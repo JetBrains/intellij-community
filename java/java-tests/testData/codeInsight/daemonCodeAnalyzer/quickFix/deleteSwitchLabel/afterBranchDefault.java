@@ -6,7 +6,7 @@ enum Day {
 class Test {
     int foo(Day d) {
         return switch (d) {
-            case Day dd && true -> 42;
+            case Day dd when true -> 42;
         };
     }
 }

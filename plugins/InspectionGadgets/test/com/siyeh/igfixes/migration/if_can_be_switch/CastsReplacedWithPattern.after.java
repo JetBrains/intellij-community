@@ -6,7 +6,7 @@ public class Test {
     int test(Object obj, int x) {
         <caret>return switch (obj) {
             case Integer y -> y.byteValue();
-            case String s && x > 0 -> s.length();
+            case String s when x > 0 -> s.length();
             case Boolean c -> (Boolean) c ? 42 : 0;
             case Character c -> ((BigDecimal) obj).hashCode();
             case null, default -> -1;

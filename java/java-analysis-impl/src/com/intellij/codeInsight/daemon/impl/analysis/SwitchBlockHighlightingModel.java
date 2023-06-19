@@ -451,7 +451,7 @@ public class SwitchBlockHighlightingModel {
           PsiPattern pattern = patternClasses.get(permittedClass);
           PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(selectorClass, permittedClass, PsiSubstitutor.EMPTY);
           PsiType permittedType = JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, substitutor);
-          if (pattern == null && (PsiUtil.getLanguageLevel(permittedClass).isLessThan(LanguageLevel.JDK_18_PREVIEW) ||
+          if (pattern == null && (PsiUtil.getLanguageLevel(permittedClass).isLessThan(LanguageLevel.JDK_18) ||
                                   TypeConversionUtil.areTypesConvertible(selectorType, permittedType)) ||
               pattern != null && !JavaPsiPatternUtil.isUnconditionalForType(pattern, TypeUtils.getType(permittedClass), true)) {
             nonVisited.add(permittedClass);
@@ -710,7 +710,7 @@ public class SwitchBlockHighlightingModel {
             if (isConstantLabelElement(nextElement)) {
               PsiExpression constExpr = ObjectUtils.tryCast(nextElement, PsiExpression.class);
               assert constExpr != null;
-              if ((PsiUtil.getLanguageLevel(constExpr).isAtLeast(LanguageLevel.JDK_18_PREVIEW) ||
+              if ((PsiUtil.getLanguageLevel(constExpr).isAtLeast(LanguageLevel.JDK_19_PREVIEW) ||
                    JavaPsiPatternUtil.isUnconditionalForType(currentElement, mySelectorType)) &&
                   JavaPsiPatternUtil.dominates(currentElement, constExpr.getType())) {
                 result.put(nextElement, current);

@@ -46,8 +46,8 @@ public enum HighlightingFeature {
   LOCAL_INTERFACES(LanguageLevel.JDK_16, "feature.local.interfaces"),
   LOCAL_ENUMS(LanguageLevel.JDK_16, "feature.local.enums"),
   INNER_STATICS(LanguageLevel.JDK_16, "feature.inner.statics"),
-  PATTERNS_IN_SWITCH(LanguageLevel.JDK_17_PREVIEW, "feature.patterns.in.switch"),
-  GUARDED_AND_PARENTHESIZED_PATTERNS(LanguageLevel.JDK_17_PREVIEW, "feature.guarded.and.parenthesised.patterns"),
+  PATTERNS_IN_SWITCH(LanguageLevel.JDK_19_PREVIEW, "feature.patterns.in.switch"),
+  GUARDED_AND_PARENTHESIZED_PATTERNS(LanguageLevel.JDK_19_PREVIEW, "feature.guarded.and.parenthesised.patterns"),
   PATTERN_GUARDS_AND_RECORD_PATTERNS(LanguageLevel.JDK_19_PREVIEW, "feature.pattern.guard.and.record.patterns"),
   RECORD_PATTERNS_IN_FOR_EACH(LanguageLevel.JDK_20_PREVIEW, "feature.record.patterns.in.for.each");
 
