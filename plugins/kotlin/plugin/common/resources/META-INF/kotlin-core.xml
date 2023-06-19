@@ -206,6 +206,11 @@
             description="For functions show vararg variant before no argruments variant"
             defaultValue="true"
             restartRequired="false"/>
+    <registryKey
+            key="kotlin.auto.completion.insert.constructor.parenthesis"
+            description="Insert constructor parenthesis on class autocompletion"
+            defaultValue="false"
+            restartRequired="false"/>
 
     <registryKey key="kotlin.create.sealed.templates.enabled"
                  defaultValue="false"

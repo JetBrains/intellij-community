@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.parentOfType
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.idea.completion.smart.SMART_COMPLETION_ITEM_PRIORITY
 import org.jetbrains.kotlin.idea.completion.smart.SmartCompletionItemPriority
 import org.jetbrains.kotlin.idea.core.completion.DescriptorBasedDeclarationLookupObject
 import org.jetbrains.kotlin.idea.util.*
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.psi.*
@@ -120,13 +122,15 @@ object KotlinClassifierInsertHandler : BaseDeclarationInsertHandler() {
             position = file.findElementAt(context.startOffset)?.getParentOfType<KtElement>(strict = false) ?: file
         }
 
-        val expression = position as? KtSimpleNameExpression
-        if (expression != null) {
-            (expression.parent as? KtExpression)?.let {
-                // avoid incomplete expressions like `super<Type` or `this<Type`
-                if (it is KtBinaryExpression && (it.left is KtSuperExpression || it.left is KtThisExpression)) return
+        if (isUnitTestMode() || Registry.`is`("kotlin.auto.completion.insert.constructor.parenthesis")) {
+            val expression = position as? KtSimpleNameExpression
+            if (expression != null) {
+                (expression.parent as? KtExpression)?.let {
+                    // avoid incomplete expressions like `super<Type` or `this<Type`
+                    if (it is KtBinaryExpression && (it.left is KtSuperExpression || it.left is KtThisExpression)) return
+                }
+                insertParentheses(item, expression, context)
             }
-            insertParentheses(item, expression, context)
         }
     }
 
