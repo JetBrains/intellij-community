@@ -27,6 +27,7 @@ import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.file.BatchFileChangeListener;
 import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.java.workspace.entities.JavaModuleSettingsKt;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -68,6 +69,12 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity;
+import com.intellij.platform.workspace.storage.VersionedStorageChange;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
@@ -83,13 +90,6 @@ import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
-import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
-import com.intellij.platform.workspace.storage.EntityChange;
-import com.intellij.platform.workspace.storage.EntityStorage;
-import com.intellij.platform.workspace.storage.VersionedStorageChange;
-import com.intellij.platform.workspace.storage.WorkspaceEntity;
-import com.intellij.platform.workspace.jps.entities.SourceRootEntity;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -99,7 +99,6 @@ import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.util.internal.ThreadLocalRandom;
 import kotlin.Unit;
-import kotlin.sequences.SequencesKt;
 import kotlinx.coroutines.CoroutineScope;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
@@ -119,7 +118,8 @@ import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jvnet.winp.Priority;
 import org.jvnet.winp.WinProcess;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -138,8 +138,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
+import java.util.function.*;
 import java.util.stream.Collectors;
 
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
@@ -1976,34 +1975,7 @@ public final class BuildManager implements Disposable {
       }
       final MessageBusConnection connection = project.getMessageBus().connect();
       if (!project.isDefault()) {
-        connection.subscribe(WorkspaceModelTopics.CHANGED, new WorkspaceModelChangeListener() {
-          @Override
-          public void changed(@NotNull VersionedStorageChange event) {
-            boolean needFSRescan = false;
-            for (EntityChange<SourceRootEntity> change : SequencesKt.asIterable(event.getChanges(SourceRootEntity.class))) {
-              final Pair<SourceRootEntity, EntityStorage> p = getEntityAndStorage(event, change);
-              final SourceRootEntity entity = p.first; // added, changed or removed source root in some module
-              final EntityStorage storage = p.second;  // storage state relevant to the change
-              if (entity != null) {
-                needFSRescan = true;
-                break;
-              }
-            }
-
-            if (needFSRescan) {
-              getInstance().clearState(project);
-            }
-            else if (event.getAllChanges().iterator().hasNext()) {
-              getInstance().cancelPreloadedBuilds(getProjectPath(project));
-            }
-          }
-
-          private static @NotNull <T extends WorkspaceEntity> Pair<T, EntityStorage> getEntityAndStorage(@NotNull VersionedStorageChange event,
-                                                                                                         EntityChange<T> change) {
-            final T entity = change.getNewEntity();
-            return entity != null? Pair.create(entity, event.getStorageAfter()) : Pair.create(change.getOldEntity(), event.getStorageBefore());
-          }
-        });
+        connection.subscribe(WorkspaceModelTopics.CHANGED, new WSModelChangeListener(project));
 
         connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
           @Override
@@ -2477,5 +2449,127 @@ public final class BuildManager implements Disposable {
         getInstance().scheduleProjectSave();
       }
     }
+  }
+
+  static final class WSModelChangeListener implements WorkspaceModelChangeListener {
+
+    private final Project myProject;
+
+    WSModelChangeListener(Project project) {
+      myProject = project;
+    }
+
+    @Override
+    public void changed(@NotNull VersionedStorageChange event) {
+      boolean needFSRescan =
+        processEntityChanges(event, SourceRootEntity.class, ChangeProcessor.anyChange(true, false)) ||
+        processEntityChanges(event, ModuleEntity.class, new ModuleEntityChangeDetector());
+
+      if (needFSRescan) {
+        getInstance().clearState(myProject);
+      }
+      else if (event.getAllChanges().iterator().hasNext()) {
+        getInstance().cancelPreloadedBuilds(getProjectPath(myProject));
+      }
+    }
+
+    interface ChangeProcessor<T, R> {
+      default boolean added(T newData) {
+        return true;
+      }
+      default boolean changed(T oldData, T newData) {
+        return true;
+      }
+      default boolean removed(T oldData) {
+        return true;
+      }
+      default R getResult() {
+        return null;
+      }
+
+      static <T, R> ChangeProcessor<T, R> anyChange(R onChangesDetected, R noChanges) {
+        return new ChangeProcessor<>() {
+          private R myResult = noChanges;
+          @Override
+          public boolean added(Object newEntity) {
+            myResult = onChangesDetected;
+            return false;
+          }
+          @Override
+          public boolean changed(Object oldEntity, Object newEntity) {
+            myResult = onChangesDetected;
+            return false;
+          }
+          @Override
+          public boolean removed(Object oldEntity) {
+            myResult = onChangesDetected;
+            return false;
+          }
+          @Override
+          public R getResult() {
+            return myResult;
+          }
+        };
+      }
+    }
+
+    static class ModuleEntityChangeDetector implements ChangeProcessor<ModuleEntity, Boolean> {
+      private boolean myNeedRescan = false;
+
+      @Override
+      public boolean changed(ModuleEntity oldEntity, ModuleEntity newEntity) {
+        myNeedRescan = processChanges(
+          Collections.singleton(Pair.create(oldEntity, newEntity)),
+          (before, after) -> before.getDependencies().equals(after.getDependencies()) &&
+            Objects.equals(JavaModuleSettingsKt.getJavaSettings(before), JavaModuleSettingsKt.getJavaSettings(after)),
+          ChangeProcessor.anyChange(true, false)
+        );
+        return !myNeedRescan;
+      }
+
+      @Override
+      public boolean removed(ModuleEntity oldEntity) {
+        myNeedRescan = true;
+        return false;
+      }
+
+      @Override
+      public Boolean getResult() {
+        return myNeedRescan;
+      }
+    }
+
+    private static <T extends WorkspaceEntity, R> R processEntityChanges(@NotNull VersionedStorageChange event, Class<T> entityClass, ChangeProcessor<T, R> proc) {
+      return processChanges(
+        ContainerUtil.map(event.getChanges(entityClass).iterator(), change -> Pair.create(change.getOldEntity(), change.getNewEntity())),
+        Objects::equals, proc
+      );
+    }
+
+    private static <T, R> R processChanges(Iterable<Pair<T, T>> data, BiFunction<T, T, Boolean> equalsImpl, ChangeProcessor<T, R> proc) {
+      for (Pair<T, T> pair : data) {
+        final T before = pair.getFirst();
+        final T after = pair.getSecond();
+        boolean shouldContinue = true;
+        if (after != null) {
+          if (before != null) {
+            if (!equalsImpl.apply(before, after)) {
+              shouldContinue = proc.changed(before, after);
+            }
+          }
+          else {
+            shouldContinue = proc.added(after);
+          }
+        }
+        else if (before != null) {
+          shouldContinue = proc.removed(before);
+        }
+        if (!shouldContinue) {
+          return proc.getResult();
+        }
+      }
+      return proc.getResult();
+    }
+
   }
 }
