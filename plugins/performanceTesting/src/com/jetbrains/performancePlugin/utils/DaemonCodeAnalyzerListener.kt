@@ -5,7 +5,6 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.util.Ref
 import com.intellij.util.messages.SimpleMessageBusConnection
 import io.opentelemetry.api.trace.Span
-import io.opentelemetry.context.Scope
 import kotlinx.coroutines.future.asDeferred
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
@@ -17,17 +16,15 @@ internal object DaemonCodeAnalyzerListener {
    *
    * @param connection The SimpleMessageBusConnection to listen to.
    * @param spanRef A reference to a Span to end when the daemon finishes.
-   * @param scopeRef A reference to a Scope to close when the daemon finishes.
    * @param timeoutInSeconds timeout for waiting result, default without timeout.
    *
    * @return A DaemonCodeAnalyzerResult that completes when the daemon finishes.
    */
   fun listen(connection: SimpleMessageBusConnection,
              spanRef: Ref<Span>,
-             scopeRef: Ref<Scope>,
              timeoutInSeconds: Long = 0,
              expectedOpenedFile: String? = null): DaemonCodeAnalyzerResult {
-    val result = DaemonCodeAnalyzerResult(connection, spanRef, scopeRef, timeoutInSeconds)
+    val result = DaemonCodeAnalyzerResult(connection, spanRef, timeoutInSeconds)
     connection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, object : DaemonCodeAnalyzer.DaemonListener {
       override fun daemonFinished(fileEditors: Collection<FileEditor>) {
         if (expectedOpenedFile == null) {
@@ -44,7 +41,7 @@ internal object DaemonCodeAnalyzerListener {
 
 internal class DaemonCodeAnalyzerResult(private val connection: SimpleMessageBusConnection,
                                         private val spanRef: Ref<Span>,
-                                        private val scopeRef: Ref<Scope>, timeoutInSeconds: Long = 0) {
+                                        timeoutInSeconds: Long = 0) {
   private val job = CompletableFuture<Unit>()
   private var suppressErrors: Boolean = false
   private var errorMessage = "Timeout on waiting for demon code analyzer complete for $timeoutInSeconds seconds"
@@ -95,7 +92,6 @@ internal class DaemonCodeAnalyzerResult(private val connection: SimpleMessageBus
     }
     finally {
       spanRef.get()?.end()
-      scopeRef.get()?.close()
       if (!job.isDone && !job.isCancelled) {
         job.complete(Unit)
       }
