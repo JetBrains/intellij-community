@@ -1,416 +1,375 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.navigationToolbar;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.navigationToolbar
 
-import com.intellij.ide.navbar.ide.NavBarIdeUtil;
-import com.intellij.ide.navbar.ide.NavBarService;
-import com.intellij.ide.navigationToolbar.ui.NavBarUIManager;
-import com.intellij.ide.ui.NavBarLocation;
-import com.intellij.ide.ui.ToolbarSettings;
-import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.ide.ui.customization.CustomActionsSchema;
-import com.intellij.ide.ui.customization.CustomisedActionGroup;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
-import com.intellij.openapi.wm.StatusBarCentralWidgetProvider;
-import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
-import com.intellij.openapi.wm.impl.status.InfoAndProgressPanel;
-import com.intellij.ui.ClientProperty;
-import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.JBScrollBar;
-import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.components.JBThinOverlappingScrollBar;
-import com.intellij.ui.hover.HoverListener;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.ui.JBSwingUtilities;
-import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.awt.*;
-import java.util.concurrent.CompletableFuture;
-
-import static com.intellij.ide.navigationToolbar.NavBarRootPaneExtension.PANEL_KEY;
+import com.intellij.ide.navbar.ide.NavBarService
+import com.intellij.ide.navbar.ide.isNavbarShown
+import com.intellij.ide.navbar.ide.isNavbarV2Enabled
+import com.intellij.ide.navigationToolbar.NavBarRootPaneExtension.NavBarWrapperPanel
+import com.intellij.ide.ui.NavBarLocation
+import com.intellij.ide.ui.ToolbarSettings
+import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UISettingsListener
+import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.ide.ui.customization.CustomisedActionGroup
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ComboBoxAction
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.IdeRootPaneNorthExtension
+import com.intellij.openapi.wm.StatusBarCentralWidgetProvider
+import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
+import com.intellij.openapi.wm.impl.status.InfoAndProgressPanel.AutoscrollLimit
+import com.intellij.openapi.wm.impl.status.InfoAndProgressPanel.ScrollableToSelected
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.components.JBScrollBar
+import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.JBThinOverlappingScrollBar
+import com.intellij.ui.hover.HoverListener
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.ui.JBSwingUtilities
+import com.intellij.util.ui.JBUI
+import java.awt.*
+import java.util.concurrent.CompletableFuture
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.JScrollPane
+import javax.swing.ScrollPaneConstants
 
 /**
  * @author Konstantin Bulenkov
  */
-public final class NavBarRootPaneExtension implements IdeRootPaneNorthExtension {
-  static final String PANEL_KEY = "NavBarPanel";
-
-  @Override
-  public @NotNull JComponent createComponent(@NotNull Project project, boolean isDocked) {
-    return new MyNavBarWrapperPanel(project);
+internal class NavBarRootPaneExtension : IdeRootPaneNorthExtension {
+  companion object {
+    const val PANEL_KEY: String = "NavBarPanel"
   }
 
-  @Override
-  public @NotNull String getKey() {
-    return IdeStatusBarImpl.NAVBAR_WIDGET_KEY;
+  override fun createComponent(project: Project, isDocked: Boolean): JComponent {
+    return MyNavBarWrapperPanel(project)
   }
+
+  override val key: String
+    get() = IdeStatusBarImpl.NAVBAR_WIDGET_KEY
 
   // used externally
-  public abstract static class NavBarWrapperPanel extends JPanel implements UISettingsListener {
-      public NavBarWrapperPanel(LayoutManager layout) {
-        super(layout);
-      }
-
-      @Override
-      protected Graphics getComponentGraphics(Graphics graphics) {
-        return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
-      }
+  abstract class NavBarWrapperPanel(layout: LayoutManager?) : JPanel(layout), UISettingsListener {
+    override fun getComponentGraphics(graphics: Graphics): Graphics {
+      return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics))
     }
+  }
 }
 
-final class MyNavBarWrapperPanel extends NavBarRootPaneExtension.NavBarWrapperPanel implements StatusBarCentralWidgetProvider {
-  private final Project myProject;
-  private JComponent myNavBarPanel;
-  private JPanel myRunPanel;
-  private Boolean myNavToolbarGroupExist;
-  JComponent myNavigationBar;
-  JScrollPane myScrollPane;
+internal class MyNavBarWrapperPanel(private val project: Project) : NavBarWrapperPanel(BorderLayout()), StatusBarCentralWidgetProvider {
+  private var navBarPanel: JComponent? = null
+  private var runPanel: JPanel? = null
+  private var navToolbarGroupExist: Boolean? = null
+  var navigationBar: JComponent? = null
+  var scrollPane: JScrollPane? = null
 
-  MyNavBarWrapperPanel(Project project) {
-    super(new BorderLayout());
-
-    myProject = project;
-
-    UISettings settings = UISettings.getInstance();
-    if (!ExperimentalUI.isNewUI() || settings.getShowNavigationBar() && settings.getNavBarLocation() == NavBarLocation.TOP) {
-      add(getNavBarPanel(), BorderLayout.CENTER);
+  init {
+    val settings = UISettings.getInstance()
+    if (!ExperimentalUI.isNewUI() || settings.showNavigationBar && settings.navBarLocation === NavBarLocation.TOP) {
+      add(getNavBarPanel(), BorderLayout.CENTER)
     }
     else {
-      setVisible(false);
+      isVisible = false
     }
-
-    revalidate();
-
-    uiSettingsChanged(settings);
+    revalidate()
+    uiSettingsChanged(settings)
   }
 
-  @Override
-  public @NotNull JComponent createCentralStatusBarComponent() {
-    return getNavBarPanel();
-  }
+  override fun createCentralStatusBarComponent(): JComponent = getNavBarPanel()
 
-  private JComponent getNavBarPanel() {
-    if (myNavBarPanel != null) {
-      return myNavBarPanel;
+  private fun getNavBarPanel(): JComponent {
+    navBarPanel?.let {
+      return it
     }
 
-    if (NavBarIdeUtil.isNavbarV2Enabled()) {
-      myNavigationBar = NavBarService.getInstance(myProject).createNavBarPanel();
+    if (isNavbarV2Enabled) {
+      navigationBar = NavBarService.getInstance(project).createNavBarPanel()
     }
     else {
-      myNavigationBar = new ReusableNavBarPanel(myProject, true);
-      ((NavBarPanel)myNavigationBar).getModel().setFixedComponent(true);
+      @Suppress("DEPRECATION")
+      navigationBar = ReusableNavBarPanel(project, true)
+      @Suppress("DEPRECATION")
+      (navigationBar as NavBarPanel).model.setFixedComponent(true)
     }
-    putClientProperty(PANEL_KEY, myNavigationBar);
-
-    myScrollPane = ScrollPaneFactory.createScrollPane(myNavigationBar);
-    updateScrollBarFlippedState(null);
-
-    myNavBarPanel = new NavBarContainer(new BorderLayout(), this);
-    myNavBarPanel.add(myScrollPane, BorderLayout.CENTER);
-    myNavBarPanel.setOpaque(!ExperimentalUI.isNewUI());
-    myNavBarPanel.updateUI();
-
+    putClientProperty(NavBarRootPaneExtension.PANEL_KEY, navigationBar)
+    scrollPane = ScrollPaneFactory.createScrollPane(navigationBar)
+    updateScrollBarFlippedState(null)
+    val navBarPanel = NavBarContainer(BorderLayout(), this)
+    this.navBarPanel = navBarPanel
+    navBarPanel.add(scrollPane!!, BorderLayout.CENTER)
+    navBarPanel.isOpaque = !ExperimentalUI.isNewUI()
+    navBarPanel.updateUI()
     if (ExperimentalUI.isNewNavbar()) {
-      HoverListener hoverListener = new HoverListener() {
-        @Override
-        public void mouseEntered(@NotNull Component component, int x, int y) {
-          toggleScrollBar(true);
+      val hoverListener: HoverListener = object : HoverListener() {
+        override fun mouseEntered(component: Component, x: Int, y: Int) {
+          toggleScrollBar(true)
         }
 
-        @Override
-        public void mouseMoved(@NotNull Component component, int x, int y) { }
-
-        @Override
-        public void mouseExited(@NotNull Component component) {
-          toggleScrollBar(false);
+        override fun mouseMoved(component: Component, x: Int, y: Int) {}
+        override fun mouseExited(component: Component) {
+          toggleScrollBar(false)
         }
-      };
-      hoverListener.addTo(myNavBarPanel);
+      }
+      hoverListener.addTo(navBarPanel)
     }
-
-    return myNavBarPanel;
+    return navBarPanel
   }
 
-  @Override
-  public void uiSettingsChanged(@NotNull UISettings uiSettings) {
-    if (myProject.isDisposed()) return;
-
-    toggleRunPanel(isShowToolPanel(uiSettings));
-    toggleNavPanel(uiSettings);
-
-    if (NavBarIdeUtil.isNavbarV2Enabled()) {
-      NavBarService.getInstance(myProject).uiSettingsChanged(uiSettings);
+  override fun uiSettingsChanged(uiSettings: UISettings) {
+    if (project.isDisposed) return
+    toggleRunPanel(isShowToolPanel(uiSettings))
+    toggleNavPanel(uiSettings)
+    if (isNavbarV2Enabled) {
+      NavBarService.getInstance(project).uiSettingsChanged(uiSettings)
     }
+    val navigationBar = navigationBar ?: return
 
-    if (myNavigationBar == null) {
-      return;
+    @Suppress("DEPRECATION")
+    if (navigationBar is NavBarPanel) {
+      navigationBar.updateState(uiSettings.showNavigationBar)
     }
-
-    if (myNavigationBar instanceof NavBarPanel) {
-      ((NavBarPanel)myNavigationBar).updateState(uiSettings.getShowNavigationBar());
-    }
-
-    boolean visible = NavBarIdeUtil.isNavbarShown(uiSettings);
+    val visible = uiSettings.isNavbarShown()
     if (ExperimentalUI.isNewUI()) {
-      myScrollPane.setVisible(visible);
+      scrollPane!!.isVisible = visible
     }
-
-    myNavigationBar.revalidate();
-    setVisible(visible);
-
-    revalidate();
-    repaint();
-
-    if (getComponentCount() > 0) {
-      Component c = getComponent(0);
-      if (c instanceof JComponent) {
-        ((JComponent)c).setOpaque(false);
+    navigationBar.revalidate()
+    isVisible = visible
+    revalidate()
+    repaint()
+    if (componentCount > 0) {
+      val c = getComponent(0)
+      if (c is JComponent) {
+        c.isOpaque = false
       }
     }
   }
 
-  @Override
-  public Insets getInsets() {
-    return NavBarUIManager.getUI().getWrapperPanelInsets(super.getInsets());
+  override fun getInsets(): Insets {
+    @Suppress("DEPRECATION")
+    return com.intellij.ide.navigationToolbar.ui.NavBarUIManager.getUI().getWrapperPanelInsets(super.getInsets())
   }
 
-  private void updateScrollBarFlippedState(@Nullable NavBarLocation location) {
-    if (ExperimentalUI.isNewNavbar() && myScrollPane != null) {
-      if (location == null) location = UISettings.getInstance().getNavBarLocation();
-      JBScrollPane.Flip flipState = (location == NavBarLocation.BOTTOM) ? JBScrollPane.Flip.VERTICAL : JBScrollPane.Flip.NONE;
-      myScrollPane.putClientProperty(JBScrollPane.Flip.class, flipState);
+  private fun updateScrollBarFlippedState(location: NavBarLocation?) {
+    if (ExperimentalUI.isNewNavbar() && scrollPane != null) {
+      val effectiveLocation = location ?: UISettings.getInstance().navBarLocation
+      val flipState = if (effectiveLocation === NavBarLocation.BOTTOM) JBScrollPane.Flip.VERTICAL else JBScrollPane.Flip.NONE
+      scrollPane!!.putClientProperty(JBScrollPane.Flip::class.java, flipState)
     }
   }
 
-  private static boolean isShowToolPanel(@NotNull UISettings uiSettings) {
-    // Evanescent me: fix run panel show condition in ExpUI if necessary.
-    if (!ExperimentalUI.isNewUI() && !uiSettings.getShowMainToolbar() && NavBarIdeUtil.isNavbarShown(uiSettings)) {
-      ToolbarSettings toolbarSettings = ToolbarSettings.getInstance();
-      return !toolbarSettings.isVisible() || !toolbarSettings.isAvailable();
+  private fun runToolbarExists(): Boolean {
+    if (navToolbarGroupExist == null) {
+      val correctedAction = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_NAVBAR_TOOLBAR)
+      navToolbarGroupExist = correctedAction is DefaultActionGroup && correctedAction.childrenCount > 0 ||
+                             correctedAction is CustomisedActionGroup && correctedAction.getFirstAction() != null
     }
-    return false;
+    return navToolbarGroupExist!!
   }
 
-  private static void alignVertically(Container container) {
-    if (container.getComponentCount() == 1) {
-      Component c = container.getComponent(0);
-      Insets insets = container.getInsets();
-      Dimension d = c.getPreferredSize();
-      Rectangle r = container.getBounds();
-      c.setBounds(insets.left, (r.height - d.height - insets.top - insets.bottom) / 2 + insets.top, r.width - insets.left - insets.right, d.height);
+  private fun toggleNavPanel(settings: UISettings) {
+    val show = if (ExperimentalUI.isNewUI()) {
+      settings.showNavigationBar && settings.navBarLocation === NavBarLocation.TOP
     }
-  }
-
-  private static boolean isNeedGap(final AnAction group) {
-    final AnAction firstAction = getFirstAction(group);
-    return firstAction instanceof ComboBoxAction;
-  }
-
-  private static @Nullable AnAction getFirstAction(final AnAction group) {
-    if (group instanceof DefaultActionGroup) {
-      AnAction firstAction = null;
-      for (final AnAction action : ((DefaultActionGroup)group).getChildActionsOrStubs()) {
-        if (action instanceof DefaultActionGroup) {
-          firstAction = getFirstAction(action);
-        }
-        else if (action instanceof Separator || action instanceof ActionGroup) {
-          continue;
-        }
-        else {
-          firstAction = action;
-          break;
-        }
-
-        if (firstAction != null) break;
-      }
-
-      return firstAction;
+    else {
+      settings.isNavbarShown()
     }
-    if (group instanceof CustomisedActionGroup) {
-      return ((CustomisedActionGroup)group).getFirstAction();
-    }
-    return null;
-  }
 
-  private boolean runToolbarExists() {
-    if (myNavToolbarGroupExist == null) {
-      final AnAction correctedAction = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_NAVBAR_TOOLBAR);
-      myNavToolbarGroupExist =
-        correctedAction instanceof DefaultActionGroup && ((DefaultActionGroup)correctedAction).getChildrenCount() > 0 ||
-        correctedAction instanceof CustomisedActionGroup && ((CustomisedActionGroup)correctedAction).getFirstAction() != null;
-    }
-    return myNavToolbarGroupExist;
-  }
-
-  private void toggleNavPanel(UISettings settings) {
-    boolean show = ExperimentalUI.isNewUI() ?
-                   settings.getShowNavigationBar() && settings.getNavBarLocation() == NavBarLocation.TOP :
-                   NavBarIdeUtil.isNavbarShown(settings);
     if (show) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        add(getNavBarPanel(), BorderLayout.CENTER);
-        myNavBarPanel.updateUI();
-      });
-    }
-    else {
-      var c = ((BorderLayout)getLayout()).getLayoutComponent(BorderLayout.CENTER);
-      if (c != null) {
-        remove(c);
+      ApplicationManager.getApplication().invokeLater {
+        val navBarPanel = getNavBarPanel()
+        add(navBarPanel, BorderLayout.CENTER)
+        navBarPanel.updateUI()
       }
     }
+    else {
+      (layout as BorderLayout).getLayoutComponent(BorderLayout.CENTER)?.let { remove(it) }
+    }
 
-    updateScrollBarFlippedState(settings.getNavBarLocation());
-    setVisible(show);
+    updateScrollBarFlippedState(settings.navBarLocation)
+    isVisible = show
   }
 
-  private void toggleRunPanel(boolean show) {
+  private fun toggleRunPanel(show: Boolean) {
+    // don't care about CompletableFuture - not used in a New UI
     CompletableFuture
-      .supplyAsync(() -> CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_NAVBAR_TOOLBAR),
+      .supplyAsync({ CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_NAVBAR_TOOLBAR) },
                    AppExecutorUtil.getAppExecutorService())
-      .thenAcceptAsync(action -> {
-        if (show && myRunPanel == null && runToolbarExists()) {
-          if (myRunPanel != null) {
-            remove(myRunPanel);
-            myRunPanel = null;
-          }
+      .thenAcceptAsync(
+        { action ->
+          if (show && runPanel == null && runToolbarExists()) {
+            if (runPanel != null) {
+              remove(runPanel)
+              runPanel = null
+            }
 
-          ActionManager manager = ActionManager.getInstance();
-          if (action instanceof ActionGroup) {
-            ActionToolbar actionToolbar = manager.createActionToolbar(ActionPlaces.NAVIGATION_BAR_TOOLBAR, (ActionGroup)action, true);
-            actionToolbar.setTargetComponent(null);
-            myRunPanel = new JPanel(new BorderLayout()) {
-              @Override
-              public void doLayout() {
-                alignVertically(this);
+            val manager = ActionManager.getInstance()
+            if (action is ActionGroup) {
+              val actionToolbar = manager.createActionToolbar(ActionPlaces.NAVIGATION_BAR_TOOLBAR,
+                                                              (action as ActionGroup?)!!, true)
+              actionToolbar.targetComponent = null
+              val runPanel = object : JPanel(BorderLayout()) {
+                override fun doLayout() {
+                  alignVertically(this)
+                }
               }
-            };
-            myRunPanel.setOpaque(false);
-            myRunPanel.add(actionToolbar.getComponent(), BorderLayout.CENTER);
-            final boolean needGap = isNeedGap(action);
-            myRunPanel.setBorder(JBUI.Borders.emptyLeft(needGap ? 5 : 1));
-            NavBarLeftSideExtension.EP_NAME.forEachExtensionSafe(extension -> {
-              extension.process(this, myProject);
-            });
-            add(myRunPanel, BorderLayout.EAST);
+              this.runPanel = runPanel
+              runPanel.isOpaque = false
+              runPanel.add(actionToolbar.component, BorderLayout.CENTER)
+              val needGap = isNeedGap(action)
+              runPanel.border = JBUI.Borders.emptyLeft(if (needGap) 5 else 1)
+              NavBarLeftSideExtension.EP_NAME.forEachExtensionSafe { extension ->
+                extension.process(this, project)
+              }
+              add(runPanel, BorderLayout.EAST)
+            }
           }
-        }
-        else if (!show && myRunPanel != null) {
-          remove(myRunPanel);
-          myRunPanel = null;
-        }
-      }, command -> ApplicationManager.getApplication().invokeLater(command, myProject.getDisposed()));
+          else if (!show && runPanel != null) {
+            remove(runPanel)
+            runPanel = null
+          }
+        },
+        { command ->
+          ApplicationManager.getApplication().invokeLater(command, project.disposed)
+        },
+      )
   }
 
-  void toggleScrollBar(boolean isOn) {
-    JScrollBar scrollBar = myScrollPane.getHorizontalScrollBar();
-    if (scrollBar instanceof JBScrollBar) {
-      ((JBScrollBar)scrollBar).toggle(isOn);
+  fun toggleScrollBar(isOn: Boolean) {
+    val scrollBar = scrollPane!!.horizontalScrollBar
+    if (scrollBar is JBScrollBar) {
+      scrollBar.toggle(isOn)
     }
   }
 }
 
-final class NavBarContainer extends JPanel implements InfoAndProgressPanel.ScrollableToSelected {
-  private final MyNavBarWrapperPanel panel;
+private fun isShowToolPanel(uiSettings: UISettings): Boolean {
+  // Evanescent me: fix run panel show condition in ExpUI if necessary.
+  if (!ExperimentalUI.isNewUI() && !uiSettings.showMainToolbar && uiSettings.isNavbarShown()) {
+    val toolbarSettings = ToolbarSettings.getInstance()
+    return !toolbarSettings.isVisible || !toolbarSettings.isAvailable
+  }
+  return false
+}
 
-  NavBarContainer(@NotNull LayoutManager layout, @NotNull MyNavBarWrapperPanel panel) {
-    super(layout);
+private fun alignVertically(container: Container) {
+  if (container.componentCount == 1) {
+    val c = container.getComponent(0)
+    val insets = container.insets
+    val d = c.preferredSize
+    val r = container.bounds
+    c.setBounds(insets.left, (r.height - d.height - insets.top - insets.bottom) / 2 + insets.top, r.width - insets.left - insets.right,
+                d.height)
+  }
+}
 
-    this.panel = panel;
-    updateUI();
+private fun isNeedGap(group: AnAction): Boolean {
+  return getFirstAction(group) is ComboBoxAction
+}
+
+private fun getFirstAction(group: AnAction): AnAction? {
+  if (group is CustomisedActionGroup) {
+    return group.getFirstAction()
+  }
+  else if (group !is DefaultActionGroup) {
+    return null
   }
 
-  @Override
-  protected void paintComponent(Graphics g) {
-    super.paintComponent(g);
-    final Component navBar = panel.myScrollPane;
-    Rectangle r = navBar.getBounds();
-
-    Graphics2D g2d = (Graphics2D)g.create();
-    g2d.translate(r.x, r.y);
-    g2d.dispose();
-  }
-
-  @Override
-  public void doLayout() {
-    // align vertically
-    final Rectangle r = getBounds();
-    final Insets insets = getInsets();
-    int x = insets.left;
-    JScrollPane scrollPane = panel.myScrollPane;
-    if (scrollPane == null || !scrollPane.isVisible()) {
-      return;
+  var firstAction: AnAction? = null
+  for (action in group.getChildActionsOrStubs()) {
+    if (action is DefaultActionGroup) {
+      firstAction = getFirstAction(action)
     }
-
-    int navBarHeight = ((Component)scrollPane).getPreferredSize().height;
-    if (ExperimentalUI.isNewNavbar()) {
-      navBarHeight = r.height;
-    }
-
-    scrollPane.setBounds(x, (r.height - navBarHeight) / 2, r.width - insets.left - insets.right, navBarHeight);
-  }
-
-  @Override
-  public void updateUI() {
-    // updateUI is called from JPanel constructor
-    if (panel == null) {
-      return;
-    }
-
-    super.updateUI();
-
-    JScrollPane scrollPane = panel.myScrollPane;
-    if (scrollPane == null || panel.myNavigationBar == null) {
-      return;
-    }
-
-    var settings = UISettings.getInstance();
-    var border = !ExperimentalUI.isNewUI() || settings.getShowNavigationBar()
-                 ? new NavBarBorder()
-                 : JBUI.Borders.empty();
-
-    if (ExperimentalUI.isNewNavbar()) {
-      scrollPane.setHorizontalScrollBar(new JBThinOverlappingScrollBar(Adjustable.HORIZONTAL));
-      if (scrollPane instanceof JBScrollPane) {
-        ((JBScrollPane)scrollPane).setOverlappingScrollBar(true);
-      }
-      scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-      panel.toggleScrollBar(false);
+    else if (action is Separator || action is ActionGroup) {
+      continue
     }
     else {
-      scrollPane.setHorizontalScrollBar(null);
+      firstAction = action
+      break
     }
 
-    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-    scrollPane.setBorder(border);
-    scrollPane.setOpaque(false);
-    scrollPane.getViewport().setOpaque(false);
-    scrollPane.setViewportBorder(null);
-
-    if (ExperimentalUI.isNewUI()) {
-      ClientProperty.put(scrollPane, JBScrollPane.FORCE_HORIZONTAL_SCROLL, true);
-      boolean visible = NavBarIdeUtil.isNavbarShown(settings);
-      scrollPane.setVisible(visible);
-      if (panel.myNavigationBar instanceof NavBarPanel) {
-        ((NavBarPanel)panel.myNavigationBar).updateState(visible);
-      }
+    if (firstAction != null) {
+      break
     }
-    panel.myNavigationBar.setBorder(null);
+  }
+  return firstAction
+}
+
+internal class NavBarContainer(layout: LayoutManager, private val panel: MyNavBarWrapperPanel) : JPanel(layout), ScrollableToSelected {
+  init {
+    updateUI()
   }
 
-  @Override
-  public void updateAutoscrollLimit(InfoAndProgressPanel.AutoscrollLimit limit) {
-    JComponent navigationBar = panel.myNavigationBar;
-    if (navigationBar instanceof NavBarPanel) {
-      ((NavBarPanel)navigationBar).updateAutoscrollLimit(limit);
+  override fun paintComponent(g: Graphics) {
+    super.paintComponent(g)
+
+    val r = panel.scrollPane!!.bounds
+    val g2d = g.create() as Graphics2D
+    g2d.translate(r.x, r.y)
+    g2d.dispose()
+  }
+
+  override fun doLayout() {
+    // align vertically
+    val r = bounds
+    val insets = insets
+    val x = insets.left
+    val scrollPane = panel.scrollPane?.takeIf { it.isVisible } ?: return
+    var navBarHeight = scrollPane.preferredSize.height
+    if (ExperimentalUI.isNewNavbar()) {
+      navBarHeight = r.height
+    }
+    scrollPane.setBounds(x, (r.height - navBarHeight) / 2, r.width - insets.left - insets.right, navBarHeight)
+  }
+
+  override fun updateUI() {
+    // updateUI is called from JPanel constructor
+    @Suppress("SENSELESS_COMPARISON")
+    if (panel == null) {
+      return
+    }
+
+    super.updateUI()
+
+    val scrollPane = panel.scrollPane ?: return
+    val navigationBar = panel.navigationBar ?: return
+
+    val settings = UISettings.getInstance()
+    val border = if (!ExperimentalUI.isNewUI() || settings.showNavigationBar) NavBarBorder() else JBUI.Borders.empty()
+    if (ExperimentalUI.isNewNavbar()) {
+      scrollPane.horizontalScrollBar = JBThinOverlappingScrollBar(Adjustable.HORIZONTAL)
+      if (scrollPane is JBScrollPane) {
+        scrollPane.setOverlappingScrollBar(true)
+      }
+      scrollPane.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
+      panel.toggleScrollBar(false)
+    }
+    else {
+      scrollPane.horizontalScrollBar = null
+    }
+    scrollPane.verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER
+    scrollPane.border = border
+    scrollPane.isOpaque = false
+    scrollPane.viewport.isOpaque = false
+    scrollPane.viewportBorder = null
+    if (ExperimentalUI.isNewUI()) {
+      ClientProperty.put(scrollPane, JBScrollPane.FORCE_HORIZONTAL_SCROLL, true)
+      val visible = settings.isNavbarShown()
+      scrollPane.isVisible = visible
+      @Suppress("DEPRECATION")
+      (navigationBar as? NavBarPanel)?.updateState(visible)
+    }
+    navigationBar.border = null
+  }
+
+  override fun updateAutoscrollLimit(limit: AutoscrollLimit) {
+    val navigationBar = panel.navigationBar
+    @Suppress("DEPRECATION")
+    if (navigationBar is NavBarPanel) {
+      navigationBar.updateAutoscrollLimit(limit)
     }
   }
 }
