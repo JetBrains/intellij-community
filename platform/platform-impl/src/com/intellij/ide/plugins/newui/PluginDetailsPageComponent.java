@@ -11,11 +11,10 @@ import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.marketplace.PluginReviewComment;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
+import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls;
 import com.intellij.ide.plugins.org.PluginManagerFilters;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
@@ -33,7 +32,6 @@ import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xml.util.XmlStringUtil;
@@ -63,8 +61,6 @@ import static java.util.Objects.requireNonNull;
  * @author Alexander Lobas
  */
 public final class PluginDetailsPageComponent extends MultiPanel {
-  private static final String MARKETPLACE_LINK = "/plugin/index?xmlId=";
-
   private final MyPluginModel myPluginModel;
   private final LinkListener<Object> mySearchListener;
   private final boolean myMarketplace;
@@ -632,11 +628,11 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     topPanel.setBorder(JBUI.Borders.empty(16, 16, 12, 16));
 
     LinkPanel newReviewLink = new LinkPanel(topPanel, true, false, null, BorderLayout.WEST);
-    newReviewLink.showWithBrowseUrl(IdeBundle.message("plugins.new.review.action"), false,
-                                    () -> ((ApplicationInfoEx)ApplicationInfo.getInstance()).getPluginManagerUrl() +
-                                          "/intellij/" +
-                                          URLUtil.encodeURIComponent(requireNonNull(myPlugin).getPluginId().getIdString()) +
-                                          "/review/new");
+    newReviewLink.showWithBrowseUrl(IdeBundle.message("plugins.new.review.action"), false, () -> {
+      PluginId pluginId = requireNonNull(myPlugin).getPluginId();
+      IdeaPluginDescriptor installedPlugin = PluginManagerCore.getPlugin(pluginId);
+      return MarketplaceUrls.getPluginWriteReviewUrl(pluginId, installedPlugin != null ? installedPlugin.getVersion() : null);
+    });
 
     JPanel reviewsPanel = new OpaquePanel(new BorderLayout(), PluginManagerConfigurable.MAIN_BG_COLOR);
     reviewsPanel.add(topPanel, BorderLayout.NORTH);
@@ -1061,11 +1057,12 @@ public final class PluginDetailsPageComponent extends MultiPanel {
 
     if (myPlugin.isBundled() && !myPlugin.allowBundledUpdate() || !isPluginFromMarketplace()) {
       myHomePage.hide();
-    }
-    else {
-      myHomePage.showWithBrowseUrl(IdeBundle.message("plugins.configurable.plugin.homepage.link"), true,
-                                   () -> ((ApplicationInfoEx)ApplicationInfo.getInstance()).getPluginManagerUrl() +
-                                         MARKETPLACE_LINK + URLUtil.encodeURIComponent(myPlugin.getPluginId().getIdString()));
+    } else {
+      myHomePage.showWithBrowseUrl(
+        IdeBundle.message("plugins.configurable.plugin.homepage.link"),
+        true,
+        () -> MarketplaceUrls.getPluginHomepage(myPlugin.getPluginId())
+      );
     }
 
     if (myDate != null) {
