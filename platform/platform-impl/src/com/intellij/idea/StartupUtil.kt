@@ -107,9 +107,7 @@ fun CoroutineScope.startApplication(args: List<String>,
   else {
     async {
       val configPath = PathManager.getConfigDir()
-      withContext(Dispatchers.IO) {
-        !Files.exists(configPath) || Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME))
-      }
+      withContext(Dispatchers.IO) { isConfigImportNeeded(configPath) }
     }
   }
 
@@ -338,6 +336,9 @@ fun CoroutineScope.startApplication(args: List<String>,
     }
   }
 }
+
+fun isConfigImportNeeded(configPath: Path): Boolean =
+  !Files.exists(configPath) || Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME))
 
 @Suppress("SpellCheckingInspection")
 private fun CoroutineScope.loadSystemLibsAndLogInfoAndInitMacApp(logDeferred: Deferred<Logger>,
