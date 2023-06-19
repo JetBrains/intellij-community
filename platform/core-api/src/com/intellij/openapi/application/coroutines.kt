@@ -250,7 +250,7 @@ fun ModalityState.asContextElement(): CoroutineContext = asContextElement()
  *
  * This dispatcher is also installed as [Dispatchers.Main].
  * Use [Dispatchers.EDT] when in doubt, use [Dispatchers.Main] if the coroutine doesn't care about IJ model,
- * e.g. when it is also able to be executed outside of IJ process.
+ * e.g., when it can be executed outside of IJ process.
  */
 @Suppress("UnusedReceiverParameter")
 val Dispatchers.EDT: CoroutineContext get() = coroutineSupport().edtDispatcher()
