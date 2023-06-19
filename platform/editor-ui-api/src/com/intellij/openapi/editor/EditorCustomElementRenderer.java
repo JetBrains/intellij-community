@@ -82,9 +82,7 @@ public interface EditorCustomElementRenderer {
    * If {@code null} is returned (and {@link #getContextMenuGroup(Inlay)} also returns {@code null}),
    * the standard editor's context menu is used instead.
    */
-  @Nullable
-  @NonNls
-  default String getContextMenuGroupId(@NotNull Inlay inlay) {
+  default @Nullable @NonNls String getContextMenuGroupId(@NotNull Inlay inlay) {
     return null;
   }
 
@@ -97,8 +95,7 @@ public interface EditorCustomElementRenderer {
    * This method takes preference over {@link #getContextMenuGroupId(Inlay)},
    * that is, if it returns a non-null value, the latter method won't be called.
    */
-  @Nullable
-  default ActionGroup getContextMenuGroup(@NotNull Inlay inlay) {
+  default @Nullable ActionGroup getContextMenuGroup(@NotNull Inlay inlay) {
     return null;
   }
 
@@ -111,8 +108,7 @@ public interface EditorCustomElementRenderer {
    * as {@link Inlay#update()} only updates the inlay's provider
    * if the returned instance is not equal to the previously defined one.
    */
-  @Nullable
-  default GutterIconRenderer calcGutterIconRenderer(@NotNull Inlay inlay) {
+  default @Nullable GutterIconRenderer calcGutterIconRenderer(@NotNull Inlay inlay) {
     return null;
   }
 }

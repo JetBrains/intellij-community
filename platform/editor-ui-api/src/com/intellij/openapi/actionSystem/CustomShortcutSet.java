@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -45,8 +45,7 @@ public final class CustomShortcutSet implements ShortcutSet {
     return myShortcuts.length == 0 ? Shortcut.EMPTY_ARRAY : myShortcuts.clone();
   }
 
-  @NotNull
-  public static CustomShortcutSet fromString(@NonNls String @NotNull ... keyboardShortcuts) {
+  public static @NotNull CustomShortcutSet fromString(@NonNls String @NotNull ... keyboardShortcuts) {
     final KeyboardShortcut[] shortcuts = new KeyboardShortcut[keyboardShortcuts.length];
     for (int i = 0; i < keyboardShortcuts.length; i++) {
       shortcuts[i] = KeyboardShortcut.fromString(keyboardShortcuts[i]);

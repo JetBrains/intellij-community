@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree;
 
 import com.intellij.util.Function;
@@ -16,9 +16,8 @@ public interface TreeVisitor {
   @NotNull
   Action visit(@NotNull TreePath path);
 
-  @NotNull
   @ApiStatus.Experimental
-  default TreeVisitor.VisitThread visitThread() {
+  default @NotNull TreeVisitor.VisitThread visitThread() {
     return VisitThread.EDT;
   }
 
@@ -74,9 +73,8 @@ public interface TreeVisitor {
       this(component, object -> type.isInstance(object) ? type.cast(object) : null);
     }
 
-    @NotNull
     @Override
-    public Action visit(@NotNull TreePath path) {
+    public @NotNull Action visit(@NotNull TreePath path) {
       return visit(converter.fun(path));
     }
 
@@ -84,8 +82,7 @@ public interface TreeVisitor {
      * @param component a last component of the current path
      * @return an action that controls visiting a tree
      */
-    @NotNull
-    protected Action visit(T component) {
+    protected @NotNull Action visit(T component) {
       if (component == null) return Action.SKIP_CHILDREN;
       if (matches(component, this.component)) return Action.INTERRUPT;
       if (contains(component, this.component)) return Action.CONTINUE;
@@ -129,9 +126,8 @@ public interface TreeVisitor {
                    : path.getPathCount();
     }
 
-    @NotNull
     @Override
-    public Action visit(@NotNull TreePath path) {
+    public @NotNull Action visit(@NotNull TreePath path) {
       return ignoreRoot && null == path.getParentPath() ? Action.CONTINUE : visit(path, converter.fun(path));
     }
 
@@ -140,8 +136,7 @@ public interface TreeVisitor {
      * @param component a corresponding component
      * @return an action that controls visiting a tree
      */
-    @NotNull
-    protected Action visit(@NotNull TreePath path, T component) {
+    protected @NotNull Action visit(@NotNull TreePath path, T component) {
       if (component == null) return Action.SKIP_CHILDREN;
       int count = path.getPathCount();
       if (count < this.count) {
@@ -162,9 +157,8 @@ public interface TreeVisitor {
      * @param depth     a depth starting from the found node
      * @return an action that controls visiting a tree
      */
-    @NotNull
     @SuppressWarnings("unused")
-    protected Action visit(@NotNull TreePath path, @NotNull T component, int depth) {
+    protected @NotNull Action visit(@NotNull TreePath path, @NotNull T component, int depth) {
       return depth == 0 ? Action.INTERRUPT : Action.SKIP_CHILDREN;
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,8 +26,8 @@ public abstract class EditorFacade {
    * @deprecated Use LineWrappingUtil.doWrapLongLinesIfNecessary()
    */
   @Deprecated
-  public abstract void doWrapLongLinesIfNecessary(@NotNull final Editor editor,
-                                                  @NotNull final Project project,
+  public abstract void doWrapLongLinesIfNecessary(final @NotNull Editor editor,
+                                                  final @NotNull Project project,
                                                   @NotNull Document document,
                                                   int startOffset,
                                                   int endOffset,
