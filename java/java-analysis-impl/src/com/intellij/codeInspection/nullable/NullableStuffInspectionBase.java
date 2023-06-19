@@ -176,11 +176,11 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
             if (parent instanceof PsiJavaCodeReferenceElement) {
               if (outerCtx.resolve() instanceof PsiPackage) {
                 reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.applied.to.package",
-                                        new MoveAnnotationOnStaticMemberQualifyingTypeFix(annotation));
+                                        new MoveAnnotationOnStaticMemberQualifyingTypeFix(annotation).asQuickFix());
               }
               else {
                 reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.outer.type",
-                                        new MoveAnnotationOnStaticMemberQualifyingTypeFix(annotation));
+                                        new MoveAnnotationOnStaticMemberQualifyingTypeFix(annotation).asQuickFix());
               }
             }
             if (parent instanceof PsiReferenceList) {
@@ -305,7 +305,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         }
       }
 
-      private PsiTypeElement[] getReferenceTypeArguments(PsiJavaCodeReferenceElement reference) {
+      private static PsiTypeElement[] getReferenceTypeArguments(PsiJavaCodeReferenceElement reference) {
         PsiReferenceParameterList typeArgList = reference.getParameterList();
         return typeArgList == null ? PsiTypeElement.EMPTY_ARRAY : typeArgList.getTypeParameterElements();
       }

@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -322,9 +323,18 @@ public final class ModCommands {
 
     @Override
     public void select(@NotNull PsiElement element) {
+      TextRange range = getRange(element);
+      if (range != null) {
+        select(range);
+      }
+    }
+
+    private @Nullable TextRange getRange(@NotNull PsiElement element) {
       validate(element);
+      SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.createPointer(element);
       myTracker.unblock();
-      select(element.getTextRange());
+      Segment range = pointer.getRange();
+      return range == null ? null : TextRange.create(range);
     }
 
     @Override
@@ -337,9 +347,10 @@ public final class ModCommands {
 
     @Override
     public void highlight(@NotNull PsiElement element, @NotNull TextAttributesKey attributesKey) {
-      validate(element);
-      myTracker.unblock();
-      highlight(element.getTextRange(), attributesKey);
+      TextRange range = getRange(element);
+      if (range != null) {
+        highlight(range, attributesKey);
+      }
     }
 
     @Override
@@ -363,9 +374,10 @@ public final class ModCommands {
 
     @Override
     public void moveTo(@NotNull PsiElement element) {
-      validate(element);
-      myTracker.unblock();
-      moveTo(element.getTextRange().getStartOffset());
+      TextRange range = getRange(element);
+      if (range != null) {
+        moveTo(range.getStartOffset());
+      }
     }
 
     @Override

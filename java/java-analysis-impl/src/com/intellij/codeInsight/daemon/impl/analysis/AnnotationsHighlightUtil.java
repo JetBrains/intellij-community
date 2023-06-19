@@ -515,7 +515,7 @@ public final class AnnotationsHighlightUtil {
       if (qualified instanceof PsiMember && ((PsiMember)qualified).hasModifierProperty(PsiModifier.STATIC)) {
         return createAnnotationError(annotation,
                                      JavaErrorBundle.message("annotation.not.allowed.static"),
-                                     new MoveAnnotationOnStaticMemberQualifyingTypeFix(annotation));
+                                     new MoveAnnotationOnStaticMemberQualifyingTypeFix(annotation).asIntention());
       }
     }
     return null;

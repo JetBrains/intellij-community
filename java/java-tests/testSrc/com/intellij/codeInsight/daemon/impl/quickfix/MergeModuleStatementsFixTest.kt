@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix
 
 import com.intellij.JavaTestUtil.getRelativeJavaTestDataPath
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 
 class MergeModuleStatementsFixTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
@@ -53,6 +54,7 @@ class MergeModuleStatementsFixTest : LightJava9ModulesCodeInsightFixtureTestCase
 
     assertNotNull("No action \"$actionText\" in ${actions.map { it.text }}", action)
     myFixture.launchAction(action)
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.checkResultByFile("${testName}_after.java")
   }
 }

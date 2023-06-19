@@ -644,7 +644,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createMakeReceiverParameterFirstFix(@NotNull PsiReceiverParameter parameter) {
-    return new MakeReceiverParameterFirstFix(parameter);
+    return new MakeReceiverParameterFirstFix(parameter).asIntention();
   }
 
   @NotNull
@@ -1140,7 +1140,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     if (resolved == null) return null;
     final PsiType returnType = resolved.getReturnType();
     if (!(returnType instanceof PsiArrayType)) return null;
-    return new MergeDuplicateAttributesFix(pair);
+    return new MergeDuplicateAttributesFix(pair).asIntention();
   }
 
   @Override

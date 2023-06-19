@@ -150,7 +150,7 @@ final class ModuleHighlightUtil {
           HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message);
         IntentionAction action1 = QuickFixFactory.getInstance().createDeleteFix(statement);
         info.registerFix(action1, null, null, null, null);
-        IntentionAction action = MergeModuleStatementsFix.createFix(statement);
+        var action = MergeModuleStatementsFix.createFix(statement);
         if (action != null) {
           info.registerFix(action, null, null, null, null);
         }
