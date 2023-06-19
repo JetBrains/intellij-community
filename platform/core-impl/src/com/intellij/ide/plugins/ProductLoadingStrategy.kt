@@ -10,22 +10,22 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 /**
- * This class is temporarily added to support two ways of loading the plugin descriptors: [the old one][PathBasedPluginDescriptorLoadingStrategy] 
- * which is based on layout of JAR files in the IDE installation directory and [the new one][com.intellij.platform.bootstrap.ModuleBasedPluginDescriptorLoadingStrategy]
+ * This class is temporarily added to support two ways of loading the plugin descriptors: [the old one][PathBasedProductLoadingStrategy] 
+ * which is based on layout of JAR files in the IDE installation directory and [the new one][com.intellij.platform.bootstrap.ModuleBasedProductLoadingStrategy]
  * which uses information from runtime module descriptors.
  */
 @ApiStatus.Internal
-abstract class PluginDescriptorLoadingStrategy {
+abstract class ProductLoadingStrategy {
   companion object {
     @Volatile
     @JvmStatic
-    private var ourStrategy: PluginDescriptorLoadingStrategy? = null
+    private var ourStrategy: ProductLoadingStrategy? = null
     
     @JvmStatic
-    var strategy: PluginDescriptorLoadingStrategy
+    var strategy: ProductLoadingStrategy
       get() {
         if (ourStrategy == null) {
-          ourStrategy = PathBasedPluginDescriptorLoadingStrategy()
+          ourStrategy = PathBasedProductLoadingStrategy()
         }
         return ourStrategy!!
       }
@@ -41,7 +41,7 @@ abstract class PluginDescriptorLoadingStrategy {
                                             zipFilePool: ZipFilePool?): List<Deferred<IdeaPluginDescriptorImpl?>>
 }
 
-private class PathBasedPluginDescriptorLoadingStrategy : PluginDescriptorLoadingStrategy() {
+private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
   override fun loadBundledPluginDescriptors(scope: CoroutineScope,
                                             bundledPluginDir: Path?,
                                             isUnitTestMode: Boolean,

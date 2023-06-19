@@ -11,7 +11,7 @@ import kotlinx.coroutines.async
 import java.nio.file.Files
 import java.nio.file.Path
 
-class ModuleBasedPluginDescriptorLoadingStrategy(private val productModules: ProductModules) : PluginDescriptorLoadingStrategy() {
+class ModuleBasedProductLoadingStrategy(private val productModules: ProductModules) : ProductLoadingStrategy() {
   override fun loadBundledPluginDescriptors(scope: CoroutineScope,
                                             bundledPluginDir: Path?,
                                             isUnitTestMode: Boolean,
