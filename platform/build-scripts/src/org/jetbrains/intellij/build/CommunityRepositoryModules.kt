@@ -619,7 +619,9 @@ object CommunityRepositoryModules {
       spec.withProjectLibrary("baksmali")
       spec.withProjectLibrary("commons-lang")
       spec.withProjectLibrary("emulator-proto")
-      //tools/adt/idea/.idea/libraries:ffmpeg <= FIXME
+      spec.withProjectLibrary("ffmpeg")
+      spec.withProjectLibrary("ffmpeg-javacpp")
+      //tools/adt/idea/.idea/libraries:ffmpeg-platform <= FIXME
       //tools/adt/idea/.idea/libraries:firebase_java_proto <= REMOVED
       spec.withProjectLibrary("google-dexlib2")
       spec.withProjectLibrary("HdrHistogram")

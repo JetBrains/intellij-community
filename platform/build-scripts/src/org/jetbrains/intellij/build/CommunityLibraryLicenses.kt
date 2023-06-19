@@ -276,14 +276,14 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/vigna/fastutil")
       .apache("https://github.com/vigna/fastutil/blob/master/LICENSE-2.0"),
     LibraryLicense(name = "ffmpeg", libraryName = "ffmpeg",
-                   url = "https://android.googlesource.com/platform/prebuilts/tools/+/1fb7943607fc474b6c96c04dcf4fec24d7752f62/common/m2/repository/org/bytedeco/",
-                   license = "LGPL v2.1+", licenseUrl = "https://android.googlesource.com/platform/prebuilts/tools/+/1fb7943607fc474b6c96c04dcf4fec24d7752f62/common/m2/repository/org/bytedeco/ffmpeg-LICENSE.md"),
-    //LibraryLicense(name = "ffmpeg-platform", libraryName = "ffmpeg-platform",
-    //               url = "https://github.com/FFmpeg/FFmpeg",
-    //               license = "???", licenseUrl = "???"),
-    //https://github.com/bytedeco/javacpp-presets/blob/master/ffmpeg/LICENSE.md
-    //https://github.com/bytedeco/javacpp/blob/master/LICENSE.txt
-    // TODO: javacpp: GPL 2.0 + classpath
+                   url = "https://android.googlesource.com/platform/prebuilts/tools/+/refs/tags/studio-2022.1.1/common/m2/repository/org/bytedeco",
+                   license = "LGPL v2.1+", licenseUrl = "https://android.googlesource.com/platform/prebuilts/tools/+/refs/tags/studio-2022.1.1/common/m2/repository/org/bytedeco/ffmpeg-LICENSE.md"),
+    LibraryLicense(name = "ffmpeg-javacpp", libraryName = "ffmpeg-javacpp",
+                   url = "https://android.googlesource.com/platform/prebuilts/tools/+/refs/tags/studio-2022.1.1/common/m2/repository/org/bytedeco",
+                   license = "LGPL v2.1+", licenseUrl = "https://android.googlesource.com/platform/prebuilts/tools/+/refs/tags/studio-2022.1.1/common/m2/repository/org/bytedeco/ffmpeg-LICENSE.md"),
+    LibraryLicense(name = "ffmpeg-platform", libraryName = "ffmpeg-platform",
+                   url = "https://android.googlesource.com/platform/prebuilts/tools/+/refs/tags/studio-2022.1.1/common/m2/repository/org/bytedeco",
+                   license = "LGPL v2.1+", licenseUrl = "https://android.googlesource.com/platform/prebuilts/tools/+/refs/tags/studio-2022.1.1/common/m2/repository/org/bytedeco/ffmpeg-LICENSE.md"),
 
     LibraryLicense(name = "FiraCode", attachedTo = "intellij.platform.resources", version = "1.206", license = "OFL",
                    url = "https://github.com/tonsky/FiraCode", licenseUrl = "https://github.com/tonsky/FiraCode/blob/master/LICENSE"),
