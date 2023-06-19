@@ -156,7 +156,7 @@ object GradleProgressIndicatorEventHelper {
             copy(totalWorkItems = totalWorkItems + additionalItems)
           }
         }
-        RUN_MAIN_TASKS == buildPhase && progressState.currentPhase == CONFIGURATION_DONE -> {
+        RUN_MAIN_TASKS == buildPhase -> {
           // Ignore execution events from nested or buildSrc builds before the configuration is done
           val totalItems = event.descriptor.buildItemsCount.toLong()
           GradleProgressState(EXECUTION, totalItems)

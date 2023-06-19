@@ -109,15 +109,11 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
         myHelper.ensureInstalledWrapper(id, rootProjectPath, effectiveSettings, listener, cancellationToken);
       }
 
-      GradleProgressIndicatorWrapper progressIndicatorWrapper = new GradleProgressIndicatorWrapper(id, effectiveSettings, listener);
-      progressIndicatorWrapper.runWithProgressIndicator(
-        listenerWithProgressIndicator -> {
-          myHelper.execute(projectPath, effectiveSettings, id, listenerWithProgressIndicator, cancellationTokenSource, connection -> {
-            executeTasks(id, tasks, projectPath, effectiveSettings, jvmParametersSetup, listenerWithProgressIndicator, connection, cancellationTokenSource);
-            return null;
-          });
-        }
-      );
+      GradleProgressIndicatorWrapper.INSTANCE.registerGradleProgressIndicator(id, effectiveSettings);
+      myHelper.execute(projectPath, effectiveSettings, id, listener, cancellationTokenSource, connection -> {
+        executeTasks(id, tasks, projectPath, effectiveSettings, jvmParametersSetup, listener, connection, cancellationTokenSource);
+        return null;
+      });
     }
     finally {
       myCancellationMap.remove(id);

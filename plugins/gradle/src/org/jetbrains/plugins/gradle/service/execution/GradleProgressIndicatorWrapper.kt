@@ -1,68 +1,89 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.execution
 
+import com.intellij.build.events.ProgressBuildEvent
+import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemTaskProgressIndicatorUpdater
+import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.*
+import com.intellij.openapi.project.Project
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gradle.service.execution.GradleProgressIndicatorEventHelper.areGradleBuildProgressEventsSupported
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
+import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.atomic.AtomicReference
-import java.util.function.Consumer
 
-internal class GradleProgressIndicatorWrapper(
-  private val id: ExternalSystemTaskId,
-  private val effectiveSettings: GradleExecutionSettings,
-  private val listener: ExternalSystemTaskNotificationListener
-) {
+internal object GradleProgressIndicatorWrapper {
+  fun registerGradleProgressIndicator(
+    taskId: ExternalSystemTaskId,
+    effectiveSettings: GradleExecutionSettings
+  ) {
+    if (!areGradleBuildProgressEventsSupported(effectiveSettings)) return
+    taskId.findProject()?.let { project ->
+      val csProvider = project.service<GradleProgressCoroutineScopeProvider>()
+      val progressIndicator = GradleProgressIndicator(project, csProvider.cs)
+      ExternalSystemProgressNotificationManager.getInstance().addNotificationListener(taskId, progressIndicator)
+    }
+  }
 
-  fun runWithProgressIndicator(consumer: Consumer<ExternalSystemTaskNotificationListener>) {
-    if (!areGradleBuildProgressEventsSupported(effectiveSettings)) {
-      // Don't run with progress indicator if build progress events are not supported
-      consumer.accept(listener)
-      return
+  private class GradleProgressIndicator(
+    private val project: Project,
+    private val cs: CoroutineScope
+  ) : ExternalSystemTaskNotificationListenerAdapter() {
+
+    private val channel: Channel<ProgressBuildEvent> = Channel()
+
+    init {
+      startProgressIndicator("Gradle build")
     }
 
-    val progressIndicator = AtomicReference<ProgressIndicator>()
-    val countDownLatch = CountDownLatch(1)
-    ProgressManager.getInstance().run(object : Task.Backgroundable(id.findProject(), "Gradle build", false) {
-      override fun run(indicator: ProgressIndicator) {
-        indicator.isIndeterminate = true
-        indicator.text = wrapText("Initializing...")
-        progressIndicator.set(indicator)
-        countDownLatch.await()
-      }
-    })
-
-    val listenerWithProgressIndicator = object : ExternalSystemTaskNotificationListenerAdapter(listener) {
-      override fun onStatusChange(event: ExternalSystemTaskNotificationEvent) {
-        super.onStatusChange(event)
-        if (progressIndicator.get() != null) {
-          updateProgressIndicator(event, progressIndicator.get())
+    private fun startProgressIndicator(@Suppress("SameParameterValue") title: String) {
+      cs.launch {
+        withBackgroundProgress(project, title) {
+          withRawProgressReporter {
+            rawProgressReporter?.text(wrapText("Initialization..."))
+            var nextEvent = channel.receiveCatching().getOrNull()
+            while (nextEvent != null) {
+              val fraction = when {
+                nextEvent.unit == "items" && nextEvent.total > 0 -> {
+                  nextEvent.progress.toDouble() / nextEvent.total
+                }
+                else -> null
+              }
+              rawProgressReporter?.fraction(fraction)
+              rawProgressReporter?.text(nextEvent.getText())
+              nextEvent = channel.receiveCatching().getOrNull()
+            }
+          }
         }
       }
     }
 
-    try {
-      consumer.accept(listenerWithProgressIndicator)
+    override fun onStatusChange(event: ExternalSystemTaskNotificationEvent) {
+      if (event is ExternalSystemBuildEvent && event.buildEvent is ProgressBuildEvent)
+        cs.launch {
+          if (!channel.isClosedForSend) {
+            channel.send(event.buildEvent as ProgressBuildEvent)
+          }
+        }
     }
-    finally {
-      countDownLatch.countDown()
+
+    override fun onEnd(id: ExternalSystemTaskId) {
+      channel.close()
     }
-  }
 
-  private fun updateProgressIndicator(event: ExternalSystemTaskNotificationEvent, indicator: ProgressIndicator) {
-    ExternalSystemTaskProgressIndicatorUpdater.updateProgressIndicator(event, indicator) { wrapText(it) }
-  }
+    private fun ProgressBuildEvent.getText(): String =
+      ExternalSystemTaskProgressIndicatorUpdater.getText(this.message, this.progress, this.total, this.unit) { wrapText(it) }
 
-  private fun wrapText(text: String): @Nls String =
-    ExternalSystemBundle.message("progress.update.text", GradleConstants.SYSTEM_ID.readableName, text)
+    private fun wrapText(text: String): @Nls String =
+      ExternalSystemBundle.message("progress.update.text", GradleConstants.SYSTEM_ID.readableName, text)
+  }
 }
