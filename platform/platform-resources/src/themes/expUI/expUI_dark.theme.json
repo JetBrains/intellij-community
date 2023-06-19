@@ -884,7 +884,7 @@
       }
     },
     "HelpBrowser": {
-      "titleHighlightForeground": "Blue4",
+      "titleHighlightForeground": "Blue6",
       "UserMessage": {
         "background": "Grey4",
         "Snippet": {
