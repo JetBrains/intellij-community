@@ -405,17 +405,15 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
       val children = this.children
       requireNotNull(children) { "Can't create a child for a node that isn't expanded" }
       val node = Node(this, path.pathByAddingChild(value))
+      if (isChildrenVisible) {
+        val row = when (index) {
+          0 -> row + 1 // Special case covered: if the parent is the invisible root, then -1 + 1 = 0, which is correct.
+          childCount -> getLastVisibleNode().row + 1
+          else -> getChildAt(index - 1).getLastVisibleNode().row + 1
+        }
+        rows.add(row, node)
+      }
       children.add(index, node)
-      if (!isChildrenVisible) {
-        return node
-      }
-      val row = when (index) {
-        0 -> row + 1 // Special case covered: if the parent is the invisible root, then -1 + 1 = 0, which is correct.
-        childCount -> getLastVisibleNode().row + 1
-        else -> getChildAt(index - 1).getLastVisibleNode().row + 1
-      }
-      rows.add(row, node)
-      node.row = row
       return node
     }
 
