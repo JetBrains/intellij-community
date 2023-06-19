@@ -193,8 +193,21 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
     }
     val debugLocation = Location("treeNodesInserted(value=%s, indices=%s)", changedValue, insertedChildIndexes)
     rows.update(debugLocation) {
+      var prevIndex = -1
       for (i in insertedChildIndexes) {
+        if (prevIndex != -1 && i - prevIndex > 1) {
+          // We need to determine the row for this one, but previous inserts might have shifted siblings,
+          // so we need to update their rows.
+          // No noticeable performance penalty here, because NodeList is smart enough to avoid updating them later:
+          // it normally updates all rows starting with the last affected by insertions, but when we update them manually,
+          // it takes this into account and will update starting from the next row after the last inserted one.
+          var nextRow = changedNode.getChildAt(prevIndex).row + 1 // Freshly inserted child, guaranteed to be unexpanded.
+          for (j in (prevIndex + 1) until i) {
+            nextRow = changedNode.getChildAt(j).updateRowsRecursively(nextRow)
+          }
+        }
         changedNode.createChildAt(i, treeModel.getChild(changedNode.userObject, i))
+        prevIndex = i
       }
     }
     treeSelectionModel?.resetRowSelection()
@@ -548,6 +561,29 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
       else -> 1 + (children?.sumOf { it.visibleSubtreeNodeCount() } ?: 0)
     }
 
+    /**
+     * Updates rows of this node and its visible children.
+     *
+     * @param nextRow the row this node is supposed to be at
+     * @return the row after the last updated row (of the last visible child)
+     */
+    fun updateRowsRecursively(nextRow: Int): Int {
+      if (!isVisible) {
+        return nextRow
+      }
+      var row = nextRow
+      rows.updateRow(this, row) // Need this roundabout way to ensure NodeList optimizations.
+      ++row
+      val children = this.children
+      if (children == null || !isChildrenVisible) {
+        return row
+      }
+      for (child in children) {
+        row = child.updateRowsRecursively(row)
+      }
+      return row
+    }
+
     fun disposeRecursively() {
       nodeByPath.remove(path)
       row = -1
@@ -639,6 +675,13 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
       if (minimumAffectedRow >= index) { // The current dirty region is to the right?
         minimumAffectedRow = index + newNodes.size // Extend it to this index, excluding the added nodes.
       } // Otherwise, we're operating inside a dirty region already, do nothing.
+    }
+
+    fun updateRow(node: Node, row: Int) {
+      node.row = row
+      if (row == minimumAffectedRow) {
+        ++minimumAffectedRow // Don't need to update this one, as we've just updated it.
+      }
     }
 
   }
