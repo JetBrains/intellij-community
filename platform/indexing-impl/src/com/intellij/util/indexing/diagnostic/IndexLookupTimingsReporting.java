@@ -2,7 +2,7 @@
 package com.intellij.util.indexing.diagnostic;
 
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
@@ -51,7 +51,7 @@ public final class IndexLookupTimingsReporting {
   private static final Logger LOG = Logger.getInstance(IndexLookupTimingsReporting.class);
   private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, SECONDS.toMillis(10));
 
-  private static final IJTracer OTEL_TRACER = TelemetryTracer.getInstance().getTracer(Indexes);
+  private static final IJTracer OTEL_TRACER = TelemetryManager.getInstance().getTracer(Indexes);
 
   /**
    * 'Feature flag': report individual index lookup events to FUS.
@@ -1033,7 +1033,7 @@ public final class IndexLookupTimingsReporting {
     private final BatchCallback batchCallbackHandle;
 
     private IndexOperationToOTelMetricsReporter() {
-      final Meter meter = TelemetryTracer.getMeter(Indexes);
+      final Meter meter = TelemetryManager.getMeter(Indexes);
 
       allKeysTotalLookups = meter.gaugeBuilder("Indexes.allKeys.lookups").buildObserver();
       allKeysLookupDurationAvg = meter.gaugeBuilder("Indexes.allKeys.lookupDurationAvgMs").buildObserver();

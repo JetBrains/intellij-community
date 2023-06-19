@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.IntSLRUCache;
@@ -162,7 +162,7 @@ public final class FileNameCache {
   }
 
   private static void setupReportingToOpenTelemetry() {
-    final Meter meter = TelemetryTracer.getMeter(VFS);
+    final Meter meter = TelemetryManager.getMeter(VFS);
 
     var queriesCounter = meter.counterBuilder("FileNameCache.queries").buildObserver();
     var fastMissesCounter = meter.counterBuilder("FileNameCache.fastMisses").buildObserver();

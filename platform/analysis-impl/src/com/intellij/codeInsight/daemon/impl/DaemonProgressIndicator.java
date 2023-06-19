@@ -21,7 +21,7 @@ import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
 import com.intellij.openapi.util.TraceableDisposable;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.Scope;
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import io.opentelemetry.api.trace.Span;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +32,7 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
   private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(debug);
   private volatile Throwable myCancellationCause;
   private volatile Span mySpan;
-  private final IJTracer myTraceManager = TelemetryTracer.Companion.getInstance().getTracer(new Scope("daemon", null));
+  private final IJTracer myTraceManager = TelemetryManager.Companion.getInstance().getTracer(new Scope("daemon", null));
 
   @Override
   public final void stop() {

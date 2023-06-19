@@ -11,7 +11,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsScopeKt;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.vcs.log.Hash;
 import git4idea.GitDisposable;
 import git4idea.GitLocalBranch;
@@ -248,7 +248,7 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
 
   @NotNull
   private GitRepoInfo readRepoInfo() {
-    return computeWithSpan(TelemetryTracer.getInstance().getTracer(VcsScopeKt.VcsScope), "reading Git repo info", span -> {
+    return computeWithSpan(TelemetryManager.getInstance().getTracer(VcsScopeKt.VcsScope), "reading Git repo info", span -> {
       span.setAttribute("repository", getShortRepositoryName(this));
 
       File configFile = myRepositoryFiles.getConfigFile();

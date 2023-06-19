@@ -8,7 +8,7 @@ import io.opentelemetry.sdk.OpenTelemetrySdkBuilder
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
-private val LOG = Logger.getInstance(TelemetryTracer::class.java)
+private val LOG = Logger.getInstance(TelemetryManager::class.java)
 
 /**
  * See [Span](https://opentelemetry.io/docs/reference/specification),
@@ -16,7 +16,7 @@ private val LOG = Logger.getInstance(TelemetryTracer::class.java)
  */
 @ApiStatus.Experimental
 @ApiStatus.Internal
-interface TelemetryTracer {
+interface TelemetryManager {
   var sdk: OpenTelemetry
   var verboseMode: Boolean
   var oTelConfigurator: OpenTelemetryDefaultConfigurator
@@ -62,7 +62,7 @@ interface TelemetryTracer {
   }
 
   companion object {
-    private lateinit var instance: TelemetryTracer
+    private lateinit var instance: TelemetryManager
     private val lock = Any()
 
     private fun <T> getImplementationService(serviceClass: Class<T>): T {
@@ -80,7 +80,7 @@ interface TelemetryTracer {
     }
 
     @JvmStatic
-    fun getInstance(): TelemetryTracer {
+    fun getInstance(): TelemetryManager {
       if (Companion::instance.isInitialized) {
         return instance
       }
@@ -94,7 +94,7 @@ interface TelemetryTracer {
 
         // GlobalOpenTelemetry.set(sdk) can be invoked only once
         try {
-          instance = getImplementationService(TelemetryTracer::class.java).apply {
+          instance = getImplementationService(TelemetryManager::class.java).apply {
             LOG.info("Loaded telemetry tracer service ${this::class.java.name}")
             sdk = init().buildAndRegisterGlobal()
           }
@@ -102,9 +102,9 @@ interface TelemetryTracer {
         }
         catch (e: Throwable) {
           LOG.info("Something unexpected happened during loading TelemetryTracer", e)
-          LOG.info("Falling back to loading default implementation of TelemetryTracer ${TelemetryTracerDefault::class.java.name}")
+          LOG.info("Falling back to loading default implementation of TelemetryTracer ${TelemetryDefaultManager::class.java.name}")
 
-          instance = TelemetryTracerDefault().apply {
+          instance = TelemetryDefaultManager().apply {
             LOG.info("Loaded telemetry tracer service ${this::class.java.name}")
             sdk = init().buildAndRegisterGlobal()
           }

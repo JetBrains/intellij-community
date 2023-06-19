@@ -1,12 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.telemetry.impl
 
-import com.intellij.platform.diagnostic.telemetry.IJTracer
-import com.intellij.platform.diagnostic.telemetry.OpenTelemetryDefaultConfigurator
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
-import com.intellij.platform.diagnostic.telemetry.wrapTracer
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.platform.diagnostic.telemetry.IJTracer
+import com.intellij.platform.diagnostic.telemetry.OpenTelemetryDefaultConfigurator
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.wrapTracer
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.metrics.Meter
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
@@ -17,7 +17,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.annotations.ApiStatus
 
-private val LOG = Logger.getInstance(TraceManager::class.java)
+private val LOG = Logger.getInstance(TelemetryManagerImpl::class.java)
 
 /**
  * See [Span](https://opentelemetry.io/docs/reference/specification),
@@ -32,7 +32,7 @@ private val LOG = Logger.getInstance(TraceManager::class.java)
  */
 @ApiStatus.Experimental
 @ApiStatus.Internal
-class TraceManager : TelemetryTracer {
+class TelemetryManagerImpl : TelemetryManager {
   override var sdk: OpenTelemetry = OpenTelemetry.noop()
   override var verboseMode: Boolean = false
   override var oTelConfigurator: OpenTelemetryDefaultConfigurator = OTelConfigurator(mainScope = CoroutineScope(Dispatchers.Default),
