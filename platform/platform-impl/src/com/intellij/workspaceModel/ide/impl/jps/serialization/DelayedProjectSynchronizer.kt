@@ -5,10 +5,9 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.startup.StartupManager
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.jps.model.diagnostic.JpsMetrics
 import com.intellij.workspaceModel.ide.JpsProjectLoadedListener
-import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.TestOnly
@@ -39,7 +38,7 @@ class DelayedProjectSynchronizer : ProjectActivity {
         projectModelSynchronizer.loadProject(project)
         project.messageBus.syncPublisher(JpsProjectLoadedListener.LOADED).loaded()
       }
-      syncTimeMs.addElapsedTimeMs(loadingTime)
+      syncTimeMs.addAndGet(loadingTime)
       thisLogger().info(
         "Workspace model loaded from cache. Syncing real project state into workspace model in $loadingTime ms. ${Thread.currentThread()}"
       )
