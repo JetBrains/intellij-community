@@ -34,7 +34,7 @@ class YamlInspectionConfigImpl(override val inspection: String,
                                override val enabled: Boolean?,
                                override val severity: String?,
                                override val ignore: List<String>,
-                               override val options: Map<String, *>) : YamlInspectionConfig
+                               override val options: Map<String, String>) : YamlInspectionConfig
 
 class YamlGroupConfigImpl(override val group: String,
                           override val enabled: Boolean?,
@@ -161,7 +161,7 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
       val inspectionId = config.inspection
       if (inspectionId != null) {
         return YamlInspectionConfigImpl(inspectionId, config.enabled, config.severity, config.ignore,
-                                        config.options ?: emptyMap<String, Any>())
+                                        config.options ?: emptyMap())
       }
       val groupId = config.group
       if (groupId != null) {

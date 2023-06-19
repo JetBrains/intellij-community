@@ -30,7 +30,7 @@ class YamlInspectionConfigRaw(
   val enabled: Boolean? = null,
   val severity: String? = null,
   val ignore: List<String> = emptyList(),
-  val options: Map<String, *>? = null
+  val options: Map<String, String>? = null
 )
 
 
