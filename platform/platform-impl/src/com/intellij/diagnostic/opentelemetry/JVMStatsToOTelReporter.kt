@@ -2,7 +2,7 @@
 package com.intellij.diagnostic.opentelemetry
 
 import com.intellij.platform.diagnostic.telemetry.JVM
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -27,7 +27,7 @@ class JVMStatsToOTelReporter : ProjectActivity {
     private var batchCallback: BatchCallback? = null
 
     init {
-      val otelMeter = TelemetryTracer.getMeter(JVM)
+      val otelMeter = TelemetryManager.getMeter(JVM)
 
       val usedHeapMemoryGauge = otelMeter.gaugeBuilder("JVM.usedHeapBytes").ofLongs().buildObserver()
       val maxHeapMemoryGauge = otelMeter.gaugeBuilder("JVM.maxHeapBytes").ofLongs().buildObserver()

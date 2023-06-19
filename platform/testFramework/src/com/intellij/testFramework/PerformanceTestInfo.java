@@ -7,7 +7,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.Scope;
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.io.StorageLockContext;
@@ -64,7 +64,7 @@ public class PerformanceTestInfo {
     assert expectedMs > 0 : "Expected must be > 0. Was: " + expectedMs;
     assert expectedInputSize > 0 : "Expected input size must be > 0. Was: " + expectedInputSize;
     this.what = what;
-    this.tracer = TelemetryTracer.getInstance().getTracer(new Scope("performanceUnitTests", null));
+    this.tracer = TelemetryManager.getInstance().getTracer(new Scope("performanceUnitTests", null));
   }
 
   @Contract(pure = true) // to warn about not calling .assertTiming() in the end

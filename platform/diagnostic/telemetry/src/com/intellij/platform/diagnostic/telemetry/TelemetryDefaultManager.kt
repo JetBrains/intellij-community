@@ -10,11 +10,11 @@ import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.OpenTelemetrySdkBuilder
 import org.jetbrains.annotations.ApiStatus
 
-private val LOG = Logger.getInstance(TelemetryTracerDefault::class.java)
+private val LOG = Logger.getInstance(TelemetryDefaultManager::class.java)
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-class TelemetryTracerDefault : TelemetryTracer {
+class TelemetryDefaultManager : TelemetryManager {
   override var sdk: OpenTelemetry = OpenTelemetry.noop()
   override var verboseMode: Boolean = false
   override var oTelConfigurator: OpenTelemetryDefaultConfigurator =

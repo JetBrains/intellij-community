@@ -18,7 +18,7 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.VcsScope
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.impl.computeWithSpan
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -358,7 +358,7 @@ class DeepComparator(private val project: Project,
   }
 
   private inline fun <R> recordSpan(root: VirtualFile, @NonNls actionName: String, block: () -> R): R {
-    return computeWithSpan(TelemetryTracer.getInstance().getTracer(VcsScope), actionName) { span ->
+    return computeWithSpan(TelemetryManager.getInstance().getTracer(VcsScope), actionName) { span ->
       span.setAttribute("rootName", root.name)
       block()
     }

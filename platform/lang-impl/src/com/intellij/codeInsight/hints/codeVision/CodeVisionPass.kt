@@ -8,7 +8,7 @@ import com.intellij.codeInsight.codeVision.CodeVisionProviderFactory
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel
 import com.intellij.concurrency.JobLauncher
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.impl.computeWithSpan
 import com.intellij.platform.diagnostic.telemetry.impl.runWithSpan
 import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
@@ -39,7 +39,7 @@ class CodeVisionPass(
   private val editor: Editor
 ) : EditorBoundHighlightingPass(editor, rootElement.containingFile, true) {
   companion object {
-    private val tracer by lazy { TelemetryTracer.getInstance().getTracer(CodeVision.toString(), true) }
+    private val tracer by lazy { TelemetryManager.getInstance().getTracer(CodeVision.toString(), true) }
 
     @JvmStatic
     @Internal

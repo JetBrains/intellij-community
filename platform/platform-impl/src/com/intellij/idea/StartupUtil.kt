@@ -27,7 +27,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.ui.*
 import com.intellij.ui.mac.MacOSApplicationProvider
 import com.intellij.ui.svg.createSvgCacheManager
@@ -234,7 +234,7 @@ fun CoroutineScope.startApplication(args: List<String>,
     lockSystemDirsJob.join()
     appInfoDeferred.join()
     subtask("opentelemetry configuration") {
-      TelemetryTracer.getInstance()
+      TelemetryManager.getInstance()
     }
   }
 

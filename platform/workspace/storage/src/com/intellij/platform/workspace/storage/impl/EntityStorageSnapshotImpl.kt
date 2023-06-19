@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.diagnostic.telemetry.JPS
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.ObjectUtils
@@ -901,7 +901,7 @@ internal class MutableEntityStorageImpl(
     init {
       // See also [org.jetbrains.jps.diagnostic.JpsMetrics] and [org.jetbrains.jps.diagnostic.Metrics].
       // If tracking of spans are needed it makes sense to extract them into separate module and depend on it.
-      setupOpenTelemetryReporting(TelemetryTracer.getMeter(JPS))
+      setupOpenTelemetryReporting(TelemetryManager.getMeter(JPS))
     }
   }
 }
