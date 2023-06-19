@@ -44,10 +44,6 @@
     <listener class="com.intellij.debugger.impl.HotSwapManager$HotSwapDebuggerManagerListener" topic="com.intellij.debugger.impl.DebuggerManagerListener"/>
     <listener class="com.intellij.debugger.ui.HotSwapUIImpl$HotSwapDebuggerManagerListener" topic="com.intellij.debugger.impl.DebuggerManagerListener"/>
     <listener class="com.intellij.packaging.impl.artifacts.ArtifactVirtualFileListener" topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
-    <listener class="com.intellij.ide.ProjectLoadedListener"
-              topic="com.intellij.workspaceModel.ide.JpsProjectLoadedListener"/>
-    <listener class="com.intellij.ide.LibraryAddedListener"
-              topic="com.intellij.javaee.weblogic.model.persistence.WorkManager"/>
   </projectListeners>
 
   <extensionPoints>
