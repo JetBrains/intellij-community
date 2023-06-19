@@ -8,7 +8,6 @@ import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModCommandService;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 
@@ -99,6 +98,5 @@ public class SplitIfActionTest extends LightJavaCodeInsightTestCase {
     assertNotNull(action.getPresentation(context));
     ModCommand command = action.perform(context);
     ApplicationManager.getApplication().runWriteAction(() -> ModCommandService.getInstance().executeInteractively(getProject(), command));
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
   }
 }
