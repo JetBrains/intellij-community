@@ -46,6 +46,14 @@ public final class ModCommands {
   }
 
   /**
+   * @param message error message to display
+   * @return a command that displays the specified error message in the editor
+   */
+  public static @NotNull ModCommand error(@NotNull @NlsContexts.Tooltip String message) {
+    return new ModDisplayError(message);
+  }
+  
+  /**
    * @param target element to select
    * @return a command that selects given element in the editor, assuming that it's opened in the editor
    */

@@ -2,6 +2,7 @@
 package com.intellij.lang.impl.modcommand;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -101,7 +102,17 @@ public class ModCommandServiceImpl implements ModCommandService {
     if (command instanceof ModChooseTarget<?> cht) {
       return executeChoose(project, cht);
     }
+    if (command instanceof ModDisplayError error) {
+      return executeError(project, error);
+    }
     throw new IllegalArgumentException("Unknown command: " + command);
+  }
+
+  private static boolean executeError(@NotNull Project project, @NotNull ModDisplayError error) {
+    Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+    if (editor == null) return false;
+    HintManager.getInstance().showErrorHint(editor, error.errorMessage());
+    return true;
   }
 
   private static <T extends @NotNull PsiElement> boolean executeChoose(@NotNull Project project, ModChooseTarget<@NotNull T> cht) {
