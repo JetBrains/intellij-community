@@ -64,11 +64,8 @@ class CodeFloatingToolbar(editor: Editor): FloatingToolbar(editor, "Floating.Cod
     val isBelow = isOneLineSelection
                   || selectionEnd == editor.caretModel.offset
                   || Registry.get("floating.codeToolbar.showBelow").asBoolean() && isSelectionEndVisible(editor)
-    val offsetForHint = when {
-      isOneLineSelection -> selectionStart
-      isBelow -> getTextStart(editor, replacedLineStartOffset(editor, selectionEnd))
-      else -> getTextStart(editor, selectionStart)
-    }
+    val anchorOffset = if (isBelow) selectionEnd else selectionStart
+    val offsetForHint = getTextStart(editor, anchorOffset)
     val visualPosition = editor.offsetToVisualPosition(offsetForHint)
     val hintPoint = HintManagerImpl.getHintPosition(hint, editor, visualPosition, HintManager.DEFAULT)
     val verticalGap = Registry.get("floating.codeToolbar.verticalOffset").asInteger()
@@ -79,17 +76,6 @@ class CodeFloatingToolbar(editor: Editor): FloatingToolbar(editor, "Floating.Cod
     }
     hintPoint.translate(0, dy)
     return hintPoint
-  }
-
-  private fun replacedLineStartOffset(editor: Editor, offset: Int): Int {
-    val document = editor.document
-    val lineNumber = document.getLineNumber(offset)
-    val lineStart = document.getLineStartOffset(lineNumber)
-    if (lineStart == offset) {
-      val previousLine = maxOf(0, lineNumber - 1)
-      return maxOf(0, document.getLineEndOffset(previousLine))
-    }
-    return offset
   }
 
   private fun isSelectionEndVisible(editor: Editor): Boolean {
@@ -114,6 +100,7 @@ class CodeFloatingToolbar(editor: Editor): FloatingToolbar(editor, "Floating.Cod
     if (textIndex < 0) return offset
     return lineStart + textIndex
   }
+
 
   override fun createActionGroup(): ActionGroup? {
     val contextAwareActionGroupId = getContextAwareGroupId()
