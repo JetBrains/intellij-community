@@ -29,6 +29,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModCommandService;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
@@ -287,7 +288,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
         Project project = context.project();
         IntentionFUSCollector.record(project, commandAction, context.file().getLanguage());
         CommandProcessor.getInstance().executeCommand(project, () -> {
-          contextAndCommand.command().execute(project);
+          ModCommandService.getInstance().executeInteractively(project, contextAndCommand.command());
         }, commandName, null);
       })
       .expireWhen(() -> hostFile.getProject().isDisposed())

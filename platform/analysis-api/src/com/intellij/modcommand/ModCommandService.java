@@ -51,7 +51,7 @@ public interface ModCommandService {
    * @param command a command to execute
    */
   @RequiresEdt
-  void execute(@NotNull Project project, @NotNull ModCommand command);
+  void executeInteractively(@NotNull Project project, @NotNull ModCommand command);
 
   /**
    * Executes given {@link ModCommand} in batch (applies default options, do not navigate) 
