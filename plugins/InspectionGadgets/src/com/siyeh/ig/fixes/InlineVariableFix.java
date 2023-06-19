@@ -15,20 +15,19 @@
  */
 package com.siyeh.ig.fixes;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.util.CommonJavaInlineUtil;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.HighlightUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class InlineVariableFix extends InspectionGadgetsFix {
+public class InlineVariableFix extends PsiUpdateModCommandQuickFix {
 
   @Override
   @NotNull
@@ -37,8 +36,7 @@ public class InlineVariableFix extends InspectionGadgetsFix {
   }
 
   @Override
-  public void doFix(final @NotNull Project project, final @NotNull ProblemDescriptor descriptor) {
-    final PsiElement nameElement = descriptor.getPsiElement();
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement nameElement, @NotNull EditorUpdater updater) {
     final PsiLocalVariable variable = (PsiLocalVariable)nameElement.getParent();
     final PsiExpression initializer = variable.getInitializer();
     if (initializer == null) {
@@ -48,14 +46,13 @@ public class InlineVariableFix extends InspectionGadgetsFix {
     final Collection<PsiReference> references = ReferencesSearch.search(variable).findAll();
     final Collection<PsiElement> replacedElements = new ArrayList<>();
     for (PsiReference reference : references) {
-
       var inlineUtil = CommonJavaInlineUtil.getInstance();
       final PsiExpression expression = inlineUtil.inlineVariable(variable, initializer, (PsiJavaCodeReferenceElement)reference, null);
       replacedElements.add(expression);
     }
 
-    if (isOnTheFly()) {
-      HighlightUtils.highlightElements(replacedElements);
+    for (PsiElement element : replacedElements) {
+      updater.highlight(element);
     }
     variable.delete();
   }

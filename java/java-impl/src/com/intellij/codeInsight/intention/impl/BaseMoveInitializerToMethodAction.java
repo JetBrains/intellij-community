@@ -6,7 +6,6 @@ import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -93,7 +92,7 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiUpdateModComm
     if (!assignments.isEmpty()) {
       PsiExpression expression = ((PsiAssignmentExpression)assignments.get(0).getExpression()).getRExpression();
       if (expression != null) {
-        updater.highlight(expression, EditorColors.SEARCH_RESULT_ATTRIBUTES);
+        updater.highlight(expression);
       }
     }
   }

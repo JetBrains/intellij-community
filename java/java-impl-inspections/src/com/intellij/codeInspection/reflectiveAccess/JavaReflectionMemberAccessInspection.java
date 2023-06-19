@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reflectiveAccess;
 
 import com.intellij.codeInsight.options.JavaClassValidator;
@@ -235,7 +235,7 @@ public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalI
     return JavaLangClassMemberReference.matchMethod(methods, argumentTypes);
   }
 
-  static final class UseAppropriateMethodFix implements LocalQuickFix {
+  static final class UseAppropriateMethodFix extends PsiUpdateModCommandQuickFix {
     private final String myProperMethod;
 
     UseAppropriateMethodFix(String method) {
@@ -257,8 +257,7 @@ public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalI
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getStartElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       PsiExpressionList expressionList = PsiTreeUtil.getNonStrictParentOfType(element, PsiExpressionList.class);
       if (expressionList == null) return;
       PsiMethodCallExpression call = ObjectUtils.tryCast(expressionList.getParent(), PsiMethodCallExpression.class);

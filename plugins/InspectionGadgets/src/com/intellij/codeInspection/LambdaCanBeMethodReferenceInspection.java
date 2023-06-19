@@ -3,7 +3,6 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.compiler.JavacQuirksInspectionVisitor;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.openapi.diagnostic.Attachment;
@@ -558,8 +557,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
       return getClassReferenceName(nonAmbiguousContainingClass);
     }
 
-    if ((containingClass.isPhysical() || IntentionPreviewUtils.isPreviewElement(containingClass)) &&
-        !PsiTypesUtil.isGetClass(psiMethod) &&
+    if (!PsiUtil.isArrayClass(containingClass) && !PsiTypesUtil.isGetClass(psiMethod) &&
         ExpressionUtils.isReferenceTo(qualifierExpression, ArrayUtil.getFirstElement(parameters))) {
       return getClassReferenceName(containingClass);
     }

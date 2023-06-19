@@ -387,7 +387,7 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     }
   }
 
-  private static class RemoveTagFix implements LocalQuickFix {
+  private static class RemoveTagFix extends PsiUpdateModCommandQuickFix {
     private final String myTagName;
     private final String myParamName;
 
@@ -407,8 +407,8 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiDocTag myTag = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiDocTag.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+      PsiDocTag myTag = PsiTreeUtil.getParentOfType(element, PsiDocTag.class);
       if (myTag != null) {
         myTag.delete();
       }

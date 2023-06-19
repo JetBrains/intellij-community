@@ -1046,7 +1046,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   public @NotNull List<IntentionAction> createExtendSealedClassFixes(@NotNull PsiJavaCodeReferenceElement subclassRef,
                                                                      @NotNull PsiClass parentClass,
                                                                      @NotNull PsiClass subClass) {
-    return Arrays.asList(ImplementOrExtendFix.createActions(subclassRef, subClass, parentClass, false));
+    return Arrays.asList(ImplementOrExtendFix.createActions(subClass, parentClass));
   }
 
   @Override

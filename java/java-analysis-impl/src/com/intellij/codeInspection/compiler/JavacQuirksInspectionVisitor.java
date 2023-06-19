@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.compiler;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -8,10 +8,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeArgumentsFix;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.miscGenerics.RedundantTypeArgsInspection;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.application.WriteAction;
@@ -275,7 +272,7 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
   }
 
 
-  private static class ReplaceAssignmentOperatorWithAssignmentFix implements LocalQuickFix {
+  private static class ReplaceAssignmentOperatorWithAssignmentFix extends PsiUpdateModCommandQuickFix {
     private final String myOperationSign;
 
     ReplaceAssignmentOperatorWithAssignmentFix(String operationSign) {
@@ -297,10 +294,9 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
-      if (element instanceof PsiAssignmentExpression) {
-        PsiReplacementUtil.replaceOperatorAssignmentWithAssignmentExpression((PsiAssignmentExpression)element);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+      if (element instanceof PsiAssignmentExpression assignment) {
+        PsiReplacementUtil.replaceOperatorAssignmentWithAssignmentExpression(assignment);
       }
     }
   }
