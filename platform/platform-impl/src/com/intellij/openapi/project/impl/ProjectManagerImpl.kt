@@ -331,7 +331,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       // if we are shutting down the entire test framework, proceed to full dispose
       val projectImpl = project as ProjectImpl
       if (!projectImpl.isTemporarilyDisposed) {
-        ApplicationManager.getApplication().runWriteAction {
+        app.runWriteAction {
           projectImpl.disposeEarlyDisposable()
           projectImpl.setTemporarilyDisposed(true)
           removeFromOpened(project)
@@ -346,7 +346,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         if (project is ComponentManagerImpl) {
           project.stopServicePreloading()
         }
-        ApplicationManager.getApplication().runWriteAction {
+        app.runWriteAction {
           if (project is ProjectImpl) {
             project.disposeEarlyDisposable()
             project.startDispose()
@@ -1213,18 +1213,20 @@ private suspend fun initProject(file: Path,
     coroutineScope {
       val isTrusted = async { !isTrustCheckNeeded || checkOldTrustedStateAndMigrate(project, file) }
 
+      val beforeComponentCreation: Job? = if (rawProjectDeferred == null) {
+        null
+      }
+      else {
+        launch {
+          (project.serviceAsync<FileEditorManager>() as? FileEditorManagerImpl)?.initJob?.join()
+        }
+      }
+
       projectInitListeners {
         it.execute(project)
       }
 
       rawProjectDeferred?.complete(project)
-
-      val beforeComponentCreation: Job? = if (rawProjectDeferred == null) {
-        null
-      }
-      else {
-        (project.serviceAsync<FileEditorManager>() as? FileEditorManagerImpl)?.initJob
-      }
 
       if (preloadServices) {
         preloadServices(project)
