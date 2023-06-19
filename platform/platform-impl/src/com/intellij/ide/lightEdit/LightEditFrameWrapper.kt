@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit
 
 import com.apple.eawt.event.FullScreenEvent
@@ -139,7 +139,9 @@ internal class LightEditFrameWrapper(
   val lightEditPanel: LightEditPanel
     get() = editPanel!!
 
-  override fun createIdeRootPane(loadingState: FrameLoadingState?): IdeRootPane = LightEditRootPane(frame = frame, parentDisposable = this)
+  override fun createIdeRootPane(loadingState: FrameLoadingState?): IdeRootPane {
+    return LightEditRootPane(frame = frame, parentDisposable = this)
+  }
 
   override suspend fun installDefaultProjectStatusBarWidgets(project: Project) {
     val editorManager = LightEditService.getInstance().editorManager
@@ -222,7 +224,9 @@ internal class LightEditFrameWrapper(
     }
 
     override fun updateNorthComponents() {}
-    override fun installNorthComponents(project: Project) {}
+
+    override suspend fun installNorthComponents(project: Project) {}
+
     override fun deinstallNorthComponents(project: Project) {}
   }
 

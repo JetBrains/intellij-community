@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -24,7 +25,6 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension
 import com.intellij.openapi.wm.StatusBar
-import com.intellij.openapi.wm.StatusBarCentralWidgetProvider
 import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFloatingMenuBarSupported
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader
@@ -51,6 +51,8 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.FlowCollector
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.MouseMotionAdapter
@@ -65,20 +67,22 @@ private const val EXTENSION_KEY = "extensionKey"
 open class IdeRootPane internal constructor(frame: JFrame,
                                             parentDisposable: Disposable,
                                             loadingState: FrameLoadingState?) : JRootPane(), UISettingsListener {
+  private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
   private var toolbar: JComponent? = null
 
   internal var statusBar: IdeStatusBarImpl? = null
     private set
 
   private val northPanel = JBBox.createVerticalBox()
-  internal var navBarStatusWidgetComponent: JComponent? = null
-    private set
 
   private var toolWindowPane: ToolWindowPane? = null
   private val glassPaneInitialized: Boolean
   private var fullScreen = false
-  internal val isCompactHeader: Boolean get() = ToggleDistractionFreeModeAction.shouldMinimizeCustomHeader() || isLightEdit
-  protected open val isLightEdit: Boolean get() = false
+  internal val isCompactHeader: Boolean
+    get() = ToggleDistractionFreeModeAction.shouldMinimizeCustomHeader() || isLightEdit
+  protected open val isLightEdit: Boolean
+    get() = false
 
   private sealed interface Helper {
     val toolbarHolder: ToolbarHolder?
@@ -136,7 +140,6 @@ open class IdeRootPane internal constructor(frame: JFrame,
     }
     else {
       if (isDecoratedMenu) {
-        @Suppress("DEPRECATION")
         CustomHeader.enableCustomHeader(frame)
 
         val selectedEditorFilePath: SelectedEditorFilePath?
@@ -233,7 +236,6 @@ open class IdeRootPane internal constructor(frame: JFrame,
       // some rootPane is required
       val rootPane = JRootPane()
       if (isDecoratedMenu && !isFloatingMenuBarSupported) {
-        @Suppress("DEPRECATION")
         CustomHeader.enableCustomHeader(frame)
       }
       frame.doSetRootPane(rootPane)
@@ -320,6 +322,8 @@ open class IdeRootPane internal constructor(frame: JFrame,
    * Invoked when enclosed frame is being disposed.
    */
   override fun removeNotify() {
+    coroutineScope.cancel()
+
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
       jMenuBar = null
       if (helper is DecoratedHelper) {
@@ -455,7 +459,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
     }
   }
 
-  fun setProject(project: Project) {
+  suspend fun setProject(project: Project) {
     installNorthComponents(project)
     statusBar?.let {
       project.messageBus.simpleConnect().subscribe(StatusBar.Info.TOPIC, it)
@@ -463,7 +467,6 @@ open class IdeRootPane internal constructor(frame: JFrame,
 
     (helper as? DecoratedHelper)?.selectedEditorFilePath?.project = project
   }
-
 
   fun makeComponentToBeMouseTransparentInTitleBar(component: JComponent) {
     if (hideNativeLinuxTitle) {
@@ -478,20 +481,43 @@ open class IdeRootPane internal constructor(frame: JFrame,
     component.addMouseMotionListener(listener)
   }
 
-  @RequiresEdt
-  protected open fun installNorthComponents(project: Project) {
+  protected open suspend fun installNorthComponents(project: Project) {
     val northExtensions = IdeRootPaneNorthExtension.EP_NAME.extensionList
     if (northExtensions.isEmpty()) {
       return
     }
 
     for (extension in northExtensions) {
-      val component = extension.createComponent(/* project = */ project, /* isDocked = */ false) ?: continue
-      component.putClientProperty(EXTENSION_KEY, extension.key)
-      northPanel.add(component)
+      val flow = extension.component(project = project, isDocked = false, statusBar = statusBar!!)
+      val key = extension.key
+      if (flow != null) {
+        coroutineScope.launch {
+          flow.collect(FlowCollector { component ->
+            withContext(Dispatchers.EDT) {
+              if (component == null) {
+                val count = northPanel.componentCount
+                for (i in count - 1 downTo 0) {
+                  val c = northPanel.getComponent(i)
+                  if (c is JComponent && c.getClientProperty(EXTENSION_KEY) == key) {
+                    northPanel.remove(i)
+                    break
+                  }
+                }
+              }
+              else {
+                component.putClientProperty(EXTENSION_KEY, key)
+                northPanel.add(component)
+              }
+            }
+          })
+        }
+        continue
+      }
 
-      if (component is StatusBarCentralWidgetProvider) {
-        navBarStatusWidgetComponent = component.createCentralStatusBarComponent()
+      withContext(Dispatchers.EDT) {
+        val component = extension.createComponent(/* project = */ project, /* isDocked = */ false) ?: return@withContext
+        component.putClientProperty(EXTENSION_KEY, key)
+        northPanel.add(component)
       }
     }
   }

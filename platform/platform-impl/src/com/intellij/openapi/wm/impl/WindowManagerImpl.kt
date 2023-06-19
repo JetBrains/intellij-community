@@ -9,11 +9,13 @@ import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
@@ -30,7 +32,10 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ScreenUtil
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.sun.jna.platform.WindowUtils
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -271,12 +276,14 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     return frameToReuse.getAndSet(null)
   }
 
-  fun assignFrame(frameHelper: ProjectFrameHelper, project: Project) {
-    LOG.assertTrue(!projectToFrame.containsKey(project))
+  suspend fun assignFrame(frameHelper: ProjectFrameHelper, project: Project) {
+    withContext(Dispatchers.EDT) {
+      LOG.assertTrue(!projectToFrame.containsKey(project))
 
-    val listener = FrameStateListener(defaultFrameInfoHelper)
-    frameHelper.frame.addComponentListener(listener)
-    projectToFrame.put(project, ProjectItem(frameHelper, listener))
+      val listener = FrameStateListener(defaultFrameInfoHelper)
+      frameHelper.frame.addComponentListener(listener)
+      projectToFrame.put(project, ProjectItem(frameHelper, listener))
+    }
   }
 
   internal suspend fun lightFrameAssign(project: Project, frameHelper: ProjectFrameHelper) {
@@ -286,6 +293,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     frameHelper.updateTitle(project)
   }
 
+  @RequiresEdt
   override fun releaseFrame(releasedFrameHelper: ProjectFrameHelper) {
     val project = releasedFrameHelper.project
     if (project != null) {
@@ -302,12 +310,9 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
       }
     }
 
-    try {
+    runCatching {
       Disposer.dispose(releasedFrameHelper)
-    }
-    catch (e: Exception) {
-      LOG.error(e)
-    }
+    }.getOrLogException(LOG)
   }
 
   override fun isFrameReused(helper: ProjectFrameHelper): Boolean = helper.frame === frameToReuse.get()
