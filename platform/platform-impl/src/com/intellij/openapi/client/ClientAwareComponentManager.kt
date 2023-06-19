@@ -14,10 +14,10 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 abstract class ClientAwareComponentManager(
-  internal val parent: ComponentManagerImpl?,
+  parent: ComponentManagerImpl?,
   coroutineScope: CoroutineScope,
   setExtensionsRootArea: Boolean = parent == null
-) : ComponentManagerImpl(parent = parent, coroutineScope = coroutineScope, setExtensionsRootArea = setExtensionsRootArea) {
+) : ComponentManagerImpl(parent, coroutineScope, setExtensionsRootArea) {
   override fun <T : Any> getServices(serviceClass: Class<T>, clientKind: ClientKind): List<T> {
     val sessionsManager = super.getService(ClientSessionsManager::class.java)!!
     return sessionsManager.getSessions(clientKind).mapNotNull {
