@@ -75,7 +75,7 @@ public class MavenEmbeddersManager {
   private String guessExistingEmbedderDir(@NotNull String multiModuleProjectDirectory) {
     var dir = multiModuleProjectDirectory;
     if (dir.isBlank()) {
-      MavenLog.LOG.error("Maven project directory is blank. Using project base path");
+      MavenLog.LOG.warn("Maven project directory is blank. Using project base path");
       dir = myProject.getBasePath();
     }
     if (null == dir || dir.isBlank()) {
