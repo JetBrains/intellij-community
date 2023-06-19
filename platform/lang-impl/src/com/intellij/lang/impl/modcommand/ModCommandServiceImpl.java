@@ -5,10 +5,15 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.LookupFocusDegree;
+import com.intellij.codeInsight.template.*;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.diff.comparison.ComparisonManager;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.fragments.DiffFragment;
+import com.intellij.lang.LangBundle;
 import com.intellij.modcommand.*;
 import com.intellij.modcommand.ModUpdateFileText.Fragment;
 import com.intellij.openapi.application.ModalityState;
@@ -26,8 +31,11 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.NotNullFunction;
@@ -38,6 +46,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -114,7 +123,94 @@ public class ModCommandServiceImpl implements ModCommandService {
       if (!onTheFly) return true; // TODO: gather all errors and display them together?
       return executeError(project, error);
     }
+    if (command instanceof ModRenameSymbol rename) {
+      if (!onTheFly) return true;
+      return executeRename(project, rename);
+    }
     throw new IllegalArgumentException("Unknown command: " + command);
+  }
+
+  private static boolean executeRename(Project project, ModRenameSymbol rename) {
+    VirtualFile file = rename.file();
+    PsiFile psiFile = PsiManagerEx.getInstanceEx(project).findFile(file);
+    if (psiFile == null) return false;
+    PsiNameIdentifierOwner element =
+      PsiTreeUtil.getNonStrictParentOfType(psiFile.findElementAt(rename.symbolRange().getStartOffset()), PsiNameIdentifierOwner.class);
+    if (element == null) return false;
+    final FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
+    final Editor editor = fileEditorManager.getSelectedTextEditor();
+    if (editor == null || !editor.getVirtualFile().equals(file)) return false;
+    PsiElement nameIdentifier = element.getNameIdentifier();
+    if (nameIdentifier == null) return false;
+    SmartPsiElementPointer<PsiNameIdentifierOwner> pointer = SmartPointerManager.createPointer(element);
+    record RenameData(Collection<PsiReference> references, PsiElement scope, PsiNameIdentifierOwner nameOwner) {
+      static RenameData create(SmartPsiElementPointer<? extends PsiNameIdentifierOwner> pointer) {
+        PsiNameIdentifierOwner owner = pointer.getElement();
+        if (owner == null) return null;
+        PsiFile psiFile = owner.getContainingFile();
+        Collection<PsiReference> references = ReferencesSearch.search(owner, new LocalSearchScope(psiFile)).findAll();
+        PsiElement scope = PsiTreeUtil.findCommonParent(ContainerUtil.map(references, ref -> ref.getElement()));
+        if (scope != null) {
+          scope = PsiTreeUtil.findCommonParent(scope, owner);
+        }
+        if (scope == null) {
+          scope = psiFile;
+        }
+        return new RenameData(references, scope, owner);
+      }
+    }
+    ReadAction.nonBlocking(() -> RenameData.create(pointer)).expireWhen(() -> editor.isDisposed())
+      .finishOnUiThread(ModalityState.defaultModalityState(), renameData -> {
+        final TextRange textRange = renameData.scope().getTextRange();
+        final int startOffset = textRange.getStartOffset();
+        final TemplateBuilderImpl builder = new TemplateBuilderImpl(renameData.scope());
+        final Expression nameExpression = new NameExpression(element.getName(), rename.nameSuggestions());
+        final PsiElement identifier = renameData.nameOwner().getNameIdentifier();
+        builder.replaceElement(identifier, "PATTERN", nameExpression, true);
+        for (PsiReference reference : renameData.references()) {
+          builder.replaceElement(reference, "PATTERN", "PATTERN", false);
+        }
+        CommandProcessor.getInstance().executeCommand(project, () -> {
+          final Template template = WriteAction.compute(builder::buildInlineTemplate);
+          editor.getCaretModel().moveToOffset(startOffset);
+          final TemplateManager templateManager = TemplateManager.getInstance(project);
+          templateManager.startTemplate(editor, template);
+        }, LangBundle.message("action.rename.text"), null);
+      })
+      .submit(AppExecutorUtil.getAppExecutorService());
+    return true;
+  }
+
+  static class NameExpression extends Expression {
+    private final String myOrig;
+    private final LookupElement[] cachedLookupElements;
+
+    NameExpression(String orig, List<String> suggestions) {
+      myOrig = orig;
+      cachedLookupElements = suggestions.stream()
+        .map(LookupElementBuilder::create)
+        .toArray(LookupElement[]::new);
+    }
+
+    @Override
+    public boolean requiresCommittedPSI() {
+      return false;
+    }
+
+    @Override
+    public Result calculateResult(ExpressionContext context) {
+      return new TextResult(myOrig);
+    }
+
+    @Override
+    public @NotNull LookupFocusDegree getLookupFocusDegree() {
+      return LookupFocusDegree.UNFOCUSED;
+    }
+
+    @Override
+    public LookupElement[] calculateLookupItems(ExpressionContext context) {
+      return cachedLookupElements;
+    }
   }
 
   private static boolean executeError(@NotNull Project project, @NotNull ModDisplayError error) {
