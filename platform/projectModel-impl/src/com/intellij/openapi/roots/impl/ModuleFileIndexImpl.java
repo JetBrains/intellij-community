@@ -5,12 +5,11 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet;
@@ -23,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
-import java.util.function.Function;
 
 /**
  * This is an internal class, {@link ModuleFileIndex} must be used instead.
@@ -62,39 +60,19 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
           }
         }
       });
-      return new Pair<>(recursiveRoots, nonRecursiveRoots);
+      Collection<VirtualFile> filteredRecursiveRoots = ContainerUtil.filter(recursiveRoots, root -> !isNestedRootOfModuleContent(root));
+      return new Pair<>(filteredRecursiveRoots, nonRecursiveRoots);
     }).executeSynchronously();
-    Collection<VirtualFile> highestRecursiveRoots = selectRootItems(rootsPair.getFirst(), root -> root.getPath());
-    return iterateProvidedRootsOfContent(processor, filter, highestRecursiveRoots, rootsPair.getSecond());
+    return iterateProvidedRootsOfContent(processor, filter, rootsPair.getFirst(), rootsPair.getSecond());
   }
 
-  private static <T> Collection<T> selectRootItems(Collection<T> items, Function<T, String> toPath) {//todo[lene] remove copy-paste
-    if (items.size() < 2) {
-      return items;
+  private boolean isNestedRootOfModuleContent(@NotNull VirtualFile root) {
+    VirtualFile parent = root.getParent();
+    if (parent == null) {
+      return false;
     }
-
-    TreeMap<String, T> pathMap = new TreeMap<>(OSAgnosticPathUtil.COMPARATOR);
-    for (T item : items) {
-      String path = FileUtil.toSystemIndependentName(toPath.apply(item));
-      if (!isIncluded(pathMap, path)) {
-        pathMap.put(path, item);
-        while (true) {
-          String excludedPath = pathMap.higherKey(path);
-          if (excludedPath != null && OSAgnosticPathUtil.startsWith(excludedPath, path)) {
-            pathMap.remove(excludedPath);
-          }
-          else {
-            break;
-          }
-        }
-      }
-    }
-    return pathMap.values();
-  }
-
-  private static boolean isIncluded(NavigableMap<String, ?> existingFiles, String path) {
-    String suggestedCoveringRoot = existingFiles.floorKey(path);
-    return suggestedCoveringRoot != null && OSAgnosticPathUtil.startsWith(path, suggestedCoveringRoot);
+    WorkspaceFileInternalInfo fileInfo = myWorkspaceFileIndex.getFileInfo(parent, false, true, false, false);
+    return fileInfo.findFileSet(fileSet -> isInContent(fileSet)) != null;
   }
 
   @Override
