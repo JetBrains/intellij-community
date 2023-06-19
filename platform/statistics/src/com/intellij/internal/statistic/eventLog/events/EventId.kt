@@ -7,7 +7,10 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import java.util.function.Consumer
 
-abstract class BaseEventId @JvmOverloads constructor(val eventId: String, val recorder: String = "FUS") {
+abstract class BaseEventId(val eventId: String, val recorder: String) {
+  @Deprecated("Recorder ID should be explicitly provided", replaceWith = ReplaceWith("BaseEventId(eventId, recorder)"))
+  constructor(eventId: String) : this(eventId, "FUS")
+
   internal fun getLogger(): StatisticsEventLogger = StatisticsEventLogProviderUtil.getEventLogProvider(recorder).logger
 
   abstract fun getFields(): List<EventField<*>>

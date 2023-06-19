@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Version
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
@@ -42,6 +43,8 @@ private val LOG = logger<FeatureUsageData>()
  */
 @ApiStatus.Internal
 class FeatureUsageData(val recorderId: String) {
+  @TestOnly
+  @Deprecated("Recorder ID should be explicitly provided", replaceWith = ReplaceWith("FeatureUsageData(recorderId)"), DeprecationLevel.WARNING)
   constructor() : this("FUS")
 
   private var data: MutableMap<String, Any> = HashMap()
