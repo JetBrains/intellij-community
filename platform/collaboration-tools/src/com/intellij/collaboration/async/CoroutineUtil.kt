@@ -111,21 +111,6 @@ fun <T, M> StateFlow<T>.mapState(
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @ApiStatus.Experimental
-fun <T, R> StateFlow<T>.mapStateScoped(scope: CoroutineScope,
-                                       sharingStart: SharingStarted = SharingStarted.Eagerly,
-                                       mapper: CoroutineScope.(T) -> R): StateFlow<R> {
-  var nestedScope: CoroutineScope = scope.childScope()
-  val originalState = this
-  return drop(1).transformLatest { newValue ->
-    nestedScope.cancel()
-    nestedScope = scope.childScope()
-    val mapped = mapper(nestedScope, newValue)
-    emit(mapped)
-  }.stateIn(scope, sharingStart, mapper(nestedScope, originalState.value))
-}
-
-@OptIn(ExperimentalCoroutinesApi::class)
-@ApiStatus.Experimental
 fun <T, R> Flow<T>.mapScoped(mapper: suspend CoroutineScope.(T) -> R): Flow<R> {
   return transformLatest { newValue ->
     coroutineScope {
