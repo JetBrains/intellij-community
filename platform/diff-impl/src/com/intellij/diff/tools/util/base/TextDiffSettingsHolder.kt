@@ -64,6 +64,9 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
     // Presentation settings
 
     var isEnableSyncScroll: Boolean = true
+      get()      = field
+      set(value) { field = value
+                   PLACE_SETTINGS.eventDispatcher.multicaster.scrollingChanged() }
 
     var isEnableAligningChangesMode: Boolean
       get() = SHARED_SETTINGS.ENABLE_ALIGNING_CHANGES_MODE
@@ -121,11 +124,13 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
 
     var contextRange: Int
       get()      = SHARED_SETTINGS.CONTEXT_RANGE
-      set(value) { SHARED_SETTINGS.CONTEXT_RANGE = value }
+      set(value) { SHARED_SETTINGS.CONTEXT_RANGE = value
+                   PLACE_SETTINGS.eventDispatcher.multicaster.foldingChanged() }
 
     var isExpandByDefault: Boolean
       get()      = PLACE_SETTINGS.EXPAND_BY_DEFAULT
-      set(value) { PLACE_SETTINGS.EXPAND_BY_DEFAULT = value }
+      set(value) { PLACE_SETTINGS.EXPAND_BY_DEFAULT = value
+                   PLACE_SETTINGS.eventDispatcher.multicaster.foldingChanged() }
 
     var isReadOnlyLock: Boolean
       get()      = PLACE_SETTINGS.READ_ONLY_LOCK
@@ -153,6 +158,8 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
       fun highlightPolicyChanged() {}
       fun ignorePolicyChanged() {}
       fun breadcrumbsPlacementChanged() {}
+      fun foldingChanged() {}
+      fun scrollingChanged() {}
 
       abstract class Adapter : Listener
     }
