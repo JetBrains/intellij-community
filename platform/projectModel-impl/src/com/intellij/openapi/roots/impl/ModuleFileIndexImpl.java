@@ -77,8 +77,8 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
 
   @Override
   public boolean isInContent(@NotNull VirtualFile fileOrDir) {
-    WorkspaceFileSetWithCustomData<ModuleContentOrSourceRootData> fileSet = 
-      myWorkspaceFileIndex.findFileSetWithCustomData(fileOrDir, true, true, false, false, ModuleContentOrSourceRootData.class);
+    WorkspaceFileSetWithCustomData<ModuleRelatedRootData> fileSet =
+      myWorkspaceFileIndex.findFileSetWithCustomData(fileOrDir, true, true, false, false, ModuleRelatedRootData.class);
     return isFromThisModule(fileSet);
   }
 
@@ -210,6 +210,6 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
 
   @Override
   protected boolean isInContent(@NotNull WorkspaceFileSetWithCustomData<?> fileSet) {
-    return fileSet.getData() instanceof ModuleContentOrSourceRootData data && myModule.equals(data.getModule());
+    return fileSet.getData() instanceof ModuleRelatedRootData data && myModule.equals(data.getModule());
   }
 }
