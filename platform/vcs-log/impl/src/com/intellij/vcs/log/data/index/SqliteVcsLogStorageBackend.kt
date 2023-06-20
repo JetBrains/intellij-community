@@ -120,6 +120,8 @@ private class ProjectLevelConnectionManager private constructor(@JvmField val st
   @JvmField
   val insertCommitPool = connection.statementPool("insert into commit_hashes(position, hash) values(?, ?) returning rowid") { ObjectBinder(2) }
   val selectCommitPool = connection.statementPool("select rowid from commit_hashes where position = ? and hash = ?") { ObjectBinder(2) }
+  val insertMoreCommitPool = connection.statementPool("insert into commit_hashes(position, hash, name, type) values(?, ?, ?, ?) returning rowid") { ObjectBinder(4) }
+  val updateCommitPool = connection.statementPool("update commit_hashes set name = ?, type = ? where position = ? and hash = ? returning rowid") { ObjectBinder(4) }
 
   fun <R> runUnderConnection(runnable: (SqliteConnection) -> R): R {
     return connect().use { connection -> runnable(connection) }
@@ -603,17 +605,18 @@ internal class SqliteVcsLogStorageBackend(project: Project,
     logProviders[ref.root]!!.referenceManager.serialize(refTypeSerializer, ref.type)
     val type = refTypeSerializer.readInt()
     val commitId = getCommitId(position, ref.commitHash)
-
-    if (commitId != null) {
-      val params = arrayOf(name, type, position, hashStr)
-      connection.execute("update commit_hashes set name = ?, type = ? where position = ? and hash = ?", params)
+    if (commitId == null) {
+      return connectionManager.insertMoreCommitPool.use { statement, binder ->
+        binder.bind(position, hashStr, name, type)
+        statement.selectNotNullInt()
+      }
     }
     else {
-      val params = arrayOf(position, hashStr, name, type)
-      connection.execute("insert into commit_hashes(position, hash, name, type) values(?, ?, ?, ?)", params)
+      return connectionManager.updateCommitPool.use { statement, binder ->
+        binder.bind(name, type, position, hashStr)
+        statement.selectNotNullInt()
+      }
     }
-
-    return getCommitId(position, hash)!!
   }
 
   override fun getVcsRef(refIndex: Int): VcsRef? {
