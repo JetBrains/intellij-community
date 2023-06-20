@@ -42,12 +42,9 @@ public final class JsonCachedValues {
   @Nullable
   public static JsonSchemaObject getSchemaObject(@NotNull VirtualFile schemaFile, @NotNull Project project) {
     JsonFileResolver.startFetchingHttpFileIfNeeded(schemaFile, project);
-    return computeForFile(schemaFile, project, (psiFile) -> computeSchemaObject(schemaFile, psiFile), JSON_OBJECT_CACHE_KEY);
-  }
-
-  @Nullable
-  private static JsonSchemaObject computeSchemaObject(@NotNull VirtualFile schemaFile, @NotNull PsiFile f) {
-    return new JsonSchemaReader(schemaFile).read(f);
+    return computeForFile(schemaFile, project, (psiFile) -> {
+      return JsonSchemaCacheManager.getInstance().computeSchemaObject(schemaFile, psiFile);
+    }, JSON_OBJECT_CACHE_KEY);
   }
 
   static final String URL_CACHE_KEY = "JsonSchemaUrlCache";
