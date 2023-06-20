@@ -12,6 +12,7 @@ import com.intellij.ui.render.RenderingHelper;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.JBUI;
@@ -418,6 +419,14 @@ public class DefaultTreeUI extends BasicTreeUI {
            // BasicTreeUI uses clickCount % toggleClickCount == 0, which works terrible for single-click, so we double-check here:
            && tree.getToggleClickCount() == event.getClickCount()
            && isExpandPreferable(tree, tree.getSelectionPath());
+  }
+
+  @Override
+  protected void toggleExpandState(TreePath path) {
+    if (!tree.isExpanded(path) && tree instanceof Tree) {
+      ((Tree)tree).startMeasuringExpandDuration(path);
+    }
+    super.toggleExpandState(path);
   }
 
   @Override
