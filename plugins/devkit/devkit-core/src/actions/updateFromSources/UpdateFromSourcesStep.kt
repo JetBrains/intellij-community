@@ -8,9 +8,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
 import com.intellij.smartUpdate.SmartUpdateStep
 import com.intellij.smartUpdate.beforeRestart
+import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.util.PsiUtil
+import javax.swing.JComponent
 
 class UpdateFromSourcesStep: SmartUpdateStep {
   override val id = "update.from.sources"
@@ -25,4 +27,10 @@ class UpdateFromSourcesStep: SmartUpdateStep {
   }
 
   override fun isAvailable(project: Project) = ExternalUpdateManager.ACTUAL == null && PsiUtil.isIdeaProject(project)
+
+  override fun getDetailsComponent(project: Project): JComponent {
+    return panel {
+      optionsPanel(project, UpdateFromSourcesSettings.getState()).apply { childComponent.setMinimumAndPreferredWidth(-1) }
+    }
+  }
 }

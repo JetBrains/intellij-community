@@ -1,5 +1,6 @@
 package com.intellij.smartUpdate
 
+import com.intellij.CommonBundle
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
@@ -20,6 +21,8 @@ import javax.swing.SpinnerDateModel
 class SmartUpdateDialog(private val project: Project) : DialogWrapper(project) {
   init {
     title = SmartUpdateBundle.message("dialog.title.smart.update")
+    setOKButtonText("Update Now")
+    setCancelButtonText(CommonBundle.getCloseButtonText())
     init()
   }
 
@@ -36,6 +39,7 @@ class SmartUpdateDialog(private val project: Project) : DialogWrapper(project) {
           indent { row { cell(it).enabled(enabled) } }
         }
       }
+      separator()
       lateinit var scheduled: Cell<JBCheckBox>
       row { scheduled = checkBox(SmartUpdateBundle.message("checkbox.schedule.update")).bindSelected({ options.scheduled }, { options.scheduled = it}) }
       indent {
