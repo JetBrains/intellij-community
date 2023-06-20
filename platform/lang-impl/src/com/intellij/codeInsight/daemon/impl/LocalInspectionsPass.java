@@ -121,7 +121,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     BackgroundUpdateHighlightersUtil.setHighlightersToEditor(myProject, getFile(), myDocument, myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset(), myInfos, getId());
   }
 
-  private static final TextAttributes NONEMPTY_TEXT_ATTRIBUTES = new UnmodifiableTextAttributes() {
+  private static final TextAttributes NONEMPTY_TEXT_ATTRIBUTES = new UnmodifiableTextAttributes(){
     @Override
     public boolean isEmpty() {
       return false;
@@ -185,7 +185,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         String reportingToolName = ((ProblemDescriptorWithReporterName)descriptor).getReportingToolName();
         toolWrapper = (LocalInspectionToolWrapper)myProfileWrapper.getInspectionTool(reportingToolName, psiElement);
       }
-      if (toolWrapper != null && psiElement != null && toolWrapper.getTool().isSuppressedFor(psiElement)) {
+      if (toolWrapper.getTool().isSuppressedFor(psiElement)) {
         registerSuppressedElements(psiElement, toolWrapper.getID(), toolWrapper.getAlternativeID(), mySuppressedElements);
         return;
       }
@@ -381,9 +381,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                          @NotNull List<? extends IntentionAction> quickFixes,
                                          @NotNull String shortName) {
     HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
-    String displayName = HighlightDisplayKey.getDisplayNameByKey(key);
     for (IntentionAction quickFix : quickFixes) {
-      builder.registerFix(quickFix, null, displayName, null, key);
+      builder.registerFix(quickFix, null, HighlightDisplayKey.getDisplayNameByKey(key), null, key);
     }
   }
 

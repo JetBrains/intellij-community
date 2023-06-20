@@ -92,8 +92,9 @@ public class HighlightDisplayKey {
     return key;
   }
 
-  @Contract("null -> null")
-  public static @Nullable @Nls(capitalization = Sentence) String getDisplayNameByKey(@Nullable HighlightDisplayKey key) {
+  @Nls(capitalization = Sentence)
+  @Nullable
+  public static String getDisplayNameByKey(@Nullable HighlightDisplayKey key) {
     if (key == null) {
       return null;
     }

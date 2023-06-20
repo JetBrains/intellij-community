@@ -126,12 +126,11 @@ import java.util.List;
 public abstract class CompletionContributor {
   public static final ExtensionPointName<CompletionContributorEP> EP = new ExtensionPointName<>("com.intellij.completion.contributor");
 
-  private final MultiMap<@Nullable CompletionType, @NotNull Pair<@NotNull ElementPattern<? extends PsiElement>, @NotNull CompletionProvider<CompletionParameters>>>
-    myMap = new MultiMap<>();
+  private final MultiMap<CompletionType, Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>>> myMap =
+    new MultiMap<>();
 
   public final void extend(@Nullable CompletionType type,
-                           final @NotNull ElementPattern<? extends PsiElement> place,
-                           @NotNull CompletionProvider<CompletionParameters> provider) {
+                           final @NotNull ElementPattern<? extends PsiElement> place, CompletionProvider<CompletionParameters> provider) {
     myMap.putValue(type, new Pair<>(place, provider));
   }
 
@@ -186,6 +185,7 @@ public abstract class CompletionContributor {
   }
 
   /**
+   *
    * @return hint text to be shown if no variants are found, typically "No suggestions"
    */
   public @Nullable @NlsContexts.HintText String handleEmptyLookup(@NotNull CompletionParameters parameters, final Editor editor) {

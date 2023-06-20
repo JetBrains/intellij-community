@@ -4,7 +4,6 @@ package com.intellij.lang;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Allows skipping running specific {@link ExternalAnnotator} for given file.
@@ -16,5 +15,5 @@ public interface ExternalAnnotatorsFilter {
   ExtensionPointName<ExternalAnnotatorsFilter> EXTENSION_POINT_NAME =
     ExtensionPointName.create("com.intellij.daemon.externalAnnotatorsFilter");
 
-  boolean isProhibited(@NotNull ExternalAnnotator annotator, @NotNull PsiFile file);
+  boolean isProhibited(ExternalAnnotator annotator, PsiFile file);
 }

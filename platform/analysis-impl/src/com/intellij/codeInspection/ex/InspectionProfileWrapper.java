@@ -12,7 +12,6 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.List;
@@ -35,8 +34,8 @@ public class InspectionProfileWrapper {
   // check whether some inspection got registered twice by accident. 've bit once.
   private static boolean alreadyChecked;
 
-  protected final @NotNull InspectionProfile myProfile;
-  protected final @NotNull InspectionProfileManager myProfileManager;
+  protected final InspectionProfile myProfile;
+  protected final InspectionProfileManager myProfileManager;
 
   public InspectionProfileWrapper(@NotNull InspectionProfileImpl profile) {
     myProfile = profile;
@@ -49,7 +48,7 @@ public class InspectionProfileWrapper {
     myProfileManager = profileManager;
   }
 
-  public @NotNull InspectionProfileManager getProfileManager() {
+  public InspectionProfileManager getProfileManager() {
     return myProfileManager;
   }
 
@@ -76,7 +75,7 @@ public class InspectionProfileWrapper {
     return myProfile.getErrorLevel(inspectionToolKey, element);
   }
 
-  public @Nullable InspectionToolWrapper<?, ?> getInspectionTool(@NotNull String shortName, @Nullable PsiElement element) {
+  public InspectionToolWrapper<?, ?> getInspectionTool(final String shortName, PsiElement element) {
     return myProfile.getInspectionTool(shortName, element);
   }
 
