@@ -74,6 +74,19 @@ internal class NativeDB : SqliteDb() {
    */
   @Synchronized
   fun exec(sql: ByteArray) {
+    //if (sql.size < 512) {
+    //  val stackTrace = StackWalker.getInstance().walk { stream ->
+    //    stream.use {
+    //      stream.asSequence()
+    //        .drop(2)
+    //        .take(3)
+    //        .joinToString(separator = "\n  ")
+    //    }
+    //  }
+    //
+    //  println("${sql.decodeToString()}\n  " + stackTrace)
+    //}
+
     val status = _exec_utf8(sql)
     if (status != SqliteCodes.SQLITE_OK) {
       throw newException(errorCode = status, errorMessage = errmsg()!!, sql = sql)

@@ -162,11 +162,9 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
       }
 
       List<GraphCommit<Integer>> list = new ArrayList<>(commits.size());
-      myStorage.executeTransaction(() -> {
-        for (TimedVcsCommit commit : commits) {
-          list.add(compactCommit(commit, root));
-        }
-      });
+      for (TimedVcsCommit commit : commits) {
+        list.add(compactCommit(commit, root));
+      }
       return list;
     }));
   }
@@ -308,7 +306,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
       LogInfo logInfo = loadRecentData(prepareRequirements(roots, commitCount, prevRefs));
       for (VirtualFile root : roots) {
         myLoadedInfo.put(root, logInfo.getCommits(root));
-        myLoadedInfo.put(root, logInfo.getRefs().get(root));
+        myLoadedInfo.myRefs.put(root, logInfo.getRefs().get(root));
       }
     }
 
@@ -424,7 +422,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     }
   }
 
-  private static class LogInfo {
+  private static final class LogInfo {
     private final VcsLogStorage myStorage;
     private final Map<VirtualFile, CompressedRefs> myRefs = new HashMap<>();
     private final Map<VirtualFile, List<GraphCommit<Integer>>> myCommits = new HashMap<>();
@@ -439,10 +437,6 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
 
     void put(@NotNull VirtualFile root, @NotNull Set<VcsRef> refs) {
       myRefs.put(root, new CompressedRefs(refs, myStorage));
-    }
-
-    void put(@NotNull VirtualFile root, @NotNull CompressedRefs refs) {
-      myRefs.put(root, refs);
     }
 
     @NotNull
