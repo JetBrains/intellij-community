@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
 import com.intellij.JavaTestUtil;
@@ -52,6 +52,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
   public void testGrEnum() { doTest(); }
   public void testGrTrait() { doTest(); }
   public void testSuspiciousParameterNames() { doTest(); }
+  public void testTimeUnit() { doTest(); }
   public void testTypeAnnotations() { doTest(); }
   public void testTypeAnno() { doTest(); }
   public void testExtendsObjectAnnotated() { doTest(); }
