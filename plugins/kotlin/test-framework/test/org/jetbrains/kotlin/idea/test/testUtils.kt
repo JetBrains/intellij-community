@@ -117,6 +117,25 @@ fun Document.extractMultipleMarkerOffsets(project: Project, caretMarker: String 
     return offsets
 }
 
+fun interface SetUpFunction {
+    /**
+     * [Throws] supports interoperability with Java.
+     */
+    @Throws(Exception::class)
+    fun invoke()
+}
+
+/**
+ * Executes a [setUp] function after enabling the K1 or K2 Kotlin plugin in system properties. The correct Kotlin plugin should be set up
+ * after [setUp] finishes.
+ */
+@Throws(Exception::class)
+fun setUpWithKotlinPlugin(isFirPlugin: Boolean, setUp: SetUpFunction) {
+    System.setProperty("idea.kotlin.plugin.use.k2", isFirPlugin.toString())
+    setUp.invoke()
+    checkPluginIsCorrect(isFirPlugin)
+}
+
 fun checkPluginIsCorrect(isFirPlugin: Boolean){
     if (isFirPlugin) {
         checkKotlinPluginKind(KotlinPluginKind.FIR_PLUGIN)
