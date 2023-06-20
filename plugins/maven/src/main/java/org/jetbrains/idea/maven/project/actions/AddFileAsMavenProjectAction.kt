@@ -5,18 +5,18 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.idea.maven.utils.actions.MavenAction
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil
+import org.jetbrains.idea.maven.utils.actions.MavenAsyncAction
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
 
-class AddFileAsMavenProjectAction : MavenAction() {
-  override fun actionPerformed(e: AnActionEvent) {
+class AddFileAsMavenProjectAction : MavenAsyncAction() {
+  override suspend fun actionPerformedAsync(e: AnActionEvent) {
     val context = e.dataContext
     val project = MavenActionUtil.getProject(context)
     val file = getSelectedFile(context)
     if (project != null && file != null) {
       val openProjectProvider = MavenOpenProjectProvider()
-      openProjectProvider.linkToExistingProject(file, project)
+      openProjectProvider.linkToExistingProjectAsync(file, project)
     }
   }
 
