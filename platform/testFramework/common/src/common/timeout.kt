@@ -7,16 +7,18 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.TestOnly
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 @TestOnly
-const val TEST_TIMEOUT_MS: Long = 1000
+val DEFAULT_TEST_TIMEOUT: Duration = 1.seconds
 
 @TestOnly
 fun timeoutRunBlocking(action: suspend CoroutineScope.() -> Unit) {
   @Suppress("RAW_RUN_BLOCKING")
   runBlocking {
     try {
-      withTimeout(TEST_TIMEOUT_MS, action)
+      withTimeout(DEFAULT_TEST_TIMEOUT, action)
     }
     catch (e: TimeoutCancellationException) {
       println(dumpCoroutines())
