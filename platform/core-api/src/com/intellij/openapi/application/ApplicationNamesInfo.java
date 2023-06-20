@@ -44,15 +44,14 @@ public final class ApplicationNamesInfo {
         try {
           return XmlDomReader.readXmlAsModel(Files.newInputStream(file));
         }
-        catch (NoSuchFileException ignore) {
-        }
+        catch (NoSuchFileException ignore) { }
         catch (Exception e) {
           throw new RuntimeException("Cannot load " + file, e);
         }
       }
     }
     else {
-      // Gateway started from other IntelliJ Based IDE case, same for Qodana
+      // Gateway started from another IntelliJ-based IDE; same for Qodana
       if (prefix.equals(PlatformUtils.GATEWAY_PREFIX) || prefix.equals(PlatformUtils.QODANA_PREFIX) || prefix.equals(PlatformUtils.JETBRAINS_CLIENT_PREFIX)) {
         String customAppInfo = System.getProperty("idea.application.info.value");
         if (customAppInfo != null) {
@@ -182,8 +181,8 @@ public final class ApplicationNamesInfo {
   }
 
   /**
-   * Returns the base name (i.e. a name without the extension and architecture suffix)
-   * of launcher files (bin/xxx64.exe, bin/xxx.bat, bin/xxx.sh, MacOS/xxx)
+   * Returns the base name (i.e., a name without the extension and architecture suffix)
+   * of launcher files (bin/xxx64.exe, bin/xxx.bat, bin/xxx.sh, macOS/xxx)
    * ({@code "idea"} for IntelliJ IDEA, {@code "webstorm"} for WebStorm, etc.).
    */
   public String getScriptName() {

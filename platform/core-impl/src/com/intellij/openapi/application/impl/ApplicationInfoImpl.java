@@ -119,7 +119,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @NonInjectable
   ApplicationInfoImpl(@NotNull XmlElement element) {
-    // behavior of this method must be consistent with idea/ApplicationInfo.xsd schema.
+    // the behavior of this method must be consistent with the `idea/ApplicationInfo.xsd` schema
     for (XmlElement child : element.children) {
       switch (child.name) {
         case "version": {
@@ -352,8 +352,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   private void overrideFromProperties() {
-    String key = "application.info.youtrack.url";
-    String youTrackUrlOverride = System.getProperty(key);
+    String youTrackUrlOverride = System.getProperty("application.info.youtrack.url");
     if (youTrackUrlOverride != null) {
       myYoutrackUrl = youTrackUrlOverride;
     }

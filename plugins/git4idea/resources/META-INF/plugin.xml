@@ -3,7 +3,7 @@
   <id>Git4Idea</id>
   <description>
     <![CDATA[
-      Provides integration with <a href="http://git-scm.com/">Git</a>.
+      Provides integration with <a href="https://git-scm.com/">Git</a>.
         <ul>
         <li>Check out your source code from a Git repository</li>
         <li>Browse, commit, push, pull, merge, view log, review pull requests, and much more</li>

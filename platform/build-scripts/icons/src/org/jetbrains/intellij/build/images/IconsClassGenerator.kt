@@ -1,6 +1,4 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "LiftReturnOrAssignment")
-
 package org.jetbrains.intellij.build.images
 
 import com.dynatrace.hash4j.hashing.Hashing
@@ -55,14 +53,14 @@ internal open class IconsClassGenerator(private val projectHome: Path,
     private val deprecatedIconFieldNameMap = CollectionFactory.createCharSequenceMap<String>(true)
 
     init {
-      deprecatedIconFieldNameMap.put("RwAccess", "Rw_access")
-      deprecatedIconFieldNameMap.put("MenuOpen", "Menu_open")
-      deprecatedIconFieldNameMap.put("MenuCut", "Menu_cut")
-      deprecatedIconFieldNameMap.put("MenuPaste", "Menu_paste")
+      deprecatedIconFieldNameMap["RwAccess"] = "Rw_access"
+      deprecatedIconFieldNameMap["MenuOpen"] = "Menu_open"
+      deprecatedIconFieldNameMap["MenuCut"] = "Menu_cut"
+      deprecatedIconFieldNameMap["MenuPaste"] = "Menu_paste"
       @Suppress("SpellCheckingInspection")
-      deprecatedIconFieldNameMap.put("MenuSaveall", "Menu_saveall")
-      deprecatedIconFieldNameMap.put("PhpIcon", "Php_icon")
-      deprecatedIconFieldNameMap.put("Emulator02", "Emulator2")
+      deprecatedIconFieldNameMap["MenuSaveall"] = "Menu_saveall"
+      deprecatedIconFieldNameMap["PhpIcon"] = "Php_icon"
+      deprecatedIconFieldNameMap["Emulator02"] = "Emulator2"
     }
   }
 
@@ -241,7 +239,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
     if (obsoleteClasses.isNotEmpty()) {
       println("\nObsolete classes:")
       println(obsoleteClasses.joinToString("\n"))
-      println("\nObsolete class it is class for icons that cannot be found anymore. Possible reasons:")
+      println("\nObsolete class is an icon class that cannot be found anymore. Possible reasons:")
       println(
         "1. Icons not located under resources root." +
         "\n   Solution - move icons to resources root or fix existing root type (must be \"resources\")"
@@ -306,8 +304,8 @@ internal open class IconsClassGenerator(private val projectHome: Path,
       result.append('\n')
     }
 
-    // IconsGeneratedSourcesFilter depends on following comment, if you are going to change the text
-    // please do correspond changes in IconsGeneratedSourcesFilter as well
+    // `IconsGeneratedSourcesFilter` depends on the following comment;
+    // if you are going to change it, please do correspond changes in `IconsGeneratedSourcesFilter` and generated files as well.
     result.append("/**\n")
     result.append(" * NOTE THIS FILE IS AUTO-GENERATED\n")
     result.append(" * DO NOT EDIT IT BY HAND, run \"Generate icon classes\" configuration instead\n")
@@ -356,12 +354,12 @@ internal open class IconsClassGenerator(private val projectHome: Path,
         nodeMap.computeIfAbsent(imageId.substring(0, index)) { mutableListOf() }.add(imageInfo)
       }
       else {
-        leafMap.put(imageId, imageInfo)
+        leafMap[imageId] = imageInfo
       }
     }
 
     fun getWeight(key: String): Int {
-      val image = leafMap.get(key) ?: return 0
+      val image = leafMap[key] ?: return 0
       return if (image.deprecated) 1 else 0
     }
 
@@ -374,7 +372,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
     var innerClassWasBefore = false
     val hasher = IconHasher(sortedKeys.size)
     for (key in sortedKeys) {
-      val group = nodeMap.get(key)
+      val group = nodeMap[key]
       if (group != null) {
         val oldLength = result.length
         val className = className(key)
@@ -383,7 +381,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
         }
         else {
           // if first in block, do not add yet another extra newline
-          if (result.length < 2 || result.get(result.length - 1) != '\n' || result.get(result.length - 2) != '{') {
+          if (result.length < 2 || result[result.length - 1] != '\n' || result[result.length - 2] != '{') {
             result.append('\n')
           }
           append(result, "public static final class $className {", level)
@@ -399,7 +397,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
         }
       }
 
-      val image = leafMap.get(key)
+      val image = leafMap[key]
       if (image != null) {
         if (innerClassWasBefore) {
           innerClassWasBefore = false
@@ -427,7 +425,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
       val deprecationComment = image.deprecation?.comment
       if (deprecationComment != null) {
         // if first in block, do not add yet another extra newline
-        if (result.get(result.length - 1) != '\n' || result.get(result.length - 2) != '\n') {
+        if (result[result.length - 1] != '\n' || result[result.length - 2] != '\n') {
           result.append('\n')
         }
         append(result, "/** @deprecated $deprecationComment */", level)
@@ -509,7 +507,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
     append(result, "${javaDoc}public static final @NotNull Icon $iconName = " +
                    "$method(\"${relativePath.removePrefix("/")}\", $key, ${image.getFlags()});", level)
 
-    val oldName = deprecatedIconFieldNameMap.get(iconName)
+    val oldName = deprecatedIconFieldNameMap[iconName]
     if (oldName != null) {
       append(result, "${javaDoc}public static final @Deprecated @NotNull Icon $oldName = $iconName;", level)
     }
@@ -677,8 +675,7 @@ private fun capitalize(name: String): String {
 private const val ICON_MANAGER_CODE = "IconManager.getInstance()"
 private val commentRegExp = Regex("(?s)<!--.*?-->")
 
-// remove line separators to unify line separators (\n vs \r\n), trim lines
-// normalization is required because a cache key is based on content
+// normalizing line separators to '\n' (required because a cache key is based on content)
 private fun loadAndNormalizeSvgFile(svgFile: Path): String {
   val builder = StringBuilder()
   Files.lines(svgFile).use { lines ->
