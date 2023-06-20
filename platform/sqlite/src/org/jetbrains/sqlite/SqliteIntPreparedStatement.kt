@@ -45,6 +45,15 @@ class SqliteIntPreparedStatement internal constructor(private val connection: Sq
 
   override fun toString(): String = sql
 
+  fun ensureCapacity(count: Int) {
+    val expectedSize = count * paramCount
+    if (expectedSize > batch.size) {
+      val newBatch = IntArray(expectedSize)
+      batch.copyInto(newBatch)
+      this.batch = newBatch
+    }
+  }
+
   fun addBatch() {
     batchPosition += paramCount
     batchQueryCount++
