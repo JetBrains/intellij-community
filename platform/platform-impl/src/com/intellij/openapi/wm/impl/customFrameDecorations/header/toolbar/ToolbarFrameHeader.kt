@@ -103,7 +103,7 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
     add(myHeaderContent, gb.next().fillCell().anchor(CENTER).weightx(1.0).weighty(1.0))
     buttonPanes?.let { add(wrap(it.getView()), gb.next().anchor(EAST)) }
 
-    setCustomFrameTopBorder({ false }, {true})
+    setCustomFrameTopBorder({ false }, { mode == ShowMode.MENU })
 
     customizer.addListener(this, true) {
       isOpaque = !it
