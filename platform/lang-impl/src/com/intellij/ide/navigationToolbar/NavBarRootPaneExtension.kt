@@ -31,16 +31,11 @@ import com.intellij.ui.hover.HoverListener
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.buffer
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.withContext
 import java.awt.*
 import java.util.concurrent.CompletableFuture
@@ -60,7 +55,7 @@ internal class NavBarRootPaneExtension : IdeRootPaneNorthExtension {
   override fun createComponent(project: Project, isDocked: Boolean): JComponent? {
     val settings = UISettings.getInstance()
     if (!ExperimentalUI.isNewUI() || (settings.showNavigationBar && settings.navBarLocation == NavBarLocation.TOP)) {
-      return MyNavBarWrapperPanel(project)
+      return MyNavBarWrapperPanel(project, useAsComponent = true)
     }
     else {
       return null
@@ -74,37 +69,34 @@ internal class NavBarRootPaneExtension : IdeRootPaneNorthExtension {
 
     // cold flow
     return channelFlow {
-      send(run {
-        val uiSettings = UISettings.getInstance()
-        withContext(Dispatchers.EDT) { createPanelIfApplicable(uiSettings, project, statusBar) }
-      })
+      send(createPanelIfApplicable(UISettings.getInstance()))
 
       project.messageBus.connect(this@channelFlow).subscribe(UISettingsListener.TOPIC, UISettingsListener { uiSettings ->
-        trySendBlocking(createPanelIfApplicable(uiSettings, project, statusBar))
-
+        trySendBlocking(createPanelIfApplicable(uiSettings))
         if (isNavbarV2Enabled) {
           NavBarService.getInstance(project).uiSettingsChanged(uiSettings)
         }
       })
       awaitClose()
     }
-      // we can send null values several times
       .distinctUntilChanged()
+      .map {
+        val uiSettings = UISettings.getInstance()
+        val result = it.configure(project, statusBar, uiSettings)
+        if (isNavbarV2Enabled) {
+          NavBarService.getInstance(project).uiSettingsChanged(uiSettings)
+        }
+        result
+      }
       .buffer(Channel.UNLIMITED)
   }
 
-  private fun CoroutineScope.createPanelIfApplicable(uiSettings: UISettings,
-                                                     project: Project,
-                                                     statusBar: StatusBar): MyNavBarWrapperPanel? {
-    if (!uiSettings.showNavigationBar) {
-      return null
+  private fun createPanelIfApplicable(uiSettings: UISettings): NavBarMode {
+    return when {
+      !uiSettings.showNavigationBar -> DisabledNavBarMode
+      uiSettings.navBarLocation == NavBarLocation.TOP -> TopNavBarMode
+      else -> BottomNavBarMode
     }
-
-    val panel = MyNavBarWrapperPanel(project)
-    launch(Dispatchers.EDT) {
-      (statusBar as? IdeStatusBarImpl)?.setCentralWidget(IdeStatusBarImpl.NAVBAR_WIDGET_KEY, panel.getNavBarPanel())
-    }
-    return if (uiSettings.navBarLocation == NavBarLocation.TOP) panel else null
   }
 
   override val key: String
@@ -139,7 +131,7 @@ private fun createNavBarPanel(scrollPane: JScrollPane, navigationBar: JComponent
   return navBarPanel
 }
 
-internal class MyNavBarWrapperPanel(private val project: Project) : NavBarWrapperPanel(BorderLayout()) {
+internal class MyNavBarWrapperPanel(private val project: Project, useAsComponent: Boolean) : NavBarWrapperPanel(BorderLayout()) {
   private var navBarPanel: JComponent? = null
   private var runPanel: JPanel? = null
   private var navToolbarGroupExist: Boolean? = null
@@ -147,9 +139,11 @@ internal class MyNavBarWrapperPanel(private val project: Project) : NavBarWrappe
   var scrollPane: JScrollPane? = null
 
   init {
-    add(getNavBarPanel(), BorderLayout.CENTER)
-    revalidate()
-    uiSettingsChanged(UISettings.getInstance())
+    if (useAsComponent) {
+      add(getNavBarPanel(), BorderLayout.CENTER)
+      revalidate()
+      uiSettingsChanged(UISettings.getInstance())
+    }
   }
 
   fun getNavBarPanel(): JComponent {
@@ -431,5 +425,40 @@ private class NavBarContainer(layout: LayoutManager,
     if (navigationBar is NavBarPanel) {
       navigationBar.updateAutoscrollLimit(limit)
     }
+  }
+}
+
+private fun setStatusBarCentralWidget(statusBar: StatusBar, component: JComponent?) {
+  (statusBar as? IdeStatusBarImpl)?.setCentralWidget(IdeStatusBarImpl.NAVBAR_WIDGET_KEY, component)
+}
+
+private sealed interface NavBarMode {
+  suspend fun configure(project: Project, statusBar: StatusBar, uiSettings: UISettings): MyNavBarWrapperPanel?
+}
+
+private object DisabledNavBarMode : NavBarMode {
+  override suspend fun configure(project: Project, statusBar: StatusBar, uiSettings: UISettings): MyNavBarWrapperPanel? {
+    withContext(Dispatchers.EDT) {
+      setStatusBarCentralWidget(statusBar, null)
+    }
+    return null
+  }
+}
+
+private object TopNavBarMode : NavBarMode {
+  override suspend fun configure(project: Project, statusBar: StatusBar, uiSettings: UISettings): MyNavBarWrapperPanel {
+    return withContext(Dispatchers.EDT) {
+      setStatusBarCentralWidget(statusBar, null)
+      MyNavBarWrapperPanel(project, useAsComponent = true)
+    }
+  }
+}
+
+private object BottomNavBarMode : NavBarMode {
+  override suspend fun configure(project: Project, statusBar: StatusBar, uiSettings: UISettings): MyNavBarWrapperPanel? {
+    withContext(Dispatchers.EDT) {
+      setStatusBarCentralWidget(statusBar, MyNavBarWrapperPanel(project, useAsComponent = false).getNavBarPanel())
+    }
+    return null
   }
 }
