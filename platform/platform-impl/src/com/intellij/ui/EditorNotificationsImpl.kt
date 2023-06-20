@@ -33,18 +33,16 @@ import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.annotations.VisibleForTesting
 import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.function.BiFunction
 import javax.swing.JComponent
 
-class EditorNotificationsImpl(private val project: Project, private val coroutineScope: CoroutineScope) : EditorNotifications(), Disposable {
+class EditorNotificationsImpl(private val project: Project,
+                              private val coroutineScope: CoroutineScope) : EditorNotifications(), Disposable {
   private val updateAllAlarm = SingleAlarm(::doUpdateAllNotifications, 100, this)
 
   private val fileToUpdateNotificationJob = CollectionFactory.createConcurrentWeakMap<VirtualFile, Job>()
-  private val fileEditorToMap =
-    CollectionFactory.createConcurrentWeakMap<FileEditor, MutableMap<Class<out EditorNotificationProvider>, JComponent>>()
 
   init {
     val connection = project.messageBus.connect()
@@ -93,16 +91,18 @@ class EditorNotificationsImpl(private val project: Project, private val coroutin
     coroutineScope.cancel()
     // help GC
     fileToUpdateNotificationJob.clear()
-    fileEditorToMap.clear()
   }
 
   companion object {
+    private val EDITOR_NOTIFICATION_PROVIDER =
+      Key.create<MutableMap<Class<out EditorNotificationProvider>, JComponent>>("editor.notification.provider")
+
     private val PENDING_UPDATE = Key.create<Boolean>("pending.notification.update")
   }
 
-  @VisibleForTesting
-  fun getNotificationPanels(fileEditor: FileEditor): MutableMap<Class<out EditorNotificationProvider>, JComponent> {
-    return fileEditorToMap.computeIfAbsent(fileEditor) { WeakHashMap() }
+  @TestOnly
+  fun getNotificationPanels(fileEditor: FileEditor): Map<Class<out EditorNotificationProvider>, JComponent> {
+    return fileEditor.getUserData(EDITOR_NOTIFICATION_PROVIDER) ?: emptyMap()
   }
 
   @TestOnly
@@ -239,7 +239,7 @@ class EditorNotificationsImpl(private val project: Project, private val coroutin
 
   @RequiresEdt
   private fun updateNotification(fileEditor: FileEditor, provider: EditorNotificationProvider, component: JComponent?) {
-    val panels = fileEditorToMap.get(fileEditor)
+    val panels = fileEditor.getUserData(EDITOR_NOTIFICATION_PROVIDER)
     val providerClass = provider.javaClass
     panels?.get(providerClass)?.let { old ->
       FileEditorManager.getInstance(project).removeTopComponent(fileEditor, old)
@@ -256,7 +256,12 @@ class EditorNotificationsImpl(private val project: Project, private val coroutin
       logNotificationShown(project, provider)
       FileEditorManager.getInstance(project).addTopComponent(fileEditor, component)
 
-      (panels ?: getNotificationPanels(fileEditor)).put(providerClass, component)
+      if (panels != null) {
+        panels.put(providerClass, component)
+      }
+      else {
+        fileEditor.putUserData(EDITOR_NOTIFICATION_PROVIDER, mutableMapOf(providerClass to component))
+      }
     }
   }
 
