@@ -39,7 +39,7 @@ class KtCancellationCheckProvider : CancellationCheckProvider {
     }
 
     analyze(callExpression) {
-      val functionCalledSymbol = callExpression.resolveCall().singleFunctionCallOrNull()?.symbol ?: return false
+      val functionCalledSymbol = callExpression.resolveCall()?.singleFunctionCallOrNull()?.symbol ?: return false
       return functionCalledSymbol.callableIdIfNonLocal?.asSingleFqName() == FqName(cancellationCheckFqn)
     }
   }
@@ -58,7 +58,7 @@ class KtCancellationCheckProvider : CancellationCheckProvider {
     if (containingArgument != null) {
       val callExpression = containingArgument.getStrictParentOfType<KtCallExpression>() ?: return Context.BLOCKING
       analyze(callExpression) {
-        val functionCall = callExpression.resolveCall().singleFunctionCallOrNull() ?: return Context.BLOCKING
+        val functionCall = callExpression.resolveCall()?.singleFunctionCallOrNull() ?: return Context.BLOCKING
         val lambdaArgumentType = functionCall.argumentMapping[containingLambda]?.returnType ?: return Context.BLOCKING
 
         return if (lambdaArgumentType.isSuspendFunctionType) Context.SUSPENDING else Context.BLOCKING

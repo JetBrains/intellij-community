@@ -125,7 +125,7 @@ internal class ConvertBinaryExpressionWithDemorgansLawIntention :
     private fun KtCallExpression.isCalling(fqName: FqName): Boolean {
         val calleeText = calleeExpression?.text ?: return false
         if (fqName.shortName().asString() != calleeText) return false
-        val symbol = resolveCall().successfulCallOrNull<KtCallableMemberCall<*, *>>()?.symbol ?: return false
+        val symbol = resolveCall()?.successfulCallOrNull<KtCallableMemberCall<*, *>>()?.symbol ?: return false
         return symbol.callableIdIfNonLocal?.asSingleFqName() == fqName
     }
 
