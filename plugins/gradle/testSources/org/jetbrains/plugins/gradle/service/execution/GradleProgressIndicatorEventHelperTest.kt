@@ -14,6 +14,9 @@ import org.gradle.tooling.events.lifecycle.BuildPhaseStartEvent
 import org.gradle.tooling.events.task.TaskFinishEvent
 import org.gradle.tooling.events.task.TaskOperationDescriptor
 import org.gradle.tooling.events.task.TaskStartEvent
+import org.gradle.tooling.events.transform.TransformFinishEvent
+import org.gradle.tooling.events.transform.TransformOperationDescriptor
+import org.gradle.tooling.events.transform.TransformStartEvent
 import org.gradle.tooling.model.ProjectIdentifier
 import org.jetbrains.plugins.gradle.service.execution.GradleProgressPhase.*
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -77,16 +80,11 @@ internal class GradleProgressIndicatorEventHelperTest {
   }
 
   @Test
-  fun `test Gradle current phase is not updated on RUN_MAIN_TASKS and RUN_WORK events if in configuration phase`() {
+  fun `test Gradle current phase is not updated on RUN_WORK events if in configuration phase`() {
     var state = GradleProgressState(CONFIGURATION, 1)
 
     // Nothing is updated
-    var event = buildPhaseStartEvent("RUN_MAIN_TASKS", 1)
-    state = GradleProgressIndicatorEventHelper.updateGradleProgressState(state, event)
-    assertThat(state).isEqualTo(GradleProgressState(CONFIGURATION, 1))
-
-    // Nothing is updated
-    event = buildPhaseStartEvent("RUN_WORK", 1)
+    val event = buildPhaseStartEvent("RUN_WORK", 1)
     state = GradleProgressIndicatorEventHelper.updateGradleProgressState(state, event)
     assertThat(state).isEqualTo(GradleProgressState(CONFIGURATION, 1))
   }
@@ -120,6 +118,15 @@ internal class GradleProgressIndicatorEventHelperTest {
     assertThat(state).isEqualTo(GradleProgressState.newInitializationState())
 
     event = taskFinishEvent(":my-project:test")
+    state = GradleProgressIndicatorEventHelper.updateGradleProgressState(state, event)
+    assertThat(state).isEqualTo(GradleProgressState.newInitializationState())
+
+    // Nothing changes on transform events
+    event = transformStartEvent(":my-project:transform")
+    state = GradleProgressIndicatorEventHelper.updateGradleProgressState(state, event)
+    assertThat(state).isEqualTo(GradleProgressState.newInitializationState())
+
+    event = transformFinishEvent(":my-project:transform")
     state = GradleProgressIndicatorEventHelper.updateGradleProgressState(state, event)
     assertThat(state).isEqualTo(GradleProgressState.newInitializationState())
   }
@@ -211,6 +218,8 @@ internal class GradleProgressIndicatorEventHelperTest {
       return Stream.of(
         Arguments.of(EXECUTION, taskStartEvent("task")),
         Arguments.of(EXECUTION, taskFinishEvent("task")),
+        Arguments.of(EXECUTION, transformStartEvent("transform")),
+        Arguments.of(EXECUTION, transformFinishEvent("transform")),
         Arguments.of(EXECUTION_DONE, buildPhaseFinishEvent("RUN_MAIN_TASKS")),
         Arguments.of(CONFIGURATION, projectConfigurationStartEvent("project")),
         Arguments.of(CONFIGURATION, projectConfigurationFinishEvent("project")),
@@ -222,8 +231,12 @@ internal class GradleProgressIndicatorEventHelperTest {
       return Stream.of(
         Arguments.of(INITIALIZATION, taskStartEvent("task")),
         Arguments.of(INITIALIZATION, taskFinishEvent("task")),
+        Arguments.of(INITIALIZATION, transformStartEvent("transform")),
+        Arguments.of(INITIALIZATION, transformFinishEvent("transform")),
         Arguments.of(CONFIGURATION, taskStartEvent("task")),
         Arguments.of(CONFIGURATION, taskFinishEvent("task")),
+        Arguments.of(CONFIGURATION, transformStartEvent("transform")),
+        Arguments.of(CONFIGURATION, transformFinishEvent("transform")),
 
         Arguments.of(INITIALIZATION, projectConfigurationStartEvent("project")),
         Arguments.of(INITIALIZATION, projectConfigurationFinishEvent("project")),
@@ -266,6 +279,22 @@ internal class GradleProgressIndicatorEventHelperTest {
       val event = mock(TaskFinishEvent::class.java)
       val descriptor = mock(TaskOperationDescriptor::class.java)
       given(descriptor.taskPath).willReturn(taskPath)
+      given(event.descriptor).willReturn(descriptor)
+      return event
+    }
+
+    private fun transformStartEvent(transformName: String): ProgressEvent {
+      val event = mock(TransformStartEvent::class.java)
+      val descriptor = mock(TransformOperationDescriptor::class.java)
+      given(descriptor.displayName).willReturn(transformName)
+      given(event.descriptor).willReturn(descriptor)
+      return event
+    }
+
+    private fun transformFinishEvent(transformName: String): ProgressEvent {
+      val event = mock(TransformFinishEvent::class.java)
+      val descriptor = mock(TransformOperationDescriptor::class.java)
+      given(descriptor.displayName).willReturn(transformName)
       given(event.descriptor).willReturn(descriptor)
       return event
     }

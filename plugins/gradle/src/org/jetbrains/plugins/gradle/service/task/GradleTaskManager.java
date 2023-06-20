@@ -40,7 +40,7 @@ import org.jetbrains.plugins.gradle.service.GradleFileModificationTracker;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.service.execution.GradleCommandLineUtil;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
-import org.jetbrains.plugins.gradle.service.execution.GradleProgressIndicatorWrapper;
+import org.jetbrains.plugins.gradle.service.execution.GradleProgressIndicatorEventListener;
 import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
@@ -109,7 +109,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
         myHelper.ensureInstalledWrapper(id, rootProjectPath, effectiveSettings, listener, cancellationToken);
       }
 
-      GradleProgressIndicatorWrapper.INSTANCE.registerGradleProgressIndicator(id, effectiveSettings);
+      GradleProgressIndicatorEventListener.maybeRegister(id, effectiveSettings);
       myHelper.execute(projectPath, effectiveSettings, id, listener, cancellationTokenSource, connection -> {
         executeTasks(id, tasks, projectPath, effectiveSettings, jvmParametersSetup, listener, connection, cancellationTokenSource);
         return null;
