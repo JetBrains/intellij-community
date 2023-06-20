@@ -513,14 +513,7 @@ internal class SqliteVcsLogStorageBackend(project: Project,
     val position = rootsToPosition.getInt(root)
     return connectionManager.selectPathIdPool.use { statement, binder ->
       binder.bind(position, relativePath)
-
-      val rs = statement.executeQuery()
-      if (rs.next()) {
-        rs.getInt(0)
-      }
-      else {
-        null
-      }
+      statement.selectInt()
     }
   }
 
@@ -538,13 +531,8 @@ internal class SqliteVcsLogStorageBackend(project: Project,
     val paramBinder = ObjectBinder(paramCount = 2)
     connection.prepareStatement("select rowid from commit_hashes where position = ? and hash = ?", paramBinder).use { statement ->
       paramBinder.bind(position, hash.asString())
-
-      val rs = statement.executeQuery()
-      if (rs.next()) {
-        return rs.getInt(0)
-      }
+      return statement.selectInt()
     }
-    return null
   }
 
   override fun getCommitIds(commitIds: Collection<Int>): Map<Int, CommitId> {
