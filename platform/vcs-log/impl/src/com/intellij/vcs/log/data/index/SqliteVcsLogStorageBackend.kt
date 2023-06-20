@@ -598,7 +598,6 @@ internal class SqliteVcsLogStorageBackend(project: Project,
 
   override fun getRefIndex(ref: VcsRef): Int {
     val position = rootsToPosition.getInt(ref.root)
-    val hash = ref.commitHash
     val hashStr = ref.commitHash.asString()
     val name = ref.name
     val refTypeSerializer = VcsRefTypeSerializer()
