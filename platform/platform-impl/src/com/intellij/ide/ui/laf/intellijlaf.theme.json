@@ -1101,7 +1101,7 @@
     "LineProfiler" : {
       "Line" : {
         "labelBackground" : "#DFDFDF",
-        "foreground" : "#808080",
+        "foreground" : "#616769",
         "hoverBackground" : "#D1D1D1"
       },
       "HotLine" : {
