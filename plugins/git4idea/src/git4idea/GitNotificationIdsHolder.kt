@@ -107,7 +107,9 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
       REBASE_STOPPED_ON_EDITING,
       REBASE_FAILED,
       UNTRACKED_FIES_OVERWITTEN,
-      TAGS_LOADING_FAILED
+      TAGS_LOADING_FAILED,
+      OPEN_IN_BROWSER_ERROR,
+      IGNORE_FILE_GENERATION_ERROR
     )
   }
 
@@ -215,5 +217,6 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val UNTRACKED_FIES_OVERWITTEN = "untracked.files.overwritten"
     const val TAGS_LOADING_FAILED = "git.tags.loading.failed"
     const val OPEN_IN_BROWSER_ERROR: String = "git.open.in.browser.error"
+    const val IGNORE_FILE_GENERATION_ERROR: String = "git.ignore.file.generation.error"
   }
 }
