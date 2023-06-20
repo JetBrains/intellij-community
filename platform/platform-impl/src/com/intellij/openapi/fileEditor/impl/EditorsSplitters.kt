@@ -212,8 +212,7 @@ open class EditorsSplitters internal constructor(
     if (showEmptyText()) {
       val gg = IdeBackgroundUtil.withFrameBackground(g, this)
       super.paintComponent(gg)
-      @Suppress("UseJBColor")
-      g.color = if (StartupUiUtil.isUnderDarcula) JBColor.border() else Color(0, 0, 0, 50)
+      g.color = JBColor.border()
       g.drawLine(0, 0, width, 0)
     }
   }
