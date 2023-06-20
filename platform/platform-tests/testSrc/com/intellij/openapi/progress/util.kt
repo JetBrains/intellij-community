@@ -71,12 +71,6 @@ suspend fun Job.timeoutJoin() {
   }
 }
 
-suspend fun <T> Deferred<T>.timeoutAwait(): T {
-  return withTimeout(TEST_TIMEOUT_MS) {
-    await()
-  }
-}
-
 fun waitAssertCompletedNormally(job: Job) {
   job.timeoutJoinBlocking()
   assertFalse(job.isCancelled)
