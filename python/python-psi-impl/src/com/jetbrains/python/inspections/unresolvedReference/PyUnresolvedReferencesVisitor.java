@@ -486,9 +486,6 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
       }
     }
     else {
-      if (PyKnownDecoratorUtil.hasUnknownDecorator(cls, myTypeEvalContext)) {
-        return true;
-      }
       final String docString = cls.getDocStringValue();
       if (docString != null && docString.contains("@DynamicAttrs")) {
         return true;
