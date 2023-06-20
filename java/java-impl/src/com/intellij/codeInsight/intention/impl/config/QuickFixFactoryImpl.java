@@ -649,8 +649,8 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createMoveBoundClassToFrontFix(@NotNull PsiClass aClass, @NotNull PsiClassType type) {
-    return new MoveBoundClassToFrontFix(aClass, type);
+  public IntentionAction createMoveBoundClassToFrontFix(@NotNull PsiTypeParameter aClass, @NotNull PsiClassType type) {
+    return new MoveBoundClassToFrontFix(aClass, type).asIntention();
   }
 
   @Override

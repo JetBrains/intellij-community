@@ -360,7 +360,7 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createMakeReceiverParameterFirstFix(@NotNull PsiReceiverParameter parameter);
 
   @NotNull
-  public abstract IntentionAction createMoveBoundClassToFrontFix(@NotNull PsiClass aClass, @NotNull PsiClassType type);
+  public abstract IntentionAction createMoveBoundClassToFrontFix(@NotNull PsiTypeParameter aClass, @NotNull PsiClassType type);
 
   public abstract void registerPullAsAbstractUpFixes(@NotNull PsiMethod method, @NotNull List<? super IntentionAction> registrar);
 
