@@ -274,7 +274,12 @@ public class DefaultTreeUI extends BasicTreeUI {
               int rendererOffset = painter.getRendererOffset(control, depth, leaf);
               int controlOffset = painter.getControlOffset(control, depth, leaf);
               int left = Math.min(helper.getX() + borderOffset, insets.left + (controlOffset < 0 ? rendererOffset : controlOffset));
-              int right = Math.max(helper.getX() + helper.getWidth() - borderOffset, insets.left + rendererOffset + bounds.width + JBUI.scale(4));
+              int treeRight = helper.getX() + helper.getWidth() - borderOffset;
+              int right = treeRight;
+              if (helper.isShrinkingSelectionDisabled(row)) {
+                int rendererRight = insets.left + rendererOffset + bounds.width + JBUI.scale(4);
+                right = Math.max(treeRight, rendererRight);
+              }
               int[] rows = tree.getSelectionRows();
               boolean shouldPaintTop = false;
               boolean shouldPaintBottom = false;

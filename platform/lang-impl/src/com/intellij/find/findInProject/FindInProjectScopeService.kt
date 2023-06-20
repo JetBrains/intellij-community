@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nls
 
 @Service(Service.Level.PROJECT)
 @State(name = "FindInProjectScope", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
-internal class FindInProjectState : PersistentStateComponent<FindInProjectState> {
+internal class FindInProjectScopeService : PersistentStateComponent<FindInProjectScopeService> {
 
   fun load(model: FindModel) {
     val customScopeName = this.customScopeName
@@ -54,14 +54,14 @@ internal class FindInProjectState : PersistentStateComponent<FindInProjectState>
   @Property
   private var customScopeName: String? = null
 
-  override fun getState(): FindInProjectState = this
+  override fun getState(): FindInProjectScopeService = this
 
-  override fun loadState(state: FindInProjectState) {
+  override fun loadState(state: FindInProjectScopeService) {
     XmlSerializerUtil.copyBean(state, this)
   }
 
   companion object {
-    @JvmStatic fun getInstance(project: Project): FindInProjectState = project.service()
+    @JvmStatic fun getInstance(project: Project): FindInProjectScopeService = project.service()
   }
 
 }

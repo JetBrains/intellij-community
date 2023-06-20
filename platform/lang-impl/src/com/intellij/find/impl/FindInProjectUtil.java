@@ -3,7 +3,7 @@ package com.intellij.find.impl;
 
 import com.intellij.find.*;
 import com.intellij.find.findInProject.FindInProjectManager;
-import com.intellij.find.findInProject.FindInProjectState;
+import com.intellij.find.findInProject.FindInProjectScopeService;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.LangBundle;
@@ -70,7 +70,7 @@ public final class FindInProjectUtil {
 
   public static void setScope(@NotNull Project project, @NotNull FindModel model, @NotNull DataContext dataContext) {
     if (AdvancedSettings.getBoolean("ide.remember.last.search.scope")) {
-      FindInProjectState.getInstance(project).load(model);
+      FindInProjectScopeService.getInstance(project).load(model);
     }
     else {
       setDirectoryName(model, dataContext);
