@@ -61,11 +61,17 @@ class CommandSpecSuggestionsTest {
         dependsOn("-a", "-c")
       }
     }
+
+    subcommand("reqSub") {
+      requiresSubcommand = true
+      subcommand("abc")
+      option("-a")
+    }
   }
 
   @Test
   fun `main command`() {
-    doTest(expected = listOf("sub", "excl", "-a", "--asd", "--bcde", "--argum", "abc"))
+    doTest(expected = listOf("sub", "excl", "reqSub", "-a", "--asd", "--bcde", "--argum", "abc"))
   }
 
   @Test
@@ -101,6 +107,11 @@ class CommandSpecSuggestionsTest {
   @Test
   fun `suggest option only if dependants present`() {
     doTest("excl", "-a", "-c", expected = listOf("-d", "--bcde"))
+  }
+
+  @Test
+  fun `do not suggest options if command requires subcommand`() {
+    doTest("reqSub", expected = listOf("abc"))
   }
 
   private fun doTest(vararg arguments: String, expected: List<String>) {
