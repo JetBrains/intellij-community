@@ -6,7 +6,6 @@ import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -154,6 +153,10 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
   }
 
   private record FileMarkupInfo(@NotNull VirtualFile virtualFile, int contentHash, @NotNull List<HighlighterState> highlighters) {
+    private FileMarkupInfo(@NotNull TextEditor textEditor, @NotNull Project project) {
+      this(textEditor.getFile(), textEditor.getEditor().getDocument().getText().hashCode(), HighlighterState.allHighlightersFromMarkup(textEditor.getEditor(), project));
+    }
+
     static FileMarkupInfo exhume(@NotNull Element element) {
       String url = element.getAttributeValue("url", "");
       VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(url);
@@ -289,17 +292,10 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
   public Element getState() {
     Map<VirtualFile, FileMarkupInfo> markup =
     Arrays.stream(FileEditorManager.getInstance(myProject).getAllEditors())
-      // consider only TextEditors which are completely highlighted
-      .filter(fe -> isHighlightingCompleted(fe, myProject))
-      .map(te -> {
-        Editor editor = ((TextEditor)te).getEditor();
-        Document document = editor.getDocument();
-        int hash = document.getText().hashCode();
-        List<HighlighterState> highlighters = HighlighterState.allHighlightersFromMarkup(editor, myProject);
-        return new FileMarkupInfo(te.getFile(), hash, highlighters);
-      })
+      .filter(fe -> fe instanceof TextEditor)
+      .map(te -> new FileMarkupInfo((TextEditor)te, myProject))
       .filter(m->!m.highlighters().isEmpty())
-      .collect(Collectors.toConcurrentMap(m->m.virtualFile(), m->m));
+      .collect(Collectors.toMap(m->m.virtualFile(), m->m));
 
     List<Element> markupElements = markup.entrySet().stream()
       .sorted(Comparator.comparing(e -> e.getKey().getUrl()))
