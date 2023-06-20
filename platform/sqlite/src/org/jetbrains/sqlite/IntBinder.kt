@@ -46,7 +46,7 @@ class IntBinder(paramCount: Int, batchCountHint: Int = 1) : BaseBinder(paramCoun
     }
   }
 
-  override fun executeBatch(pointer: Long, db: SqliteDb) {
+  override fun executeBatch(pointer: Long, db: NativeDB) {
     for (batchIndex in 0 until batchQueryCount) {
       db.reset(pointer)
       for (index in 0 until paramCount) {
@@ -112,7 +112,7 @@ class LongBinder(paramCount: Int, batchCountHint: Int = 1) : BaseBinder(paramCou
     }
   }
 
-  override fun executeBatch(pointer: Long, db: SqliteDb) {
+  override fun executeBatch(pointer: Long, db: NativeDB) {
     for (batchIndex in 0 until batchQueryCount) {
       db.reset(pointer)
       for (index in 0 until paramCount) {

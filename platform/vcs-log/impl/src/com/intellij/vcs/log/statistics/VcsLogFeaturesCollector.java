@@ -122,8 +122,11 @@ public @NonNls class VcsLogFeaturesCollector extends ProjectUsagesCollector {
                            COLUMN, new ArrayList<>(List.of(COLUMN_NAME.with(columnName))));
         }
 
-        Collection<String> tabs = projectLog.getTabManager$intellij_platform_vcs_log_impl().getTabs();
-        metricEvents.add(ADDITIONAL_TABS.metric(EventFields.Count.with(tabs.size())));
+        VcsLogTabsManager tabManager = projectLog.getTabManager();
+        if (tabManager != null) {
+          Collection<String> tabs = tabManager.getTabs();
+          metricEvents.add(ADDITIONAL_TABS.metric(EventFields.Count.with(tabs.size())));
+        }
 
         return metricEvents;
       }

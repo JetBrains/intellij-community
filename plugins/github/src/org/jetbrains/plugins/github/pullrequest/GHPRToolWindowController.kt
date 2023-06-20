@@ -11,8 +11,8 @@ import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowLogi
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowRepositoryContentController
 import java.util.concurrent.CompletableFuture
 
-@Service
-internal class GHPRToolWindowController(private val project: Project) {
+@Service(Service.Level.PROJECT)
+class GHPRToolWindowController(private val project: Project) {
   @RequiresEdt
   fun isAvailable(): Boolean {
     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(GHPRToolWindowFactory.ID) ?: return false

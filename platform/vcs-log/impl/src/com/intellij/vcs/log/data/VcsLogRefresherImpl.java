@@ -13,7 +13,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.index.VcsLogModifiableIndex;
@@ -156,17 +155,35 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     return joined;
   }
 
-  private @NotNull List<GraphCommit<Integer>> compactCommits(@NotNull List<? extends TimedVcsCommit> commits, final @NotNull VirtualFile root) {
+  private @NotNull List<GraphCommit<Integer>> compactCommits(@NotNull List<? extends TimedVcsCommit> commits, @NotNull VirtualFile root) {
     return computeWithSpan(myTracer, "compacting commits", (span -> {
-      List<GraphCommit<Integer>> map = ContainerUtil.map(commits, commit -> compactCommit(commit, root));
-      myStorage.flush();
-      return map;
+      if (commits.isEmpty()) {
+        return Collections.emptyList();
+      }
+
+      List<GraphCommit<Integer>> list = new ArrayList<>(commits.size());
+      myStorage.executeTransaction(() -> {
+        for (TimedVcsCommit commit : commits) {
+          list.add(compactCommit(commit, root));
+        }
+      });
+      return list;
     }));
   }
 
-  private @NotNull GraphCommit<Integer> compactCommit(@NotNull TimedVcsCommit commit, final @NotNull VirtualFile root) {
-    List<Integer> parents = ContainerUtil.map(commit.getParents(),
-                                              (NotNullFunction<Hash, Integer>)hash -> myStorage.getCommitIndex(hash, root));
+  private @NotNull GraphCommit<Integer> compactCommit(@NotNull TimedVcsCommit commit, @NotNull VirtualFile root) {
+    List<Integer> parents;
+    Collection<? extends Hash> collection = commit.getParents();
+    if (collection.isEmpty()) {
+      parents = Collections.emptyList();
+    }
+    else {
+      parents = new ArrayList<>(collection.size());
+      for (Hash t : collection) {
+        parents.add(myStorage.getCommitIndex(t, root));
+      }
+    }
+
     int index = myStorage.getCommitIndex(commit.getId(), root);
     myIndex.markForIndexing(index, root);
     return GraphCommitImpl.createIntCommit(index, parents, commit.getTimestamp());

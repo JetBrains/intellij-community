@@ -37,6 +37,7 @@ class ExecutionPositionGutterVm(val gutterIconRendererState: StateFlow<GutterIco
 
 
 internal class ExecutionPointVmImpl(
+  internal val coroutineScope: CoroutineScope,
   override val mainPositionVm: ExecutionPositionVm?,
   override val alternativePositionVm: ExecutionPositionVm?,
   override val isTopFrame: Boolean,
@@ -73,7 +74,7 @@ internal class ExecutionPointVmImpl(
       val mainPositionVm = createPositionVm(mainSourcePosition, XSourceKind.MAIN)
       val alternativePositionVm = createPositionVm(alternativeSourcePosition, XSourceKind.ALTERNATIVE)
 
-      return ExecutionPointVmImpl(mainPositionVm, alternativePositionVm, isTopFrame, activeSourceKindState)
+      return ExecutionPointVmImpl(coroutineScope, mainPositionVm, alternativePositionVm, isTopFrame, activeSourceKindState)
     }
   }
 }

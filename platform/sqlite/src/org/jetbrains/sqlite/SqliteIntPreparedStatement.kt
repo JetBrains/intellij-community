@@ -39,10 +39,7 @@ class SqliteIntPreparedStatement internal constructor(private val connection: Sq
       val pointer = pointer ?: return
       this.pointer = null
       batchPosition = 0
-      val status = pointer.close()
-      if (status != SqliteCodes.SQLITE_OK && status != SqliteCodes.SQLITE_MISUSE) {
-        throw db.newException(status)
-      }
+      pointer.close(db)
     }
   }
 

@@ -17,35 +17,18 @@ internal class SafeStatementPointer(
   var isClosed: Boolean = false
     private set
 
-  // to return on subsequent calls to close() after this ptr has been closed
-  private var closeOperationStatus = 0
-
-  // to throw on subsequent calls to close, after this ptr has been closed if the close function threw an exception
-  private var closeException: Exception? = null
-
-  /**
-   * Close this pointer
-   *
-   * @return the return code of the close callback function
-   */
-  fun close(): Int = connection.useDb { db -> internalClose(db) }
-
-  internal fun internalClose(db: SqliteDb): Int {
+  internal fun close(db: SqliteDb) {
     // if this is already closed, return or throw the previous result
     if (isClosed) {
-      closeException?.let {
-        throw it
-      }
-      return closeOperationStatus
+      return
     }
 
     try {
-      closeOperationStatus = db.finalize(this, pointer)
-      return closeOperationStatus
-    }
-    catch (e: Exception) {
-      closeException = e
-      throw e
+      val status = db.finalize(this, pointer)
+      if (status != SqliteCodes.SQLITE_OK && status != SqliteCodes.SQLITE_MISUSE) {
+        throw db.newException(status)
+      }
+      return
     }
     finally {
       isClosed = true
@@ -58,7 +41,7 @@ internal class SafeStatementPointer(
    * @param task the function to run
    * @return the return of the passed in function
    */
-  inline fun safeRunInt(task: (db: SqliteDb, statementPointer: Long) -> Int): Int {
+  inline fun safeRunInt(task: (db: NativeDB, statementPointer: Long) -> Int): Int {
     connection.useDb { db ->
       ensureOpen()
       return task(db, pointer)

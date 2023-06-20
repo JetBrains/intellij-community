@@ -44,4 +44,8 @@ internal class GitLabToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 
   override fun shouldBeAvailable(project: Project): Boolean = false
+
+  companion object {
+    const val ID = "Merge Requests"
+  }
 }
