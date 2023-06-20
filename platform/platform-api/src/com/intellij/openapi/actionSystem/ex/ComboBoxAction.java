@@ -167,7 +167,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       setHorizontalAlignment(LEFT);
       setFocusable(ScreenReader.isActive());
       putClientProperty("styleCombo", ComboBoxAction.this);
-      setMargin(JBUI.insets(0, 8, 0, 5));
+      setMargin();
       if (isSmallVariant()) {
         setFont(JBUI.Fonts.toolbarSmallComboBoxFont());
       }
@@ -205,6 +205,10 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       myPresentation.addPropertyChangeListener(evt -> {
         presentationChanged(evt);
       });
+    }
+
+    private void setMargin() {
+      setMargin(JBUI.insets(0, 8, 0, 5));
     }
 
     /**
@@ -382,6 +386,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       setUI(uiClassName == null ?
             BasicButtonUI.createUI(this) :
             UIManager.getUI(this));
+      setMargin();
     }
 
     @ApiStatus.Experimental
