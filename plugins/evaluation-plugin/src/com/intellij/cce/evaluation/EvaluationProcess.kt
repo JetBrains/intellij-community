@@ -78,10 +78,6 @@ class EvaluationProcess private constructor(private val steps: List<EvaluationSt
         steps.add(factory.reorderElements())
       }
 
-      if (shouldHighlightInIde) {
-        steps.add(factory.highlightTokensInIdeStep())
-      }
-
       if (shouldGenerateReports) {
         steps.add(factory.generateReportStep())
       }

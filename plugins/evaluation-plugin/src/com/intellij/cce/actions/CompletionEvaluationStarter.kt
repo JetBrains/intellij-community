@@ -104,7 +104,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
       val config = loadConfig(Paths.get(configPath), feature.getStrategySerializer())
       val project = loadProject(config.projectPath)
       val workspace = EvaluationWorkspace.create(config)
-      val stepFactory = BackgroundStepFactory(feature, config, project, true, null, EvaluationRootInfo(true))
+      val stepFactory = BackgroundStepFactory(feature, config, project, null, EvaluationRootInfo(true))
       EvaluationProcess.build({
                                 customize()
                                 shouldReorderElements = config.reorder.useReordering
@@ -147,7 +147,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
                                               shouldInterpretActions = interpretActions
                                               shouldReorderElements = reorderElements
                                               shouldGenerateReports = generateReport
-                                            }, BackgroundStepFactory(feature, config, project, true, null, EvaluationRootInfo(true)))
+                                            }, BackgroundStepFactory(feature, config, project, null, EvaluationRootInfo(true)))
       process.startAsync(workspace)
     }
   }
@@ -164,7 +164,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
       val project = loadProject(config.projectPath)
       val process = EvaluationProcess.build({
                                               shouldGenerateReports = true
-                                            }, BackgroundStepFactory(feature, config, project, true, workspacesToCompare, EvaluationRootInfo(true)))
+                                            }, BackgroundStepFactory(feature, config, project, workspacesToCompare, EvaluationRootInfo(true)))
       process.startAsync(outputWorkspace)
     }
   }

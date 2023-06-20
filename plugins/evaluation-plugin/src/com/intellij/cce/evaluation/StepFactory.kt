@@ -5,7 +5,6 @@ interface StepFactory {
   fun interpretActionsStep(): EvaluationStep
   fun interpretActionsOnNewWorkspaceStep(): EvaluationStep
   fun reorderElements(): EvaluationStep
-  fun highlightTokensInIdeStep(): EvaluationStep
   fun generateReportStep(): EvaluationStep
   fun finishEvaluationStep(): EvaluationStep
   fun setupStatsCollectorStep(): EvaluationStep?

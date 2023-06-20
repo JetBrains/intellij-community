@@ -27,9 +27,8 @@ class ReportGenerationStep<T : EvaluationStrategy>  (
   filters: List<SessionsFilter>,
   comparisonFilters: List<CompareSessionsFilter>,
   project: Project,
-  isHeadless: Boolean,
   private val feature: EvaluableFeature<T>
-  ) : BackgroundEvaluationStep(project, isHeadless) {
+  ) : BackgroundEvaluationStep(project) {
   override val name: String = "Report generation"
 
   override val description: String = "Generation of HTML-report"

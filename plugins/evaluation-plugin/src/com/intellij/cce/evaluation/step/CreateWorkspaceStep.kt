@@ -9,8 +9,7 @@ import com.intellij.openapi.project.Project
 abstract class CreateWorkspaceStep(
   private val config: Config,
   private val handler: TwoWorkspaceHandler,
-  project: Project,
-  isHeadless: Boolean) : BackgroundEvaluationStep(project, isHeadless) {
+  project: Project) : BackgroundEvaluationStep(project) {
 
   override fun runInBackground(workspace: EvaluationWorkspace, progress: Progress): EvaluationWorkspace {
     val newWorkspace = EvaluationWorkspace.create(config)

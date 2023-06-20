@@ -23,10 +23,9 @@ class ActionsGenerationStep(
   private val language: String,
   private val evaluationRootInfo: EvaluationRootInfo,
   project: Project,
-  isHeadless: Boolean,
   private val processor: GenerateActionsProcessor,
   private val featureName: String
-  ) : BackgroundEvaluationStep(project, isHeadless) {
+  ) : BackgroundEvaluationStep(project) {
   override val name: String = "Generating actions"
 
   override val description: String = "Generating actions by selected files"

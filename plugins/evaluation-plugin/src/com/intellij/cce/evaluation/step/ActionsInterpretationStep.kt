@@ -11,8 +11,7 @@ class ActionsInterpretationStep(
   private val config: Config.ActionsInterpretation,
   private val language: String,
   private val actionsInvoker: ActionsInvoker,
-  project: Project,
-  isHeadless: Boolean) : BackgroundEvaluationStep(project, isHeadless) {
+  project: Project) : BackgroundEvaluationStep(project) {
   override val name: String = "Actions interpreting"
 
   override val description: String = "Interpretation of generated actions"

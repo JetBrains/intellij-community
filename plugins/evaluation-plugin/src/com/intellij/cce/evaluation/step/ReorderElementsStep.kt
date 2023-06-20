@@ -12,12 +12,11 @@ import com.intellij.cce.workspace.FeaturesSerializer
 import com.intellij.cce.workspace.info.FileSessionsInfo
 import com.intellij.openapi.project.Project
 
-class ReorderElementsStep(config: Config, project: Project, isHeadless: Boolean) :
+class ReorderElementsStep(config: Config, project: Project) :
   CreateWorkspaceStep(
     Config.buildFromConfig(config) { evaluationTitle = config.reorder.title },
     ReorderElementsHandler(config.reorder.features),
-    project,
-    isHeadless) {
+    project) {
 
   override val name: String = "Reorder elements"
 
