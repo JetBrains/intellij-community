@@ -9,7 +9,8 @@ class HeadlessFinishEvaluationStep : FinishEvaluationStep() {
     print("Evaluation completed. ")
     if (workspace.getReports().isEmpty()) {
       println(" Workspace: ${workspace.path()}")
-    } else {
+    }
+    else {
       println("Reports:")
       workspace.getReports().forEach { println("${it.key}: ${it.value}") }
     }

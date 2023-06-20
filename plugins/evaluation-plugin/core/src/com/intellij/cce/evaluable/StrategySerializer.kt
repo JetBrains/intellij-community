@@ -7,6 +7,6 @@ import com.google.gson.JsonSerializer
 import java.lang.reflect.Type
 
 interface StrategySerializer<T : EvaluationStrategy> : JsonSerializer<T> {
-    override fun serialize(src: T, typeOfSrc: Type, context: JsonSerializationContext): JsonObject
-    fun deserialize(map: Map<String, Any>, language: String): T
+  override fun serialize(src: T, typeOfSrc: Type, context: JsonSerializationContext): JsonObject
+  fun deserialize(map: Map<String, Any>, language: String): T
 }

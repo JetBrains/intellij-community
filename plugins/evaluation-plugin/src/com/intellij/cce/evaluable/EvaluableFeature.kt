@@ -28,7 +28,7 @@ interface EvaluableFeature<T : EvaluationStrategy> {
 
   fun getStrategySerializer(): StrategySerializer<T>
 
-  fun getGenerateActionsProcessor(strategy: T) : GenerateActionsProcessor
+  fun getGenerateActionsProcessor(strategy: T): GenerateActionsProcessor
 
   fun getActionsInvoker(project: Project, language: Language, strategy: T): ActionsInvoker
 
@@ -37,7 +37,7 @@ interface EvaluableFeature<T : EvaluationStrategy> {
                              comparisonFilterName: String,
                              featuresStorages: List<FeaturesStorage>,
                              fullLineStorages: List<FullLineLogsStorage>,
-                             dirs: GeneratorDirectories) : FileReportGenerator =
+                             dirs: GeneratorDirectories): FileReportGenerator =
     BasicFileReportGenerator(suggestionsComparators, filterName, comparisonFilterName, featuresStorages, dirs)
 
   fun getMetrics(): List<Metric> = listOf(

@@ -3,9 +3,7 @@ package com.intellij.cce.metric
 
 import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
-import com.intellij.cce.metric.util.Bootstrap
 import com.intellij.cce.metric.util.Sample
-import org.apache.commons.lang.StringUtils
 
 fun createCompletionGolfMetrics(): List<Metric> =
   listOf(
@@ -72,9 +70,12 @@ internal class TypingsCount : CompletionGolfMetric<Int>() {
     get() = sample.sum()
 
   override fun compute(sessions: List<Session>, comparator: SuggestionsComparator): Int =
-    sessions.sumOf { it.expectedLength() +
-                     it.lookups.count { it.selectedPosition >= 0 } -
-                     it.lookups.sumOf { it.selectedWithoutPrefix()?.length ?: 0 } }
+    sessions.sumOf {
+      it.expectedLength() +
+      it.lookups.count { it.selectedPosition >= 0 } -
+      it.lookups.sumOf { it.selectedWithoutPrefix()?.length ?: 0 }
+    }
+
   companion object {
     const val NAME = "Typings"
   }

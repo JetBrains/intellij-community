@@ -5,8 +5,6 @@ import com.google.gson.Gson
 import com.intellij.cce.core.Session
 import com.intellij.cce.workspace.FeaturesSerializer
 import java.io.File
-import java.io.FileReader
-import java.io.FileWriter
 import java.nio.file.Paths
 
 class FeaturesStorageImpl(storageDir: String) : StorageWithMetadataBase(storageDir), FeaturesStorage {

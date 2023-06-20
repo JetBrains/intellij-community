@@ -40,7 +40,8 @@ class ListSizeRestriction private constructor(private val list: List<*>) {
       currentSize = list.size
       if (currentSize > previousSize) {
         attemptsToWait += 1
-      } else {
+      }
+      else {
         attemptsToWait = 0
       }
     }

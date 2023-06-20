@@ -2,9 +2,9 @@
 package com.intellij.cce.evaluable.completion
 
 
-import com.intellij.cce.core.*
-import com.intellij.cce.evaluation.CodeCompletionHandlerFactory
+import com.intellij.cce.core.Language
 import com.intellij.cce.evaluable.common.BasicActionsInvoker
+import com.intellij.cce.evaluation.CodeCompletionHandlerFactory
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 import com.intellij.codeInsight.completion.CompletionProgressIndicator
 import com.intellij.codeInsight.lookup.Lookup
@@ -12,17 +12,16 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEx
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.completion.ml.actions.MLCompletionFeaturesUtil
-import com.intellij.completion.ml.util.prefix
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
-import java.util.*
 
 abstract class BaseCompletionActionsInvoker(project: Project,
                                             language: Language) : BasicActionsInvoker(project, language) {
 
-  protected fun invokeCompletion(expectedText: String, prefix: String?, completionType: com.intellij.codeInsight.completion.CompletionType): LookupEx? {
+  protected fun invokeCompletion(expectedText: String,
+                                 prefix: String?,
+                                 completionType: com.intellij.codeInsight.completion.CompletionType): LookupEx? {
     val handlerFactory = CodeCompletionHandlerFactory.findCompletionHandlerFactory(project, language)
     val handler = handlerFactory?.createHandler(completionType, expectedText, prefix) ?: object : CodeCompletionHandlerBase(completionType,
                                                                                                                             false, false,

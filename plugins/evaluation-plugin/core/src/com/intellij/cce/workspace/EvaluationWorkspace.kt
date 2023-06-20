@@ -63,7 +63,7 @@ class EvaluationWorkspace private constructor(private val basePath: Path) {
 
   fun path(): Path = basePath
 
-  fun<T : EvaluationStrategy> readConfig(strategySerializer: StrategySerializer<T>): Config =
+  fun <T : EvaluationStrategy> readConfig(strategySerializer: StrategySerializer<T>): Config =
     ConfigFactory.load(pathToConfig, strategySerializer)
 
   fun saveAdditionalStats(name: String, stats: Map<String, Any>) {

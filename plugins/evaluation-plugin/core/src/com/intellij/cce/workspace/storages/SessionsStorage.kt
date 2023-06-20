@@ -5,9 +5,6 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.intellij.cce.workspace.SessionSerializer
 import com.intellij.cce.workspace.info.FileSessionsInfo
-import java.io.FileReader
-import java.io.FileWriter
-import java.nio.file.Paths
 
 open class SessionsStorage(storageDir: String) : StorageWithMetadataBase(storageDir) {
   companion object {

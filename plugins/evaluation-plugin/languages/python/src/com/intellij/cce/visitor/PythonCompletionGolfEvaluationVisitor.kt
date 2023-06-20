@@ -89,7 +89,8 @@ class PythonCompletionGolfVisitorFactory : CompletionGolfVisitorFactory {
     override fun visitElement(element: PsiElement) {
       if (tokenSetContributor.keywordTokens.contains(element.elementType)) {
         addElement(element.node)
-      } else if (element is PsiNameIdentifierOwner) {
+      }
+      else if (element is PsiNameIdentifierOwner) {
         element.nameIdentifier?.node?.let { addElement(it) }
       }
       super.visitElement(element)
@@ -108,7 +109,8 @@ class PythonCompletionGolfVisitorFactory : CompletionGolfVisitorFactory {
     override fun visitPyStringLiteralExpression(node: PyStringLiteralExpression) {
       if (node.parent is PySubscriptionExpression) {
         addElement(node.node)
-      } else {
+      }
+      else {
         super.visitPyStringLiteralExpression(node)
       }
     }

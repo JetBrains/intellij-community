@@ -6,7 +6,6 @@ import com.intellij.cce.core.Session
 import com.intellij.cce.core.SuggestionKind
 import com.intellij.cce.metric.MovesCount
 import com.intellij.cce.metric.MovesCountNormalised
-import com.intellij.cce.metric.PerfectLine
 import com.intellij.cce.metric.TotalLatencyMetric
 import com.intellij.cce.workspace.storages.FeaturesStorage
 import com.intellij.cce.workspace.storages.FullLineLogsStorage
@@ -56,7 +55,7 @@ class CompletionGolfFileReportGenerator(
       else -> "stats-unknown"
     }
   } ?: "stats-unknown"
- 
+
   companion object {
     private enum class Threshold(override val value: Double, override val className: String) : BaseThreshold {
       EXCELLENT(System.getenv("CG_THRESHOLD_EXCELLENT")?.toDouble() ?: 0.15, "stats-excellent"),

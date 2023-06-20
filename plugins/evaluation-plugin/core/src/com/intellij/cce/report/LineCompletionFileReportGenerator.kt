@@ -3,8 +3,9 @@ package com.intellij.cce.report
 
 import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
-import com.intellij.cce.metric.*
-import com.intellij.cce.metric.PerfectLine
+import com.intellij.cce.metric.MatchedRatio
+import com.intellij.cce.metric.PrefixSimilarity
+import com.intellij.cce.metric.TotalLatencyMetric
 import com.intellij.cce.workspace.storages.FeaturesStorage
 import com.intellij.cce.workspace.storages.FullLineLogsStorage
 import jdk.jfr.Threshold
@@ -46,15 +47,15 @@ class LineCompletionFileReportGenerator(
   override fun getThresholds(): List<BaseThreshold> = Threshold.values().toList()
 
   override fun getThresholdClass(value: Double?): String = value?.let {
-      when {
-        Threshold.EXCELLENT <= value -> Threshold.EXCELLENT.className
-        Threshold.GOOD <= value -> Threshold.GOOD.className
-        Threshold.SATISFACTORY <= value -> Threshold.SATISFACTORY.className
-        Threshold.BAD <= value -> Threshold.BAD.className
-        Threshold.VERY_BAD <= value -> Threshold.VERY_BAD.className
-        else -> "stats-unknown"
-      }
-    } ?: "stats-unknown"
+    when {
+      Threshold.EXCELLENT <= value -> Threshold.EXCELLENT.className
+      Threshold.GOOD <= value -> Threshold.GOOD.className
+      Threshold.SATISFACTORY <= value -> Threshold.SATISFACTORY.className
+      Threshold.BAD <= value -> Threshold.BAD.className
+      Threshold.VERY_BAD <= value -> Threshold.VERY_BAD.className
+      else -> "stats-unknown"
+    }
+  } ?: "stats-unknown"
 
   companion object {
     enum class Threshold(override val value: Double, override val className: String) : BaseThreshold {

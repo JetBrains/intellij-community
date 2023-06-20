@@ -69,7 +69,8 @@ class CompletionGolfEmulation(private val strategy: CompletionGolfStrategy, priv
 
     return if (res != null) {
       possibleResult.takeIf { res.first.length < suggestion.length }
-    } else {
+    }
+    else {
       possibleResult
     }
   }

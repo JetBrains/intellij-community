@@ -1,8 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluation.step
 
-import com.intellij.cce.actions.*
-import com.intellij.cce.core.*
+import com.intellij.cce.actions.ActionsGenerator
+import com.intellij.cce.actions.CallFeature
+import com.intellij.cce.actions.FileActions
+import com.intellij.cce.core.JvmProperties
+import com.intellij.cce.core.PropertyAdapters
+import com.intellij.cce.core.SymbolLocation
+import com.intellij.cce.core.TokenProperties
 import com.intellij.cce.evaluation.EvaluationRootInfo
 import com.intellij.cce.processor.DefaultEvaluationRootProcessor
 import com.intellij.cce.processor.EvaluationRootByRangeProcessor
@@ -26,13 +31,15 @@ class ActionsGenerationStep(
   project: Project,
   private val processor: GenerateActionsProcessor,
   private val featureName: String
-  ) : BackgroundEvaluationStep(project) {
+) : BackgroundEvaluationStep(project) {
   override val name: String = "Generating actions"
 
   override val description: String = "Generating actions by selected files"
 
   override fun runInBackground(workspace: EvaluationWorkspace, progress: Progress): EvaluationWorkspace {
-    val filesForEvaluation = ReadAction.compute<List<VirtualFile>, Throwable> { FilesHelper.getFilesOfLanguage(project, config.actions.evaluationRoots, language) }
+    val filesForEvaluation = ReadAction.compute<List<VirtualFile>, Throwable> {
+      FilesHelper.getFilesOfLanguage(project, config.actions.evaluationRoots, language)
+    }
     generateActions(workspace, language, filesForEvaluation, evaluationRootInfo, progress)
     return workspace
   }

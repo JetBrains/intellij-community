@@ -2,6 +2,7 @@
 package com.intellij.cce.evaluation
 
 import com.intellij.cce.core.Language
+import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
@@ -13,7 +14,6 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.sdk.PythonSdkType
-import com.intellij.cce.workspace.EvaluationWorkspace
 
 class SetupPythonInterpreterStep(private val project: Project) : SetupSdkStep() {
   companion object {
@@ -39,7 +39,8 @@ class SetupPythonInterpreterStep(private val project: Project) : SetupSdkStep() 
       val projectSdk = projectRootManager.projectSdk
       if (projectSdk != null) {
         println("Project SDK already configured")
-      } else {
+      }
+      else {
         println("Project SDK not configured")
         val sdkHomePath = System.getenv("EVALUATION_PYTHON") ?: System.getenv("PYTHONPATH")
         if (sdkHomePath == null) {

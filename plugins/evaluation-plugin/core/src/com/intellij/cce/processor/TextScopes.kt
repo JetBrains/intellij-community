@@ -41,7 +41,8 @@ class TextScopes(text: String) {
           else if (SCOPE_CHARS.containsValue(char)) {
             if (opened.isEmpty()) {
               closed.add(char)
-            } else {
+            }
+            else {
               opened.pop()
             }
           }

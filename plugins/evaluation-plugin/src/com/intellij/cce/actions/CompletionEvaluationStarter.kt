@@ -9,7 +9,6 @@ import com.github.ajalt.clikt.parameters.arguments.default
 import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
-import com.google.gson.GsonBuilder
 import com.intellij.cce.evaluable.EvaluableFeature
 import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.evaluable.StrategySerializer
@@ -19,7 +18,6 @@ import com.intellij.cce.evaluation.EvaluationRootInfo
 import com.intellij.cce.util.ExceptionsUtil.stackTraceToString
 import com.intellij.cce.workspace.ConfigFactory
 import com.intellij.cce.workspace.EvaluationWorkspace
-import com.intellij.cce.workspace.filter.SessionsFilter
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.project.Project
@@ -46,7 +44,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
 
     protected val featureName by argument(name = "Feature name").default("rename")
 
-    protected fun<T : EvaluationStrategy> loadConfig(configPath: Path, strategySerializer: StrategySerializer<T>) = try {
+    protected fun <T : EvaluationStrategy> loadConfig(configPath: Path, strategySerializer: StrategySerializer<T>) = try {
       println("Load config: $configPath")
       val config = ConfigFactory.load(configPath, strategySerializer)
       println("Config loaded!")
@@ -165,7 +163,8 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
       val project = loadProject(config.projectPath)
       val process = EvaluationProcess.build({
                                               shouldGenerateReports = true
-                                            }, BackgroundStepFactory(feature, config, project, workspacesToCompare, EvaluationRootInfo(true)))
+                                            },
+                                            BackgroundStepFactory(feature, config, project, workspacesToCompare, EvaluationRootInfo(true)))
       process.startAsync(outputWorkspace)
     }
   }

@@ -142,6 +142,7 @@ enum class TypeProperty {
   LOCAL_VARIABLE,
   LINE,
   PARAMETER,
+
   // TODO: consider constructors separately
   TYPE_REFERENCE,
   METHOD_CALL,

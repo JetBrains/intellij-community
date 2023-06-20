@@ -1,10 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluable.completion
 
-import com.intellij.cce.actions.*
+import com.intellij.cce.actions.CallFeature
+import com.intellij.cce.actions.DeleteRange
+import com.intellij.cce.actions.MoveCaret
+import com.intellij.cce.actions.PrintText
 import com.intellij.cce.core.CodeFragment
 import com.intellij.cce.core.CodeToken
-import com.intellij.cce.processor.DeleteScopesProcessor
 import com.intellij.cce.processor.GenerateActionsProcessor
 import com.intellij.cce.processor.TextScopes
 
@@ -54,23 +56,7 @@ class CompletionGenerateActionsProcessor(private val strategy: CompletionStrateg
       CompletionContext.PREVIOUS -> preparePreviousContext(token)
     }
 
-
     addAction(CallFeature(token.text, token.offset, token.properties))
-    //val prefix = prefixCreator.getPrefix(token.text)
-    //var currentPrefix = ""
-    //if (prefixCreator.completePrevious) {
-    //  for (symbol in prefix) {
-    //    addAction(CallFeature(currentPrefix, token.text, token.offset, token.properties))
-    //    addAction(PrintText(symbol.toString(), false))
-    //    currentPrefix += symbol
-    //  }
-    //}
-    //else if (prefix.isNotEmpty()) addAction(PrintText(prefix, false))
-    //addAction(CallFeature(prefix, token.text, token.offset, token.properties))
-    //
-    //if (prefix.isNotEmpty())
-    //  addAction(DeleteRange(token.offset, token.offset + prefix.length, true))
-    //addAction(PrintText(token.text, true))
   }
 
   private fun prepareAllContext(token: CodeToken) {

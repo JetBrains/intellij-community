@@ -2,7 +2,6 @@
 package com.intellij.cce.evaluable.rename
 
 import com.intellij.cce.evaluable.EvaluationStrategy
-import com.intellij.cce.evaluable.golf.CompletionGolfStrategy
 import com.intellij.cce.filter.EvaluationFilter
 
 

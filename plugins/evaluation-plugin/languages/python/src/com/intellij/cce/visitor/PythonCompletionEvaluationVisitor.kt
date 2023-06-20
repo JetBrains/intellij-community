@@ -2,12 +2,12 @@
 package com.intellij.cce.visitor
 
 import com.intellij.cce.core.*
+import com.intellij.cce.visitor.exceptions.PsiConverterException
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.elementType
 import com.jetbrains.python.PythonTokenSetContributor
 import com.jetbrains.python.psi.*
-import com.intellij.cce.visitor.exceptions.PsiConverterException
 
 class PythonCompletionEvaluationVisitor : EvaluationVisitor, PyRecursiveElementVisitor() {
   private var _codeFragment: CodeFragment? = null
@@ -38,7 +38,8 @@ class PythonCompletionEvaluationVisitor : EvaluationVisitor, PyRecursiveElementV
       val qualifier = node.qualifier?.reference?.resolve()
       val properties = if (qualifier is PyParameter && !qualifier.isSelf) {
         SimpleTokenProperties.create(TypeProperty.PARAMETER_MEMBER, SymbolLocation.PROJECT) {}
-      } else {
+      }
+      else {
         TokenProperties.UNKNOWN
       }
       val token = CodeToken(name.text, name.startOffset, properties)

@@ -22,7 +22,8 @@ class Precision : Metric {
           if (comparator.accept(suggestion, session.expectedText)) {
             fileSample.add(1.0)
             sample.add(1.0)
-          } else {
+          }
+          else {
             fileSample.add(0.0)
             sample.add(0.0)
           }

@@ -70,7 +70,8 @@ class EvaluationProcess private constructor(private val steps: List<EvaluationSt
       if (shouldInterpretActions) {
         if (shouldGenerateActions) {
           steps.add(factory.interpretActionsStep())
-        } else {
+        }
+        else {
           steps.add(factory.interpretActionsOnNewWorkspaceStep())
         }
       }

@@ -3,11 +3,8 @@ package com.intellij.cce.report
 
 import com.intellij.cce.metric.MetricInfo
 import com.intellij.cce.metric.MetricValueType
-import com.intellij.cce.metric.SuggestionsComparator
 import com.intellij.cce.workspace.info.FileErrorInfo
 import com.intellij.cce.workspace.info.FileEvaluationInfo
-import com.intellij.cce.workspace.storages.FeaturesStorage
-import com.intellij.cce.workspace.storages.FullLineLogsStorage
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import java.io.BufferedInputStream

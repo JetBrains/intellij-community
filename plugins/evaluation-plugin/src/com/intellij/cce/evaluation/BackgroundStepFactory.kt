@@ -2,9 +2,9 @@
 package com.intellij.cce.evaluation
 
 import com.intellij.cce.core.Language
-import com.intellij.cce.evaluation.step.*
 import com.intellij.cce.evaluable.EvaluableFeature
 import com.intellij.cce.evaluable.EvaluationStrategy
+import com.intellij.cce.evaluation.step.*
 import com.intellij.cce.interpreter.ActionsInvoker
 import com.intellij.cce.interpreter.DelegationActionsInvoker
 import com.intellij.cce.workspace.Config

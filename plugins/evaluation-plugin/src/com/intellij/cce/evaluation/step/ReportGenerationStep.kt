@@ -23,13 +23,13 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import java.nio.file.Path
 
-class ReportGenerationStep<T : EvaluationStrategy>  (
+class ReportGenerationStep<T : EvaluationStrategy>(
   private val inputWorkspaces: List<EvaluationWorkspace>?,
   filters: List<SessionsFilter>,
   comparisonFilters: List<CompareSessionsFilter>,
   project: Project,
   private val feature: EvaluableFeature<T>
-  ) : BackgroundEvaluationStep(project) {
+) : BackgroundEvaluationStep(project) {
   override val name: String = "Report generation"
 
   override val description: String = "Generation of HTML-report"
@@ -68,7 +68,8 @@ class ReportGenerationStep<T : EvaluationStrategy>  (
           HtmlReportGenerator(
             dirs,
             defaultMetrics,
-            feature.getFileReportGenerator(suggestionsComparators, filter.name, comparisonStorage.reportName, featuresStorages, fullLineStorages, dirs)
+            feature.getFileReportGenerator(suggestionsComparators, filter.name, comparisonStorage.reportName, featuresStorages,
+                                           fullLineStorages, dirs)
           ),
           JsonReportGenerator(
             workspace.reportsDirectory(),

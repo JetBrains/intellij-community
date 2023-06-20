@@ -28,7 +28,8 @@ class SetupFullLineStep : UndoableEvaluationStep {
         val logPath = initLogPathValue
         if (logPath == null) {
           System.clearProperty(LOG_PATH_PROPERTY)
-        } else {
+        }
+        else {
           System.setProperty(LOG_PATH_PROPERTY, logPath)
         }
         return workspace

@@ -20,7 +20,8 @@ class CheckProjectSdkStep(private val project: Project, private val language: St
     val sdk = if (resolvedLanguage == Language.RUBY) {
       val module = ModuleManager.getInstance(project).modules[0]
       ModuleRootManager.getInstance(module).sdk
-    } else {
+    }
+    else {
       ProjectRootManager.getInstance(project).projectSdk
     }
     if (sdk == null) {

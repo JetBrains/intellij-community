@@ -6,7 +6,8 @@ import com.intellij.cce.core.Language
 import com.intellij.cce.evaluable.EvaluableFeature
 import com.intellij.cce.evaluable.StrategySerializer
 import com.intellij.cce.interpreter.ActionsInvoker
-import com.intellij.cce.metric.*
+import com.intellij.cce.metric.EditSimilarity
+import com.intellij.cce.metric.Metric
 import com.intellij.cce.processor.GenerateActionsProcessor
 import com.intellij.openapi.project.Project
 

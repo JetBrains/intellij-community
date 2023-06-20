@@ -50,7 +50,8 @@ interface CompletionGolfAllEvaluationVisitor : CompletionGolfEvaluationVisitor {
             safeCodeFragment.addChild(CodeLine(line, offset).apply { addChild(CodeToken(text, start, prop)) })
           }
           start += text.length + 1
-        } else if (offset > element.endOffset) {
+        }
+        else if (offset > element.endOffset) {
           break
         }
         offset += line.length + 1

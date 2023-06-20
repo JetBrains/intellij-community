@@ -58,7 +58,8 @@ private class LimitedSummary(val limit: Int, private val delegate: Summary = Sum
     for ((key, value) in defaultNumbers.entries) {
       if (value is Int) {
         counters[key] = value
-      } else {
+      }
+      else {
         result[key] = value
       }
     }
