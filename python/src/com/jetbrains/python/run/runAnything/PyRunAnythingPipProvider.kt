@@ -5,6 +5,8 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.pip.PipBasedPackageManager
+import com.jetbrains.python.packaging.repository.PyPIPackageRepository
+import com.jetbrains.python.packaging.repository.PyPackageRepository
 import icons.PythonIcons
 import javax.swing.Icon
 
@@ -32,6 +34,10 @@ class PyRunAnythingPipProvider : PyRunAnythingPackageProvider() {
   override fun getPackageManager(dataContext: DataContext): PythonPackageManager? {
     val pythonSdk = getSdk(dataContext) ?: return null
     return (PythonPackageManager.forSdk(dataContext.project, pythonSdk) as? PipBasedPackageManager) ?: return null
+  }
+
+  override fun getPackageRepository(dataContext: DataContext): PyPackageRepository? {
+    return getPackageManager(dataContext)?.repositoryManager?.repositories?.first { it is PyPIPackageRepository }
   }
 }
 
