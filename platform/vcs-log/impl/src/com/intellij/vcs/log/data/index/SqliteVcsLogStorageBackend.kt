@@ -106,7 +106,7 @@ private class ProjectLevelConnectionManager private constructor(@JvmField val st
   val selectPathIdPool = connection.statementPool(sql = "select rowid from path where position = ? and relativePath = ?") { ObjectBinder(2) }
 
   @JvmField
-  val insertPathPool = connection.statementPool(sql = "insert into path(position, relativePath) values (?, ?)") { ObjectBinder(2) }
+  val insertPathPool = connection.statementPool(sql = "insert into path(position, relativePath) values (?, ?) returning rowid") { ObjectBinder(2) }
 
   @JvmField
   val selectPathPool = connection.statementPool(sql = "select position, relativePath from path where rowid = ?") { IntBinder(1) }
@@ -492,9 +492,8 @@ internal class SqliteVcsLogStorageBackend(project: Project,
       else {
         connectionManager.insertPathPool.use { statement, binder ->
           binder.bind(position, relativePath)
-          statement.executeUpdate()
+          statement.selectNotNullInt()
         }
-        getPathIdOrFail(root, relativePath)
       }
     }
   }
