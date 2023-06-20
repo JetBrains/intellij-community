@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.util.concurrency.BlockingJob
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.coroutines.coroutineContext
 
@@ -126,7 +128,7 @@ private fun <T> runBlockingCancellable(allowOrphan: Boolean, action: suspend Cor
     }
     try {
       @Suppress("RAW_RUN_BLOCKING")
-      runBlocking(ctx, action)
+      runBlocking(ctx + readActionContext(), action)
     }
     catch (ce: CancellationException) {
       throw CeProcessCanceledException(ce)
@@ -164,7 +166,7 @@ fun <T> indicatorRunBlockingCancellable(indicator: ProgressIndicator, action: su
                   CoroutineName("indicator run blocking")
     try {
       @Suppress("RAW_RUN_BLOCKING")
-      runBlocking(context, action)
+      runBlocking(context + readActionContext(), action)
     }
     catch (ce: CancellationException) {
       throw CeProcessCanceledException(ce)
@@ -412,6 +414,29 @@ private fun assertBackgroundThreadOrWriteAction() {
     "This method is forbidden on EDT because it does not pump the event queue. " +
     "Switch to a BGT, or use com.intellij.openapi.progress.TasksKt.runWithModalProgressBlocking. "
   ))
+}
+
+@IntellijInternalApi
+@Internal
+fun readActionContext(): CoroutineContext {
+  return if (ApplicationManager.getApplication().isReadAccessAllowed) {
+    RunBlockingUnderReadActionMarker
+  }
+  else {
+    EmptyCoroutineContext
+  }
+}
+
+@IntellijInternalApi
+@Internal
+fun CoroutineContext.isRunBlockingUnderReadAction(): Boolean {
+  return this[RunBlockingUnderReadActionMarker] != null
+}
+
+private object RunBlockingUnderReadActionMarker
+  : CoroutineContext.Element,
+    CoroutineContext.Key<RunBlockingUnderReadActionMarker> {
+  override val key: CoroutineContext.Key<*> get() = this
 }
 
 @Deprecated(

@@ -5,6 +5,7 @@ import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.contextModality
+import com.intellij.openapi.progress.isRunBlockingUnderReadAction
 import com.intellij.openapi.util.Conditions
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.MainCoroutineDispatcher
@@ -25,6 +26,9 @@ internal sealed class EdtCoroutineDispatcher : MainCoroutineDispatcher() {
   override val immediate: MainCoroutineDispatcher get() = Immediate
 
   override fun dispatch(context: CoroutineContext, block: Runnable) {
+    check(!context.isRunBlockingUnderReadAction()) {
+      "Switching to Dispatchers.EDT from `runBlockingCancellable` inside in a read-action leads to possible deadlock."
+    }
     val state = context.contextModality()
                 ?: ModalityState.nonModal() // dispatch with NON_MODAL by default
     val runnable = if (state === ModalityState.any()) {
