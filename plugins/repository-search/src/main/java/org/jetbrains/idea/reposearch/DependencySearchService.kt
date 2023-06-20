@@ -17,7 +17,6 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.all
 import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
-import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.function.BiConsumer
 import java.util.function.Consumer
@@ -45,6 +44,7 @@ class DependencySearchService(private val project: Project) : Disposable {
     if (parameters.useCache()) {
       val cachedValue = foundInCache(cacheKey, consumer)
       if (cachedValue != null) {
+        consumer(PoisonedRepositoryArtifactData.INSTANCE)
         return cachedValue
       }
     }
@@ -52,7 +52,9 @@ class DependencySearchService(private val project: Project) : Disposable {
     val thisNewFuture = CompletableFuture<Collection<RepositoryArtifactData>>()
     val existingFuture = cache.putIfAbsent(cacheKey, thisNewFuture)
     if (existingFuture != null && parameters.useCache()) {
-      return fillResultsFromCache(existingFuture, consumer)
+      val result = fillResultsFromCache(existingFuture, consumer)
+      consumer(PoisonedRepositoryArtifactData.INSTANCE)
+      return result;
     }
 
 
@@ -64,6 +66,7 @@ class DependencySearchService(private val project: Project) : Disposable {
 
     if (parameters.isLocalOnly || remoteProviders.isEmpty()) {
       thisNewFuture.complete(localResultSet.getAll())
+      consumer(PoisonedRepositoryArtifactData.INSTANCE)
       return resolvedPromise(0)
     }
 
@@ -91,6 +94,7 @@ class DependencySearchService(private val project: Project) : Disposable {
     }
 
     return promises.all(resultSet, ignoreErrors = true).then {
+      consumer(PoisonedRepositoryArtifactData.INSTANCE)
       if (!resultSet.isEmpty() && existingFuture == null) {
         thisNewFuture.complete(resultSet.getAll())
       }
