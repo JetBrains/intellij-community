@@ -10,7 +10,7 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.HeavyPlatformTestCase
-import com.intellij.util.timeoutRunBlocking
+import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield

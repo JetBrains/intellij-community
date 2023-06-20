@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.ModalityStateEx
 import com.intellij.openapi.progress.impl.ProgressState
-import com.intellij.util.timeoutRunBlocking
+import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch

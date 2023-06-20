@@ -5,8 +5,8 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LeakHunter
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.util.concurrency.Semaphore
-import com.intellij.util.timeoutRunBlocking
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.RepeatedTest

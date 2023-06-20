@@ -2,6 +2,7 @@
 package com.intellij.util
 
 import com.intellij.openapi.progress.timeoutWaitUp
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.ui.EDT

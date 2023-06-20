@@ -6,8 +6,8 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.testFramework.LeakHunter
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.util.timeoutRunBlocking
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.AfterEach
