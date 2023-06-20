@@ -154,7 +154,7 @@ internal class PortableCompilationCacheUploader(
       }
     }
     uploader.upload(path = CommitsHistory.JSON_FILE,
-                    file = writeCommitHistory(if (overrideRemoteHistory) commitHistory else commitHistory.plus(remoteCommitHistory())))
+                    file = writeCommitHistory(if (overrideRemoteHistory) commitHistory else commitHistory + remoteCommitHistory()))
   }
 
   private fun remoteCommitHistory(): CommitsHistory {
