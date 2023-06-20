@@ -4,11 +4,10 @@ package com.jetbrains.jsonSchema.impl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
@@ -16,16 +15,13 @@ import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.AppExecutorUtil
 import java.lang.ref.SoftReference
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.TimeUnit
-import kotlin.math.max
 
 @Service(Service.Level.PROJECT)
 class JsonSchemaCacheManager : Disposable {
 
   fun computeSchemaObject(schemaVirtualFile: VirtualFile, schemaPsiFile: PsiFile): JsonSchemaObject? {
-    val created: CompletableFuture<JsonSchemaObjectRef> = SafeFjpCompletableFuture()
+    val created: CompletableFuture<JsonSchemaObjectRef> = CompletableFuture()
     val future: CompletableFuture<JsonSchemaObjectRef> = getUpToDateValue(schemaVirtualFile, schemaPsiFile, created, CACHE_KEY)
     if (future === created) {
       if (ApplicationManager.getApplication().isDispatchThread) {
@@ -35,8 +31,7 @@ class JsonSchemaCacheManager : Disposable {
         completeAsync(schemaVirtualFile, schemaPsiFile, created)
       }
     }
-    val indicator = EmptyProgressIndicator.notNullize(ProgressManager.getInstance().progressIndicator)
-    return ApplicationUtil.runWithCheckCanceled(future, indicator).get()
+    return ProgressIndicatorUtils.awaitWithCheckCanceled(future, ProgressManager.getInstance().progressIndicator).get()
   }
 
   private fun completeSync(schemaVirtualFile: VirtualFile,
@@ -93,32 +88,3 @@ class JsonSchemaCacheManager : Disposable {
 }
 
 private typealias JsonSchemaObjectRef = SoftReference<JsonSchemaObject?>
-
-/**
- * Bare [java.util.concurrent.CompletableFuture.get] throws `RejectedExecutionException("Thread limit exceeded replacing blocked worker")`,
- * when FJP is full.
- * This inheritor tries to avoid propagating the exception to caller.
- */
-private class SafeFjpCompletableFuture<T> : CompletableFuture<T>() {
-  override fun get(timeout: Long, unit: TimeUnit): T {
-    val deadlineNano: Long = System.nanoTime() + unit.toNanos(timeout)
-    try {
-      return super.get(timeout, unit)
-    }
-    catch (e: RejectedExecutionException) {
-      return getManually(deadlineNano)
-    }
-  }
-
-  private fun getManually(deadlineNano: Long): T {
-    while (System.nanoTime() < deadlineNano) {
-      Thread.sleep(5)
-      try {
-        return super.get(max(0, deadlineNano - System.nanoTime()), TimeUnit.NANOSECONDS)
-      }
-      catch (_: RejectedExecutionException) {
-      }
-    }
-    return super.get(0, TimeUnit.NANOSECONDS)
-  }
-}
