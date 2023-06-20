@@ -262,29 +262,31 @@ public final class BackgroundTaskUtil {
    */
   @CalledInAny
   public static @NotNull BackgroundTask<?> submitTask(@NotNull Executor executor, @NotNull Disposable parent, @NotNull Runnable task) {
-    ProgressIndicator indicator = new EmptyProgressIndicator();
-    indicator.start();
-    CompletableFuture<?> future = CompletableFuture.runAsync(() -> ProgressManager.getInstance().runProcess(task, indicator), executor);
-    return createBackgroundTask(future, task.toString(), indicator, parent);
+    return createBackgroundTask(executor, () -> {
+      task.run();
+      return null;
+    }, task.toString(), parent);
   }
 
   @CalledInAny
   public static @NotNull <T> BackgroundTask<T> submitTask(@NotNull Executor executor,
                                                           @NotNull Disposable parent,
                                                           @NotNull Computable<? extends T> task) {
-    ProgressIndicator indicator = new EmptyProgressIndicator();
-    indicator.start();
-    CompletableFuture<T> future = CompletableFuture.supplyAsync(() -> ProgressManager.getInstance().runProcess(task, indicator),
-                                                                executor);
-    return createBackgroundTask(future, task.toString(), indicator, parent);
+    return createBackgroundTask(executor, task, task.toString(), parent);
   }
 
-  private static @NotNull <T> BackgroundTask<T> createBackgroundTask(@NotNull CompletableFuture<T> future,
+  private static @NotNull <T> BackgroundTask<T> createBackgroundTask(@NotNull Executor executor,
+                                                                     @NotNull Computable<? extends T> task,
                                                                      @NotNull @NlsSafe String taskName,
-                                                                     @NotNull ProgressIndicator indicator,
                                                                      @NotNull Disposable parent) {
+    ProgressIndicator indicator = new EmptyProgressIndicator();
+    indicator.start();
+    CompletableFuture<T> future = CompletableFuture.supplyAsync(() -> ProgressManager.getInstance().runProcess(task, indicator), executor);
+
     Disposable disposable = () -> {
-      if (indicator.isRunning()) indicator.cancel();
+      if (indicator.isRunning()) {
+        indicator.cancel();
+      }
       tryAwaitFuture(future, taskName); // git a task chance to finish in sync
     };
 
