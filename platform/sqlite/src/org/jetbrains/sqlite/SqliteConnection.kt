@@ -14,6 +14,8 @@ private val BEGIN_TRANSACTION = "begin transaction".encodeToByteArray()
 private val COMMIT = "commit".encodeToByteArray()
 private val ROLLBACK = "rollback".encodeToByteArray()
 
+private val savepointNameGenerator = java.util.Random()
+
 class SqliteConnection(file: Path?, config: SQLiteConfig = SQLiteConfig()) : AutoCloseable {
   private val dbRef = AtomicReference<NativeDB?>()
   private val lock = ReentrantLock()
@@ -69,6 +71,27 @@ class SqliteConnection(file: Path?, config: SQLiteConfig = SQLiteConfig()) : Aut
 
   private fun getDb(): NativeDB {
     return requireNotNull(dbRef.get()) { "database connection closed" }
+  }
+
+  // https://www.sqlite.org/lang_savepoint.html
+  fun withSavePoint(task: () -> Unit) {
+    val name = java.lang.Long.toUnsignedString(System.currentTimeMillis(), Character.MAX_RADIX) +
+               "_" +
+               java.lang.Long.toUnsignedString(savepointNameGenerator.nextLong(), Character.MAX_RADIX)
+    useDb { it.exec("savepoint $name".toByteArray()) }
+    var ok = false
+    try {
+      task()
+      ok = true
+    }
+    finally {
+      if (ok) {
+        useDb { it.exec("release savepoint $name".toByteArray()) }
+      }
+      else {
+        useDb { it.exec("rollback transaction to savepoint $name".toByteArray()) }
+      }
+    }
   }
 
   fun <T : Binder> prepareStatement(@Language("SQLite") sql: String, binder: T): SqlitePreparedStatement<T> {

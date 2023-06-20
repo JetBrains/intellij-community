@@ -109,4 +109,9 @@ public interface VcsLogStorage {
    * Forces data in the storage to be written on disk.
    */
   void flush();
+
+  default void executeTransaction(@NotNull Runnable task) {
+    task.run();
+    flush();
+  }
 }
