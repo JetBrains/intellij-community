@@ -6,10 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.builder.selected
+import com.intellij.ui.dsl.builder.*
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -21,7 +18,7 @@ import javax.swing.SpinnerDateModel
 class SmartUpdateDialog(private val project: Project) : DialogWrapper(project) {
   init {
     title = SmartUpdateBundle.message("dialog.title.smart.update")
-    setOKButtonText("Update Now")
+    setOKButtonText(SmartUpdateBundle.message("button.update.now"))
     setCancelButtonText(CommonBundle.getCloseButtonText())
     init()
   }
@@ -36,7 +33,7 @@ class SmartUpdateDialog(private val project: Project) : DialogWrapper(project) {
           checkBox(step.stepName).enabled(enabled).bindSelected(options.property(step.id))
         }
         step.getDetailsComponent(project)?.let {
-          indent { row { cell(it).enabled(enabled) } }
+          indent { row { cell(it).align(Align.FILL).enabled(enabled) } }
         }
       }
       separator()
