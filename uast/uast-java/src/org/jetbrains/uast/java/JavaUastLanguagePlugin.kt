@@ -222,7 +222,7 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
   private fun isOneOfNames(annotationEntry: PsiNameValuePair, annotationsHint: Collection<String>): Boolean {
     if (annotationsHint.isEmpty()) return true
     val qualifiedName = PsiTreeUtil.getParentOfType(annotationEntry, PsiAnnotation::class.java)?.qualifiedName
-    return annotationsHint.contains(qualifiedName)
+    return qualifiedName != null && annotationsHint.contains(qualifiedName)
   }
 }
 
