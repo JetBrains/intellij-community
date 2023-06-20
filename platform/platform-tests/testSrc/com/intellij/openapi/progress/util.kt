@@ -40,12 +40,6 @@ fun Semaphore.timeoutWaitUp() {
   assertTrue(waitFor(TEST_TIMEOUT_MS))
 }
 
-suspend fun KSemaphore.timeoutAcquire() {
-  withTimeout(TEST_TIMEOUT_MS) {
-    acquire()
-  }
-}
-
 fun <X> Future<X>.timeoutGet(): X {
   return get(TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS)
 }
