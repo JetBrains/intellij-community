@@ -38,14 +38,18 @@ class CodegenJarLoader(val project: Project) {
   private suspend fun loadJar(): ClassLoader {
     val artifactVersion = calculateArtifactVersion().getOrThrow()
     val codegenLibraryDescription = JpsMavenRepositoryLibraryDescriptor(GROUP_ID, ARTIFACT_ID, artifactVersion,
-                                                                        false, emptyList())
+                                                                        true, emptyList())
     val roots =
       JarRepositoryManager.loadDependenciesAsync(project, codegenLibraryDescription, setOf(ArtifactKind.ARTIFACT),
-                                                 listOf(INTELLIJ_DEPENDENCIES_DESCRIPTION), null).await()
+                                                 listOf(INTELLIJ_DEPENDENCIES_DESCRIPTION, INTELLIJ_RELEASES_DESCRIPTION, INTELLIJ_NIGHTLY_DESCRIPTION),
+                                                 null).await()
 
-    val pathToJar = PathUtil.getLocalPath(roots.firstOrNull()?.file)?.toNioPath() ?: error("Cannot get path ${roots.firstOrNull()?.file}")
-    thisLogger().info("Path to jar: $pathToJar")
-    return UrlClassLoader.build().files(listOf(pathToJar)).parent(this.javaClass.classLoader).get()
+    val pathsToJars = roots.mapNotNull { PathUtil.getLocalPath(it.file)?.toNioPath() }
+    if (pathsToJars.isEmpty()) {
+      error("Cannot get paths ${roots.joinToString(", ") { it.file.path }}")
+    }
+    thisLogger().info("Path to jar: ${pathsToJars.joinToString(", ")}")
+    return UrlClassLoader.build().files(pathsToJars).parent(this.javaClass.classLoader).get()
   }
 
   private fun calculateArtifactVersion(): Result<String> {
@@ -75,6 +79,16 @@ class CodegenJarLoader(val project: Project) {
       "intellij-dependencies",
       "Intellij Dependencies",
       "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies",
+    )
+    private val INTELLIJ_RELEASES_DESCRIPTION = RemoteRepositoryDescription(
+      "intellij-releases",
+      "Intellij Releases",
+      "https://www.jetbrains.com/intellij-repository/releases",
+    )
+    private val INTELLIJ_NIGHTLY_DESCRIPTION = RemoteRepositoryDescription(
+      "intellij-nightly",
+      "Intellij Nightly",
+      "https://www.jetbrains.com/intellij-repository/nightly",
     )
   }
 }
