@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.FileStructureTestFixture
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
@@ -62,8 +61,9 @@ abstract class KotlinFileStructureTestBase : KotlinLightCodeInsightFixtureTestCa
 
     protected fun checkResult() {
         val printInfo = Queryable.PrintInfo(arrayOf("text"), arrayOf("location"))
-        PlatformTestUtil.waitForPromise(TreeUtil.promiseExpand(popupFixture.tree, Integer.MAX_VALUE))
+        PlatformTestUtil.waitForPromise(TreeUtil.promiseExpandAll(popupFixture.tree))
+        PlatformTestUtil.waitWhileBusy(popupFixture.tree)
         val popupText = StructureViewUtil.print(popupFixture.tree, false, printInfo, null).trim { it <= ' ' }
-        UsefulTestCase.assertSameLinesWithFile("$testDataPath/$treeFileName", popupText)
+        assertSameLinesWithFile("$testDataPath/$treeFileName", popupText)
     }
 }
