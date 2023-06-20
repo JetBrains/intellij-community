@@ -640,4 +640,30 @@ interface UastApiFixtureTestBase : UastPluginSelection {
         })
     }
 
+    fun checkIdentifierOfNullableExtensionReceiver(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                enum class SortOrder {
+                  ASCENDING, DESCENDING, UNSORTED
+                }
+
+                fun <C> Comparator<C>?.withOrder(sortOrder: SortOrder): Comparator<C>? =
+                  this?.let {
+                    when (sortOrder) {
+                      SortOrder.ASCENDING -> it
+                      SortOrder.DESCENDING -> it.reversed()
+                      SortOrder.UNSORTED -> null
+                    }
+                  }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val withOrder = uFile.findElementByTextFromPsi<UMethod>("withOrder", strict = false)
+            .orFail("can't convert extension function: withOrder")
+        val extensionReceiver = withOrder.uastParameters.first()
+        val identifier = extensionReceiver.uastAnchor as? UIdentifier
+        TestCase.assertNotNull(identifier)
+    }
+
 }

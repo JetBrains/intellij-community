@@ -82,4 +82,8 @@ class FirUastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         doCheck("LambdaImplicitParameters", ::checkLambdaImplicitParameters)
     }
 
+    fun testIdentifierOfNullableExtensionReceiver() {
+        checkIdentifierOfNullableExtensionReceiver(myFixture)
+    }
+
 }
