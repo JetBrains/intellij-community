@@ -26,13 +26,13 @@ internal const val SETTINGS_SYNC_SNAPSHOT_ZIP = "$SETTINGS_SYNC_SNAPSHOT.zip"
 private const val CONNECTION_TIMEOUT_MS = 10000
 private const val READ_TIMEOUT_MS = 50000
 
-internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
+internal open class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
 
   private val snapshotFilePath get() = getSnapshotFilePath()
 
-  internal val client get() = _client.value
+  internal open val client get() = _client.value
   private val _client = lazy { createCloudConfigClient(clientVersionContext) }
-  private val clientVersionContext = CloudConfigVersionContext()
+  internal val clientVersionContext = CloudConfigVersionContext()
 
   private fun receiveSnapshotFile(): Pair<InputStream?, String?> {
     return clientVersionContext.doWithVersion(snapshotFilePath, null) { filePath ->
@@ -282,7 +282,8 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
 
     private val LOG = logger<CloudConfigServerCommunicator>()
 
-    private val DUMMY_ETAG_STORAGE: ETagStorage = object : ETagStorage {
+    @VisibleForTesting
+    internal val DUMMY_ETAG_STORAGE: ETagStorage = object : ETagStorage {
       override fun get(path: String): String? {
         return null
       }
