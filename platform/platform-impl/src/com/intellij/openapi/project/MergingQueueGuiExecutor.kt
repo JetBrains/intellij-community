@@ -18,6 +18,7 @@ import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -230,6 +231,16 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
    * @return state containing `true` if some task is currently executed in background thread.
    */
   val isRunning: StateFlow<Boolean> = mySingleTaskExecutor.isRunning
+
+  /**
+   * Modification tracker that increases each time the executor starts or stops
+   *
+   * This is not the same as [isRunning], because [isRunning] is a state flow, meaning that it is conflated and deduplicated, i.e. short
+   * transitions true-false-true can be missed in [isRunning]. [startedOrStoppedEvent] is still conflated, but never miss the latest event.
+   *
+   * TODO: [isRunning] should be a shared flow without deduplication, then we wont need [startedOrStoppedEvent]
+   */
+  internal val startedOrStoppedEvent: Flow<*> = mySingleTaskExecutor.modificationTrackerAsFlow
 
   /**
    * Suspends queue in this executor: new tasks will be added to the queue, but they will not be executed until [resumeQueue]
