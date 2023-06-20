@@ -10,7 +10,7 @@ import com.intellij.util.indexing.roots.kind.*
 import com.intellij.platform.workspace.storage.EntityReference
 
 internal data class ModuleRootOriginImpl(override val module: Module,
-                                         override val roots: List<VirtualFile>) : ModuleRootOrigin
+                                         override val roots: List<VirtualFile>?) : ModuleRootOrigin
 
 internal data class LibraryOriginImpl(override val classRoots: List<VirtualFile>,
                                       override val sourceRoots: List<VirtualFile>) : LibraryOrigin

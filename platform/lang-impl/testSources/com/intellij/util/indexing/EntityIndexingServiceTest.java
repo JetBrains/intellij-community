@@ -24,13 +24,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 
 public class EntityIndexingServiceTest extends EntityIndexingServiceTestBase {
 
   public void testIndexingModule() throws Exception {
     doTest(this::createModuleAndSourceRoot, this::removeModule,
-           pair -> IndexableEntityProviderMethods.INSTANCE.createIterators(pair.getFirst(), Collections.singletonList(pair.getSecond())));
+           pair -> IndexableEntityProviderMethods.INSTANCE.createModuleContentIterators(pair.getFirst()));
   }
 
   @NotNull

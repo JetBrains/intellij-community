@@ -3,6 +3,7 @@ package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -14,8 +15,6 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.AdditionalIndexableFileSet;
 import com.intellij.util.indexing.EntityIndexingServiceEx;
@@ -23,12 +22,8 @@ import com.intellij.util.indexing.IndexableFilesIndex;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
+import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet;
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData;
-import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData;
-import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
-import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileSetVisitor;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
@@ -42,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-import static com.intellij.util.indexing.roots.IndexableEntityProviderMethods.INSTANCE;
 import static com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl.Companion;
 
 @ApiStatus.Experimental
@@ -91,6 +85,10 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
     EntityStorage entityStorage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
     List<IndexableFilesIterator> iterators = new ArrayList<>();
 
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
+      iterators.addAll(IndexableEntityProviderMethods.INSTANCE.createModuleContentIterators(module));
+    }
+
     List<Sdk> sdks = new ArrayList<>();
     ModuleDependencyIndex moduleDependencyIndex = ModuleDependencyIndex.getInstance(project);
     for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
@@ -106,7 +104,7 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
     }
     for (Sdk sdk : sdks) {
       ProgressManager.checkCanceled();
-      iterators.addAll(INSTANCE.createIterators(sdk));
+      iterators.addAll(IndexableEntityProviderMethods.INSTANCE.createIterators(sdk));
     }
 
     Set<IndexableSetOrigin> libraryOrigins = new HashSet<>();
@@ -126,8 +124,11 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
       }
     }
 
+    WorkspaceIndexingRootsBuilder.Companion.Settings settings = new WorkspaceIndexingRootsBuilder.Companion.Settings();
+    settings.setCollectExplicitRootsForModules(false);
+    settings.setRetainCondition(contributor -> contributor.getStorageKind() == EntityStorageKind.MAIN);
     WorkspaceIndexingRootsBuilder builder =
-      WorkspaceIndexingRootsBuilder.Companion.registerEntitiesFromContributors(project, entityStorage);
+      WorkspaceIndexingRootsBuilder.Companion.registerEntitiesFromContributors(project, entityStorage, settings);
     builder.addIteratorsFromRoots(iterators, libraryOrigins, entityStorage);
 
     boolean addedFromDependenciesIndexedStatusService = false;
@@ -165,30 +166,6 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
     if (module == null) {
       return Collections.emptyList();
     }
-    List<VirtualFile> roots = getModuleRootsToIndex(module);
-    if (roots.isEmpty()) return Collections.emptyList();
-    return Collections.singletonList(new ModuleIndexableFilesIteratorImpl(module, roots, true));
-  }
-
-  @NotNull
-  private List<VirtualFile> getModuleRootsToIndex(@NotNull Module module) {
-    List<VirtualFile> roots = ReadAction.nonBlocking(() -> {
-      if (project.isDisposed()) return null;
-      WorkspaceFileIndexEx index = (WorkspaceFileIndexEx)WorkspaceFileIndex.getInstance(project);
-      List<VirtualFile> files = new SmartList<>();
-      index.visitFileSets(new WorkspaceFileSetVisitor() {
-        @Override
-        public void visitIncludedRoot(@NotNull WorkspaceFileSet fileSet) {
-          if (!(fileSet instanceof WorkspaceFileSetWithCustomData<?>)) return;
-          ModuleRelatedRootData data =
-            ObjectUtils.tryCast(((WorkspaceFileSetWithCustomData<?>)fileSet).getData(), ModuleRelatedRootData.class);
-          if (data != null && data.getModule().equals(module)) {
-            files.add(fileSet.getRoot());
-          }
-        }
-      });
-      return files;
-    }).executeSynchronously();
-    return IndexingRootsCollectionUtil.selectRootVirtualFiles(roots);
+    return IndexableEntityProviderMethods.INSTANCE.createModuleContentIterators(module);
   }
 }

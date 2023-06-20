@@ -35,6 +35,10 @@ object IndexableEntityProviderMethods {
     return setOf(ModuleIndexableFilesIteratorImpl(module, roots, true))
   }
 
+  fun createModuleContentIterators(module: Module): Collection<IndexableFilesIterator> {
+    return listOf(ModuleIndexableFilesIteratorImpl(module, null, true))
+  }
+
   fun createIterators(entity: ModuleEntity, entityStorage: EntityStorage, project: Project): Collection<IndexableFilesIterator> {
     if (shouldIndexProjectBasedOnIndexableEntityProviders()) {
       if (IndexableFilesIndex.isEnabled()) {
