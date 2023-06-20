@@ -3,11 +3,13 @@ package org.jetbrains.intellij.build.pycharm
 
 import org.jetbrains.intellij.build.ApplicationInfoProperties
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 import java.nio.file.Path
 
 open class PyCharmWindowsDistributionCustomizer : WindowsDistributionCustomizer() {
-  override fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: Path) {
+  override suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: Path, arch: JvmArchitecture) {
+    super.copyAdditionalFiles(context, targetDirectory, arch)
     PyCharmBuildUtils.copySkeletons(context, targetDirectory, "skeletons-win*.zip")
   }
 
