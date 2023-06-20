@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.impl.compilation
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.Compressor
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -153,8 +154,16 @@ internal class PortableCompilationCacheUploader(
         "JPS Caches are uploaded: $cacheUploaded, metadata is uploaded: $metadataUploaded"
       }
     }
-    uploader.upload(path = CommitsHistory.JSON_FILE,
-                    file = writeCommitHistory(if (overrideRemoteHistory) commitHistory else commitHistory + remoteCommitHistory()))
+    val newHistory = if (overrideRemoteHistory) commitHistory else commitHistory + remoteCommitHistory()
+    uploader.upload(path = CommitsHistory.JSON_FILE, file = writeCommitHistory(newHistory))
+    val expected = newHistory.commitsForRemote(remoteGitUrl).toList()
+    val actual = remoteCommitHistory().commitsForRemote(remoteGitUrl).take(expected.count())
+    check(ContainerUtil.equalsIdentity(expected, actual)) {
+      """
+        Expected: $expected
+        Actual: $actual
+      """.trimIndent()
+    }
   }
 
   private fun remoteCommitHistory(): CommitsHistory {
@@ -179,7 +188,7 @@ internal class PortableCompilationCacheUploader(
 private class Uploader(serverUrl: String, val authHeader: String) {
   private val serverUrl = serverUrl.withTrailingSlash()
 
-  fun upload(path: String, file: Path): Boolean {
+  fun upload(path: String, file: Path) {
     val url = pathToUrl(path)
     spanBuilder("upload").setAttribute("url", url).setAttribute("path", path).useWithScope {
       check(Files.exists(file)) {
@@ -199,7 +208,6 @@ private class Uploader(serverUrl: String, val authHeader: String) {
           }).build()).execute().useSuccessful {}
       }
     }
-    return true
   }
 
   fun isExist(path: String, logIfExists: Boolean = false): Boolean {
