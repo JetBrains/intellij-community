@@ -476,7 +476,7 @@
       <add-to-group group-id="MainToolbarQuickActions" relative-to-action="addQuickAction.Profile" anchor="after"/>
       <separator key="MainToolbarQuickActions.vcs.separator"/>
       <action id="addQuickAction.Git.Update" class="git4idea.ui.toolbar.UpdateQuickAction" icon="AllIcons.Actions.CheckOut"/>
-      <action id="addQuickAction.Git.Commit" class="git4idea.ui.toolbar.CommitQuickAction" icon="AllIcons.Vcs.CommitNode"/>
+      <action id="addQuickAction.Git.Commit" class="git4idea.ui.toolbar.CommitQuickAction" icon="AllIcons.Actions.Commit"/>
       <action id="addQuickAction.Git.Push" class="git4idea.ui.toolbar.PushQuickAction" icon="AllIcons.Vcs.Push"/>
       <action id="addQuickAction.Git.Diff" class="git4idea.ui.toolbar.DiffQuickAction" icon="AllIcons.Actions.Diff"/>
       <action id="addQuickAction.Git.History" class="git4idea.ui.toolbar.HistoryQuickAction" icon="AllIcons.Vcs.History"/>
