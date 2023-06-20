@@ -6,6 +6,7 @@ package org.jetbrains.sqlite
 import org.intellij.lang.annotations.Language
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -14,7 +15,7 @@ private val BEGIN_TRANSACTION = "begin transaction".encodeToByteArray()
 private val COMMIT = "commit".encodeToByteArray()
 private val ROLLBACK = "rollback".encodeToByteArray()
 
-private val savepointNameGenerator = java.util.Random()
+private val savepointNameGenerator = AtomicLong()
 
 class SqliteConnection(file: Path?, config: SQLiteConfig = SQLiteConfig()) : AutoCloseable {
   private val dbRef = AtomicReference<NativeDB?>()
@@ -74,15 +75,18 @@ class SqliteConnection(file: Path?, config: SQLiteConfig = SQLiteConfig()) : Aut
   }
 
   // https://www.sqlite.org/lang_savepoint.html
-  fun withSavePoint(task: () -> Unit) {
-    val name = java.lang.Long.toUnsignedString(System.currentTimeMillis(), Character.MAX_RADIX) +
+  fun <T> withSavePoint(task: () -> T): T {
+    // incremental prefix for easier debug
+    // use prefix `p` as name cannot start with a number
+    val name = "p" + savepointNameGenerator.getAndIncrement().toString() +
                "_" +
-               java.lang.Long.toUnsignedString(savepointNameGenerator.nextLong(), Character.MAX_RADIX)
+               java.lang.Long.toUnsignedString(System.currentTimeMillis(), Character.MAX_RADIX)
     useDb { it.exec("savepoint $name".toByteArray()) }
     var ok = false
     try {
-      task()
+      val result = task()
       ok = true
+      return result
     }
     finally {
       if (ok) {

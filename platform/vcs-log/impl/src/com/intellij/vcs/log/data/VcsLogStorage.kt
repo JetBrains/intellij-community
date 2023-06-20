@@ -8,7 +8,6 @@ import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsRef
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
-import java.util.concurrent.Callable
 import java.util.function.Predicate
 
 /**
@@ -100,10 +99,4 @@ interface VcsLogStorage {
    * Forces data in the storage to be written on disk.
    */
   fun flush()
-
-  fun <T : Any?> executeTransaction(task: Callable<T>): T {
-    val result = task.call()
-    flush()
-    return result
-  }
 }

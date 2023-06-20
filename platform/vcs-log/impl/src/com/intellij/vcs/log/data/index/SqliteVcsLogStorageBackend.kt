@@ -431,13 +431,6 @@ internal class SqliteVcsLogStorageBackend(project: Project,
   override fun flush() {
   }
 
-  override fun executeTransaction(task: Runnable) {
-    // do not use transactions - maybe nested
-    connectionManager.connection.withSavePoint {
-      task.run()
-    }
-  }
-
   override fun iterateChangesInCommits(root: VirtualFile, path: FilePath, consumer: ObjIntConsumer<List<ChangeKind>>) {
     connectionManager.runUnderConnection { connection ->
       val position = rootsToPosition.getInt(root)

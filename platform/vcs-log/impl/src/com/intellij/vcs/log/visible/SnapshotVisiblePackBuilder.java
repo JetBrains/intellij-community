@@ -24,7 +24,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class SnapshotVisiblePackBuilder {
+public final class SnapshotVisiblePackBuilder {
   private static final int VISIBLE_RANGE = 1000;
   private final @NotNull VcsLogStorage myStorage;
 
