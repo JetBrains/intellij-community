@@ -6,42 +6,52 @@ import com.intellij.openapi.ListSelection
 import com.intellij.openapi.vcs.changes.Change
 import git4idea.changes.GitBranchComparisonResult
 
-sealed interface ChangesSelection {
-  val changes: List<Change>
+sealed class ChangesSelection(
+  val changes: List<Change>,
   val selectedIdx: Int
+) {
 
-  data class Single(override val changes: List<Change>,
-                    override val selectedIdx: Int,
-                    val location: DiffLineLocation? = null) : ChangesSelection {
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as ChangesSelection
+
+    if (changes != other.changes) return false
+    if (selectedIdx != other.selectedIdx) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = changes.hashCode()
+    result = 31 * result + selectedIdx
+    return result
+  }
+
+  class Single(changes: List<Change>, selectedIdx: Int, val location: DiffLineLocation? = null) : ChangesSelection(changes, selectedIdx) {
+
+    constructor(changes: List<Change>, change: Change, location: DiffLineLocation?)
+      : this(changes, changes.indexOfFirst { it === change }, location)
+
     override fun equals(other: Any?): Boolean {
       if (this === other) return true
-      if (other !is Single) return false
-      if (selectedIdx != other.selectedIdx) return false
-      if (location != other.location) return false
+      if (javaClass != other?.javaClass) return false
+      if (!super.equals(other)) return false
 
-      return changes.isEqual(other.changes)
+      other as Single
+
+      return location == other.location
     }
 
-
     override fun hashCode(): Int {
-      var result = changes.calcHashCode()
-      result = 31 * result + selectedIdx
+      var result = super.hashCode()
       result = 31 * result + (location?.hashCode() ?: 0)
       return result
     }
   }
 
-  data class Multiple(override val changes: List<Change>, override val selectedIdx: Int = 0) : ChangesSelection {
-    override fun equals(other: Any?): Boolean {
-      if (this === other) return true
-      if (other !is Multiple) return false
-      if (selectedIdx != other.selectedIdx) return false
-
-      return changes.isEqual(other.changes)
-    }
-
-    override fun hashCode(): Int = changes.calcHashCode()
-  }
+  class Multiple(changes: List<Change>, selectedIdx: Int = 0) : ChangesSelection(changes, selectedIdx)
 
   companion object {
     fun ListSelection<Change>.toSelection(location: DiffLineLocation? = null): ChangesSelection {
