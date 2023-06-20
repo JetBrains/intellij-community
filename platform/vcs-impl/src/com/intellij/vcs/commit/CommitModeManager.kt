@@ -1,13 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
-import com.intellij.ide.ApplicationInitializedListener
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager.getApplication
-import com.intellij.openapi.application.ConfigImportHelper.isNewUser
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -27,8 +24,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.SimpleMessageBusConnection
 import com.intellij.util.messages.Topic
 import com.intellij.vcs.commit.NonModalCommitUsagesCollector.logStateChanged
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.CalledInAny
 import java.util.*
 
@@ -40,26 +35,6 @@ private val appSettings get() = VcsApplicationSettings.getInstance()
 
 internal fun AnActionEvent.getProjectCommitMode(): CommitMode? =
   project?.let { CommitModeManager.getInstance(it).getCurrentCommitMode() }
-
-internal class NonModalCommitCustomization : ApplicationInitializedListener {
-  override suspend fun execute(asyncScope: CoroutineScope) {
-    if (!isNewUser()) {
-      return
-    }
-
-    PropertiesComponent.getInstance().setValue(KEY, true)
-    appSettings.COMMIT_FROM_LOCAL_CHANGES = true
-    asyncScope.launch {
-      logStateChanged(null)
-    }
-  }
-
-  companion object {
-    private const val KEY = "NonModalCommitCustomization.IsApplied"
-
-    internal fun isNonModalCustomizationApplied(): Boolean = PropertiesComponent.getInstance().isTrueValue(KEY)
-  }
-}
 
 @Service(Service.Level.PROJECT)
 class CommitModeManager(private val project: Project) : Disposable {

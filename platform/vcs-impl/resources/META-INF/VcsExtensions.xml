@@ -155,8 +155,6 @@
                     serviceImplementation="com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager"
                     testServiceImplementation="com.intellij.openapi.vcs.changes.ui.DummyChangesViewContentManager"/>
 
-    <applicationInitializedListener implementation="com.intellij.vcs.commit.NonModalCommitCustomization"/>
-
     <toolWindow id="Commit" anchor="left" icon="AllIcons.Toolwindows.ToolWindowCommit"
                 factoryClass="com.intellij.openapi.vcs.changes.ui.CommitToolWindowFactory"/>
 

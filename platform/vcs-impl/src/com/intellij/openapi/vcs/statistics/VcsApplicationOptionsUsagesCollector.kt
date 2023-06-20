@@ -5,9 +5,7 @@ import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
-import com.intellij.vcs.commit.NonModalCommitPromotionState
 import com.intellij.vcs.commit.NonModalCommitUsagesCollector
-import java.util.*
 
 class VcsApplicationOptionsUsagesCollector : ApplicationUsagesCollector() {
   override fun getGroup(): EventLogGroup {
@@ -18,13 +16,7 @@ class VcsApplicationOptionsUsagesCollector : ApplicationUsagesCollector() {
 
 
   companion object {
-    internal val GROUP = EventLogGroup("vcs.application.configuration", 3)
-    internal val NON_MODEL_COMMIT = GROUP.registerVarargEvent("non.modal.commit", EventFields.Enabled)
-    internal val NON_MODEL_COMMIT_NEW_INSTALLATION = GROUP.registerEvent("non.modal.commit.new.installation",
-                                                                         EventFields.Enabled)
-    internal val NON_MODEL_COMMIT_PROMOTION = GROUP.registerEvent("non.modal.commit.promotion",
-                                                                  EventFields.Enum("value", NonModalCommitPromotionState::class.java) {
-                                                                    it.name.lowercase(Locale.ENGLISH)
-                                                                  })
+    internal val GROUP = EventLogGroup("vcs.application.configuration", 4)
+    internal val NON_MODAL_COMMIT = GROUP.registerVarargEvent("non.modal.commit", EventFields.Enabled)
   }
 }

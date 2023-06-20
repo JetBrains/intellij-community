@@ -13,7 +13,6 @@ import com.intellij.util.ui.JBUI.Borders.emptyRight
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil.addBorder
 import com.intellij.util.ui.UIUtil.getRegularPanelInsets
-import com.intellij.vcs.commit.NonModalCommitPromoter
 import com.intellij.vcs.commit.SingleChangeListCommitWorkflow
 import com.intellij.vcs.commit.SingleChangeListCommitWorkflowUi
 import com.intellij.vcs.commit.getDisplayedPaths
@@ -56,8 +55,6 @@ class DefaultCommitChangeListDialog(workflow: SingleChangeListCommitWorkflow) : 
       }
     }, this)
   }
-
-  override fun createTitlePane(): JComponent? = NonModalCommitPromoter.getInstance(project).getPromotionPanel(this)
 
   override fun createCenterPanel(): JComponent =
     simplePanel(super.createCenterPanel()).apply {
