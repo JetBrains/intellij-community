@@ -12,10 +12,7 @@ import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
@@ -283,28 +280,12 @@ public final class BackgroundTaskUtil {
   }
 
   private static @NotNull <T> BackgroundTask<T> createBackgroundTask(@NotNull CompletableFuture<T> future,
-                                                                     @NotNull String taskName,
+                                                                     @NotNull @NlsSafe String taskName,
                                                                      @NotNull ProgressIndicator indicator,
                                                                      @NotNull Disposable parent) {
     Disposable disposable = () -> {
       if (indicator.isRunning()) indicator.cancel();
-      try {
-        future.get(1, TimeUnit.SECONDS);
-      }
-      catch (ExecutionException e) {
-        Throwable cause = e.getCause();
-        if (cause instanceof ProcessCanceledException || cause instanceof CancellationException) {
-          // ignore: expected cancellation
-        }
-        else {
-          LOG.error(e);
-        }
-      }
-      catch (CancellationException ignored) {
-      }
-      catch (InterruptedException | TimeoutException e) {
-        LOG.debug("Couldn't await background process on disposal: " + taskName);
-      }
+      tryAwaitFuture(future, taskName); // git a task chance to finish in sync
     };
 
     if (!registerIfParentNotDisposed(parent, disposable)) {
@@ -315,6 +296,26 @@ public final class BackgroundTaskUtil {
     }
 
     return new BackgroundTask<>(parent, indicator, future);
+  }
+
+  private static <T> void tryAwaitFuture(@NotNull CompletableFuture<T> future, @NotNull @NlsSafe String taskName) {
+    try {
+      future.get(1, TimeUnit.SECONDS);
+    }
+    catch (ExecutionException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof ProcessCanceledException || cause instanceof CancellationException) {
+        // ignore: expected cancellation
+      }
+      else {
+        LOG.error(e);
+      }
+    }
+    catch (CancellationException ignored) {
+    }
+    catch (InterruptedException | TimeoutException e) {
+      LOG.debug("Couldn't await background process on disposal: " + taskName);
+    }
   }
 
   @CalledInAny
