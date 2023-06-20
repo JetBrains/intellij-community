@@ -10,7 +10,7 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import java.util.ArrayList;
 
 public class ActionsWithBrokenUpdateMethodTest extends LightPlatformTestCase {
-  public void testActionsWithShortcuts() throws Exception {
+  public void testActionsUpdateMethods() {
     ActionManagerImpl actionManager = (ActionManagerImpl)ActionManager.getInstance();
 
     AnActionEvent event1 = new AnActionEvent(null, DataContext.EMPTY_CONTEXT,
@@ -34,9 +34,9 @@ public class ActionsWithBrokenUpdateMethodTest extends LightPlatformTestCase {
         action.update(event2);
 
         if (action instanceof ActionGroup group) {
-          (group).getChildren(null);
-          (group).getChildren(event1);
-          (group).getChildren(event2);
+          group.getChildren(null);
+          group.getChildren(event1);
+          group.getChildren(event2);
         }
       }
       catch (Throwable e) {
