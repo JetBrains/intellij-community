@@ -12,7 +12,7 @@ sealed class Binder {
 
   internal abstract fun bindParams(pointer: Long, db: SqliteDb)
 
-  internal abstract fun executeBatch(pointer: Long, db: SqliteDb)
+  internal abstract fun executeBatch(pointer: Long, db: NativeDB)
 
   internal abstract fun clearBatch()
 }
@@ -29,7 +29,7 @@ object EmptyBinder : Binder() {
 
   override fun addBatch() = throw IllegalStateException()
 
-  override fun executeBatch(pointer: Long, db: SqliteDb) = throw IllegalStateException()
+  override fun executeBatch(pointer: Long, db: NativeDB) = throw IllegalStateException()
 
   override fun clearBatch() {
   }
@@ -70,7 +70,7 @@ class ObjectBinder(paramCount: Int, batchCountHint: Int = 1) : BaseBinder(paramC
     }
   }
 
-  override fun executeBatch(pointer: Long, db: SqliteDb) {
+  override fun executeBatch(pointer: Long, db: NativeDB) {
     for (batchIndex in 0 until batchQueryCount) {
       db.reset(pointer)
       for (position in 0 until paramCount) {

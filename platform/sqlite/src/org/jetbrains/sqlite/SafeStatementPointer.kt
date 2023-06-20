@@ -41,7 +41,7 @@ internal class SafeStatementPointer(
    * @param task the function to run
    * @return the return of the passed in function
    */
-  inline fun safeRunInt(task: (db: SqliteDb, statementPointer: Long) -> Int): Int {
+  inline fun safeRunInt(task: (db: NativeDB, statementPointer: Long) -> Int): Int {
     connection.useDb { db ->
       ensureOpen()
       return task(db, pointer)

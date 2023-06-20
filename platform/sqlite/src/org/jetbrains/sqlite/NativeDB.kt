@@ -65,9 +65,19 @@ internal class NativeDB : SqliteDb() {
   @Synchronized
   external override fun _close()
 
+  /**
+   * Complies, evaluates, executes and commits an SQL statement.
+   *
+   * @param sql An SQL statement.
+   * @return [Result Codes](http://www.sqlite.org/c3ref/c_abort.html)
+   * @see [http://www.sqlite.org/c3ref/exec.html](http://www.sqlite.org/c3ref/exec.html)
+   */
   @Synchronized
-  override fun _exec(sql: ByteArray): Int {
-    return _exec_utf8(sql)
+  fun exec(sql: ByteArray) {
+    val status = _exec_utf8(sql)
+    if (status != SqliteCodes.SQLITE_OK) {
+      throw newException(errorCode = status, errorMessage = errmsg()!!, sql = sql)
+    }
   }
 
   @Synchronized
@@ -103,8 +113,15 @@ internal class NativeDB : SqliteDb() {
   @Synchronized
   external override fun finalize(stmt: Long): Int
 
+  /**
+   * Evaluates a statement.
+   *
+   * @param stmt Pointer to the statement.
+   * @return [Result Codes](http://www.sqlite.org/c3ref/c_abort.html)
+   * @see [http://www.sqlite.org/c3ref/step.html](http://www.sqlite.org/c3ref/step.html)
+   */
   @Synchronized
-  external override fun step(stmt: Long): Int
+  external fun step(stmt: Long): Int
 
   @Synchronized
   external override fun reset(stmt: Long): Int

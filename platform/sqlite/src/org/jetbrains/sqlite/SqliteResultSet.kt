@@ -57,7 +57,7 @@ class SqliteResultSet(private val statement: SqlitePreparedStatement<*>) {
     }
 
     // do the real work
-    return when (val statusCode = statement.pointer.safeRunInt(SqliteDb::step)) {
+    return when (val statusCode = statement.pointer.safeRunInt(NativeDB::step)) {
       SqliteCodes.SQLITE_DONE -> {
         pastLastRow = true
         false

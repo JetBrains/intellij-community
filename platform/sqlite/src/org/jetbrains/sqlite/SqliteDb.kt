@@ -89,20 +89,6 @@ internal abstract class SqliteDb {
    */
   abstract fun total_changes(): Long
 
-  /**
-   * Execute an SQL statement using the process of compiling, evaluating, and destroying the prepared statement object.
-   *
-   * @param sql SQL statement to be executed.
-   * @see [http://www.sqlite.org/c3ref/exec.html](http://www.sqlite.org/c3ref/exec.html)
-   */
-  @Synchronized
-  fun exec(sql: ByteArray) {
-    val status = _exec(sql)
-    if (status != SqliteCodes.SQLITE_OK) {
-      throw newException(errorCode = status, errorMessage = errmsg()!!, sql = sql)
-    }
-  }
-
   abstract fun open(file: String, openFlags: Int): Int
 
   /**
@@ -176,15 +162,6 @@ internal abstract class SqliteDb {
   protected abstract fun _close()
 
   /**
-   * Complies, evaluates, executes and commits an SQL statement.
-   *
-   * @param sql An SQL statement.
-   * @return [Result Codes](http://www.sqlite.org/c3ref/c_abort.html)
-   * @see [http://www.sqlite.org/c3ref/exec.html](http://www.sqlite.org/c3ref/exec.html)
-   */
-  abstract fun _exec(sql: ByteArray): Int
-
-  /**
    * Destroys a prepared statement.
    *
    * @param stmt Pointer to the statement pointer.
@@ -192,15 +169,6 @@ internal abstract class SqliteDb {
    * @see [http://www.sqlite.org/c3ref/finalize.html](http://www.sqlite.org/c3ref/finalize.html)
    */
   abstract fun finalize(stmt: Long): Int
-
-  /**
-   * Evaluates a statement.
-   *
-   * @param stmt Pointer to the statement.
-   * @return [Result Codes](http://www.sqlite.org/c3ref/c_abort.html)
-   * @see [http://www.sqlite.org/c3ref/step.html](http://www.sqlite.org/c3ref/step.html)
-   */
-  abstract fun step(stmt: Long): Int
 
   /**
    * Sets a prepared statement object back to its initial state, ready to be re-executed.

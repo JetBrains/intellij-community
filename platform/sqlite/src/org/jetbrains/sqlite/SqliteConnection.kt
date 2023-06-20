@@ -10,7 +10,9 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
+private val BEGIN_TRANSACTION = "begin transaction".encodeToByteArray()
 private val COMMIT = "commit".encodeToByteArray()
+private val ROLLBACK = "rollback".encodeToByteArray()
 
 class SqliteConnection(file: Path?, config: SQLiteConfig = SQLiteConfig()) : AutoCloseable {
   private val dbRef = AtomicReference<NativeDB?>()
@@ -27,6 +29,7 @@ class SqliteConnection(file: Path?, config: SQLiteConfig = SQLiteConfig()) : Aut
     file?.parent?.let { Files.createDirectories(it) }
     loadNativeDb()
     val db = NativeDB()
+
     @Suppress("IfThenToElvis")
     val status = db.open(if (file == null) ":memory:" else file.toAbsolutePath().normalize().toString(), config.openModeFlag) and 0xff
     if (status != SqliteCodes.SQLITE_OK) {
@@ -62,6 +65,10 @@ class SqliteConnection(file: Path?, config: SQLiteConfig = SQLiteConfig()) : Aut
     lock.withLock {
       return task(getDb())
     }
+  }
+
+  private fun getDb(): NativeDB {
+    return requireNotNull(dbRef.get()) { "database connection closed" }
   }
 
   fun <T : Binder> prepareStatement(@Language("SQLite") sql: String, binder: T): SqlitePreparedStatement<T> {
@@ -107,7 +114,7 @@ class SqliteConnection(file: Path?, config: SQLiteConfig = SQLiteConfig()) : Aut
   }
 
   fun execute(@Language("SQLite") sql: String) {
-    getDb().exec(sql.encodeToByteArray())
+    useDb { it.exec(sql.encodeToByteArray()) }
   }
 
   fun execute(@Language("SQLite") sql: String, values: Any) {
@@ -152,20 +159,16 @@ class SqliteConnection(file: Path?, config: SQLiteConfig = SQLiteConfig()) : Aut
     }
   }
 
-  private fun getDb(): NativeDB {
-    return requireNotNull(dbRef.get()) { "database connection closed" }
-  }
-
   fun beginTransaction() {
-    execute("begin transaction")
+    useDb { it.exec(BEGIN_TRANSACTION) }
   }
 
   fun commit() {
-    getDb().exec(COMMIT)
+    useDb { it.exec(COMMIT) }
   }
 
   fun rollback() {
-    getDb().exec("rollback".encodeToByteArray())
+    useDb { it.exec(ROLLBACK) }
   }
 }
 
@@ -216,7 +219,7 @@ internal fun sqlBind(pointer: Long, index: Int, v: Any?, db: SqliteDb) {
   }
 }
 
-internal fun stepInBatch(statementPointer: Long, db: SqliteDb, batchIndex: Int) {
+internal fun stepInBatch(statementPointer: Long, db: NativeDB, batchIndex: Int) {
   val status = db.step(statementPointer)
   if (status != SqliteCodes.SQLITE_DONE) {
     db.reset(statementPointer)
