@@ -16,18 +16,24 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.ui.LightweightHint
+import kotlinx.coroutines.CoroutineScope
 import java.awt.Point
 
 /**
  * Represents floating toolbar which is shown for selected text inside editor.
  * Toolbar is visible only if mouse was used for the selection.
  */
-class CodeFloatingToolbar(editor: Editor): FloatingToolbar(editor, "Floating.CodeToolbar") {
+class CodeFloatingToolbar(
+  editor: Editor,
+  coroutineScope: CoroutineScope
+): FloatingToolbar(editor, coroutineScope, "Floating.CodeToolbar") {
 
   override fun hasIgnoredParent(element: PsiElement): Boolean {
-    return AdvancedSettings.getBoolean("floating.codeToolbar.hide")
-           || !element.isWritable
-           || TemplateManagerImpl.getInstance(element.project).getActiveTemplate(editor) != null
+    return !element.isWritable || TemplateManagerImpl.getInstance(element.project).getActiveTemplate(editor) != null
+  }
+
+  override fun isEnabled(): Boolean {
+    return !AdvancedSettings.getBoolean("floating.codeToolbar.hide")
   }
 
   override fun disableForDoubleClickSelection(): Boolean = true

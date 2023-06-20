@@ -9,96 +9,175 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.event.*
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.ui.LightweightHint
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.ui.components.BorderLayoutPanel
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import org.jetbrains.annotations.ApiStatus
-import java.awt.BorderLayout
 import java.awt.Point
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
+import java.awt.event.KeyListener
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
-import javax.swing.JPanel
+import kotlin.coroutines.resume
 import kotlin.properties.Delegates
+import kotlin.time.Duration.Companion.milliseconds
 
 @ApiStatus.Internal
-open class FloatingToolbar(val editor: Editor, protected val defaultActionGroupId: String) : Disposable {
-  private val mouseListener = MouseListener()
-  private val keyboardListener = KeyboardListener()
-  private val mouseMotionListener = MouseMotionListener()
-  private val selectionListener = EditorSelectionListener()
-  private val documentListener = DocumentChangeListener()
-
+open class FloatingToolbar(
+  val editor: Editor,
+  /**
+   * This scope will be canceled on dispose.
+   */
+  private val coroutineScope: CoroutineScope,
+  protected val defaultActionGroupId: String
+): Disposable {
   private var hint: LightweightHint? = null
   private var buttonSize: Int by Delegates.notNull()
   private var lastSelection: String? = null
   private var showToolbar = true
+  private var hintWasShownForSelection = false
+
+  private enum class HintRequest {
+    Show,
+    Hide
+  }
+
+  private val hintRequests = MutableSharedFlow<HintRequest>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   init {
-    registerListeners()
+    coroutineScope.launch {
+      hintRequests.debounce(50.milliseconds).collectLatest { request ->
+        withContext(Dispatchers.EDT) {
+          when (request) {
+            HintRequest.Show -> showIfHidden()
+            HintRequest.Hide -> hide()
+          }
+        }
+      }
+    }
+    //@Suppress("LeakingThis")
+    editor.apply {
+      addEditorMouseListener(MouseListener(), this@FloatingToolbar)
+      addEditorMouseMotionListener(MouseMotionListener(), this@FloatingToolbar)
+      contentComponent.addKeyListener(KeyboardListener(), this@FloatingToolbar)
+      selectionModel.addSelectionListener(EditorSelectionListener(), this@FloatingToolbar)
+      document.addDocumentListener(DocumentChangeListener(), this@FloatingToolbar)
+    }
   }
 
   open fun hideByOtherHints(): Boolean = false
 
-  fun isShown(): Boolean = hint != null
+  @RequiresEdt
+  fun isShown(): Boolean {
+    return hint != null
+  }
 
-  fun hideIfShown() {
+  @RequiresEdt
+  private fun hide() {
     hint?.hide()
   }
 
-  fun showIfHidden() {
-    if (hint != null || !canBeShownAtCurrentSelection() || (!shouldReviveAfterClose() && !showToolbar)) {
+  @RequiresEdt
+  private suspend fun showIfHidden() {
+    if (hint != null || !shouldReviveAfterClose() && !showToolbar) {
       return
     }
-    createActionToolbar(editor.contentComponent) { toolbar ->
-      val hint = hint ?: return@createActionToolbar
-      hint.component.add(toolbar.component, BorderLayout.CENTER)
-      showOrUpdateLocation(hint)
-      hint.addHintListener {
-        this@FloatingToolbar.hint = null
-        showToolbar = false
-      }
+    val canBeShownAtCurrentSelection = readAction { canBeShownAtCurrentSelection() }
+    if (!canBeShownAtCurrentSelection) {
+      return
     }
-    hint = LightweightHint(JPanel(BorderLayout())).apply {
+    val hint = createHint()
+    hint.addHintListener {
+      this.hint = null
+      showToolbar = false
+    }
+    this.hint = hint
+    showHint(hint)
+  }
+
+  private suspend fun createHint(): LightweightHint {
+    val toolbar = createUpdatedActionToolbar(editor.contentComponent)
+    val component = BorderLayoutPanel().apply {
+      addToCenter(toolbar.component)
+    }
+    val hint = LightweightHint(component).apply {
       setForceShowAsPopup(true)
+    }
+    return hint
+  }
+
+  fun scheduleShow() {
+    if (isEnabled()) {
+      check(hintRequests.tryEmit(HintRequest.Show))
     }
   }
 
-  fun updateLocationIfShown() {
-    showOrUpdateLocation(hint ?: return)
+  fun scheduleHide() {
+    check(hintRequests.tryEmit(HintRequest.Hide))
+  }
+
+  @RequiresEdt
+  private fun updateLocationIfShown() {
+    hint?.let(::showHint)
   }
 
   override fun dispose() {
-    unregisterListeners()
-    hideIfShown()
+    coroutineScope.cancel()
+    hide()
     hint = null
   }
 
   protected open fun createActionGroup(): ActionGroup? {
-    return CustomActionsSchema.getInstance().getCorrectedAction(defaultActionGroupId) as? ActionGroup ?: return null
+    return CustomActionsSchema.getInstance().getCorrectedAction(defaultActionGroupId) as? ActionGroup
   }
 
+  private suspend fun createUpdatedActionToolbar(targetComponent: JComponent): ActionToolbar {
+    return suspendCancellableCoroutine { continuation ->
+      createActionToolbar(targetComponent) {
+        if (!continuation.isCompleted) {
+          continuation.resume(it)
+        }
+      }
+    }
+  }
 
   private fun createActionToolbar(targetComponent: JComponent, onUpdated: (ActionToolbar) -> Unit) {
     val group = createActionGroup() ?: return
     val place = ActionPlaces.EDITOR_FLOATING_TOOLBAR
-    val toolbar = ToolbarUtils.createImmediatelyUpdatedToolbar(group,
-                                                               place,
-                                                               targetComponent,
-                                                               horizontal = true,
-                                                               onUpdated)
-
+    val toolbar = ToolbarUtils.createImmediatelyUpdatedToolbar(
+      group,
+      place,
+      targetComponent,
+      horizontal = true,
+      onUpdated
+    )
     buttonSize = toolbar.maxButtonHeight
   }
 
-  private fun showOrUpdateLocation(hint: LightweightHint) {
-    val hideByOtherHintsMask = if (hideByOtherHints()) HintManager.HIDE_BY_OTHER_HINT else 0
+  private fun showHint(hint: LightweightHint) {
+    val hideByOtherHintsMask = when {
+      hideByOtherHints() -> HintManager.HIDE_BY_OTHER_HINT
+      else -> 0
+    }
     HintManagerImpl.getInstanceImpl().showEditorHint(
       hint,
       editor,
@@ -109,31 +188,20 @@ open class FloatingToolbar(val editor: Editor, protected val defaultActionGroupI
     )
   }
 
-  private fun registerListeners() {
-    editor.addEditorMouseListener(mouseListener)
-    editor.addEditorMouseMotionListener(mouseMotionListener)
-    editor.contentComponent.addKeyListener(keyboardListener)
-    editor.selectionModel.addSelectionListener(selectionListener)
-    editor.document.addDocumentListener(documentListener)
-  }
-
-  private fun unregisterListeners() {
-    editor.removeEditorMouseListener(mouseListener)
-    editor.removeEditorMouseMotionListener(mouseMotionListener)
-    editor.contentComponent.removeKeyListener(keyboardListener)
-    editor.selectionModel.removeSelectionListener(selectionListener)
-    editor.document.removeDocumentListener(documentListener)
-  }
-
+  @RequiresReadLock
   private fun canBeShownAtCurrentSelection(): Boolean {
     val file = PsiEditorUtil.getPsiFile(editor)
-    PsiDocumentManager.getInstance(file.project).commitDocument(editor.document)
+    val document = editor.document
+    if (!PsiDocumentManager.getInstance(file.project).isCommitted(document)) {
+      return false
+    }
     val selectionModel = editor.selectionModel
     val elementAtStart = PsiUtilCore.getElementAtOffset(file, selectionModel.selectionStart)
     val elementAtEnd = PsiUtilCore.getElementAtOffset(file, selectionModel.selectionEnd)
     return !(hasIgnoredParent(elementAtStart) || hasIgnoredParent(elementAtEnd))
   }
 
+  @RequiresReadLock
   protected open fun hasIgnoredParent(element: PsiElement): Boolean {
     return false
   }
@@ -146,6 +214,10 @@ open class FloatingToolbar(val editor: Editor, protected val defaultActionGroupI
   protected open fun shouldReviveAfterClose(): Boolean = true
 
   protected open fun shouldSurviveDocumentChange(): Boolean = true
+
+  protected open fun isEnabled(): Boolean {
+    return true
+  }
 
   protected open fun getHintPosition(hint: LightweightHint): Point {
     val hintPos = HintManagerImpl.getInstanceImpl().getHintPosition(hint, editor, HintManager.DEFAULT)
@@ -160,70 +232,84 @@ open class FloatingToolbar(val editor: Editor, protected val defaultActionGroupI
 
   private fun updateOnProbablyChangedSelection(onSelectionChanged: (String) -> Unit) {
     val newSelection = editor.selectionModel.selectedText
-
     when (newSelection) {
-      null -> hideIfShown()
+      null -> scheduleHide()
       lastSelection -> Unit
       else -> onSelectionChanged(newSelection)
     }
-
     lastSelection = newSelection
   }
 
   private inner class MouseListener : EditorMouseListener {
-    override fun mouseReleased(e: EditorMouseEvent) {
+    override fun mouseReleased(event: EditorMouseEvent) {
+      hintWasShownForSelection = false
       updateOnProbablyChangedSelection {
         if (isShown()) {
           updateLocationIfShown()
         } else {
-          showIfHidden()
+          scheduleShow()
         }
       }
     }
   }
 
   private inner class KeyboardListener : KeyAdapter() {
-    override fun keyReleased(e: KeyEvent) {
-      super.keyReleased(e)
-      if (e.source != editor.contentComponent) {
+    override fun keyReleased(event: KeyEvent) {
+      super.keyReleased(event)
+      if (event.source != editor.contentComponent) {
         return
       }
+      hintWasShownForSelection = false
       updateOnProbablyChangedSelection {
-        hideIfShown()
+        scheduleHide()
       }
     }
   }
 
   private inner class MouseMotionListener : EditorMouseMotionListener {
-    override fun mouseMoved(e: EditorMouseEvent) {
-      val visualPosition = e.visualPosition
-      val hoverSelected = editor.caretModel.allCarets.any {
-        val beforeSelectionEnd = it.selectionEndPosition.after(visualPosition)
-        val afterSelectionStart = visualPosition.after(it.selectionStartPosition)
-        beforeSelectionEnd && afterSelectionStart
-      }
-      if (hoverSelected) {
-        showIfHidden()
+    override fun mouseMoved(event: EditorMouseEvent) {
+      val visualPosition = event.visualPosition
+      val hoverSelected = editor.caretModel.allCarets.any { visualPosition.isInsideSelection(it) }
+      if (hoverSelected && (hintWasShownForSelection || hint?.isVisible == true)) {
+        hintWasShownForSelection = true
+        scheduleShow()
       } else {
         if (!Registry.get("floating.codeToolbar.revive.selectionChangeOnly").asBoolean()) {
           showToolbar = true
         }
       }
     }
+
+    private fun VisualPosition.isInsideSelection(caret: Caret): Boolean {
+      val beforeSelectionEnd = caret.selectionEndPosition.after(this)
+      val afterSelectionStart = this.after(caret.selectionStartPosition)
+      return beforeSelectionEnd && afterSelectionStart
+    }
   }
 
   private inner class EditorSelectionListener : SelectionListener {
-    override fun selectionChanged(e: SelectionEvent) {
+    override fun selectionChanged(event: SelectionEvent) {
       val event = IdeEventQueue.getInstance().trueCurrentEvent
       val isDoubleClick = (event as? MouseEvent)?.clickCount == 2
       showToolbar = !(disableForDoubleClickSelection() && isDoubleClick)
+      hintWasShownForSelection = false
     }
   }
 
   private inner class DocumentChangeListener : BulkAwareDocumentListener {
     override fun documentChanged(event: DocumentEvent) {
+      hintWasShownForSelection = false
       if (!shouldSurviveDocumentChange()) {
-        hideIfShown()
+        scheduleHide()
+      }
+    }
+  }
+
+  companion object {
+    private fun JComponent.addKeyListener(listener: KeyListener, parentDisposable: Disposable) {
+      addKeyListener(listener)
+      Disposer.register(parentDisposable) {
+        removeKeyListener(listener)
       }
     }
   }
