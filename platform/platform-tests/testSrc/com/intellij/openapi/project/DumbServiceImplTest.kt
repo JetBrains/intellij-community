@@ -17,11 +17,8 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiManagerImpl
-import com.intellij.testFramework.EdtRule
-import com.intellij.testFramework.ProjectRule
-import com.intellij.testFramework.RunsInEdt
+import com.intellij.testFramework.*
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
-import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ArrayUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.application
@@ -34,6 +31,10 @@ import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
 import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.messages.impl.MessageBusImpl
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 import org.junit.*
 import org.junit.Assert.*
 import org.junit.runner.RunWith
@@ -98,6 +99,59 @@ class DumbServiceImplTest {
     Disposer.dispose(testDisposable)
   }
 
+  @Test
+  fun `test runWhenSmart does not hang in scheduler queue after Default dispatcher starvation`() {
+    val releaseDefaultDispatcher = CountDownLatch(1)
+    val inSmartMode = CountDownLatch(1)
+
+    try {
+      // occupy all the Dispatcher.Default threads with useless work
+      CoroutineScope(Dispatchers.Default).launch {
+        while (releaseDefaultDispatcher.count > 0) {
+          launch {
+            releaseDefaultDispatcher.awaitOrThrow(10, "releaseDefaultDispatcher was not invoked")
+          }
+          yield() // let just submitted coroutine to start and use current thread, so `yield` will suspend until releaseDefaultDispatcher.
+        }
+      }
+
+      Thread.sleep(100) // saturate default dispatcher (wait until `launch` suspended and cannot create new tasks)
+
+      runInEdtAndWait {
+        dumbService.queue {
+          dumbService.runWhenSmart {
+            inSmartMode.countDown()
+          }
+        }
+
+        assertTrue("Dumb mode didn't start", dumbService.isDumb)
+      }
+
+      // Wait until dumb mode is finished.
+      // Don't rely on dumbService.waitForSmartMode because it may need Default dispatcher, which is still busy.
+      // We want dumb service to become dumb and then smart WHILE all the dispatcher threads are busy, so all the StateFlows listeners
+      //   missed both these events (due to conflation)
+      for (i in 1..10) {
+        if (runInEdtAndGet { !dumbService.isDumb }) break
+        Thread.sleep(100)
+      }
+      assertFalse("Dumb mode didn't finish", runInEdtAndGet { dumbService.isDumb })
+
+      // now release Default dispatcher and see if runnable is executed (it should)
+      releaseDefaultDispatcher.countDown()
+      inSmartMode.awaitOrThrow(5, "Smart mode runnable didn't run")
+    }
+    finally {
+      releaseDefaultDispatcher.countDown()
+    }
+  }
+
+  private fun DumbServiceImpl.queue(task: (ProgressIndicator) -> Unit) {
+    queueTask(object : DumbModeTask() {
+      override fun performInDumbMode(indicator: ProgressIndicator) = task(indicator)
+    })
+  }
+  
   @Test
   fun `test runWhenSmart not invoked in dumb mode`() {
     val toStringAlphabeticOrderComparator = Comparator<Any?> { s1, s2 ->

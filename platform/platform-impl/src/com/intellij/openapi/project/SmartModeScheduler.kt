@@ -16,10 +16,11 @@ import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.startup.StartupManager
+import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -53,12 +54,10 @@ class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Dis
 
   private val projectOpening: AtomicBoolean = AtomicBoolean(true)
 
-  // DumbService starts in dumb mode and then becomes smart
-  private val projectDumb: StateFlow<DumbServiceImpl.State> = (project.service<DumbService>() as DumbServiceImpl).stateAsFlow()
-
-  // There is no race: scanning task is queued from "required for smart mode" dumb task, and scanner immediately becomes "running".
-  // Even if listener still has not received "running" event, direct check of the state should say that scanning executor is running
-  private val projectScanning = project.service<UnindexedFilesScannerExecutor>().isRunning
+  private val dumbServiceImpl = project.service<DumbService>() as DumbServiceImpl
+  private val filesScannerExecutor = project.service<UnindexedFilesScannerExecutor>()
+  private val projectDumbState: StateFlow<DumbServiceImpl.DumbState> = dumbServiceImpl.dumbStateAsFlow
+  private val projectScanningChanged: Flow<*> = filesScannerExecutor.startedOrStoppedEvent
 
   init {
     project.messageBus.simpleConnect().subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
@@ -72,20 +71,15 @@ class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Dis
     })
 
     sc.launch {
-      projectScanning.collect {
-        blockingContext {
-          // we don't pass current value to the method because the value might have already outdated
-          onFilesScanningChanged()
-        }
+      projectScanningChanged.collect {
+        onStateChanged()
       }
     }
 
+    sc.childScope()
     sc.launch {
-      projectDumb.collect {
-        blockingContext {
-          // we don't pass current value to the method because the value might have already outdated
-          onDumbModeChanged()
-        }
+      projectDumbState.collect {
+        onStateChanged()
       }
     }
   }
@@ -95,18 +89,14 @@ class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Dis
     myRunWhenSmartQueue.addLast(if (executor === runnable) runnable else RunnableDelegate(runnable) { executor.run() })
   }
 
-  private fun onFilesScanningChanged() = onStateChanged { }
-  private fun onDumbModeChanged(): Unit = onStateChanged { }
-  internal fun onProjectOpened(): Unit = onStateChanged { projectOpening.set(false) }
+  internal fun onProjectOpened() {
+    projectOpening.set(false)
+    onStateChanged()
+  }
 
-  private fun onStateChanged(updateState: () -> Unit) {
-    updateState()
+  private fun onStateChanged() {
     if (isSmart()) {
       // Always reschedule execution to avoid unexpected write lock acquired.
-      // DumbModeListener and FilesScanningListener events are published synchronously. This means that if previous listener started
-      //   write action and tried to publish another event while in write action via synchronous publisher, we'll have unexpected
-      //   write lock acquired in our callback (because message bus first delivers us an event in the same thread with write lock acquired,
-      //   and then delivers other events published by previous publishers).
       //
       // Note2: DumbService tracks modality by itself: exit event occurs in the same modality as the enter event.
       //        Use default modality here to avoid deadlocks like in WEB-59844 (dumb mode may start and end in non NON_MODAL contexts)
@@ -120,7 +110,8 @@ class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Dis
       runnable.run()
     }
     else {
-      onStateChanged { addLast(runnable) }
+      addLast(runnable)
+      onStateChanged()
     }
   }
 
@@ -155,8 +146,8 @@ class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Dis
 
   private fun isSmart() = (getCurrentMode() == 0)
   fun getCurrentMode(): Int =
-    (if (projectScanning.value) SCANNING else 0) +
-    (if (projectDumb.value == DumbServiceImpl.State.DUMB) DUMB else 0) +
+    (if (filesScannerExecutor.isRunning.value) SCANNING else 0) +
+    (if (projectDumbState.value.isDumb) DUMB else 0) +
     (if (projectOpening.get()) OPENING else 0)
 
   fun clear() {

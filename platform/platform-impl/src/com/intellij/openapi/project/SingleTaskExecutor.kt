@@ -46,6 +46,8 @@ internal class SingleTaskExecutor(private val task: Progressive) {
 
   private val runState = MutableStateFlow(RunState.STOPPED)
   private val shouldContinueBackgroundProcessing = AtomicBoolean(false)
+  private val modificationCount = MutableStateFlow<Long>(0)
+
   private fun runWithStateHandling(runnable: Runnable) {
     try {
       do {
@@ -70,7 +72,9 @@ internal class SingleTaskExecutor(private val task: Progressive) {
       while (shouldContinueBackgroundProcessing.get() && runState.compareAndSet(RunState.STOPPING, RunState.STARTING))
     }
     finally {
-      runState.compareAndSet(RunState.STOPPING, RunState.STOPPED)
+      if (runState.compareAndSet(RunState.STOPPING, RunState.STOPPED)) {
+        modificationCount.update { it + 1 }
+      }
     }
   }
 
@@ -89,10 +93,14 @@ internal class SingleTaskExecutor(private val task: Progressive) {
       return false // there will be at least one more check of shouldContinueBackgroundProcessing in the background thread
     }
     else {
-      val thisThreadShouldProcessQueue = runState.compareAndSet(RunState.STOPPING, RunState.STARTING) ||
-                                         runState.compareAndSet(RunState.STOPPED, RunState.STARTING)
+      val stoppedToStarting = runState.compareAndSet(RunState.STOPPED, RunState.STARTING)
+      val thisThreadShouldProcessQueue = stoppedToStarting || runState.compareAndSet(RunState.STOPPING, RunState.STARTING)
       // whatever thread (this or background) wins the competition and sets STARTING - that thread should process the queue
-      if (!thisThreadShouldProcessQueue) return false
+      if (stoppedToStarting) {
+        modificationCount.update { it + 1 }
+      } else if (!thisThreadShouldProcessQueue) {
+        return false
+      }
     }
     processRunner.accept(StateAwareTask(task))
     return true
@@ -114,6 +122,7 @@ internal class SingleTaskExecutor(private val task: Progressive) {
   }
 
   val isRunning: StateFlow<Boolean> = IsRunningStateFlow(runState)
+  val modificationTrackerAsFlow: StateFlow<Long> = modificationCount
 
   companion object {
     private val LOG = Logger.getInstance(SingleTaskExecutor::class.java)
