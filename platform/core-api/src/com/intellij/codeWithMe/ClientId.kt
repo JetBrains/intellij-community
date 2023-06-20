@@ -40,11 +40,6 @@ data class ClientId(val value: String) {
     RETURN_LOCAL,
 
     /**
-     * Throw an exception if ClientId is not set
-     */
-    THROW,
-
-    /**
      * Write error to logger and return localId
      */
     LOG_ERROR,
@@ -123,7 +118,6 @@ data class ClientId(val value: String) {
     val current: ClientId
       get() = when (absenceBehaviorValue) {
         AbsenceBehavior.RETURN_LOCAL -> currentOrNull ?: localId
-        AbsenceBehavior.THROW -> currentOrNull ?: throw NullPointerException("ClientId not set")
         AbsenceBehavior.LOG_ERROR -> {
           val currentId = currentOrNull
           if (currentId == null) {
@@ -227,6 +221,9 @@ data class ClientId(val value: String) {
     @JvmStatic
     fun withClientId(clientId: ClientId?): AccessToken {
       if (clientId == null) {
+        if (absenceBehaviorValue == AbsenceBehavior.LOG_ERROR) {
+          LOG.error("Attempt to call withClientId with ClientId==null")
+        }
         return AccessToken.EMPTY_ACCESS_TOKEN
       }
       return withClientId(clientId.value)

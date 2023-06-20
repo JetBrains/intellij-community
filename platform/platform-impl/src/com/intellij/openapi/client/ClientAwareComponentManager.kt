@@ -43,7 +43,7 @@ abstract class ClientAwareComponentManager(
     val clientId = ClientId.currentOrNull
     val session = sessionManager?.getSession(clientId ?: ClientId.localId) as? ClientSessionImpl
     val service = session?.doGetService(serviceClass = serviceClass, createIfNeeded = createIfNeeded, fallbackToShared = false)
-    if (clientId == null && service != null && ClientId.absenceBehaviorValue != ClientId.AbsenceBehavior.RETURN_LOCAL) {
+    if (clientId == null && service != null && ClientId.absenceBehaviorValue == ClientId.AbsenceBehavior.LOG_ERROR) {
       logger.error("Requested existing per-client service '${service.javaClass.name}' under missing ClientId. " +
                    "Host implementation will be returned, but calling code has to be fixed: either set/promote ClientId " +
                    "or mark the service as non per-client")
