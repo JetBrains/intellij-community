@@ -122,6 +122,7 @@ public final class VfsRootAccess {
 
     try {
       allowed.add(FileUtil.toSystemIndependentName(getJavaHome()));
+      allowed.add(FileUtil.toSystemIndependentName(FileUtil.getTempDirectory()));
       allowed.add(FileUtil.toSystemIndependentName(System.getProperty("java.io.tmpdir")));
 
       String userHome = FileUtil.toSystemIndependentName(SystemProperties.getUserHome());
