@@ -3,6 +3,7 @@ package org.jetbrains.idea.reposearch
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.WaitFor
 import junit.framework.TestCase
@@ -73,6 +74,7 @@ class DependencySearchServiceTest : LightPlatformTestCase() {
     val promise = dependencySearchService.suggestPrefix("group", "artifact", searchParameters) {
       result.add(it)
     }
+    PlatformTestUtil.waitForPromise(promise)
     val artifactResults = result.filterIsInstance(MavenRepositoryArtifactInfo::class.java)
     TestCase.assertTrue(result.last() === PoisonedRepositoryArtifactData.INSTANCE)
     UsefulTestCase.assertSameElements(artifactResults.flatMap { it.items.asList() }.map { it.version },
