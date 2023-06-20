@@ -16,7 +16,7 @@ import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
-internal class SettingsSynchronizer : ApplicationInitializedListener, ApplicationActivationListener, SettingsSyncEnabledStateListener, SettingsSyncCategoriesChangeListener {
+internal class SettingsSynchronizer : ApplicationInitializedListener, ApplicationActivationListener, SettingsSyncEventListener{
 
   private val executorService = AppExecutorUtil.createBoundedScheduledExecutorService("Settings Sync Update", 1)
   private val autoSyncDelay get() = Registry.intValue("settingsSync.autoSync.frequency.sec", 60).toLong()
@@ -28,7 +28,7 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
       return@blockingContext
     }
 
-    SettingsSyncEvents.getInstance().addEnabledStateChangeListener(this)
+    SettingsSyncEvents.getInstance().addListener(this)
 
     if (isSettingsSyncEnabledInSettings()) {
       executorService.schedule(initializeSyncing(SettingsSyncBridge.InitMode.JustInit), 0, TimeUnit.SECONDS)
@@ -71,18 +71,18 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
     LOG.info("Initializing settings sync")
     val settingsSyncMain = SettingsSyncMain.getInstance()
     settingsSyncMain.controls.bridge.initialize(initMode)
-    SettingsSyncEvents.getInstance().addCategoriesChangeListener(this)
+    SettingsSyncEvents.getInstance().addListener(this)
     syncSettings()
     LocalHostNameProvider.initialize()
   }
 
   override fun enabledStateChanged(syncEnabled: Boolean) {
     if (syncEnabled) {
-      SettingsSyncEvents.getInstance().addCategoriesChangeListener(this)
+      SettingsSyncEvents.getInstance().addListener(this)
       // actual start of the sync is handled inside SettingsSyncEnabler
     }
     else {
-      SettingsSyncEvents.getInstance().removeCategoriesChangeListener(this)
+      SettingsSyncEvents.getInstance().removeListener(this)
       stopSyncingByTimer()
       SettingsSyncMain.getInstance().disableSyncing()
     }

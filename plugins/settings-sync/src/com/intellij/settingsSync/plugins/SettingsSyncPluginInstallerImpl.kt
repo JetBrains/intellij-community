@@ -60,7 +60,10 @@ internal open class SettingsSyncPluginInstallerImpl(private val notifyErrors: Bo
     if (settingsChanged){
       SettingsSyncEvents.getInstance().fireCategoriesChanged()
     }
-    notifyRestartNeeded(pluginsRequiredRestart)
+    if (pluginsRequiredRestart.size > 0) {
+      SettingsSyncEvents.getInstance().fireRestartRequired("install", SettingsSyncBundle.message("plugins.sync.install.message",
+                                                                                                 pluginsRequiredRestart.size))
+    }
   }
 
   open internal fun install(installer: PluginDownloader): Boolean = installer.installDynamically(null)
@@ -84,29 +87,6 @@ internal open class SettingsSyncPluginInstallerImpl(private val notifyErrors: Bo
     }
     return null
   }
-
-  private fun notifyRestartNeeded(pluginsRequiredRestart: List<String>) {
-    if (pluginsRequiredRestart.isEmpty())
-      return
-    val listOfPluginsQuoted = pluginsRequiredRestart.joinToString(
-      limit = 10,
-      truncated = SettingsSyncBundle.message("plugins.sync.restart.notification.more.plugins",
-                                             pluginsRequiredRestart.size - 10)
-    )
-    val notification = NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP)
-      .createNotification(SettingsSyncBundle.message("plugins.sync.restart.notification.title"),
-                          SettingsSyncBundle.message("plugins.sync.restart.notification.message",
-                                                     pluginsRequiredRestart.size, listOfPluginsQuoted),
-                          NotificationType.INFORMATION)
-    notification.addAction(NotificationAction.create(
-      SettingsSyncBundle.message("plugins.sync.restart.notification.action", ApplicationNamesInfo.getInstance().fullProductName),
-      Consumer {
-        val app = ApplicationManager.getApplication() as ApplicationEx
-        app.restart(true)
-      }))
-    notification.notify(null)
-  }
-
 
   internal class PrepareInstallationRunnable(
     val pluginIds: List<PluginId>,

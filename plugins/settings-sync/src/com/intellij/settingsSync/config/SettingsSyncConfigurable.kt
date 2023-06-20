@@ -70,7 +70,7 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
 
   inner class EnabledPredicate : ComponentPredicate() {
     override fun addListener(listener: (Boolean) -> Unit) {
-      SettingsSyncEvents.getInstance().addEnabledStateChangeListener(object : SettingsSyncEnabledStateListener {
+      SettingsSyncEvents.getInstance().addListener(object : SettingsSyncEventListener {
         override fun enabledStateChanged(syncEnabled: Boolean) {
           listener(invoke())
         }

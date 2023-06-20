@@ -6,6 +6,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Assert
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import java.util.concurrent.atomic.AtomicReference
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
@@ -327,5 +328,48 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
     assertPluginManagerState {
       cvsOutdated(enabled = true) // remains the same as it's incompatible
     }
+  }
+
+  @Test
+  @TestFor(issues = ["IDEA-303622"])
+  fun `show restart required after install` (){
+    restart_required_base(false, false, true)
+  }
+  @Test
+  @TestFor(issues = ["IDEA-303622"])
+  fun `show restart required after enable` (){
+    restart_required_base(true, false, true)
+  }
+  @Test
+  @TestFor(issues = ["IDEA-303622"])
+  fun `show restart required after disable` (){
+    restart_required_base(true, true, false)
+  }
+
+  private fun restart_required_base(installedBefore: Boolean, enabledBefore: Boolean, enabledInPush: Boolean){
+    val restartRequiredRef = AtomicReference<Pair<String, String>>()
+    SettingsSyncEvents.getInstance().addListener(object : SettingsSyncEventListener {
+      override fun restartRequired(cause: String, details: String) {
+        restartRequiredRef.set(Pair(cause, details))
+      }
+    })
+    testPluginManager.addPluginDescriptors(quickJump)
+    if (installedBefore) {
+      testPluginManager.addPluginDescriptors(scala.withEnabled(enabledBefore))
+    }
+
+    pluginManager.pushChangesToIde(state {
+      quickJump(enabled = false)
+      scala(enabled = enabledInPush)
+    })
+
+    assertIdeState {
+      quickJump(enabled = false)
+      if (installedBefore) {
+        scala(enabled = enabledBefore)
+      }
+    }
+    assertNotNull(restartRequiredRef.get(), "Should have processed")
+    assert(restartRequiredRef.get().second.contains("1"))
   }
 }

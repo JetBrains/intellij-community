@@ -7,10 +7,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.*
 
-@ApiStatus.Internal
-fun interface SettingsSyncEnabledStateListener : EventListener {
-  fun enabledStateChanged(syncEnabled: Boolean)
-}
 
 @State(name = "SettingsSyncSettings", storages = [Storage(FILE_SPEC)])
 @ApiStatus.Internal

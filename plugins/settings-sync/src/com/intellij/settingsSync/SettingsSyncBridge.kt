@@ -46,16 +46,18 @@ class SettingsSyncBridge(parentDisposable: Disposable,
     }
   }
 
-  private val settingsChangeListener = SettingsChangeListener { event ->
-    LOG.debug("Adding settings changed event $event to the queue")
-    if (event is SyncSettingsEvent.ExclusiveEvent) { // such events will be processed separately from all others
-      queue.queue(Update.create(event) {
-        processExclusiveEvent(event)
-      })
-    }
-    else {
-      pendingEvents.add(event as SyncSettingsEvent.StandardEvent)
-      queue.queue(updateObject)
+  private val settingsChangeListener = object: SettingsSyncEventListener {
+    override fun settingChanged(event: SyncSettingsEvent) {
+      LOG.debug("Adding settings changed event $event to the queue")
+      if (event is SyncSettingsEvent.ExclusiveEvent) { // such events will be processed separately from all others
+        queue.queue(Update.create(event) {
+          processExclusiveEvent(event)
+        })
+      }
+      else {
+        pendingEvents.add(event as SyncSettingsEvent.StandardEvent)
+        queue.queue(updateObject)
+      }
     }
   }
 
@@ -66,7 +68,7 @@ class SettingsSyncBridge(parentDisposable: Disposable,
     settingsLog.initialize()
 
     // the queue is not activated initially => events will be collected but not processed until we perform all initialization tasks
-    SettingsSyncEvents.getInstance().addSettingsChangedListener(settingsChangeListener)
+    SettingsSyncEvents.getInstance().addListener(settingsChangeListener)
     ideMediator.activateStreamProvider()
 
     applyInitialChanges(initMode)
@@ -301,7 +303,7 @@ class SettingsSyncBridge(parentDisposable: Disposable,
     }
 
     ideMediator.removeStreamProvider()
-    SettingsSyncEvents.getInstance().removeSettingsChangedListener(settingsChangeListener)
+    SettingsSyncEvents.getInstance().removeListener(settingsChangeListener)
     pendingEvents.clear()
     rollback(previousState)
     queue.deactivate() // for tests it is important to have it the last statement, otherwise waitForAllExecuted can finish before rollback
