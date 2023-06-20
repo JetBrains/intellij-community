@@ -13,8 +13,8 @@ import java.util.regex.Pattern
 
 /**
  * Manages the list of run/debug configurations in a project.
- * @see RunnerRegistry
- * @see ExecutionManager
+ * @see com.intellij.execution.runners.ProgramRunner
+ * @see com.intellij.execution.ExecutionManager
  */
 abstract class RunManager {
   companion object {
@@ -206,9 +206,10 @@ abstract class RunManager {
   }
 
   /**
-   * Sets unique name if existing one is not 'unique'
-   * If settings type is not null (for example settings may be provided by plugin that is unavailable after IDE restart, so type would be suddenly null)
-   * name will be chosen unique for certain type otherwise name will be unique among all configurations
+   * Sets unique name if existing one is not 'unique'.
+   * If the settings type is not null (e.g., settings may be provided by plugin that is unavailable after IDE restart,
+   * so the type would be suddenly null), the name will be chosen unique for a certain type.
+   * Otherwise, the name will be unique among all configurations.
    * @return `true` if name was changed
    */
   fun setUniqueNameIfNeeded(settings: RunnerAndConfigurationSettings): Boolean {

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -169,8 +170,8 @@ final class ProcessBalloon {
   }
 
   private static @NotNull Component getAnchor(@NotNull JRootPane pane) {
-    if (pane instanceof IdeRootPane) {
-      JComponent component = ((IdeRootPane)pane).getToolWindowPane().getDocumentComponent();
+    if (pane instanceof IdeRootPane ideRootPane && !(ideRootPane instanceof LightEditCompatible)) {
+      JComponent component = ideRootPane.getToolWindowPane().getDocumentComponent();
       return component == null || !component.isShowing() ? pane : component;
     }
 

@@ -287,8 +287,7 @@ object SourceNavigationHelper {
         from: KtDeclaration,
         navigationKind: NavigationKind
     ): KtDeclaration {
-        val project = from.project
-        if (DumbService.isDumb(project)) return from
+        if (!from.isValid || DumbService.isDumb(from.project)) return from
 
         when (navigationKind) {
             NavigationKind.CLASS_FILES_TO_SOURCES -> if (!from.containingKtFile.isCompiled) return from

@@ -101,6 +101,7 @@
   <technology name="jdbi" class="org.jdbi.v3.core.Jdbi"/>
   <technology name="jdi-light" class="com.epam.jdi.light.elements.pageobjects.annotations.locators.UI"/>
   <technology name="jetbrains-annotations" class="org.jetbrains.annotations.Contract"/>
+  <technology name="jetbrains-compose" class="androidx.compose.ui.ComposeScene"/>
   <technology name="jhipster" class="io.github.jhipster.config.JHipsterProperties"/>
   <technology name="jmockit" class="mockit.Mock"/>
   <technology name="jodd-db" class="jodd.db.DbQuery"/>

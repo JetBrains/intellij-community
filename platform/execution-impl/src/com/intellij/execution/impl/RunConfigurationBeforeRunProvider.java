@@ -92,7 +92,8 @@ public class RunConfigurationBeforeRunProvider
   }
 
   @Override
-  public @NotNull RunConfigurableBeforeRunTask createTask(@NotNull RunConfiguration runConfiguration) {
+  @Nullable
+  public RunConfigurableBeforeRunTask createTask(@NotNull RunConfiguration runConfiguration) {
     return new RunConfigurableBeforeRunTask();
   }
 

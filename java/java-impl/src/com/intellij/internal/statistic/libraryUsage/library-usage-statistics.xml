@@ -221,6 +221,10 @@
   <technology name="monix" root="monix.reactive"/>
   <technology name="monocle" root="monocle"/>
   <technology name="multik" root="org.jetbrains.kotlinx.multik"/>
+  <technology name="dataframe" root="org.jetbrains.kotlinx.dataframe" />
+  <technology name="kotlindl" root="org.jetbrains.kotlinx.dl" />
+  <technology name="kandy" root="org.jetbrains.kotlinx.kandy" />
+  <technology name="kotlin-spark" root="org.jetbrains.kotlinx.spark" />
   <technology name="multiplatform-settings" root="com.russhwolf.settings"/>
   <technology name="munit" root="munit"/>
   <technology name="mvikotlin" root="com.arkivanov.mvikotlin"/>

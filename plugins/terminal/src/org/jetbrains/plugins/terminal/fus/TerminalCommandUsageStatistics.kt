@@ -12,20 +12,30 @@ import com.intellij.util.execution.ParametersListUtil
 
 internal object TerminalCommandUsageStatistics {
 
+  private val emptyCommand = TerminalCommandEventData("<empty>", null)
+  private val whitespacesCommand = TerminalCommandEventData("<whitespaces>", null)
   private val relativePathCommand = TerminalCommandEventData("<relative path>", null)
   private val absolutePathCommand = TerminalCommandEventData("<absolute path>", null)
   private val knownCommandToSubCommandsMap: Map<String, List<String>> = buildKnownCommandToSubCommandMap()
 
-  internal val commandExecutableField = EventFields.String("command", listOf(relativePathCommand.command, absolutePathCommand.command)
+  internal val commandExecutableField = EventFields.String("command", listOf(relativePathCommand.command, absolutePathCommand.command,
+                                                                             emptyCommand.command, whitespacesCommand.command)
                                                                      + knownCommandToSubCommandsMap.keys)
   internal val subCommandField = EventFields.String("subCommand", knownCommandToSubCommandsMap.values.flatten())
 
   fun triggerCommandExecuted(commandExecutedEvent: EventId2<String?, String?>, project: Project, userCommandLine: String) {
-    val eventData = toEventData(ParametersListUtil.parse(userCommandLine))
+    val eventData = toEventData(userCommandLine)
     commandExecutedEvent.log(project, eventData?.command, eventData?.subCommand)
   }
 
-  private fun toEventData(userCommand: List<String>): TerminalCommandEventData? {
+  private fun toEventData(userCommandLine: String): TerminalCommandEventData? {
+    if (userCommandLine.isEmpty()) {
+      return emptyCommand
+    }
+    if (userCommandLine.isBlank()) {
+      return whitespacesCommand
+    }
+    val userCommand = ParametersListUtil.parse(userCommandLine)
     toKnownCommand(userCommand)?.let {
       return it
     }

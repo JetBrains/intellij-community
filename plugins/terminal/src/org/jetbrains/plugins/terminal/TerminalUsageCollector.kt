@@ -19,7 +19,7 @@ class TerminalUsageTriggerCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup(GROUP_ID, 9)
+    private val GROUP = EventLogGroup(GROUP_ID, 11)
 
     private val TERMINAL_COMMAND_HANDLER_FIELD = EventFields.StringValidatedByCustomRule("terminalCommandHandler",
                                                                                          ClassNameRuleValidator::class.java)

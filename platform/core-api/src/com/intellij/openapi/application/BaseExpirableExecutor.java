@@ -2,7 +2,6 @@
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -14,7 +13,6 @@ import java.util.concurrent.Callable;
  * @see ExpirableExecutor
  * @see AppUIExecutor
  */
-@ApiStatus.Internal
 public interface BaseExpirableExecutor<E extends BaseExpirableExecutor<E>> {
   /**
    * @return an executor that no longer invokes the given runnable after the supplied Disposable is disposed

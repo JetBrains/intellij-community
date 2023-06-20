@@ -14,70 +14,68 @@ class SegmentedButtonBlock<T>(myProperty: ObservableMutableProperty<T>,
                               @NlsContexts.Label val mainLabel: String?,
                               val items: List<T>,
                               val renderer: (T) -> String,
-                              @NlsContexts.Label val leftBottomLabel: String?,
-                              @NlsContexts.Label val midBottomLabel: String?,
-                              @NlsContexts.Label val rightBottomLabel: String?) : SingleInputFeedbackBlock<T>(myProperty) {
+                              @NlsContexts.Label val leftBottomLabel: String? = null,
+                              @NlsContexts.Label val midBottomLabel: String? = null,
+                              @NlsContexts.Label val rightBottomLabel: String? = null) : SingleInputFeedbackBlock<T>(myProperty) {
 
   override fun addToPanel(panel: Panel) {
     panel.apply {
-      panel {
-        if (mainLabel != null) {
-          row {
-            label(mainLabel)
-              .customize(Gaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
-              .bold()
-          }.bottomGap(BottomGap.SMALL).topGap(TopGap.MEDIUM)
-        }
+      if (mainLabel != null) {
         row {
-          segmentedButton(items, renderer)
-            .apply {
-              maxButtonsCount(items.size)
-            }.customize(Gaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
-            .whenItemSelected { myProperty.set(it) }
-            .align(Align.FILL)
-            .validation {
-              addApplyRule(CommonFeedbackBundle.message("dialog.feedback.segmentedButton.error")) { it.selectedItem == null }
-            }
-        }
-
+          label(mainLabel)
+            .customize(Gaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
+        }.bottomGap(BottomGap.SMALL)
+      }
+      row {
+        segmentedButton(items, renderer)
+          .apply {
+            maxButtonsCount(items.size)
+          }.customize(Gaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
+          .whenItemSelected { myProperty.set(it) }
+          .align(Align.FILL)
+          .validation {
+            addApplyRule(CommonFeedbackBundle.message("dialog.feedback.segmentedButton.required")) { it.selectedItem == null }
+          }
+      }.apply {
         if (leftBottomLabel == null && midBottomLabel == null && rightBottomLabel == null) {
-          return@panel
-        }
-
-        row {
-          if (leftBottomLabel != null) {
-            label(leftBottomLabel)
-              .applyToComponent {
-                font = ComponentPanelBuilder.getCommentFont(font)
-                foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
-              }
-              .widthGroup("Group")
-              .apply {
-                if (midBottomLabel == null) {
-                  resizableColumn()
-                }
-              }
-          }
-          if (midBottomLabel != null) {
-            label(midBottomLabel)
-              .applyToComponent {
-                font = ComponentPanelBuilder.getCommentFont(font)
-                foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
-              }
-              .align(AlignX.CENTER)
-              .resizableColumn()
-          }
-          if (rightBottomLabel != null) {
-            label(rightBottomLabel)
-              .applyToComponent {
-                font = ComponentPanelBuilder.getCommentFont(font)
-                foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
-                horizontalAlignment = SwingConstants.RIGHT
-              }
-              .widthGroup("Group")
-          }
+          this.bottomGap(BottomGap.MEDIUM)
+          return
         }
       }
+
+      row {
+        if (leftBottomLabel != null) {
+          label(leftBottomLabel)
+            .applyToComponent {
+              font = ComponentPanelBuilder.getCommentFont(font)
+              foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
+            }
+            .widthGroup("Group")
+            .apply {
+              if (midBottomLabel == null) {
+                resizableColumn()
+              }
+            }
+        }
+        if (midBottomLabel != null) {
+          label(midBottomLabel)
+            .applyToComponent {
+              font = ComponentPanelBuilder.getCommentFont(font)
+              foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
+            }
+            .align(AlignX.CENTER)
+            .resizableColumn()
+        }
+        if (rightBottomLabel != null) {
+          label(rightBottomLabel)
+            .applyToComponent {
+              font = ComponentPanelBuilder.getCommentFont(font)
+              foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
+              horizontalAlignment = SwingConstants.RIGHT
+            }
+            .widthGroup("Group")
+        }
+      }.bottomGap(BottomGap.MEDIUM)
     }
   }
 }

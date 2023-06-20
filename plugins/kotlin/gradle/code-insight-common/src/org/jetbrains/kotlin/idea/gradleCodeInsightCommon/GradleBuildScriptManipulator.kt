@@ -101,9 +101,10 @@ fun addJdkSpec(
         targetVersionNumber: String
     ) -> Unit
 ) {
-    val useToolchain =
-        gradleVersion >= GradleVersionProvider.getVersion(MIN_GRADLE_VERSION_FOR_JVM_TOOLCHAIN_SYNTAX.version) && version.compare("1.5.30") >= 0
-    val useToolchainHelper = useToolchain && version.compare("1.7.20") >= 0
+    // This is a quick fix to temporarily switch off adding toolchains. KTIJ-25673
+    val useToolchain = false
+        //gradleVersion >= GradleVersionProvider.getVersion(MIN_GRADLE_VERSION_FOR_JVM_TOOLCHAIN_SYNTAX.version) && version.compare("1.5.30") >= 0
+    val useToolchainHelper = false //= useToolchain && version.compare("1.7.20") >= 0
 
     var targetVersionNumber = jvmTarget.removePrefix("1.")
     if (useToolchain) {

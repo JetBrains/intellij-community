@@ -59,7 +59,7 @@ final class LightEditGotoOpenedFileAction extends FileChooserAction implements L
 
   private static @Nullable Path getSelectedNioPath(@Nullable Project project) {
     VirtualFile file = getSelectedFile(project);
-    return file != null ? file.toNioPath() : null;
+    return file != null ? file.getFileSystem().getNioPath(file) : null;
   }
 
   private static @Nullable VirtualFile getSelectedFile(@NotNull FileSystemTree fileSystemTree, @Nullable Project project) {

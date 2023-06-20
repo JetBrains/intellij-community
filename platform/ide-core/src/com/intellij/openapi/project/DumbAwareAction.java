@@ -47,7 +47,7 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
   }
 
   protected DumbAwareAction() {
-    super((Icon)null);
+    super();
   }
 
   protected DumbAwareAction(@Nullable Icon icon) {

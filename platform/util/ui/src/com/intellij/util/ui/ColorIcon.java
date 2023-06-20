@@ -81,7 +81,7 @@ public class ColorIcon extends EmptyIcon {
 
     if (myBorder) {
       g.setColor(Gray.x00.withAlpha(40));
-      g.fillRoundRect(x, y, width, height, arc, arc);
+      g.drawRoundRect(x, y, width, height, arc, arc);
     }
     config.restore();
   }

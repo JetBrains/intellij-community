@@ -252,7 +252,7 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
       if (task == activeTask) {
         continue;
       }
-      if (manager.isLocallyClosed(task)) {
+      if (task.isClosed()) {
         temp.add(task);
         continue;
       }

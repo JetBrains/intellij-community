@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.nio.file.Path
+import java.util.*
 import kotlin.io.path.exists
 import kotlin.reflect.full.staticProperties
 
@@ -45,7 +46,7 @@ class IndexKotlinTest : KotlinLightCodeInsightFixtureTestCase() {
         myFixture.createFile("1.kt", "fun foo() = Unit")
     }
 
-    @Bombed(year = 2023, month = 4, day = 3, user = "Yuriy Artamonov")
+    @Bombed(year = 2023, month = Calendar.JULY, day = 3, user = "Yuriy Artamonov")
     fun testKotlinFileIsKnownDuplicatedIdViolation() {
         assertFalse("KtStubElementTypes must not declare FILE field",
                     KtStubElementTypes::class.staticProperties.any { it.name == "FILE" })

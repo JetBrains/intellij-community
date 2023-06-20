@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.openapi.project.Project;
@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Run task once in the history for project or application.
+ * Run a task only once in the history for a project or application.
  *
  * @author Konstantin Bulenkov
  */
@@ -15,8 +15,8 @@ public final class RunOnceUtil {
   /**
    * Perform the task if it was not performed before for the given project.
    *
-   * @param id unique id for the task
-   * @return {@code true} if task was performed, {@code false} if task had already been performed before.
+   * @param id unique ID for the task
+   * @return {@code true} if the task was performed, {@code false} if the task had already been performed before.
    */
   public static boolean runOnceForProject(@NotNull Project project, @NotNull @NonNls String id, @NotNull Runnable task) {
     return _runOnce(PropertiesComponent.getInstance(project), id, false, task);
@@ -25,19 +25,19 @@ public final class RunOnceUtil {
   /**
    * Perform the task if it was not performed before for the given project.
    *
-   * @param id unique id for the task
+   * @param id unique ID for the task
    * @param isIDEAware if {@code true}, the task will be performed for each IDE
-   * @return {@code true} if task was performed, {@code false} if task had already been performed before.
+   * @return {@code true} if the task was performed, {@code false} if the task had already been performed before.
    */
   public static boolean runOnceForProject(@NotNull Project project, @NotNull @NonNls String id, boolean isIDEAware, @NotNull Runnable task) {
     return _runOnce(PropertiesComponent.getInstance(project), id, isIDEAware, task);
   }
 
   /**
-   * Perform the task if it was not performed before for this application.
+   * Perform the task if it was not performed before for this application (running IDE instance).
    *
-   * @param id unique id for the task
-   * @return {@code true} if task was performed, {@code false} if task had already been performed before.
+   * @param id unique ID for the task
+   * @return {@code true} if the task was performed, {@code false} if the task had already been performed before.
    */
   public static boolean runOnceForApp(@NotNull @NonNls String id, @NotNull Runnable task) {
     return _runOnce(PropertiesComponent.getInstance(), id, false, task);

@@ -35,6 +35,7 @@ fun JBTextArea.adjustBehaviourForFeedbackForm() {
 const val TEXT_AREA_ROW_SIZE = 5
 const val TEXT_AREA_COLUMN_SIZE = 42
 const val TEXT_FIELD_EMAIL_COLUMN_SIZE = 25
+const val COMBOBOX_COLUMN_SIZE = 25
 
 val EMAIL_REGEX = Regex(".+@.+\\..+")
 
@@ -58,7 +59,7 @@ fun <T> Panel.createSegmentedButtonWithBottomLabels(@NlsContexts.Label mainLabel
         .whenItemSelected { bindProperty.set(it) }
         .align(Align.FILL)
         .validation {
-          addApplyRule(CommonFeedbackBundle.message("dialog.feedback.segmentedButton.error")) { it.selectedItem == null }
+          addApplyRule(CommonFeedbackBundle.message("dialog.feedback.segmentedButton.required")) { it.selectedItem == null }
         }
     }
 
