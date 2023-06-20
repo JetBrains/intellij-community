@@ -17,8 +17,7 @@ import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.workspaceModel.codegen.impl.engine.ProblemReporter
 
 fun ObjClass<*>.generateBuilderCode(reporter: ProblemReporter): String = lines {
@@ -30,7 +29,7 @@ fun ObjClass<*>.generateBuilderCode(reporter: ProblemReporter): String = lines {
   val superBuilders = superTypes.filterIsInstance<ObjClass<*>>().filter { !it.isStandardInterface }.joinToString { 
     ", ${it.name}.Builder<$typeParameter>"
   }
-  val header = "interface Builder$typeDeclaration: $javaFullName$superBuilders, ${WorkspaceEntity.Builder::class.fqn}<$typeParameter>, ${ObjBuilder::class.fqn}<$typeParameter>"
+  val header = "interface Builder$typeDeclaration: $javaFullName$superBuilders, ${WorkspaceEntity.Builder::class.fqn}<$typeParameter>"
 
   section(header) {
     list(allFields.noSymbolicId()) {
@@ -134,7 +133,7 @@ private val knownInterfaces = setOf(
 fun ObjClass<*>.generateCompanionObject(): String = lines {
   val builderGeneric = if (openness.extendable) "<$javaFullName>" else ""
   val companionObjectHeader = buildString {
-    append("companion object: ${Type::class.fqn}<$javaFullName, Builder$builderGeneric>(")
+    append("companion object: ${EntityType::class.fqn}<$javaFullName, Builder$builderGeneric>(")
     val base = superTypes.filterIsInstance<ObjClass<*>>().firstOrNull()
     if (base != null && base.name !in SKIPPED_TYPES)
       append(base.javaFullName)
