@@ -22,16 +22,14 @@ package com.intellij.psi.stubs;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.indexing.ID;
-import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class StubIndexKey<K, Psi extends PsiElement> extends ID<K, Psi> {
-  private StubIndexKey(@NonNls @Pattern(VALID_ID_REGEXP) String name, @Nullable PluginId pluginId) {
+  private StubIndexKey(@NonNls String name, @Nullable PluginId pluginId) {
     super(name, pluginId);
   }
-
 
   @NotNull
   public static synchronized <K, Psi extends PsiElement> StubIndexKey<K, Psi> createIndexKey(@NonNls @NotNull String name) {
