@@ -1241,8 +1241,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
       Project project = e.getProject();
       if (project == null) return;
 
-      String toolWindowId =
-        ((ServiceViewManagerImpl)ServiceViewManager.getInstance(project)).getToolWindowId(myContributor.getClass());
+      String toolWindowId = ServiceViewManager.getInstance(project).getToolWindowId(myContributor.getClass());
       if (toolWindowId == null) return;
 
       ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(toolWindowId);
