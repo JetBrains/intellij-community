@@ -37,6 +37,7 @@ import java.nio.file.Path
 import java.util.function.BiConsumer
 import java.util.regex.Pattern
 import java.util.stream.Stream
+import kotlin.io.path.readLines
 
 internal class TestingTasksImpl(private val context: CompilationContext, private val options: TestingOptions) : TestingTasks {
   private val NO_TESTS_ERROR = 42
@@ -618,30 +619,75 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
         }
     }
     else {
-      val exitCode5 = spanBuilder("run junit 5 tests").useWithScope {
-        runJUnit5Engine(systemProperties = systemProperties,
-                        jvmArgs = jvmArgs,
-                        envVariables = envVariables,
-                        bootstrapClasspath = bootstrapClasspath,
-                        modulePath = modulePath,
-                        testClasspath = testClasspath,
-                        suiteName = null,
-                        methodName = null)
+      val failedClassesJUnit5List = Files.createTempFile("failed-classes-junit5-", ".list").apply { Files.delete(this) }
+      val failedClassesJUnit3List = Files.createTempFile("failed-classes-junit3-", ".list").apply { Files.delete(this) }
+      val additionalJvmArgsJUnit5: List<String> = failedClassesJUnit5List.let {
+        if (options.attemptCount > 1) listOf("-Dintellij.build.test.retries.failedClasses.file=$it", "-Dintellij.build.test.list.file=$it")
+        else emptyList()
       }
-      val exitCode3 = spanBuilder("run junit 3 tests").useWithScope {
-        runJUnit5Engine(systemProperties = systemProperties,
-                        jvmArgs = jvmArgs,
-                        envVariables = envVariables,
-                        bootstrapClasspath = bootstrapClasspath,
-                        modulePath = modulePath,
-                        testClasspath = testClasspath,
-                        suiteName = options.bootstrapSuite,
-                        methodName = null)
+      val additionalJvmArgsJUnit3: List<String> = failedClassesJUnit3List.let {
+        if (options.attemptCount > 1) listOf("-Dintellij.build.test.retries.failedClasses.file=$it", "-Dintellij.build.test.list.file=$it")
+        else emptyList()
       }
-      if (exitCode5 == NO_TESTS_ERROR && exitCode3 == NO_TESTS_ERROR &&
-          // a bucket might be empty for run configurations with too few tests due to imperfect tests balancing
-          numberOfBuckets < 2) {
-        throw RuntimeException("No tests were found in the configuration")
+      var runJUnit5 = true
+      var runJUnit3 = true
+      for (attempt in 1..options.attemptCount) {
+        if (!runJUnit5 && !runJUnit3) break
+        val spanNameSuffix = if (options.attemptCount > 1) " (attempt $attempt)" else ""
+        val additionalJvmArgs: List<String> = if (attempt > 1) listOf("-Dintellij.build.test.ignoreFirstAndLastTests=true") else emptyList()
+
+        val exitCode5 = if (runJUnit5) spanBuilder("run junit 5 tests${spanNameSuffix}").useWithScope {
+          runJUnit5Engine(systemProperties = systemProperties,
+                          jvmArgs = jvmArgs + additionalJvmArgs + additionalJvmArgsJUnit5,
+                          envVariables = envVariables,
+                          bootstrapClasspath = bootstrapClasspath,
+                          modulePath = modulePath,
+                          testClasspath = testClasspath,
+                          suiteName = null,
+                          methodName = null)
+        }
+        else 0
+        val exitCode3 =  if (runJUnit3) spanBuilder("run junit 3 tests${spanNameSuffix}").useWithScope {
+          runJUnit5Engine(systemProperties = systemProperties,
+                          jvmArgs = jvmArgs + additionalJvmArgs + additionalJvmArgsJUnit3,
+                          envVariables = envVariables,
+                          bootstrapClasspath = bootstrapClasspath,
+                          modulePath = modulePath,
+                          testClasspath = testClasspath,
+                          suiteName = options.bootstrapSuite,
+                          methodName = null)
+        }
+        else 0
+
+        if (exitCode5 == NO_TESTS_ERROR && exitCode3 == NO_TESTS_ERROR &&
+            // only check on first (full) attempt
+            attempt == 1 &&
+            // a bucket might be empty for run configurations with too few tests due to imperfect tests balancing
+            numberOfBuckets < 2) {
+          throw RuntimeException("No tests were found in the configuration")
+        }
+
+        if (attempt == options.attemptCount) break
+
+        if (runJUnit5) {
+          val failedClassesJUnit5 = failedClassesJUnit5List.let { if (Files.exists(it)) it.readLines() else emptyList() }
+          if (failedClassesJUnit5.isNotEmpty()) {
+            context.messages.info("Will rerun JUnit 5 tests: $failedClassesJUnit5")
+          }
+          else {
+            runJUnit5 = false
+          }
+        }
+
+        if (runJUnit3) {
+          val failedClassesJUnit3 = failedClassesJUnit3List.let { if (Files.exists(it)) it.readLines() else emptyList() }
+          if (failedClassesJUnit3.isNotEmpty()) {
+            context.messages.info("Will rerun JUnit 3 tests: $failedClassesJUnit3")
+          }
+          else {
+            runJUnit3 = false
+          }
+        }
       }
     }
   }

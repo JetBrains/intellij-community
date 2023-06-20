@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.intellij.util.SystemProperties
@@ -143,4 +143,9 @@ open class TestingOptions {
    * Terminate execution immediately if any test fails. Both build script and test JVMs are terminated.
    */
   var isFailFast = SystemProperties.getBooleanProperty("intellij.build.test.failFast", false)
+
+  /**
+   * Number of attempts to run tests. Starting from the 2nd attempt only failed tests are re-run.
+   */
+  var attemptCount = SystemProperties.getIntProperty("intellij.build.test.attempt.count", 1)
 }

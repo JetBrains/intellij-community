@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tests;
 
 import jetbrains.buildServer.messages.serviceMessages.MapSerializerUtil;
@@ -109,7 +109,7 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
     }
 
     public boolean smthExecuted() {
-      return myCurrentTestStart > 0;
+      return myCurrentTestStart != 0;
     }
 
     @Override
@@ -140,7 +140,7 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
     public void executionStarted(TestIdentifier testIdentifier) {
       if (testIdentifier.isTest()) {
         testStarted(testIdentifier);
-        myCurrentTestStart = System.currentTimeMillis();
+        myCurrentTestStart = System.nanoTime();
       }
       else if (hasNonTrivialParent(testIdentifier)) {
         myFinishCount = 0;
@@ -215,7 +215,7 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
     }
 
     protected long getDuration() {
-      return System.currentTimeMillis() - myCurrentTestStart;
+      return (System.nanoTime() - myCurrentTestStart) / 1_000_000;
     }
 
     private void testStarted(TestIdentifier testIdentifier) {

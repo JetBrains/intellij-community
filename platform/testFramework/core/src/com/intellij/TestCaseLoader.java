@@ -6,7 +6,6 @@ import com.intellij.idea.ExcludeFromTestDiscovery;
 import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.idea.IgnoreJUnit3;
 import com.intellij.nastradamus.NastradamusClient;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.teamcity.TeamCityClient;
 import com.intellij.testFramework.*;
@@ -20,7 +19,6 @@ import junit.framework.TestSuite;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.annotation.Annotation;
@@ -30,11 +28,14 @@ import java.lang.reflect.Modifier;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
+import java.util.stream.Stream;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace", "TestOnlyProblems"})
 public class TestCaseLoader {
@@ -120,6 +121,10 @@ public class TestCaseLoader {
     if (affectedTestsFilter != null) {
       testClassesFilter = new TestClassesFilter.And(testClassesFilter, affectedTestsFilter);
     }
+    TestClassesFilter explicitTestsFilter = explicitTestsFilter();
+    if (explicitTestsFilter != null) {
+      testClassesFilter = new TestClassesFilter.And(testClassesFilter, explicitTestsFilter);
+    }
     myTestClassesFilter = testClassesFilter;
     System.out.println(myTestClassesFilter);
   }
@@ -177,23 +182,44 @@ public class TestCaseLoader {
 
   private static @Nullable TestClassesFilter affectedTestsFilter() {
     if (RUN_ONLY_AFFECTED_TESTS) {
-      System.out.println("Trying to load affected tests.");
-      File affectedTestClasses = new File(System.getProperty("idea.home.path"), "discoveredTestClasses.txt");
-      if (affectedTestClasses.exists()) {
-        System.out.println("Loading file with affected classes " + affectedTestClasses.getAbsolutePath());
-        try {
-          return new PatternListTestClassFilter(FileUtil.loadLines(affectedTestClasses));
-        }
-        catch (IOException e) {
-          e.printStackTrace();
-          throw new RuntimeException(e);
-        }
-      }
+      return Stream.of(System.getProperty("intellij.build.test.affected.classes.file", ""),
+                       System.getProperty("idea.home.path", "") + "/discoveredTestClasses.txt")
+        .filter(Predicate.not(StringUtil::isEmptyOrSpaces))
+        .map(Path::of)
+        .filter(Files::isRegularFile)
+        .findFirst()
+        .map(path -> {
+          System.out.println("Loading affected tests patterns from " + path);
+          return loadTestsFilterFromFile(path, true);
+        }).orElse(null);
     }
     else {
       System.out.println("Affected tests discovery is disabled. Will run with the standard test filter");
     }
     return null;
+  }
+
+  private static @Nullable TestClassesFilter explicitTestsFilter() {
+    String fileName = System.getProperty("intellij.build.test.list.file");
+    if (fileName != null && !fileName.isBlank()) {
+      Path path = Path.of(fileName);
+      if (Files.isRegularFile(path)) {
+        System.out.println("Loading explicit tests list from " + path);
+        return loadTestsFilterFromFile(path, false);
+      }
+    }
+    return null;
+  }
+
+  private static @NotNull TestClassesFilter loadTestsFilterFromFile(Path path, boolean linesArePatterns) {
+    try {
+      List<String> lines = Files.readAllLines(path);
+      return linesArePatterns ? new PatternListTestClassFilter(lines) : new NameListTestClassFilter(lines);
+    }
+    catch (IOException e) {
+      e.printStackTrace();
+      throw new RuntimeException(e);
+    }
   }
 
   private static List<String> getTestGroups() {
@@ -234,7 +260,7 @@ public class TestCaseLoader {
   }
 
   static boolean matchesCurrentBucketViaHashing(@NotNull String testIdentifier) {
-    return MathUtil.nonNegativeAbs(testIdentifier.hashCode()) % TEST_RUNNERS_COUNT == TEST_RUNNER_INDEX;
+    return TEST_RUNNERS_COUNT == 1 || MathUtil.nonNegativeAbs(testIdentifier.hashCode()) % TEST_RUNNERS_COUNT == TEST_RUNNER_INDEX;
   }
 
   /**
@@ -501,7 +527,7 @@ public class TestCaseLoader {
    * @return Sorted list of loaded classes
    */
   public List<Class<?>> getClasses() {
-    List<Class<?>> result = new ArrayList<>(myClassSet.size());
+    List<Class<?>> result = new ArrayList<>(myClassSet.size() + 2);
 
     if (myFirstTestClass != null) {
       result.add(myFirstTestClass);
@@ -591,6 +617,15 @@ public class TestCaseLoader {
 
     if (ourFilter == null) {
       ourFilter = calcTestClassFilter("tests/testGroups.properties");
+      TestClassesFilter affectedTestsFilter = affectedTestsFilter();
+      if (affectedTestsFilter != null) {
+        ourFilter = new TestClassesFilter.And(ourFilter, affectedTestsFilter);
+      }
+      TestClassesFilter explicitTestsFilter = explicitTestsFilter();
+      if (explicitTestsFilter != null) {
+        ourFilter = new TestClassesFilter.And(ourFilter, explicitTestsFilter);
+      }
+      System.out.println("Initialized tests filter: " + ourFilter);
     }
     return (isIncludingPerformanceTestsRun() || isPerformanceTestsRun() == isPerformanceTest(null, className)) &&
            // no need to calculate bucket matching (especially that may break fair bucketing), if the test does not match the filter

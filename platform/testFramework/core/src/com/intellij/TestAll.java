@@ -258,6 +258,10 @@ public class TestAll implements Test {
     if (testListener != null) {
       testResult.addListener(testListener);
     }
+    final OutOfProcessRetries.OutOfProcessRetryListener outOfProcessRetryListener = OutOfProcessRetries.getListenerForOutOfProcessRetry();
+    if (outOfProcessRetryListener != null) {
+      testResult.addListener(outOfProcessRetryListener);
+    }
 
     testResult = RetriesImpl.maybeEnable(testResult);
 
@@ -280,6 +284,14 @@ public class TestAll implements Test {
     if (testListener instanceof Closeable) {
       try {
         ((Closeable)testListener).close();
+      }
+      catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+    if (outOfProcessRetryListener != null) {
+      try {
+        outOfProcessRetryListener.save();
       }
       catch (IOException e) {
         e.printStackTrace();
