@@ -9,12 +9,17 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.ToolbarComboWidget;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBEmptyBorder;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.BadLocationException;
@@ -103,7 +108,7 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
     c.setTransparentHoverBackground(JBColor.namedColor("MainToolbar.Dropdown.transparentHoverBackground", c.getHoverBackground()));
 
     Insets insets = JBUI.CurrentTheme.MainToolbar.Dropdown.borderInsets();
-    JBEmptyBorder border = JBUI.Borders.empty(insets.top, insets.left, insets.bottom, insets.right);
+    Border border = new EmptyBorder(insets);
     c.setBorder(border);
   }
 

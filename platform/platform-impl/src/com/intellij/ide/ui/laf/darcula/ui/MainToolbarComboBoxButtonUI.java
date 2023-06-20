@@ -7,13 +7,14 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.hover.HoverListener;
-import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtilities;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.View;
@@ -58,7 +59,7 @@ public class MainToolbarComboBoxButtonUI extends DarculaButtonUI {
     c.setBackground(COLOR);
 
     Insets insets = JBUI.CurrentTheme.MainToolbar.Dropdown.borderInsets();
-    JBEmptyBorder border = JBUI.Borders.empty(insets.top, insets.left, insets.bottom, insets.right);
+    Border border = new EmptyBorder(insets);
     c.setBorder(border);
     c.setOpaque(true);
 
