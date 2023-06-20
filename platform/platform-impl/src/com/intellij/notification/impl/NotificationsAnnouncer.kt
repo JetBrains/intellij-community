@@ -30,7 +30,7 @@ object NotificationsAnnouncer {
   private val mode: NotificationAnnouncingMode get() =
     NotificationsConfiguration.getNotificationsConfiguration().notificationAnnouncingMode
 
-  val isFeatureAvailable: Boolean get() = Registry.`is`("ide.accessibility.announcing.notifications.available")
+  val isFeatureAvailable: Boolean get() = Registry.`is`("ide.accessibility.announcing.notifications.available", false)
 
   @ApiStatus.Experimental
   @JvmStatic
