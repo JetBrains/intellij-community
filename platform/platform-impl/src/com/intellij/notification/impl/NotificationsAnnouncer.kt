@@ -47,7 +47,11 @@ object NotificationsAnnouncer {
     if (!isEnabled()) return
     EDT.assertIsEdt()
 
-    val frame = WindowManager.getInstance().getFrame(project) ?: return
+    val frame =
+      (if (project == null) WindowManager.getInstance().findVisibleFrame()
+      else WindowManager.getInstance().getFrame(project))
+      ?: return
+
     var focusedFrame: Container? = KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow
     while (focusedFrame != null && frame !== focusedFrame) {
       focusedFrame = focusedFrame.parent
