@@ -15,8 +15,10 @@ import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.statistics.modules
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.concurrent.atomic.AtomicBoolean
 
 abstract class PyRunAnythingPackageProvider : RunAnythingCommandLineProvider() {
+  private var cacheInitialized = AtomicBoolean(false)
 
   override fun suggestCompletionVariants(dataContext: DataContext,
                                          commandLine: CommandLine): Sequence<String> {
@@ -29,6 +31,7 @@ abstract class PyRunAnythingPackageProvider : RunAnythingCommandLineProvider() {
     if ((isInstall || isUninstall) &&
         shouldCompletePackageNames(commandLine.parameters, commandLine.toComplete)) {
       val packageManager = getPackageManager(dataContext) ?: return emptySequence()
+      initCaches(packageManager)
       if (isInstall) {
         val packageRepository = getPackageRepository(dataContext) ?: return emptySequence()
         return packageManager.repositoryManager.packagesFromRepository(packageRepository).filter {
@@ -43,6 +46,7 @@ abstract class PyRunAnythingPackageProvider : RunAnythingCommandLineProvider() {
       if (ind == null || operator == null || commandLine.toComplete.isBlank()) return emptySequence()
       val packageName = last.substring(0, ind)
       val packageManager = getPackageManager(dataContext) ?: return emptySequence()
+      initCaches(packageManager)
       val packageSpec = getPackageRepository(dataContext)?.createPackageSpecification(packageName) ?: return emptySequence()
       return runBlockingCancellable {
         withContext(Dispatchers.Default) {
@@ -60,6 +64,12 @@ abstract class PyRunAnythingPackageProvider : RunAnythingCommandLineProvider() {
   protected abstract fun getPackageManager(dataContext: DataContext): PythonPackageManager?
 
   protected abstract fun getPackageRepository(dataContext: DataContext): PyPackageRepository?
+
+  private fun initCaches(packageManager: PythonPackageManager) {
+    if (!cacheInitialized.getAndSet(true)) {
+      runBlockingCancellable { packageManager.repositoryManager.initCaches() }
+    }
+  }
 
   private fun getCompOperatorPosition(param: String): Pair<Int?, String?> {
     return compOperator().map { Pair(param.indexOf(it), it) }.filter { it.first != -1 }.firstOrNull() ?: Pair(null, null)
