@@ -6,85 +6,101 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.AppExecutorUtil
-import java.lang.ref.SoftReference
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.ScheduledExecutorService
 
 @Service(Service.Level.PROJECT)
 class JsonSchemaCacheManager : Disposable {
 
+  private val cache: ConcurrentMap<String, CachedValue<JsonSchemaObjectFuture>> = ConcurrentHashMap()
+
+  /**
+   *  Computes [JsonSchemaObject] preventing multiple concurrent computations of the same schema.
+   */
   fun computeSchemaObject(schemaVirtualFile: VirtualFile, schemaPsiFile: PsiFile): JsonSchemaObject? {
-    val created: CompletableFuture<JsonSchemaObjectRef> = CompletableFuture()
-    val future: CompletableFuture<JsonSchemaObjectRef> = getUpToDateValue(schemaVirtualFile, schemaPsiFile, created, CACHE_KEY)
-    if (future === created) {
+    val newFuture: JsonSchemaObjectFuture = CompletableFuture()
+    val future: JsonSchemaObjectFuture = getUpToDateFuture(schemaVirtualFile, schemaPsiFile, newFuture)
+    if (future === newFuture) {
       if (ApplicationManager.getApplication().isDispatchThread) {
-        completeSync(schemaVirtualFile, schemaPsiFile, created)
+        // Compute synchronously, because we can't start `NonBlockingReadAction` on EDT and
+        // immediately after that wait on EDT for its computation in blocking manner.
+        completeSync(schemaVirtualFile, schemaPsiFile, newFuture)
       }
       else {
-        completeAsync(schemaVirtualFile, schemaPsiFile, created)
+        // We cannot `completeSync(schemaVirtualFile, schemaPsiFile, newFuture)` here, because of
+        // unwanted `ProcessCanceledException` caching. If we try to avoid `ProcessCanceledException` caching by
+        // starting a new computation, the new computation will fail with PCE too, because of cancelled progress.
+        completeAsync(schemaVirtualFile, schemaPsiFile, newFuture)
       }
     }
-    return ProgressIndicatorUtils.awaitWithCheckCanceled(future, ProgressManager.getInstance().progressIndicator).get()
+    return ProgressIndicatorUtils.awaitWithCheckCanceled(future, ProgressManager.getInstance().progressIndicator)
   }
 
-  private fun completeSync(schemaVirtualFile: VirtualFile,
-                           schemaPsiFile: PsiFile,
-                           future: CompletableFuture<JsonSchemaObjectRef>) {
+  private fun getUpToDateFuture(schemaVirtualFile: VirtualFile,
+                                schemaPsiFile: PsiFile,
+                                newFuture: JsonSchemaObjectFuture): JsonSchemaObjectFuture {
+    val cachedValue: CachedValue<JsonSchemaObjectFuture> = cache.compute(schemaVirtualFile.url) { _, prevValue ->
+      val virtualFileModStamp: Long = schemaVirtualFile.modificationStamp
+      val psiFileModStamp: Long = schemaPsiFile.modificationStamp
+      if (prevValue != null && prevValue.virtualFileModStamp == virtualFileModStamp && prevValue.psiFileModStamp == psiFileModStamp) {
+        prevValue
+      }
+      else {
+        CachedValue(newFuture, virtualFileModStamp, psiFileModStamp)
+      }
+    }!! // !!, because`remappingFunction` always returns not-null value
+    return cachedValue.value
+  }
+
+  private fun completeSync(schemaVirtualFile: VirtualFile, schemaPsiFile: PsiFile, future: JsonSchemaObjectFuture) {
     try {
-      future.complete(SoftReference(JsonSchemaReader(schemaVirtualFile).read(schemaPsiFile)))
+      future.complete(JsonSchemaReader(schemaVirtualFile).read(schemaPsiFile))
     }
     catch (e: Exception) {
-      future.completeExceptionally(e)
+      completeExceptionally(future, e)
     }
   }
 
-  private fun completeAsync(schemaVirtualFile: VirtualFile,
-                            schemaPsiFile: PsiFile,
-                            future: CompletableFuture<JsonSchemaObjectRef>) {
-    val promise = ReadAction.nonBlocking<JsonSchemaObjectRef> {
-      SoftReference(JsonSchemaReader(schemaVirtualFile).read(schemaPsiFile))
+  private fun completeAsync(schemaVirtualFile: VirtualFile, schemaPsiFile: PsiFile, future: JsonSchemaObjectFuture) {
+    val promise = ReadAction.nonBlocking<JsonSchemaObject?> {
+      JsonSchemaReader(schemaVirtualFile).read(schemaPsiFile)
     }.expireWith(this).submit(READER_EXECUTOR)
     promise.onSuccess {
       future.complete(it)
     }
     promise.onError {
-      future.completeExceptionally(it)
+      completeExceptionally(future, it)
     }
+  }
+
+  private fun completeExceptionally(future: CompletableFuture<*>, e: Throwable) {
+    if (e is ProcessCanceledException) {
+      thisLogger().error("PCE will be cached unexpectedly", e)
+    }
+    future.completeExceptionally(e)
   }
 
   override fun dispose() {
+    cache.clear()
   }
 
-  private data class CachedValue<T>(val value: T, val virtualModStamp: Long, val psiModStamp: Long)
+  private data class CachedValue<T>(val value: T, val virtualFileModStamp: Long, val psiFileModStamp: Long)
 
   companion object {
-
     @JvmStatic
     fun getInstance(project: Project): JsonSchemaCacheManager = project.service()
-    private val CACHE_KEY = Key.create<CachedValue<CompletableFuture<JsonSchemaObjectRef>>>("Future<JsonSchemaObjectCache>")
     private val READER_EXECUTOR: ScheduledExecutorService = AppExecutorUtil.createBoundedScheduledExecutorService("JSON Schema reader", 1)
-
-    @Suppress("SameParameterValue")
-    private fun <T> getUpToDateValue(schemaVirtualFile: VirtualFile, schemaPsiFile: PsiFile, created: T, key: Key<CachedValue<T>>): T {
-      synchronized(this) {
-        val virtualFileModStamp: Long = schemaVirtualFile.modificationStamp
-        val psiModStamp: Long = schemaPsiFile.modificationStamp
-        val data: CachedValue<T>? = schemaVirtualFile.getUserData(key)
-        if (data != null && data.virtualModStamp == virtualFileModStamp && data.psiModStamp == psiModStamp) {
-          return data.value
-        }
-        schemaVirtualFile.putUserData(key, CachedValue(created, virtualFileModStamp, psiModStamp))
-        return created
-      }
-    }
   }
 }
 
-private typealias JsonSchemaObjectRef = SoftReference<JsonSchemaObject?>
+private typealias JsonSchemaObjectFuture = CompletableFuture<JsonSchemaObject?>
