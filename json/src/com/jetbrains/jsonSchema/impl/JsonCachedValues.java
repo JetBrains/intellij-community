@@ -42,19 +42,16 @@ public final class JsonCachedValues {
   @Nullable
   public static JsonSchemaObject getSchemaObject(@NotNull VirtualFile schemaFile, @NotNull Project project) {
     JsonFileResolver.startFetchingHttpFileIfNeeded(schemaFile, project);
-    return computeForFile(schemaFile, project, (psiFile) -> computeSchemaObject(schemaFile, psiFile), JSON_OBJECT_CACHE_KEY);
-  }
-
-  @Nullable
-  private static JsonSchemaObject computeSchemaObject(@NotNull VirtualFile schemaFile, @NotNull PsiFile f) {
-    return new JsonSchemaReader(schemaFile).read(f);
+    return computeForFile(schemaFile, project, (psiFile) -> {
+      return JsonSchemaCacheManager.getInstance(psiFile.getProject()).computeSchemaObject(schemaFile, psiFile);
+    }, JSON_OBJECT_CACHE_KEY);
   }
 
   static final String URL_CACHE_KEY = "JsonSchemaUrlCache";
   private static final Key<CachedValue<String>> SCHEMA_URL_KEY = Key.create(URL_CACHE_KEY);
   @Nullable
   public static String getSchemaUrlFromSchemaProperty(@NotNull VirtualFile file,
-                                                       @NotNull Project project) {
+                                                      @NotNull Project project) {
     String value = JsonSchemaFileValuesIndex.getCachedValue(project, file, URL_CACHE_KEY);
     if (value != null) {
       return JsonSchemaFileValuesIndex.NULL.equals(value) ? null : value;
@@ -171,7 +168,7 @@ public final class JsonCachedValues {
   private static final Key<CachedValue<List<JsonSchemaCatalogEntry>>> SCHEMA_CATALOG_CACHE_KEY = Key.create("JsonSchemaCatalogCache");
   @Nullable
   public static List<JsonSchemaCatalogEntry> getSchemaCatalog(@NotNull final VirtualFile catalog,
-                                   @NotNull final Project project) {
+                                                              @NotNull final Project project) {
     if (!catalog.isValid()) return null;
     return computeForFile(catalog, project, JsonCachedValues::computeSchemaCatalog, SCHEMA_CATALOG_CACHE_KEY);
   }
