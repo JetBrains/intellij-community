@@ -351,13 +351,14 @@ public final class BackgroundTaskUtil {
       }
     };
 
-    if (!registerIfParentNotDisposed(parent, disposable)) {
-      indicator.cancel();
-      throw new ProcessCanceledException();
-    }
-
     try {
-      ProgressManager.getInstance().runProcess(task, indicator);
+      ProgressManager.getInstance().runProcess(() -> {
+        if (!registerIfParentNotDisposed(parent, disposable)) {
+          throw new ProcessCanceledException();
+        }
+
+        task.run();
+      }, indicator);
     }
     finally {
       Disposer.dispose(disposable);
