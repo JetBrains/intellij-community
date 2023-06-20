@@ -3,6 +3,7 @@ package com.intellij.openapi.progress
 
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.TestLoggerFactory.TestLoggerAssertionError
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.util.TEST_TIMEOUT_MS
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.getValue
@@ -61,14 +62,8 @@ fun waitAssertCompletedWithCancellation(future: Future<*>) {
   waitAssertCompletedWith(future, CancellationException::class)
 }
 
-fun Job.timeoutJoinBlocking(): Unit = runBlocking {
-  timeoutJoin()
-}
-
-suspend fun Job.timeoutJoin() {
-  withTimeout(TEST_TIMEOUT_MS) {
-    join()
-  }
+fun Job.timeoutJoinBlocking(): Unit = timeoutRunBlocking {
+  join()
 }
 
 fun waitAssertCompletedNormally(job: Job) {
