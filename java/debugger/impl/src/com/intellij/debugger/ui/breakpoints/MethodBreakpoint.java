@@ -39,7 +39,6 @@ import com.intellij.psi.*;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.SlowOperations;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
@@ -55,7 +54,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
-import org.jetbrains.org.objectweb.asm.Label;
 import org.jetbrains.org.objectweb.asm.MethodVisitor;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 
@@ -215,41 +213,45 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
         breakpoint.disableEmulation();
         return;
       }
+      else if (method.isAbstract()) {
+        continue;
+      }
+
       Method target = MethodBytecodeUtil.getBridgeTargetMethod(method, classesByName);
-      if (target != null && !ContainerUtil.isEmpty(DebuggerUtilsEx.allLineLocations(target))) {
+      if (target != null) {
         method = target;
       }
 
-      List<Location> allLineLocations = DebuggerUtilsEx.allLineLocations(method);
-      if (allLineLocations == null && !method.isBridge()) { // no line numbers
-        LOG.info("Breakpoint emulation was disabled because " + method + " contains no line info");
-        breakpoint.disableEmulation();
-        return;
+      if (breakpoint.isWatchEntry()) {
+        // We assume that all VMs start code indexes from zero.
+        Location location = new LocationCodeIndexOnly(method, 0);
+        createLocationBreakpointRequest(breakpoint, location, debugProcess, true);
       }
-      if (!ContainerUtil.isEmpty(allLineLocations)) {
-        if (breakpoint.isWatchEntry()) {
-          createLocationBreakpointRequest(breakpoint, ContainerUtil.getFirstItem(allLineLocations), debugProcess, true);
-        }
-        if (breakpoint.isWatchExit()) {
-          MethodBytecodeUtil.visit(method, new MethodVisitor(Opcodes.API_VERSION) {
-            int myLastLine = 0;
 
-            @Override
-            public void visitLineNumber(int line, Label start) {
-              myLastLine = line;
-            }
+      if (breakpoint.isWatchExit()) {
+        final Method finalMethod = method;
+        class BytecodeVisitor extends MethodVisitor implements MethodBytecodeUtil.InstructionOffsetReader {
+          private int bytecodeOffset = -1;
 
-            @Override
-            public void visitInsn(int opcode) {
-              switch (opcode) {
-                case Opcodes.RETURN, Opcodes.IRETURN, Opcodes.FRETURN, Opcodes.ARETURN, Opcodes.LRETURN, Opcodes.DRETURN ->
-                  allLineLocations.stream()
-                    .filter(l -> l.lineNumber() == myLastLine)
-                    .findFirst().ifPresent(location -> createLocationBreakpointRequest(breakpoint, location, debugProcess, false));
-              }
+          BytecodeVisitor() {
+            super(Opcodes.API_VERSION);
+          }
+
+          @Override
+          public void readBytecodeInstructionOffset(int offset) {
+            bytecodeOffset = offset;
+          }
+
+          @Override
+          public void visitInsn(int opcode) {
+            if (Opcodes.IRETURN <= opcode && opcode <= Opcodes.RETURN) {
+              assert bytecodeOffset >= 0;
+              Location location = new LocationCodeIndexOnly(finalMethod, bytecodeOffset);
+              createLocationBreakpointRequest(breakpoint, location, debugProcess, false);
             }
-          }, true);
+          }
         }
+        MethodBytecodeUtil.visit(method, new BytecodeVisitor(), false);
       }
     }
     if (base && found) {
@@ -613,5 +615,101 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   private static void updateProgress(ProgressIndicator progressIndicator, int current, int total) {
     progressIndicator.setText2(current + "/" + total);
     progressIndicator.setFraction((double)current / total);
+  }
+
+  /**
+   * Optimized {@link Location} which should be used only to create breakpoint
+   * at known valid code index.
+   * <p/>
+   * The key difference with {@link com.jetbrains.jdi.ConcreteMethodImpl#locationOfCodeIndex(long)}
+   * is an absence of index validity checks, which normally would require to load line number information.
+   */
+  private static class LocationCodeIndexOnly implements Location {
+    private final Method method;
+    private final long codeIndex;
+
+    public LocationCodeIndexOnly(Method method, long codeIndex) {
+      assert !method.isNative() && !method.isAbstract();
+      assert codeIndex >= 0;
+
+      this.method = method;
+      this.codeIndex = codeIndex;
+    }
+
+    @Override
+    public VirtualMachine virtualMachine() {
+      return method.virtualMachine();
+    }
+
+    @Override
+    public ReferenceType declaringType() {
+      return method.declaringType();
+    }
+
+    @Override
+    public Method method() {
+      return method;
+    }
+
+    @Override
+    public long codeIndex() {
+      return codeIndex;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+      if (this == other) return true;
+      if (other == null || getClass() != other.getClass()) return false;
+      LocationCodeIndexOnly that = (LocationCodeIndexOnly)other;
+      return this.codeIndex == that.codeIndex &&
+             this.method.equals(that.method);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(method, codeIndex);
+    }
+
+    @Override
+    public int compareTo(@NotNull Location that) {
+      // Same as in LocationImpl
+      int res = this.method().compareTo(that.method());
+      if (res != 0) {
+        return res;
+      }
+      return Long.compare(codeIndex(), that.codeIndex());
+    }
+
+    // region Absent information about source code
+    @Override
+    public int lineNumber() {
+      return -1;
+    }
+
+    @Override
+    public int lineNumber(String stratum) {
+      return -1;
+    }
+
+    @Override
+    public String sourceName() throws AbsentInformationException {
+      throw new AbsentInformationException();
+    }
+
+    @Override
+    public String sourceName(String stratum) throws AbsentInformationException {
+      throw new AbsentInformationException();
+    }
+
+    @Override
+    public String sourcePath() throws AbsentInformationException {
+      throw new AbsentInformationException();
+    }
+
+    @Override
+    public String sourcePath(String stratum) throws AbsentInformationException {
+      throw new AbsentInformationException();
+    }
+    // endregion
   }
 }
