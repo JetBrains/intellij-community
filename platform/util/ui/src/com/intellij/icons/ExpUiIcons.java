@@ -42,6 +42,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon PlayLast = load("expui/actions/playLast.svg", -236076917, 2);
     /** 16x16 */ public static final @NotNull Icon ProfileCPU = load("expui/actions/profileCPU.svg", -143458575, 2);
     /** 16x16 */ public static final @NotNull Icon ProjectDirectory = load("expui/actions/projectDirectory.svg", 1333538549, 2);
+    /** 16x16 */ public static final @NotNull Icon RunAll = load("expui/actions/runAll.svg", 892135407, 2);
     /** 16x16 */ public static final @NotNull Icon ShowImportStatements = load("expui/actions/showImportStatements.svg", 935761482, 2);
     /** 16x16 */ public static final @NotNull Icon ShowReadAccess = load("expui/actions/showReadAccess.svg", 432207500, 2);
     /** 16x16 */ public static final @NotNull Icon ShowWriteAccess = load("expui/actions/showWriteAccess.svg", 799113071, 2);
