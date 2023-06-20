@@ -5,12 +5,15 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.components.ServiceDescriptor
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.throwAlreadyDisposedError
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
+
+private val logger = logger<ClientAwareComponentManager>()
 
 @ApiStatus.Internal
 abstract class ClientAwareComponentManager(
@@ -37,8 +40,15 @@ abstract class ClientAwareComponentManager(
       sessionManager = super.doGetService(serviceClass = ClientSessionsManager::class.java, createIfNeeded = true)
     }
 
-    val session = sessionManager?.getSession(ClientId.current) as? ClientSessionImpl
-    return session?.doGetService(serviceClass = serviceClass, createIfNeeded = createIfNeeded, fallbackToShared = false)
+    val clientId = ClientId.currentOrNull
+    val session = sessionManager?.getSession(clientId ?: ClientId.localId) as? ClientSessionImpl
+    val service = session?.doGetService(serviceClass = serviceClass, createIfNeeded = createIfNeeded, fallbackToShared = false)
+    if (clientId == null && service != null && ClientId.absenceBehaviorValue != ClientId.AbsenceBehavior.RETURN_LOCAL) {
+      logger.error("Requested existing per-client service '${service.javaClass.name}' under missing ClientId. " +
+                   "Host implementation will be returned, but calling code has to be fixed: either set/promote ClientId " +
+                   "or mark the service as non per-client")
+    }
+    return service
   }
 
   final override fun registerComponents(modules: List<IdeaPluginDescriptorImpl>,

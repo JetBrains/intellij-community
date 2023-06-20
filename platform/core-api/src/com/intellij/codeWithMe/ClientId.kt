@@ -62,7 +62,7 @@ data class ClientId(val value: String) {
     /**
      * Specifies behavior for [ClientId.current]
      */
-    private val absenceBehaviorValue: AbsenceBehavior get() {
+    val absenceBehaviorValue: AbsenceBehavior get() {
       if (!LoadingState.COMPONENTS_LOADED.isOccurred)
         return AbsenceBehavior.RETURN_LOCAL
       if (!Registry.getInstance().isLoaded) {
