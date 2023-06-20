@@ -117,6 +117,10 @@ private class ProjectLevelConnectionManager private constructor(@JvmField val st
   @JvmField
   val selectCommitsForUserPool = connection.statementPool("select commitId from user where name = ? and email = ?") { ObjectBinder(2) }
 
+  @JvmField
+  val insertCommitPool = connection.statementPool("insert into commit_hashes(position, hash) values(?, ?)") { ObjectBinder(2) }
+  val selectCommitPool = connection.statementPool("select rowid from commit_hashes where position = ? and hash = ?") { ObjectBinder(2) }
+
   fun <R> runUnderConnection(runnable: (SqliteConnection) -> R): R {
     return connect().use { connection -> runnable(connection) }
   }
@@ -520,18 +524,22 @@ internal class SqliteVcsLogStorageBackend(project: Project,
   override fun getCommitIndex(hash: Hash, root: VirtualFile): Int {
     val position = rootsToPosition.getInt(root)
     val commitId = getCommitId(position, hash)
-    if (commitId != null) return commitId
+    if (commitId != null) {
+      return commitId
+    }
 
-    connection.execute("insert into commit_hashes(position, hash) values(?, ?)", arrayOf(position, hash.asString()))
+    connectionManager.insertCommitPool.use { statement, binder ->
+      binder.bind(position, hash.asString())
+      statement.executeUpdate()
+    }
 
     return getCommitId(position, hash)!!
   }
 
   private fun getCommitId(position: Int, hash: Hash): Int? {
-    val paramBinder = ObjectBinder(paramCount = 2)
-    connection.prepareStatement("select rowid from commit_hashes where position = ? and hash = ?", paramBinder).use { statement ->
-      paramBinder.bind(position, hash.asString())
-      return statement.selectInt()
+    return connectionManager.selectCommitPool.use { statement, binder ->
+      binder.bind(position, hash.asString())
+      statement.selectInt()
     }
   }
 
@@ -655,7 +663,7 @@ private class SqliteVcsLogWriter(private val connection: SqliteConnection, priva
     insert into log(commitId, message, authorTime, commitTime, isCommitter) 
     values(?, ?, ?, ?, ?) 
     on conflict(commitId) do update set message=excluded.message
-    """, ObjectBinder(paramCount = 5, batchCountHint = 256)).binder
+    """, ObjectBinder(paramCount = 5, batchCountHint = 1024)).binder
   private val userBatch = statementCollection.prepareStatement("""
     insert into user(commitId, isCommitter, name, email) 
     values(?, ?, ?, ?) 
