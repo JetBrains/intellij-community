@@ -12,7 +12,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vcs.update.CommonUpdateProjectAction
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.ui.dsl.builder.MutableProperty
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.MapAnnotation
@@ -84,7 +84,6 @@ class SmartUpdate(val project: Project, private val coroutineScope: CoroutineSco
 }
 
 class SmartUpdateAction: DumbAwareAction(SmartUpdateBundle.message("action.smart.update.text")) {
-
   override fun actionPerformed(e: AnActionEvent) {
     val project = getEventProject(e)!!
     if (SmartUpdateDialog(project).showAndGet()) {
@@ -93,11 +92,15 @@ class SmartUpdateAction: DumbAwareAction(SmartUpdateBundle.message("action.smart
   }
 
   override fun update(e: AnActionEvent) {
-    if (!Registry.`is`("ide.smart.update", false)) {
+    val project = e.project
+    if (!Registry.`is`("ide.smart.update", false) || project == null) {
       e.presentation.isEnabledAndVisible = false
       return
     }
-    CommonUpdateProjectAction().update(e)
+    if (!ProjectLevelVcsManager.getInstance(project).hasActiveVcss()) {
+      e.presentation.setEnabledAndVisible(false)
+      return
+    }
     e.presentation.text = templateText
   }
 
