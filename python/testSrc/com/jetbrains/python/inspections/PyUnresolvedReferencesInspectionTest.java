@@ -861,6 +861,23 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
                  "a.<warning descr=\"Cannot find reference 'append' in 'None'\">append</warning>(10)");
   }
 
+  // PY-30190
+  public void testUnresolvedReferenceInDecoratedClass() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("""
+       def foo(cls):
+           return cls
+                                  
+                                  
+       @foo
+       class Bar2(object):
+           def __init__(self):
+               print(self.<warning descr="Unresolved attribute reference 'hello' for class 'Bar2'">hello</warning>)
+                           """)
+    );
+  }
+
   // PY-39682
   public void testWildcardIgnorePatternReferenceForNestedBinaryModule() {
     runWithAdditionalClassEntryInSdkRoots(getTestDirectoryPath() + "/site-packages", () -> {
