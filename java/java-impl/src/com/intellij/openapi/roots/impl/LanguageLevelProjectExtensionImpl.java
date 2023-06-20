@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
-import com.google.common.collect.Streams;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -41,7 +40,7 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
       new WorkspaceModelChangeListener() {
         @Override
         public void changed(@NotNull VersionedStorageChange event) {
-          if (Streams.stream(event.getChanges(JavaModuleSettingsEntity.class).iterator()).anyMatch(change ->
+          if (event.getChanges(JavaModuleSettingsEntity.class).stream().anyMatch(change ->
             change instanceof EntityChange.Replaced<?> &&
             !Objects.equals(((EntityChange.Replaced<JavaModuleSettingsEntity>)change).getOldEntity().getLanguageLevelId(),
                             ((EntityChange.Replaced<JavaModuleSettingsEntity>)change).getNewEntity().getLanguageLevelId())

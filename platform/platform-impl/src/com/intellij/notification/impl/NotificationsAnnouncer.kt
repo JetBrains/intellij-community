@@ -30,7 +30,7 @@ object NotificationsAnnouncer {
   private val mode: NotificationAnnouncingMode get() =
     NotificationsConfiguration.getNotificationsConfiguration().notificationAnnouncingMode
 
-  val isFeatureAvailable: Boolean get() = Registry.`is`("ide.accessibility.announcing.notifications.available")
+  val isFeatureAvailable: Boolean get() = Registry.`is`("ide.accessibility.announcing.notifications.available", false)
 
   @ApiStatus.Experimental
   @JvmStatic
@@ -47,7 +47,11 @@ object NotificationsAnnouncer {
     if (!isEnabled()) return
     EDT.assertIsEdt()
 
-    val frame = WindowManager.getInstance().getFrame(project) ?: return
+    val frame =
+      (if (project == null) WindowManager.getInstance().findVisibleFrame()
+      else WindowManager.getInstance().getFrame(project))
+      ?: return
+
     var focusedFrame: Container? = KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow
     while (focusedFrame != null && frame !== focusedFrame) {
       focusedFrame = focusedFrame.parent

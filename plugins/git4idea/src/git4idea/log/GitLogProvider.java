@@ -54,9 +54,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
-import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.computeWithSpan;
-import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.runWithSpan;
-import static com.intellij.platform.diagnostic.telemetry.impl.TraceUtil.computeWithSpanThrows;
+import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.computeWithSpan;
+import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runWithSpan;
+import static com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil.computeWithSpanThrows;
 import static com.intellij.vcs.log.VcsLogFilterCollection.*;
 import static git4idea.history.GitCommitRequirements.DiffRenameLimit;
 

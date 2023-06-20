@@ -1,5 +1,6 @@
 package com.intellij.workspaceModel.codegen.impl.writer.classes
 
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.impl.writer.*
@@ -7,7 +8,6 @@ import com.intellij.workspaceModel.codegen.impl.writer.fields.implWsBuilderField
 import com.intellij.workspaceModel.codegen.impl.writer.fields.implWsBuilderIsInitializedCode
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.bridgeEntities.LibraryEntity
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList

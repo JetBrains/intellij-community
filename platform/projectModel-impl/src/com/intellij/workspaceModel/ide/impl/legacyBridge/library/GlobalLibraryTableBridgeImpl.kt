@@ -40,7 +40,7 @@ class GlobalLibraryTableBridgeInitializer : BridgeInitializer {
 
     @Suppress("UNCHECKED_CAST")
     val libraryChanges = (changes[LibraryEntity::class.java] as? List<EntityChange<LibraryEntity>>) ?: emptyList()
-    val addChanges = libraryChanges.asSequence().filterGlobalLibraryChanges().filterIsInstance<EntityChange.Added<LibraryEntity>>()
+    val addChanges = libraryChanges.filterGlobalLibraryChanges().filterIsInstance<EntityChange.Added<LibraryEntity>>()
 
     for (addChange in addChanges) {
       // Will initialize the bridge if missing
@@ -68,7 +68,7 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
 
     @Suppress("UNCHECKED_CAST")
     val libraryChanges = (changes[LibraryEntity::class.java] as? List<EntityChange<LibraryEntity>>) ?: emptyList()
-    val addChanges = libraryChanges.asSequence().filterGlobalLibraryChanges().filterIsInstance<EntityChange.Added<LibraryEntity>>()
+    val addChanges = libraryChanges.filterGlobalLibraryChanges().filterIsInstance<EntityChange.Added<LibraryEntity>>()
 
     for (addChange in addChanges) {
       // Will initialize the bridge if missing
@@ -140,7 +140,7 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
 
     val removeChanges = event.getChanges(LibraryEntity::class.java).filterGlobalLibraryChanges()
       .filterIsInstance<EntityChange.Removed<LibraryEntity>>()
-    if (removeChanges.none()) return
+    if (removeChanges.isEmpty()) return
 
     for (change in removeChanges) {
       val library = event.storageBefore.libraryMap.getDataByEntity(change.entity)
@@ -159,7 +159,7 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
       .filterGlobalLibraryChanges()
       // Since the listener is not deprecated, it will be better to keep the order of events as remove -> replace -> add
       .orderToRemoveReplaceAdd()
-    if (changes.none()) return
+    if (changes.isEmpty()) return
 
     val entityStorage = GlobalWorkspaceModel.getInstance().entityStorage
     for (change in changes) {
@@ -353,7 +353,7 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
   }
 }
 
-private fun Sequence<EntityChange<LibraryEntity>>.filterGlobalLibraryChanges(): Sequence<EntityChange<LibraryEntity>> {
+private fun List<EntityChange<LibraryEntity>>.filterGlobalLibraryChanges(): List<EntityChange<LibraryEntity>> {
   return filter {
     when (it) {
       is EntityChange.Added -> it.entity.tableId is LibraryTableId.GlobalLibraryTableId

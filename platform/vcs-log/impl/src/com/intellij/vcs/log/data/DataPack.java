@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.computeWithSpan;
+import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.computeWithSpan;
 
 public class DataPack extends DataPackBase {
   public static final DataPack EMPTY = new DataPack(RefsModel.createEmptyInstance(EmptyLogStorage.INSTANCE),

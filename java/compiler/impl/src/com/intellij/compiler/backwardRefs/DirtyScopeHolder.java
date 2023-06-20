@@ -41,7 +41,6 @@ import com.intellij.platform.workspace.storage.EntityChange;
 import com.intellij.platform.workspace.storage.VersionedStorageChange;
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity;
 import com.intellij.platform.workspace.jps.entities.ModuleEntity;
-import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,13 +98,13 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
     connect.subscribe(WorkspaceModelTopics.CHANGED, new WorkspaceModelChangeListener() {
       @Override
       public void beforeChanged(@NotNull VersionedStorageChange event) {
-        for (EntityChange<ModuleEntity> change : SequencesKt.asIterable(event.getChanges(ModuleEntity.class))) {
+        for (EntityChange<ModuleEntity> change : event.getChanges(ModuleEntity.class)) {
           ModuleEntity oldEntity = change.getOldEntity();
           if (oldEntity != null) {
             addToDirtyModules(ModuleEntityUtils.findModule(oldEntity, event.getStorageBefore()));
           }
         }
-        for (EntityChange<ContentRootEntity> change : SequencesKt.asIterable(event.getChanges(ContentRootEntity.class))) {
+        for (EntityChange<ContentRootEntity> change : event.getChanges(ContentRootEntity.class)) {
           ContentRootEntity oldEntity = change.getOldEntity();
           if (oldEntity != null) {
             addToDirtyModules(ModuleEntityUtils.findModule(oldEntity.getModule(), event.getStorageBefore()));
@@ -115,13 +114,13 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
 
       @Override
       public void changed(@NotNull VersionedStorageChange event) {
-        for (EntityChange<ModuleEntity> change : SequencesKt.asIterable(event.getChanges(ModuleEntity.class))) {
+        for (EntityChange<ModuleEntity> change : event.getChanges(ModuleEntity.class)) {
           ModuleEntity newEntity = change.getNewEntity();
           if (newEntity != null) {
             addToDirtyModules(ModuleEntityUtils.findModule(newEntity, event.getStorageAfter()));
           }
         }
-        for (EntityChange<ContentRootEntity> change : SequencesKt.asIterable(event.getChanges(ContentRootEntity.class))) {
+        for (EntityChange<ContentRootEntity> change : event.getChanges(ContentRootEntity.class)) {
           ContentRootEntity newEntity = change.getNewEntity();
           if (newEntity != null) {
             addToDirtyModules(ModuleEntityUtils.findModule(newEntity.getModule(), event.getStorageAfter()));

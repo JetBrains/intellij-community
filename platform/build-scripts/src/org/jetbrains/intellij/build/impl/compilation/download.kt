@@ -2,7 +2,7 @@
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.github.luben.zstd.ZstdDirectBufferDecompressingStreamNoFinalizer
-import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.lang.HashMapZipFile
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes

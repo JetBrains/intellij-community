@@ -32,9 +32,9 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
-import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.computeWithSpan;
-import static com.intellij.platform.diagnostic.telemetry.impl.TraceUtil.computeWithSpanThrows;
-import static com.intellij.platform.diagnostic.telemetry.impl.TraceUtil.runWithSpanThrows;
+import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.computeWithSpan;
+import static com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil.computeWithSpanThrows;
+import static com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil.runWithSpanThrows;
 
 public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogRefresherImpl.class);

@@ -40,6 +40,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.IntPredicate;
+import java.util.function.ObjIntConsumer;
 import java.util.zip.ZipException;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.InvertedNameIndex.NULL_NAME_ID;
@@ -80,7 +81,8 @@ public final class FSRecordsImpl {
   static final boolean USE_SMALL_ATTR_TABLE = getBooleanProperty("idea.use.small.attr.table.for.vfs", true);
 
   static final boolean USE_FAST_NAMES_IMPLEMENTATION = getBooleanProperty("vfs.use-fast-names-storage", false);
-  public static final boolean USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION = getBooleanProperty("vfs.use-streamlined-attributes-storage", true);
+  public static final boolean USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION =
+    getBooleanProperty("vfs.use-streamlined-attributes-storage", true);
   public static final boolean USE_RAW_ACCESS_TO_READ_CHILDREN = getBooleanProperty("vfs.use-raw-access-to-read-children", false);
 
   private static final FileAttribute SYMLINK_TARGET_ATTRIBUTE = new FileAttribute("FsRecords.SYMLINK_TARGET");
@@ -144,8 +146,7 @@ public final class FSRecordsImpl {
   private static int calculateVersion() {
     //bumped main version (59 -> 60) because of VfsDependentEnumerator removal, and filenames change
     final int mainVFSFormatVersion = 60;
-    return nextMask(mainVFSFormatVersion +
-                    (PersistentFSRecordsStorageFactory.getRecordsStorageImplementation().ordinal()), /* acceptable range is [0..255] */ 8,
+    return nextMask(mainVFSFormatVersion + (PersistentFSRecordsStorageFactory.getRecordsStorageImplementation().ordinal()), /* acceptable range is [0..255] */ 8,
            nextMask(USE_CONTENT_HASHES,
            nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
            nextMask(false, // feel free to re-use
@@ -414,9 +415,21 @@ public final class FSRecordsImpl {
     }
   }
 
-  int findRootRecord(@NotNull String rootUrl) {
+  int findOrCreateRootRecord(@NotNull String rootUrl) {
     try {
       return treeAccessor.findOrCreateRootRecord(rootUrl);
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
+  }
+
+  void forEachRoot(@NotNull ObjIntConsumer<String> rootConsumer) {
+    try {
+      treeAccessor.forEachRoot((rootId, rootUrlId) -> {
+        String rootUrl = getNameByNameId(rootUrlId).toString();
+        rootConsumer.accept(rootUrl, rootId);
+      });
     }
     catch (IOException e) {
       throw handleError(e);
@@ -746,16 +759,16 @@ public final class FSRecordsImpl {
       connection.getRecords().setParent(fileId, parentId);
       connection.markDirty();
     }
-    catch (Throwable e) {
+    catch (IOException e) {
       throw handleError(e);
     }
   }
 
 
   /**
-   * TODO RC: this method is used to look up files by name, but this non-strict enumerator this approach
-   * becomes 'non-strict' also: nameId returned could be the new nameId, never used before, hence
-   * in any file record, even though name was already registered for some file(s)
+   * TODO RC: this method is used to look up files by name, but with (future) non-strict enumerator
+   * this approach becomes 'non-strict' also: nameId returned could be the new nameId, never used
+   * before, hence in any file record, even though name was already registered for some file(s)
    */
   int getNameId(@NotNull String name) {
     try {
@@ -904,11 +917,11 @@ public final class FSRecordsImpl {
   /**
    * @return nameId > 0
    */
-  int writeAttributesToRecord(int fileId,
-                              int parentId,
-                              @NotNull FileAttributes attributes,
-                              @NotNull String name,
-                              boolean overwriteMissed) {
+  int updateRecordFields(int fileId,
+                         int parentId,
+                         @NotNull FileAttributes attributes,
+                         @NotNull String name,
+                         boolean overwriteMissed) {
     int nameId = getNameId(name);
     long timestamp = attributes.lastModified;
     long length = attributes.isDirectory() ? -1L : attributes.length;
@@ -961,8 +974,6 @@ public final class FSRecordsImpl {
 
   @NotNull AttributeOutputStream writeAttribute(int fileId,
                                                 @NotNull FileAttribute attribute) {
-    //TODO RC: check fileId here, and throw exception if it is not valid
-    //         (fileId will be checked on stream.close(), but in general it is better to do it earlier)
     return attributeAccessor.writeAttribute(fileId, attribute);
   }
 
@@ -1189,7 +1200,7 @@ public final class FSRecordsImpl {
                          "; parentId=" + parentId;
     if (parentId > 0) {
       description += "; parent.name=" + getName(parentId)
-                     + "; parent.children=" + list(parentId);
+                     + "; parent.children=" + list(parentId) + "; ";
     }
     return description;
   }

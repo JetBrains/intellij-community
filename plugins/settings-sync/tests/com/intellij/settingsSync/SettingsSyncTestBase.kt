@@ -55,8 +55,7 @@ internal abstract class SettingsSyncTestBase {
     SettingsSyncSettings.getInstance().state.reset()
 
     remoteCommunicator = if (isTestingAgainstRealCloudServer()) {
-      System.setProperty(CloudConfigServerCommunicator.URL_PROPERTY, CloudConfigServerCommunicator.DEFAULT_PRODUCTION_URL)
-      TestCloudConfigRemoteCommunicator()
+      TestRemoteCommunicator()
     }
     else {
       MockRemoteCommunicator()

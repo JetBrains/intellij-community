@@ -1,4 +1,5 @@
 // WITH_STDLIB
+// IS_APPLICABLE: false
 
 abstract class KotlinClass : JavaInterface {
     override fun getSomething(): String = ""

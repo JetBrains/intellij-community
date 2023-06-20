@@ -33,7 +33,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
-import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.runSpanWithScope;
+import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runSpanWithScope;
 
 public final class VcsLogData implements Disposable, VcsLogDataProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogData.class);

@@ -7,13 +7,15 @@ import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.annotations.TestOnly
 
 class SearchEverywhereMlExperiment {
   companion object {
-    private const val NUMBER_OF_GROUPS = 4
+    const val NUMBER_OF_GROUPS = 4
   }
 
-  private val isExperimentalMode: Boolean = StatisticsUploadAssistant.isSendAllowed() && ApplicationManager.getApplication().isEAP
+  var isExperimentalMode: Boolean = StatisticsUploadAssistant.isSendAllowed() && ApplicationManager.getApplication().isEAP
+    @TestOnly set
 
   private val tabsWithEnabledLogging = setOf(
     SearchEverywhereTabWithMlRanking.ACTION.tabId,
@@ -37,8 +39,7 @@ class SearchEverywhereMlExperiment {
 
     SearchEverywhereTabWithMlRanking.CLASSES to Experiment(
       2 to ExperimentType.USE_EXPERIMENTAL_MODEL,
-      3 to ExperimentType.NO_ML,
-      4 to ExperimentType.NO_ML_FEATURES
+      3 to ExperimentType.NO_ML
     ),
 
     SearchEverywhereTabWithMlRanking.ALL to Experiment(
@@ -52,7 +53,7 @@ class SearchEverywhereMlExperiment {
   val experimentGroup: Int
     get() = if (isExperimentalMode) {
       val experimentGroup = EventLogConfiguration.getInstance().bucket % NUMBER_OF_GROUPS
-      val registryExperimentGroup = Registry.intValue("search.everywhere.ml.experiment.group")
+      val registryExperimentGroup = Registry.intValue("search.everywhere.ml.experiment.group", -1, -1, NUMBER_OF_GROUPS - 1)
       if (registryExperimentGroup >= 0) registryExperimentGroup else experimentGroup
     }
     else {

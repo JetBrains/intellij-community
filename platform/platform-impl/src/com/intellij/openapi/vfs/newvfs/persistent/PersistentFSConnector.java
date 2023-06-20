@@ -448,9 +448,6 @@ final class PersistentFSConnector {
     throws IOException {
     final long startedAtNs = System.nanoTime();
     try {
-      //We wantRun self-checks on a limited number of files during VFS init.Self-check all the files could significantly slow
-      // down VFS initialization, but even a small number of checks could catch VFS corruption, if any.
-
       //VFS errors early on startup cause terrifying UX error messages -- it is much better to catch VFS
       // corruption early on and rebuild VFS from 0. But we also don't want to always check each VFS file
       // on startup, since it delays regular startup (i.e. without corruptions) quite a lot.

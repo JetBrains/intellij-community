@@ -28,7 +28,7 @@ import java.util.List;
 
 import static com.intellij.codeInsight.util.HighlightVisitorScopeKt.*;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
-import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.runWithSpan;
+import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runWithSpan;
 
 public class HighlightVisitorBasedInspection extends GlobalSimpleInspectionTool {
   public static final String SHORT_NAME = "Annotator";

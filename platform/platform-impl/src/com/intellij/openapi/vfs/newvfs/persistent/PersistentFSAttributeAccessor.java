@@ -115,8 +115,9 @@ public final class PersistentFSAttributeAccessor {
   @NotNull
   public AttributeOutputStream writeAttribute(final int fileId,
                                               final @NotNull FileAttribute attribute) {
-    //TODO RC: we need to check fileId here, and throw exception if it is not valid
-    //         (fileId will be checked on stream.close(), but in general it is better to do it earlier)
+    //MAYBE RC: check fileId for be in range (1..max)? fileId will be checked on stream.close(),
+    //          but it is quite common to swallow exceptions from stream.close() -- and in general
+    //          it is better to fail earlier
     final AttributeOutputStream attributeStream = attributesStorage.writeAttribute(connection, fileId, attribute);
     if (attribute.isVersioned()) {
       try {

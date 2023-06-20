@@ -1538,9 +1538,19 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
             runTest("../idea/tests/testData/inspectionsLocal/redundantSuspend/coroutineContext.kt");
         }
 
+        @TestMetadata("invokeOperator.kt")
+        public void testInvokeOperator() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/redundantSuspend/invokeOperator.kt");
+        }
+
         @TestMetadata("invokingByQualified.kt")
         public void testInvokingByQualified() throws Exception {
             runTest("../idea/tests/testData/inspectionsLocal/redundantSuspend/invokingByQualified.kt");
+        }
+
+        @TestMetadata("lambdaCall.kt")
+        public void testLambdaCall() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/redundantSuspend/lambdaCall.kt");
         }
 
         @TestMetadata("nullableFunctionType.kt")

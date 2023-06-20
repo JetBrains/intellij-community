@@ -373,10 +373,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
 
   override fun loadState(element: Element) {
     val oldLaF = myCurrentLaf
-    myCurrentLaf = loadLafState(element, ELEMENT_LAF)
-    if (myCurrentLaf == null) {
-      myCurrentLaf = loadDefaultLaf()
-    }
+    val newLaF = loadLafState(element, ELEMENT_LAF) ?: loadDefaultLaf()
     autodetect = java.lang.Boolean.parseBoolean(element.getAttributeValue(ATTRIBUTE_AUTODETECT))
     preferredLightLaf = loadLafState(element, ELEMENT_PREFERRED_LIGHT_LAF)
     preferredDarkLaf = loadLafState(element, ELEMENT_PREFERRED_DARK_LAF)
@@ -392,8 +389,11 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     if (autodetect) {
       orCreateLafDetector
     }
-    if (!isFirstSetup && myCurrentLaf != oldLaF) {
-      QuickChangeLookAndFeel.switchLafAndUpdateUI(this, myCurrentLaf!!, true, true)
+    if (!isFirstSetup && newLaF != oldLaF) {
+      QuickChangeLookAndFeel.switchLafAndUpdateUI(this, newLaF, true, true)
+    }
+    else {
+      myCurrentLaf = newLaF
     }
   }
 

@@ -46,6 +46,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -127,11 +128,33 @@ public class ModCommandServiceImpl implements ModCommandService {
       if (!onTheFly) return true;
       return executeRename(project, rename);
     }
+    if (command instanceof ModCreateFile create) {
+      return executeCreate(project, create);
+    }
     throw new IllegalArgumentException("Unknown command: " + command);
   }
 
+  private boolean executeCreate(@NotNull Project project, @NotNull ModCreateFile create) {
+    FutureVirtualFile file = create.file();
+    VirtualFile parent = actualize(file.getParent());
+    try {
+      return WriteAction.compute(() -> {
+        VirtualFile newFile = parent.createChildData(this, file.getName());
+        PsiFile psiFile = PsiManager.getInstance(project).findFile(newFile);
+        if (psiFile == null) return false;
+        psiFile.getViewProvider().getDocument().setText(create.text());
+        return true;
+      });
+    }
+    catch (IOException e) {
+      executeError(project, new ModDisplayError(e.getMessage()));
+      return false;
+    }
+  }
+
   private static boolean executeRename(Project project, ModRenameSymbol rename) {
-    VirtualFile file = rename.file();
+    VirtualFile file = actualize(rename.file());
+    if (file == null) return false;
     PsiFile psiFile = PsiManagerEx.getInstanceEx(project).findFile(file);
     if (psiFile == null) return false;
     PsiNameIdentifierOwner element =
@@ -265,8 +288,13 @@ public class ModCommandServiceImpl implements ModCommandService {
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
+  private static VirtualFile actualize(@NotNull VirtualFile file) {
+    return file instanceof FutureVirtualFile future ? actualize(future.getParent()).findChild(future.getName()) : file;
+  }
+
   private static boolean executeNavigate(@NotNull Project project, ModNavigate nav) {
-    VirtualFile file = nav.file();
+    VirtualFile file = actualize(nav.file());
+    if (file == null) return false;
     int selectionStart = nav.selectionStart();
     int selectionEnd = nav.selectionEnd();
     int caret = nav.caret();
@@ -283,7 +311,9 @@ public class ModCommandServiceImpl implements ModCommandService {
   }
 
   private static boolean executeHighlight(Project project, ModHighlight highlight) {
-    FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(highlight.virtualFile());
+    VirtualFile file = actualize(highlight.virtualFile());
+    if (file == null) return false;
+    FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(file);
     if (!(fileEditor instanceof TextEditor textEditor)) return false;
     Editor editor = textEditor.getEditor();
     HighlightManager manager = HighlightManager.getInstance(project);

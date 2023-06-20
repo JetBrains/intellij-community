@@ -13,9 +13,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -278,12 +280,27 @@ public final class ModCommands {
   private static class EditorUpdaterImpl implements EditorUpdater, DocumentListener, Disposable {
     private final @NotNull FileTracker myTracker;
     private final @NotNull Map<PsiFile, FileTracker> myChangedFiles = new LinkedHashMap<>();
-    private final @NotNull VirtualFile myOrigVirtualFile;
+    private final @NotNull Map<PsiFile, NewFileInfo> myNewFiles = new LinkedHashMap<>();
+    private @NotNull VirtualFile myNavigationFile;
     private int myCaretOffset;
     private @NotNull TextRange mySelection;
     private final List<ModHighlight.HighlightInfo> myHighlightInfos = new ArrayList<>();
     private @Nullable ModRenameSymbol myRenameSymbol;
     private boolean myPositionUpdated = false;
+
+    private static final class NewFileInfo {
+      private final @NotNull PsiFile file;
+      private final @NotNull FutureVirtualFile futureFile;
+
+      private NewFileInfo(@NotNull VirtualFile directory, @NotNull PsiFile file) {
+        this.file = file;
+        futureFile = new FutureVirtualFile(directory, file.getName(), file.getFileType(), "");
+      }
+
+      private @NotNull ModCommand getCommand() {
+        return new ModCreateFile(futureFile, file.getText());
+      }
+    }
 
     private EditorUpdaterImpl(@NotNull ModCommandAction.ActionContext actionContext) {
       myCaretOffset = actionContext.offset();
@@ -291,7 +308,7 @@ public final class ModCommands {
       // TODO: lazily get the tracker for the current file
       myTracker = tracker(actionContext.file());
       myTracker.myPositionDocument.addDocumentListener(this, this);
-      myOrigVirtualFile = Objects.requireNonNull(myTracker.myOrigFile.getOriginalFile().getVirtualFile());
+      myNavigationFile = Objects.requireNonNull(myTracker.myOrigFile.getOriginalFile().getVirtualFile());
     }
     
     private @NotNull FileTracker tracker(@NotNull PsiFile file) {
@@ -306,6 +323,9 @@ public final class ModCommands {
     public <E extends PsiElement> E getWritable(E e) {
       if (e == null) return null;
       PsiFile file = e.getContainingFile();
+      if (myNewFiles.containsKey(file)) {
+        return e;
+      }
       PsiFile originalFile = file.getOriginalFile();
       if (originalFile != file) {
         FileTracker tracker = tracker(originalFile);
@@ -317,14 +337,43 @@ public final class ModCommands {
     }
 
     @Override
+    public @NotNull PsiFile createFile(@NotNull PsiDirectory directory,
+                                       @NotNull String name,
+                                       @NotNull FileType type,
+                                       @NotNull String content) {
+      VirtualFile parent = directory.getVirtualFile();
+      PsiFile psiFile = PsiFileFactory.getInstance(myTracker.myProject).createFileFromText(name, type, content);
+      myNewFiles.put(psiFile, new NewFileInfo(parent, psiFile));
+      return psiFile;
+    }
+
+    @Override
     public void dispose() {
     }
 
     @Override
     public void select(@NotNull PsiElement element) {
-      validate(element);
+      TextRange range = getRange(element);
+      if (range != null) {
+        select(range);
+      }
+    }
+
+    private @Nullable TextRange getRange(@NotNull PsiElement element) {
+      if (!element.isValid()) throw new IllegalArgumentException();
+      if (!PsiTreeUtil.isAncestor(myTracker.myCopyFile, element, false)) {
+        if (element instanceof PsiFile file) {
+          // allow navigating to the beginning of files
+          NewFileInfo info = myNewFiles.get(file);
+          myNavigationFile = info != null ? info.futureFile : file.getOriginalFile().getVirtualFile();
+          return TextRange.create(0, 0);
+        }
+        throw new IllegalArgumentException();
+      }
+      SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.createPointer(element);
       myTracker.unblock();
-      select(element.getTextRange());
+      Segment range = pointer.getRange();
+      return range == null ? null : TextRange.create(range);
     }
 
     @Override
@@ -337,9 +386,10 @@ public final class ModCommands {
 
     @Override
     public void highlight(@NotNull PsiElement element, @NotNull TextAttributesKey attributesKey) {
-      validate(element);
-      myTracker.unblock();
-      highlight(element.getTextRange(), attributesKey);
+      TextRange range = getRange(element);
+      if (range != null) {
+        highlight(range, attributesKey);
+      }
     }
 
     @Override
@@ -363,9 +413,10 @@ public final class ModCommands {
 
     @Override
     public void moveTo(@NotNull PsiElement element) {
-      validate(element);
-      myTracker.unblock();
-      moveTo(element.getTextRange().getStartOffset());
+      TextRange range = getRange(element);
+      if (range != null) {
+        moveTo(range.getStartOffset());
+      }
     }
 
     @Override
@@ -383,7 +434,7 @@ public final class ModCommands {
       if (myRenameSymbol != null) {
         throw new IllegalStateException("One element is already registered for rename");
       }
-      myRenameSymbol = new ModRenameSymbol(myOrigVirtualFile, element.getTextRange(), suggestedNames);
+      myRenameSymbol = new ModRenameSymbol(myNavigationFile, element.getTextRange(), suggestedNames);
     }
 
     private TextRange mapRange(@NotNull TextRange range) {
@@ -414,11 +465,6 @@ public final class ModCommands {
       return Objects.requireNonNull(visitor.myFile);
     }
 
-    private void validate(@NotNull PsiElement element) {
-      if (!element.isValid()) throw new IllegalArgumentException();
-      if (!PsiTreeUtil.isAncestor(myTracker.myCopyFile, element, false)) throw new IllegalArgumentException();
-    }
-
     @Override
     public void documentChanged(@NotNull DocumentEvent event) {
       myCaretOffset = updateOffset(event, myCaretOffset);
@@ -447,6 +493,7 @@ public final class ModCommands {
     
     private @NotNull ModCommand getCommand() {
       return myChangedFiles.values().stream().map(FileTracker::getUpdateCommand).reduce(nop(), ModCommand::andThen)
+        .andThen(myNewFiles.values().stream().map(NewFileInfo::getCommand).reduce(nop(), ModCommand::andThen))
         .andThen(getNavigateCommand()).andThen(getHighlightCommand()).andThen(myRenameSymbol == null ? nop() : myRenameSymbol);
     }
 
@@ -463,13 +510,13 @@ public final class ModCommands {
         caret = this.myCaretOffset;
       }
       if (start == -1 && end == -1 && caret == -1) return nop();
-      return new ModNavigate(myOrigVirtualFile, start, end, caret);
+      return new ModNavigate(myNavigationFile, start, end, caret);
     }
     
     @NotNull
     private ModCommand getHighlightCommand() {
       if (myHighlightInfos.isEmpty()) return nop();
-      return new ModHighlight(myOrigVirtualFile, myHighlightInfos);
+      return new ModHighlight(myNavigationFile, myHighlightInfos);
     }
   }
 }

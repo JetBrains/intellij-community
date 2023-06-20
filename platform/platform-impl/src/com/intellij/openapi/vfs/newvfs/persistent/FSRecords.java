@@ -4,16 +4,10 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ThrottledLogger;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
-import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
-import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
-import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
+import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferReader;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferWriter;
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor;
@@ -22,7 +16,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.DataOutputStream;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.*;
 
@@ -128,16 +121,16 @@ public final class FSRecords {
   }
 
   /** Intermediate failures met during VFS initialization (if any) */
-  public static List<Throwable> initializationFailures(){
+  public static List<Throwable> initializationFailures() {
     return implOrFail().initializationFailures();
   }
 
   /** Were VFS storages created anew this run, or we read already filled */
-  public static boolean wasCreateANew(){
+  public static boolean wasCreateANew() {
     return implOrFail().wasCreatedANew();
   }
 
-  public static long totalInitializationDuration(@NotNull TimeUnit unit){
+  public static long totalInitializationDuration(@NotNull TimeUnit unit) {
     return implOrFail().totalInitializationDuration(unit);
   }
 
@@ -204,8 +197,8 @@ public final class FSRecords {
     return impl.listRoots();
   }
 
-  static int findRootRecord(@NotNull String rootUrl) {
-    return implOrFail().findRootRecord(rootUrl);
+  static int findOrCreateRootRecord(@NotNull String rootUrl) {
+    return implOrFail().findOrCreateRootRecord(rootUrl);
   }
 
   static void loadRootData(int id,
@@ -268,98 +261,6 @@ public final class FSRecords {
     implOrFail().moveChildren(fromParentId, toParentId);
   }
 
-  //MAYBE RC: this method is better to be moved up, to VirtualFileSystem?
-  static @Nullable VirtualFileSystemEntry findFileById(int fileId,
-                                                       @NotNull VirtualDirectoryCache idToDirCache) {
-    FSRecordsImpl impl = implOrFail();
-
-    //We climb up from fileId, collecting parentIds (=path), until find a parent which is cached in
-    // idToDirCache. From that (grand)parent we climb down (findDescendantByIdPath) to fileId,
-    // resolving every child via idToDirCache:
-    class ParentFinder implements ThrowableComputable<Void, Exception> {
-      private @Nullable IntList path;
-      private VirtualFileSystemEntry foundParent;
-
-      @Override
-      public Void compute() {
-        int currentId = fileId;
-        while (true) {
-          int parentId = impl.getParent(currentId);
-          if (path != null && (path.size() % 128 == 0 && path.contains(parentId))) {
-            //circularity check is expensive: do it only once-in-a-while, as path became deep enough
-            //  to start to suspect something may be wrong.
-            LOG.error("Cyclic parent-child relations in the database: fileId = " + fileId + ": path=" + path);
-            break;
-          }
-          foundParent = idToDirCache.getCachedDir(parentId);
-          if (foundParent != null) {
-            break;
-          }
-          if (parentId == NULL_FILE_ID) {
-            //TODO RC: It seems idToDirCache _must_ contain all roots -- see PersistentFSImpl.findRoot()
-            //         method, there each new root is added to the cache, and idToDirCache.myIdToRootCache
-            //         cleared only on connect/disconnect. Hence, I think here we should throw exception.
-            //         But (it seems) the method .findFileById() is used in an assumption it just returns
-            //         null if 'incorrect' fileId is passed in? -- so I keep legacy behavior until I'll
-            //         be able to understand it better, or fix calling code meaningfully.
-
-            String currentFileName = getName(currentId);
-            int preRootIdFlags = impl.getFlags(currentId);
-            int sourceFileFlags = impl.getFlags(fileId);
-
-            int finalCurrentId = currentId;
-            THROTTLED_LOG.info(
-              () -> "file[" + fileId + ", flags: " + sourceFileFlags + "]: " +
-                    "top parent (id: " + finalCurrentId + ", name: '" + currentFileName + "', flags: " + preRootIdFlags + " parent: 0), " +
-                    "is still not in the idToDirCache. " +
-                    "path: " + path
-            );
-            break;
-          }
-
-          currentId = parentId;
-          if (path == null) {
-            path = new IntArrayList();
-          }
-          path.add(currentId);
-        }
-        return null;
-      }
-
-      private @Nullable VirtualFileSystemEntry findDescendantByIdPath() {
-        VirtualFileSystemEntry parent = foundParent;
-        if (path != null) {
-          for (int i = path.size() - 1; i >= 0; i--) {
-            parent = findChild(parent, path.getInt(i));
-          }
-        }
-
-        return findChild(parent, fileId);
-      }
-
-      private @Nullable VirtualFileSystemEntry findChild(VirtualFileSystemEntry parent, int childId) {
-        if (!(parent instanceof VirtualDirectoryImpl)) {
-          return null;
-        }
-        VirtualFileSystemEntry child = ((VirtualDirectoryImpl)parent).doFindChildById(childId);
-        if (child instanceof VirtualDirectoryImpl) {
-          LOG.assertTrue(childId == child.getId());
-          VirtualFileSystemEntry old = idToDirCache.cacheDirIfAbsent(child);
-          if (old != null) child = old;
-        }
-        return child;
-      }
-    }
-
-    ParentFinder finder = new ParentFinder();
-    finder.compute(); // IOExceptions are already handled
-    VirtualFileSystemEntry file = finder.findDescendantByIdPath();
-    if (file != null) {
-      LOG.assertTrue(file.getId() == fileId);
-    }
-    return file;
-  }
-
 
   //========== symlink manipulation: ========================================
 
@@ -396,9 +297,9 @@ public final class FSRecords {
     implOrFail().setParent(id, parentId);
   }
 
-  //TODO RC: this method is used to look up files by name, but this non-strict enumerator this approach
-  //         becomes 'non-strict' also: nameId returned could be the new nameId, never used before, hence
-  //         in any file record, even though name was already registered for some file(s)
+  //MAYBE RC: this method is used to look up files by name, but with future non-strict enumerator this
+  //          approach becomes 'non-strict' also: nameId returned could be the new nameId, never used
+  //          before in any file record, even though the name was already registered for some file(s)
   static int getNameId(@NotNull String name) {
     return implOrFail().getNameId(name);
   }
@@ -447,12 +348,12 @@ public final class FSRecords {
   /**
    * @return nameId > 0
    */
-  static int writeAttributesToRecord(int fileId,
-                                     int parentId,
-                                     @NotNull FileAttributes attributes,
-                                     @NotNull String name,
-                                     boolean overwriteMissed) {
-    return implOrFail().writeAttributesToRecord(fileId, parentId, attributes, name, overwriteMissed);
+  static int updateRecordFields(int fileId,
+                                int parentId,
+                                @NotNull FileAttributes attributes,
+                                @NotNull String name,
+                                boolean overwriteMissed) {
+    return implOrFail().updateRecordFields(fileId, parentId, attributes, name, overwriteMissed);
   }
 
 
@@ -478,7 +379,6 @@ public final class FSRecords {
 
   public static @NotNull AttributeOutputStream writeAttribute(int fileId,
                                                               @NotNull FileAttribute attribute) {
-    //TODO RC: we need to check fileId here, and throw exception if it is not valid
     return implOrFail().writeAttribute(fileId, attribute);
   }
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.impl.writer.fields
 
+import com.intellij.platform.workspace.jps.entities.LibraryRoot
 import com.intellij.workspaceModel.codegen.impl.writer.classes.*
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
@@ -9,7 +10,6 @@ import com.intellij.workspaceModel.codegen.impl.writer.isRefType
 import com.intellij.workspaceModel.codegen.impl.writer.*
 import com.intellij.workspaceModel.codegen.impl.writer.javaName
 import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.bridgeEntities.LibraryRoot
 import com.intellij.platform.workspace.storage.impl.*
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceSet

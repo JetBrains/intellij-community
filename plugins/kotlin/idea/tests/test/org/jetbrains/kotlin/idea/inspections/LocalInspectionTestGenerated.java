@@ -9011,6 +9011,39 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     @TestMetadata("testData/inspectionsLocal/redundantIf")
     public abstract static class RedundantIf extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/redundantIf/floatingPoint")
+        public static class FloatingPoint extends AbstractLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("eq.kt")
+            public void testEq() throws Exception {
+                runTest("testData/inspectionsLocal/redundantIf/floatingPoint/eq.kt");
+            }
+
+            @TestMetadata("greaterThan.kt")
+            public void testGreaterThan() throws Exception {
+                runTest("testData/inspectionsLocal/redundantIf/floatingPoint/greaterThan.kt");
+            }
+
+            @TestMetadata("greaterThanEq.kt")
+            public void testGreaterThanEq() throws Exception {
+                runTest("testData/inspectionsLocal/redundantIf/floatingPoint/greaterThanEq.kt");
+            }
+
+            @TestMetadata("lessThan.kt")
+            public void testLessThan() throws Exception {
+                runTest("testData/inspectionsLocal/redundantIf/floatingPoint/lessThan.kt");
+            }
+
+            @TestMetadata("lessThanEq.kt")
+            public void testLessThanEq() throws Exception {
+                runTest("testData/inspectionsLocal/redundantIf/floatingPoint/lessThanEq.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/redundantIf/ignoreChainedIf")
         public abstract static class IgnoreChainedIf extends AbstractLocalInspectionTest {
             @RunWith(JUnit3RunnerWithInners.class)
@@ -9047,6 +9080,29 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 public void testNotChainedIf() throws Exception {
                     runTest("testData/inspectionsLocal/redundantIf/ignoreChainedIf/true/notChainedIf.kt");
                 }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/redundantIf/invertEmptinessCheck")
+        public static class InvertEmptinessCheck extends AbstractLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("isBlank.kt")
+            public void testIsBlank() throws Exception {
+                runTest("testData/inspectionsLocal/redundantIf/invertEmptinessCheck/isBlank.kt");
+            }
+
+            @TestMetadata("isEmpty.kt")
+            public void testIsEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/redundantIf/invertEmptinessCheck/isEmpty.kt");
+            }
+
+            @TestMetadata("isNotEmpty.kt")
+            public void testIsNotEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/redundantIf/invertEmptinessCheck/isNotEmpty.kt");
             }
         }
     }
@@ -10202,9 +10258,19 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantSuspend/coroutineContext.kt");
         }
 
+        @TestMetadata("invokeOperator.kt")
+        public void testInvokeOperator() throws Exception {
+            runTest("testData/inspectionsLocal/redundantSuspend/invokeOperator.kt");
+        }
+
         @TestMetadata("invokingByQualified.kt")
         public void testInvokingByQualified() throws Exception {
             runTest("testData/inspectionsLocal/redundantSuspend/invokingByQualified.kt");
+        }
+
+        @TestMetadata("lambdaCall.kt")
+        public void testLambdaCall() throws Exception {
+            runTest("testData/inspectionsLocal/redundantSuspend/lambdaCall.kt");
         }
 
         @TestMetadata("nullableFunctionType.kt")
@@ -13166,6 +13232,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     public static class ReplaceNegatedIsEmptyWithIsNotEmpty extends AbstractLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("call.kt")
+        public void testCall() throws Exception {
+            runTest("testData/inspectionsLocal/replaceNegatedIsEmptyWithIsNotEmpty/call.kt");
         }
 
         @TestMetadata("notNegateBlank.kt")
@@ -17281,6 +17352,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
 
+                @TestMetadata("abstract.kt")
+                public void testAbstract() throws Exception {
+                    runTest("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/default/abstract.kt");
+                }
+
                 @TestMetadata("nonTrivialGet.kt")
                 public void testNonTrivialGet() throws Exception {
                     runTest("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/default/nonTrivialGet.kt");
@@ -17319,6 +17395,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
 
+                @TestMetadata("abstract.kt")
+                public void testAbstract() throws Exception {
+                    runTest("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/false/abstract.kt");
+                }
+
                 @TestMetadata("nonTrivialGet.kt")
                 public void testNonTrivialGet() throws Exception {
                     runTest("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/false/nonTrivialGet.kt");
@@ -17355,6 +17436,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             public static class True extends AbstractLocalInspectionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("abstract.kt")
+                public void testAbstract() throws Exception {
+                    runTest("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/true/abstract.kt");
                 }
 
                 @TestMetadata("nonTrivialGet.kt")

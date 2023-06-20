@@ -5,17 +5,13 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
+import org.jetbrains.kotlin.idea.codeinsight.utils.EmptinessCheckFunctionUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.negate
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.parents
@@ -110,48 +106,6 @@ internal class ConvertBinaryExpressionWithDemorgansLawIntention :
 
     context(KtAnalysisSession)
     private fun KtQualifiedExpression.invertSelectorFunction(): KtQualifiedExpression? {
-        val callExpression = callExpression ?: return null
-        val fromFunctionName = callExpression.calleeExpression?.text ?: return null
-        val (fromFunctionFqNames, toFunctionName) = functionNames[fromFunctionName] ?: return null
-        if (fromFunctionFqNames.none { callExpression.isCalling(it) }) return null
-        return KtPsiFactory(project).createExpressionByPattern(
-            "$0.$toFunctionName()",
-            receiverExpression,
-            reformat = false
-        ) as? KtQualifiedExpression
+        return EmptinessCheckFunctionUtils.invertFunctionCall(this) as? KtQualifiedExpression
     }
-
-    context(KtAnalysisSession)
-    private fun KtCallExpression.isCalling(fqName: FqName): Boolean {
-        val calleeText = calleeExpression?.text ?: return false
-        if (fqName.shortName().asString() != calleeText) return false
-        val symbol = resolveCall().successfulCallOrNull<KtCallableMemberCall<*, *>>()?.symbol ?: return false
-        return symbol.callableIdIfNonLocal?.asSingleFqName() == fqName
-    }
-
-}
-
-private val packages = listOf(
-    "java.util.ArrayList",
-    "java.util.HashMap",
-    "java.util.HashSet",
-    "java.util.LinkedHashMap",
-    "java.util.LinkedHashSet",
-    "kotlin.collections",
-    "kotlin.collections.List",
-    "kotlin.collections.Set",
-    "kotlin.collections.Map",
-    "kotlin.collections.MutableList",
-    "kotlin.collections.MutableSet",
-    "kotlin.collections.MutableMap",
-    "kotlin.text"
-)
-
-private val functionNames: Map<String, Pair<List<FqName>, String>> by lazy {
-    mapOf(
-        "isEmpty" to Pair(packages.map { FqName("$it.isEmpty") }, "isNotEmpty"),
-        "isNotEmpty" to Pair(packages.map { FqName("$it.isNotEmpty") }, "isEmpty"),
-        "isBlank" to Pair(listOf(FqName("kotlin.text.isBlank")), "isNotBlank"),
-        "isNotBlank" to Pair(listOf(FqName("kotlin.text.isNotBlank")), "isBlank"),
-    )
 }

@@ -115,7 +115,7 @@ class ModulesByLinkedKeyCache(private val project: Project) : Disposable, Worksp
 
         val storageBefore = event.storageBefore
         val storageAfter = event.storageAfter
-        val changes = event.getChanges(ModuleEntity::class.java).also { if (it.none()) return }
+        val changes = event.getChanges(ModuleEntity::class.java).ifEmpty { return }
 
         val stableNameProvider = StableModuleNameProvider.getInstance(project)
 
