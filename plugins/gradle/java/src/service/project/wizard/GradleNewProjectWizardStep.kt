@@ -63,7 +63,9 @@ import org.jetbrains.plugins.gradle.service.project.wizard.statistics.GradleNewP
 import org.jetbrains.plugins.gradle.service.settings.PlaceholderGroup.Companion.placeholderGroup
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleDefaultProjectSettings
-import org.jetbrains.plugins.gradle.util.*
+import org.jetbrains.plugins.gradle.util.GradleBundle
+import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.suggestGradleVersion
 import javax.swing.Icon
 
 abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
@@ -141,7 +143,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
           .bindItem(distributionTypeProperty)
           .whenItemSelectedFromUi { logGradleDistributionChanged(distributionType.value) }
           .onApply { logGradleDistributionFinished(distributionType.value) }
-      }
+      }.visibleIf(parentProperty.transform { distributionTypes.size > 1 })
       row {
         placeholderGroup {
           component(WRAPPER) {
