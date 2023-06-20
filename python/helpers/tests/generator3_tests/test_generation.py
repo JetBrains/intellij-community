@@ -347,6 +347,10 @@ class SkeletonGenerationTest(FunctionalGeneratorTestCase):
     def test_ignoring_extra_submodules_not_under_binary_own_qname(self):
         self.check_generator_output('pkg.mod', 'pkg/mod.py')
 
+    # PY-60959
+    def test_module_attributes_with_illegal_names_are_skipped(self):
+        self.check_generator_output('mod', 'mod.py')
+
 
 class MultiModuleGenerationTest(FunctionalGeneratorTestCase):
     default_generator_extra_args = ['--name-pattern', 'mod?']
