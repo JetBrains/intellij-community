@@ -5,14 +5,18 @@ import com.intellij.openapi.progress.checkCancelled
 import com.intellij.openapi.progress.coroutineSuspender
 import com.intellij.openapi.progress.timeoutAwait
 import com.intellij.openapi.progress.timeoutJoin
-import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.UsefulTestCase.assertSize
 import com.intellij.util.ConcurrencyUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.fail
 
-class CoroutineSuspenderTest : LightPlatformTestCase() {
+class CoroutineSuspenderTest {
 
-  fun `test cancel paused coroutines`(): Unit = runBlocking {
+  @Test
+  fun `cancel paused coroutines`(): Unit = runBlocking {
     val count = 10
     val started = Channel<Unit>()
     val suspender = coroutineSuspender(false)
@@ -35,7 +39,8 @@ class CoroutineSuspenderTest : LightPlatformTestCase() {
     job.timeoutJoin()
   }
 
-  fun `test resume paused coroutines`(): Unit = runBlocking {
+  @Test
+  fun `resume paused coroutines`(): Unit = runBlocking {
     val count = 10
     val started = Channel<Unit>()
     val paused = Channel<Unit>()
