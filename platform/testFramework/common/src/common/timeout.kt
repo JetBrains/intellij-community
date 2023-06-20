@@ -14,11 +14,11 @@ import kotlin.time.Duration.Companion.seconds
 val DEFAULT_TEST_TIMEOUT: Duration = 1.seconds
 
 @TestOnly
-fun timeoutRunBlocking(action: suspend CoroutineScope.() -> Unit) {
+fun timeoutRunBlocking(timeout: Duration = DEFAULT_TEST_TIMEOUT, action: suspend CoroutineScope.() -> Unit) {
   @Suppress("RAW_RUN_BLOCKING")
   runBlocking {
     try {
-      withTimeout(DEFAULT_TEST_TIMEOUT, action)
+      withTimeout(timeout, action)
     }
     catch (e: TimeoutCancellationException) {
       println(dumpCoroutines())
