@@ -729,9 +729,8 @@ private class SqliteVcsLogWriter(private val connection: SqliteConnection, priva
 
   private fun putPathChanges(commitId: Int, details: VcsLogIndexer.CompressedDetails) {
     val changesToStore = collectChangesAndPutRenames(details)
-
-    for (entry in changesToStore) {
-      val pathId = entry.key
+    for (entry in changesToStore.int2ObjectEntrySet()) {
+      val pathId = entry.intKey
       val changes = entry.value
 
       for (change in changes) {
