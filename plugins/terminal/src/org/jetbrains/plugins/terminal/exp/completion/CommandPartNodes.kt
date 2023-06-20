@@ -39,7 +39,9 @@ internal class SubcommandNode(text: String,
 
     val existingOptions = children.mapNotNull { (it as? OptionNode)?.spec }
     val options = getAllAvailableOptions().filter { opt ->
-      opt.repeatTimes == 0 || existingOptions.count { it == opt } < opt.repeatTimes
+      (opt.repeatTimes == 0 || existingOptions.count { it == opt } < opt.repeatTimes)
+      && opt.exclusiveOn.none { exclusive -> existingOptions.any { it.names.contains(exclusive) } }
+      && opt.dependsOn.all { dependant -> existingOptions.any { it.names.contains(dependant) } }
     }
     suggestions.addAll(options)
 

@@ -48,11 +48,24 @@ class CommandSpecSuggestionsTest {
         suggestions("s1")
       }
     }
+
+    subcommand("excl") {
+      option("-a") {
+        exclusiveOn("-b")
+      }
+      option("-b") {
+        exclusiveOn("-a")
+      }
+      option("-c")
+      option("-d") {
+        dependsOn("-a", "-c")
+      }
+    }
   }
 
   @Test
   fun `main command`() {
-    doTest(expected = listOf("sub", "-a", "--asd", "--bcde", "--argum", "abc"))
+    doTest(expected = listOf("sub", "excl", "-a", "--asd", "--bcde", "--argum", "abc"))
   }
 
   @Test
@@ -78,6 +91,16 @@ class CommandSpecSuggestionsTest {
   @Test
   fun `suggest infinitely repeating option again`() {
     doTest("sub", "-a", "-a", "-a", expected = listOf("-o", "--opt1", "-a", "--long", "--withReqArg", "--withOptArg", "--bcde", "s1"))
+  }
+
+  @Test
+  fun `do not suggest excluded option`() {
+    doTest("excl", "-a", expected = listOf("-c", "--bcde"))
+  }
+
+  @Test
+  fun `suggest option only if dependants present`() {
+    doTest("excl", "-a", "-c", expected = listOf("-d", "--bcde"))
   }
 
   private fun doTest(vararg arguments: String, expected: List<String>) {
