@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.diagnostics.*
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
+import org.jetbrains.kotlin.diagnostics.rendering.RootDiagnosticRendererFactory
 import org.jetbrains.kotlin.idea.base.plugin.isK2Plugin
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.util.caching.ConcurrentFactoryCache
@@ -201,17 +202,17 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
 
         val result = LLCompilerFacade.compile(codeFragment, compilerConfiguration, languageVersionSettings, builderFactory)
 
-        val llCompilationResult = result.getOrNull() ?: error("Implement error processing")
+        val compilationResult = result.getOrNull()
+            ?: throw EvaluateExceptionUtil.createEvaluateException(result.exceptionOrNull())
 
-        val errors = llCompilationResult.diagnostics.filter { it.severity == Severity.ERROR }
-
-        if (errors.isNotEmpty()) {
-            //val ktDiagnostic = errors[0] as KtDiagnostic
-            //val message = errors[0].factory.ktRenderer.render(ktDiagnostic)
-            evaluationException(errors[0].toString())
+        val diagnostics = compilationResult.diagnostics
+        if (diagnostics.isNotEmpty()) {
+            val diagnostic = diagnostics.first() as KtDiagnostic
+            val factory = RootDiagnosticRendererFactory(diagnostic)
+            throw EvaluateExceptionUtil.createEvaluateException(factory.render(diagnostic))
         }
 
-        val classes: List<ClassToLoad> = llCompilationResult.outputFiles.filterCodeFragmentClassFiles()
+        val classes: List<ClassToLoad> = compilationResult.outputFiles.filterCodeFragmentClassFiles()
             .map {
                 ClassToLoad(it.internalClassName, it.relativePath, it.asByteArray())
             }
@@ -219,7 +220,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         val fragmentClass = classes.single { it.className == GENERATED_CLASS_NAME }
         val methodSignature = getMethodSignature(fragmentClass)
 
-        val parameters = llCompilationResult.capturedValues.mapNotNull { it.toDumbCodeFragmentParameter() }
+        val parameters = compilationResult.capturedValues.mapNotNull { it.toDumbCodeFragmentParameter() }
         val parameterInfo = K2CodeFragmentParameterInfo(parameters)
         val x = CodeFragmentCompiler.CompilationResult(classes, parameterInfo, mapOf(), methodSignature)
         createCompiledDataDescriptor(x)
