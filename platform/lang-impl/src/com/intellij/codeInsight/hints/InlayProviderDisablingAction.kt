@@ -4,7 +4,6 @@
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.CodeInsightBundle
-import com.intellij.codeInsight.hints.settings.language.NewInlayProviderSettingsModel
 import com.intellij.codeInsight.hints.settings.showInlaySettings
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.AnAction
@@ -25,31 +24,6 @@ class InlayProviderDisablingAction(
   override fun actionPerformed(e: AnActionEvent) {
     disableInlayHintsProvider(key, language)
     refreshHints(project)
-  }
-}
-
-/**
- * Disables given [ImmediateConfigurable.Case] of the given [InlayHintsProvider] for the language.
- * Language is taken from the PSI file in [com.intellij.openapi.actionSystem.DataContext].
- */
-internal class DisableInlayHintsProviderCaseAction(
-  private val providerKey: SettingsKey<*>,
-  private val providerName: Supplier<@Nls(capitalization = Title) String>,
-  private val caseId: String,
-  private val caseName: Supplier<@Nls(capitalization = Title) String>
-) : AnAction(Supplier { CodeInsightBundle.message("action.disable.inlay.hints.provider.case.text", providerName.get(), caseName.get()) }) {
-
-  override fun actionPerformed(e: AnActionEvent) {
-    val file = e.getData(PSI_FILE) ?: return
-    val provider = InlayHintsProviderExtension.allForLanguage(file.language).find { it.key == providerKey } ?: return
-
-    val config = InlayHintsSettings.instance()
-    val model = NewInlayProviderSettingsModel(provider.withSettings(file.language, config), config)
-    val case = model.cases.find { it.id == caseId } ?: return
-
-    case.value = false
-    model.apply()
-    refreshHints(file.project)
   }
 }
 
