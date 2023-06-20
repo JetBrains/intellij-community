@@ -45,7 +45,7 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
     override fun initCodegen(
         classDescriptor: ClassDescriptor,
         methodDescriptor: FunctionDescriptor,
-        parameterInfo: CodeFragmentParameterInfo
+        parameterInfo: K1CodeFragmentParameterInfo
     ) {
         // NO-OP
     }
@@ -67,7 +67,7 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
         compilerConfiguration: CompilerConfiguration,
         classDescriptor: ClassDescriptor,
         methodDescriptor: FunctionDescriptor,
-        parameterInfo: CodeFragmentParameterInfo
+        parameterInfo: K1CodeFragmentParameterInfo
     ) {
         builder.isIrBackend(true)
         builder.codegenFactory(
@@ -86,13 +86,13 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
         compilerConfiguration: CompilerConfiguration,
         classDescriptor: ClassDescriptor,
         methodDescriptor: FunctionDescriptor,
-        parameterInfo: CodeFragmentParameterInfo
+        parameterInfo: K1CodeFragmentParameterInfo
     ): CodegenFactory {
         val mangler = JvmDescriptorMangler(MainFunctionDetector(bindingContext, compilerConfiguration.languageVersionSettings))
         val evaluatorFragmentInfo = EvaluatorFragmentInfo(
             classDescriptor,
             methodDescriptor,
-            parameterInfo.parameters.map { EvaluatorFragmentParameterInfo(it.targetDescriptor, it.isLValue) }
+            parameterInfo.smartParameters.map { EvaluatorFragmentParameterInfo(it.targetDescriptor, it.isLValue) }
         )
         return JvmIrCodegenFactory(
             configuration = compilerConfiguration,
@@ -159,11 +159,11 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
         executionContext: ExecutionContext,
         codeFragment: KtCodeFragment,
         bindingContext: BindingContext
-    ): CodeFragmentParameterInfo {
+    ): K1CodeFragmentParameterInfo {
         return CodeFragmentParameterAnalyzer(executionContext, codeFragment, bindingContext).analyze().let { analysis ->
             // Local functions do not exist as run-time values on the IR backend: they are static functions.
-            CodeFragmentParameterInfo(
-                analysis.parameters.filter { it.kind != CodeFragmentParameter.Kind.LOCAL_FUNCTION },
+            K1CodeFragmentParameterInfo(
+                analysis.smartParameters.filter { it.kind != CodeFragmentParameter.Kind.LOCAL_FUNCTION },
                 analysis.crossingBounds
             )
         }
@@ -171,7 +171,7 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
 
     override fun extractResult(
         methodDescriptor: FunctionDescriptor,
-        parameterInfo: CodeFragmentParameterInfo,
+        parameterInfo: K1CodeFragmentParameterInfo,
         generationState: GenerationState
     ): CodeFragmentCompiler.CompilationResult {
         val classes: List<ClassToLoad> = collectGeneratedClasses(generationState)
@@ -188,7 +188,7 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
             CodeFragmentParameter.Smart(dumb, type, target)
         }
 
-        val processedOldCaptures: List<CodeFragmentParameter.Smart> = parameterInfo.parameters.map {
+        val processedOldCaptures: List<CodeFragmentParameter.Smart> = parameterInfo.smartParameters.map {
             val target = it.targetDescriptor
             val (newName, newDebugName) = when {
                 target is LocalVariableDescriptor && target.isDelegated -> {
@@ -205,7 +205,7 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
         }
 
         val newParameterInfo =
-            CodeFragmentParameterInfo(
+            K1CodeFragmentParameterInfo(
                 processedOldCaptures + newCaptures,
                 parameterInfo.crossingBounds
             )

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.evaluation.CodeFragmentFactoryContextWrapper
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
@@ -29,6 +30,7 @@ import org.jetbrains.eval4j.jdi.JDIEval
 import org.jetbrains.eval4j.jdi.asJdiValue
 import org.jetbrains.eval4j.jdi.asValue
 import org.jetbrains.eval4j.jdi.makeInitialFrame
+import org.jetbrains.kotlin.analysis.low.level.api.fir.compiler.CodeFragmentCapturedValue
 import org.jetbrains.kotlin.analysis.low.level.api.fir.compiler.LLCompilerFacade
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
@@ -55,6 +57,7 @@ import org.jetbrains.kotlin.idea.debugger.evaluate.variables.VariableFinder
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.application.attachmentByPsiFile
 import org.jetbrains.kotlin.idea.util.application.merge
+import org.jetbrains.kotlin.name.NameUtils
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
@@ -216,10 +219,41 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         val fragmentClass = classes.single { it.className == GENERATED_CLASS_NAME }
         val methodSignature = getMethodSignature(fragmentClass)
 
-        // TODO: need to fill this info (ignoring Smart#targetDescriptor ???)
-        val parameterInfo = CodeFragmentParameterInfo(listOf(), setOf())
+        val parameters = llCompilationResult.capturedValues.mapNotNull { it.toDumbCodeFragmentParameter() }
+        val parameterInfo = K2CodeFragmentParameterInfo(parameters)
         val x = CodeFragmentCompiler.CompilationResult(classes, parameterInfo, mapOf(), methodSignature)
         createCompiledDataDescriptor(x)
+    }
+
+    private fun CodeFragmentCapturedValue.toDumbCodeFragmentParameter(): CodeFragmentParameter.Dumb? {
+        return when (this) {
+            is CodeFragmentCapturedValue.Local ->
+                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.ORDINARY, name)
+            is CodeFragmentCapturedValue.LocalDelegate ->
+                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DELEGATED, name)
+            is CodeFragmentCapturedValue.ContainingClass ->
+                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DISPATCH_RECEIVER, "", displayText)
+            is CodeFragmentCapturedValue.SuperClass ->
+                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DISPATCH_RECEIVER, "", displayText)
+            is CodeFragmentCapturedValue.ExtensionReceiver ->
+                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.EXTENSION_RECEIVER, name, displayText)
+            is CodeFragmentCapturedValue.ContextReceiver -> {
+                val name = NameUtils.contextReceiverName(index).asString()
+                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.CONTEXT_RECEIVER, name, displayText)
+            }
+            is CodeFragmentCapturedValue.ForeignValue -> {
+                assert(name.endsWith(CodeFragmentFactoryContextWrapper.DEBUG_LABEL_SUFFIX))
+                val valueName = name.substringBeforeLast(CodeFragmentFactoryContextWrapper.DEBUG_LABEL_SUFFIX)
+                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DEBUG_LABEL, valueName, name)
+            }
+            is CodeFragmentCapturedValue.FieldVariable ->
+                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.FIELD_VAR, name, displayText)
+            is CodeFragmentCapturedValue.FakeJavaOuterClass ->
+                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.FAKE_JAVA_OUTER_CLASS, name, displayText)
+            CodeFragmentCapturedValue.CoroutineContext ->
+                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.FAKE_JAVA_OUTER_CLASS, "")
+            else -> null
+        }
     }
 
     private fun compiledCodeFragmentDataK1(context: ExecutionContext): CompiledCodeFragmentData {
@@ -549,8 +583,7 @@ fun createCompiledDataDescriptor(result: CodeFragmentCompiler.CompilationResult)
     val localFunctionSuffixes = result.localFunctionSuffixes
 
     val dumbParameters = ArrayList<CodeFragmentParameter.Dumb>(result.parameterInfo.parameters.size)
-    for (parameter in result.parameterInfo.parameters) {
-        val dumb = parameter.dumb
+    for (dumb in result.parameterInfo.parameters) {
         if (dumb.kind == CodeFragmentParameter.Kind.LOCAL_FUNCTION) {
             val suffix = localFunctionSuffixes[dumb]
             if (suffix != null) {
@@ -565,7 +598,7 @@ fun createCompiledDataDescriptor(result: CodeFragmentCompiler.CompilationResult)
     return CompiledCodeFragmentData(
         result.classes,
         dumbParameters,
-        result.parameterInfo.crossingBounds,
+        (result.parameterInfo as? K1CodeFragmentParameterInfo)?.crossingBounds ?: emptySet(),
         result.mainMethodSignature
     )
 }

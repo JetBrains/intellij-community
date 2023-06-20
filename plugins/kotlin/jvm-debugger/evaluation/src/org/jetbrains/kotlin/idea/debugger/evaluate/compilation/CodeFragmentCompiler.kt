@@ -169,7 +169,7 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
         declaration: KtCodeFragment,
         className: Name,
         methodName: Name,
-        parameterInfo: CodeFragmentParameterInfo,
+        parameterInfo: K1CodeFragmentParameterInfo,
         returnType: KotlinType,
         packageFragmentDescriptor: PackageFragmentDescriptor
     ): Pair<ClassDescriptor, FunctionDescriptor> {
@@ -212,7 +212,7 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
 
         fun erase(type: KotlinType): KotlinType = upperBoundIfTypeParameter(type) ?: eraseTypeArguments(type)
 
-        val parameters = parameterInfo.parameters.mapIndexed { index, parameter ->
+        val parameters = parameterInfo.smartParameters.mapIndexed { index, parameter ->
             ValueParameterDescriptorImpl(
                 methodDescriptor, null, index, Annotations.EMPTY, Name.identifier("p$index"),
                 erase(parameter.targetType),
