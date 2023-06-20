@@ -22,6 +22,7 @@ import org.gradle.tooling.events.ProgressEvent;
 import org.gradle.tooling.events.ProgressListener;
 import org.gradle.tooling.events.StatusEvent;
 import org.gradle.tooling.events.download.FileDownloadProgressEvent;
+import org.gradle.tooling.events.lifecycle.BuildPhaseProgressEvent;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,6 +55,7 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
   private final GradleDownloadProgressListener myDownloadProgressListener;
   private ExternalSystemTaskNotificationEvent myLastStatusChange = null;
   private GradleProgressState myGradleProgressState = GradleProgressState.newInitializationState();
+  private boolean isBuildProgressSupported;
 
   public GradleProgressListener(
     @NotNull ExternalSystemTaskNotificationListener listener,
@@ -74,15 +76,18 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
     myGradleVersion = extractGradleVersion(settings);
     myOperationId = taskId.hashCode() + ":" + FileUtil.pathHashCode(buildRootDir == null ? UUID.randomUUID().toString() : buildRootDir);
     myDownloadProgressListener = GradleDownloadProgressListener.newListener(taskId);
+    isBuildProgressSupported = areGradleBuildProgressEventsSupported(myGradleVersion);
   }
 
   @Override
   public void statusChanged(ProgressEvent event) {
-    ExternalSystemTaskNotificationEvent progressBuildEvent;
-    if (isGradleBuildProgressEvent(event) && areGradleBuildProgressEventsSupported(myGradleVersion)) {
-      // Progress indicator supported with Gradle >= 7.6
+    // When Gradle version is not available (e.g. no wrapper yet),
+    // we determine if build progress is supported from events
+    isBuildProgressSupported = isBuildProgressSupported(event);
+    if (isBuildProgressSupported && isAnyBuildProgressEvent(event)) {
+      // Build progress indicator is supported with Gradle >= 7.6
       myGradleProgressState = updateGradleProgressState(myGradleProgressState, event);
-      progressBuildEvent = createProgressIndicatorEvent(myTaskId, myTaskId, event, myGradleProgressState);
+      var progressBuildEvent = createProgressIndicatorEvent(myTaskId, myTaskId, event, myGradleProgressState);
       if (progressBuildEvent != null) {
         // update IDE progress determinate indicator
         myListener.onStatusChange(progressBuildEvent);
@@ -90,23 +95,22 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
     }
     else if (isGradleDownloadEvent(event)) {
       sendProgressToOutputIfNeeded(event);
-      progressBuildEvent = GradleProgressEventConverter.convertProgressBuildEvent(myTaskId, myTaskId, event);
+      var progressBuildEvent = GradleProgressEventConverter.convertProgressBuildEvent(myTaskId, myTaskId, event);
       if (progressBuildEvent != null && event instanceof StatusEvent) {
-        // update IDE progress determinate indicator
-        myDownloadProgressListener.updateProgressIndicator(progressBuildEvent);
+        if (isBuildProgressSupported) {
+          // Show download progress as separate indicators when build progress is supported
+          myDownloadProgressListener.updateProgressIndicator(progressBuildEvent);
+        } else {
+          // Otherwise show download progress on main progress indicator
+          myListener.onStatusChange(progressBuildEvent);
+        }
       }
     }
     else {
-      progressBuildEvent = GradleProgressEventConverter.convertProgressBuildEvent(myTaskId, myTaskId, event);
-      if (progressBuildEvent != null) {
-        if (event instanceof StatusEvent) {
-          // update IDE progress determinate indicator
-          myListener.onStatusChange(progressBuildEvent);
-        }
-        else if (!progressBuildEvent.equals(myLastStatusChange)) {
-          myListener.onStatusChange(progressBuildEvent);
-          myLastStatusChange = progressBuildEvent;
-        }
+      var progressBuildEvent = GradleProgressEventConverter.convertProgressBuildEvent(myTaskId, myTaskId, event);
+      if (progressBuildEvent != null && !progressBuildEvent.equals(myLastStatusChange)) {
+        myListener.onStatusChange(progressBuildEvent);
+        myLastStatusChange = progressBuildEvent;
       }
     }
 
@@ -114,6 +118,15 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
     if (taskNotificationEvent != null) {
       myListener.onStatusChange(taskNotificationEvent);
     }
+  }
+
+  private boolean isBuildProgressSupported(ProgressEvent event) {
+    if (isBuildProgressSupported) {
+      return true;
+    }
+    // If BuildPhaseProgressEvent is sent, then it must be
+    // Gradle >= 7.6 and build progress is supported
+    return event instanceof BuildPhaseProgressEvent;
   }
 
   private boolean isGradleDownloadEvent(ProgressEvent event) {

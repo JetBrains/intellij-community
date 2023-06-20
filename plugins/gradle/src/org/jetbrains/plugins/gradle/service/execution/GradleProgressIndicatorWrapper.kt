@@ -22,6 +22,7 @@ import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import kotlin.math.max
+import kotlin.math.min
 
 internal object GradleProgressIndicatorWrapper {
   fun registerGradleProgressIndicator(
@@ -52,10 +53,11 @@ internal object GradleProgressIndicatorWrapper {
         withBackgroundProgress(project, title, cancellable = false) {
           withRawProgressReporter {
             rawProgressReporter?.text(wrapText("Initialization..."))
+            rawProgressReporter?.fraction(null)
             var nextEvent = channel.receiveCatching().getOrNull()
             while (nextEvent != null) {
               val fraction = when {
-                nextEvent.unit == "items" && nextEvent.total > 0 -> max(nextEvent.progress.toDouble() / nextEvent.total, 1.0)
+                nextEvent.unit == "items" && nextEvent.total > 0 -> min(nextEvent.progress.toDouble() / nextEvent.total, 1.0)
                 else -> null
               }
               rawProgressReporter?.fraction(fraction)

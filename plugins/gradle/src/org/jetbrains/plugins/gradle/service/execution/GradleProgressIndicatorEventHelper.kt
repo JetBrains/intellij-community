@@ -51,7 +51,7 @@ object GradleProgressIndicatorEventHelper {
   }
 
   @JvmStatic
-  fun isGradleBuildProgressEvent(event: ProgressEvent): Boolean {
+  fun isAnyBuildProgressEvent(event: ProgressEvent): Boolean {
     return event is BuildPhaseProgressEvent ||
            event is TaskProgressEvent ||
            event is TransformProgressEvent ||
@@ -67,7 +67,7 @@ object GradleProgressIndicatorEventHelper {
   ): ExternalSystemTaskNotificationEvent? {
     if (event is BuildPhaseFinishEvent && progressState.currentPhase == EXECUTION_DONE && RUN_MAIN_TASKS == event.descriptor.buildPhase) {
       return ExternalSystemBuildEvent(taskId,
-        ProgressBuildEventImpl(id, null, event.eventTime, "Done, waiting other processes to finish...", 0, 0, "")
+        ProgressBuildEventImpl(id, null, event.eventTime, "Done, waiting other processes to finish...", -1, -1, "")
       )
     }
     if (!shouldCreateProgressIndicatorEvent(event, progressState)) return null
