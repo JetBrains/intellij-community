@@ -36,7 +36,12 @@ internal class SubcommandNode(text: String,
     if (children.isEmpty()) {
       suggestions.addAll(spec.subcommands)
     }
-    suggestions.addAll(getAllAvailableOptions())
+
+    val existingOptions = children.mapNotNull { (it as? OptionNode)?.spec }
+    val options = getAllAvailableOptions().filter { opt ->
+      opt.repeatTimes == 0 || existingOptions.count { it == opt } < opt.repeatTimes
+    }
+    suggestions.addAll(options)
 
     val args = spec.args
     val existingArgsCount = children.count { it is ArgumentNode }

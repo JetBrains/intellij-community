@@ -16,6 +16,7 @@ class CommandSpecSuggestionsTest {
     option("-a", "--asd")
     option("--bcde") {
       isPersistent = true
+      repeatTimes = 2
     }
     option("--argum") {
       argument("optArg", isOptional = true) {
@@ -29,7 +30,9 @@ class CommandSpecSuggestionsTest {
 
     subcommand("sub") {
       option("-o", "--opt1")
-      option("-a")
+      option("-a") {
+        repeatTimes = 0
+      }
       option("--long")
       option("--withReqArg") {
         argument("reqArg")
@@ -54,12 +57,27 @@ class CommandSpecSuggestionsTest {
 
   @Test
   fun `argument of option`() {
-    doTest("--argum", expected = listOf("all", "none", "default", "-a", "--asd", "--bcde", "--argum", "abc"))
+    doTest("--argum", expected = listOf("all", "none", "default", "-a", "--asd", "--bcde", "abc"))
   }
 
   @Test
   fun `suggest persistent option for subcommand`() {
     doTest("sub", expected = listOf("-o", "--opt1", "-a", "--long", "--withReqArg", "--withOptArg", "--bcde", "s1"))
+  }
+
+  @Test
+  fun `suggest twice repeating option for the second time`() {
+    doTest("--bcde", expected = listOf("-a", "--asd", "--bcde", "--argum", "abc"))
+  }
+
+  @Test
+  fun `do not suggest twice repeating option for the third time`() {
+    doTest("--bcde", "--bcde", expected = listOf("-a", "--asd", "--argum", "abc"))
+  }
+
+  @Test
+  fun `suggest infinitely repeating option again`() {
+    doTest("sub", "-a", "-a", "-a", expected = listOf("-o", "--opt1", "-a", "--long", "--withReqArg", "--withOptArg", "--bcde", "s1"))
   }
 
   private fun doTest(vararg arguments: String, expected: List<String>) {

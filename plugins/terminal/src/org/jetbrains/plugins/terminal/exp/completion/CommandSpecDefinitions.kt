@@ -39,7 +39,7 @@ data class ShellOption(
   val isPersistent: Boolean = false,
   val isRequired: Boolean = false,
   val separator: String? = null,
-  val repeatTimes: Int = 1,
+  val repeatTimes: Int = 1,  // can be 0, it means that option can be repeated infinitely
   val exclusiveOn: List<String> = emptyList(),
   val dependsOn: List<String> = emptyList(),
 
