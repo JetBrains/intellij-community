@@ -12,20 +12,19 @@ class UnsupportedGradleImportingTest : BuildViewMessagesImportingTestCase() {
   @Test
   fun testSyncMessages() {
     importProject("")
-    val expectedExecutionTree: String
-    val gradleJvmSupportMatrix = GradleJvmSupportMatrix.getInstance()
-    when {
-      gradleJvmSupportMatrix.isUnsupported(currentGradleVersion) -> expectedExecutionTree =
+    val expectedExecutionTree = when {
+      !GradleJvmSupportMatrix.isGradleSupportedByIdea(currentGradleVersion) ->
         "-\n" +
         " -failed\n" +
         "  Unsupported Gradle"
       // sample assertion for deprecated Gradle version.
-      gradleJvmSupportMatrix.isDeprecated(currentGradleVersion) -> expectedExecutionTree =
+      GradleJvmSupportMatrix.isGradleDeprecatedByIdea(currentGradleVersion) ->
         "-\n" +
         " -finished\n" +
         "  Gradle ${currentGradleVersion.version} support can be dropped in the next release"
-      else -> expectedExecutionTree = "-\n" +
-                                      " finished"
+      else ->
+        "-\n" +
+        " finished"
     }
 
     assertSyncViewTreeEquals(expectedExecutionTree)

@@ -13,9 +13,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.impl.AbstractSdkTestFixture
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
-import org.jetbrains.plugins.gradle.util.getSupportedJavaVersions
-import org.jetbrains.plugins.gradle.util.isSupported
 
 
 internal class GradleJvmTestFixtureImpl(private val gradleVersion: GradleVersion) : AbstractSdkTestFixture() {
@@ -26,14 +25,14 @@ internal class GradleJvmTestFixtureImpl(private val gradleVersion: GradleVersion
     get() = JavaSdk.getInstance()
 
   override fun isSdkSupported(versionString: String): Boolean {
-    return isSupported(gradleVersion, versionString)
+    return GradleJvmSupportMatrix.isSupported(gradleVersion, versionString)
   }
 
   override fun findOrCreateSdk(): Sdk {
     return findSdkInTable() ?: findAndAddSdk() ?: throw AssertionError(
       "Cannot find JDK for $gradleVersion.\n" +
       "Please, research JDK restrictions or discuss it with test author, and install JDK manually.\n" +
-      "Supported JDKs for current restrictions: " + getSupportedJavaVersions(gradleVersion) + "\n" +
+      "Supported JDKs for current restrictions: " + GradleJvmSupportMatrix.getSupportedJavaVersions(gradleVersion) + "\n" +
       "Checked paths: " + sdkType.suggestHomePaths()
     )
   }

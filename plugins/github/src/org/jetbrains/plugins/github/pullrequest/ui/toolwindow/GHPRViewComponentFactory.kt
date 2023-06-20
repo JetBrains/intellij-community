@@ -69,7 +69,6 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
   private val detailsLoadingModel = GHCompletableFutureLoadingModel<GHPullRequest>(disposable)
   private val commitsLoadingModel = GHCompletableFutureLoadingModel<List<GHCommit>>(disposable)
   private val changesLoadingModel = GHCompletableFutureLoadingModel<GitBranchComparisonResult>(disposable)
-  private val viewedStateLoadingModel = GHCompletableFutureLoadingModel<Map<String, GHPullRequestFileViewedState>>(disposable)
 
   init {
     dataProvider.detailsData.loadDetails(disposable) {
@@ -81,7 +80,6 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     dataProvider.changesData.loadChanges(disposable) {
       changesLoadingModel.future = it
     }
-    setupViewedStateModel()
     // pre-fetch to show diff quicker
     dataProvider.changesData.fetchBaseBranch()
     dataProvider.changesData.fetchHeadBranch()
@@ -121,15 +119,6 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
 
   private val uiDisposable = Disposer.newDisposable().also {
     Disposer.register(disposable, it)
-  }
-
-  private fun setupViewedStateModel() {
-    fun update() {
-      viewedStateLoadingModel.future = dataProvider.viewedStateData.loadViewedState()
-    }
-
-    dataProvider.viewedStateData.addViewedStateListener(disposable) { update() }
-    update()
   }
 
   fun create(): JComponent =

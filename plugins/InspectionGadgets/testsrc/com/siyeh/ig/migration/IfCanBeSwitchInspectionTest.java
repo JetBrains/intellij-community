@@ -23,7 +23,7 @@ public class IfCanBeSwitchInspectionTest extends LightJavaInspectionTestCase {
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_17;
+    return JAVA_20;
   }
 
   @Nullable

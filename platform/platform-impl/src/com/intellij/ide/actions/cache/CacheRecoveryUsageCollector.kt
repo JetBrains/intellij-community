@@ -15,6 +15,7 @@ internal class CacheRecoveryUsageCollector : CounterUsagesCollector() {
         listOf(
           "refresh",
           "hammer",
+          "recover-from-log",
           "reindex",
           "drop-shared-index",
           "rescan",

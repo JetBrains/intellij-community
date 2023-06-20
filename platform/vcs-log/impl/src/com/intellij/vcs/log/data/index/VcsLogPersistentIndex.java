@@ -14,7 +14,7 @@ import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -128,7 +128,9 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
   }
 
   private static int getIndexingLimit() {
-    return Math.max(1, Registry.intValue("vcs.log.index.limit.minutes"));
+    int limitValue = Registry.intValue("vcs.log.index.limit.minutes");
+    if (limitValue < 0) return -1;
+    return Math.max(1, limitValue);
   }
 
   @Override
@@ -412,7 +414,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       indicator.setIndeterminate(false);
       indicator.setFraction(0);
 
-      mySpan = TelemetryTracer.getInstance().getTracer(VcsScope).spanBuilder("git-log-indexing").startSpan();
+      mySpan = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder("git-log-indexing").startSpan();
       myScope = mySpan.makeCurrent();
       myStartTime = getCurrentTimeMillis();
 
@@ -581,7 +583,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       int limit = myIndexingLimit.get(myRoot).get();
       boolean isBigRoot = myBigRepositoriesList.isBig(myRoot);
       boolean isOvertime = !myIdleIndexer.isEnabled()
-                           && (time >= (Math.max(limit, 1L) * 60 * 1000) && !isBigRoot);
+                           && (limit > 0 && time >= (Math.max(limit, 1L) * 60 * 1000) && !isBigRoot);
       if (isOvertime || (isBigRoot && !indicator.isCanceled())) {
         mySpan.setAttribute("cancelled", true);
         LOG.warn("Indexing " + myRoot.getName() + " was cancelled after " + StopWatch.formatTime(time));

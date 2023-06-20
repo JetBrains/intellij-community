@@ -31,15 +31,15 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor;
 import com.intellij.workspaceModel.core.fileIndex.impl.PlatformInternalWorkspaceFileIndexContributor;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl;
-import com.intellij.workspaceModel.ide.WorkspaceModel;
-import com.intellij.workspaceModel.storage.EntityChange;
-import com.intellij.workspaceModel.storage.EntityReference;
-import com.intellij.workspaceModel.storage.EntityStorage;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId;
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.storage.EntityChange;
+import com.intellij.platform.workspace.storage.EntityReference;
+import com.intellij.platform.workspace.storage.EntityStorage;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
+import com.intellij.platform.workspace.jps.entities.LibraryEntity;
+import com.intellij.platform.workspace.jps.entities.LibraryId;
+import com.intellij.platform.workspace.jps.entities.LibraryTableId;
+import com.intellij.platform.workspace.jps.entities.ModuleId;
 import kotlin.Pair;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NonNls;
@@ -182,7 +182,7 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
                                                                              @NotNull Collection<? extends EntityChange<?>> events,
                                                                              @NotNull EntityStorage entityStorage) {
     List<IndexableIteratorBuilder> builders = new SmartList<>();
-    WorkspaceIndexingRootsBuilder descriptionsBuilder = new WorkspaceIndexingRootsBuilder();
+    WorkspaceIndexingRootsBuilder descriptionsBuilder = new WorkspaceIndexingRootsBuilder(false);
     for (EntityChange<? extends WorkspaceEntity> change : events) {
       collectIteratorBuildersOnChange(Change.fromEntityChange(change), change.getOldEntity(), change.getNewEntity(), project, builders,
                                       descriptionsBuilder, entityStorage);
@@ -357,7 +357,7 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
     if (entities.isEmpty()) return Collections.emptyList();
     List<IndexableIteratorBuilder> builders = new SmartList<>();
 
-    WorkspaceIndexingRootsBuilder descriptionsBuilder = new WorkspaceIndexingRootsBuilder();
+    WorkspaceIndexingRootsBuilder descriptionsBuilder = new WorkspaceIndexingRootsBuilder(false);
     for (WorkspaceEntity entity : entities) {
       collectIteratorBuildersOnChange(Change.Added, null, entity, project, builders, descriptionsBuilder, entityStorage);
     }

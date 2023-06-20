@@ -13,7 +13,7 @@ internal class SearchEverywhereActionsRankingModelLoader : SearchEverywhereMLRan
   private val expResourceDirectory = "actions_features_exp"
   private val expModelDirectory = "actions_model_exp"
 
-  override val supportedContributorName: String = ActionSearchEverywhereContributor::class.java.simpleName
+  override val supportedTab: String = ActionSearchEverywhereContributor::class.java.simpleName
 
   override fun getBundledModel(): DecisionFunction {
     return if (shouldProvideExperimentalModel()) {

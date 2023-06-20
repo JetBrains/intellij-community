@@ -5,11 +5,11 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.util.io.createFile
-import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.SymbolicEntityId
-import com.intellij.workspaceModel.storage.WorkspaceEntityWithSymbolicId
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.SymbolicEntityId
+import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.*
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts.jetbrainsAnnotations

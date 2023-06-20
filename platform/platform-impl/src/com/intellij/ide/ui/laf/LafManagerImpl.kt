@@ -10,7 +10,6 @@ import com.intellij.diagnostic.runActivity
 import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.WelcomeWizardUtil
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
@@ -18,7 +17,6 @@ import com.intellij.ide.ui.*
 import com.intellij.ide.ui.UISettings.Companion.getPreferredFractionalMetricsValue
 import com.intellij.ide.ui.UISettings.Companion.shadowInstance
 import com.intellij.ide.ui.laf.SystemDarkThemeDetector.Companion.createDetector
-import com.intellij.ide.ui.laf.darcula.DarculaInstaller
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI
@@ -303,7 +301,6 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
           val needUninstall = StartupUiUtil.isUnderDarcula
           // setup default LAF or one specified by readExternal
           doSetLaF(lookAndFeelInfo = laf, installEditorScheme = false)
-          updateWizardLAF(needUninstall)
         }
       }
       selectComboboxModel()
@@ -370,20 +367,6 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     if (currentIsDark != systemIsDark || myCurrentLaf !== expectedLaf) {
       QuickChangeLookAndFeel.switchLafAndUpdateUI(this, expectedLaf, true)
     }
-  }
-
-  fun updateWizardLAF(wasUnderDarcula: Boolean) {
-    if (WelcomeWizardUtil.getWizardLAF() == null) {
-      return
-    }
-
-    if (StartupUiUtil.isUnderDarcula) {
-      DarculaInstaller.install()
-    }
-    else if (wasUnderDarcula) {
-      DarculaInstaller.uninstall()
-    }
-    WelcomeWizardUtil.setWizardLAF(null)
   }
 
   override fun dispose() {}
@@ -477,14 +460,18 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       getLafState(element, ELEMENT_PREFERRED_DARK_LAF, preferredDarkLaf)
     }
 
-    val lafsToSchemes = Element(ELEMENT_LAFS_TO_PREVIOUS_SCHEMES)
-    for ((laf, scheme) in lafToPreviousScheme) {
-      val lafToScheme = Element(ELEMENT_LAF_TO_SCHEME)
-      lafToScheme.setAttribute(ATTRIBUTE_LAF, laf)
-      lafToScheme.setAttribute(ATTRIBUTE_SCHEME, scheme)
-      lafsToSchemes.addContent(lafToScheme)
+    if (lafToPreviousScheme.isNotEmpty()) {
+      val lafsToSchemes = Element(ELEMENT_LAFS_TO_PREVIOUS_SCHEMES)
+      val lafToPreviousSchemeSorted = lafToPreviousScheme.toList().sortedBy { it.first }
+      for ((laf, scheme) in lafToPreviousSchemeSorted) {
+        val lafToScheme = Element(ELEMENT_LAF_TO_SCHEME)
+        lafToScheme.setAttribute(ATTRIBUTE_LAF, laf)
+        lafToScheme.setAttribute(ATTRIBUTE_SCHEME, scheme)
+        lafsToSchemes.addContent(lafToScheme)
+      }
+      element.addContent(lafsToSchemes)
     }
-    element.addContent(lafsToSchemes)
+
     return element
   }
 
@@ -527,14 +514,6 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   override fun getSettingsToolbar(): JComponent = settingsToolbar.value.component
 
   private fun loadDefaultLaf(): LookAndFeelInfo {
-    val wizardLafName = WelcomeWizardUtil.getWizardLAF()
-    if (wizardLafName != null) {
-      val laf = findLaf(wizardLafName)
-      if (laf != null) {
-        return laf
-      }
-      LOG.error("Could not find wizard L&F: $wizardLafName")
-    }
     if (SystemInfoRt.isMac) {
       val className = DarculaLaf::class.java.name
       val laf = findLaf(className)

@@ -23,7 +23,6 @@ internal object GradleCompatibilityDataParser : IdeVersionedDataParser<GradleCom
         val versionMapping = VersionMapping()
         versionMapping.javaVersionInfo = obj["java"]?.takeIf { it.isJsonPrimitive }?.asString ?: return null
         versionMapping.gradleVersionInfo = obj["gradle"]?.takeIf { it.isJsonPrimitive }?.asString ?: return null
-        versionMapping.comment = obj["comment"]?.takeIf { it.isJsonPrimitive }?.asString
         versionMapping
       }
 

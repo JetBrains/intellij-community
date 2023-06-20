@@ -56,6 +56,7 @@ import com.intellij.ui.tabs.impl.multiRow.WrapMultiRowLayout
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout
 import com.intellij.util.concurrency.EdtScheduledExecutorService
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.TimedDeadzone
 import com.intellij.util.ui.UIUtil
@@ -563,7 +564,7 @@ private class EditorTabs(
     setUiDecorator(object : UiDecorator {
       override fun getDecoration(): UiDecoration {
         return UiDecoration(
-          labelInsets = if (isHorizontalTabs) JBUI.CurrentTheme.EditorTabs.tabInsets() else JBUI.CurrentTheme.EditorTabs.verticalTabInsets(),
+          labelInsets = getTabLabelInsets(),
           contentInsetsSupplier = Function { pos ->
             val actionsOnTheRight: Boolean? = when (pos) {
               ActionsPosition.RIGHT -> true
@@ -615,6 +616,11 @@ private class EditorTabs(
   override val entryPointActionGroup: DefaultActionGroup
     get() = _entryPointActionGroup
 
+  private fun getTabLabelInsets(): JBInsets {
+    val insets = if (isHorizontalTabs) JBUI.CurrentTheme.EditorTabs.tabInsets() else JBUI.CurrentTheme.EditorTabs.verticalTabInsets()
+    return insets as? JBInsets ?: error("JBInsets expected, but was: $insets")
+  }
+
   override fun createTabLabel(info: TabInfo): TabLabel {
     return EditorTabLabel(info)
   }
@@ -639,9 +645,10 @@ private class EditorTabs(
     }
 
     override fun getPreferredHeight(): Int {
-      val insets = insets
+      val insets = getTabLabelInsets().unscaled
+      val height = JBUI.scale(UNSCALED_PREF_HEIGHT - insets.top - insets.bottom)
       val layoutInsets = layoutInsets
-      return super.getPreferredHeight() - layoutInsets.top - layoutInsets.bottom - insets.top - insets.bottom
+      return height - layoutInsets.top - layoutInsets.bottom
     }
 
     override fun isShowTabActions(): Boolean = UISettings.shadowInstance.showCloseButton || isPinned

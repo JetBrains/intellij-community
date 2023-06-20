@@ -45,13 +45,21 @@ public interface ModCommandService {
   @Nullable ModCommandAction unwrap(@NotNull LocalQuickFix fix);
 
   /**
-   * Executes given {@link ModCommand}.
+   * Executes given {@link ModCommand} interactively (may require user input, navigate into editors, etc.).
    * 
    * @param project current project
    * @param command a command to execute
    */
   @RequiresEdt
-  void execute(@NotNull Project project, @NotNull ModCommand command);
+  void executeInteractively(@NotNull Project project, @NotNull ModCommand command);
+
+  /**
+   * Executes given {@link ModCommand} in batch (applies default options, do not navigate) 
+   *
+   * @param project current project
+   * @param command a command to execute
+   */
+  void executeInBatch(@NotNull Project project, @NotNull ModCommand command);
 
   /**
    * @return an instance of this service

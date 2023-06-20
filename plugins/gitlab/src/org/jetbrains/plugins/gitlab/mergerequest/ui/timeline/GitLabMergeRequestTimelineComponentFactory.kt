@@ -1,19 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 
-import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.*
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
-import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.collaboration.ui.util.bindChildIn
 import com.intellij.collaboration.ui.util.bindEnabledIn
 import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.ide.DataManager
@@ -28,22 +25,18 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
-import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.components.panels.ListLayout
 import com.intellij.util.ui.JBUI.Borders
 import com.intellij.util.ui.StyleSheetUtil
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.*
-import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
-import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestErrorStatusPresenter
+import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineUIUtil.createTitleTextPane
-import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineViewModel.LoadingState
 import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditingViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditorComponentFactory
@@ -56,56 +49,46 @@ internal object GitLabMergeRequestTimelineComponentFactory {
   fun create(project: Project,
              cs: CoroutineScope,
              timelineVm: GitLabMergeRequestTimelineViewModel,
-             accountVm: GitLabAccountViewModel,
              avatarIconsProvider: IconsProvider<GitLabUserDTO>
   ): JComponent {
     val actionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Request.Details.Popup") as ActionGroup
-    val timelineWrapper = Wrapper()
-    val timelineComponents = Wrapper()
-    val loadedTimelinePanel = VerticalListPanel(0).apply {
-      add(timelineComponents)
-      bindChildIn(cs, timelineVm.newNoteVm, null) { editVm ->
-        editVm?.let { createNewNoteField(project, avatarIconsProvider, it) }
+
+    val titleComponent = GitLabMergeRequestTimelineTitleComponent.create(cs, timelineVm).let {
+      CollaborationToolsUIUtil.wrapWithLimitedSize(it, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
+    }.apply {
+      border = Borders.empty(CodeReviewTimelineUIUtil.HEADER_VERT_PADDING, CodeReviewTimelineUIUtil.ITEM_HOR_PADDING)
+    }
+    val descriptionComponent = GitLabMergeRequestTimelineDescriptionComponent
+      .createComponent(cs, timelineVm, avatarIconsProvider)
+
+    val content = ComponentListPanelFactory.createVertical(cs, timelineVm.timelineItems, GitLabMergeRequestTimelineItemViewModel::id,
+                                                           panelInitializer = {
+                                                             add(LoadingLabel().apply {
+                                                               border = Borders.empty(ComponentType.FULL.paddingInsets)
+                                                             }, ListLayout.Alignment.CENTER)
+                                                           }) { itemCs, item ->
+      createItemComponent(project, itemCs, avatarIconsProvider, item)
+    }
+    val newNoteField = timelineVm.newNoteVm?.let {
+      cs.createNewNoteField(project, avatarIconsProvider, it)
+    }
+    val timelinePanel = VerticalListPanel(0).apply {
+      add(titleComponent)
+      add(descriptionComponent)
+      add(content)
+      if (newNoteField != null) {
+        add(newNoteField)
+      }
+    }
+    PopupHandler.installPopupMenu(timelinePanel, actionGroup, ActionPlaces.POPUP)
+    DataManager.registerDataProvider(timelinePanel) { dataId ->
+      when {
+        GitLabMergeRequestViewModel.DATA_KEY.`is`(dataId) -> timelineVm
+        else -> null
       }
     }
 
-    cs.launch {
-      timelineVm.timelineLoadingFlow.mapScoped { state ->
-        when (state) {
-          LoadingState.Loading -> {
-            LoadingLabel().apply {
-              border = Borders.empty(ComponentType.FULL.paddingInsets)
-            }
-          }
-          is LoadingState.Error -> {
-            val errorPresenter = GitLabMergeRequestErrorStatusPresenter(accountVm)
-            val errorPanel = ErrorStatusPanelFactory.create(cs, flowOf(state.exception), errorPresenter)
-            CollaborationToolsUIUtil.moveToCenter(errorPanel)
-          }
-          is LoadingState.Result -> {
-            val content = createLoadedTimelineComponent(this, project, avatarIconsProvider, state)
-            timelineComponents.apply {
-              setContent(content)
-              repaint()
-            }
-            PopupHandler.installPopupMenu(loadedTimelinePanel, actionGroup, ActionPlaces.POPUP)
-            DataManager.registerDataProvider(loadedTimelinePanel) { dataId ->
-              when {
-                GitLabMergeRequestsActionKeys.MERGE_REQUEST.`is`(dataId) -> state.mr
-                else -> null
-              }
-            }
-            loadedTimelinePanel
-          }
-          else -> null
-        }
-      }.collect {
-        timelineWrapper.setContent(it)
-        timelineWrapper.repaint()
-      }
-    }
-
-    return ScrollPaneFactory.createScrollPane(timelineWrapper, true).apply {
+    return ScrollPaneFactory.createScrollPane(timelinePanel, true).apply {
       horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
       viewport.isOpaque = false
       CollaborationToolsUIUtil.overrideUIDependentProperty(this) {
@@ -115,33 +98,6 @@ internal object GitLabMergeRequestTimelineComponentFactory {
       UiNotifyConnector.doWhenFirstShown(it) {
         timelineVm.requestLoad()
       }
-    }
-  }
-
-  private fun createLoadedTimelineComponent(
-    timelineCs: CoroutineScope,
-    project: Project,
-    avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-    timelineLoadingResult: LoadingState.Result
-  ): JComponent {
-    val mr = timelineLoadingResult.mr
-    val titleComponent = GitLabMergeRequestTimelineTitleComponent.create(timelineCs, mr).let {
-      CollaborationToolsUIUtil.wrapWithLimitedSize(it, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
-    }.apply {
-      border = Borders.empty(CodeReviewTimelineUIUtil.HEADER_VERT_PADDING, CodeReviewTimelineUIUtil.ITEM_HOR_PADDING)
-    }
-
-    val descriptionComponent = GitLabMergeRequestTimelineDescriptionComponent.createComponent(timelineCs, mr, avatarIconsProvider)
-
-    val timelineItemsComponent = ComponentListPanelFactory.createVertical(timelineCs, timelineLoadingResult.items,
-                                                                          GitLabMergeRequestTimelineItemViewModel::id) { cs, item ->
-      createItemComponent(project, cs, avatarIconsProvider, item)
-    }
-
-    return VerticalListPanel().apply {
-      add(titleComponent)
-      add(descriptionComponent)
-      add(timelineItemsComponent)
     }
   }
 

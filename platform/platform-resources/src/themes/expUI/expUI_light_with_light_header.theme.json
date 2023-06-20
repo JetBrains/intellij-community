@@ -45,6 +45,11 @@
       }
     },
 
+    "WindowControls": {
+      "foreground": "#050708",
+      "inactiveForeground": "#9B9C9C"
+    },
+
     "MenuBar.borderColor": "Grey12",
 
     "Notification": {

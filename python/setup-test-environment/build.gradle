@@ -154,8 +154,8 @@ envs {
 
   createPython("python3.11",
                python311version,
-               [],
-               "python3.11",
+               ["black == 23.1.0"],
+               "python3.11\nblack",
                true)
 
   createPython("python3.12",

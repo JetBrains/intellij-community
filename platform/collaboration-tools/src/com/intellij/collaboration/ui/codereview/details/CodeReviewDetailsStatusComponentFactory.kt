@@ -134,7 +134,6 @@ object CodeReviewDetailsStatusComponentFactory {
   ): JComponent {
     val panel = VerticalListPanel().apply {
       name = "Code review status: reviewers"
-      border = JBUI.Borders.empty(STATUS_REVIEWER_BORDER, 0)
       bindVisibilityIn(scope, reviewersReview.map { it.isNotEmpty() })
     }
 
@@ -163,6 +162,7 @@ object CodeReviewDetailsStatusComponentFactory {
     statusIconsEnabled: Boolean
   ): JComponent {
     return HorizontalListPanel(STATUS_REVIEWER_COMPONENT_GAP).apply {
+      border = JBUI.Borders.empty(STATUS_REVIEWER_BORDER, 0)
       val reviewerLabel = ReviewDetailsStatusLabel("Code review status: reviewer").apply {
         iconTextGap = STATUS_REVIEWER_COMPONENT_GAP
         icon = iconProvider(avatarKeyProvider(reviewer), Avatar.Sizes.BASE)

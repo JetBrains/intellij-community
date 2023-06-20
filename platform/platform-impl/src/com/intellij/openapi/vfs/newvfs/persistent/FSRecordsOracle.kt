@@ -119,13 +119,13 @@ class FSRecordsOracle(
 
       override fun readAttribute(fileAttribute: FileAttribute): State.DefinedState<AttributeInputStream?> {
         if (!distanceEvaluator.isWorthLookingUpFrom(point())) return State.NotAvailable()
-        val attrId = vfsLogContext.stringEnumerator.enumerate(fileAttribute.id)
+        val attrId = vfsLogContext.enumerateAttribute(fileAttribute)
         val attrData = VfsChronicle.lookupAttributeData(point(), fileId, attrId, direction = TraverseDirection.PLAY)
         if (attrData.found) return State.NotAvailable() // some operation took place in between (point(), end())
         return fsRecords.readAttributeWithLock(fileId, fileAttribute).let(State::Ready)
       }
 
-      override fun getRecoverableChildrenIds(): State.DefinedState<RecoveredChildrenIds> {
+      override fun getChildrenIds(): State.DefinedState<RecoveredChildrenIds> {
         if (point() == vfsLogContext.operationLogStorage.end()) {
           val childrenIds = fsRecords.listIds(fileId).toList()
           return object : RecoveredChildrenIds, List<Int> by childrenIds {

@@ -19,7 +19,7 @@ class SqlitePreparedStatement<T : Binder> internal constructor(@JvmField interna
       columnCount = db.column_count(pointer.pointer)
       val paramCount = db.bind_parameter_count(pointer.pointer)
       if (paramCount != binder.paramCount) {
-        pointer.close()
+        pointer.close(db)
         throw IllegalStateException("statement param count: $paramCount, binder param count: ${binder.paramCount}")
       }
     }
@@ -29,15 +29,14 @@ class SqlitePreparedStatement<T : Binder> internal constructor(@JvmField interna
   }
 
   override fun close() {
-    connection.useDb { db ->
-      val pointer = pointer.takeIf { !it.isClosed } ?: return
-      resultSet.close()
-      binder.clearBatch()
-      val status = pointer.close()
-      if (status != SqliteCodes.SQLITE_OK && status != SqliteCodes.SQLITE_MISUSE) {
-        throw db.newException(status)
-      }
-    }
+    connection.useDb(::close)
+  }
+
+  internal fun close(db: NativeDB) {
+    val pointer = pointer.takeIf { !it.isClosed } ?: return
+    resultSet.close(db)
+    binder.clearBatch()
+    pointer.close(db)
   }
 
   fun executeQuery(): SqliteResultSet {
@@ -45,7 +44,7 @@ class SqlitePreparedStatement<T : Binder> internal constructor(@JvmField interna
     // SqliteResultSet is responsible for `db.reset`, that's why here we do not have try-finally as `executeLifecycle` does
     connection.useDb { db ->
       pointer.ensureOpen()
-      resultSet.close()
+      resultSet.close(db)
 
       bindParams(db)
       val isEmpty = step(statementPointer = pointer.pointer, sql = sql, db = db)
@@ -80,6 +79,18 @@ class SqlitePreparedStatement<T : Binder> internal constructor(@JvmField interna
   fun selectBoolean(): Boolean {
     executeLifecycle { db, isEmpty ->
       return !isEmpty && db.column_int(pointer.pointer, 0) != 0
+    }
+  }
+
+  fun selectInt(): Int? {
+    executeLifecycle { db, isEmpty ->
+      return if (isEmpty) null else db.column_int(pointer.pointer, 0)
+    }
+  }
+
+  fun selectNotNullInt(): Int {
+    executeLifecycle { db, isEmpty ->
+      return if (isEmpty) throw IllegalStateException("Must be not empty") else db.column_int(pointer.pointer, 0)
     }
   }
 

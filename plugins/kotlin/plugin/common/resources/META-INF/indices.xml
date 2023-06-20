@@ -70,8 +70,8 @@
                  defaultValue="false"
                  description="Allows nested indices access" />
     <registryKey key="kotlin.indices.timing.enabled"
-                 defaultValue="true"
-                 description="Allows nested indices access" />
+                 defaultValue="false"
+                 description="Allows indices access time tracking" />
     <registryKey key="kotlin.indices.timing.threshold.single"
                  defaultValue="2500"
                  description="Time threshold in ms to report slow index single get access" />

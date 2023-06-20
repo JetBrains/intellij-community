@@ -929,7 +929,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createDeleteSideEffectAwareFix(@NotNull PsiExpressionStatement statement) {
-    return new DeleteSideEffectsAwareFix(statement, statement.getExpression());
+    return new DeleteSideEffectsAwareFix(statement, statement.getExpression()).asIntention();
   }
 
   @Nullable
@@ -1007,7 +1007,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createAddParameterListFix(@NotNull PsiMethod method) {
-    return new AddParameterListFix(method);
+    return new AddParameterListFix(method).asIntention();
   }
 
   @NotNull
@@ -1028,13 +1028,13 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @Override
   public @NotNull IntentionAction createFillPermitsListFix(@NotNull PsiIdentifier classIdentifier) {
-    return new FillPermitsListFix(classIdentifier);
+    return new FillPermitsListFix(classIdentifier).asIntention();
   }
 
   @Override
   public @NotNull IntentionAction createAddToPermitsListFix(@NotNull PsiClass subClass,
                                                             @NotNull PsiClass superClass) {
-    return new AddToPermitsListFix(subClass, superClass);
+    return new AddToPermitsListFix(subClass, superClass).asIntention();
   }
 
   @Override
@@ -1046,7 +1046,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   public @NotNull List<IntentionAction> createExtendSealedClassFixes(@NotNull PsiJavaCodeReferenceElement subclassRef,
                                                                      @NotNull PsiClass parentClass,
                                                                      @NotNull PsiClass subClass) {
-    return Arrays.asList(ImplementOrExtendFix.createActions(subclassRef, subClass, parentClass, false));
+    return Arrays.asList(ImplementOrExtendFix.createActions(subClass, parentClass));
   }
 
   @Override
@@ -1151,7 +1151,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @Override
   public @NotNull IntentionAction createSimplifyBooleanFix(@NotNull PsiExpression expression, boolean value) {
-    return new SimplifyBooleanExpressionFix(expression, value);
+    return new SimplifyBooleanExpressionFix(expression, value).asIntention();
   }
 
   @Override
@@ -1167,7 +1167,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public @NotNull IntentionAction createRemoveRedundantLambdaParameterTypesFix(@NotNull PsiLambdaExpression lambdaExpression,
                                                                                @IntentionName String message) {
-    return new RemoveRedundantLambdaParameterTypesFix(lambdaExpression, message);
+    return new RemoveRedundantLambdaParameterTypesFix(lambdaExpression, message).asIntention();
   }
 
   @Override
@@ -1183,10 +1183,9 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
       myMessage = message;
     }
 
-    @Nls
     @Override
-    public @NotNull String getText() {
-      return myMessage;
+    protected @NotNull Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiLambdaExpression element) {
+      return Presentation.of(myMessage);
     }
   }
 

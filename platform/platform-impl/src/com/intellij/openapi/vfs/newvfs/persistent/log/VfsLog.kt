@@ -6,11 +6,13 @@ import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionIntercepto
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.SimpleStringPersistentEnumerator
 import com.intellij.util.io.delete
+import com.intellij.util.io.isDirectory
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.io.path.div
 import kotlin.io.path.forEachDirectoryEntry
+import kotlin.math.max
 
 /**
  * VfsLog tracks every modification operation done to files of PersistentFS and persists them in a separate storage,
@@ -22,18 +24,19 @@ class VfsLog(
   private val storagePath: Path,
   private val readOnly: Boolean = false
 ) {
-  private var version by PersistentVar.integer(storagePath / "version")
+  var version by PersistentVar.integer(storagePath / "version")
+    private set
 
   init {
     version.let {
       if (it != VERSION) {
         if (it != null) {
-          LOG.info("VFS Log version differs from the implementation version: log $it vs implementation $VERSION")
+          LOG.info("VfsLog storage version differs from the implementation version: log $it vs implementation $VERSION")
         }
         if (!readOnly) {
           if (it != null) {
             LOG.info("Upgrading storage, old data will be lost")
-            clear()
+            clearStorage(storagePath)
           }
           version = VERSION
         }
@@ -41,13 +44,14 @@ class VfsLog(
     }
   }
 
-  private inner class ContextImpl: VfsLogContext {
+  private inner class ContextImpl : VfsLogContext {
     @OptIn(ExperimentalCoroutinesApi::class)
     override val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(WORKER_THREADS_COUNT))
 
     // todo: probably need to propagate readOnly to storages to ensure safety
     override val stringEnumerator = SimpleStringPersistentEnumerator(storagePath / "stringsEnum")
-    override val operationLogStorage = OperationLogStorageImpl(storagePath / "operations", stringEnumerator)
+    override val operationLogStorage = OperationLogStorageImpl(storagePath / "operations", stringEnumerator,
+                                                               coroutineScope, WORKER_THREADS_COUNT)
     override val payloadStorage = PayloadStorageImpl(storagePath / "data")
 
     fun flush() {
@@ -56,8 +60,18 @@ class VfsLog(
     }
 
     fun dispose() {
+      // cancellation of writing coroutines will lead to incomplete descriptors being written instead of the actual data
+      if (operationLogStorage.size() != operationLogStorage.emergingSize()) {
+        LOG.warn("VfsLog didn't manage to write all data before disposal. Some data about the last operations will be lost: " +
+                 "size=${operationLogStorage.size()}, emergingSize=${operationLogStorage.emergingSize()}")
+      }
       coroutineScope.cancel("dispose")
       flush()
+      if (operationLogStorage.persistentSize() != operationLogStorage.emergingSize()) {
+        // If it happens, then there are active writers at disposal (VFS is still working and interceptors enqueue operations)
+        LOG.error("after cancellation: " +
+                  "persistentSize=${operationLogStorage.persistentSize()}, emergingSize=${operationLogStorage.emergingSize()}")
+      }
       operationLogStorage.dispose()
       payloadStorage.dispose()
     }
@@ -88,16 +102,10 @@ class VfsLog(
     LOG.debug("VfsLog disposed")
   }
 
-  fun clear() {
-    assert(!readOnly)
-    storagePath.forEachDirectoryEntry { child ->
-      if (child != storagePath / "version") {
-        child.delete(true)
-      }
-    }
+  val connectionInterceptors: List<ConnectionInterceptor> = if (readOnly) {
+    emptyList()
   }
-
-  val connectionInterceptors : List<ConnectionInterceptor> = if (readOnly) { emptyList() } else {
+  else {
     listOf(
       ContentsLogInterceptor(context),
       AttributesLogInterceptor(context),
@@ -107,18 +115,38 @@ class VfsLog(
 
   val vFileEventApplicationListener: VFileEventApplicationListener = if (readOnly) {
     object : VFileEventApplicationListener {} // no op
-  } else {
+  }
+  else {
     VFileEventApplicationLogListener(context)
+  }
+
+  fun awaitPendingWrites() {
+    while (_context.operationLogStorage.size() < _context.operationLogStorage.emergingSize()) {
+      Thread.sleep(1)
+    }
   }
 
   companion object {
     private val LOG = Logger.getInstance(VfsLog::class.java)
 
-    const val VERSION: Int = -48
+    const val VERSION = 2
 
     @JvmField
     val LOG_VFS_OPERATIONS_ENABLED: Boolean = SystemProperties.getBooleanProperty("idea.vfs.log-vfs-operations.enabled", false)
-    private val WORKER_THREADS_COUNT = SystemProperties.getIntProperty("idea.vfs.log-vfs-operations.workers", 4)
+    private val WORKER_THREADS_COUNT = SystemProperties.getIntProperty(
+      "idea.vfs.log-vfs-operations.workers",
+      max(4, Runtime.getRuntime().availableProcessors() / 2)
+    )
     // TODO: compaction & its options
+
+    fun clearStorage(storagePath: Path) {
+      if (storagePath.isDirectory()) {
+        storagePath.forEachDirectoryEntry { child ->
+          if (child != storagePath / "version") {
+            child.delete(true)
+          }
+        }
+      }
+    }
   }
 }

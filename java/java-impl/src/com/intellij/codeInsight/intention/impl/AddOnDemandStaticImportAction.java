@@ -251,7 +251,7 @@ public class AddOnDemandStaticImportAction extends PsiUpdateModCommandAction<Psi
     List<PsiJavaCodeReferenceElement> dequalifiedElements = new ArrayList<>();
     addStaticImports(element.getContainingFile(), element, dequalifiedElements);
     for (PsiJavaCodeReferenceElement ref : dequalifiedElements) {
-      updater.highlight(ref, EditorColors.SEARCH_RESULT_ATTRIBUTES);
+      updater.highlight(ref);
     }
   }
 

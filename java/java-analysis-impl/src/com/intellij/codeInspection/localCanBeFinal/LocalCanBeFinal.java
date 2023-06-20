@@ -394,7 +394,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
     return SHORT_NAME;
   }
 
-  private static class AcceptSuggested implements LocalQuickFix {
+  private static class AcceptSuggested extends PsiUpdateModCommandQuickFix {
     @Override
     @NotNull
     public String getFamilyName() {
@@ -402,9 +402,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor problem) {
-      PsiElement nameIdentifier = problem.getPsiElement();
-      if (nameIdentifier == null) return;
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement nameIdentifier, @NotNull EditorUpdater updater) {
       PsiVariable psiVariable = PsiTreeUtil.getParentOfType(nameIdentifier, PsiVariable.class, false);
       if (psiVariable == null) return;
       psiVariable.normalizeDeclaration();

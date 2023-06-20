@@ -9,6 +9,7 @@ import com.intellij.openapi.components.BaseState
 import com.intellij.util.xmlb.annotations.Transient
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
 import com.jetbrains.python.packaging.common.PythonSimplePackageSpecification
+import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -59,7 +60,8 @@ open class PyPackageRepository() : BaseState() {
   }
 
   open fun createPackageSpecification(packageName: String,
-                                 version: String? = null): PythonPackageSpecification {
-    return PythonSimplePackageSpecification(packageName, version, this)
+                                      version: String? = null,
+                                      relation: PyRequirementRelation? = null): PythonPackageSpecification {
+    return PythonSimplePackageSpecification(packageName, version, this, relation)
   }
 }

@@ -34,8 +34,7 @@ public interface LineNumberConverter {
   /**
    * Returns text to be displayed in the gutter for the given document line.
    */
-  @Nullable
-  default String convertLineNumberToString(@NotNull Editor editor, int lineNumber) {
+  default @Nullable String convertLineNumberToString(@NotNull Editor editor, int lineNumber) {
     Integer converted = convert(editor, lineNumber);
     return converted == null ? null : String.valueOf(converted);
   }
@@ -44,8 +43,7 @@ public interface LineNumberConverter {
    * Returns text of the maximum line number in document which should be used
    * to calculate the width of the line number area in the gutter.
    */
-  @Nullable
-  default String getMaxLineNumberString(@NotNull Editor editor) {
+  default @Nullable String getMaxLineNumberString(@NotNull Editor editor) {
     Integer maxLineNumber = getMaxLineNumber(editor);
     return maxLineNumber == null ? null : String.valueOf(maxLineNumber);
   }
@@ -67,9 +65,8 @@ public interface LineNumberConverter {
    * always produces monotonically increasing numbers.
    */
   interface Increasing extends LineNumberConverter {
-    @Nullable
     @Override
-    default Integer getMaxLineNumber(@NotNull Editor editor) {
+    default @Nullable Integer getMaxLineNumber(@NotNull Editor editor) {
       for (int i = editor.getDocument().getLineCount(); i > 0; i--) {
         Integer number = convert(editor, i);
         if (number != null) return number;

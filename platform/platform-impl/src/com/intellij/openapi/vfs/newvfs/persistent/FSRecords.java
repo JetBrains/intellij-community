@@ -352,12 +352,7 @@ public final class FSRecords {
     }
 
     ParentFinder finder = new ParentFinder();
-    try {
-      finder.compute();
-    }
-    catch (Throwable t) {
-      throw impl.handleError(t);
-    }
+    finder.compute(); // IOExceptions are already handled
     VirtualFileSystemEntry file = finder.findDescendantByIdPath();
     if (file != null) {
       LOG.assertTrue(file.getId() == fileId);

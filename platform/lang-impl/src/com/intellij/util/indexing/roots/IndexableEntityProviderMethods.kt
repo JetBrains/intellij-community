@@ -12,15 +12,15 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.IndexableFilesIndex
 import com.intellij.util.indexing.IndexableSetContributor
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
-import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
-import com.intellij.workspaceModel.ide.virtualFile
-import com.intellij.workspaceModel.storage.EntityReference
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.platform.backend.workspace.virtualFile
+import com.intellij.platform.workspace.storage.EntityReference
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 
 object IndexableEntityProviderMethods {
   fun createIterators(entity: ModuleEntity,
@@ -33,6 +33,10 @@ object IndexableEntityProviderMethods {
 
   fun createIterators(module: Module, roots: List<VirtualFile>): Collection<IndexableFilesIterator> {
     return setOf(ModuleIndexableFilesIteratorImpl(module, roots, true))
+  }
+
+  fun createModuleContentIterators(module: Module): Collection<IndexableFilesIterator> {
+    return listOf(ModuleIndexableFilesIteratorImpl(module, null, true))
   }
 
   fun createIterators(entity: ModuleEntity, entityStorage: EntityStorage, project: Project): Collection<IndexableFilesIterator> {

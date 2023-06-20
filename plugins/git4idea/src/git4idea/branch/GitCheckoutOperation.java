@@ -17,7 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.vcs.log.Hash;
 import git4idea.GitProtectedBranchesKt;
 import git4idea.changes.GitChangeUtils;
@@ -89,7 +89,7 @@ class GitCheckoutOperation extends GitBranchOperation {
 
   @Override
   protected void execute() {
-    runWithSpan(TelemetryTracer.getInstance().getTracer(VcsScope), "checkout", (span) -> {
+    runWithSpan(TelemetryManager.getInstance().getTracer(VcsScope), "checkout", (span) -> {
       StructuredIdeActivity checkoutActivity = CHECKOUT_ACTIVITY.started(myProject, () -> List.of(
         IS_BRANCH_PROTECTED.with(isBranchProtected()),
         IS_NEW_BRANCH.with(myNewBranch != null)

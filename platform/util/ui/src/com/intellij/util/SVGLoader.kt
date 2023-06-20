@@ -10,6 +10,7 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.svg.*
 import com.intellij.util.ui.ImageUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.w3c.dom.Element
 import java.awt.*
 import java.awt.image.BufferedImage
@@ -57,7 +58,8 @@ object SVGLoader {
   }
 
   /**
-   * Loads an image with the specified `width` and `height` (in user space). Size specified in svg file is ignored.
+   * Loads an image with the specified `width` and `height` (in user space).
+   * Size specified in the svg file is ignored.
    * Note: always pass `url` when it is available.
    */
   @Throws(IOException::class)
@@ -118,6 +120,8 @@ object SVGLoader {
     }
   }
 
+  @ScheduledForRemoval
+  @Deprecated("Please use SvgAttributePatcher")
   interface SvgElementColorPatcher {
     fun patchColors(svg: Element) {
     }
@@ -129,8 +133,9 @@ object SVGLoader {
   }
 
   interface SvgElementColorPatcherProvider {
-    @Suppress("DeprecatedCallableAddReplaceWith")
+    @Suppress("DeprecatedCallableAddReplaceWith", "DEPRECATION")
     @Deprecated("Implement attributeForPath")
+    @ScheduledForRemoval
     fun forPath(path: String?): SvgElementColorPatcher? {
       return null
     }
@@ -141,6 +146,7 @@ object SVGLoader {
 
     fun digest(): LongArray? = null
 
+    @ScheduledForRemoval
     @Deprecated("Implement digest", ReplaceWith("digest"))
     fun wholeDigest(): ByteArray? = null
   }

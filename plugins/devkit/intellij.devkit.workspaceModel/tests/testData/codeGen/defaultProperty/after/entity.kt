@@ -1,12 +1,12 @@
 package com.intellij.workspaceModel.test.api
 
 import com.intellij.workspaceModel.deft.api.annotations.Default
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.Type
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.ObjBuilder
+import com.intellij.platform.workspace.storage.Type
 
 interface DefaultFieldEntity : WorkspaceEntity {
   val version: Int
@@ -18,7 +18,7 @@ interface DefaultFieldEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : DefaultFieldEntity, WorkspaceEntity.Builder<DefaultFieldEntity>, ObjBuilder<DefaultFieldEntity> {
+  interface Builder : DefaultFieldEntity, WorkspaceEntity.Builder<DefaultFieldEntity> {
     override var entitySource: EntitySource
     override var version: Int
     override var data: TestData

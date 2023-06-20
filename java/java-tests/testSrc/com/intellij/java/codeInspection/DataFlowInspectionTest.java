@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
@@ -158,6 +159,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
 
   private void checkIntentionResult(String hint) {
     myFixture.launchAction(myFixture.findSingleIntention(hint));
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
     PsiTestUtil.checkPsiMatchesTextIgnoringNonCode(getFile());
   }

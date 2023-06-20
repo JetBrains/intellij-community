@@ -20,7 +20,9 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
-import com.intellij.platform.workspaceModel.jps.JpsProjectConfigLocation
+import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
+import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentWriter
+import com.intellij.platform.workspace.jps.serialization.impl.isExternalModuleFile
 import com.intellij.project.stateStore
 import com.intellij.util.PathUtil
 import com.intellij.util.PathUtilRt

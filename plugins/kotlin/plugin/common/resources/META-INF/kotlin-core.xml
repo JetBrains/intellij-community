@@ -206,6 +206,11 @@
             description="For functions show vararg variant before no argruments variant"
             defaultValue="true"
             restartRequired="false"/>
+    <registryKey
+            key="kotlin.auto.completion.insert.constructor.parenthesis"
+            description="Insert constructor parenthesis on class autocompletion"
+            defaultValue="false"
+            restartRequired="false"/>
 
     <registryKey key="kotlin.create.sealed.templates.enabled"
                  defaultValue="false"
@@ -244,7 +249,7 @@
               topic="org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetectorListener"/>
 
     <listener class="org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetector$ModelChangeListener"
-              topic="com.intellij.workspaceModel.ide.WorkspaceModelChangeListener"/>
+              topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
   </projectListeners>
 
   <applicationListeners>

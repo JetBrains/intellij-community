@@ -57,8 +57,8 @@ private val defaultDeepEquals = { lhs: Any, rhs: Any ->
     is VirtualFileSnapshot.RecoveredChildrenIds -> {
       rhs as VirtualFileSnapshot.RecoveredChildrenIds
       var ok = true
-      if (lhs.isComplete) ok = ok and lhs.containsAll(rhs)
-      if (rhs.isComplete) ok = ok and rhs.containsAll(lhs)
+      if (lhs.isComplete) ok = ok && lhs.containsAll(rhs)
+      if (rhs.isComplete) ok = ok && rhs.containsAll(lhs)
       ok
     }
     else -> lhs == rhs
@@ -109,9 +109,8 @@ abstract class DualSourceTimeMachine(val original: VfsTimeMachine, val oracle: V
       override fun readAttribute(fileAttribute: FileAttribute): DefinedState<AttributeInputStream?> = alternativeState {
         readAttribute(fileAttribute)
       }
-      override fun getRecoverableChildrenIds(): DefinedState<VirtualFileSnapshot.RecoveredChildrenIds> = alternativeState {
-        getRecoverableChildrenIds()
-      }
+
+      override fun getChildrenIds(): DefinedState<VirtualFileSnapshot.RecoveredChildrenIds> = alternativeState { getChildrenIds() }
     }
   }
 }

@@ -16,6 +16,7 @@
 package com.siyeh.ipp.forloop;
 
 import com.intellij.codeInsight.BlockUtils;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -26,13 +27,13 @@ import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.VariableNameGenerator;
-import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
+public class ReplaceForEachLoopWithIndexedForLoopIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -40,7 +41,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
   }
 
   @Override
-  public @NotNull String getText() {
+  public @IntentionName @NotNull String getTextForElement(@NotNull PsiElement element) {
     return IntentionPowerPackBundle.message("replace.for.each.loop.with.indexed.for.loop.intention.name");
   }
 

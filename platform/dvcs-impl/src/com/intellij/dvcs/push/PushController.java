@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.push;
 
 import com.intellij.diff.util.DiffUtil;
@@ -422,8 +422,11 @@ public final class PushController implements Disposable {
   @NotNull
   @CalledInAny
   public PrePushHandler.Result executeHandlers(@NotNull ProgressIndicator indicator) throws ProcessCanceledException, HandlerException {
-    List<PrePushHandler> handlers = PrePushHandler.EP_NAME.getExtensionList(myProject);
-    if (handlers.isEmpty()) return PrePushHandler.Result.OK;
+    List<PrePushHandler> handlers = PrePushHandler.EP_NAME.getExtensionList();
+    if (handlers.isEmpty()) {
+      return PrePushHandler.Result.OK;
+    }
+
     List<PushInfo> pushDetails = preparePushDetails();
     StepsProgressIndicator stepsIndicator = new StepsProgressIndicator(indicator, handlers.size());
     stepsIndicator.setIndeterminate(false);

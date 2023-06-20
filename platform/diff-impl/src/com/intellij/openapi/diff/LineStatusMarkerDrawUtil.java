@@ -124,7 +124,7 @@ public final class LineStatusMarkerDrawUtil {
         int end = change.y2;
         Color gutterColor = getGutterColor(change.type, editor);
         int line = gutter.getHoveredFreeMarkersLine();
-        if (line != -1 && editor.xyToLogicalPosition(new Point(x, start)).line <= line && line < editor.xyToLogicalPosition(new Point(x, end)).line) {
+        if (isRangeHovered(editor, line, x, start, end)) {
           paintRect(g, gutterColor, null, x - 1, start, endX + 2, end);
         } else {
           paintRect(g, gutterColor, null, x, start, endX, end);
@@ -160,6 +160,12 @@ public final class LineStatusMarkerDrawUtil {
         }
       }
     }
+  }
+
+  public static boolean isRangeHovered(@NotNull Editor editor, int line, int x, int start, int end) {
+    return line != -1 &&
+           editor.xyToLogicalPosition(new Point(x, start)).line <= line &&
+           line < editor.xyToLogicalPosition(new Point(x, end)).line;
   }
 
   public static void paintRange(@NotNull Graphics g,

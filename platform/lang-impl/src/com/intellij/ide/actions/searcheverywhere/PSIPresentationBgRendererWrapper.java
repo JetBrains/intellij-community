@@ -51,7 +51,7 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
     return PossibleSlowContributor.checkSlow(myDelegate);
   }
 
-  public static SearchEverywhereContributor<Object> wrapIfNecessary(AbstractGotoSEContributor delegate) {
+  public static WeightedSearchEverywhereContributor<Object> wrapIfNecessary(AbstractGotoSEContributor delegate) {
     if (Registry.is("psi.element.list.cell.renderer.background")) {
       return new PSIPresentationBgRendererWrapper(delegate);
     }

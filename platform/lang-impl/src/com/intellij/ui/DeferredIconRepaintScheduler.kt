@@ -2,6 +2,8 @@
 package com.intellij.ui
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -46,9 +48,10 @@ class DeferredIconRepaintScheduler {
   }
 
   private fun schedule(): Job {
+    val modality = ModalityState.current()
     return service<IconCalculatingService>().coroutineScope.launch {
       delay(50.milliseconds)
-      withContext(Dispatchers.EDT) {
+      withContext(Dispatchers.EDT + modality.asContextElement()) {
         while (!queue.isEmpty()) {
           ensureActive()
           val request = queue.removeFirst()

@@ -10,13 +10,11 @@ import com.intellij.openapi.ui.playback.commands.KeyCodeTypeCommand;
 import com.intellij.openapi.util.Ref;
 import com.intellij.platform.diagnostic.telemetry.impl.TraceUtil;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.messages.MessageBusConnection;
 import com.jetbrains.performancePlugin.PerformanceTestSpan;
 import com.jetbrains.performancePlugin.utils.DaemonCodeAnalyzerListener;
 import com.jetbrains.performancePlugin.utils.DaemonCodeAnalyzerResult;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.context.Context;
-import io.opentelemetry.context.Scope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
@@ -54,7 +52,6 @@ public class DelayTypeCommand extends KeyCodeTypeCommand {
     final String text = delayText[1] + END_CHAR;
     final boolean calculateAnalyzesTime = delayText.length > 2 && Boolean.parseBoolean(delayText[2]);
     Ref<Span> spanRef = new Ref<>();
-    Ref<Scope> scopeRef = new Ref<>();
     var projectConnection = context.getProject().getMessageBus().simpleConnect();
     var applicationConnection = ApplicationManager.getApplication().getMessageBus().connect();
 
@@ -86,10 +83,9 @@ public class DelayTypeCommand extends KeyCodeTypeCommand {
             () -> {
               if (currentChar == END_CHAR) {
                 if (calculateAnalyzesTime) {
-                  job.set(DaemonCodeAnalyzerListener.INSTANCE.listen(projectConnection, spanRef, scopeRef, 0, null));
+                  job.set(DaemonCodeAnalyzerListener.INSTANCE.listen(projectConnection, spanRef, 0, null));
                   var spanBuilder = PerformanceTestSpan.TRACER.spanBuilder(CODE_ANALYSIS_SPAN_NAME).setParent(Context.current().with(span));
                   spanRef.set(spanBuilder.startSpan());
-                  scopeRef.set(spanRef.get().makeCurrent());
                 }
                 allScheduled.countDown();
                 myExecutor.shutdown();

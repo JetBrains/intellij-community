@@ -11,7 +11,6 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtilRt
-import com.intellij.util.childScope
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.data.index.VcsLogPathsIndex.*
@@ -32,6 +31,7 @@ import org.jetbrains.sqlite.*
 import java.io.IOException
 import java.nio.file.Files
 import java.util.function.IntConsumer
+import java.util.function.IntFunction
 import java.util.function.ObjIntConsumer
 import java.util.function.Predicate
 
@@ -84,20 +84,44 @@ private const val TABLE_SCHEMA = """
 
 internal const val SQLITE_VCS_LOG_DB_FILENAME_PREFIX = "vcs-log-v"
 
-private class ProjectLevelConnectionManager(project: Project, logId: String) : Disposable {
-  var connection: SqliteConnection
-    private set
+private class ProjectLevelConnectionManager private constructor(@JvmField val storageId: StorageId.File) : Disposable {
+  constructor(project: Project, logId: String)
+    : this(StorageId.File(project.name, logId, "$SQLITE_VCS_LOG_DB_FILENAME_PREFIX$DB_VERSION-${VcsLogPersistentIndex.VERSION}", "db"))
 
-  val storageId = StorageId.File(project.name, logId,
-                                 "$SQLITE_VCS_LOG_DB_FILENAME_PREFIX$DB_VERSION-${VcsLogPersistentIndex.VERSION}", "db")
   private val dbFile = storageId.storagePath
+
+  @JvmField
+  val connection: SqliteConnection = connect()
 
   @Volatile
   var isFresh = false
 
-  init {
-    connection = connect()
-  }
+  @JvmField
+  val selectParent = connection.statementPool(sql = "select parent from parent where commitId = ?") { IntBinder(1) }
+
+  @JvmField
+  val selectRename = connection.statementPool(sql = "select rename from rename where parent = ? and child = ?") { IntBinder(2) }
+
+  @JvmField
+  val selectPathIdPool = connection.statementPool(sql = "select rowid from path where position = ? and relativePath = ?") { ObjectBinder(2) }
+
+  @JvmField
+  val insertPathPool = connection.statementPool(sql = "insert into path(position, relativePath) values (?, ?) returning rowid") { ObjectBinder(2) }
+
+  @JvmField
+  val selectPathPool = connection.statementPool(sql = "select position, relativePath from path where rowid = ?") { IntBinder(1) }
+
+  @JvmField
+  val selectCommitterForCommitPool = connection.statementPool("select name, email from user where commitId = ? and isCommitter = ?") { IntBinder(2) }
+
+  @JvmField
+  val selectCommitsForUserPool = connection.statementPool("select commitId from user where name = ? and email = ?") { ObjectBinder(2) }
+
+  @JvmField
+  val insertCommitPool = connection.statementPool("insert into commit_hashes(position, hash) values(?, ?) returning rowid") { ObjectBinder(2) }
+  val selectCommitPool = connection.statementPool("select rowid from commit_hashes where position = ? and hash = ?") { ObjectBinder(2) }
+  val insertMoreCommitPool = connection.statementPool("insert into commit_hashes(position, hash, name, type) values(?, ?, ?, ?) returning rowid") { ObjectBinder(4) }
+  val updateCommitPool = connection.statementPool("update commit_hashes set name = ?, type = ? where position = ? and hash = ? returning rowid") { ObjectBinder(4) }
 
   fun <R> runUnderConnection(runnable: (SqliteConnection) -> R): R {
     return connect().use { connection -> runnable(connection) }
@@ -112,38 +136,35 @@ private class ProjectLevelConnectionManager(project: Project, logId: String) : D
     return connection
   }
 
-  fun recreate() {
+  fun recreate(): ProjectLevelConnectionManager {
     connection.close()
     // not a regular Files.deleteIfExists; to use a repeated delete operation to overcome possible issues on Windows
     NioFiles.deleteRecursively(dbFile)
-    connection = connect()
+    return ProjectLevelConnectionManager(storageId)
   }
 
   override fun dispose() = connection.close()
 }
 
-private const val RENAME_SQL = "insert into rename(parent, child, rename) values(?, ?, ?)"
-private const val RENAME_DELETE_SQL = "delete from rename where parent = ? and child = ?"
-
 internal class SqliteVcsLogStorageBackend(project: Project,
                                           private val logProviders: Map<VirtualFile, VcsLogProvider>,
                                           private val errorHandler: VcsLogErrorHandler,
-                                          disposable: Disposable) :
-  VcsLogStorageBackend, VcsLogStorage {
-
-  private val connectionManager = ProjectLevelConnectionManager(project, PersistentUtil.calcLogId(project, logProviders)).also {
+                                          disposable: Disposable) : VcsLogStorageBackend, VcsLogStorage {
+  @Volatile
+  private var connectionManager = ProjectLevelConnectionManager(project, PersistentUtil.calcLogId(project, logProviders)).also {
     Disposer.register(disposable, it)
   }
-  override val storageId get() = connectionManager.storageId
+
+  override val storageId: StorageId.File
+    get() = connectionManager.storageId
 
   private val userRegistry = project.service<VcsUserRegistry>()
 
   private val sortedRoots = logProviders.keys.sortedWith(Comparator.comparing(VirtualFile::getPath))
 
-  private val rootsToPosition = Object2IntOpenHashMap<VirtualFile>()
-    .apply {
-      sortedRoots.forEachIndexed { index, root -> put(root, index) }
-    }
+  private val rootsToPosition = Object2IntOpenHashMap<VirtualFile>().apply {
+    sortedRoots.forEachIndexed { index, root -> put(root, index) }
+  }
 
   override var isFresh: Boolean
     get() = connectionManager.isFresh
@@ -247,10 +268,9 @@ internal class SqliteVcsLogStorageBackend(project: Project,
   }
 
   override fun getParents(commitId: Int): IntArray {
-    val batch = IntBinder(paramCount = 1)
-    connection.prepareStatement("select parent from parent where commitId = ?", batch).use { statement ->
-      batch.bind(commitId)
-      return readIntArray(statement)
+    return connectionManager.selectParent.use { statement, binder ->
+      binder.bind(commitId)
+      readIntArray(statement)
     }
   }
 
@@ -264,7 +284,7 @@ internal class SqliteVcsLogStorageBackend(project: Project,
       val rs = statement.executeQuery()
       while (rs.next()) {
         val commitId = rs.getInt(0)
-        val hashes = result.getOrPut(commitId) { mutableListOf() }
+        val hashes = result.computeIfAbsent(commitId) { mutableListOf() }
         hashes.add(rs.getString(1)!!.let(HashImpl::build))
       }
     }
@@ -284,10 +304,9 @@ internal class SqliteVcsLogStorageBackend(project: Project,
   }
 
   override fun getRename(parent: Int, child: Int): IntArray {
-    val batch = IntBinder(paramCount = 2)
-    connection.prepareStatement("select rename from rename where parent = ? and child = ?", batch).use { statement ->
-      batch.bind(parent, child)
-      return readIntArray(statement)
+    return connectionManager.selectRename.use { statement, binder ->
+      binder.bind(parent, child)
+      readIntArray(statement)
     }
   }
 
@@ -338,7 +357,7 @@ internal class SqliteVcsLogStorageBackend(project: Project,
   }
 
   override fun markCorrupted() {
-    connectionManager.recreate()
+    connectionManager = connectionManager.recreate()
   }
 
   override fun getAuthorForCommit(commitId: Int): VcsUser? {
@@ -384,9 +403,8 @@ internal class SqliteVcsLogStorageBackend(project: Project,
     val commitIds = IntOpenHashSet()
 
     for (user in users) {
-      val paramBinder = ObjectBinder(paramCount = 2)
-      connection.prepareStatement("select commitId from user where name = ? and email = ?", paramBinder).use { statement ->
-        paramBinder.bindMultiple(user.name, user.email)
+      connectionManager.selectCommitsForUserPool.use { statement, binder ->
+        binder.bind(user.name, user.email)
         val rs = statement.executeQuery()
         while (rs.next()) {
           commitIds.add(rs.getInt(0))
@@ -398,19 +416,27 @@ internal class SqliteVcsLogStorageBackend(project: Project,
   }
 
   private fun getCommitterForCommit(commitId: Int, isCommitter: Int): VcsUser? {
-    val paramBinder = IntBinder(paramCount = 2)
-    connection.prepareStatement("select name, email from user where commitId = ? and isCommitter = ?", paramBinder).use { statement ->
-      paramBinder.bind(commitId, isCommitter)
+    return connectionManager.selectCommitterForCommitPool.use { statement, binder ->
+      binder.bind(commitId, isCommitter)
       val rs = statement.executeQuery()
       if (rs.next()) {
-        return userRegistry.createUser(rs.getString(0)!!, rs.getString(1)!!)
+        userRegistry.createUser(rs.getString(0)!!, rs.getString(1)!!)
       }
-
-      return null
+      else {
+        null
+      }
     }
   }
 
-  override fun flush() {}
+  override fun flush() {
+  }
+
+  override fun executeTransaction(task: Runnable) {
+    // do not use transactions - maybe nested
+    connectionManager.connection.withSavePoint {
+      task.run()
+    }
+  }
 
   override fun iterateChangesInCommits(root: VirtualFile, path: FilePath, consumer: ObjIntConsumer<List<ChangeKind>>) {
     connectionManager.runUnderConnection { connection ->
@@ -422,11 +448,11 @@ internal class SqliteVcsLogStorageBackend(project: Project,
         "select commitId, kind from path as p join path_change as c on p.rowid = c.pathId where p.position = ? and p.relativePath = ?",
         paramBinder).use { statement ->
 
-        paramBinder.bindMultiple(position, relativePath)
+        paramBinder.bind(position, relativePath)
 
         val rs = statement.executeQuery()
         while (rs.next()) {
-          val changes = changesInCommit.getOrPut(rs.getInt(0)) { arrayListOf() }
+          val changes = changesInCommit.computeIfAbsent(rs.getInt(0), IntFunction { arrayListOf() })
           changes.add(ChangeKind.getChangeKindById(rs.getInt(1).toByte()))
         }
       }
@@ -458,31 +484,34 @@ internal class SqliteVcsLogStorageBackend(project: Project,
     return null
   }
 
-  override fun getPathsEncoder(): VcsLogIndexer.PathsEncoder =
-    VcsLogIndexer.PathsEncoder { root, relativePath, _ ->
+  override fun getPathsEncoder(): VcsLogIndexer.PathsEncoder {
+    return VcsLogIndexer.PathsEncoder { root, relativePath, _ ->
       val position = rootsToPosition.getInt(root)
       val pathId = getPathId(root, relativePath)
       if (pathId != null) {
         pathId
       }
       else {
-        connection.execute("insert into path(position, relativePath) values (?, ?)", arrayOf(position, relativePath))
-        getPathIdOrFail(root, relativePath)
+        connectionManager.insertPathPool.use { statement, binder ->
+          binder.bind(position, relativePath)
+          statement.selectNotNullInt()
+        }
       }
     }
+  }
 
   private fun getPath(pathId: Int): LightFilePath? {
-    val paramBinder = IntBinder(paramCount = 1)
-    connection.prepareStatement("select position, relativePath from path where rowid = ?", paramBinder).use { statement ->
-      paramBinder.bind(pathId)
+    return connectionManager.selectPathPool.use { statement, binder ->
+      binder.bind(pathId)
 
       val rs = statement.executeQuery()
       if (rs.next()) {
-        return LightFilePath(sortedRoots.get(rs.getInt(0)), rs.getString(1)!!)
+        LightFilePath(sortedRoots.get(rs.getInt(0)), rs.getString(1)!!)
+      }
+      else {
+        null
       }
     }
-
-    return null
   }
 
   private fun getPathId(filePath: LightFilePath): Int {
@@ -490,50 +519,35 @@ internal class SqliteVcsLogStorageBackend(project: Project,
   }
 
   private fun getPathIdOrFail(root: VirtualFile, relativePath: String): Int {
-    val pathId = getPathId(root, relativePath)
-    if (pathId == null) {
-      throw IOException("Path ${root} with relativePath = ${relativePath} not stored")
-    }
-
-    return pathId
+    return getPathId(root, relativePath) ?: throw IOException("Path ${root} with relativePath = ${relativePath} not stored")
   }
 
   private fun getPathId(root: VirtualFile, relativePath: String): Int? {
     val position = rootsToPosition.getInt(root)
-    val paramBinder = ObjectBinder(paramCount = 2)
-    connection.prepareStatement("select rowid from path where position = ? and relativePath = ?", paramBinder).use { statement ->
-      paramBinder.bindMultiple(position, relativePath)
-
-      val rs = statement.executeQuery()
-      if (rs.next()) {
-        return rs.getInt(0)
-      }
+    return connectionManager.selectPathIdPool.use { statement, binder ->
+      binder.bind(position, relativePath)
+      statement.selectInt()
     }
-
-    return null
   }
 
   override fun getCommitIndex(hash: Hash, root: VirtualFile): Int {
     val position = rootsToPosition.getInt(root)
     val commitId = getCommitId(position, hash)
-    if (commitId != null) return commitId
+    if (commitId != null) {
+      return commitId
+    }
 
-    connection.execute("insert into commit_hashes(position, hash) values(?, ?)", arrayOf(position, hash.asString()))
-
-    return getCommitId(position, hash)!!
+    return connectionManager.insertCommitPool.use { statement, binder ->
+      binder.bind(position, hash.asString())
+      statement.selectNotNullInt()
+    }
   }
 
   private fun getCommitId(position: Int, hash: Hash): Int? {
-    val paramBinder = ObjectBinder(paramCount = 2)
-    connection.prepareStatement("select rowid from commit_hashes where position = ? and hash = ?", paramBinder).use { statement ->
-      paramBinder.bindMultiple(position, hash.asString())
-
-      val rs = statement.executeQuery()
-      if (rs.next()) {
-        return rs.getInt(0)
-      }
+    return connectionManager.selectCommitPool.use { statement, binder ->
+      binder.bind(position, hash.asString())
+      statement.selectInt()
     }
-    return null
   }
 
   override fun getCommitIds(commitIds: Collection<Int>): Map<Int, CommitId> {
@@ -591,17 +605,18 @@ internal class SqliteVcsLogStorageBackend(project: Project,
     logProviders[ref.root]!!.referenceManager.serialize(refTypeSerializer, ref.type)
     val type = refTypeSerializer.readInt()
     val commitId = getCommitId(position, ref.commitHash)
-
-    if (commitId != null) {
-      val params = arrayOf(name, type, position, hashStr)
-      connection.execute("update commit_hashes set name = ?, type = ? where position = ? and hash = ?", params)
+    if (commitId == null) {
+      return connectionManager.insertMoreCommitPool.use { statement, binder ->
+        binder.bind(position, hashStr, name, type)
+        statement.selectNotNullInt()
+      }
     }
     else {
-      val params = arrayOf(position, hashStr, name, type)
-      connection.execute("insert into commit_hashes(position, hash, name, type) values(?, ?, ?, ?)", params)
+      return connectionManager.updateCommitPool.use { statement, binder ->
+        binder.bind(name, type, position, hashStr)
+        statement.selectNotNullInt()
+      }
     }
-
-    return getCommitId(position, hash)!!
   }
 
   override fun getVcsRef(refIndex: Int): VcsRef? {
@@ -656,7 +671,7 @@ private class SqliteVcsLogWriter(private val connection: SqliteConnection, priva
     insert into log(commitId, message, authorTime, commitTime, isCommitter) 
     values(?, ?, ?, ?, ?) 
     on conflict(commitId) do update set message=excluded.message
-    """, ObjectBinder(paramCount = 5, batchCountHint = 256)).binder
+    """, ObjectBinder(paramCount = 5, batchCountHint = 1024)).binder
   private val userBatch = statementCollection.prepareStatement("""
     insert into user(commitId, isCommitter, name, email) 
     values(?, ?, ?, ?) 
@@ -666,8 +681,8 @@ private class SqliteVcsLogWriter(private val connection: SqliteConnection, priva
   private val parentDeleteStatement = statementCollection.prepareIntStatement("delete from parent where commitId = ?")
   private val parentStatement = statementCollection.prepareIntStatement("insert into parent(commitId, parent) values(?, ?)")
 
-  private val renameDeleteStatement = statementCollection.prepareIntStatement(RENAME_DELETE_SQL)
-  private val renameStatement = statementCollection.prepareIntStatement(RENAME_SQL)
+  private val renameDeleteStatement = statementCollection.prepareIntStatement("delete from rename where parent = ? and child = ?")
+  private val renameStatement = statementCollection.prepareIntStatement("insert into rename(parent, child, rename) values(?, ?, ?)")
 
   private val changeStatement = statementCollection.prepareIntStatement("insert into path_change(commitId, pathId, kind) values(?, ?, ?)")
 

@@ -18,9 +18,9 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.JavaModuleTestCase
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import java.io.File
 import java.nio.file.Paths
 
@@ -44,7 +44,8 @@ class UnloadedModulesConfigurationTest : JavaModuleTestCase() {
     assertEquals("$projectDirUrl/dep", assertOneElement(dep.contentRoots).url)
     assertEquals("util", assertOneElement(dep.dependencyModuleNames))
     
-    assertSameElements(WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities.entities(ModuleEntity::class.java).map { it.name }.toList(), 
+    assertSameElements(WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities.entities(
+      ModuleEntity::class.java).map { it.name }.toList(),
                        "dep", "util")
   }
 

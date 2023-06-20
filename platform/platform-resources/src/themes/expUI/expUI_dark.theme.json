@@ -607,6 +607,11 @@
       "separatorColor": "Grey4"
     },
 
+    "WindowControls": {
+      "foreground": "#CED0D6",
+      "inactiveForeground": "#6F737A"
+    },
+
     "Tree": {
       "collapsedIcon": "/expui/general/chevronRight.svg",
       "collapsedSelectedIcon": "/expui/general/chevronRight.svg",
@@ -879,6 +884,7 @@
       }
     },
     "HelpBrowser": {
+      "titleHighlightForeground": "Blue4",
       "UserMessage": {
         "background": "Grey4",
         "Snippet": {

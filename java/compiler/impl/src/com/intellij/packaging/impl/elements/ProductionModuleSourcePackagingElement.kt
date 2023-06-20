@@ -11,11 +11,11 @@ import com.intellij.packaging.impl.ui.DelegatedPackagingElementPresentation
 import com.intellij.packaging.impl.ui.ModuleElementPresentation
 import com.intellij.packaging.ui.ArtifactEditorContext
 import com.intellij.packaging.ui.PackagingElementPresentation
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
-import com.intellij.workspaceModel.storage.bridgeEntities.addModuleSourcePackagingElementEntity
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.java.workspace.entities.ModuleSourcePackagingElementEntity
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 
@@ -46,10 +46,12 @@ class ProductionModuleSourcePackagingElement : ModulePackagingElementBase {
 
     val moduleName = this.moduleName
     val addedEntity = if (moduleName != null) {
-      diff.addModuleSourcePackagingElementEntity(ModuleId(moduleName), source)
+      diff addEntity ModuleSourcePackagingElementEntity(source) {
+        module = ModuleId(moduleName)
+      }
     }
     else {
-      diff.addModuleSourcePackagingElementEntity(null, source)
+      diff addEntity ModuleSourcePackagingElementEntity(source)
     }
     diff.mutableElements.addMapping(addedEntity, this)
     return addedEntity

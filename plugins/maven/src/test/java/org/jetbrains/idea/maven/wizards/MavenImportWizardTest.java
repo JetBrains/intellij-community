@@ -29,7 +29,9 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
@@ -138,11 +140,20 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
       });
     }
     else {
-      List<Path> paths = ContainerUtil.map(
-        MavenProjectsManager.getInstance(module.getProject()).getProjectsTreeForTests().getExistingManagedFiles(), m -> m.toNioPath()
-      );
-      assertEquals(2, paths.size());
-      assertContainsElements(paths, pom1, pom2);
+      var project = module.getProject();
+      var modules = ModuleManager.getInstance(project).getModules();
+      var moduleNames = new HashSet<String>();
+      for (var existingModule : modules) {
+        moduleNames.add(existingModule.getName());
+      }
+      assertEquals(Set.of("project", "project2"), moduleNames);
+
+      var projectsManager = MavenProjectsManager.getInstance(project);
+      var mavenProjectNames = new HashSet<String>();
+      for (var p : projectsManager.getProjects()) {
+        mavenProjectNames.add(p.getMavenId().getArtifactId());
+      }
+      assertEquals(Set.of("project", "project2"), mavenProjectNames);
     }
   }
 
@@ -159,10 +170,11 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
     MavenProjectBuilder builder = (MavenProjectBuilder)provider.doGetBuilder();
     builder.setFileToImport(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(pom2));
     Module module = importProjectFrom(pom1.toString(), null, provider);
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(module.getProject());
     if (MavenUtil.isLinearImportEnabled()) {
       afterImportFinished(module.getProject(), c -> {
         List<Path> paths = ContainerUtil.map(
-          MavenProjectsManager.getInstance(module.getProject()).getProjectsTreeForTests().getRootProjectsFiles(), m -> m.toNioPath()
+          projectsManager.getProjectsTreeForTests().getRootProjectsFiles(), m -> m.toNioPath()
         );
         assertEquals(1, paths.size());
         assertEquals(pom2, paths.get(0));
@@ -170,7 +182,7 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
     }
     else {
       List<Path> paths = ContainerUtil.map(
-        MavenProjectsManager.getInstance(module.getProject()).getProjectsTreeForTests().getExistingManagedFiles(), m -> m.toNioPath()
+        projectsManager.getProjectsTreeForTests().getExistingManagedFiles(), m -> m.toNioPath()
       );
       assertEquals(1, paths.size());
       assertEquals(pom2, paths.get(0));

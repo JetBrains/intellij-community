@@ -25,8 +25,7 @@ class MavenEffectivePomEvaluator {
           val projectFile = resolveWslAware(project, { File(virtualFile.path) }) { wsl: WSLDistribution ->
             wsl.getWslFile(File(virtualFile.path))
           }
-          val res = embedder.evaluateEffectivePom(projectFile!!, profiles.enabledProfiles, profiles.disabledProfiles)
-          return@withBackgroundProgress res!!
+          return@withBackgroundProgress embedder.evaluateEffectivePom(projectFile!!, profiles.enabledProfiles, profiles.disabledProfiles)
         }
         catch (e: Exception) {
           MavenLog.LOG.error(e)

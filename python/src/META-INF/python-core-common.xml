@@ -19,7 +19,7 @@
   <projectListeners>
     <listener
       class="com.jetbrains.python.inspections.PyInterpreterInspection$Visitor$CacheCleaner"
-      topic="com.intellij.workspaceModel.ide.WorkspaceModelChangeListener"/>
+      topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
     <listener
       class="com.jetbrains.python.inspections.PyInterpreterInspection$Visitor$CacheCleaner"
       topic="com.intellij.openapi.projectRoots.ProjectJdkTable$Listener"/>
@@ -489,6 +489,19 @@
     <notificationGroup id="pyproject.toml Watcher" displayType="STICKY_BALLOON" isLogByDefault="true" bundle="messages.PyBundle"
                        key="python.sdk.poetry.pip.file.watcher"/>
 
+    <completion.contributor language="TOML"
+                            implementationClass="com.jetbrains.python.packaging.pyproject.PyprojectPackageCompletionContributor"/>
+    <completion.contributor language="TOML"
+                            implementationClass="com.jetbrains.python.packaging.pyproject.PyprojectMetadataCompletionContributor"/>
+    <localInspection language="TOML"
+                     shortName="PyprojectInspection"
+                     suppressId="PyprojectInspection"
+                     bundle="messages.PyBundle"
+                     groupKey="INSP.GROUP.python"
+                     key="INSP.NAME.pyproject.packages"
+                     level="WARNING"
+                     enabledByDefault="true"
+                     implementationClass="com.jetbrains.python.packaging.pyproject.PyprojectPackageInspection"/>
     <toolWindow id="Python Packages" anchor="bottom"
                 icon="PythonIcons.Python.PythonPackages"
                 factoryClass="com.jetbrains.python.packaging.toolwindow.PyPackagesToolWindowFactory"/>
@@ -511,6 +524,29 @@
       serviceImplementation="com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory$Available$Default"/>
 
     <registryKey key="python.new.run.config" defaultValue="true" description="Python Run configurations new UI"/>
+
+    <!-- Black -->
+    <projectConfigurable groupId="tools"
+                         provider="com.jetbrains.python.black.configuration.BlackFormatterConfigurableProvider"
+                         id="com.jetbrains.python.black.configuration.BlackFormatterConfigurable"
+                         bundle="messages.PyBundle"
+                         key="black.configurable.name"
+                         nonDefaultProject="true"/>
+
+    <registryKey key="black.formatter.support.enabled" defaultValue="false"
+                 description="Enable Black formatter support"/>
+
+    <formattingService implementation="com.jetbrains.python.black.BlackFormattingService"/>
+    <actionOnSave id="BlackFormatterActionOnSave"
+                  implementation="com.jetbrains.python.black.BlackFormatterActionOnSave"
+                  order="after FormatOnSaveAction"/>
+
+    <actionOnSaveInfoProvider id="BlackFormatterActionOnSaveInfo"
+                              implementation="com.jetbrains.python.black.configuration.BlackFormatterConfigurable$BlackFormatterActionOnSaveInfoProvider"/>
+
+    <projectService serviceImplementation="com.jetbrains.python.black.configuration.BlackFormatterConfiguration"/>
+    <notificationGroup id="Black Formatter Integration" displayType="STICKY_BALLOON" isLogByDefault="true" bundle="messages.PyBundle"
+                       key="black.configurable.name"/>
 
     <dependencyCollector kind="python" implementation="com.jetbrains.python.packaging.PyDependencyCollector"/>
   </extensions>
@@ -765,6 +801,9 @@
     <action id="CleanPyc" class="com.jetbrains.python.actions.CleanPycAction">
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ProjectViewPopupMenuRefactoringGroup"/>
     </action>
+
+    <action id="CollapsePythonTypeAnnotations" class="com.jetbrains.python.actions.PyCollapseTypeAnnotationsAction"/>
+    <action id="ExpandPythonTypeAnnotations" class="com.jetbrains.python.actions.PyExpandTypeAnnotationsAction"/>
 
     <group id="PyPackagingMenu">
       <action id="PySyncPythonRequirements" class="com.jetbrains.python.packaging.PySyncPythonRequirementsAction"/>

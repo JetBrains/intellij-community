@@ -109,7 +109,17 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private void initVfsLog() {
     var readOnly = !VfsLog.LOG_VFS_OPERATIONS_ENABLED;
-    myVfsLog = new VfsLog(Path.of(FSRecords.getCachesDir() + "/vfslog"), readOnly);
+    var vfsLogPath = new PersistentFSPaths(Path.of(FSRecords.getCachesDir())).getVfsLogStorage();
+    if (!VfsLog.LOG_VFS_OPERATIONS_ENABLED) {
+      // forcefully erase VfsLog storages if the feature is disabled so that when it will be
+      // enabled again we won't consider old data as a source for recovery
+      try {
+        VfsLog.Companion.clearStorage(vfsLogPath);
+      } catch (Throwable e) {
+        LOG.error("failed to clear the storage of VfsLog", e);
+      }
+    }
+    myVfsLog = new VfsLog(vfsLogPath, readOnly);
   }
 
   @ApiStatus.Internal
@@ -117,7 +127,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     myIdToDirCache.clear();
     myVfsData = new VfsData(app);
     LOG.assertTrue(!myConnected.get());
-    initVfsLog();
     doConnect();
     PersistentFsConnectionListener.EP_NAME.getExtensionList().forEach(PersistentFsConnectionListener::connectionOpen);
   }
@@ -141,6 +150,16 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private void doConnect() {
     if (myConnected.compareAndSet(false, true)) {
       Activity activity = StartUpMeasurer.startActivity("connect FSRecords", ActivityCategory.DEFAULT);
+      if (VfsLog.LOG_VFS_OPERATIONS_ENABLED) {
+        try {
+          if (VfsRecoveryUtils.INSTANCE.applyStoragesReplacementIfMarkerExists(Path.of(FSRecords.getCachesDir()))) {
+            LOG.info("FSRecords storages replacement was applied");
+          }
+        } catch (Throwable e) {
+          LOG.error("FSRecords storages replacement has failed", e);
+        }
+      }
+      initVfsLog();
       FSRecords.connect(myVfsLog.getConnectionInterceptors());
       activity.end();
     }

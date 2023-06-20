@@ -2,7 +2,7 @@
 package com.intellij.completion.ml.performance
 
 import com.intellij.platform.diagnostic.telemetry.CompletionRanking
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import io.opentelemetry.api.metrics.LongCounter
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
@@ -85,7 +85,7 @@ class MLCompletionPerformanceTracker {
   }
 
   private class OTelTracker : PerformanceTracker {
-    private val meter = TelemetryTracer.getMeter(CompletionRanking)
+    private val meter = TelemetryManager.getMeter(CompletionRanking)
     private val key2counter: MutableMap<String, LongCounter> = mutableMapOf()
     override fun addByKey(key: String, timeMs: Long) {
       key2counter.computeIfAbsent(key) {

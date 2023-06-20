@@ -1079,7 +1079,7 @@ public final class JBUI {
 
       @NotNull
       public static JBDimension defaultExperimentalToolbarButtonSize() {
-        return size(40, 40);
+        return size(30, 30);
       }
 
       public static int experimentalToolbarButtonIconSize() {
@@ -1156,6 +1156,13 @@ public final class JBUI {
 
         @NotNull public static Insets borderInsets() {
           return insets("MainToolbar.Dropdown.borderInsets", isNewUI() ? insets(5, 12, 5, 6) : insets(3, 5));
+        }
+      }
+
+      public static final class SplitDropdown {
+
+        @NotNull public static Insets borderInsets() {
+          return insets("MainToolbar.SplitDropdown.borderInsets", isNewUI() ? insets(5, 5, 5, 3) : insets(3, 5));
         }
       }
     }

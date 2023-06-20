@@ -19,6 +19,7 @@ import com.intellij.ui.util.minimumWidth
 import com.intellij.util.ui.JBUI
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager.getGradleVersionSafe
 import org.jetbrains.plugins.gradle.service.project.open.suggestGradleHome
@@ -113,7 +114,7 @@ class IdeaGradleDefaultProjectSettingsControl : GradleSettingsControl() {
 
   private fun setCurrentDefaultProjectSettings(settings: GradleDefaultProjectSettings) {
     distributionType = DistributionTypeItem.valueOf(settings.distributionType)
-    gradleVersions = getAllSupportedGradleVersions().map { it.version }
+    gradleVersions = GradleJvmSupportMatrix.getAllSupportedGradleVersionsByIdea().map { it.version }
     autoSelectGradleVersion = settings.gradleVersion == null
     when (distributionType) {
       WRAPPER -> when (autoSelectGradleVersion) {

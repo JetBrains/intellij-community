@@ -295,7 +295,7 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.LightServiceMigrationXMLInspection"
                      key="inspection.light.service.migration.display.name"/>
-    <localInspection language="JVM" shortName="LightServiceMigrationCode"
+    <localInspection language="UAST" shortName="LightServiceMigrationCode"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
@@ -532,9 +532,9 @@
       implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionClassShouldNotBePublicProviderForJVM"/>
     <extensionClassShouldBeFinalErrorMessageProvider language="JVM"
       implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionClassShouldBeFinalErrorMessageProvider"/>
-    <serviceLevelExtractor language="JAVA"
-      implementationClass="org.jetbrains.idea.devkit.inspections.ServiceLevelExtractorForJava"/>
-    <lightServiceMustBeFinalErrorMessageProvider language="JAVA"
+    <serviceLevelExtractor language="JVM"
+      implementationClass="org.jetbrains.idea.devkit.inspections.ServiceLevelExtractorForJVM"/>
+    <lightServiceMustBeFinalErrorMessageProvider language="JVM"
       implementationClass="org.jetbrains.idea.devkit.inspections.LightServiceMustBeFinalErrorMessageProvider"/>
     <appServiceAsStaticFinalFieldQuickFixProvider
       language="JAVA"

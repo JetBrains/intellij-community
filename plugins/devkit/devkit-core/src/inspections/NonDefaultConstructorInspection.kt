@@ -50,7 +50,7 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass::class.j
     // hack, allow Project-level @Service
     var isServiceAnnotation = false
     var extensionPoint: ExtensionPoint? = null
-    if (javaPsi.hasAnnotation("com.intellij.openapi.components.Service")) {
+    if (isLightService(aClass)) {
       area = null
       isService = true
       isServiceAnnotation = true

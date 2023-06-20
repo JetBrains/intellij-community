@@ -136,8 +136,7 @@ public class ProblemsHolder {
    * Returns {@link EmptyResolveMessageProvider#getUnresolvedMessagePattern()} (if implemented),
    * otherwise, default message "Cannot resolve symbol '[reference.getCanonicalText()]'".
    */
-  @NotNull
-  public static @InspectionMessage String unresolvedReferenceMessage(@NotNull PsiReference reference) {
+  public static @NotNull @InspectionMessage String unresolvedReferenceMessage(@NotNull PsiReference reference) {
     String message;
     if (reference instanceof EmptyResolveMessageProvider) {
       String pattern = ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern();
@@ -181,8 +180,7 @@ public class ProblemsHolder {
     registerProblem(myManager.createProblemDescriptor(psiElement, rangeInElement, descriptionTemplate, highlightType, myOnTheFly, fixes));
   }
 
-  @NotNull
-  public List<ProblemDescriptor> getResults() {
+  public @NotNull List<ProblemDescriptor> getResults() {
     return myProblems;
   }
 
@@ -191,8 +189,7 @@ public class ProblemsHolder {
     return problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
-  @NotNull
-  public final InspectionManager getManager() {
+  public final @NotNull InspectionManager getManager() {
     return myManager;
   }
 
@@ -208,13 +205,11 @@ public class ProblemsHolder {
     return myOnTheFly;
   }
 
-  @NotNull
-  public PsiFile getFile() {
+  public @NotNull PsiFile getFile() {
     return myFile;
   }
 
-  @NotNull
-  public final Project getProject() {
+  public final @NotNull Project getProject() {
     return myManager.getProject();
   }
 

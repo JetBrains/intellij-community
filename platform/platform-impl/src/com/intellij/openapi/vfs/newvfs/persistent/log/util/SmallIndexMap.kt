@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.log.util
 
-import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -11,6 +10,7 @@ import java.util.concurrent.atomic.AtomicReference
  */
 @Suppress("UNCHECKED_CAST")
 class SmallIndexMap<T: Any>(private val create: (Int) -> T, val chunkSize: Int = 64) {
+  @Volatile
   private var head: Node<Array<Any?>> = NodeImpl(arrayOfNulls(chunkSize)) // only modified on close
 
   private fun chunkId(index: Int) = index / chunkSize
@@ -72,7 +72,7 @@ class SmallIndexMap<T: Any>(private val create: (Int) -> T, val chunkSize: Int =
   }
 
   private class NodeImpl<C>(override val value: C): Node<C> {
-    private var next = AtomicReference<NodeImpl<C>?>(null)
+    private val next = AtomicReference<NodeImpl<C>?>(null)
 
     override fun next(init: () -> C): NodeImpl<C> {
       next.get()?.let { return it }
@@ -88,8 +88,8 @@ class SmallIndexMap<T: Any>(private val create: (Int) -> T, val chunkSize: Int =
 
   private class ClosedMapNode : Node<Array<Any?>> {
     override val value: Nothing
-      get() = throw IllegalStateException("access to closed SmallIndexMap")
-    override fun nextOrNull(): Nothing = throw IllegalStateException("access to closed SmallIndexMap")
-    override fun next(init: () -> Array<Any?>): Nothing = throw IllegalStateException("access to closed SmallIndexMap")
+      get() = throw AssertionError("access to closed SmallIndexMap")
+    override fun nextOrNull(): Nothing = throw AssertionError("access to closed SmallIndexMap")
+    override fun next(init: () -> Array<Any?>): Nothing = throw AssertionError("access to closed SmallIndexMap")
   }
 }

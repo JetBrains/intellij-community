@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
  */
 class JBCefProxySettings {
   public final boolean USE_HTTP_PROXY;
+  public final boolean PROXY_TYPE_IS_SOCKS;
   public final boolean USE_PROXY_PAC;
   public final boolean USE_PAC_URL;
   public final @Nullable String PAC_URL;
@@ -25,6 +26,7 @@ class JBCefProxySettings {
   private static @Nullable JBCefProxySettings ourTestInstance;
 
   private JBCefProxySettings(boolean useHttpProxy,
+                             boolean proxyTypeIsSocks,
                              boolean useProxyPac,
                              boolean usePacUrl,
                              @Nullable String pacUrl,
@@ -35,6 +37,7 @@ class JBCefProxySettings {
                              @NotNull Credentials credentials)
   {
     USE_HTTP_PROXY = useHttpProxy;
+    PROXY_TYPE_IS_SOCKS = proxyTypeIsSocks;
     USE_PROXY_PAC = useProxyPac;
     USE_PAC_URL = usePacUrl;
     PAC_URL = pacUrl;
@@ -52,6 +55,7 @@ class JBCefProxySettings {
     HttpConfigurable httpSettings = HttpConfigurable.getInstance();
     return new JBCefProxySettings(
       httpSettings.USE_HTTP_PROXY,
+      httpSettings.PROXY_TYPE_IS_SOCKS,
       httpSettings.USE_PROXY_PAC,
       httpSettings.USE_PAC_URL,
       httpSettings.PAC_URL,
@@ -73,6 +77,7 @@ class JBCefProxySettings {
   }
 
   public static void setTestInstance(boolean useHttpProxy,
+                                     boolean proxyTypeIsSocks,
                                      boolean useProxyPac,
                                      boolean usePacUrl,
                                      @Nullable String pacUrl,
@@ -88,6 +93,7 @@ class JBCefProxySettings {
     }
     ourTestInstance = new JBCefProxySettings(
       useHttpProxy,
+      proxyTypeIsSocks,
       useProxyPac,
       usePacUrl,
       pacUrl,

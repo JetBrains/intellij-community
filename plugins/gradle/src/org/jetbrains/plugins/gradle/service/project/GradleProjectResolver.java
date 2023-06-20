@@ -220,8 +220,12 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       if (!isCustomSerializationSupported(resolverCtx, gradleVersion, isCompositeBuildsSupported)) {
         useCustomSerialization = false;
       }
-      if (GradleJvmSupportMatrix.getInstance().isUnsupported(gradleVersion)) {
+      if (!GradleJvmSupportMatrix.isGradleSupportedByIdea(gradleVersion)) {
         throw new IllegalStateException("Unsupported Gradle version");
+      }
+      var javaHome = buildEnvironment.getJava().getJavaHome();
+      if (!GradleJvmSupportMatrix.isJavaHomeSupportedByIdea(javaHome.getPath())) {
+        throw new IllegalStateException("Unsupported Gradle JVM version");
       }
     }
     final ProjectImportAction projectImportAction =
@@ -305,7 +309,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
             buildFinishWaiter.countDown();
           }
         });
-      if (gradleVersion != null && GradleJvmSupportMatrix.getInstance().isDeprecated(gradleVersion)) {
+      if (gradleVersion != null && GradleJvmSupportMatrix.isGradleDeprecatedByIdea(gradleVersion)) {
         resolverCtx.report(MessageEvent.Kind.WARNING, new DeprecatedGradleVersionIssue(gradleVersion, resolverCtx.getProjectPath()));
       }
       performanceTrace.addTrace(allModels.getPerformanceTrace());

@@ -22,12 +22,12 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.MultiMap
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import org.jetbrains.kotlin.idea.base.analysis.libraries.LibraryDependencyCandidate
 import org.jetbrains.kotlin.idea.base.facet.isHMPPEnabled
 import org.jetbrains.kotlin.idea.base.projectStructure.*
@@ -44,10 +44,26 @@ import org.jetbrains.kotlin.idea.configuration.isMavenized
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-private class LibraryDependencyCandidatesAndSdkInfos(
-    val libraryDependencyCandidates: MutableSet<LibraryDependencyCandidate> = linkedSetOf(),
-    val sdkInfos: MutableSet<SdkInfo> = LinkedHashSet(1)
+private open class LibraryDependencyCandidatesAndSdkInfos(
+    open val libraryDependencyCandidates: Collection<LibraryDependencyCandidate>,
+    open val sdkInfos: Collection<SdkInfo>
 ) {
+    override fun toString(): String {
+        return "[${Integer.toHexString(System.identityHashCode(this))}] libraryDependencyCandidates: ${
+            libraryDependencyCandidates.map { it.libraries.map(LibraryInfo::name) }
+        } sdkInfos: ${sdkInfos.map { it.sdk.name }}"
+    }
+}
+
+private class LibraryDependencyCandidatesAndSdkInfosBuilder(
+    override val libraryDependencyCandidates: MutableSet<LibraryDependencyCandidate> = linkedSetOf(),
+    override val sdkInfos: MutableSet<SdkInfo> = LinkedHashSet(1)
+): LibraryDependencyCandidatesAndSdkInfos(libraryDependencyCandidates, sdkInfos) {
+    operator fun plusAssign(other: LibraryDependencyCandidatesAndSdkInfosBuilder) {
+        libraryDependencyCandidates += other.libraryDependencyCandidates
+        sdkInfos += other.sdkInfos
+    }
+
     operator fun plusAssign(other: LibraryDependencyCandidatesAndSdkInfos) {
         libraryDependencyCandidates += other.libraryDependencyCandidates
         sdkInfos += other.sdkInfos
@@ -61,8 +77,11 @@ private class LibraryDependencyCandidatesAndSdkInfos(
         sdkInfos += sdkInfo
     }
 
+    fun build(): LibraryDependencyCandidatesAndSdkInfos =
+        LibraryDependencyCandidatesAndSdkInfos(libraryDependencyCandidates.toList(), sdkInfos.toList())
+
     override fun toString(): String {
-        return "[${Integer.toHexString(System.identityHashCode(this))}] libraryDependencyCandidates: ${
+        return "builder [${Integer.toHexString(System.identityHashCode(this))}] libraryDependencyCandidates: ${
             libraryDependencyCandidates.map { it.libraries.map(LibraryInfo::name) }
         } sdkInfos: ${sdkInfos.map { it.sdk.name }}"
     }
@@ -126,7 +145,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
      */
     private fun stdlibJvmDependencies(
         libraryInfo: LibraryInfo,
-        allDependencyCandidates: Set<LibraryDependencyCandidate>,
+        allDependencyCandidates: Collection<LibraryDependencyCandidate>,
     ): List<LibraryInfo> {
         if (!libraryInfo.platform.isJvm()) return emptyList()
 
@@ -140,7 +159,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
     //NOTE: used LibraryRuntimeClasspathScope as reference
     private fun computeLibrariesAndSdksUsedWithNoFilter(libraryInfo: LibraryInfo): LibraryDependencyCandidatesAndSdkInfos {
-        val libraryDependencyCandidatesAndSdkInfos = LibraryDependencyCandidatesAndSdkInfos()
+        val libraryDependencyCandidatesAndSdkInfos = LibraryDependencyCandidatesAndSdkInfosBuilder()
 
         val modulesLibraryIsUsedIn =
             getLibraryUsageIndex().getModulesLibraryIsUsedIn(libraryInfo)
@@ -273,7 +292,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
         private fun internalGet(
             key: Module,
-            tmpResults: MutableMap<Module, LibraryDependencyCandidatesAndSdkInfos>,
+            tmpResults: MutableMap<Module, LibraryDependencyCandidatesAndSdkInfosBuilder>,
             trace: LinkedHashSet<Module>,
             loops: MutableMap<Module, Set<Module>>
         ): LibraryDependencyCandidatesAndSdkInfos {
@@ -287,7 +306,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
             checkCanceled()
 
-            val newValue = computeLibrariesAndSdksUsedIn(key, tmpResults, trace, loops)
+            val newValue = computeLibrariesAndSdksUsedIn(key, tmpResults, trace, loops).build()
 
             if (isValidityChecksEnabled) {
                 checkValueValidity(newValue)
@@ -300,7 +319,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
                 useCache { cache ->
                     val existedValue = cache.putIfAbsent(key, newValue)
                     for (entry in tmpResults.entries) {
-                        cache.putIfAbsent(entry.key, entry.value)
+                        cache.putIfAbsent(entry.key, entry.value.build())
                     }
 
                     existedValue
@@ -319,7 +338,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         private fun dumpLoopsIfPossible(
             key: Module,
             newValue: LibraryDependencyCandidatesAndSdkInfos,
-            tmpResults: MutableMap<Module, LibraryDependencyCandidatesAndSdkInfos>,
+            tmpResults: MutableMap<Module, LibraryDependencyCandidatesAndSdkInfosBuilder>,
             trace: LinkedHashSet<Module>,
             loops: MutableMap<Module, Set<Module>>,
         ): LibraryDependencyCandidatesAndSdkInfos? {
@@ -331,7 +350,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
                 tmpResults.remove(key)
                 for (loopModule in currentLoop) {
                     tmpResults.remove(loopModule)?.let {
-                        cache.putIfAbsent(loopModule, it)
+                        cache.putIfAbsent(loopModule, it.build())
                     }
 
                     loops.remove(loopModule)
@@ -343,14 +362,14 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
         private fun computeLibrariesAndSdksUsedIn(
             module: Module,
-            tmpResults: MutableMap<Module, LibraryDependencyCandidatesAndSdkInfos>,
+            tmpResults: MutableMap<Module, LibraryDependencyCandidatesAndSdkInfosBuilder>,
             trace: LinkedHashSet<Module>,
             loops: MutableMap<Module, Set<Module>>
-        ): LibraryDependencyCandidatesAndSdkInfos {
+        ): LibraryDependencyCandidatesAndSdkInfosBuilder {
             checkCanceled()
             check(trace.add(module)) { "recursion detected" }
 
-            val libraryDependencyCandidatesAndSdkInfos = LibraryDependencyCandidatesAndSdkInfos()
+            val libraryDependencyCandidatesAndSdkInfos = LibraryDependencyCandidatesAndSdkInfosBuilder()
             tmpResults[module] = libraryDependencyCandidatesAndSdkInfos
 
             val modulesToVisit = HashSet<Module>()
@@ -387,10 +406,10 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
                 // circular dependency found
                 val reversedTrace = trace.toList().asReversed()
 
-                val sharedLibraryDependencyCandidatesAndSdkInfos: LibraryDependencyCandidatesAndSdkInfos = run {
-                    var shared: LibraryDependencyCandidatesAndSdkInfos? = null
+                val sharedLibraryDependencyCandidatesAndSdkInfos: LibraryDependencyCandidatesAndSdkInfosBuilder = run {
+                    var shared: LibraryDependencyCandidatesAndSdkInfosBuilder? = null
                     val loop = hashSetOf<Module>()
-                    val duplicates = hashSetOf<LibraryDependencyCandidatesAndSdkInfos>()
+                    val duplicates = hashSetOf<LibraryDependencyCandidatesAndSdkInfosBuilder>()
                     for (traceModule in reversedTrace) {
                         loop += traceModule
                         loops[traceModule]?.let { loop += it }
@@ -410,7 +429,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
                 sharedLibraryDependencyCandidatesAndSdkInfos += libraryDependencyCandidatesAndSdkInfos
 
                 for (traceModule in reversedTrace) {
-                    val traceModuleLibraryDependencyCandidatesAndSdkInfos: LibraryDependencyCandidatesAndSdkInfos =
+                    val traceModuleLibraryDependencyCandidatesAndSdkInfos: LibraryDependencyCandidatesAndSdkInfosBuilder =
                         tmpResults.getValue(traceModule)
                     if (traceModuleLibraryDependencyCandidatesAndSdkInfos === sharedLibraryDependencyCandidatesAndSdkInfos) {
                         if (traceModule === moduleToVisit) {
@@ -448,7 +467,8 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
                 // We should not include SDK from dependent modules
                 // see the traverse way of OrderEnumeratorBase#shouldAddOrRecurse for JdkOrderEntry
-                moduleLibraryDependencyCandidatesAndSdkInfos.libraryDependencyCandidates += moduleToVisitLibraryDependencyCandidatesAndSdkInfos.libraryDependencyCandidates
+                moduleLibraryDependencyCandidatesAndSdkInfos.libraryDependencyCandidates +=
+                    moduleToVisitLibraryDependencyCandidatesAndSdkInfos.libraryDependencyCandidates
             }
 
             trace.remove(module)

@@ -109,7 +109,7 @@ public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTo
     };
   }
 
-  private static class ReplaceWithMapForEachFix implements LocalQuickFix {
+  private static class ReplaceWithMapForEachFix extends PsiUpdateModCommandQuickFix {
     @Nls
     @NotNull
     @Override
@@ -118,8 +118,7 @@ public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTo
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getStartElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       PsiElement foreach = element instanceof PsiForeachStatement ? element : element.getParent();
       if (foreach instanceof PsiForeachStatement) {
         fixInForeach((PsiForeachStatement)foreach);

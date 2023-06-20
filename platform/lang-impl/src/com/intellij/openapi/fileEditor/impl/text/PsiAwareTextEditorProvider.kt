@@ -5,6 +5,7 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter
 import com.intellij.codeInsight.folding.CodeFoldingManager
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.impl.EditorFactoryImpl
@@ -117,7 +118,7 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
   }
 
   override fun setStateImpl(project: Project?, editor: Editor, state: TextEditorState, exactState: Boolean) {
-    super.setStateImpl(project, editor, state, exactState)
+    super.setStateImpl(project = project, editor = editor, state = state, exactState = exactState)
 
     // folding
     val foldState = state.foldingState
@@ -126,7 +127,8 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
       val psiDocumentManager = PsiDocumentManager.getInstance(project)
       if (!psiDocumentManager.isCommitted(editor.document)) {
         psiDocumentManager.commitDocument(editor.document)
-        LOG.error("File should be parsed when changing editor state, otherwise UI might be frozen for a considerable time")
+        logger<PsiAwareTextEditorProvider>()
+          .error("File should be parsed when changing editor state, otherwise UI might be frozen for a considerable time")
       }
       editor.foldingModel.runBatchFoldingOperation { CodeFoldingManager.getInstance(project).restoreFoldingState(editor, foldState) }
     }
@@ -135,16 +137,9 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
   override fun createWrapperForEditor(editor: Editor): EditorWrapper = PsiAwareEditorWrapper(editor)
 
   private inner class PsiAwareEditorWrapper(editor: Editor) : EditorWrapper(editor) {
-    private val backgroundHighlighter: TextEditorBackgroundHighlighter?
-
-    init {
-      val project = editor.project
-      backgroundHighlighter = project?.let { TextEditorBackgroundHighlighter(it, editor) }
-    }
+    private val backgroundHighlighter = editor.project?.let { TextEditorBackgroundHighlighter(it, editor) }
 
     override fun getBackgroundHighlighter(): BackgroundEditorHighlighter? = backgroundHighlighter
-
-    override fun isValid(): Boolean = !editor.isDisposed
   }
 }
 

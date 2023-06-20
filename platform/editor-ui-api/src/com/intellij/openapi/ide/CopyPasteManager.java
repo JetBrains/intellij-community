@@ -33,11 +33,9 @@ public abstract class CopyPasteManager {
 
   public abstract boolean areDataFlavorsAvailable(DataFlavor @NotNull ... flavors);
 
-  @Nullable
-  public abstract Transferable getContents();
+  public abstract @Nullable Transferable getContents();
 
-  @Nullable
-  public abstract <T> T getContents(@NotNull DataFlavor flavor);
+  public abstract @Nullable <T> T getContents(@NotNull DataFlavor flavor);
 
   public abstract Transferable @NotNull [] getAllContents();
 
@@ -62,7 +60,7 @@ public abstract class CopyPasteManager {
   public abstract void stopKillRings(@NotNull Document document);
 
   public interface ContentChangedListener extends EventListener {
-    void contentChanged(@Nullable final Transferable oldTransferable, final Transferable newTransferable);
+    void contentChanged(final @Nullable Transferable oldTransferable, final Transferable newTransferable);
   }
 
   public static void copyTextToClipboard(@NotNull String text) {

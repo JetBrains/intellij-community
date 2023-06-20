@@ -330,7 +330,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
         if (value instanceof PsiExpression expression) {
           Object constantValue = JavaConstantExpressionEvaluator.computeConstantExpression(expression, null, false);
           if (argumentValue.equals(constantValue)) {
-            return new ReplaceWithMagicConstantFix(argument, value);
+            return new ReplaceWithMagicConstantFix(argument, value).asQuickFix();
           }
         }
       }
@@ -367,7 +367,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
           }
         }
         if (!flags.isEmpty()) {
-          return new ReplaceWithMagicConstantFix(argument, flags.toArray(PsiAnnotationMemberValue.EMPTY_ARRAY));
+          return new ReplaceWithMagicConstantFix(argument, flags.toArray(PsiAnnotationMemberValue.EMPTY_ARRAY)).asQuickFix();
         }
       }
     }
@@ -503,8 +503,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
     return !children.isEmpty();
   }
 
-  private static class ReplaceWithMagicConstantFix extends LocalQuickFixOnPsiElement {
-    @SafeFieldForPreview
+  private static class ReplaceWithMagicConstantFix extends PsiUpdateModCommandAction<PsiExpression> {
     private final List<SmartPsiElementPointer<PsiAnnotationMemberValue>> myMemberValuePointers;
 
     ReplaceWithMagicConstantFix(@NotNull PsiExpression argument, PsiAnnotationMemberValue @NotNull ... values) {
@@ -520,20 +519,22 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
       return JavaBundle.message("quickfix.family.replace.with.magic.constant");
     }
 
-    @NotNull
     @Override
-    public String getText() {
-      List<String> names = myMemberValuePointers.stream().map(SmartPsiElementPointer::getElement).filter(Objects::nonNull)
-        .map(PsiElement::getText).toList();
-      String expression = StringUtil.join(names, " | ");
-      return CommonQuickFixBundle.message("fix.replace.with.x", expression);
+    protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiExpression element) {
+      List<String> names = new ArrayList<>();
+      for (SmartPsiElementPointer<PsiAnnotationMemberValue> myMemberValuePointer : myMemberValuePointers) {
+        PsiAnnotationMemberValue value = myMemberValuePointer.getElement();
+        if (value == null) return null;
+        names.add(value.getText());
+      }
+      return Presentation.of(CommonQuickFixBundle.message("fix.replace.with.x", StringUtil.join(names, " | ")));
     }
 
     @Override
-    public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+    protected void invoke(@NotNull ActionContext context, @NotNull PsiExpression startElement, @NotNull EditorUpdater updater) {
       List<PsiAnnotationMemberValue> values = ContainerUtil.map(myMemberValuePointers, SmartPsiElementPointer::getElement);
       String text = StringUtil.join(Collections.nCopies(values.size(), "0"), " | ");
-      PsiExpression concatExp = PsiElementFactory.getInstance(project).createExpressionFromText(text, startElement);
+      PsiExpression concatExp = PsiElementFactory.getInstance(context.project()).createExpressionFromText(text, startElement);
 
       List<PsiLiteralExpression> expressionsToReplace = new ArrayList<>(values.size());
       concatExp.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -561,18 +562,9 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
         @Override
         public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
           PsiElement bound = expression.bindToElement(resolvedValuesIterator.next());
-          JavaCodeStyleManager.getInstance(project).shortenClassReferences(bound);
+          JavaCodeStyleManager.getInstance(context.project()).shortenClassReferences(bound);
         }
       });
-    }
-
-    @Override
-    public boolean isAvailable(@NotNull Project project,
-                               @NotNull PsiFile file,
-                               @NotNull PsiElement startElement,
-                               @NotNull PsiElement endElement) {
-      boolean allValid = myMemberValuePointers.stream().map(SmartPsiElementPointer::getElement).allMatch(p -> p != null && p.isValid());
-      return allValid && super.isAvailable(project, file, startElement, endElement);
     }
   }
 }

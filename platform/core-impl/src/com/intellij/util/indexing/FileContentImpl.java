@@ -30,7 +30,7 @@ import java.nio.charset.Charset;
 public final class FileContentImpl extends IndexedFileImpl implements PsiDependentFileContent {
   private final @NotNull NotNullComputable<byte[]> myContentComputable;
   private Charset myCharset;
-  private byte[] myContent;
+  private byte[] myCachedContentBytes;
   private CharSequence myContentAsText;
   private byte[] myIndexedFileHash;
   private boolean myLighterASTShouldBeThreadSafe;
@@ -156,21 +156,18 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
 
   @Override
   public byte @NotNull [] getContent() {
-    if (myContent == null) {
-      if (myContentAsText != null) {
-        myContent = myContentAsText.toString().getBytes(getCharset());
-      } else {
-        myContent = myContentComputable.compute();
-        FileType unsubstitutedFileType = getFileTypeWithoutSubstitution(this);
-        if (!unsubstitutedFileType.isBinary()) {
-          // Normalize line-separators for textual files to ensure
-          // consistency of getContent() and getContentAsText(): both must return \n.
-          // It calls getContent() internally and assigns the myContent to null.
-          myContent = getContentAsText().toString().getBytes(getCharset());
-        }
+    if (myCachedContentBytes == null) {
+      FileType unsubstitutedFileType = getFileTypeWithoutSubstitution(this);
+      if (unsubstitutedFileType.isBinary()) {
+        myCachedContentBytes = computeOriginalContent();
+      }
+      else {
+        // Normalize line-separators for textual files to ensure
+        // consistency of getContent() and getContentAsText(): both must return \n.
+        myCachedContentBytes = getContentAsText().toString().getBytes(getCharset());
       }
     }
-    return myContent;
+    return myCachedContentBytes;
   }
 
   @Override
@@ -180,18 +177,17 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
       throw new UnsupportedOperationException("Cannot obtain text for binary file type : " + unsubstitutedFileType.getDescription());
     }
     final CharSequence content = getUserData(IndexingDataKeys.FILE_TEXT_CONTENT_KEY);
-    try {
-      if (content != null) {
-        return content;
-      }
-      if (myContentAsText == null) {
-        myContentAsText = LoadTextUtil.getTextByBinaryPresentation(getContent(), myFile, false, false);
-      }
-      return myContentAsText;
-    } finally {
-      // Help GC. Indexes expect either getContent() or getContentAsText().
-      myContent = null;
+    if (content != null) {
+      return content;
     }
+    if (myContentAsText == null) {
+      myContentAsText = LoadTextUtil.getTextByBinaryPresentation(computeOriginalContent(), myFile, false, false);
+    }
+    return myContentAsText;
+  }
+
+  private byte @NotNull [] computeOriginalContent() {
+    return myContentComputable.compute();
   }
 
   @Override

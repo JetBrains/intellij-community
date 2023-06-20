@@ -30,6 +30,6 @@ public final class PsiQuickFixFactory {
   }
 
   public static LocalQuickFix createChangeAnnotationParameterFix(@NotNull PsiAnnotation psiAnnotation, @NotNull String name, @Nullable String newValue) {
-    return new ChangeAnnotationParameterQuickFix(psiAnnotation, name, newValue);
+    return new ChangeAnnotationParameterQuickFix(psiAnnotation, name, newValue).asQuickFix();
   }
 }

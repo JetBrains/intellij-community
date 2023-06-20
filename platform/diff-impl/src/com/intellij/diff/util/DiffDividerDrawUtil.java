@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.diff.util.DiffDrawUtil.lineToY;
@@ -81,6 +82,8 @@ public final class DiffDividerDrawUtil {
   public static List<DividerPolygon> createVisiblePolygons(@NotNull Editor editor1,
                                                            @NotNull Editor editor2,
                                                            @NotNull DividerPaintable paintable) {
+    if (editor1.isDisposed() || editor2.isDisposed()) return Collections.emptyList();
+
     DividerPaintableHandlerImpl handler = new DividerPaintableHandlerImpl(editor1, editor2);
     paintable.process(handler);
     return handler.getPolygons();

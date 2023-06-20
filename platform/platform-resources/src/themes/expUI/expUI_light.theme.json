@@ -629,6 +629,11 @@
       }
     },
 
+    "WindowControls": {
+      "foreground": "#A8ADBD",
+      "inactiveForeground": "#818594"
+    },
+
     "OnePixelDivider.background": "Grey12",
 
     "TitlePane": {
@@ -908,6 +913,7 @@
       }
     },
     "HelpBrowser": {
+      "titleHighlightForeground": "Blue4",
       "UserMessage": {
         "background": "Grey11",
         "Snippet": {

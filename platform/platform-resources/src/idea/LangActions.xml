@@ -497,11 +497,9 @@
         <!--suppress PluginXmlCapitalization -->
         <action id="Floating.CodeToolbar.SurroundWithIf" class="com.intellij.codeInsight.generation.actions.SurroundWithActionBase" />
       </group>
-      <group id="Floating.CodeToolbar.Configure" class="com.intellij.openapi.actionSystem.impl.MoreActionGroup" searchable="false">
-        <action id="Floating.CodeToolbar.Customize" class="com.intellij.ui.codeFloatingToolbar.CustomizeCodeFloatingToolbarAction" />
-        <action id="Floating.CodeToolbar.Disable" class="com.intellij.ui.codeFloatingToolbar.DisableCodeFloatingToolbarAction" />
-      </group>
     </group>
+    <action id="Floating.CodeToolbar.Disable" class="com.intellij.ui.codeFloatingToolbar.DisableCodeFloatingToolbarAction" />
+
     <group id="CodeMenu" popup="true">
       <reference ref="OverrideMethods"/>
       <reference ref="ImplementMethods"/>
@@ -1520,9 +1518,9 @@
              class="com.intellij.ide.actions.NonEmptyActionGroup"/>
       <group id="ServiceView.OpenInNewTabGroup" popup="true" icon="AllIcons.Actions.OpenNewTab"
              class="com.intellij.execution.services.OpenInNewTabActionGroup">
-      <action id="ServiceView.OpenInNewTab" class="com.intellij.execution.services.OpenInNewTabAction"/>
-      <action id="ServiceView.OpenEachInNewTab" class="com.intellij.execution.services.OpenEachInNewTabAction"/>
-      <action id="ServiceView.SplitByType" class="com.intellij.execution.services.SplitByTypeAction"/>
+        <action id="ServiceView.OpenInNewTab" class="com.intellij.execution.services.OpenInNewTabAction"/>
+        <action id="ServiceView.OpenEachInNewTab" class="com.intellij.execution.services.OpenEachInNewTabAction"/>
+        <action id="ServiceView.SplitByType" class="com.intellij.execution.services.SplitByTypeAction"/>
       </group>
       <separator/>
       <group id="ServiceView.AddService" popup="true" icon="AllIcons.General.Add" use-shortcut-of="NewElement"
@@ -1539,6 +1537,7 @@
       <reference id="ServiceView.OpenInNewTab"/>
       <reference id="ServiceView.OpenEachInNewTab"/>
       <reference id="ServiceView.SplitByType"/>
+      <action id="ServiceView.OpenInToolWindow" class="com.intellij.execution.services.OpenInToolWindowAction"/>
       <separator/>
       <reference id="$Delete"/>
       <separator/>

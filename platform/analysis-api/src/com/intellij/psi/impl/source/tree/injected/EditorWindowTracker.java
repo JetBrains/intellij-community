@@ -19,8 +19,7 @@ public abstract class EditorWindowTracker {
    * @param injectedFile injected file, its host must be in host editor
    * @return editor that corresponds to the injected file (may create a new one)
    */
-  @NotNull
-  public abstract Editor getEditorForInjectedFile(@NotNull Editor hostEditor,
+  public abstract @NotNull Editor getEditorForInjectedFile(@NotNull Editor hostEditor,
                                                   @NotNull PsiFile injectedFile);
 
   public abstract void disposeInvalidEditors();

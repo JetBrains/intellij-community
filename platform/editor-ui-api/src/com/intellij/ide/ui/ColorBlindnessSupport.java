@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,16 +24,14 @@ public class ColorBlindnessSupport {
   /**
    * Returns an instance of extension to support the specified color-blindness.
    */
-  @Nullable
-  public static ColorBlindnessSupport get(@Nullable ColorBlindness blindness) {
+  public static @Nullable ColorBlindnessSupport get(@Nullable ColorBlindness blindness) {
     return blindness == null ? null : Lazy.MAP.get(blindness);
   }
 
   /**
    * Returns an image filter for the supported color-blindness.
    */
-  @Nullable
-  public ImageFilter getFilter() {
+  public @Nullable ImageFilter getFilter() {
     return null;
   }
 

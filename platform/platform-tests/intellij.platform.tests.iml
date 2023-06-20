@@ -15,8 +15,8 @@
     <orderEntry type="library" scope="TEST" name="jmock.legacy" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
-    <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage" />
-    <orderEntry type="module" module-name="intellij.platform.workspaceModel.jps" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
     <orderEntry type="module" module-name="intellij.platform.lvcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.resources" scope="RUNTIME" />
@@ -78,5 +78,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang.testEntities" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit5Suites" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.backend.workspace" scope="TEST" />
   </component>
 </module>

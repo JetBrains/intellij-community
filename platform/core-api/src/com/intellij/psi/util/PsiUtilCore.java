@@ -500,7 +500,7 @@ public class PsiUtilCore {
     sb.append("\nfileType=").append(fileType.getName()).append("/").append(fileType.getClass().getName());
     sb.append("\nisIgnored=").append(ignored);
     sb.append(" underIgnored=").append(indexFacade.isUnderIgnored(file));
-    sb.append(" inLibrary=").append(indexFacade.isInLibrarySource(file) || indexFacade.isInLibraryClasses(file));
+    sb.append(" inLibrary=").append(indexFacade.isInLibrary(file));
     sb.append(" parentDir=").append(vDir == null ? "no-vfs" : vDir.isDirectory() ? "has-vfs-dir" : "has-vfs-file").
       append("/").append(psiDir == null ? "no-psi" : "has-psi");
     sb.append("\nviewProvider=").append(viewProvider == null ? "null" : viewProvider.getClass().getName());

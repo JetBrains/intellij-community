@@ -12,5 +12,10 @@ interface InteractiveCourseFactory {
 
   val isActive: Boolean
 
+  val isEnabled: Boolean
+
+  val disabledText: String
   fun getInteractiveCourseComponent(): JComponent
+
+  fun getCourseData(): InteractiveCourseData
 }

@@ -592,7 +592,6 @@
                              treeRenderer="com.intellij.ide.plugins.PluginManagerConfigurableTreeRenderer"
                              bundle="messages.IdeBundle"
                              key="title.plugins"/>
-    <customFileDropHandler implementation="com.intellij.ide.plugins.PluginDropHandler"/>
     <applicationConfigurable parentId="preferences.general" instance="com.intellij.util.net.HttpProxyConfigurable" id="http.proxy"
                              bundle="messages.IdeBundle"
                              key="http.proxy.configurable"/>
@@ -824,7 +823,6 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.plugins.DynamicPluginsUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ui.EditorNotificationUsagesCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.customize.CustomizeWizardCollector"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.updateSettings.impl.UpdateInfoStatsCollector"/>
 
@@ -850,8 +848,6 @@
 
     <statistics.collectorExtension implementation="com.intellij.ide.actions.ToolwindowFusEventFields"/>
     <statistics.collectorExtension implementation="com.intellij.ide.actions.DragEditorTabsFusEventFields"/>
-
-    <applicationInitializedListener implementation="com.intellij.ide.customize.CustomizeIDEWizardCollectorActivity"/>
 
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.EAPUsageCollector"/>
     <statistic.eventLog.eventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.fus.FeatureUsageEventLoggerProvider"/>
@@ -964,9 +960,9 @@
     <actionPromoter implementation="com.intellij.ui.ToolbarDecoratorActionPromoter"/>
     <actionPromoter implementation="com.intellij.ide.actions.WindowActionPromoter"/>
 
-    <applicationService serviceInterface="com.intellij.workspaceModel.ide.GlobalWorkspaceModelCache"
+    <applicationService serviceInterface="com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache"
                         serviceImplementation="com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModelCacheImpl"/>
-    <projectService serviceInterface="com.intellij.workspaceModel.ide.WorkspaceModelCache"
+    <projectService serviceInterface="com.intellij.platform.backend.workspace.WorkspaceModelCache"
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl"/>
     <cachesInvalidator implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCachesInvalidator"/>
     <recoveryAction implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelRecoveryAction"/>
@@ -1265,7 +1261,6 @@
     <gutterMarkPreprocessor implementation="com.intellij.refactoring.suggested.SuggestedRefactoringGutterMarkPreprocessor"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.suggested.SuggestedRefactoringFeatureUsage"/>
 
-    <applicationInitializedListener implementation="com.intellij.ide.customize.WelcomeWizardHelper"/>
     <applicationInitializedListener implementation="com.intellij.openapi.application.impl.JitSuppressor"/>
 
     <applicationInitializedListener implementation="com.intellij.openapi.editor.actions.ResetFontSizeAction$Listener"/>
@@ -1422,6 +1417,7 @@
     <advancedSetting id="show.diff.as.editor.tab" default="true" bundle="messages.DiffBundle" groupKey="advanced.settings.vcs"/>
 
     <recoveryAction implementation="com.intellij.ide.actions.cache.InvalidateCachesAndRestartAction"/>
+    <recoveryAction implementation="com.intellij.ide.actions.cache.RecoverVfsFromLogAction"/>
 
     <applicationService serviceInterface="com.intellij.openapi.application.CoroutineSupport"
                         serviceImplementation="com.intellij.openapi.application.impl.PlatformCoroutineSupport"/>
@@ -1446,6 +1442,8 @@
 
     <projectService serviceInterface="com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService"
                     serviceImplementation="com.intellij.internal.performanceTests.DummyProjectInitializationDiagnosticService"/>
+
+    <applicationService serviceImplementation="com.intellij.ide.actions.cache.RecoverVfsFromLogService"/>
 
     <!-- Minimap -->
     <registryKey key="editor.minimap.enabled" defaultValue="false" description="Enables Minimap"/>

@@ -9,8 +9,8 @@ import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
-import com.intellij.workspaceModel.storage.EntityReference
-import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.EntityReference
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory
 

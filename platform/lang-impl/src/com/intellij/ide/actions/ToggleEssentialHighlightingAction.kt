@@ -18,7 +18,7 @@ import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 
-private class ToggleEssentialHighlightingAction : ToggleAction() {
+class ToggleEssentialHighlightingAction : ToggleAction() {
   override fun isSelected(e: AnActionEvent): Boolean {
     return EssentialHighlightingMode.isEnabled()
   }

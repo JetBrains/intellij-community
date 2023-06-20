@@ -8,7 +8,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactPointer;
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity;
+import com.intellij.platform.workspace.jps.entities.LibraryEntity;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

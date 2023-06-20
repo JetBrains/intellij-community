@@ -38,50 +38,52 @@ internal class ConfigureServicesDialog(private val project: Project) : DialogWra
   private val statusLabel = JBLabel()
   private val initiallyFocusedTree: ServicesTree
 
+  companion object {
+    internal fun collectServices(project: Project): Pair<List<ServiceViewContributor<*>>, List<ServiceViewContributor<*>>> {
+      val included = ArrayList<ServiceViewContributor<*>>()
+      val excluded = ArrayList<ServiceViewContributor<*>>()
+      val serviceViewManager = ServiceViewManager.getInstance(project)
+      for (contributor in ServiceViewContributor.CONTRIBUTOR_EP_NAME.extensionList) {
+        if ((contributor.getViewDescriptor(project) as? ServiceViewToolWindowDescriptor)?.isExclusionAllowed != false) {
+          val toolWindowId = serviceViewManager.getToolWindowId(contributor::class.java) ?: ToolWindowId.SERVICES
+          if (toolWindowId == ToolWindowId.SERVICES) {
+            included.add(contributor)
+          }
+          else {
+            excluded.add(contributor)
+          }
+        }
+      }
+      return Pair(included, excluded)
+    }
+
+    private fun collectTypes(project: Project): Pair<List<ConfigurationType>, List<ConfigurationType>> {
+      val includedTypes = ArrayList<ConfigurationType>()
+      val excludedTypes = ArrayList<ConfigurationType>()
+      val types = RunDashboardManager.getInstance(project).types
+      for (type in ConfigurationType.CONFIGURATION_TYPE_EP.extensionList) {
+        if (types.contains(type.id)) {
+          includedTypes.add(type)
+        }
+        else {
+          excludedTypes.add(type)
+        }
+      }
+      return Pair(includedTypes, excludedTypes)
+    }
+  }
+
   init {
     title = ExecutionBundle.message("service.view.configure.dialog.title")
 
-    val services = collectServices()
-    val types = collectTypes()
+    val services = collectServices(project)
+    val types = collectTypes(project)
 
     includedServicesTree.initTree(services.first, types.first, true)
     excludedServicesTree.initTree(services.second, types.second, false)
 
     initiallyFocusedTree = includedServicesTree
     init()
-  }
-
-  private fun collectServices(): Pair<List<ServiceViewContributor<*>>, List<ServiceViewContributor<*>>> {
-    val included = ArrayList<ServiceViewContributor<*>>()
-    val excluded = ArrayList<ServiceViewContributor<*>>()
-    val serviceViewManager = ServiceViewManager.getInstance(project)
-    for (contributor in ServiceViewContributor.CONTRIBUTOR_EP_NAME.extensionList) {
-      if ((contributor.getViewDescriptor(project) as? ServiceViewToolWindowDescriptor)?.isExclusionAllowed != false) {
-        val toolWindowId = serviceViewManager.getToolWindowId(contributor::class.java) ?: ToolWindowId.SERVICES
-        if (toolWindowId == ToolWindowId.SERVICES) {
-          included.add(contributor)
-        }
-        else {
-          excluded.add(contributor)
-        }
-      }
-    }
-    return Pair(included, excluded)
-  }
-
-  private fun collectTypes(): Pair<List<ConfigurationType>, List<ConfigurationType>> {
-    val includedTypes = ArrayList<ConfigurationType>()
-    val excludedTypes = ArrayList<ConfigurationType>()
-    val types = RunDashboardManager.getInstance(project).types
-    for (type in ConfigurationType.CONFIGURATION_TYPE_EP.extensionList) {
-      if (types.contains(type.id)) {
-        includedTypes.add(type)
-      }
-      else {
-        excludedTypes.add(type)
-      }
-    }
-    return Pair(includedTypes, excludedTypes)
   }
 
   override fun createCenterPanel(): JComponent {

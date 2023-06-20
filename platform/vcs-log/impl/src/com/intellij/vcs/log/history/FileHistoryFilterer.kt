@@ -13,7 +13,7 @@ import com.intellij.openapi.vcs.history.VcsCachingHistory
 import com.intellij.openapi.vcs.history.VcsFileRevision
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.MultiMap
@@ -128,7 +128,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
                filters: VcsLogFilterCollection,
                commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage>? {
       val start = System.currentTimeMillis()
-      TelemetryTracer.getInstance().getTracer(VcsScope).spanBuilder("computing history").useWithScope { scope ->
+      TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder("computing history").useWithScope { scope ->
         val isInitial = commitCount == CommitCountStage.INITIAL
 
         val indexDataGetter = index.dataGetter
@@ -289,7 +289,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
     private fun collectRenamesFromProvider(fileHistory: FileHistory): MultiMap<UnorderedPair<Int>, Rename> {
       if (fileHistory.unmatchedAdditionsDeletions.isEmpty()) return MultiMap.empty()
 
-      TelemetryTracer.getInstance().getTracer(VcsScope).spanBuilder("collecting renames").useWithScope {
+      TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder("collecting renames").useWithScope {
         val handler = logProviders[root]?.fileHistoryHandler ?: return MultiMap.empty()
 
         val renames = fileHistory.unmatchedAdditionsDeletions.mapNotNull { ad ->

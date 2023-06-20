@@ -6,6 +6,7 @@ import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.TransparentScrollPane
 import com.intellij.collaboration.ui.codereview.changes.CodeReviewChangesTreeFactory
+import com.intellij.collaboration.ui.codereview.setupCodeReviewProgressModel
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.Project
@@ -92,6 +93,9 @@ internal class GitLabMergeRequestDetailsChangesComponentFactory(private val proj
         }
 
         tree.installPopupHandler(ActionManager.getInstance().getAction("GitLab.Merge.Request.Changes.Popup") as ActionGroup)
+      }.apply {
+        val progressModel = GitLabMergeRequestProgressTreeModel(this@createChangesTree, vm)
+        setupCodeReviewProgressModel(progressModel)
       }
 
   private fun updateUserChangesSelection(vm: GitLabMergeRequestChangesViewModel, tree: AsyncChangesTree) {

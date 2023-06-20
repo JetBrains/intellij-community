@@ -31,7 +31,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
@@ -249,6 +253,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
           getFileEditorManager().removeTopComponent(fileEditor, component);
           info.removeFileLeverComponent(fileEditor);
         }
+        RangeHighlighterEx highlighter = info.highlighter;
+        if (highlighter != null) {
+          highlighter.dispose();
+        }
         infosToRemove.add(info);
       }
     }
@@ -262,24 +270,33 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     VirtualFile vFile = BackedVirtualFile.getOriginFileIfBacked(psiFile.getViewProvider().getVirtualFile());
     FileEditorManager fileEditorManager = getFileEditorManager();
     for (FileEditor fileEditor : fileEditorManager.getAllEditors(vFile)) {
-      if (fileEditor instanceof TextEditor) {
+      if (fileEditor instanceof TextEditor textEditor) {
         List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> actionRanges = new ArrayList<>();
         info.findRegisteredQuickFix((descriptor, range) -> {
           actionRanges.add(Pair.create(descriptor, range));
           return null;
         });
-        FileLevelIntentionComponent component = new FileLevelIntentionComponent(info.getDescription(), info.getSeverity(),
-                                                                                info.getGutterIconRenderer(), actionRanges,
-                                                                                psiFile, ((TextEditor)fileEditor).getEditor(), info.getToolTip());
-        fileEditorManager.addTopComponent(fileEditor, component);
         List<HighlightInfo> fileLevelInfos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
         if (fileLevelInfos == null) {
           fileLevelInfos = ContainerUtil.createConcurrentList(); // must be able to iterate in hasFileLevelHighlights() and concurrently modify in addFileLevelHighlight()
           fileEditor.putUserData(FILE_LEVEL_HIGHLIGHTS, fileLevelInfos);
         }
-        info.addFileLeverComponent(fileEditor, component);
-        info.setGroup(group);
-        fileLevelInfos.add(info);
+        if (!ContainerUtil.exists(fileLevelInfos, existing->existing.equalsByActualOffset(info))) {
+          Document document = textEditor.getEditor().getDocument();
+          MarkupModel markupModel = DocumentMarkupModel.forDocument(document, myProject, true);
+          RangeHighlighter highlighter = markupModel.addRangeHighlighter(0, document.getTextLength(), ANY_GROUP, null, HighlighterTargetArea.EXACT_RANGE);
+          // for the condition `existing.equalsByActualOffset(info)` above work correctly,
+          // create (empty) whole-file highlighter which will track the document size changes
+          // which will make possible to calculate correct `info.getActualEndOffset()`
+          info.setHighlighter((RangeHighlighterEx)highlighter);
+          info.setGroup(group);
+          fileLevelInfos.add(info);
+          FileLevelIntentionComponent component = new FileLevelIntentionComponent(info.getDescription(), info.getSeverity(),
+                                                                                  info.getGutterIconRenderer(), actionRanges,
+                                                                                  psiFile, ((TextEditor)fileEditor).getEditor(), info.getToolTip());
+          fileEditorManager.addTopComponent(fileEditor, component);
+          info.addFileLeverComponent(fileEditor, component);
+        }
       }
     }
   }

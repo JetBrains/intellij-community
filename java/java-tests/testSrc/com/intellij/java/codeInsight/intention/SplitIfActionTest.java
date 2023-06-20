@@ -6,8 +6,8 @@ import com.intellij.codeInsight.intention.impl.SplitIfAction;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModCommandService;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 
@@ -97,7 +97,6 @@ public class SplitIfActionTest extends LightJavaCodeInsightTestCase {
     ModCommandAction.ActionContext context = ModCommandAction.ActionContext.from(getEditor(), getFile());
     assertNotNull(action.getPresentation(context));
     ModCommand command = action.perform(context);
-    ApplicationManager.getApplication().runWriteAction(() -> command.execute(getProject()));
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    ApplicationManager.getApplication().runWriteAction(() -> ModCommandService.getInstance().executeInteractively(getProject(), command));
   }
 }

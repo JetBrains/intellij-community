@@ -10,7 +10,6 @@ import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
@@ -251,13 +250,8 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   // initScheme has to execute only after the LaF has been set in LafManagerImpl.initializeComponent
   private void initScheme(@NotNull UIManager.LookAndFeelInfo currentLaf) {
     EditorColorsScheme scheme = null;
-    String wizardEditorScheme = WelcomeWizardUtil.getWizardEditorScheme();
-    if (wizardEditorScheme != null) {
-      scheme = getScheme(wizardEditorScheme);
-      LOG.assertTrue(scheme != null, "Wizard scheme " + wizardEditorScheme + " not found");
-    }
 
-    if (!themeIsCustomized && scheme == null) {
+    if (!themeIsCustomized) {
       if (currentLaf instanceof UIThemeBasedLookAndFeelInfo) {
         String schemeName = ((UIThemeBasedLookAndFeelInfo)currentLaf).getTheme().getEditorSchemeName();
         if (schemeName != null) {

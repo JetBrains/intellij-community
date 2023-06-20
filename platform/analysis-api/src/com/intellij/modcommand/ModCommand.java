@@ -1,10 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.modcommand;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -17,16 +14,8 @@ import java.util.Set;
  * <p>
  * All inheritors are records, so the whole state is declarative and readable.
  */
-public sealed interface ModCommand permits ModChooseTarget, ModCompositeCommand, ModNavigate, ModNothing, ModUpdateFileText, ModHighlight {
-  /**
-   * Executes the command
-   * 
-   * @param project current project
-   */
-  @RequiresEdt
-  default void execute(@NotNull Project project) {
-    ApplicationManager.getApplication().getService(ModCommandService.class).execute(project, this);
-  }
+public sealed interface ModCommand
+  permits ModChooseTarget, ModCompositeCommand, ModDisplayError, ModHighlight, ModNavigate, ModNothing, ModRenameSymbol, ModUpdateFileText {
 
   /**
    * @return true if the command does nothing

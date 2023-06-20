@@ -85,6 +85,10 @@
   <actions>
     <action id="GitLab.Open.Settings.Page" class="org.jetbrains.plugins.gitlab.GitLabOpenSettingsPageAction"/>
 
+    <action id="GitLab.Merge.Request.Show.List"
+            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabShowMergeRequestsAction"
+            icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo"/>
+
     <action id="GitLab.Merge.Request.List.Refresh"
             class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestListRefreshAction"
             use-shortcut-of="Refresh"
@@ -97,28 +101,41 @@
             class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestCheckoutRemoteBranchAction"/>
     <action id="GitLab.Merge.Request.Show"
             class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabShowMergeRequestAction"/>
-    <action id="GitLab.Merge.Request.Open.In.Browser"
-            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabOpenMergeRequestInBrowserAction"/>
+    <action id="GitLab.Merge.Request.Open.Link"
+            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestOpenURLAction"
+            icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo"/>
+    <action id="GitLab.Merge.Request.Copy.Link"
+            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestCopyURLAction"
+            icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo"/>
+
+    <group id="GitLab.Main.Group" popup="true">
+      <reference id="GitLab.Merge.Request.Show.List"/>
+      <add-to-group group-id="Git.MainMenu" relative-to-action="Git.Configure.Remotes" anchor="before"/>
+    </group>
 
     <group id="GitLab.Merge.Request.List.Actions">
       <reference id="GitLab.Merge.Request.Show"/>
-      <reference id="GitLab.Merge.Request.Open.In.Browser"/>
+      <reference id="GitLab.Merge.Request.Open.Link"/>
+      <reference id="GitLab.Merge.Request.Copy.Link"/>
       <separator/>
       <reference id="GitLab.Merge.Request.List.Refresh"/>
     </group>
 
     <group id="GitLab.Merge.Request.Details.Popup">
       <reference id="GitLab.Merge.Request.Refresh"/>
+      <reference id="GitLab.Merge.Request.Open.Link"/>
+      <reference id="GitLab.Merge.Request.Copy.Link"/>
     </group>
 
     <group id="GitLab.Merge.Request.Timeline.Popup">
       <reference id="GitLab.Merge.Request.Refresh"/>
+      <reference id="GitLab.Merge.Request.Open.Link"/>
+      <reference id="GitLab.Merge.Request.Copy.Link"/>
     </group>
 
     <group id="GitLab.Merge.Request.Changes.Popup">
       <reference id="Diff.ShowDiff"/>
       <reference id="Diff.ShowStandaloneDiff"/>
-      <reference id="GitLab.Merge.Request.Refresh"/>
       <reference id="EditSource"/>
       <group id="GitLab.Merge.Request.Details.Commit.Tree.ViewOptions" icon="AllIcons.Actions.Show" popup="true">
         <reference id="ChangesView.GroupBy"/>
@@ -126,6 +143,10 @@
       <separator/>
       <reference ref="ExpandAll"/>
       <reference ref="CollapseAll"/>
+      <separator/>
+      <reference id="GitLab.Merge.Request.Refresh"/>
+      <reference id="GitLab.Merge.Request.Open.Link"/>
+      <reference id="GitLab.Merge.Request.Copy.Link"/>
     </group>
 
     <group id="GitLab.Merge.Request.Diff.Discussions.View.Options"

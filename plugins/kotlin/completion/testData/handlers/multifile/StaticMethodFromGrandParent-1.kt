@@ -4,3 +4,4 @@ class Inheritor : Base() {
         fooBa<caret>
     }
 }
+// AUTOCOMPLETE_SETTING: true

@@ -25,8 +25,7 @@ import java.util.*;
 
 public final class ScopeToolState {
   private static final Logger LOG = Logger.getInstance(ScopeToolState.class);
-  @NotNull
-  private final String myScopeName;
+  private final @NotNull String myScopeName;
   private NamedScope myScope;
   private InspectionToolWrapper<?, ?> myToolWrapper;
   private boolean myEnabled;
@@ -52,26 +51,22 @@ public final class ScopeToolState {
     myLevel = level;
   }
 
-  @NotNull
-  public ScopeToolState copy() {
+  public @NotNull ScopeToolState copy() {
     return new ScopeToolState(myScopeName, myToolWrapper, myEnabled, myLevel);
   }
 
-  @Nullable
-  public NamedScope getScope(@Nullable Project project) {
+  public @Nullable NamedScope getScope(@Nullable Project project) {
     if (myScope == null && project != null) {
       myScope = NamedScopesHolder.getScope(project, myScopeName);
     }
     return myScope;
   }
 
-  @NotNull
-  public String getScopeName() {
+  public @NotNull String getScopeName() {
     return myScopeName;
   }
 
-  @NotNull
-  public InspectionToolWrapper<?, ?> getTool() {
+  public @NotNull InspectionToolWrapper<?, ?> getTool() {
     return myToolWrapper;
   }
 
@@ -79,8 +74,7 @@ public final class ScopeToolState {
     return myEnabled;
   }
 
-  @NotNull
-  public HighlightDisplayLevel getLevel() {
+  public @NotNull HighlightDisplayLevel getLevel() {
     return myLevel;
   }
 
@@ -108,8 +102,7 @@ public final class ScopeToolState {
     myEditorAttributesKey = textAttributesKey;
   }
 
-  @Nullable
-  public JComponent getAdditionalConfigPanel(@NotNull Disposable parent, @NotNull Project project) {
+  public @Nullable JComponent getAdditionalConfigPanel(@NotNull Disposable parent, @NotNull Project project) {
     if (myAdditionalConfigPanelState == null) {
       myAdditionalConfigPanelState = ConfigPanelState.of(
         OptionPaneRenderer.createOptionsPanel(myToolWrapper.getTool(), parent, project), myToolWrapper);

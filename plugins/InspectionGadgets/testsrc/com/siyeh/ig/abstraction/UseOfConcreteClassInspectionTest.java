@@ -28,7 +28,7 @@ public class UseOfConcreteClassInspectionTest extends LightJavaInspectionTestCas
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_17;
+    return JAVA_20;
   }
 
   @Override

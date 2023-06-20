@@ -21,7 +21,7 @@ class Test {
 
   void testEnumUnreachable2(Day d) {
     switch (d) {
-      case (Day dd && true):
+      case Day dd when true:
         throw new IllegalArgumentException();
     }
     <error descr="Unreachable statement">System.out.println();</error>

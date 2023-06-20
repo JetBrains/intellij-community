@@ -13,7 +13,7 @@ import com.intellij.psi.PsiLiteralExpression
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.PathUtil
 import com.intellij.util.lang.UrlClassLoader
-import com.intellij.workspaceModel.storage.CodeGeneratorVersions
+import com.intellij.platform.workspace.storage.CodeGeneratorVersions
 import org.jetbrains.concurrency.await
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor

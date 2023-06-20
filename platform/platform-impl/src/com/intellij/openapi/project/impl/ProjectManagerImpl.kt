@@ -67,7 +67,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isLoadedFromCacheButHasNoModules
 import com.intellij.platform.attachToProjectAsync
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.impl.useWithScope2
 import com.intellij.platform.jps.model.diagnostic.JpsMetrics
 import com.intellij.projectImport.ProjectAttachProcessor
@@ -331,7 +331,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       // if we are shutting down the entire test framework, proceed to full dispose
       val projectImpl = project as ProjectImpl
       if (!projectImpl.isTemporarilyDisposed) {
-        ApplicationManager.getApplication().runWriteAction {
+        app.runWriteAction {
           projectImpl.disposeEarlyDisposable()
           projectImpl.setTemporarilyDisposed(true)
           removeFromOpened(project)
@@ -346,7 +346,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         if (project is ComponentManagerImpl) {
           project.stopServicePreloading()
         }
-        ApplicationManager.getApplication().runWriteAction {
+        app.runWriteAction {
           if (project is ProjectImpl) {
             project.disposeEarlyDisposable()
             project.startDispose()
@@ -959,7 +959,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 }
 
-private val tracer by lazy { TelemetryTracer.getInstance().getTracer(ProjectManagerScope) }
+private val tracer by lazy { TelemetryManager.getInstance().getTracer(ProjectManagerScope) }
 
 @NlsSafe
 private fun message(e: Throwable): String {
@@ -1213,18 +1213,20 @@ private suspend fun initProject(file: Path,
     coroutineScope {
       val isTrusted = async { !isTrustCheckNeeded || checkOldTrustedStateAndMigrate(project, file) }
 
+      val beforeComponentCreation: Job? = if (rawProjectDeferred == null) {
+        null
+      }
+      else {
+        launch {
+          (project.serviceAsync<FileEditorManager>() as? FileEditorManagerImpl)?.initJob?.join()
+        }
+      }
+
       projectInitListeners {
         it.execute(project)
       }
 
       rawProjectDeferred?.complete(project)
-
-      val beforeComponentCreation: Job? = if (rawProjectDeferred == null) {
-        null
-      }
-      else {
-        (project.serviceAsync<FileEditorManager>() as? FileEditorManagerImpl)?.initJob
-      }
 
       if (preloadServices) {
         preloadServices(project)

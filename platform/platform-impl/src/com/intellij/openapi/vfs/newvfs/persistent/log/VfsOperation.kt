@@ -267,26 +267,42 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
         }
       }
     }
+
+    companion object {
+      val <T: Any> RecordsOperation<T>.fileId: Int? get() = when (this) {
+        is AllocateRecord -> if (result.hasValue) result.value else null
+        is CleanRecord -> fileId
+        is FillRecord -> fileId
+        is MarkRecordAsModified -> fileId
+        is SetAttributeRecordId -> fileId
+        is SetContentRecordId -> fileId
+        is SetFlags -> fileId
+        is SetLength -> fileId
+        is SetNameId -> fileId
+        is SetParent -> fileId
+        is SetTimestamp -> fileId
+        is SetVersion -> null
+      }
+    }
   }
 
   sealed class AttributesOperation<T : Any>(tag: VfsOperationTag, result: OperationResult<T>) : VfsOperation<T>(tag, result) {
-    // TODO: maybe attribute version should also saved
-    class WriteAttribute(val fileId: Int, val attributeIdEnumerated: Int, val attrDataPayloadRef: PayloadRef, result: OperationResult<Unit>)
+    class WriteAttribute(val fileId: Int, val enumeratedAttribute: EnumeratedFileAttribute, val attrDataPayloadRef: PayloadRef, result: OperationResult<Unit>)
       : AttributesOperation<Unit>(VfsOperationTag.ATTR_WRITE_ATTR, result) {
       internal companion object : Serializer<WriteAttribute> {
-        override val valueSizeBytes: Int = Int.SIZE_BYTES * 2 + PayloadRef.SIZE_BYTES + OperationResult.SIZE_BYTES
+        override val valueSizeBytes: Int = Int.SIZE_BYTES + EnumeratedFileAttribute.SIZE_BYTES + PayloadRef.SIZE_BYTES + OperationResult.SIZE_BYTES
         override fun InputStream.deserialize(enumerator: DataEnumerator<String>): WriteAttribute =
           DataInputStream(this).run {
             val fileId = readInt()
-            val attrIdEnumerated = readInt()
+            val attrIdEnumerated = readLong().toULong()
             val payloadRef = readPayloadRef()
             val result = readResult<Unit>(enumerator)
-            return WriteAttribute(fileId, attrIdEnumerated, payloadRef, result)
+            return WriteAttribute(fileId, EnumeratedFileAttribute(attrIdEnumerated), payloadRef, result)
           }
 
         override fun OutputStream.serialize(operation: WriteAttribute, enumerator: DataEnumerator<String>): Unit = DataOutputStream(this).run {
           writeInt(operation.fileId)
-          writeInt(operation.attributeIdEnumerated)
+          writeLong(operation.enumeratedAttribute.compressedInfo.toLong())
           writePayloadRef(operation.attrDataPayloadRef)
           writeResult(operation.result, enumerator)
         }
@@ -294,7 +310,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
     }
 
     class DeleteAttributes(val fileId: Int, result: OperationResult<Unit>)
-      : RecordsOperation<Unit>(VfsOperationTag.ATTR_DELETE_ATTRS, result) {
+      : AttributesOperation<Unit>(VfsOperationTag.ATTR_DELETE_ATTRS, result) {
       internal companion object : Serializer<DeleteAttributes> {
         override val valueSizeBytes: Int = Int.SIZE_BYTES + OperationResult.SIZE_BYTES
         override fun InputStream.deserialize(enumerator: DataEnumerator<String>): DeleteAttributes =
@@ -312,7 +328,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
     }
 
     class SetVersion(val version: Int, result: OperationResult<Unit>)
-      : RecordsOperation<Unit>(VfsOperationTag.ATTR_SET_VERSION, result) {
+      : AttributesOperation<Unit>(VfsOperationTag.ATTR_SET_VERSION, result) {
       internal companion object : Serializer<AttributesOperation.SetVersion> {
         override val valueSizeBytes: Int = Int.SIZE_BYTES + OperationResult.SIZE_BYTES
         override fun InputStream.deserialize(enumerator: DataEnumerator<String>): AttributesOperation.SetVersion =
@@ -327,6 +343,14 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           writeInt(operation.version)
           writeResult(operation.result, enumerator)
         }
+      }
+    }
+
+    companion object {
+      val AttributesOperation<*>.fileId: Int? get() = when (this) {
+        is WriteAttribute -> fileId
+        is DeleteAttributes -> fileId
+        is SetVersion -> null
       }
     }
   }
@@ -506,6 +530,20 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
             writeInt(operation.version)
             writeResult(operation.result, enumerator)
           }
+      }
+    }
+
+    companion object {
+      val <T: Any> ContentsOperation<T>.contentRecordId: Int? get() = when (this) {
+        is AcquireNewRecord -> if (result.hasValue) result.value else null
+        is AcquireRecord -> recordId
+        is AppendStream -> recordId
+        is ReleaseRecord -> recordId
+        is ReplaceBytes -> recordId
+        is WriteBytes -> recordId
+        is WriteStream -> recordId
+        is WriteStream2 -> recordId
+        is SetVersion -> null
       }
     }
   }

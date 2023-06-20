@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix
 
 import com.intellij.JavaTestUtil
@@ -10,6 +10,7 @@ import com.intellij.codeInspection.reflectiveAccess.JavaLangInvokeHandleSignatur
 import com.intellij.codeInspection.reflectiveAccess.JavaLangInvokeHandleSignatureInspection.DEFAULT_SIGNATURE
 import com.intellij.codeInspection.reflectiveAccess.JavaLangInvokeHandleSignatureInspection.POSSIBLE_SIGNATURES
 import com.intellij.java.JavaBundle.message
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.ReflectiveSignature
@@ -60,6 +61,7 @@ class JavaLangInvokeMethodHandleSignatureFixTest : LightJavaCodeInsightFixtureTe
     val signature = ReflectiveSignature.create(listOf(*withSignature)) ?: ReflectiveSignature.NO_ARGUMENT_CONSTRUCTOR_SIGNATURE
 
     val lookupElements = launchAction(action, signature)
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     checkLookupElements(file, lookupElements)
     myFixture.checkResultByFile("after$testName.java")
   }

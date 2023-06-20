@@ -420,8 +420,7 @@ public interface Editor extends UserDataHolder {
    * By default, it retrieves the visible area from the scrolling pane attached to the editor component.
    * Can only be called from the EDT.
    */
-  @NotNull
-  default ProperTextRange calculateVisibleRange() {
+  default @NotNull ProperTextRange calculateVisibleRange() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     Rectangle rect = getScrollingModel().getVisibleArea();
     LogicalPosition startPosition = xyToLogicalPosition(new Point(rect.x, rect.y));

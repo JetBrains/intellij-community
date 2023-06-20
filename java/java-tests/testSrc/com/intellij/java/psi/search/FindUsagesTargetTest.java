@@ -53,6 +53,6 @@ public class FindUsagesTargetTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_17;
+    return JAVA_20;
   }
 }

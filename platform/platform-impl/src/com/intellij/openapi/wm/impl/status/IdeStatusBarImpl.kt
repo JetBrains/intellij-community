@@ -246,11 +246,17 @@ open class IdeStatusBarImpl internal constructor(
 
   @ApiStatus.Experimental
   @RequiresEdt
-  fun setCentralWidget(id: String, component: JComponent) {
-    val widget = object : StatusBarWidget {
-      override fun ID(): String = id
+  fun setCentralWidget(id: String, component: JComponent?) {
+    if (component == null) {
+      widgetMap.remove(id)
     }
-    widgetMap.put(id, WidgetBean(widget = widget, position = Position.CENTER, component = component, order = LoadingOrder.ANY))
+    else {
+      val widget = object : StatusBarWidget {
+        override fun ID(): String = id
+      }
+      widgetMap.put(id, WidgetBean(widget = widget, position = Position.CENTER, component = component, order = LoadingOrder.ANY))
+    }
+
     infoAndProgressPanel.setCentralComponent(component)
     infoAndProgressPanel.component.revalidate()
   }

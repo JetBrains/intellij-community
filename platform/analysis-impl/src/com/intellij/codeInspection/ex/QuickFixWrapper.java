@@ -225,6 +225,7 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     @Override
     public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
       if (myUnwrappedAction != null) {
+        if (myDescriptor.getStartElement() == null) return null;
         return myUnwrappedAction.getPresentation(ActionContext.from(myDescriptor));
       }
       PsiElement psiElement = myDescriptor.getPsiElement();

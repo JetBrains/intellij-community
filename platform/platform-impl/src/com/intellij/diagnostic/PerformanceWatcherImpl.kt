@@ -301,16 +301,54 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
   }
 
   private inner class FreezeCheckerTask(private val taskStart: Long) {
-    private val state = AtomicReference(CheckerState.CHECKING)
-    private val dumpTask = AtomicReference<MySamplingTask?>()
+    private val state = AtomicReference<CheckerState>(CheckerState.CHECKING)
 
     fun stop() {
-      if (state.getAndSet(CheckerState.FINISHED) != CheckerState.FREEZE) {
+      val oldState = state.getAndSet(CheckerState.FINISHED)
+      if (oldState is CheckerState.FREEZE_LOGGING) {
+        val task = oldState.dumpDask
+        stopFreezeReporting(task)
+      }
+    }
+
+    fun edtFrozen() {
+      if (!state.compareAndSet(CheckerState.CHECKING, CheckerState.FREEZE_DETECTED)) {
         return
       }
 
+      val dumpTask = startFreezeReporting()
+
+      if (!state.compareAndSet(CheckerState.FREEZE_DETECTED, CheckerState.FREEZE_LOGGING(dumpTask))) {
+        stopFreezeReporting(dumpTask)
+      }
+    }
+
+    suspend fun stopDumpingAsync() {
+      val oldState = state.getAndSet(CheckerState.FINISHED)
+      if (oldState is CheckerState.FREEZE_LOGGING) {
+        oldState.dumpDask.stopDumpingThreads()
+      }
+    }
+
+    private fun startFreezeReporting(): MySamplingTask {
+      val freezeFolder = "${THREAD_DUMPS_PREFIX}freeze-${formatTime(ZonedDateTime.now())}-${buildName()}"
+
+      //TODO always true for some reason
+      //myFreezeDuringStartup = !LoadingState.INDEXING_FINISHED.isOccurred();
+      val reportDir = logDir.resolve(freezeFolder)
+      Files.createDirectories(reportDir)
+
+      for (listener in EP_NAME.extensionList) {
+        listener.uiFreezeStarted(reportDir, coroutineScope)
+      }
+      val dumpTask = MySamplingTask(freezeFolder = freezeFolder, taskStart = taskStart)
+      publisher?.uiFreezeStarted(reportDir)
+
+      return dumpTask
+    }
+
+    private fun stopFreezeReporting(task: MySamplingTask) {
       val taskStop = System.nanoTime()
-      val task = dumpTask.getAndSet(null) ?: return
       coroutineScope.launch {
         task.stopDumpingThreads()
 
@@ -329,29 +367,6 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
           listener.uiFreezeRecorded(durationMs, reportDir)
         }
       }
-    }
-
-    fun edtFrozen() {
-      if (!state.compareAndSet(CheckerState.CHECKING, CheckerState.FREEZE)) {
-        return
-      }
-
-      val freezeFolder = "${THREAD_DUMPS_PREFIX}freeze-${formatTime(ZonedDateTime.now())}-${buildName()}"
-
-      //TODO always true for some reason
-      //myFreezeDuringStartup = !LoadingState.INDEXING_FINISHED.isOccurred();
-      val reportDir = logDir.resolve(freezeFolder)
-      Files.createDirectories(reportDir)
-
-      for (listener in EP_NAME.extensionList) {
-        listener.uiFreezeStarted(reportDir, coroutineScope)
-      }
-      dumpTask.set(MySamplingTask(freezeFolder = freezeFolder, taskStart = taskStart))
-      publisher?.uiFreezeStarted(reportDir)
-    }
-
-    suspend fun stopDumpingAsync() {
-      (dumpTask.getAndSet(null) ?: return).stopDumpingThreads()
     }
   }
 
@@ -593,8 +608,9 @@ internal fun compareStackTraceElements(el1: StackTraceElement, el2: StackTraceEl
   }
 }
 
-private enum class CheckerState {
-  CHECKING,
-  FREEZE,
-  FINISHED
+private sealed interface CheckerState {
+  object CHECKING : CheckerState
+  object FREEZE_DETECTED : CheckerState
+  class FREEZE_LOGGING(val dumpDask: PerformanceWatcherImpl.MySamplingTask) : CheckerState
+  object FINISHED : CheckerState
 }

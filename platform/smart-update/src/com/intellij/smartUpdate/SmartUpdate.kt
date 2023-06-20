@@ -5,9 +5,9 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -16,14 +16,22 @@ import com.intellij.openapi.vcs.update.CommonUpdateProjectAction
 import com.intellij.ui.dsl.builder.MutableProperty
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.MapAnnotation
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import org.jetbrains.ide.UpdateActionsListener
+import java.time.Duration
+import java.time.LocalTime
 import java.util.*
 
 @State(name = "SmartUpdateOptions", storages = [Storage(value = StoragePathMacros.WORKSPACE_FILE, roamingType = RoamingType.DISABLED)])
 @Service(Service.Level.PROJECT)
-class SmartUpdate(val project: Project) : PersistentStateComponent<SmartUpdate.Options>, Disposable {
+class SmartUpdate(val project: Project, private val coroutineScope: CoroutineScope) : PersistentStateComponent<SmartUpdate.Options>, Disposable {
 
   class Options: BaseState() {
+    var scheduled = false
+    var scheduledTime: LocalTime = LocalTime.of(6, 0)
+
     @get:MapAnnotation(surroundWithTag = false)
     var map: MutableMap<String, Boolean> by linkedMap()
     fun value(id: String) = map[id] ?: true
@@ -54,10 +62,21 @@ class SmartUpdate(val project: Project) : PersistentStateComponent<SmartUpdate.O
 
   fun execute(project: Project, e: AnActionEvent? = null) {
     executeNext(LinkedList(availableSteps().filter { options.value(it.id) }), project, e)
+    scheduleUpdate()
   }
 
   private fun executeNext(steps: Queue<SmartUpdateStep>, project: Project, e: AnActionEvent?) {
     steps.poll()?.performUpdateStep(project, e) { executeNext(steps, project, e) }
+  }
+
+  internal fun scheduleUpdate() {
+    if (!options.scheduled) return
+    coroutineScope.async {
+      var duration = Duration.between(LocalTime.now(), options.scheduledTime)
+      if (duration.isNegative) duration = duration.plusDays(1)
+      delay(duration.toMillis())
+      blockingContext { execute(project) }
+    }
   }
 
   override fun dispose() {
@@ -91,9 +110,11 @@ const val IDE_RESTARTED_KEY = "smart.update.ide.restarted"
 
 class IdeRestartedActivity: ProjectActivity {
   override suspend fun execute(project: Project) {
+    val service = project.service<SmartUpdate>()
     if (PropertiesComponent.getInstance().isTrueValue(IDE_RESTARTED_KEY)) {
       PropertiesComponent.getInstance().setValue(IDE_RESTARTED_KEY, false)
-      project.service<SmartUpdate>().execute(project)
+      service.execute(project)
     }
+    else service.scheduleUpdate()
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -51,8 +51,7 @@ public abstract class InspectionElementsMerger {
    * when one of toolNames doesn't present in the profile, default settings for that tool are expected, e.g. by default the result would be enabled with min severity WARNING
    */
   @Contract(pure = true)
-  @NonNls
-  public abstract String @NotNull [] getSourceToolNames();
+  public abstract @NonNls String @NotNull [] getSourceToolNames();
 
   /**
    * The ids to check for suppression.
@@ -60,8 +59,7 @@ public abstract class InspectionElementsMerger {
    * @return the suppressIds of the merged inspections.
    */
   @Contract(pure = true)
-  @NonNls
-  public String @NotNull [] getSuppressIds() {
+  public @NonNls String @NotNull [] getSuppressIds() {
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 

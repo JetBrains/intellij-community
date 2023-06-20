@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.ide.plugins.newui
@@ -26,10 +26,7 @@ import com.intellij.util.io.URLUtil
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.lang.ImmutableZipFile
 import com.intellij.util.ui.JBImageIcon
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.awt.GraphicsEnvironment
 import java.io.File
 import java.io.IOException
@@ -148,8 +145,17 @@ internal fun reloadPluginIcon(icon: Icon, width: Int, height: Int): Icon {
 internal fun getPluginIconFileName(light: Boolean): String = PluginManagerCore.META_INF + if (light) PLUGIN_ICON else PLUGIN_ICON_DARK
 
 private fun tryLoadIcon(zipFile: com.intellij.util.lang.ZipFile, light: Boolean): PluginLogoIconProvider? {
-  val data = zipFile.getData(getPluginIconFileName(light))
-  return if (data == null) null else loadFileIcon(data)
+  val pluginIconFileName = getPluginIconFileName(light)
+  try {
+    return zipFile.getData(pluginIconFileName)?.let { loadFileIcon(it) }
+  }
+  catch (e: CancellationException) {
+    throw e
+  }
+  catch (e: Throwable) {
+    LOG.warn("Cannot load plugin icon (zipFile=$zipFile, pluginIconFileName=$pluginIconFileName)")
+    return null
+  }
 }
 
 private fun getIdForKey(descriptor: IdeaPluginDescriptor): String {
@@ -164,15 +170,9 @@ private fun getIdForKey(descriptor: IdeaPluginDescriptor): String {
          }
 }
 
-private fun loadFileIcon(data: ByteArray): PluginLogoIconProvider? {
-  try {
-    val images = loadWithSizes(listOf(PLUGIN_ICON_SIZE, PLUGIN_ICON_SIZE_SCALED), data)
-    return HiDPIPluginLogoIcon(JBImageIcon(images.get(0)), JBImageIcon(images.get(1)))
-  }
-  catch (e: IOException) {
-    LOG.debug(e)
-    return null
-  }
+private fun loadFileIcon(data: ByteArray): PluginLogoIconProvider {
+  val images = loadWithSizes(listOf(PLUGIN_ICON_SIZE, PLUGIN_ICON_SIZE_SCALED), data)
+  return HiDPIPluginLogoIcon(JBImageIcon(images.get(0)), JBImageIcon(images.get(1)))
 }
 
 private fun loadPluginIconsFromUrl(idPlugin: String, lazyIcon: LazyPluginLogoIcon, coroutineContext: CoroutineContext) {
@@ -256,13 +256,14 @@ private fun loadPluginIconsFromFile(path: Path, idPlugin: String, lazyIcon: Lazy
 }
 
 private fun tryLoadDirIcons(idPlugin: String, lazyIcon: LazyPluginLogoIcon, path: Path): Boolean {
-  val light = tryLoadIcon(dirFile = path, light = true)
-  val dark = tryLoadIcon(dirFile = path, light = false)
-  if (light != null || dark != null) {
-    putIcon(idPlugin, lazyIcon, light, dark)
-    return true
+  val light = tryLoadIcon(path.resolve(getPluginIconFileName(light = true)))
+  val dark = tryLoadIcon(path.resolve(getPluginIconFileName(light = false)))
+  if (light == null && dark == null) {
+    return false
   }
-  return false
+
+  putIcon(idPlugin = idPlugin, lazyIcon = lazyIcon, light = light, dark = dark)
+  return true
 }
 
 private fun tryLoadJarIcons(idPlugin: String,
@@ -276,8 +277,8 @@ private fun tryLoadJarIcons(idPlugin: String,
 
   try {
     ImmutableZipFile.load(path).use { zipFile ->
-      val light = tryLoadIcon(zipFile, true)
-      val dark = tryLoadIcon(zipFile, false)
+      val light = tryLoadIcon(zipFile = zipFile, light = true)
+      val dark = tryLoadIcon(zipFile = zipFile, light = false)
       if (put || light != null || dark != null) {
         putIcon(idPlugin = idPlugin, lazyIcon = lazyIcon, light = light, dark = dark)
         return true
@@ -340,19 +341,18 @@ private fun putMissingIcon(idPlugin: String) {
   iconCache.put(idPlugin, MISSING)
 }
 
-private fun tryLoadIcon(dirFile: Path, light: Boolean): PluginLogoIconProvider? {
-  return tryLoadIcon(dirFile.resolve(getPluginIconFileName(light)))
-}
-
 private fun tryLoadIcon(iconFile: Path): PluginLogoIconProvider? {
   try {
     val data = Files.readAllBytes(iconFile)
-    return if (data.isEmpty()) null else loadFileIcon(Files.readAllBytes(iconFile))
+    return if (data.isEmpty()) null else loadFileIcon(data)
   }
   catch (ignore: NoSuchFileException) {
   }
-  catch (e: Exception) {
-    LOG.debug(e)
+  catch (e: CancellationException) {
+    throw e
+  }
+  catch (e: Throwable) {
+    LOG.warn("Cannot load plugin icon (file=$iconFile)", e)
   }
   return null
 }

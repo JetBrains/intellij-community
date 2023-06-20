@@ -23,24 +23,22 @@ internal class KtRetrievingServiceInspectionTest : RetrievingServiceInspectionTe
 
   fun testReplaceWithGetInstanceApplicationLevel() {
     myFixture.addClass(
-      //language=java
       """
       import com.intellij.openapi.application.ApplicationManager;
       import com.intellij.openapi.components.Service;
 
-      @Service(Service.Level.APP)
+      @Service
       public final class MyService {
         public static MyService getInstance() {
           return ApplicationManager.getApplication().getService(MyService.class);
         }
       }
-    """)
+      """)
     doTest(DevKitBundle.message("inspection.retrieving.service.replace.with", "MyService", "getInstance"))
   }
 
   fun testReplaceWithGetInstanceProjectLevel() {
     myFixture.addClass(
-      //language=java
       """
       import com.intellij.openapi.application.ApplicationManager;
       import com.intellij.openapi.components.Service;
@@ -52,7 +50,11 @@ internal class KtRetrievingServiceInspectionTest : RetrievingServiceInspectionTe
           return project.getService(MyService.class);
         }
       }
-    """)
+      """)
     doTest(DevKitBundle.message("inspection.retrieving.service.replace.with", "MyService", "getInstance"))
+  }
+
+  fun testUnregisteredService() {
+    doTest()
   }
 }

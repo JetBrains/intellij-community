@@ -64,9 +64,8 @@ public record ModChooseTarget<T extends @NotNull PsiElement>(@NotNull List<@NotN
                                                                             @NotNull String text,
                                                                             @NotNull TextRange range) {
       return new ListItem<T>() {
-        @NotNull
         @Override
-        public T element() {
+        public @NotNull T element() {
           return element;
         }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeHighlighting;
 
 import com.intellij.icons.AllIcons;
@@ -89,8 +89,7 @@ public class HighlightDisplayLevel {
   private Pair<? extends @NotNull Icon, ? extends @NotNull Icon> myIconPair = new Pair<>(EmptyIcon.ICON_16, EmptyIcon.ICON_16);
   private final HighlightSeverity mySeverity;
 
-  @Nullable
-  public static HighlightDisplayLevel find(String name) {
+  public static @Nullable HighlightDisplayLevel find(String name) {
     if ("NON_SWITCHABLE_ERROR".equals(name)) return NON_SWITCHABLE_ERROR;
     if ("NON_SWITCHABLE_WARNING".equals(name)) return NON_SWITCHABLE_WARNING;
     for (Map.Entry<HighlightSeverity, HighlightDisplayLevel> entry : ourMap.entrySet()) {
@@ -111,23 +110,19 @@ public class HighlightDisplayLevel {
     return mySeverity.toString();
   }
 
-  @NotNull
-  public @NonNls String getName() {
+  public @NotNull @NonNls String getName() {
     return mySeverity.getName();
   }
 
-  @NotNull
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return myIconPair.first;
   }
 
-  @NotNull
-  public Icon getOutlineIcon() {
+  public @NotNull Icon getOutlineIcon() {
     return myIconPair.second;
   }
 
-  @NotNull
-  public HighlightSeverity getSeverity(){
+  public @NotNull HighlightSeverity getSeverity(){
     return mySeverity;
   }
 
@@ -160,8 +155,7 @@ public class HighlightDisplayLevel {
     return new Pair<>(new ColorizedIcon(key, first), new ColorizedIcon(key, second));
   }
 
-  @NotNull
-  public static Icon createIconByMask(final Color renderColor) {
+  public static @NotNull Icon createIconByMask(final Color renderColor) {
     return new MyColorIcon(getEmptyIconDim(), renderColor);
   }
 
@@ -180,8 +174,7 @@ public class HighlightDisplayLevel {
     Color getColor();
   }
 
-  @Nullable
-  private static Color getColorFromAttributes(@NotNull TextAttributesKey key) {
+  private static @Nullable Color getColorFromAttributes(@NotNull TextAttributesKey key) {
     final EditorColorsManager manager = EditorColorsManager.getInstance();
     if (manager != null) {
       TextAttributes attributes = manager.getGlobalScheme().getAttributes(key);

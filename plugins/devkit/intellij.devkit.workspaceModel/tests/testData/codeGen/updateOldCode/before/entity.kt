@@ -1,7 +1,7 @@
 //new comment
 package com.intellij.workspaceModel.test.api
 
-import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 
 interface SimpleEntity : WorkspaceEntity {
   val version: Int
@@ -10,7 +10,7 @@ interface SimpleEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SimpleEntity, ModifiableWorkspaceEntity<SimpleEntity>, ObjBuilder<SimpleEntity> {
+  interface Builder : SimpleEntity, ModifiableWorkspaceEntity<SimpleEntity> {
     //obsolete
   }
 

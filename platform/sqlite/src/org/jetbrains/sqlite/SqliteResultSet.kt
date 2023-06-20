@@ -18,16 +18,14 @@ class SqliteResultSet(private val statement: SqlitePreparedStatement<*>) {
   // last column accessed, for wasNull(). -1 if none
   private var lastColumn = 0
 
-  fun close() {
+  internal fun close(db: NativeDB) {
     row = 0
     pastLastRow = false
     lastColumn = -1
     if (isOpen && !statement.pointer.isClosed) {
       val pointer = statement.pointer
       if (!pointer.isClosed) {
-        statement.connection.useDb { db ->
-          db.reset(pointer.pointer)
-        }
+        db.reset(pointer.pointer)
       }
       isOpen = false
     }
@@ -59,7 +57,7 @@ class SqliteResultSet(private val statement: SqlitePreparedStatement<*>) {
     }
 
     // do the real work
-    return when (val statusCode = statement.pointer.safeRunInt(SqliteDb::step)) {
+    return when (val statusCode = statement.pointer.safeRunInt(NativeDB::step)) {
       SqliteCodes.SQLITE_DONE -> {
         pastLastRow = true
         false

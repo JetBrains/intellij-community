@@ -1,13 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNameIdentifierOwner;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.function.BiConsumer;
 
 /**
@@ -38,6 +41,15 @@ public interface EditorUpdater {
    * @param range range to select
    */
   void select(@NotNull TextRange range);
+  
+  /**
+   * Highlight given element as a search result
+   * 
+   * @param element element to select
+   */
+  default void highlight(@NotNull PsiElement element) {
+    highlight(element, EditorColors.SEARCH_RESULT_ATTRIBUTES);
+  }
   
   /**
    * Highlight given element
@@ -74,4 +86,12 @@ public interface EditorUpdater {
    * @param ch character to find
    */
   void moveToPrevious(char ch);
+
+  /**
+   * Suggest to rename a given element
+   * 
+   * @param element element to rename
+   * @param suggestedNames names to suggest (user is free to type any other name as well)
+   */
+  void rename(@NotNull PsiNameIdentifierOwner element, @NotNull List<@NotNull String> suggestedNames);
 }

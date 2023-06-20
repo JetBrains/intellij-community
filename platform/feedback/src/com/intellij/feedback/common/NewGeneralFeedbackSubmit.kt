@@ -62,7 +62,8 @@ data class FeedbackRequestData(override val feedbackType: String,
 /**
  * Feedback request data for answers that include a detailed answer and the user's email.
  * Sent to WebTeam Backend. Stored on the AWS S3 and also submit ticket to Zendesk.
- * The created ticket will not be closed immediately, and it is assumed that a support specialist will look at it.
+ * Please note that the created ticket will be closed immediately,
+ * and it is assumed that it will be reviewed by a support specialist only if the user responds something to this ticket.
  */
 data class FeedbackRequestDataWithDetailedAnswer(val email: String,
                                                  val title: String,

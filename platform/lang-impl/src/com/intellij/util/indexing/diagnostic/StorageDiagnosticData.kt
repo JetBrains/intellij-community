@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.intellij.platform.diagnostic.telemetry.Storage
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.impl.helpers.ReentrantReadWriteLockUsageMonitor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
@@ -247,7 +247,7 @@ object StorageDiagnosticData {
   //         b) we already have monitoring of FilePageCache here, so better to keep old/new monitoring in one
   //            place for a while
   private fun setupReportingToOpenTelemetry() {
-    val otelMeter = TelemetryTracer.getMeter(Storage)
+    val otelMeter = TelemetryManager.getMeter(Storage)
 
     if (MONITOR_STORAGE_LOCK) {
       ReentrantReadWriteLockUsageMonitor(

@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -98,6 +99,7 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
     } else {
       myFixture.checkPreviewAndLaunchAction(action);
     }
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     myFixture.checkResultByFile(getRelativePath() + "/" + testName + ".after.java");
   }
 

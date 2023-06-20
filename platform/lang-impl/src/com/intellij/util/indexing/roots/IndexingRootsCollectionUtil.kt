@@ -31,12 +31,12 @@ import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.ide.virtualFile
-import com.intellij.workspaceModel.storage.EntityReference
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.platform.backend.workspace.virtualFile
+import com.intellij.platform.workspace.storage.EntityReference
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.*
 import java.util.function.Consumer
@@ -169,12 +169,14 @@ private fun isIncluded(existingFiles: NavigableMap<String, *>, path: String): Bo
   return suggestedCoveringRoot != null && OSAgnosticPathUtil.startsWith(path, suggestedCoveringRoot)
 }
 
-internal class WorkspaceIndexingRootsBuilder {
+internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Boolean) {
   private val moduleRoots: MultiMap<Module, VirtualFile> = MultiMap.create()
   private val descriptions: MutableCollection<IndexingRootsDescription> = mutableListOf()
   private val reincludedRoots: MutableCollection<VirtualFile> = HashSet()
 
-  fun <E : WorkspaceEntity> registerAddedEntity(entity: E, contributor: WorkspaceFileIndexContributor<E>, storage: EntityStorage) {
+  fun <E : WorkspaceEntity> registerAddedEntity(entity: E,
+                                                contributor: WorkspaceFileIndexContributor<E>,
+                                                storage: EntityStorage) {
     val rootData = rootData(contributor, entity, storage)
     rootData.cleanExcludedRoots()
     loadRegistrarData(rootData)
@@ -183,7 +185,7 @@ internal class WorkspaceIndexingRootsBuilder {
   private fun <E : WorkspaceEntity> rootData(contributor: WorkspaceFileIndexContributor<E>,
                                              entity: E,
                                              storage: EntityStorage): RootData<E> {
-    val registrar = MyWorkspaceFileSetRegistrar(contributor)
+    val registrar = MyWorkspaceFileSetRegistrar(contributor, ignoreModuleRoots)
     contributor.registerFileSets(entity, registrar, storage)
     return registrar.rootData
   }
@@ -201,7 +203,7 @@ internal class WorkspaceIndexingRootsBuilder {
     val oldRootData = rootData(contributor, oldEntity, storage)
     val newRootData = rootData(contributor, newEntity, storage)
 
-    val data = RootData(contributor)
+    val data = RootData(contributor, ignoreModuleRoots)
     data.moduleContents.putAllValues(diff(oldRootData.moduleContents, newRootData.moduleContents))
     data.customizedModuleContentEntities.putAllValues(newRootData.customizedModuleContentEntities)
     data.customizedModuleContentRoots.putAllValues(diff(oldRootData.customizedModuleContentRoots, newRootData.customizedModuleContentRoots))
@@ -348,7 +350,7 @@ internal class WorkspaceIndexingRootsBuilder {
     fun registerEntitiesFromContributors(project: Project,
                                          entityStorage: EntityStorage,
                                          settings: Settings = Settings.DEFAULT): WorkspaceIndexingRootsBuilder {
-      val builder = WorkspaceIndexingRootsBuilder()
+      val builder = WorkspaceIndexingRootsBuilder(!settings.collectExplicitRootsForModules)
       val contributors = (WorkspaceFileIndex.getInstance(project) as WorkspaceFileIndexImpl).contributors
       for (contributor in contributors) {
         ProgressManager.checkCanceled()
@@ -369,6 +371,8 @@ internal class WorkspaceIndexingRootsBuilder {
         }
       }
       var retainCondition: Condition<WorkspaceFileIndexContributor<*>>? = null
+      var collectExplicitRootsForModules: Boolean = true
+
       fun shouldIgnore(contributor: WorkspaceFileIndexContributor<*>): Boolean {
         val condition = retainCondition
         return condition != null && !condition.value(contributor)
@@ -377,7 +381,8 @@ internal class WorkspaceIndexingRootsBuilder {
   }
 }
 
-private class RootData<E : WorkspaceEntity>(val contributor: WorkspaceFileIndexContributor<E>) {
+private class RootData<E : WorkspaceEntity>(val contributor: WorkspaceFileIndexContributor<E>,
+                                            val ignoreModuleRoots: Boolean) {
   val moduleContents = MultiMap.create<Module, VirtualFile>()
   val customizedModuleContentEntities = MultiMap<Module, EntityReference<E>>()
   val customizedModuleContentRoots = MultiMap.createSet<EntityReference<E>, VirtualFile>()
@@ -406,12 +411,14 @@ private class RootData<E : WorkspaceEntity>(val contributor: WorkspaceFileIndexC
     fillCustomizationValues(entity, entityReference)
 
     if (customData is ModuleRelatedRootData) {
-      if (contributor is CustomizingIndexingContributor<E, *>) {
-        customizedModuleContentEntities.putValue(customData.module, entityReference)
-        customizedModuleContentRoots.putValue(entityReference, root)
-      }
-      else {
-        moduleContents.putValue(customData.module, root)
+      if (!ignoreModuleRoots) {
+        if (contributor is CustomizingIndexingContributor<E, *>) {
+          customizedModuleContentEntities.putValue(customData.module, entityReference)
+          customizedModuleContentRoots.putValue(entityReference, root)
+        }
+        else {
+          moduleContents.putValue(customData.module, root)
+        }
       }
     }
     else if (kind.isContent) {
@@ -464,9 +471,10 @@ private class RootData<E : WorkspaceEntity>(val contributor: WorkspaceFileIndexC
   }
 }
 
-private class MyWorkspaceFileSetRegistrar<E : WorkspaceEntity>(contributor: WorkspaceFileIndexContributor<E>) : WorkspaceFileSetRegistrar {
+private class MyWorkspaceFileSetRegistrar<E : WorkspaceEntity>(contributor: WorkspaceFileIndexContributor<E>,
+                                                               ignoreModuleRoots: Boolean) : WorkspaceFileSetRegistrar {
   //todo[lene] inline
-  val rootData: RootData<E> = RootData(contributor)
+  val rootData: RootData<E> = RootData(contributor, ignoreModuleRoots)
 
   override fun registerFileSet(root: VirtualFileUrl, kind: WorkspaceFileKind, entity: WorkspaceEntity, customData: WorkspaceFileSetData?) {
     rootData.registerFileSet(root, kind, entity, customData)

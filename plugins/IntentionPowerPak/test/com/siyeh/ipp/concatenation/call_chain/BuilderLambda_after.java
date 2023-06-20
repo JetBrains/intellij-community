@@ -6,7 +6,7 @@ class Test {
     Supplier<StringBuilder> supplier = () -> {
         sb.append("foo");
         sb.append("bar");
-        re<caret>turn sb;
+        return <caret>sb;
     };
   }
 }

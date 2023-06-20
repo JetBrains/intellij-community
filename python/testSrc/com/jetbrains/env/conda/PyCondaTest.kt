@@ -10,17 +10,13 @@ import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.ProjectRule
-import com.intellij.util.io.awaitExit
 import com.jetbrains.getPythonVersion
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.add.target.conda.loadLocalPythonCondaPath
 import com.jetbrains.python.sdk.add.target.conda.saveLocalPythonCondaPath
-import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
+import com.jetbrains.python.sdk.flavors.conda.*
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest.EmptyNamedEnv
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile
-import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
-import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
-import com.jetbrains.python.sdk.flavors.conda.addCondaPythonToTargetCommandLine
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert
 import org.junit.Before
@@ -96,13 +92,10 @@ internal class PyCondaTest {
     // Python version contains word "Python", LanguageLevel doesn't expect it
     val pythonVersion = getPythonVersion(condaEnv).trimStart { !it.isDigit() && it != '.' }
     Assert.assertEquals("Wrong python version installed", languageLevel, LanguageLevel.fromPythonVersion(pythonVersion))
-
-    Runtime.getRuntime().exec(
-      arrayOf(condaRule.condaPath.toString(), "remove", "--name", condaEnv.envIdentity.userReadableName, "--all", "-y")).awaitExit()
   }
 
   @Test
-  fun testCondaCreateEnv(): Unit = runTest {
+  fun testCondaCreateEnv(): Unit = runTest(timeout = 20.seconds) {
     val envName = "myNewEnvForTests"
     PyCondaEnv.createEnv(condaRule.condaCommand,
                          EmptyNamedEnv(LanguageLevel.PYTHON39, envName)).mapFlat { it.getResultStdout() }
@@ -130,7 +123,27 @@ internal class PyCondaTest {
         baseFound = true
       }
     }
-    Assert.assertTrue("No base conda found", baseFound);
+    Assert.assertTrue("No base conda found", baseFound)
+  }
+
+  @Test
+  fun testCondaListUnnamedEnvs(): Unit = runTest {
+    val envsDirs = Path.of(PyCondaEnv.getEnvsDirs(condaRule.commandExecutor, condaRule.condaPathOnTarget).getOrThrow().first())
+    val childDir = envsDirs.resolve("child")
+    val childEnvPrefix = childDir.resolve("childEnv").toString()
+    val siblingDir = envsDirs.resolveSibling("${envsDirs.fileName}Sibling")
+    val siblingEnvPrefix = siblingDir.resolve("siblingEnv").toString()
+
+    PyCondaEnv.createEnv(condaRule.condaCommand, NewCondaEnvRequest.EmptyUnnamedEnv(LanguageLevel.PYTHON39, childEnvPrefix)).mapFlat { it.getResultStdout() }
+    PyCondaEnv.createEnv(condaRule.condaCommand, NewCondaEnvRequest.EmptyUnnamedEnv(LanguageLevel.PYTHON39, siblingEnvPrefix)).mapFlat { it.getResultStdout() }
+
+    // Important to check that envIdentity is UnnamedEnv as this is testing to make sure that
+    // getEnvs doesn't mistakenly return a NamedEnv for an environment that isn't a direct child of envsDirs
+    val envs = PyCondaEnv.getEnvs(condaRule.commandExecutor, condaRule.condaPathOnTarget).getOrThrow()
+          .map { it.envIdentity }
+          .filterIsInstance<PyCondaEnvIdentity.UnnamedEnv>()
+    Assert.assertTrue("No child $childEnvPrefix in $envs", envs.any { it.envPath == childEnvPrefix })
+    Assert.assertTrue("No sibling $siblingEnvPrefix in $envs", envs.any { it.envPath == siblingEnvPrefix })
   }
 
   private suspend fun getPythonVersion(condaEnv: PyCondaEnv): String {

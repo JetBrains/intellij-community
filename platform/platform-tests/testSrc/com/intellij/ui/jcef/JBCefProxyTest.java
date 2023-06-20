@@ -40,7 +40,7 @@ public class JBCefProxyTest {
     assertTrue("cannot parse proxy settings: '" + proxySettings + "'", matcher.matches() && matcher.groupCount() == 4);
 
     var proxyPort = Integer.parseInt(matcher.group(4));
-    JBCefProxySettings.setTestInstance(true, false, false, null, matcher.group(3), proxyPort, null, true, matcher.group(1),
+    JBCefProxySettings.setTestInstance(true, false, false, false, null, matcher.group(3), proxyPort, null, true, matcher.group(1),
                                        matcher.group(2));
   }
 

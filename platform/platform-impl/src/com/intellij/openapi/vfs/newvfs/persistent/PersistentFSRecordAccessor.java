@@ -8,6 +8,7 @@ import com.intellij.util.TimeoutUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntLists;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +27,8 @@ import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Flags.FREE
  * free-list. That free-list is not utilized for re-use, but for various sanity-checking activities
  * during the testing.
  */
-final class PersistentFSRecordAccessor {
+@ApiStatus.Internal
+public final class PersistentFSRecordAccessor {
   private static final Logger LOG = Logger.getInstance(PersistentFSRecordAccessor.class);
 
   @NotNull

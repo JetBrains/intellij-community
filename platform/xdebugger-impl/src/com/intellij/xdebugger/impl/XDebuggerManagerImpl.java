@@ -97,7 +97,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
   private XDebuggerState myState = new XDebuggerState();
 
-  public XDebuggerManagerImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
+  XDebuggerManagerImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     myProject = project;
 
     MessageBusConnection messageBusConnection = project.getMessageBus().connect(this);

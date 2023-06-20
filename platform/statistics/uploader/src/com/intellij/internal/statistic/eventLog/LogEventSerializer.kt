@@ -213,7 +213,7 @@ class LogEventJsonDeserializer : JsonDeserializer<LogEvent>() {
     return LogEvent(session, build, bucket, time, LogEventGroup(groupId, groupVersion), recorderVersion, action)
   }
 
-  private fun transformData(value: Any): Any {
+  private fun transformData(value: JsonNode): Any {
     return when (value) {
       is TextNode -> value.textValue()
       is LongNode -> value.longValue()

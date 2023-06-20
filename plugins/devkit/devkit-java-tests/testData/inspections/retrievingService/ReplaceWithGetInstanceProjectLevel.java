@@ -9,6 +9,6 @@ final class MyService {
   }
 
   void foo(Project project) {
-    MyService service = <weak_warning descr="Can be replaced with 'MyService.getInstance()' call">project.getService<caret>(MyService.class)</weak_warning>;
+    MyService service = project.<weak_warning descr="Can be replaced with 'MyService.getInstance()' call">get<caret>Service</weak_warning>(MyService.class);
   }
 }

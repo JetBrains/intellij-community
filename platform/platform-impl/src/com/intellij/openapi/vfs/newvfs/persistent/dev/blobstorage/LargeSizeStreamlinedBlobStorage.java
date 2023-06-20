@@ -4,7 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.LargeBlobStorageRecordLayout.ActualRecords.LargeRecord;
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.DirectBufferWrapper;
 import com.intellij.util.io.PagedFileStorage;
@@ -1140,7 +1140,7 @@ public class LargeSizeStreamlinedBlobStorage implements StreamlinedBlobStorage {
 
   @NotNull
   private BatchCallback setupReportingToOpenTelemetry(final Path fileName) {
-    final Meter meter = TelemetryTracer.getMeter(Storage);
+    final Meter meter = TelemetryManager.getMeter(Storage);
 
     final var recordsAllocated = meter.counterBuilder("StreamlinedBlobStorage.recordsAllocated").buildObserver();
     final var recordsRelocated = meter.counterBuilder("StreamlinedBlobStorage.recordsRelocated").buildObserver();

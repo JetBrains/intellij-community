@@ -25,15 +25,14 @@ import java.util.*
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
+private val ASYNC_LOADER = Key.create<AsyncEditorLoader>("ASYNC_LOADER")
+
 class AsyncEditorLoader internal constructor(private val project: Project,
                                              private val provider: TextEditorProvider,
                                              private val coroutineScope: CoroutineScope) {
   private val delayedActions = ArrayDeque<Runnable>()
 
   companion object {
-    private val ASYNC_LOADER = Key.create<AsyncEditorLoader>("ASYNC_LOADER")
-    private val LOG = logger<AsyncEditorLoader>()
-
     @JvmStatic
     @RequiresEdt
     fun performWhenLoaded(editor: Editor, runnable: Runnable) {
@@ -114,7 +113,7 @@ class AsyncEditorLoader internal constructor(private val project: Project,
 
     runCatching {
       continuation.run()
-    }.getOrLogException(LOG)
+    }.getOrLogException(logger<AsyncEditorLoader>())
 
     editor.scrollingModel.disableAnimation()
     try {

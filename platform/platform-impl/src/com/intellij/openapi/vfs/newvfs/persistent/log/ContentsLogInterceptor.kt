@@ -28,16 +28,16 @@ class ContentsLogInterceptor(
       val sdo = underlying(record)
       object : IStorageDataOutput by sdo {
         override fun close() {
-          { sdo.close() } catchResult ::interceptClose
+          val data = sdo.asByteArraySequence().toBytes();
+          { sdo.close() } catchResult { interceptClose(data, it) }
         }
 
-        private fun interceptClose(result: OperationResult<Unit>) {
-          val data = sdo.asByteArraySequence().toBytes()
+        private fun interceptClose(data: ByteArray, result: OperationResult<Unit>) {
           context.enqueueOperationWrite(VfsOperationTag.CONTENT_WRITE_STREAM) {
             val payloadRef = payloadStorage.writePayload(data.size.toLong()) {
               write(data, 0, data.size)
             }
-            VfsOperation.ContentsOperation.WriteStream(recordId, payloadRef, result)
+            VfsOperation.ContentsOperation.WriteStream(record, payloadRef, result)
           }
         }
       }
@@ -57,7 +57,7 @@ class ContentsLogInterceptor(
             val payloadRef = payloadStorage.writePayload(data.size.toLong()) {
               write(data, 0, data.size)
             }
-            VfsOperation.ContentsOperation.WriteStream2(recordId, fixedSize, payloadRef, result)
+            VfsOperation.ContentsOperation.WriteStream2(record, fixedSize, payloadRef, result)
           }
         }
       }

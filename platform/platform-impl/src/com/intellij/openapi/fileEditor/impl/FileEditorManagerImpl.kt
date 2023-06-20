@@ -1037,7 +1037,7 @@ open class FileEditorManagerImpl(
     return coroutineScope {
       val providers: List<kotlin.Pair<FileEditorProvider, AsyncFileEditorProvider.Builder?>>
       if (existingComposite == null) {
-        if (!canOpenFile(file)) {
+        if (!canOpenFileAsync(file)) {
           return@coroutineScope FileEditorComposite.EMPTY
         }
 
@@ -1523,7 +1523,9 @@ open class FileEditorManagerImpl(
   }
 
   @RequiresEdt
-  override fun getEditors(file: VirtualFile): Array<FileEditor> = getComposite(file)?.allEditors?.toTypedArray() ?: FileEditor.EMPTY_ARRAY
+  final override fun getEditors(file: VirtualFile): Array<FileEditor> = getComposite(file)?.allEditors?.toTypedArray() ?: FileEditor.EMPTY_ARRAY
+
+  final override fun getEditorList(file: VirtualFile): List<FileEditor> = getComposite(file)?.allEditors ?: emptyList()
 
   override fun getAllEditors(file: VirtualFile): Array<FileEditor> {
     val result = ArrayList<FileEditor>()

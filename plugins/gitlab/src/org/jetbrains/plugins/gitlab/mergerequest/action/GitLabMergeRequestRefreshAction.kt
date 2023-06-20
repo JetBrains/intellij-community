@@ -4,19 +4,19 @@ package org.jetbrains.plugins.gitlab.mergerequest.action
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
+import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 internal class GitLabMergeRequestRefreshAction : DumbAwareAction(GitLabBundle.message("merge.request.refresh")) {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
-    val mergeRequest: GitLabMergeRequest? = e.getData(GitLabMergeRequestsActionKeys.MERGE_REQUEST)
-    e.presentation.isEnabled = mergeRequest != null
+    val ctrl = e.getData(GitLabMergeRequestViewModel.DATA_KEY)
+    e.presentation.isEnabled = ctrl != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val mergeRequest: GitLabMergeRequest = e.getRequiredData(GitLabMergeRequestsActionKeys.MERGE_REQUEST)
-    mergeRequest.refreshData()
+    val ctrl = e.getRequiredData(GitLabMergeRequestViewModel.DATA_KEY)
+    ctrl.refreshData()
   }
 }

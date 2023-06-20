@@ -6,8 +6,6 @@ import java.nio.ByteBuffer
 import java.nio.MappedByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.channels.FileChannel.MapMode
-import kotlin.math.max
-import kotlin.math.min
 
 class ChunkMMappedFileIO(
   private val fileChannel: FileChannel,
@@ -24,14 +22,14 @@ class ChunkMMappedFileIO(
                                           body: (processedBytesBefore: Int, chunkId: Int, chunkOffset: Int, len: Int) -> Unit) {
     if (length == 0) return
     var chunkId = getChunkIdForByte(position)
-    val targetRange = position until position + length
+    val endPosition = position + length
     var processed = 0
-    while (true) {
-      val chunkRange = getChunkRange(chunkId)
-      val toProcessRange = targetRange.cap(chunkRange)
-      if (toProcessRange == null) return
-      val len = (toProcessRange.last - toProcessRange.first + 1).toInt()
-      body(processed, chunkId, (toProcessRange.first % CHUNK_SIZE).toInt(), len)
+    while (firstByteOf(chunkId) < endPosition) {
+      val toProcessStart = firstByteOf(chunkId).coerceAtLeast(position)
+      val toProcessEnd = byteAfterLastOf(chunkId).coerceAtMost(endPosition)
+      val len = (toProcessEnd - toProcessStart).toInt()
+      assert(len > 0)
+      body(processed, chunkId, (toProcessStart % CHUNK_SIZE).toInt(), len)
       processed += len
       chunkId++
     }
@@ -54,8 +52,8 @@ class ChunkMMappedFileIO(
 
   private fun readChunkConfined(chunkId: Int, chunkOffset: Int, buf: ByteArray, offset: Int, length: Int) {
     assert(0 <= chunkOffset && chunkOffset + length <= CHUNK_SIZE)
-    val p = chunks.getOrCreate(chunkId)
-    p.get(chunkOffset, buf, offset, length)
+    val chunk = chunks.getOrCreate(chunkId)
+    chunk.get(chunkOffset, buf, offset, length)
   }
 
   override fun read(position: Long, buf: ByteArray, offset: Int, length: Int) {
@@ -70,20 +68,8 @@ class ChunkMMappedFileIO(
     return p.toInt()
   }
 
-  private fun getChunkRange(piece: Int): LongRange {
-    return (piece * CHUNK_SIZE) until (piece + 1) * CHUNK_SIZE
-  }
-
-  /**
-   * Intersection of two ranges
-   */
-  private fun LongRange.cap(other: LongRange): LongRange? {
-    assert(first <= last && other.first <= other.last)
-    if (last < other.first || other.last < first) {
-      return null
-    }
-    return max(first, other.first)..min(last, other.last)
-  }
+  private fun firstByteOf(chunkId: Int): Long = chunkId * CHUNK_SIZE
+  private fun byteAfterLastOf(chunkId: Int): Long = (chunkId + 1) * CHUNK_SIZE
 
   override fun isDirty(): Nothing = throw UnsupportedOperationException("unexpected call")
 
@@ -94,8 +80,8 @@ class ChunkMMappedFileIO(
   }
 
   override fun close() {
-    chunks.close()
     fileChannel.close()
+    chunks.close()
   }
 
   override fun offsetOutputStream(startPosition: Long): OffsetOutputStream = OffsetOutputStream(this, startPosition)

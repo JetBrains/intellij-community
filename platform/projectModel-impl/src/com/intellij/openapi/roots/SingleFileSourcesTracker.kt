@@ -3,14 +3,9 @@ package com.intellij.openapi.roots
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.isFile
 import com.intellij.workspaceModel.ide.*
-import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 
 /**
  * Inside IntelliJ platform, a source root is usually referred to as a source directory containing source code.

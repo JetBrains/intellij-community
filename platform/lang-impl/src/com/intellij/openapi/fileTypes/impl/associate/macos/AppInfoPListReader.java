@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl.associate.macos;
 
 import com.intellij.openapi.application.PathManager;
@@ -13,11 +13,10 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.IOException;
+
+import static com.intellij.util.JavaXmlDocumentKt.createDocumentBuilder;
 
 class AppInfoPListReader {
   private final static String BUNDLE_IDENTIFIER = "CFBundleIdentifier";
@@ -70,13 +69,8 @@ class AppInfoPListReader {
   }
 
   void loadPList() throws OSFileAssociationException {
-    DocumentBuilderFactory factory = DocumentBuilderFactory.newDefaultInstance();
     try {
-      DocumentBuilder builder = factory.newDocumentBuilder();
-      myDocument = builder.parse(getInfoPListFile());
-    }
-    catch (ParserConfigurationException e) {
-      LOG.error(e);
+      myDocument = createDocumentBuilder().parse(getInfoPListFile());
     }
     catch (SAXException | IOException e) {
       throw new OSFileAssociationException("Error reading Info.plist: " + e.getMessage());

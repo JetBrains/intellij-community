@@ -27,8 +27,7 @@ public abstract class ModCommandQuickFix implements LocalQuickFix {
    * @param descriptor problem reported by the tool which provided this quick fix action
    * @return a command to be applied to finally execute the fix.
    */
-  @NotNull
-  public abstract ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor);
+  public abstract @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor);
   
   @Override
   public final boolean startInWriteAction() {
@@ -48,7 +47,13 @@ public abstract class ModCommandQuickFix implements LocalQuickFix {
   @Override
   public final void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     ModCommand command = perform(project, descriptor);
-    command.execute(project);
+    ModCommandService.getInstance().executeInteractively(project, command);
+  }
+
+  @Override
+  public final void applyFixNonInteractively(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    ModCommand command = perform(project, descriptor);
+    ModCommandService.getInstance().executeInBatch(project, command);
   }
 
   @Override

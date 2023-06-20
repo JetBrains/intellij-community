@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.LineNumberConverterAdapter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.components.panels.Wrapper;
 import it.unimi.dsi.fastutil.ints.IntListIterator;
@@ -117,7 +116,7 @@ final class PatchDiffTool implements FrameDiffTool {
 
       for (IntListIterator iterator = builder.getSeparatorLines().iterator(); iterator.hasNext(); ) {
         int offset = patchDocument.getLineStartOffset(iterator.nextInt());
-        DiffDrawUtil.createLineSeparatorHighlighter(myEditor, offset, offset, BooleanGetter.TRUE);
+        DiffDrawUtil.createLineSeparatorHighlighter(myEditor, offset, offset);
       }
 
       // highlighting

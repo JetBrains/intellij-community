@@ -3,7 +3,7 @@ package com.intellij.openapi.module
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 
 interface AutomaticModuleUnloader {
   fun processNewModules(currentModules: Set<String>, builder: MutableEntityStorage, unloadedEntityBuilder: MutableEntityStorage)

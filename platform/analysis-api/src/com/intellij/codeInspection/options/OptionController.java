@@ -296,8 +296,7 @@ public interface OptionController {
     );
   }
 
-  @NotNull
-  private static Field getField(@NotNull Object obj, String bindId, int dot) {
+  private static @NotNull Field getField(@NotNull Object obj, String bindId, int dot) {
     String fieldName = dot >= 0 ? bindId.substring(0, dot) : bindId;
     Field field;
     try {

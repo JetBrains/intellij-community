@@ -4,5 +4,5 @@ package com.intellij.platform.diagnostic.telemetry
 import io.opentelemetry.api.metrics.Meter
 
 
-fun Scope.meter(): Meter = TelemetryTracer.getInstance().getMeter(this.toString())
-fun Scope.tracer(verbose: Boolean): IJTracer = TelemetryTracer.getInstance().getTracer(this.toString(), verbose)
+fun Scope.meter(): Meter = TelemetryManager.getInstance().getMeter(this.toString())
+fun Scope.tracer(verbose: Boolean): IJTracer = TelemetryManager.getInstance().getTracer(this.toString(), verbose)

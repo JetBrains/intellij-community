@@ -26,7 +26,7 @@ interface ModuleContentOrigin : ContentOrigin {
 
 interface ModuleRootOrigin : ModuleContentOrigin {
   override val module: Module
-  val roots: List<VirtualFile>
+  val roots: List<VirtualFile>?
 }
 
 interface LibraryOrigin : IndexableSetOrigin {

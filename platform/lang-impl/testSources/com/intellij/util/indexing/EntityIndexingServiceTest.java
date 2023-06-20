@@ -17,20 +17,19 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods;
 import com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId;
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId;
+import com.intellij.platform.workspace.jps.entities.LibraryId;
+import com.intellij.platform.workspace.jps.entities.LibraryTableId;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 
 public class EntityIndexingServiceTest extends EntityIndexingServiceTestBase {
 
   public void testIndexingModule() throws Exception {
     doTest(this::createModuleAndSourceRoot, this::removeModule,
-           pair -> IndexableEntityProviderMethods.INSTANCE.createIterators(pair.getFirst(), Collections.singletonList(pair.getSecond())));
+           pair -> IndexableEntityProviderMethods.INSTANCE.createModuleContentIterators(pair.getFirst()));
   }
 
   @NotNull

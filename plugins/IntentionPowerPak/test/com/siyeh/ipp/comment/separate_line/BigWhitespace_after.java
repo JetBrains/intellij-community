@@ -4,6 +4,6 @@ class A {
 
 
 
-  // not b
+  <caret>// not b
   String a;
 }

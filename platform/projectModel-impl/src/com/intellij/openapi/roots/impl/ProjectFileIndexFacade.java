@@ -47,6 +47,11 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
   }
 
   @Override
+  public boolean isInLibrary(@NotNull VirtualFile file) {
+    return myFileIndex.isInLibrary(file);
+  }
+
+  @Override
   public boolean isInLibraryClasses(@NotNull VirtualFile file) {
     return myFileIndex.isInLibraryClasses(file);
   }
