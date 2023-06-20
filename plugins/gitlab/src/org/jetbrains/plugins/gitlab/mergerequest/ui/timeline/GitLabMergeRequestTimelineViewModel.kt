@@ -12,6 +12,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
+import org.jetbrains.plugins.gitlab.mergerequest.diff.ChangesSelection
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.DelegatingGitLabNoteEditingViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
@@ -66,8 +67,8 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
       null
     }
 
-  private val _diffRequests = MutableSharedFlow<GitLabDiscussionDiffViewModel.FullDiffRequest>()
-  val diffRequests: Flow<GitLabDiscussionDiffViewModel.FullDiffRequest> = _diffRequests.asSharedFlow()
+  private val _diffRequests = MutableSharedFlow<ChangesSelection.Single>()
+  val diffRequests: Flow<ChangesSelection.Single> = _diffRequests.asSharedFlow()
 
   override fun refreshData() {
     cs.launchNow {
@@ -123,7 +124,7 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
 @OptIn(ExperimentalCoroutinesApi::class)
 private fun CoroutineScope.handleDiffRequests(
   diffVm: Flow<GitLabDiscussionDiffViewModel?>,
-  handler: suspend (GitLabDiscussionDiffViewModel.FullDiffRequest) -> Unit
+  handler: suspend (ChangesSelection.Single) -> Unit
 ) {
   launch(start = CoroutineStart.UNDISPATCHED) {
     diffVm

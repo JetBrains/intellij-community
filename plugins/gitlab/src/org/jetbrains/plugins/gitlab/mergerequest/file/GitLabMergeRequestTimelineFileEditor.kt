@@ -76,8 +76,8 @@ internal class GitLabMergeRequestTimelineFileEditor(private val project: Project
               wrapper.setContent(timeline)
               wrapper.repaint()
 
-              it.diffRequests.collect { (change, location) ->
-                diffBridge.setChanges(ChangesSelection.Single(listOf(change), 0, location))
+              it.diffRequests.collect { change->
+                diffBridge.setChanges(change)
                 ctx.filesController.openDiff(file.mergeRequestId, true)
               }
             },
