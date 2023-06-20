@@ -3444,8 +3444,8 @@ public final class HighlightUtil {
     PsiElement refGrandParent = referenceList.getParent();
     if (resolved instanceof PsiClass aClass) {
       if (refGrandParent instanceof PsiClass parentClass) {
-        if (refGrandParent instanceof PsiTypeParameter) {
-          builder = GenericsHighlightUtil.checkElementInTypeParameterExtendsList(referenceList, parentClass, resolveResult, ref);
+        if (refGrandParent instanceof PsiTypeParameter typeParameter) {
+          builder = GenericsHighlightUtil.checkElementInTypeParameterExtendsList(referenceList, typeParameter, resolveResult, ref);
         }
         else if (referenceList.equals(parentClass.getImplementsList()) ||
                  referenceList.equals(parentClass.getExtendsList())) {
