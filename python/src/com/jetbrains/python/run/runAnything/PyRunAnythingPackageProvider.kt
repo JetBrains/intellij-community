@@ -27,8 +27,8 @@ abstract class PyRunAnythingPackageProvider : RunAnythingCommandLineProvider() {
       return getDefaultCommands()
     }
     val isInstall = commandLine.command.startsWith("install")
-    val isUninstall = commandLine.command.startsWith("uninstall")
-    if ((isInstall || isUninstall) &&
+    val updateExisting = commandUpdatingExisting(commandLine.command)
+    if ((isInstall || updateExisting) &&
         shouldCompletePackageNames(commandLine.parameters, commandLine.toComplete)) {
       val packageManager = getPackageManager(dataContext) ?: return emptySequence()
       initCaches(packageManager)
@@ -69,6 +69,11 @@ abstract class PyRunAnythingPackageProvider : RunAnythingCommandLineProvider() {
     if (!cacheInitialized.getAndSet(true)) {
       runBlockingCancellable { packageManager.repositoryManager.initCaches() }
     }
+  }
+
+  private fun commandUpdatingExisting(command: String): Boolean {
+    return command.startsWith("uninstall") || command.startsWith("remove") || command.startsWith("upgrade")
+           || command.startsWith("update")
   }
 
   private fun getCompOperatorPosition(param: String): Pair<Int?, String?> {
