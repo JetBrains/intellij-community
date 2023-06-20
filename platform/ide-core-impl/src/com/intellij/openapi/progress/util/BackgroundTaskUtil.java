@@ -280,27 +280,39 @@ public final class BackgroundTaskUtil {
                                                                      @NotNull @NlsSafe String taskName,
                                                                      @NotNull Disposable parent) {
     ProgressIndicator indicator = new EmptyProgressIndicator();
-    indicator.start();
-    CompletableFuture<T> future = CompletableFuture.supplyAsync(() -> ProgressManager.getInstance().runProcess(task, indicator), executor);
 
+    AtomicReference<Future<?>> futureRef = new AtomicReference<>();
     Disposable disposable = () -> {
       if (indicator.isRunning()) {
         indicator.cancel();
       }
-      tryAwaitFuture(future, taskName); // git a task chance to finish in sync
+
+      Future<?> future = futureRef.get();
+      if (future != null) {
+        tryAwaitFuture(future, taskName); // give a task chance to finish in sync
+      }
     };
 
-    if (!registerIfParentNotDisposed(parent, disposable)) {
-      indicator.cancel();
-    }
-    else {
-      future.whenComplete((o, e) -> Disposer.dispose(disposable));
-    }
+    CompletableFuture<T> future = CompletableFuture.supplyAsync(() -> {
+      try {
+        return ProgressManager.getInstance().runProcess(() -> {
+          if (!registerIfParentNotDisposed(parent, disposable)) {
+            throw new ProcessCanceledException();
+          }
+
+          return task.compute();
+        }, indicator);
+      }
+      finally {
+        Disposer.dispose(disposable);
+      }
+    }, executor);
+    futureRef.set(future);
 
     return new BackgroundTask<>(parent, indicator, future);
   }
 
-  private static <T> void tryAwaitFuture(@NotNull CompletableFuture<T> future, @NotNull @NlsSafe String taskName) {
+  private static void tryAwaitFuture(@NotNull Future<?> future, @NotNull @NlsSafe String taskName) {
     try {
       future.get(1, TimeUnit.SECONDS);
     }
