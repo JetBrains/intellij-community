@@ -6,6 +6,7 @@ import com.intellij.diagnostic.AbstractMessage
 import com.intellij.diagnostic.MessagePool
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter.Companion.logStats
+import com.intellij.driver.impl.InvokerMBean
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.ide.lightEdit.LightEditService
@@ -119,6 +120,10 @@ class ProjectLoaded : InitProjectActivityJavaShim(), ApplicationInitializedListe
   }
 
   override suspend fun execute(asyncScope: CoroutineScope) {
+    if (System.getProperty("com.sun.management.jmxremote") == "true") {
+      InvokerMBean.register()
+    }
+
     if (ApplicationManagerEx.getApplicationEx().isLightEditMode) {
       LightEditService.getInstance().editorManager.addListener(object : LightEditorListener {
         override fun afterSelect(editorInfo: LightEditorInfo?) {
