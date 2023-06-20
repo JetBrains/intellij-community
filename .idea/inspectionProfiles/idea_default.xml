@@ -1874,6 +1874,30 @@
         <constraint name="s1" nameOfExprType="java\.lang\.String" within="" contains="" />
         <constraint name="s2" nameOfExprType="java\.lang\.String" within="" contains="" />
       </replaceConfiguration>
+      <replaceConfiguration name="Use explicit function to cast as SwiftExpression" description="Instances of SwiftExpression might still be a statement.&#10;Please be more explicit in what you are interested in by using either:&#10; - asSwiftExpressionThatMightBeStatement()&#10; - asSwiftExpression()&#10; - asSwiftExpressionThatIsNotUsedAsStatement()" suppressId="swift.explicit.expression.as" problemDescriptor="Use explicit function to cast as SwiftExpression" text="$ref$ as SwiftExpression" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$ref$.asSwiftExpression()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ref" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use explicit function to cast as SwiftExpression" text="$ref$ as? SwiftExpression" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$ref$.asSwiftExpression()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ref" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use explicit function to cast as SwiftExpression" text="$ref$.asSafely&lt;SwiftExpression&gt;()" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$ref$.asSwiftExpression()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ref" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use explicit function to cast as SwiftExpression" text="$ref$?.asSafely&lt;SwiftExpression&gt;()" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$ref$.asSwiftExpression()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ref" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use explicit function to cast SwiftExpression" description="Instances of SwiftExpression might still be a statement.&#10;Please be more explicit in what you are interested in by using either:&#10; - isSwiftExpressionThatMightBeStatement()&#10; - isSwiftExpression()&#10; - isSwiftExpressionThatIsNotUsedAsStatement()" suppressId="swift.explicit.expression.is" problemDescriptor="Use explicit function to cast SwiftExpression" text="$ref$ is SwiftExpression" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$ref$.isSwiftExpression()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ref" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use explicit function to cast SwiftExpression" text="$ref$ instanceof SwiftExpression" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="SwiftBranchStatementKt.isSwiftExpression($ref$, null)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ref" within="" contains="" />
+      </replaceConfiguration>
       <replaceConfiguration name="use explicit toArray() method" text="com.intellij.util.ArrayUtil.toObjectArray($collection$, $class$.class)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="$collection$.toArray(new $class$[0])">
         <constraint name="__context__" within="" contains="" />
         <constraint name="class" within="" contains="" />
