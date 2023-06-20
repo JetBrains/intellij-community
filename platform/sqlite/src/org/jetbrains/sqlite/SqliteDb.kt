@@ -77,15 +77,6 @@ internal abstract class SqliteDb {
   abstract fun errmsg(): String?
 
   /**
-   * Returns the value for SQLITE_VERSION, SQLITE_VERSION_NUMBER, and SQLITE_SOURCE_ID C
-   * preprocessor macros that are associated with the library.
-   *
-   * @see [http://www.sqlite.org/c3ref/c_source_id.html](http://www.sqlite.org/c3ref/c_source_id.html)
-   */
-  @Suppress("SpellCheckingInspection")
-  abstract fun libversion(): String
-
-  /**
    * @return Number of rows that were changed, inserted or deleted by the last SQL statement
    * @see [http://www.sqlite.org/c3ref/changes.html](http://www.sqlite.org/c3ref/changes.html)
    */
@@ -97,15 +88,6 @@ internal abstract class SqliteDb {
    * @see [http://www.sqlite.org/c3ref/total_changes.html](http://www.sqlite.org/c3ref/total_changes.html)
    */
   abstract fun total_changes(): Long
-
-  /**
-   * Enables or disables loading of SQLite extensions.
-   *
-   * @param enable True to enable; false otherwise.
-   * @return [Result Codes](http://www.sqlite.org/c3ref/c_abort.html)
-   * @see [http://www.sqlite.org/c3ref/load_extension.html](http://www.sqlite.org/c3ref/load_extension.html)
-   */
-  abstract fun enable_load_extension(enable: Boolean): Int
 
   /**
    * Execute an SQL statement using the process of compiling, evaluating, and destroying the prepared statement object.
@@ -270,60 +252,6 @@ internal abstract class SqliteDb {
   abstract fun bind_double(stmt: Long, oneBasedColumnIndex: Int, v: Double): Int
   abstract fun bind_text(stmt: Long, oneBasedColumnIndex: Int, v: String): Int
   abstract fun bind_blob(stmt: Long, oneBasedColumnIndex: Int, v: ByteArray?): Int
-
-  /**
-   * @param dbName       Database name to be backed up.
-   * @param destFileName Target backup file name.
-   * @param observer     ProgressObserver object.
-   * @return [Result Codes](http://www.sqlite.org/c3ref/c_abort.html)
-   */
-  abstract fun backup(dbName: String, destFileName: String, observer: ProgressObserver?): Int
-
-  /**
-   * @param dbName          Database name to be backed up.
-   * @param destFileName    Target backup file name.
-   * @param observer        ProgressObserver object.
-   * @param sleepTimeMillis time to wait during a backup/restore operation if sqlite3_backup_step
-   * returns SQLITE_BUSY before continuing
-   * @param nTimeouts       the number of times sqlite3_backup_step can return SQLITE_BUSY before
-   * failing
-   * @param pagesPerStep    the number of pages to copy in each sqlite3_backup_step. If this is
-   * negative, the entire DB is copied at once.
-   * @return [Result Codes](http://www.sqlite.org/c3ref/c_abort.html)
-   */
-  abstract fun backup(dbName: String,
-                      destFileName: String,
-                      observer: ProgressObserver?,
-                      sleepTimeMillis: Int,
-                      nTimeouts: Int,
-                      pagesPerStep: Int): Int
-
-  /**
-   * @param dbName         Database name for restoring data.
-   * @param sourceFileName Source file name.
-   * @param observer       ProgressObserver object.
-   * @return [Result Codes](http://www.sqlite.org/c3ref/c_abort.html)
-   */
-  abstract fun restore(dbName: String, sourceFileName: String, observer: ProgressObserver?): Int
-
-  /**
-   * @param dbName          the name of the db to restore
-   * @param sourceFileName  the filename of the source db to restore
-   * @param observer        ProgressObserver object.
-   * @param sleepTimeMillis time to wait during a backup/restore operation if sqlite3_backup_step
-   * returns SQLITE_BUSY before continuing
-   * @param nTimeouts       the number of times sqlite3_backup_step can return SQLITE_BUSY before
-   * failing
-   * @param pagesPerStep    the number of pages to copy in each sqlite3_backup_step. If this is
-   * negative, the entire DB is copied at once.
-   * @return [Result Codes](http://www.sqlite.org/c3ref/c_abort.html)
-   */
-  abstract fun restore(dbName: String,
-                       sourceFileName: String,
-                       observer: ProgressObserver?,
-                       sleepTimeMillis: Int,
-                       nTimeouts: Int,
-                       pagesPerStep: Int): Int
 
   /**
    * @param id    The id of the limit.

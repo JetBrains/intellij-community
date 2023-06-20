@@ -20,10 +20,6 @@ package org.jetbrains.sqlite
 import java.io.IOException
 import java.nio.ByteBuffer
 
-private const val DEFAULT_BACKUP_BUSY_SLEEP_TIME_MILLIS = 100
-private const val DEFAULT_BACKUP_NUM_BUSY_BEFORE_FAIL = 3
-private const val DEFAULT_PAGES_PER_BACKUP_STEP = 100
-
 /** This class provides a thin JNI layer over the SQLite3 C API.  */
 internal class NativeDB : SqliteDb() {
   // SQLite connection handle.
@@ -77,9 +73,6 @@ internal class NativeDB : SqliteDb() {
   @Synchronized
   external fun _exec_utf8(sqlUtf8: ByteArray?): Int
 
-  @Synchronized
-  external override fun enable_load_extension(enable: Boolean): Int
-
   external override fun interrupt()
 
   @Synchronized
@@ -100,14 +93,6 @@ internal class NativeDB : SqliteDb() {
   @Suppress("SpellCheckingInspection")
   @Synchronized
   external fun errmsg_utf8(): ByteBuffer?
-
-  @Synchronized
-  override fun libversion(): String {
-    return utf8ByteBufferToString(libversion_utf8())
-  }
-
-  @Suppress("SpellCheckingInspection")
-  private external fun libversion_utf8(): ByteBuffer
 
   @Synchronized
   external override fun changes(): Long
@@ -181,63 +166,6 @@ internal class NativeDB : SqliteDb() {
 
   @Synchronized
   external override fun limit(id: Int, value: Int): Int
-
-  override fun backup(dbName: String, destFileName: String, observer: ProgressObserver?): Int {
-    return backup(dbNameUtf8 = stringToUtf8ByteArray(dbName),
-                  destFileNameUtf8 = stringToUtf8ByteArray(destFileName),
-                  observer = observer,
-                  sleepTimeMillis = DEFAULT_BACKUP_BUSY_SLEEP_TIME_MILLIS,
-                  nTimeouts = DEFAULT_BACKUP_NUM_BUSY_BEFORE_FAIL,
-                  pagesPerStep = DEFAULT_PAGES_PER_BACKUP_STEP)
-  }
-
-  override fun backup(dbName: String,
-                      destFileName: String,
-                      observer: ProgressObserver?,
-                      sleepTimeMillis: Int,
-                      nTimeouts: Int,
-                      pagesPerStep: Int): Int {
-    return backup(dbNameUtf8 = stringToUtf8ByteArray(dbName),
-                  destFileNameUtf8 = stringToUtf8ByteArray(destFileName),
-                  observer = observer,
-                  sleepTimeMillis = sleepTimeMillis,
-                  nTimeouts = nTimeouts,
-                  pagesPerStep = pagesPerStep)
-  }
-
-  @Synchronized
-  external fun backup(dbNameUtf8: ByteArray,
-                      destFileNameUtf8: ByteArray,
-                      observer: ProgressObserver?,
-                      sleepTimeMillis: Int,
-                      nTimeouts: Int,
-                      pagesPerStep: Int): Int
-
-  @Synchronized
-  override fun restore(dbName: String, sourceFileName: String, observer: ProgressObserver?): Int {
-    return restore(dbName = dbName,
-                   sourceFileName = sourceFileName,
-                   observer = observer,
-                   sleepTimeMillis = DEFAULT_BACKUP_BUSY_SLEEP_TIME_MILLIS,
-                   nTimeouts = DEFAULT_BACKUP_NUM_BUSY_BEFORE_FAIL,
-                   pagesPerStep = DEFAULT_PAGES_PER_BACKUP_STEP)
-  }
-
-  @Synchronized
-  override fun restore(dbName: String,
-                       sourceFileName: String,
-                       observer: ProgressObserver?,
-                       sleepTimeMillis: Int,
-                       nTimeouts: Int,
-                       pagesPerStep: Int): Int {
-    return restore(
-      dbNameUtf8 = stringToUtf8ByteArray(dbName),
-      sourceFileName = stringToUtf8ByteArray(sourceFileName),
-      observer = observer,
-      sleepTimeMillis = sleepTimeMillis,
-      nTimeouts = nTimeouts,
-      pagesPerStep = pagesPerStep)
-  }
 
   @Synchronized
   external fun restore(dbNameUtf8: ByteArray?,
