@@ -2,6 +2,7 @@ package com.intellij.searchEverywhereMl
 
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import org.junit.Assert
 
 class SearchEverywhereMlExperimentTest : BasePlatformTestCase() {
   private val EXPERIMENT_GROUP_REG_KEY = "search.everywhere.ml.experiment.group"
@@ -16,5 +17,23 @@ class SearchEverywhereMlExperimentTest : BasePlatformTestCase() {
     // Clamp - NUMBER_OF_GROUPS is used as modulo, so the max allowed value is NUMBER_OF_GROUPS - 1
     Registry.get(EXPERIMENT_GROUP_REG_KEY).setValue(SearchEverywhereMlExperiment.NUMBER_OF_GROUPS)
     assertEquals(SearchEverywhereMlExperiment.NUMBER_OF_GROUPS - 1, mlExperiment.experimentGroup)
+  }
+
+  fun `test no experiment group higher than total number of groups`() {
+    // For context, see IDEA-322948. Basically, we want to make sure that all experiments we defined are accessible
+    val mlExperiment = SearchEverywhereMlExperiment()
+    mlExperiment.getTabExperiments()
+      .mapValues { experimentDefinition ->
+        experimentDefinition.value.tabExperiments.keys.filter { experimentGroup ->
+          experimentGroup < 0 || experimentGroup >= SearchEverywhereMlExperiment.NUMBER_OF_GROUPS
+        }
+      }
+      .filterValues { it.isNotEmpty() }
+      .takeIf { it.isNotEmpty() }
+      ?.map { (tab, invalidGroups) -> "Tab \"${tab.name.lowercase()}\" with groups $invalidGroups" }
+      ?.let { "Inaccessible experiment groups: $it" }
+      ?.let {
+        Assert.fail(it)
+      }
   }
 }

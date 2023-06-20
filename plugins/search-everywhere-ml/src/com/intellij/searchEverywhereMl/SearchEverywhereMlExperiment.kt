@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 
 class SearchEverywhereMlExperiment {
   companion object {
@@ -72,12 +73,16 @@ class SearchEverywhereMlExperiment {
     return tabExperiments[tab]?.getExperimentByGroup(experimentGroup) ?: ExperimentType.NO_EXPERIMENT
   }
 
+  @TestOnly
+  internal fun getTabExperiments(): Map<SearchEverywhereTabWithMlRanking, Experiment> = tabExperiments
+
   enum class ExperimentType {
     NO_EXPERIMENT, NO_ML, USE_EXPERIMENTAL_MODEL, NO_ML_FEATURES, ENABLE_TYPOS
   }
 
-  private class Experiment(vararg experiments: Pair<Int, ExperimentType>) {
-    private val tabExperiments: MutableMap<Int, ExperimentType>
+  @VisibleForTesting
+  internal class Experiment(vararg experiments: Pair<Int, ExperimentType>) {
+    val tabExperiments: Map<Int, ExperimentType>
 
     init {
       tabExperiments = hashMapOf(*experiments)
