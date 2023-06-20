@@ -49,6 +49,7 @@ import com.intellij.util.ExceptionUtil
 import com.intellij.util.Function
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.text.DateFormatUtil
+import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -229,7 +230,7 @@ open class IdeErrorsDialog internal constructor(private val myMessagePool: Messa
     myAttachmentArea = JTextArea()
     val attachmentFont = EditorColorsManager.getInstance()?.globalScheme?.getFont(EditorFontType.PLAIN)
     if (attachmentFont != null) {
-      myAttachmentArea.font = attachmentFont
+      myAttachmentArea.font = JBFont.create(attachmentFont)
     }
     myAttachmentArea.margin = JBUI.insets(2)
     myAttachmentArea.document.addDocumentListener(object : DocumentAdapter() {
