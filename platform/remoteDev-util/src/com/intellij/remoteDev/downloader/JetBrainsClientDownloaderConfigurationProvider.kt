@@ -28,6 +28,12 @@ import kotlin.io.path.*
 // .startServerAndServeClient(lifetime, clientDistribution, clientJdkBuildTxt)
 @ApiStatus.Experimental
 interface JetBrainsClientDownloaderConfigurationProvider {
+
+  companion object {
+    const val ClientUrlVar = "THIN_CLIENT_URL"
+    const val DisableClientSignatureCheck = "THIN_CLIENT_SIGNATURE_CHECK_DISABLED"
+  }
+
   fun modifyClientCommandLine(clientCommandLine: GeneralCommandLine)
 
   val clientDownloadUrl: URI
@@ -52,7 +58,10 @@ class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
   override fun modifyClientCommandLine(clientCommandLine: GeneralCommandLine) { }
 
   override val clientDownloadUrl: URI
-    get() = RemoteDevSystemSettings.getClientDownloadUrl().value
+    get() {
+      val envVar = System.getenv(JetBrainsClientDownloaderConfigurationProvider.ClientUrlVar)
+      return if (envVar.isNotEmpty()) URI(envVar) else RemoteDevSystemSettings.getClientDownloadUrl ().value
+    }
   override val jreDownloadUrl: URI
     get() = RemoteDevSystemSettings.getJreDownloadUrl().value
 
@@ -69,7 +78,11 @@ class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
     get() = IntellijClientDownloaderSystemSettings.isVersionManagementEnabled()
   override val modifiedDateInManifestIncluded: Boolean
     get() = IntellijClientDownloaderSystemSettings.isModifiedDateInManifestIncluded()
-  override val verifySignature: Boolean = true
+  override val verifySignature: Boolean
+    get() {
+      val envVar = System.getenv(JetBrainsClientDownloaderConfigurationProvider.DisableClientSignatureCheck)
+      return envVar.isEmpty() || envVar.toBoolean()
+    }
 
   override fun patchVmOptions(vmOptionsFile: Path, connectionUri: URI) {
 
