@@ -6,6 +6,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.io.SimpleStringPersistentEnumerator;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -106,7 +107,7 @@ public class ID<K, V> extends IndexId<K,V> {
   }
 
   @NotNull
-  public static synchronized <K, V> ID<K, V> create(@NonNls @NotNull String name) {
+  public static synchronized <K, V> ID<K, V> create(@NonNls @NotNull @Pattern(VALID_ID_REGEXP) String name) {
     PluginId pluginId = getCallerPluginId();
     final ID<K, V> found = findByName(name, true, pluginId);
     return found == null ? new ID<>(name, pluginId) : found;

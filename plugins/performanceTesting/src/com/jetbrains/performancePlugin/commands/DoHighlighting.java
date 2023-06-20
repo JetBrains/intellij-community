@@ -7,7 +7,7 @@ import com.intellij.codeInspection.GlobalInspectionTool;
 import com.intellij.codeInspection.InspectionEngine;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
-import com.intellij.platform.diagnostic.telemetry.impl.TraceUtil;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;

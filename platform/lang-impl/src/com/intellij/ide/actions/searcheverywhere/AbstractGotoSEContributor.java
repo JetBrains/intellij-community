@@ -62,7 +62,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
 
   private static final Pattern ourPatternToDetectLinesAndColumns = Pattern.compile(
     "(.+?)" + // name, non-greedy matching
-    "(?::|@|,| |#|#L|\\?l=| on line | at line |:?\\(|:?\\[)" + // separator
+    "(?::|@|,| |#|#L|\\?l=| on line | at line |:line |:?\\(|:?\\[)" + // separator
     "(\\d+)?(?:\\W(\\d+)?)?" + // line + column
     "[)\\]]?" // possible closing paren/brace
   );

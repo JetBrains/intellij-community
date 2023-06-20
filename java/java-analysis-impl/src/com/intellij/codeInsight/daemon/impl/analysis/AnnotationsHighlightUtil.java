@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.MoveAnnotationOnStaticMemberQualifyingTypeFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.MoveAnnotationToPackageInfoFileFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceVarWithExplicitTypeFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
@@ -515,7 +516,7 @@ public final class AnnotationsHighlightUtil {
       if (qualified instanceof PsiMember && ((PsiMember)qualified).hasModifierProperty(PsiModifier.STATIC)) {
         return createAnnotationError(annotation,
                                      JavaErrorBundle.message("annotation.not.allowed.static"),
-                                     new MoveAnnotationOnStaticMemberQualifyingTypeFix(annotation));
+                                     new MoveAnnotationOnStaticMemberQualifyingTypeFix(annotation).asIntention());
       }
     }
     return null;
@@ -623,7 +624,7 @@ public final class AnnotationsHighlightUtil {
         QUICK_FIX_FACTORY.createDeleteFix(annotationList, JavaAnalysisBundle.message("intention.text.remove.annotation"));
       HighlightInfo.Builder builder =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(annotationList).descriptionAndTooltip(message);
-      IntentionAction moveAnnotationToPackageInfoFileFix = new MoveAnnotationToPackageInfoFileFix(statement);
+      var moveAnnotationToPackageInfoFileFix = new MoveAnnotationToPackageInfoFileFix(statement);
       return builder.registerFix(deleteFix, null, null, null, null)
         .registerFix(moveAnnotationToPackageInfoFileFix, null, null, null, null);
     }

@@ -65,7 +65,7 @@ import java.util.Objects;
 import java.util.concurrent.Future;
 
 import static com.intellij.codeInsight.util.CodeCompletionKt.*;
-import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.runWithSpan;
+import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runWithSpan;
 
 @SuppressWarnings("deprecation")
 public class CodeCompletionHandlerBase {

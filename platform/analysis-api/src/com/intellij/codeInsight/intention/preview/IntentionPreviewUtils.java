@@ -4,10 +4,7 @@ package com.intellij.codeInsight.intention.preview;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.modcommand.ModChooseTarget;
-import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModNavigate;
-import com.intellij.modcommand.ModUpdateFileText;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -166,6 +163,10 @@ public final class IntentionPreviewUtils {
           vFile.equals(InjectedLanguageManager.getInstance(project).getTopLevelFile(file).getOriginalFile().getVirtualFile());
         customDiffList.add(new IntentionPreviewInfo.CustomDiff(vFile.getFileType(), 
                                                                currentFile ? null : vFile.getName(), modFile.oldText(), modFile.newText(), true));
+      }
+      else if (command instanceof ModCreateFile createFile) {
+        VirtualFile vFile = createFile.file();
+        customDiffList.add(new IntentionPreviewInfo.CustomDiff(vFile.getFileType(), vFile.getName(), "", createFile.text(), true));
       }
       else if (command instanceof ModNavigate navigate && navigate.caret() != -1) {
         PsiFile target = PsiManager.getInstance(project).findFile(navigate.file());

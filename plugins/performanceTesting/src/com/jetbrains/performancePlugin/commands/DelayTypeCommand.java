@@ -8,7 +8,7 @@ import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.commands.KeyCodeTypeCommand;
 import com.intellij.openapi.util.Ref;
-import com.intellij.platform.diagnostic.telemetry.impl.TraceUtil;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.jetbrains.performancePlugin.PerformanceTestSpan;
 import com.jetbrains.performancePlugin.utils.DaemonCodeAnalyzerListener;

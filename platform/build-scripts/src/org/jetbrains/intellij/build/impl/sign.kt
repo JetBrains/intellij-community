@@ -3,9 +3,9 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.platform.diagnostic.telemetry.impl.use
-import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
-import com.intellij.platform.diagnostic.telemetry.impl.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
 import com.jcraft.jsch.agentproxy.AgentProxy
 import com.jcraft.jsch.agentproxy.AgentProxyException
 import com.jcraft.jsch.agentproxy.Connector

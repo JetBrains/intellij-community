@@ -4,7 +4,7 @@
 package org.jetbrains.intellij.build.devServer
 
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.platform.diagnostic.telemetry.impl.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
 import com.intellij.util.PathUtilRt
 import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.UrlClassLoader

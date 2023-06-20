@@ -7,7 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.vfs.findFileOrDirectory
-import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.impl.file.PsiDirectoryImpl
 import com.jetbrains.performancePlugin.PerformanceTestSpan

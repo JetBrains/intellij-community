@@ -19,7 +19,7 @@ import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.VcsScope
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.impl.computeWithSpan
+import com.intellij.platform.diagnostic.telemetry.helpers.computeWithSpan
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.*

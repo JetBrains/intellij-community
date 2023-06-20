@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 import static com.intellij.codeInsight.util.CodeCompletionKt.*;
-import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.runWithSpan;
+import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runWithSpan;
 
 /**
  * @author peter

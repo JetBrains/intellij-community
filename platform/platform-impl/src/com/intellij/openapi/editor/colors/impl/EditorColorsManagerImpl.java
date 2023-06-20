@@ -97,6 +97,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
 
   private State myState = new State();
   private boolean themeIsCustomized;
+  private boolean myInitialConfigurationLoaded = false;
 
   public EditorColorsManagerImpl() {
     this(SchemeManagerFactory.getInstance());
@@ -487,8 +488,9 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     mySchemeManager.setCurrent(scheme == null ? getDefaultScheme() : scheme, notify, processChangeSynchronously);
   }
 
-  private void setGlobalSchemeInner(@Nullable EditorColorsScheme scheme) {
-    mySchemeManager.setCurrent(scheme == null ? getDefaultScheme() : scheme, false);
+  private void setGlobalSchemeLoadedFromConfiguration(@Nullable EditorColorsScheme scheme) {
+    mySchemeManager.setCurrent(scheme == null ? getDefaultScheme() : scheme, myInitialConfigurationLoaded);
+    myInitialConfigurationLoaded = true;
   }
 
   private @NotNull EditorColorsScheme getDefaultScheme() {
@@ -555,7 +557,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   @Override
   public void noStateLoaded() {
     themeIsCustomized = false;
-    setGlobalSchemeInner(StartupUiUtil.isUnderDarcula() ? getScheme("Darcula") : getDefaultScheme());
+    setGlobalSchemeLoadedFromConfiguration(StartupUiUtil.isUnderDarcula() ? getScheme("Darcula") : getDefaultScheme());
   }
 
   @Override
@@ -581,7 +583,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
           }
         });
       }
-      setGlobalSchemeInner(schemeRef.get());
+      setGlobalSchemeLoadedFromConfiguration(schemeRef.get());
       notifyAboutSolarizedColorSchemeDeprecationIfSet(colorsScheme);
     }
   }

@@ -304,7 +304,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         val allReferenceExpressions = getElementsAtLineIfAny<KtCallableReferenceExpression>(file, lineNumber)
 
         return allReferenceExpressions.firstOrNull {
-            it.calculatedClassNameMatches(currentLocationClassName)
+            it.calculatedClassNameMatches(currentLocationClassName, false)
         }
     }
 
@@ -341,18 +341,22 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     }
 
     private fun List<KtFunction>.getAppropriateLiteralBasedOnDeclaringClassName(currentLocationClassName: String): KtFunction? {
-        return firstOrNull { it.firstChild.calculatedClassNameMatches(currentLocationClassName) }
+        return firstOrNull { it.firstChild.calculatedClassNameMatches(currentLocationClassName, true) }
     }
 
-    private fun PsiElement.calculatedClassNameMatches(currentLocationClassName: String): Boolean {
+    private fun PsiElement.calculatedClassNameMatches(currentLocationClassName: String, isLambda: Boolean): Boolean {
         val classNameProvider = ClassNameProvider(
             debugProcess.project,
             debugProcess.searchScope,
             ClassNameProvider.Configuration.DEFAULT.copy(alwaysReturnLambdaParentClass = false)
         )
 
-        return classNameProvider.getCandidatesForElement(this).any { it == currentLocationClassName }
+        return classNameProvider.getCandidatesForElement(this)
+          .run { if (isLambda) filter(::isNestedClassName) else this }
+          .any { it == currentLocationClassName }
     }
+
+    private fun isNestedClassName(name: String): Boolean = "\$" in name
 
     private fun List<KtFunction>.getAppropriateLiteralBasedOnLambdaName(location: Location, lineNumber: Int): KtFunction? {
         val method = location.safeMethod() ?: return null

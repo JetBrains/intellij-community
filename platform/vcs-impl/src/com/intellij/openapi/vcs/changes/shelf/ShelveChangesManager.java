@@ -73,10 +73,10 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 
-import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.computeWithSpan;
-import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.runWithSpan;
-import static com.intellij.platform.diagnostic.telemetry.impl.TraceUtil.computeWithSpanThrows;
-import static com.intellij.platform.diagnostic.telemetry.impl.TraceUtil.runWithSpanThrows;
+import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.computeWithSpan;
+import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runWithSpan;
+import static com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil.computeWithSpanThrows;
+import static com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil.runWithSpanThrows;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.SHELVE_FAILED;
 import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.SHELVE_SUCCESSFUL;

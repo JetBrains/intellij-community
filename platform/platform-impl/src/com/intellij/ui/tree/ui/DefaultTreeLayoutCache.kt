@@ -36,20 +36,21 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
     }
     super.setRootVisible(rootVisible)
     val root = this.root ?: return
+    val debugLocation = Location("setRootVisible(%s)", rootVisible)
     if (rootVisible) {
       root.invalidateSize()
-      rows.update {
+      rows.update(debugLocation) {
         rows.add(0, root)
       }
     }
     else {
-      rows.update {
+      rows.update(debugLocation) {
         rows.removeAt(0)
       }
       treeSelectionModel?.removeSelectionPath(root.path)
     }
     treeSelectionModel?.resetRowSelection()
-    checkInvariants("setRootVisible(%s)", rootVisible)
+    checkInvariants(debugLocation)
   }
 
   override fun setRowHeight(rowHeight: Int) {
@@ -64,20 +65,21 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
     else if (rowHeight > 0 && variableHeight != null) {
       variableHeight = null
     }
-    checkInvariants("setRowHeight(%d)", rowHeight)
+    checkInvariants(Location("setRowHeight(%d)", rowHeight))
   }
 
   override fun setNodeDimensions(nd: NodeDimensions?) {
     super.setNodeDimensions(nd)
     invalidateSizes()
-    checkInvariants("setNodeDimensions(%s)", nd)
+    checkInvariants(Location("setNodeDimensions(%s)", nd))
   }
 
   override fun setExpandedState(path: TreePath?, isExpanded: Boolean) {
     val node = getOrCreateNode(path) ?: return
     val wasVisible = node.isVisible
     val oldVisibleChildren = node.visibleChildCount
-    rows.update {
+    val debugLocation = Location("setExpandedState(%s, %s)", path, isExpanded)
+    rows.update(debugLocation) {
       if (isExpanded) {
         node.ensureChildrenVisible()
       }
@@ -87,7 +89,7 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
         node.invalidateSize()
       }
     }
-    checkInvariants("setExpandedState(%s, %s)", path, isExpanded)
+    checkInvariants(debugLocation)
     val newVisibleChildren = node.visibleChildCount
     if (wasVisible && oldVisibleChildren == 0 && newVisibleChildren == 1) {
       autoExpandHandler(node.getChildAt(0).path)
@@ -172,7 +174,7 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
       changedChildNode.userObject = model.getChild(changedValue, i)
       changedChildNode.invalidateSize()
     }
-    checkInvariants("treeNodesChanged(value=%s, indices=%s)", changedValue, changedChildIndexes)
+    checkInvariants(Location("treeNodesChanged(value=%s, indices=%s)", changedValue, changedChildIndexes))
   }
 
   override fun treeNodesInserted(e: TreeModelEvent?) {
@@ -189,16 +191,30 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
     if (!changedNode.isChildrenLoaded) {
       return
     }
-    rows.update {
+    val debugLocation = Location("treeNodesInserted(value=%s, indices=%s)", changedValue, insertedChildIndexes)
+    rows.update(debugLocation) {
+      var prevIndex = -1
       for (i in insertedChildIndexes) {
+        if (prevIndex != -1 && i - prevIndex > 1) {
+          // We need to determine the row for this one, but previous inserts might have shifted siblings,
+          // so we need to update their rows.
+          // No noticeable performance penalty here, because NodeList is smart enough to avoid updating them later:
+          // it normally updates all rows starting with the last affected by insertions, but when we update them manually,
+          // it takes this into account and will update starting from the next row after the last inserted one.
+          var nextRow = changedNode.getChildAt(prevIndex).row + 1 // Freshly inserted child, guaranteed to be unexpanded.
+          for (j in (prevIndex + 1) until i) {
+            nextRow = changedNode.getChildAt(j).updateRowsRecursively(nextRow)
+          }
+        }
         changedNode.createChildAt(i, treeModel.getChild(changedNode.userObject, i))
+        prevIndex = i
       }
     }
     treeSelectionModel?.resetRowSelection()
+    checkInvariants(debugLocation)
     if (insertedChildIndexes.size == 1 && changedNode.visibleChildCount == 1) {
       autoExpandHandler(changedNode.getChildAt(0).path)
     }
-    checkInvariants("treeNodesInserted(value=%s, indices=%s)", changedValue, insertedChildIndexes)
   }
 
   override fun treeNodesRemoved(e: TreeModelEvent?) {
@@ -215,7 +231,8 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
     if (!changedNode.isChildrenLoaded) {
       return
     }
-    rows.update {
+    val debugLocation = Location("treeNodesRemoved(value=%s, indices=%s)", changedValue, removedChildIndexes)
+    rows.update(debugLocation) {
       for (index in removedChildIndexes.reversed()) {
         changedNode.removeChildAt(index)
       }
@@ -224,7 +241,7 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
       }
     }
     treeSelectionModel?.resetRowSelection()
-    checkInvariants("treeNodesRemoved(value=%s, indices=%s)", changedValue, removedChildIndexes)
+    checkInvariants(debugLocation)
   }
 
   override fun treeStructureChanged(e: TreeModelEvent?) {
@@ -233,6 +250,7 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
     }
     val changedPath = e.treePathOrRoot
     val changedNode = getNode(changedPath)
+    val debugLocation = Location("treeStructureChanged(path=%s)", changedPath)
     if (changedPath.isRoot) {
       rebuild()
       treeSelectionModel?.clearSelection()
@@ -243,7 +261,7 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
       checkNotNull(parent) { "Changed node $changedNode is not root, but its parent is null" }
       val index = parent.getChildIndex(changedNode)
       check(index != -1) { "The node $parent has no child $changedNode" }
-      rows.update {
+      rows.update(debugLocation) {
         parent.removeChildAt(index)
         val newNode = parent.createChildAt(index, changedPath.lastPathComponent)
         if (childrenWereVisible) {
@@ -251,7 +269,7 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
         }
       }
     }
-    checkInvariants("treeStructureChanged(path=%s)", changedPath)
+    checkInvariants(debugLocation)
   }
 
   private fun rebuild() {
@@ -261,12 +279,14 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
     val newRootObject = treeModel?.root ?: return
     val newRootNode = Node(null, CachingTreePath(newRootObject))
     this.root = newRootNode
-    rows.update {
+    val location = Location("rebuild")
+    rows.update(location) {
       if (isRootVisible) {
         rows.add(0, newRootNode)
       }
       newRootNode.ensureChildrenVisible()
     }
+    checkInvariants(location)
   }
 
   private fun getRowByY(y: Int): Int =
@@ -398,17 +418,15 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
       val children = this.children
       requireNotNull(children) { "Can't create a child for a node that isn't expanded" }
       val node = Node(this, path.pathByAddingChild(value))
+      if (isChildrenVisible) {
+        val row = when (index) {
+          0 -> row + 1 // Special case covered: if the parent is the invisible root, then -1 + 1 = 0, which is correct.
+          childCount -> getLastVisibleNode().row + 1
+          else -> getChildAt(index - 1).getLastVisibleNode().row + 1
+        }
+        rows.add(row, node)
+      }
       children.add(index, node)
-      if (!isChildrenVisible) {
-        return node
-      }
-      val row = when (index) {
-        0 -> row + 1 // Special case covered: if the parent is the invisible root, then -1 + 1 = 0, which is correct.
-        childCount -> getLastVisibleNode().row + 1
-        else -> getChildAt(index - 1).getLastVisibleNode().row + 1
-      }
-      rows.add(row, node)
-      node.row = row
       return node
     }
 
@@ -543,6 +561,29 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
       else -> 1 + (children?.sumOf { it.visibleSubtreeNodeCount() } ?: 0)
     }
 
+    /**
+     * Updates rows of this node and its visible children.
+     *
+     * @param nextRow the row this node is supposed to be at
+     * @return the row after the last updated row (of the last visible child)
+     */
+    fun updateRowsRecursively(nextRow: Int): Int {
+      if (!isVisible) {
+        return nextRow
+      }
+      var row = nextRow
+      rows.updateRow(this, row) // Need this roundabout way to ensure NodeList optimizations.
+      ++row
+      val children = this.children
+      if (children == null || !isChildrenVisible) {
+        return row
+      }
+      for (child in children) {
+        row = child.updateRowsRecursively(row)
+      }
+      return row
+    }
+
     fun disposeRecursively() {
       nodeByPath.remove(path)
       row = -1
@@ -570,11 +611,23 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
     }
 
     inline fun update(update: () -> Unit) {
+      updateImpl(null, update)
+    }
+
+    inline fun update(location: Location, update: () -> Unit) {
+      updateImpl(location, update)
+    }
+
+    inline fun updateImpl(location: Location?, update: () -> Unit) {
       val reentry = minimumAffectedRow != -1
       if (reentry) { // Indirect recursion, will update later up the stack.
         update()
         return
       }
+      if (location == null) {
+        throw IllegalStateException("A non-reentry call of NodeList.update with no location is detected")
+      }
+      val initialSize = size
       try {
         minimumAffectedRow = Integer.MAX_VALUE
         update()
@@ -582,6 +635,8 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
           nodes[i].row = i
         }
         onUpdate()
+      } catch (e: Exception) {
+        LOG.error(AssertionError("A bug in DefaultTreeLayoutCache is detected in $location, size was $initialSize, now $size", e))
       } finally {
         minimumAffectedRow = -1
       }
@@ -620,6 +675,13 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
       if (minimumAffectedRow >= index) { // The current dirty region is to the right?
         minimumAffectedRow = index + newNodes.size // Extend it to this index, excluding the added nodes.
       } // Otherwise, we're operating inside a dirty region already, do nothing.
+    }
+
+    fun updateRow(node: Node, row: Int) {
+      node.row = row
+      if (row == minimumAffectedRow) {
+        ++minimumAffectedRow // Don't need to update this one, as we've just updated it.
+      }
     }
 
   }
@@ -701,16 +763,26 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
 
   }
 
-  private fun checkInvariants(location: String, vararg args: Any?) {
+  private fun checkInvariants(location: Location) {
     if (!LOG.isDebugEnabled) {
       return
     }
     SlowOperations.startSection(SlowOperations.GENERIC).use { // Only for debugging, so slow ops are fine here.
-      InvariantChecker(location.format(*args)).checkInvariants()
+      InvariantChecker(location).checkInvariants()
     }
   }
 
-  private inner class InvariantChecker(private val location: String) {
+  private class Location(private val location: String, private vararg val args: Any?) {
+
+    override fun toString() = location.format(
+      *args
+        .map { if (it is IntArray) it.toList() else it }
+        .toTypedArray()
+    )
+
+  }
+
+  private inner class InvariantChecker(private val location: Location) {
 
     private val messages = mutableListOf<String>()
 
@@ -735,19 +807,53 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
     }
 
     private fun checkRows() {
-      for (i in 0 until rows.size) {
-        if (rows[i].row != i) {
-          messages += "Row inconsistency: row $i contains ${rows[i].path} which is supposed to be at ${rows[i].row}"
+      val root = this@DefaultTreeLayoutCache.root
+      if (root == null) {
+        if (rows.size != 0) {
+          messages += "The tree is empty, but there are ${rows.size} visible rows"
         }
+        return
+      }
+      val size = checkRowsCounting(0, root)
+      if (size != rows.size) {
+        messages += "Visiting all visible nodes yields $size rows, but there are ${rows.size}"
       }
     }
 
-    private fun checkEmptyTree() {
-      if (root != null) {
-        messages += "No visible rows, but the root is = $root"
+    private fun checkRowsCounting(expectedRow: Int, node: Node): Int {
+      var row = expectedRow
+      if (node.row != -1 && rows.getOrNull(node.row) != node) {
+        messages += "Row inconsistency: node ${node.path} should be at ${node.row} which contains ${rows.getOrNull(node.row)?.path}"
       }
-      if (nodeByPath.isNotEmpty()) {
-        messages += "No visible rows, but the tree has ${nodeByPath.size} nodes: $nodeByPath"
+      else if (node.row != -1 && node.row != row) {
+        messages += "Row inconsistency: node ${node.path} should be at ${row}, but is at ${node.row}"
+      }
+      var count = if (node.row == -1) 0 else 1 // This may be the invisible root, but it may still have visible children!
+      row += count
+      val children = node.children
+      if (children == null || !node.isChildrenVisible) {
+        return count
+      }
+      for (child in children) {
+        val visibleSubtreeSize = checkRowsCounting(row, child)
+        count += visibleSubtreeSize
+        row += visibleSubtreeSize
+      }
+      return count
+    }
+
+    private fun checkEmptyTree() {
+      val root = this@DefaultTreeLayoutCache.root
+      if (root != null) {
+        if (isRootVisible) {
+          messages += "No visible rows, but the root is $root and it's visible"
+        }
+        else if (root.childCount > 0) {
+          messages += "No visible rows, but the invisible root $root has children: ${root.children}"
+        }
+      }
+      else if (nodeByPath.isNotEmpty()) {
+        messages += "An empty tree has ${nodeByPath.size} nodes: $nodeByPath"
       }
     }
 
@@ -783,16 +889,16 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
         val node = rows[i]
         val visibleSubtreeSize = node.visibleSubtreeNodeCount()
         if (visibleSubtreeSize <= 0) {
-          messages += "Node ${node.path} is visible, but has the visible subtree of size $visibleSubtreeSize"
+          messages += "Node ${node.path} at row $i is visible, but has the visible subtree of size $visibleSubtreeSize"
         }
         if (!node.isChildrenVisible) {
           if (visibleSubtreeSize > 1) {
-            messages += "Node ${node.path} is not expanded, but has the visible subtree of size $visibleSubtreeSize"
+            messages += "Node ${node.path} at row $i is not expanded, but has the visible subtree of size $visibleSubtreeSize"
           }
           checkAllChildrenAreInvisible(node)
         }
         if (i + visibleSubtreeSize > rows.size) {
-          messages += "Node ${node.path} has the visible subtree of size $visibleSubtreeSize, which is more than rowCount=${rows.size}"
+          messages += "Node ${node.path} at row $i has the visible subtree of size $visibleSubtreeSize, which extends past rowCount=${rows.size}"
         }
       }
     }

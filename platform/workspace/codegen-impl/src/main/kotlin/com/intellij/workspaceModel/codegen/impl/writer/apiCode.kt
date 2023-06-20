@@ -9,13 +9,9 @@ import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.engine.GenerationProblem
 import com.intellij.workspaceModel.codegen.engine.ProblemLocation
 import com.intellij.workspaceModel.codegen.engine.SKIPPED_TYPES
-import com.intellij.workspaceModel.codegen.engine.impl.ProblemReporter
 import com.intellij.workspaceModel.codegen.impl.writer.fields.javaMutableType
 import com.intellij.workspaceModel.codegen.impl.writer.fields.javaType
 import com.intellij.workspaceModel.codegen.impl.writer.fields.wsCode
-import com.intellij.workspaceModel.codegen.impl.writer.fqn
-import com.intellij.workspaceModel.codegen.impl.writer.fqn7
-import com.intellij.workspaceModel.codegen.impl.writer.lines
 import com.intellij.workspaceModel.codegen.impl.writer.*
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
@@ -23,6 +19,7 @@ import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspac
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.ObjBuilder
 import com.intellij.platform.workspace.storage.Type
+import com.intellij.workspaceModel.codegen.impl.engine.ProblemReporter
 
 fun ObjClass<*>.generateBuilderCode(reporter: ProblemReporter): String = lines {
   checkSuperTypes(this@generateBuilderCode, reporter)

@@ -480,7 +480,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
 
   private inner class LoadedModulesListUpdater : WorkspaceModelChangeListener {
     override fun changed(event: VersionedStorageChange) {
-      if (event.getChanges(ModuleEntity::class.java).any() && unloadedModules.isNotEmpty()) {
+      if (event.getChanges(ModuleEntity::class.java).isNotEmpty() && unloadedModules.isNotEmpty()) {
         AutomaticModuleUnloader.getInstance(project).setLoadedModules(modules.map { it.name })
       }
     }
@@ -530,7 +530,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
       DFSTBuilder(buildModuleGraph(storage, true)).comparator()
     }
 
-    fun Sequence<EntityChange<LibraryEntity>>.filterModuleLibraryChanges(): Sequence<EntityChange<LibraryEntity>> = filter { it.isModuleLibrary() }
+    fun List<EntityChange<LibraryEntity>>.filterModuleLibraryChanges(): List<EntityChange<LibraryEntity>> = filter { it.isModuleLibrary() }
 
     private fun EntityChange<LibraryEntity>.isModuleLibrary(): Boolean {
       return when (this) {

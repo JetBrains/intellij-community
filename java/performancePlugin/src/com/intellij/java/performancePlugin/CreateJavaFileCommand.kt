@@ -5,7 +5,7 @@ import com.intellij.core.JavaPsiBundle.message
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.playback.PlaybackContext
-import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.impl.file.PsiJavaDirectoryFactory
 import com.jetbrains.performancePlugin.PerformanceTestSpan

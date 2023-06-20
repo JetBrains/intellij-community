@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.BiConsumer;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.FSRecords.IDE_USE_FS_ROOTS_DATA_LOADER;
 
@@ -122,6 +123,17 @@ class PersistentFSTreeAccessor {
   }
 
   int @NotNull [] listRoots() throws IOException {
+    //Roots in VFS are quite special:
+    // The root record itself (in connection.records) is just a normal file record, with parentId=NULL_ID,
+    // and nameId=names.enumerate(root name).
+    //
+    // But all roots are _also_ stored as a CHILDREN attribute of special SUPER_ROOT record with reserved id=1.
+    // That specific CHILDREN attribute format is different from an ordinary CHILDREN attribute format: it stores
+    // both rootIds and root_Url_Ids (both as diff-compressed VARINTs). The thing is: rootUrl != rootName.
+    // E.g. for local Linux fs root: name="/", url="file:"
+    //
+    // We use rootUrl in method findOrCreateRootRecord(rootUrl) -- this is how we uniquely identify root on
+    // an actual filesystem -- i.e. we assume rootUrl is a unique way for identify fs node.
     try (DataInputStream input = myAttributeAccessor.readAttribute(SUPER_ROOT_ID, CHILDREN_ATTR)) {
       if (input == null) return ArrayUtilRt.EMPTY_INT_ARRAY;
 
@@ -243,6 +255,35 @@ class PersistentFSTreeAccessor {
     }
   }
 
+  /** supplies all the roots into rootConsumer, along with appropriate rootUrlId */
+  void forEachRoot(final @NotNull BiConsumer<Integer, Integer> rootConsumer) throws IOException {
+    myRootsAccessLock.lock();
+    try {
+      try (final DataInputStream input = myAttributeAccessor.readAttribute(SUPER_ROOT_ID, CHILDREN_ATTR)) {
+        if (input != null) {
+          final int count = DataInputOutputUtil.readINT(input);
+          if (count < 0) {
+            throw new IOException("SUPER_ROOT.CHILDREN attribute is corrupted: roots count(=" + count + ") must be >=0");
+          }
+          int prevId = 0;
+          int prevNameId = 0;
+
+          for (int i = 0; i < count; i++) {
+            final int nameId = DataInputOutputUtil.readINT(input) + prevNameId;
+            final int rootId = DataInputOutputUtil.readINT(input) + prevId;
+            prevNameId = nameId;
+            prevId = rootId;
+
+            rootConsumer.accept(rootId, nameId);
+          }
+        }
+      }
+    }
+    finally {
+      myRootsAccessLock.unlock();
+    }
+  }
+
   void loadDirectoryData(int id,
                          @NotNull VirtualFile parent,
                          @NotNull CharSequence childName,
@@ -352,7 +393,7 @@ class PersistentFSTreeAccessor {
       // -- it is not a caller error, but VFS corruption:
       throw new CorruptedException(
         "file[" + parentId + "].child[" + childNo + "][#" + childId + "] is out of allocated id range (0.." + maxAllocatedID + "] " +
-        "-> VFS is corrupted");
+        "-> VFS is corrupted (was IDE forcibly terminated?)");
     }
   }
 }

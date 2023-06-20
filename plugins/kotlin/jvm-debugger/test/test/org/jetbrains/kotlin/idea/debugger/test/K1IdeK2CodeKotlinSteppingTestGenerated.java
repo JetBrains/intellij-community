@@ -1315,6 +1315,11 @@ public abstract class K1IdeK2CodeKotlinSteppingTestGenerated extends AbstractK1I
             runTest("testData/stepping/custom/lambdaWithNoExecutableCodeOnLine.kt");
         }
 
+        @TestMetadata("lineBreakpointWithAnonymousFunction.kt")
+        public void testLineBreakpointWithAnonymousFunction() throws Exception {
+            runTest("testData/stepping/custom/lineBreakpointWithAnonymousFunction.kt");
+        }
+
         @TestMetadata("manyFilesWithInlineCalls1.kt")
         public void testManyFilesWithInlineCalls1() throws Exception {
             runTest("testData/stepping/custom/manyFilesWithInlineCalls1.kt");

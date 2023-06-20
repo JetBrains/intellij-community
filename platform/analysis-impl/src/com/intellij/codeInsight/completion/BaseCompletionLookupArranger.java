@@ -33,7 +33,7 @@ import java.util.*;
 import java.util.function.Predicate;
 
 import static com.intellij.codeInsight.util.CodeCompletionKt.*;
-import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.computeWithSpan;
+import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.computeWithSpan;
 
 public class BaseCompletionLookupArranger extends LookupArranger implements CompletionLookupArranger {
   private static final Logger LOG = Logger.getInstance(BaseCompletionLookupArranger.class);

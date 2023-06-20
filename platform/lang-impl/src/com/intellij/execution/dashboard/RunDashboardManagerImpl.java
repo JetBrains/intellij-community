@@ -15,9 +15,11 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.services.ServiceEventListener;
 import com.intellij.execution.services.ServiceViewDescriptor;
 import com.intellij.execution.services.ServiceViewManager;
-import com.intellij.execution.services.ServiceViewManagerImpl;
 import com.intellij.execution.services.ServiceViewUIUtils;
-import com.intellij.execution.ui.*;
+import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManager;
+import com.intellij.execution.ui.RunContentManagerImpl;
+import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.lightEdit.LightEdit;
@@ -234,9 +236,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
         myToolWindowId = ToolWindowId.SERVICES;
       }
       else {
-        String toolWindowId =
-          ((ServiceViewManagerImpl)ServiceViewManager.getInstance(myProject))
-            .getToolWindowId(RunDashboardServiceViewContributor.class);
+        String toolWindowId = ServiceViewManager.getInstance(myProject).getToolWindowId(RunDashboardServiceViewContributor.class);
         myToolWindowId = toolWindowId != null ? toolWindowId : ToolWindowId.SERVICES;
       }
     }

@@ -95,11 +95,11 @@ object Switcher : BaseSwitcherAction(null) {
     return SwitcherPanel(project, title, event, if (pinned) vFiles != null else null, event == null || !event.isShiftDown)
   }
 
-  class SwitcherPanel internal constructor(val project: Project,
-                                           title: @Nls String,
-                                           event: InputEvent?,
-                                           onlyEditedFiles: Boolean?,
-                                           forward: Boolean) : BorderLayoutPanel(), DataProvider, QuickSearchComponent, Disposable {
+  class SwitcherPanel(val project: Project,
+                      title: @Nls String,
+                      event: InputEvent?,
+                      onlyEditedFiles: Boolean?,
+                      forward: Boolean) : BorderLayoutPanel(), DataProvider, QuickSearchComponent, Disposable {
     val myPopup: JBPopup?
     val toolWindows: JBList<SwitcherListItem>
     val files: JBList<SwitcherVirtualFile>
@@ -444,7 +444,7 @@ object Switcher : BaseSwitcherAction(null) {
       }
     }
 
-    private fun cancel() {
+    fun cancel() {
       myPopup!!.cancel()
     }
 

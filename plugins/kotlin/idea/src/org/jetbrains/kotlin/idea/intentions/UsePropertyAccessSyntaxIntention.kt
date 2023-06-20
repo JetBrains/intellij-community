@@ -13,6 +13,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.impl.compiled.ClsMethodImpl
 import org.jdom.Element
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalType
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.*
+import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
 import org.jetbrains.kotlin.idea.core.NotPropertiesService
@@ -45,7 +47,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DelegatingBindingTrace
-import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoBefore
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.calls.CallResolver
@@ -230,7 +231,7 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
         val notProperties = inspection?.fqNameList?.toSet() ?: NotPropertiesService.getNotProperties(callExpression)
         if (function.shouldNotConvertToProperty(notProperties)) return null
 
-        if (inspection?.reportNonTrivialAccessors != true && function.hasMultipleStatements()) return null
+        if (inspection?.reportNonTrivialAccessors != true && !function.isTrivialAccessor(callExpression.project)) return null
 
         val resolutionScope = callExpression.getResolutionScope(bindingContext, resolutionFacade)
 
@@ -294,12 +295,23 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
     private fun String.isSuitableAsPropertyAccessor(): Boolean =
         canBePropertyAccessor(this) && commonGetterLikePrefixes.none { prefix -> this.contains(prefix) }
 
-    private fun FunctionDescriptor.hasMultipleStatements(): Boolean =
-        when (val declaration = DescriptorToSourceUtils.descriptorToDeclaration(this)) {
-            is KtNamedFunction -> declaration.bodyBlockExpression?.statements.orEmpty().size > 1
-            is PsiMethod -> declaration.body?.statements.orEmpty().size > 1
-            else -> false
+    private fun FunctionDescriptor.isTrivialAccessor(project: Project): Boolean {
+        val accessors = DescriptorToSourceUtilsIde.getAllDeclarations(project, targetDescriptor = this)
+        return accessors.all { it.isTrivialAccessor() }
+    }
+
+    // Accessor is considered trivial if it has exactly one statement
+    // Abstract methods are not trivial because they can be overridden by complex overrides
+    private fun PsiElement.isTrivialAccessor(): Boolean = when (this) {
+        is KtNamedFunction -> bodyBlockExpression?.statements.orEmpty().size == 1
+        is ClsMethodImpl -> {
+            sourceMirrorMethod?.body?.statements?.let { it.size == 1 }
+                ?: true // skip compiled methods for which we can't get the source code
         }
+
+        is PsiMethod -> body?.statements.orEmpty().size == 1
+        else -> false
+    }
 
     private fun checkWillResolveToProperty(
         resolvedCall: ResolvedCall<out CallableDescriptor>,

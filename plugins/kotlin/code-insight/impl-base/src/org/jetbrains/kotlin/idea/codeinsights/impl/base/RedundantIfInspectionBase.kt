@@ -63,7 +63,12 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
 
             val isChainedIf = expression.getPrevSiblingIgnoringWhitespaceAndComments() is KtIfExpression ||
                     expression.parent.let { it is KtContainerNodeForControlStructureBody && it.expression == expression }
-            val highlightType = if (ignoreChainedIf && isChainedIf) INFORMATION else GENERIC_ERROR_OR_WARNING
+
+            val hasConditionWithFloatingPointType = expression.hasConditionWithFloatingPointType()
+
+            val highlightType =
+                if ((ignoreChainedIf && isChainedIf) || hasConditionWithFloatingPointType) INFORMATION
+                else GENERIC_ERROR_OR_WARNING
 
             holder.registerProblemWithoutOfflineInformation(
                 expression,
@@ -71,7 +76,7 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
                 isOnTheFly,
                 highlightType,
                 expression.ifKeyword.textRangeInParent,
-                RemoveRedundantIf(redundancyType, branchType, returnAfterIf)
+                RemoveRedundantIf(redundancyType, branchType, returnAfterIf, hasConditionWithFloatingPointType)
             )
         }
     }
@@ -82,6 +87,19 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
      * Called from read action and from modal window, so it's safe to use resolve here.
      */
     abstract fun isBooleanExpression(expression: KtExpression): Boolean
+
+    abstract fun invertEmptinessCheck(condition: KtExpression): KtExpression?
+
+    abstract fun KtIfExpression.hasConditionWithFloatingPointType(): Boolean
+
+    protected fun KtIfExpression.inequalityCondition(): KtBinaryExpression? {
+        return (condition as? KtBinaryExpression)
+            ?.takeIf { it.left != null && it.right != null }
+            ?.takeIf {
+                val operation = it.operationToken
+                operation == KtTokens.LT || operation == KtTokens.LTEQ || operation == KtTokens.GT || operation == KtTokens.GTEQ
+            }
+    }
 
     private sealed class BranchType {
         object Simple : BranchType()
@@ -157,10 +175,14 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
         private val redundancyType: RedundancyType,
         private val branchType: BranchType,
         returnAfterIf: KtExpression?,
+        private val mayChangeSemantics: Boolean,
     ) : LocalQuickFix {
         val returnExpressionAfterIf: SmartPsiElementPointer<KtExpression>? = returnAfterIf?.let(SmartPointerManager::createPointer)
 
-        override fun getName() = KotlinBundle.message("remove.redundant.if.text")
+        override fun getName(): String =
+            if (mayChangeSemantics) KotlinBundle.message("remove.redundant.if.may.change.semantics.with.floating.point.types")
+            else KotlinBundle.message("remove.redundant.if.text")
+
         override fun getFamilyName() = name
 
         override fun startInWriteAction(): Boolean = false
@@ -172,9 +194,7 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
             val condition = when (redundancyType) {
                 RedundancyType.NONE -> return
                 RedundancyType.THEN_TRUE -> element.condition
-                RedundancyType.ELSE_TRUE -> element.condition?.negate(
-                    optionalBooleanExpressionCheck = ::checkIsBooleanExpressionFromModalWindow
-                )
+                RedundancyType.ELSE_TRUE -> negate(element.condition)
             } ?: return
             val factory = KtPsiFactory(project)
             val newExpressionOnlyWithCondition = when (branchType) {
@@ -197,6 +217,12 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
                 val replaced = element.replace(newExpressionOnlyWithCondition)
                 commentSaver.restore(replaced)
             }
+        }
+
+        private fun negate(expression: KtExpression?): KtExpression? {
+            if (expression == null) return null
+            invertEmptinessCheck(expression)?.let { return it }
+            return expression.negate(optionalBooleanExpressionCheck = ::checkIsBooleanExpressionFromModalWindow)
         }
 
         private fun checkIsBooleanExpressionFromModalWindow(expression: KtExpression): Boolean =

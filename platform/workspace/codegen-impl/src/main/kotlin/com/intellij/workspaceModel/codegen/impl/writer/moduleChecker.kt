@@ -4,7 +4,7 @@ package com.intellij.workspaceModel.codegen.impl.writer
 import com.intellij.workspaceModel.codegen.deft.meta.CompiledObjModule
 import com.intellij.workspaceModel.codegen.engine.GenerationProblem
 import com.intellij.workspaceModel.codegen.engine.ProblemLocation
-import com.intellij.workspaceModel.codegen.engine.impl.ProblemReporter
+import com.intellij.workspaceModel.codegen.impl.engine.ProblemReporter
 
 internal fun checkExtensionFields(module: CompiledObjModule, reporter: ProblemReporter) {
   module.extensions.forEach { extProperty ->

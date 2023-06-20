@@ -233,7 +233,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
     get() = project.messageBus.syncPublisher(RunManagerListener.TOPIC)
 
   init {
-    project.messageBus.connect().subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+      project.messageBus.connect().subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
       override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
         iconAndInvalidCache.clear()
       }
