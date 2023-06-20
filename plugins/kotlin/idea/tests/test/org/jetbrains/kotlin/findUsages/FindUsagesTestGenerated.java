@@ -617,9 +617,19 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("dataClassComponent.0.kt")
+            public void testDataClassComponent() throws Exception {
+                runTest("testData/findUsages/kotlin/findFunctionUsages/dataClassComponent.0.kt");
+            }
+
             @TestMetadata("enumFunctionUsages.0.kt")
             public void testEnumFunctionUsages() throws Exception {
                 runTest("testData/findUsages/kotlin/findFunctionUsages/enumFunctionUsages.0.kt");
+            }
+
+            @TestMetadata("enumValueOf.0.kt")
+            public void testEnumValueOf() throws Exception {
+                runTest("testData/findUsages/kotlin/findFunctionUsages/enumValueOf.0.kt");
             }
 
             @TestMetadata("functionUsedInPlainText.0.kt")
@@ -1006,6 +1016,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
             public void testPrimaryConstructorWithKeyword() throws Exception {
                 runTest("testData/findUsages/kotlin/findPrimaryConstructorUsages/primaryConstructorWithKeyword.0.kt");
             }
+
+            @TestMetadata("primaryConstructorWithOverloadedOption.0.kt")
+            public void testPrimaryConstructorWithOverloadedOption() throws Exception {
+                runTest("testData/findUsages/kotlin/findPrimaryConstructorUsages/primaryConstructorWithOverloadedOption.0.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -1018,6 +1033,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
             @TestMetadata("extensionPropertyUsages.0.kt")
             public void testExtensionPropertyUsages() throws Exception {
                 runTest("testData/findUsages/kotlin/findPropertyUsages/extensionPropertyUsages.0.kt");
+            }
+
+            @TestMetadata("javaAndKotlinImplementations.0.kt")
+            public void testJavaAndKotlinImplementations() throws Exception {
+                runTest("testData/findUsages/kotlin/findPropertyUsages/javaAndKotlinImplementations.0.kt");
             }
 
             @TestMetadata("javaAndKotlinOverrides.0.kt")
@@ -1206,6 +1226,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
             @TestMetadata("secondaryConstructor.0.kt")
             public void testSecondaryConstructor() throws Exception {
                 runTest("testData/findUsages/kotlin/findSecondaryConstructorUsages/secondaryConstructor.0.kt");
+            }
+
+            @TestMetadata("secondaryConstructorWithOverloadedOption.0.kt")
+            public void testSecondaryConstructorWithOverloadedOption() throws Exception {
+                runTest("testData/findUsages/kotlin/findSecondaryConstructorUsages/secondaryConstructorWithOverloadedOption.0.kt");
             }
         }
 
