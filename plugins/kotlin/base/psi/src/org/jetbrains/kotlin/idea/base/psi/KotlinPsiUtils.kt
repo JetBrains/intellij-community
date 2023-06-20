@@ -223,8 +223,6 @@ fun PsiElement.childrenDfsSequence(): Sequence<PsiElement> =
         visit(this@childrenDfsSequence)
     }
 
-fun KtExpression.isAnnotationArgument(): Boolean = this.parents.any { it is KtAnnotationEntry }
-
 fun ValueArgument.findSingleLiteralStringTemplateText(): String? {
     return getArgumentExpression()
         ?.safeAs<KtStringTemplateExpression>()

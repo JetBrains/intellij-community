@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
 import org.jetbrains.kotlin.load.java.JvmAnnotationNames
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.util.OperatorNameConventions
@@ -132,8 +133,7 @@ object CallParameterInfoProvider {
         argumentMapping: Map<KtExpression, KtVariableLikeSignature<KtValueParameterSymbol>>,
         currentArgument: KtValueArgument,
     ): Boolean {
-        val argumentList = currentArgument.parent as? KtValueArgumentList ?: return false
-        if (argumentList.parent !is KtAnnotationEntry) return false
+        if (!currentArgument.isInsideAnnotationEntryArgumentList()) return false
 
         if (signature.symbol.origin != KtSymbolOrigin.JAVA) return false
 
