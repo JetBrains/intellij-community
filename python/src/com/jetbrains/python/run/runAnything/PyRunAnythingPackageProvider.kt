@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.sdk.isTargetBased
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.statistics.modules
@@ -29,7 +30,8 @@ abstract class PyRunAnythingPackageProvider : RunAnythingCommandLineProvider() {
         shouldCompletePackageNames(commandLine.parameters, commandLine.toComplete)) {
       val packageManager = getPackageManager(dataContext) ?: return emptySequence()
       if (isInstall) {
-        return packageManager.repositoryManager.allPackages().filter {
+        val packageRepository = getPackageRepository(dataContext) ?: return emptySequence()
+        return packageManager.repositoryManager.packagesFromRepository(packageRepository).filter {
           it.startsWith(commandLine.toComplete)
         }.asSequence()
       }
@@ -41,12 +43,12 @@ abstract class PyRunAnythingPackageProvider : RunAnythingCommandLineProvider() {
       if (ind == null || operator == null || commandLine.toComplete.isBlank()) return emptySequence()
       val packageName = last.substring(0, ind)
       val packageManager = getPackageManager(dataContext) ?: return emptySequence()
-      val packageSpec = packageManager.repositoryManager.repositories.first().createPackageSpecification(packageName)
+      val packageSpec = getPackageRepository(dataContext)?.createPackageSpecification(packageName) ?: return emptySequence()
       return runBlockingCancellable {
         withContext(Dispatchers.Default) {
           val packageInfo = packageManager.repositoryManager.getPackageDetails(packageSpec)
           val versionPrefix = last.substring(ind + operator.length)
-          packageInfo.availableVersions.asSequence().filter { it.startsWith(versionPrefix) }.map { packageName + operator + it }
+          packageInfo.availableVersions.distinct().asSequence().filter { it.startsWith(versionPrefix) }.map { packageName + operator + it }
         }
       }
     }
@@ -56,6 +58,8 @@ abstract class PyRunAnythingPackageProvider : RunAnythingCommandLineProvider() {
   protected abstract fun getDefaultCommands(): Sequence<String>
 
   protected abstract fun getPackageManager(dataContext: DataContext): PythonPackageManager?
+
+  protected abstract fun getPackageRepository(dataContext: DataContext): PyPackageRepository?
 
   private fun getCompOperatorPosition(param: String): Pair<Int?, String?> {
     return compOperator().map { Pair(param.indexOf(it), it) }.filter { it.first != -1 }.firstOrNull() ?: Pair(null, null)
