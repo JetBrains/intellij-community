@@ -5,7 +5,9 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.externalSystem.actionSystem.AnAsyncAction
 import com.intellij.openapi.project.DumbAware
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Experimental
 abstract class MavenAsyncAction : AnAsyncAction(), DumbAware {
   override fun update(e: AnActionEvent) {
     val p = e.presentation
