@@ -118,7 +118,7 @@ private class ProjectLevelConnectionManager private constructor(@JvmField val st
   val selectCommitsForUserPool = connection.statementPool("select commitId from user where name = ? and email = ?") { ObjectBinder(2) }
 
   @JvmField
-  val insertCommitPool = connection.statementPool("insert into commit_hashes(position, hash) values(?, ?)") { ObjectBinder(2) }
+  val insertCommitPool = connection.statementPool("insert into commit_hashes(position, hash) values(?, ?) returning rowid") { ObjectBinder(2) }
   val selectCommitPool = connection.statementPool("select rowid from commit_hashes where position = ? and hash = ?") { ObjectBinder(2) }
 
   fun <R> runUnderConnection(runnable: (SqliteConnection) -> R): R {
@@ -536,12 +536,10 @@ internal class SqliteVcsLogStorageBackend(project: Project,
       return commitId
     }
 
-    connectionManager.insertCommitPool.use { statement, binder ->
+    return connectionManager.insertCommitPool.use { statement, binder ->
       binder.bind(position, hash.asString())
-      statement.executeUpdate()
+      statement.selectNotNullInt()
     }
-
-    return getCommitId(position, hash)!!
   }
 
   private fun getCommitId(position: Int, hash: Hash): Int? {

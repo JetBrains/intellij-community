@@ -88,6 +88,12 @@ class SqlitePreparedStatement<T : Binder> internal constructor(@JvmField interna
     }
   }
 
+  fun selectNotNullInt(): Int {
+    executeLifecycle { db, isEmpty ->
+      return if (isEmpty) throw IllegalStateException("Must be not empty") else db.column_int(pointer.pointer, 0)
+    }
+  }
+
   fun selectByteArray(): ByteArray? {
     executeLifecycle { db, isEmpty ->
       return if (isEmpty) null else db.column_blob(pointer.pointer, 0)
