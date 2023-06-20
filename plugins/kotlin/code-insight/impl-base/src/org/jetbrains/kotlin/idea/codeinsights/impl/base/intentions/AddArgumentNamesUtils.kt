@@ -68,7 +68,7 @@ object AddArgumentNamesUtils {
         call: KtCallElement,
         startArgument: KtValueArgument?
     ): Map<SmartPsiElementPointer<KtValueArgument>, Name>? {
-        val resolvedCall = call.resolveCall().singleFunctionCallOrNull() ?: return null
+        val resolvedCall = call.resolveCall()?.singleFunctionCallOrNull() ?: return null
         if (!resolvedCall.symbol.hasStableParameterNames) {
             return null
         }

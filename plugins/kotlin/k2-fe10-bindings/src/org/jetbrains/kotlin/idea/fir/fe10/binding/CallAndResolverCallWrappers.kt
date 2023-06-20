@@ -152,7 +152,7 @@ class CallAndResolverCallWrappers(bindingContext: KtSymbolBasedBindingContext) {
                 val delegationCall = constructorPSI.getDelegationCall()
                 val ktCallInfo = context.withAnalysisSession { delegationCall.resolveCall() }
                 val diagnostic = ktCallInfo.safeAs<KtErrorCallInfo>()?.diagnostic
-                val constructorCall = ktCallInfo.calls.singleOrNull() ?: return null
+                val constructorCall = ktCallInfo?.calls?.singleOrNull() ?: return null
 
                 if (constructorCall !is KtFunctionCall<*>) context.errorHandling(constructorCall::class.toString())
                 val psiCall = CallMaker.makeCall(null, null, delegationCall)

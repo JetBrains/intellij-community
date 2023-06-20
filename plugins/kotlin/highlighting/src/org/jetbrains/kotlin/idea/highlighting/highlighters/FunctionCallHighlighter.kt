@@ -52,7 +52,7 @@ internal class FunctionCallHighlighter(
             ?.takeUnless { it is KtLambdaExpression }
             ?.takeUnless { it is KtCallExpression /* KT-16159 */ }
             ?.let { callee ->
-                expression.resolveCall().singleCallOrNull<KtCall>()?.let { call ->
+                expression.resolveCall()?.singleCallOrNull<KtCall>()?.let { call ->
                     getTextAttributesForCall(call)?.let { attributes ->
                         highlightName(callee, attributes)
                     }
