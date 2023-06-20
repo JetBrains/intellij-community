@@ -106,8 +106,8 @@ private fun installActionListener(project: Project, pathToRunningFile: @NonNls S
   val actionsMapReported = promotedActions.associateWith { false }.toMutableMap()
   connection.subscribe(AnActionListener.TOPIC, object : AnActionListener {
     override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
-      val editor = event.getData(CommonDataKeys.EDITOR) ?: return
-      if (editor.virtualFile.path != pathToRunningFile) {
+      val virtualFile = event.getData(CommonDataKeys.EDITOR)?.virtualFile ?: return
+      if (virtualFile.path != pathToRunningFile) {
         return
       }
 
