@@ -73,8 +73,9 @@ class DependencySearchServiceTest : LightPlatformTestCase() {
     val promise = dependencySearchService.suggestPrefix("group", "artifact", searchParameters) {
       result.add(it)
     }
-    assertTrue(result.all { it is MavenRepositoryArtifactInfo })
-    UsefulTestCase.assertSameElements(result.map { it as MavenRepositoryArtifactInfo }.flatMap { it.items.asList() }.map { it.version },
+    val artifactResults = result.filterIsInstance(MavenRepositoryArtifactInfo::class.java)
+    TestCase.assertTrue(result.last() === PoisonedRepositoryArtifactData.INSTANCE)
+    UsefulTestCase.assertSameElements(artifactResults.flatMap { it.items.asList() }.map { it.version },
                                       "0", "1", "2", "3", "4")
   }
 
