@@ -2,6 +2,7 @@
 package com.intellij.ui.tree.ui
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.tree.CachingTreePath
 import com.intellij.util.SlowOperations
 import com.intellij.util.ui.JBUI
@@ -764,7 +765,7 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
   }
 
   private fun checkInvariants(location: Location) {
-    if (!LOG.isDebugEnabled) {
+    if (!Registry.`is`("ide.tree.experimental.layout.cache.debug", false)) {
       return
     }
     SlowOperations.startSection(SlowOperations.GENERIC).use { // Only for debugging, so slow ops are fine here.
