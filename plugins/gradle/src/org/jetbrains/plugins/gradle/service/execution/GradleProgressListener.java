@@ -75,7 +75,7 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
     myTaskId = taskId;
     myGradleVersion = extractGradleVersion(settings);
     myOperationId = taskId.hashCode() + ":" + FileUtil.pathHashCode(buildRootDir == null ? UUID.randomUUID().toString() : buildRootDir);
-    myDownloadProgressListener = GradleDownloadProgressListener.newListener(taskId);
+    myDownloadProgressListener = GradleDownloadProgressListener.newListener(taskId, myListener);
     isBuildProgressSupported = areGradleBuildProgressEventsSupported(myGradleVersion);
   }
 
@@ -97,13 +97,8 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
       sendProgressToOutputIfNeeded(event);
       var progressBuildEvent = GradleProgressEventConverter.convertProgressBuildEvent(myTaskId, myTaskId, event);
       if (progressBuildEvent != null && event instanceof StatusEvent) {
-        if (isBuildProgressSupported) {
-          // Show download progress as separate indicators when build progress is supported
-          myDownloadProgressListener.updateProgressIndicator(progressBuildEvent);
-        } else {
-          // Otherwise show download progress on main progress indicator
-          myListener.onStatusChange(progressBuildEvent);
-        }
+        // Update progress indicator
+        myDownloadProgressListener.updateProgressIndicator(progressBuildEvent, isBuildProgressSupported);
       }
     }
     else {
