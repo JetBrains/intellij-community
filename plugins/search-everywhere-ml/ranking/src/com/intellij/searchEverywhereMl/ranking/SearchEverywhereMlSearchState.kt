@@ -1,5 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.searchEverywhereMl.ranking
+
 import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
@@ -60,19 +61,20 @@ internal class SearchEverywhereMlSearchState(
    * @param contributorFeatures The list of contributor-related features.
    */
   private fun getElementMLScoreForAllTab(tabId: String,
-                                contributorId: String,
-                                contextFeatures: List<EventPair<*>>,
-                                elementFeatures: List<EventPair<*>>,
-                                contributorFeatures: List<EventPair<*>>): Double? {
+                                         contributorId: String,
+                                         contextFeatures: List<EventPair<*>>,
+                                         elementFeatures: List<EventPair<*>>,
+                                         contributorFeatures: List<EventPair<*>>): Double? {
 
     if (tabId != ALL_CONTRIBUTORS_GROUP_ID) {
       throw IllegalArgumentException("Supported only for All tab.")
     }
     return try {
-        val features = getAllFeatures(contextFeatures, elementFeatures, contributorFeatures)
-        val model = getForContributor(contributorId)
-        model.predict(features)
-    } catch (e: IllegalArgumentException) {
+      val features = getAllFeatures(contextFeatures, elementFeatures, contributorFeatures)
+      val model = getForContributor(contributorId)
+      model.predict(features)
+    }
+    catch (e: IllegalArgumentException) {
       null
     }
   }
