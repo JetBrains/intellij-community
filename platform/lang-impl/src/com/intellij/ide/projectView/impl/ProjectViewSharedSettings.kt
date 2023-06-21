@@ -5,6 +5,7 @@ import com.intellij.ide.projectView.NodeSortKey
 import com.intellij.ide.projectView.ProjectViewSettings
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.ReportValue
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -17,6 +18,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 class ProjectViewSharedSettings : PersistentStateComponent<ProjectViewSharedSettings> {
   var flattenPackages: Boolean = false
   var showMembers: Boolean = false
+  @ReportValue
   var sortKey: NodeSortKey = ProjectViewSettings.Immutable.DEFAULT.sortKey
   var showModules: Boolean = true
   var flattenModules: Boolean = false
