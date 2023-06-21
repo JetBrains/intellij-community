@@ -48,7 +48,7 @@ internal class GitLabMergeRequestDetailsChangesComponentFactory(private val proj
     return TransparentScrollPane(wrapper).apply {
       horizontalScrollBarPolicy = HORIZONTAL_SCROLLBAR_NEVER
       verticalScrollBarPolicy = VERTICAL_SCROLLBAR_AS_NEEDED
-      ScrollableContentBorder.setup(scrollPane = this, sides = Side.TOP_AND_BOTTOM, targetComponent = wrapper)
+      ScrollableContentBorder.setup(scrollPane = this, sides = Side.TOP_AND_BOTTOM, targetComponent = this)
     }
   }
 
