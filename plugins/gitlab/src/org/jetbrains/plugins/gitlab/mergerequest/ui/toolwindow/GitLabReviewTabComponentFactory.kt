@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow
 
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
 import com.intellij.collaboration.ui.toolwindow.ReviewListTabComponentDescriptor
@@ -27,8 +28,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import org.jetbrains.plugins.gitlab.mergerequest.diff.ChangesSelection
-import org.jetbrains.plugins.gitlab.mergerequest.diff.ChangesSelection.Companion.toSelection
-import org.jetbrains.plugins.gitlab.mergerequest.diff.isEqual
+import org.jetbrains.plugins.gitlab.mergerequest.diff.selectedChange
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContext
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContextHolder
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestDetailsComponentFactory
@@ -96,33 +96,36 @@ internal class GitLabReviewTabComponentFactory(
     }
 
     val diffBridge = ctx.getDiffBridge(reviewId)
-    cs.launch(Dispatchers.EDT, start = CoroutineStart.UNDISPATCHED) {
-      detailsVmFlow.flatMapLatest {
-        it.changesVm.changesSelection
-      }.collectLatest {
-        diffBridge.setChanges(it.toSelection())
-      }
-    }
 
-    cs.launch(Dispatchers.EDT, start = CoroutineStart.UNDISPATCHED) {
+    cs.launchNow(Dispatchers.EDT) {
       detailsVmFlow.collectLatest { detailsVm ->
-        diffBridge.displayedChanges.collectLatest { changes ->
-          if (changes !is ChangesSelection.Multiple) {
-            diffBridge.selectedChange.distinctUntilChanged { old, new ->
-              if (old == null || new == null) false else old.isEqual(new)
-            }.filterNotNull().collect {
-              detailsVm.changesVm.selectChange(it)
+        val changesVm = detailsVm.changesVm
+        val changeListVms = changesVm.changeListVm.mapNotNull { it.getOrNull() }
+
+        launchNow {
+          changeListVms.flatMapLatest {
+            it.changesSelection
+          }.filterNotNull().collectLatest {
+            diffBridge.setChanges(it)
+          }
+        }
+
+        launchNow {
+          diffBridge.displayedChanges.mapNotNull {
+            (it as? ChangesSelection.Precise)?.selectedChange
+          }.collect {
+            changesVm.selectChange(it)
+          }
+        }
+
+        launchNow {
+          changeListVms.collectLatest {
+            it.showDiffRequests.collectLatest {
+              ctx.filesController.openDiff(reviewId, true)
             }
           }
         }
-      }
-    }
-
-    cs.launch(Dispatchers.EDT, start = CoroutineStart.UNDISPATCHED) {
-      detailsVmFlow.flatMapLatest {
-        it.changesVm.showDiffRequests
-      }.collect {
-        ctx.filesController.openDiff(reviewId, true)
+        awaitCancellation()
       }
     }
 

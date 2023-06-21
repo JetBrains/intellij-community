@@ -20,7 +20,10 @@ import com.intellij.ui.PopupHandler
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -29,7 +32,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
-import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestChangesViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestChangeListViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestErrorStatusPresenter
@@ -62,10 +65,13 @@ internal object GitLabMergeRequestDetailsComponentFactory {
             val detailsPanel = createDetailsComponent(project, detailsVm, avatarIconsProvider).apply {
               val actionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Request.Details.Popup") as ActionGroup
               PopupHandler.installPopupMenu(this, actionGroup, ActionPlaces.POPUP)
+
+              val changesModelState = detailsVm.changesVm.changeListVm.map { it.getOrNull() }
+                .stateIn(this@bindContentIn, SharingStarted.Eagerly, null)
               DataManager.registerDataProvider(this) { dataId ->
                 when {
                   GitLabMergeRequestViewModel.DATA_KEY.`is`(dataId) -> detailsVm
-                  GitLabMergeRequestChangesViewModel.DATA_KEY.`is`(dataId) -> detailsVm.changesVm
+                  GitLabMergeRequestChangeListViewModel.DATA_KEY.`is`(dataId) -> changesModelState.value
                   else -> null
                 }
               }
