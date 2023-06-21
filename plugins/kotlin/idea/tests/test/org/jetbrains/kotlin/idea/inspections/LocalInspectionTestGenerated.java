@@ -9036,6 +9036,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             public void testTailComment4() throws Exception {
                 runTest("testData/inspectionsLocal/redundantIf/comment/tailComment4.kt");
             }
+
+            @TestMetadata("tailComment5.kt")
+            public void testTailComment5() throws Exception {
+                runTest("testData/inspectionsLocal/redundantIf/comment/tailComment5.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)

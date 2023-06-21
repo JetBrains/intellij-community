@@ -2427,6 +2427,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             public void testTailComment4() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/redundantIf/comment/tailComment4.kt");
             }
+
+            @TestMetadata("tailComment5.kt")
+            public void testTailComment5() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/redundantIf/comment/tailComment5.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)

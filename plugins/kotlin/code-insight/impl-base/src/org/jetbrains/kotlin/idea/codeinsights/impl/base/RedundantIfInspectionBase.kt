@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
+import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.negate
@@ -18,10 +19,7 @@ import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComments
-import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
-import org.jetbrains.kotlin.psi.psiUtil.siblings
+import org.jetbrains.kotlin.psi.psiUtil.*
 
 /**
  * A parent class for K1 and K2 RedundantIfInspection.
@@ -67,11 +65,7 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
 
             val hasConditionWithFloatingPointType = expression.hasConditionWithFloatingPointType()
 
-            val bothBranchesHaveTailComments = when {
-              returnAfterIf != null -> expression.hasTailComments() && returnAfterIf.hasTailComments()
-              expression.`else` != null -> expression.then?.parent?.hasTailComments() == true && expression.hasTailComments()
-              else -> false
-            }
+            val bothBranchesHaveTailComments = bothBranchesHaveComments(expression.then, expression.`else`, returnAfterIf)
 
             val highlightType =
                 if ((ignoreChainedIf && isChainedIf) || hasConditionWithFloatingPointType || bothBranchesHaveTailComments) INFORMATION
@@ -108,8 +102,25 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
             }
     }
 
-    private fun PsiElement.hasTailComments(): Boolean =
-        siblings(withItself = false).takeWhile { it is PsiWhiteSpace || it is PsiComment }.any { it is PsiComment }
+    private fun bothBranchesHaveComments(
+        thenExpression: KtExpression?,
+        elseExpression: KtExpression?,
+        returnAfterIf: KtExpression?
+    ): Boolean {
+        return thenExpression.hasComments() && (elseExpression.hasComments(thenExpression) || returnAfterIf.hasComments(thenExpression))
+    }
+
+    private fun PsiElement?.hasComments(prevExpression: KtExpression? = null): Boolean {
+        if (this == null) return false
+        if (this is KtBlockExpression) return anyDescendantOfType<PsiComment>()
+
+        val lineNumber = getLineNumber()
+        val prevExpressionLineNumber = prevExpression?.getLineNumber()
+        fun Sequence<PsiElement>.comments() = takeWhile { it is PsiWhiteSpace || it is PsiComment }.filterIsInstance<PsiComment>()
+        val hasPrevComment = prevLeafs.comments().any { it.getLineNumber() != prevExpressionLineNumber }
+        val hasTailComment = nextLeafs.comments().any { it.getLineNumber() == lineNumber }
+        return hasPrevComment || hasTailComment
+    }
 
     private sealed class BranchType {
         object Simple : BranchType()
