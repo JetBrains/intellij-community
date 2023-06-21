@@ -31,7 +31,8 @@ interface JetBrainsClientDownloaderConfigurationProvider {
 
   companion object {
     const val ClientUrlVar = "THIN_CLIENT_URL"
-    const val DisableClientSignatureCheck = "THIN_CLIENT_SIGNATURE_CHECK_DISABLED"
+    const val CheckClientSignature = "THIN_CLIENT_CHECK_SIGNATURE"
+    const val DownloadLatestForSnapshot = "THIN_CLIENT_DOWNLOAD_LATEST_FOR_SNAPSHOT"
   }
 
   fun modifyClientCommandLine(clientCommandLine: GeneralCommandLine)
@@ -80,7 +81,7 @@ class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
     get() = IntellijClientDownloaderSystemSettings.isModifiedDateInManifestIncluded()
   override val verifySignature: Boolean
     get() {
-      val envVar = System.getenv(JetBrainsClientDownloaderConfigurationProvider.DisableClientSignatureCheck)
+      val envVar = System.getenv(JetBrainsClientDownloaderConfigurationProvider.CheckClientSignature)
       return envVar.isEmpty() || envVar.toBoolean()
     }
 
@@ -121,7 +122,11 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
 
   override val clientLaunched: Signal<Unit> = Signal()
 
-  override val downloadLatestBuildFromCDNForSnapshotHost = false
+  override val downloadLatestBuildFromCDNForSnapshotHost: Boolean
+    get() {
+      val envVar = System.getenv(JetBrainsClientDownloaderConfigurationProvider.DownloadLatestForSnapshot)
+      return envVar.isEmpty() || envVar.toBoolean()
+    }
 
   override fun patchVmOptions(vmOptionsFile: Path, connectionUri: URI) {
     thisLogger().info("Patching $vmOptionsFile")
