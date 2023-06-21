@@ -31,10 +31,7 @@ import java.awt.*
 import java.awt.GridBagConstraints.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
-import javax.swing.JComponent
-import javax.swing.JFrame
-import javax.swing.JLabel
-import javax.swing.JPanel
+import javax.swing.*
 
 private enum class ShowMode {
   MENU, TOOLBAR
@@ -120,6 +117,7 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
 
   override fun initToolbar(toolbarActionGroups: List<Pair<ActionGroup, String>>) {
     doUpdateToolbar(toolbarActionGroups)
+    updateSize()
   }
 
   override fun updateToolbar() {
@@ -131,6 +129,7 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
     }
 
     updateToolbarAppearanceFromMode()
+    updateSize()
   }
 
   override fun paint(g: Graphics?) {
@@ -171,6 +170,10 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
 
   private fun updateMenuBarAppearance() {
     menuBarHeaderTitle.isVisible = (isCompact && mode == ShowMode.MENU)
+  }
+
+  private fun updateTitleButtonsMode() {
+    buttonPanes?.isCompactMode = isCompact
   }
 
   override fun installListeners() {
@@ -214,6 +217,7 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
   }
 
   private fun updateToolbarAppearanceFromMode() {
+    updateTitleButtonsMode()
     updateMenuButtonMinimumSize()
     if (mode == ShowMode.MENU) updateMenuBarAppearance()
   }

@@ -80,9 +80,16 @@ open class IdeRootPane internal constructor(frame: JFrame,
   private val glassPaneInitialized: Boolean
   private var fullScreen = false
   internal val isCompactHeader: Boolean
-    get() = ToggleDistractionFreeModeAction.shouldMinimizeCustomHeader() || isLightEdit
+    get() = ToggleDistractionFreeModeAction.shouldMinimizeCustomHeader()
+            || isLightEdit
+            || SystemInfo.isMac && mainToolbarHasNoActions()
+            || !SystemInfo.isMac && !UISettings.shadowInstance.separateMainMenu && mainToolbarHasNoActions()
+
   protected open val isLightEdit: Boolean
     get() = false
+
+  private fun mainToolbarHasNoActions() =
+    MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()).all { it.first.getChildren(null).isEmpty() }
 
   private sealed interface Helper {
     val toolbarHolder: ToolbarHolder?
@@ -217,6 +224,8 @@ open class IdeRootPane internal constructor(frame: JFrame,
 
     @Suppress("LeakingThis")
     contentPane.add(createCenterComponent(frame, parentDisposable), BorderLayout.CENTER)
+
+    if (isLightEdit && ExperimentalUI.isNewUI()) updateToolbar()
   }
 
   companion object {

@@ -4,7 +4,6 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header
 import com.intellij.CommonBundle
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.icons.AllIcons
-import com.intellij.ide.actions.ToggleDistractionFreeModeAction
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.MnemonicHelper
@@ -13,6 +12,7 @@ import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
 import com.intellij.ui.*
 import com.intellij.ui.paint.LinePainter2D
@@ -132,16 +132,20 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
   override fun updateUI() {
     super.updateUI()
     updateWinControlsTheme()
-    if (ExperimentalUI.isNewUI()) {
-      preferredSize = preferredSize.apply {
-        height = JBUI.scale(
-          when {
-            ToggleDistractionFreeModeAction.shouldMinimizeCustomHeader() -> HEADER_HEIGHT_DFM
-            UISettings.getInstance().compactMode -> HEADER_HEIGHT_COMPACT
-            else -> HEADER_HEIGHT_NORMAL
-          }
-        )
-      }
+    updateSize()
+  }
+
+  protected fun updateSize() {
+    if (!ExperimentalUI.isNewUI()) return
+
+    preferredSize = preferredSize.apply {
+      height = JBUI.scale(
+        when {
+          (rootPane as? IdeRootPane)?.isCompactHeader == true -> HEADER_HEIGHT_DFM
+          UISettings.getInstance().compactMode -> HEADER_HEIGHT_COMPACT
+          else -> HEADER_HEIGHT_NORMAL
+        }
+      )
     }
   }
 
