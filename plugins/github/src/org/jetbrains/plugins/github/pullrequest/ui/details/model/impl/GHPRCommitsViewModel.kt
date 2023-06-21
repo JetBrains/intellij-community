@@ -30,13 +30,13 @@ internal class GHPRCommitsViewModel(
     return commit.abbreviatedOid
   }
 
-  override fun selectCommit(commit: GHCommit?) {
-    diffBridge.activeTree = GHPRDiffController.ActiveTree.COMMITS
-    super.selectCommit(commit)
-  }
-
-  override fun selectAllCommits() {
-    diffBridge.activeTree = GHPRDiffController.ActiveTree.FILES
-    super.selectAllCommits()
+  override fun selectCommit(index: Int) {
+    if (index > -1) {
+      diffBridge.activeTree = GHPRDiffController.ActiveTree.COMMITS
+    }
+    else {
+      diffBridge.activeTree = GHPRDiffController.ActiveTree.FILES
+    }
+    super.selectCommit(index)
   }
 }

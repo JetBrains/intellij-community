@@ -122,8 +122,8 @@ object CodeReviewDetailsCommitsComponentFactory {
             searchTextPlaceHolder = CollaborationToolsBundle.message("review.details.commits.search.placeholder")
           )
         )
-
-        if (chosenCommit == null) changesVm.selectAllCommits() else changesVm.selectCommit(chosenCommit)
+        val index = chosenCommit?.let(commits::indexOf) ?: -1
+        changesVm.selectCommit(index)
       }
     }
   }

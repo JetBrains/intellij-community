@@ -88,16 +88,16 @@ internal class GitLabMergeRequestChangesViewModelImpl(
 
   override fun selectChange(change: Change) {
     cs.launch {
-      val commit = combine(reviewCommits, parsedChanges) { commits, changesRes ->
+      val commitIndex = combine(reviewCommits, parsedChanges) { commits, changesRes ->
         val changes = changesRes.getOrNull() ?: throw CancellationException("Missing changes")
         if (changes.changes.find { it.isEqual(change) } != null) {
-          null
+          -1
         }
         else {
-          changes.commitByChange[change]?.let { commitSha -> commits.find { it.sha == commitSha } }
+          changes.commitByChange[change]?.let { commitSha -> commits.indexOfFirst { it.sha == commitSha } } ?: -1
         }
       }.first()
-      selectCommit(commit)
+      selectCommit(commitIndex)
       _changeSelectionRequests.emit(change)
     }
   }

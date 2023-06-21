@@ -36,7 +36,6 @@ import kotlinx.coroutines.flow.combine
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestFileViewedState
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRCombinedDiffPreviewBase.Companion.createAndSetupDiffPreview
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
@@ -139,13 +138,13 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     private val commitsVm: GHPRCommitsViewModel
   ) : GHPRCommitBrowserComponentController {
     override fun selectCommit(oid: String) {
-      val selectedCommit = commitsVm.reviewCommits.value.find { it.abbreviatedOid == oid }
+      val selectedCommit = commitsVm.reviewCommits.value.indexOfFirst { it.abbreviatedOid == oid }
       commitsVm.selectCommit(selectedCommit)
       CollaborationToolsUIUtil.focusPanel(tree)
     }
 
     override fun selectChange(oid: String?, filePath: String) {
-      commitsVm.selectAllCommits()
+      commitsVm.selectCommit(-1)
 
       tree.invokeAfterRefresh {
         if (oid == null) {

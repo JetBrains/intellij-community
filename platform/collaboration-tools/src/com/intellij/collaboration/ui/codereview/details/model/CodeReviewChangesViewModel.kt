@@ -7,15 +7,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 
 interface CodeReviewChangesViewModel<T> {
-  val reviewCommits: StateFlow<List<T>>
+  val reviewCommits: Flow<List<T>>
   val selectedCommit: Flow<T?>
 
   /** `-1` for "all commits" mode */
   val selectedCommitIndex: Flow<Int>
 
-  fun selectCommit(commit: T?)
-
-  fun selectAllCommits()
+  fun selectCommit(index: Int)
 
   fun selectNextCommit()
 
@@ -25,20 +23,17 @@ interface CodeReviewChangesViewModel<T> {
 }
 
 abstract class CodeReviewChangesViewModelBase<T> : CodeReviewChangesViewModel<T> {
+  abstract override val reviewCommits: StateFlow<List<T>>
+
   private val _selectedCommitState: MutableStateFlow<T?> = MutableStateFlow(null)
   override val selectedCommit: Flow<T?> = _selectedCommitState.asSharedFlow()
 
   private val _selectedCommitIndexState: MutableStateFlow<Int> = MutableStateFlow(-1)
   override val selectedCommitIndex: Flow<Int> = _selectedCommitIndexState.asSharedFlow()
 
-  override fun selectCommit(commit: T?) {
-    _selectedCommitState.value = commit
-    _selectedCommitIndexState.value = reviewCommits.value.indexOf(commit)
-  }
-
-  override fun selectAllCommits() {
-    _selectedCommitState.value = null
-    _selectedCommitIndexState.value = -1
+  override fun selectCommit(index: Int) {
+    _selectedCommitState.value = reviewCommits.value.getOrNull(index)
+    _selectedCommitIndexState.value = index
   }
 
   override fun selectNextCommit() {
