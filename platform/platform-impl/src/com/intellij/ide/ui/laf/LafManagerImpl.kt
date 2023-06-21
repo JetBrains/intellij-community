@@ -15,7 +15,6 @@ import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.ui.*
 import com.intellij.ide.ui.UISettings.Companion.getPreferredFractionalMetricsValue
-import com.intellij.ide.ui.UISettings.Companion.shadowInstance
 import com.intellij.ide.ui.laf.SystemDarkThemeDetector.Companion.createDetector
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo
@@ -299,7 +298,6 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
         findLaf(currentLaf.className)
       }
       if (laf != null) {
-        val needUninstall = StartupUiUtil.isUnderDarcula
         // setup default LAF or one specified by readExternal
         doSetLaF(lookAndFeelInfo = laf, installEditorScheme = false)
       }
@@ -585,13 +583,13 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     if (!isFirstSetup && installEditorScheme) {
       if (processChangeSynchronously) {
         updateEditorSchemeIfNecessary(oldLaf, true)
-        shadowInstance.fireUISettingsChanged()
+        UISettings.getInstance().fireUISettingsChanged()
         ActionToolbarImpl.updateAllToolbarsImmediately()
       }
       else {
         ApplicationManager.getApplication().invokeLater {
           updateEditorSchemeIfNecessary(oldLaf, false)
-          shadowInstance.fireUISettingsChanged()
+          UISettings.getInstance().fireUISettingsChanged()
           ActionToolbarImpl.updateAllToolbarsImmediately()
         }
       }
