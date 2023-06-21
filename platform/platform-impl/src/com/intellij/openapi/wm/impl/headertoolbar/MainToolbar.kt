@@ -4,7 +4,7 @@ package com.intellij.openapi.wm.impl.headertoolbar
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.ActionUrl
-import com.intellij.ide.ui.customization.CustomActionsListener.Companion.fireSchemaChanged
+import com.intellij.ide.ui.customization.CustomActionsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.customization.CustomizationUtil
 import com.intellij.ide.ui.laf.darcula.ui.MainToolbarComboBoxButtonUI
@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
@@ -29,6 +30,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.Header
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.MainMenuButton
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.HorizontalLayout
+import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBInsets
@@ -133,11 +135,22 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
       migrateToolbar(schema, listOf("root", "Main Toolbar Left"), mainToolbarPath + "Left")
       migrateToolbar(schema, listOf("root", "Main Toolbar Center"), mainToolbarPath + "Center")
       migrateToolbar(schema, listOf("root", "Main Toolbar Right"), mainToolbarPath + "Right")
+
+      schemaChanged()
     } catch (e: Throwable) {
       LOG.error("Migration of Main Toolbar customizations is failed", e)
       schema.copyFrom(backup)
-      fireSchemaChanged()
+      schemaChanged()
     }
+  }
+
+  private fun schemaChanged() {
+    CustomActionsSchema.getInstance().initActionIcons()
+    CustomActionsSchema.setCustomizationSchemaForCurrentProjects()
+    if (SystemInfo.isMac) {
+      TouchbarSupport.reloadAllActions()
+    }
+    CustomActionsListener.fireSchemaChanged()
   }
 
   private fun migrateToolbar(schema: CustomActionsSchema, fromPath: List<String>, toPath: List<String>) {
@@ -154,7 +167,6 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
     tmpSchema.setActions(actions)
 
     schema.copyFrom(tmpSchema)
-    fireSchemaChanged()
   }
 
   private fun installClickListener(popupHandler: PopupHandler, customTitleBar: WindowDecorations.CustomTitleBar?) {
