@@ -46,6 +46,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import java.util.*
+import javax.xml.stream.events.Characters
 
 internal class NewKotlinFileAction : AbstractNewKotlinFileAction(), DumbAware {
     override fun isAvailable(dataContext: DataContext): Boolean {
@@ -222,24 +223,36 @@ object NewKotlinFileNameValidator : InputValidatorEx {
 }
 
 private fun findOrCreateTarget(dir: PsiDirectory, name: String, directorySeparators: CharArray): Pair<String, PsiDirectory> {
-    var className = removeKotlinExtensionIfPresent(name)
+    var fileName = removeKotlinExtensionIfPresent(name)
     var targetDir = dir
 
     for (splitChar in directorySeparators) {
-        if (splitChar in className) {
-            val names = className.trim().split(splitChar)
+        if (splitChar in fileName) {
+            val names = fileName.trim().split(splitChar)
 
-            for (dirName in names.dropLast(1)) {
+            var fileNameParts = 1
+            if (splitChar == '.') {
+                // "aaa.bbb.Ccc.ddd.ee" ->
+                // dirs: "aaa/bbb"
+                // file name: "Ccc.ddd.ee"
+                // class name: "Ccc"
+                val classNameIndex = names.indexOfLast { it.isNotBlank() && Character.isUpperCase(it.first()) }
+                if (classNameIndex != -1) {
+                    fileNameParts = names.size - classNameIndex
+                }
+            }
+
+            for (dirName in names.dropLast(fileNameParts)) {
                 targetDir = targetDir.findSubdirectory(dirName) ?: runWriteAction {
                     targetDir.createSubdirectory(dirName)
                 }
             }
 
-            className = names.last()
+            fileName = names.takeLast(fileNameParts).joinToString(".")
             break
         }
     }
-    return Pair(className, targetDir)
+    return Pair(fileName, targetDir)
 }
 
 const val KOTLIN_WORKSHEET_EXTENSION: String = "ws.kts"
@@ -254,11 +267,13 @@ private fun removeKotlinExtensionIfPresent(name: String): String = when {
     else -> name
 }
 
-private fun createKotlinFileFromTemplate(dir: PsiDirectory, className: String, template: FileTemplate): PsiFile? {
+private fun createKotlinFileFromTemplate(dir: PsiDirectory, fileName: String, template: FileTemplate): PsiFile? {
     val project = dir.project
     val defaultProperties = FileTemplateManager.getInstance(project).defaultProperties
 
     val properties = Properties(defaultProperties)
+    template.fileName = fileName
+    val className = fileName.substringBefore('.')
 
     val element = try {
         CreateFromTemplateDialog(
@@ -293,12 +308,12 @@ internal fun createKotlinFileFromTemplate(name: String, template: FileTemplate, 
         else -> FQNAME_SEPARATORS
     }
 
-    val (className, targetDir) = findOrCreateTarget(dir, name, directorySeparators)
+    val (fileName, targetDir) = findOrCreateTarget(dir, name, directorySeparators)
 
     val service = DumbService.getInstance(dir.project)
     return service.computeWithAlternativeResolveEnabled<PsiFile?, Throwable> {
         val adjustedDir = CreateTemplateInPackageAction.adjustDirectory(targetDir, JavaModuleSourceRootTypes.SOURCES)
-        val psiFile = createKotlinFileFromTemplate(adjustedDir, className, template)
+        val psiFile = createKotlinFileFromTemplate(adjustedDir, fileName, template)
         if (psiFile is KtFile) {
             val singleClass = psiFile.declarations.singleOrNull() as? KtClass
             if (singleClass != null && !singleClass.isEnum() && !singleClass.isInterface() && name.contains("Abstract")) {

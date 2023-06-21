@@ -59,8 +59,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     if (attributesDefaults != null && attributesDefaults.isFixedName()) {
       myDefaultProperties.setProperty(FileTemplate.ATTRIBUTE_NAME, attributesDefaults.getDefaultFileName());
       mustEnterName = false;
-    }
-    if (!template.getFileName().isEmpty()) {
+    } else if (!template.getFileName().isEmpty()) {
       String fileName = FileTemplateUtil.mergeTemplate(myDefaultProperties, template.getFileName(), false);
       try {
         String[] strings = FileTemplateUtil.calculateAttributes(fileName, myDefaultProperties, false, project);
