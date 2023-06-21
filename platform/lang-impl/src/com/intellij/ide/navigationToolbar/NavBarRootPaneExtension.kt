@@ -151,6 +151,7 @@ internal class MyNavBarWrapperPanel(private val project: Project, useAsComponent
       return it
     }
 
+    val navigationBar: JComponent
     if (isNavbarV2Enabled) {
       navigationBar = NavBarService.getInstance(project).createNavBarPanel()
     }
@@ -160,10 +161,13 @@ internal class MyNavBarWrapperPanel(private val project: Project, useAsComponent
       @Suppress("DEPRECATION")
       (navigationBar as NavBarPanel).model.setFixedComponent(true)
     }
+    this.navigationBar = navigationBar
+
     putClientProperty(NavBarRootPaneExtension.PANEL_KEY, navigationBar)
     scrollPane = ScrollPaneFactory.createScrollPane(navigationBar)
     updateScrollBarFlippedState(location = null, scrollPane = scrollPane!!)
-    val navBarPanel = createNavBarPanel(scrollPane = scrollPane!!, navigationBar = navigationBar!!)
+    val navBarPanel = createNavBarPanel(scrollPane = scrollPane!!, navigationBar = navigationBar)
+    navBarPanel.putClientProperty(NavBarRootPaneExtension.PANEL_KEY, navigationBar)
     this.navBarPanel = navBarPanel
     return navBarPanel
   }
