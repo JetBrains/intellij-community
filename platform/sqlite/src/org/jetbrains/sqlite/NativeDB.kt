@@ -177,6 +177,8 @@ internal class NativeDB : SqliteDb() {
   @Synchronized
   external override fun bind_int(stmt: Long, oneBasedColumnIndex: Int, v: Int): Int
 
+  external fun executeBatch(statementPointer: Long, queryCount: Int, paramCount: Int, data: IntArray)
+
   @Synchronized
   external override fun bind_long(stmt: Long, oneBasedColumnIndex: Int, v: Long): Int
 

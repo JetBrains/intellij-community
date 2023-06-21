@@ -244,6 +244,8 @@ JNIEXPORT jint JNICALL Java_org_jetbrains_sqlite_NativeDB_bind_1null
 JNIEXPORT jint JNICALL Java_org_jetbrains_sqlite_NativeDB_bind_1int
   (JNIEnv *, jobject, jlong, jint, jint);
 
+JNIEXPORT jint JNICALL Java_org_jetbrains_sqlite_NativeDB_executeBatch(JNIEnv *, jobject, jlong, jint, jint, jintArray);
+
 /*
  * Class:     org_jetbrains_sqlite_NativeDB
  * Method:    bind_long

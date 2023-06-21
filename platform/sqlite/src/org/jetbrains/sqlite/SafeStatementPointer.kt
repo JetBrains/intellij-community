@@ -5,11 +5,7 @@ package org.jetbrains.sqlite
  * A class for safely wrapping calls to a native pointer to a statement, ensuring no other thread
  * has access to the pointer while it is run
  */
-internal class SafeStatementPointer(
-  private val connection: SqliteConnection,
-  @JvmField
-  internal val pointer: Long,
-) {
+internal class SafeStatementPointer(private val connection: SqliteConnection, @JvmField internal val pointer: Long) {
   /**
    * Check whether this pointer has been closed
    */
@@ -18,7 +14,6 @@ internal class SafeStatementPointer(
     private set
 
   internal fun close(db: SqliteDb) {
-    // if this is already closed, return or throw the previous result
     if (isClosed) {
       return
     }
@@ -28,7 +23,6 @@ internal class SafeStatementPointer(
       if (status != SqliteCodes.SQLITE_OK && status != SqliteCodes.SQLITE_MISUSE) {
         throw db.newException(status)
       }
-      return
     }
     finally {
       isClosed = true

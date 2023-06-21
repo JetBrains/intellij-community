@@ -7,6 +7,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.util.*
 
 class SqliteTest {
   private lateinit var connection: SqliteConnection
@@ -55,6 +56,84 @@ class SqliteTest {
   }
 
   @Test
+  fun intPreparedStatement() {
+    connection.execute("""
+      create table log (
+        a integer not null,
+        b integer not null,
+        c integer not null
+      ) strict
+    """)
+
+    val rowCount = 100
+    val columnCount = 3
+
+    val statementCollection = StatementCollection(connection)
+    try {
+      val statement = statementCollection.prepareIntStatement("insert into log(a, b, c) values(?, ?, ?)")
+      val random = Random(42)
+      repeat(rowCount) {
+        statement.binder.bind(random.nextInt(), random.nextInt(), random.nextInt())
+        statement.addBatch()
+      }
+      statement.executeBatch()
+    }
+    finally {
+      statementCollection.close(true)
+    }
+
+    connection.prepareStatement("select a, b, c from log order by rowid", EmptyBinder).use { statement ->
+      val random = Random(42)
+      val resultSet = statement.executeQuery()
+      var count = 0
+      while (resultSet.next()) {
+        count++
+        repeat(columnCount) {
+          assertThat(resultSet.getInt(it)).isEqualTo(random.nextInt())
+        }
+      }
+      assertThat(count == rowCount)
+    }
+  }
+
+  @Test
+  fun intBinder() {
+    connection.execute("""
+      create table log (
+        a integer not null,
+        b integer not null,
+        c integer not null
+      ) strict
+    """)
+
+    val rowCount = 100
+    val columnCount = 3
+
+    val binder = IntBinder(3)
+    connection.prepareStatement("insert into log(a, b, c) values(?, ?, ?)", binder).use { statement ->
+      val random = Random(42)
+      repeat(rowCount) {
+        binder.bind(random.nextInt(), random.nextInt(), random.nextInt())
+        binder.addBatch()
+      }
+      statement.executeBatch()
+    }
+
+    connection.prepareStatement("select a, b, c from log order by rowid", EmptyBinder).use { statement ->
+      val random = Random(42)
+      val resultSet = statement.executeQuery()
+      var count = 0
+      while (resultSet.next()) {
+        count++
+        repeat(columnCount) {
+          assertThat(resultSet.getInt(it)).isEqualTo(random.nextInt())
+        }
+      }
+      assertThat(count == rowCount)
+    }
+  }
+
+  @Test
   fun longBinder() {
     connection.execute("""
       create table log (
@@ -63,10 +142,7 @@ class SqliteTest {
       ) strict
     """)
 
-    connection.prepareStatement("""
-      insert into log(commitId, authorTime) 
-      values(?, ?)
-    """, LongBinder(2)).use { statement ->
+    connection.prepareStatement("insert into log(commitId, authorTime) values(?, ?)", LongBinder(2)).use { statement ->
       statement.binder.bind(12, 42)
       statement.binder.addBatch()
 

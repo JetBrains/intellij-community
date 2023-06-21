@@ -696,25 +696,21 @@ private class SqliteVcsLogWriter(private val connection: SqliteConnection, priva
 
   private fun putParents(commitId: Int, root: VirtualFile, parents: List<Hash>) {
     // clear old if any
-    parentDeleteStatement.setInt(1, commitId)
+    parentDeleteStatement.binder.bind(commitId)
     parentDeleteStatement.addBatch()
 
     for (parent in parents) {
-      parentStatement.setInt(1, commitId)
-      parentStatement.setInt(2, storage.getCommitIndex(parent, root))
+      parentStatement.binder.bind(commitId, storage.getCommitIndex(parent, root))
       parentStatement.addBatch()
     }
   }
 
   private fun putRename(parent: Int, child: Int, renames: IntArray) {
-    renameDeleteStatement.setInt(1, parent)
-    renameDeleteStatement.setInt(2, child)
+    renameDeleteStatement.binder.bind(parent, child)
     renameDeleteStatement.addBatch()
 
     for (rename in renames) {
-      renameStatement.setInt(1, parent)
-      renameStatement.setInt(2, child)
-      renameStatement.setInt(3, rename)
+      renameStatement.binder.bind(parent, child, rename)
       renameStatement.addBatch()
     }
   }
@@ -727,9 +723,7 @@ private class SqliteVcsLogWriter(private val connection: SqliteConnection, priva
       val changes = entry.value
 
       for (change in changes) {
-        changeStatement.setInt(1, commitId)
-        changeStatement.setInt(2, pathId)
-        changeStatement.setInt(3, change.id.toInt())
+        changeStatement.binder.bind(commitId, pathId, change.id.toInt())
         changeStatement.addBatch()
       }
     }
