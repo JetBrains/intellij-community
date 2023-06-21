@@ -27,5 +27,6 @@
     <orderEntry type="module" module-name="kotlin.base.kdoc" />
     <orderEntry type="module" module-name="kotlin.base.statistics" />
     <orderEntry type="module" module-name="intellij.java.impl" />
+    <orderEntry type="module" module-name="kotlin.code-insight.utils" />
   </component>
 </module>

@@ -151,7 +151,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameKotlinImplicitLambdaParameter"/>
     <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameDynamicMemberHandler"/>
     <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameOnSecondaryConstructorHandler"/>
     <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameJavaSyntheticPropertyHandler"/>
