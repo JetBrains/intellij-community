@@ -266,7 +266,7 @@ public class TestCaseLoader {
     var groupsTestCaseLoader = new TestCaseLoader("tests/testGroups.properties");
 
     for (Path classesRoot : TestAll.getClassRoots()) {
-      ClassFinder classFinder = new ClassFinder(classesRoot.toFile(), "", INCLUDE_UNCONVENTIONALLY_NAMED_TESTS);
+      ClassFinder classFinder = new ClassFinder(classesRoot, "", INCLUDE_UNCONVENTIONALLY_NAMED_TESTS);
 
       Collection<String> foundTestClasses = classFinder.getClasses();
       groupsTestCaseLoader.loadTestCases(classesRoot.getFileName().toString(), foundTestClasses);
@@ -603,7 +603,7 @@ public class TestCaseLoader {
 
     for (Path classesRoot : classesRoots) {
       int count = getClassesCount();
-      ClassFinder classFinder = new ClassFinder(classesRoot.toFile(), rootPackage, INCLUDE_UNCONVENTIONALLY_NAMED_TESTS);
+      ClassFinder classFinder = new ClassFinder(classesRoot, rootPackage, INCLUDE_UNCONVENTIONALLY_NAMED_TESTS);
       loadTestCases(classesRoot.getFileName().toString(), classFinder.getClasses());
       count = getClassesCount() - count;
       if (count > 0) {
