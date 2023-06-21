@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tests;
 
 import org.junit.platform.engine.FilterResult;
@@ -16,6 +16,7 @@ import org.junit.vintage.engine.descriptor.VintageTestDescriptor;
 import java.lang.reflect.Method;
 import java.util.ServiceLoader;
 
+// Used to run JUnit 5 tests via JUnit 5 runtime
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public final class JUnit5TeamCityRunnerForTestsOnClasspath {
 
@@ -30,6 +31,7 @@ public final class JUnit5TeamCityRunnerForTestsOnClasspath {
       }
       catch (Throwable e) {
         e.printStackTrace();
+        System.exit(1);
         return;
       }
       System.out.println("Number of test engines: " + ServiceLoader.load(TestEngine.class).stream().count());

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit5;
 
 import com.intellij.junit4.ExpectedPatterns;
@@ -206,7 +206,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
           myFinishCount = 0;
         }
       }
-      myPrintStream.println("##teamcity[testSuiteFinished " + idAndName(testIdentifier, displayName) + "]");
+      myPrintStream.println("##teamcity[testSuiteFinished" + idAndName(testIdentifier, displayName) + "]");
     }
   }
 

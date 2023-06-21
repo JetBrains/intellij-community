@@ -33,6 +33,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
 
+// Used to run JUnit 3/4 tests via JUnit 5 runtime
 public final class JUnit5TeamCityRunnerForTestAllSuite {
   public static void main(String[] args) throws ClassNotFoundException {
     try {
@@ -166,7 +167,6 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
                                    TestExecutionResult.Status status,
                                    Throwable throwableOptional,
                                    String reason) {
-      final String displayName = getName(testIdentifier);
       if (testIdentifier.isTest()) {
         final long duration = getDuration();
         if (status == TestExecutionResult.Status.FAILED) {
@@ -206,7 +206,7 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
             myFinishCount = 0;
           }
         }
-        myPrintStream.println("##teamcity[testSuiteFinished " + idAndName(testIdentifier, displayName) + "]");
+        myPrintStream.println("##teamcity[testSuiteFinished" + idAndName(testIdentifier) + "]");
       }
     }
 
@@ -333,14 +333,13 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
     }
 
     private String idAndName(TestIdentifier testIdentifier) {
-      return idAndName(testIdentifier, getName(testIdentifier));
-    }
-
-    private String idAndName(TestIdentifier testIdentifier, String displayName) {
-      return " id='" + escapeName(getId(testIdentifier)) +
-             "' name='" + escapeName(displayName) +
-             "' nodeId='" + escapeName(getId(testIdentifier)) +
-             "' parentNodeId='" + escapeName(getParentId(testIdentifier)) + "'";
+      String id = getId(testIdentifier);
+      String name = getName(testIdentifier);
+      String parentId = getParentId(testIdentifier);
+      return " id='" + escapeName(id) +
+             "' name='" + escapeName(name) +
+             "' nodeId='" + escapeName(id) +
+             "' parentNodeId='" + escapeName(parentId) + "'";
     }
 
     private String getParentId(TestIdentifier testIdentifier) {

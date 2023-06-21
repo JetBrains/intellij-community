@@ -164,6 +164,7 @@ public class TestCaseLoader {
     System.out.println("Using test groups: " + testGroupNames);
     Set<String> testGroupNameSet = new HashSet<>(testGroupNames);
     testGroupNameSet.removeAll(groups.keySet());
+    testGroupNameSet.remove(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED);
     if (!testGroupNameSet.isEmpty()) {
       System.err.println("Unknown test groups: " + testGroupNameSet);
     }
@@ -582,6 +583,9 @@ public class TestCaseLoader {
   public static boolean isClassIncluded(String className) {
     if (!INCLUDE_UNCONVENTIONALLY_NAMED_TESTS &&
         !className.endsWith("Test")) {
+      return false;
+    }
+    if ("_FirstInSuiteTest".equals(className) || "_LastInSuiteTest".equals(className)) {
       return false;
     }
 

@@ -532,6 +532,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       .flatMap { module ->
         val root = Path.of(context.getModuleTestsOutputPath(module))
         if (Files.exists(root)) {
+          @Suppress("SSBasedInspection")
           Files.walk(root).use { stream ->
             stream
               .filter { it.toString().endsWith("Test.class") }
