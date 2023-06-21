@@ -5,7 +5,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.openapi.project.Project;
@@ -71,7 +71,7 @@ public class WrapObjectWithOptionalOfNullableFix extends MethodArgumentFix {
     }
 
     @Override
-    protected void invoke(@NotNull ActionContext context, @NotNull PsiExpression expression, @NotNull EditorUpdater updater) {
+    protected void invoke(@NotNull ActionContext context, @NotNull PsiExpression expression, @NotNull ModPsiUpdater updater) {
       expression.replace(getModifiedExpression(expression));
     }
 

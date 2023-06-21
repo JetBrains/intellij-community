@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
-import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
@@ -34,7 +34,7 @@ public class AddTypeAnnotationFix extends PsiUpdateModCommandQuickFix {
   }
 
   @Override
-  protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     PsiTypeElement typeElement = ObjectUtils.tryCast(element, PsiTypeElement.class);
     if (typeElement == null || !typeElement.acceptsAnnotations()) return;
     for (PsiAnnotation annotation : typeElement.getAnnotations()) {

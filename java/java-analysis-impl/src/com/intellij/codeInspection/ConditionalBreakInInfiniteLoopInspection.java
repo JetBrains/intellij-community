@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -239,7 +240,7 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiConditionalLoopStatement loop = PsiTreeUtil.getParentOfType(element, PsiConditionalLoopStatement.class);
       if (loop == null) return;
       Context context = Context.from(loop, noConversionToDoWhile, false);

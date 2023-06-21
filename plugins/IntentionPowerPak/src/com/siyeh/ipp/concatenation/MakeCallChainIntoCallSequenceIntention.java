@@ -15,7 +15,7 @@
  */
 package com.siyeh.ipp.concatenation;
 
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -59,7 +59,7 @@ public class MakeCallChainIntoCallSequenceIntention extends MCIntention {
   }
 
   @Override
-  protected void processIntention(@NotNull ActionContext context, @NotNull EditorUpdater updater, @NotNull PsiElement element) {
+  protected void processIntention(@NotNull ActionContext context, @NotNull ModPsiUpdater updater, @NotNull PsiElement element) {
     final List<String> callTexts = new ArrayList<>();
     PsiMethodCallExpression call = ObjectUtils.tryCast(element, PsiMethodCallExpression.class);
     if (call == null) return;
@@ -145,7 +145,7 @@ public class MakeCallChainIntoCallSequenceIntention extends MCIntention {
   private static PsiVariable appendStatements(PsiStatement anchor,
                                               CommentTracker tracker,
                                               boolean introduceVariable,
-                                              String replacementBlock, @NotNull EditorUpdater updater) {
+                                              String replacementBlock, @NotNull ModPsiUpdater updater) {
     PsiElement parent = anchor.getParent();
     Project project = anchor.getProject();
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);

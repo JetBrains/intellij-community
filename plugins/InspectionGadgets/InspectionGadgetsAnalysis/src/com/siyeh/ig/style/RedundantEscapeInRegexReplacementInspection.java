@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
-import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
@@ -91,7 +91,7 @@ public class RedundantEscapeInRegexReplacementInspection extends BaseInspection 
     }
 
     @Override
-    protected void invoke(@NotNull ActionContext context, @NotNull PsiLiteralExpression literal, @NotNull EditorUpdater updater) {
+    protected void invoke(@NotNull ActionContext context, @NotNull PsiLiteralExpression literal, @NotNull ModPsiUpdater updater) {
       final TextRange range = context.selection().shiftLeft(literal.getTextRange().getStartOffset());
       final String text = literal.getText();
       final int length = text.length();

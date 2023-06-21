@@ -2,9 +2,9 @@
 package com.siyeh.ig.visibility;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -41,7 +41,7 @@ public class AmbiguousMethodCallInspection extends BaseInspection implements Cle
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       final PsiElement parent = element.getParent();
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)parent.getParent();
       final String newExpressionText = "super." + methodCallExpression.getText();

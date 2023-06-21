@@ -16,7 +16,7 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -81,7 +81,7 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement tailCallToken, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement tailCallToken, @NotNull ModPsiUpdater updater) {
       final PsiMethod method =
         PsiTreeUtil.getParentOfType(tailCallToken, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
       if (method == null) {

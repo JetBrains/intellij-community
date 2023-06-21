@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -247,7 +247,7 @@ public class AddOnDemandStaticImportAction extends PsiUpdateModCommandAction<Psi
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiIdentifier element, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiIdentifier element, @NotNull ModPsiUpdater updater) {
     List<PsiJavaCodeReferenceElement> dequalifiedElements = new ArrayList<>();
     addStaticImports(element.getContainingFile(), element, dequalifiedElements);
     for (PsiJavaCodeReferenceElement ref : dequalifiedElements) {

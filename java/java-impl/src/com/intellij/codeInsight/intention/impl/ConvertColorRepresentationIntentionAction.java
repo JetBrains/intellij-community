@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.PriorityAction;
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
@@ -46,7 +46,7 @@ public final class ConvertColorRepresentationIntentionAction extends PsiUpdateMo
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiNewExpression expression, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiNewExpression expression, @NotNull ModPsiUpdater updater) {
     final PsiExpressionList arguments = expression.getArgumentList();
     if (arguments == null) return;
 

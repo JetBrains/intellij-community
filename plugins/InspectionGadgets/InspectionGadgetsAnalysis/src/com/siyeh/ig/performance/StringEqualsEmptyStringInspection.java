@@ -16,9 +16,13 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.codeInspection.SetInspectionOptionFix;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -121,7 +125,7 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
       final PsiReferenceExpression expression = PsiTreeUtil.getParentOfType(startElement, PsiReferenceExpression.class);
       if (expression == null) return;
       final PsiMethodCallExpression call = (PsiMethodCallExpression)expression.getParent();

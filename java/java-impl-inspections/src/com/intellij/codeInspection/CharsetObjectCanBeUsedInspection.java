@@ -5,6 +5,7 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteCatchFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteMultiCatchFix;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -287,7 +288,7 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
       PsiExpression expression = ObjectUtils.tryCast(startElement, PsiExpression.class);
       if (expression == null) return;
       PsiElement anchor = FOR_NAME_MATCHER.matches(expression) ? null : PsiTreeUtil.getParentOfType(expression, PsiCallExpression.class);

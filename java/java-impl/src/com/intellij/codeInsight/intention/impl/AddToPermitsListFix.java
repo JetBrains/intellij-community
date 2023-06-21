@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.java.JavaBundle;
@@ -27,7 +27,7 @@ public class AddToPermitsListFix extends PsiUpdateModCommandAction<PsiClass> {
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiClass superClass, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiClass superClass, @NotNull ModPsiUpdater updater) {
     SealedUtils.addClassToPermitsList(superClass, myClassQualifiedName);
     PsiReferenceList list = superClass.getPermitsList();
     if (list != null) {

@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -66,7 +66,7 @@ public class AddMethodFix extends PsiUpdateModCommandAction<PsiClass> {
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiClass psiClass, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiClass psiClass, @NotNull ModPsiUpdater updater) {
     PsiMethod method = createMethod(psiClass);
     if (method.getContainingFile().getOriginalFile() == context.file()) {
       GenerateMembersUtil.positionCaret(updater, method, true);

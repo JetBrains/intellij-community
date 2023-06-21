@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.migration;
 
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -92,7 +92,7 @@ public class WhileCanBeForeachInspection extends BaseInspection {
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement whileElement, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement whileElement, @NotNull ModPsiUpdater updater) {
       final PsiWhileStatement whileStatement = (PsiWhileStatement)whileElement.getParent();
       final PsiStatement body = whileStatement.getBody();
       if (body == null) {

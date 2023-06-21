@@ -7,6 +7,7 @@ import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.OptionController;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.TextRange;
@@ -247,7 +248,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       final PsiMethodCallExpression methodCallExpression = updater.getWritable(myMethodCallExpression.getElement());
       if (methodCallExpression == null) return;
       PsiExpressionStatement expressionStatement = ObjectUtils.tryCast(methodCallExpression.getParent(), PsiExpressionStatement.class);

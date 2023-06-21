@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
@@ -15,5 +16,5 @@ public abstract class PsiUpdateModCommandQuickFix extends ModCommandQuickFix {
     return ModCommands.psiUpdate(descriptor.getStartElement(), (e, updater) -> applyFix(project, e, updater));
   }
 
-  protected abstract void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater);
+  protected abstract void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater);
 }

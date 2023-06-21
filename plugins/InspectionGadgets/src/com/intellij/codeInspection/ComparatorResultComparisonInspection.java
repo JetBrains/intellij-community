@@ -5,6 +5,7 @@ import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
@@ -115,7 +116,7 @@ public class ComparatorResultComparisonInspection extends AbstractBaseJavaLocalI
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiBinaryExpression binOp = PsiTreeUtil.getParentOfType(element, PsiBinaryExpression.class);
       if (binOp == null) return;
       CommentTracker ct = new CommentTracker();

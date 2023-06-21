@@ -15,7 +15,7 @@
  */
 package com.siyeh.ipp.comment;
 
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
@@ -47,7 +47,7 @@ public class MoveCommentToSeparateLineIntention extends MCIntention {
   }
 
   @Override
-  public void processIntention(@NotNull ActionContext context, @NotNull EditorUpdater updater, @NotNull PsiElement element) {
+  public void processIntention(@NotNull ActionContext context, @NotNull ModPsiUpdater updater, @NotNull PsiElement element) {
     final PsiComment comment = (PsiComment)element;
     final PsiWhiteSpace whitespace;
     while (true) {

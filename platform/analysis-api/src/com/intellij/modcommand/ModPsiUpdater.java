@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInspection;
+package com.intellij.modcommand;
 
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -22,7 +22,7 @@ import java.util.function.BiConsumer;
  * @see ModCommands#psiUpdate(PsiElement, BiConsumer) 
  */
 @ApiStatus.Experimental
-public interface EditorUpdater {
+public interface ModPsiUpdater {
   /**
    * @param e element to update
    * @return a copy of this element inside a writable non-physical file, whose changes are tracked and will be added to the final command

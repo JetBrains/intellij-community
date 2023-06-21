@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.nullable;
 
-import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
@@ -16,7 +16,7 @@ public class MoveAnnotationToArrayFix extends PsiUpdateModCommandQuickFix {
   }
 
   @Override
-  protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     PsiAnnotation annotation = ObjectUtils.tryCast(element, PsiAnnotation.class);
     if (annotation == null) return;
     String qualifiedName = annotation.getQualifiedName();

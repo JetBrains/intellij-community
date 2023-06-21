@@ -7,7 +7,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.impl.SplitConditionUtil;
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
 import com.intellij.codeInspection.util.IntentionFamilyName;
@@ -144,7 +144,7 @@ public class SimplifyBooleanExpressionFix extends PsiUpdateModCommandAction<PsiE
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiExpression subExpression, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiExpression subExpression, @NotNull ModPsiUpdater updater) {
     invoke(subExpression);
   }
 

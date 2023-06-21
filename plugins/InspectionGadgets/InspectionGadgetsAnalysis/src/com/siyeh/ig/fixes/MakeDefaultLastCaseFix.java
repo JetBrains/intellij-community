@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
-import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSwitchBlock;
@@ -32,7 +32,7 @@ public class MakeDefaultLastCaseFix extends PsiUpdateModCommandAction<PsiSwitchL
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiSwitchLabelStatementBase labelStatementBase, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiSwitchLabelStatementBase labelStatementBase, @NotNull ModPsiUpdater updater) {
     PsiSwitchBlock switchBlock = labelStatementBase.getEnclosingSwitchBlock();
     if (switchBlock == null) return;
     PsiCodeBlock blockBody = switchBlock.getBody();

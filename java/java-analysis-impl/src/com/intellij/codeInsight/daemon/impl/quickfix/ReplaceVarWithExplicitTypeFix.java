@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.codeInspection.VariableTypeCanBeExplicitInspection;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -25,7 +25,7 @@ public class ReplaceVarWithExplicitTypeFix extends PsiUpdateModCommandAction<Psi
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiTypeElement startElement, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiTypeElement startElement, @NotNull ModPsiUpdater updater) {
     if (startElement.getParent() instanceof PsiParameter psiParameter &&
         psiParameter.getDeclarationScope() instanceof PsiLambdaExpression lambda) {
       for (PsiParameter parameter : lambda.getParameterList().getParameters()) {

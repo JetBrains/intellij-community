@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix.makefinal;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.PsiLocalVariable;
@@ -21,7 +21,7 @@ public class MakeVarEffectivelyFinalFix extends PsiUpdateModCommandAction<PsiLoc
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiLocalVariable local, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiLocalVariable local, @NotNull ModPsiUpdater updater) {
     myFixer.fix(local);
   }
 

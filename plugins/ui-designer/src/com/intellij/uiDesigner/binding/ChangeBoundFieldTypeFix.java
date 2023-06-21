@@ -2,7 +2,7 @@
 package com.intellij.uiDesigner.binding;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiField;
@@ -28,7 +28,7 @@ public class ChangeBoundFieldTypeFix extends PsiUpdateModCommandAction<PsiField>
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiField field, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiField field, @NotNull ModPsiUpdater updater) {
     PsiTypeElement element = field.getTypeElement();
     if (element == null) return;
     element.replace(JavaPsiFacade.getInstance(context.project()).getElementFactory().createTypeElement(myTypeToSet));

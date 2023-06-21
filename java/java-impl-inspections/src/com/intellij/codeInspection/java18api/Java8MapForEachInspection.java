@@ -6,6 +6,7 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.JavaFeature;
@@ -118,7 +119,7 @@ public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTo
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiElement foreach = element instanceof PsiForeachStatement ? element : element.getParent();
       if (foreach instanceof PsiForeachStatement) {
         fixInForeach((PsiForeachStatement)foreach);

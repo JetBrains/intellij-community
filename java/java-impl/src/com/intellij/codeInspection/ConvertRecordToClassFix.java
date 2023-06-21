@@ -11,6 +11,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.parser.DeclarationParser;
 import com.intellij.lang.java.parser.JavaParser;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -75,7 +76,7 @@ public class ConvertRecordToClassFix extends PsiUpdateModCommandAction<PsiElemen
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
     PsiClass recordClass;
     if (startElement instanceof PsiErrorElement) {
       recordClass = tryMakeRecord(startElement);

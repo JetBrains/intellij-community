@@ -2,9 +2,9 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElementFactory;
@@ -44,7 +44,7 @@ public class ChangeAnnotationParameterQuickFix extends PsiUpdateModCommandAction
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiAnnotation annotation, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiAnnotation annotation, @NotNull ModPsiUpdater updater) {
     final PsiNameValuePair attribute = AnnotationUtil.findDeclaredAttribute(annotation, myName);
     if (myNewValue != null) {
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(context.project());

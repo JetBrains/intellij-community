@@ -7,7 +7,7 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -172,7 +172,7 @@ public final class GenerateMembersUtil {
     editor.getSelectionModel().removeSelection();
   }
 
-  public static void positionCaret(@NotNull EditorUpdater updater, @NotNull PsiElement firstMember, boolean toEditMethodBody) {
+  public static void positionCaret(@NotNull ModPsiUpdater updater, @NotNull PsiElement firstMember, boolean toEditMethodBody) {
     LOG.assertTrue(firstMember.isValid());
     Project project = firstMember.getProject();
 

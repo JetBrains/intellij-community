@@ -15,7 +15,7 @@
  */
 package com.siyeh.ipp.base;
 
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.ModCommands;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.java.JavaLanguage;
@@ -48,7 +48,7 @@ public abstract class MCIntention implements ModCommandAction {
     throw new UnsupportedOperationException("Not implemented");
   }
 
-  protected void processIntention(@NotNull ActionContext context, @NotNull EditorUpdater updater, @NotNull PsiElement element) {
+  protected void processIntention(@NotNull ActionContext context, @NotNull ModPsiUpdater updater, @NotNull PsiElement element) {
     processIntention(element);
   }
 

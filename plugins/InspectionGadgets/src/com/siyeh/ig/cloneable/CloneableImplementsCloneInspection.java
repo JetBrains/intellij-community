@@ -16,7 +16,7 @@
 package com.siyeh.ig.cloneable;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
@@ -118,7 +118,7 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiClass aClass)) {
         return;

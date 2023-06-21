@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
@@ -32,7 +33,7 @@ public class JavaDocFixes {
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiDocComment docComment = PsiTreeUtil.getParentOfType(element, PsiDocComment.class);
       if (docComment != null) {
         PsiDocTag tag = JavaPsiFacade.getElementFactory(project).createDocTagFromText("@" + myTag + " " + myValue);
@@ -197,7 +198,7 @@ public class JavaDocFixes {
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiDocTag tag = PsiTreeUtil.getParentOfType(element, PsiDocTag.class);
       if (tag != null) {
         tag.delete();
@@ -207,7 +208,7 @@ public class JavaDocFixes {
 
   private static abstract class AbstractUnknownTagFix extends PsiUpdateModCommandQuickFix {
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       final PsiElement enclosingTag = element.getParent();
       if (enclosingTag == null) return;
 

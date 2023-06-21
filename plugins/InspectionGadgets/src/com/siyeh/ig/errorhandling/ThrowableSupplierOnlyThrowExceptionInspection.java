@@ -2,7 +2,7 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -57,7 +57,7 @@ public class ThrowableSupplierOnlyThrowExceptionInspection extends BaseInspectio
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
       PsiMethodCallExpression callExpression = PsiTreeUtil.getParentOfType(startElement, PsiMethodCallExpression.class);
       if (callExpression == null) {
         return;

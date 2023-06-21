@@ -15,10 +15,10 @@
  */
 package com.siyeh.ig.threading;
 
-import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -80,7 +80,7 @@ public class SynchronizedMethodInspection extends BaseInspection {
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement nameElement, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement nameElement, @NotNull ModPsiUpdater updater) {
       final PsiModifierList modifierList = (PsiModifierList)nameElement.getParent();
       assert modifierList != null;
       final PsiMethod method = (PsiMethod)modifierList.getParent();

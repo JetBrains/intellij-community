@@ -4,6 +4,7 @@ package com.intellij.codeInspection.localCanBeFinal;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -402,7 +403,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement nameIdentifier, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement nameIdentifier, @NotNull ModPsiUpdater updater) {
       PsiVariable psiVariable = PsiTreeUtil.getParentOfType(nameIdentifier, PsiVariable.class, false);
       if (psiVariable == null) return;
       psiVariable.normalizeDeclaration();

@@ -2,9 +2,9 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
@@ -143,7 +143,7 @@ public class SingleStatementInBlockInspection extends BaseInspection implements 
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
       PsiStatement statement = PsiTreeUtil.getNonStrictParentOfType(startElement, PsiStatement.class);
       if (statement instanceof PsiBlockStatement) {
         statement = PsiTreeUtil.getNonStrictParentOfType(statement.getParent(), PsiStatement.class);

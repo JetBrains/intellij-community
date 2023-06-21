@@ -6,6 +6,7 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.streamMigration.CollectMigration.CollectTerminal;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -195,7 +196,7 @@ public class FuseStreamOperationsInspection extends AbstractBaseJavaLocalInspect
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiMethodCallExpression chain = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
       if (chain == null) return;
       CollectTerminal terminal = extractTerminal(chain);

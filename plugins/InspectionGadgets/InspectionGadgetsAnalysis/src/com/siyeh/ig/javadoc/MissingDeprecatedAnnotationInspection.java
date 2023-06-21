@@ -16,10 +16,10 @@
 package com.siyeh.ig.javadoc;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
@@ -79,7 +79,7 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement identifier, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement identifier, @NotNull ModPsiUpdater updater) {
       final PsiModifierListOwner parent = (PsiModifierListOwner)identifier.getParent();
       if (parent == null) {
         return;
@@ -106,7 +106,7 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiElement parent = element.getParent();
       if (!(parent instanceof PsiJavaDocumentedElement documentedElement)) {
         return;
@@ -132,7 +132,7 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
       }
     }
 
-    private static void moveCaretAfter(PsiDocTag tag, @NotNull EditorUpdater updater) {
+    private static void moveCaretAfter(PsiDocTag tag, @NotNull ModPsiUpdater updater) {
       PsiElement sibling = tag.getNextSibling();
       PsiDocTagValue valueElement = tag.getValueElement();
       if (valueElement != null) {

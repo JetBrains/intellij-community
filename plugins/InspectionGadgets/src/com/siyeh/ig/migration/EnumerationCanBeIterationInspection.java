@@ -2,6 +2,7 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.*;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -16,7 +17,6 @@ import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.PsiElementOrderComparator;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.intellij.lang.annotations.MagicConstant;
@@ -68,7 +68,7 @@ public class EnumerationCanBeIterationInspection extends BaseInspection implemen
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       final PsiReferenceExpression methodExpression =
         (PsiReferenceExpression)element.getParent();
       final PsiMethodCallExpression methodCallExpression =

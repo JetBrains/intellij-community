@@ -2,8 +2,8 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import one.util.streamex.StreamEx;
@@ -26,7 +26,7 @@ public class AddMissingDeconstructionComponentsFix extends PsiUpdateModCommandAc
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiDeconstructionList deconstructionList, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiDeconstructionList deconstructionList, @NotNull ModPsiUpdater updater) {
     if (deconstructionList.getParent() instanceof PsiDeconstructionPattern deconstructionPattern) {
       boolean isEmptyList = deconstructionList.getDeconstructionComponents().length == 0;
       String deconstructionListText = deconstructionList.getText();

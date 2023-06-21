@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
@@ -54,7 +54,7 @@ public class ComposeFunctionChainAction extends PsiUpdateModCommandAction<PsiMet
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiMethodCallExpression call, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiMethodCallExpression call, @NotNull ModPsiUpdater updater) {
     PsiElement outer = call.getParent().getParent();
     if(!(outer instanceof PsiMethodCallExpression outerCall)) return;
     PsiMethod outerMethod = outerCall.resolveMethod();

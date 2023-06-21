@@ -5,7 +5,7 @@ import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.psi.*;
@@ -68,7 +68,7 @@ public class DeleteSideEffectsAwareFix extends PsiUpdateModCommandAction<PsiStat
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiStatement statement, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiStatement statement, @NotNull ModPsiUpdater updater) {
     PsiExpression expression = updater.getWritable(myExpressionPtr.getElement());
     if (expression == null) return;
     List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(expression);

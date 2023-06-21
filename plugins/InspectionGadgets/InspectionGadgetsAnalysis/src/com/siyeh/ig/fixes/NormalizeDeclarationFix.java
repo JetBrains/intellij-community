@@ -16,8 +16,8 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.BlockUtils;
-import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -52,7 +52,7 @@ public class NormalizeDeclarationFix extends PsiUpdateModCommandQuickFix {
   }
 
   @Override
-  protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     if (!(element instanceof PsiVariable) && !(element instanceof PsiMethod) && !(element instanceof PsiDeclarationStatement)) {
       element = element.getParent();
     }

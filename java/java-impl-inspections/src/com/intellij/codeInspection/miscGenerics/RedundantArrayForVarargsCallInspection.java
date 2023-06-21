@@ -3,6 +3,7 @@ package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInspection.*;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -92,7 +93,7 @@ public class RedundantArrayForVarargsCallInspection extends AbstractBaseJavaLoca
 
     private static final class RedundantArrayForVarargsCallFix extends PsiUpdateModCommandQuickFix {
       @Override
-      protected void applyFix(@NotNull Project project, @NotNull PsiElement arrayCreation, @NotNull EditorUpdater updater) {
+      protected void applyFix(@NotNull Project project, @NotNull PsiElement arrayCreation, @NotNull ModPsiUpdater updater) {
         if (!(arrayCreation instanceof PsiNewExpression newExpression)) return;
         CommonJavaRefactoringUtil.inlineArrayCreationForVarargs(newExpression);
       }

@@ -2,9 +2,9 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -32,7 +32,7 @@ public class MakeReceiverParameterFirstFix extends PsiUpdateModCommandAction<Psi
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiReceiverParameter parameter, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiReceiverParameter parameter, @NotNull ModPsiUpdater updater) {
     final PsiParameterList parameterList = ObjectUtils.tryCast(parameter.getParent(), PsiParameterList.class);
     if (parameterList == null) return;
     final PsiElement firstChild = parameterList.getFirstChild();

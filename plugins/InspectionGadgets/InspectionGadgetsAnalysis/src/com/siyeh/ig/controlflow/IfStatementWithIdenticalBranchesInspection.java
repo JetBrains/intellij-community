@@ -21,6 +21,7 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -142,7 +143,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiIfStatement ifStatement = tryCast(element.getParent(), PsiIfStatement.class);
       if (ifStatement == null) return;
       ElseIf elseIf = ElseIf.from(ifStatement, unwrap(ifStatement.getThenBranch()));
@@ -237,7 +238,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(element, PsiIfStatement.class, false);
       if (ifStatement == null) return;
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);

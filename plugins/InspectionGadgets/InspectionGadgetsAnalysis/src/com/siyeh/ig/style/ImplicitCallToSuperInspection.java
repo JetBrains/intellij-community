@@ -15,10 +15,10 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -65,7 +65,7 @@ public class ImplicitCallToSuperInspection extends BaseInspection {
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement methodName, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement methodName, @NotNull ModPsiUpdater updater) {
       final PsiElement parent = methodName.getParent();
       if (!(parent instanceof PsiMethod method)) {
         return;

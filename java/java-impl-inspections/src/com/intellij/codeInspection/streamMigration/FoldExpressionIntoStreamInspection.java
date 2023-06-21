@@ -4,6 +4,7 @@ package com.intellij.codeInspection.streamMigration;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -194,7 +195,7 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiPolyadicExpression expression = tryCast(element, PsiPolyadicExpression.class);
       if (expression == null) return;
       TerminalGenerator generator = getGenerator(expression);

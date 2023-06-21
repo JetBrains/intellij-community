@@ -16,7 +16,7 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.module.Module;
@@ -83,7 +83,7 @@ public class UseOfObsoleteAssertInspection extends BaseInspection implements Cle
 
   private static class ReplaceObsoleteAssertsFix extends PsiUpdateModCommandQuickFix {
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
       final PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(startElement, PsiMethodCallExpression.class);
       if (call == null) {
         return;

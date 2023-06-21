@@ -4,6 +4,7 @@ package com.intellij.codeInspection;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
@@ -91,7 +92,7 @@ public class BlockMarkerCommentsInspection extends AbstractBaseJavaLocalInspecti
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       element.delete();
     }
   }

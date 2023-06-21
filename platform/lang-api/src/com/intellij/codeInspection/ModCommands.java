@@ -98,13 +98,13 @@ public final class ModCommands {
    * @return a command that will perform the corresponding update to the original elements and the editor
    */
   public static @NotNull ModCommand psiUpdate(@NotNull ModCommandAction.ActionContext context,
-                                              @NotNull Consumer<@NotNull EditorUpdater> updater) {
+                                              @NotNull Consumer<@NotNull ModPsiUpdater> updater) {
     var runnable = new Runnable() {
-      private EditorUpdaterImpl myUpdater;
+      private ModPsiUpdaterImpl myUpdater;
 
       @Override
       public void run() {
-        myUpdater = new EditorUpdaterImpl(context);
+        myUpdater = new ModPsiUpdaterImpl(context);
         updater.accept(myUpdater);
       }
 
@@ -141,7 +141,7 @@ public final class ModCommands {
    * @return a command that will perform the corresponding update to the original element
    */
   public static <E extends PsiElement> @NotNull ModCommand psiUpdate(@NotNull E orig,
-                                                                     @NotNull BiConsumer<@NotNull E, @NotNull EditorUpdater> updater) {
+                                                                     @NotNull BiConsumer<@NotNull E, @NotNull ModPsiUpdater> updater) {
     return psiUpdate(ModCommandAction.ActionContext.from(null, orig.getContainingFile()), eu -> updater.accept(eu.getWritable(orig), eu));
   }
 
@@ -277,7 +277,7 @@ public final class ModCommands {
     }
   }
 
-  private static class EditorUpdaterImpl implements EditorUpdater, DocumentListener, Disposable {
+  private static class ModPsiUpdaterImpl implements ModPsiUpdater, DocumentListener, Disposable {
     private final @NotNull FileTracker myTracker;
     private final @NotNull Map<PsiFile, FileTracker> myChangedFiles = new LinkedHashMap<>();
     private final @NotNull Map<PsiFile, NewFileInfo> myNewFiles = new LinkedHashMap<>();
@@ -302,7 +302,7 @@ public final class ModCommands {
       }
     }
 
-    private EditorUpdaterImpl(@NotNull ModCommandAction.ActionContext actionContext) {
+    private ModPsiUpdaterImpl(@NotNull ModCommandAction.ActionContext actionContext) {
       myCaretOffset = actionContext.offset();
       mySelection = actionContext.selection();
       // TODO: lazily get the tracker for the current file

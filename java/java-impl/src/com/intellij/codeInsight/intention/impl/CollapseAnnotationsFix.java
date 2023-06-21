@@ -3,7 +3,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -32,7 +32,7 @@ public final class CollapseAnnotationsFix extends PsiUpdateModCommandAction<PsiA
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiAnnotation annotation, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiAnnotation annotation, @NotNull ModPsiUpdater updater) {
     PsiNameValuePair attribute = ArrayUtil.getFirstElement(annotation.getParameterList().getAttributes());
     if (attribute == null) return;
     PsiAnnotationMemberValue origValue = attribute.getValue();

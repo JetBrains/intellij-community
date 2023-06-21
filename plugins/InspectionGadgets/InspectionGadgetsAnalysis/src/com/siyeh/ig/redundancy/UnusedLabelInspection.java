@@ -16,7 +16,7 @@
 package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -62,7 +62,7 @@ public class UnusedLabelInspection extends BaseInspection implements CleanupLoca
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement label, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement label, @NotNull ModPsiUpdater updater) {
       final PsiElement parent = label.getParent();
       if (!(parent instanceof PsiLabeledStatement labeledStatement)) {
         return;

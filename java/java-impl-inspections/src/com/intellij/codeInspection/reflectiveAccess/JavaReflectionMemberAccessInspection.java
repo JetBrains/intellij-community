@@ -5,6 +5,7 @@ import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -257,7 +258,7 @@ public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalI
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiExpressionList expressionList = PsiTreeUtil.getNonStrictParentOfType(element, PsiExpressionList.class);
       if (expressionList == null) return;
       PsiMethodCallExpression call = ObjectUtils.tryCast(expressionList.getParent(), PsiMethodCallExpression.class);

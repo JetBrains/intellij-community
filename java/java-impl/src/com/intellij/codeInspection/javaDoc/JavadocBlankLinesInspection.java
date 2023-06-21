@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.javaDoc;
 
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
@@ -116,7 +116,7 @@ public class JavadocBlankLinesInspection extends LocalInspectionTool {
     }
 
     @Override
-    protected void invoke(@NotNull ActionContext context, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+    protected void invoke(@NotNull ActionContext context, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
       Document document = startElement.getContainingFile().getViewProvider().getDocument();
       if (document == null) return;
       TextRange range = startElement.getTextRange();

@@ -4,6 +4,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -350,7 +351,7 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiForeachStatementBase foreachStatementBase = updater.getWritable(myForEachStatement.getElement());
       PsiParameter parameter = updater.getWritable(myParameter.getElement());
       if (foreachStatementBase == null || parameter == null) {

@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -20,7 +20,7 @@ public class AddFinallyFix extends PsiUpdateModCommandAction<PsiTryStatement> {
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiTryStatement tryStatement, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiTryStatement tryStatement, @NotNull ModPsiUpdater updater) {
     PsiStatement replacement =
       JavaPsiFacade.getElementFactory(context.project())
         .createStatementFromText(tryStatement.getText() + "finally {\n\n}", tryStatement);
@@ -28,7 +28,7 @@ public class AddFinallyFix extends PsiUpdateModCommandAction<PsiTryStatement> {
     moveCaretToFinallyBlock(updater, Objects.requireNonNull(result.getFinallyBlock()));
   }
 
-  private static void moveCaretToFinallyBlock(@NotNull EditorUpdater updater, @NotNull PsiCodeBlock block) {
+  private static void moveCaretToFinallyBlock(@NotNull ModPsiUpdater updater, @NotNull PsiCodeBlock block) {
     PsiFile file = block.getContainingFile();
     Document document = file.getViewProvider().getDocument();
     Project project = file.getProject();

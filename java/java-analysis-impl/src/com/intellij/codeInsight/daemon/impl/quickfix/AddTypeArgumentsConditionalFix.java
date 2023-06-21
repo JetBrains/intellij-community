@@ -3,9 +3,9 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.PriorityAction;
-import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -40,7 +40,7 @@ public class AddTypeArgumentsConditionalFix extends PsiUpdateModCommandAction<Ps
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiMethodCallExpression call, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiMethodCallExpression call, @NotNull ModPsiUpdater updater) {
     final PsiTypeParameter[] typeParameters = myMethod.getTypeParameters();
     final String typeArguments = "<" + StringUtil.join(typeParameters, parameter -> {
       final PsiType substituteTypeParam = mySubstitutor.substitute(parameter);

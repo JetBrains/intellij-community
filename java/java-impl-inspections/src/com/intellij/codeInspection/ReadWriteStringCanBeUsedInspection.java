@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -88,7 +89,7 @@ public class ReadWriteStringCanBeUsedInspection extends AbstractBaseJavaLocalIns
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiNewExpression newExpression = tryCast(element.getParent(), PsiNewExpression.class);
       if (newExpression == null) return;
       PsiExpressionList newArgList = newExpression.getArgumentList();
@@ -130,7 +131,7 @@ public class ReadWriteStringCanBeUsedInspection extends AbstractBaseJavaLocalIns
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiMethodCallExpression writeCall = tryCast(element.getParent().getParent(), PsiMethodCallExpression.class);
       if (!FILES_WRITE.test(writeCall)) return;
       PsiExpressionList argumentList = writeCall.getArgumentList();

@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -109,7 +110,7 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiSwitchBlock switchBlock = tryCast(element instanceof PsiSwitchBlock ? element : element.getParent(), PsiSwitchBlock.class);
       if (switchBlock == null) return;
       Replacer replacer = findReplacer(switchBlock);

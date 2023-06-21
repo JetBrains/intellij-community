@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -250,7 +251,7 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiForStatement statement = tryCast(element, PsiForStatement.class);
       if (statement == null) return;
       CountingLoop loop = CountingLoop.from(statement);

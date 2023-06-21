@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
@@ -47,7 +47,7 @@ public final class AddExceptionFromFieldInitializerToConstructorThrowsFix extend
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     final NavigatablePsiElement e =
       PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiFunctionalExpression.class, PsiField.class);
     if (e instanceof PsiField field) {

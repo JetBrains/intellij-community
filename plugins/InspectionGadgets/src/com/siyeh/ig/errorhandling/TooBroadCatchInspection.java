@@ -16,7 +16,7 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithUtil;
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
@@ -121,7 +121,7 @@ public class TooBroadCatchInspection extends BaseInspection {
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (!(element instanceof PsiTypeElement typeElement)) {
         return;
       }

@@ -6,6 +6,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
@@ -122,7 +123,7 @@ public class ListRemoveInLoopInspection extends AbstractBaseJavaLocalInspectionT
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiLoopStatement loopStatement = PsiTreeUtil.getParentOfType(element, PsiLoopStatement.class);
       if (loopStatement == null) return;
       PsiExpressionStatement statement = tryCast(ControlFlowUtils.stripBraces(loopStatement.getBody()), PsiExpressionStatement.class);
