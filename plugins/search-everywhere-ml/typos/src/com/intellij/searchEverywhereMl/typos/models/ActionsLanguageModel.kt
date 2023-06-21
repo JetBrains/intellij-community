@@ -24,23 +24,24 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
-@Service(Service.Level.APP)
+@Service(Service.Level.PROJECT)
 internal class ActionsLanguageModel @NonInjectable constructor(private val actionDictionary: ActionDictionary,
+                                                               project: Project,
                                                                coroutineScope: CoroutineScope) :
   Dictionary by actionDictionary, FrequencyMetadata by actionDictionary {
 
   @Suppress("unused")
-  constructor(coroutineScope: CoroutineScope) : this(actionDictionary = ActionDictionaryImpl(), coroutineScope)
+  constructor(project: Project, coroutineScope: CoroutineScope) : this(actionDictionary = ActionDictionaryImpl(), project, coroutineScope)
 
   companion object {
     /**
      * Returns null if the application is not in an internal mode
      */
-    fun getInstance(): ActionsLanguageModel? {
+    fun getInstance(project: Project): ActionsLanguageModel? {
       if (!isTypoFixingEnabled) {
         return null
       }
-      return service<ActionsLanguageModel>()
+      return project.service<ActionsLanguageModel>()
     }
   }
 
@@ -111,7 +112,7 @@ internal class ActionsLanguageModel @NonInjectable constructor(private val actio
 
 private class ModelComputationStarter : ProjectActivity {
   override suspend fun execute(project: Project) {
-    ActionsLanguageModel.getInstance()
+    ActionsLanguageModel.getInstance(project)
   }
 }
 
