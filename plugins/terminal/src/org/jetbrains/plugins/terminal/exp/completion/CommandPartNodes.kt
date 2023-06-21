@@ -6,7 +6,7 @@ internal abstract class CommandPartNode<T>(val text: String, open val spec: T?, 
 
   open fun getSuggestionsOfNext(): List<BaseSuggestion> = emptyList()
 
-  protected fun getAvailableArguments(allArgs: List<ShellArgument>): List<ShellArgument> {
+  fun getAvailableArguments(allArgs: List<ShellArgument>): List<ShellArgument> {
     val existingArgs = children.mapNotNull { (it as? ArgumentNode)?.spec }
     val lastExistingArgIndex = existingArgs.lastOrNull()?.let { allArgs.indexOf(it) } ?: -1
     val firstRequiredArgIndex = allArgs.withIndex().find { (ind, argument) ->

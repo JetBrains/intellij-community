@@ -34,8 +34,16 @@ internal class CommandTreeBuilder(private val command: String,
       val name = arguments[curIndex]
       val suggestions = root.getDirectSuggestionsOfNext()
       val suggestion = suggestions.find { it.names.contains(name) }
-      if (suggestion != null) {
-        val node = createChildNode(name, suggestion, root)
+      val node = if (suggestion == null) {
+        // option requires an argument, then probably provided name is this argument
+        root.getAvailableArguments(root.spec.args).find { !it.isOptional }?.let {
+          ArgumentNode(name, it, root)
+        }
+      }
+      else {
+        createChildNode(name, suggestion, root)
+      }
+      if (node != null) {
         root.children.add(node)
         curIndex++
       }

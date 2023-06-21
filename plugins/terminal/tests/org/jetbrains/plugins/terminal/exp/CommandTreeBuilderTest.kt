@@ -38,6 +38,19 @@ class CommandTreeBuilderTest {
       option("--withOptArg") {
         argument("optArg", isOptional = true)
       }
+      option("--manyArgs") {
+        argument("a1")
+        argument("a2", isOptional = true) {
+          suggestions("a2")
+        }
+      }
+      option("--skippedArg") {
+        argument("opt", isOptional = true)
+        argument("req")
+        argument("opt2", isOptional = true) {
+          suggestions("opt2")
+        }
+      }
 
       argument("file") {
         suggestions("somePath")
@@ -110,6 +123,26 @@ class CommandTreeBuilderTest {
       assertSubcommandOf("sub", commandName)
       assertArgumentOfSubcommand("somePath", "sub")
       assertArgumentOfSubcommand("arg1", "sub")
+    }
+  }
+
+  @Test
+  fun `option with unknown arg`() {
+    doTest("sub", "--manyArgs", "unknown", "a2") {
+      assertSubcommandOf("sub", commandName)
+      assertOptionOf("--manyArgs", "sub")
+      assertArgumentOfOption("unknown", "--manyArgs")
+      assertArgumentOfOption("a2", "--manyArgs")
+    }
+  }
+
+  @Test
+  fun `option with unknown arg preceded with skipped optional arg`() {
+    doTest("sub", "--skippedArg", "unknown", "opt2") {
+      assertSubcommandOf("sub", commandName)
+      assertOptionOf("--skippedArg", "sub")
+      assertArgumentOfOption("unknown", "--skippedArg")
+      assertArgumentOfOption("opt2", "--skippedArg")
     }
   }
 
