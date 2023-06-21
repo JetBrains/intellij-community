@@ -103,6 +103,8 @@
     <indexPatternBuilder implementation="com.intellij.mermaid.lang.highlighting.MermaidIndexPatternBuilder"/>
 
     <applicationConfigurable groupId="language"
+                             bundle="messages.MermaidBundle"
+                             key="mermaid.settings.name"
                              instance="com.intellij.mermaid.settings.MermaidSettingsConfigurable"
                              id="Settings.Mermaid"/>
     <applicationService
