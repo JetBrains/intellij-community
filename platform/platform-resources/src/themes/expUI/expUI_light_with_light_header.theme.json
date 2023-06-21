@@ -41,6 +41,7 @@
         "foreground": "Grey1",
         "background": "Grey13",
         "hoverBackground": "Grey12",
+        "transparentHoverBackground": "#0000001A",
         "pressedBackground": "Grey11"
       }
     },
