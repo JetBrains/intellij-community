@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.ide.ui.laf
@@ -26,7 +26,6 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.SettingsCategory
@@ -60,7 +59,6 @@ import com.intellij.ui.tree.ui.DefaultTreeUI
 import com.intellij.util.EventDispatcher
 import com.intellij.util.FontUtil
 import com.intellij.util.IJSwingUtilities
-import com.intellij.util.ModalityUiUtil
 import com.intellij.util.SVGLoader.colorPatcherProvider
 import com.intellij.util.SVGLoader.setSelectionColorPatcherProvider
 import com.intellij.util.concurrency.SynchronizedClearableLazy
@@ -284,35 +282,37 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   }
 
   override fun initializeComponent() {
-    ModalityUiUtil.invokeLaterIfNeeded(ModalityState.any()) {
-      val currentLaf = myCurrentLaf!!
-      if (currentLaf is UIThemeBasedLookAndFeelInfo) {
-        if (!currentLaf.isInitialised) {
-          doSetLaF(currentLaf, false)
-        }
+    // we preload LafManagerImpl in EDT, no one can access LafManagerImpl early
+    EDT.assertIsEdt()
+
+    val currentLaf = myCurrentLaf!!
+    if (currentLaf is UIThemeBasedLookAndFeelInfo) {
+      if (!currentLaf.isInitialised) {
+        doSetLaF(currentLaf, false)
+      }
+    }
+    else {
+      val laf = if (currentLaf.className == DarculaLaf::class.java.name) {
+        lafList.firstOrNull { it.name == "Darcula" && it.className == DarculaLaf::class.java.name } ?: findLaf(currentLaf.className)
       }
       else {
-        val laf = if (currentLaf.className == DarculaLaf::class.java.name) {
-          lafList.firstOrNull { it.name == "Darcula" && it.className == DarculaLaf::class.java.name } ?: findLaf(currentLaf.className)
-        } else {
-          findLaf(currentLaf.className)
-        }
-        if (laf != null) {
-          val needUninstall = StartupUiUtil.isUnderDarcula
-          // setup default LAF or one specified by readExternal
-          doSetLaF(lookAndFeelInfo = laf, installEditorScheme = false)
-        }
+        findLaf(currentLaf.className)
       }
-      selectComboboxModel()
-      updateUI()
-      // must be after updateUI
-      isFirstSetup = false
-      detectAndSyncLaf()
-      runActivity("new ui configuration") {
-        ExperimentalUI.getInstance().lookAndFeelChanged()
+      if (laf != null) {
+        val needUninstall = StartupUiUtil.isUnderDarcula
+        // setup default LAF or one specified by readExternal
+        doSetLaF(lookAndFeelInfo = laf, installEditorScheme = false)
       }
-      addThemeAndDynamicPluginListeners()
     }
+    selectComboboxModel()
+    updateUI()
+    // must be after updateUI
+    isFirstSetup = false
+    detectAndSyncLaf()
+    runActivity("new ui configuration") {
+      ExperimentalUI.getInstance().lookAndFeelChanged()
+    }
+    addThemeAndDynamicPluginListeners()
   }
 
   private fun addThemeAndDynamicPluginListeners() {
