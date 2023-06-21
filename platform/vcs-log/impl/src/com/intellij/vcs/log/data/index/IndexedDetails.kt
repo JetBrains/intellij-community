@@ -68,7 +68,7 @@ class IndexedDetails(private val dataGetter: IndexDataGetter,
                        storage: VcsLogStorage,
                        factory: VcsLogObjectsFactory): Int2ObjectMap<VcsCommitMetadata> {
 
-      val commitIds = storage.getCommitIds(commitIndexes) ?: return Int2ObjectMaps.emptyMap()
+      val commitIds = storage.getCommitIds(commitIndexes)
       if (commitIds.isEmpty()) return Int2ObjectMaps.emptyMap()
 
       val authors = dataGetter.getAuthor(commitIndexes) ?: return Int2ObjectMaps.emptyMap()
