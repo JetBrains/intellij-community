@@ -26,7 +26,7 @@ import kotlinx.coroutines.launch
 
 @Service(Service.Level.PROJECT)
 internal class ActionsLanguageModel @NonInjectable constructor(private val actionDictionary: ActionDictionary,
-                                                               project: Project,
+                                                               private val project: Project,
                                                                coroutineScope: CoroutineScope) :
   Dictionary by actionDictionary, FrequencyMetadata by actionDictionary {
 
@@ -66,7 +66,7 @@ internal class ActionsLanguageModel @NonInjectable constructor(private val actio
   }
 
   private fun getWordsFromSettings(): Sequence<@NlsContexts.ConfigurableName String> {
-    return ShowSettingsUtilImpl.configurables(project = null, withIdeSettings = true, checkNonDefaultProject = false)
+    return ShowSettingsUtilImpl.configurables(project = project, withIdeSettings = true, checkNonDefaultProject = true)
       .filterIsInstance<SearchableConfigurable>()
       .mapNotNull { it.displayNameFast }
   }
