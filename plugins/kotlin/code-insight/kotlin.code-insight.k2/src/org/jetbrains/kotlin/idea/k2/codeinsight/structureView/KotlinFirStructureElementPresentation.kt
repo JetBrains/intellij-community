@@ -12,11 +12,16 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.util.PsiIconUtil
 import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.renderer.base.KtKeywordRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtCallableReturnTypeFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KtParameterDefaultValueRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererModifierFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KtTypeParametersRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KtConstructorSymbolRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KtFunctionSymbolRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.classifiers.KtNamedClassOrObjectSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.superTypes.KtSuperTypesFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
@@ -25,6 +30,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightBundle
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import javax.swing.Icon
 
@@ -49,6 +55,13 @@ internal class KotlinFirStructureElementPresentation(
             superTypesFilter = KtSuperTypesFilter.NONE
             parameterDefaultValueRenderer = KtParameterDefaultValueRenderer.THREE_DOTS
             typeParametersRenderer = KtTypeParametersRenderer.NO_TYPE_PARAMETERS
+            keywordRender =
+                KtKeywordRenderer.AsWordWithFilter { keyword -> keyword == KtTokens.CONSTRUCTOR_KEYWORD || keyword == KtTokens.OBJECT_KEYWORD || keyword == KtTokens.COMPANION_KEYWORD }
+            returnTypeFilter = KtCallableReturnTypeFilter.ALWAYS
+            classOrObjectRenderer = KtNamedClassOrObjectSymbolRenderer.AS_SOURCE_WITHOUT_PRIMARY_CONSTRUCTOR
+            parameterDefaultValueRenderer = KtParameterDefaultValueRenderer.NO_DEFAULT_VALUE
+            constructorRenderer = KtConstructorSymbolRenderer.AS_RAW_SIGNATURE
+            functionSymbolRenderer = KtFunctionSymbolRenderer.AS_RAW_SIGNATURE
         }
     }
 

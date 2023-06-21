@@ -1,13 +1,13 @@
 -CheckMemberLocationForJava.kt
- -class Some
-  fun equals(other: Any?): Boolean location=→Any
-  fun foo123() location=→A3
-  fun foo12_() location=→A2
-  fun foo1_3() location=→A3
-  fun foo1__() location=→A1
-  fun foo_23() location=→A3
-  fun foo_2_() location=→A2
-  fun foo__3() location=→A3
-  fun foo___() location=→First
-  fun hashCode(): Int location=→Any
-  fun toString(): String location=→Any
+ -Some
+  equals(Any?): Boolean location=→Any
+  foo123(): Unit location=→A3
+  foo12_(): Unit location=→A2
+  foo1_3(): Unit location=→A3
+  foo1__(): Unit location=→A1
+  foo_23(): Unit location=→A3
+  foo_2_(): Unit location=→A2
+  foo__3(): Unit location=→A3
+  foo___(): Unit location=→First
+  hashCode(): Int location=→Any
+  toString(): String location=→Any

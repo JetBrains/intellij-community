@@ -1,7 +1,7 @@
 -LocalElements.kt
- -fun foo()
-  -class X
+ -foo(): Unit
+  bar(): Unit
+  -X
    -<class initializer>
-    fun quux()
-   fun xyzzy()
-  fun bar()
+    quux(): Unit
+   xyzzy(): Unit

@@ -1,7 +1,7 @@
 -Simple.kt
- -class Test(str: String)
-  constructor(str: String)
-  fun foo(): Int
-  fun other()
+ -Test
+  constructor Test(String)
+  foo(): Int
+  other(): Unit
+  some: Int
   str: String
-  val some: Int
