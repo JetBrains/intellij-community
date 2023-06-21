@@ -129,7 +129,6 @@ class SqlitePreparedStatement<T : Binder> internal constructor(@JvmField interna
       connection.useDb { db ->
         pointer.ensureOpen()
         binder.executeBatch(pointer.pointer, db)
-        db.reset(pointer.pointer)
       }
     }
     finally {

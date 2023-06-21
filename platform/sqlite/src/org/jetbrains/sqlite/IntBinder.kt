@@ -123,5 +123,6 @@ class LongBinder(paramCount: Int, batchCountHint: Int = 1) : BaseBinder(paramCou
 
       stepInBatch(statementPointer = pointer, db = db, batchIndex = batchIndex)
     }
+    db.reset(pointer)
   }
 }

@@ -79,6 +79,7 @@ class ObjectBinder(paramCount: Int, batchCountHint: Int = 1) : BaseBinder(paramC
 
       stepInBatch(statementPointer = pointer, db = db, batchIndex = batchIndex)
     }
+    db.reset(pointer)
   }
 
   override fun clearBatch() {
