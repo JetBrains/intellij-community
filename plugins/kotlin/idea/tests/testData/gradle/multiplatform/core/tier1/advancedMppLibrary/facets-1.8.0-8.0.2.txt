@@ -106,7 +106,7 @@ project.jvmMain
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = project:commonMain, project:jvmAndNativeMain
-    targetPlatform = JVM (1.8)
+    targetPlatform = JVM (17)
 
 project.jvmTest
     externalProjectId = project
@@ -114,7 +114,7 @@ project.jvmTest
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = project:commonTest, project:jvmAndNativeTest
-    targetPlatform = JVM (1.8)
+    targetPlatform = JVM (17)
 
 project.linuxX64Main
     externalProjectId = project
