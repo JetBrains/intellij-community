@@ -216,6 +216,7 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
   private fun createActionBar(group: ActionGroup, customizationGroup: ActionGroup?): JComponent {
     val toolbar = MyActionToolbarImpl(group, layoutCallBack, customizationGroup, MAIN_TOOLBAR_ID)
     toolbar.setActionButtonBorder(JBUI.Borders.empty(mainToolbarButtonInsets()))
+    toolbar.setActionButtonBorder(2, 5)
     toolbar.setCustomButtonLook(HeaderToolbarButtonLook())
 
     toolbar.setMinimumButtonSize { ActionToolbar.experimentalToolbarMinimumButtonSize() }
