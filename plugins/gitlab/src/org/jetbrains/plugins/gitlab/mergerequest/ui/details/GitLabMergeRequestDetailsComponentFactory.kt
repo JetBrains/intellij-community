@@ -112,6 +112,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
         .emptyBorders()
         .fill()
         .flowY()
+        .noGrid()
         .hideMode(3)
     )
 
@@ -133,11 +134,11 @@ internal object GitLabMergeRequestDetailsComponentFactory {
                                                              htmlPaneFactory = { SimpleHtmlPane() }),
           CC().growX().gap(ReviewDetailsUIUtil.COMMIT_INFO_GAPS))
       add(GitLabMergeRequestDetailsChangesComponentFactory(project).create(cs, changesVm),
-          CC().grow().push())
+          CC().grow().shrinkPrioY(200))
       add(GitLabMergeRequestDetailsStatusChecksComponentFactory.create(cs, statusVm, detailsReviewFlowVm, avatarIconsProvider),
           CC().growX().gap(ReviewDetailsUIUtil.STATUSES_GAPS).maxHeight("${ReviewDetailsUIUtil.STATUSES_MAX_HEIGHT}"))
       add(GitLabMergeRequestDetailsActionsComponentFactory.create(cs, detailsReviewFlowVm, avatarIconsProvider),
-          CC().growX().gap(ReviewDetailsUIUtil.ACTIONS_GAPS))
+          CC().growX().gap(ReviewDetailsUIUtil.ACTIONS_GAPS).minHeight("pref"))
     }
   }
 
