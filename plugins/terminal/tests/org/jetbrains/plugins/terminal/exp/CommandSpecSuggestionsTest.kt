@@ -84,11 +84,31 @@ class CommandSpecSuggestionsTest {
         suggestions("arg4", "arg44")
       }
     }
+
+    subcommand("variadic") {
+      option("-a")
+      option("--var") {
+        argument("var") {
+          isVariadic = true
+          suggestions("var1", "var2")
+        }
+      }
+      argument("req") {
+        suggestions("req")
+      }
+      argument("var") {
+        isVariadic = true
+        suggestions("v")
+      }
+      argument("opt", isOptional = true) {
+        suggestions("opt")
+      }
+    }
   }
 
   @Test
   fun `main command`() {
-    doTest(expected = listOf("sub", "excl", "reqSub", "manyArgs", "-a", "--asd", "--bcde", "--argum", "abc"))
+    doTest(expected = listOf("sub", "excl", "reqSub", "manyArgs", "variadic", "-a", "--asd", "--bcde", "--argum", "abc"))
   }
 
   @Test
@@ -144,6 +164,21 @@ class CommandSpecSuggestionsTest {
   @Test
   fun `suggest arguments till first required arg (with existing args)`() {
     doTest("manyArgs", "arg22", expected = listOf("--bcde", "arg3", "arg4", "arg44"))
+  }
+
+  @Test
+  fun `suggest variadic argument of option again`() {
+    doTest("variadic", "--var", "var1", "var2", expected = listOf("var1", "var2"))
+  }
+
+  @Test
+  fun `suggest variadic argument of command again`() {
+    doTest("variadic", "req", "v", expected = listOf("v", "opt", "-a", "--var", "--bcde"))
+  }
+
+  @Test
+  fun `do not suggest variadic arg again after other arg`() {
+    doTest("variadic", "req", "v", "opt", expected = listOf("-a", "--var", "--bcde"))
   }
 
   private fun doTest(vararg arguments: String, expected: List<String>) {

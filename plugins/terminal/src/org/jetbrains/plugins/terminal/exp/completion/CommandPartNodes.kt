@@ -8,11 +8,13 @@ internal abstract class CommandPartNode<T>(val text: String, open val spec: T?, 
 
   fun getAvailableArguments(allArgs: List<ShellArgument>): List<ShellArgument> {
     val existingArgs = children.mapNotNull { (it as? ArgumentNode)?.spec }
-    val lastExistingArgIndex = existingArgs.lastOrNull()?.let { allArgs.indexOf(it) } ?: -1
+    val lastExistingArg = existingArgs.lastOrNull()
+    val lastExistingArgIndex = lastExistingArg?.let { allArgs.indexOf(it) } ?: -1
     val firstRequiredArgIndex = allArgs.withIndex().find { (ind, argument) ->
       ind > lastExistingArgIndex && !argument.isOptional
     }?.index ?: (allArgs.size - 1)
-    return allArgs.subList(lastExistingArgIndex + 1, firstRequiredArgIndex + 1)
+    val includeLast = lastExistingArg?.isVariadic == true
+    return allArgs.subList(lastExistingArgIndex + if (includeLast) 0 else 1, firstRequiredArgIndex + 1)
   }
 
   override fun toString(): String {
