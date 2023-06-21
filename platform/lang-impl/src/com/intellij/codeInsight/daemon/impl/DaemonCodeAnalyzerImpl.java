@@ -285,9 +285,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
           Document document = textEditor.getEditor().getDocument();
           MarkupModel markupModel = DocumentMarkupModel.forDocument(document, myProject, true);
           RangeHighlighter highlighter = markupModel.addRangeHighlighter(0, document.getTextLength(), ANY_GROUP, null, HighlighterTargetArea.EXACT_RANGE);
+          highlighter.setGreedyToLeft(true);
+          highlighter.setGreedyToRight(true);
           // for the condition `existing.equalsByActualOffset(info)` above work correctly,
-          // create (empty) whole-file highlighter which will track the document size changes
-          // which will make possible to calculate correct `info.getActualEndOffset()`
+          // create a fake whole-file highlighter which will track the document size changes
+          // and which will make possible to calculate correct `info.getActualEndOffset()`
           info.setHighlighter((RangeHighlighterEx)highlighter);
           info.setGroup(group);
           fileLevelInfos.add(info);
