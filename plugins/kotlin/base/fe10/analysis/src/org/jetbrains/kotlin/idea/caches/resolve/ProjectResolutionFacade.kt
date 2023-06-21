@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -75,7 +76,7 @@ internal class ProjectResolutionFacade(
             if (disposed) throw ProcessCanceledException(InvalidResolverException("${toString()} is invalidated"))
 
             val resolverProvider: ResolverForProject<IdeaModuleInfo> = computeModuleResolverProvider()
-            if (parentDisposable != null) {
+            if (Registry.`is`("kotlin.resolve.disposable.resolver") && parentDisposable != null) {
                 (resolverForProjectHolder?.value as? Disposable)?.let(Disposer::dispose)
                 (resolverProvider as? Disposable)?.let {
                     (it as? IdeaResolverForProject)?.checkIsValid()
@@ -156,7 +157,9 @@ internal class ProjectResolutionFacade(
 
     init {
         parentDisposable?.let {
-            Disposer.register(it, this)
+            if (Registry.`is`("kotlin.resolve.disposable.resolver")) {
+                Disposer.register(it, this)
+            }
         }
     }
 

@@ -388,6 +388,10 @@
                  description="Allows ResolveElementCache to reuse analysis results of PerFileCache"
                  defaultValue="true"
                  restartRequired="true"/>
+    <registryKey key="kotlin.resolve.disposable.resolver"
+                 description="Allows IdeaResolverForProject to be disposable"
+                 defaultValue="false"
+                 restartRequired="true"/>
   </extensions>
 
   <!-- Tips and Tricks -->
