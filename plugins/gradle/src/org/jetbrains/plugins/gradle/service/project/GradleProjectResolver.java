@@ -42,7 +42,6 @@ import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.execution.target.TargetBuildLauncher;
 import org.jetbrains.plugins.gradle.issue.DeprecatedGradleVersionIssue;
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix;
 import org.jetbrains.plugins.gradle.model.*;
@@ -218,9 +217,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       gradleVersion = GradleVersion.version(buildEnvironment.getGradle().getGradleVersion());
       isCompositeBuildsSupported = gradleVersion.compareTo(GradleVersion.version("3.1")) >= 0;
       resolverCtx.setBuildEnvironment(buildEnvironment);
-      if (!isCustomSerializationSupported(resolverCtx, gradleVersion, isCompositeBuildsSupported)) {
-        useCustomSerialization = false;
-      }
       if (!GradleJvmSupportMatrix.isGradleSupportedByIdea(gradleVersion)) {
         throw new IllegalStateException("Unsupported Gradle version");
       }
@@ -568,14 +564,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
                                                                              buildSrcModuleNode.get());
       }
     }
-  }
-
-  private static boolean isCustomSerializationSupported(@NotNull DefaultProjectResolverContext resolverCtx,
-                                                        GradleVersion gradleVersion,
-                                                        boolean isCompositeBuildsSupported) {
-    return isCompositeBuildsSupported ||
-           resolverCtx.getConnection().newBuild() instanceof TargetBuildLauncher ||
-           gradleVersion.getBaseVersion().compareTo(GradleVersion.version("3.0")) >= 0;
   }
 
   private static void configureExecutionArgumentsAndVmOptions(@NotNull GradleExecutionSettings executionSettings,
