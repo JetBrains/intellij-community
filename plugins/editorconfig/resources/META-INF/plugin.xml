@@ -112,6 +112,15 @@ For more information, check the documentation for <a href="https://editorconfig.
         enabledByDefault="true"
         level="WARNING"
         implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigDeprecatedDescriptorInspection"/>
+    <localInspection
+      language="EditorConfig"
+      shortName="EditorConfigVerifyByCore"
+      bundle="messages.EditorConfigBundle"
+      key="inspection.verify.by.core.name"
+      groupKey="editorconfig.inspection.group"
+      enabledByDefault="true"
+      level="ERROR"
+      implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigVerifyByCoreInspection"/>
 
     <!-- Root declaration inspections -->
     <localInspection
