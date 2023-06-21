@@ -6,6 +6,7 @@ package org.jetbrains.sqlite
 import org.intellij.lang.annotations.Language
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantLock
@@ -65,13 +66,17 @@ class SqliteConnection(file: Path?, config: SQLiteConfig = SQLiteConfig()) : Aut
   }
 
   internal inline fun <T> useDb(task: (db: NativeDB) -> T): T {
+    if (dbRef.get() == null) {
+      throw AlreadyClosedException()
+    }
+
     lock.withLock {
       return task(getDb())
     }
   }
 
   private fun getDb(): NativeDB {
-    return requireNotNull(dbRef.get()) { "database connection closed" }
+    return dbRef.get() ?: throw AlreadyClosedException()
   }
 
   // https://www.sqlite.org/lang_savepoint.html
@@ -99,7 +104,7 @@ class SqliteConnection(file: Path?, config: SQLiteConfig = SQLiteConfig()) : Aut
   }
 
   fun <T : Binder> prepareStatement(@Language("SQLite") sql: String, binder: T): SqlitePreparedStatement<T> {
-    return SqlitePreparedStatement(connection = this, sql = sql.encodeToByteArray(), binder = binder)
+    return prepareStatement(sqlUtf8 = sql.encodeToByteArray(), binder = binder)
   }
 
   fun <T : Binder> prepareStatement(sqlUtf8: ByteArray, binder: T): SqlitePreparedStatement<T> {
@@ -149,6 +154,10 @@ class SqliteConnection(file: Path?, config: SQLiteConfig = SQLiteConfig()) : Aut
   }
 
   override fun close() {
+    if (dbRef.get() == null) {
+      return
+    }
+
     lock.withLock {
       val db = dbRef.getAndSet(null) ?: return
 
@@ -258,3 +267,6 @@ internal fun stepInBatch(statementPointer: Long, db: NativeDB, batchIndex: Int) 
     }
   }
 }
+
+class AlreadyClosedException : CancellationException()
+
