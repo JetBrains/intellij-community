@@ -4,6 +4,7 @@ package testing
 import kotlin.test.*
 import org.junit.runner.RunWith
 import org.junit.runners.Suite
+import org.junit.Ignore
 import org.junit.Test
 
 @RunWith(Suite::class)
@@ -33,6 +34,18 @@ class <lineMarker descr="Run Test" icon="runConfigurations/testState/run_run.svg
             }
         }
     }
+}
+
+object <lineMarker descr="Run Test" icon="runConfigurations/testState/run.svg">SessionObjectTest</lineMarker> {
+    @Test
+    fun <lineMarker descr="Run Test" icon="runConfigurations/testState/run.svg">testSessionCreateDelete</lineMarker>() {}
+
+    @Ignore
+    @Test
+    fun <lineMarker descr="Run Test" icon="runConfigurations/testState/run.svg">configFileWithEnvironmentVariables</lineMarker>() {}
+
+    @Test
+    fun <lineMarker descr="Run Test" icon="runConfigurations/testState/run.svg">`top level extension function as module function`</lineMarker>() {}
 }
 
 abstract class <lineMarker descr="Run Test"><lineMarker descr="Is subclassed by FooCase in AbstractBar (testing) Press ... to navigate">AbstractBar</lineMarker></lineMarker> {

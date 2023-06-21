@@ -38,6 +38,8 @@ class KotlinJUnit5Framework: JUnit5Framework(), KotlinPsiBasedTestFramework {
             return isJUnit5TestMethod(declaration)
         }
 
+        override fun allowTestMethodsInObject(): Boolean = true
+
         private fun isJUnit5TestClass(declaration: KtClassOrObject): Boolean {
             val b = if (!isFrameworkAvailable(declaration)) {
                 false
