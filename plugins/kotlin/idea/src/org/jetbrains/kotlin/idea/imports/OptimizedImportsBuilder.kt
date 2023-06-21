@@ -99,7 +99,7 @@ class OptimizedImportsBuilder(
             val importRulesBefore = importRules.size
             val result = tryBuildOptimizedImports()
             if (importRules.size == importRulesBefore) return result
-            testLog?.append("Trying to build import list again with import rules: ${importRules.joinToString()}\n")
+            testLog?.append("Trying to build import list again with import rules: ${importRules.sortedBy { it.toString() }.joinToString()}\n")
         }
     }
 
