@@ -37,7 +37,7 @@ class SqliteConnection(file: Path?, config: SQLiteConfig = SQLiteConfig()) : Aut
     @Suppress("IfThenToElvis")
     val status = db.open(if (filePath == null) ":memory:" else filePath, config.openModeFlag) and 0xff
     if (status != SqliteCodes.SQLITE_OK) {
-      throw SqliteDb.newException(status, filePath.orEmpty(), null)
+      throw newException(status, filePath.orEmpty(), null)
     }
 
     try {
@@ -153,34 +153,30 @@ class SqliteConnection(file: Path?, config: SQLiteConfig = SQLiteConfig()) : Aut
     executeLifecycle<Unit>(sql.encodeToByteArray(), values) { _, _, _ -> }
   }
 
-  override fun close() {
-    if (dbRef.get() == null) {
-      return
-    }
-
+  fun interruptAndClose() {
+    val db = dbRef.getAndSet(null) ?: return
+    // not under lock - as we currently may hold the lock in another thread
+    db.interrupt()
     lock.withLock {
-      val db = dbRef.getAndSet(null) ?: return
+      doClose(db)
+    }
+  }
 
-      val pool = statementPoolList.toList()
-      statementPoolList.clear()
+  override fun close() {
+    val db = dbRef.getAndSet(null) ?: return
+    lock.withLock {
+      doClose(db)
+    }
+  }
 
-      var error: Throwable? = null
-      for (item in pool) {
-        try {
-          item.close(db)
-        }
-        catch (e: Throwable) {
-          if (error == null) {
-            error = e
-          }
-          else {
-            error.addSuppressed(e)
-          }
-        }
-      }
+  private fun doClose(db: NativeDB) {
+    val pool = statementPoolList.toList()
+    statementPoolList.clear()
 
+    var error: Throwable? = null
+    for (item in pool) {
       try {
-        db.close()
+        item.close(db)
       }
       catch (e: Throwable) {
         if (error == null) {
@@ -190,9 +186,21 @@ class SqliteConnection(file: Path?, config: SQLiteConfig = SQLiteConfig()) : Aut
           error.addSuppressed(e)
         }
       }
-
-      error?.let { throw it }
     }
+
+    try {
+      db.close()
+    }
+    catch (e: Throwable) {
+      if (error == null) {
+        error = e
+      }
+      else {
+        error.addSuppressed(e)
+      }
+    }
+
+    error?.let { throw it }
   }
 
   fun beginTransaction() {
@@ -212,7 +220,7 @@ internal fun step(statementPointer: Long, sql: ByteArray, db: NativeDB): Boolean
   return when (val status = db.step(statementPointer) and 0xFF) {
     SqliteCodes.SQLITE_DONE -> true
     SqliteCodes.SQLITE_ROW -> false
-    else -> throw SqliteDb.newException(status, db.errmsg()!!, sql)
+    else -> throw newException(status, db.errmsg()!!, sql)
   }
 }
 

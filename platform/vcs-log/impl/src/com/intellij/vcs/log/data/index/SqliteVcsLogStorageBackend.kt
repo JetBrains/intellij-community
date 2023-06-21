@@ -143,7 +143,7 @@ private class ProjectLevelConnectionManager private constructor(@JvmField val st
     return ProjectLevelConnectionManager(storageId)
   }
 
-  override fun dispose() = connection.close()
+  override fun dispose() = connection.interruptAndClose()
 }
 
 internal class SqliteVcsLogStorageBackend(project: Project,
@@ -442,7 +442,6 @@ internal class SqliteVcsLogStorageBackend(project: Project,
       connection.prepareStatement(
         "select commitId, kind from path as p join path_change as c on p.rowid = c.pathId where p.position = ? and p.relativePath = ?",
         paramBinder).use { statement ->
-
         paramBinder.bind(position, relativePath)
 
         val rs = statement.executeQuery()

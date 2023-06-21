@@ -96,7 +96,11 @@ internal class NativeDB : SqliteDb() {
   @Synchronized
   external fun _exec_utf8(sqlUtf8: ByteArray?): Int
 
-  external override fun interrupt()
+  /**
+   * Aborts any pending operation and returns at its earliest opportunity.
+   * See [http://www.sqlite.org/c3ref/interrupt.html](http://www.sqlite.org/c3ref/interrupt.html)
+   */
+  external fun interrupt()
 
   @Synchronized
   external override fun busy_timeout(ms: Int)
