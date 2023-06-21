@@ -138,7 +138,6 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
     setCustomFrameTopBorder()
 
     customTitleBar = JBR.getWindowDecorations()?.createCustomTitleBar()
-    System.out.println("")
   }
 
   override fun updateUI() {
