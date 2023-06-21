@@ -45,7 +45,7 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
         let user_home_path = get_user_home()?.to_string_checked()?;
         let slash = std::path::MAIN_SEPARATOR;
         vm_options.push(format!("-XX:ErrorFile={user_home_path}{slash}java_error_in_{}_%p.log", self.launcher_base_name));
-        vm_options.push(format!("-XX:HeapDumpPath={user_home_path}{slash}java_error_in_{}_%p.hprof", self.launcher_base_name));
+        vm_options.push(format!("-XX:HeapDumpPath={user_home_path}{slash}java_error_in_{}.hprof", self.launcher_base_name));
 
         // collecting JVM options from user and distribution files
         self.collect_vm_options_from_files(&mut vm_options)?;
