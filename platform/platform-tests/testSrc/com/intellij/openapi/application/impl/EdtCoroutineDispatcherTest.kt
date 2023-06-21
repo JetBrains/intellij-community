@@ -10,16 +10,16 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
 @TestApplication
 class EdtCoroutineDispatcherTest {
 
-  @AfterEach
+  @BeforeEach
   fun cleanEDTQueue() {
     UIUtil.pump()
   }
