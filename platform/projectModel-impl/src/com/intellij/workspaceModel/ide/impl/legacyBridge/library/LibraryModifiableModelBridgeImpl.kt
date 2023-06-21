@@ -170,8 +170,8 @@ internal class LibraryModifiableModelBridgeImpl(
   private fun LibraryEntity.hasEqualProperties(another: LibraryEntity): Boolean {
     if (this.tableId != another.tableId) return false
     if (this.name != another.name) return false
-    if (this.roots != another.roots) return false
-    if (this.excludedRoots != another.excludedRoots) return false
+    if (this.roots.toSet() != another.roots.toSet()) return false
+    if (this.excludedRoots.toSet() != another.excludedRoots.toSet()) return false
     return true
   }
 

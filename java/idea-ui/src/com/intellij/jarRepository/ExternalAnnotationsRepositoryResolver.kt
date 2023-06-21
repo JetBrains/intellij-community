@@ -50,7 +50,7 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
     }
 
     ApplicationManager.getApplication().invokeAndWait {
-      updateLibrary(roots, mavenLibDescriptor, library)
+      updateLibraryAnnotations(roots, mavenLibDescriptor, library)
     }
 
     return !roots.isNullOrEmpty()
@@ -75,7 +75,7 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
       return false
     }
 
-    ApplicationManager.getApplication().invokeAndWait { updateLibrary(roots, descriptor, library) }
+    ApplicationManager.getApplication().invokeAndWait { updateLibraryAnnotations(roots, descriptor, library) }
     return true
   }
 
@@ -103,29 +103,49 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
       }.thenAsync { roots ->
         val promise = AsyncPromise<Library>()
         ApplicationManager.getApplication().invokeLater {
-          updateLibrary(roots, mavenLibDescriptor, library)
+          updateLibraryAnnotations(roots, mavenLibDescriptor, library)
           promise.setResult(library)
         }
         promise
       }
   }
 
-  private fun updateLibrary(roots: MutableList<OrderRoot>?,
-                    mavenLibDescriptor: JpsMavenRepositoryLibraryDescriptor,
-                    library: Library) {
+  private fun updateLibraryAnnotations(roots: MutableList<OrderRoot>?,
+                                       mavenLibDescriptor: JpsMavenRepositoryLibraryDescriptor,
+                                       library: Library) {
     if (library !is LibraryEx || library.isDisposed) return
     if (roots.isNullOrEmpty()) {
       LOG.info("No annotations found for [$mavenLibDescriptor]")
+    } else if (!requireUpdateLibraryAnnotations(roots, library)) {
+      LOG.info("Annotations are not required to be updated for [$mavenLibDescriptor]")
     } else {
       runWriteAction {
         LOG.debug("Found ${roots.size} external annotations for ${library.name}")
-        val editor = ExistingLibraryEditor(library, null)
-        val type = AnnotationOrderRootType.getInstance()
-        editor.getUrls(type).forEach { editor.removeRoot(it, type) }
-        editor.addRoots(roots)
-        editor.commit()
+        val rootsAnnotations = roots
+          .filter { it.type == AnnotationOrderRootType.getInstance() }
+          .map { it.file.url }
+          .toHashSet()
+        val annotationType = AnnotationOrderRootType.getInstance()
+        val libraryEditor = ExistingLibraryEditor(library, null)
+        libraryEditor.getUrls(annotationType).forEach { annotationUrl ->
+          if (rootsAnnotations.contains(annotationUrl)) {
+            rootsAnnotations.remove(annotationUrl)
+          } else {
+            libraryEditor.removeRoot(annotationUrl, annotationType)
+          }
+        }
+        rootsAnnotations.forEach { annotationUrl ->
+          libraryEditor.addRoot(annotationUrl, annotationType)
+        }
+        libraryEditor.commit()
       }
     }
+  }
+
+  private fun requireUpdateLibraryAnnotations(roots: MutableList<OrderRoot>, library: Library): Boolean {
+    val libraryRootsUrls = library.getUrls(AnnotationOrderRootType.getInstance()).toSet()
+    val rootsUrls = roots.map { it.file.url }.toSet()
+    return rootsUrls != libraryRootsUrls
   }
 
   private fun extractDescriptor(mavenId: String?,
