@@ -3,9 +3,7 @@ package org.jetbrains.kotlin.idea.compiler.configuration
 
 import com.intellij.openapi.roots.libraries.JarVersionDetectionUtil
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.io.JarUtil
 import com.intellij.openapi.vfs.JarFileSystem
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.FsRoot
 import com.intellij.util.text.VersionComparatorUtil
@@ -183,6 +181,12 @@ class IdeKotlinVersion private constructor(
 
     val languageVersionSettings: LanguageVersionSettings
         get() = LanguageVersionSettingsImpl(languageVersion, apiVersion)
+
+    fun withoutBuildNumber(): IdeKotlinVersion {
+        return if (buildNumber != null) {
+            parse(rawVersion.substringBeforeLast('-')).getOrDefault(this)
+        } else this
+    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
