@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInspection.*;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
@@ -333,7 +334,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       final PsiExpression typeExpression = factory.createExpressionFromText(myFieldTypeText + ".class", element);
       final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
@@ -367,7 +368,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       final PsiIdentifier identifier = factory.createIdentifier(myReplacementName);
       final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);

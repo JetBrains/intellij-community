@@ -5,6 +5,7 @@ import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection.MethodRe
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -108,7 +109,7 @@ public class AnonymousCanBeMethodReferenceInspection extends AbstractBaseJavaLoc
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (element instanceof PsiNewExpression newExpression) {
         final PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
         if (anonymousClass == null) return;

@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.fixes;
 
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -36,7 +36,7 @@ public class InlineVariableFix extends PsiUpdateModCommandQuickFix {
   }
 
   @Override
-  protected void applyFix(@NotNull Project project, @NotNull PsiElement nameElement, @NotNull EditorUpdater updater) {
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement nameElement, @NotNull ModPsiUpdater updater) {
     final PsiLocalVariable variable = (PsiLocalVariable)nameElement.getParent();
     final PsiExpression initializer = variable.getInitializer();
     if (initializer == null) {

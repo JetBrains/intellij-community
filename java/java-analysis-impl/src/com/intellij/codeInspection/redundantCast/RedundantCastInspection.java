@@ -5,6 +5,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.miscGenerics.SuspiciousMethodCallUtil;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
@@ -91,7 +92,7 @@ public class RedundantCastInspection extends AbstractBaseJavaLocalInspectionTool
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement castTypeElement, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement castTypeElement, @NotNull ModPsiUpdater updater) {
       if (castTypeElement.getParent() instanceof PsiTypeCastExpression cast) {
         RemoveRedundantCastUtil.removeCast(cast);
       }

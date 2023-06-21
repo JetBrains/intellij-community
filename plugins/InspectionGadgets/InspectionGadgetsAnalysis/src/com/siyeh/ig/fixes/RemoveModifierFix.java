@@ -15,9 +15,9 @@
  */
 package com.siyeh.ig.fixes;
 
-import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.lang.ASTNode;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -48,7 +48,7 @@ public class RemoveModifierFix extends PsiUpdateModCommandQuickFix {
   }
 
   @Override
-  protected void applyFix(@NotNull Project project, @NotNull PsiElement modifierElement, @NotNull EditorUpdater updater) {
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement modifierElement, @NotNull ModPsiUpdater updater) {
     PsiElement modifierElementParent = modifierElement.getParent();
     if (modifierElementParent instanceof PsiModifierList &&
         modifierElementParent.getParent() instanceof PsiMethod method) {

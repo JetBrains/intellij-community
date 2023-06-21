@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -29,7 +29,7 @@ public class ConvertToStringLiteralAction extends PsiUpdateModCommandAction<PsiJ
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiJavaToken element, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiJavaToken element, @NotNull ModPsiUpdater updater) {
     final String text = StringUtil.unescapeStringCharacters(element.getText());
     final int length = text.length();
     if (length > 1 && text.charAt(0) == '\'' && text.charAt(length - 1) == '\'') {

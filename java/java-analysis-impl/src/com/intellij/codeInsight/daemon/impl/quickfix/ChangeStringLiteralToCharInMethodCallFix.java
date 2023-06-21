@@ -4,8 +4,8 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.PriorityAction;
-import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -43,7 +43,7 @@ public final class ChangeStringLiteralToCharInMethodCallFix extends PsiUpdateMod
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiLiteralExpression literal, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiLiteralExpression literal, @NotNull ModPsiUpdater updater) {
     final Object value = literal.getValue();
     if (value != null && value.toString().length() == 1) {
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.project());

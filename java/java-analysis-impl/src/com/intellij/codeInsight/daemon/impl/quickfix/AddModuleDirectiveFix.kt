@@ -2,10 +2,10 @@
 package com.intellij.codeInsight.daemon.impl.quickfix
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
-import com.intellij.codeInspection.EditorUpdater
 import com.intellij.codeInspection.PsiUpdateModCommandAction
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.modcommand.ModCommandAction
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementFactory
 import com.intellij.psi.PsiJavaModule
@@ -27,7 +27,7 @@ abstract class AddModuleDirectiveFix(module: PsiJavaModule) : PsiUpdateModComman
 class AddRequiresDirectiveFix(module: PsiJavaModule, private val requiredName: String) : AddModuleDirectiveFix(module) {
   override fun getText(): String = QuickFixBundle.message("module.info.add.requires.name", requiredName)
 
-  override fun invoke(context: ModCommandAction.ActionContext, module: PsiJavaModule, updater: EditorUpdater) {
+  override fun invoke(context: ModCommandAction.ActionContext, module: PsiJavaModule, updater: ModPsiUpdater) {
     if (module.requires.find { requiredName == it.moduleName } == null) {
       PsiUtil.addModuleStatement(module, PsiKeyword.REQUIRES + ' ' + requiredName)
     }
@@ -41,7 +41,7 @@ class AddExportsDirectiveFix(
 ) : AddPackageAccessibilityFix(PsiKeyword.EXPORTS, module, packageName, targetName) {
   override fun getText(): String = QuickFixBundle.message("module.info.add.exports.name", packageName)
 
-  override fun invoke(context: ModCommandAction.ActionContext, module: PsiJavaModule, updater: EditorUpdater) {
+  override fun invoke(context: ModCommandAction.ActionContext, module: PsiJavaModule, updater: ModPsiUpdater) {
     addPackageAccessibility(context.project, module, module.exports)
   }
 }
@@ -53,7 +53,7 @@ class AddOpensDirectiveFix(
 ) : AddPackageAccessibilityFix(PsiKeyword.OPENS, module, packageName, targetName) {
   override fun getText(): String = QuickFixBundle.message("module.info.add.opens.name", packageName)
 
-  override fun invoke(context: ModCommandAction.ActionContext, module: PsiJavaModule, updater: EditorUpdater) {
+  override fun invoke(context: ModCommandAction.ActionContext, module: PsiJavaModule, updater: ModPsiUpdater) {
     addPackageAccessibility(context.project, module, module.opens)
   }
 }
@@ -85,7 +85,7 @@ abstract class AddPackageAccessibilityFix(
 class AddUsesDirectiveFix(module: PsiJavaModule, private val svcName: String) : AddModuleDirectiveFix(module) {
   override fun getText(): String = QuickFixBundle.message("module.info.add.uses.name", svcName)
 
-  override fun invoke(context: ModCommandAction.ActionContext, module: PsiJavaModule, updater: EditorUpdater) {
+  override fun invoke(context: ModCommandAction.ActionContext, module: PsiJavaModule, updater: ModPsiUpdater) {
     if (module.uses.find { svcName == it.classReference?.qualifiedName } == null) {
       PsiUtil.addModuleStatement(module, PsiKeyword.USES + ' ' + svcName)
     }

@@ -2,9 +2,9 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -39,7 +39,7 @@ public abstract class MethodArgumentFix extends PsiUpdateModCommandAction<PsiExp
   abstract @NotNull String getText(@NotNull PsiExpressionList list);
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiExpressionList list, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiExpressionList list, @NotNull ModPsiUpdater updater) {
     PsiExpression expression = list.getExpressions()[myIndex];
 
     LOG.assertTrue(expression != null && expression.isValid());

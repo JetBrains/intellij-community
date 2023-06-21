@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
@@ -109,7 +109,7 @@ public final class VariableArrayTypeFix extends PsiUpdateModCommandAction<PsiArr
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiArrayInitializerExpression initializer, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiArrayInitializerExpression initializer, @NotNull ModPsiUpdater updater) {
     PsiVariable variable = getVariableLocal(initializer);
     if (variable == null) return;
     variable = updater.getWritable(variable);

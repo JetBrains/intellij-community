@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.psi.*;
 import com.siyeh.ig.psiutils.*;
@@ -39,7 +39,7 @@ public final class DeleteReturnFix extends PsiUpdateModCommandAction<PsiReturnSt
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiReturnStatement returnStatement, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiReturnStatement returnStatement, @NotNull ModPsiUpdater updater) {
     PsiExpression returnValue = returnStatement.getReturnValue();
     if (returnValue == null) return;
     CommentTracker ct = new CommentTracker();

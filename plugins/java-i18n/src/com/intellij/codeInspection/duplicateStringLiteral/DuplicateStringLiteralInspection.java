@@ -10,6 +10,7 @@ import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -272,7 +273,7 @@ public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLoca
     }
 
     @Override
-    protected void invoke(@NotNull ActionContext context, @NotNull PsiLiteralExpression literal, @NotNull EditorUpdater updater) {
+    protected void invoke(@NotNull ActionContext context, @NotNull PsiLiteralExpression literal, @NotNull ModPsiUpdater updater) {
       final PsiField myConstant = myConst.getElement();
       if (myConstant == null) return;
       final PsiExpression initializer = myConstant.getInitializer();

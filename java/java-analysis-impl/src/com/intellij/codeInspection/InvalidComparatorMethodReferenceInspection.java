@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -75,7 +76,7 @@ public class InvalidComparatorMethodReferenceInspection extends AbstractBaseJava
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiElement parent = element.getParent();
       if (parent != null) {
         PsiExpression newMethodExpression = JavaPsiFacade.getElementFactory(project)

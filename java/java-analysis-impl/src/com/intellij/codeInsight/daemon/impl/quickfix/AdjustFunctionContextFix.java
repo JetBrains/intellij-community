@@ -4,8 +4,8 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
-import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -63,7 +63,7 @@ public class AdjustFunctionContextFix extends PsiUpdateModCommandAction<PsiMetho
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiMethodCallExpression call, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiMethodCallExpression call, @NotNull ModPsiUpdater updater) {
     ExpressionUtils.bindCallTo(call, myNewName);
   }
 

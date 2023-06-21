@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
@@ -20,7 +20,7 @@ public class ReplaceAssignmentWithComparisonFix extends PsiUpdateModCommandActio
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiAssignmentExpression assignmentExpression, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiAssignmentExpression assignmentExpression, @NotNull ModPsiUpdater updater) {
     Project project = context.project();
     PsiBinaryExpression
       comparisonExpr = (PsiBinaryExpression)JavaPsiFacade.getElementFactory(project).createExpressionFromText("a==b", assignmentExpression);

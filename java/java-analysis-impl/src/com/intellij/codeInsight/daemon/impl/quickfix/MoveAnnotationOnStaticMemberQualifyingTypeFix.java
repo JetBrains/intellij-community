@@ -2,9 +2,9 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
-import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -23,7 +23,7 @@ public final class MoveAnnotationOnStaticMemberQualifyingTypeFix extends PsiUpda
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiAnnotation annotation, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiAnnotation annotation, @NotNull ModPsiUpdater updater) {
     final PsiTypeElement psiTypeElement = getTypeElement(annotation);
     if (psiTypeElement == null) return;
 

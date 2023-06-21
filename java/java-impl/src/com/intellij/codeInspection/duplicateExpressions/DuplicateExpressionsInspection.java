@@ -4,6 +4,7 @@ package com.intellij.codeInspection.duplicateExpressions;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -328,7 +329,7 @@ public final class DuplicateExpressionsInspection extends LocalInspectionTool {
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (element instanceof PsiExpression) {
         new CommentTracker().replaceAndRestoreComments(element, myVariableName);
       }
@@ -359,7 +360,7 @@ public final class DuplicateExpressionsInspection extends LocalInspectionTool {
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (element instanceof PsiExpression expr) {
         List<PsiExpression> occurrences = collectReplaceableOccurrences(expr);
         for (PsiExpression occurrence : occurrences) {

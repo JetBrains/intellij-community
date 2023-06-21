@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -32,7 +32,7 @@ public abstract class MergeModuleStatementsFix<T extends PsiStatement> extends P
   abstract @NotNull String getText();
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiJavaModule javaModule, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiJavaModule javaModule, @NotNull ModPsiUpdater updater) {
     final List<T> statementsToMerge = getStatementsToMerge(javaModule);
     LOG.assertTrue(!statementsToMerge.isEmpty());
 

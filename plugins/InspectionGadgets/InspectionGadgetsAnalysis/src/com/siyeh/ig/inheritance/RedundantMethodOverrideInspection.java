@@ -2,10 +2,10 @@
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
-import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -89,7 +89,7 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement methodNameIdentifier, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement methodNameIdentifier, @NotNull ModPsiUpdater updater) {
       if (!(methodNameIdentifier.getParent() instanceof PsiMethod method)) return;
       PsiMethod superMethod = findSuperMethod(method);
       if (superMethod == null) return;
@@ -146,7 +146,7 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement methodNameIdentifier, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement methodNameIdentifier, @NotNull ModPsiUpdater updater) {
       final PsiElement method = methodNameIdentifier.getParent();
       assert method != null;
       method.delete();

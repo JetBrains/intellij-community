@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.psi.*;
@@ -31,7 +31,7 @@ public class MoveBoundClassToFrontFix extends PsiUpdateModCommandAction<PsiTypeP
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiTypeParameter typeParameter, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiTypeParameter typeParameter, @NotNull ModPsiUpdater updater) {
     PsiReferenceList extendsList = typeParameter.getExtendsList();
     if (!(myTypePointer.getType() instanceof PsiClassType classType)) return;
     ExtendsListFix.modifyList(extendsList, false, -1, classType);

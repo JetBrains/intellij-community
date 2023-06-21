@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -73,7 +74,7 @@ public class FunctionalExpressionCanBeFoldedInspection extends AbstractBaseJavaL
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiElement parent = element.getParent();
       if (parent instanceof PsiMethodReferenceExpression) {
         final PsiExpression qualifierExpression = ((PsiMethodReferenceExpression)parent).getQualifierExpression();

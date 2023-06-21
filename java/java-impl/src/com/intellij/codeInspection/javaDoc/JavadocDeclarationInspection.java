@@ -9,6 +9,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.ASTNode;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -556,7 +557,7 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiSnippetDocTag snippetTag = PsiTreeUtil.getParentOfType(element, PsiSnippetDocTag.class);
       if (snippetTag == null) return;
       PsiSnippetDocTagValue valueElement = snippetTag.getValueElement();

@@ -2,6 +2,7 @@
 package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInspection.*;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -67,7 +68,7 @@ public class RedundantClassCallInspection extends AbstractBaseJavaLocalInspectio
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
       if (call == null) return;
       PsiExpression arg = ArrayUtil.getFirstElement(call.getArgumentList().getExpressions());

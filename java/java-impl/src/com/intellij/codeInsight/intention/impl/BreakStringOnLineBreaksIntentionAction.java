@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.util.text.StringUtil;
@@ -37,7 +37,7 @@ public class BreakStringOnLineBreaksIntentionAction extends PsiUpdateModCommandA
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiJavaToken token, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiJavaToken token, @NotNull ModPsiUpdater updater) {
     if (token.getTokenType() != JavaTokenType.STRING_LITERAL) return;
 
     final String text = token.getText();

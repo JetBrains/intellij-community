@@ -15,7 +15,10 @@
  */
 package com.siyeh.ig.finalization;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -24,7 +27,6 @@ import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -58,7 +60,7 @@ public class FinalizeNotProtectedInspection extends BaseInspection implements Cl
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement methodName, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement methodName, @NotNull ModPsiUpdater updater) {
       final PsiMethod method = (PsiMethod)methodName.getParent();
       Objects.requireNonNull(method).getModifierList().setModifierProperty(PsiModifier.PROTECTED, true);
     }

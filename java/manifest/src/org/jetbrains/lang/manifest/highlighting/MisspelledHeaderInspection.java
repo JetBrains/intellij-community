@@ -27,6 +27,7 @@ package org.jetbrains.lang.manifest.highlighting;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.PsiElement;
@@ -131,7 +132,7 @@ public final class MisspelledHeaderInspection extends LocalInspectionTool {
     }
 
     @Override
-    protected void invoke(@NotNull ActionContext context, @NotNull Header header, @NotNull EditorUpdater updater) {
+    protected void invoke(@NotNull ActionContext context, @NotNull Header header, @NotNull ModPsiUpdater updater) {
       header.setName(myNewName);
     }
   }

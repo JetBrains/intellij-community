@@ -16,9 +16,9 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.HardcodedMethodConstants;
@@ -58,7 +58,7 @@ public class StringBufferToStringInConcatenationInspection extends BaseInspectio
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement methodNameToken, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement methodNameToken, @NotNull ModPsiUpdater updater) {
       final PsiElement methodCallExpression = methodNameToken.getParent();
       assert methodCallExpression != null;
       final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)methodCallExpression.getParent();

@@ -17,6 +17,7 @@ import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.FQNameCellRenderer;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.model.Symbol;
 import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -407,7 +408,7 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiDocTag myTag = PsiTreeUtil.getParentOfType(element, PsiDocTag.class);
       if (myTag != null) {
         myTag.delete();

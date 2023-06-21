@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
@@ -33,7 +33,7 @@ public class ReuseVariableDeclarationFix extends PsiUpdateModCommandAction<PsiLo
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiLocalVariable variable, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiLocalVariable variable, @NotNull ModPsiUpdater updater) {
     final PsiVariable refVariable = findPreviousVariable(variable);
     if (refVariable == null) return;
 

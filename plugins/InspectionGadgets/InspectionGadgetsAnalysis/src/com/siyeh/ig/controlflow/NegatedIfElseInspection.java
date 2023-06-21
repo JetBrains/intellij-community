@@ -15,10 +15,10 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -79,7 +79,7 @@ public class NegatedIfElseInspection extends BaseInspection {
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement ifToken, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement ifToken, @NotNull ModPsiUpdater updater) {
       final PsiIfStatement ifStatement = (PsiIfStatement)ifToken.getParent();
       assert ifStatement != null;
       final PsiStatement elseBranch = ifStatement.getElseBranch();

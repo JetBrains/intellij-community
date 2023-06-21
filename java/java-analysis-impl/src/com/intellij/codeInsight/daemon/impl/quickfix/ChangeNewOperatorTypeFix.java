@@ -3,9 +3,9 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UnfairTextRange;
@@ -43,7 +43,7 @@ public final class ChangeNewOperatorTypeFix extends PsiUpdateModCommandAction<Ps
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiNewExpression element, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiNewExpression element, @NotNull ModPsiUpdater updater) {
     PsiNewExpression newExpression;
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
     int caretOffset;

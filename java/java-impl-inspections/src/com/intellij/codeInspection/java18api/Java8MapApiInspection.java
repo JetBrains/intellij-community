@@ -9,6 +9,7 @@ import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -285,7 +286,7 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiElement outerElement = PsiTreeUtil.getParentOfType(element, PsiIfStatement.class,
                                                             PsiConditionalExpression.class, PsiForeachStatement.class);
       if (outerElement == null) return;

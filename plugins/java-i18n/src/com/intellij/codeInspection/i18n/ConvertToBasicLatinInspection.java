@@ -2,7 +2,7 @@
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.java.i18n.JavaI18nBundle;
@@ -196,7 +196,7 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       final Handler handler;
       if (element instanceof PsiLiteralExpression) {
         handler = new LiteralHandler();

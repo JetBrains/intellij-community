@@ -25,6 +25,7 @@
 package org.jetbrains.lang.manifest.highlighting;
 
 import com.intellij.codeInspection.*;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -71,7 +72,7 @@ public class MissingFinalNewlineInspection extends LocalInspectionTool {
     }
 
     @Override
-    protected void invoke(@NotNull ActionContext context, @NotNull Section section, @NotNull EditorUpdater updater) {
+    protected void invoke(@NotNull ActionContext context, @NotNull Section section, @NotNull ModPsiUpdater updater) {
       PsiElement lastChild = section.getLastChild();
       if (lastChild instanceof Header) {
         lastChild.getNode().addLeaf(ManifestTokenType.NEWLINE, "\n", null);

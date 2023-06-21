@@ -3,7 +3,7 @@ package com.intellij.codeInspection.redundantCast;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.java.JavaBundle;
@@ -152,7 +152,7 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiTypeCastExpression cast = PsiTreeUtil.getParentOfType(element, PsiTypeCastExpression.class);
       if (cast == null) return;
       PsiReferenceExpression ref = tryCast(PsiUtil.skipParenthesizedExprDown(cast.getOperand()), PsiReferenceExpression.class);

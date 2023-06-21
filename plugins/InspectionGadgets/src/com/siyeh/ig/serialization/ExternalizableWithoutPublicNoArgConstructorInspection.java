@@ -2,7 +2,7 @@
 package com.siyeh.ig.serialization;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.AddDefaultConstructorFix;
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -67,7 +67,7 @@ public class ExternalizableWithoutPublicNoArgConstructorInspection extends BaseI
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement classNameIdentifier, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement classNameIdentifier, @NotNull ModPsiUpdater updater) {
       final PsiClass aClass = (PsiClass)classNameIdentifier.getParent();
       if (aClass == null) {
         return;

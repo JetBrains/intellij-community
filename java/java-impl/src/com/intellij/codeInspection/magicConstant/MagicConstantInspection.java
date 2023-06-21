@@ -8,6 +8,7 @@ import com.intellij.codeInspection.magicConstant.MagicConstantUtils.AllowedValue
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -531,7 +532,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
     }
 
     @Override
-    protected void invoke(@NotNull ActionContext context, @NotNull PsiExpression startElement, @NotNull EditorUpdater updater) {
+    protected void invoke(@NotNull ActionContext context, @NotNull PsiExpression startElement, @NotNull ModPsiUpdater updater) {
       List<PsiAnnotationMemberValue> values = ContainerUtil.map(myMemberValuePointers, SmartPsiElementPointer::getElement);
       String text = StringUtil.join(Collections.nCopies(values.size(), "0"), " | ");
       PsiExpression concatExp = PsiElementFactory.getInstance(context.project()).createExpressionFromText(text, startElement);

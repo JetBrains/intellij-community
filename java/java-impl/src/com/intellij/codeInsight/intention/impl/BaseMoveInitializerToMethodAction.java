@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.java.JavaLanguage;
@@ -75,7 +75,7 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiUpdateModComm
   protected abstract Collection<String> getUnsuitableModifiers();
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiField field, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiField field, @NotNull ModPsiUpdater updater) {
     final PsiClass aClass = field.getContainingClass();
     if (aClass == null) return;
 

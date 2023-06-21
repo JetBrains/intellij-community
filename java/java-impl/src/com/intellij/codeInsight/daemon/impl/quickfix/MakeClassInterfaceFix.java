@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -33,7 +33,7 @@ public class MakeClassInterfaceFix extends PsiUpdateModCommandAction<PsiClass> {
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiClass myClass, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiClass myClass, @NotNull ModPsiUpdater updater) {
     final PsiReferenceList extendsList = myMakeInterface? myClass.getExtendsList() : myClass.getImplementsList();
     final PsiReferenceList implementsList = myMakeInterface? myClass.getImplementsList() : myClass.getExtendsList();
     if (extendsList != null) {

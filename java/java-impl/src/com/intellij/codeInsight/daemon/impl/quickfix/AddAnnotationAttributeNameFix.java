@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,7 +30,7 @@ public class AddAnnotationAttributeNameFix extends PsiUpdateModCommandAction<Psi
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiNameValuePair element, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiNameValuePair element, @NotNull ModPsiUpdater updater) {
     doFix(element, myName);
   }
 

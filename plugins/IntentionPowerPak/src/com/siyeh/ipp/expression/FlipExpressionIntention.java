@@ -15,7 +15,7 @@
  */
 package com.siyeh.ipp.expression;
 
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiJavaToken;
@@ -60,7 +60,7 @@ public class FlipExpressionIntention extends MCIntention {
   }
 
   @Override
-  protected void processIntention(@NotNull ActionContext context, @NotNull EditorUpdater updater, @NotNull PsiElement element) {
+  protected void processIntention(@NotNull ActionContext context, @NotNull ModPsiUpdater updater, @NotNull PsiElement element) {
     final PsiJavaToken token = (PsiJavaToken)element;
     int offset = context.offset();
     final PsiElement parent = token.getParent();

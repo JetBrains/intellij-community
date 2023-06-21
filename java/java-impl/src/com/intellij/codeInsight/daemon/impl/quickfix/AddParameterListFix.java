@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiIdentifier;
@@ -20,7 +20,7 @@ public class AddParameterListFix extends PsiUpdateModCommandAction<PsiMethod> {
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiMethod method, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiMethod method, @NotNull ModPsiUpdater updater) {
     PsiIdentifier identifier = method.getNameIdentifier();
     if (identifier == null) return;
     method.addAfter(JavaPsiFacade.getElementFactory(context.project())

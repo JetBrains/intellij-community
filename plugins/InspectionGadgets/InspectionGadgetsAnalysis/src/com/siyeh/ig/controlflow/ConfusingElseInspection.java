@@ -15,15 +15,17 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
@@ -76,7 +78,7 @@ public class ConfusingElseInspection extends BaseInspection implements CleanupLo
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement ifKeyword, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement ifKeyword, @NotNull ModPsiUpdater updater) {
       final PsiIfStatement ifStatement = (PsiIfStatement)ifKeyword.getParent();
       if (ifStatement == null) {
         return;

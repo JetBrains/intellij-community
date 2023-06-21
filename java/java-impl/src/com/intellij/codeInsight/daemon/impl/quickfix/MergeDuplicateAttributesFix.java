@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.*;
@@ -20,7 +20,7 @@ public class MergeDuplicateAttributesFix extends PsiUpdateModCommandAction<PsiNa
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiNameValuePair pair, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiNameValuePair pair, @NotNull ModPsiUpdater updater) {
     PsiAnnotationParameterList parameterList = (PsiAnnotationParameterList)pair.getParent();
     PsiNameValuePair[] attributes = parameterList.getAttributes();
     List<String> strings = new ArrayList<>();

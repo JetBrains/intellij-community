@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -34,7 +34,7 @@ public class MoveAnnotationToPackageInfoFileFix extends PsiUpdateModCommandActio
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiPackageStatement packageStatement, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiPackageStatement packageStatement, @NotNull ModPsiUpdater updater) {
     PsiPackage aPackage = getPackage(packageStatement);
     if (aPackage == null) return;
     PsiFile packageInfoFile = getPackageInfoFile(aPackage);

@@ -17,10 +17,9 @@ package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.intention.PriorityAction;
-import com.intellij.codeInspection.EditorUpdater;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiBinaryExpression;
@@ -28,7 +27,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -77,7 +75,7 @@ public final class EqualityToSafeEqualsFix extends PsiUpdateModCommandQuickFix i
   }
 
   @Override
-  protected void applyFix(@NotNull Project project, @NotNull PsiElement comparisonToken, @NotNull EditorUpdater updater) {
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement comparisonToken, @NotNull ModPsiUpdater updater) {
     final PsiElement parent = comparisonToken.getParent();
     if (!(parent instanceof PsiBinaryExpression expression)) {
       return;

@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -105,7 +106,7 @@ public class AnonymousHasLambdaAlternativeInspection extends AbstractBaseJavaLoc
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if(!(element instanceof PsiNewExpression newExpression)) return;
       PsiAnonymousClass aClass = newExpression.getAnonymousClass();
       if(aClass == null) return;

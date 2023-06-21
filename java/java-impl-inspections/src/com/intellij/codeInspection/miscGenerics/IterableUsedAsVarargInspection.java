@@ -3,6 +3,7 @@ package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInspection.*;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -89,7 +90,7 @@ public class IterableUsedAsVarargInspection extends AbstractBaseJavaLocalInspect
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiExpression expression = tryCast(element, PsiExpression.class);
       if (expression == null) return;
       if (!InheritanceUtil.isInheritor(expression.getType(), CommonClassNames.JAVA_UTIL_COLLECTION)) return;

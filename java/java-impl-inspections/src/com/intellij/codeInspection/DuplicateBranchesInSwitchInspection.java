@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -314,7 +315,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       BranchFixContext context = new BranchFixContext();
       if (context.prepare(element, branch -> mySwitchLabelText.equals(branch.getSwitchLabelText()))) {
         context.moveBranchLabel();
@@ -333,7 +334,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       BranchFixContext context = new BranchFixContext();
       if (context.prepare(element, Branch::isDefault)) {
         context.moveBranchLabel();
@@ -348,7 +349,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
    */
   private static class MergeWithDefaultRuleFix extends MergeWithDefaultBranchFix {
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       RuleFixContext context = new RuleFixContext();
       if (context.prepare(element, BranchBase::isDefault)) {
         context.copyCaseValues(true);
@@ -375,7 +376,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       BranchFixContext context = new BranchFixContext();
       if (context.prepare(element, BranchBase::isDefault)) {
         context.deleteBranchLabel();
@@ -1034,7 +1035,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       RuleFixContext context = new RuleFixContext();
       if (context.prepare(element, rule -> mySwitchLabelText.equals(rule.getSwitchLabelText()))) {
         context.copyCaseValues(false);
@@ -1061,7 +1062,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       RuleFixContext context = new RuleFixContext();
       if (context.prepare(element, Rule::isDefault)) {
         context.deleteRedundantComments();

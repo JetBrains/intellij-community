@@ -16,21 +16,21 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.BlockUtils;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class UnnecessaryBlockStatementInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
@@ -75,7 +75,7 @@ public class UnnecessaryBlockStatementInspection extends BaseInspection implemen
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement leftBrace, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement leftBrace, @NotNull ModPsiUpdater updater) {
       final PsiElement parent = leftBrace.getParent();
       if (!(parent instanceof PsiCodeBlock block)) {
         return;

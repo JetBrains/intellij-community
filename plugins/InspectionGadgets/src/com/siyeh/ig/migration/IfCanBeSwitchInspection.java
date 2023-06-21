@@ -8,6 +8,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.pom.java.LanguageLevel;
@@ -95,7 +96,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
       final PsiElement element = startElement.getParent();
       if (!(element instanceof PsiIfStatement ifStatement)) {
         return;
@@ -178,7 +179,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     return expression;
   }
 
-  private static void replaceIfWithSwitch(PsiIfStatement ifStatement, @NotNull EditorUpdater updater) {
+  private static void replaceIfWithSwitch(PsiIfStatement ifStatement, @NotNull ModPsiUpdater updater) {
     boolean breaksNeedRelabeled = false;
     PsiStatement breakTarget = null;
     String newLabel = "";

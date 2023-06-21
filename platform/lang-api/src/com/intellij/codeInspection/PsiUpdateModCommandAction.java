@@ -3,12 +3,11 @@ package com.intellij.codeInspection;
 
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.stream.IntStream;
 
 /**
  * A convenient abstract class to implement {@link ModCommandAction}
@@ -51,5 +50,5 @@ public abstract class PsiUpdateModCommandAction<E extends PsiElement> extends Ps
    * @param element starting element copy. It's allowed only to modify the file where this element is located
    * @param updater updater to change caret position and selection if necessary
    */
-  protected abstract void invoke(@NotNull ActionContext context, @NotNull E element, @NotNull EditorUpdater updater);
+  protected abstract void invoke(@NotNull ActionContext context, @NotNull E element, @NotNull ModPsiUpdater updater);
 }
