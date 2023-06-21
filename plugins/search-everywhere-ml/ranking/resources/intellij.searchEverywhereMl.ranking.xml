@@ -147,7 +147,8 @@
 
   <actions>
     <action id="com.intellij.searchEverywhereMl.ranking.actions.OpenFeaturesInScratchFileAction"
-            class="com.intellij.searchEverywhereMl.ranking.actions.OpenFeaturesInScratchFileAction">
+            class="com.intellij.searchEverywhereMl.ranking.actions.OpenFeaturesInScratchFileAction"
+            internal="true">
       <add-to-group group-id="MaintenanceGroup" anchor="last"/>
       <keyboard-shortcut keymap="$default" first-keystroke="shift ctrl alt 1"/>
       <override-text place="GoToAction"/>
