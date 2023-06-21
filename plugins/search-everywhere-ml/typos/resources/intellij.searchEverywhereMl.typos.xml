@@ -29,4 +29,12 @@
 
     <postStartupActivity implementation="com.intellij.searchEverywhereMl.typos.models.ModelComputationStarter"/>
   </extensions>
+
+  <actions>
+    <action id="com.intellij.searchEverywhereMl.typos.actions.DumpDictionaryToFileAction"
+            class="com.intellij.searchEverywhereMl.typos.actions.DumpDictionaryToFileAction"
+            internal="true">
+      <add-to-group group-id="MaintenanceGroup" anchor="last"/>
+    </action>
+  </actions>
 </idea-plugin>
