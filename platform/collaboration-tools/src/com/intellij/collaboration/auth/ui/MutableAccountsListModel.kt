@@ -31,6 +31,12 @@ abstract class MutableAccountsListModel<A : Account, Cred>
     notifyCredentialsChanged(account)
   }
 
+  fun remove(account: A) {
+    accountsListModel.remove(account)
+    newCredentials.remove(account)
+    notifyCredentialsChanged(account)
+  }
+
   private fun notifyCredentialsChanged(account: A) {
     accountsListModel.contentsChanged(account)
   }
