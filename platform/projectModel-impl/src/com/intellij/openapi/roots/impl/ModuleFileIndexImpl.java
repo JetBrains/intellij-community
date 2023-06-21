@@ -72,7 +72,14 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
       return false;
     }
     WorkspaceFileInternalInfo fileInfo = myWorkspaceFileIndex.getFileInfo(parent, false, true, false, false);
-    return fileInfo.findFileSet(fileSet -> isInContent(fileSet)) != null;
+    return fileInfo.findFileSet(this::hasRecursiveRootFromModuleContent) != null;
+  }
+
+  private boolean hasRecursiveRootFromModuleContent(@NotNull WorkspaceFileSetWithCustomData<?> fileSet) {
+    if (fileSet instanceof WorkspaceFileSetImpl && !((WorkspaceFileSetImpl)fileSet).getRecursive()) {
+      return false;
+    }
+    return isInContent(fileSet);
   }
 
   @Override
