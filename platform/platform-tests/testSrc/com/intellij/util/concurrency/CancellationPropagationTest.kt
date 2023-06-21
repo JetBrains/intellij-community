@@ -563,12 +563,13 @@ class CancellationPropagationTest {
   @Test
   fun `blockingContextScope suspends until all children are cancelled`() = timeoutRunBlocking {
     val allowedToProceed = Semaphore(1)
-    val scheduled = Semaphore(1)
+    val scheduled = Semaphore(2)
     var cancelled: Boolean by AtomicReference(false)
     var blockingJobRef: Job? by AtomicReference(null)
     val job = withRootJob {
       blockingJobRef = it
       ApplicationManager.getApplication().executeOnPooledThread {
+        scheduled.up()
         allowedToProceed.timeoutWaitUp()
         try {
           Cancellation.checkCancelled()
@@ -580,6 +581,7 @@ class CancellationPropagationTest {
       }
       scheduled.up()
     }
+    scheduled.timeoutWaitUp()
     scheduled.timeoutWaitUp()
     assertTrue(job.isActive)
     blockingJobRef!!.cancel(null)
