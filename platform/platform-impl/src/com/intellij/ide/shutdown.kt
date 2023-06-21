@@ -11,7 +11,9 @@ import com.intellij.openapi.progress.impl.pumpEventsForHierarchy
 import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.EmptyRunnable
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.io.blockingDispatcher
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import javax.swing.SwingUtilities
@@ -71,7 +73,7 @@ internal fun cancelAndJoinBlocking(
   }
   LOG.trace("$debugString: waiting for scope completion")
   @OptIn(DelicateCoroutinesApi::class)
-  val dumpJob = GlobalScope.launch {
+  val dumpJob = GlobalScope.launch(@OptIn(IntellijInternalApi::class) blockingDispatcher) {
     delay(delayUntilCoroutineDump)
     LOG.warn("$debugString: scope was not completed in $delayUntilCoroutineDump.\n${dumpCoroutines(scope = containerScope)}")
   }
