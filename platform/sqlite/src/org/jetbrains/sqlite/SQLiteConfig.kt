@@ -5,7 +5,7 @@ package org.jetbrains.sqlite
 
 class SQLiteConfig {
   // SQLite defaults to 0, but as https://github.com/xerial/sqlite-jdbc we use 3000
-  var busyTimeout: Int = 3000
+  private var busyTimeout: Int = 3000
 
   // SQLite default to DELETE (https://www.sqlite.org/pragma.html#pragma_journal_mode),
   // but WAL (https://www.sqlite.org/wal.html) "is significantly faster in most scenarios"
@@ -17,9 +17,6 @@ class SQLiteConfig {
   //private var synchronous: SynchronousMode = SynchronousMode.NORMAL
 
   // SQLite is compiled with SQLITE_DEFAULT_WAL_SYNCHRONOUS=1
-
-  // set the default open mode of SQLite3
-  var openModeFlag: Int = 0x00 or SQLiteOpenMode.READWRITE.flag or SQLiteOpenMode.CREATE.flag
 
   internal fun apply(db: NativeDB) {
     @Suppress("RemoveExplicitTypeArguments")
@@ -54,7 +51,7 @@ private enum class JournalMode {
  * [Database file open modes of SQLite](https://www.sqlite.org/c3ref/open.html)
  */
 @Suppress("unused", "SpellCheckingInspection")
-private enum class SQLiteOpenMode(val flag: Int) {
+internal enum class SQLiteOpenMode(@JvmField val flag: Int) {
   READONLY(0x00000001),
 
   READWRITE(0x00000002),

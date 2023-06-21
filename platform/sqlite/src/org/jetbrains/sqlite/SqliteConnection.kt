@@ -18,14 +18,12 @@ private val ROLLBACK = "rollback".encodeToByteArray()
 
 private val savepointNameGenerator = AtomicLong()
 
-class SqliteConnection(file: Path?, config: SQLiteConfig = SQLiteConfig()) : AutoCloseable {
+class SqliteConnection(file: Path?, readOnly: Boolean = false) : AutoCloseable {
   private val dbRef = AtomicReference<NativeDB?>()
   private val lock = ReentrantLock()
 
   val isClosed: Boolean
     get() = dbRef.get() == null
-
-  private var currentBusyTimeout: Int
 
   private val statementPoolList = mutableListOf<SqlStatementPool<*>>()
 
@@ -35,14 +33,14 @@ class SqliteConnection(file: Path?, config: SQLiteConfig = SQLiteConfig()) : Aut
     val db = NativeDB()
     val filePath = file?.toAbsolutePath()?.normalize()?.toString()
     @Suppress("IfThenToElvis")
-    val status = db.open(if (filePath == null) ":memory:" else filePath, config.openModeFlag) and 0xff
+    val status = db.open(if (filePath == null) ":memory:" else filePath,
+                         if (readOnly) SQLiteOpenMode.READONLY.flag else (SQLiteOpenMode.READWRITE.flag or SQLiteOpenMode.CREATE.flag)) and 0xff
     if (status != SqliteCodes.SQLITE_OK) {
       throw newException(status, filePath.orEmpty(), null)
     }
 
     try {
-      config.apply(db)
-      currentBusyTimeout = config.busyTimeout
+      SQLiteConfig().apply(db)
     }
     catch (e: Throwable) {
       try {
