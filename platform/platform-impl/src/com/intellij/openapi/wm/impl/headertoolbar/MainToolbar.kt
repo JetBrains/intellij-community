@@ -127,21 +127,34 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
   private fun migratePreviousCustomizations(schema: CustomActionsSchema) {
     val backup = CustomActionsSchema(null)
     backup.copyFrom(schema)
-    try {
-      val mainToolbarPath = listOf("root", schema.getDisplayName(MAIN_TOOLBAR_ID)!!)
-      val url = ActionUrl().apply { groupPath = ArrayList(mainToolbarPath) }
-      if (!schema.getChildActions(url).isEmpty()) return
+    val mainToolbarPath = listOf("root", schema.getDisplayName(MAIN_TOOLBAR_ID)!!)
+    val url = ActionUrl().apply { groupPath = ArrayList(mainToolbarPath) }
+    if (!schema.getChildActions(url).isEmpty()) return
 
-      migrateToolbar(schema, listOf("root", "Main Toolbar Left"), mainToolbarPath + "Left")
-      migrateToolbar(schema, listOf("root", "Main Toolbar Center"), mainToolbarPath + "Center")
-      migrateToolbar(schema, listOf("root", "Main Toolbar Right"), mainToolbarPath + "Right")
+    val tmpSchema = CustomActionsSchema(null)
+    tmpSchema.copyFrom(schema)
 
-      schemaChanged()
-    } catch (e: Throwable) {
-      LOG.error("Migration of Main Toolbar customizations is failed", e)
-      schema.copyFrom(backup)
+    val changed = migrateToolbar(tmpSchema, listOf("root", "Main Toolbar Left"), mainToolbarPath + "Left")
+                  || migrateToolbar(tmpSchema, listOf("root", "Main Toolbar Center"), mainToolbarPath + "Center")
+                  || migrateToolbar(tmpSchema, listOf("root", "Main Toolbar Right"), mainToolbarPath + "Right")
+
+    if (changed) {
+      schema.copyFrom(tmpSchema)
       schemaChanged()
     }
+  }
+
+  private fun migrateToolbar(schema: CustomActionsSchema, fromPath: List<String>, toPath: List<String>): Boolean {
+    val parentURL = ActionUrl().apply { groupPath = ArrayList(fromPath) }
+    val childActions = schema.getChildActions(parentURL)
+    if (childActions.isEmpty()) return false
+
+    val newUrls = childActions.map { ActionUrl(ArrayList(toPath), it.component, it.actionType, it.absolutePosition) }
+    val actions = schema.getActions().toMutableList()
+    actions.addAll(newUrls)
+    actions.removeIf { url: ActionUrl -> fromPath == url.groupPath }
+    schema.setActions(actions)
+    return true
   }
 
   private fun schemaChanged() {
@@ -151,22 +164,6 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
       TouchbarSupport.reloadAllActions()
     }
     CustomActionsListener.fireSchemaChanged()
-  }
-
-  private fun migrateToolbar(schema: CustomActionsSchema, fromPath: List<String>, toPath: List<String>) {
-    val parentURL = ActionUrl().apply { groupPath = ArrayList(fromPath) }
-    val childActions = schema.getChildActions(parentURL)
-    if (childActions.isEmpty()) return
-
-    val tmpSchema = CustomActionsSchema(null)
-    tmpSchema.copyFrom(schema)
-    val newUrls = childActions.map { ActionUrl(ArrayList(toPath), it.component, it.actionType, it.absolutePosition) }
-    val actions = tmpSchema.getActions().toMutableList()
-    actions.addAll(newUrls)
-    actions.removeIf { url: ActionUrl -> fromPath == url.groupPath }
-    tmpSchema.setActions(actions)
-
-    schema.copyFrom(tmpSchema)
   }
 
   private fun installClickListener(popupHandler: PopupHandler, customTitleBar: WindowDecorations.CustomTitleBar?) {
