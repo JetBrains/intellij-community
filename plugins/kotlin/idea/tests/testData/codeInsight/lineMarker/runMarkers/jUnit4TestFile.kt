@@ -36,16 +36,19 @@ class <lineMarker descr="Run Test" icon="runConfigurations/testState/run_run.svg
     }
 }
 
-object <lineMarker descr="Run Test" icon="runConfigurations/testState/run.svg">SessionObjectTest</lineMarker> {
+object SessionObjectTest {
     @Test
-    fun <lineMarker descr="Run Test" icon="runConfigurations/testState/run.svg">testSessionCreateDelete</lineMarker>() {}
+    fun testSessionCreateDelete() {}
 
     @Ignore
     @Test
-    fun <lineMarker descr="Run Test" icon="runConfigurations/testState/run.svg">configFileWithEnvironmentVariables</lineMarker>() {}
+    fun configFileWithEnvironmentVariables() {}
+
+    @Ignore
+    fun notAnIgoreTest() {}
 
     @Test
-    fun <lineMarker descr="Run Test" icon="runConfigurations/testState/run.svg">`top level extension function as module function`</lineMarker>() {}
+    fun `top level extension function as module function`() {}
 }
 
 abstract class <lineMarker descr="Run Test"><lineMarker descr="Is subclassed by FooCase in AbstractBar (testing) Press ... to navigate">AbstractBar</lineMarker></lineMarker> {

@@ -3,6 +3,7 @@ package testing
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Disabled
+import kotlin.test.*
 
 class <lineMarker descr="Run Test">Simple</lineMarker> {
     @Test
@@ -17,6 +18,13 @@ object <lineMarker descr="Run Test" icon="runConfigurations/testState/run.svg">S
     @Disabled
     @Test
     fun <lineMarker descr="Run Test" icon="runConfigurations/testState/run.svg">configFileWithEnvironmentVariables</lineMarker>() {}
+
+    @Ignore
+    @Test
+    fun <lineMarker descr="Run Test" icon="runConfigurations/testState/run.svg">kotlinTestIgnore</lineMarker>() {}
+
+    @Disabled
+    fun notAnIgoreTest() {}
 
     @Test
     fun <lineMarker descr="Run Test" icon="runConfigurations/testState/run.svg">`top level extension function as module function`</lineMarker>() {}
