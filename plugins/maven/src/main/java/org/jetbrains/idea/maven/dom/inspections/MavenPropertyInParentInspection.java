@@ -5,7 +5,6 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlElement;
@@ -18,13 +17,11 @@ import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
+import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomParent;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference;
 import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper;
-import org.jetbrains.idea.maven.server.MavenDistribution;
-import org.jetbrains.idea.maven.server.MavenDistributionsCache;
-import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -71,15 +68,8 @@ public class MavenPropertyInParentInspection extends XmlSuppressableInspectionTo
   }
 
   private static boolean isMaven35OrMore(@NotNull PsiFile file) {
-    PsiDirectory directory = file.getContainingDirectory();
-    MavenDistribution distribution;
-    if (directory == null) {
-      distribution = MavenDistributionsCache.getInstance(file.getProject()).getSettingsDistribution();
-    }
-    else {
-      distribution = MavenDistributionsCache.getInstance(file.getProject()).getMavenDistribution(directory.getVirtualFile().getPath());
-    }
-    return StringUtil.compareVersionNumbers(distribution.getVersion(), "3.5") >= 0;
+    return StringUtil.compareVersionNumbers(MavenDomUtil.getMavenVersion(file.getVirtualFile(), file.getProject()), "3.5") >= 0;
+
   }
 
   private static void validate(@NotNull InspectionManager manager, boolean isOnTheFly, boolean maven35,

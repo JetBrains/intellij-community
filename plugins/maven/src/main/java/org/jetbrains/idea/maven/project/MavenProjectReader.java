@@ -169,7 +169,7 @@ public final class MavenProjectReader {
                                         Collection<MavenProjectProblem> problems,
                                         VirtualFile file) {
     String version = MavenJDOMUtil.findChildValueByPath(xmlProject, "parent.version");
-    if (version != null || !MavenConsumerPomUtil.isConsumerPomResolutionApplicable(myProject)) {
+    if (version != null || !MavenConsumerPomUtil.isAutomaticVersionFeatureEnabled(file, myProject)) {
       return StringUtil.notNullize(version, UNKNOWN);
     }
     String parentGroupId = MavenJDOMUtil.findChildValueByPath(xmlProject, "parent.groupId");
