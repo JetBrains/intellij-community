@@ -2107,7 +2107,9 @@ open class FileEditorManagerImpl(
       // must be executed with a current modality — that's why coroutineScope.launch should be not used
       withContext(Dispatchers.EDT) {
         if (isFileOpen(file)) {
-          publisher.fileOpened(this@FileEditorManagerImpl, file)
+          runCatching {
+            publisher.fileOpened(this@FileEditorManagerImpl, file)
+          }.getOrLogException(LOG)
         }
       }
     }
