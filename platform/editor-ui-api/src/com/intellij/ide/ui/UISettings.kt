@@ -496,7 +496,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
   companion object {
     init {
       if (JBUIScale.SCALE_VERBOSE) {
-        LOG.info(String.format("defFontSize=%.1f, defFontScale=%.2f", defFontSize, defFontScale))
+        LOG.info(String.format("defFontSize=%.1f, defFontScale=%.2f", getDefFontSize(), defFontScale))
       }
     }
 
@@ -628,8 +628,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
      * @return the default scaled font size
      */
     @JvmStatic
-    val defFontSize: Float
-      get() = UISettingsState.defFontSize
+    fun getDefFontSize(): Float = getDefaultFontSize()
 
     @JvmStatic
     fun restoreFontSize(readSize: Float, readScale: Float?): Float {
@@ -640,7 +639,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
         }
         // Reset font to default on switch from IDE-managed HiDPI to JRE-managed HiDPI. Doesn't affect OSX.
         if (!SystemInfoRt.isMac && JreHiDpiUtil.isJreHiDPIEnabled()) {
-          size = UISettingsState.defFontSize
+          size = getDefaultFontSize()
         }
       }
       else if (readScale != defFontScale) {

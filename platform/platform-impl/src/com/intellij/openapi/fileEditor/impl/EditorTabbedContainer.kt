@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.openapi.fileEditor.impl
@@ -651,9 +651,9 @@ private class EditorTabs(
       return height - layoutInsets.top - layoutInsets.bottom
     }
 
-    override fun isShowTabActions(): Boolean = UISettings.shadowInstance.showCloseButton || isPinned
+    override fun isShowTabActions(): Boolean = UISettings.getInstance().showCloseButton || isPinned
 
-    override fun isTabActionsOnTheRight(): Boolean = UISettings.shadowInstance.closeTabButtonOnTheRight
+    override fun isTabActionsOnTheRight(): Boolean = UISettings.getInstance().closeTabButtonOnTheRight
 
     override fun shouldPaintFadeout(): Boolean {
       return super.shouldPaintFadeout() && Registry.`is`("ide.editor.tabs.show.fadeout", true)

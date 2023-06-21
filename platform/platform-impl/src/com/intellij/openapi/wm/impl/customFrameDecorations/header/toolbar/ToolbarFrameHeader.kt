@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
 import com.intellij.ide.ProjectWindowCustomizerService
@@ -87,11 +87,11 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
   }
 
   private val mode: ShowMode
-    get() = if (isToolbarInHeader(UISettings.shadowInstance)) ShowMode.TOOLBAR else ShowMode.MENU
+    get() = if (isToolbarInHeader()) ShowMode.TOOLBAR else ShowMode.MENU
+
   private val isCompact: Boolean get() = (root as? IdeRootPane)?.isCompactHeader == true
 
-  private fun toolbarCardName(isCompact: Boolean = this.isCompact): String =
-    if (isCompact) "PATH" else "TOOLBAR"
+  private fun toolbarCardName(isCompact: Boolean = this.isCompact): String = if (isCompact) "PATH" else "TOOLBAR"
 
   init {
     mainMenuButton.expandableMenu = expandableMenu
@@ -103,7 +103,7 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
     add(myHeaderContent, gb.next().fillCell().anchor(CENTER).weightx(1.0).weighty(1.0))
     buttonPanes?.let { add(wrap(it.getView()), gb.next().anchor(EAST)) }
 
-    setCustomFrameTopBorder({ false }, { mode == ShowMode.MENU })
+    setCustomFrameTopBorder(isTopNeeded = { false }, isBottomNeeded = { mode == ShowMode.MENU })
 
     customizer.addListener(this, true) {
       isOpaque = !it
