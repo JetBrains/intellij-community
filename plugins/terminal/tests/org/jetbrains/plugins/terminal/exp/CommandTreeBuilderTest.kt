@@ -106,10 +106,10 @@ class CommandTreeBuilderTest {
 
   @Test
   fun `subcommand with two arguments`() {
-    doTest("sub", "arg1", "somePath") {
+    doTest("sub", "somePath", "arg1") {
       assertSubcommandOf("sub", commandName)
-      assertArgumentOfSubcommand("arg1", "sub")
       assertArgumentOfSubcommand("somePath", "sub")
+      assertArgumentOfSubcommand("arg1", "sub")
     }
   }
 

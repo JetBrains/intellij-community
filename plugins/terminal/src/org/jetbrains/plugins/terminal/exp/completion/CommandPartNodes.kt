@@ -6,6 +6,15 @@ internal abstract class CommandPartNode<T>(val text: String, open val spec: T?, 
 
   open fun getSuggestionsOfNext(): List<BaseSuggestion> = emptyList()
 
+  protected fun getAvailableArguments(allArgs: List<ShellArgument>): List<ShellArgument> {
+    val existingArgs = children.mapNotNull { (it as? ArgumentNode)?.spec }
+    val lastExistingArgIndex = existingArgs.lastOrNull()?.let { allArgs.indexOf(it) } ?: -1
+    val firstRequiredArgIndex = allArgs.withIndex().find { (ind, argument) ->
+      ind > lastExistingArgIndex && !argument.isOptional
+    }?.index ?: (allArgs.size - 1)
+    return allArgs.subList(lastExistingArgIndex + 1, firstRequiredArgIndex + 1)
+  }
+
   override fun toString(): String {
     return "${javaClass.simpleName} { text: $text, children: $children }"
   }
@@ -32,12 +41,9 @@ internal class SubcommandNode(text: String,
     }
     suggestions.addAll(options)
 
-    val args = spec.args
-    val existingArgsCount = children.count { it is ArgumentNode }
-    if (args.size > existingArgsCount) {
-      // TODO: here should be also file suggestions if there are corresponding argument
-      suggestions.addAll(args.flatMap { it.getArgumentSuggestions() })
-    }
+    val availableArgs = getAvailableArguments(spec.args)
+    //   TODO: here should be also file suggestions if there are corresponding argument
+    suggestions.addAll(availableArgs.flatMap { it.getArgumentSuggestions() })
     return suggestions
   }
 
@@ -60,20 +66,17 @@ internal class OptionNode(text: String,
   override fun getSuggestionsOfNext(): List<BaseSuggestion> {
     val suggestions = mutableListOf<BaseSuggestion>()
     suggestions.addAll(getDirectSuggestionsOfNext())
-    if (parent is SubcommandNode && spec.args.all { it.isOptional }) {
+    val availableArgs = getAvailableArguments(spec.args)
+    if (parent is SubcommandNode && availableArgs.all { it.isOptional }) {
       suggestions.addAll(parent.getSuggestionsOfNext())
     }
     return suggestions
   }
 
   fun getDirectSuggestionsOfNext(): List<BaseSuggestion> {
-    val args = spec.args
-    val existingArgsCount = children.count { it is ArgumentNode }
-    if (args.size > existingArgsCount) {
-      // TODO: here should be also file suggestions if there are corresponding argument
-      return args.flatMap { it.getArgumentSuggestions() }
-    }
-    return emptyList()
+    val availableArgs = getAvailableArguments(spec.args)
+    //   TODO: here should be also file suggestions if there are corresponding argument
+    return availableArgs.flatMap { it.getArgumentSuggestions() }
   }
 }
 
