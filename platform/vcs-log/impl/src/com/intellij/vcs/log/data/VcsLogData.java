@@ -29,7 +29,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.*;
 
 import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
@@ -38,6 +41,8 @@ import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runSpan
 public final class VcsLogData implements Disposable, VcsLogDataProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogData.class);
   public static final int RECENT_COMMITS_COUNT = Registry.intValue("vcs.log.recent.commits.count");
+  public static final boolean USE_SQLITE = Registry.is("vcs.log.index.sqlite.storage", false);
+
   public static final VcsLogProgress.ProgressKey DATA_PACK_REFRESH = new VcsLogProgress.ProgressKey("data pack");
 
   private final @NotNull Project myProject;
@@ -73,8 +78,6 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
   private final @NotNull Object myLock = new Object();
   private @NotNull State myState = State.CREATED;
   private @Nullable SingleTaskController.SingleTask myInitialization = null;
-
-  private static final boolean useSqlite = Registry.is("vcs.log.index.sqlite.storage", false);
 
   public VcsLogData(@NotNull Project project,
                     @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
@@ -131,7 +134,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
 
   private @NotNull VcsLogStorage createStorage() {
     try {
-      if (useSqlite) {
+      if (USE_SQLITE) {
         return new SqliteVcsLogStorageBackend(myProject, myLogProviders, myErrorHandler, this);
       }
       return new VcsLogStorageImpl(myProject, myLogProviders, myErrorHandler, this);
