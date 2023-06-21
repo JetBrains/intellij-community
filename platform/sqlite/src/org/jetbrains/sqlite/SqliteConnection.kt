@@ -32,11 +32,11 @@ class SqliteConnection(file: Path?, config: SQLiteConfig = SQLiteConfig()) : Aut
     file?.parent?.let { Files.createDirectories(it) }
     loadNativeDb()
     val db = NativeDB()
-
+    val filePath = file?.toAbsolutePath()?.normalize()?.toString()
     @Suppress("IfThenToElvis")
-    val status = db.open(if (file == null) ":memory:" else file.toAbsolutePath().normalize().toString(), config.openModeFlag) and 0xff
+    val status = db.open(if (filePath == null) ":memory:" else filePath, config.openModeFlag) and 0xff
     if (status != SqliteCodes.SQLITE_OK) {
-      throw SqliteDb.newException(status, "", null)
+      throw SqliteDb.newException(status, filePath.orEmpty(), null)
     }
 
     try {
