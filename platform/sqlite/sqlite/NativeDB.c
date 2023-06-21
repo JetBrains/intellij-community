@@ -435,7 +435,6 @@ JNIEXPORT jlong JNICALL Java_org_jetbrains_sqlite_NativeDB_prepare_1utf8(
     return fromref(stmt);
 }
 
-
 JNIEXPORT jint JNICALL Java_org_jetbrains_sqlite_NativeDB__1exec_1utf8(
         JNIEnv *env, jobject this, jbyteArray sql)
 {
@@ -775,6 +774,48 @@ JNIEXPORT jint JNICALL Java_org_jetbrains_sqlite_NativeDB_bind_1int(
     }
 
     return sqlite3_bind_int(toref(stmt), pos, v);
+}
+
+JNIEXPORT jint JNICALL Java_org_jetbrains_sqlite_NativeDB_executeBatch
+(
+  JNIEnv *env, jobject this, jlong statement, jint queryCount, jint paramCount, jintArray data
+)
+{
+  if (!statement)
+  {
+      throwex_stmt_finalized(env);
+      return SQLITE_MISUSE;
+  }
+
+  int batchIndex;
+  int position;
+  int status;
+  jint *body = (*env)->GetIntArrayElements(env, data, NULL);
+  for (batchIndex = 0; batchIndex < queryCount; batchIndex++) {
+    sqlite3_reset(toref(statement));
+
+    for (position = 0; position < paramCount; position++) {
+      status = sqlite3_bind_int(toref(statement), position + 1, body[(batchIndex * paramCount) + position]);
+      if (status != SQLITE_OK) {
+        (*env)->ReleaseIntArrayElements(env, data, body, JNI_ABORT);
+        throwex(env, this);
+        return SQLITE_MISUSE;
+      }
+    }
+
+    status = sqlite3_step(toref(statement));
+    if (status != SQLITE_DONE) {
+      (*env)->ReleaseIntArrayElements(env, data, body, JNI_ABORT);
+      sqlite3_reset(toref(statement));
+      throwex(env, this);
+      return SQLITE_MISUSE;
+    }
+  }
+  (*env)->ReleaseIntArrayElements(env, data, body, JNI_ABORT);
+  sqlite3_reset(toref(statement));
+  sqlite3_clear_bindings(toref(statement));
+
+  return SQLITE_OK;
 }
 
 JNIEXPORT jint JNICALL Java_org_jetbrains_sqlite_NativeDB_bind_1long(

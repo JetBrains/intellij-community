@@ -1,4 +1,4 @@
-VERSION := 3.42.0-jb.0
+VERSION := 3.42.0-jb.1
 
 .phony: archive-native install-native
 
