@@ -710,7 +710,7 @@ class CancellationPropagationTest {
         }
       })
       {
-        runBlocking {
+        timeoutRunBlocking {
           val queue = MergingUpdateQueue("test queue", 100, true, null)
           var updateAllowedToComplete by AtomicReference(false)
           var secondUpdateExecuted by AtomicReference(false)
