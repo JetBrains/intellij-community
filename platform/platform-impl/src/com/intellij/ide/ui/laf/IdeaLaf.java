@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf;
 
 import com.intellij.icons.AllIcons;
@@ -46,7 +46,6 @@ public final class IdeaLaf extends MetalLookAndFeel {
 
   @SuppressWarnings("HardCodedStringLiteral")
   static void initIdeaDefaults(UIDefaults defaults) {
-    fillFallbackDefaults(defaults);
     defaults.put("Menu.maxGutterIconWidth", 18);
     defaults.put("MenuItem.maxGutterIconWidth", 18);
     // TODO[vova,anton] REMOVE!!! INVESTIGATE??? Borland???
@@ -136,9 +135,20 @@ public final class IdeaLaf extends MetalLookAndFeel {
   static void fillFallbackDefaults(UIDefaults defaults) {
     // These icons are only needed to prevent Swing from trying to fetch defaults with AWT ImageFetcher threads (IDEA-322089),
     // but might as well just put something sensibly-looking there, just in case they show up due to some bug:
-    defaults.put("Tree.openIcon", AllIcons.Nodes.Folder);
-    defaults.put("Tree.closedIcon", AllIcons.Nodes.Folder);
-    defaults.put("Tree.leafIcon", AllIcons.FileTypes.Any_type);
+    UIDefaults.LazyValue folderIcon = new UIDefaults.LazyValue() {
+      @Override
+      public Object createValue(UIDefaults table) {
+        return AllIcons.Nodes.Folder;
+      }
+    };
+    defaults.put("Tree.openIcon", folderIcon);
+    defaults.put("Tree.closedIcon", folderIcon);
+    defaults.put("Tree.leafIcon", new UIDefaults.LazyValue() {
+      @Override
+      public Object createValue(UIDefaults table) {
+        return AllIcons.FileTypes.Any_type;
+      }
+    });
     // These two are actually set by our themes, so we don't want to override them here:
     //defaults.put("Tree.expandedIcon", AllIcons.Toolbar.Expand);
     //defaults.put("Tree.collapsedIcon", AllIcons.Actions.ArrowExpand);
