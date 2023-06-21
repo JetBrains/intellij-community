@@ -163,7 +163,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   private var preferredDarkLaf: LookAndFeelInfo? = null
   private val myStoredDefaults = HashMap<LafReference?, MutableMap<String, Any?>>()
   private val myLafComboBoxModel = SynchronizedClearableLazy<CollectionComboBoxModel<LafReference>> { LafComboBoxModel() }
-  private val settingsToolbar: Lazy<ActionToolbar> = SynchronizedClearableLazy {
+  private val settingsToolbar = lazy {
     val group = DefaultActionGroup(PreferredLafAction())
     val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, group, true)
     toolbar.targetComponent = toolbar.component
