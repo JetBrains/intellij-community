@@ -41,7 +41,6 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   private final Set<Class<?>> myTargetTypes = new LinkedHashSet<>();
 
   private final boolean myIsPreviewMode;
-  private final boolean myIsCompositeBuildsSupported;
   private boolean myUseProjectsLoadedPhase;
   private boolean myParallelModelsFetch;
 
@@ -49,9 +48,8 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   private transient @Nullable GradleBuild myGradleBuild = null;
   private transient @Nullable ModelConverter myModelConverter = null;
 
-  public ProjectImportAction(boolean isPreviewMode, boolean isCompositeBuildsSupported) {
+  public ProjectImportAction(boolean isPreviewMode) {
     myIsPreviewMode = isPreviewMode;
-    myIsCompositeBuildsSupported = isCompositeBuildsSupported;
   }
 
   public void addProjectImportModelProvider(@NotNull ProjectImportModelProvider provider) {
@@ -154,7 +152,6 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
       myModelConverter,
       converterExecutor,
       myIsPreviewMode,
-      myIsCompositeBuildsSupported,
       isProjectsLoadedAction,
       myParallelModelsFetch
     );

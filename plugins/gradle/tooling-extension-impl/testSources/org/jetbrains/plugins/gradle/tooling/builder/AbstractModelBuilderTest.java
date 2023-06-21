@@ -147,8 +147,7 @@ public abstract class AbstractModelBuilderTest {
     ((DefaultGradleConnector)connector).daemonMaxIdleTime(daemonMaxIdleTime, TimeUnit.SECONDS);
 
     try (ProjectConnection connection = connector.connect()) {
-      boolean isCompositeBuildsSupported = _gradleVersion.compareTo(GradleVersion.version("3.1")) >= 0;
-      final ProjectImportAction projectImportAction = new ProjectImportAction(false, isCompositeBuildsSupported);
+      final ProjectImportAction projectImportAction = new ProjectImportAction(false);
       projectImportAction.addProjectImportModelProvider(new ClassSetImportModelProvider(getModels(),
                                                                                         Collections.singleton(IdeaProject.class)));
       BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = connection.action(projectImportAction);

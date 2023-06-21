@@ -9,8 +9,8 @@ import org.jetbrains.plugins.gradle.tooling.serialization.ToolingSerializerConve
 
 @ApiStatus.Internal
 public final class ProjectImportActionWithCustomSerializer extends ProjectImportAction {
-  public ProjectImportActionWithCustomSerializer(boolean isPreviewMode, boolean isCompositeBuildsSupported) {
-    super(isPreviewMode, isCompositeBuildsSupported);
+  public ProjectImportActionWithCustomSerializer(boolean isPreviewMode) {
+    super(isPreviewMode);
   }
 
   @NotNull

@@ -63,7 +63,7 @@ fun <T : Any> buildGradleModel(
     )
 
     connector.connect().use { gradleConnection ->
-        val projectImportAction = ProjectImportAction(false, true)
+        val projectImportAction = ProjectImportAction(false)
         projectImportAction.addProjectImportModelProvider(
             ClassSetImportModelProvider(
                 setOf(

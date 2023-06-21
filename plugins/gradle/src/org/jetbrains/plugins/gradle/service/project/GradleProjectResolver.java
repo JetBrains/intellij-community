@@ -212,10 +212,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     GradleVersion gradleVersion = null;
 
     boolean useCustomSerialization = Registry.is("gradle.tooling.custom.serializer", true);
-    boolean isCompositeBuildsSupported = false;
     if (buildEnvironment != null) {
       gradleVersion = GradleVersion.version(buildEnvironment.getGradle().getGradleVersion());
-      isCompositeBuildsSupported = gradleVersion.compareTo(GradleVersion.version("3.1")) >= 0;
       resolverCtx.setBuildEnvironment(buildEnvironment);
       if (!GradleJvmSupportMatrix.isGradleSupportedByIdea(gradleVersion)) {
         throw new IllegalStateException("Unsupported Gradle version");
@@ -227,8 +225,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
     final ProjectImportAction projectImportAction =
       useCustomSerialization
-      ? new ProjectImportActionWithCustomSerializer(resolverCtx.isPreviewMode(), isCompositeBuildsSupported)
-      : new ProjectImportAction(resolverCtx.isPreviewMode(), isCompositeBuildsSupported);
+      ? new ProjectImportActionWithCustomSerializer(resolverCtx.isPreviewMode())
+      : new ProjectImportAction(resolverCtx.isPreviewMode());
 
     boolean useParallelModelsFetch = Registry.is("gradle.tooling.models.parallel.fetch", false);
     projectImportAction.setParallelModelsFetch(useParallelModelsFetch);

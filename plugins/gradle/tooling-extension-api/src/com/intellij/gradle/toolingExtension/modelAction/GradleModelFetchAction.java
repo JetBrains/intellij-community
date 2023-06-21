@@ -14,7 +14,6 @@ import org.gradle.tooling.model.gradle.GradleBuild;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.Build;
 import org.jetbrains.plugins.gradle.model.ProjectImportAction;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
@@ -38,7 +37,6 @@ public class GradleModelFetchAction {
   private final @NotNull ExecutorService myModelConverterExecutor;
 
   private final boolean myIsPreviewMode;
-  private final boolean myIsCompositeBuildsSupported;
   private final boolean myIsProjectsLoadedAction;
   private final boolean myParallelModelsFetch;
 
@@ -48,7 +46,6 @@ public class GradleModelFetchAction {
     @NotNull ModelConverter modelConverter,
     @NotNull ExecutorService modelConverterExecutor,
     boolean isPreviewMode,
-    boolean isCompositeBuildsSupported,
     boolean isProjectsLoadedAction,
     boolean parallelModelsFetch
   ) {
@@ -59,7 +56,6 @@ public class GradleModelFetchAction {
     myModelConverterExecutor = modelConverterExecutor;
 
     myIsPreviewMode = isPreviewMode;
-    myIsCompositeBuildsSupported = isCompositeBuildsSupported;
     myIsProjectsLoadedAction = isProjectsLoadedAction;
     myParallelModelsFetch = parallelModelsFetch;
   }
@@ -86,27 +82,26 @@ public class GradleModelFetchAction {
     }
   }
 
-  private Set<GradleBuild> getNestedBuilds(@NotNull BuildController controller, @NotNull GradleBuild build) {
+  private static Set<GradleBuild> getNestedBuilds(@NotNull BuildController controller, @NotNull GradleBuild build) {
     BuildEnvironment environment = controller.getModel(BuildEnvironment.class);
-    GradleVersion envGradleVersion = null;
-    if (environment != null) {
-      // call to GradleVersion.current() will load version class from client classloader and return TAPI version number
-      envGradleVersion = GradleVersion.version(environment.getGradle().getGradleVersion());
+    if (environment == null) {
+      return Collections.emptySet();
     }
-    if (!myIsCompositeBuildsSupported) {
+    GradleVersion gradleVersion = GradleVersion.version(environment.getGradle().getGradleVersion());
+    if (gradleVersion.compareTo(GradleVersion.version("3.1")) < 0) {
       return Collections.emptySet();
     }
     Set<String> processedBuildsPaths = new HashSet<>();
     Set<GradleBuild> nestedBuilds = new LinkedHashSet<>();
     String rootBuildPath = build.getBuildIdentifier().getRootDir().getPath();
     processedBuildsPaths.add(rootBuildPath);
-    Queue<GradleBuild> queue = new ArrayDeque<>(getEditableBuilds(build, envGradleVersion));
+    Queue<GradleBuild> queue = new ArrayDeque<>(getEditableBuilds(build, gradleVersion));
     while (!queue.isEmpty()) {
       GradleBuild includedBuild = queue.remove();
       String includedBuildPath = includedBuild.getBuildIdentifier().getRootDir().getPath();
       if (processedBuildsPaths.add(includedBuildPath)) {
         nestedBuilds.add(includedBuild);
-        queue.addAll(getEditableBuilds(includedBuild, envGradleVersion));
+        queue.addAll(getEditableBuilds(includedBuild, gradleVersion));
       }
     }
     return nestedBuilds;
@@ -118,8 +113,8 @@ public class GradleModelFetchAction {
    * @param build parent build
    * @return builds to be imported by IDEA. Before Gradle 8.0 - included builds, 8.0 and later - included and buildSrc builds
    */
-  private static DomainObjectSet<? extends GradleBuild> getEditableBuilds(@NotNull GradleBuild build, @Nullable GradleVersion version) {
-    if (version != null && version.compareTo(GradleVersion.version("8.0")) >= 0) {
+  private static DomainObjectSet<? extends GradleBuild> getEditableBuilds(@NotNull GradleBuild build, @NotNull GradleVersion version) {
+    if (version.compareTo(GradleVersion.version("8.0")) >= 0) {
       DomainObjectSet<? extends GradleBuild> builds = build.getEditableBuilds();
       if (builds.isEmpty()) {
         return build.getIncludedBuilds();
