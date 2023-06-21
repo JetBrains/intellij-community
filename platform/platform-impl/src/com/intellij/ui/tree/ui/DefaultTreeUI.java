@@ -604,7 +604,7 @@ public class DefaultTreeUI extends BasicTreeUI {
 
   @Override
   protected AbstractLayoutCache createLayoutCache() {
-    if (is("ide.tree.experimental.layout.cache", false)) {
+    if (is("ide.tree.experimental.layout.cache", true)) {
       return new DefaultTreeLayoutCache(path -> {
         handleAutoExpand(path);
         return Unit.INSTANCE;
