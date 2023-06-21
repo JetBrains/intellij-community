@@ -15,8 +15,8 @@ import java.util.concurrent.atomic.AtomicInteger
 internal class MockRemoteCommunicator : TestRemoteCommunicator() {
   private val filesAndVersions = mutableMapOf<String, Version>()
   private val myClientV2 = lazy {
-    object: CloudConfigFileClientV2(url, Configuration().auth(JbaTokenAuthProvider("my-test-token")),
-                                    CloudConfigServerCommunicator.DUMMY_ETAG_STORAGE, clientVersionContext) {
+    object : CloudConfigFileClientV2(url, Configuration().auth(JbaTokenAuthProvider("my-test-token")),
+                                     CloudConfigServerCommunicator.DUMMY_ETAG_STORAGE, clientVersionContext) {
       override fun read(filePath: String): InputStream {
         val version = filesAndVersions[filePath] ?: throw IOException("file $filePath is not found")
         versionIdStorage.store(filePath, version.versionInfo.versionId)
@@ -46,7 +46,6 @@ internal class MockRemoteCommunicator : TestRemoteCommunicator() {
   }
 
 
-
   override val client: CloudConfigFileClientV2
     get() = myClientV2.value
 
@@ -54,12 +53,12 @@ internal class MockRemoteCommunicator : TestRemoteCommunicator() {
     ByteArrayOutputStream().use { stream ->
       SettingsSnapshotZipSerializer.serializeToStream(snapshot, stream)
       val content = stream.toByteArray()
-      client.write(getSnapshotFilePath(), ByteArrayInputStream(content))
+      client.write(currentSnapshotFilePath(), ByteArrayInputStream(content))
     }
   }
 
   override fun getVersionOnServer(): SettingsSnapshot? {
-    val snapshotFilePath = getSnapshotFilePath()
+    val snapshotFilePath = currentSnapshotFilePath()
     return getSnapshotFromVersion(filesAndVersions[snapshotFilePath]?.content)
   }
 
@@ -71,7 +70,7 @@ internal class MockRemoteCommunicator : TestRemoteCommunicator() {
     constructor(content: ByteArray) : this(content, MyVersionInfo())
   }
 
-  private class MyVersionInfo: FileVersionInfo(){
+  private class MyVersionInfo : FileVersionInfo() {
     private val versionId: String = versionRef.incrementAndGet().toString()
     private val modifiedDate = Date(System.currentTimeMillis())
     override fun getVersionId() = versionId
@@ -89,6 +88,7 @@ internal class MockRemoteCommunicator : TestRemoteCommunicator() {
     FileUtil.writeToFile(tempFile, version)
     return SettingsSnapshotZipSerializer.extractFromZip(tempFile.toPath())
   }
+
   companion object {
     private val versionRef = AtomicInteger()
   }

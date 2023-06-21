@@ -117,22 +117,7 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
     internal fun syncSettings() {
       SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.SyncRequest)
     }
-
-    internal fun checkCrossIdeSyncStatusOnServer(remoteCommunicator: SettingsSyncRemoteCommunicator) {
-      try {
-        val crossIdeSyncEnabled = remoteCommunicator.isFileExists(CROSS_IDE_SYNC_MARKER_FILE)
-        if (crossIdeSyncEnabled != SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled) {
-          LOG.info("Cross-IDE sync status on server is: ${enabledOrDisabled(crossIdeSyncEnabled)}. Updating local settings with it.")
-          SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled = crossIdeSyncEnabled
-        }
-      }
-      catch (e: Throwable) {
-        LOG.error("Couldn't check if $CROSS_IDE_SYNC_MARKER_FILE exists", e)
-      }
-    }
   }
 }
-
-internal const val CROSS_IDE_SYNC_MARKER_FILE = "cross-ide-sync-enabled"
 
 internal fun enabledOrDisabled(value: Boolean?) = if (value == null) "null" else if (value) "enabled" else "disabled"

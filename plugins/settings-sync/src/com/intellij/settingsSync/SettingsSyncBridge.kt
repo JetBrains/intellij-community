@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.settingsSync.SettingsSyncBridge.PushRequestMode.*
-import com.intellij.settingsSync.SettingsSynchronizer.Companion.checkCrossIdeSyncStatusOnServer
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.ContainerUtil
@@ -86,9 +85,6 @@ class SettingsSyncBridge(parentDisposable: Disposable,
     val previousState = collectCurrentState()
 
     settingsLog.logExistingSettings()
-
-    checkCrossIdeSyncStatusOnServer(remoteCommunicator)
-
     try {
       when (initMode) {
         is InitMode.TakeFromServer -> applySnapshotFromServer(initMode.cloudEvent)
@@ -256,8 +252,6 @@ class SettingsSyncBridge(parentDisposable: Disposable,
   }
 
   private fun checkServer() {
-    checkCrossIdeSyncStatusOnServer(remoteCommunicator)
-
     when (remoteCommunicator.checkServerState()) {
       is ServerState.UpdateNeeded -> {
         LOG.info("Updating from server")

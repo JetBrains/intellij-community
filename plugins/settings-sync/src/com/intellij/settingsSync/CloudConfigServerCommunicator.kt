@@ -18,8 +18,9 @@ import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InputStream
 import java.util.*
-import java.util.function.Supplier
+import java.util.concurrent.atomic.AtomicReference
 
+internal const val CROSS_IDE_SYNC_MARKER_FILE = "cross-ide-sync-enabled"
 internal const val SETTINGS_SYNC_SNAPSHOT = "settings.sync.snapshot"
 internal const val SETTINGS_SYNC_SNAPSHOT_ZIP = "$SETTINGS_SYNC_SNAPSHOT.zip"
 
@@ -28,13 +29,41 @@ private const val READ_TIMEOUT_MS = 50000
 
 internal open class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
 
-  private val snapshotFilePath get() = getSnapshotFilePath()
-
   internal open val client get() = _client.value
   private val _client = lazy { createCloudConfigClient(clientVersionContext) }
-  internal val clientVersionContext = CloudConfigVersionContext()
+  protected val clientVersionContext = CloudConfigVersionContext()
 
-  private fun receiveSnapshotFile(): Pair<InputStream?, String?> {
+  private val lastRemoteErrorRef = AtomicReference<Throwable>()
+
+  @VisibleForTesting
+  @Throws(IOException::class)
+  protected fun currentSnapshotFilePath(): String? {
+    try {
+      val crossIdeSyncEnabled = isFileExists(CROSS_IDE_SYNC_MARKER_FILE)
+      if (crossIdeSyncEnabled != SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled) {
+        LOG.info("Cross-IDE sync status on server is: ${enabledOrDisabled(crossIdeSyncEnabled)}. Updating local settings with it.")
+        SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled = crossIdeSyncEnabled
+      }
+      return if (crossIdeSyncEnabled) {
+        SETTINGS_SYNC_SNAPSHOT_ZIP
+      }
+      else {
+        "${ApplicationNamesInfo.getInstance().productName.lowercase()}/$SETTINGS_SYNC_SNAPSHOT_ZIP"
+      }
+    }
+    catch (e: Throwable) {
+      if (e is IOException) {
+        throw e
+      }
+      else {
+        LOG.warn("Couldn't check if $CROSS_IDE_SYNC_MARKER_FILE exists", e)
+        return null
+      }
+    }
+  }
+
+  @Throws(IOException::class)
+  private fun receiveSnapshotFile(snapshotFilePath: String): Pair<InputStream?, String?> {
     return clientVersionContext.doWithVersion(snapshotFilePath, null) { filePath ->
       try {
         val stream = client.read(filePath)
@@ -46,7 +75,7 @@ internal open class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicat
 
         Pair(stream, actualVersion)
       }
-      catch (fileNotFound : FileNotFoundException) {
+      catch (fileNotFound: FileNotFoundException) {
         Pair(null, null)
       }
     }
@@ -64,6 +93,15 @@ internal open class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicat
     versionContext: CloudConfigVersionContext,
     cloudConfigClient: CloudConfigFileClientV2
   ): SettingsSyncPushResult {
+    val snapshotFilePath: String
+    val defaultMessage = "Unknown during checking $CROSS_IDE_SYNC_MARKER_FILE"
+    try {
+      snapshotFilePath = currentSnapshotFilePath() ?: return SettingsSyncPushResult.Error(defaultMessage)
+    }
+    catch (ioe: IOException) {
+      return SettingsSyncPushResult.Error(ioe.message ?: defaultMessage)
+    }
+
     val versionToPush: String?
     if (force) {
       // get the latest server version: pushing with it will overwrite the file in any case
@@ -102,8 +140,10 @@ internal open class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicat
 
   override fun checkServerState(): ServerState {
     try {
+      val snapshotFilePath = currentSnapshotFilePath() ?: return ServerState.Error("Unknown error during checkServerState")
       val latestVersion = client.getLatestVersion(snapshotFilePath)
       LOG.debug("Latest version info: $latestVersion")
+      clearLastRemoteError()
       when (latestVersion?.versionId) {
         null -> return ServerState.FileNotExists
         SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId -> return ServerState.UpToDate
@@ -119,7 +159,9 @@ internal open class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicat
   override fun receiveUpdates(): UpdateResult {
     LOG.info("Receiving settings snapshot from the cloud config server...")
     try {
-      val (stream, version) = receiveSnapshotFile()
+      val snapshotFilePath = currentSnapshotFilePath() ?: return UpdateResult.Error("Unknown error during receiveUpdates")
+      val (stream, version) = receiveSnapshotFile(snapshotFilePath)
+      clearLastRemoteError()
       if (stream == null) {
         LOG.info("$snapshotFilePath not found on the server")
         return UpdateResult.NoFileOnServer
@@ -152,7 +194,9 @@ internal open class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicat
     }
 
     try {
-      return sendSnapshotFile(zip.inputStream(), expectedServerVersionId, force)
+      val pushResult = sendSnapshotFile(zip.inputStream(), expectedServerVersionId, force)
+      clearLastRemoteError()
+      return pushResult
     }
     catch (ive: InvalidVersionIdException) {
       LOG.info("Rejected: version doesn't match the version on server: ${ive.message}")
@@ -173,16 +217,25 @@ internal open class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicat
     }
   }
 
+  private fun clearLastRemoteError(){
+    if (lastRemoteErrorRef.get() != null) {
+      LOG.info("Connection to setting sync server is restored")
+    }
+    lastRemoteErrorRef.set(null)
+  }
+
   private fun handleRemoteError(e: Throwable): String {
     val defaultMessage = "Error during communication with server"
     if (e is IOException) {
-      LOG.warn(e)
-      return e.message ?: defaultMessage
+      if (lastRemoteErrorRef.get()?.message != e.message) {
+        lastRemoteErrorRef.set(e)
+        LOG.warn("$defaultMessage: ${e.message}")
+      }
     }
     else {
       LOG.error(e)
-      return defaultMessage
     }
+    return e.message ?: defaultMessage
   }
 
   fun downloadSnapshot(filePath: String, version: FileVersionInfo): InputStream? {
@@ -191,7 +244,7 @@ internal open class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicat
     }
 
     if (stream == null) {
-      LOG.info("$snapshotFilePath not found on the server")
+      LOG.info("$filePath not found on the server")
     }
 
     return stream
@@ -211,6 +264,7 @@ internal open class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicat
     client.delete(filePath)
   }
 
+  @Throws(IOException::class)
   override fun isFileExists(filePath: String): Boolean {
     return client.getLatestVersion(filePath) != null
   }
@@ -262,14 +316,6 @@ internal open class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicat
     internal fun createCloudConfigClient(versionContext: CloudConfigVersionContext): CloudConfigFileClientV2 {
       val conf = createConfiguration()
       return CloudConfigFileClientV2(url, conf, DUMMY_ETAG_STORAGE, versionContext)
-    }
-
-    @VisibleForTesting
-    internal fun getSnapshotFilePath() = if (SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled) {
-      SETTINGS_SYNC_SNAPSHOT_ZIP
-    }
-    else {
-      "${ApplicationNamesInfo.getInstance().productName.lowercase()}/$SETTINGS_SYNC_SNAPSHOT_ZIP"
     }
 
     private fun createConfiguration(): Configuration {
