@@ -122,6 +122,32 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
+    @TargetVersions("6.0+")
+    fun testProjectWithSubmodule() {
+        importProjectFromTestData()
+        runInEdtAndWait {
+            runWriteAction {
+                val module = ModuleManager.getInstance(myProject).findModuleByName("project.submodule.main")!!
+                val moduleGroup = module.toModuleGroup()
+                assertEquals(ConfigureKotlinStatus.CAN_BE_CONFIGURED, findGradleModuleConfigurator().getStatus(moduleGroup))
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("6.0+")
+    fun testProjectWithSubmoduleKts() {
+        importProjectFromTestData()
+        runInEdtAndWait {
+            runWriteAction {
+                val module = ModuleManager.getInstance(myProject).findModuleByName("project.submodule.main")!!
+                val moduleGroup = module.toModuleGroup()
+                assertEquals(ConfigureKotlinStatus.CAN_BE_CONFIGURED, findGradleModuleConfigurator().getStatus(moduleGroup))
+            }
+        }
+    }
+
+    @Test
     fun testConfigure10() {
         val files = importProjectFromTestData()
 

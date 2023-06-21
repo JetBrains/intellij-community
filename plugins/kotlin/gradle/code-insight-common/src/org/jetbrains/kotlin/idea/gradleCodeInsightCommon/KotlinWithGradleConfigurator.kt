@@ -52,22 +52,19 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             return ConfigureKotlinStatus.CONFIGURED
         }
 
-        val buildFiles = runReadAction {
-            listOf(
-                module.getBuildScriptPsiFile(),
-                module.project.getTopLevelBuildScriptPsiFile()
-            ).filterNotNull()
+        val (projectBuildFile, topLevelBuildFile) = runReadAction {
+            module.getBuildScriptPsiFile() to module.project.getTopLevelBuildScriptPsiFile()
         }
 
-        if (buildFiles.isEmpty()) {
+        if (projectBuildFile == null && topLevelBuildFile == null) {
             return ConfigureKotlinStatus.NON_APPLICABLE
         }
 
-        if (buildFiles.none { it.isConfiguredByAnyGradleConfigurator() }) {
-            return ConfigureKotlinStatus.CAN_BE_CONFIGURED
+        if (projectBuildFile?.isConfiguredByAnyGradleConfigurator() == true) {
+            return ConfigureKotlinStatus.BROKEN
         }
 
-        return ConfigureKotlinStatus.BROKEN
+        return ConfigureKotlinStatus.CAN_BE_CONFIGURED
     }
 
     private fun PsiFile.isConfiguredByAnyGradleConfigurator(): Boolean {
