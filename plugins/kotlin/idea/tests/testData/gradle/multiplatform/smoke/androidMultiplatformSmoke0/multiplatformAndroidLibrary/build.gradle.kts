@@ -5,6 +5,7 @@ plugins {
 
 android {
     compileSdk = {{compile_sdk_version}}
+    namespace = "org.jetbrains.kotlin.smoke.multiplatformAndroidLibrary"
     sourceSets.getByName("main").manifest.srcFile("src/androidMain/AndroidManifest.xml")
 }
 
