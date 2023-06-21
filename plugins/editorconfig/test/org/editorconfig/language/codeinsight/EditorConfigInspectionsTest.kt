@@ -52,6 +52,8 @@ class EditorConfigInspectionsTest : BasePlatformTestCase() {
    */
   fun testSpaceInHeader2() = doTest(EditorConfigSpaceInHeaderInspection::class, checkWeakWarnings = true)
 
+  fun testSpaceInKey() = doTest(EditorConfigVerifyByCoreInspection::class)
+
   fun testUnexpectedComma() = doTest(EditorConfigUnexpectedCommaInspection::class)
   fun testUnusedDeclaration() = doTest(EditorConfigUnusedDeclarationInspection::class)
   fun testValueCorrectness() = doTest(EditorConfigValueCorrectnessInspection::class)
