@@ -128,14 +128,15 @@ fun CoroutineScope.startApplication(args: List<String>,
     }
   }
 
-  // LookAndFeel type is not specified to avoid class loading
-  val initAwtToolkitAndEventQueueJob = launch {
-    // this should happen before UI initialization - if we're not going to show the UI (in case another IDE instance is already running),
-    // we shouldn't initialize AWT toolkit in order to avoid unnecessary focus stealing and space switching on macOS.
-    initAwtToolkit(lockSystemDirsJob, busyThread)
+  val initAwtToolkitAndEventQueueJob = scheduleInitAwtToolkitAndEventQueue(lockSystemDirsJob, busyThread, isHeadless)
+  schedulePreloadingLafClasses()
 
+  // LookAndFeel type is not specified to avoid class loading
+  val initLafJob = launch {
+    initAwtToolkitAndEventQueueJob.join()
+    // SwingDispatcher must be used after Toolkit init
     withContext(RawSwingDispatcher) {
-      patchSystem(isHeadless)
+      initUi(isHeadless)
     }
   }
 
@@ -143,17 +144,6 @@ fun CoroutineScope.startApplication(args: List<String>,
     val result = ZipFilePoolImpl()
     ZipFilePool.POOL = result
     result
-  }
-
-  preloadLafClasses()
-
-  // LookAndFeel type is not specified to avoid class loading
-  val initLafJob = launch {
-    initAwtToolkitAndEventQueueJob.join()
-    // SwingDispatcher must be used after Toolkit init
-    withContext(RawSwingDispatcher) {
-      initUi()
-    }
   }
 
   launch {
@@ -714,21 +704,6 @@ private fun logPath(path: String): String {
   catch (ignored: InvalidPathException) {
   }
   return "$path -> ?"
-}
-
-// the method must be called on EDT
-private fun patchSystem(isHeadless: Boolean) {
-  runActivity("event queue replacing") {
-    // replace system event queue
-    IdeEventQueue.getInstance()
-    // do not crash AWT on exceptions
-    AWTExceptionHandler.register()
-  }
-  if (!isHeadless && "true" == System.getProperty("idea.check.swing.threading")) {
-    runActivity("repaint manager set") {
-      RepaintManager.setCurrentManager(AssertiveRepaintManager())
-    }
-  }
 }
 
 interface AppStarter {
