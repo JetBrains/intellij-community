@@ -1263,7 +1263,7 @@
 
     <applicationInitializedListener implementation="com.intellij.openapi.application.impl.JitSuppressor"/>
 
-    <applicationInitializedListener implementation="com.intellij.openapi.editor.actions.ResetFontSizeAction$Listener"/>
+    <applicationInitializedListener implementation="com.intellij.openapi.editor.actions.ResetFontSizeAppInitListener"/>
 
     <applicationService serviceImplementation="com.intellij.internal.DebugAttachDetector" headlessImplementation="" preload="true"/>
 
