@@ -7,8 +7,8 @@ import git4idea.changes.findCumulativeChange
 import org.jetbrains.plugins.gitlab.mergerequest.diff.ChangesSelection
 
 interface GitLabMergeRequestNotePositionMapping {
-  class Actual(val change: ChangesSelection.Single) : GitLabMergeRequestNotePositionMapping
-  class Outdated(val change: ChangesSelection.Single) : GitLabMergeRequestNotePositionMapping
+  class Actual(val change: ChangesSelection.Precise) : GitLabMergeRequestNotePositionMapping
+  class Outdated(val change: ChangesSelection.Precise) : GitLabMergeRequestNotePositionMapping
   object Obsolete : GitLabMergeRequestNotePositionMapping
   class Error(val error: Throwable) : GitLabMergeRequestNotePositionMapping
 
@@ -32,7 +32,7 @@ interface GitLabMergeRequestNotePositionMapping {
             LOG.debug("Current head differs from $position")
             val change = mrChanges.findCumulativeChange(position.sha, position.filePath)
             if (change != null) {
-              val changeSelection = ChangesSelection.Single(mrChanges.changes, change, textLocation)
+              val changeSelection = ChangesSelection.Precise(mrChanges.changes, change, textLocation)
               return Outdated(changeSelection)
             }
             else {
@@ -66,7 +66,7 @@ interface GitLabMergeRequestNotePositionMapping {
         LOG.debug("Can't find change for $position")
         return Obsolete
       }
-      val changeSelection = ChangesSelection.Single(changes, change, textLocation)
+      val changeSelection = ChangesSelection.Precise(changes, change, textLocation)
       return Actual(changeSelection)
     }
   }

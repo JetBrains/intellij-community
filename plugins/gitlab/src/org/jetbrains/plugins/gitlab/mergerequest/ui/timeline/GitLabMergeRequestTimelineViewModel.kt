@@ -67,8 +67,8 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
       null
     }
 
-  private val _diffRequests = MutableSharedFlow<ChangesSelection.Single>()
-  val diffRequests: Flow<ChangesSelection.Single> = _diffRequests.asSharedFlow()
+  private val _diffRequests = MutableSharedFlow<ChangesSelection.Precise>()
+  val diffRequests: Flow<ChangesSelection.Precise> = _diffRequests.asSharedFlow()
 
   override fun refreshData() {
     cs.launchNow {
@@ -124,7 +124,7 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
 @OptIn(ExperimentalCoroutinesApi::class)
 private fun CoroutineScope.handleDiffRequests(
   diffVm: Flow<GitLabDiscussionDiffViewModel?>,
-  handler: suspend (ChangesSelection.Single) -> Unit
+  handler: suspend (ChangesSelection.Precise) -> Unit
 ) {
   launch(start = CoroutineStart.UNDISPATCHED) {
     diffVm

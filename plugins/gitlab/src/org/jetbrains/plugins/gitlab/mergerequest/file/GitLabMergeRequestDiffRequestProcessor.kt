@@ -24,7 +24,6 @@ import com.intellij.util.cancelOnDispose
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.getDiffComputer
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabLazyProject
@@ -65,20 +64,6 @@ fun createMergeRequestDiffRequestProcessor(project: Project,
       }
   }
 
-  uiCs.launchNow {
-    callbackFlow {
-      val listener = MutableDiffRequestChainProcessor.SelectionListener { producer ->
-        trySend((producer as? ChangeDiffRequestProducer)?.change)
-      }
-      processor.selectionEventDispatcher.addListener(listener)
-      awaitClose {
-        processor.selectionEventDispatcher.removeListener(listener)
-      }
-    }.collect {
-      diffBridge.changeSelected(it)
-    }
-  }
-
   return processor
 }
 
@@ -86,36 +71,51 @@ private suspend fun handleChanges(project: Project,
                                   changes: GitLabMergeRequestChanges,
                                   diffBridge: GitLabMergeRequestDiffBridge,
                                   processor: MutableDiffRequestChainProcessor) {
-  diffBridge.displayedChanges.collectLatest { selection ->
-    if (selection.changes.isEmpty()) {
-      processor.chain = null
-      return@collectLatest
+  var currentSelection: ChangesSelection? = null
+  val selectionListener = MutableDiffRequestChainProcessor.SelectionListener { producer ->
+    val change = (producer as? ChangeDiffRequestProducer)?.change
+    if (currentSelection != null && change != null) {
+      val newSelection = currentSelection!!.copyWithSelection(change)
+      currentSelection = newSelection
+      diffBridge.setChanges(newSelection)
     }
+  }
+  diffBridge.displayedChanges.collect { selection ->
+    val needUpdate =
+      if (selection is ChangesSelection.Precise && selection.location != null) {
+        true
+      }
+      else {
+        !currentSelection.equalChanges(selection)
+      }
 
-    val changesBundle: GitBranchComparisonResult = try {
-      loadRevisionsAndParseChanges(changes)
-    }
-    catch (ce: CancellationException) {
-      throw ce
-    }
-    catch (e: Exception) {
-      processor.chain = SimpleDiffRequestChain(ErrorDiffRequest(e))
-      return@collectLatest
-    }
+    if (needUpdate) {
+      processor.selectionEventDispatcher.removeListener(selectionListener)
 
-    val currentChanges = processor.chain?.requests?.mapNotNull {
-      (it as? ChangeDiffRequestProducer)?.change
-    }.orEmpty()
+      if (selection.changes.isEmpty()) {
+        processor.chain = null
+        return@collect
+      }
 
-    if (selection.changes.isEqual(currentChanges) && selection.selectedIdx == processor.currentIndex) {
-      return@collectLatest
-    }
+      val changesBundle: GitBranchComparisonResult = try {
+        loadRevisionsAndParseChanges(changes)
+      }
+      catch (ce: CancellationException) {
+        throw ce
+      }
+      catch (e: Exception) {
+        processor.chain = SimpleDiffRequestChain(ErrorDiffRequest(e))
+        return@collect
+      }
 
-    val producers = selection.toProducersSelection { change, location ->
-      val changeDataKeys = createData(changesBundle, change, location)
-      ChangeDiffRequestProducer.create(project, change, changeDataKeys)
+      val producers = selection.toProducersSelection { change, location ->
+        val changeDataKeys = createData(changesBundle, change, location)
+        ChangeDiffRequestProducer.create(project, change, changeDataKeys)
+      }
+      processor.chain = producers.let(SimpleDiffRequestChain::fromProducers)
+      currentSelection = selection
+      processor.selectionEventDispatcher.addListener(selectionListener)
     }
-    processor.chain = producers.let(SimpleDiffRequestChain::fromProducers)
   }
 }
 
@@ -150,8 +150,8 @@ private fun createData(
 
 private fun ChangesSelection.toProducersSelection(mapper: (Change, DiffLineLocation?) -> DiffRequestProducer?)
   : ListSelection<out DiffRequestProducer> = when (this) {
-  is ChangesSelection.Multiple -> ListSelection.createAt(changes.mapNotNull { mapper(it, null) }, 0).asExplicitSelection()
-  is ChangesSelection.Single -> {
+  is ChangesSelection.Fuzzy -> ListSelection.createAt(changes.mapNotNull { mapper(it, null) }, 0).asExplicitSelection()
+  is ChangesSelection.Precise -> {
     var newSelectionIndex = -1
     val result = mutableListOf<DiffRequestProducer>()
     for (i in changes.indices) {

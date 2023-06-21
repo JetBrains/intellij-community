@@ -26,7 +26,7 @@ interface GitLabDiscussionDiffViewModel {
   val mapping: Flow<GitLabMergeRequestNotePositionMapping>
   val patchHunk: Flow<PatchHunkResult>
 
-  val showDiffRequests: Flow<ChangesSelection.Single>
+  val showDiffRequests: Flow<ChangesSelection.Precise>
   val showDiffHandler: Flow<(() -> Unit)?>
 
   sealed interface PatchHunkResult {
@@ -83,11 +83,11 @@ class GitLabDiscussionDiffViewModelImpl(
     }
   }.modelFlow(cs, LOG)
 
-  private val _showDiffRequests = MutableSharedFlow<ChangesSelection.Single>(
+  private val _showDiffRequests = MutableSharedFlow<ChangesSelection.Precise>(
     extraBufferCapacity = 1,
     onBufferOverflow = BufferOverflow.DROP_OLDEST
   )
-  override val showDiffRequests: Flow<ChangesSelection.Single> = _showDiffRequests.asSharedFlow()
+  override val showDiffRequests: Flow<ChangesSelection.Precise> = _showDiffRequests.asSharedFlow()
 
   override val showDiffHandler: Flow<(() -> Unit)?> = mapping.map {
     when (it) {
@@ -101,7 +101,7 @@ class GitLabDiscussionDiffViewModelImpl(
     }
   }
 
-  private fun requestFullDiff(change: ChangesSelection.Single) {
+  private fun requestFullDiff(change: ChangesSelection.Precise) {
     cs.launch {
       _showDiffRequests.emit(change)
     }

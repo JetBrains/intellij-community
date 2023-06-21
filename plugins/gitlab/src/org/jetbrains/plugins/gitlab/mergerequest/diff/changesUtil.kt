@@ -2,8 +2,9 @@
 package org.jetbrains.plugins.gitlab.mergerequest.diff
 
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
-import com.intellij.openapi.ListSelection
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.containers.HashingStrategy
 import git4idea.changes.GitBranchComparisonResult
 
 sealed class ChangesSelection(
@@ -11,35 +12,43 @@ sealed class ChangesSelection(
   val selectedIdx: Int
 ) {
 
+  abstract fun copyWithSelection(change: Change): ChangesSelection
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
 
     other as ChangesSelection
 
-    if (changes != other.changes) return false
+    if (!changes.isEqual(other.changes)) return false
     if (selectedIdx != other.selectedIdx) return false
 
     return true
   }
 
   override fun hashCode(): Int {
-    var result = changes.hashCode()
+    var result = changes.calcHashCode()
     result = 31 * result + selectedIdx
     return result
   }
 
-  class Single(changes: List<Change>, selectedIdx: Int, val location: DiffLineLocation? = null) : ChangesSelection(changes, selectedIdx) {
+  /**
+   * Single change selected from [changes]
+   */
+  class Precise(changes: List<Change>, selectedIdx: Int = 0, val location: DiffLineLocation? = null)
+    : ChangesSelection(changes, selectedIdx) {
 
-    constructor(changes: List<Change>, change: Change, location: DiffLineLocation?)
+    constructor(changes: List<Change>, change: Change, location: DiffLineLocation? = null)
       : this(changes, changes.indexOfFirst { it === change }, location)
+
+    override fun copyWithSelection(change: Change): ChangesSelection = Precise(changes, changes.indexOfFirst { it === change })
 
     override fun equals(other: Any?): Boolean {
       if (this === other) return true
       if (javaClass != other?.javaClass) return false
       if (!super.equals(other)) return false
 
-      other as Single
+      other as Precise
 
       return location == other.location
     }
@@ -49,44 +58,69 @@ sealed class ChangesSelection(
       result = 31 * result + (location?.hashCode() ?: 0)
       return result
     }
+
+    override fun toString(): String = "ChangesSelection.Precise(change=$selectedChange, location=$location)"
   }
 
-  class Multiple(changes: List<Change>, selectedIdx: Int = 0) : ChangesSelection(changes, selectedIdx)
+  /**
+   * Changes selected by a certain group (like directory)
+   */
+  class Fuzzy(changes: List<Change>, selectedIdx: Int = 0) : ChangesSelection(changes, selectedIdx) {
+    override fun copyWithSelection(change: Change): ChangesSelection = Fuzzy(changes, changes.indexOfFirst { it === change })
 
-  companion object {
-    fun ListSelection<Change>.toSelection(location: DiffLineLocation? = null): ChangesSelection {
-      return if (isExplicitSelection) {
-        Multiple(list)
-      }
-      else {
-        Single(list, selectedIndex, location)
-      }
-    }
+    override fun toString(): String = "ChangesSelection.Fuzzy(change=$selectedChange)"
   }
 }
 
 val ChangesSelection.selectedChange: Change?
   get() = selectedIdx.let { changes.getOrNull(it) }
 
-internal fun Collection<Change>.isEqual(other: Collection<Change>): Boolean =
-  equalsVia(other, Change::isEqual)
-
-internal fun <E> Collection<E>.equalsVia(other: Collection<E>, isEqual: (E, E) -> Boolean): Boolean {
+internal fun ChangesSelection?.equalChanges(other: Any?): Boolean {
+  if (this == null && other != null) return false
+  if (this != null && other == null) return false
   if (other === this) return true
-  if (size != other.size) return false
+  if (this == null || other == null) return false // for null safety
 
-  val i1 = iterator()
-  val i2 = other.iterator()
+  other as ChangesSelection
 
-  while (i1.hasNext() && i2.hasNext()) {
-    val e1 = i1.next()
-    val e2 = i2.next()
-    if (!isEqual(e1, e2)) return false
-  }
-  return !(i1.hasNext() || i2.hasNext())
+  if (!changes.isEqual(other.changes)) return false
+  if (selectedIdx != other.selectedIdx) return false
+  return true
 }
 
-internal fun Change.isEqual(other: Change): Boolean =
+internal fun Collection<Change>?.isEqual(other: Collection<Change>?, ordered: Boolean = false): Boolean =
+  equalsVia(other, GitBranchComparisonResult.REVISION_COMPARISON_HASHING_STRATEGY, ordered)
+
+internal fun <E> Collection<E>?.equalsVia(other: Collection<E>?, strategy: HashingStrategy<E>, ordered: Boolean = false): Boolean {
+  if (this == null && other != null) return false
+  if (this != null && other == null) return false
+  if (other === this) return true
+  if (this == null || other == null) return false // for null safety
+  if (size != other.size) return false
+
+  if (ordered) {
+    val i1 = iterator()
+    val i2 = other.iterator()
+
+    while (i1.hasNext() && i2.hasNext()) {
+      val e1 = i1.next()
+      val e2 = i2.next()
+      if (!strategy.equals(e1, e2)) return false
+    }
+    return !(i1.hasNext() || i2.hasNext())
+  }
+  else {
+    val thisSet = CollectionFactory.createCustomHashingStrategySet(strategy).apply {
+      addAll(this)
+    }
+    val otherSet = CollectionFactory.createCustomHashingStrategySet(strategy).apply {
+      addAll(other)
+    }
+    return thisSet == otherSet
+  }
+}
+
+internal fun Change.isEqual(other: Change?): Boolean =
   GitBranchComparisonResult.REVISION_COMPARISON_HASHING_STRATEGY.equals(this, other)
 
 //java.util.List.hashCode
