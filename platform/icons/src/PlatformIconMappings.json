@@ -398,6 +398,7 @@
     },
     "ide": {
       "configFile.svg": "ide/configFile.svg",
+      "externalLink.svg": "ide/external_link_arrow.svg",
       "feedbackRating.svg": "ide/feedbackRating.svg",
       "feedbackRatingFocused.svg": "ide/feedbackRatingFocused.svg",
       "feedbackRatingFocusedOn.svg": "ide/feedbackRatingFocusedOn.svg",
