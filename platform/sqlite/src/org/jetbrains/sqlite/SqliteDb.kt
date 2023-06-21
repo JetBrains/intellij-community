@@ -25,31 +25,6 @@ internal abstract class SqliteDb {
   // tracer for statements to avoid unfinalized statements on db close
   private val statements: MutableSet<SafeStatementPointer> = Collections.newSetFromMap(IdentityHashMap())
 
-  companion object {
-    /**
-     * Throws formatted SqliteException with error code and message.
-     */
-    fun newException(errorCode: Int, errorMessage: String, sql: ByteArray? = null): SqliteException {
-      val code = SqliteErrorCode.getErrorCode(errorCode)
-      var text = if (code == SqliteErrorCode.UNKNOWN_ERROR) {
-        "$code:$errorCode ($errorMessage)"
-      }
-      else {
-        "$code ($errorMessage)"
-      }
-      if (sql != null) {
-        text += " (sql=${sql.decodeToString()})"
-      }
-      return SqliteException(message = text, resultCode = code)
-    }
-  }
-
-  /**
-   * Aborts any pending operation and returns at its earliest opportunity.
-   * See [http://www.sqlite.org/c3ref/interrupt.html](http://www.sqlite.org/c3ref/interrupt.html)
-   */
-  abstract fun interrupt()
-
   /**
    * Sets a [busy handler](http://www.sqlite.org/c3ref/busy_handler.html) that sleeps
    * for a specified amount of time when a table is locked.
@@ -259,9 +234,12 @@ internal abstract class SqliteDb {
 
 class SqliteException internal constructor(message: String, @Suppress("unused") val resultCode: SqliteErrorCode) : IOException(message)
 
-internal object SqliteCodes {
+object SqliteCodes {
   /** Successful result  */
   const val SQLITE_OK = 0
+
+  /** Operation terminated by sqlite3_interrupt() */
+  const val SQLITE_INTERRUPT = 9
 
   /** Library used incorrectly  */
   const val SQLITE_MISUSE = 21
@@ -272,3 +250,21 @@ internal object SqliteCodes {
   /** sqlite_step() has finished executing  */
   const val SQLITE_DONE = 101
 }
+
+/**
+ * Throws formatted SqliteException with error code and message.
+ */
+internal fun newException(errorCode: Int, errorMessage: String, sql: ByteArray? = null): SqliteException {
+  val code = SqliteErrorCode.getErrorCode(errorCode)
+  var text = if (code == SqliteErrorCode.UNKNOWN_ERROR) {
+    "$code:$errorCode ($errorMessage)"
+  }
+  else {
+    "$code ($errorMessage)"
+  }
+  if (sql != null) {
+    text += " (sql=${sql.decodeToString()})"
+  }
+  return SqliteException(message = text, resultCode = code)
+}
+

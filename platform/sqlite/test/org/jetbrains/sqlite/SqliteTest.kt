@@ -3,11 +3,18 @@
 
 package org.jetbrains.sqlite
 
+import kotlinx.coroutines.*
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.assertj.core.api.Condition
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
 import java.util.*
+import java.util.concurrent.TimeUnit
+import java.util.function.Predicate
+import kotlin.time.Duration.Companion.milliseconds
 
 class SqliteTest {
   private lateinit var connection: SqliteConnection
@@ -25,6 +32,34 @@ class SqliteTest {
   @Test
   fun insert() {
     testInsert(connection)
+  }
+
+  @Test
+  @Timeout(value = 2, unit = TimeUnit.MINUTES)
+  fun interrupt(): Unit = runBlocking(Dispatchers.Default) {
+    val started = CompletableDeferred<Boolean>()
+    val sqlJob = async(Dispatchers.IO) {
+      started.complete(true)
+      assertThatThrownBy {
+        connection.execute("""
+      WITH RECURSIVE r(i) AS (
+        VALUES(0)
+        UNION ALL
+        SELECT i FROM r
+        LIMIT 1000000000
+      )
+      SELECT i FROM r WHERE i = 1
+    """.trimIndent())
+      }.`is`(Condition(Predicate { it is SqliteException && it.resultCode == SqliteErrorCode.SQLITE_INTERRUPT }, ""))
+    }
+
+    started.await()
+    delay(100.milliseconds)
+    connection.interruptAndClose()
+    if (sqlJob.isActive) {
+      delay(100.milliseconds)
+    }
+    assertThat(sqlJob.isCancelled)
   }
 
   @Test
