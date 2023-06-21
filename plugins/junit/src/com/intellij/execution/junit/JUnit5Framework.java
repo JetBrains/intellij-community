@@ -132,8 +132,11 @@ public class JUnit5Framework extends JUnitTestFramework {
 
   @Override
   public boolean isIgnoredMethod(PsiElement element) {
-    final PsiMethod testMethod = element instanceof PsiMethod ? JUnitUtil.getTestMethod(element) : null;
-    return testMethod != null && AnnotationUtil.isAnnotated(testMethod, "org.junit.jupiter.api.Disabled", 0);
+    if (element instanceof PsiMethod method) {
+      final PsiMethod ignoredTestMethod = AnnotationUtil.isAnnotated(method, "org.junit.jupiter.api.Disabled", 0) ? JUnitUtil.getTestMethod(element) : null;
+      return ignoredTestMethod != null;
+    }
+    return false;
   }
 
   @Override
