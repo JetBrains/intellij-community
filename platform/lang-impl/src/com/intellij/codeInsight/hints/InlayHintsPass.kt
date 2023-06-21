@@ -2,24 +2,30 @@
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass
+import com.intellij.codeInsight.daemon.impl.Divider
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.concurrency.JobLauncher
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.InlayModel
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
-import com.intellij.psi.SyntaxTraverser
+import com.intellij.util.CommonProcessors
 import com.intellij.util.Processor
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.stream.IntStream
 
@@ -34,26 +40,44 @@ class InlayHintsPass(
     if (!HighlightingLevelManager.getInstance(myFile.project).shouldHighlight(myFile)) return
     if (enabledCollectors.isEmpty()) return
     val buffers = ConcurrentLinkedQueue<HintsBuffer>()
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
-      enabledCollectors,
-      progress,
-      true,
-      false,
-      Processor { collector ->
-        // TODO [roman.ivanov] it is not good to create separate traverser here as there may be many hints providers
-        val traverser = SyntaxTraverser.psiTraverser(rootElement)
-        for (element in traverser.preOrderDfsTraversal()) {
-          if (!collector.collectHints(element, myEditor)) break
-        }
-        val hints = collector.sink.complete()
-        buffers.add(hints)
-        true
+
+    val priorityRange = runBlockingCancellable {
+      withContext(Dispatchers.EDT) {
+        editor.calculateVisibleRange()
       }
-    )
+    }
+    val allDivided = mutableListOf<Divider.DividedElements>()
+
+    progress.checkCanceled()
+    Divider.divideInsideAndOutsideAllRoots(myFile, myFile.textRange,
+                                           priorityRange,
+                                           { true },
+                                           CommonProcessors.CollectProcessor(allDivided))
+    val elementsInside = allDivided.flatMap(Divider.DividedElements::inside).toSet()
+    val elementsOutside = allDivided.flatMap(Divider.DividedElements::outside).toSet()
+
+    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
+        enabledCollectors,
+        progress,
+        true,
+        false,
+        Processor { collector ->
+          for (element in elementsInside + elementsOutside) {
+            if (!collector.collectHints(element, editor)) break
+          }
+
+          val hints = collector.sink.complete()
+          buffers.add(hints)
+          true
+        }
+      )) {
+      throw ProcessCanceledException()
+    }
     val iterator = buffers.iterator()
     if (!iterator.hasNext()) return
     val allHintsAccumulator = iterator.next()
     for (hintsBuffer in iterator) {
+      progress.checkCanceled()
       allHintsAccumulator.mergeIntoThis(hintsBuffer)
     }
     allHints = allHintsAccumulator
