@@ -264,14 +264,11 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     )
   }
 
-  private fun ValidationInfoBuilder.validateIdeaGradleCompatibility(
-    withDialog: Boolean,
-    gradleVersion: GradleVersion
-  ): ValidationInfo? {
-    val oldestSupportedGradleVersion = GradleJvmSupportMatrix.getOldestSupportedGradleVersionByIdea()
-    if (gradleVersion >= oldestSupportedGradleVersion) {
+  private fun ValidationInfoBuilder.validateIdeaGradleCompatibility(withDialog: Boolean, gradleVersion: GradleVersion): ValidationInfo? {
+    if (GradleJvmSupportMatrix.isGradleSupportedByIdea(gradleVersion)) {
       return null
     }
+    val oldestSupportedGradleVersion = GradleJvmSupportMatrix.getOldestSupportedGradleVersionByIdea()
     return errorWithDialog(
       withDialog = withDialog,
       message = GradleBundle.message(
