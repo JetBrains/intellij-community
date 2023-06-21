@@ -67,6 +67,7 @@ internal object GHPRDetailsComponentFactory {
         .emptyBorders()
         .fill()
         .flowY()
+        .noGrid()
         .hideMode(3)
     )).apply {
       isOpaque = false
@@ -84,7 +85,7 @@ internal object GHPRDetailsComponentFactory {
                                                              },
                                                              htmlPaneFactory = { SimpleHtmlPane() }),
           CC().growX().gap(ReviewDetailsUIUtil.COMMIT_INFO_GAPS))
-      add(commitFilesBrowserComponent, CC().grow().push())
+      add(commitFilesBrowserComponent, CC().grow().shrinkPrioY(200))
       add(statusChecks, CC().growX().gap(ReviewDetailsUIUtil.STATUSES_GAPS).maxHeight("${ReviewDetailsUIUtil.STATUSES_MAX_HEIGHT}"))
       add(actionsComponent, CC().growX().pushX().gap(ReviewDetailsUIUtil.ACTIONS_GAPS).minHeight("pref"))
 
