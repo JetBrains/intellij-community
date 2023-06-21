@@ -46,6 +46,7 @@ class ProjectViewState : PersistentStateComponent<ProjectViewState> {
     "More sorting options are available now, use sortKey instead",
     replaceWith = ReplaceWith("sortKey == NodeSortKey.BY_TYPE")
   )
+  @get:SkipReportingStatistics
   var sortByType: Boolean
     get() = sortKey == NodeSortKey.BY_TYPE
     set(value) {
