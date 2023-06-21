@@ -264,7 +264,7 @@ public abstract class AbstractValueHint {
       });
 
       // editor may be disposed before later invokator process this action
-      if (myEditor.isDisposed() || myEditor.getComponent().getRootPane() == null) {
+      if (myEditor.isDisposed()) {
         return false;
       }
 

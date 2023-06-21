@@ -77,7 +77,7 @@ class XDebuggerTooltipPopup {
       .createPopup();
 
     //Editor may be disposed before later invokator process this action
-    if (myEditor.getComponent().getRootPane() == null) {
+    if (myEditor.isDisposed()) {
       myPopup.cancel();
       return null;
     }
