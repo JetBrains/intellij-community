@@ -10,13 +10,18 @@ import org.jetbrains.kotlin.statistics.metrics.BooleanMetrics
 import org.jetbrains.kotlin.statistics.metrics.NumericalMetrics
 import org.jetbrains.kotlin.statistics.metrics.StringMetrics
 
+private const val BASE_FUS_VERSION = 9
+
 class KotlinGradleFUSCollector : CounterUsagesCollector() {
 
     override fun getGroup(): EventLogGroup = GROUP
 
     companion object {
 
-        private val GROUP = EventLogGroup("kotlin.gradle.performance", 11)
+        private val GROUP = EventLogGroup(
+            "kotlin.gradle.performance",
+            BASE_FUS_VERSION + StringMetrics.VERSION + BooleanMetrics.VERSION + NumericalMetrics.VERSION
+        )
 
         private fun listOfAllMetrics(): Array<Any> {
             val result = ArrayList<Any>()
