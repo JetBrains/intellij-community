@@ -4,8 +4,6 @@ package org.jetbrains.plugins.terminal.exp.completion
 internal abstract class CommandPartNode<T>(val text: String, open val spec: T?, val parent: CommandPartNode<*>?) {
   val children: MutableList<CommandPartNode<*>> = mutableListOf()
 
-  open fun createChildNode(name: String): CommandPartNode<*>? = null
-
   open fun getSuggestionsOfNext(): List<BaseSuggestion> = emptyList()
 
   override fun toString(): String {
@@ -16,21 +14,6 @@ internal abstract class CommandPartNode<T>(val text: String, open val spec: T?, 
 internal class SubcommandNode(text: String,
                               override val spec: ShellSubcommand,
                               parent: CommandPartNode<*>?) : CommandPartNode<ShellSubcommand>(text, spec, parent) {
-  override fun createChildNode(name: String): CommandPartNode<*>? {
-    val subcommand = spec.subcommands.find { it.names.contains(name) }
-    if (subcommand != null && children.isEmpty()) {
-      // subcommand can be only on the first place
-      return SubcommandNode(name, subcommand, this)
-    }
-    getAllAvailableOptions().find { it.names.contains(name) }?.let {
-      return OptionNode(name, it, this)
-    }
-    return if (spec.args.size > children.count { it is ArgumentNode }) {
-      ArgumentNode(name, this)
-    }
-    else null
-  }
-
   override fun getSuggestionsOfNext(): List<BaseSuggestion> {
     val suggestions = mutableListOf<BaseSuggestion>()
     if (children.isEmpty()) {
@@ -53,7 +36,7 @@ internal class SubcommandNode(text: String,
     val existingArgsCount = children.count { it is ArgumentNode }
     if (args.size > existingArgsCount) {
       // TODO: here should be also file suggestions if there are corresponding argument
-      suggestions.addAll(args.flatMap { it.suggestions })
+      suggestions.addAll(args.flatMap { it.getArgumentSuggestions() })
     }
     return suggestions
   }
@@ -74,32 +57,36 @@ internal class SubcommandNode(text: String,
 internal class OptionNode(text: String,
                           override val spec: ShellOption,
                           parent: CommandPartNode<*>?) : CommandPartNode<ShellOption>(text, spec, parent) {
-  override fun createChildNode(name: String): CommandPartNode<*>? {
-    return if (spec.args.size > children.count { it is ArgumentNode }) {
-      ArgumentNode(name, this)
-    }
-    else null
-  }
-
   override fun getSuggestionsOfNext(): List<BaseSuggestion> {
     val suggestions = mutableListOf<BaseSuggestion>()
-    val args = spec.args
-    val existingArgsCount = children.count { it is ArgumentNode }
-    if (args.size > existingArgsCount) {
-      // TODO: here should be also file suggestions if there are corresponding argument
-      suggestions.addAll(args.flatMap { it.suggestions })
-    }
-    if (parent is SubcommandNode && args.all { it.isOptional }) {
+    suggestions.addAll(getDirectSuggestionsOfNext())
+    if (parent is SubcommandNode && spec.args.all { it.isOptional }) {
       suggestions.addAll(parent.getSuggestionsOfNext())
     }
     return suggestions
   }
+
+  fun getDirectSuggestionsOfNext(): List<BaseSuggestion> {
+    val args = spec.args
+    val existingArgsCount = children.count { it is ArgumentNode }
+    if (args.size > existingArgsCount) {
+      // TODO: here should be also file suggestions if there are corresponding argument
+      return args.flatMap { it.getArgumentSuggestions() }
+    }
+    return emptyList()
+  }
 }
 
-internal class ArgumentNode(text: String, parent: CommandPartNode<*>?) : CommandPartNode<ShellArgument>(text, null, parent) {
+internal class ArgumentNode(text: String,
+                            override val spec: ShellArgument,
+                            parent: CommandPartNode<*>?) : CommandPartNode<ShellArgument>(text, spec, parent) {
   override fun getSuggestionsOfNext(): List<BaseSuggestion> {
     return parent?.getSuggestionsOfNext() ?: emptyList()
   }
 }
 
 internal class UnknownNode(text: String, parent: CommandPartNode<*>?) : CommandPartNode<Any>(text, null, parent)
+
+private fun ShellArgument.getArgumentSuggestions(): List<ShellArgumentSuggestion> {
+  return suggestions.map { ShellArgumentSuggestion(it, this) }
+}

@@ -15,7 +15,9 @@ internal class CommandTreeBuilder(private val command: String,
   private fun buildSubcommandTree(root: SubcommandNode) {
     while (curIndex < arguments.size) {
       val name = arguments[curIndex]
-      val node = root.createChildNode(name) ?: UnknownNode(name, root)
+      val suggestions = root.getSuggestionsOfNext()
+      val suggestion = suggestions.find { it.names.contains(name) }
+      val node = suggestion?.let { createChildNode(name, it, root) } ?: UnknownNode(name, root)
       root.children.add(node)
       curIndex++
       if (node is SubcommandNode) {
@@ -30,12 +32,23 @@ internal class CommandTreeBuilder(private val command: String,
   private fun buildOptionTree(root: OptionNode) {
     while (curIndex < arguments.size) {
       val name = arguments[curIndex]
-      val node = root.createChildNode(name)
-      if (node != null) {
+      val suggestions = root.getDirectSuggestionsOfNext()
+      val suggestion = suggestions.find { it.names.contains(name) }
+      if (suggestion != null) {
+        val node = createChildNode(name, suggestion, root)
         root.children.add(node)
         curIndex++
       }
       else return
+    }
+  }
+
+  private fun createChildNode(name: String, suggestion: BaseSuggestion, parent: CommandPartNode<*>?): CommandPartNode<*> {
+    return when (suggestion) {
+      is ShellSubcommand -> SubcommandNode(name, suggestion, parent)
+      is ShellOption -> OptionNode(name, suggestion, parent)
+      is ShellArgumentSuggestion -> ArgumentNode(name, suggestion.argument, parent)
+      else -> throw IllegalArgumentException("Unknown suggestion: $suggestion")
     }
   }
 }

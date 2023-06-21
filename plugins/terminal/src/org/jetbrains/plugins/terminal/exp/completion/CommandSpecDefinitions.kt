@@ -3,13 +3,13 @@ package org.jetbrains.plugins.terminal.exp.completion
 
 import kotlinx.serialization.Serializable
 
-abstract class BaseSuggestion {
-  abstract val names: List<String>
-  abstract val displayName: String?
-  abstract val insertValue: String?
-  abstract val description: String?
-  abstract val priority: Int
-  abstract val hidden: Boolean
+interface BaseSuggestion {
+  val names: List<String>
+  val displayName: String?
+  val insertValue: String?
+  val description: String?
+  val priority: Int
+  val hidden: Boolean
 }
 
 @Serializable
@@ -30,7 +30,7 @@ data class ShellSubcommand(
   override val description: String? = null,
   override val priority: Int = 50,
   override val hidden: Boolean = false
-) : BaseSuggestion()
+) : BaseSuggestion
 
 @Serializable
 data class ShellOption(
@@ -48,7 +48,7 @@ data class ShellOption(
   override val description: String? = null,
   override val priority: Int = 50,
   override val hidden: Boolean = false
-) : BaseSuggestion()
+) : BaseSuggestion
 
 @Serializable
 data class ShellArgument(
@@ -75,7 +75,7 @@ data class ShellSuggestion(
   override val description: String? = null,
   override val priority: Int = 50,
   override val hidden: Boolean = false
-) : BaseSuggestion()
+) : BaseSuggestion
 
 @Serializable
 data class ShellSuggestionsGenerator(
@@ -92,3 +92,5 @@ data class ShellCommandParserDirectives(
 )
 
 internal val DEFAULT_PARSER_DIRECTIVES = ShellCommandParserDirectives()
+
+class ShellArgumentSuggestion(suggestion: ShellSuggestion, val argument: ShellArgument) : BaseSuggestion by suggestion

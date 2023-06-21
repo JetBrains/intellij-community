@@ -18,10 +18,14 @@ class CommandTreeBuilderTest {
     option("-a", "--asd")
     option("--bcde")
     option("--argum") {
-      argument("optArg", isOptional = true)
+      argument("optArg", isOptional = true) {
+        suggestions("someArg")
+      }
     }
 
-    argument("mainCmdArg", isOptional = true)
+    argument("mainCmdArg", isOptional = true) {
+      suggestions("aaa", "bbb")
+    }
 
     subcommand("sub") {
       option("-o", "--opt1")
@@ -36,9 +40,11 @@ class CommandTreeBuilderTest {
       }
 
       argument("file") {
-        templates("filepath")
+        suggestions("somePath")
       }
-      argument("someOptArg", isOptional = true)
+      argument("someOptArg", isOptional = true) {
+        suggestions("arg1", "arg2")
+      }
     }
   }
 
@@ -52,10 +58,10 @@ class CommandTreeBuilderTest {
 
   @Test
   fun `main command with options and argument of command`() {
-    doTest("--asd", "--bcde", "someArg") {
+    doTest("--asd", "--bcde", "aaa") {
       assertOptionOf("--asd", commandName)
       assertOptionOf("--bcde", commandName)
-      assertArgumentOfSubcommand("someArg", commandName)
+      assertArgumentOfSubcommand("aaa", commandName)
     }
   }
 
@@ -71,39 +77,39 @@ class CommandTreeBuilderTest {
 
   @Test
   fun `main command with argument and option with argument sequentially`() {
-    doTest("--argum", "optArg", "cmdArg") {
+    doTest("--argum", "someArg", "bbb") {
       assertOptionOf("--argum", commandName)
-      assertArgumentOfOption("optArg", "--argum")
-      assertArgumentOfSubcommand("cmdArg", commandName)
+      assertArgumentOfOption("someArg", "--argum")
+      assertArgumentOfSubcommand("bbb", commandName)
     }
   }
 
   @Test
   fun `main command with argument and option with argument divided by option`() {
-    doTest("--argum", "optArg", "--asd", "cmdArg") {
+    doTest("--argum", "someArg", "--asd", "aaa") {
       assertOptionOf("--argum", commandName)
-      assertArgumentOfOption("optArg", "--argum")
+      assertArgumentOfOption("someArg", "--argum")
       assertOptionOf("--asd", commandName)
-      assertArgumentOfSubcommand("cmdArg", commandName)
+      assertArgumentOfSubcommand("aaa", commandName)
     }
   }
 
   @Test
   fun `subcommand with options and argument`() {
-    doTest("sub", "-o", "-b", "someFilePath") {
+    doTest("sub", "-o", "-b", "somePath") {
       assertSubcommandOf("sub", commandName)
       assertOptionOf("-o", "sub")
       assertOptionOf("-b", "sub")
-      assertArgumentOfSubcommand("someFilePath", "sub")
+      assertArgumentOfSubcommand("somePath", "sub")
     }
   }
 
   @Test
   fun `subcommand with two arguments`() {
-    doTest("sub", "arg1", "arg2") {
+    doTest("sub", "arg1", "somePath") {
       assertSubcommandOf("sub", commandName)
       assertArgumentOfSubcommand("arg1", "sub")
-      assertArgumentOfSubcommand("arg2", "sub")
+      assertArgumentOfSubcommand("somePath", "sub")
     }
   }
 
