@@ -45,6 +45,7 @@ import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.not
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
@@ -226,7 +227,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
         val fontFace = cell(FontComboBox())
           .bind({ it.fontName }, { it, value -> it.fontName = value },
-                MutableProperty({ if (settings.overrideLafFonts) settings.fontFace else getDefaultFont().family },
+                MutableProperty({ if (settings.overrideLafFonts) getFontFamily(settings.fontFace) else getDefaultFont().family },
                                 { settings.fontFace = it }))
           .shouldUpdateLaF()
           .enabledIf(useCustomCheckbox.selected)
@@ -514,6 +515,14 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
   }
 
   private fun <T : JComponent> Cell<T>.shouldUpdateLaF(): Cell<T> = onApply { shouldUpdateLaF = true }
+}
+
+private fun getFontFamily(fontFace: String?): String {
+  val defFace = JBUIScale.getSystemFontData(null).first
+  if (fontFace != null && fontFace != defFace) {
+    return fontFace
+  }
+  return Font(defFace, Font.PLAIN, 13).family
 }
 
 private fun getDefaultFont(): Font {

@@ -3,6 +3,7 @@ package com.intellij.ide.ui
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.FontUtil
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Property
@@ -28,7 +29,7 @@ class NotRoamableUiSettings : SerializablePersistentStateComponent<NotRoamableUi
     }
 
   var fontFace: String?
-    get() = state.fontFace
+    get() = state.fontFace ?: JBUIScale.getSystemFontData(null).first
     set(value) {
       updateState { it.copy(fontFace = value) }
     }
