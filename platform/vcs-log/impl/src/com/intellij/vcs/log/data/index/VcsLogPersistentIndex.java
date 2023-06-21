@@ -40,6 +40,7 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.sqlite.AlreadyClosedException;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -449,6 +450,9 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
         }
         performCommit = true;
       }
+      catch (AlreadyClosedException e) {
+        throw new ProcessCanceledException(e);
+      }
       catch (ProcessCanceledException e) {
         performCommit = true;
         scheduleReindex();
@@ -467,7 +471,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
         try {
           mutator.close(performCommit);
         }
-        catch (ProcessCanceledException ignored) {
+        catch (AlreadyClosedException | ProcessCanceledException ignored) {
         }
         catch (Exception e) {
           myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
