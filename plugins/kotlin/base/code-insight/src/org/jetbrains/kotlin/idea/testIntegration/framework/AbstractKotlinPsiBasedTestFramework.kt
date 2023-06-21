@@ -9,8 +9,9 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
 abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework {
-    abstract val markerClassFqn: String
-    abstract val disabledTestAnnotation: String
+    protected abstract val markerClassFqn: String
+    protected abstract val disabledTestAnnotation: String
+    protected abstract val allowTestMethodsInObject: Boolean
 
     protected fun isFrameworkAvailable(element: KtElement): Boolean {
         val module = element.module ?: return false
@@ -33,6 +34,7 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
         return when {
             declaration.isPrivate() -> false
             declaration.isAnnotation() -> false
+            (declaration.isTopLevel() && declaration is KtObjectDeclaration) && !allowTestMethodsInObject -> false
             declaration.annotations.isNotEmpty() -> true
             declaration.superTypeListEntries.any { it is KtSuperTypeCallEntry } -> true
             declaration.declarations.any { it is KtNamedFunction && it.isPublic } -> true
@@ -49,13 +51,11 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
             declaration.isExtensionDeclaration() -> false
             else -> {
                 val ktClassOrObject =
-                    if (allowTestMethodsInObject()) declaration.getStrictParentOfType<KtClassOrObject>() else declaration.containingClass()
+                    if (allowTestMethodsInObject) declaration.getStrictParentOfType<KtClassOrObject>() else declaration.containingClass()
                 ktClassOrObject?.let(::isTestClass) ?: false
             }
         }
     }
-
-    protected open fun allowTestMethodsInObject(): Boolean = false
 
     override fun isIgnoredMethod(declaration: KtNamedFunction): Boolean {
         return (isAnnotated(declaration, KOTLIN_TEST_IGNORE)
