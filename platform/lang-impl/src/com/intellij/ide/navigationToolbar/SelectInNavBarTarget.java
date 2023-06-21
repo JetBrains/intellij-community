@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.DataManager;
@@ -8,18 +8,19 @@ import com.intellij.ide.impl.SelectInTargetPsiWrapper;
 import com.intellij.ide.navbar.ui.StaticNavBarPanel;
 import com.intellij.ide.navbar.vm.NavBarVm;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 /**
  * @author Anna Kozlova
@@ -54,28 +55,39 @@ final class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Dum
   }
 
   public static void selectInNavBar(boolean showPopup) {
-    DataManager.getInstance().getDataContextFromFocus()
-      .doWhenDone((Consumer<DataContext>)context -> {
-        IdeFrame frame = IdeFrame.KEY.getData(context);
-        if (frame instanceof IdeFrameEx) {
-          var navBar = ((IdeFrameEx)frame).getNorthExtension(IdeStatusBarImpl.NAVBAR_WIDGET_KEY);
-          if (navBar != null) {
-            Object panel = navBar.getClientProperty(NavBarRootPaneExtension.PANEL_KEY);
-            if (panel instanceof StaticNavBarPanel navBarPanel) {
-              NavBarVm vm = navBarPanel.getModel();
-              if (vm != null) {
-                vm.selectTail();
-                if (showPopup) {
-                  vm.showPopup();
-                }
-              }
-            }
-            else {
-              ((NavBarPanel)panel).rebuildAndSelectLastDirectoryOrTail(showPopup);
-            }
+    DataManager.getInstance().getDataContextFromFocusAsync().onSuccess(context -> {
+      IdeFrame frame = IdeFrame.KEY.getData(context);
+      if (frame == null) {
+        return;
+      }
+
+      StatusBar statusBar = frame.getStatusBar();
+      JComponent navBar = null;
+      if (statusBar instanceof IdeStatusBarImpl) {
+        navBar = ((IdeStatusBarImpl)statusBar).getWidgetComponent(IdeStatusBarImpl.NAVBAR_WIDGET_KEY);
+      }
+      if (navBar == null && frame instanceof IdeFrameEx) {
+        navBar = ((IdeFrameEx)frame).getNorthExtension(IdeStatusBarImpl.NAVBAR_WIDGET_KEY);
+      }
+
+      if (navBar == null) {
+        return;
+      }
+
+      Object panel = navBar.getClientProperty(NavBarRootPaneExtension.PANEL_KEY);
+      if (panel instanceof StaticNavBarPanel navBarPanel) {
+        NavBarVm vm = navBarPanel.getModel();
+        if (vm != null) {
+          vm.selectTail();
+          if (showPopup) {
+            vm.showPopup();
           }
         }
-      });
+      }
+      else {
+        ((NavBarPanel)panel).rebuildAndSelectLastDirectoryOrTail(showPopup);
+      }
+    });
   }
 
   @Override
