@@ -236,7 +236,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   private fun ValidationInfoBuilder.validateJavaSdk(withDialog: Boolean): ValidationInfo? {
     val javaVersion = getJdkVersion()
     if (javaVersion == null) {
-      return error(GradleBundle.message("gradle.settings.wizard.java.undefined"))
+      return null
     }
     return validateIdeaJavaCompatibility(withDialog, javaVersion)
   }
