@@ -76,10 +76,6 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
         }
     }
 
-    override fun getModuleNameSuffixForMangledName(mangledName: String): String? {
-        notImplementedInK2()
-    }
-
     override fun mangleInternalName(name: String, moduleName: String): String {
         return name + "$" + NameUtils.sanitizeAsJavaIdentifier(moduleName)
     }
