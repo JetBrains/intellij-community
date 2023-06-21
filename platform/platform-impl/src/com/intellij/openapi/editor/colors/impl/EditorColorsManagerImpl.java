@@ -592,7 +592,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   public void initializeComponent() {
     Activity activity = StartUpMeasurer.startActivity("editor color scheme initialization");
     // LafManager is initialized in EDT, so, that's ok to call it here
-    LookAndFeelInfo laf = LafManager.getInstance().getCurrentLookAndFeel();
+    LookAndFeelInfo laf = ApplicationManager.getApplication().isUnitTestMode() ? null : LafManager.getInstance().getCurrentLookAndFeel();
     // null in a headless mode
     if (laf != null) {
       initScheme(laf);

@@ -686,10 +686,10 @@ private class SqliteVcsLogWriter(private val connection: SqliteConnection, priva
 
     val isCommitter = if (details.author == details.committer) 0 else 1
     if (isCommitter == 1) {
-      userBatch.bindMultiple(commitId, isCommitter, details.committer.name, details.committer.email)
+      userBatch.bind(commitId, isCommitter, details.committer.name, details.committer.email)
       userBatch.addBatch()
     }
-    userBatch.bindMultiple(commitId, 0, details.author.name, details.author.email)
+    userBatch.bind(commitId, 0, details.author.name, details.author.email)
     userBatch.addBatch()
 
     logBatch.bind(commitId, details.fullMessage, details.authorTime, details.commitTime, isCommitter)
