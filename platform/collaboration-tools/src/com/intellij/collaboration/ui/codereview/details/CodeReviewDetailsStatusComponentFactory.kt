@@ -38,6 +38,14 @@ object CodeReviewDetailsStatusComponentFactory {
   private const val CI_COMPONENT_BORDER_LEFT = 8
   private const val CI_COMPONENT_BORDER_RIGHT = 20
 
+  @Suppress("FunctionName")
+  fun ReviewDetailsStatusLabel(componentName: String): JLabel =
+    JLabel().apply {
+      name = componentName
+      isOpaque = false
+      JLabelUtil.setTrimOverflow(this, trim = true)
+    }
+
   fun createConflictsComponent(scope: CoroutineScope, hasConflicts: Flow<Boolean>): JComponent {
     return ReviewDetailsStatusLabel("Code review status: review has conflicts").apply {
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
@@ -215,14 +223,6 @@ object CodeReviewDetailsStatusComponentFactory {
       pending != 0 && failed != 0 -> CollaborationToolsBundle.message("review.details.status.ci.progress.and.failed")
       pending != 0 -> CollaborationToolsBundle.message("review.details.status.ci.progress")
       else -> CollaborationToolsBundle.message("review.details.status.ci.failed")
-    }
-  }
-
-  class ReviewDetailsStatusLabel(componentName: String) : JLabel() {
-    init {
-      name = componentName
-      isOpaque = false
-      JLabelUtil.setTrimOverflow(this, trim = true)
     }
   }
 
