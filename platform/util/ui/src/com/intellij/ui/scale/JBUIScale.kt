@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("LiftReturnOrAssignment")
 
 package com.intellij.ui.scale
@@ -81,14 +81,16 @@ object JBUIScale {
   }
 
   private var systemFontData = SynchronizedClearableLazy<Pair<String?, Int>> {
-    runActivity("system font data computation") {
-      computeSystemFontData(null)
-    }
+    computeSystemFontData(uiDefaults = null)
   }
 
   private fun computeSystemFontData(uiDefaults: Supplier<UIDefaults?>?): Pair<String, Int> {
     if (GraphicsEnvironment.isHeadless()) {
       return Pair("Dialog", 12)
+    }
+
+    if (uiDefaults == null) {
+      thisLogger().error("Must be precomputed")
     }
 
     // with JB Linux JDK, the label font comes properly scaled based on Xft.dpi settings.
@@ -382,6 +384,9 @@ object JBUIScale {
     }
     return computeSystemFontData(uiDefaults).also { systemFontData.value = it }
   }
+
+  @JvmStatic
+  fun getSystemFontDataIfInitialized(): Pair<String?, Int>? = systemFontData.valueIfInitialized
 
   /**
    * Returns the system scale factor, corresponding to the graphics.

@@ -518,11 +518,13 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 }
 
 private fun getFontFamily(fontFace: String?): String {
-  val defFace = JBUIScale.getSystemFontData(null).first
-  if (fontFace != null && fontFace != defFace) {
+  val defaultFontFamily = JBUIScale.getSystemFontDataIfInitialized()?.first
+  if (fontFace == null || fontFace == defaultFontFamily) {
+    return Font(defaultFontFamily, Font.PLAIN, 13).family
+  }
+  else {
     return fontFace
   }
-  return Font(defFace, Font.PLAIN, 13).family
 }
 
 private fun getDefaultFont(): Font {

@@ -29,7 +29,7 @@ class NotRoamableUiSettings : SerializablePersistentStateComponent<NotRoamableUi
     }
 
   var fontFace: String?
-    get() = state.fontFace ?: JBUIScale.getSystemFontData(null).first
+    get() = state.fontFace ?: JBUIScale.getSystemFontDataIfInitialized()?.first
     set(value) {
       updateState { it.copy(fontFace = value) }
     }
