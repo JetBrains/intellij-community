@@ -236,6 +236,7 @@
     <module name="kotlin.code-insight.k2"/>
     <module name="kotlin.code-insight.live-templates-k2"/>
     <module name="kotlin.code-insight.postfix-templates-k2"/>
+    <module name="kotlin.code-insight.structural-search-k2"/>
 
     <module name="kotlin.searching.k2"/>
     <module name="kotlin.refactorings.k2"/>

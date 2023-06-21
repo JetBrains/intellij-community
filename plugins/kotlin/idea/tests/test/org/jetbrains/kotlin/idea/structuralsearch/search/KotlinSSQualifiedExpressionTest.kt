@@ -5,8 +5,6 @@ package org.jetbrains.kotlin.idea.structuralsearch.search
 import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
 class KotlinSSQualifiedExpressionTest : KotlinStructuralSearchTest() {
-    override fun getBasePath(): String = "qualifiedExpression"
-
     fun testDotRegular() { doTest("'_.'_", """
         class A {
             companion object {

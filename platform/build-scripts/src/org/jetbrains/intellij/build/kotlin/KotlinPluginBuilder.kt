@@ -176,6 +176,7 @@ object KotlinPluginBuilder {
     "kotlin.code-insight.postfix-templates-k1",
     "kotlin.code-insight.postfix-templates-k2",
     "kotlin.code-insight.structural-search-k1",
+    "kotlin.code-insight.structural-search-k2",
     "kotlin.code-insight.line-markers-shared",
     "kotlin.code-insight.line-markers-k2",
     "kotlin.fir",

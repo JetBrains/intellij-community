@@ -17,9 +17,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
-import org.jetbrains.kotlin.idea.test.util.slashedPath
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 
 abstract class KotlinStructuralSearchTest : BasePlatformTestCase() {
@@ -35,13 +33,6 @@ abstract class KotlinStructuralSearchTest : BasePlatformTestCase() {
         super.setUp()
         myInspection = SSBasedInspection()
         myFixture.enableInspections(myInspection)
-    }
-
-    protected fun doTest(pattern: String, context: PatternContext = KotlinStructuralSearchProfile.DEFAULT_CONTEXT) {
-        myFixture.configureByFile(getTestName(true) + ".kt")
-        withCustomCompilerOptions(myFixture.file.text, project, module) {
-            testHighlighting(pattern, context)
-        }
     }
 
     protected fun doTest(pattern: String, highlighting: String, context: PatternContext = KotlinStructuralSearchProfile.DEFAULT_CONTEXT) {
@@ -62,8 +53,6 @@ abstract class KotlinStructuralSearchTest : BasePlatformTestCase() {
         StructuralSearchProfileActionProvider.createNewInspection(myConfiguration, project)
         myFixture.testHighlighting(true, false, false)
     }
-
-    override fun getTestDataPath(): String = IDEA_TEST_DATA_DIR.resolve("structuralsearch/$basePath").slashedPath
 
     companion object {
         fun checkApplicableConstraints(options: MatchOptions, compiledPattern: CompiledPattern): String? {

@@ -5,15 +5,13 @@ package org.jetbrains.kotlin.idea.structuralsearch.search
 import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
 class KotlinSSConstantExpressionTest : KotlinStructuralSearchTest() {
-    override fun getBasePath(): String = "constantExpression"
+    fun testNull() { doTest("null", "val a = <warning descr=\"SSR\">null</warning>") }
 
-    fun testNull() { doTest("null") }
+    fun testBoolean() { doTest("true", "val a = <warning descr=\"SSR\">true</warning>") }
 
-    fun testBoolean() { doTest("true") }
+    fun testInteger() { doTest("1", "val a = <warning descr=\"SSR\">1</warning>") }
 
-    fun testInteger() { doTest("1") }
+    fun testFloat() { doTest("1.0f", "val a = <warning descr=\"SSR\">1.0f</warning>") }
 
-    fun testFloat() { doTest("1.0f") }
-
-    fun testCharacter() { doTest("'a'") }
+    fun testCharacter() { doTest("'a'", "val a = <warning descr=\"SSR\">'a'</warning>") }
 }

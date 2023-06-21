@@ -5,9 +5,23 @@ package org.jetbrains.kotlin.idea.structuralsearch.search
 import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
 class KotlinSSIsExpressionTest : KotlinStructuralSearchTest() {
-    override fun getBasePath(): String = "isExpression"
+    fun testIs() { doTest("'_ is '_", """
+        fun foo(arg: Int): Any = when(arg) {
+            0 -> 1
+            else -> "a"
+        }
 
-    fun testIs() { doTest("'_ is '_") }
+        val bar1 = <warning descr="SSR">foo(0) is Int</warning>
+        val bar2 = foo(1) !is String
+    """.trimIndent()) }
 
-    fun testNegatedIs() { doTest("'_ !is '_") }
+    fun testNegatedIs() { doTest("'_ !is '_", """
+        fun foo(arg: Int): Any = when(arg) {
+            0 -> 1
+            else -> "a"
+        }
+
+        val bar1 = foo(0) is Int
+        val bar2 = <warning descr="SSR">foo(1) !is String</warning>
+    """.trimIndent()) }
 }
