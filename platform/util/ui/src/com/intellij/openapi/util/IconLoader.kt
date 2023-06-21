@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "DeprecatedCallableAddReplaceWith", "LiftReturnOrAssignment")
 
 package com.intellij.openapi.util
@@ -55,12 +55,6 @@ private val colorPatchCache = ConcurrentHashMap<Int, MutableMap<LongArray, Mutab
 @Volatile
 private var STRICT_GLOBAL = false
 
-private val STRICT_LOCAL: ThreadLocal<Boolean> = object : ThreadLocal<Boolean>() {
-  override fun initialValue(): Boolean = false
-
-  override fun get(): Boolean = STRICT_GLOBAL || super.get()
-}
-
 internal val fakeComponent: JComponent by lazy { object : JComponent() {} }
 
 /**
@@ -71,18 +65,6 @@ internal val fakeComponent: JComponent by lazy { object : JComponent() {} }
  * @see com.intellij.util.IconUtil
  */
 object IconLoader {
-  @TestOnly
-  @JvmStatic
-  fun <T> performStrictly(computable: Supplier<out T>): T {
-    STRICT_LOCAL.set(true)
-    return try {
-      computable.get()
-    }
-    finally {
-      STRICT_LOCAL.set(false)
-    }
-  }
-
   fun setStrictGlobally(strict: Boolean) {
     STRICT_GLOBAL = strict
   }
@@ -489,7 +471,7 @@ private fun updateTransform(updater: Function<in IconTransform, IconTransform>) 
 private fun findIcon(originalPath: String,
                      aClass: Class<*>?,
                      classLoader: ClassLoader,
-                     strict: Boolean = STRICT_LOCAL.get(),
+                     strict: Boolean = STRICT_GLOBAL,
                      deferUrlResolve: Boolean): Icon? {
   if (deferUrlResolve) {
     return findIconUsingDeprecatedImplementation(originalPath = originalPath,
@@ -512,7 +494,7 @@ fun findIconUsingDeprecatedImplementation(originalPath: String,
                                           classLoader: ClassLoader,
                                           aClass: Class<*>?,
                                           toolTip: Supplier<String?>? = null,
-                                          strict: Boolean = STRICT_LOCAL.get()): Icon? {
+                                          strict: Boolean = STRICT_GLOBAL): Icon? {
   var effectiveClassLoader = classLoader
   val startTime = StartUpMeasurer.getCurrentTimeIfEnabled()
   val patchedPath = patchIconPath(originalPath = originalPath, classLoader = effectiveClassLoader)
