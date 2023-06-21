@@ -477,28 +477,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals("Field can be converted to a local variable", infos.get(0).getDescription());
   }
 
-  private static class MyTrackingInspection extends LocalInspectionTool {
+  private static class MyTrackingInspection extends MyFegnaInspection {
     private final List<PsiElement> visited = Collections.synchronizedList(new ArrayList<>());
-
-    @Nls
-    @NotNull
-    @Override
-    public String getGroupDisplayName() {
-      return "fegna";
-    }
-
-    @Nls
-    @NotNull
-    @Override
-    public String getDisplayName() {
-      return getGroupDisplayName();
-    }
-
-    @NotNull
-    @Override
-    public String getShortName() {
-      return getGroupDisplayName();
-    }
 
     @NotNull
     @Override
@@ -518,6 +498,27 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       };
     }
 
+  }
+  private static abstract class MyFegnaInspection extends LocalInspectionTool {
+    @Nls
+    @NotNull
+    @Override
+    public String getGroupDisplayName() {
+      return "fegna";
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getDisplayName() {
+      return getGroupDisplayName();
+    }
+
+    @NotNull
+    @Override
+    public String getShortName() {
+      return getGroupDisplayName();
+    }
   }
   private static class MyWholeInspection extends MyTrackingInspection {
     @Override
@@ -1442,27 +1443,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         visitedElements.add(element);
       }
     }
-    LocalInspectionTool tool = new LocalInspectionTool() {
-      @Nls
-      @NotNull
-      @Override
-      public String getGroupDisplayName() {
-        return "fegna";
-      }
-
-      @Nls
-      @NotNull
-      @Override
-      public String getDisplayName() {
-        return getGroupDisplayName();
-      }
-
-      @NotNull
-      @Override
-      public String getShortName() {
-        return getGroupDisplayName();
-      }
-
+    LocalInspectionTool tool = new MyFegnaInspection() {
       @NotNull
       @Override
       public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -2988,27 +2969,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     AtomicReference<String> diagnosticText = new AtomicReference<>("1st run");
     AtomicInteger stallMs = new AtomicInteger();
-    LocalInspectionTool tool = new LocalInspectionTool() {
-      @Nls
-      @NotNull
-      @Override
-      public String getGroupDisplayName() {
-        return "fegna";
-      }
-
-      @Nls
-      @NotNull
-      @Override
-      public String getDisplayName() {
-        return getGroupDisplayName();
-      }
-
-      @NotNull
-      @Override
-      public String getShortName() {
-        return getGroupDisplayName();
-      }
-
+    LocalInspectionTool tool = new MyFegnaInspection() {
       @NotNull
       @Override
       public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -3565,5 +3526,39 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
 
+  private static class MyFileLevelInspection extends MyFegnaInspection {
+    @NotNull
+    @Override
+    public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+      return new JavaElementVisitor() {
+        @Override
+        public void visitIdentifier(@NotNull PsiIdentifier identifier) {
+          super.visitIdentifier(identifier);
+          if (identifier.getText().contains("XXX")) {
+            holder.registerProblem(identifier.getContainingFile(),"blah", ProblemHighlightType.WARNING);
+          }
+        }
+      };
+    }
+
+  }
+  public void testFileLevelHighlightingDoesNotDuplicateOnTypingInsideSmallRange() {
+    registerInspection(new MyFileLevelInspection());
+    @Language("JAVA")
+    String text = """
+      class X {
+        void foo() {
+          int XXX<caret>;
+        }
+      }""";
+    configureByText(JavaFileType.INSTANCE, text);
+
+    assertEmpty(highlightErrors());
+    assertOneElement(myDaemonCodeAnalyzer.getFileLevelHighlights(getProject(), getFile()));
+
+    type('2');
+    assertEmpty(highlightErrors());
+    assertOneElement(myDaemonCodeAnalyzer.getFileLevelHighlights(getProject(), getFile()));
+  }
 }
 
