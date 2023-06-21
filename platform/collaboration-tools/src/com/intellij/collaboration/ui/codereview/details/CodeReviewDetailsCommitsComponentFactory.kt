@@ -17,6 +17,7 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBFont
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -30,14 +31,15 @@ object CodeReviewDetailsCommitsComponentFactory {
   private const val COMPONENTS_GAP = 4
   private const val COMMIT_HASH_OFFSET = 8
 
-  fun <T> create(scope: CoroutineScope, changesVm: CodeReviewChangesViewModel<T>, commitPresenter: (T?) -> CommitPresenter): JComponent {
+  fun <T> create(scope: CoroutineScope, changesVm: CodeReviewChangesViewModel<T>,
+                 commitPresentation: (commit: T) -> CommitPresentation): JComponent {
     val commitsPopupTitle = JLabel().apply {
       font = JBFont.regular().asBold()
       bindTextIn(scope, changesVm.reviewCommits.map { commits ->
         CollaborationToolsBundle.message("review.details.commits.title.text", commits.size)
       })
     }
-    val commitsPopup = createCommitChooserActionLink(scope, changesVm, commitPresenter)
+    val commitsPopup = scope.createCommitChooserActionLink(changesVm, commitPresentation)
     val nextCommitIcon = InlineIconButton(AllIcons.Chooser.Bottom).apply {
       withBackgroundHover = true
       actionListener = ActionListener { changesVm.selectNextCommit() }
@@ -61,11 +63,11 @@ object CodeReviewDetailsCommitsComponentFactory {
     }
   }
 
-  private fun <T> createCommitChooserActionLink(
-    scope: CoroutineScope,
+  private fun <T> CoroutineScope.createCommitChooserActionLink(
     changesVm: CodeReviewChangesViewModel<T>,
-    commitPresenter: (T?) -> CommitPresenter
+    commitPresentation: (commit: T) -> CommitPresentation
   ): JComponent {
+    val scope = this
     return ActionLink().apply {
       horizontalAlignment = SwingConstants.RIGHT
       setDropDownLinkIcon()
@@ -84,20 +86,20 @@ object CodeReviewDetailsCommitsComponentFactory {
       bindDisabledIn(scope, changesVm.reviewCommits.map { commits ->
         commits.size <= 1
       })
-      addActionListener(createCommitPopupAction(scope, changesVm, commitPresenter))
+      addActionListener(scope.createCommitPopupAction(changesVm, commitPresentation))
     }
   }
 
-  private fun <T> createCommitPopupAction(
-    scope: CoroutineScope,
+  private fun <T> CoroutineScope.createCommitPopupAction(
     changesVm: CodeReviewChangesViewModel<T>,
-    commitPresenter: (T?) -> CommitPresenter
+    commitPresentation: (commit: T) -> CommitPresentation
   ): ActionListener {
     return ActionListener { event ->
       val parentComponent = event.source as? JComponent ?: return@ActionListener
       val point = RelativePoint.getSouthWestOf(parentComponent)
-      scope.launch {
-        val commits = changesVm.reviewCommits.value
+      launch {
+        val commits = changesVm.reviewCommits.first()
+        val commitsCount = commits.size
         val selectedCommit = changesVm.selectedCommit.stateIn(this).value
         val popupItems: List<T?> = mutableListOf<T?>(null).apply {
           addAll(commits)
@@ -106,13 +108,15 @@ object CodeReviewDetailsCommitsComponentFactory {
           point,
           popupItems,
           filteringMapper = { commit: T? ->
-            when (val presentation = commitPresenter(commit)) {
-              is CommitPresenter.SingleCommit -> presentation.title
-              is CommitPresenter.AllCommits -> CollaborationToolsBundle.message("review.details.commits.popup.all", commits.size)
+            if (commit == null) {
+              CollaborationToolsBundle.message("review.details.commits.popup.all", commitsCount)
+            }
+            else {
+              commitPresentation(commit).title
             }
           },
-          renderer = CommitRenderer.createCommitRenderer { commit: T? ->
-            SelectableWrapper(commitPresenter(commit), commit == selectedCommit)
+          renderer = CommitRenderer.createCommitRenderer(commitsCount) { commit: T? ->
+            SelectableWrapper(commit?.let(commitPresentation), commit == selectedCommit)
           },
           popupConfig = PopupConfig(
             searchTextPlaceHolder = CollaborationToolsBundle.message("review.details.commits.search.placeholder")
