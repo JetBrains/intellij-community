@@ -692,11 +692,17 @@ object CodeWithMeClientDownloader {
     else executable.resolveSibling("jetbrains_client64.vmoptions")
     service<JetBrainsClientDownloaderConfigurationProvider>().patchVmOptions(vmOptionsFile, URI(url))
 
+    val clientEnvironment = mutableMapOf<String, String>()
+    if (Registry.`is`("rdct.enable.per.connection.client.process")) {
+      clientEnvironment["JBC_SEPARATE_CONFIG"] = "true"
+    }
+
     if (SystemInfo.isWindows) {
-      val hProcess = WindowsFileUtil.windowsShellExecute(
+      val hProcess = WindowsFileUtil.windowsCreateProcess(
         executable = executable,
         workingDirectory = extractedJetBrainsClientData.clientDir,
-        parameters = parameters
+        parameters = parameters,
+        environment = clientEnvironment
       )
 
       @Suppress("LocalVariableName")
@@ -733,6 +739,8 @@ object CodeWithMeClientDownloader {
 
       fun doRunProcess() {
         val commandLine = GeneralCommandLine(fullLauncherCmd + parameters)
+          .withEnvironment(clientEnvironment)
+
         config.modifyClientCommandLine(commandLine)
 
         LOG.info("Starting JetBrains Client process (attempts left: $attemptCount): ${commandLine}")
