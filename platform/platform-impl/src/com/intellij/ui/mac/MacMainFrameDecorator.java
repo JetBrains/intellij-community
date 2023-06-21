@@ -7,7 +7,6 @@ import com.apple.eawt.FullScreenListener;
 import com.apple.eawt.FullScreenUtilities;
 import com.apple.eawt.event.FullScreenEvent;
 import com.intellij.ide.ActiveWindowsWatcher;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
@@ -127,7 +126,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
           frame.togglingFullScreenInProgress = false;
           // We can get the notification when the frame has been disposed
           JRootPane rootPane = frame.getRootPane();
-          if (!ExperimentalUI.isNewUI() || !MainToolbarKt.isToolbarInHeader(UISettings.getShadowInstance())) {
+          if (!ExperimentalUI.isNewUI() || !MainToolbarKt.isToolbarInHeader()) {
             ToolbarUtil.setCustomTitleBar(frame, rootPane, runnable -> {
               if (!Disposer.isDisposed(parentDisposable)) {
                 Disposer.register(parentDisposable, runnable::run);

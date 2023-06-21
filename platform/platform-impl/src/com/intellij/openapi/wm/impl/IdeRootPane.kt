@@ -110,13 +110,13 @@ open class IdeRootPane internal constructor(frame: JFrame,
   }
 
   private val helper: Helper
+
   private val isToolbarVisible: Boolean
     get() {
       val uiSettings = UISettings.shadowInstance
       val isNewToolbar = ExperimentalUI.isNewUI()
-      return ((isNewToolbar && !isToolbarInHeader(uiSettings) && !isCompactHeader)
-              || (!isNewToolbar && uiSettings.showMainToolbar))
-             && !uiSettings.presentationMode
+      return !uiSettings.presentationMode &&
+             ((isNewToolbar && !isToolbarInHeader() && !isCompactHeader) || (!isNewToolbar && uiSettings.showMainToolbar))
     }
 
   init {
@@ -298,11 +298,10 @@ open class IdeRootPane internal constructor(frame: JFrame,
       helper.customFrameTitlePane.getComponent().isVisible = isCustomFrameHeaderVisible
     }
     else if (SystemInfoRt.isXWindow) {
-      val isNewToolbar = ExperimentalUI.isNewUI()
-
       if (toolbar != null) {
-        val uiSettings = UISettings.shadowInstance
-         toolbar!!.isVisible = !fullScreen && ((!isCompactHeader && isNewToolbar && !isToolbarInHeader(uiSettings)) || (!isNewToolbar && uiSettings.showMainToolbar))
+        val isNewToolbar = ExperimentalUI.isNewUI()
+         toolbar!!.isVisible = !fullScreen && ((!isCompactHeader && isNewToolbar && !isToolbarInHeader()) ||
+                                               (!isNewToolbar && UISettings.getInstance().showMainToolbar))
       }
     }
 

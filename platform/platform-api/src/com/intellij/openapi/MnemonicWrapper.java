@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -62,7 +63,8 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
 
   @Override
   public final void run() {
-    boolean disabled = UISettings.getShadowInstance().getDisableMnemonicsInControls();
+    boolean disabled = !LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred() ||
+                       UISettings.getShadowInstance().getDisableMnemonicsInControls();
     try {
       myEvent = true;
       if (myTextWithMnemonic == null) {

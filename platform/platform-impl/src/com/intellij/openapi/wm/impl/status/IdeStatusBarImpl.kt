@@ -8,7 +8,6 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.diagnostic.runActivity
 import com.intellij.ide.HelpTooltipManager
 import com.intellij.ide.IdeEventQueue
-import com.intellij.ide.ui.UISettings
 import com.intellij.internal.statistic.service.fus.collectors.StatusBarPopupShown
 import com.intellij.internal.statistic.service.fus.collectors.StatusBarWidgetClicked
 import com.intellij.openapi.Disposable
@@ -166,7 +165,7 @@ open class IdeStatusBarImpl internal constructor(
     rightPanel.border = JBUI.Borders.emptyLeft(1)
     add(rightPanel, BorderLayout.EAST)
 
-    infoAndProgressPanel = InfoAndProgressPanel(UISettings.shadowInstance, this)
+    infoAndProgressPanel = InfoAndProgressPanel(this)
     ClientProperty.put(infoAndProgressPanel.component, WIDGET_ID, infoAndProgressPanel.ID())
     centerPanel.add(infoAndProgressPanel.component)
     widgetMap.put(infoAndProgressPanel.ID(), WidgetBean(widget = infoAndProgressPanel,

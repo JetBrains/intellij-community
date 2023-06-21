@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.ui
 
 import com.intellij.ide.ui.UISettings
@@ -56,7 +56,7 @@ class FontSizeInfoUsageCollector : ApplicationUsagesCollector() {
 
   override fun getMetrics(): Set<MetricEvent> {
     val scheme = EditorColorsManager.getInstance().globalScheme
-    val ui = UISettings.shadowInstance
+    val ui = UISettings.getInstance()
     val usages = mutableSetOf(
       UI_FONT.metric(ui.fontFace, ui.fontSize, ui.fontSize2D),
       PRESENTATION_MODE_FONT.metric(UISettingsUtils.with(ui).presentationModeFontSize.toInt())

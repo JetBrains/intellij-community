@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.util.DiffPlaces;
@@ -477,7 +477,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     if (executors.isEmpty()) return emptyList();
     List<CommitExecutorAction> result = new ArrayList<>();
 
-    if (isDefaultCommitEnabled() && UISettings.getShadowInstance().getAllowMergeButtons()) {
+    if (isDefaultCommitEnabled() && UISettings.getInstance().getAllowMergeButtons()) {
       ActionGroup primaryActions = (ActionGroup)ActionManager.getInstance().getAction(VcsActions.PRIMARY_COMMIT_EXECUTORS_GROUP);
       ActionGroup executorActions = (ActionGroup)ActionManager.getInstance().getAction(VcsActions.COMMIT_EXECUTORS_GROUP);
 

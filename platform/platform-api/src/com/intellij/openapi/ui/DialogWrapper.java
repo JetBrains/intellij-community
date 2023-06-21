@@ -5,7 +5,6 @@ import com.intellij.CommonBundle;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.actions.ActionsCollector;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.statistic.eventLog.FeatureUsageUiEventsKt;
 import com.intellij.openapi.Disposable;
@@ -535,7 +534,7 @@ public abstract class DialogWrapper {
       }
     }
 
-    if (!UISettings.getShadowInstance().getAllowMergeButtons()) {
+    if (!Registry.is("ide.allow.merge.buttons", true)) {
       actions = flattenOptionsActions(actions);
       leftSideActions = flattenOptionsActions(leftSideActions);
     }
@@ -769,7 +768,7 @@ public abstract class DialogWrapper {
 
   public static @NotNull JButton createJButtonForAction(@NotNull Action action, @Nullable JRootPane rootPane) {
     JButton button;
-    if (action instanceof OptionAction optionAction && UISettings.getShadowInstance().getAllowMergeButtons()) {
+    if (action instanceof OptionAction optionAction && Registry.is("ide.allow.merge.buttons", true)) {
       JBOptionButton optionButton = new JBOptionButton(optionAction, optionAction.getOptions());
       optionButton.setOptionTooltipText(getDefaultTooltip());
       button = optionButton;

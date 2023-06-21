@@ -67,11 +67,11 @@ class NotRoamableUiSettings : SerializablePersistentStateComponent<NotRoamableUi
   override fun loadState(state: NotRoamableUiOptions) {
     var fontSize = UISettings.restoreFontSize(state.fontSize, state.fontScale)
     if (fontSize <= 0) {
-      fontSize = UISettingsState.defFontSize
+      fontSize = getDefaultFontSize()
     }
     var ideScale = state.ideScale
     if (ideScale <= 0) {
-      ideScale = UISettingsState.defFontSize
+      ideScale = getDefaultFontSize()
     }
 
     super.loadState(state.copy(
@@ -171,3 +171,10 @@ data class NotRoamableUiOptions(
   @OptionTag
   val overrideLafFontsWasMigrated: Boolean = false,
 )
+
+/**
+ * Returns the default font size scaled by #defFontScale
+ *
+ * @return the default scaled font size
+ */
+internal fun getDefaultFontSize(): Float = JBUIScale.DEF_SYSTEM_FONT_SIZE * UISettings.defFontScale

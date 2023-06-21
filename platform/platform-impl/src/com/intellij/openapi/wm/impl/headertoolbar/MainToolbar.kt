@@ -336,10 +336,20 @@ private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: Layout
   }
 }
 
-internal fun isToolbarInHeader(settings: UISettings = UISettings.shadowInstance) : Boolean {
-  return IdeFrameDecorator.isCustomDecorationAvailable() &&
-         (SystemInfoRt.isMac || (SystemInfoRt.isWindows && !settings.separateMainMenu && settings.mergeMainMenuWithWindowTitle))
-         || IdeRootPane.hideNativeLinuxTitle && !settings.separateMainMenu
+internal fun isToolbarInHeader() : Boolean {
+  if (IdeFrameDecorator.isCustomDecorationAvailable()) {
+    if (SystemInfoRt.isMac) {
+      return true
+    }
+    val settings = UISettings.getInstance()
+    if (SystemInfoRt.isWindows && !settings.separateMainMenu && settings.mergeMainMenuWithWindowTitle) {
+      return true
+    }
+  }
+  if (IdeRootPane.hideNativeLinuxTitle && !UISettings.getInstance().separateMainMenu) {
+    return true
+  }
+  return false
 }
 
 internal fun isDarkHeader(): Boolean = ColorUtil.isDark(JBColor.namedColor("MainToolbar.background"))
