@@ -183,4 +183,59 @@ class IdeKotlinVersionTest {
         test("1.0.0-SNAPSHOT", artifactBuildSuffix = "")
         test("1.0.0-SNAPSHOT-20", artifactBuildSuffix = "-20")
     }
+
+    @Test
+    fun testStableVersionWithoutBuildNumber() {
+        val version = IdeKotlinVersion.parse("1.8.20").getOrThrow()
+        assertEquals(version, version.withoutBuildNumber())
+    }
+
+    @Test
+    fun testStableVersionWithBuildNumber() {
+        val version = IdeKotlinVersion.parse("1.8.20").getOrThrow()
+        val versionWithNumber = IdeKotlinVersion.parse("1.8.20-585").getOrThrow()
+        assertEquals(version, versionWithNumber.withoutBuildNumber())
+        assertEquals("1.8.20", versionWithNumber.withoutBuildNumber().artifactVersion)
+    }
+
+    @Test
+    fun testBetaVersionWithoutBuildNumber() {
+        val version = IdeKotlinVersion.parse("1.8.20-Beta").getOrThrow()
+        assertEquals(version, version.withoutBuildNumber())
+    }
+
+    @Test
+    fun testBetaVersionWithBuildNumber() {
+        val version = IdeKotlinVersion.parse("1.8.20-Beta").getOrThrow()
+        val versionWithNumber = IdeKotlinVersion.parse("1.8.20-Beta-585").getOrThrow()
+        assertEquals(version, versionWithNumber.withoutBuildNumber())
+    }
+
+    @Test
+    fun testRCVersionWithoutBuildNumber() {
+        val version = IdeKotlinVersion.parse("1.8.20-RC2").getOrThrow()
+        assertEquals(version, version.withoutBuildNumber())
+    }
+
+    @Test
+    fun testRCVersionWithBuildNumber() {
+        val version = IdeKotlinVersion.parse("1.8.20-RC2").getOrThrow()
+        val versionWithNumber = IdeKotlinVersion.parse("1.8.20-RC2-585").getOrThrow()
+        assertEquals(version, versionWithNumber.withoutBuildNumber())
+    }
+
+    @Test
+    fun testReleaseVersionWithoutBuildNumber() {
+        val version = IdeKotlinVersion.parse("1.8.20-release").getOrThrow()
+        assertEquals(version, version.withoutBuildNumber())
+        assertEquals("1.8.20", version.artifactVersion)
+    }
+
+    @Test
+    fun testReleaseVersionWithBuildNumber() {
+        val version = IdeKotlinVersion.parse("1.8.20-release").getOrThrow()
+        val versionWithNumber = IdeKotlinVersion.parse("1.8.20-release-585").getOrThrow()
+        assertEquals(version, versionWithNumber.withoutBuildNumber())
+        assertEquals("1.8.20", versionWithNumber.withoutBuildNumber().artifactVersion)
+    }
 }
