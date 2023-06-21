@@ -6,7 +6,9 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginNode;
 import com.intellij.ide.plugins.RepositoryHelper;
+import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
+import com.intellij.ide.plugins.newui.PluginDetailsPageComponent;
 import com.intellij.ide.plugins.org.PluginManagerFilters;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
@@ -14,6 +16,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,6 +62,28 @@ abstract class InstallAndEnableTask extends Task.Modal {
 
       List<IdeaPluginDescriptor> descriptors =
         new ArrayList<>(RepositoryHelper.mergePluginsFromRepositories(marketplacePlugins, myCustomPlugins, true));
+
+      if (myShowDialog) {
+        MarketplaceRequests marketplace = MarketplaceRequests.getInstance();
+        Set<PluginId> pluginIds = ContainerUtil.map2Set(descriptors, descriptor -> descriptor.getPluginId());
+        for (IdeCompatibleUpdate update : MarketplaceRequests.getLastCompatiblePluginUpdate(pluginIds)) {
+          int index = ContainerUtil.indexOf(descriptors, d -> d.getPluginId().getIdString().equals(update.getPluginId()));
+          if (index != -1) {
+            IdeaPluginDescriptor descriptor = descriptors.get(index);
+            if (descriptor instanceof PluginNode node) {
+              node.setExternalPluginId(update.getExternalPluginId());
+              node.setExternalUpdateId(update.getExternalUpdateId());
+              node.setDescription(null);
+
+              PluginNode pluginNode = marketplace.loadPluginDetails(node);
+              if (pluginNode != null) {
+                PluginDetailsPageComponent.loadAllPluginDetails(marketplace, node, pluginNode);
+                descriptors.set(index, pluginNode);
+              }
+            }
+          }
+        }
+      }
 
       var org = PluginManagerFilters.getInstance();
       for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {

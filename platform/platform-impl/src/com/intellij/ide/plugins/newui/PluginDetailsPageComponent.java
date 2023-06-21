@@ -873,7 +873,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     }
   }
 
-  private static void loadAllPluginDetails(@NotNull MarketplaceRequests marketplace,
+  public static void loadAllPluginDetails(@NotNull MarketplaceRequests marketplace,
                                            @NotNull PluginNode node,
                                            @NotNull PluginNode pluginNode) {
     IntellijPluginMetadata metadata = marketplace.loadPluginMetadata(node);
