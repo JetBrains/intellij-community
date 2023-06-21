@@ -38,6 +38,8 @@ class KotlinJUnit4Framework: JUnit4Framework(), KotlinPsiBasedTestFramework {
             }
         }
 
+        override fun allowTestMethodsInObject(): Boolean = true
+
         override fun findSetUp(classOrObject: KtClassOrObject): KtNamedFunction? =
             findAnnotatedFunction(classOrObject.takeIf { isTestClass(it) }, setUpAnnotations)
 
