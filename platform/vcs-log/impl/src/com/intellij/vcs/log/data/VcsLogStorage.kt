@@ -39,7 +39,7 @@ interface VcsLogStorage {
    *
    * @return commits identified by the given commit indexes or empty map
    */
-  fun getCommitIds(commitIds: Collection<Int>): Map<Int, CommitId>? {
+  fun getCommitIds(commitIds: Collection<Int>): Map<Int, CommitId> {
     val result = Int2ObjectOpenHashMap<CommitId>()
     for (commitIndex in commitIds) {
       getCommitId(commitIndex)?.let {
