@@ -149,7 +149,7 @@ private class ProjectLevelConnectionManager private constructor(@JvmField val st
 internal class SqliteVcsLogStorageBackend(project: Project,
                                           private val logProviders: Map<VirtualFile, VcsLogProvider>,
                                           private val errorHandler: VcsLogErrorHandler,
-                                          disposable: Disposable) : VcsLogStorageBackend, VcsLogStorage {
+                                          private val disposable: Disposable) : VcsLogStorageBackend, VcsLogStorage {
   @Volatile
   private var connectionManager = ProjectLevelConnectionManager(project, PersistentUtil.calcLogId(project, logProviders)).also {
     Disposer.register(disposable, it)
@@ -357,7 +357,9 @@ internal class SqliteVcsLogStorageBackend(project: Project,
   }
 
   override fun markCorrupted() {
-    connectionManager = connectionManager.recreate()
+    val oldConnectionManager = connectionManager
+    Disposer.dispose(oldConnectionManager)
+    connectionManager = connectionManager.recreate().also { Disposer.register(disposable, it) }
   }
 
   override fun getAuthorForCommit(commitId: Int): VcsUser? {
