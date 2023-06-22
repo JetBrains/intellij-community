@@ -65,6 +65,7 @@ import com.intellij.util.ui.*
 import com.intellij.util.ui.LafIconLookup.getIcon
 import com.intellij.util.ui.LafIconLookup.getSelectedIcon
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -597,6 +598,9 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     isFirstSetup = false
   }
 
+  @Internal
+  fun updateLafNoSave(lookAndFeelInfo: LookAndFeelInfo) = doSetLaF(lookAndFeelInfo, false)
+
   private fun doSetLaF(lookAndFeelInfo: LookAndFeelInfo, installEditorScheme: Boolean): Boolean {
     val defaults = UIManager.getDefaults()
     defaults.clear()
@@ -782,7 +786,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       defaults.put(JBUI.CurrentTheme.VersionControl.Log.verticalPaddingKey(), 4)
     }
   }
-  
+
   private fun cmSize(width: Int, height: Int): Dimension = Dimension(width, height)
 
   @Suppress("UseDPIAwareInsets")

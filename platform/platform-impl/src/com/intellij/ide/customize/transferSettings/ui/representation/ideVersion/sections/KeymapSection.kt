@@ -25,7 +25,7 @@ import javax.swing.JPanel
 import javax.swing.KeyStroke
 import javax.swing.border.CompoundBorder
 
-class KeymapSection(private val ideVersion: IdeVersion) : IdeRepresentationSection(ideVersion.settings.preferences, SettingsPreferencesKind.Keymap, AllIcons.Plugins.PluginLogo) {
+class KeymapSection(private val ideVersion: IdeVersion) : IdeRepresentationSection(ideVersion.settings.preferences, SettingsPreferencesKind.Keymap, AllIcons.TransferSettings.Keymap) {
   override val name: String = "Keymap"
   override val disabledCheckboxText: String = "Default IntelliJ keymap will be used"
 
@@ -37,8 +37,8 @@ class KeymapSection(private val ideVersion: IdeVersion) : IdeRepresentationSecti
       keymap.demoShortcuts.take(3).forEach {
         row {
           val dsc = it.defaultShortcut
-          if (dsc is KeyboardShortcut) cell(KeyboardTwoShortcuts(dsc, _isSelected)).customize(UnscaledGaps.EMPTY)
-          if (dsc is DummyKeyboardShortcut) cell(KeyboardTwoShortcuts(dsc, _isSelected)).customize(UnscaledGaps.EMPTY)
+          if (dsc is KeyboardShortcut) cell(KeyboardTwoShortcuts(dsc, _isSelected, _isEnabled)).customize(UnscaledGaps.EMPTY)
+          if (dsc is DummyKeyboardShortcut) cell(KeyboardTwoShortcuts(dsc, _isSelected, _isEnabled)).customize(UnscaledGaps.EMPTY)
           mutableLabel(it.humanName)
         }.layout(RowLayout.PARENT_GRID)
       }
@@ -46,7 +46,7 @@ class KeymapSection(private val ideVersion: IdeVersion) : IdeRepresentationSecti
   }
 }
 
-private class KeyboardTwoShortcuts private constructor(private val shortcut: Pair<List<String>, List<String>?>, private val isSelected: AtomicBooleanProperty) : JPanel() {
+private class KeyboardTwoShortcuts private constructor(private val shortcut: Pair<List<String>, List<String>?>, private val isSelected: AtomicBooleanProperty, private val isEnabledPanel: AtomicBooleanProperty) : JPanel() {
   companion object {
     @Nls
     private val delim = if (SystemInfo.isMac) "" else "+"
@@ -79,8 +79,8 @@ private class KeyboardTwoShortcuts private constructor(private val shortcut: Pai
     }
   }
 
-  constructor(sc: KeyboardShortcut, isSelected: AtomicBooleanProperty) : this(init(sc), isSelected)
-  constructor(sc: DummyKeyboardShortcut, isSelected: AtomicBooleanProperty) : this(init(sc), isSelected)
+  constructor(sc: KeyboardShortcut, isSelected: AtomicBooleanProperty, isEnabled: AtomicBooleanProperty) : this(init(sc), isSelected, isEnabled)
+  constructor(sc: DummyKeyboardShortcut, isSelected: AtomicBooleanProperty, isEnabled: AtomicBooleanProperty) : this(init(sc), isSelected, isEnabled)
 
   private fun parsePart(part: List<String>) {
     part.forEachIndexed { i, sc ->
@@ -101,6 +101,10 @@ private class KeyboardTwoShortcuts private constructor(private val shortcut: Pai
 
       isSelected.afterChange {
         foreground = if (it) UIUtil.getLabelForeground() else UIUtil.getLabelDisabledForeground()
+      }
+
+      isEnabledPanel.afterChange {
+        foreground = if (it || !isSelected.get()) UIUtil.getLabelForeground() else UIUtil.getLabelDisabledForeground()
       }
     }
   }

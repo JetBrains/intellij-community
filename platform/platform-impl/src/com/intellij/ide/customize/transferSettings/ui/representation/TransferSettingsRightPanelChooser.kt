@@ -10,7 +10,7 @@ import com.intellij.ide.customize.transferSettings.ui.representation.ideVersion.
 
 class TransferSettingsRightPanelChooser(private val ideV: BaseIdeVersion, private val config: TransferSettingsConfiguration) {
   fun select(): TransferSettingsRepresentationPanel = when (ideV) {
-    is IdeVersion -> TransferSettingsIdeRepresentation(ideV as IdeVersion, config.getSectionsFactory())
+    is IdeVersion -> TransferSettingsIdeRepresentation(ideV, config.getSectionsFactory())
     is FailedIdeVersion -> TransferSettingsFailedIdeRepresentation(ideV, config.controller)
     else -> error("Unknown type of BaseIdeVersion")
   }

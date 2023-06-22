@@ -11,6 +11,7 @@ import javax.swing.ListModel
 import javax.swing.ListSelectionModel
 import javax.swing.ScrollPaneConstants
 import javax.swing.event.ListSelectionEvent
+import javax.swing.plaf.ComponentUI
 
 class TransferSettingsLeftPanel(listModel: ListModel<BaseIdeVersion>) : JBScrollPane(JList(listModel)) {
   val list: JList<BaseIdeVersion> get() = (viewport.view as JList<BaseIdeVersion>)
@@ -33,5 +34,9 @@ class TransferSettingsLeftPanel(listModel: ListModel<BaseIdeVersion>) : JBScroll
       previousSelectedIndex = list.selectedIndex
       action(list, it)
     }
+  }
+
+  override fun setUI(newUI: ComponentUI?) {
+    super.setUI(newUI)
   }
 }

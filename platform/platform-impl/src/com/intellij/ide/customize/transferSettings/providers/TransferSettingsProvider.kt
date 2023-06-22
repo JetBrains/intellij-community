@@ -9,6 +9,5 @@ interface TransferSettingsProvider { // ex. AbstractTransferSettingsProvider
   val name: String
   fun isAvailable(): Boolean
   fun getIdeVersions(skipIds: List<String>): List<BaseIdeVersion>
-  fun getImportPerformer(ideVersion: IdeVersion): ImportPerformer
   fun getSupportedFeatures(): List<SettingsPreferencesKind> = SettingsPreferencesKind.keysWithoutNone
 }

@@ -23,7 +23,7 @@ class StateDatabaseParser(private val settings: Settings) {
 
   fun process(file: File) {
     try {
-      Class.forName("org.sqlite.JDBC")
+      //Class.forName("org.sqlite.JDBC")
       connection = DriverManager.getConnection("jdbc:sqlite:" + FileUtil.toSystemIndependentName(file.path))
       parseRecents()
     }

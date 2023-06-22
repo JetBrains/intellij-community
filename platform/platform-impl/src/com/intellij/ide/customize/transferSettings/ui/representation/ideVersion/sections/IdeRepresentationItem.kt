@@ -19,6 +19,7 @@ abstract class IdeRepresentationSection(private val prefs: SettingsPreferences,
                                         final override val key: SettingsPreferencesKind,
                                         private val icon: Icon) : TransferSettingsSection {
   protected val _isSelected: AtomicBooleanProperty = AtomicBooleanProperty(prefs[key])
+  protected val _isEnabled = AtomicBooleanProperty(true)
   protected open val disabledCheckboxText: String? = null
   private val leftGap = 20
   private var morePanel: JComponent? = null
@@ -34,12 +35,19 @@ abstract class IdeRepresentationSection(private val prefs: SettingsPreferences,
 
   protected abstract fun getContent(): JComponent
 
+  final override fun block() {
+    _isEnabled.set(false)
+  }
+
   final override fun getUI(): DialogPanel = panel {
     customizeSpacingConfiguration(EmptySpacingConfiguration()) {
       row {
         icon(icon).align(AlignY.TOP).customize(UnscaledGaps(left = 30, right = 30)).applyToComponent {
           _isSelected.afterChange {
             this.icon = if (it) this@IdeRepresentationSection.icon else IconLoader.getDisabledIcon(icon)
+          }
+          _isEnabled.afterChange {
+            this.icon = if (it && _isSelected.get()) this@IdeRepresentationSection.icon else IconLoader.getDisabledIcon(icon)
           }
           border = JBUI.Borders.empty()
         }
@@ -49,6 +57,10 @@ abstract class IdeRepresentationSection(private val prefs: SettingsPreferences,
             checkBox(name).bold().bindSelected(_isSelected).applyToComponent {
               _isSelected.afterChange {
                 this.foreground = if (it) UIUtil.getLabelForeground() else UIUtil.getLabelDisabledForeground()
+              }
+              _isEnabled.afterChange {
+                this.foreground = if (it || _isSelected.get()) UIUtil.getLabelForeground() else UIUtil.getLabelDisabledForeground()
+                isEnabled = it
               }
             }.customize(UnscaledGaps(bottom = 5, top = 5))
             label("").visible(false).apply {
@@ -73,6 +85,9 @@ abstract class IdeRepresentationSection(private val prefs: SettingsPreferences,
   protected fun Row.mutableLabel(@NlsContexts.Label text: String): Cell<JLabel> = label(text).applyToComponent {
     _isSelected.afterChange {
       this.foreground = if (it) UIUtil.getLabelForeground() else UIUtil.getLabelDisabledForeground()
+    }
+    _isEnabled.afterChange {
+      this.foreground = if (it || !_isSelected.get()) UIUtil.getLabelForeground() else UIUtil.getLabelDisabledForeground()
     }
   }
 

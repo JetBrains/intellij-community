@@ -9,5 +9,6 @@ interface TransferSettingsSection {
   val key: SettingsPreferencesKind
   val name: @Nls String
   fun worthShowing(): Boolean
+  fun block()
   fun getUI(): JComponent
 }

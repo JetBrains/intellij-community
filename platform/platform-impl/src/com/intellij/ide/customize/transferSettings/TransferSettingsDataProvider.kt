@@ -19,6 +19,10 @@ class TransferSettingsDataProvider(private val providers: List<TransferSettingsP
   constructor(vararg providers: TransferSettingsProvider) : this(providers.toList())
 
   fun refresh(): TransferSettingsDataProvider {
+    baseIdeVersions.clear()
+    ideVersions.clear()
+    failedIdeVersions.clear()
+
     val newBase = TransferSettingsDataProviderSession(providers, baseIdeVersions.map { it.id }).baseIdeVersions
     baseIdeVersions.addAll(newBase)
 
