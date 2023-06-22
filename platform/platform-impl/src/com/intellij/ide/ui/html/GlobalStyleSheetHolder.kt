@@ -77,7 +77,6 @@ object GlobalStyleSheetHolder {
   @Service(Service.Level.APP)
   @OptIn(FlowPreview::class)
   private class UpdateService(cs: CoroutineScope) {
-
     private val updateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     init {
@@ -87,8 +86,8 @@ object GlobalStyleSheetHolder {
           .collectLatest {
             val app = ApplicationManager.getApplication()
             coroutineScope {
-              async { app.serviceAsync<EditorColorsManager>() }
-              async { app.serviceAsync<FontFamilyService>() }
+              launch { app.serviceAsync<EditorColorsManager>() }
+              launch { app.serviceAsync<FontFamilyService>() }
             }
             withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
               updateGlobalStyleSheet()
