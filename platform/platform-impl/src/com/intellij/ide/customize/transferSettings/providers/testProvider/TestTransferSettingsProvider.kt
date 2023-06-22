@@ -2,6 +2,7 @@
 package com.intellij.ide.customize.transferSettings.providers.testProvider
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.customize.transferSettings.db.KnownLafs
 import com.intellij.ide.customize.transferSettings.models.*
 import com.intellij.ide.customize.transferSettings.providers.DefaultImportPerformer
 import com.intellij.ide.customize.transferSettings.providers.TransferSettingsProvider
@@ -12,17 +13,17 @@ class TestTransferSettingsProvider : TransferSettingsProvider {
 
   override fun isAvailable(): Boolean = true
 
+  val saved = listOf(IdeVersion("test23", AllIcons.CodeWithMe.CwmJoin, "Test Instance", "yes", Settings(
+
+    laf = KnownLafs.Light,
+    //keymap = BundledKeymap("My cool keymap", "Sublime Text", emptyList(/* fill this with shortcuts samples or action ids */)),
+    plugins = mutableListOf(
+      PluginFeature("com.intellij.ideolog", "Ideolog")
+    )
+  ), Date(), this))
+
   override fun getIdeVersions(skipIds: List<String>): List<BaseIdeVersion> {
     if (skipIds.isNotEmpty()) return emptyList()
-    return listOf(IdeVersion("test23", AllIcons.CodeWithMe.CwmJoin, "Test Instance", "yes", Settings(
-
-      laf = BundledLookAndFeel.fromManager("Darcula"),
-      //keymap = BundledKeymap("My cool keymap", "Sublime Text", emptyList(/* fill this with shortcuts samples or action ids */)),
-      plugins = mutableListOf(
-        PluginFeature("com.intellij.ideolog", "Ideolog")
-      )
-    ), Date(), this))
+    return saved
   }
-
-  override fun getImportPerformer(ideVersion: IdeVersion): DefaultImportPerformer = DefaultImportPerformer()
 }

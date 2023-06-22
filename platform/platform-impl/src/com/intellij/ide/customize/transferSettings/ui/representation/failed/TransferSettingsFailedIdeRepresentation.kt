@@ -14,6 +14,10 @@ import javax.swing.JComponent
 
 class TransferSettingsFailedIdeRepresentation(private val ide: FailedIdeVersion,
                                               private val controller: TransferSettingsController) : TransferSettingsRepresentationPanel {
+
+  override fun block() {
+    // nothing to block
+  }
   override fun getComponent(): JComponent = panel {
     row {
       icon(AllIcons.General.Warning).align(AlignY.TOP).customize(UnscaledGaps(right = 5))

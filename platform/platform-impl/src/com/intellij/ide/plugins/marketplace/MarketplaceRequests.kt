@@ -123,6 +123,9 @@ class MarketplaceRequests : PluginInfoProvider {
       }
       catch (e: Exception) {
         LOG.infoOrDebug("Can not get compatible updates from Marketplace", e)
+        if (throwExceptions) {
+          throw e
+        }
         return emptyList()
       }
     }

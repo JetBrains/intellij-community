@@ -21,11 +21,13 @@ class VSCodeTransferSettingsProvider : TransferSettingsProvider {
     false -> SmartList()
   }
 
-  override fun getImportPerformer(ideVersion: IdeVersion): DefaultImportPerformer = DefaultImportPerformer()
+  private val cachedIdeVersion by lazy {
+    IdeVersion("VSCode", AllIcons.TransferSettings.Vscode, "Visual Studio Code", settings = processor.getProcessedSettings(),
+               provider = this)
+  }
 
   private fun getIdeVersion(): IdeVersion {
-    return IdeVersion("VSCode", AllIcons.Idea_logo_welcome, "Visual Studio Code", settings = processor.getProcessedSettings(),
-                      provider = this)
+    return cachedIdeVersion
   }
 
   private fun isVSCodeDetected() = Files.isDirectory(Paths.get(vsCodeHome)) && processor.willDetectAtLeastSomething()

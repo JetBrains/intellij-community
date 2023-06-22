@@ -4,7 +4,7 @@ package com.intellij.ide.customize.transferSettings.models
 import com.intellij.ide.customize.transferSettings.TransferSettingsConfiguration
 import javax.swing.DefaultListModel
 
-class TransferSettingsModel(private val config: TransferSettingsConfiguration) {
+class TransferSettingsModel(private val config: TransferSettingsConfiguration, val shouldShowLeftPanel: Boolean) {
   val listModel: DefaultListModel<BaseIdeVersion> = DefaultListModel<BaseIdeVersion>()
 
   fun performRefresh(selectionTargetId: String?): List<BaseIdeVersion> {

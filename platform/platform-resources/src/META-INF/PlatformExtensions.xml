@@ -1509,6 +1509,13 @@
     <projectService serviceImplementation="com.intellij.openapi.updateSettings.impl.CustomPluginRepositoriesConfigurationComponent"
                     configurationSchemaKey="plugins"/>
     <updateSettingsProvider implementation="com.intellij.openapi.updateSettings.impl.ConfigurationScriptPluginRepositoriesProvider"/>
+
+    <postStartupActivity implementation="com.intellij.ide.customize.transferSettings.TransferSettingsProjectActivity"/>
+    <notificationGroup displayType="STICKY_BALLOON" id="transferSettings"
+                       bundle="messages.IdeBundle" key="transfer.settings.notificationGroup"/>
+    <registryKey key="transferSettings.enabled"
+                 defaultValue="false"
+                 description="Enable Transfer Setting from VSCode sticky ballon"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
