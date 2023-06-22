@@ -18,7 +18,7 @@ internal class CommandTreeBuilder(private val command: String,
       val suggestions = root.getSuggestionsOfNext()
       val suggestion = suggestions.find { it.names.contains(name) }
       if (suggestion == null
-          && !root.spec.parserDirectives.flagsArePosixNoncompliant
+          && !root.getMergedParserDirectives().flagsArePosixNoncompliant
           && name.startsWith("-") && !name.startsWith("--") && name.length > 2) {
         addChainedOptions(root, suggestions, name)
         curIndex++

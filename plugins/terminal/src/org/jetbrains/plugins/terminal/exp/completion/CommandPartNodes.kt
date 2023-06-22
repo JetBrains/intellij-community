@@ -36,7 +36,7 @@ internal class SubcommandNode(text: String,
     }
 
     val lastArg = (children.lastOrNull() as? ArgumentNode)?.spec
-    if ((!spec.parserDirectives.optionsMustPrecedeArguments || children.filterIsInstance<ArgumentNode>().isEmpty())
+    if ((!getMergedParserDirectives().optionsMustPrecedeArguments || children.filterIsInstance<ArgumentNode>().isEmpty())
         && (lastArg?.isVariadic != true || lastArg.optionsCanBreakVariadicArg)) {
       val options = getAvailableOptions()
       suggestions.addAll(options)
@@ -67,6 +67,25 @@ internal class SubcommandNode(text: String,
       cur = cur.parent
     }
     return options
+  }
+
+  fun getMergedParserDirectives(): ShellCommandParserDirectives {
+    val directives = mutableListOf<ShellCommandParserDirectives>()
+    directives.add(spec.parserDirectives)
+    var cur = parent
+    while (cur is SubcommandNode) {
+      directives.add(cur.spec.parserDirectives)
+      cur = cur.parent
+    }
+    return directives.asReversed().reduce { base, child -> mergeDirectives(base, child) }
+  }
+
+  // child values takes precedence over base only if they are not default
+  private fun mergeDirectives(base: ShellCommandParserDirectives, child: ShellCommandParserDirectives): ShellCommandParserDirectives {
+    val flagsArePosixNoncompliant = if (child.flagsArePosixNoncompliant) true else base.flagsArePosixNoncompliant
+    val optionsMustPrecedeArguments = if (child.optionsMustPrecedeArguments) true else base.optionsMustPrecedeArguments
+    val optionArgSeparators = (base.optionArgSeparators + child.optionArgSeparators).toSet().toList()
+    return ShellCommandParserDirectives(flagsArePosixNoncompliant, optionsMustPrecedeArguments, optionArgSeparators)
   }
 }
 

@@ -93,6 +93,14 @@ class CommandSpecSuggestionsTest {
       argument("arg", isOptional = true) {
         suggestions("arg")
       }
+
+      subcommand("sub") {
+        option("-e")
+        option("-f")
+        argument("arg") {
+          suggestions("arg2")
+        }
+      }
     }
 
     subcommand("variadic") {
@@ -219,6 +227,11 @@ class CommandSpecSuggestionsTest {
   @Test
   fun `do not suggest options after argument if it is restricted`() {
     doTest("optPrecedeArgs", "-c", "arg", expected = listOf())
+  }
+
+  @Test
+  fun `do not suggest options after argument if it is restricted (parser directive is propagated from parent command)`() {
+    doTest("optPrecedeArgs", "sub", "-f", "arg2", expected = listOf())
   }
 
   @Test
