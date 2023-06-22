@@ -52,7 +52,7 @@ interface SvgAttributePatcher {
 }
 
 @ApiStatus.Internal
-fun loadSvg(data: ByteArray, scale: Float): Image {
+fun loadSvg(data: ByteArray, scale: Float): BufferedImage {
   return loadAndCacheIfApplicable(path = null, precomputedCacheKey = 0, scale = scale, colorPatcherProvider = null) {
     data
   }!!

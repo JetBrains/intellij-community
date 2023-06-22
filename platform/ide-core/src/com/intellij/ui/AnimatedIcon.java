@@ -18,8 +18,9 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
-import static com.intellij.ui.AnimatedIcon.Default.*;
+import static com.intellij.ui.SpinningProgressIconKt.bigSpinningProgressIcon;
 
 public class AnimatedIcon implements Icon {
   private static final Logger LOG = Logger.getInstance(AnimatedIcon.class);
@@ -45,11 +46,6 @@ public class AnimatedIcon implements Icon {
   }
 
   public static class Default extends AnimatedIcon {
-
-    public Default() {
-      super(DEFAULT_FRAMES);
-    }
-
     private static final Icon[] OLD_ICONS = {
       AllIcons.Process.Step_1,
       AllIcons.Process.Step_2,
@@ -59,6 +55,7 @@ public class AnimatedIcon implements Icon {
       AllIcons.Process.Step_6,
       AllIcons.Process.Step_7,
       AllIcons.Process.Step_8};
+
     private static final Frame[] DEFAULT_FRAMES = getDefaultFrames();
 
     private static Frame[] getDefaultFrames() {
@@ -72,6 +69,10 @@ public class AnimatedIcon implements Icon {
     public static final List<Icon> ICONS = ContainerUtil.map(getDefaultFrames(), Frame::getIcon);
 
     public static final AnimatedIcon INSTANCE = new Default();
+
+    public Default() {
+      super(DEFAULT_FRAMES);
+    }
   }
 
   public static final class Big extends AnimatedIcon {
@@ -95,11 +96,20 @@ public class AnimatedIcon implements Icon {
       if (Boolean.getBoolean("disable.new.spinning.icon")) {
         return AnimatedIcon.getFrames(DELAY, OLD_BIG_ICONS);
       }
-      return new SpinningProgressIcon.Big().frames;
+      return bigSpinningProgressIcon().frames;
     }
 
     public static final int DELAY = 125;
-    public static final List<Icon> ICONS = ContainerUtil.map(getDefaultBigFrames(), Frame::getIcon);
+    public static final Icon[] ICONS;
+
+    static {
+      AnimatedIcon.Frame[] array = getDefaultBigFrames();
+      Icon[] result = new Icon[array.length];
+      for (int i = 0; i < array.length; i++) {
+        result[i] = array[i].getIcon();
+      }
+      ICONS = result;
+    }
 
     public static final AnimatedIcon INSTANCE = new Big();
   }
@@ -201,8 +211,7 @@ public class AnimatedIcon implements Icon {
     }
   }
 
-
-  Frame[] frames;
+  final Frame[] frames;
   private final Set<Component> requested = Collections.newSetFromMap(new IdentityHashMap<>());
   private long time;
   private int index;
@@ -218,13 +227,9 @@ public class AnimatedIcon implements Icon {
     time = System.currentTimeMillis();
   }
 
-  AnimatedIcon() {
-    frames = createFrames();
+  protected AnimatedIcon(@NotNull Function<AnimatedIcon, Frame[]> frameProducer) {
+    frames = frameProducer.apply(this);
     time = System.currentTimeMillis();
-  }
-
-  protected Frame[] createFrames() {
-    return getFrames(DELAY, ICONS.toArray(new Icon[0]));
   }
 
   private static Frame[] getFrames(int delay, Icon @NotNull ... icons) {

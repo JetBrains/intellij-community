@@ -5,6 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.impl.fadeOut
+import com.intellij.util.ui.AnimatedIcon
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
@@ -29,7 +30,7 @@ internal class AsyncLoadingDecorator(private val startDelay: Duration) {
     return scope.launch {
       delay((startDelay.inWholeMilliseconds - (System.currentTimeMillis() - scheduleTime)).coerceAtLeast(0))
       withContext(Dispatchers.EDT) {
-        val loadingLayer = LoadingLayer(AsyncProcessIcon.Big("Loading"))
+        val loadingLayer = LoadingLayer(AsyncProcessIcon.createBig("Loading"))
         addUi(loadingLayer)
         this@AsyncLoadingDecorator.loadingLayer = loadingLayer
       }
@@ -56,7 +57,7 @@ internal class AsyncLoadingDecorator(private val startDelay: Duration) {
     }
   }
 
-  private class LoadingLayer(@JvmField val processIcon: AsyncProcessIcon) : JPanel(GridBagLayout()) {
+  private class LoadingLayer(@JvmField val processIcon: AnimatedIcon) : JPanel(GridBagLayout()) {
     private var currentAlpha = -1f
 
     init {
