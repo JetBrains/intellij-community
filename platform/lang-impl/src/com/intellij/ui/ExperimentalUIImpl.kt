@@ -114,7 +114,7 @@ private class ExperimentalUIImpl : ExperimentalUI() {
 
 private fun setRegistryKeyIfNecessary(key: String, value: Boolean, registryManager: RegistryManager) {
   val registryValue = registryManager.get(key)
-  if (registryValue.isBoolean != value) {
+  if (registryValue.asBoolean() != value) {
     registryValue.setValue(value)
   }
 }
