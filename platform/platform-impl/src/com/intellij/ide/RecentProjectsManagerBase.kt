@@ -310,6 +310,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       // Reopening such a project should be similar to opening the dir first time (and trying to import known project formats)
       // IDEA-144453 IDEA rejects opening a recent project if there are no .idea subfolder
       // CPP-12106 Auto-load CMakeLists.txt on opening from Recent projects when .idea and cmake-build-debug were deleted
+      LOG.info("Opening project from the recent projects, but .idea is missing. Open project as this is first time.")
       return ProjectUtil.openOrImportAsync(projectFile, effectiveOptions)
     }
   }
