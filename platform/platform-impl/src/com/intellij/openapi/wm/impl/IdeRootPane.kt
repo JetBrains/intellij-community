@@ -644,7 +644,7 @@ private fun createToolbar(): JComponent {
   if (ExperimentalUI.isNewUI()) {
     val toolbar = MainToolbar()
     toolbar.init(MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()))
-    toolbar.border = JBUI.Borders.empty()
+    toolbar.border = JBUI.Borders.empty(0, 5)
     return toolbar
   }
   else {
