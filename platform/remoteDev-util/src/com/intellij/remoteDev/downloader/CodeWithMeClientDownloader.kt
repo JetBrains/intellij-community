@@ -693,7 +693,7 @@ object CodeWithMeClientDownloader {
     service<JetBrainsClientDownloaderConfigurationProvider>().patchVmOptions(vmOptionsFile, URI(url))
 
     val clientEnvironment = mutableMapOf<String, String>()
-    if (Registry.`is`("rdct.enable.per.connection.client.process")) {
+    if (Registry.`is`("rdct.enable.per.connection.client.process") && ClientVersionUtil.isJBCSeparateConfigSupported(extractedJetBrainsClientData.version)) {
       clientEnvironment["JBC_SEPARATE_CONFIG"] = "true"
     }
 
