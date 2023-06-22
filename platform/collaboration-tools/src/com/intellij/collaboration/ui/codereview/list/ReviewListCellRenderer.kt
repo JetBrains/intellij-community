@@ -17,6 +17,7 @@ import com.intellij.util.containers.nullize
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
 import icons.CollaborationToolsIcons
+import icons.DvcsImplIcons
 import java.awt.*
 import java.awt.geom.RoundRectangle2D
 import javax.swing.*
@@ -131,7 +132,7 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
 
     val tagGroup = presentation.tagGroup
     tags.apply {
-      icon = CollaborationToolsIcons.Review.Branch
+      icon = DvcsImplIcons.BranchLabel
       isVisible = tagGroup != null
     }.also {
       if (tagGroup != null) {
@@ -142,10 +143,10 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
             val color = tag.color
             if (color != null) {
               //TODO: need a separate untinted icon to color properly
-              label.icon = IconUtil.colorize(CollaborationToolsIcons.Review.Branch, color)
+              label.icon = IconUtil.colorize(DvcsImplIcons.BranchLabel, color)
             }
             else {
-              label.icon = CollaborationToolsIcons.Review.Branch
+              label.icon = DvcsImplIcons.BranchLabel
             }
           }
         }

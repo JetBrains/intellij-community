@@ -17,13 +17,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.hover.addHoverAndPressStateListener
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JLabelUtil
 import com.intellij.util.ui.UIUtil
-import icons.CollaborationToolsIcons
+import icons.DvcsImplIcons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
@@ -33,11 +34,13 @@ import javax.swing.JComponent
 import javax.swing.ListCellRenderer
 
 object CodeReviewDetailsBranchComponentFactory {
-  fun create(scope: CoroutineScope,
-             branchesVm: CodeReviewBranchesViewModel,
-             checkoutAction: AnAction,
-             dataContext: DataContext): JComponent {
-    val sourceBranch = JBLabel(CollaborationToolsIcons.Review.Branch).apply {
+  fun create(
+    scope: CoroutineScope,
+    branchesVm: CodeReviewBranchesViewModel,
+    checkoutAction: AnAction,
+    dataContext: DataContext
+  ): JComponent {
+    val sourceBranch = JBLabel(DvcsImplIcons.BranchLabel).apply {
       border = JBUI.Borders.empty(1, 2, 1, 4)
       addHoverAndPressStateListener(comp = this, pressedStateCallback = { _, isPressed ->
         if (!isPressed) return@addHoverAndPressStateListener
@@ -47,7 +50,8 @@ object CodeReviewDetailsBranchComponentFactory {
       foreground = CurrentBranchComponent.TEXT_COLOR
       bindTextIn(scope, branchesVm.sourceBranch)
       bindIconIn(scope, branchesVm.isCheckedOut.map { isCheckedOut ->
-        if (isCheckedOut) CollaborationToolsIcons.Review.BranchCurrent else CollaborationToolsIcons.Review.Branch
+        if (!isCheckedOut) return@map DvcsImplIcons.BranchLabel
+        return@map if (ExperimentalUI.isNewUI()) DvcsImplIcons.CurrentBranchLabel else DvcsImplIcons.CurrentBranchFavoriteLabel
       })
 
       scope.launchNow {

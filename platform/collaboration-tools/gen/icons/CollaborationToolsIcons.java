@@ -24,7 +24,6 @@ public final class CollaborationToolsIcons {
   /** 16x16 */ public static final @NotNull Icon PullRequestOpen = load("icons/pullRequestOpen.svg", 1308708793, 0);
 
   public static final class Review {
-    /** 16x16 */ public static final @NotNull Icon Branch = load("icons/review/branch.svg", -364426997, 2);
     /** 16x16 */ public static final @NotNull Icon BranchCurrent = load("icons/review/branchCurrent.svg", -646572009, 0);
     /** 16x16 */ public static final @NotNull Icon CommentHovered = load("icons/review/commentHovered.svg", 735585407, 0);
     /** 16x16 */ public static final @NotNull Icon CommentReadMany = load("icons/review/commentReadMany.svg", -1735310916, 2);
@@ -33,6 +32,11 @@ public final class CollaborationToolsIcons {
     /** 16x16 */ public static final @NotNull Icon CommentUnresolved = load("icons/review/commentUnresolved.svg", 514456290, 0);
     /** 16x16 */ public static final @NotNull Icon DefaultAvatar = load("icons/review/defaultAvatar.svg", -2063080124, 0);
     /** 16x16 */ public static final @NotNull Icon NonMergeable = load("icons/review/nonMergeable.svg", -1457097161, 0);
+
+    /** @deprecated use DvcsImplIcons.BranchLabel instead */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final @NotNull Icon Branch = load("icons/review/branch.svg", 0, 0);
   }
 
   /** 16x16 */ public static final @NotNull Icon Send = load("icons/send.svg", -418436367, 0);
