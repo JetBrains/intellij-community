@@ -35,13 +35,10 @@ internal class SubcommandNode(text: String,
       return suggestions
     }
 
-    val existingOptions = children.mapNotNull { (it as? OptionNode)?.spec }
-    val options = getAllAvailableOptions().filter { opt ->
-      (opt.repeatTimes == 0 || existingOptions.count { it == opt } < opt.repeatTimes)
-      && opt.exclusiveOn.none { exclusive -> existingOptions.any { it.names.contains(exclusive) } }
-      && opt.dependsOn.all { dependant -> existingOptions.any { it.names.contains(dependant) } }
+    if (!spec.parserDirectives.optionsMustPrecedeArguments || children.filterIsInstance<ArgumentNode>().isEmpty()) {
+      val options = getAvailableOptions()
+      suggestions.addAll(options)
     }
-    suggestions.addAll(options)
 
     val availableArgs = getAvailableArguments(spec.args)
     //   TODO: here should be also file suggestions if there are corresponding argument
@@ -49,7 +46,16 @@ internal class SubcommandNode(text: String,
     return suggestions
   }
 
-  private fun getAllAvailableOptions(): List<ShellOption> {
+  private fun getAvailableOptions(): List<ShellOption> {
+    val existingOptions = children.mapNotNull { (it as? OptionNode)?.spec }
+    return getAllOptions().filter { opt ->
+      (opt.repeatTimes == 0 || existingOptions.count { it == opt } < opt.repeatTimes)
+      && opt.exclusiveOn.none { exclusive -> existingOptions.any { it.names.contains(exclusive) } }
+      && opt.dependsOn.all { dependant -> existingOptions.any { it.names.contains(dependant) } }
+    }
+  }
+
+  private fun getAllOptions(): List<ShellOption> {
     val options = mutableListOf<ShellOption>()
     options.addAll(spec.options)
     var cur = parent

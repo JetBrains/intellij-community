@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
+import org.jetbrains.plugins.terminal.exp.completion.ShellCommandParserDirectives
 import org.jetbrains.plugins.terminal.exp.util.commandSpec
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -44,7 +45,7 @@ class CommandSpecSuggestionsTest {
       }
 
       argument("file") {
-        templates("filepath")
+        suggestions("file")
       }
       argument("someOptArg", isOptional = true) {
         suggestions("s1")
@@ -85,6 +86,15 @@ class CommandSpecSuggestionsTest {
       }
     }
 
+    subcommand("optPrecedeArgs") {
+      parserDirectives = ShellCommandParserDirectives(optionsMustPrecedeArguments = true)
+      option("-c")
+      option("-d")
+      argument("arg", isOptional = true) {
+        suggestions("arg")
+      }
+    }
+
     subcommand("variadic") {
       option("-a")
       option("--var") {
@@ -108,7 +118,7 @@ class CommandSpecSuggestionsTest {
 
   @Test
   fun `main command`() {
-    doTest(expected = listOf("sub", "excl", "reqSub", "manyArgs", "variadic", "-a", "--asd", "--bcde", "--argum", "abc"))
+    doTest(expected = listOf("sub", "excl", "reqSub", "manyArgs", "optPrecedeArgs", "variadic", "-a", "--asd", "--bcde", "--argum", "abc"))
   }
 
   @Test
@@ -118,7 +128,7 @@ class CommandSpecSuggestionsTest {
 
   @Test
   fun `suggest persistent option for subcommand`() {
-    doTest("sub", expected = listOf("-o", "--opt1", "-a", "--long", "--withReqArg", "--withOptArg", "--bcde"))
+    doTest("sub", expected = listOf("-o", "--opt1", "-a", "--long", "--withReqArg", "--withOptArg", "--bcde", "file"))
   }
 
   @Test
@@ -133,7 +143,7 @@ class CommandSpecSuggestionsTest {
 
   @Test
   fun `suggest infinitely repeating option again`() {
-    doTest("sub", "-a", "-a", "-a", expected = listOf("-o", "--opt1", "-a", "--long", "--withReqArg", "--withOptArg", "--bcde"))
+    doTest("sub", "-a", "-a", "-a", expected = listOf("-o", "--opt1", "-a", "--long", "--withReqArg", "--withOptArg", "--bcde", "file"))
   }
 
   @Test
@@ -179,6 +189,16 @@ class CommandSpecSuggestionsTest {
   @Test
   fun `do not suggest variadic arg again after other arg`() {
     doTest("variadic", "req", "v", "opt", expected = listOf("-a", "--var", "--bcde"))
+  }
+
+  @Test
+  fun `suggest options after argument`() {
+    doTest("sub", "-a", "file", expected = listOf("-o", "--opt1", "-a", "--long", "--withReqArg", "--withOptArg", "s1", "--bcde"))
+  }
+
+  @Test
+  fun `do not suggest options after argument if it is restricted`() {
+    doTest("optPrecedeArgs", "-c", "arg", expected = listOf())
   }
 
   private fun doTest(vararg arguments: String, expected: List<String>) {
