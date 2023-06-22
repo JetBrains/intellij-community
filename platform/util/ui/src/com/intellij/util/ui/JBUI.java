@@ -2188,6 +2188,6 @@ public final class JBUI {
   }
 
   private static boolean isNewUI() {
-    return Registry.is("ide.experimental.ui");
+    return NewUi.isEnabled();
   }
 }

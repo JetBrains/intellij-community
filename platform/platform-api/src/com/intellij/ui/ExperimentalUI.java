@@ -43,7 +43,7 @@ import static java.time.temporal.ChronoUnit.DAYS;
  */
 @ApiStatus.Internal
 public abstract class ExperimentalUI {
-  public static final String KEY = "ide.experimental.ui";
+  public static final String KEY = NewUi.KEY;
 
   public static final String NEW_UI_USED_PROPERTY = "experimental.ui.used.once";
   public static final String NEW_UI_FIRST_SWITCH = "experimental.ui.first.switch";
@@ -52,9 +52,11 @@ public abstract class ExperimentalUI {
   private static final String FIRST_PROMOTION_DATE_PROPERTY = "experimental.ui.first.promotion.localdate";
 
   private final AtomicBoolean isIconPatcherSet = new AtomicBoolean();
-  @Nullable
-  private static volatile Boolean newUiOneSessionOverrideForThinClient = null;
   private IconPathPatcher iconPathPatcher;
+
+  static {
+    NewUi.initialize(() -> EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY));
+  }
 
   public static ExperimentalUI getInstance() {
     return ApplicationManager.getApplication().getService(ExperimentalUI.class);
@@ -62,19 +64,7 @@ public abstract class ExperimentalUI {
 
   @Contract(pure = true)
   public static boolean isNewUI() {
-    Boolean override = newUiOneSessionOverrideForThinClient;
-    return override == null
-           ? EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY)
-           : override;
-  }
-
-  protected static boolean isNewUiOverriden() {
-    return newUiOneSessionOverrideForThinClient != null;
-  }
-
-  public static void overrideNewUiForOneSessionForThinClient(boolean newUi) {
-    newUiOneSessionOverrideForThinClient = newUi;
-    getInstance().lookAndFeelChanged();
+    return NewUi.isEnabled();
   }
 
   public static void setNewUI(boolean newUI) {

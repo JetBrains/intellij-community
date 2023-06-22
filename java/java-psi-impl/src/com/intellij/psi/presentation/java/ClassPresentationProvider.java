@@ -9,10 +9,10 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.NewUi;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -34,7 +34,7 @@ public class ClassPresentationProvider implements ItemPresentationProvider<PsiCl
           PsiClassOwner classOwner = (PsiClassOwner)file;
           String packageName = classOwner.getPackageName();
           if (packageName.isEmpty()) return null;
-          return Registry.is("ide.experimental.ui") ? JavaPsiBundle.message("aux.context.display", packageName) : "(" + packageName + ")";
+          return NewUi.isEnabled() ? JavaPsiBundle.message("aux.context.display", packageName) : "(" + packageName + ")";
         }
         return null;
       }
