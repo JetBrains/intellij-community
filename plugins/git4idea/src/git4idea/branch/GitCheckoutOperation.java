@@ -89,7 +89,7 @@ class GitCheckoutOperation extends GitBranchOperation {
 
   @Override
   protected void execute() {
-    runWithSpan(TelemetryManager.getInstance().getTracer(VcsScope), "checkout", (span) -> {
+    runWithSpan(TelemetryManager.getInstance().getTracer(VcsScope), "git-checkout", (span) -> {
       StructuredIdeActivity checkoutActivity = CHECKOUT_ACTIVITY.started(myProject, () -> List.of(
         IS_BRANCH_PROTECTED.with(isBranchProtected()),
         IS_NEW_BRANCH.with(myNewBranch != null)
