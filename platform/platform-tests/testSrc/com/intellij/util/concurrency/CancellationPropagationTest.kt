@@ -795,10 +795,11 @@ class CancellationPropagationTest {
     val allowedToCompleteThenAsync = Semaphore(1)
     val finishedThenAsync = Semaphore(1)
     var timesCancelled by AtomicReference(0)
-    val readActionScheduled = Semaphore(1)
+    val readActionScheduled = Semaphore(2)
     val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Test NBRA", 1)
     val job = withRootJob { job ->
       ReadAction.nonBlocking(Callable {
+        readActionScheduled.up()
         while (!allowedToCompleteRA) {
           try {
             ProgressManager.checkCanceled()
@@ -826,6 +827,7 @@ class CancellationPropagationTest {
         }
       readActionScheduled.up()
     }
+    readActionScheduled.timeoutWaitUp()
     readActionScheduled.timeoutWaitUp()
     assertTrue(job.isActive)
     assertEquals(0, timesCancelled)
