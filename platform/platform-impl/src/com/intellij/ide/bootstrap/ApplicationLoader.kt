@@ -7,7 +7,6 @@ package com.intellij.ide.bootstrap
 
 import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.subtask
-import com.intellij.icons.AllIcons
 import com.intellij.ide.*
 import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.idea.*
@@ -17,17 +16,13 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.extensions.impl.findByIdOrFromInstance
-import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemPropertyBean
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
-import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.AppIcon
 import com.intellij.util.PlatformUtils
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.createDirectories
 import com.intellij.util.lang.ZipFilePool
-import com.intellij.util.ui.AsyncProcessIcon
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
@@ -66,7 +61,7 @@ internal suspend fun initApplicationImpl(args: List<String>,
 
     // doesn't block app start-up
     asyncScope.launch(CoroutineName("post app init tasks")) {
-      runPostAppInitTasks(app)
+      runPostAppInitTasks()
     }
 
     preloadCriticalServicesJob.join()
@@ -120,7 +115,7 @@ fun getAppInitializedListeners(app: Application): List<ApplicationInitializedLis
   return result
 }
 
-private fun CoroutineScope.runPostAppInitTasks(app: ApplicationImpl) {
+private fun CoroutineScope.runPostAppInitTasks() {
   launch(CoroutineName("create locator file") + Dispatchers.IO) {
     createAppLocatorFile()
   }
@@ -129,22 +124,6 @@ private fun CoroutineScope.runPostAppInitTasks(app: ApplicationImpl) {
     // this functionality should be used only by plugin functionality that is used after start-up
     launch(CoroutineName("system properties setting")) {
       SystemPropertyBean.initSystemProperties()
-    }
-  }
-
-  if (app.isHeadlessEnvironment) {
-    return
-  }
-
-  launch(CoroutineName("icons preloading") + Dispatchers.IO) {
-    if (app.isInternal) {
-      IconLoader.setStrictGlobally(true)
-    }
-
-    blockingContext {
-      AsyncProcessIcon("")
-      AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
-      AnimatedIcon.FS()
     }
   }
 }

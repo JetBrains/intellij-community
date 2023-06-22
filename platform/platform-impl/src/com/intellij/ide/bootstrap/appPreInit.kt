@@ -4,6 +4,7 @@ package com.intellij.ide.bootstrap
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.subtask
+import com.intellij.icons.AllIcons
 import com.intellij.ide.ApplicationLoadListener
 import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.ide.plugins.PluginSet
@@ -24,6 +25,9 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.util.IconLoader
+import com.intellij.ui.AnimatedIcon
+import com.intellij.util.ui.AsyncProcessIcon
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.VisibleForTesting
 
@@ -67,6 +71,12 @@ internal suspend fun preInitApp(app: ApplicationImpl,
       }
       catch (e: Throwable) {
         log.error("Can't initialize OpenTelemetry: will use default (noop) SDK impl", e)
+      }
+    }
+
+    if (app.isInternal && !app.isHeadlessEnvironment) {
+      launch {
+        IconLoader.setStrictGlobally(true)
       }
     }
 
@@ -114,6 +124,12 @@ internal suspend fun preInitApp(app: ApplicationImpl,
       if (!app.isHeadlessEnvironment) {
         // preload only when LafManager is ready
         app.serviceAsync<EditorColorsManager>()
+
+        launch(CoroutineName("icons preloading") + Dispatchers.IO) {
+          AsyncProcessIcon("")
+          AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
+          AnimatedIcon.FS()
+        }
       }
     }
   }
