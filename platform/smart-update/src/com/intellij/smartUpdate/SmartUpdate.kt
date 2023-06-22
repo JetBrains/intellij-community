@@ -17,6 +17,7 @@ import com.intellij.ui.dsl.builder.MutableProperty
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.MapAnnotation
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import org.jetbrains.ide.UpdateActionsListener
@@ -29,8 +30,8 @@ import java.util.*
 class SmartUpdate(val project: Project, private val coroutineScope: CoroutineScope) : PersistentStateComponent<SmartUpdate.Options>, Disposable {
 
   class Options: BaseState() {
-    var scheduled = false
-    var scheduledTime: LocalTime = LocalTime.of(6, 0)
+    var scheduled by property(false)
+    var scheduledTime by property(LocalTime.of(6, 0).toSecondOfDay())
 
     @get:MapAnnotation(surroundWithTag = false)
     var map: MutableMap<String, Boolean> by linkedMap()
@@ -38,7 +39,8 @@ class SmartUpdate(val project: Project, private val coroutineScope: CoroutineSco
     fun property(id: String) = MutableProperty({ value(id) }, { map[id] = it })
   }
 
-  var restartRequested: Boolean = false
+  var restartRequested = false
+  var updateScheduled: Deferred<*>? = null
   private val options = Options()
 
   init {
@@ -71,8 +73,9 @@ class SmartUpdate(val project: Project, private val coroutineScope: CoroutineSco
 
   internal fun scheduleUpdate() {
     if (!options.scheduled) return
-    coroutineScope.async {
-      var duration = Duration.between(LocalTime.now(), options.scheduledTime)
+    updateScheduled?.cancel()
+    updateScheduled = coroutineScope.async {
+      var duration = Duration.between(LocalTime.now(), LocalTime.ofSecondOfDay(options.scheduledTime.toLong()))
       if (duration.isNegative) duration = duration.plusDays(1)
       delay(duration.toMillis())
       blockingContext { execute(project) }
@@ -89,6 +92,7 @@ class SmartUpdateAction: DumbAwareAction(SmartUpdateBundle.message("action.smart
     if (SmartUpdateDialog(project).showAndGet()) {
       project.service<SmartUpdate>().execute(project, e)
     }
+    project.service<SmartUpdate>().scheduleUpdate()
   }
 
   override fun update(e: AnActionEvent) {

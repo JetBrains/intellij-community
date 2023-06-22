@@ -7,13 +7,9 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
-import java.time.Instant
-import java.time.LocalDate
 import java.time.LocalTime
-import java.time.ZoneId
-import java.util.*
 import javax.swing.JSpinner
-import javax.swing.SpinnerDateModel
+import javax.swing.SpinnerNumberModel
 
 class SmartUpdateDialog(private val project: Project) : DialogWrapper(project) {
   init {
@@ -40,18 +36,26 @@ class SmartUpdateDialog(private val project: Project) : DialogWrapper(project) {
       lateinit var scheduled: Cell<JBCheckBox>
       row { scheduled = checkBox(SmartUpdateBundle.message("checkbox.schedule.update")).bindSelected({ options.scheduled }, { options.scheduled = it}) }
       indent {
-        val spinner = JSpinner(SpinnerDateModel().apply { value = getScheduled(options.scheduledTime) })
-        spinner.editor = JSpinner.DateEditor(spinner, "hh:mm")
+        val time = LocalTime.ofSecondOfDay(options.scheduledTime.toLong())
+        val hour = SpinnerNumberModel(time.hour, 0, 23, 1)
+        val minute = SpinnerNumberModel(time.minute, 0, 59, 1)
+
         row {
           label(SmartUpdateBundle.message("label.every.day.at"))
-          cell(spinner)
+          cell(JSpinner(hour).apply { editor = JSpinner.NumberEditor(this, "##")})
+          @Suppress("DialogTitleCapitalization")
+          label(SmartUpdateBundle.message("label.hours"))
+          cell(JSpinner(minute).apply { editor = JSpinner.NumberEditor(this, "##")})
+            .onApply { options.scheduledTime = LocalTime.of(hour.number.toInt(), minute.number.toInt()).toSecondOfDay() }
+          @Suppress("DialogTitleCapitalization")
+          label(SmartUpdateBundle.message("label.minutes"))
         }.enabledIf(scheduled.selected)
       }
     }
   }
 
-  private fun getScheduled(time: LocalTime): Date {
-    val instant: Instant = time.atDate(LocalDate.now()).atZone(ZoneId.systemDefault()).toInstant()
-    return Date.from(instant)
+  override fun doCancelAction() {
+    applyFields()
+    super.doCancelAction()
   }
 }
