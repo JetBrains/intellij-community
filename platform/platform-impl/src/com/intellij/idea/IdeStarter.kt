@@ -3,11 +3,8 @@
 
 package com.intellij.idea
 
-import com.intellij.diagnostic.LoadingState
-import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.*
 import com.intellij.diagnostic.StartUpMeasurer.startActivity
-import com.intellij.diagnostic.runActivity
-import com.intellij.diagnostic.runChild
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.*
 import com.intellij.ide.impl.ProjectUtil
@@ -67,6 +64,10 @@ open class IdeStarter : ModernApplicationStarter() {
       val app = ApplicationManagerEx.getApplicationEx()
       val lifecyclePublisher = app.messageBus.syncPublisher(AppLifecycleListener.TOPIC)
       openProjectIfNeeded(args = args, app = app, asyncCoroutineScope = this, lifecyclePublisher = lifecyclePublisher)
+
+      app.serviceAsync<PerformanceWatcher>()
+      // cache it as IdeEventQueue should use loaded PerformanceWatcher service as soon as it is ready (getInstanceIfCreated is used)
+      PerformanceWatcher.getInstance().startEdtSampling()
 
       launch { reportPluginErrors() }
 

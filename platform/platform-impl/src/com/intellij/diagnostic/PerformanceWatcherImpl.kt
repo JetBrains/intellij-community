@@ -84,19 +84,6 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
       coroutineScope.launch {
         asyncInit()
 
-        val samplingIntervalMs = samplingInterval
-        @Suppress("KotlinConstantConditions")
-        if (samplingIntervalMs <= 0) {
-          return@launch
-        }
-
-        while (true) {
-          delay(samplingIntervalMs)
-          samplePerformance(samplingIntervalMs)
-        }
-      }
-
-      coroutineScope.launch {
         taskFlow.collectLatest { task ->
           if (task == null) {
             return@collectLatest
@@ -105,6 +92,25 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
           delay(unresponsiveInterval.toLong())
           task.edtFrozen()
         }
+      }
+    }
+  }
+
+  override fun startEdtSampling() {
+    if (!isActive) {
+      return
+    }
+
+    coroutineScope.launch {
+      val samplingIntervalMs = samplingInterval
+      @Suppress("KotlinConstantConditions")
+      if (samplingIntervalMs <= 0) {
+        return@launch
+      }
+
+      while (true) {
+        delay(samplingIntervalMs)
+        samplePerformance(samplingIntervalMs)
       }
     }
   }

@@ -4,6 +4,7 @@ package com.intellij.diagnostic
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Path
 
@@ -97,4 +98,7 @@ abstract class PerformanceWatcher {
    * library internals might be omitted.
    */
   abstract fun dumpThreads(pathPrefix: String, appendMillisecondsToFileName: Boolean, stripDump: Boolean): Path?
+
+  @Internal
+  abstract fun startEdtSampling()
 }

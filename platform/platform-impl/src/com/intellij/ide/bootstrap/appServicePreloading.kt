@@ -75,12 +75,6 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
       return@launch
     }
 
-    launch {
-      app.serviceAsync<PerformanceWatcher>()
-      // cache it as IdeEventQueue should use loaded PerformanceWatcher service as soon as it is ready (getInstanceIfCreated is used)
-      PerformanceWatcher.getInstance()
-    }
-
     pathMacroJob.join()
 
     launch {
@@ -91,6 +85,10 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
     launch(CoroutineName("CustomActionsSchema preloading")) { app.serviceAsync<CustomActionsSchema>() }
     // wants PathMacros
     launch(CoroutineName("GeneralSettings preloading")) { app.serviceAsync<GeneralSettings>() }
+
+    launch {
+      app.serviceAsync<PerformanceWatcher>()
+    }
 
     // ActionManager uses KeymapManager
     subtask("KeymapManager preloading") { app.serviceAsync<KeymapManager>() }
