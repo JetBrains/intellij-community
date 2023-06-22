@@ -80,7 +80,7 @@ private fun calcStats(log: VfsLog): Stats {
                   //else {
                   //  attrCount[attributeId] = attrCount.getOrDefault(attributeId, 0) + 1
                   //}
-                  val data = payloadStorage.readAt(op.attrDataPayloadRef)
+                  val data = payloadStorage.readPayload(op.attrDataPayloadRef)
                   if (data == null) {
                     stats.nullPayloads.incrementAndGet()
                   }
@@ -89,7 +89,7 @@ private fun calcStats(log: VfsLog): Stats {
                   }
                 }
                 is VfsOperation.ContentsOperation.WriteBytes -> {
-                  val data = payloadStorage.readAt(op.dataPayloadRef)
+                  val data = payloadStorage.readPayload(op.dataPayloadRef)
                   if (data == null) {
                     stats.nullPayloads.incrementAndGet()
                   }
@@ -178,7 +178,7 @@ private fun vfsRecoveryDraft(log: VfsLog,
   var vfileEvents = 0
   var vfileEventContentOps = 0
 
-  val payloadReadAt = log.context.payloadStorage::readAt
+  val payloadReadAt = log.context.payloadStorage::readPayload
   val payloadReader: (PayloadRef) -> State.DefinedState<ByteArray> = {
     val data = payloadReadAt(it)
     if (data == null) State.NotAvailable(NotEnoughInformationCause("data is not available anymore"))

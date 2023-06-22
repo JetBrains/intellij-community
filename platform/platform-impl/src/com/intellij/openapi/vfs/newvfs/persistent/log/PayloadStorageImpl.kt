@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef.Source
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.ByteCountingOutputStream
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.ChunkMMappedFileIO
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.StorageIO
@@ -46,7 +47,7 @@ class PayloadStorageImpl(
         body()
         validateWrittenBytesCount(0L)
       }
-      return PayloadRef.ZERO_SIZE
+      return PayloadRef(0L, Source.Inline0)
     }
     val buf = BufferExposingByteArrayOutputStream(10) // 1 + (64 - 6) / 7 < 10
     val out = DataOutputStream(buf)
@@ -59,16 +60,16 @@ class PayloadStorageImpl(
         body()
         validateWrittenBytesCount(sizeBytes)
       }
-      PayloadRef(payloadPos)
+      PayloadRef(payloadPos, Source.PayloadStorage)
     }
   }
 
-  override fun readAt(ref: PayloadRef): ByteArray? {
-    if (ref == PayloadRef.ZERO_SIZE) return ByteArray(0)
+  override fun readPayload(payloadRef: PayloadRef): ByteArray? {
+    if (payloadRef.source == Source.Inline0) return ByteArray(0)
     // TODO: revisit unexpected value cases
-    if (ref.offset < 0 || ref.offset >= position.getReadyPosition()) return null
+    if (payloadRef.offset < 0 || payloadRef.offset >= position.getReadyPosition()) return null
     val buf = ByteArray(10) // 1 + (64 - 6) / 7 < 10
-    storageIO.read(ref.offset, buf)
+    storageIO.read(payloadRef.offset, buf)
     val inp = ByteArrayInputStream(buf)
     val sizeBytes = try {
       DataInputOutputUtil.readLONG(DataInputStream(inp))
@@ -82,7 +83,7 @@ class PayloadStorageImpl(
       return null
     }
     val data = ByteArray(sizeBytes.toInt())
-    storageIO.read(ref.offset + dataOffset, data)
+    storageIO.read(payloadRef.offset + dataOffset, data)
     return data
   }
 

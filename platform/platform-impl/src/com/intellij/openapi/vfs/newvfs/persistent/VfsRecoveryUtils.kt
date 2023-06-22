@@ -176,7 +176,7 @@ object VfsRecoveryUtils {
       val attributeEnumerator = SimpleStringPersistentEnumerator(newStoragePaths.storagePath(attrEnumFile))
 
       val payloadReader: (PayloadRef) -> DefinedState<ByteArray> = {
-        val data = logContext.payloadStorage.readAt(it)
+        val data = logContext.payloadStorage.readPayload(it)
         if (data == null) NotAvailable(NotEnoughInformationCause("data is not available anymore"))
         else Ready(data)
       }
@@ -383,7 +383,7 @@ object VfsRecoveryUtils {
       val superRootValidChildren = superRootChildren.filter { ctx.fileStates.getState(it) == RecoveryState.INITIALIZED }
       // root children attr is a special case
       newFsRecords.writeAttribute(superRootId, PersistentFSTreeAccessor.CHILDREN_ATTR).use { output ->
-        val childrenToSave = superRootValidChildren.map { it }.toSet()
+        val childrenToSave = superRootValidChildren.toSet()
         val (ids, names) = superRootChildrenByAttr.filter { it.fileId in childrenToSave }
           .sortedBy { it.fileId }.map { it.fileId to it.nameId }.unzip()
         PersistentFSTreeAccessor.saveNameIdSequenceWithDeltas(names.toIntArray(), ids.toIntArray(), output)
@@ -401,7 +401,7 @@ object VfsRecoveryUtils {
         if (validChildren.isEmpty()) continue
         try {
           val idDeltas =
-            (listOf(fileId) + validChildren.map { it }.sorted())
+            (listOf(fileId) + validChildren.sorted())
               .zipWithNext()
               .map { it.second - it.first }
           newFsRecords.writeAttribute(fileId, PersistentFSTreeAccessor.CHILDREN_ATTR).use { out ->
