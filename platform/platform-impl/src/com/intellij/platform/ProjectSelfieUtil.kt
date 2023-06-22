@@ -18,7 +18,7 @@ import java.nio.file.Path
 
 internal object ProjectSelfieUtil {
   val isEnabled: Boolean
-    get() = ExperimentalUI.isNewUI() && Registry.`is`("ide.project.loading.show.last.state", true)
+    get() = ExperimentalUI.isNewUI() && Registry.`is`("ide.project.loading.show.last.state", false)
 
   internal fun getSelfieLocation(projectWorkspaceId: String): Path {
     return appSystemDir.resolve("project-selfies-v2").resolve("$projectWorkspaceId.ij")
