@@ -69,11 +69,18 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   static final int ALL_FLAGS_MASK =
-    VfsDataFlags.IS_WRITABLE_FLAG | VfsDataFlags.IS_HIDDEN_FLAG | VfsDataFlags.IS_OFFLINE | VfsDataFlags.SYSTEM_LINE_SEPARATOR_DETECTED |
-    VfsDataFlags.DIRTY_FLAG | VfsDataFlags.IS_SYMLINK_FLAG | VfsDataFlags.STRICT_PARENT_HAS_SYMLINK_FLAG | VfsDataFlags.CHILDREN_CASE_SENSITIVE;
+    VfsDataFlags.IS_WRITABLE_FLAG |
+    VfsDataFlags.IS_HIDDEN_FLAG |
+    VfsDataFlags.IS_OFFLINE |
+    VfsDataFlags.SYSTEM_LINE_SEPARATOR_DETECTED |
+    VfsDataFlags.DIRTY_FLAG |
+    VfsDataFlags.IS_SYMLINK_FLAG |
+    VfsDataFlags.STRICT_PARENT_HAS_SYMLINK_FLAG |
+    VfsDataFlags.CHILDREN_CASE_SENSITIVE;
 
   @MagicConstant(flagsFromClass = VfsDataFlags.class)
-  @interface Flags {}
+  @interface Flags {
+  }
 
   private volatile @NotNull("except `NULL_VIRTUAL_FILE`") VfsData.Segment mySegment;
   private volatile VirtualDirectoryImpl myParent;
@@ -90,7 +97,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     myId = id;
     myParent = parent;
     if (id <= 0) {
-      throw new IllegalArgumentException("id must be positive but got: "+id);
+      throw new IllegalArgumentException("id must be positive but got: " + id);
     }
   }
 
@@ -106,7 +113,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     VfsData data = getSegment().vfsData;
     PersistentFSImpl fs = (PersistentFSImpl)ManagingFS.getInstanceOrNull();
     if (fs != null && !fs.isOwnData(data)) {
-      throw new AssertionError("Alien file!");
+      throw new AssertionError("Alien file! id: " + myId + ", parent: " + myParent);
     }
     return data;
   }
@@ -250,7 +257,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     int length = 0;
     List<CharSequence> names = new ArrayList<>();
     VirtualFileSystemEntry v = this;
-    for (;;) {
+    for (; ; ) {
       VirtualDirectoryImpl parent = v.getParent();
       if (parent == null) {
         break;
@@ -412,7 +419,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       return getUrl();
     }
     String reason = getInvalidationInfo();
-    return getUrl() + " (invalid" + (reason == null ? "" : ", reason: "+reason) + ")";
+    return getUrl() + " (invalid" + (reason == null ? "" : ", reason: " + reason) + ")";
   }
 
   public void setNewName(@NotNull String newName) {
@@ -525,7 +532,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     if (property == VFileProperty.SPECIAL) return !isDirectory() && isSpecial();
     if (property == VFileProperty.HIDDEN) return getFlagInt(VfsDataFlags.IS_HIDDEN_FLAG);
     if (property == VFileProperty.SYMLINK) return isSymlink();
-    throw new IllegalArgumentException("unknown property: "+property);
+    throw new IllegalArgumentException("unknown property: " + property);
   }
 
   /**
@@ -554,6 +561,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   public void setWritableFlag(boolean value) {
     setFlagInt(VfsDataFlags.IS_WRITABLE_FLAG, value);
   }
+
   @ApiStatus.Internal
   public void setHiddenFlag(boolean value) {
     setFlagInt(VfsDataFlags.IS_HIDDEN_FLAG, value);
@@ -594,7 +602,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     if (VfsUtilCore.isAncestor(resolved, this, false)) return true;
 
     // check if it's circular - any symlink above resolves to my target too
-    for (VirtualFileSystemEntry p = getParent(); p != null ; p = p.getParent()) {
+    for (VirtualFileSystemEntry p = getParent(); p != null; p = p.getParent()) {
       // when the file has no symlinks up the hierarchy, it's not circular
       if (!p.thisOrParentHaveSymlink()) return false;
       if (p.isSymlink()) {

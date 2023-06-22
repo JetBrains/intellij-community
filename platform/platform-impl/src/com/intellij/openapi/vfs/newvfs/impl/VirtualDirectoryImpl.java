@@ -600,7 +600,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
                                    boolean markAllChildrenLoaded,
                                    @NotNull BiConsumer<? super VirtualFile, ? super ChildInfo> callback) {
     if (added.size() <= 1) {
-      //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < added.size(); i++) {
         ChildInfo info = added.get(i);
         assert info.getId() > 0 : info;
