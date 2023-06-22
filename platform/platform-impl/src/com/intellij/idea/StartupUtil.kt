@@ -214,9 +214,9 @@ fun CoroutineScope.startApplication(args: List<String>,
         euaDocumentDeferred = euaDocumentDeferred,
       )
 
-      if (ConfigImportHelper.isNewUser() && System.getProperty("ide.experimental.ui") == null) {
+      if (ConfigImportHelper.isNewUser() && System.getProperty(NewUi.KEY) == null) {
         runCatching {
-          EarlyAccessRegistryManager.setAndFlush(mapOf("ide.experimental.ui" to "true"))
+          EarlyAccessRegistryManager.setAndFlush(mapOf(NewUi.KEY to "true"))
         }.getOrLogException(log)
       }
     }
