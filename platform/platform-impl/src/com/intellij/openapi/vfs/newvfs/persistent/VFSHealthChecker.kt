@@ -8,13 +8,18 @@ import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter
 import com.intellij.openapi.diagnostic.JulLogger
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Flags.CHILDREN_CACHED
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Flags.IS_DIRECTORY
+import com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckerConstants.CHECK_ORPHAN_RECORDS
 import com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckerConstants.HEALTH_CHECKING_ENABLED
 import com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckerConstants.HEALTH_CHECKING_PERIOD_MS
+import com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckerConstants.HEALTH_CHECKING_START_DELAY_MS
 import com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckerConstants.LOG
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.BitUtil
 import com.intellij.util.SystemProperties
+import com.intellij.util.SystemProperties.getBooleanProperty
+import com.intellij.util.SystemProperties.getIntProperty
 import com.intellij.util.io.DataEnumeratorEx
 import com.intellij.util.io.PowerStatus
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
@@ -26,6 +31,7 @@ import java.util.logging.Level
 import kotlin.system.exitProcess
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.DurationUnit.MILLISECONDS
 import kotlin.time.toDuration
@@ -33,12 +39,24 @@ import kotlin.time.toDuration
 
 object VFSHealthCheckerConstants {
   @JvmStatic
-  val HEALTH_CHECKING_ENABLED = SystemProperties.getBooleanProperty("vfs.health-check.enabled",
-                                                                    ApplicationManager.getApplication().isEAP)
+  val HEALTH_CHECKING_ENABLED = getBooleanProperty("vfs.health-check.enabled",
+                                                   ApplicationManager.getApplication().isEAP)
 
   @JvmStatic
-  val HEALTH_CHECKING_PERIOD_MS = SystemProperties.getIntProperty("vfs.health-check.checking-period-ms",
-                                                                  1.hours.inWholeMilliseconds.toInt())
+  val HEALTH_CHECKING_PERIOD_MS = getIntProperty("vfs.health-check.checking-period-ms",
+                                                 1.hours.inWholeMilliseconds.toInt())
+
+  /** 10min in most cases enough for the initial storm of requests to VFS (scanning/indexing/etc)
+   *  to finish, so VFS _likely_ +/- settles down after that.
+   */
+  @JvmStatic
+  val HEALTH_CHECKING_START_DELAY_MS = getIntProperty("vfs.health-check.checking-start-delay-ms",
+                                                      10.minutes.inWholeMilliseconds.toInt())
+
+
+  /** May take quite a time, hence disabled by default */
+  @JvmStatic
+  val CHECK_ORPHAN_RECORDS = getBooleanProperty("vfs.health-check.check-orphan-records", false)
 
   @JvmStatic
   val LOG: Logger = FSRecords.LOG
@@ -48,28 +66,37 @@ object VFSHealthCheckerConstants {
 class VFSHealthCheckServiceStarter : ApplicationInitializedListener {
   override suspend fun execute(asyncScope: CoroutineScope) {
     if (HEALTH_CHECKING_ENABLED) {
-      if (HEALTH_CHECKING_PERIOD_MS < 1000) {
-        LOG.warn("VFS health-check is not enabled: incorrect period $HEALTH_CHECKING_PERIOD_MS ms, must be >= 1000")
+      if (HEALTH_CHECKING_PERIOD_MS < 1.minutes.inWholeMilliseconds) {
+        LOG.warn("VFS health-check is NOT enabled: incorrect period $HEALTH_CHECKING_PERIOD_MS ms, must be >= 1 min")
         return
       }
-      LOG.info("VFS health-check enabled: each $HEALTH_CHECKING_PERIOD_MS ms")
+      LOG.info("VFS health-check enabled: first after $HEALTH_CHECKING_START_DELAY_MS ms, and each following $HEALTH_CHECKING_PERIOD_MS ms")
 
       asyncScope.launch(Dispatchers.Default) {
+        delay(HEALTH_CHECKING_START_DELAY_MS.toDuration(MILLISECONDS))
+
         val checkingPeriod = HEALTH_CHECKING_PERIOD_MS.toDuration(MILLISECONDS)
         while (isActive && !FSRecords.implOrFail().isDisposed) {
-          delay(checkingPeriod)
 
-          if (PowerStatus.getPowerStatus() == PowerStatus.BATTERY
-              || PowerSaveMode.isEnabled()) {
-            delay(checkingPeriod) //make it twice rarer
-          }
           //MAYBE RC: track FSRecords.getLocalModCount() to run the check only if there are enough changes
           //          since the last check.
-
           //MAYBE RC: use IdleTracker.getInstance().events to launch checkup on next _idle_ period?
-          launch(Dispatchers.IO) {
-            //MAYBE RC: show a progress bar -- or better not bother user?
-            doCheckupAndReportResults()
+
+          if (!PowerSaveMode.isEnabled()) {
+            launch(Dispatchers.IO) {
+              //MAYBE RC: show a progress bar -- or better not bother user?
+              doCheckupAndReportResults()
+            }
+          }
+          else {
+            LOG.info("VFS health-check skipped: PowerSaveMode is enabled")
+          }
+
+          delay(checkingPeriod)
+
+          if (PowerStatus.getPowerStatus() == PowerStatus.BATTERY) {
+            LOG.info("VFS health-check delayed: power source is battery")
+            delay(checkingPeriod) //make it twice rarer
           }
         }
       }
@@ -220,9 +247,24 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
             }
           } //else: it is ok, contentId _could_ be NULL_ID
 
-          if (parentId == DataEnumeratorEx.NULL_ID && !allRoots.contains(fileId)) {
-            nullParents++
-            log.info("file[#$fileId]{$fileName}: not in ROOTS, but parentId is not set (NULL_ID) -> non-ROOTS must have parents")
+          if (parentId == DataEnumeratorEx.NULL_ID) {
+            if (!allRoots.contains(fileId)) {
+              nullParents++
+              log.info("file[#$fileId]{$fileName}: not in ROOTS, but parentId is not set (NULL_ID) -> non-ROOTS must have parents")
+            }
+          }
+          else {
+            if (CHECK_ORPHAN_RECORDS) {
+              if (BitUtil.isSet(flags, CHILDREN_CACHED)) {
+                val childrenOfParent = impl.listIds(parentId)
+                if (childrenOfParent.indexOf(fileId) < 0) {
+                  inconsistentParentChildRelationships++ //MAYBE RC: dedicated counter?
+                  log.info("file[#$fileId]{$fileName}: record is orphan, .parent.children(first 64: ${
+                    childrenOfParent.take(64)
+                  }...) doesn't contain it!")
+                }
+              }
+            }
           }
 
           val isDirectory = BitUtil.isSet(flags, IS_DIRECTORY)
@@ -232,6 +274,8 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
             for (i in children.indices) {
               childrenChecked++
               val childId = children[i]
+              //re-request maxAllocatedID before loop so racing changes will be accounted for:
+              val maxAllocatedID = fileRecords.maxAllocatedID()
               if (childId < FSRecords.MIN_REGULAR_FILE_ID || childId > maxAllocatedID) {
                 generalErrors++ //MAYBE RC: dedicated counter?
                 log.info("file[#$fileId]{$fileName}: children[$i][#$childId] " +
@@ -253,6 +297,10 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
           }
 
           //TODO RC: try read _all_ attributes, check all them are readable
+          //if(attributeRecordId!=AbstractAttributesStorage.NON_EXISTENT_ATTR_RECORD_ID) {
+          //  TODO RC: check attribute storage _has_ such a record (not deleted)
+          //}
+
         }
         catch (t: Throwable) {
           generalErrors++
@@ -415,8 +463,10 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
   }
 }
 
-/** Runs health-check on given VFS files (<path-to-VFS-dir>) in read-only mode (i.e. doesn't change anything),
- * and prints report */
+/**
+ * Runs health-check on given VFS files (<path-to-VFS-dir>) and prints report.
+ * BEWARE: it could change VFS files, e.g. rebuild some of them -- so always make a backup.
+ */
 fun main(args: Array<String>) {
   if (args.isEmpty()) {
     System.err.println("Usage: <path-to-VFS-dir>")
@@ -426,6 +476,10 @@ fun main(args: Array<String>) {
   println("Checking VFS [$path]")
   val records = FSRecordsImpl.connect(path, emptyList()) { _, error ->
     throw error
+  }
+  println("VFS roots:")
+  records.forEachRoot { rootUrl, rootId ->
+    println("\troot[$rootId]: url: '$rootUrl")
   }
 
   val log = configureLogger()
