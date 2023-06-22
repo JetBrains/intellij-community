@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.AnimatedIcon
 import com.intellij.util.ui.AsyncProcessIcon
@@ -115,6 +116,15 @@ internal suspend fun preInitApp(app: ApplicationImpl,
     euaTaskDeferred?.await()?.invoke()
 
     asyncScope.launch {
+      if (!app.isHeadlessEnvironment) {
+        launch(CoroutineName("icons preloading") + Dispatchers.IO) {
+          Disposer.dispose(AsyncProcessIcon.createBig(""))
+          Disposer.dispose(AsyncProcessIcon(""))
+          AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
+          AnimatedIcon.FS()
+        }
+      }
+
       loadIconMapping?.join()
       // preloaded as a part of preloadCriticalServices, used by LafManager
       app.serviceAsync<UISettings>()
@@ -123,12 +133,8 @@ internal suspend fun preInitApp(app: ApplicationImpl,
       }
       if (!app.isHeadlessEnvironment) {
         // preload only when LafManager is ready
-        app.serviceAsync<EditorColorsManager>()
-
-        launch(CoroutineName("icons preloading") + Dispatchers.IO) {
-          AsyncProcessIcon("")
-          AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
-          AnimatedIcon.FS()
+        launch {
+          app.serviceAsync<EditorColorsManager>()
         }
       }
     }

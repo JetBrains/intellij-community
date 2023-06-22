@@ -11,6 +11,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.ui.AbstractPainter
@@ -571,49 +572,29 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatch
   }
 }
 
+private const val LOADING_ALPHA = 0.5f
+
 private class IdePaneLoadingLayer(
   private val pane: JComponent,
   private val loadingState: FrameLoadingState,
   private val onFinish: () -> Unit,
 ) {
-  companion object {
-    private const val ALPHA = 0.5f
-  }
+  private var currentAlpha = LOADING_ALPHA
 
-  private var currentAlpha = ALPHA
-
-  @Volatile
-  var icon: JComponent? = null
+  @JvmField
+  val icon: JComponent
 
   private var selfie: Image? = loadingState.selfie
 
   init {
-    val scheduledTime = System.currentTimeMillis()
-    loadingState.loadingScope.launch {
-      delay((300 - (System.currentTimeMillis() - scheduledTime)).coerceAtLeast(0))
-
-      withContext(Dispatchers.EDT) {
-        val icon = object : AsyncProcessIcon.Big("Loading") {
-          init {
-            isOpaque = false
-          }
-        }
-        this@IdePaneLoadingLayer.icon = icon
-        pane.add(icon)
-      }
-    }
+    icon = AsyncProcessIcon.createBig("Loading")
+    icon.isOpaque = false
+    pane.add(icon)
 
     loadingState.loadingScope.coroutineContext.job.invokeOnCompletion { cause ->
-      val finishCoroutineScope = try {
+      val finishCoroutineScope = runCatching {
         if (cause == null) loadingState.finishScopeProvider() else null
-      }
-      catch (ignore: CancellationException) {
-        null
-      }
-      catch (e: Throwable) {
-        thisLogger().error(e)
-        null
-      }
+      }.getOrLogException(thisLogger())
 
       if (finishCoroutineScope == null) {
         @Suppress("DEPRECATION")
@@ -632,13 +613,10 @@ private class IdePaneLoadingLayer(
           try {
             // a gutter icon leads to editor shift, so, we cannot paint selfie with opacity
             selfie = null
-            val icon = icon
             removeIcon()
-            if (icon != null) {
-              fadeOut(initialAlpha = ALPHA) { alpha ->
-                currentAlpha = alpha
-                icon.paintImmediately(icon.bounds)
-              }
+            fadeOut(initialAlpha = LOADING_ALPHA) { alpha ->
+              currentAlpha = alpha
+              icon.paintImmediately(icon.bounds)
             }
           }
           finally {
@@ -650,10 +628,7 @@ private class IdePaneLoadingLayer(
   }
 
   private fun removeIcon() {
-    icon?.let {
-      icon = null
-      pane.remove(it)
-    }
+    pane.remove(icon)
   }
 
   fun paintPane(g: Graphics) {
@@ -667,19 +642,20 @@ private class IdePaneLoadingLayer(
       g.setColor(JBColor.PanelBackground)
       g.fillRect(0, 0, pane.width, pane.height)
     }
-    else if (currentAlpha == ALPHA) {
-      // we draw image as semi-transparent, but we cannot show what is actually happening, so, we hide it using a non-transparent background
+    else if (currentAlpha == LOADING_ALPHA) {
+      // we draw the image as semi-transparent, but we cannot show what is actually happening,
+      // so, we hide it using a non-transparent background
       g.color = JBColor.PanelBackground
       g.fillRect(0, 0, pane.width, pane.height)
 
       (g as Graphics2D).composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, currentAlpha)
 
-      StartupUiUtil.drawImage(g, selfie)
+      drawImage(g, selfie)
     }
     else {
       // end animation
       (g as Graphics2D).composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, currentAlpha)
-      StartupUiUtil.drawImage(g, selfie)
+      drawImage(g, selfie)
     }
   }
 
@@ -711,7 +687,7 @@ private class IdePaneLoadingLayer(
 
 interface FrameLoadingState {
   companion object {
-    const val PROJECT_LOADING_CANCELLED_BY_USER: String = "PROJECT_LOADING_CANCELLED_BY_USER"
+    internal const val PROJECT_LOADING_CANCELLED_BY_USER: String = "PROJECT_LOADING_CANCELLED_BY_USER"
   }
 
   /**
