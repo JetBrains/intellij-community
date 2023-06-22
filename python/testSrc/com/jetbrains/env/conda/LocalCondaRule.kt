@@ -4,6 +4,7 @@ package com.jetbrains.env.conda
 import com.intellij.execution.processTools.getResultStdout
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
+import com.intellij.openapi.diagnostic.logger
 import com.jetbrains.env.conda.LocalCondaRule.Companion.CONDA_PATH
 import com.jetbrains.python.sdk.add.target.conda.TargetCommandExecutor
 import com.jetbrains.python.sdk.add.target.conda.TargetEnvironmentRequestCommandExecutor
@@ -57,9 +58,14 @@ class LocalCondaRule : ExternalResource() {
     condasToRemove.removeAll(condasBeforeTest)
     for (envName in condasToRemove) {
       val condaPath = condaPath.toString()
-      val args = arrayOf(condaPath, "remove", "--name", envName, "--all", "-y")
       println("Removing $envName")
-      Runtime.getRuntime().exec(args).getResultStdout().getOrThrow()
+
+      for (arg in arrayOf("--name", "-p")) {
+        val args = arrayOf(condaPath, "remove", arg, envName, "--all", "-y")
+        Runtime.getRuntime().exec(args).getResultStdout().getOrElse {
+          logger<LocalCondaRule>().warn(it)
+        }
+      }
     }
   }
 
