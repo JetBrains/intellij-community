@@ -5,18 +5,18 @@ import com.intellij.workspaceModel.codegen.impl.writer.*
 import com.intellij.workspaceModel.codegen.impl.writer.fields.implWsEntityFieldCode
 import com.intellij.workspaceModel.codegen.impl.writer.fields.refsConnectionId
 import com.intellij.workspaceModel.codegen.impl.writer.fields.refsConnectionIdCode
-import com.intellij.platform.workspace.storage.CodeGeneratorVersions
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
+import com.intellij.workspaceModel.codegen.impl.CodeGeneratorVersionCalculator
 
 fun ObjClass<*>.implWsEntityCode(): String {
   return """
 package ${module.name}    
 
-@${GeneratedCodeApiVersion::class.fqn}(${CodeGeneratorVersions.API_VERSION})
-@${GeneratedCodeImplVersion::class.fqn}(${CodeGeneratorVersions.IMPL_VERSION})
+@${GeneratedCodeApiVersion::class.fqn}(${CodeGeneratorVersionCalculator.apiVersion})
+@${GeneratedCodeImplVersion::class.fqn}(${CodeGeneratorVersionCalculator.implementationMajorVersion})
 ${if (openness.instantiatable) "open" else "abstract"} class $javaImplName(val dataSource: $javaDataName): $javaFullName, ${WorkspaceEntityBase::class.fqn}() {
     ${
     """

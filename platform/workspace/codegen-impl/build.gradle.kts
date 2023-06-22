@@ -4,8 +4,12 @@ plugins {
   id("org.jetbrains.kotlin.jvm") version "1.8.0"
 }
 
+val codegenImplMinorVersion =  project.findProperty("codegenImplMinorVersion")?.toString()
+val codegenImplMajorVersion =  project.findProperty("codegenImplMajorVersion")?.toString()
+val codegenApiVersion =  project.findProperty("codegenApiVersion")?.toString()
+
 group = "com.jetbrains.intellij.platform"
-version = "0.0.2"
+version = "$codegenApiVersion.$codegenImplMajorVersion.$codegenImplMinorVersion"
 
 repositories {
   mavenCentral()
@@ -22,6 +26,13 @@ repositories {
 
 kotlin {
   jvmToolchain(17)
+}
+
+tasks.withType(Jar::class) {
+  manifest {
+    attributes["Specification-Version"] = "$codegenApiVersion"
+    attributes["Implementation-Version"] = "$codegenImplMajorVersion"
+  }
 }
 
 publishing {
