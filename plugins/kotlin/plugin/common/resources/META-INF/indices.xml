@@ -81,5 +81,18 @@
     <registryKey key="kotlin.indices.short.names.filtering.enabled" defaultValue="true"
                  description="Filter irrelevant Kotlin FQNames by short name index"
                  restartRequired="true"/>
+
+    <notificationGroup
+            id="Recover Kotlin Indices"
+            displayType="STICKY_BALLOON"
+            bundle="messages.KotlinBaseAnalysisBundle"
+            key="kotlin.repair.indices.group.name"
+    />
   </extensions>
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.stubindex.resolve.KotlinRepairIdeAfterCorruptionNotification"
+              topic="org.jetbrains.kotlin.idea.stubindex.resolve.KotlinCorruptedIndexListener"
+              activeInHeadlessMode="false"
+              activeInTestMode="false"/>
+  </projectListeners>
 </idea-plugin>
