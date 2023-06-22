@@ -1520,9 +1520,11 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   private boolean isAutoscrollFromSourceNotBlocked(String paneId) {
     AbstractProjectViewPane pane = getProjectViewPaneById(paneId);
-    if (pane == null) return false;
+    if (pane == null || pane != getCurrentProjectViewPane()) return false;
+    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
+    if (toolWindow == null || !toolWindow.isVisible()) return false;
     JTree tree = pane.getTree();
-    if (tree == null || !tree.isShowing()) return false;
+    if (tree == null) return false;
     return !ClientProperty.isTrue(tree, AUTO_SCROLL_FROM_SOURCE_BLOCKED);
   }
 

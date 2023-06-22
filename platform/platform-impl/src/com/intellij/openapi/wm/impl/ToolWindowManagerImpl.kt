@@ -61,10 +61,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEve
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType.MovedOrResized
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.toolWindow.*
-import com.intellij.ui.BalloonImpl
-import com.intellij.ui.ClientProperty
-import com.intellij.ui.ComponentUtil
-import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.*
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -2052,7 +2049,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
    * Handles event from decorator and modify weight/floating bounds of the
    * tool window depending on a decoration type.
    */
-  fun movedOrResized(source: InternalDecoratorImpl) {
+  open fun movedOrResized(source: InternalDecoratorImpl) {
     if (!source.isShowing) {
       // do not recalculate the tool window size if it is not yet shown (and, therefore, has 0,0,0,0 bounds)
       return
