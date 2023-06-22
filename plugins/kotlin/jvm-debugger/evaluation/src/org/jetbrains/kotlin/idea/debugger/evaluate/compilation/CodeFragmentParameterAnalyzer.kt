@@ -37,13 +37,17 @@ import org.jetbrains.kotlin.types.expressions.createFunctionType
 
 interface CodeFragmentParameterInfo {
     val parameters: List<Dumb>
+    val crossingBounds: Set<Dumb>
 }
 
-class K2CodeFragmentParameterInfo(override val parameters: List<Dumb>) : CodeFragmentParameterInfo
+class K2CodeFragmentParameterInfo(
+    override val parameters: List<Dumb>,
+    override val crossingBounds: Set<Dumb>
+) : CodeFragmentParameterInfo
 
 class K1CodeFragmentParameterInfo(
     val smartParameters: List<Smart>,
-    val crossingBounds: Set<Dumb>
+    override val crossingBounds: Set<Dumb>
 ) : CodeFragmentParameterInfo {
     override val parameters: List<Dumb> = object : AbstractList<Dumb>() {
         override val size: Int

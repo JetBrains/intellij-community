@@ -11,6 +11,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.evaluation.expression.*
 import com.intellij.debugger.engine.jdi.StackFrameProxy
 import com.intellij.debugger.impl.DebuggerUtilsEx
+import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Attachment
@@ -26,11 +27,9 @@ import com.sun.jdi.Value
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.eval4j.*
-import org.jetbrains.eval4j.jdi.JDIEval
-import org.jetbrains.eval4j.jdi.asJdiValue
-import org.jetbrains.eval4j.jdi.asValue
-import org.jetbrains.eval4j.jdi.makeInitialFrame
+import org.jetbrains.eval4j.jdi.*
 import org.jetbrains.kotlin.analysis.low.level.api.fir.compiler.CodeFragmentCapturedValue
+import org.jetbrains.kotlin.analysis.low.level.api.fir.compiler.LLCompilationResult
 import org.jetbrains.kotlin.analysis.low.level.api.fir.compiler.LLCompilerFacade
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
@@ -69,7 +68,10 @@ import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.tree.ClassNode
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.collections.ArrayList
+import kotlin.collections.HashSet
 import org.jetbrains.eval4j.Value as Eval4JValue
+import org.jetbrains.org.objectweb.asm.Type as AsmType
 
 internal val LOG = Logger.getInstance(KotlinEvaluator::class.java)
 
@@ -188,31 +190,27 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
     }
 
     private fun compiledCodeFragmentDataK2(context: ExecutionContext): CompiledCodeFragmentData = runReadAction {
+        val compilerConfiguration = CompilerConfiguration().apply {
+            put(LLCompilerFacade.CODE_FRAGMENT_CLASS_NAME, GENERATED_CLASS_NAME)
+            put(LLCompilerFacade.CODE_FRAGMENT_METHOD_NAME, GENERATED_FUNCTION_NAME)
+        }
+
         val languageVersionSettings = codeFragment.languageVersionSettings
-        val compilerConfiguration = CompilerConfiguration().also {
-            it.put(LLCompilerFacade.CODE_FRAGMENT_CLASS_NAME, GENERATED_CLASS_NAME)
-            it.put(LLCompilerFacade.CODE_FRAGMENT_METHOD_NAME, GENERATED_FUNCTION_NAME)
-        }
         val builderFactory = ClassBuilderFactories.BINARIES
+        val compilerResult = LLCompilerFacade.compile(codeFragment, compilerConfiguration, languageVersionSettings, builderFactory)
+        val compilerCompilationResult = compilerResult.getOrNull()
+            ?: throw EvaluateExceptionUtil.createEvaluateException(compilerResult.exceptionOrNull())
 
-
-        if (@Suppress("TestOnlyProblems") LOG_COMPILATIONS) {
-            LOG.debug("Compile bytecode for ${codeFragment.text}")
-        }
-
-        val result = LLCompilerFacade.compile(codeFragment, compilerConfiguration, languageVersionSettings, builderFactory)
-
-        val compilationResult = result.getOrNull()
-            ?: throw EvaluateExceptionUtil.createEvaluateException(result.exceptionOrNull())
-
-        val diagnostics = compilationResult.diagnostics
+        val diagnostics = compilerCompilationResult.diagnostics
         if (diagnostics.isNotEmpty()) {
             val diagnostic = diagnostics.first() as KtDiagnostic
             val factory = RootDiagnosticRendererFactory(diagnostic)
             throw EvaluateExceptionUtil.createEvaluateException(factory.render(diagnostic))
         }
 
-        val classes: List<ClassToLoad> = compilationResult.outputFiles.filterCodeFragmentClassFiles()
+        logCompilation(codeFragment)
+
+        val classes: List<ClassToLoad> = compilerCompilationResult.outputFiles.filterCodeFragmentClassFiles()
             .map {
                 ClassToLoad(it.internalClassName, it.relativePath, it.asByteArray())
             }
@@ -220,10 +218,25 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         val fragmentClass = classes.single { it.className == GENERATED_CLASS_NAME }
         val methodSignature = getMethodSignature(fragmentClass)
 
-        val parameters = compilationResult.capturedValues.mapNotNull { it.toDumbCodeFragmentParameter() }
-        val parameterInfo = K2CodeFragmentParameterInfo(parameters)
-        val x = CodeFragmentCompiler.CompilationResult(classes, parameterInfo, mapOf(), methodSignature)
-        createCompiledDataDescriptor(x)
+        val parameterInfo = computeCodeFragmentParameterInfo(compilerCompilationResult)
+        val ideCompilationResult = CodeFragmentCompiler.CompilationResult(classes, parameterInfo, mapOf(), methodSignature)
+        createCompiledDataDescriptor(ideCompilationResult)
+    }
+
+    private fun computeCodeFragmentParameterInfo(compilationResult: LLCompilationResult): K2CodeFragmentParameterInfo {
+        val parameters = ArrayList<CodeFragmentParameter.Dumb>(compilationResult.capturedValues.size)
+        val crossingBounds = HashSet<CodeFragmentParameter.Dumb>()
+
+        for (capturedValue in compilationResult.capturedValues) {
+            val parameter = capturedValue.toDumbCodeFragmentParameter() ?: continue
+            parameters.add(parameter)
+
+            if (capturedValue.isCrossingInlineBounds) {
+                crossingBounds.add(parameter)
+            }
+        }
+
+        return K2CodeFragmentParameterInfo(parameters, crossingBounds)
     }
 
     private fun CodeFragmentCapturedValue.toDumbCodeFragmentParameter(): CodeFragmentParameter.Dumb? {
@@ -231,7 +244,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
             is CodeFragmentCapturedValue.Local ->
                 CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.ORDINARY, name)
             is CodeFragmentCapturedValue.LocalDelegate ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DELEGATED, name)
+                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DELEGATED, displayText)
             is CodeFragmentCapturedValue.ContainingClass ->
                 CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DISPATCH_RECEIVER, "", displayText)
             is CodeFragmentCapturedValue.SuperClass ->
@@ -247,11 +260,9 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                 val valueName = name.substringBeforeLast(CodeFragmentFactoryContextWrapper.DEBUG_LABEL_SUFFIX)
                 CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DEBUG_LABEL, valueName, name)
             }
-            is CodeFragmentCapturedValue.FieldVariable ->
+            is CodeFragmentCapturedValue.BackingField ->
                 CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.FIELD_VAR, name, displayText)
-            is CodeFragmentCapturedValue.FakeJavaOuterClass ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.FAKE_JAVA_OUTER_CLASS, name, displayText)
-            CodeFragmentCapturedValue.CoroutineContext ->
+            is CodeFragmentCapturedValue.CoroutineContext ->
                 CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.FAKE_JAVA_OUTER_CLASS, "")
             else -> null
         }
@@ -289,9 +300,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         val result =
             compilerHandler.compileCodeFragment(codeFragment, analysisResult.moduleDescriptor, analysisResult.bindingContext, context)
 
-        if (@Suppress("TestOnlyProblems") LOG_COMPILATIONS) {
-            LOG.debug("Compile bytecode for ${codeFragment.text}")
-        }
+        logCompilation(codeFragment)
 
         return createCompiledDataDescriptor(result)
     }
@@ -507,6 +516,12 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         @get:ApiStatus.Internal
         var LOG_COMPILATIONS: Boolean = false
 
+        private fun logCompilation(codeFragment: KtCodeFragment) {
+            if (@Suppress("TestOnlyProblems") LOG_COMPILATIONS) {
+                LOG.debug("Compile bytecode for ${codeFragment.text}")
+            }
+        }
+
         internal val IGNORED_DIAGNOSTICS: Set<DiagnosticFactory<*>> = Errors.INVISIBLE_REFERENCE_DIAGNOSTICS +
                 setOf(
                     Errors.OPT_IN_USAGE_ERROR,
@@ -599,7 +614,7 @@ fun createCompiledDataDescriptor(result: CodeFragmentCompiler.CompilationResult)
     return CompiledCodeFragmentData(
         result.classes,
         dumbParameters,
-        (result.parameterInfo as? K1CodeFragmentParameterInfo)?.crossingBounds ?: emptySet(),
+        result.parameterInfo.crossingBounds,
         result.mainMethodSignature
     )
 }
