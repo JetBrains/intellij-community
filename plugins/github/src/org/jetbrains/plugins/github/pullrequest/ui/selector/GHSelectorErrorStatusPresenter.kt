@@ -41,7 +41,7 @@ class GHSelectorErrorStatusPresenter(
     private val project: Project,
     private val account: GithubAccount,
     private val resetAction: () -> Unit
-  ) : AbstractAction(CollaborationToolsBundle.message("repository.and.account.selector.login.again.action.text")) {
+  ) : AbstractAction(CollaborationToolsBundle.message("login.again.action.text")) {
     override fun actionPerformed(event: ActionEvent) {
       val parentComponent = event.source as? JComponent ?: return
       val authData = GHAccountsUtil.requestReLogin(account, project, parentComponent, authType = AuthorizationType.UNDEFINED)

@@ -26,6 +26,7 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
+import org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneViewModel.UIState
 import javax.swing.JComponent
 
 internal class GitLabCloneComponent(
@@ -44,15 +45,15 @@ internal class GitLabCloneComponent(
   )
 
   private val repositoriesPanel: DialogPanel = GitLabCloneRepositoriesComponentFactory.create(
-    project, cs, cloneVm, searchField, directoryField
+    cs, cloneVm, searchField, directoryField
   ).apply {
     registerValidators(cs.nestedDisposable())
   }
   private val wrapper: Wrapper = Wrapper().apply {
-    bindContentIn(cs, cloneVm.uiState) { componentState ->
-      when (componentState) {
-        GitLabCloneViewModel.UIState.LOGIN  -> GitLabCloneLoginComponentFactory.create(this, cloneVm, accountManager)
-        GitLabCloneViewModel.UIState.REPOSITORY_LIST -> repositoriesPanel
+    bindContentIn(cs, cloneVm.uiState) { uiState ->
+      when (uiState) {
+        is UIState.Login -> GitLabCloneLoginComponentFactory.create(this, cloneVm, uiState.account)
+        UIState.Repositories -> repositoriesPanel
       }
     }
   }

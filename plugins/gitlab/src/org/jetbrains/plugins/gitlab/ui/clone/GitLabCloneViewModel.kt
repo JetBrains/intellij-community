@@ -17,6 +17,7 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.GitLabApiImpl
+import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
@@ -26,37 +27,37 @@ import com.intellij.collaboration.util.SingleCoroutineLauncher
 import java.nio.file.Paths
 
 internal interface GitLabCloneViewModel {
-  val accountManager: GitLabAccountManager
-
   val uiState: Flow<UIState>
   val accountsRefreshRequest: Flow<Set<GitLabAccount>>
   val isLoading: Flow<Boolean>
+
   val selectedItem: Flow<GitLabCloneListItem?>
+  val items: Flow<List<GitLabCloneListItem>>
 
   val accountDetailsProvider: GitLabAccountsDetailsProvider
 
-  fun runTask(block: suspend () -> Unit)
-
   fun selectItem(item: GitLabCloneListItem?)
 
-  fun switchToLoginPanel()
+  fun switchToLoginPanel(account: GitLabAccount?)
 
   fun switchToRepositoryList()
 
   fun doClone(checkoutListener: CheckoutProvider.Listener, directoryPath: String)
 
-  suspend fun collectAccountRepositories(account: GitLabAccount): List<GitLabCloneListItem>
+  fun updateAccount(account: GitLabAccount, credentials: String)
 
-  enum class UIState {
-    LOGIN,
-    REPOSITORY_LIST
+  fun isAccountUnique(serverPath: GitLabServerPath, accountName: String): Boolean
+
+  sealed interface UIState {
+    class Login(val account: GitLabAccount?) : UIState
+    object Repositories : UIState
   }
 }
 
 internal class GitLabCloneViewModelImpl(
   private val project: Project,
   parentCs: CoroutineScope,
-  override val accountManager: GitLabAccountManager
+  private val accountManager: GitLabAccountManager
 ) : GitLabCloneViewModel {
   private val vcsNotifier: VcsNotifier = project.service<VcsNotifier>()
 
@@ -65,7 +66,7 @@ internal class GitLabCloneViewModelImpl(
 
   private val accounts: Flow<Set<GitLabAccount>> = accountManager.accountsState
 
-  private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(UIState.LOGIN)
+  private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(UIState.Login(null))
   override val uiState: Flow<UIState> = _uiState.asSharedFlow()
 
   override val accountsRefreshRequest: MutableSharedFlow<Set<GitLabAccount>> = MutableSharedFlow()
@@ -73,6 +74,9 @@ internal class GitLabCloneViewModelImpl(
 
   private val _selectedItem: MutableStateFlow<GitLabCloneListItem?> = MutableStateFlow(null)
   override val selectedItem: Flow<GitLabCloneListItem?> = _selectedItem.asSharedFlow()
+
+  private val _items: MutableStateFlow<List<GitLabCloneListItem>> = MutableStateFlow(emptyList())
+  override val items: Flow<List<GitLabCloneListItem>> = _items.asSharedFlow()
 
   override val accountDetailsProvider = GitLabAccountsDetailsProvider(cs) { account ->
     val token = accountManager.findCredentials(account) ?: return@GitLabAccountsDetailsProvider null
@@ -84,32 +88,41 @@ internal class GitLabCloneViewModelImpl(
       accounts.collectLatest { accounts ->
         accountsRefreshRequest.emit(accounts)
         if (accounts.isNotEmpty()) {
-          _uiState.value = UIState.REPOSITORY_LIST
+          switchToRepositoryList()
         }
 
         accounts.forEach { account ->
-          accountManager.getCredentialsFlow(account).collectLatest {
-            accountsRefreshRequest.emit(accounts)
+          launch {
+            accountManager.getCredentialsFlow(account).collectLatest {
+              accountsRefreshRequest.emit(accounts)
+            }
           }
         }
       }
     }
-  }
 
-  override fun runTask(block: suspend () -> Unit) = taskLauncher.launch {
-    block()
+    cs.launch(start = CoroutineStart.UNDISPATCHED) {
+      accountsRefreshRequest.collectLatest { accounts ->
+        taskLauncher.launch {
+          _items.value = accounts.flatMap { account ->
+            collectRepositoriesByAccount(account)
+          }
+        }
+        switchToRepositoryList()
+      }
+    }
   }
 
   override fun selectItem(item: GitLabCloneListItem?) {
     _selectedItem.value = item
   }
 
-  override fun switchToLoginPanel() {
-    _uiState.value = UIState.LOGIN
+  override fun switchToLoginPanel(account: GitLabAccount?) {
+    _uiState.value = UIState.Login(account)
   }
 
   override fun switchToRepositoryList() {
-    _uiState.value = UIState.REPOSITORY_LIST
+    _uiState.value = UIState.Repositories
   }
 
   override fun doClone(checkoutListener: CheckoutProvider.Listener, directoryPath: String) {
@@ -138,7 +151,17 @@ internal class GitLabCloneViewModelImpl(
     GitCheckoutProvider.clone(project, Git.getInstance(), checkoutListener, destinationParent, selectedUrl, directoryName, parentDirectory)
   }
 
-  override suspend fun collectAccountRepositories(account: GitLabAccount): List<GitLabCloneListItem> {
+  override fun updateAccount(account: GitLabAccount, credentials: String) {
+    cs.launch {
+      accountManager.updateAccount(account, credentials)
+    }
+  }
+
+  override fun isAccountUnique(serverPath: GitLabServerPath, accountName: String): Boolean {
+    return accountManager.isAccountUnique(serverPath, accountName)
+  }
+
+  private suspend fun collectRepositoriesByAccount(account: GitLabAccount): List<GitLabCloneListItem> {
     val token = accountManager.findCredentials(account) ?: return listOf(
       GitLabCloneListItem.Error(account, CollaborationToolsBundle.message("account.token.missing"))
     )

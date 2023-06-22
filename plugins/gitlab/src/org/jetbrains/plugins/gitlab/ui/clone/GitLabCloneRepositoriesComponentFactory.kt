@@ -8,7 +8,6 @@ import com.intellij.collaboration.ui.codereview.details.GroupedRenderer
 import com.intellij.collaboration.ui.util.LinkActionMouseAdapter
 import com.intellij.collaboration.ui.util.bindBusyIn
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.CollectionListModel
@@ -27,15 +26,12 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
-import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
-import org.jetbrains.plugins.gitlab.exception.GitLabHttpStatusErrorAction
 import javax.swing.JSeparator
 import javax.swing.ListCellRenderer
 import javax.swing.ListModel
 
 internal object GitLabCloneRepositoriesComponentFactory {
   fun create(
-    project: Project,
     cs: CoroutineScope,
     cloneVm: GitLabCloneViewModel,
     searchField: SearchTextField,
@@ -49,7 +45,7 @@ internal object GitLabCloneRepositoriesComponentFactory {
       VcsCloneDialogUiSpec.Components.avatarSize,
       AccountsPopupConfig(cloneVm)
     )
-    val repositoryList = createRepositoryList(project, cs, cloneVm, accountsModel, repositoriesModel)
+    val repositoryList = createRepositoryList(cs, cloneVm, accountsModel, repositoriesModel)
     CollaborationToolsUIUtil.attachSearch(repositoryList, searchField) { cloneItem ->
       when (cloneItem) {
         is GitLabCloneListItem.Error -> ""
@@ -85,14 +81,13 @@ internal object GitLabCloneRepositoriesComponentFactory {
   }
 
   private fun createRepositoryList(
-    project: Project,
     cs: CoroutineScope,
     cloneVm: GitLabCloneViewModel,
     accountsModel: ListModel<GitLabAccount>,
     repositoriesModel: ListModel<GitLabCloneListItem>
   ): JBList<GitLabCloneListItem> {
     return JBList(repositoriesModel).apply {
-      cellRenderer = createRepositoryRenderer(project, cs, cloneVm.accountManager, accountsModel, repositoriesModel)
+      cellRenderer = createRepositoryRenderer(accountsModel, repositoriesModel, cloneVm::switchToLoginPanel)
       isFocusable = false
       selectionModel.addListSelectionListener {
         cloneVm.selectItem(selectedValue)
@@ -119,13 +114,8 @@ internal object GitLabCloneRepositoriesComponentFactory {
   private fun createRepositoriesModel(cs: CoroutineScope, cloneVm: GitLabCloneViewModel): ListModel<GitLabCloneListItem> {
     val accountsModel = CollectionListModel<GitLabCloneListItem>()
     cs.launch(start = CoroutineStart.UNDISPATCHED) {
-      cloneVm.accountsRefreshRequest.collectLatest { accounts ->
-        cloneVm.runTask {
-          val repositories = accounts.flatMap { account ->
-            cloneVm.collectAccountRepositories(account)
-          }
-          accountsModel.replaceAll(repositories)
-        }
+      cloneVm.items.collectLatest { items ->
+        accountsModel.replaceAll(items)
       }
     }
 
@@ -133,14 +123,12 @@ internal object GitLabCloneRepositoriesComponentFactory {
   }
 
   private fun createRepositoryRenderer(
-    project: Project,
-    cs: CoroutineScope,
-    accountManager: GitLabAccountManager,
     accountsModel: ListModel<GitLabAccount>,
-    repositoriesModel: ListModel<GitLabCloneListItem>
+    repositoriesModel: ListModel<GitLabCloneListItem>,
+    switchToLoginAction: (GitLabAccount) -> Unit
   ): ListCellRenderer<GitLabCloneListItem> {
     return GroupedRenderer(
-      baseRenderer = GitLabCloneListRenderer { account -> GitLabHttpStatusErrorAction.LogInAgain(project, cs, account, accountManager) },
+      baseRenderer = GitLabCloneListRenderer(switchToLoginAction),
       hasSeparatorAbove = { value, index ->
         when (index) {
           0 -> accountsModel.size > 1
@@ -159,7 +147,7 @@ internal object GitLabCloneRepositoriesComponentFactory {
   private class AccountsPopupConfig(cloneVm: GitLabCloneViewModel) : CompactAccountsPanelFactory.PopupConfig<GitLabAccount> {
     private val loginWithTokenAction: AccountMenuItem.Action = AccountMenuItem.Action(
       CollaborationToolsBundle.message("clone.dialog.login.with.token.action"),
-      { cloneVm.switchToLoginPanel() },
+      { cloneVm.switchToLoginPanel(account = null) },
       showSeparatorAbove = true
     )
 
