@@ -2,11 +2,8 @@
 package com.intellij.execution.ui.resume
 
 import com.intellij.execution.ui.RunWidgetManager
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Key
 
@@ -20,7 +17,8 @@ class CompositeResumeAction : DumbAwareAction() {
   }
 
   init {
-    setDefaultState(templatePresentation)
+    templatePresentation.icon = AllIcons.Actions.Pause
+    templatePresentation.text = ""
   }
 
   private fun setDefaultState(presentation: Presentation) {
@@ -38,7 +36,7 @@ class CompositeResumeAction : DumbAwareAction() {
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
+    return ActionUpdateThread.BGT
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -61,6 +59,7 @@ class CompositeResumeAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = false
     val project = e.project ?: return
+
 
     if (!RunWidgetManager.getInstance(project).isResumeAvailable()) return
 

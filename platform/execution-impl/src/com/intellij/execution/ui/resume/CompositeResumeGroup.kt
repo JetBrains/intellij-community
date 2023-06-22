@@ -2,15 +2,25 @@
 package com.intellij.execution.ui.resume
 
 import com.intellij.execution.ui.RunWidgetManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 
 class CompositeResumeGroup : DefaultActionGroup() {
+  companion object {
+    private val arrayOf: Array<AnAction> = arrayOf(CompositeResumeAction())
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
+
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     e?.project?.let{
       if(RunWidgetManager.getInstance(it).isResumeAvailable()) {
-        return arrayOf(CompositeResumeAction())
+        return arrayOf
       }
     }
     return emptyArray()
