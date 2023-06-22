@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
@@ -661,8 +661,8 @@ public class DisposerTest  {
     int N = 1_000_000;
     Disposable root = Disposer.newDisposable("test_root");
 
-    Disposable[] children = IntStream.range(0, N).mapToObj(i -> Disposer.newDisposable("child "+i)).toArray(Disposable[]::new);
-    PlatformTestUtil.startPerformanceTest(name.getMethodName(), 10_000, () -> {
+    Disposable[] children = IntStream.range(0, N).mapToObj(i -> Disposer.newDisposable("child " + i)).toArray(Disposable[]::new);
+    PlatformTestUtil.startPerformanceTest(name.getMethodName(), 15_000, () -> {
         for (Disposable child : children) {
           Disposer.register(root, child);
         }
