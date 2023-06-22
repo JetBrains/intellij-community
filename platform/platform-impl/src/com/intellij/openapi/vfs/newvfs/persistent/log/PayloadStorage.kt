@@ -2,9 +2,12 @@
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State
+import kotlinx.collections.immutable.PersistentSet
 import java.io.OutputStream
 
 interface PayloadStorage: PayloadStorageIO {
+  val sourcesDeclaration: PersistentSet<PayloadRef.Source>
+
   fun size(): Long
 
   fun flush()

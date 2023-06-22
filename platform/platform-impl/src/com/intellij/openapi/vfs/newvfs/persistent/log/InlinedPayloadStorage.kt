@@ -1,0 +1,57 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.vfs.newvfs.persistent.log
+
+import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef.Source
+import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef.Source.Companion.isInline
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State
+import kotlinx.collections.immutable.PersistentSet
+import kotlinx.collections.immutable.toPersistentSet
+import java.io.ByteArrayOutputStream
+import java.io.OutputStream
+
+object InlinedPayloadStorage : PayloadStorage { // TODO utilize
+  override val sourcesDeclaration: PersistentSet<Source> = Source.values().filter { it.isInline }.toPersistentSet()
+
+  override fun size(): Long = 0
+  override fun flush() {}
+  override fun dispose() {}
+
+  fun isSuitableForInlining(sizeBytes: Long) = sizeBytes <= 7
+
+  override fun writePayload(sizeBytes: Long, body: OutputStream.() -> Unit): PayloadRef {
+    require(isSuitableForInlining(sizeBytes)) { "payload of size $sizeBytes cannot be inline (max size 7)" }
+    val out = ByteArrayOutputStream(sizeBytes.toInt())
+    require(out.size() == sizeBytes.toInt()) {
+      "unexpected amount of data has been written: written ${out.size()} vs expected ${sizeBytes}"
+    }
+    return inlineData(out.toByteArray())
+  }
+
+  override fun readPayload(payloadRef: PayloadRef): State.DefinedState<ByteArray> {
+    return payloadRef.unInlineData().let(State::Ready)
+  }
+
+  private fun inlineData(data: ByteArray): PayloadRef {
+    require(isSuitableForInlining(data.size.toLong()))
+    var packedOffset: ULong = 0.toULong()
+    with(ULongPacker) {
+      data.forEachIndexed { index, byte ->
+        packedOffset = packedOffset.setInt(byte.toUByte().toInt(), index * Byte.SIZE_BITS, Byte.SIZE_BITS)
+      }
+    }
+    return PayloadRef(packedOffset.toLong(), Source.VALUES[data.size])
+  }
+
+  private fun PayloadRef.unInlineData(): ByteArray {
+    require(source.isInline)
+    val size = sourceOrdinal
+    val packedOffset = offset.toULong()
+    val data = ByteArray(size)
+    with(ULongPacker) {
+      for (index in 0 until size) {
+        data[index] = packedOffset.getInt(index * Byte.SIZE_BITS, Byte.SIZE_BITS).toByte()
+      }
+    }
+    return data
+  }
+}

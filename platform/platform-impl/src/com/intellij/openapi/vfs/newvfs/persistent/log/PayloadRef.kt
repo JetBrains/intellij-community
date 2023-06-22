@@ -16,9 +16,7 @@ value class PayloadRef(val compressedInfo: ULong) {
   val sourceOrdinal: Int get() = with(ULongPacker) { compressedInfo.getInt(SOURCE_OFFSET, SOURCE_BITS) }
 
   init {
-    require(sourceOrdinal < Source.VALUES.size) {
-      "unknown plane: id=$sourceOrdinal is outside of the registered ids range"
-    }
+    require(sourceOrdinal < Source.VALUES.size) { "unknown source: id=$sourceOrdinal is outside of the registered ids range" }
   }
 
   /**
@@ -48,6 +46,7 @@ value class PayloadRef(val compressedInfo: ULong) {
 
     companion object {
       internal val VALUES = Source.values() // to not generate too much garbage
+      val Source.isInline: Boolean get() = this in Inline0..Inline7
     }
   }
 
@@ -67,34 +66,6 @@ value class PayloadRef(val compressedInfo: ULong) {
       0.toULong()
         .setInt(source.ordinal, SOURCE_OFFSET, SOURCE_BITS)
         .setLong(offset, OFFSET_OFFSET, OFFSET_BITS)
-    }
-
-    val PayloadRef.isInlined: Boolean get() = sourceOrdinal in Source.Inline0.ordinal..Source.Inline7.ordinal
-
-    fun isSuitableForInlining(data: ByteArray) = data.size <= 7
-
-    fun inlineData(data: ByteArray): PayloadRef {
-      require(data.size <= 7)
-      var packedOffset: ULong = 0.toULong()
-      with(ULongPacker) {
-        data.forEachIndexed { index, byte ->
-          packedOffset = packedOffset.setInt(byte.toUByte().toInt(), index * Byte.SIZE_BITS, Byte.SIZE_BITS)
-        }
-      }
-      return PayloadRef(packedOffset.toLong(), Source.VALUES[data.size])
-    }
-
-    fun PayloadRef.unInlineData(): ByteArray {
-      require(isInlined)
-      val size = sourceOrdinal
-      val packedOffset = offset.toULong()
-      val data = ByteArray(size)
-      with(ULongPacker) {
-        for (index in 0 until size) {
-          data[index] = packedOffset.getInt(index * Byte.SIZE_BITS, Byte.SIZE_BITS).toByte()
-        }
-      }
-      return data
     }
   }
 
