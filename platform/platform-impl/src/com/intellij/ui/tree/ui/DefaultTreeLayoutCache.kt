@@ -523,19 +523,31 @@ class DefaultTreeLayoutCache(
       if (isExpanded || isLeaf) {
         return
       }
-      doExpand()
       isExpanded = true
+      doExpand()
     }
 
     private fun doExpand() {
       val firstChildRow = row + 1
-      val children = this.children ?: loadChildren()
+      val children = mutableListOf<Node>()
+      collectNewlyVisibleChildren(children)
       rows.update {
         rows.addAll(firstChildRow, children)
       }
     }
 
-    fun loadChildren(): MutableList<Node> {
+    private fun collectNewlyVisibleChildren(result: MutableList<Node>) {
+      if (!isExpanded) {
+        return
+      }
+      val children = this.children ?: loadChildren()
+      for (child in children) {
+        result += child
+        child.collectNewlyVisibleChildren(result)
+      }
+    }
+
+    fun loadChildren(): List<Node> {
       val children = (0 until treeModel.getChildCount(userObject)).mapTo(mutableListOf()) { i ->
         Node(this, path.pathByAddingChild(treeModel.getChild(userObject, i)))
       }
