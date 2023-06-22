@@ -22,7 +22,6 @@ import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsLogProperties;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.data.SingleTaskController;
-import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.impl.HeavyAwareListener;
@@ -330,7 +329,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
 
     @Override
     protected int disposeLongTimeout() {
-      if (VcsLogData.USE_SQLITE) return 5000;
+      if (SqliteVcsLogStorageBackendKt.isSqliteBackend(myBackend)) return 5000;
 
       return super.disposeLongTimeout();
     }

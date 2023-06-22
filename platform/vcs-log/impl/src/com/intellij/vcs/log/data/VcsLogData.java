@@ -41,7 +41,6 @@ import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runSpan
 public final class VcsLogData implements Disposable, VcsLogDataProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogData.class);
   public static final int RECENT_COMMITS_COUNT = Registry.intValue("vcs.log.recent.commits.count");
-  public static final boolean USE_SQLITE = Registry.is("vcs.log.index.sqlite.storage", false);
 
   public static final VcsLogProgress.ProgressKey DATA_PACK_REFRESH = new VcsLogProgress.ProgressKey("data pack");
 
@@ -134,7 +133,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
 
   private @NotNull VcsLogStorage createStorage() {
     try {
-      if (USE_SQLITE) {
+      if (Registry.is("vcs.log.index.sqlite.storage", false)) {
         return new SqliteVcsLogStorageBackend(myProject, myLogProviders, myErrorHandler, this);
       }
       return new VcsLogStorageImpl(myProject, myLogProviders, myErrorHandler, this);

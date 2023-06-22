@@ -806,3 +806,5 @@ private fun readIntArray(statement: SqlitePreparedStatement<IntBinder>): IntArra
 }
 
 private fun Iterable<Int>.toInClause() = "(" + joinToString(separator = ",") { "'$it'" } + ")"
+
+internal val VcsLogStorageBackend.isSqliteBackend : Boolean get() = this is SqliteVcsLogStorageBackend
