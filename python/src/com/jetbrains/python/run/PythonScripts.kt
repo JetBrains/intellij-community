@@ -41,14 +41,14 @@ private val LOG = Logger.getInstance("#com.jetbrains.python.run.PythonScripts")
 
 @JvmOverloads
 fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironment,
-                                             sdk: Sdk,
+                                             sdk: Sdk?,
                                              interpreterParameters: List<String>,
                                              isUsePty: Boolean = false): TargetedCommandLine {
   val commandLineBuilder = TargetedCommandLineBuilder(targetEnvironment.request)
   workingDir?.apply(targetEnvironment)?.let { commandLineBuilder.setWorkingDirectory(it) }
   commandLineBuilder.charset = charset
   inputFile?.let { commandLineBuilder.setInputFile(TargetValue.fixed(it.absolutePath)) }
-  sdk.configureBuilderToRunPythonOnTarget(commandLineBuilder)
+  sdk?.configureBuilderToRunPythonOnTarget(commandLineBuilder)
   commandLineBuilder.addParameters(interpreterParameters)
   when (this) {
     is PythonScriptExecution -> pythonScriptPath?.let { commandLineBuilder.addParameter(it.apply(targetEnvironment)) }
@@ -62,14 +62,16 @@ fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironmen
       commandLineBuilder.addParameter(resolvedParameter)
     }
   }
-  val userPathList = sdk.targetAdditionalData?.pathsAddedByUser?.map { it.value }?.map { constant(it) }?.toMutableList() ?: ArrayList()
+  val userPathList = sdk?.targetAdditionalData?.pathsAddedByUser?.map { it.value }?.map { constant(it) }?.toMutableList() ?: ArrayList()
   initPythonPath(envs, true, userPathList, targetEnvironment.request, false)
   for ((name, value) in envs) {
     commandLineBuilder.addEnvironmentVariable(name, value.apply(targetEnvironment))
   }
   val environmentVariablesForVirtualenv = mutableMapOf<String, String>()
   // TODO [Targets API] It would be cool to activate environment variables for any type of target
-  PythonSdkType.patchEnvironmentVariablesForVirtualenv(environmentVariablesForVirtualenv, sdk)
+  if (sdk != null) {
+    PythonSdkType.patchEnvironmentVariablesForVirtualenv(environmentVariablesForVirtualenv, sdk)
+  }
   // TODO [Targets API] [major] PATH env for virtualenv should extend existing PATH env
   environmentVariablesForVirtualenv.forEach { (name, value) -> commandLineBuilder.addEnvironmentVariable(name, value) }
   // TODO [Targets API] [major] `PythonSdkFlavor` should be taken into account to pass (at least) "IRONPYTHONPATH" or "JYTHONPATH"
@@ -81,7 +83,9 @@ fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironmen
   // This fix shouldn't be here, since flavor patches envs (see configureBuilderToRunPythonOnTarget), but envs
   // then overwritten by patchEnvironmentVariablesForVirtualenv and envs
   // Fix must be removed after path merging implementation
-  commandLineBuilder.fixCondaPathEnvIfNeeded(sdk)
+  if (sdk != null) {
+    commandLineBuilder.fixCondaPathEnvIfNeeded(sdk)
+  }
   return commandLineBuilder.build()
 }
 
