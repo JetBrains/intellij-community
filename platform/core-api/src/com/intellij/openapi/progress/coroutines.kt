@@ -218,7 +218,7 @@ suspend fun <T> blockingContext(action: () -> T): T {
  *   print("A")
  *   blockingContextScope {
  *     print("B")
- *     executeOnPooledThread {
+ *     ApplicationManager.getApplication().executeOnPooledThread {
  *       print("C")
  *     }
  *     print("D")
