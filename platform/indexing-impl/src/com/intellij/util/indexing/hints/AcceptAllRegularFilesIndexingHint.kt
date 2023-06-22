@@ -5,8 +5,9 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.util.ThreeState
 import com.intellij.util.indexing.IndexedFile
+import com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy.BEFORE_SUBSTITUTION
 
-object AcceptAllRegularFilesIndexingHint : BaseFileTypeInputFilter() {
+object AcceptAllRegularFilesIndexingHint : BaseFileTypeInputFilter(BEFORE_SUBSTITUTION) {
   override fun acceptFileType(fileType: FileType): ThreeState = ThreeState.YES
 
   override fun slowPathIfFileTypeHintUnsure(file: IndexedFile): Boolean {

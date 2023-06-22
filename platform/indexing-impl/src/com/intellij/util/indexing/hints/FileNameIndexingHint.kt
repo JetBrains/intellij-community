@@ -41,7 +41,7 @@ class FileNameExtensionInputFilter(extension: String,
 @ApiStatus.Experimental
 abstract class BaseWeakFileNameSuffixInputFilter internal constructor(
   private val binary: BinaryFileTypePolicy = BINARY_OR_NON_BINARY
-) : BaseFileTypeInputFilter() {
+) : BaseFileTypeInputFilter(FileTypeSubstitutionStrategy.AFTER_SUBSTITUTION) {
   // Don't do like this, this is not correct (see IDEA-303356 for example):
   //    val ext = fileNameSuffix.substringAfterLast(".")
   //    val weakFileType = if (ext != fileNameSuffix) FileTypeManager.getInstance().getFileTypeByExtension(ext) else null
