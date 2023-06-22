@@ -8,6 +8,6 @@ import org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirIdeOutOfBlockM
 
 internal fun Module.publishOutOfBlockModification() {
     runWriteAction {
-        FirIdeOutOfBlockModificationService.getInstance(project).publishModuleOnlyOutOfBlockModification(this)
+        FirIdeOutOfBlockModificationService.getInstance(project).publishModuleOutOfBlockModification(this)
     }
 }

@@ -12,8 +12,8 @@ import com.intellij.psi.impl.PsiTreeChangePreprocessor
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.getNonLocalReanalyzableContainingDeclaration
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.invalidateAfterInBlockModification
+import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.psi.KtDeclaration
 
 @OptIn(LLFirInternals::class)
@@ -63,7 +63,8 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
     }
 
     private fun outOfBlockInvalidation(element: PsiElement) {
-        FirIdeOutOfBlockModificationService.getInstance(project).publishModuleAndProjectOutOfBlockModification(element.module)
+        val module = ProjectStructureProvider.getModule(project, element, contextualModule = null)
+        FirIdeOutOfBlockModificationService.getInstance(project).publishModuleAndProjectOutOfBlockModification(module)
     }
 
     private fun calculateChangeType(

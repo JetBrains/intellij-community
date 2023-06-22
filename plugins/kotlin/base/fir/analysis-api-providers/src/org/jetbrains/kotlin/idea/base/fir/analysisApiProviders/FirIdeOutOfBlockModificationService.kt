@@ -8,17 +8,11 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.providers.analysisMessageBus
-import org.jetbrains.kotlin.analysis.providers.topics.KotlinModuleOutOfBlockModificationListener
 import org.jetbrains.kotlin.analysis.providers.topics.KotlinTopics
-import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
+import org.jetbrains.kotlin.idea.base.projectStructure.productionOrTestSourceModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
-import org.jetbrains.kotlin.idea.util.AbstractSingleFileModuleAfterFileEventListener
 
 /**
  * [FirIdeOutOfBlockModificationService] increments modification trackers and publishes subscription events on out-of-block modification
@@ -32,35 +26,31 @@ internal class FirIdeOutOfBlockModificationService(val project: Project) : Dispo
      */
     val projectOutOfBlockModificationTracker: SimpleModificationTracker = SimpleModificationTracker()
 
-    init {
-        val busConnection = project.messageBus.connect(this)
-        busConnection.subscribe(VirtualFileManager.VFS_CHANGES, SingleFileModuleContentChangeListener(project))
-    }
-
     override fun dispose() {}
 
     /**
-     * Publishes out-of-block modification for [module]'s [KtModule]s. Must be called in a write action.
+     * Publishes out-of-block modification for [module]. Must be called in a write action.
      */
-    fun publishModuleOnlyOutOfBlockModification(module: Module) {
+    fun publishModuleOutOfBlockModification(module: KtModule) {
         ApplicationManager.getApplication().assertWriteAccessAllowed()
 
-        module.sourceModuleInfos.forEach {
-            project.analysisMessageBus.syncPublisher(KotlinTopics.MODULE_OUT_OF_BLOCK_MODIFICATION).onModification(it.toKtModule())
-        }
+        project.analysisMessageBus.syncPublisher(KotlinTopics.MODULE_OUT_OF_BLOCK_MODIFICATION).onModification(module)
     }
 
     /**
-     * Publishes out-of-block modification for [module]'s [KtModule]s and the project itself. Must be called in a write action if [module]
-     * is not `null`.
-     *
-     * [publishModuleAndProjectOutOfBlockModification] cannot be used for single file-based [KtModule]s (such as scripts), because they
-     * don't have an associated IntelliJ [Module].
+     * Publishes out-of-block modification for [module]. Must be called in a write action.
      */
-    fun publishModuleAndProjectOutOfBlockModification(module: Module?) {
-        if (module != null) {
-            publishModuleOnlyOutOfBlockModification(module)
-        }
+    fun publishModuleOutOfBlockModification(module: Module) {
+        // A test source `KtModule` will be invalidated together with its production source `KtModule` because it is a direct dependent from
+        // friend dependencies. See `IdeKotlinModuleDependentsProvider`.
+        module.productionOrTestSourceModuleInfo?.let { publishModuleOutOfBlockModification(it.toKtModule()) }
+    }
+
+    /**
+     * Publishes out-of-block modification for [module] and the project itself. Must be called in a write action.
+     */
+    fun publishModuleAndProjectOutOfBlockModification(module: KtModule) {
+        publishModuleOutOfBlockModification(module)
         projectOutOfBlockModificationTracker.incModificationCount()
     }
 
@@ -74,25 +64,5 @@ internal class FirIdeOutOfBlockModificationService(val project: Project) : Dispo
     companion object {
         fun getInstance(project: Project): FirIdeOutOfBlockModificationService =
             project.getService(FirIdeOutOfBlockModificationService::class.java)
-    }
-}
-
-/**
- * A single-file module file event listener that publishes out-of-block modification events for the associated [KtModule]s.
- *
- * Any file modification triggers an out-of-block modification event, not just actual out-of-block modifications, which is allowed per the
- * contract of [KotlinModuleOutOfBlockModificationListener].
- *
- * Because Kotlin script and not-under-content-root files aren't associated with a [Module],
- * [FirIdeOutOfBlockModificationService.publishModuleAndProjectOutOfBlockModification] cannot be used to publish out-of-block modification
- * events for such [KtModule]s, hence the existence of this listener.
- */
-private class SingleFileModuleContentChangeListener(
-    private val project: Project,
-) : AbstractSingleFileModuleAfterFileEventListener(project) {
-    override fun isRelevantEvent(event: VFileEvent, file: VirtualFile): Boolean = event is VFileContentChangeEvent
-
-    override fun processEvent(event: VFileEvent, module: KtModule) {
-        project.analysisMessageBus.syncPublisher(KotlinTopics.MODULE_OUT_OF_BLOCK_MODIFICATION).onModification(module)
     }
 }
