@@ -5,8 +5,7 @@ import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.navigation.CtrlMouseData
 import com.intellij.codeInsight.navigation.impl.*
-import com.intellij.codeInsight.navigation.impl.NavigationActionResult.MultipleTargets
-import com.intellij.codeInsight.navigation.impl.NavigationActionResult.SingleTarget
+import com.intellij.codeInsight.navigation.impl.NavigationActionResult.*
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
 import com.intellij.openapi.editor.Editor
@@ -68,6 +67,9 @@ internal object GotoDeclarationOnlyHandler2 : CodeInsightActionHandler {
           GTDUCollector.recordNavigated(eventData, it.javaClass)
         }
         navigateRequest(project, actionResult.request)
+      }
+      is LazySingleTarget -> {
+        navigateRequestLazy(project, actionResult.requestor)
       }
       is MultipleTargets -> {
         val popup = createTargetPopup(

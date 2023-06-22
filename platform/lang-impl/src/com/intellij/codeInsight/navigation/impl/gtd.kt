@@ -2,8 +2,7 @@
 package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.codeInsight.navigation.CtrlMouseData
-import com.intellij.codeInsight.navigation.impl.NavigationActionResult.MultipleTargets
-import com.intellij.codeInsight.navigation.impl.NavigationActionResult.SingleTarget
+import com.intellij.codeInsight.navigation.impl.NavigationActionResult.*
 import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiSymbolService
 import com.intellij.model.psi.impl.TargetData
@@ -11,6 +10,7 @@ import com.intellij.model.psi.impl.declaredReferencedData
 import com.intellij.navigation.SymbolNavigationService
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.navigation.NavigationTarget
+import com.intellij.psi.PsiCompiledElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.ApiStatus
@@ -60,21 +60,29 @@ class TargetGTDActionData(private val project: Project, private val targetData: 
       extractSingleTargetResult(symbol, navigationProvider)?.let { result -> return result }
     }
 
-    data class GTDSingleTarget(val navigationTarget: NavigationTarget, val navigationProvider: Any?)
+    data class GTDSingleTarget(val navigationTarget: NavigationTarget, val navigationProvider: Any?, val lazy: Boolean)
 
     val result = SmartList<GTDSingleTarget>()
+    val psiSymbolService = PsiSymbolService.getInstance()
     for ((symbol, navigationProvider) in targetData.targets) {
+      val elementFromSymbol = psiSymbolService.extractElementFromSymbol(targetData.targets[0].symbol)
+      val showLazy = elementFromSymbol is PsiCompiledElement
       for (navigationTarget in SymbolNavigationService.getInstance().getNavigationTargets(project, symbol)) {
-        result += GTDSingleTarget(navigationTarget, navigationProvider)
+        result += GTDSingleTarget(navigationTarget, navigationProvider, showLazy)
       }
     }
     return when (result.size) {
       0 -> null
       1 -> {
         // don't compute presentation for single target
-        val (navigationTarget, navigationProvider) = result.single()
-        navigationTarget.navigationRequest()?.let { request ->
-          SingleTarget(request, navigationProvider)
+        val (navigationTarget, navigationProvider, showLazy) = result.single()
+        if (!showLazy) {
+          navigationTarget.navigationRequest()?.let { request ->
+            SingleTarget(request, navigationProvider)
+          }
+        }
+        else {
+          LazySingleTarget(navigationTarget::navigationRequest, navigationProvider)
         }
       }
       else -> {
