@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.lang.Language;
+import com.intellij.model.ModelBranch;
 import com.intellij.openapi.fileTypes.CharsetUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -10,6 +11,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -144,8 +146,30 @@ public class LightVirtualFile extends LightVirtualFileBase {
     return ThreeState.UNSURE;
   }
 
+  /**
+   * @return true if this virtual file is considered a non-physical,
+   * and changes in the file should not produce events and
+   * can be performed outside of write action.
+   */
+  public boolean shouldSkipEventSystem() {
+    return false;
+  } 
+
   @Override
   public String toString() {
     return "LightVirtualFile: " + getPresentableUrl();
+  }
+
+  /**
+   * Determines if the given virtual file should be treated as non-physical one
+   *
+   * @param virtualFile the virtual file to check
+   * @return true if the virtual file is an instance of LightVirtualFile and {@link #shouldSkipEventSystem()} method returns true,
+   * false otherwise
+   */
+  @Contract("null -> false")
+  public static boolean shouldSkipEventSystem(@Nullable VirtualFile virtualFile) {
+    return ModelBranch.getFileBranch(virtualFile) != null ||
+           virtualFile instanceof LightVirtualFile && ((LightVirtualFile)virtualFile).shouldSkipEventSystem();
   }
 }

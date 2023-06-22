@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
-import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.*;
@@ -39,8 +38,7 @@ public class MoveAnnotationToPackageInfoFileFix extends PsiUpdateModCommandActio
     if (aPackage == null) return;
     PsiFile packageInfoFile = getPackageInfoFile(aPackage);
     if (packageInfoFile == null) {
-      packageInfoFile = updater.createFile(packageStatement.getContainingFile().getOriginalFile().getContainingDirectory(),
-                                           PsiPackage.PACKAGE_INFO_FILE, JavaFileType.INSTANCE, "");
+      packageInfoFile = updater.getWritable(context.file().getContainingDirectory()).createFile(PsiPackage.PACKAGE_INFO_FILE);
     }
     if (PsiPackage.PACKAGE_INFO_FILE.equals(packageInfoFile.getName())) {
       PsiFile modifiedPackageInfoFile = moveAnnotationsAndGetFile(packageStatement, updater.getWritable(packageInfoFile));

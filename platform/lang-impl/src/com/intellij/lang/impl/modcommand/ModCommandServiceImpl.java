@@ -50,6 +50,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class ModCommandServiceImpl implements ModCommandService {
@@ -366,5 +367,10 @@ public class ModCommandServiceImpl implements ModCommandService {
                                                                                 DumbProgressIndicator.INSTANCE);
     return ContainerUtil.map(fragments, fr -> new Fragment(fr.getStartOffset2(), fr.getEndOffset1() - fr.getStartOffset1(),
                                                            fr.getEndOffset2() - fr.getStartOffset2()));
+  }
+
+  @Override
+  public @NotNull ModCommand psiUpdate(ModCommandAction.@NotNull ActionContext context, @NotNull Consumer<@NotNull ModPsiUpdater> updater) {
+    return PsiUpdateImpl.psiUpdate(context, updater);
   }
 }

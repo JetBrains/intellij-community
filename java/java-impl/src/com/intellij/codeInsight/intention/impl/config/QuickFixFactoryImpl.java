@@ -393,7 +393,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createMoveClassToSeparateFileFix(@NotNull PsiClass aClass) {
-    return new MoveClassToSeparateFileFix(aClass);
+    return new MoveClassToSeparateFileFix(aClass).asIntention();
   }
 
   @NotNull

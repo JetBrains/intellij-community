@@ -3,11 +3,10 @@ package com.intellij.modcommand;
 
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -25,21 +24,14 @@ import java.util.function.BiConsumer;
 public interface ModPsiUpdater {
   /**
    * @param e element to update
-   * @return a copy of this element inside a writable non-physical file, whose changes are tracked and will be added to the final command
+   * @return a copy of this element inside a writable non-physical file, whose changes are tracked and will be added to the final command.
+   * If {@code e} is a {@link PsiDirectory}, a non-physical copy is returned, which allows you to create new files inside that directory.
+   * Other write operations on the directory may not work.
    * @param <E> type of the element
    */
   @Contract(value = "null -> null; !null -> !null")
   <E extends PsiElement> E getWritable(E e);
 
-  /**
-   * @param directory parent directory
-   * @param name file name
-   * @param type file type
-   * @param content initial file content
-   * @return a newly created editable non-physical file, whose changes will be added to the final command
-   */
-  @NotNull PsiFile createFile(@NotNull PsiDirectory directory, @NotNull String name, @NotNull FileType type, @NotNull String content);
-  
   /**
    * Selects given element
    * 
@@ -106,4 +98,12 @@ public interface ModPsiUpdater {
    * @param suggestedNames names to suggest (user is free to type any other name as well)
    */
   void rename(@NotNull PsiNameIdentifierOwner element, @NotNull List<@NotNull String> suggestedNames);
+
+  /**
+   * Cancels any changes done previously, displaying an error message with the given text instead.
+   * The subsequent updates will be ignored.
+   *
+   * @param errorMessage the error message to display
+   */
+  void cancel(@NotNull @NlsContexts.Tooltip String errorMessage);
 }

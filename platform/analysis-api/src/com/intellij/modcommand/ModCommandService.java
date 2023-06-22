@@ -9,6 +9,8 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Consumer;
+
 /**
  * A support service to handle {@link ModCommand} and {@link ModCommandAction}
  */
@@ -60,6 +62,12 @@ public interface ModCommandService {
    * @param command a command to execute
    */
   void executeInBatch(@NotNull Project project, @NotNull ModCommand command);
+
+  /**
+   * Implementation of ModCommands.psiUpdate; should not be used directly.
+   */
+  @NotNull ModCommand psiUpdate(@NotNull ModCommandAction.ActionContext context,
+                                @NotNull Consumer<@NotNull ModPsiUpdater> updater);
 
   /**
    * @return an instance of this service
