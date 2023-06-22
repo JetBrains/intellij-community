@@ -663,29 +663,41 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
 
   @Test
   public void testConcurrentListAllDoesntCauseDuplicateFileIds() throws Exception {
-    PersistentFSImpl fs = (PersistentFSImpl)PersistentFS.getInstance();
+    PersistentFSImpl pfs = (PersistentFSImpl)PersistentFS.getInstance();
+    Application application = ApplicationManager.getApplication();
 
-    for (int i = 0; i < 10; i++) {
-      File file = tempDirectory.newFile("d" + i + "/file.txt", "x".getBytes(UTF_8));
-      VirtualDirectoryImpl vTemp = (VirtualDirectoryImpl)refreshAndFind(file).getParent();
+    //FIXME RC: this test actually fails given enough attempts (100-2000 is usually enough).
+    //          It was failing for quite a lot of time, just rarely, since attempts count
+    //          is low.
+    //          It fails because PersistentFSImpl.persistAllChildren() is not thread-safe,
+    //          it is possible for it to create file duplicates
+    int enoughAttempts = 10;
+    for (int attempt = 0; attempt < enoughAttempts; attempt++) {
+      File file1 = tempDirectory.newFile("dir." + attempt + "/file1", "text1".getBytes(UTF_8));
+      Path file2 = file1.toPath().resolveSibling("file2");
+
+      VirtualDirectoryImpl vTemp = (VirtualDirectoryImpl)refreshAndFind(file1).getParent();
       assertFalse(vTemp.allChildrenLoaded());
-      Files.writeString(file.toPath().resolveSibling("new.txt"), "new");
-      Future<List<? extends ChildInfo>> f1 = ApplicationManager.getApplication().executeOnPooledThread(() -> fs.listAll(vTemp));
-      Future<List<? extends ChildInfo>> f2 = ApplicationManager.getApplication().executeOnPooledThread(() -> fs.listAll(vTemp));
+      Files.writeString(file2, "text2");
+
+      Future<List<? extends ChildInfo>> f1 = application.executeOnPooledThread(() -> pfs.listAll(vTemp));
+      Future<List<? extends ChildInfo>> f2 = application.executeOnPooledThread(() -> pfs.listAll(vTemp));
       List<? extends ChildInfo> children1 = f1.get();
       List<? extends ChildInfo> children2 = f2.get();
+
       int[] nameIds1 = children1.stream().mapToInt(n -> n.getNameId()).toArray();
       int[] nameIds2 = children2.stream().mapToInt(n -> n.getNameId()).toArray();
 
       // there can be one or two children, depending on whether the VFS refreshed in time or not.
       // but in any case, there must not be duplicate ids (i.e. files with the same name but different getId())
-      for (int i1 = 0; i1 < nameIds1.length; i1++) {
-        int nameId1 = nameIds1[i1];
-        int i2 = ArrayUtil.find(nameIds2, nameId1);
-        if (i2 >= 0) {
-          int id1 = children1.get(i1).getId();
-          int id2 = children2.get(i2).getId();
-          assertEquals("Duplicate ids found. children1=" + children1 + "; children2=" + children2, id1, id2);
+      for (int nameIndexIn1 = 0; nameIndexIn1 < nameIds1.length; nameIndexIn1++) {
+        int nameId1 = nameIds1[nameIndexIn1];
+        int nameIndexIn2 = ArrayUtil.find(nameIds2, nameId1);
+        if (nameIndexIn2 >= 0) {
+          int childId1 = children1.get(nameIndexIn1).getId();
+          int childId2 = children2.get(nameIndexIn2).getId();
+          assertEquals("[attempt: " + attempt + "] duplicate ids found: \nchildren1=" + children1 + "\nchildren2=" + children2,
+                       childId1, childId2);
         }
       }
     }
