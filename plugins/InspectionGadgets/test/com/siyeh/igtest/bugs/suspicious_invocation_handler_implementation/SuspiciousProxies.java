@@ -57,7 +57,7 @@ class Test {
 
   void unused() {
     Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(),
-                           new Class[]{Runnable.class}, (proxy, <warning descr="Method is never used in 'invoke': it's unlikely that 'hashCode', 'equals' and 'toString' are implemented correctly">method</warning>, params) -> {
+                           new Class[]{Runnable.class}, (proxy, <warning descr="Method is never used in 'invoke()': it's unlikely that 'hashCode()', 'equals()' and 'toString()' are implemented correctly">method</warning>, params) -> {
         System.out.println("Hello World!");
         return null;
       });
@@ -158,7 +158,7 @@ class Test {
     return null;
   }
   
-  Object handlerUsed(Object proxy, Method <warning descr="Method is never used in 'invoke': it's unlikely that 'hashCode', 'equals' and 'toString' are implemented correctly">m</warning>, Object[] args) {
+  Object handlerUsed(Object proxy, Method <warning descr="Method is never used in 'invoke()': it's unlikely that 'hashCode()', 'equals()' and 'toString()' are implemented correctly">m</warning>, Object[] args) {
     System.out.println("hello");
     return null;
   }
