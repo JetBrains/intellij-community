@@ -13,5 +13,13 @@ data class BuildInfo(
   @JsonProperty("branch_name")
   val branchName: String,
 
-  val os: String
+  val os: String,
+
+  @JsonProperty("build_type")
+  val buildType: String,
+
+  val status: String,
+
+  @JsonProperty("build_status_message")
+  val buildStatusMessage: String = ""
 )

@@ -64,7 +64,7 @@
 
   <problem>
     <file>set.kt</file>
-    <line>8</line>
+    <line>9</line>
     <module>light_idea_test_case</module>
     <entry_point TYPE="file" FQNAME="set.kt" />
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Explicit 'get' or 'set' call</problem_class>
@@ -76,6 +76,15 @@
     <line>9</line>
     <module>light_idea_test_case</module>
     <entry_point TYPE="file" FQNAME="set2.kt" />
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Explicit 'get' or 'set' call</problem_class>
+    <description>Should be replaced with indexing</description>
+  </problem>
+
+  <problem>
+    <file>overriddenSet.kt</file>
+    <line>19</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="overriddenSet.kt" />
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Explicit 'get' or 'set' call</problem_class>
     <description>Should be replaced with indexing</description>
   </problem>

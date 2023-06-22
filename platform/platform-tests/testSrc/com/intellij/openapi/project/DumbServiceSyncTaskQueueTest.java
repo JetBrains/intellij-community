@@ -14,8 +14,13 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DumbServiceSyncTaskQueueTest extends BasePlatformTestCase {
-  private final DumbServiceMergingTaskQueue myQueue = new DumbServiceMergingTaskQueue();
-  private final DumbServiceSyncTaskQueue myService = new DumbServiceSyncTaskQueue(myQueue);
+  private DumbServiceSyncTaskQueue myService;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myService = new DumbServiceSyncTaskQueue(getProject(), new DumbServiceMergingTaskQueue());
+  }
 
   @NotNull
   private DumbServiceSyncTaskQueue service() {

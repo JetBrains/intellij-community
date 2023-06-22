@@ -34,7 +34,6 @@
     <orderEntry type="module" module-name="intellij.regexp" />
     <orderEntry type="module" module-name="intellij.platform.debugger" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
-    <orderEntry type="library" exported="" name="markdownj" level="project" />
     <orderEntry type="library" name="http-client" level="project" />
     <orderEntry type="module" module-name="intellij.platform.tasks.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.tasks" exported="" />
@@ -46,7 +45,9 @@
           <root url="jar://$MAVEN_REPOSITORY$/commons-discovery/commons-discovery/0.4/commons-discovery-0.4.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/commons-discovery/commons-discovery/0.4/commons-discovery-0.4-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="library" name="javax.annotation-api" level="project" />
@@ -54,5 +55,6 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="library" name="jsonpath" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="intellij.platform.markdown.utils" />
   </component>
 </module>

@@ -4,7 +4,7 @@
     <inspectionGroupProvider implementation="com.intellij.codeInspection.inspectionProfile.InspectionBasicGroupProvider" />
     <inspectionGroupProvider implementation="com.intellij.codeInspection.inspectionProfile.InspectionCategoryGroupProvider" />
     <inspectionGroupProvider implementation="com.intellij.codeInspection.inspectionProfile.DefaultSeverityGroupProvider" />
-    <appStarter implementation="com.intellij.inspectopedia.extractor.InspectopediaExtractor"/>
+    <appStarter id="inspectopedia-generator" implementation="com.intellij.inspectopedia.extractor.InspectopediaExtractor"/>
   </extensions>
   <extensionPoints>
     <extensionPoint name="inspectResultsConsumer" interface="com.intellij.codeInspection.InspectResultsConsumer" dynamic="true"/>

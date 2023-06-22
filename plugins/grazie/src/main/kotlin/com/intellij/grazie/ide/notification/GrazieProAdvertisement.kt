@@ -5,7 +5,6 @@ import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
-import com.intellij.notification.NotificationAction.createSimpleExpiring
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.invokeLater
@@ -64,20 +63,29 @@ internal fun advertiseGrazieProfessional(project: Project) {
   markDelayed()
   invokeLater {
     val text = GrazieBundle.message("grazie.notification.pro.advertisement.text")
-    val remindLaterAction = createSimpleExpiring(GrazieBundle.message("grazie.notification.pro.advertisement.remind.later.action.text")) {
-      markDelayed()
-    }
-    val ignoreAction = createSimpleExpiring(GrazieBundle.message("grazie.notification.pro.advertisement.ignore.action.text")) {
-      markShown()
-    }
     val group = GrazieToastNotifications.GENERAL_GROUP
     group.createNotification(text, NotificationType.INFORMATION)
       .setTitle(GrazieBundle.message("grazie.notification.pro.advertisement.title"))
       .addAction(InstallGrazieProfessionalAction())
-      .addAction(remindLaterAction)
-      .addAction(ignoreAction)
+      .addAction(RemindLaterAction())
+      .addAction(IgnoreAction())
       .setSuggestionType(true)
+      .setDisplayId(GrazieNotificationIds.GRAZIE_PRO_ADVERTISEMENT)
       .notify(project)
+  }
+}
+
+private class RemindLaterAction: NotificationAction(GrazieBundle.message("grazie.notification.pro.advertisement.remind.later.action.text")) {
+  override fun actionPerformed(event: AnActionEvent, notification: Notification) {
+    markDelayed()
+    notification.expire()
+  }
+}
+
+private class IgnoreAction: NotificationAction(GrazieBundle.message("grazie.notification.pro.advertisement.ignore.action.text")) {
+  override fun actionPerformed(event: AnActionEvent, notification: Notification) {
+    markShown()
+    notification.expire()
   }
 }
 

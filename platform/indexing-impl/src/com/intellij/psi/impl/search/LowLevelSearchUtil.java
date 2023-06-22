@@ -23,6 +23,7 @@ import com.intellij.util.text.StringSearcher;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -36,7 +37,8 @@ public final class LowLevelSearchUtil {
   // null -> there were nothing injected found
   private static Boolean processInjectedFile(PsiElement element,
                                              @NotNull StringSearcher searcher,
-                                             int start, @NotNull ProgressIndicator progress,
+                                             int start,
+                                             @NotNull ProgressIndicator progress,
                                              InjectedLanguageManager injectedLanguageManager,
                                              @NotNull TextOccurenceProcessor processor) {
     if (!(element instanceof PsiLanguageInjectionHost)) return null;
@@ -100,7 +102,7 @@ public final class LowLevelSearchUtil {
     return true;
   }
 
-  private static ASTNode findNextLeafElementAt(ASTNode scopeNode, ASTNode last, int offset) {
+  private static ASTNode findNextLeafElementAt(@NotNull ASTNode scopeNode, @Nullable ASTNode last, int offset) {
     int offsetR = offset;
     if (last != null) {
       offsetR -= last.getStartOffset() - scopeNode.getStartOffset() + last.getTextLength();
@@ -193,7 +195,9 @@ public final class LowLevelSearchUtil {
       progress.checkCanceled();
       final ASTNode leafNode = findNextLeafElementAt(node, lastElement, offset);
       if (leafNode == null) {
-        LOG.error("Cannot find leaf: node=" + node + "; offset=" + offset + "; lastElement=" + lastElement);
+        PsiElement psi = node.getPsi();
+        LOG.error("Cannot find leaf: node=" + node + "; psi= " + psi + "; language=" + (psi==null?null:psi.getLanguage())+
+                  "; offset=" + offset + "; lastElement=" + lastElement);
         continue;
       }
       final int offsetInLeaf = offset - leafNode.getStartOffset() + scopeStartOffset;
@@ -209,9 +213,9 @@ public final class LowLevelSearchUtil {
   }
 
   private static void diagnoseInvalidRange(@NotNull PsiElement scope,
-                                           PsiFile file,
-                                           FileViewProvider viewProvider,
-                                           CharSequence buffer,
+                                           @NotNull PsiFile file,
+                                           @NotNull FileViewProvider viewProvider,
+                                           @NotNull CharSequence buffer,
                                            TextRange range) {
     String msg = "Range for element: '" + scope + "' = " + range + " is out of file '" + file + "' range: " + file.getTextRange();
     msg += "; file contents length: " + buffer.length();

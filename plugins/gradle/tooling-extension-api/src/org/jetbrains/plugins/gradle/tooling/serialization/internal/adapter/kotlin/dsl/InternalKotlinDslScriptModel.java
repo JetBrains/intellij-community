@@ -27,17 +27,17 @@ public class InternalKotlinDslScriptModel implements KotlinDslScriptModel, Seria
                                       List<String> implicitImports,
                                       List<EditorReport> editorReports,
                                       List<String> exceptions) {
-    myClassPath = new ArrayList<File>(classPath);
-    mySourcePath = new ArrayList<File>(sourcePath);
-    myImplicitImports = new ArrayList<String>(implicitImports);
-    myEditorReports = new ArrayList<EditorReport>(editorReports.size());
+    myClassPath = new ArrayList<>(classPath);
+    mySourcePath = new ArrayList<>(sourcePath);
+    myImplicitImports = new ArrayList<>(implicitImports);
+    myEditorReports = new ArrayList<>(editorReports.size());
     for (EditorReport report : editorReports) {
       EditorPosition position = report.getPosition();
       InternalEditorPosition internalEditorPosition =
         position == null ? null : new InternalEditorPosition(position.getLine(), position.getColumn());
       myEditorReports.add(new InternalEditorReport(report.getSeverity(), report.getMessage(), internalEditorPosition));
     }
-    myExceptions = new ArrayList<String>(exceptions);
+    myExceptions = new ArrayList<>(exceptions);
   }
 
   @Override

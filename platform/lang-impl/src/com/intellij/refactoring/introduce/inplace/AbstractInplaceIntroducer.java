@@ -5,6 +5,7 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.template.TextResult;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -34,6 +35,7 @@ import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -172,7 +174,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       final String[] names = suggestNames(replaceAllOccurrences, getLocalVariable());
       boolean started = false;
-      try {
+      try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
         if (replaceAllOccurrences) {
           int segmentsLimit = Registry.intValue("inplace.rename.segments.limit", -1);
           // Too many occurrences: rename template won't start, see InplaceRefactoring.buildTemplateAndStart

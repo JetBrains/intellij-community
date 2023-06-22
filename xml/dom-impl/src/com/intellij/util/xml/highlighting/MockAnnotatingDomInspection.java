@@ -13,7 +13,7 @@ public final class MockAnnotatingDomInspection<T extends DomElement> extends Bas
   }
 
   @Override
-  protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
+  protected void checkDomElement(@NotNull DomElement element, @NotNull DomElementAnnotationHolder holder, @NotNull DomHighlightingHelper helper) {
     for (Class aClass : getDomClasses()) {
       helper.runAnnotators(element, holder, aClass);
     }

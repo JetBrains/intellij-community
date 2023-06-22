@@ -2,24 +2,18 @@
 package training.learn.lesson.general.run
 
 import com.intellij.execution.RunManager
-import com.intellij.execution.RunManagerListener
-import com.intellij.execution.RunnerAndConfigurationSettings
-import com.intellij.execution.actions.ConfigurationContext
+import com.intellij.execution.ui.RunConfigurationStartHistory
 import com.intellij.execution.ui.UIExperiment
 import com.intellij.icons.AllIcons
-import com.intellij.ide.impl.DataManagerImpl
 import com.intellij.ide.ui.text.ShortcutsRenderingUtil
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.LogicalPosition
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.tasks.TaskBundle
 import com.intellij.util.DocumentUtil
@@ -46,9 +40,6 @@ import training.statistic.LessonStartingWay
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiUtil.findComponentWithTimeout
 import training.util.WeakReferenceDelegator
-import training.util.getActionById
-import training.util.invokeActionForFocusContext
-import java.awt.Rectangle
 import java.awt.event.KeyEvent
 
 abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message("debug.workflow.lesson.name")) {
@@ -60,6 +51,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
   protected abstract val debuggingMethodName: String
   protected abstract val methodForStepInto: String
   protected abstract val stepIntoDirectionToRight: Boolean
+  protected open val breakpointXRange: (width: Int) -> IntRange = LessonUtil.breakpointXRange
 
   protected val afterFixText: String by lazy { sample.text.replaceFirst("[0]", "[1]") }
 
@@ -72,7 +64,20 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
     clearBreakpoints()
     prepareTask()
 
-    toggleBreakpointTask(sample, { logicalPosition }) {
+    highlightButtonById("Run", highlightInside = false, usePulsation = false)
+
+    task {
+      text(LessonsBundle.message("debug.workflow.run.current"), LearningBalloonConfig(Balloon.Position.below, 0, duplicateMessage = true))
+      checkToolWindowState("Run", true)
+      test {
+        ideFrame {
+          highlightedArea.click()
+        }
+      }
+    }
+
+    toggleBreakpointTask(sample, { logicalPosition }, breakpointXRange = breakpointXRange) {
+      text(LessonsBundle.message("debug.workflow.exception.description"))
       text(LessonsBundle.message("debug.workflow.toggle.breakpoint",
                                  action("ToggleLineBreakpoint")))
     }
@@ -117,34 +122,16 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
   }
 
   private fun LessonContext.prepareTask() {
-    var needToRun = false
-    prepareRuntimeTask {
-      (this@CommonDebugLesson).debugSession = null
-      val stopAction = getActionById("Stop")
-      invokeActionForFocusContext(stopAction)
-      runWriteAction {
-        needToRun = !selectedNeedConfiguration() && !configureDebugConfiguration()
-      }
-    }
-
     showInvalidDebugLayoutWarning()
 
-    if (needToRun) {
-      // Normally this step should not be shown!
-      task {
-        text(LessonsBundle.message("debug.workflow.run.program", action("RunClass")))
-        addFutureStep {
-          subscribeForMessageBus(RunManagerListener.TOPIC, object : RunManagerListener {
-            override fun runConfigurationSelected(settings: RunnerAndConfigurationSettings?) {
-              if (selectedNeedConfiguration()) {
-                completeStep()
-              }
-            }
-          })
+    prepareRuntimeTask {
+      runWriteAction {
+        val instance = RunManager.getInstance(project)
+        for (it in instance.allSettings) {
+          instance.removeConfiguration(it)
         }
-        proposeRestore {
-          checkExpectedStateOfEditor(sample, false)
-        }
+        RunManager.getInstance(project).selectedConfiguration = null
+        RunConfigurationStartHistory.getInstance(project).loadState(RunConfigurationStartHistory.State())
       }
     }
   }
@@ -336,26 +323,13 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
 
     actionTask("XDebugger.MuteBreakpoints") {
       proposeModificationRestore(afterFixText)
-      LessonsBundle.message("debug.workflow.mute.breakpoints", icon(AllIcons.Debugger.MuteBreakpoints), action(it))
+      LessonsBundle.message("debug.workflow.mute.breakpoints", icon(AllIcons.Debugger.MuteBreakpoints))
     }
   }
 
   private fun LessonContext.runToCursorTask() {
     val position = sample.getPosition(3)
     caret(position)
-
-    highlightLineNumberByOffset(position.startOffset)
-    task {
-      if (!UIExperiment.isNewDebuggerUIEnabled()) {
-        val runToCursorAction = getActionById("RunToCursor")
-        triggerAndFullHighlight {
-          usePulsation = true
-          clearPreviousHighlights = false
-        }.component { ui: ActionButton ->
-          ui.action == runToCursorAction && LessonUtil.checkToolbarIsShowing(ui)
-        }
-      }
-    }
 
     actionTask("RunToCursor") {
       proposeRestore {
@@ -366,8 +340,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
         LessonsBundle.message("debug.workflow.run.to.cursor.press.or.click", action(it), icon(AllIcons.Actions.RunToCursor))
       }
       else LessonsBundle.message("debug.workflow.run.to.cursor.press", action(it))
-      val alternative = LessonsBundle.message("debug.workflow.run.to.cursor.alternative", LessonUtil.actionName(it))
-      "$intro $actionPart $alternative"
+      "$intro $actionPart"
     }
   }
 
@@ -425,17 +398,6 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
 
   protected open fun LessonContext.restoreHotSwapStateInformer() = Unit
 
-  private fun LessonContext.highlightLineNumberByOffset(offset: Int) {
-    task {
-      triggerAndBorderHighlight().componentPart l@{ ui: EditorGutterComponentEx ->
-        if (CommonDataKeys.EDITOR.getData(ui as DataProvider) != editor) return@l null
-        val line = editor.offsetToVisualLine(offset, true)
-        val y = editor.visualLineToY(line)
-        return@l Rectangle(2, y, ui.iconsAreaWidth + 6, editor.lineHeight)
-      }
-    }
-  }
-
   private fun LessonContext.quickEvaluateTask(positionId: Int, textAndRestore: TaskContext.(LessonSamplePosition) -> Unit) {
     task("QuickEvaluateExpression") {
       before {
@@ -447,23 +409,6 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
       textAndRestore(position)
       test { actions(it) }
     }
-  }
-
-  private fun TaskRuntimeContext.selectedNeedConfiguration(): Boolean {
-    val runManager = RunManager.getInstance(project)
-    val selectedConfiguration = runManager.selectedConfiguration
-    return selectedConfiguration?.name == configurationName
-  }
-
-  private fun TaskRuntimeContext.configureDebugConfiguration(): Boolean {
-    val runManager = RunManager.getInstance(project)
-    val dataContext = DataManagerImpl.getInstance().getDataContext(editor.component)
-    val configurationsFromContext = ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN).configurationsFromContext
-
-    val configuration = configurationsFromContext?.singleOrNull() ?: return false
-    runManager.addConfiguration(configuration.configurationSettings)
-    runManager.selectedConfiguration = configuration.configurationSettings
-    return true
   }
 
   protected fun TaskContext.proposeModificationRestore(restoreText: String, checkDebugSession: Boolean = true) = proposeRestore {

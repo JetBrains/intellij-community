@@ -1,13 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.ui.uiDslTestAction
 
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
@@ -20,7 +21,7 @@ import javax.swing.border.Border
 @Suppress("DialogTitleCapitalization")
 @ApiStatus.Internal
 internal class CheckBoxRadioButtonPanel {
-  val panel = panel {
+  val panel: DialogPanel = panel {
     row {
       panel {
         buttonsGroup {
@@ -102,6 +103,6 @@ private fun Cell<JToggleButton>.customize(background: Color, border: Border) {
     isOpaque = true
     this.background = background
     this.border = border
-    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY)
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
   }
 }

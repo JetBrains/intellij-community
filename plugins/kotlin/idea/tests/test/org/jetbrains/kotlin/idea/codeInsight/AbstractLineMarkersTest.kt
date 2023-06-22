@@ -1,9 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
+import com.intellij.codeInsight.daemon.GutterIconDescriptor
 import com.intellij.codeInsight.daemon.LineMarkerInfo
+import com.intellij.codeInsight.daemon.LineMarkerSettings
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.daemon.impl.InheritorsLineMarkerNavigator
 import com.intellij.codeInsight.navigation.GotoImplementationHandler
@@ -22,6 +24,7 @@ import org.jetbrains.kotlin.idea.base.test.InnerLineMarkerCodeMetaInfo
 import org.jetbrains.kotlin.idea.base.test.InnerLineMarkerConfiguration
 import org.jetbrains.kotlin.idea.base.test.KotlinExpectedHighlightingData
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.TestableLineMarkerNavigator
+import org.jetbrains.kotlin.idea.highlighter.markers.KotlinLineMarkerOptions
 import org.jetbrains.kotlin.idea.navigation.NavigationTestUtils
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.psi.KtFile
@@ -48,14 +51,27 @@ abstract class AbstractLineMarkersTest : KotlinLightCodeInsightFixtureTestCase()
         return checkHighlighting(psiFile, documentToAnalyze, expectedHighlighting, expectedFile)
     }
 
-    fun doTest(unused: String, additionalCheck: () -> Unit) {
+    fun doTest(@Suppress("UNUSED_PARAMETER") unused: String, additionalCheck: () -> Unit) {
         val fileText = FileUtil.loadFile(dataFile())
-        try {
-            ConfigLibraryUtil.configureLibrariesByDirective(myFixture.module, fileText)
-            if (InTextDirectivesUtils.findStringWithPrefixes(fileText, "METHOD_SEPARATORS") != null) {
-                DaemonCodeAnalyzerSettings.getInstance().SHOW_METHOD_SEPARATORS = true
+        ConfigLibraryUtil.configureLibrariesByDirective(myFixture.module, fileText)
+        if (InTextDirectivesUtils.findStringWithPrefixes(fileText, "METHOD_SEPARATORS") != null) {
+            DaemonCodeAnalyzerSettings.getInstance().SHOW_METHOD_SEPARATORS = true
+        }
+        val disabledOptions = InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, "// OPTION: ")
+            .mapNotNull {
+                if (it.startsWith("-")) {
+                    val optionName = it.substring(1)
+                    val field = KotlinLineMarkerOptions::class.java.getDeclaredField(optionName)
+                    field.isAccessible = true
+                    field.get(KotlinLineMarkerOptions) as GutterIconDescriptor
+                } else {
+                    null
+                }
             }
-
+        disabledOptions.forEach {
+            LineMarkerSettings.getSettings().setEnabled(it, false)
+        }
+        try {
             val dependencySuffixes = listOf(".dependency.kt", ".dependency.java", ".dependency1.kt", ".dependency2.kt")
             for (suffix in dependencySuffixes) {
                 val dependencyPath = fileName().replace(".kt", suffix)
@@ -84,6 +100,9 @@ abstract class AbstractLineMarkersTest : KotlinLightCodeInsightFixtureTestCase()
         } finally {
             ConfigLibraryUtil.unconfigureLibrariesByDirective(module, fileText)
             DaemonCodeAnalyzerSettings.getInstance().SHOW_METHOD_SEPARATORS = false
+            disabledOptions.forEach {
+                LineMarkerSettings.getSettings().setEnabled(it, true)
+            }
         }
 
     }
@@ -115,27 +134,31 @@ abstract class AbstractLineMarkersTest : KotlinLightCodeInsightFixtureTestCase()
 
                 val lineMarker = navigateMarker!!.lineMarker
 
-                val handler = lineMarker.navigationHandler
-                if (handler is InheritorsLineMarkerNavigator) {
-                    val gotoData =
-                        GotoImplementationHandler().createDataForSourceForTests(editor, lineMarker.element!!.parent!!)
-                    val targets = gotoData.targets.toMutableList().sortedBy {
-                        it.renderAsGotoImplementation()
+                when (val handler = lineMarker.navigationHandler) {
+                    is InheritorsLineMarkerNavigator -> {
+                        val gotoData =
+                            GotoImplementationHandler().createDataForSourceForTests(editor, lineMarker.element!!.parent!!)
+                        val targets = gotoData.targets.toMutableList().sortedBy {
+                            it.renderAsGotoImplementation()
+                        }
+                        val actualNavigationData = NavigationTestUtils.getNavigateElementsText(project, targets)
+
+                        UsefulTestCase.assertSameLines(getExpectedNavigationText(navigationComment), actualNavigationData)
+
                     }
-                    val actualNavigationData = NavigationTestUtils.getNavigateElementsText(project, targets)
 
-                    UsefulTestCase.assertSameLines(getExpectedNavigationText(navigationComment), actualNavigationData)
+                    is TestableLineMarkerNavigator -> {
+                        val navigateElements = handler.getTargetsPopupDescriptor(lineMarker.element)?.targets?.sortedBy {
+                            it.renderAsGotoImplementation()
+                        }
+                        val actualNavigationData = NavigationTestUtils.getNavigateElementsText(project, navigateElements)
 
-                }
-                else if (handler is TestableLineMarkerNavigator) {
-                    val navigateElements = handler.getTargetsPopupDescriptor(lineMarker.element)?.targets?.sortedBy {
-                        it.renderAsGotoImplementation()
+                        UsefulTestCase.assertSameLines(getExpectedNavigationText(navigationComment), actualNavigationData)
                     }
-                    val actualNavigationData = NavigationTestUtils.getNavigateElementsText(project, navigateElements)
 
-                    UsefulTestCase.assertSameLines(getExpectedNavigationText(navigationComment), actualNavigationData)
-                } else {
-                    Assert.fail("Only TestableLineMarkerNavigator are supported in navigate check")
+                    else -> {
+                        Assert.fail("Only TestableLineMarkerNavigator are supported in navigate check")
+                    }
                 }
             }
         }
@@ -178,7 +201,7 @@ abstract class AbstractLineMarkersTest : KotlinLightCodeInsightFixtureTestCase()
             documentToAnalyze: Document,
             expectedHighlighting: ExpectedHighlightingData,
             expectedFile: File
-        ): MutableList<LineMarkerInfo<*>> {
+        ): List<LineMarkerInfo<*>> {
             val markers = DaemonCodeAnalyzerImpl.getLineMarkers(documentToAnalyze, psiFile.project)
 
             try {

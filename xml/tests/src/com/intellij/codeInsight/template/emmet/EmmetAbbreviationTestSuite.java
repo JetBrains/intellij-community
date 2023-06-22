@@ -12,6 +12,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
@@ -25,6 +26,7 @@ import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.ui.UIUtil;
 import junit.framework.TestSuite;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,7 +82,7 @@ public abstract class EmmetAbbreviationTestSuite extends TestSuite {
 
   protected void addTest(String source, String expected, @Nullable TestInitializer setUp, String... extensions) {
     for (String extension : extensions) {
-      super.addTest(new EmmetAbbreviationTest(source, expected, extension, false, setUp));
+      super.addTest(new EmmetAbbreviation(source, expected, extension, false, setUp) {});
     }
   }
 
@@ -90,7 +92,7 @@ public abstract class EmmetAbbreviationTestSuite extends TestSuite {
 
   protected void addTestWithPositionCheck(String source, String expected, @Nullable TestInitializer setUp, String... extensions) {
     for (String extension : extensions) {
-      super.addTest(new EmmetAbbreviationTest(source, expected, extension, true, setUp));
+      super.addTest(new EmmetAbbreviation(source, expected, extension, true, setUp) {});
     }
   }
 
@@ -108,8 +110,7 @@ public abstract class EmmetAbbreviationTestSuite extends TestSuite {
     return CodeStyle.getSettings(fixture.getProject()).getCustomSettings(HtmlCodeStyleSettings.class);
   }
 
-  @SuppressWarnings("JUnitTestCaseWithNoTests")
-  private class EmmetAbbreviationTest extends BasePlatformTestCase {
+  private abstract class EmmetAbbreviation extends BasePlatformTestCase {
     private final String extension;
     private final String sourceData;
     private final String expectedData;
@@ -118,17 +119,11 @@ public abstract class EmmetAbbreviationTestSuite extends TestSuite {
     private final Set<Integer> expectedTabStops = new HashSet<>();
     private final Set<Integer> actualTabStops = new HashSet<>();
 
-    @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-    EmmetAbbreviationTest(@NotNull String sourceData, @NotNull String expectedData, @NotNull String extension, boolean checkPosition) {
-      this(sourceData, expectedData, extension, checkPosition, null);
-    }
-
-    @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-    EmmetAbbreviationTest(@NotNull String sourceData,
-                          @NotNull String expectedData,
-                          @NotNull String extension,
-                          boolean checkPosition,
-                          @Nullable TestInitializer initializer) {
+    EmmetAbbreviation(@NotNull String sourceData,
+                      @NotNull String expectedData,
+                      @NotNull String extension,
+                      boolean checkPosition,
+                      @Nullable TestInitializer initializer) {
       this.extension = extension;
       this.sourceData = sourceData;
       this.expectedData = expectedData;
@@ -164,6 +159,7 @@ public abstract class EmmetAbbreviationTestSuite extends TestSuite {
       String expectedText = !expectedData.contains(EditorTestUtil.CARET_TAG) ? prepareExpectedText(expectedData) : expectedData;
       prepareEditorForTest(sourceData, extension);
       expandAndReformat(true);
+
       myFixture.checkResult(expectedText);
       if (myCheckPosition) {
         assertEquals(expectedTabStops, actualTabStops); //check placeholders
@@ -171,12 +167,15 @@ public abstract class EmmetAbbreviationTestSuite extends TestSuite {
     }
 
     private void expandAndReformat(final boolean actualCode) {
-      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-        Project project = getProject();
-        assertNotNull(project);
-        EditorAction action = (EditorAction)ActionManager.getInstance().getAction(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_BY_TAB);
-        action.actionPerformed(myFixture.getEditor(), DataManager.getInstance().getDataContext());
+      Project project = getProject();
+      assertNotNull(project);
+      EditorAction action = (EditorAction)ActionManager.getInstance().getAction(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_BY_TAB);
+      action.actionPerformed(myFixture.getEditor(), DataManager.getInstance().getDataContext());
 
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+      UIUtil.dispatchAllInvocationEvents();
+
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
         TemplateState state = TemplateManagerImpl.getTemplateState(myFixture.getEditor());
         Editor editor = InjectedLanguageUtil.getTopLevelEditor(myFixture.getEditor());
         while (state != null && !state.isFinished()) {

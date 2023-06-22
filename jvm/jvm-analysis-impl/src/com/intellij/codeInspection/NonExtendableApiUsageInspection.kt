@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
@@ -62,6 +62,10 @@ class NonExtendableApiUsageInspection : LocalInspectionTool() {
         }
         problemsHolder.registerProblem(elementToHighlight, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
       }
+    }
+
+    override fun processLambda(sourceNode: ULambdaExpression, target: PsiModifierListOwner) {
+      processReference(sourceNode, target, null)
     }
 
     override fun processMethodOverriding(method: UMethod, overriddenMethod: PsiMethod) {

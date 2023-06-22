@@ -12,18 +12,17 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.ProjectInfo
-import org.jetbrains.kotlin.gradle.newTests.TestConfiguration
-import org.jetbrains.kotlin.gradle.newTests.TestWithKotlinPluginAndGradleVersions
-import org.jetbrains.kotlin.gradle.newTests.testFeatures.OrderEntriesFilteringTestFeature
-import org.jetbrains.kotlin.gradle.workspace.WorkspacePrintingMode
-import org.jetbrains.kotlin.gradle.workspace.checkWorkspaceModel
+import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfiguration
+import org.jetbrains.kotlin.gradle.multiplatformTests.TestWithKotlinPluginAndGradleVersions
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orderEntries.OrderEntriesChecker
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace.GeneralWorkspaceChecks
+import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.checkWorkspaceModel
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_7_21
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_8_0
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher
 import org.junit.Rule
 import org.junit.runners.Parameterized
-import java.io.File
 
 @Suppress("ACCIDENTAL_OVERRIDE")
 abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImportingTestCase(), TestWithKotlinPluginAndGradleVersions {
@@ -195,7 +194,8 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
     ) {
         val testConfiguration = TestConfiguration().apply {
             // Temporary hack for older usages (they were expecting K/N Dist to be leniently folded)
-            getConfiguration(OrderEntriesFilteringTestFeature).hideKonanDist = true
+            getConfiguration(OrderEntriesChecker).hideKonanDist = true
+            getConfiguration(GeneralWorkspaceChecks).testClassifier = testClassifier
             configure()
         }
 
@@ -205,8 +205,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
             myProjectRoot.toNioPath().toFile(),
             kotlinPluginVersion,
             gradleVersion,
-            listOf(WorkspacePrintingMode.MODULE_DEPENDENCIES),
-            testClassifier = testClassifier,
+            listOf(OrderEntriesChecker),
             testConfiguration = testConfiguration
         )
     }

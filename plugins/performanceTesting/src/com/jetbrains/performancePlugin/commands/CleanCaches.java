@@ -15,6 +15,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
+/**
+ * Command simulates invocation of 'Invalidate caches' action
+ */
 public class CleanCaches extends AbstractCommand {
 
   public static final String PREFIX = CMD_PREFIX + "cleanCaches";

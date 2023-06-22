@@ -12,6 +12,8 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
@@ -23,8 +25,8 @@ import com.intellij.testFramework.VfsTestUtil
 import org.gradle.util.GradleVersion
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.kotlin.idea.base.test.AndroidStudioTestUtils
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBinary
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBinary
 import org.jetbrains.kotlin.idea.test.GradleProcessOutputInterceptor
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
@@ -150,9 +152,14 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
             it.name == GradleConstants.DEFAULT_SCRIPT_NAME
                     || it.name == GradleConstants.KOTLIN_DSL_SCRIPT_NAME
                     || it.name == GradleConstants.SETTINGS_FILE_NAME
+                    || it.name == GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME
         }
             .forEach {
-                if (it.name == GradleConstants.SETTINGS_FILE_NAME && !File(testDataDirectory(), it.name + AFTER_SUFFIX).exists()) return@forEach
+                if (it.name == GradleConstants.SETTINGS_FILE_NAME &&
+                    !File(testDataDirectory(), GradleConstants.SETTINGS_FILE_NAME + AFTER_SUFFIX).exists()) return@forEach
+                if (it.name == GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME &&
+                    !File(testDataDirectory(), GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME + AFTER_SUFFIX).exists()) return@forEach
+
                 val actualText = configureKotlinVersionAndProperties(LoadTextUtil.loadText(it).toString())
                 val expectedFileName = if (File(testDataDirectory(), it.name + ".$gradleVersion" + AFTER_SUFFIX).exists()) {
                     it.name + ".$gradleVersion" + AFTER_SUFFIX
@@ -160,6 +167,42 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
                     it.name + AFTER_SUFFIX
                 }
                 val expectedFile = File(testDataDirectory(), expectedFileName)
+                KotlinTestUtils.assertEqualsToFile(expectedFile, actualText) { s -> configureKotlinVersionAndProperties(s) }
+            }
+    }
+
+    /**
+     * Compares expected (with ".after" postfix) and actual files with directory traversal.
+     */
+    protected fun checkFilesInMultimoduleProject(files: List<VirtualFile>, subModules: List<String>) {
+        FileDocumentManager.getInstance().saveAllDocuments()
+
+        files.filter {
+            it.name == GradleConstants.DEFAULT_SCRIPT_NAME
+                    || it.name == GradleConstants.KOTLIN_DSL_SCRIPT_NAME
+                    || it.name == GradleConstants.SETTINGS_FILE_NAME
+                    || it.name == GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME
+        }
+            .forEach {
+                if (it.name == GradleConstants.SETTINGS_FILE_NAME &&
+                    !File(testDataDirectory(), GradleConstants.SETTINGS_FILE_NAME + AFTER_SUFFIX).exists()) return@forEach
+                if (it.name == GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME &&
+                    !File(testDataDirectory(), GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME + AFTER_SUFFIX).exists()) return@forEach
+
+                val actualText = configureKotlinVersionAndProperties(LoadTextUtil.loadText(it).toString())
+                var moduleForBuildScript = ""
+                for (module in subModules) {
+                    if(it.path.substringBefore("/" + it.name).endsWith(module)) {
+                        moduleForBuildScript = module
+                        break
+                    }
+                }
+                val expectedFileName = if (File(File(testDataDirectory(), moduleForBuildScript), it.name + ".$gradleVersion" + AFTER_SUFFIX).exists()) {
+                    it.name + ".$gradleVersion" + AFTER_SUFFIX
+                } else {
+                    it.name + AFTER_SUFFIX
+                }
+                val expectedFile = File(testDataDirectory(), if (moduleForBuildScript.isNotEmpty()) {"$moduleForBuildScript/$expectedFileName"} else expectedFileName)
                 KotlinTestUtils.assertEqualsToFile(expectedFile, actualText) { s -> configureKotlinVersionAndProperties(s) }
             }
     }
@@ -299,11 +342,16 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
 
         const val LATEST_STABLE_GRADLE_PLUGIN_VERSION = "1.3.70"
 
-        val SUPPORTED_GRADLE_VERSIONS = arrayOf("5.6.4", "6.0.1")
+        val SUPPORTED_GRADLE_VERSIONS = arrayOf("5.6.4", "6.0.1", "6.7.1", "7.6")
 
         @JvmStatic
         @Suppress("ACCIDENTAL_OVERRIDE")
         @Parameterized.Parameters(name = "{index}: with Gradle-{0}")
         fun data(): Collection<Array<Any>> = SUPPORTED_GRADLE_VERSIONS.map { arrayOf(it) }
     }
+}
+
+fun GradleImportingTestCase.enableExperimentalMPP(enable: Boolean) {
+    //enable experimental MPP features e.g. an import K/JS run tasks
+    (AdvancedSettings.getInstance() as AdvancedSettingsImpl).setSetting("kotlin.mpp.experimental", enable, testRootDisposable)
 }

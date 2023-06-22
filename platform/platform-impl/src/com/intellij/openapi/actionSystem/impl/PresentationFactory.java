@@ -38,9 +38,7 @@ public class PresentationFactory {
       if (needUpdate) {
         presentation.setIcon(templatePresentation.getIcon());
         presentation.setDisabledIcon(templatePresentation.getDisabledIcon());
-        if (needUpdate) {
-          presentation.putClientProperty(NEED_UPDATE_PRESENTATION, null);
-        }
+        presentation.putClientProperty(NEED_UPDATE_PRESENTATION, null);
       }
       processPresentation(presentation, action);
     }

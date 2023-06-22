@@ -33,6 +33,10 @@ public interface GrCall extends GroovyPsiElement {
 
   GroovyResolveResult @NotNull [] getCallVariants(@Nullable GrExpression upToArgument);
 
+  default GroovyResolveResult @NotNull [] getCallVariants(@Nullable GrExpression upToArgument, boolean incompleteCode){
+    return getCallVariants(upToArgument);
+  }
+
   @Nullable
   default PsiMethod resolveMethod() {
     return PsiImplUtil.extractUniqueElement(multiResolve(false));

@@ -17,10 +17,7 @@ public interface ModuleEx extends Module {
     }
   }
 
-  default void moduleAdded(List<? super ModuleComponent> oldComponents) {
-  }
-
-  default void projectClosed() {
+  default void moduleAdded(List<ModuleComponent> oldComponents) {
   }
 
   default void rename(@NotNull String newName, boolean notifyStorage) {

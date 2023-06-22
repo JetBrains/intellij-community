@@ -239,19 +239,29 @@ private class ExtensionsScope(
 
     override fun getContributedFunctions(name: Name, location: LookupLocation): Collection<SimpleFunctionDescriptor> {
         return contextScope.collectFunctions(name, location).flatMap {
-            if (it is SimpleFunctionDescriptor && it.isExtension) it.substituteExtensionIfCallable(
-                receiverTypes,
-                CallType.DOT
-            ) else emptyList()
+            if (it is SimpleFunctionDescriptor && it.isExtension) {
+                it.substituteExtensionIfCallable(
+                    receiverTypes = receiverTypes,
+                    callType = CallType.DOT,
+                    ignoreTypeParameters = true,
+                )
+            } else {
+                emptyList()
+            }
         }
     }
 
     override fun getContributedVariables(name: Name, location: LookupLocation): Collection<PropertyDescriptor> {
         return contextScope.collectVariables(name, location).flatMap {
-            if (it is PropertyDescriptor && it.isExtension) it.substituteExtensionIfCallable(
-                receiverTypes,
-                CallType.DOT
-            ) else emptyList()
+            if (it is PropertyDescriptor && it.isExtension) {
+                it.substituteExtensionIfCallable(
+                    receiverTypes = receiverTypes,
+                    callType = CallType.DOT,
+                    ignoreTypeParameters = true,
+                )
+            } else {
+                emptyList()
+            }
         }
     }
 
@@ -267,10 +277,15 @@ private class ExtensionsScope(
             nameFilter,
             changeNamesForAliased = true
         ).flatMap {
-            if (it is CallableDescriptor && it.isExtension) it.substituteExtensionIfCallable(
-                receiverTypes,
-                CallType.DOT
-            ) else emptyList()
+            if (it is CallableDescriptor && it.isExtension) {
+                it.substituteExtensionIfCallable(
+                    receiverTypes = receiverTypes,
+                    callType = CallType.DOT,
+                    ignoreTypeParameters = true,
+                )
+            } else {
+                emptyList()
+            }
         }
     }
 

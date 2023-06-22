@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.cache
 
 import com.intellij.openapi.application.ApplicationInfo
@@ -50,7 +50,6 @@ class PythonSimpleRepositoryCache : PythonPackageCache<PyPackageRepository> {
     }
   }
 
-  @Suppress("BlockingMethodInNonBlockingContext")
   private suspend fun loadFrom(repository: PyPackageRepository): List<String> {
     return withContext(Dispatchers.IO) {
       val packages = mutableListOf<String>()

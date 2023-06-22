@@ -172,14 +172,14 @@ class CloneableProjectsService {
   }
 
   class CloneTaskInfo(
-    @NlsContexts.ProgressTitle private val title: String,
-    @Nls private val cancelTooltipText: String,
-    @Nls val actionTitle: String,
-    @Nls val actionTooltipText: String,
-    @Nls val failedTitle: String,
-    @Nls val canceledTitle: String,
-    @Nls val stopTitle: String,
-    @Nls val stopDescription: String
+    private val title: @NlsContexts.ProgressTitle String,
+    private val cancelTooltipText: @Nls String,
+    val actionTitle: @Nls String,
+    val actionTooltipText: @Nls String,
+    val failedTitle: @Nls String,
+    val canceledTitle: @Nls String,
+    val stopTitle: @Nls String,
+    val stopDescription: @Nls String
   ) : TaskInfo {
     override fun getTitle(): String = title
     override fun getCancelText(): String = CommonBundle.getCancelButtonText()

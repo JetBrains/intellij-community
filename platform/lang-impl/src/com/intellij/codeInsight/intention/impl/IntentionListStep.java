@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -8,7 +8,6 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.AbstractEmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
-import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -37,17 +36,14 @@ import java.util.stream.Collectors;
 public class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>, SpeedSearchFilter<IntentionActionWithTextCaching> {
   private static final Logger LOG = Logger.getInstance(IntentionListStep.class);
 
-  @NotNull
-  private final CachedIntentions myCachedIntentions;
-  @Nullable
-  private final IntentionHintComponent.IntentionPopup myPopup;
+  private final @NotNull CachedIntentions myCachedIntentions;
+  private final @Nullable IntentionHintComponent.IntentionPopup myPopup;
   private final Dimension myMaxIconSize;
 
   private Runnable myFinalRunnable;
   private final Project myProject;
   private final PsiFile myFile;
-  @Nullable
-  private final Editor myEditor;
+  private final @Nullable Editor myEditor;
 
   public IntentionListStep(@Nullable IntentionHintComponent.IntentionPopup popup,
                            @Nullable Editor editor,
@@ -82,8 +78,6 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     }
 
     if (hasSubstep(action)) {
-      closeIntentionPreviewPopup();
-
       return getSubStep(action, action.getToolName());
     }
 
@@ -94,15 +88,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
   public boolean isFinal(IntentionActionWithTextCaching value) {
     IntentionAction a = IntentionActionDelegate.unwrap(value.getAction());
 
-    return  !(a instanceof AbstractEmptyIntentionAction) || !hasSubstep(value);
-  }
-
-  private static void closeIntentionPreviewPopup() {
-    ApplicationManager.getApplication().invokeLater(() ->
-       StackingPopupDispatcher.getInstance().getPopupStream()
-         .filter(popup -> popup.getUserData(IntentionPreviewPopupUpdateProcessor.IntentionPreviewPopupKey.class) != null)
-         .toList()
-         .forEach(popup -> popup.cancel()));
+    return !(a instanceof AbstractEmptyIntentionAction) || !hasSubstep(value);
   }
 
   @Override
@@ -114,7 +100,11 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     myFinalRunnable = () -> {
       HintManager.getInstance().hideAllHints();
       if (myProject.isDisposed()) return;
-      if (myEditor != null && (myEditor.isDisposed() || (!UIUtil.isShowing(myEditor.getComponent()) && !ApplicationManager.getApplication().isUnitTestMode()))) return;
+      if (myEditor != null &&
+          (myEditor.isDisposed() ||
+           (!UIUtil.isShowing(myEditor.getComponent()) && !ApplicationManager.getApplication().isUnitTestMode()))) {
+        return;
+      }
 
       if (DumbService.isDumb(myProject) && !DumbService.isDumbAware(cachedAction)) {
         DumbService.getInstance(myProject).showDumbModeNotification(
@@ -144,17 +134,20 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
   IntentionListStep getSubStep(@NotNull IntentionActionWithTextCaching action, @NlsContexts.PopupTitle String title) {
     ShowIntentionsPass.IntentionsInfo intentions = new ShowIntentionsPass.IntentionsInfo();
     for (IntentionAction optionIntention : action.getOptionIntentions()) {
-      intentions.intentionsToShow.add(new HighlightInfo.IntentionActionDescriptor(optionIntention, null, null, getIcon(optionIntention), null, null, null));
+      intentions.intentionsToShow.add(
+        new HighlightInfo.IntentionActionDescriptor(optionIntention, null, null, getIcon(optionIntention), null, null, null));
     }
     for (IntentionAction optionFix : action.getOptionErrorFixes()) {
-      intentions.errorFixesToShow.add(new HighlightInfo.IntentionActionDescriptor(optionFix, null, null, getIcon(optionFix), null, null, null));
+      intentions.errorFixesToShow.add(
+        new HighlightInfo.IntentionActionDescriptor(optionFix, null, null, getIcon(optionFix), null, null, null));
     }
     for (IntentionAction optionFix : action.getOptionInspectionFixes()) {
-      intentions.inspectionFixesToShow.add(new HighlightInfo.IntentionActionDescriptor(optionFix, null, null, getIcon(optionFix), null, null, null));
+      intentions.inspectionFixesToShow.add(
+        new HighlightInfo.IntentionActionDescriptor(optionFix, null, null, getIcon(optionFix), null, null, null));
     }
 
     return new IntentionListStep(myPopup, myEditor, myFile, myProject,
-                                 CachedIntentions.create(myProject, myFile, myEditor, intentions)){
+                                 CachedIntentions.create(myProject, myFile, myEditor, intentions)) {
       @Override
       public String getTitle() {
         return title;
@@ -191,9 +184,9 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
 
       List<IntentionActionWithTextCaching> subActions = getSubStep(cached, cached.getToolName()).getValues();
       List<IntentionAction> options = subActions.stream()
-          .map(IntentionActionWithTextCaching::getAction)
-          .filter(option -> ShowIntentionActionsHandler.chooseFileForAction(myFile, myEditor, option) != null)
-          .collect(Collectors.toList());
+        .map(IntentionActionWithTextCaching::getAction)
+        .filter(option -> ShowIntentionActionsHandler.chooseFileForAction(myFile, myEditor, option) != null)
+        .collect(Collectors.toList());
       result.put(action, options);
     }
     return result;
@@ -207,14 +200,12 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
   }
 
   @Override
-  @NotNull
-  public List<IntentionActionWithTextCaching> getValues() {
+  public @NotNull List<IntentionActionWithTextCaching> getValues() {
     return myCachedIntentions.getAllActions();
   }
 
   @Override
-  @NotNull
-  public String getTextFor(IntentionActionWithTextCaching action) {
+  public @NotNull String getTextFor(IntentionActionWithTextCaching action) {
     String text = action.getText();
     if (LOG.isDebugEnabled() && text.startsWith("<html>")) {
       LOG.info("IntentionAction.getText() returned HTML: action=" + action.getAction().getClass() + " text=" + text);
@@ -231,8 +222,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     return icon;
   }
 
-  @Nullable
-  public Icon getOriginalIconFor(@NotNull IntentionActionWithTextCaching value) {
+  public @Nullable Icon getOriginalIconFor(@NotNull IntentionActionWithTextCaching value) {
     if (!value.isShowIcon()) return null;
 
     return myCachedIntentions.getIcon(value);
@@ -247,6 +237,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
 
   @Override
   public int getDefaultOptionIndex() { return 0; }
+
   @Override
   public ListSeparator getSeparatorAbove(IntentionActionWithTextCaching value) {
     List<IntentionActionWithTextCaching> values = getValues();
@@ -259,20 +250,25 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     }
     return null;
   }
+
   @Override
   public boolean isMnemonicsNavigationEnabled() { return false; }
+
   @Override
   public MnemonicNavigationFilter<IntentionActionWithTextCaching> getMnemonicNavigationFilter() { return null; }
+
   @Override
   public boolean isSpeedSearchEnabled() { return true; }
+
   @Override
   public boolean isAutoSelectionEnabled() { return false; }
+
   @Override
   public SpeedSearchFilter<IntentionActionWithTextCaching> getSpeedSearchFilter() { return this; }
 
   //speed search filter
   @Override
-  public String getIndexedString(IntentionActionWithTextCaching value) { return getTextFor(value);}
+  public String getIndexedString(IntentionActionWithTextCaching value) { return getTextFor(value); }
 
 
   private @NotNull Dimension getMaxIconSize() {

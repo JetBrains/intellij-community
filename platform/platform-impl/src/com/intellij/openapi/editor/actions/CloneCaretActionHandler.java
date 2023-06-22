@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorLastActionTracker;
 import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler;
 import com.intellij.openapi.util.Key;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +22,7 @@ import java.util.Set;
 public class CloneCaretActionHandler extends EditorActionHandler {
   private static final Key<Integer> LEVEL = Key.create("CloneCaretActionHandler.level");
 
-  private static final Set<String> OUR_ACTIONS = ContainerUtil.set(
+  private static final Set<String> OUR_ACTIONS = Set.of(
     IdeActions.ACTION_EDITOR_CLONE_CARET_ABOVE,
     IdeActions.ACTION_EDITOR_CLONE_CARET_BELOW,
     IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT_WITH_SELECTION,
@@ -118,10 +117,10 @@ public class CloneCaretActionHandler extends EditorActionHandler {
   private boolean isRepeatedActionInvocation() {
     if (myRepeatedInvocation) return true;
     String lastActionId = EditorLastActionTracker.getInstance().getLastActionId();
-    return isSuitableLastAction(lastActionId);
+    return lastActionId != null && isSuitableLastAction(lastActionId);
   }
 
-  protected boolean isSuitableLastAction(String lastActionId){
+  protected boolean isSuitableLastAction(@NotNull String lastActionId){
     return OUR_ACTIONS.contains(lastActionId);
   }
 }

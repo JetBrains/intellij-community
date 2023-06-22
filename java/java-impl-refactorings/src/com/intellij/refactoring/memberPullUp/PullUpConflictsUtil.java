@@ -31,25 +31,27 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
+
 public final class PullUpConflictsUtil {
   private PullUpConflictsUtil() {}
 
-  public static MultiMap<PsiElement, String> checkConflicts(MemberInfoBase<? extends PsiMember>[] infos,
-                                                            PsiClass subclass,
-                                                            @Nullable PsiClass superClass,
-                                                            @NotNull PsiPackage targetPackage,
-                                                            @NotNull PsiDirectory targetDirectory,
-                                                            final InterfaceContainmentVerifier interfaceContainmentVerifier) {
+  public static MultiMap<PsiElement, @DialogMessage String> checkConflicts(MemberInfoBase<? extends PsiMember>[] infos,
+                                                                           PsiClass subclass,
+                                                                           @Nullable PsiClass superClass,
+                                                                           @NotNull PsiPackage targetPackage,
+                                                                           @NotNull PsiDirectory targetDirectory,
+                                                                           InterfaceContainmentVerifier interfaceContainmentVerifier) {
     return checkConflicts(infos, subclass, superClass, targetPackage, targetDirectory, interfaceContainmentVerifier, true);
   }
 
-  public static MultiMap<PsiElement, String> checkConflicts(final MemberInfoBase<? extends PsiMember>[] infos,
-                                                            @NotNull final PsiClass subclass,
-                                                            @Nullable PsiClass superClass,
-                                                            @NotNull final PsiPackage targetPackage,
-                                                            @NotNull PsiDirectory targetDirectory,
-                                                            final InterfaceContainmentVerifier interfaceContainmentVerifier,
-                                                            boolean movedMembers2Super) {
+  public static MultiMap<PsiElement, @DialogMessage String> checkConflicts(MemberInfoBase<? extends PsiMember>[] infos,
+                                                                           @NotNull PsiClass subclass,
+                                                                           @Nullable PsiClass superClass,
+                                                                           @NotNull PsiPackage targetPackage,
+                                                                           @NotNull PsiDirectory targetDirectory,
+                                                                           InterfaceContainmentVerifier interfaceContainmentVerifier,
+                                                                           boolean movedMembers2Super) {
     final Set<PsiMember> movedMembers = new HashSet<>();
     final Set<PsiMethod> abstractMethods = new HashSet<>();
     final boolean isInterfaceTarget;
@@ -76,7 +78,7 @@ public final class PullUpConflictsUtil {
         movedMembers.add(member);
       }
     }
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    final MultiMap<PsiElement, @DialogMessage String> conflicts = new MultiMap<>();
     final Set<PsiMethod> abstrMethods = new HashSet<>(abstractMethods);
     if (superClass != null && movedMembers2Super) {
       for (PsiMethod method : subclass.getMethods()) {
@@ -208,7 +210,8 @@ public final class PullUpConflictsUtil {
     return result;
   }
 
-  private static void checkInterfaceTarget(MemberInfoBase<? extends PsiMember>[] infos, MultiMap<PsiElement, String> conflictsList) {
+  private static void checkInterfaceTarget(MemberInfoBase<? extends PsiMember>[] infos,
+                                           MultiMap<PsiElement, @DialogMessage String> conflictsList) {
     for (MemberInfoBase<? extends PsiMember> info : infos) {
       PsiModifierListOwner member = info.getMember();
 
@@ -233,28 +236,30 @@ public final class PullUpConflictsUtil {
 
   private static void checkSuperclassMembers(PsiClass superClass,
                                              MemberInfoBase<? extends PsiMember>[] infos,
-                                             MultiMap<PsiElement, String> conflictsList) {
+                                             MultiMap<PsiElement, @DialogMessage String> conflictsList) {
     for (MemberInfoBase<? extends PsiMember> info : infos) {
       PsiMember member = info.getMember();
-      boolean isConflict = false;
+      PsiMember superMember = null;
       if (member instanceof PsiField) {
-        String name = member.getName();
-
-        isConflict = superClass.findFieldByName(name, false) != null;
+        superMember = superClass.findFieldByName(member.getName(), false);
       }
-      else if (member instanceof PsiMethod) {
-        PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, member.getContainingClass(), PsiSubstitutor.EMPTY);
+      else if (member instanceof PsiMethod method) {
+        PsiClass aClass = method.getContainingClass();
+        if (aClass == null) continue;
+        PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
         MethodSignature signature = ((PsiMethod) member).getSignature(superSubstitutor);
         final PsiMethod superClassMethod = MethodSignatureUtil.findMethodBySignature(superClass, signature, false);
-        isConflict = superClassMethod != null && !superClassMethod.hasModifierProperty(PsiModifier.ABSTRACT);
+        if (superClassMethod != null && !superClassMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
+          superMember = superClassMethod;
+        }
       }
 
-      if (isConflict) {
+      if (superMember != null) {
         String message = RefactoringBundle.message("0.already.contains.a.1",
                                                    RefactoringUIUtil.getDescription(superClass, false),
-                                                   RefactoringUIUtil.getDescription(member, false));
+                                                   RefactoringUIUtil.getDescription(superMember, false));
         message = StringUtil.capitalize(message);
-        conflictsList.putValue(superClass, message);
+        conflictsList.putValue(superMember, message);
       }
 
       if (member instanceof PsiMethod method) {

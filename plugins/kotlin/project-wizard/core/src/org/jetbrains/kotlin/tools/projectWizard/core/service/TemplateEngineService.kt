@@ -5,8 +5,6 @@ package org.jetbrains.kotlin.tools.projectWizard.core.service
 import org.apache.velocity.VelocityContext
 import org.apache.velocity.app.Velocity
 import org.apache.velocity.runtime.RuntimeConstants
-import org.apache.velocity.runtime.RuntimeServices
-import org.apache.velocity.runtime.log.LogChute
 import org.jetbrains.kotlin.tools.projectWizard.core.TaskResult
 import org.jetbrains.kotlin.tools.projectWizard.core.Writer
 import org.jetbrains.kotlin.tools.projectWizard.core.div
@@ -14,6 +12,7 @@ import org.jetbrains.kotlin.tools.projectWizard.templates.FileTemplate
 import org.jetbrains.kotlin.tools.projectWizard.templates.FileTemplateDescriptor
 import org.jetbrains.kotlin.tools.projectWizard.templates.FileTextDescriptor
 import org.jetbrains.kotlin.tools.projectWizard.templates.Template
+import org.slf4j.helpers.NOPLogger
 import java.io.StringWriter
 
 abstract class TemplateEngineService : WizardService {
@@ -53,18 +52,11 @@ class VelocityTemplateEngineServiceImpl : TemplateEngineService(), IdeaIndepende
 
 
     private fun runVelocityActionWithoutLogging(action: () -> Unit) {
-        val initialLogger = Velocity.getProperty(RuntimeConstants.RUNTIME_LOG_LOGSYSTEM)
-        Velocity.setProperty(RuntimeConstants.RUNTIME_LOG_LOGSYSTEM, DoNothingVelocityLogger)
+        val initialLogger = Velocity.getProperty(RuntimeConstants.RUNTIME_LOG_INSTANCE)
+        Velocity.setProperty(RuntimeConstants.RUNTIME_LOG_INSTANCE, NOPLogger.NOP_LOGGER)
         action()
         if (initialLogger != null) {
-            Velocity.setProperty(RuntimeConstants.RUNTIME_LOG_LOGSYSTEM, initialLogger)
+            Velocity.setProperty(RuntimeConstants.RUNTIME_LOG_INSTANCE, initialLogger)
         }
-    }
-
-    private object DoNothingVelocityLogger : LogChute {
-        override fun isLevelEnabled(level: Int): Boolean = false
-        override fun init(rs: RuntimeServices?) = Unit
-        override fun log(level: Int, message: String?) = Unit
-        override fun log(level: Int, message: String?, t: Throwable?) = Unit
     }
 }

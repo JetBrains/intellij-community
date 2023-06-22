@@ -1,12 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.inspectionProfile
 
-import com.intellij.openapi.project.Project
+import org.yaml.snakeyaml.DumperOptions
+import org.yaml.snakeyaml.LoaderOptions
 import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.constructor.CustomClassLoaderConstructor
 import org.yaml.snakeyaml.introspector.BeanAccess
 import org.yaml.snakeyaml.representer.Representer
-import java.io.File
 import java.io.Reader
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -36,9 +36,9 @@ class YamlInspectionConfigRaw(
 
 fun readConfig(reader: Reader, includeReaders: (Path) -> Reader): YamlInspectionProfileRaw {
   val merged = readRaw(reader, includeReaders)
-  val representer = Representer()
+  val representer = Representer(DumperOptions())
   representer.propertyUtils.isSkipMissingProperties = true
-  val constr = CustomClassLoaderConstructor(YamlInspectionProfileRaw::class.java, YamlInspectionProfileRaw::class.java.classLoader)
+  val constr = CustomClassLoaderConstructor(YamlInspectionProfileRaw::class.java, YamlInspectionProfileRaw::class.java.classLoader, LoaderOptions())
   val yaml = Yaml(constr, representer)
   yaml.setBeanAccess(BeanAccess.FIELD)
 
@@ -63,12 +63,15 @@ private fun merge(first: Map<String, *>, second: Map<String, *>): Map<String, *>
   }
 }
 
+private val FIELDS_TO_MERGE = setOf("groups", "inspections")
+
 private fun readRaw(reader: Reader, includeReaders: (Path) -> Reader): Map<String, *> {
   val yamlReader = Yaml()
   val rawConfig: Map<String, *> = yamlReader.load(reader)
   val includedConfigs = (rawConfig["include"] as? List<*>)?.filterIsInstance(String::class.java).orEmpty().map { Paths.get(it) }
 
   return includedConfigs.fold(rawConfig) { accumulator, path ->
-    merge(accumulator, readRaw(includeReaders.invoke(path)) { includeReaders.invoke(path.parent.resolve(it)) })
+    val includedYaml = readRaw(includeReaders.invoke(path)) { includeReaders.invoke(path.parent.resolve(it)) }
+    merge(accumulator, includedYaml.filterKeys { field -> field in FIELDS_TO_MERGE })
   }
 }

@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -369,80 +370,82 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
   }
 
   Inlay getElementAt(@NotNull EditorLocation location, boolean ignoreBlockElementWidth) {
-    Insets insets = myEditor.getContentComponent().getInsets();
-    Point point = location.getPoint();
-    if (point.y < insets.top) return null; // can happen for mouse drag events
-    int relX = point.x - insets.left;
-    if (relX < 0) return null;
+    return ReadAction.compute(() -> {
+      Insets insets = myEditor.getContentComponent().getInsets();
+      Point point = location.getPoint();
+      if (point.y < insets.top) return null; // can happen for mouse drag events
+      int relX = point.x - insets.left;
+      if (relX < 0) return null;
 
-    boolean hasInlineElements = hasInlineElements();
-    boolean hasBlockElements = hasBlockElements();
-    boolean hasAfterLineEndElements = hasAfterLineEndElements();
-    if (!hasInlineElements && !hasBlockElements && !hasAfterLineEndElements) return null;
+      boolean hasInlineElements = hasInlineElements();
+      boolean hasBlockElements = hasBlockElements();
+      boolean hasAfterLineEndElements = hasAfterLineEndElements();
+      if (!hasInlineElements && !hasBlockElements && !hasAfterLineEndElements) return null;
 
-    VisualPosition visualPosition = location.getVisualPosition();
-    if (hasBlockElements) {
-      int visualLine = visualPosition.line;
-      int baseY = location.getVisualLineStartY();
-      if (point.y < baseY) {
-        List<Inlay<?>> inlays = getBlockElementsForVisualLine(visualLine, true);
-        int yDiff = baseY - point.y;
-        for (int i = inlays.size() - 1; i >= 0; i--) {
-          Inlay inlay = inlays.get(i);
-          yDiff -= inlay.getHeightInPixels();
-          if (yDiff <= 0) {
-            return ignoreBlockElementWidth || relX < inlay.getWidthInPixels() ? inlay : null;
-          }
-        }
-        LOG.error("Inconsistent state: " + point + ", " + visualPosition + ", baseY=" + baseY + ", " + inlays,
-                  new Attachment("editorState.txt", myEditor.dumpState()));
-        return null;
-      }
-      else {
-        int lineBottom = location.getVisualLineEndY();
-        if (point.y >= lineBottom) {
-          List<Inlay<?>> inlays = getBlockElementsForVisualLine(visualLine, false);
-          int yDiff = point.y - lineBottom;
-          for (Inlay inlay : inlays) {
+      VisualPosition visualPosition = location.getVisualPosition();
+      if (hasBlockElements) {
+        int visualLine = visualPosition.line;
+        int baseY = location.getVisualLineStartY();
+        if (point.y < baseY) {
+          List<Inlay<?>> inlays = getBlockElementsForVisualLine(visualLine, true);
+          int yDiff = baseY - point.y;
+          for (int i = inlays.size() - 1; i >= 0; i--) {
+            Inlay inlay = inlays.get(i);
             yDiff -= inlay.getHeightInPixels();
-            if (yDiff < 0) {
-              return relX < inlay.getWidthInPixels() ? inlay : null;
+            if (yDiff <= 0) {
+              return ignoreBlockElementWidth || relX < inlay.getWidthInPixels() ? inlay : null;
             }
           }
-          LOG.error("Inconsistent state: " + point + ", " + visualPosition + ", lineBottom=" + lineBottom + ", " + inlays,
+          LOG.error("Inconsistent state: " + point + ", " + visualPosition + ", baseY=" + baseY + ", " + inlays,
                     new Attachment("editorState.txt", myEditor.dumpState()));
           return null;
         }
+        else {
+          int lineBottom = location.getVisualLineEndY();
+          if (point.y >= lineBottom) {
+            List<Inlay<?>> inlays = getBlockElementsForVisualLine(visualLine, false);
+            int yDiff = point.y - lineBottom;
+            for (Inlay inlay : inlays) {
+              yDiff -= inlay.getHeightInPixels();
+              if (yDiff < 0) {
+                return relX < inlay.getWidthInPixels() ? inlay : null;
+              }
+            }
+            LOG.error("Inconsistent state: " + point + ", " + visualPosition + ", lineBottom=" + lineBottom + ", " + inlays,
+                      new Attachment("editorState.txt", myEditor.dumpState()));
+            return null;
+          }
+        }
       }
-    }
-    if (hasInlineElements) {
-      if (location.getCollapsedRegion() == null) {
+      if (hasInlineElements) {
+        if (location.getCollapsedRegion() == null) {
+          int offset = location.getOffset();
+          List<Inlay<?>> inlays = getInlineElementsInRange(offset, offset);
+          if (!inlays.isEmpty()) {
+            VisualPosition startVisualPosition = myEditor.offsetToVisualPosition(offset);
+            Point inlayPoint = myEditor.visualPositionToXY(startVisualPosition);
+            if (point.y < inlayPoint.y || point.y >= inlayPoint.y + myEditor.getLineHeight()) return null;
+            Inlay<?> inlay = findInlay(inlays, point.x, inlayPoint.x);
+            if (inlay != null) return inlay;
+          }
+        }
+      }
+      if (hasAfterLineEndElements) {
         int offset = location.getOffset();
-        List<Inlay<?>> inlays = getInlineElementsInRange(offset, offset);
-        if (!inlays.isEmpty()) {
-          VisualPosition startVisualPosition = myEditor.offsetToVisualPosition(offset);
-          Point inlayPoint = myEditor.visualPositionToXY(startVisualPosition);
-          if (point.y < inlayPoint.y || point.y >= inlayPoint.y + myEditor.getLineHeight()) return null;
-          Inlay<?> inlay = findInlay(inlays, point.x, inlayPoint.x);
-          if (inlay != null) return inlay;
+        int logicalLine = myEditor.getDocument().getLineNumber(offset);
+        if (offset == myEditor.getDocument().getLineEndOffset(logicalLine) && location.getCollapsedRegion() == null) {
+          List<Inlay<?>> inlays = myEditor.getInlayModel().getAfterLineEndElementsForLogicalLine(logicalLine);
+          if (!inlays.isEmpty()) {
+            Rectangle bounds = inlays.get(0).getBounds();
+            assert bounds != null;
+            if (point.y < bounds.y || point.y >= bounds.y + bounds.height) return null;
+            Inlay<?> inlay = findInlay(inlays, point.x, bounds.x);
+            if (inlay != null) return inlay;
+          }
         }
       }
-    }
-    if (hasAfterLineEndElements) {
-      int offset = location.getOffset();
-      int logicalLine = myEditor.getDocument().getLineNumber(offset);
-      if (offset == myEditor.getDocument().getLineEndOffset(logicalLine) && location.getCollapsedRegion() == null) {
-        List<Inlay<?>> inlays = myEditor.getInlayModel().getAfterLineEndElementsForLogicalLine(logicalLine);
-        if (!inlays.isEmpty()) {
-          Rectangle bounds = inlays.get(0).getBounds();
-          assert bounds != null;
-          if (point.y < bounds.y || point.y >= bounds.y + bounds.height) return null;
-          Inlay<?> inlay = findInlay(inlays, point.x, bounds.x);
-          if (inlay != null) return inlay;
-        }
-      }
-    }
-    return null;
+      return null;
+    });
   }
 
   private static Inlay<?> findInlay(List<? extends Inlay<?>> inlays, int x, int startX) {
@@ -610,7 +613,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     }
 
     @Override
-    void fireBeforeRemoved(@NotNull InlineInlayImpl inlay, @NotNull @NonNls Object reason) {
+    void fireBeforeRemoved(@NotNull InlineInlayImpl inlay) {
       if (inlay.getUserData(InlayImpl.OFFSET_BEFORE_DISPOSAL) == null) {
         if (myMoveInProgress) {
           // delay notification about invalidated inlay - folding model is not consistent at this point
@@ -630,7 +633,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     }
 
     @Override
-    void fireBeforeRemoved(@NotNull BlockInlayImpl inlay, @NotNull @NonNls Object reason) {
+    void fireBeforeRemoved(@NotNull BlockInlayImpl inlay) {
       if (inlay.getUserData(InlayImpl.OFFSET_BEFORE_DISPOSAL) == null) {
         notifyRemoved(inlay);
       }
@@ -643,7 +646,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     }
 
     @Override
-    void fireBeforeRemoved(@NotNull AfterLineEndInlayImpl inlay, @NotNull @NonNls Object reason) {
+    void fireBeforeRemoved(@NotNull AfterLineEndInlayImpl inlay) {
       if (inlay.getUserData(InlayImpl.OFFSET_BEFORE_DISPOSAL) == null) {
         notifyRemoved(inlay);
       }

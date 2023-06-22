@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -13,7 +14,7 @@ import java.util.List;
 public final class ReflectionUtilRt {
   @NotNull
   public static List<Field> collectFields(@NotNull Class<?> clazz) {
-    List<Field> result = new ArrayList<Field>();
+    List<Field> result = new ArrayList<>();
     collectFields(clazz, result);
     return result;
   }
@@ -28,6 +29,39 @@ public final class ReflectionUtilRt {
 
     for (Class<?> each : clazz.getInterfaces()) {
       collectFields(each, result);
+    }
+  }
+
+  @NotNull
+  public static List<Method> collectGetters(@NotNull Class<?> clazz) {
+    List<Method> methods = collectMethods(clazz);
+    List<Method> result = new ArrayList<>();
+    for (Method method: methods) {
+      String methodName = method.getName();
+      if (methodName.startsWith("get") && method.getParameterTypes().length == 0 && !methodName.equals("getClass")) {
+        result.add(method);
+      }
+    }
+    return result;
+  }
+
+  @NotNull
+  public static List<Method> collectMethods(@NotNull Class<?> clazz) {
+    List<Method> result = new ArrayList<>();
+    collectMethods(clazz, result);
+    return result;
+  }
+
+  private static void collectMethods(@NotNull Class<?> clazz, @NotNull List<? super Method> result) {
+    result.addAll(Arrays.asList(clazz.getDeclaredMethods()));
+
+    Class<?> superClass = clazz.getSuperclass();
+    if (superClass != null) {
+      collectMethods(superClass, result);
+    }
+
+    for (Class<?> each : clazz.getInterfaces()) {
+      collectMethods(each, result);
     }
   }
 

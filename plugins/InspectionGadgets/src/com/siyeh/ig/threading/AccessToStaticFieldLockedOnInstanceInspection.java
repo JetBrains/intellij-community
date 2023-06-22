@@ -18,6 +18,7 @@ package com.siyeh.ig.threading;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ConcurrencyAnnotationsManager;
 import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -26,7 +27,6 @@ import com.intellij.util.containers.OrderedSet;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.IgnoreClassFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -52,7 +52,7 @@ public class AccessToStaticFieldLockedOnInstanceInspection extends BaseInspectio
 
   @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiExpression expression = (PsiExpression)infos[0];
     final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
     if (aClass == null) {

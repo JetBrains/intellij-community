@@ -12,9 +12,9 @@ import com.jetbrains.python.console.PythonDebugLanguageConsoleView
 import com.jetbrains.python.console.pydev.ConsoleCommunication
 import org.jetbrains.annotations.Nls
 
-class PydevDebugConsoleExecuteActionHandler(private val myConsole: PythonDebugLanguageConsoleView,
-                                            myProcessHandler: ProcessHandler,
-                                            consoleCommunication: ConsoleCommunication) : PydevConsoleExecuteActionHandler(myConsole.pydevConsoleView, myProcessHandler, consoleCommunication), XDebugSessionListener {
+open class PydevDebugConsoleExecuteActionHandler(private val myConsole: PythonDebugLanguageConsoleView,
+                                                 myProcessHandler: ProcessHandler,
+                                                 consoleCommunication: ConsoleCommunication) : PydevConsoleExecuteActionHandler(myConsole.pydevConsoleView, myProcessHandler, consoleCommunication), XDebugSessionListener {
 
   override val consoleIsNotEnabledMessage: @Nls String
     get() = PyBundle.message("debugger.pydev.console.pause.the.process.to.use.command.line")

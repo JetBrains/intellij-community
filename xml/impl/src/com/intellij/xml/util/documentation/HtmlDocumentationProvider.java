@@ -4,7 +4,9 @@ package com.intellij.xml.util.documentation;
 import com.intellij.documentation.mdn.MdnSymbolDocumentation;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDocumentation;
+import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbService;
@@ -19,10 +21,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.XmlUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Collections;
 import java.util.List;
@@ -112,16 +111,28 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     if (contextElement instanceof XmlElement) return null;
     DocumentationProvider styleProvider = getStyleProvider();
     PsiElement result = null;
-    if (styleProvider != null) {
+    if (checkProvider(styleProvider)) {
       result = styleProvider.getCustomDocumentationElement(editor, file, contextElement, targetOffset);
     }
     if (result == null) {
       DocumentationProvider scriptProvider = getScriptDocumentationProvider();
-      if (scriptProvider != null) {
+      if (checkProvider(scriptProvider)) {
         result = scriptProvider.getCustomDocumentationElement(editor, file, contextElement, targetOffset);
       }
     }
     return result;
+  }
+
+  @Contract("null->false")
+  private static boolean checkProvider(@Nullable DocumentationProvider provider) {
+    if (provider == null) return false;
+    if (provider instanceof CompositeDocumentationProvider
+      && ContainerUtil.or(((CompositeDocumentationProvider)provider).getAllProviders(), p -> p instanceof HtmlDocumentationProvider)) {
+      Logger.getInstance(HtmlDocumentationProvider.class)
+        .error("An 'HtmlDocumentationProvider' is most likely registered through 'com.intellij.documentationProvider' extension point instead of 'com.intellij.lang.documentationProvider'. Recurrent behaviour has been prevented.");
+      return false;
+    }
+    return true;
   }
 
   @Override

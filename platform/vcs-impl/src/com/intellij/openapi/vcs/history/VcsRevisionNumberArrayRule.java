@@ -27,24 +27,22 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 /**
  * {@link VcsDataKeys#VCS_REVISION_NUMBERS}
  */
-public class VcsRevisionNumberArrayRule implements GetDataRule {
-
-  @Nullable
+final class VcsRevisionNumberArrayRule implements GetDataRule {
   @Override
-  public Object getData(@NotNull DataProvider dataProvider) {
+  public @Nullable Object getData(@NotNull DataProvider dataProvider) {
     List<VcsRevisionNumber> revisionNumbers = getRevisionNumbers(dataProvider);
 
     return !ContainerUtil.isEmpty(revisionNumbers) ? revisionNumbers.toArray(new VcsRevisionNumber[0]) : null;
   }
 
-  @Nullable
-  public List<VcsRevisionNumber> getRevisionNumbers(@NotNull DataProvider dataProvider) {
+  public @Nullable List<VcsRevisionNumber> getRevisionNumbers(@NotNull DataProvider dataProvider) {
     VcsRevisionNumber revisionNumber = VcsDataKeys.VCS_REVISION_NUMBER.getData(dataProvider);
     if (revisionNumber != null) {
       return Collections.singletonList(revisionNumber);
@@ -52,7 +50,7 @@ public class VcsRevisionNumberArrayRule implements GetDataRule {
 
     ChangeList[] changeLists = VcsDataKeys.CHANGE_LISTS.getData(dataProvider);
     if (changeLists != null && changeLists.length > 0) {
-      List<CommittedChangeList> committedChangeLists = ContainerUtil.findAll(changeLists, CommittedChangeList.class);
+      List<CommittedChangeList> committedChangeLists = new ArrayList<>(ContainerUtil.findAll(changeLists, CommittedChangeList.class));
 
       if (!committedChangeLists.isEmpty()) {
         ContainerUtil.sort(committedChangeLists, CommittedChangeListByDateComparator.DESCENDING);
@@ -72,8 +70,7 @@ public class VcsRevisionNumberArrayRule implements GetDataRule {
     return null;
   }
 
-  private static class CommittedChangeListToRevisionNumberFunction implements Function<CommittedChangeList, VcsRevisionNumber> {
-
+  private static final class CommittedChangeListToRevisionNumberFunction implements Function<CommittedChangeList, VcsRevisionNumber> {
     private static final CommittedChangeListToRevisionNumberFunction INSTANCE = new CommittedChangeListToRevisionNumberFunction();
 
     /**
@@ -89,8 +86,7 @@ public class VcsRevisionNumberArrayRule implements GetDataRule {
     }
   }
 
-  private static class FileRevisionToRevisionNumberFunction implements Function<VcsFileRevision, VcsRevisionNumber> {
-
+  private static final class FileRevisionToRevisionNumberFunction implements Function<VcsFileRevision, VcsRevisionNumber> {
     private static final FileRevisionToRevisionNumberFunction INSTANCE = new FileRevisionToRevisionNumberFunction();
 
     @Override

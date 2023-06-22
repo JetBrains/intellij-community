@@ -3,6 +3,7 @@ package com.intellij.idea;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.nio.file.Files;
@@ -57,22 +58,30 @@ public final class AppMode {
     return isRemoteDevHost;
   }
 
-  /** @deprecated please use {@link #isRemoteDevHost()} */
-  @Deprecated
-  public static boolean isIsRemoteDevHost() {
-    return isRemoteDevHost;
+  public static boolean isDevServer() {
+    return Boolean.getBoolean("idea.use.dev.build.server");
+  }
+
+  public static boolean isDroidFactory() {
+    return "AndroidStudio".equalsIgnoreCase(System.getProperty(PLATFORM_PREFIX_PROPERTY));
   }
 
   public static void setFlags(@NotNull List<String> args) {
     isHeadless = isHeadless(args);
-    isCommandLine = isHeadless || (args.size() > 0 && isGuiCommand(args.get(0)));
+    isCommandLine = isHeadless || (!args.isEmpty() && isGuiCommand(args.get(0)));
     isLightEdit = "LightEdit".equals(System.getProperty(PLATFORM_PREFIX_PROPERTY)) || (!isCommandLine && isFileAfterOptions(args));
 
     if (isHeadless) {
       System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
     }
 
-    isRemoteDevHost = args.size() > 0 && (CWM_HOST_COMMAND.equals(args.get(0)) || CWM_HOST_NO_LOBBY_COMMAND.equals(args.get(0)) || REMOTE_DEV_HOST_COMMAND.equals(args.get(0)));
+    if (args.isEmpty()) {
+      return;
+    }
+
+    isRemoteDevHost = CWM_HOST_COMMAND.equals(args.get(0)) ||
+                      CWM_HOST_NO_LOBBY_COMMAND.equals(args.get(0)) ||
+                      REMOTE_DEV_HOST_COMMAND.equals(args.get(0));
 
     for (String arg : args) {
       if (DISABLE_NON_BUNDLED_PLUGINS.equalsIgnoreCase(arg)) {
@@ -119,13 +128,13 @@ public final class AppMode {
       return true;
     }
 
-    if (args.size() == 0) {
+    if (args.isEmpty()) {
       return false;
     }
 
     String firstArg = args.get(0);
 
-    @SuppressWarnings("SpellCheckingInspection") List<String> headlessCommands = Arrays.asList(
+    List<String> headlessCommands = Arrays.asList(
       "ant", "duplocate", "dataSources", "dump-launch-parameters", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format",
       "keymap", "update", "inspections", "intentions", "rdserver-headless", "thinClient-headless", "installPlugins", "dumpActions",
       "cwmHostStatus", "remoteDevStatus", "invalidateCaches", "warmup", "buildEventsScheme", "inspectopedia-generator", "remoteDevShowHelp",
@@ -134,12 +143,7 @@ public final class AppMode {
     return headlessCommands.contains(firstArg) || firstArg.length() < 20 && firstArg.endsWith("inspect");
   }
 
-  public static boolean isDevServer() {
-    return Boolean.getBoolean("idea.use.dev.build.server");
-  }
-
-  public static String getDevBuildRunDirName(@NotNull String platformPrefix) {
-    String result = System.getProperty("dev.build.dir");
-    return result != null ? result : platformPrefix.equals("Idea") ? "idea-community" : platformPrefix;
+  public static @Nullable String getDevIdeaProjectDir() {
+    return System.getProperty("idea.dev.project.root");
   }
 }

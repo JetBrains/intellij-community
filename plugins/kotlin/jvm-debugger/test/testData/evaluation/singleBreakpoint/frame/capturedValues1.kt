@@ -14,7 +14,7 @@ fun Int.foo(args: Array<String>) {
             val c2 = 3
             block("y") place2@ {
                 //Breakpoint!
-                this@place1
+                this@place1 + ""
                 this@foo
                 b
                 c2

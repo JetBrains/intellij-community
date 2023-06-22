@@ -24,18 +24,6 @@ abstract class LinearOrderInlayRenderer<Constraint : Any>(
   private val comparator: Comparator<ConstrainedPresentation<*, Constraint>> = compareBy { it.priority }
 ) : PresentationContainerRenderer<Constraint> {
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use constructor with [Comparator] parameter")
-  constructor(
-    constrainedPresentations: Collection<ConstrainedPresentation<*, Constraint>>,
-    createPresentation: (List<ConstrainedPresentation<*, Constraint>>) -> InlayPresentation,
-    comparator: (ConstrainedPresentation<*, Constraint>) -> Int
-  ) : this(
-    constrainedPresentations,
-    createPresentation,
-    compareBy(comparator)
-  )
-
   // Supposed to be changed rarely and rarely contains more than 1 element
   private var presentations: List<ConstrainedPresentation<*, Constraint>> = SmartList(constrainedPresentations.sortedWith(comparator))
 

@@ -1,2 +1,2 @@
-Value read 16 val (x, y) = b1 + b2
-Value read 7 val (x, y) = this
+Value read 17 val (x, y) = b1 + b2
+Value read 8 val (x, y) = this

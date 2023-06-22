@@ -16,7 +16,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
 
   private val layout = panel.layout as GridLayout
 
-  val grid = grid ?: layout.rootGrid
+  val grid: Grid = grid ?: layout.rootGrid
 
   var columnsCount: Int = 0
     private set
@@ -27,10 +27,11 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
   private var defaultVerticalAlign = VerticalAlign.CENTER
   private var defaultBaselineAlign = false
 
-  private var x = 0
+  var x: Int = 0
+    private set
   private var y = GRID_EMPTY
 
-  fun columnsGaps(value: List<HorizontalGaps>): RowsGridBuilder {
+  fun columnsGaps(value: List<UnscaledGapsX>): RowsGridBuilder {
     grid.columnsGaps.clear()
     grid.columnsGaps.addAll(value)
     return this
@@ -39,7 +40,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
   /**
    * Starts new row. Can be omitted for the first and after last rows
    */
-  fun row(rowGaps: VerticalGaps = VerticalGaps.EMPTY, resizable: Boolean = false): RowsGridBuilder {
+  fun row(rowGaps: UnscaledGapsY = UnscaledGapsY.EMPTY, resizable: Boolean = false): RowsGridBuilder {
     x = 0
     y++
 
@@ -52,6 +53,9 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
     return this
   }
 
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated("Use the overloaded function with UnscaledGaps in parameters")
+  @ApiStatus.ScheduledForRemoval
   fun cell(component: JComponent,
            width: Int = 1,
            horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
@@ -60,6 +64,33 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
            resizableColumn: Boolean = false,
            gaps: Gaps = Gaps.EMPTY,
            visualPaddings: Gaps = Gaps.EMPTY,
+           widthGroup: String? = null,
+           componentHelper: ComponentHelper? = null): RowsGridBuilder {
+    return cell(component, width, horizontalAlign, verticalAlign, baselineAlign, resizableColumn,
+                gaps.toUnscaled(), visualPaddings.toUnscaled(), widthGroup, componentHelper)
+  }
+
+  // todo needed only while migration Gaps to UnscaledGaps. Should be removed later
+  fun cell(component: JComponent,
+           width: Int = 1,
+           horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
+           verticalAlign: VerticalAlign = defaultVerticalAlign,
+           baselineAlign: Boolean = defaultBaselineAlign,
+           resizableColumn: Boolean = false,
+           widthGroup: String? = null,
+           componentHelper: ComponentHelper? = null): RowsGridBuilder {
+    return cell(component, width, horizontalAlign, verticalAlign, baselineAlign, resizableColumn,
+                UnscaledGaps.EMPTY, UnscaledGaps.EMPTY, widthGroup, componentHelper)
+  }
+
+  fun cell(component: JComponent,
+           width: Int = 1,
+           horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
+           verticalAlign: VerticalAlign = defaultVerticalAlign,
+           baselineAlign: Boolean = defaultBaselineAlign,
+           resizableColumn: Boolean = false,
+           gaps: UnscaledGaps = UnscaledGaps.EMPTY,
+           visualPaddings: UnscaledGaps = UnscaledGaps.EMPTY,
            widthGroup: String? = null,
            componentHelper: ComponentHelper? = null): RowsGridBuilder {
     if (y == GRID_EMPTY) {
@@ -77,12 +108,38 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
     return skip(width)
   }
 
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated("Use the overloaded function with UnscaledGaps in parameters")
+  @ApiStatus.ScheduledForRemoval
   fun constraints(width: Int = 1,
                   horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
                   verticalAlign: VerticalAlign = defaultVerticalAlign,
                   baselineAlign: Boolean = defaultBaselineAlign,
                   gaps: Gaps = Gaps.EMPTY,
                   visualPaddings: Gaps = Gaps.EMPTY,
+                  widthGroup: String? = null,
+                  componentHelper: ComponentHelper? = null): Constraints {
+    return constraints(width, horizontalAlign, verticalAlign, baselineAlign,
+                       gaps.toUnscaled(), visualPaddings.toUnscaled(), widthGroup, componentHelper)
+  }
+
+  // todo needed only while migration Gaps to UnscaledGaps. Should be removed later
+  fun constraints(width: Int = 1,
+                  horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
+                  verticalAlign: VerticalAlign = defaultVerticalAlign,
+                  baselineAlign: Boolean = defaultBaselineAlign,
+                  widthGroup: String? = null,
+                  componentHelper: ComponentHelper? = null): Constraints {
+    return constraints(width, horizontalAlign, verticalAlign, baselineAlign,
+                       UnscaledGaps.EMPTY, UnscaledGaps.EMPTY, widthGroup, componentHelper)
+  }
+
+  fun constraints(width: Int = 1,
+                  horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
+                  verticalAlign: VerticalAlign = defaultVerticalAlign,
+                  baselineAlign: Boolean = defaultBaselineAlign,
+                  gaps: UnscaledGaps = UnscaledGaps.EMPTY,
+                  visualPaddings: UnscaledGaps = UnscaledGaps.EMPTY,
                   widthGroup: String? = null,
                   componentHelper: ComponentHelper? = null): Constraints {
     if (y == GRID_EMPTY) {
@@ -98,6 +155,9 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
     return result
   }
 
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated("Use the overloaded function with UnscaledGaps in parameters")
+  @ApiStatus.ScheduledForRemoval
   fun subGrid(width: Int = 1,
               horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
               verticalAlign: VerticalAlign = defaultVerticalAlign,
@@ -105,6 +165,16 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
               resizableColumn: Boolean = false,
               gaps: Gaps = Gaps.EMPTY,
               visualPaddings: Gaps = Gaps.EMPTY): Grid {
+    return subGrid(width, horizontalAlign, verticalAlign, baselineAlign, resizableColumn, gaps.toUnscaled(), visualPaddings.toUnscaled())
+  }
+
+  fun subGrid(width: Int = 1,
+              horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
+              verticalAlign: VerticalAlign = defaultVerticalAlign,
+              baselineAlign: Boolean = defaultBaselineAlign,
+              resizableColumn: Boolean = false,
+              gaps: UnscaledGaps = UnscaledGaps.EMPTY,
+              visualPaddings: UnscaledGaps = UnscaledGaps.EMPTY): Grid {
     startFirstRow()
     if (resizableColumn) {
       addResizableColumn()
@@ -117,6 +187,9 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
     return layout.addLayoutSubGrid(constraints)
   }
 
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated("Use the overloaded function with UnscaledGaps in parameters")
+  @ApiStatus.ScheduledForRemoval
   fun subGridBuilder(width: Int = 1,
                      horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
                      verticalAlign: VerticalAlign = defaultVerticalAlign,
@@ -124,6 +197,27 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
                      resizableColumn: Boolean = false,
                      gaps: Gaps = Gaps.EMPTY,
                      visualPaddings: Gaps = Gaps.EMPTY): RowsGridBuilder {
+    return subGridBuilder(width, horizontalAlign, verticalAlign, baselineAlign,
+                          resizableColumn, gaps.toUnscaled(), visualPaddings.toUnscaled())
+  }
+
+
+  // todo needed only while migration Gaps to UnscaledGaps. Should be removed later
+  fun subGridBuilder(width: Int = 1,
+                     horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
+                     verticalAlign: VerticalAlign = defaultVerticalAlign,
+                     baselineAlign: Boolean = defaultBaselineAlign,
+                     resizableColumn: Boolean = false): RowsGridBuilder {
+    return subGridBuilder(width, horizontalAlign, verticalAlign, baselineAlign, resizableColumn, UnscaledGaps.EMPTY, UnscaledGaps.EMPTY)
+  }
+
+  fun subGridBuilder(width: Int = 1,
+                     horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
+                     verticalAlign: VerticalAlign = defaultVerticalAlign,
+                     baselineAlign: Boolean = defaultBaselineAlign,
+                     resizableColumn: Boolean = false,
+                     gaps: UnscaledGaps = UnscaledGaps.EMPTY,
+                     visualPaddings: UnscaledGaps = UnscaledGaps.EMPTY): RowsGridBuilder {
     return RowsGridBuilder(panel, subGrid(width, horizontalAlign, verticalAlign, baselineAlign, resizableColumn, gaps, visualPaddings))
       .defaultHorizontalAlign(defaultHorizontalAlign)
       .defaultVerticalAlign(defaultVerticalAlign)
@@ -139,11 +233,11 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
     return this
   }
 
-  fun setRowGaps(rowGaps: VerticalGaps) {
+  fun setRowGaps(rowGaps: UnscaledGapsY) {
     startFirstRow()
 
     while (grid.rowsGaps.size <= y) {
-      grid.rowsGaps.add(VerticalGaps.EMPTY)
+      grid.rowsGaps.add(UnscaledGapsY.EMPTY)
     }
     grid.rowsGaps[y] = rowGaps
   }

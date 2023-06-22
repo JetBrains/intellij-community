@@ -191,15 +191,13 @@ internal class GradleScriptNotificationProvider : EditorNotificationProvider {
             )
         }
 
-        val wizard = ImportModuleAction.selectFileAndCreateWizard(
-            project,
-            null,
-            manager.externalProjectDescriptor,
-            projectImportProviders
-        ) ?: return
-
-        if (wizard.stepCount <= 0 || wizard.showAndGet()) {
-            ImportModuleAction.createFromWizard(project, wizard)
+        ImportModuleAction.doImport(project) {
+            ImportModuleAction.selectFileAndCreateWizard(
+                project,
+                null,
+                manager.externalProjectDescriptor,
+                projectImportProviders
+            )
         }
     }
 

@@ -113,6 +113,7 @@
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PySuperClassAttributesCompletionContributor"/>
     <completion.contributor language="Python"
+                            id="PyDictKeyNames"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyDictKeyNamesCompletionContributor"/>
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyDictLiteralCompletionContributor"/>
@@ -132,7 +133,7 @@
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyClassNameCompletionContributor"/>
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyModulePackageCompletionContributor"/>
-    <completion.contributor language="Python" order="first"
+    <completion.contributor language="Python" order="first" id="pyModuleNameCompletionContributor"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyModuleNameCompletionContributor"/>
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyUnresolvedModuleAttributeCompletionContributor"/>
@@ -224,6 +225,9 @@
     <localInspection language="Python" shortName="PyPep8NamingInspection" suppressId="PyPep8Naming" bundle="messages.PyPsiBundle" key="INSP.NAME.pep8.naming" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyPep8NamingInspection"/>
     <localInspection language="Python" shortName="PyShadowingBuiltinsInspection" suppressId="PyShadowingBuiltins" bundle="messages.PyPsiBundle" key="INSP.NAME.shadowing.builtins" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyShadowingBuiltinsInspection"/>
 
+    <codeInsight.parameterNameHints language="Python"
+                                    implementationClass="com.jetbrains.python.inlayHints.PythonInlayParameterHintsProvider"/>
+
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyConvertMethodToPropertyIntention</className>
       <bundleName>messages.PyPsiBundle</bundleName>
@@ -244,6 +248,12 @@
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.SpecifyTypeInDocstringIntention</className>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.PyHideTypeAnnotationsIntention</className>
       <bundleName>messages.PyPsiBundle</bundleName>
       <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
@@ -433,12 +443,15 @@
       <bundleName>messages.PyPsiBundle</bundleName>
       <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
-    
+
     <registryKey defaultValue="false"
                  description="Enable pyi stubs distributed with numpy (see https://github.com/numpy/numpy/issues/18565)"
                  key="enable.numpy.pyi.stubs"/>
     <registryKey key="python.explicit.namespace.packages" defaultValue="true" restartRequired="true"
                  description="Require marking namespace packages explicitly, treat regular directories as implicit source roots"/>
+    <registryKey key="python.type.hints.literal.string" defaultValue="true"
+                 description="When enabled, activates LiteralString inference for Python string literals" />
+
   </extensions>
 
   <extensionPoints>

@@ -23,8 +23,6 @@
     <orderEntry type="module" module-name="intellij.java.impl" />
     <orderEntry type="library" name="swingx" level="project" />
     <orderEntry type="module" module-name="intellij.platform.smRunner" />
-    <orderEntry type="library" name="Kryo" level="project" />
-    <orderEntry type="library" name="Objenesis" level="project" />
     <orderEntry type="library" name="Ant" level="project" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jps.build" />
@@ -42,7 +40,7 @@
     <orderEntry type="module" module-name="intellij.java.debugger.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.java.compiler.impl" />
-    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer.annotations" />
     <orderEntry type="module" module-name="intellij.completionMlRanking" />
     <orderEntry type="module" module-name="intellij.performanceTesting" />

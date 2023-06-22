@@ -184,4 +184,29 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
   }
 
   public void testCharacterMethods() { checkHighlighting(); }
+
+  @SuppressWarnings("MethodOverloadsMethodOfSuperclass")
+  public void testDateTimeComparing()  {
+    myFixture.addClass("""
+                         package java.time.chrono;
+                         public interface ChronoLocalDateTime<T> { }""");
+    myFixture.addClass("""
+                        package java.time;
+                        import java.time.temporal.TemporalUnit;
+                        public final class LocalTime {
+                          public static LocalTime now() { return new LocalTime(); }
+                          public boolean isBefore(LocalTime localTime) { return false; }
+                          public boolean isAfter(LocalTime localTime) { return false; }
+                         }""");
+    myFixture.addClass("""
+                        package java.time;
+                        import java.time.chrono.ChronoLocalDateTime;
+                        import java.time.temporal.TemporalUnit;
+                        public final class LocalDateTime implements ChronoLocalDateTime<LocalDate> {
+                          public static LocalDateTime now() { return new LocalDateTime(); }
+                          public boolean isBefore(ChronoLocalDateTime<LocalDate> localDateTime2) { return false; }
+                          public boolean isAfter(ChronoLocalDateTime<LocalDate> localDateTime2) { return false; }
+                         }""");
+    checkHighlighting();
+  }
 }

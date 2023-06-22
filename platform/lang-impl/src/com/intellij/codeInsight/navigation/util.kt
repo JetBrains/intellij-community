@@ -7,7 +7,6 @@ import com.intellij.ide.util.PsiElementListCellRenderer
 import com.intellij.navigation.ColoredItemPresentation
 import com.intellij.navigation.ItemPresentation
 import com.intellij.navigation.NavigationItem
-import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.markup.EffectType
@@ -19,6 +18,7 @@ import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.pom.PomTargetPsiElement
 import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.psi.PsiElement
@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nls
 import java.awt.Font
 import java.util.regex.Pattern
 
-private val LOG: Logger = Logger.getInstance("#com.intellij.codeInsight.navigation")
+val LOG: Logger = Logger.getInstance("#com.intellij.codeInsight.navigation")
 private val CONTAINER_PATTERN: Pattern = Pattern.compile("(\\(in |\\()?([^)]*)(\\))?")
 
 /**

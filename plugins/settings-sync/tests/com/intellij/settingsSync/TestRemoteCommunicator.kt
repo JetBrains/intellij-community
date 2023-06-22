@@ -1,16 +1,32 @@
 package com.intellij.settingsSync
 
+import com.intellij.util.io.inputStream
+import com.jetbrains.cloudconfig.CloudConfigFileClientV2
 import org.junit.Assert
+import java.time.Instant
 import java.util.concurrent.CountDownLatch
 
-internal abstract class TestRemoteCommunicator : SettingsSyncRemoteCommunicator {
+internal open class TestRemoteCommunicator : CloudConfigServerCommunicator() {
 
   private lateinit var pushedLatch: CountDownLatch
   private lateinit var pushedSnapshot: SettingsSnapshot
 
-  abstract fun prepareFileOnServer(snapshot: SettingsSnapshot)
+  open fun prepareFileOnServer(snapshot: SettingsSnapshot) {
+    val zip = SettingsSnapshotZipSerializer.serializeToZip(snapshot)
+    sendSnapshotFile(zip.inputStream(), null, true, clientVersionContext, client)
+  }
 
-  abstract fun getVersionOnServer(): SettingsSnapshot?
+  open fun deleteAllFiles() {
+    client.delete("*")
+  }
+
+  open fun getVersionOnServer(): SettingsSnapshot? =
+    when (val updateResult = receiveUpdates()) {
+      is UpdateResult.Success -> updateResult.settingsSnapshot
+      UpdateResult.FileDeletedFromServer -> snapshotForDeletion()
+      UpdateResult.NoFileOnServer -> null
+      is UpdateResult.Error -> throw AssertionError(updateResult.message)
+    }
 
   fun awaitForPush(testExecution: () -> Unit): SettingsSnapshot {
     pushedLatch = CountDownLatch(1)
@@ -26,5 +42,13 @@ internal abstract class TestRemoteCommunicator : SettingsSyncRemoteCommunicator 
     }
   }
 
-  abstract fun deleteAllFiles()
+  private fun snapshotForDeletion() =
+    SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo(), isDeleted = true), emptySet(), null, emptyMap(), emptySet())
+
+  override fun push(snapshot: SettingsSnapshot, force: Boolean, expectedServerVersionId: String?): SettingsSyncPushResult {
+    val result = super.push(snapshot, force, expectedServerVersionId)
+    settingsPushed(snapshot)
+    return result
+  }
+
 }

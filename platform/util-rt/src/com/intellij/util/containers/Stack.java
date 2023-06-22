@@ -72,7 +72,7 @@ public class Stack<T> extends ArrayList<T> {
       for (int i = 0; i < other.size(); i++) {
         Object o1 = other.get(i);
         Object o2 = get(i);
-        if (!(o1 == null ? o2 == null : o1.equals(o2))) {
+        if (!Objects.equals(o1, o2)) {
           return false;
         }
       }

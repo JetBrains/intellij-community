@@ -12,7 +12,7 @@ import com.intellij.refactoring.PackageWrapper
 import com.intellij.refactoring.move.MoveCallback
 import com.intellij.refactoring.move.MoveHandler
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
-import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsHandlerActions
+import org.jetbrains.kotlin.idea.refactoring.move.MoveKotlinDeclarationsHandlerActions
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui.KotlinAwareMoveFilesOrDirectoriesModel
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui.MoveKotlinNestedClassesModel
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui.MoveKotlinNestedClassesToUpperLevelModel

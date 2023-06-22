@@ -1,16 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.workspaceModel
 
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.Type
+import com.intellij.platform.workspace.storage.EntityType
 
 object MavenProjectsTreeEntitySource : EntitySource
 
@@ -19,12 +18,12 @@ interface MavenProjectsTreeSettingsEntity: WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : MavenProjectsTreeSettingsEntity, WorkspaceEntity.Builder<MavenProjectsTreeSettingsEntity>, ObjBuilder<MavenProjectsTreeSettingsEntity> {
+  interface Builder : MavenProjectsTreeSettingsEntity, WorkspaceEntity.Builder<MavenProjectsTreeSettingsEntity> {
     override var entitySource: EntitySource
     override var importedFilePaths: MutableList<String>
   }
 
-  companion object : Type<MavenProjectsTreeSettingsEntity, Builder>() {
+  companion object : EntityType<MavenProjectsTreeSettingsEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

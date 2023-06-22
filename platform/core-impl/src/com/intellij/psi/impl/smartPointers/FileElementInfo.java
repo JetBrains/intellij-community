@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.lang.Language;
@@ -19,14 +19,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 final class FileElementInfo extends SmartPointerElementInfo {
-  @NotNull
-  private final VirtualFile myVirtualFile;
-  @NotNull
-  private final Project myProject;
-  @NotNull
-  private final String myLanguageId;
-  @NotNull
-  private final String myFileClassName;
+  private final @NotNull VirtualFile myVirtualFile;
+  private final @NotNull Project myProject;
+  private final @NotNull String myLanguageId;
+  private final @NotNull String myFileClassName;
 
   FileElementInfo(@NotNull PsiFile file) {
     myVirtualFile = file.getViewProvider().getVirtualFile();

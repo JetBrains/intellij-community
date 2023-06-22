@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -116,7 +117,7 @@ public abstract class AbstractTestProxy extends CompositePrintable {
   @NotNull
   public List<DiffHyperlink> getDiffViewerProviders() {
     final DiffHyperlink provider = getDiffViewerProvider();
-    return provider == null ? Collections.emptyList() : Collections.singletonList(provider);
+    return ContainerUtil.createMaybeSingletonList(provider);
   }
 
   @Nullable

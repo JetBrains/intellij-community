@@ -9,12 +9,6 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.NonExtendable
 interface PrefixTreeMap<Key, Value> : Map<Key, Value> {
 
-  fun getKeySequence(): Sequence<Key>
-
-  fun getValueSequence(): Sequence<Value>
-
-  fun getEntrySequence(): Sequence<Pair<Key, Value>>
-
   /**
    * Returns descendant keys for [key].
    *
@@ -25,13 +19,7 @@ interface PrefixTreeMap<Key, Value> : Map<Key, Value> {
 
   fun getDescendantValues(key: Key): List<Value>
 
-  fun getDescendantEntries(key: Key): Map<Key, Value>
-
-  fun getDescendantKeySequence(key: Key): Sequence<Key>
-
-  fun getDescendantValueSequence(key: Key): Sequence<Value>
-
-  fun getDescendantEntrySequence(key: Key): Sequence<Pair<Key, Value>>
+  fun getDescendantEntries(key: Key): Set<Map.Entry<Key, Value>>
 
   /**
    * Returns ancestor elements for [key].
@@ -43,13 +31,7 @@ interface PrefixTreeMap<Key, Value> : Map<Key, Value> {
 
   fun getAncestorValues(key: Key): List<Value>
 
-  fun getAncestorEntries(key: Key): Map<Key, Value>
-
-  fun getAncestorKeySequence(key: Key): Sequence<Key>
-
-  fun getAncestorValueSequence(key: Key): Sequence<Value>
-
-  fun getAncestorEntrySequence(key: Key): Sequence<Pair<Key, Value>>
+  fun getAncestorEntries(key: Key): Set<Map.Entry<Key, Value>>
 
   /**
    * Returns root keys in this map.
@@ -61,11 +43,5 @@ interface PrefixTreeMap<Key, Value> : Map<Key, Value> {
 
   fun getRootValues(): List<Value>
 
-  fun getRootEntries(): Map<Key, Value>
-
-  fun getRootKeySequence(): Sequence<Key>
-
-  fun getRootValueSequence(): Sequence<Value>
-
-  fun getRootEntrySequence(): Sequence<Pair<Key, Value>>
+  fun getRootEntries(): Set<Map.Entry<Key, Value>>
 }

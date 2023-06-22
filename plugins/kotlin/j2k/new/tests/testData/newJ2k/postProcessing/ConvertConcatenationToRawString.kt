@@ -1,24 +1,24 @@
 class Test {
-    var s1 = """
+    var s1: String = """
          asdf
          asdfasdf
          """.trimIndent()
-    var s2 = """
+    var s2: String = """
          asdf
          asdfasdf
 
          """.trimIndent()
-    var s3 = """
+    var s3: String = """
          asdf
          nadfadsf
          asdfasdf
          """.trimIndent()
-    var s4 = """
+    var s4: String = """
          asdf
          nadfadsf
          asdfasdf
 
          """.trimIndent()
-    var trailingNewlinesOnly = "asdf" + "\n"
-    var trailingNewlinesOnly2 = "asdf\n" + "\n"
+    var trailingNewlinesOnly: String = "asdf" + "\n"
+    var trailingNewlinesOnly2: String = "asdf\n" + "\n"
 }

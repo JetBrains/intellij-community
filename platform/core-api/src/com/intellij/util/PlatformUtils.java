@@ -84,7 +84,7 @@ public final class PlatformUtils {
 
   /**
    * If you're enabling some behavior in IntelliJ IDEA, it's quite probable that it makes sense to enable it in Android Studio as well,
-   * so consider adding {@code || getPlatformPrefix().equals("AndroidStudio")} condition.
+   * so consider adding {@code || IdeInfo.isAndroidStudio()} condition.
    */
   public static boolean isIntelliJ() {
     return isIdeaUltimate() || isIdeaCommunity() || is(IDEA_EDU_PREFIX);
@@ -96,7 +96,7 @@ public final class PlatformUtils {
 
   /**
    * If you're enabling some behavior in IntelliJ IDEA, it's quite probable that it makes sense to enable it in Android Studio as well,
-   * so consider adding {@code || getPlatformPrefix().equals("AndroidStudio")} condition.
+   * so consider adding {@code || IdeInfo.isAndroidStudio()} condition.
    */
   public static boolean isIdeaCommunity() {
     return is(IDEA_CE_PREFIX);
@@ -185,13 +185,6 @@ public final class PlatformUtils {
   public static boolean isGoIde() {
     return is(GOIDE_PREFIX);
   }
-
-  /**
-   * @deprecated Code With Me Guest is an old name for JetBrains Client
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static boolean isCodeWithMeGuest() { return is(CWM_GUEST_PREFIX); }
 
   public static boolean isJetBrainsClient() { return is(JETBRAINS_CLIENT_PREFIX); }
 

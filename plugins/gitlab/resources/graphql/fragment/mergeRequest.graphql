@@ -9,6 +9,16 @@ fragment mergeRequest on MergeRequest {
   targetBranch
   sourceBranch
 
+  labels(first: 100) {
+    pageInfo {
+      ...pageInfo
+    }
+
+    nodes {
+      title
+    }
+  }
+
   diffRefs {
     baseSha
     startSha
@@ -16,9 +26,23 @@ fragment mergeRequest on MergeRequest {
   }
 
   conflicts
+  headPipeline {
+    ...pipeline
+  }
   mergeStatusEnum
+  mergeable
   state
   draft
+
+  shouldBeRebased
+  rebaseInProgress
+
+  targetProject {
+    ...project
+  }
+  sourceProject {
+    ...project
+  }
 
   author {
     ...user
@@ -63,6 +87,6 @@ fragment mergeRequest on MergeRequest {
     }
   }
   userPermissions {
-    createNote
+    ...mergeRequestPermissions
   }
 }

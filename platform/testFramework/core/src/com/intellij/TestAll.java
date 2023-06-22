@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.idea.Bombed;
+import com.intellij.idea.IgnoreJUnit3;
 import com.intellij.idea.RecordExecution;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -82,7 +83,7 @@ public class TestAll implements Test {
     }
   };
 
-  public static final Filter NOT_BOMBED = new Filter() {
+  private static final Filter NOT_BOMBED = new Filter() {
     @Override
     public boolean shouldRun(Description description) {
       return !isBombed(description);
@@ -99,12 +100,24 @@ public class TestAll implements Test {
     }
   };
 
+  private static final Filter NOT_IGNORED = new Filter() {
+    @Override
+    public boolean shouldRun(Description description) {
+      return description.getAnnotation(IgnoreJUnit3.class) == null;
+    }
+
+    @Override
+    public String describe() {
+      return "Not @IgnoreJUnit3";
+    }
+  };
+
   private final TestCaseLoader myTestCaseLoader;
   private int myRunTests = -1;
   private int myIgnoredTests;
   private TestRecorder myTestRecorder;
 
-  private static final List<Throwable> outClassLoadingProblems = new ArrayList<>();
+  private static final List<Throwable> ourClassLoadingProblems = new ArrayList<>();
   private static JUnit4TestAdapterCache ourUnit4TestAdapterCache;
 
   public TestAll(String rootPackage) throws Throwable {
@@ -120,11 +133,11 @@ public class TestAll implements Test {
     }
     myTestCaseLoader.fillTestCases(rootPackage, classesRoots);
 
-    outClassLoadingProblems.addAll(myTestCaseLoader.getClassLoadingErrors());
+    ourClassLoadingProblems.addAll(myTestCaseLoader.getClassLoadingErrors());
   }
 
   public static List<Throwable> getLoadingClassProblems() {
-    return outClassLoadingProblems;
+    return ourClassLoadingProblems;
   }
 
   public static List<Path> getClassRoots() {
@@ -396,7 +409,7 @@ public class TestAll implements Test {
 
         JUnit4TestAdapter adapter = createJUnit4Adapter(testCaseClass);
         try {
-          adapter.filter(NOT_BOMBED.intersect(isPerformanceTestsRun() ? PERFORMANCE_ONLY : NO_PERFORMANCE));
+          adapter.filter(NOT_BOMBED.intersect(NOT_IGNORED).intersect(isPerformanceTestsRun() ? PERFORMANCE_ONLY : NO_PERFORMANCE));
         }
         catch (NoTestsRemainException ignored) {
         }
@@ -418,6 +431,10 @@ public class TestAll implements Test {
             }
 
             Method method = findTestMethod((TestCase)test);
+
+            if (method != null && method.getAnnotation(IgnoreJUnit3.class) != null) {
+              return;
+            }
             Bombed methodBomb = method == null ? null : method.getAnnotation(Bombed.class);
             if (methodBomb == null) {
               doAddTest(test);

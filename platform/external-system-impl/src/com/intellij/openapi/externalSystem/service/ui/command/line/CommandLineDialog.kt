@@ -12,7 +12,8 @@ import com.intellij.openapi.util.RecursionManager
 import com.intellij.ui.ColoredTableCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.TableSpeedSearch
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.ColumnInfo
@@ -65,14 +66,12 @@ class CommandLineDialog(
 
     for (table in tables) {
       row {
-        scrollPane(table)
-      }
+        scrollCell(table).align(Align.FILL)
+      }.resizableRow()
     }
 
-    onGlobalApply {
-      val selectedVariant = tables
-        .mapNotNull { it.selectedVariant }
-        .firstOrNull()
+    onApply {
+      val selectedVariant = tables.firstNotNullOfOrNull { it.selectedVariant }
       fireVariantChosen(selectedVariant)
     }
   }
@@ -124,7 +123,7 @@ class CommandLineDialog(
       val nameColumn = columnModel.getColumn(0)
       val descriptionColumn = columnModel.getColumn(1)
 
-      val search = TableSpeedSearch(this)
+      val search = TableSpeedSearch.installOn(this)
       nameColumn.cellRenderer = Renderer(search, tableInfo.dataColumnIcon)
       descriptionColumn.cellRenderer = Renderer(search, tableInfo.descriptionColumnIcon)
 

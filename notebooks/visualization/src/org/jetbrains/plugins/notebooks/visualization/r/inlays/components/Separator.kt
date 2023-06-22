@@ -16,6 +16,7 @@ import java.awt.Graphics
 import java.awt.Graphics2D
 import javax.swing.JComponent
 import javax.swing.SwingConstants
+import kotlin.math.max
 
 /** Public copy of MySeparator class from ActionToolbarImpl. Draws a separator in toolbar.*/
 class MySeparator(private val myText: String?) : JComponent() {
@@ -39,7 +40,7 @@ class MySeparator(private val myText: String?) : JComponent() {
         return if (myText != null) {
             val fontMetrics = getFontMetrics(font)
             val textWidth = getTextWidth(fontMetrics, myText, graphics)
-            JBDimension(width + gap * 2 + textWidth, Math.max(fontMetrics.height, height), true)
+            JBDimension(width + gap * 2 + textWidth, max(fontMetrics.height, height), true)
         } else {
             JBDimension(width, height, true)
         }

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.impl.ProjectUtil.focusProjectWindow
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -16,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.ui.AppUIUtil
+import com.intellij.util.PathUtilRt
 import com.intellij.util.io.systemIndependentPath
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
@@ -29,6 +31,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.regex.Pattern
 import javax.swing.SwingUtilities
 import kotlin.io.path.exists
+import kotlin.math.max
 
 private val NOT_FOUND = createError("not found")
 private val LINE_AND_COLUMN = Pattern.compile("^(.*?)(?::(\\d+))?(?::(\\d+))?$")
@@ -97,8 +100,12 @@ internal class OpenFileHttpService : RestService() {
       }
     }
 
-    if (apiRequest.file == null) {
+    val requestedFile = apiRequest.file
+    if (requestedFile == null) {
       return parameterMissedErrorMessage("file")
+    }
+    if (PathUtilRt.startsWithSeparatorSeparator(FileUtil.toSystemIndependentName(requestedFile))) {
+      return "UNC paths are not supported"
     }
 
     val promise = openFile(apiRequest, context, request) ?: return null
@@ -151,11 +158,12 @@ internal class OpenFileHttpService : RestService() {
     queue.cancelSession(refreshSessionId)
     val mainTask = OpenFileTask(FileUtil.toCanonicalPath(systemIndependentPath, '/'), request)
     requests.offer(mainTask)
+    val clientId = ClientId.ownerId
     val session = queue.createSession(true, true, {
       while (true) {
         val task = requests.poll() ?: break
         task.promise.catchError {
-          if (openRelativePath(task.path, task.request)) {
+          if (openRelativePath(task.path, task.request, clientId)) {
             task.promise.setResult(null)
           }
           else {
@@ -163,7 +171,7 @@ internal class OpenFileHttpService : RestService() {
           }
         }
       }
-    }, ModalityState.NON_MODAL)
+    }, ModalityState.nonModal())
 
     session.addAllFiles(*ManagingFS.getInstance().localRoots)
     refreshSessionId = session.id
@@ -189,13 +197,19 @@ private class OpenFileTask(val path: String, val request: OpenFileRequest) {
 private fun navigate(project: Project?, file: VirtualFile, request: OpenFileRequest) {
   val effectiveProject = project ?: RestService.getLastFocusedOrOpenedProject() ?: ProjectManager.getInstance().defaultProject
   // OpenFileDescriptor line and column number are 0-based.
-  OpenFileDescriptor(effectiveProject, file, Math.max(request.line - 1, 0), Math.max(request.column - 1, 0)).navigate(true)
+  OpenFileDescriptor(effectiveProject, file, max(request.line - 1, 0), max(request.column - 1, 0)).navigate(true)
   if (request.focused) {
     focusProjectWindow(project, true)
   }
 }
 
 // path must be normalized
+private fun openRelativePath(path: String, request: OpenFileRequest, clientId: ClientId): Boolean {
+  ClientId.withClientId(clientId) {
+    return openRelativePath(path, request)
+  }
+}
+
 private fun openRelativePath(path: String, request: OpenFileRequest): Boolean {
   var virtualFile: VirtualFile? = null
   var project: Project? = null

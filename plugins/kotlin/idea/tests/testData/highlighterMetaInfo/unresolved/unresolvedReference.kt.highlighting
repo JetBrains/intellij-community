@@ -1,0 +1,7 @@
+// FIR_IDENTICAL
+// ALLOW_ERRORS
+// HIGHLIGHTER_ATTRIBUTES_KEY
+
+fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'; highlightingTextAttributesKey='INFORMATION_ATTRIBUTES'")!>main<!>() {
+    <!HIGHLIGHTING("severity='ERROR'; descr='[UNRESOLVED_REFERENCE] Unresolved reference: AAA'; highlightingTextAttributesKey='WRONG_REFERENCES_ATTRIBUTES'")!>AAA<!>()
+}

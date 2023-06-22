@@ -17,6 +17,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.psi.search.scope.packageSet.PatternPackageSet;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -119,6 +120,12 @@ public class PackagePatternProvider extends PatternDialectProvider {
   @NotNull
   public String getShortName() {
     return PACKAGES;
+  }
+
+  @Nls
+  @Override
+  public @NotNull String getHintMessage() {
+    return JavaBundle.message("package.pattern.provider.hint.label");
   }
 
   @Override

@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.descriptors.impl.CompositePackageFragmentProvider
 import org.jetbrains.kotlin.descriptors.impl.ModuleDescriptorImpl
 import org.jetbrains.kotlin.frontend.di.createContainerForLazyResolve
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.JsKlibLibraryInfo
+import org.jetbrains.kotlin.idea.project.IdeaAbsentDescriptorHandler
 import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.js.resolve.JsPlatformAnalyzerServices
 import org.jetbrains.kotlin.platform.idePlatformKind
@@ -58,11 +59,12 @@ class JsResolverForModuleFactory(
             moduleDescriptor.platform!!,
             JsPlatformAnalyzerServices,
             targetEnvironment,
-            languageVersionSettings
+            languageVersionSettings,
+            IdeaAbsentDescriptorHandler::class.java
         )
         var packageFragmentProvider = container.get<ResolveSession>().packageFragmentProvider
 
-        val libraryProviders = createPackageFragmentProvider(moduleInfo, container, moduleContext, moduleDescriptor)
+        val libraryProviders = createJsPackageFragmentProvider(moduleInfo, container, moduleContext, moduleDescriptor)
 
         if (libraryProviders.isNotEmpty()) {
             packageFragmentProvider = CompositePackageFragmentProvider(
@@ -75,7 +77,7 @@ class JsResolverForModuleFactory(
     }
 }
 
-internal fun <M : ModuleInfo> createPackageFragmentProvider(
+internal fun <M : ModuleInfo> createJsPackageFragmentProvider(
     moduleInfo: M,
     container: StorageComponentContainer,
     moduleContext: ModuleContext,

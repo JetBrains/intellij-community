@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -42,12 +42,11 @@ public abstract class PrefixMatcher {
 
   public abstract boolean prefixMatches(@NotNull String name);
 
-  @NotNull
-  public final String getPrefix() {
+  public final @NotNull String getPrefix() {
     return myPrefix;
   }
 
-  @NotNull public abstract PrefixMatcher cloneWithPrefix(@NotNull String prefix);
+  public abstract @NotNull PrefixMatcher cloneWithPrefix(@NotNull String prefix);
 
   public int matchingDegree(String string) {
     return 0;

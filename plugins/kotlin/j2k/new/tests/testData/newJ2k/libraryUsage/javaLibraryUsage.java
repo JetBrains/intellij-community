@@ -1,4 +1,4 @@
-// WITH_LIBRARY: /simple/java
+// WITH_LIBRARY: ../../libSources/simple/java
 
 import library.java.test.Library;
 

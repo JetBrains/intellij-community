@@ -15,19 +15,20 @@
  */
 package com.siyeh.ipp.concatenation;
 
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class JoinConcatenatedStringLiteralsIntention extends Intention {
+public class JoinConcatenatedStringLiteralsIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -35,7 +36,7 @@ public class JoinConcatenatedStringLiteralsIntention extends Intention {
   }
 
   @Override
-  public @NotNull String getText() {
+  public @IntentionName @NotNull String getTextForElement(@NotNull PsiElement element) {
     return IntentionPowerPackBundle.message("join.concatenated.string.literals.intention.name");
   }
 

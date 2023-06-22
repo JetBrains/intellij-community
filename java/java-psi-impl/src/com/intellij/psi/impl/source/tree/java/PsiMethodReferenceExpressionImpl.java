@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
@@ -158,9 +158,8 @@ public final class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<F
     }
     else if (isConstructor()) {
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
-      final PsiClass arrayClass = factory.getArrayClass(PsiUtil.getLanguageLevel(this));
-      if (arrayClass == containingClass) {
-        final PsiTypeParameter[] typeParameters = arrayClass.getTypeParameters();
+      if (factory.isArrayClass(containingClass)) {
+        final PsiTypeParameter[] typeParameters = containingClass.getTypeParameters();
         if (typeParameters.length != 1) return null;
         final PsiType componentType = qualifierResolveResult.getSubstitutor().substitute(typeParameters[0]);
         LOG.assertTrue(componentType != null, qualifierResolveResult.getSubstitutor());

@@ -4,7 +4,9 @@
 package com.intellij.openapi.observable.util
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
+import com.intellij.openapi.ui.Splitter
 import java.awt.Dimension
 import javax.swing.JComponent
 
@@ -21,5 +23,21 @@ val JComponent.sizeProperty: ObservableProperty<Dimension>
 
     override fun afterChange(parentDisposable: Disposable?, listener: (Dimension) -> Unit) {
       whenSizeChanged(parentDisposable, listener)
+    }
+  }
+
+val Splitter.proportionProperty: ObservableMutableProperty<Float>
+  get() = object : ObservableMutableProperty<Float> {
+
+    override fun get(): Float {
+      return proportion
+    }
+
+    override fun set(value: Float) {
+      proportion = value
+    }
+
+    override fun afterChange(parentDisposable: Disposable?, listener: (Float) -> Unit) {
+      whenPropertyChanged<Float>(Splitter.PROP_PROPORTION, parentDisposable, listener)
     }
   }

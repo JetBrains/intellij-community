@@ -2,6 +2,7 @@
 package com.intellij.openapi.ui.panel;
 
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -9,6 +10,11 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @deprecated Provides incorrect spacing between components and out-dated. Fully covered by Kotlin UI DSL, which should be used instead.
+ * PanelGridBuilder will be removed after moving Kotlin UI DSL into platform API package
+ */
+@Deprecated
 public class PanelGridBuilder implements PanelBuilder {
   private boolean expand;
   private boolean splitColumns;
@@ -59,6 +65,7 @@ public class PanelGridBuilder implements PanelBuilder {
                                                    null, 0, 0);
 
     addToPanel(panel, gc);
+    UIUtil.applyDeprecatedBackground(panel);
     return panel;
   }
 

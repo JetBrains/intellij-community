@@ -2,14 +2,14 @@
 package org.jetbrains.kotlin.idea.gradleJava.configuration.mpp
 
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil
-import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver
+import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMppGradleProjectResolver
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.getKotlinModuleId
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinDependency
 import org.jetbrains.kotlin.idea.gradleTooling.resolveAllDependsOnSourceSets
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 
-internal fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependenciesBySourceSetVisibilityGraph(
+internal fun KotlinMppGradleProjectResolver.Companion.populateModuleDependenciesBySourceSetVisibilityGraph(
     context: KotlinMppPopulateModuleDependenciesContext
 ): Unit = with(context) {
     for (sourceSet in mppModel.sourceSetsByName.values) {

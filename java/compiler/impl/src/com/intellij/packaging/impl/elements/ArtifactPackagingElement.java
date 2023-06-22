@@ -12,13 +12,13 @@ import com.intellij.packaging.impl.ui.ArtifactElementPresentation;
 import com.intellij.packaging.impl.ui.DelegatedPackagingElementPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
+import com.intellij.platform.workspace.storage.EntitySource;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
+import com.intellij.java.workspace.entities.ArtifactId;
+import com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.workspaceModel.storage.EntitySource;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.MutableEntityStorage;
-import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
-import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactId;
-import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactOutputPackagingElementEntity;
+import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,11 +114,17 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
     WorkspaceEntity existingEntity = getExistingEntity(diff);
     if (existingEntity != null) return existingEntity;
 
-    ArtifactId id = null;
+    ArtifactId id;
     if (this.myArtifactPointer != null) {
       id = new ArtifactId(this.myArtifactPointer.getArtifactName());
     }
-    ArtifactOutputPackagingElementEntity entity = ExtensionsKt.addArtifactOutputPackagingElementEntity(diff, id, source);
+    else {
+      id = null;
+    }
+    ArtifactOutputPackagingElementEntity entity = diff.addEntity(ArtifactOutputPackagingElementEntity.create(source, entityBuilder -> {
+      entityBuilder.setArtifact(id);
+      return Unit.INSTANCE;
+    }));
     diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(entity, this);
     return entity;
   }

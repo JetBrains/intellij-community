@@ -6,6 +6,7 @@ import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.bind
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.impl.CellImpl.Companion.installValidationRequestor
+import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.selected
 import com.intellij.util.ui.ThreeStateCheckBox
 import org.jetbrains.annotations.ApiStatus
@@ -38,12 +39,17 @@ fun <T : AbstractButton> Cell<T>.bindSelected(getter: () -> Boolean, setter: (Bo
   return bindSelected(MutableProperty(getter, setter))
 }
 
+fun <T : AbstractButton> Cell<T>.selected(value: Boolean): Cell<T> {
+  component.isSelected = value
+  return this
+}
+
 fun <T : AbstractButton> Cell<T>.actionListener(actionListener: (event: ActionEvent, component: T) -> Unit): Cell<T> {
   component.addActionListener(ActionListener { actionListener(it, component) })
   return this
 }
 
-val Cell<AbstractButton>.selected
+val Cell<AbstractButton>.selected: ComponentPredicate
   get() = component.selected
 
 @ApiStatus.Experimental

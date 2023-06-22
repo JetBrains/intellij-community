@@ -184,7 +184,7 @@ public final class StaticGenericInfo extends DomGenericInfoEx {
   @Override
   @NotNull
   public List<? extends CustomDomChildrenDescriptionImpl> getCustomNameChildrenDescription() {
-    return myCustomDescription == null ? Collections.emptyList() : Collections.singletonList(myCustomDescription);
+    return ContainerUtil.createMaybeSingletonList(myCustomDescription);
   }
 
   @Nullable

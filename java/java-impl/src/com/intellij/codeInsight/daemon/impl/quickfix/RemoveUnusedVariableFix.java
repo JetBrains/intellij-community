@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -24,6 +10,9 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -31,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -90,26 +80,33 @@ public class RemoveUnusedVariableFix implements IntentionAction {
   }
 
   private void removeVariableAndReferencingStatements(Editor editor) {
-    final List<PsiElement> references = collectReferences(myVariable);
-    final List<PsiElement> sideEffects = new ArrayList<>();
-    boolean canCopeWithSideEffects = true;
-    // check for side effects
-    for (PsiElement element : references) {
-      Boolean result = RemoveUnusedVariableUtil.processUsage(element, myVariable, sideEffects, RemoveMode.CANCEL);
-      if (result == null) return;
-      canCopeWithSideEffects &= result;
-    }
+    record Context(List<PsiElement> sideEffects, List<PsiElement> references, boolean canCopeWithSideEffects) {}
 
-    final RemoveMode deleteMode = showSideEffectsWarning(sideEffects, myVariable, editor, canCopeWithSideEffects);
+    ReadAction.nonBlocking(() -> {
+      if (!myVariable.isValid()) return null;
+      final List<PsiElement> references = collectReferences(myVariable);
+      final List<PsiElement> sideEffects = new ArrayList<>();
+      boolean canCopeWithSideEffects = true;
+      // check for side effects
+      for (PsiElement element : references) {
+        Boolean result = RemoveUnusedVariableUtil.processUsage(element, myVariable, sideEffects, RemoveMode.CANCEL);
+        if (result == null) return null;
+        canCopeWithSideEffects &= result;
+      }
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      try {
-        RemoveUnusedVariableUtil.deleteReferences(myVariable, references, deleteMode);
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
-    });
+      return new Context(sideEffects, references, canCopeWithSideEffects);
+    }).finishOnUiThread(ModalityState.nonModal(), context -> {
+      if (context == null) return;
+      final RemoveMode deleteMode = showSideEffectsWarning(context.sideEffects, myVariable, editor, context.canCopeWithSideEffects);
+      WriteCommandAction.writeCommandAction(myVariable.getProject()).run(() -> {
+        try {
+          RemoveUnusedVariableUtil.deleteReferences(myVariable, context.references, deleteMode);
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      });
+    }).submit(AppExecutorUtil.getAppExecutorService());
   }
 
   private static List<PsiElement> collectReferences(@NotNull PsiVariable variable) {

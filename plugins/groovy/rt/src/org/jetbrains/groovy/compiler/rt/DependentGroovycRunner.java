@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.groovy.compiler.rt;
 
 import groovy.lang.Binding;
@@ -21,7 +21,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.nio.charset.Charset;
+import java.lang.reflect.InvocationTargetException;
+import java.nio.charset.StandardCharsets;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.*;
@@ -51,10 +52,10 @@ public final class DependentGroovycRunner {
     config.setOutput(new PrintWriter(err));
     config.setWarningLevel(WarningMessage.PARANOIA);
 
-    final List<GroovyCompilerMessage> compilerMessages = new ArrayList<GroovyCompilerMessage>();
-    final List<CompilationUnitPatcher> patchers = new ArrayList<CompilationUnitPatcher>();
-    final List<File> srcFiles = new ArrayList<File>();
-    final Map<String, File> class2File = new HashMap<String, File>();
+    final List<GroovyCompilerMessage> compilerMessages = new ArrayList<>();
+    final List<CompilationUnitPatcher> patchers = new ArrayList<>();
+    final List<File> srcFiles = new ArrayList<>();
+    final Map<String, File> class2File = new HashMap<>();
 
     final String[] finalOutputRef = new String[1];
     fillFromArgsFile(argsFile, config, patchers, compilerMessages, srcFiles, class2File, finalOutputRef, err);
@@ -63,7 +64,7 @@ public final class DependentGroovycRunner {
     String[] finalOutputs = finalOutputRef[0].split(File.pathSeparator);
 
     if (forStubs) {
-      Map<String, Object> options = new HashMap<String, Object>();
+      Map<String, Object> options = new HashMap<>();
       options.put(STUB_DIR, config.getTargetDirectory());
       options.put("keepStubs", Boolean.TRUE);
       config.setJointCompilationOptions(options);
@@ -80,7 +81,7 @@ public final class DependentGroovycRunner {
     catch (NoSuchMethodError ignored) { // old groovyc's don't have optimization options
     }
 
-    if (configScript != null && configScript.length() > 0) {
+    if (configScript != null && !configScript.isEmpty()) {
       try {
         applyConfigurationScript(new File(configScript), config, err);
       }
@@ -88,7 +89,7 @@ public final class DependentGroovycRunner {
       }
     }
 
-    out.println(GroovyRtConstants.PRESENTABLE_MESSAGE + "Groovyc: loading sources...");
+    out.println(GroovyRtConstants.PRESENTABLE_MESSAGE + "Groovyc: loading sources…");
     renameResources(finalOutputs, "", TEMP_RESOURCE_SUFFIX);
 
     final List<OutputItem> compiledFiles;
@@ -107,6 +108,7 @@ public final class DependentGroovycRunner {
           }
         }
 
+        @Override
         @SuppressWarnings("RedundantMethodOverride")
         public void doPhaseOperation(CompilationUnit unit) throws CompilationFailedException {
           super.doPhaseOperation(unit);
@@ -116,7 +118,7 @@ public final class DependentGroovycRunner {
       addSources(forStubs, srcFiles, unit);
       runPatchers(patchers, compilerMessages, unit, resourceLoader, srcFiles);
 
-      out.println(GroovyRtConstants.PRESENTABLE_MESSAGE + "Groovyc: compiling...");
+      out.println(GroovyRtConstants.PRESENTABLE_MESSAGE + "Groovyc: compiling…");
       compiledFiles = wrapper.compile(unit, forStubs && mailbox == null ? Phases.CONVERSION : Phases.ALL);
     }
     finally {
@@ -208,7 +210,7 @@ public final class DependentGroovycRunner {
       //noinspection IOResourceOpenedButNotSafelyClosed
       stream = new FileInputStream(argsFile);
       //noinspection IOResourceOpenedButNotSafelyClosed
-      reader = new BufferedReader(new InputStreamReader(stream, Charset.forName("UTF-8")));
+      reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
 
       reader.readLine(); // skip classpath
 
@@ -234,16 +236,11 @@ public final class DependentGroovycRunner {
           while (!GroovyRtConstants.END.equals(s = reader.readLine())) {
             try {
               final Class<?> patcherClass = classLoader.loadClass(s);
-              final CompilationUnitPatcher patcher = (CompilationUnitPatcher)patcherClass.newInstance();
+              final CompilationUnitPatcher patcher = (CompilationUnitPatcher)patcherClass.getConstructor().newInstance();
               patchers.add(patcher);
             }
-            catch (InstantiationException e) {
-              addExceptionInfo(compilerMessages, e, "Couldn't instantiate " + s);
-            }
-            catch (IllegalAccessException e) {
-              addExceptionInfo(compilerMessages, e, "Couldn't instantiate " + s);
-            }
-            catch (ClassNotFoundException e) {
+            catch (InstantiationException | ClassNotFoundException | IllegalAccessException | NoSuchMethodException |
+                   InvocationTargetException e) {
               addExceptionInfo(compilerMessages, e, "Couldn't instantiate " + s);
             }
           }
@@ -260,9 +257,6 @@ public final class DependentGroovycRunner {
 
         line = reader.readLine();
       }
-    }
-    catch (FileNotFoundException e) {
-      e.printStackTrace(err);
     }
     catch (IOException e) {
       e.printStackTrace(err);
@@ -308,7 +302,7 @@ public final class DependentGroovycRunner {
     }
   }
 
-  private static void reportCompiledItems(@NotNull PrintStream out, @NotNull List<? extends OutputItem> compiledFiles) {
+  private static void reportCompiledItems(@NotNull PrintStream out, @NotNull List<OutputItem> compiledFiles) {
     for (OutputItem compiledFile : compiledFiles) {
       /*
        * output path
@@ -461,6 +455,7 @@ public final class DependentGroovycRunner {
               }
             }
 
+            @Override
             @SuppressWarnings("RedundantMethodOverride")
             public void doPhaseOperation(CompilationUnit unit) throws CompilationFailedException {
               super.doPhaseOperation(unit);
@@ -484,8 +479,10 @@ public final class DependentGroovycRunner {
       }
     };
     unit.setCompilerFactory(new JavaCompilerFactory() {
+      @Override
       public JavaCompiler createCompiler(final CompilerConfiguration config) {
         return new JavaCompiler() {
+          @Override
           public void compile(List<String> files, CompilationUnit cu) {
             if (mailbox != null) {
               reportCompiledItems(
@@ -507,7 +504,7 @@ public final class DependentGroovycRunner {
   }
 
   private static void pauseAndWaitForJavac(Queue<? super Object> mailbox) {
-    LinkedBlockingQueue<String> fromJps = new LinkedBlockingQueue<String>();
+    LinkedBlockingQueue<String> fromJps = new LinkedBlockingQueue<>();
     mailbox.offer(fromJps); // signal that stubs are generated
     while (true) {
       try {
@@ -539,6 +536,7 @@ public final class DependentGroovycRunner {
     };
 
     GroovyClassLoader classLoader = AccessController.doPrivileged(new PrivilegedAction<GroovyClassLoader>() {
+      @Override
       public GroovyClassLoader run() {
         return new GroovyClassLoader(Thread.currentThread().getContextClassLoader(), compilerConfiguration) {
           @Override

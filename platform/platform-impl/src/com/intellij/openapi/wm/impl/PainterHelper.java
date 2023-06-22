@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,13 +13,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.icons.IconUtilKt;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.ScaleContext;
-import com.intellij.util.ImageLoader;
 import com.intellij.util.SVGLoader;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.StartupUiUtilKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -300,7 +302,7 @@ final class PainterHelper implements Painter.Listener {
 
       float adjustedAlpha = Boolean.TRUE.equals(g.getRenderingHint(IdeBackgroundUtil.ADJUST_ALPHA)) ? 0.65f * alpha : alpha;
       GraphicsConfig gc = new GraphicsConfig(g).setAlpha(adjustedAlpha);
-      StartupUiUtil.drawImage(g, scaled, dst, src, null, null);
+      StartupUiUtilKt.drawImage(g, scaled, dst, src, null, null);
       gc.restore();
     }
 
@@ -496,7 +498,7 @@ final class PainterHelper implements Painter.Listener {
       boolean newOk = newImage != null;
       if (prevOk || newOk) {
         ModalityState modalityState = ModalityState.stateForComponent(rootComponent);
-        if (modalityState.dominates(ModalityState.NON_MODAL)) {
+        if (modalityState.dominates(ModalityState.nonModal())) {
           ComponentUtil.getActiveWindow().repaint();
         }
         else {
@@ -573,16 +575,9 @@ final class PainterHelper implements Painter.Listener {
       try {
         boolean flipV = imageLoadSettings.flipV();
         boolean flipH = imageLoadSettings.flipH();
-        boolean isSvg = imageLoadSettings.isSvg();
         BufferedImageFilter flipFilter = flipV || flipH ? flipFilter(flipV, flipH) : null;
-        return ImageLoader.INSTANCE.convertImage(
-          image,
-          flipFilter == null ? Collections.emptyList() : Collections.singletonList(flipFilter),
-          ImageLoader.ALLOW_FLOAT_SCALING, ScaleContext.create(),
-          false, // we scale and handle HiDPI later
-          false,
-          1,
-          isSvg);
+        // we scale and handle HiDPI later
+        return IconUtilKt.filterImage(image, ContainerUtil.createMaybeSingletonList(flipFilter));
       }
       catch (Exception e) {
         LOG.warn(e);

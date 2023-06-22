@@ -19,10 +19,12 @@
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-cli" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-ir" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-jps-common" level="project" />
     <orderEntry type="module" module-name="kotlin.plugin.k1" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.util" />
     <orderEntry type="module" module-name="kotlin.base.psi" />
     <orderEntry type="module" module-name="kotlin.base.compiler-configuration" />
+    <orderEntry type="module" module-name="kotlin.base.project-structure" />
     <orderEntry type="module" module-name="kotlin.base.plugin" />
     <orderEntry type="module" module-name="kotlin.base.test" />
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" />

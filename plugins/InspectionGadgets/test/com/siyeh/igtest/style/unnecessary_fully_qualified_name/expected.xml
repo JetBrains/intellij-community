@@ -26,14 +26,14 @@
     <file>UnnecessaryFullyQualifiedName.java</file>
     <line>17</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary fully qualified name</problem_class>
-    <description>Qualifier &lt;code&gt;java.lang&lt;/code&gt; is unnecessary, and can be replaced with an import #loc</description>
+    <description>Qualifier &lt;code&gt;java.lang&lt;/code&gt; is unnecessary and can be removed #loc</description>
   </problem>
 
   <problem>
     <file>UnnecessaryFullyQualifiedName.java</file>
     <line>18</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary fully qualified name</problem_class>
-    <description>Qualifier &lt;code&gt;java.lang&lt;/code&gt; is unnecessary, and can be replaced with an import #loc</description>
+    <description>Qualifier &lt;code&gt;java.lang&lt;/code&gt; is unnecessary and can be removed #loc</description>
   </problem>
 
   <problem>
@@ -47,7 +47,7 @@
     <file>UnnecessaryFQNJavadoc.java</file>
     <line>4</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary fully qualified name</problem_class>
-    <description>Qualifier &lt;code&gt;java.util&lt;/code&gt; is unnecessary, and can be replaced with an import #loc</description>
+    <description>Qualifier &lt;code&gt;java.util&lt;/code&gt; is unnecessary and can be removed #loc</description>
   </problem>
 
   <problem>

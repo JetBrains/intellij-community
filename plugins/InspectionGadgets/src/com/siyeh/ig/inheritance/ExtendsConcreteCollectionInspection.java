@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.inheritance;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -28,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 public class ExtendsConcreteCollectionInspection extends BaseInspection {
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[1];
     // skip inheritance with delegation for anonymous classes
     // or better suggest to replace anonymous with inner and then replace with delegation

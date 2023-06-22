@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl;
 
 import com.intellij.CommonBundle;
@@ -8,7 +8,6 @@ import com.intellij.compiler.progress.CompilerMessagesService;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.DefaultMessageHandler;
-import com.intellij.configurationStore.StoreUtil;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
@@ -347,24 +346,13 @@ public final class CompileDriver {
               }
             }
             case BUILD_COMPLETED -> {
-              ExitStatus status = ExitStatus.SUCCESS;
-              if (event.hasCompletionStatus()) {
-                final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status completionStatus =
-                  event.getCompletionStatus();
-                switch (completionStatus) {
-                  case CANCELED:
-                    status = ExitStatus.CANCELLED;
-                    break;
-                  case ERRORS:
-                    status = ExitStatus.ERRORS;
-                    break;
-                  case SUCCESS:
-                    break;
-                  case UP_TO_DATE:
-                    status = ExitStatus.UP_TO_DATE;
-                    break;
-                }
-              }
+              ExitStatus status = !event.hasCompletionStatus() ? ExitStatus.SUCCESS : 
+                                  switch (event.getCompletionStatus()) {
+                case CANCELED -> ExitStatus.CANCELLED;
+                case ERRORS -> ExitStatus.ERRORS;
+                case SUCCESS -> ExitStatus.SUCCESS;
+                case UP_TO_DATE -> ExitStatus.UP_TO_DATE;
+              };
               compileContext.putUserDataIfAbsent(COMPILE_SERVER_BUILD_STATUS, status);
             }
             case CUSTOM_BUILDER_MESSAGE -> {
@@ -425,11 +413,7 @@ public final class CompileDriver {
       }
 
       // ensure the project model seen by build process is up-to-date
-      StoreUtil.saveSettings(myProject);
-      if (!isUnitTestMode) {
-        StoreUtil.saveSettings(ApplicationManager.getApplication());
-      }
-
+      CompilerDriverHelperKt.saveSettings(myProject, isUnitTestMode);
       Tracer.Span compileWorkSpan = Tracer.start("compileWork");
       CompilerCacheManager compilerCacheManager = CompilerCacheManager.getInstance(myProject);
       final BuildManager buildManager = BuildManager.getInstance();
@@ -485,15 +469,16 @@ public final class CompileDriver {
         compilerCacheManager.flushCaches();
         flushCompilerCaches.complete();
 
-        final long duration = notifyCompilationCompleted(compileContext, callback, COMPILE_SERVER_BUILD_STATUS.get(compileContext));
+        final ExitStatus status = COMPILE_SERVER_BUILD_STATUS.get(compileContext);
+        final long duration = notifyCompilationCompleted(compileContext, callback, status);
         CompilerUtil.logDuration(
-          "\tCOMPILATION FINISHED (BUILD PROCESS); Errors: " +
-          compileContext.getMessageCount(CompilerMessageCategory.ERROR) +
-          "; warnings: " +
-          compileContext.getMessageCount(CompilerMessageCategory.WARNING),
+          "\tCOMPILATION FINISHED (BUILD PROCESS); Errors: " + compileContext.getMessageCount(CompilerMessageCategory.ERROR) +
+          "; warnings: " + compileContext.getMessageCount(CompilerMessageCategory.WARNING),
           duration
         );
-
+        if (status == ExitStatus.SUCCESS) {
+          BuildUsageCollector.logBuildCompleted(duration, isRebuild, false);
+        }
       }
     };
 

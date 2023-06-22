@@ -4,11 +4,17 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.toolwindow.ReviewListTabComponentDescriptor
 import com.intellij.ide.DataManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabLazyProject
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContext
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersHistoryModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersViewModelImpl
@@ -20,45 +26,40 @@ import javax.swing.JComponent
 
 internal class GitLabReviewListTabComponentDescriptor(
   project: Project,
-  cs: CoroutineScope,
+  parentCs: CoroutineScope,
   accountManager: GitLabAccountManager,
-  projectContext: GitLabToolwindowProjectContext
+  ctx: GitLabProjectUIContext
 ) : ReviewListTabComponentDescriptor {
+  private val cs = parentCs.childScope(Dispatchers.Default)
 
-  override val viewModel: GitLabMergeRequestsListViewModel
+  private val avatarIconsProvider: IconsProvider<GitLabUserDTO> = ctx.avatarIconProvider
+  private val projectData: GitLabLazyProject = ctx.projectData
 
-  override val component: JComponent
+  private val accountVm = GitLabAccountViewModelImpl(project, cs, ctx.account, accountManager)
+  private val filterVm: GitLabMergeRequestsFiltersViewModel = GitLabMergeRequestsFiltersViewModelImpl(
+    cs,
+    currentUser = ctx.currentUser,
+    historyModel = GitLabMergeRequestsFiltersHistoryModel(project.service<GitLabMergeRequestsPersistentFiltersHistory>()),
+    avatarIconsProvider = avatarIconsProvider,
+    projectData = projectData
+  )
 
-  init {
-    val connection = projectContext.connection
-    val avatarIconsProvider: IconsProvider<GitLabUserDTO> = projectContext.avatarIconProvider
+  override val viewModel: GitLabMergeRequestsListViewModel = GitLabMergeRequestsListViewModelImpl(
+    cs,
+    filterVm = filterVm,
+    repository = ctx.projectName,
+    avatarIconsProvider = avatarIconsProvider,
+    tokenRefreshFlow = ctx.tokenRefreshFlow,
+    loaderSupplier = { filtersValue -> projectData.mergeRequests.getListLoader(filtersValue.toSearchQuery()) }
+  )
 
-    val filterVm: GitLabMergeRequestsFiltersViewModel = GitLabMergeRequestsFiltersViewModelImpl(
-      cs,
-      currentUser = connection.currentUser,
-      historyModel = GitLabMergeRequestsFiltersHistoryModel(GitLabMergeRequestsPersistentFiltersHistory()),
-      avatarIconsProvider = avatarIconsProvider,
-      projectData = connection.projectData
-    )
-
-    viewModel = GitLabMergeRequestsListViewModelImpl(
-      cs,
-      filterVm = filterVm,
-      repository = connection.repo.repository.projectPath.name,
-      account = connection.account,
-      avatarIconsProvider = avatarIconsProvider,
-      accountManager = accountManager,
-      tokenRefreshFlow = connection.tokenRefreshFlow,
-      loaderSupplier = { filtersValue -> connection.projectData.mergeRequests.getListLoader(filtersValue.toSearchQuery()) }
-    )
-
-    component = GitLabMergeRequestsPanelFactory().create(project, cs, viewModel).also {
-      DataManager.registerDataProvider(it) { dataId ->
+  override val component: JComponent = GitLabMergeRequestsPanelFactory()
+    .create(cs.childScope(Dispatchers.Main), accountVm, viewModel).also { panel ->
+      DataManager.registerDataProvider(panel) { dataId ->
         when {
-          GitLabMergeRequestsActionKeys.FILES_CONTROLLER.`is`(dataId) -> projectContext.filesController
+          GitLabMergeRequestsActionKeys.FILES_CONTROLLER.`is`(dataId) -> ctx.filesController
           else -> null
         }
       }
     }
-  }
 }

@@ -1,0 +1,5 @@
+fragment project on Project {
+  name
+  httpUrlToRepo
+  webUrl
+}

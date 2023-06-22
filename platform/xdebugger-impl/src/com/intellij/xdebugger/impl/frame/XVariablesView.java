@@ -5,7 +5,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -136,14 +135,9 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
   }
 
   public static final class InlineVariablesInfo {
-    private final Map<Pair<VirtualFile, Integer>, Set<Entry>> myData = new HashMap<>();
-    private final Object2LongMap<VirtualFile> myTimestamps = new Object2LongOpenHashMap<>();
     private static final Key<InlineVariablesInfo> DEBUG_VARIABLES = Key.create("debug.variables");
-    private List<InlineDebugRenderer> myInlays = null;
 
-    public InlineVariablesInfo() {
-      myTimestamps.defaultReturnValue(-1);
-    }
+    private List<InlineDebugRenderer> myInlays = null;
 
     @Nullable
     public static InlineVariablesInfo get(@Nullable XDebugSession session) {
@@ -159,23 +153,6 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
       }
     }
 
-    @Nullable
-    public synchronized List<XValueNodeImpl> get(@NotNull VirtualFile file, int line, long currentTimestamp) {
-      long timestamp = myTimestamps.getLong(file);
-      if (timestamp == -1 || timestamp < currentTimestamp) {
-        return null;
-      }
-      Set<Entry> entries = myData.get(new Pair<>(file, line));
-      if (entries == null) return null;
-      return ContainerUtil.map(entries, entry -> entry.myNode);
-    }
-
-    public synchronized void put(@NotNull VirtualFile file, @NotNull XSourcePosition position, @NotNull XValueNodeImpl node, long timestamp) {
-      myTimestamps.put(file, timestamp);
-      Pair<VirtualFile, Integer> key = new Pair<>(file, position.getLine());
-      myData.computeIfAbsent(key, k -> new TreeSet<>()).add(new Entry(position.getOffset(), node));
-    }
-
     public void setInlays(List<InlineDebugRenderer> inlays) {
       myInlays = inlays;
     }
@@ -183,43 +160,6 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
     @NotNull
     public List<InlineDebugRenderer> getInlays() {
       return ObjectUtils.notNull(myInlays, Collections::emptyList);
-    }
-
-    private static class Entry implements Comparable<Entry> {
-      private final long myOffset;
-      private final XValueNodeImpl myNode;
-
-      Entry(long offset, @NotNull XValueNodeImpl node) {
-        myOffset = offset;
-        myNode = node;
-      }
-
-      @Override
-      public int compareTo(Entry o) {
-        if (myNode == o.myNode) return 0;
-        int res = Comparing.compare(myOffset, o.myOffset);
-        if (res == 0) {
-          return XValueNodeImpl.COMPARATOR.compare(myNode, o.myNode);
-        }
-        return res;
-      }
-
-      @Override
-      public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Entry entry = (Entry)o;
-
-        if (!myNode.equals(entry.myNode)) return false;
-
-        return true;
-      }
-
-      @Override
-      public int hashCode() {
-        return myNode.hashCode();
-      }
     }
   }
 }

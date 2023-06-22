@@ -468,7 +468,7 @@ public class DomChildrenTest extends DomTestCase {
   }
 
   private List<String> getFixedPath(final DomElement element) {
-    return ContainerUtil.map2List(DomUtil.getFixedPath(element), s -> s.getName());
+    return ContainerUtil.map(DomUtil.getFixedPath(element), s -> s.getName());
   }
 
   public void testElementsWithoutXmlGetItLater() {

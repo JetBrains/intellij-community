@@ -1,13 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.eclipse.config
 
-import com.intellij.workspaceModel.ide.impl.jps.serialization.CustomModuleComponentSerializer
-import com.intellij.workspaceModel.ide.impl.jps.serialization.ErrorReporter
-import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentReader
-import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentWriter
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.platform.workspace.jps.serialization.impl.CustomModuleComponentSerializer
+import com.intellij.platform.workspace.jps.serialization.impl.ErrorReporter
+import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
+import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentWriter
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl.*
 import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer
@@ -69,7 +69,7 @@ class EclipseModuleManagerSerializer : CustomModuleComponentSerializer {
     eclipseProperties.eclipseUrls.forEach {
       componentTag.addContent(Element(LIBELEMENT).setAttribute(VALUE_ATTR, it.url))
     }
-    eclipseProperties.variablePaths.forEach { name, path ->
+    eclipseProperties.variablePaths.forEach { (name, path) ->
       val prefix = listOf(SRC_PREFIX, SRC_LINK_PREFIX, LINK_PREFIX).firstOrNull { name.startsWith(it) } ?: ""
       val varTag = Element(VARELEMENT)
       varTag.setAttribute(VAR_ATTRIBUTE, name.removePrefix(prefix))
@@ -87,7 +87,7 @@ class EclipseModuleManagerSerializer : CustomModuleComponentSerializer {
     }
     val srcDescriptionTag = Element(SRC_DESCRIPTION)
     srcDescriptionTag.setAttribute(EXPECTED_POSITION, eclipseProperties.expectedModuleSourcePlace.toString())
-    eclipseProperties.srcPlace.forEach { url, position ->
+    eclipseProperties.srcPlace.forEach { (url, position) ->
       srcDescriptionTag.addContent(Element(SRC_FOLDER).setAttribute(VALUE_ATTR, url).setAttribute(EXPECTED_POSITION, position.toString()))
     }
     componentTag.addContent(srcDescriptionTag)

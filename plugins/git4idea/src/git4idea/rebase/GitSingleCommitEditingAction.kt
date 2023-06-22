@@ -21,7 +21,7 @@ internal abstract class GitSingleCommitEditingAction : GitCommitEditingActionBas
     return CommitEditingDataCreationResult.Created(SingleCommitEditingData(repository, selection, logData))
   }
 
-  override fun checkCommitsEditingAvailability(commitEditingData: SingleCommitEditingData): String? {
+  override fun lastCheckCommitsEditingAvailability(commitEditingData: SingleCommitEditingData): String? {
     val commit = commitEditingData.selectedCommit
     val branches = findContainingBranches(commitEditingData.logData, commit.root, commit.id)
 

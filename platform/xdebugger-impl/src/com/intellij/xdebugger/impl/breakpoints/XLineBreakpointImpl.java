@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.LazyRangeMarkerFactory;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -172,7 +171,9 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
           markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(finalDocument, getProject(), false);
           if (markupModel != null) {
             // renderersChanged false - we don't change gutter size
-            markupModel.fireAttributesChanged((RangeHighlighterEx)highlighter, false, false);
+            MarkupEditorFilter filter = highlighter.getEditorFilter();
+            highlighter.setEditorFilter(MarkupEditorFilter.EMPTY);
+            highlighter.setEditorFilter(filter); // to fireChanged
           }
         }
 
@@ -272,8 +273,8 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
             setFileUrl(file.getUrl());
             setLine(line, true);
             XDebugSessionImpl session = debuggerManager.getCurrentSession();
-            if (session != null && session.getActiveNonLineBreakpoint() == XLineBreakpointImpl.this) {
-              session.clearActiveNonLineBreakpoint(true);
+            if (session != null) {
+              session.checkActiveNonLineBreakpointOnRemoval(XLineBreakpointImpl.this);
             }
           }
           return true;

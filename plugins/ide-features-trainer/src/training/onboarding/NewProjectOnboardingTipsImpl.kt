@@ -1,4 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+
 package training.onboarding
 
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
@@ -16,7 +18,7 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
@@ -59,7 +61,9 @@ internal val promotedActions = listOf(IdeActions.ACTION_SEARCH_EVERYWHERE,
 private class NewProjectOnboardingTipsImpl : NewProjectOnboardingTips {
   @RequiresEdt
   override fun installTips(project: Project, simpleSampleText: String) {
-    // Set this option explicitly, because its default depends on number of empty projects.
+    OnboardingTipsStatistics.logOnboardingTipsInstalled(project, onboardingGenerationNumber)
+
+    // Set this option explicitly, because its default depends on the number of empty projects.
     PropertiesComponent.getInstance().setValue(NewProjectWizardStep.GENERATE_ONBOARDING_TIPS_NAME, true)
 
     val fileEditorManager = FileEditorManager.getInstance(project)
@@ -78,7 +82,7 @@ private class NewProjectOnboardingTipsImpl : NewProjectOnboardingTips {
     val pathToRunningFile = file.path
     project.onboardingTipsDebugPath = pathToRunningFile
     installDebugListener(project, pathToRunningFile)
-    installActionsListener(project, pathToRunningFile)
+    installActionListener(project, pathToRunningFile)
 
     val number = onboardingGenerationNumber
     if (number != 0 && onboardingGenerationShowDisableMessage) {
@@ -88,8 +92,8 @@ private class NewProjectOnboardingTipsImpl : NewProjectOnboardingTips {
   }
 }
 
-private class InstallOnboardingTooltip : StartupActivity {
-  override fun runActivity(project: Project) {
+private class InstallOnboardingTooltip : ProjectActivity {
+  override suspend fun execute(project: Project) {
     val pathToRunningFile = project.onboardingTipsDebugPath
     if (pathToRunningFile != null) {
       installDebugListener(project, pathToRunningFile)
@@ -97,17 +101,20 @@ private class InstallOnboardingTooltip : StartupActivity {
   }
 }
 
-private fun installActionsListener(project: Project, pathToRunningFile: @NonNls String) {
+private fun installActionListener(project: Project, pathToRunningFile: @NonNls String) {
   val connection = project.messageBus.connect()
   val actionsMapReported = promotedActions.associateWith { false }.toMutableMap()
   connection.subscribe(AnActionListener.TOPIC, object : AnActionListener {
     override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
-      val editor = event.getData(CommonDataKeys.EDITOR) ?: return
-      if (editor.virtualFile.path != pathToRunningFile) return
-      val actionId = ActionManager.getInstance().getId(action)
-      val reported = actionsMapReported[actionId] ?: return
+      val virtualFile = event.getData(CommonDataKeys.EDITOR)?.virtualFile ?: return
+      if (virtualFile.path != pathToRunningFile) {
+        return
+      }
+
+      val actionId = ActionManager.getInstance().getId(action)!!
+      val reported = actionsMapReported.get(actionId) ?: return
       if (!reported) {
-        actionsMapReported[actionId] = true
+        actionsMapReported.put(actionId, true)
         // usage count increased in the beforeActionPerformed listener,
         // so here we use afterActionPerformed event to avoid question about listeners order
         val usageCount = service<ActionsLocalSummary>().getActionStatsById(actionId)?.usageCount ?: return

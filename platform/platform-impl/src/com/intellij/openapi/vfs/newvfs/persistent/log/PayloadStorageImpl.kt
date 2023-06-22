@@ -7,16 +7,18 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.io.ByteCountingOutputStrea
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.ChunkMMappedFileIO
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.StorageIO
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.AdvancingPositionTracker
+import com.intellij.openapi.vfs.newvfs.persistent.log.util.SkipListAdvancingPositionTracker
+import com.intellij.openapi.vfs.newvfs.persistent.log.util.trackAdvance
 import com.intellij.util.io.DataInputOutputUtil
 import com.intellij.util.io.DataOutputStream
-import com.intellij.util.io.UnInterruptibleFileChannel
+import com.intellij.util.io.ResilientFileChannel
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
 import java.io.EOFException
 import java.io.OutputStream
 import java.nio.channels.FileChannel
 import java.nio.file.Path
-import java.nio.file.StandardOpenOption
+import java.nio.file.StandardOpenOption.*
 import kotlin.io.path.div
 
 class PayloadStorageImpl(
@@ -29,13 +31,14 @@ class PayloadStorageImpl(
   init {
     FileUtil.ensureExists(storagePath.toFile())
 
-    val fileChannel = UnInterruptibleFileChannel(storagePath / "payload",
-                                                 StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE)
+    val fileChannel = ResilientFileChannel(storagePath / "payload", READ, WRITE, CREATE)
     storageIO = ChunkMMappedFileIO(fileChannel, FileChannel.MapMode.READ_WRITE)
 
-    position = AdvancingPositionTracker(lastSafeSize ?: 0L)
+    position = SkipListAdvancingPositionTracker(lastSafeSize ?: 0L)
   }
 
+  // TODO small payload (e.g. <= 7 bytes) can be inlined into a PayloadRef and this will eliminate IO for them. This should considerably
+  //      increase write performance for attributes (there are lots of small __index_stamps__ attrs)
   override fun writePayload(sizeBytes: Long, body: OutputStream.() -> Unit): PayloadRef {
     assert(sizeBytes >= 0)
     if (sizeBytes == 0L) {
@@ -50,7 +53,7 @@ class PayloadStorageImpl(
     DataInputOutputUtil.writeLONG(out, sizeBytes)
 
     val fullSize = out.writtenBytesCount.toLong() + sizeBytes
-    return position.track(fullSize) { payloadPos ->
+    return position.trackAdvance(fullSize) { payloadPos ->
       storageIO.write(payloadPos, buf.internalBuffer, 0, out.writtenBytesCount)
       storageIO.offsetOutputStream(payloadPos + out.writtenBytesCount).run {
         body()
@@ -63,6 +66,7 @@ class PayloadStorageImpl(
   override fun readAt(ref: PayloadRef): ByteArray? {
     if (ref == PayloadRef.ZERO_SIZE) return ByteArray(0)
     // TODO: revisit unexpected value cases
+    if (ref.offset < 0 || ref.offset >= position.getReadyPosition()) return null
     val buf = ByteArray(10) // 1 + (64 - 6) / 7 < 10
     storageIO.read(ref.offset, buf)
     val inp = ByteArrayInputStream(buf)
@@ -85,7 +89,7 @@ class PayloadStorageImpl(
   override fun size(): Long = lastSafeSize ?: 0L
 
   override fun flush() {
-    val safeSize = position.getMinInflightPosition()
+    val safeSize = position.getReadyPosition()
     storageIO.force()
     lastSafeSize = safeSize
   }

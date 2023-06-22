@@ -9,10 +9,10 @@ public class Test {
                 Integer z = y;
                 return y.byteValue();
             }
-            case String r && x > 0 -> {
+            case String r when x > 0 -> {
                 return ((String) obj).length();
             }
-            case Character character -> {
+            case Character c -> {
                 return ((BigDecimal) obj).hashCode();
             }
             case null, default -> {

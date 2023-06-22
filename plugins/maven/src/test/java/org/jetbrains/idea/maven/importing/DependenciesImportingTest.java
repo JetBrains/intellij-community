@@ -18,7 +18,6 @@ import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.junit.Assume;
 import org.junit.Test;
 
@@ -29,6 +28,13 @@ import java.util.Collections;
 import java.util.List;
 
 public class DependenciesImportingTest extends MavenMultiVersionImportingTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myProjectsManager.initForTests();
+    myProjectsManager.listenForExternalChanges();
+  }
+
   @Test
   public void testLibraryDependency() {
     importProject("""
@@ -604,6 +610,66 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
     assertModuleModuleDeps(mn("project", "m1.test"), mn("project", "m1.main"));
     assertModuleModuleDeps(mn("project", "m2.test"), mn("project", "m2.main"), mn("project", "m1.main"));
     assertModuleModuleDeps(mn("project", "m2.main"), mn("project", "m1.main"));
+  }
+
+  @Test
+  public void testTestDependencyOnPerSourceTypeModule() {
+    Assume.assumeTrue(isWorkspaceImport());
+
+    createModulePom("m1",
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m1</artifactId>
+                      <version>1</version>
+                      <properties>
+                        <maven.compiler.source>8</maven.compiler.source>
+                        <maven.compiler.target>8</maven.compiler.target>
+                        <maven.compiler.testSource>11</maven.compiler.testSource>
+                        <maven.compiler.testTarget>11</maven.compiler.testTarget>
+                      </properties>
+                      <parent>
+                        <groupId>test</groupId>
+                        <artifactId>project</artifactId>
+                        <version>1</version>
+                      </parent>""");
+
+    createModulePom("m2",
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m2</artifactId>
+                      <version>1</version>
+                      <parent>
+                        <groupId>test</groupId>
+                        <artifactId>project</artifactId>
+                        <version>1</version>
+                      </parent>
+                      <dependencies>
+                        <dependency>
+                          <groupId>test</groupId>
+                          <artifactId>m1</artifactId>
+                          <version>1</version>
+                          <type>test-jar</type>
+                          <scope>test</scope>
+                        </dependency>
+                      </dependencies>""");
+
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <packaging>pom</packaging>
+                    <modules>
+                      <module>m1</module>
+                      <module>m2</module>
+                    </modules>""");
+
+    assertModules("project",
+                  mn("project", "m1"),
+                  mn("project", "m2"),
+                  mn("project", "m1.main"),
+                  mn("project", "m1.test"));
+    assertModuleModuleDeps(mn("project", "m2"), mn("project", "m1.test"));
+    assertModuleModuleDeps(mn("project", "m1.test"), mn("project", "m1.main"));
   }
 
   @Test
@@ -1579,8 +1645,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
     setRepositoryPath(new File(myDir, "__repo").getPath());
     myProjectsManager.getEmbeddersManager().reset(); // to recognize repository change
 
-    scheduleResolveAll();
-    resolveDependenciesAndImport();
+    updateAllProjects();
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/",
@@ -1612,9 +1677,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
     setRepositoryPath(new File(myDir, "__repo").getPath());
     myProjectsManager.getEmbeddersManager().reset(); // to recognize repository change
 
-    scheduleResolveAll();
-
-    resolveDependenciesAndImport();
+    updateAllProjects();
 
     assertModuleLibDep("project", "Maven: org.testng:testng:jdk15:5.8",
                        "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-jdk15.jar!/",
@@ -1641,10 +1704,9 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                        Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/"),
                        Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/"));
 
-    scheduleResolveAll();
-    resolveDependenciesAndImport();
-    scheduleResolveAll();
-    resolveDependenciesAndImport();
+    // update twice
+    updateAllProjects();
+    updateAllProjects();
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0",
                        Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/"),
@@ -1674,10 +1736,9 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                        Collections.emptyList(),
                        Collections.emptyList());
 
-    scheduleResolveAll();
-    resolveDependenciesAndImport();
-    scheduleResolveAll();
-    resolveDependenciesAndImport();
+    // update twice
+    updateAllProjects();
+    updateAllProjects();
 
     assertModuleLibDep("project", "Maven: xxx:yyy:1",
                        Arrays.asList("jar://" + getRoot() + "/foo/bar.jar!/"),
@@ -1960,7 +2021,9 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                          <module>m1</module>
                        </modules>""");
 
-    configConfirmationForYesAnswer();
+    //configConfirmationForYesAnswer();
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
+
     importProject();
     assertProjectLibraries("Maven: group:lib1:1");
   }
@@ -2238,7 +2301,8 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
     assertModules("project", "m1", "m2");
     assertModuleModuleDeps("m1", "m2");
 
-    configConfirmationForYesAnswer();
+    //configConfirmationForYesAnswer();
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
 
 
     setIgnoredFilesPathForNextImport(Collections.singletonList(m2.getPath()));

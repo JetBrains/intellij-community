@@ -8,5 +8,3 @@ fun test(b: Boolean, p: P?): O {
         else -> p<caret>
     }
 }
-
-/* IGNORE_FIR */

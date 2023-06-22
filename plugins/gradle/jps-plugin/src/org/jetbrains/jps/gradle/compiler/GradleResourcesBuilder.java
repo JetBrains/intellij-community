@@ -54,7 +54,7 @@ public class GradleResourcesBuilder extends TargetBuilder<GradleResourceRootDesc
     holder.processDirtyFiles(new FileProcessor<GradleResourceRootDescriptor, GradleResourcesTarget>() {
 
       @Override
-      public boolean apply(GradleResourcesTarget t, File file, GradleResourceRootDescriptor rd) throws IOException {
+      public boolean apply(@NotNull GradleResourcesTarget t, @NotNull File file, @NotNull GradleResourceRootDescriptor rd) throws IOException {
         assert target == t;
 
         List<File> fileList = files.get(rd);

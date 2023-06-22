@@ -9,7 +9,7 @@ import com.intellij.util.containers.CollectionFactory
 internal class MySearchableOptionProcessor(private val stopWords: Set<String>) : SearchableOptionProcessor() {
   private val cache: MutableSet<String> = HashSet()
   val storage: MutableMap<CharSequence, LongArray> = CollectionFactory.createCharSequenceMap(20, 0.9f, true)
-  val identifierTable = IndexedCharsInterner()
+  val identifierTable: IndexedCharsInterner = IndexedCharsInterner()
 
   override fun addOptions(text: String,
                           path: String?,

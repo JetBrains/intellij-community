@@ -26,7 +26,7 @@ internal class DependencyCollectorBean : BaseKeyedLazyInstance<DependencyCollect
   var implementation: String = ""
 
   companion object {
-    val EP_NAME = ExtensionPointName.create<DependencyCollectorBean>("com.intellij.dependencyCollector")
+    val EP_NAME: ExtensionPointName<DependencyCollectorBean> = ExtensionPointName.create("com.intellij.dependencyCollector")
   }
 
   override fun getImplementationClassName(): String = implementation
@@ -76,7 +76,7 @@ internal class DependencySupportBean() : PluginAware {
 
   companion object {
 
-    val EP_NAME = ExtensionPointName.create<DependencySupportBean>("com.intellij.dependencySupport")
+    val EP_NAME: ExtensionPointName<DependencySupportBean> = ExtensionPointName.create("com.intellij.dependencySupport")
   }
 
   @ApiStatus.Experimental
@@ -100,7 +100,7 @@ internal class DependencySupportBean() : PluginAware {
   }
 }
 
-internal const val DEPENDENCY_SUPPORT_FEATURE = "dependencySupport"
+internal const val DEPENDENCY_SUPPORT_FEATURE: String = "dependencySupport"
 
 internal val DependencySupportBean.id: @NlsSafe String
   get() = "$kind:$coordinate"

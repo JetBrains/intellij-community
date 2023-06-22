@@ -20,5 +20,5 @@ class ItemsList(override val name: String, private val knownValuesList: List<Str
 }
 
 @JvmField
-val HostProductCode = ItemsList("parentProductCode", listOf("IU", "RM", "WS", "PS", "PY", "DS", "OC", "CL", "DB", "RD", "GO"))
+val HostProductCode: ItemsList = ItemsList("parentProductCode", listOf("IU", "RM", "WS", "PS", "PY", "DS", "OC", "CL", "DB", "RD", "GO"))
 

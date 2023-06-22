@@ -141,7 +141,7 @@ public final class StringPattern extends ObjectPattern<String, StringPattern> {
 
   @Override
   @NotNull
-  public StringPattern oneOf(@NonNls final String... values) {
+  public StringPattern oneOf(@NonNls final String @NotNull ... values) {
     return super.oneOf(values);
   }
 

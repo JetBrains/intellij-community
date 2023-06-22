@@ -2,6 +2,7 @@
 package com.intellij.find;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.icons.ExpUiIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
@@ -13,16 +14,15 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.IconManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public final class FindAllAction extends AnAction implements ShortcutProvider, DumbAware {
-  private static final Icon FIND_ICON =
-    ExperimentalUI.isNewUI() ? IconManager.getInstance().getIcon("expui/general/openInToolWindow.svg", AllIcons.class)
-                             : AllIcons.General.Pin_tab;
+  private static Icon getFindIcon() {
+    return ExperimentalUI.isNewUI() ? ExpUiIcons.General.OpenInToolWindow : AllIcons.General.Pin_tab;
+  }
 
   public FindAllAction() {
     super(IdeBundle.messagePointer(ExperimentalUI.isNewUI() ? "show.in.find.window.button.name.newui" : "show.in.find.window.button.name"),
@@ -72,8 +72,8 @@ public final class FindAllAction extends AnAction implements ShortcutProvider, D
   private static @NotNull Icon getIcon(@Nullable Project project) {
     ToolWindowManager toolWindowManager = project != null ? ToolWindowManager.getInstance(project) : null;
     if (toolWindowManager != null) {
-      return toolWindowManager.getLocationIcon(ToolWindowId.FIND, FIND_ICON);
+      return toolWindowManager.getLocationIcon(ToolWindowId.FIND, getFindIcon());
     }
-    return FIND_ICON;
+    return getFindIcon();
   }
 }

@@ -20,6 +20,14 @@
             "properties": [
               {
                 "name": "fooBaz",
+                "read-only": true,
+                "value": {
+                  "type": "string"
+                }
+              },
+              {
+                "name": "fooBad",
+                "read-only": false,
                 "value": {
                   "type": "string"
                 }

@@ -16,7 +16,9 @@
 package com.siyeh.ig.assignment;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -27,7 +29,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CodeBlockSurrounder;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -74,7 +75,7 @@ public class IncrementDecrementUsedAsExpressionInspection extends BaseInspection
 
   @Override
   @Nullable
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiExpression expression = (PsiExpression)infos[0];
     if (PsiTreeUtil.getParentOfType(expression, PsiCodeBlock.class, true, PsiMember.class) == null) {
       return null;
@@ -83,7 +84,7 @@ public class IncrementDecrementUsedAsExpressionInspection extends BaseInspection
   }
 
   private static class IncrementDecrementUsedAsExpressionFix
-    extends InspectionGadgetsFix {
+    extends PsiUpdateModCommandQuickFix {
 
     private final String elementText;
 
@@ -106,8 +107,8 @@ public class IncrementDecrementUsedAsExpressionInspection extends BaseInspection
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      extractPrefixPostfixExpressionToSeparateStatement(descriptor.getPsiElement());
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
+      extractPrefixPostfixExpressionToSeparateStatement(startElement);
     }
   }
 

@@ -27,7 +27,7 @@ import org.jetbrains.annotations.ApiStatus
 interface ListSplitJoinContext {
 
   companion object {
-    val EXTENSION = LanguageExtension<ListSplitJoinContext>("com.intellij.listSplitJoinContext")
+    val EXTENSION: LanguageExtension<ListSplitJoinContext> = LanguageExtension<ListSplitJoinContext>("com.intellij.listSplitJoinContext")
   }
 
   /**

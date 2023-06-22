@@ -15,11 +15,12 @@
  */
 package org.jetbrains.jps.model.java.impl;
 
-import com.intellij.util.Consumer;
 import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.module.*;
 import org.jetbrains.jps.model.module.impl.JpsDependenciesRootsEnumeratorBase;
+
+import java.util.function.Consumer;
 
 public class JpsJavaDependenciesRootsEnumeratorImpl extends JpsDependenciesRootsEnumeratorBase<JpsJavaDependenciesEnumeratorImpl> implements JpsJavaDependenciesRootsEnumerator {
   private boolean myWithoutSelfModuleOutput;
@@ -52,7 +53,7 @@ public class JpsJavaDependenciesRootsEnumeratorImpl extends JpsDependenciesRoots
       for (JpsModuleSourceRoot root : module.getSourceRoots()) {
         JpsModuleSourceRootType<?> type = root.getRootType();
         if (type.equals(JavaSourceRootType.SOURCE) && includeProduction || type.equals(JavaSourceRootType.TEST_SOURCE) && includeTests) {
-          urlConsumer.consume(root.getUrl());
+          urlConsumer.accept(root.getUrl());
         }
       }
     }
@@ -62,7 +63,7 @@ public class JpsJavaDependenciesRootsEnumeratorImpl extends JpsDependenciesRoots
         if (includeProduction && includeTests) {
           String url = extensionService.getOutputUrl(module, false);
           if (url != null) {
-            urlConsumer.consume(url);
+            urlConsumer.accept(url);
           }
         }
       }
@@ -71,11 +72,11 @@ public class JpsJavaDependenciesRootsEnumeratorImpl extends JpsDependenciesRoots
         if (includeTests) {
           String testsOutputUrl = extensionService.getOutputUrl(module, true);
           if (testsOutputUrl != null && !testsOutputUrl.equals(outputUrl)) {
-            urlConsumer.consume(testsOutputUrl);
+            urlConsumer.accept(testsOutputUrl);
           }
         }
         if (includeProduction && outputUrl != null) {
-          urlConsumer.consume(outputUrl);
+          urlConsumer.accept(outputUrl);
         }
       }
     }
@@ -83,7 +84,7 @@ public class JpsJavaDependenciesRootsEnumeratorImpl extends JpsDependenciesRoots
       JpsJavaModuleExtension extension = JpsJavaExtensionService.getInstance().getModuleExtension(module);
       if (extension != null) {
         for (String url : extension.getAnnotationRoots().getUrls()) {
-          urlConsumer.consume(url);
+          urlConsumer.accept(url);
         }
       }
     }

@@ -12,7 +12,6 @@ import com.intellij.build.events.MessageEventResult
 import com.intellij.build.events.impl.*
 import com.intellij.build.issue.BuildIssue
 import com.intellij.build.issue.BuildIssueQuickFix
-import com.intellij.execution.ExecutionException
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -20,7 +19,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.externalSystem.issue.BuildIssueException
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
@@ -39,9 +37,10 @@ import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.q
 import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
-import org.jetbrains.idea.maven.server.CannotStartServerException
+import org.jetbrains.idea.maven.server.MavenArtifactEvent
+import org.jetbrains.idea.maven.server.MavenArtifactEvent.ArtifactEventType
+import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator
 import org.jetbrains.idea.maven.server.MavenServerManager
-import org.jetbrains.idea.maven.server.MavenServerProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
@@ -267,7 +266,7 @@ class MavenSyncConsole(private val myProject: Project) {
         addBuildIssue(buildIssueException.buildIssue, MessageEvent.Kind.ERROR)
       }
       else {
-        mySyncView.onEvent(mySyncId, createMessageEvent(e))
+        mySyncView.onEvent(mySyncId, createMessageEvent(myProject, mySyncId, e))
       }
 
     }
@@ -278,37 +277,10 @@ class MavenSyncConsole(private val myProject: Project) {
     }
   }
 
-  private fun createMessageEvent(e: Throwable): MessageEventImpl {
-    val csse = ExceptionUtil.findCause(e, CannotStartServerException::class.java)
-    if (csse != null) {
-      val cause = ExceptionUtil.findCause(csse, ExecutionException::class.java)
-      if (cause != null) {
-        return MessageEventImpl(mySyncId, MessageEvent.Kind.ERROR, SyncBundle.message("build.event.title.internal.server.error"),
-                                getExceptionText(cause), getExceptionText(cause))
-      }
-      else {
-        return MessageEventImpl(mySyncId, MessageEvent.Kind.ERROR, SyncBundle.message("build.event.title.internal.server.error"),
-                                getExceptionText(csse), getExceptionText(csse))
-      }
-    }
-    return MessageEventImpl(mySyncId, MessageEvent.Kind.ERROR, SyncBundle.message("build.event.title.error"),
-                            getExceptionText(e), getExceptionText(e))
-  }
-
-
-  private fun getExceptionText(e: Throwable): @NlsSafe String {
-    if (MavenWorkspaceSettingsComponent.getInstance(myProject).settings.getGeneralSettings().isPrintErrorStackTraces) {
-      return ExceptionUtil.getThrowableText(e)
-    }
-
-    if (!e.localizedMessage.isNullOrEmpty()) return e.localizedMessage
-    return if (StringUtil.isEmpty(e.message)) SyncBundle.message("build.event.title.error") else e.message!!
-  }
-
-  fun getListener(type: MavenServerProgressIndicator.ResolveType): ArtifactSyncListener {
+  fun getListener(type: MavenServerConsoleIndicator.ResolveType): ArtifactSyncListener {
     return when (type) {
-      MavenServerProgressIndicator.ResolveType.PLUGIN -> ArtifactSyncListenerImpl("maven.sync.plugins")
-      MavenServerProgressIndicator.ResolveType.DEPENDENCY -> ArtifactSyncListenerImpl("maven.sync.dependencies")
+      MavenServerConsoleIndicator.ResolveType.PLUGIN -> ArtifactSyncListenerImpl("maven.sync.plugins")
+      MavenServerConsoleIndicator.ResolveType.DEPENDENCY -> ArtifactSyncListenerImpl("maven.sync.dependencies")
     }
   }
 
@@ -456,7 +428,8 @@ class MavenSyncConsole(private val myProject: Project) {
 
   @Synchronized
   fun showQuickFixBadMaven(message: String, kind: MessageEvent.Kind) {
-    val bundledVersion = MavenServerManager.getMavenVersion(MavenServerManager.BUNDLED_MAVEN_3)
+    val bundledVersion = MavenUtil.getMavenVersionByMavenHome(
+      MavenServerManager.BUNDLED_MAVEN_3)
     mySyncView.onEvent(mySyncId, BuildIssueEventImpl(mySyncId, object : BuildIssue {
       override val title = SyncBundle.message("maven.sync.version.issue.title")
       override val description: String = "${message}\n" +
@@ -560,7 +533,6 @@ class MavenSyncConsole(private val myProject: Project) {
     @ApiStatus.Experimental
     @JvmStatic
     fun startTransaction(project: Project) {
-      debugLog("Maven sync: start sync transaction")
       val syncConsole = MavenProjectsManager.getInstance(project).syncConsole
       synchronized(syncConsole) {
         syncConsole.syncTransactionStarted = true
@@ -570,7 +542,6 @@ class MavenSyncConsole(private val myProject: Project) {
     @ApiStatus.Experimental
     @JvmStatic
     fun finishTransaction(project: Project) {
-      debugLog("Maven sync: finish sync transaction")
       val syncConsole = MavenProjectsManager.getInstance(project).syncConsole
       synchronized(syncConsole) {
         syncConsole.syncTransactionStarted = false
@@ -580,6 +551,19 @@ class MavenSyncConsole(private val myProject: Project) {
 
     private fun debugLog(s: String, exception: Throwable? = null) {
       MavenLog.LOG.debug(s, exception)
+    }
+  }
+
+  @Synchronized
+  fun handleDownloadEvents(downloadEvents: List<MavenArtifactEvent>) {
+    for (e in downloadEvents) {
+      val listener = getListener(e.resolveType)
+      val id = e.dependencyId
+      when (e.artifactEventType) {
+        ArtifactEventType.DOWNLOAD_STARTED -> listener.downloadStarted(id)
+        ArtifactEventType.DOWNLOAD_COMPLETED -> listener.downloadCompleted(id)
+        ArtifactEventType.DOWNLOAD_FAILED -> listener.downloadFailed(id, e.errorMessage, e.stackTrace)
+      }
     }
   }
 }

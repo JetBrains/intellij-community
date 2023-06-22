@@ -107,7 +107,7 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
       buf.append(StringUtil.join(data.TEST_LISTENERS, ";"));
     }
     collectListeners(javaParameters, buf, IDEATestNGListener.EP_NAME, ";");
-    if (buf.length() > 0) javaParameters.getProgramParametersList().add(CommandLineArgs.LISTENER, buf.toString());
+    if (!buf.isEmpty()) javaParameters.getProgramParametersList().add(CommandLineArgs.LISTENER, buf.toString());
 
     createServerSocket(javaParameters);
     createTempFiles(javaParameters);

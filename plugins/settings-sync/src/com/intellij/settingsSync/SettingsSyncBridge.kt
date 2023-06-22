@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.settingsSync.SettingsSyncBridge.PushRequestMode.*
-import com.intellij.settingsSync.SettingsSynchronizer.Companion.checkCrossIdeSyncStatusOnServer
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.ContainerUtil
@@ -46,16 +45,18 @@ class SettingsSyncBridge(parentDisposable: Disposable,
     }
   }
 
-  private val settingsChangeListener = SettingsChangeListener { event ->
-    LOG.debug("Adding settings changed event $event to the queue")
-    if (event is SyncSettingsEvent.ExclusiveEvent) { // such events will be processed separately from all others
-      queue.queue(Update.create(event) {
-        processExclusiveEvent(event)
-      })
-    }
-    else {
-      pendingEvents.add(event as SyncSettingsEvent.StandardEvent)
-      queue.queue(updateObject)
+  private val settingsChangeListener = object: SettingsSyncEventListener {
+    override fun settingChanged(event: SyncSettingsEvent) {
+      LOG.debug("Adding settings changed event $event to the queue")
+      if (event is SyncSettingsEvent.ExclusiveEvent) { // such events will be processed separately from all others
+        queue.queue(Update.create(event) {
+          processExclusiveEvent(event)
+        })
+      }
+      else {
+        pendingEvents.add(event as SyncSettingsEvent.StandardEvent)
+        queue.queue(updateObject)
+      }
     }
   }
 
@@ -66,7 +67,7 @@ class SettingsSyncBridge(parentDisposable: Disposable,
     settingsLog.initialize()
 
     // the queue is not activated initially => events will be collected but not processed until we perform all initialization tasks
-    SettingsSyncEvents.getInstance().addSettingsChangedListener(settingsChangeListener)
+    SettingsSyncEvents.getInstance().addListener(settingsChangeListener)
     ideMediator.activateStreamProvider()
 
     applyInitialChanges(initMode)
@@ -84,9 +85,6 @@ class SettingsSyncBridge(parentDisposable: Disposable,
     val previousState = collectCurrentState()
 
     settingsLog.logExistingSettings()
-
-    checkCrossIdeSyncStatusOnServer(remoteCommunicator)
-
     try {
       when (initMode) {
         is InitMode.TakeFromServer -> applySnapshotFromServer(initMode.cloudEvent)
@@ -120,8 +118,7 @@ class SettingsSyncBridge(parentDisposable: Disposable,
       LOG.info("Migration from old storage applied.")
       var masterPosition = settingsLog.advanceMaster() // merge (preserve) 'ide' changes made by logging existing settings & by migration
 
-      val updateResult = remoteCommunicator.receiveUpdates()
-      when (updateResult) {
+      when (val updateResult = remoteCommunicator.receiveUpdates()) {
         is UpdateResult.Success -> {
           LOG.info("There is a snapshot on the server => prefer server version over local migration data")
           val snapshot = updateResult.settingsSnapshot
@@ -255,8 +252,6 @@ class SettingsSyncBridge(parentDisposable: Disposable,
   }
 
   private fun checkServer() {
-    checkCrossIdeSyncStatusOnServer(remoteCommunicator)
-
     when (remoteCommunicator.checkServerState()) {
       is ServerState.UpdateNeeded -> {
         LOG.info("Updating from server")
@@ -302,7 +297,7 @@ class SettingsSyncBridge(parentDisposable: Disposable,
     }
 
     ideMediator.removeStreamProvider()
-    SettingsSyncEvents.getInstance().removeSettingsChangedListener(settingsChangeListener)
+    SettingsSyncEvents.getInstance().removeListener(settingsChangeListener)
     pendingEvents.clear()
     rollback(previousState)
     queue.deactivate() // for tests it is important to have it the last statement, otherwise waitForAllExecuted can finish before rollback
@@ -412,6 +407,7 @@ class SettingsSyncBridge(parentDisposable: Disposable,
 
   @TestOnly
   fun waitForAllExecuted(timeout: Long, timeUnit: TimeUnit) {
+    queue.flush()
     queue.waitForAllExecuted(timeout, timeUnit)
   }
 

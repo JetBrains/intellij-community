@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -22,8 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
 
@@ -100,11 +99,18 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
 
   @Override
   public boolean isEmptyPatternSupported() {
-    return true;
+    return !Registry.is("search.everywhere.recents");
   }
 
   @Override
   public boolean isShownInSeparateTab() {
     return false;
+  }
+
+  public static class Factory implements SearchEverywhereContributorFactory<Object> {
+    @Override
+    public @NotNull SearchEverywhereContributor<Object> createContributor(@NotNull AnActionEvent initEvent) {
+      return PSIPresentationBgRendererWrapper.wrapIfNecessary(new RecentFilesSEContributor(initEvent));
+    }
   }
 }

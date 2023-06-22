@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
@@ -11,14 +11,12 @@ import com.intellij.util.Range
 import com.sun.jdi.Location
 import org.jetbrains.kotlin.codegen.coroutines.INVOKE_SUSPEND_METHOD_NAME
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
+import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.trimIfMangledInBytecode
-import org.jetbrains.kotlin.idea.debugger.core.isInsideInlineArgument
-import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
-import com.intellij.openapi.application.runReadAction
+import org.jetbrains.kotlin.idea.debugger.core.stepping.StopOnReachedMethodFilter
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
-import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 
@@ -26,7 +24,7 @@ class KotlinLambdaMethodFilter(
     lambda: KtFunction,
     private val callingExpressionLines: Range<Int>?,
     private val lambdaInfo: KotlinLambdaInfo
-) : BreakpointStepMethodFilter {
+) : BreakpointStepMethodFilter, StopOnReachedMethodFilter {
     private val lambdaPtr = lambda.createSmartPointer()
     private val firstStatementPosition: SourcePosition?
     private val lastStatementLine: Int
@@ -44,7 +42,7 @@ class KotlinLambdaMethodFilter(
     override fun locationMatches(process: DebugProcessImpl, location: Location): Boolean {
         val lambda = lambdaPtr.getElementInReadAction() ?: return true
         if (lambdaInfo.isInline) {
-            return isInsideInlineArgument(lambda, location, process)
+            return location.matchesLambda(process, lambda)
         }
 
         val method = location.safeMethod() ?: return true
@@ -53,14 +51,21 @@ class KotlinLambdaMethodFilter(
         }
 
         val methodName = method.name() ?: return false
-        return isTargetLambdaName(methodName) &&
-               location.matchesExpression(process, lambda.bodyExpression)
+        return isTargetLambdaName(methodName) && location.matchesLambda(process, lambda)
     }
 
-    private fun Location.matchesExpression(process: DebugProcessImpl, bodyExpression: KtExpression?): Boolean {
+    private fun Location.matchesLambda(process: DebugProcessImpl, lambda: KtFunction): Boolean {
         val sourcePosition = process.positionManager.getSourcePosition(this) ?: return true
-        val blockAt = runReadAction { sourcePosition.elementAt.parentOfType<KtBlockExpression>(true) } ?: return true
-        return blockAt === bodyExpression
+        return runReadAction {
+            val bodyExpression = lambda.bodyExpression
+            val elementAt = sourcePosition.elementAt
+            if (elementAt == bodyExpression) {
+                return@runReadAction true
+            }
+
+            val blockAt = elementAt.parentOfType<KtBlockExpression>(withSelf = true)
+            blockAt == bodyExpression
+        }
     }
 
     override fun getCallingExpressionLines() =

@@ -2,10 +2,8 @@
 
 package org.jetbrains.kotlin.ide.konan
 
-import org.jetbrains.kotlin.analyzer.ModuleInfo
-import org.jetbrains.kotlin.analyzer.PlatformAnalysisParameters
-import org.jetbrains.kotlin.analyzer.ResolverForModuleFactory
-import org.jetbrains.kotlin.analyzer.ResolverForProject
+import com.intellij.openapi.components.service
+import org.jetbrains.kotlin.analyzer.*
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.functions.functionInterfacePackageFragmentProvider
@@ -17,7 +15,6 @@ import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.PackageFragmentProvider
 import org.jetbrains.kotlin.descriptors.impl.CompositePackageFragmentProvider
 import org.jetbrains.kotlin.ide.konan.analyzer.NativeResolverForModuleFactory
-import org.jetbrains.kotlin.idea.base.projectStructure.IDELanguageSettingsProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.caches.resolve.BuiltInsCacheKey
 import org.jetbrains.kotlin.idea.klib.CachingIdeKlibMetadataLoader
@@ -85,10 +82,7 @@ class NativePlatformKindResolution : IdePlatformKindResolution {
             stdlibInfo.capabilities
         )
 
-        val languageVersionSettings = IDELanguageSettingsProvider.getLanguageVersionSettings(
-            stdlibInfo,
-            project
-        )
+        val languageVersionSettings = project.service<LanguageSettingsProvider>().getLanguageVersionSettings(stdlibInfo, project)
 
         val stdlibPackageFragmentProvider = createKlibPackageFragmentProvider(
             stdlibInfo,

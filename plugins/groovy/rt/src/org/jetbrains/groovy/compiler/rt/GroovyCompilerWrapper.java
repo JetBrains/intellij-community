@@ -51,10 +51,7 @@ public class GroovyCompilerWrapper {
     catch (CompilationFailedException e) {
       processCompilationException(e);
     }
-    catch (IOException e) {
-      processException(e, "");
-    }
-    catch (GroovyBugError e) {
+    catch (IOException | GroovyBugError e) {
       processException(e, "");
     }
     catch (NoClassDefFoundError e) {
@@ -91,14 +88,14 @@ public class GroovyCompilerWrapper {
       return getStubOutputItems(compilationUnit, targetDirectory);
     }
 
-    final SortedSet<String> allClasses = new TreeSet<String>();
+    final SortedSet<String> allClasses = new TreeSet<>();
     //noinspection unchecked
     List<GroovyClass> listOfClasses = compilationUnit.getClasses();
     for (GroovyClass listOfClass : listOfClasses) {
       allClasses.add(listOfClass.getName());
     }
 
-    List<OutputItem> compiledFiles = new ArrayList<OutputItem>();
+    List<OutputItem> compiledFiles = new ArrayList<>();
     for (Iterator iterator = compilationUnit.iterator(); iterator.hasNext();) {
       SourceUnit sourceUnit = (SourceUnit) iterator.next();
       String fileName = sourceUnit.getName();
@@ -129,7 +126,7 @@ public class GroovyCompilerWrapper {
 
   @NotNull
   static List<OutputItem> getStubOutputItems(CompilationUnit compilationUnit, final File stubDirectory) {
-    final List<OutputItem> compiledFiles = new ArrayList<OutputItem>();
+    final List<OutputItem> compiledFiles = new ArrayList<>();
     compilationUnit.applyToPrimaryClassNodes(new CompilationUnit.PrimaryClassNodeOperation() {
       @Override
       public void call(SourceUnit source, GeneratorContext context, ClassNode classNode) throws CompilationFailedException {

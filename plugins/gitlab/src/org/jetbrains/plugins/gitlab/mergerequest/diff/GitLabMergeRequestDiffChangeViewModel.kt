@@ -2,9 +2,10 @@
 package org.jetbrains.plugins.gitlab.mergerequest.diff
 
 import com.intellij.collaboration.async.mapCaching
+import com.intellij.collaboration.async.mapFiltered
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
-import com.intellij.collaboration.ui.codereview.diff.DiffMappedValue
+import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
 import com.intellij.openapi.diagnostic.logger
@@ -12,26 +13,29 @@ import com.intellij.openapi.diff.impl.patch.PatchHunk
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.util.childScope
-import git4idea.changes.GitChangeDiffData
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelAndJoin
+import git4idea.changes.GitTextFilePatchWithHistory
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.DiffPathsInput
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNote
 import org.jetbrains.plugins.gitlab.ui.comment.*
 import kotlin.coroutines.cancellation.CancellationException
 
-private typealias DiscussionsFlow = Flow<Collection<DiffMappedValue<GitLabDiscussionViewModel>>>
-private typealias NewDiscussionsFlow = Flow<Collection<DiffMappedValue<NewGitLabNoteViewModel>>>
+private typealias DiscussionsFlow = Flow<Collection<GitLabMergeRequestDiffDiscussionViewModel>>
+private typealias NewDiscussionsFlow = Flow<Map<DiffLineLocation, NewGitLabNoteViewModel>>
 
-interface GitLabMergeRequestDiffChangeViewModel {
+internal interface GitLabMergeRequestDiffChangeViewModel {
+  val isCumulativeChange: Boolean
+
   val discussions: DiscussionsFlow
+  val draftDiscussions: DiscussionsFlow
   val newDiscussions: NewDiscussionsFlow
+
+  val discussionsViewOption: StateFlow<DiscussionsViewOption>
 
   fun requestNewDiscussion(location: DiffLineLocation, focus: Boolean)
   fun cancelNewDiscussion(location: DiffLineLocation)
@@ -39,53 +43,36 @@ interface GitLabMergeRequestDiffChangeViewModel {
 
 private val LOG = logger<GitLabMergeRequestDiffChangeViewModel>()
 
-class GitLabMergeRequestDiffChangeViewModelImpl(
+internal class GitLabMergeRequestDiffChangeViewModelImpl(
   parentCs: CoroutineScope,
   private val currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest,
-  private val diffData: GitChangeDiffData
+  private val diffData: GitTextFilePatchWithHistory,
+  override val discussionsViewOption: StateFlow<DiscussionsViewOption>
 ) : GitLabMergeRequestDiffChangeViewModel {
 
-  private val cs = parentCs.childScope()
+  private val cs = parentCs.childScope(Dispatchers.Default + CoroutineName("GitLab Merge Request Review Diff Change"))
 
-  override val discussions: DiscussionsFlow = mergeRequest.userDiscussions
-    .map { discussions -> discussions.mapNotNull { mapDiscussionToDiff(diffData, it) } }
+  override val isCumulativeChange: Boolean = !diffData.isCumulative
+
+  override val discussions: DiscussionsFlow = mergeRequest.discussions
     .mapCaching(
-      { it.value.id },
-      { cs, disc -> createMappedVm(cs, disc) },
-      { value.destroy() }
+      GitLabDiscussion::id,
+      { cs, disc -> GitLabMergeRequestDiffDiscussionViewModelImpl(cs, diffData, currentUser, disc, discussionsViewOption) },
+      GitLabMergeRequestDiffDiscussionViewModelImpl::destroy
+    ).modelFlow(cs, LOG)
+
+  override val draftDiscussions: DiscussionsFlow = mergeRequest.draftNotes.mapFiltered { it.discussionId == null }
+    .mapCaching(
+      GitLabNote::id,
+      { cs, note -> GitLabMergeRequestDiffDraftDiscussionViewModel(cs, diffData, note) },
+      GitLabMergeRequestDiffDraftDiscussionViewModel::destroy
     ).modelFlow(cs, LOG)
 
 
   private val _newDiscussions = MutableStateFlow<Map<DiffLineLocation, NewGitLabNoteViewModel>>(emptyMap())
-  override val newDiscussions: NewDiscussionsFlow =
-    _newDiscussions.map { vms ->
-      vms.map { DiffMappedValue(it.toPair()) }
-    }.modelFlow(cs, LOG)
+  override val newDiscussions: NewDiscussionsFlow = _newDiscussions.asStateFlow()
 
-  private fun mapDiscussionToDiff(diffData: GitChangeDiffData, discussion: GitLabDiscussion): DiffMappedValue<GitLabDiscussion>? {
-    val position = discussion.position?.takeIf { pos -> diffData.contains(pos.diffRefs.headSha, pos.filePath) } ?: return null
-
-    val originalSide = if (position.newLine != null) Side.RIGHT else Side.LEFT
-    val originalLine = (position.newLine ?: position.oldLine!!) - 1
-
-    val location = when (diffData) {
-      is GitChangeDiffData.Cumulative -> {
-        DiffLineLocation(originalSide, originalLine)
-      }
-      is GitChangeDiffData.Commit -> {
-        diffData.mapPosition(position.diffRefs.headSha, originalSide, originalLine) ?: return null
-      }
-    }
-    return DiffMappedValue(location, discussion)
-  }
-
-  private fun createMappedVm(cs: CoroutineScope, mappedDiscussion: DiffMappedValue<GitLabDiscussion>)
-    : DiffMappedValue<GitLabDiscussionViewModel> {
-    val vm = GitLabDiscussionViewModelImpl(cs, currentUser, mappedDiscussion.value)
-    val location = DiffLineLocation(mappedDiscussion.side, mappedDiscussion.lineIndex)
-    return DiffMappedValue(location, vm)
-  }
 
   override fun requestNewDiscussion(location: DiffLineLocation, focus: Boolean) {
     _newDiscussions.updateAndGet {
@@ -113,6 +100,7 @@ class GitLabMergeRequestDiffChangeViewModelImpl(
     val patch = diffData.patch
     val startSha = patch.beforeVersionId!!
     val headSha = patch.afterVersionId!!
+    val baseSha = if (diffData.isCumulative) diffData.fileHistory.findStartCommit() else startSha
 
     // Due to https://gitlab.com/gitlab-org/gitlab/-/issues/325161 we need line index for both sides for context lines
     val otherSide = transferToOtherSide(patch, location)
@@ -122,8 +110,9 @@ class GitLabMergeRequestDiffChangeViewModelImpl(
     val pathBefore = patch.beforeName
     val pathAfter = patch.afterName
 
+    // Due to https://gitlab.com/gitlab-org/gitlab/-/issues/296829 we need base ref here
     val positionInput = GitLabDiffPositionInput(
-      null,
+      baseSha,
       startSha,
       lineBefore?.inc(),
       headSha,

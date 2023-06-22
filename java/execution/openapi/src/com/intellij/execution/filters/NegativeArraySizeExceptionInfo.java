@@ -2,6 +2,7 @@
 package com.intellij.execution.filters;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +23,9 @@ public class NegativeArraySizeExceptionInfo extends ExceptionInfo {
   }
   
   @Override
-  PsiElement matchSpecificExceptionElement(@NotNull PsiElement e) {
+  ExceptionLineRefiner.RefinerMatchResult matchSpecificExceptionElement(@NotNull PsiElement current) {
+    PsiElement e = PsiTreeUtil.nextVisibleLeaf(current);
+    if (e == null) return null;
     PsiExpression candidate = null;
     if (e instanceof PsiKeyword && e.textMatches(PsiKeyword.NEW) && e.getParent() instanceof PsiNewExpression) {
       PsiExpression[] dimensions = ((PsiNewExpression)e.getParent()).getArrayDimensions();
@@ -39,6 +42,6 @@ public class NegativeArraySizeExceptionInfo extends ExceptionInfo {
         }
       }
     }
-    return candidate;
+    return onTheSameLineFor(current, candidate, true);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.devkit.toolwindow
 
 import com.intellij.diagnostic.logging.LogConsoleBase
@@ -99,7 +99,8 @@ internal class StatisticsEventLogToolWindow(project: Project, private val record
   }
 
   companion object {
-    val rejectedValidationTypes = setOf(REJECTED, INCORRECT_RULE, UNDEFINED_RULE, UNREACHABLE_METADATA, PERFORMANCE_ISSUE)
+    @Suppress("DEPRECATION")
+    val rejectedValidationTypes = setOf(REJECTED, INCORRECT_RULE, UNDEFINED_RULE, UNREACHABLE_METADATA, UNREACHABLE_METADATA_OBSOLETE, PERFORMANCE_ISSUE)
     val alertEvents = setOf(EventLogSystemEvents.TOO_MANY_EVENTS_ALERT, EventLogSystemEvents.TOO_MANY_EVENTS)
   }
 }

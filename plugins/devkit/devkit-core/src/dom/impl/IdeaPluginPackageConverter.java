@@ -79,7 +79,7 @@ public class IdeaPluginPackageConverter extends PsiPackageConverter {
     }
 
     @Override
-    public LocalQuickFix @Nullable [] getQuickFixes() {
+    public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
       PsiPackage basePackage = null;
       if (myIndex != 0) {
         final ResolveResult resolveResult =

@@ -2,12 +2,13 @@
 package com.intellij.credentialStore.keePass
 
 import com.intellij.credentialStore.*
-import com.intellij.credentialStore.kdbx.IncorrectMasterPasswordException
+import com.intellij.credentialStore.kdbx.IncorrectMainPasswordException
 import com.intellij.credentialStore.kdbx.KdbxPassword
 import com.intellij.credentialStore.kdbx.KeePassDatabase
 import com.intellij.credentialStore.kdbx.loadKdbx
 import com.intellij.ide.passwordSafe.PasswordStorage
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.delete
 import com.intellij.util.io.safeOutputStream
 import org.jetbrains.annotations.TestOnly
@@ -17,28 +18,30 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.exists
 
-const val DB_FILE_NAME = "c.kdbx"
+const val DB_FILE_NAME: String = "c.kdbx"
 
-fun getDefaultKeePassBaseDirectory() = PathManager.getConfigDir()
+fun getDefaultKeePassBaseDirectory(): Path = PathManager.getConfigDir()
 
-fun getDefaultMasterPasswordFile() = getDefaultKeePassBaseDirectory().resolve(MASTER_KEY_FILE_NAME)
+fun getDefaultMainPasswordFile(): Path = getDefaultKeePassBaseDirectory().resolve(MAIN_KEY_FILE_NAME)
 
 /**
- * preloadedMasterKey [MasterKey.value] will be cleared
+ * preloadedMainKey [MainKey.value] will be cleared
  */
-internal class KeePassCredentialStore constructor(internal val dbFile: Path, private val masterKeyStorage: MasterKeyFileStorage, preloadedDb: KeePassDatabase? = null) : BaseKeePassCredentialStore() {
-  constructor(dbFile: Path, masterKeyFile: Path) : this(dbFile, MasterKeyFileStorage(masterKeyFile), null)
+internal class KeePassCredentialStore(internal val dbFile: Path, private val mainKeyStorage: MainKeyFileStorage, preloadedDb: KeePassDatabase? = null) : BaseKeePassCredentialStore() {
+  constructor(dbFile: Path, mainKeyFile: Path) : this(dbFile = dbFile,
+                                                      mainKeyStorage = MainKeyFileStorage(mainKeyFile),
+                                                      preloadedDb = null)
 
   private val isNeedToSave: AtomicBoolean
 
   override var db: KeePassDatabase = if (preloadedDb == null) {
     isNeedToSave = AtomicBoolean(false)
-    when {
-      dbFile.exists() -> {
-        val masterPassword = masterKeyStorage.load() ?: throw IncorrectMasterPasswordException(isFileMissed = true)
-        loadKdbx(dbFile, KdbxPassword.createAndClear(masterPassword))
-      }
-      else -> KeePassDatabase()
+    if (dbFile.exists()) {
+      val mainPassword = mainKeyStorage.load() ?: throw IncorrectMainPasswordException(isFileMissed = true)
+      loadKdbx(dbFile, KdbxPassword.createAndClear(mainPassword))
+    }
+    else {
+      KeePassDatabase()
     }
   }
   else {
@@ -46,13 +49,13 @@ internal class KeePassCredentialStore constructor(internal val dbFile: Path, pri
     preloadedDb
   }
 
-  val masterKeyFile: Path
-    get() = masterKeyStorage.passwordFile
+  val mainKeyFile: Path
+    get() = mainKeyStorage.passwordFile
 
   @Synchronized
   @TestOnly
   fun reload() {
-    val key = masterKeyStorage.load()!!
+    val key = mainKeyStorage.load()!!
     val kdbxPassword = KdbxPassword(key)
     key.fill(0)
     db = loadKdbx(dbFile, kdbxPassword)
@@ -60,23 +63,23 @@ internal class KeePassCredentialStore constructor(internal val dbFile: Path, pri
   }
 
   @Synchronized
-  fun save(masterKeyEncryptionSpec: EncryptionSpec) {
+  fun save(mainKeyEncryptionSpec: EncryptionSpec) {
     if (!isNeedToSave.compareAndSet(true, false) && !db.isDirty) {
       return
     }
 
     try {
       val secureRandom = createSecureRandom()
-      val masterKey = masterKeyStorage.load()
+      val mainKey = mainKeyStorage.load()
       val kdbxPassword: KdbxPassword
-      if (masterKey == null) {
-        val key = generateRandomMasterKey(masterKeyEncryptionSpec, secureRandom)
+      if (mainKey == null) {
+        val key = generateRandomMainKey(mainKeyEncryptionSpec, secureRandom)
         kdbxPassword = KdbxPassword(key.value!!)
-        masterKeyStorage.save(key)
+        mainKeyStorage.save(key)
       }
       else {
-        kdbxPassword = KdbxPassword(masterKey)
-        masterKey.fill(0)
+        kdbxPassword = KdbxPassword(mainKey)
+        mainKey.fill(0)
       }
 
       dbFile.safeOutputStream().use {
@@ -84,9 +87,9 @@ internal class KeePassCredentialStore constructor(internal val dbFile: Path, pri
       }
     }
     catch (e: Throwable) {
-      // schedule save again
+      // schedule a save again
       isNeedToSave.set(true)
-      LOG.error("Cannot save password database", e)
+      logger<KeePassCredentialStore>().error("Cannot save password database", e)
     }
   }
 
@@ -99,7 +102,7 @@ internal class KeePassCredentialStore constructor(internal val dbFile: Path, pri
       dbFile.delete()
     }
     finally {
-      masterKeyStorage.save(null)
+      mainKeyStorage.save(null)
     }
   }
 
@@ -109,9 +112,9 @@ internal class KeePassCredentialStore constructor(internal val dbFile: Path, pri
   }
 
   @TestOnly
-  fun setMasterPassword(masterKey: MasterKey, secureRandom: SecureRandom) {
-    // KdbxPassword hashes value, so, it can be cleared before file write (to reduce time when master password exposed in memory)
-    saveDatabase(dbFile, db, masterKey, masterKeyStorage, secureRandom)
+  fun setMainPassword(mainKey: MainKey, secureRandom: SecureRandom) {
+    // KdbxPassword hashes value, so, it can be cleared before a file write (to reduce time when main password exposed in memory)
+    saveDatabase(dbFile = dbFile, db = db, mainKey = mainKey, mainKeyStorage = mainKeyStorage, secureRandom = secureRandom)
   }
 
   override fun markDirty() {
@@ -126,14 +129,14 @@ class InMemoryCredentialStore : BaseKeePassCredentialStore(), PasswordStorage {
   }
 }
 
-internal fun generateRandomMasterKey(masterKeyEncryptionSpec: EncryptionSpec, secureRandom: SecureRandom): MasterKey {
+internal fun generateRandomMainKey(mainKeyEncryptionSpec: EncryptionSpec, secureRandom: SecureRandom): MainKey {
   val bytes = secureRandom.generateBytes(512)
-  return MasterKey(Base64.getEncoder().withoutPadding().encode(bytes), isAutoGenerated = true, encryptionSpec = masterKeyEncryptionSpec)
+  return MainKey(Base64.getEncoder().withoutPadding().encode(bytes), isAutoGenerated = true, encryptionSpec = mainKeyEncryptionSpec)
 }
 
-internal fun saveDatabase(dbFile: Path, db: KeePassDatabase, masterKey: MasterKey, masterKeyStorage: MasterKeyFileStorage, secureRandom: SecureRandom) {
-  val kdbxPassword = KdbxPassword(masterKey.value!!)
-  masterKeyStorage.save(masterKey)
+internal fun saveDatabase(dbFile: Path, db: KeePassDatabase, mainKey: MainKey, mainKeyStorage: MainKeyFileStorage, secureRandom: SecureRandom) {
+  val kdbxPassword = KdbxPassword(mainKey.value!!)
+  mainKeyStorage.save(mainKey)
   dbFile.safeOutputStream().use {
     db.save(kdbxPassword, it, secureRandom)
   }

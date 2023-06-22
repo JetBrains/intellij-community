@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.project.Project;
@@ -11,9 +12,8 @@ import java.util.Collection;
 import java.util.Collections;
 
 final class HttpFileReferenceHelper extends FileReferenceHelper {
-  @Nullable
   @Override
-  public PsiFileSystemItem findRoot(@NotNull Project project, @NotNull VirtualFile file) {
+  public @Nullable PsiFileSystemItem findRoot(@NotNull Project project, @NotNull VirtualFile file) {
     VirtualFile root = file;
     VirtualFile parent;
     while ((parent = root.getParent()) != null) {
@@ -22,9 +22,8 @@ final class HttpFileReferenceHelper extends FileReferenceHelper {
     return getPsiFileSystemItem(project, root);
   }
 
-  @NotNull
   @Override
-  public Collection<PsiFileSystemItem> getContexts(@NotNull Project project, @NotNull VirtualFile file) {
+  public @NotNull Collection<PsiFileSystemItem> getContexts(@NotNull Project project, @NotNull VirtualFile file) {
     PsiFileSystemItem item = getPsiFileSystemItem(project, file);
     return item == null ? Collections.emptyList() : Collections.singleton(item);
   }

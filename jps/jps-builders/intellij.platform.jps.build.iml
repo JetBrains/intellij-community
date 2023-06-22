@@ -40,7 +40,6 @@
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />
-    <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="library" name="javax.annotation-api" level="project" />
     <orderEntry type="module-library">
@@ -61,6 +60,7 @@
     <orderEntry type="library" name="netty-buffer" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jps.build.javac.rt" exported="" />
     <orderEntry type="module" module-name="intellij.platform.tracing.rt" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.runtime.repository" />
     <orderEntry type="module" module-name="intellij.platform.util.trove" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
   </component>

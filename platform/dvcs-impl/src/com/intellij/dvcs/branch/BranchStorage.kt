@@ -15,7 +15,7 @@ class BranchStorage : BaseState() {
 
   fun contains(typeName: String, repository: Repository?, branchName: String): Boolean {
     val branches = branches[typeName] ?: return false
-    return DvcsBranchUtil.find<DvcsBranchInfo>(branches, repository, branchName) != null
+    return DvcsBranchUtil.find(branches, repository, branchName) != null
   }
 
   fun add(typeName: String, repository: Repository?, branchName: String) {
@@ -29,7 +29,7 @@ class BranchStorage : BaseState() {
 
   fun remove(typeName: String, repository: Repository?, branchName: String) {
     val branches = branches[typeName] ?: return
-    val toDelete = DvcsBranchUtil.find<DvcsBranchInfo>(branches, repository, branchName) ?: return
+    val toDelete = DvcsBranchUtil.find(branches, repository, branchName) ?: return
     branches.remove(toDelete)
     if (branches.isEmpty()) {
       this.branches.remove(typeName)

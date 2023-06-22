@@ -30,6 +30,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.codeStyle.CodeStyleConfigurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.ui.JavaVisibilityPanel;
 import com.intellij.ui.SortedListModel;
 import com.intellij.ui.components.JBCheckBox;
@@ -78,6 +79,7 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
   private JTextField mySubclassPrefix;
   private JTextField mySubclassSuffix;
   private JBCheckBox myReplaceSumCb;
+  private JCheckBox myCbDeclareVarType;
   private CommenterForm myCommenterForm;
   private SortedListModel<String> myRepeatAnnotationsModel;
 
@@ -132,6 +134,7 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
 
     myCbGenerateFinalLocals.setSelected(javaSettings.GENERATE_FINAL_LOCALS);
     myCbGenerateFinalParameters.setSelected(javaSettings.GENERATE_FINAL_PARAMETERS);
+    myCbDeclareVarType.setSelected(JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE);
 
     myCbUseExternalAnnotations.setSelected(javaSettings.USE_EXTERNAL_ANNOTATIONS);
     myInsertOverrideAnnotationCheckBox.setSelected(javaSettings.INSERT_OVERRIDE_ANNOTATION);
@@ -173,6 +176,7 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
 
     javaSettings.GENERATE_FINAL_LOCALS = myCbGenerateFinalLocals.isSelected();
     javaSettings.GENERATE_FINAL_PARAMETERS = myCbGenerateFinalParameters.isSelected();
+    JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE = myCbDeclareVarType.isSelected();
 
     javaSettings.USE_EXTERNAL_ANNOTATIONS = myCbUseExternalAnnotations.isSelected();
     javaSettings.INSERT_OVERRIDE_ANNOTATION = myInsertOverrideAnnotationCheckBox.isSelected();
@@ -230,6 +234,7 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
 
     isModified |= isCheckboxModified(myCbGenerateFinalLocals, javaSettings.GENERATE_FINAL_LOCALS);
     isModified |= isCheckboxModified(myCbGenerateFinalParameters, javaSettings.GENERATE_FINAL_PARAMETERS);
+    isModified |= isCheckboxModified(myCbDeclareVarType, JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE);
 
     isModified |= isCheckboxModified(myCbUseExternalAnnotations, javaSettings.USE_EXTERNAL_ANNOTATIONS);
     isModified |= isCheckboxModified(myInsertOverrideAnnotationCheckBox, javaSettings.INSERT_OVERRIDE_ANNOTATION);

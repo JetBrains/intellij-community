@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.revert;
 
 import com.intellij.openapi.vcs.VcsException;
@@ -60,19 +60,12 @@ public class CmdRevertClient extends BaseSvnClient implements RevertClient {
 
     @Nullable
     public static EventAction createAction(@NotNull String code) {
-      EventAction result = null;
-
-      if (REVERTED_CODE.equals(code)) {
-        result = EventAction.REVERT;
-      }
-      else if (FAILED_TO_REVERT_CODE.equals(code)) {
-        result = EventAction.FAILED_REVERT;
-      }
-      else if (SKIPPED_CODE.equals(code)) {
-        result = EventAction.SKIP;
-      }
-
-      return result;
+      return switch (code) {
+        case REVERTED_CODE -> EventAction.REVERT;
+        case FAILED_TO_REVERT_CODE -> EventAction.FAILED_REVERT;
+        case SKIPPED_CODE -> EventAction.SKIP;
+        default -> null;
+      };
     }
   }
 }

@@ -1,48 +1,57 @@
 package com.intellij.smartUpdate
 
+import com.intellij.CommonBundle
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.layout.selected
-import com.intellij.util.ui.JBFont
+import com.intellij.ui.dsl.builder.*
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.ZoneId
+import java.util.*
+import javax.swing.JSpinner
+import javax.swing.SpinnerDateModel
 
 class SmartUpdateDialog(private val project: Project) : DialogWrapper(project) {
   init {
     title = SmartUpdateBundle.message("dialog.title.smart.update")
+    setOKButtonText(SmartUpdateBundle.message("button.update.now"))
+    setCancelButtonText(CommonBundle.getCloseButtonText())
     init()
   }
 
   override fun createCenterPanel(): DialogPanel {
-    val options = project.service<SmartUpdate>().state
-    val ideUpdateAvailable = IdeUpdateStep().isAvailable()
-    lateinit var updateCheckBox: JBCheckBox
+    val smartUpdate = project.service<SmartUpdate>()
+    val options = smartUpdate.state
     return panel {
-      row {
-        updateCheckBox = checkBox(SmartUpdateBundle.message("checkbox.update.ide")).bindSelected({ ideUpdateAvailable && options.updateIde },
-                                                              { if (ideUpdateAvailable) options.updateIde = it }).component
-        updateCheckBox.isEnabled = ideUpdateAvailable
+      for (step in smartUpdate.availableSteps()) {
+        val enabled = step.isEnabled(project)
+        row {
+          checkBox(step.stepName).enabled(enabled).bindSelected(options.property(step.id))
+        }
+        step.getDetailsComponent(project)?.let {
+          indent { row { cell(it).align(Align.FILL).enabled(enabled) } }
+        }
       }
+      separator()
+      lateinit var scheduled: Cell<JBCheckBox>
+      row { scheduled = checkBox(SmartUpdateBundle.message("checkbox.schedule.update")).bindSelected({ options.scheduled }, { options.scheduled = it}) }
       indent {
+        val spinner = JSpinner(SpinnerDateModel().apply { value = getScheduled(options.scheduledTime) })
+        spinner.editor = JSpinner.DateEditor(spinner, "hh:mm")
         row {
-          label(IdeUpdateStep().getDescription()).component.font = JBFont.smallOrNewUiMedium()
-        }
-        row {
-          val restartCheckBox = checkBox(SmartUpdateBundle.message("checkbox.switch.to.updated.ide.restart.required")).bindSelected(
-            { ideUpdateAvailable && options.updateIde && options.restartIde },
-            { if (ideUpdateAvailable && options.updateIde) options.restartIde = it }).component
-          updateCheckBox.addActionListener { restartCheckBox.isEnabled = updateCheckBox.isSelected }
-        }
-      }.enabledIf(updateCheckBox.selected)
-      row {
-        checkBox(SmartUpdateBundle.message("checkbox.update.project")).bindSelected(options::updateProject)
-      }
-      row {
-        checkBox(SmartUpdateBundle.message("checkbox.build.project")).bindSelected(options::buildProject)
+          label(SmartUpdateBundle.message("label.every.day.at"))
+          cell(spinner)
+        }.enabledIf(scheduled.selected)
       }
     }
+  }
+
+  private fun getScheduled(time: LocalTime): Date {
+    val instant: Instant = time.atDate(LocalDate.now()).atZone(ZoneId.systemDefault()).toInstant()
+    return Date.from(instant)
   }
 }

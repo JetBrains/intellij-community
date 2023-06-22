@@ -8,7 +8,6 @@ import com.intellij.htmltools.codeInspection.htmlInspections.htmltagreplace.Repl
 import com.intellij.htmltools.codeInspection.htmlInspections.htmltagreplace.ReplaceHtmlTagWithCssAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -21,9 +20,9 @@ public class HtmlPresentationalElementInspection extends HtmlLocalInspectionTool
   @NonNls private static final Set<String> ourHtmlReplaceableTagsHtml5;
 
   static {
-    ourHtmlReplaceableTagsHtml4 = ContainerUtil.immutableSet("i", "b", "tt");
-    ourHtmlReplaceableTagsHtml5 = ContainerUtil.immutableSet("i", "b");
-    ourCssReplaceableTags = ContainerUtil.immutableSet("i", "b", "big", "small", "tt");
+    ourHtmlReplaceableTagsHtml4 = Set.of("i", "b", "tt");
+    ourHtmlReplaceableTagsHtml5 = Set.of("i", "b");
+    ourCssReplaceableTags = Set.of("i", "b", "big", "small", "tt");
   }
 
   @Override

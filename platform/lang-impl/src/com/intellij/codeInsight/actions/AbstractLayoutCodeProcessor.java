@@ -4,6 +4,9 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.core.CoreBundle;
+import com.intellij.formatting.service.CoreFormattingService;
+import com.intellij.formatting.service.FormattingService;
+import com.intellij.formatting.service.FormattingServiceUtil;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
@@ -149,7 +152,7 @@ public abstract class AbstractLayoutCodeProcessor {
                                         boolean processChangedTextOnly) {
     myProject = project;
     myModule = null;
-    myFiles = ContainerUtil.filter(files, AbstractLayoutCodeProcessor::canBeFormatted);
+    myFiles = List.of(files);
     myProgressText = progressText;
     myCommandName = commandName;
     myPostRunnable = postRunnable;
@@ -229,7 +232,7 @@ public abstract class AbstractLayoutCodeProcessor {
   @NotNull
   private FileRecursiveIterator build() {
     if (myFiles != null) {
-      return new FileRecursiveIterator(myProject, myFiles);
+      return new FileRecursiveIterator(myProject, ContainerUtil.filter(myFiles, AbstractLayoutCodeProcessor::canBeFormatted));
     }
     if (myProcessChangedTextOnly) {
       return buildChangedFilesIterator();
@@ -345,7 +348,8 @@ public abstract class AbstractLayoutCodeProcessor {
 
   private static boolean canBeFormatted(@NotNull PsiFile file) {
     if (!file.isValid()) return false;
-    if (LanguageFormatting.INSTANCE.forContext(file) == null) {
+    FormattingService formattingService = FormattingServiceUtil.findService(file, true, true);
+    if (formattingService instanceof CoreFormattingService && LanguageFormatting.INSTANCE.forContext(file) == null) {
       return false;
     }
     VirtualFile virtualFile = file.getVirtualFile();

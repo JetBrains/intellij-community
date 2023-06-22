@@ -24,9 +24,9 @@ public class ClasspathEntryModelImpl implements ClasspathEntryModel, Serializabl
   private final Set<File> javadoc;
 
   public ClasspathEntryModelImpl(@NotNull Collection<File> classes, @NotNull Collection<File> sources, @NotNull Collection<File> javadoc) {
-    this.classes = new LinkedHashSet<File>(classes);
-    this.sources = new LinkedHashSet<File>(sources);
-    this.javadoc = new LinkedHashSet<File>(javadoc);
+    this.classes = new LinkedHashSet<>(classes);
+    this.sources = new LinkedHashSet<>(sources);
+    this.javadoc = new LinkedHashSet<>(javadoc);
   }
 
   @NotNull

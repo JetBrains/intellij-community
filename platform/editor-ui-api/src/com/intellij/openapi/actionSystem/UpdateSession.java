@@ -11,6 +11,7 @@ import java.util.function.Supplier;
  * An interface to the current session of an {@link ActionGroup} async update and expansion.
  * To be used for recursive action updates and action-group expansions,
  * and for action-group expansion postprocessing.
+ * Session can be obtained by {@link AnActionEvent#getUpdateSession()}
  *
  * @see com.intellij.ide.actions.WeighingActionGroup
  * @see com.intellij.ide.actions.NonTrivialActionGroup

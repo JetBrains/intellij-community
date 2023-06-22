@@ -2,8 +2,7 @@
 
 package org.jetbrains.kotlin.idea.highlighter
 
-import com.intellij.lang.annotation.AnnotationHolder
-import com.intellij.lang.annotation.Annotator
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
@@ -15,36 +14,27 @@ abstract class AbstractBindingContextAwareHighlightingPassBase(
     file: KtFile,
     document: Document
 ) : AbstractHighlightingPassBase(file, document) {
-    private val cachedAnnotator by lazy { annotator }
-
-    protected abstract val annotator: Annotator
+    abstract fun annotate(element: PsiElement, holder: HighlightInfoHolder)
 
     private var bindingContext: BindingContext? = null
 
     protected fun bindingContext(): BindingContext = bindingContext ?: error("bindingContext has to be acquired")
 
-    protected open fun buildBindingContext(holder: AnnotationHolder): BindingContext =
+    protected open fun buildBindingContext(): BindingContext =
         file.analyzeWithAllCompilerChecks().also { it.throwIfError() }.bindingContext
 
-    override fun runAnnotatorWithContext(element: PsiElement, holder: AnnotationHolder) {
-        bindingContext = buildBindingContext(holder)
+    override fun runAnnotatorWithContext(element: PsiElement, holder: HighlightInfoHolder) {
+        bindingContext = buildBindingContext()
         try {
-            visitWithAnnotator(element, cachedAnnotator, holder)
+            element.accept(object : PsiRecursiveElementVisitor() {
+                override fun visitElement(element: PsiElement) {
+                    annotate(element, holder)
+                    super.visitElement(element)
+                }
+            })
         } finally {
             bindingContext = null
         }
     }
 
-    private fun visitWithAnnotator(
-        element: PsiElement,
-        annotator: Annotator,
-        holder: AnnotationHolder
-    ) {
-        element.accept(object : PsiRecursiveElementVisitor() {
-            override fun visitElement(element: PsiElement) {
-                annotator.annotate(element, holder)
-                super.visitElement(element)
-            }
-        })
-    }
 }

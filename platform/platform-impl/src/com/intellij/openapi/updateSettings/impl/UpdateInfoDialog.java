@@ -1,15 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.actions.WhatsNewAction;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -33,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.nio.file.Files;
@@ -44,18 +41,13 @@ import java.util.stream.Collectors;
 import static com.intellij.openapi.updateSettings.impl.UpdateCheckerService.SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY;
 import static com.intellij.openapi.util.Pair.pair;
 
-/**
- * @author pti
- */
 public final class UpdateInfoDialog extends AbstractUpdateDialog {
-
   private final @Nullable Project myProject;
   private final @NotNull PlatformUpdates.Loaded myLoadedResult;
   private final @Nullable Collection<PluginDownloader> myUpdatedPlugins;
   private final boolean myWriteProtected;
   private final @Nullable Pair<@NlsContexts.Label String, Boolean> myLicenseInfo;
   private final @Nullable File myTestPatch;
-  private final @Nullable AbstractAction myWhatsNewAction;
 
   public UpdateInfoDialog(@Nullable Project project,
                           @NotNull PlatformUpdates.Loaded loadedResult,
@@ -70,7 +62,6 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
     myWriteProtected = patches != null && !SystemInfo.isWindows && !Files.isWritable(Paths.get(PathManager.getHomePath()));
     myLicenseInfo = getLicensingInfo(myLoadedResult);
     myTestPatch = null;
-    myWhatsNewAction = null;
     init();
     if (!ContainerUtil.isEmpty(incompatiblePlugins)) {
       String names = incompatiblePlugins.stream()
@@ -92,14 +83,6 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
     myWriteProtected = false;
     myLicenseInfo = getLicensingInfo(myLoadedResult);
     myTestPatch = patchFile;
-    String whatsNewUrl = myLoadedResult.getNewBuild().getBlogPost();
-    myWhatsNewAction = project == null || whatsNewUrl == null ? null : new AbstractAction("[T] What's New") {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        WhatsNewAction.openWhatsNewPage(project, whatsNewUrl);
-        close(OK_EXIT_CODE);
-      }
-    };
     init();
     setTitle("[TEST] " + getTitle());
   }
@@ -207,10 +190,6 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
       actions.add(updateButton);
     }
 
-    if (myWhatsNewAction != null) {
-      actions.add(myWhatsNewAction);
-    }
-
     return actions.toArray(new Action[0]);
   }
 
@@ -224,7 +203,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
       return;  // update cancelled
     }
 
-    new Task.Backgroundable(null, IdeBundle.message("update.preparing"), true, PerformInBackgroundOption.DEAF) {
+    new Task.Backgroundable(myProject, IdeBundle.message("update.preparing"), true, PerformInBackgroundOption.DEAF) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         String[] command;
@@ -233,7 +212,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
             command = UpdateInstaller.preparePatchCommand(List.of(myTestPatch), indicator);
           }
           else {
-            List<File> files = UpdateInstaller.downloadPatchChain(myLoadedResult.getPatches().getChain(), indicator);
+            @SuppressWarnings("DataFlowIssue") var files = UpdateInstaller.downloadPatchChain(myLoadedResult.getPatches().getChain(), indicator);
             command = UpdateInstaller.preparePatchCommand(files, indicator);
           }
         }
@@ -241,16 +220,16 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
           throw e;
         }
         catch (Exception e) {
-          Logger.getInstance(UpdateInstaller.class).warn(e);
+          Logger.getInstance(UpdateInfoDialog.class).warn(e);
 
-          String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
-          String downloadUrl = UpdateInfoPanel.downloadUrl(myLoadedResult.getNewBuild(), myLoadedResult.getUpdatedChannel());
-          String message = IdeBundle.message("update.downloading.patch.error", e.getMessage(), downloadUrl);
+          var title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
+          var downloadUrl = UpdateInfoPanel.downloadUrl(myLoadedResult.getNewBuild(), myLoadedResult.getUpdatedChannel());
+          var message = IdeBundle.message("update.downloading.patch.error", e.getMessage());
           UpdateChecker.getNotificationGroupForIdeUpdateResults()
             .createNotification(title, message, NotificationType.ERROR)
-            .setListener(NotificationListener.URL_OPENING_LISTENER)
+            .addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("update.downloading.patch.open"), () -> BrowserUtil.browse(downloadUrl)))
             .setDisplayId("ide.patch.download.failed")
-            .notify(null);
+            .notify(myProject);
 
           return;
         }
@@ -264,18 +243,13 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
             restartLaterAndRunCommand(command);
           }
           else {
-            String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
-            String message = IdeBundle.message("update.ready.message");
+            var title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
+            var message = IdeBundle.message("update.ready.message");
             UpdateChecker.getNotificationGroupForIdeUpdateResults()
               .createNotification(title, message, NotificationType.INFORMATION)
-              .setListener(new NotificationListener.Adapter() {
-                @Override
-                protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-                  restartLaterAndRunCommand(command);
-                }
-              })
+              .addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("update.ready.restart"), () -> restartLaterAndRunCommand(command)))
               .setDisplayId("ide.update.suggest.restart")
-              .notify(null);
+              .notify(myProject);
           }
         }
         else {
@@ -303,7 +277,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
       FileUtil.setExecutable(file);
     }
     catch (Exception e) {
-      Logger.getInstance(UpdateInstaller.class).error(e);
+      Logger.getInstance(UpdateInfoDialog.class).error(e);
       return;
     }
 

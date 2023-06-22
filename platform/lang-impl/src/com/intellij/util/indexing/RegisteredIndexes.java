@@ -4,8 +4,7 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.util.SmartList;
@@ -16,9 +15,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.awaitWithCheckCanceled;
 
 public final class RegisteredIndexes {
   @NotNull
@@ -45,6 +45,8 @@ public final class RegisteredIndexes {
 
   private final AtomicBoolean myShutdownPerformed = new AtomicBoolean(false);
 
+  private volatile RequiredIndexesEvaluator myRequiredIndexesEvaluator;
+
   RegisteredIndexes(@NotNull FileDocumentManager fileDocumentManager,
                     @NotNull FileBasedIndexImpl fileBasedIndex) {
     myFileDocumentManager = fileDocumentManager;
@@ -68,7 +70,10 @@ public final class RegisteredIndexes {
     IndexConfiguration state = myState; // memory barrier
     if (state == null) {
       try {
-        myState = state = myStateFuture.get();
+        myState = state = awaitWithCheckCanceled(myStateFuture);
+      }
+      catch (ProcessCanceledException ex) {
+        throw ex;
       }
       catch (Throwable t) {
         throw new RuntimeException(t);
@@ -79,11 +84,11 @@ public final class RegisteredIndexes {
 
   void waitUntilAllIndicesAreInitialized() {
     waitUntilIndicesAreInitialized();
-    await(myAllIndicesInitializedFuture);
+    awaitWithCheckCanceled(myAllIndicesInitializedFuture);
   }
 
   void waitUntilIndicesAreInitialized() {
-    await(myStateFuture);
+    awaitWithCheckCanceled((Future<?>)myStateFuture);
   }
 
   void extensionsDataWasLoaded() {
@@ -92,6 +97,11 @@ public final class RegisteredIndexes {
 
   void markInitialized() {
     myInitialized = true;
+    myRequiredIndexesEvaluator = new RequiredIndexesEvaluator(this);
+  }
+
+  void resetHints() {
+    myRequiredIndexesEvaluator = new RequiredIndexesEvaluator(this);
   }
 
   void ensureLoadedIndexesUpToDate() {
@@ -177,17 +187,8 @@ public final class RegisteredIndexes {
     }
   }
 
-  private static void await(@NotNull Future<?> future) {
-    if (ProgressManager.getInstance().isInNonCancelableSection()) {
-      try {
-        future.get();
-      }
-      catch (InterruptedException | ExecutionException e) {
-        FileBasedIndexImpl.LOG.error(e);
-      }
-    }
-    else {
-      ProgressIndicatorUtils.awaitWithCheckCanceled(future);
-    }
+  @NotNull
+  List<ID<?, ?>> getRequiredIndexes(@NotNull IndexedFile indexedFile) {
+    return myRequiredIndexesEvaluator.getRequiredIndexes(indexedFile);
   }
 }

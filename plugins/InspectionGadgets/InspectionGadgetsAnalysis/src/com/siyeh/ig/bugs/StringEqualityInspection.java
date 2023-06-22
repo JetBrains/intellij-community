@@ -15,12 +15,12 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiExpression;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.EqualityToEqualsFix;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -45,7 +45,7 @@ public class StringEqualityInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     return EqualityToEqualsFix.buildEqualityFixes((PsiBinaryExpression)infos[0]);
   }
 

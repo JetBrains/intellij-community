@@ -71,7 +71,7 @@ final class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, Pr
     myTree = tree;
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(myProject);
 
-    myPattern = ContainerUtil.map2List(processor.getElements(), smartPointerManager::createSmartPsiElementPointer);
+    myPattern = ContainerUtil.map(processor.getElements(), smartPointerManager::createSmartPsiElementPointer);
     mySnapshot = new ExtractMethodSnapshot(processor);
     myAnchor = smartPointerManager.createSmartPsiElementPointer(processor.getAnchor());
 

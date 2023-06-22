@@ -129,6 +129,58 @@ class MavenEncodingImportingTest : MavenMultiVersionImportingTestCase() {
     TestCase.assertEquals(StandardCharsets.ISO_8859_1, EncodingProjectManager.getInstance(myProject).getEncoding(subFile2, true))
   }
 
+  @Test fun testShouldSetEncodingPerProjectInSubsequentImport() {
+    createModulePom("module1", """
+                          <parent>
+                            <groupId>test</groupId>
+                            <artifactId>project</artifactId>
+                            <version>1</version>
+                          </parent>
+                          <artifactId>module1</artifactId>""")
+
+    createModulePom("module2", """
+                          <parent>
+                            <groupId>test</groupId>
+                            <artifactId>project</artifactId>
+                            <version>1</version>
+                          </parent>
+                          <artifactId>module2</artifactId>
+                          <properties>
+                            <project.build.sourceEncoding>ISO-8859-1</project.build.sourceEncoding>
+                          </properties>""")
+
+    val subFile1 = createProjectSubFile("module1/src/main/java/MyClass.java")
+    val subFile2 = createProjectSubFile("module2/src/main/java/AnotherClass.java")
+    importProject("""
+                     <groupId>test</groupId>
+                     <artifactId>project</artifactId>
+                     <version>1</version>
+                     <packaging>pom</packaging>
+                     <modules>
+                       <module>module1</module>
+                       <module>module2</module>
+                     </modules>
+                     <properties>
+                        <project.build.sourceEncoding>UTF-16</project.build.sourceEncoding>
+                     </properties>""")
+
+    importProject("""
+                     <groupId>test</groupId>
+                     <artifactId>project</artifactId>
+                     <version>1</version>
+                     <packaging>pom</packaging>
+                     <modules>
+                       <module>module1</module>
+                       <module>module2</module>
+                     </modules>
+                     <properties>
+                        <project.build.sourceEncoding>UTF-16</project.build.sourceEncoding>
+                     </properties>""")
+
+    assertEquals(StandardCharsets.UTF_16, EncodingProjectManager.getInstance(myProject).getEncoding(subFile1, true))
+    assertEquals(StandardCharsets.ISO_8859_1, EncodingProjectManager.getInstance(myProject).getEncoding(subFile2, true))
+  }
+
   @Test fun testShouldSetEncodingToNewFiles() {
 
     createModulePom("module1", """<parent>

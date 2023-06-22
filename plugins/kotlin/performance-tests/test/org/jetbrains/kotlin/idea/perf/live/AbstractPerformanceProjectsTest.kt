@@ -307,7 +307,7 @@ abstract class AbstractPerformanceProjectsTest : UsefulTestCase() {
         note: String = ""
     ) {
         var fileText: String? = null
-        perfTypeAndDo<Unit>(
+        perfTypeAndDo(
             project,
             fileName,
             "typeAndUndo",

@@ -23,8 +23,8 @@ import org.jetbrains.kotlin.idea.base.facet.refinesFragmentIds
 import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionProvider
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.facet.*
-import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl.findKotlinPluginVersion
 import org.jetbrains.kotlin.idea.gradleJava.configuration.GradleProjectImportHandler
+import org.jetbrains.kotlin.idea.gradleJava.findKotlinPluginVersion
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.platform.CommonPlatforms
@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
+import org.jetbrains.kotlin.platform.wasm.WasmPlatforms
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
@@ -109,7 +110,8 @@ class KotlinFragmentDataService : AbstractProjectDataService<KotlinFragmentData,
                     ?: JvmPlatforms.defaultJvmPlatform
 
                 // TODO should we select platform depending on isIr platform detail?
-                KotlinPlatform.JS, KotlinPlatform.WASM -> JsPlatforms.defaultJsPlatform
+                KotlinPlatform.JS -> JsPlatforms.defaultJsPlatform
+                KotlinPlatform.WASM -> WasmPlatforms.Default
                 KotlinPlatform.NATIVE -> fragmentDataNode.data.platforms
                     .filterIsInstance<IdeaKpmNativePlatform>()
                     .mapNotNull { KonanTarget.predefinedTargets[it.konanTarget] }
@@ -147,7 +149,7 @@ class KotlinFragmentDataService : AbstractProjectDataService<KotlinFragmentData,
             ideModule.hasExternalSdkConfiguration = sourceSetNode.data.sdkName != null
             ideModule.isKpmModule = true
             ideModule.refinesFragmentIds = fragmentDataNode.data.refinesFragmentIds.toList()
-            applyCompilerArgumentsToFacet(compilerArguments, platform.createArguments(), kotlinFacet, modelsProvider)
+            applyCompilerArgumentsToFacet(compilerArguments, kotlinFacet, modelsProvider)
             kotlinFacet.noVersionAutoAdvance()
             return kotlinFacet
         }

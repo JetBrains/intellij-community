@@ -35,7 +35,7 @@ public class UserFilterPopupComponent
   }
 
   @Override
-  protected ActionGroup createActionGroup() {
+  protected @NotNull ActionGroup createActionGroup() {
     List<AnAction> group = new ArrayList<>();
     group.add(createSelectMultipleValuesAction());
     if (!myLogData.getCurrentUser().isEmpty()) {

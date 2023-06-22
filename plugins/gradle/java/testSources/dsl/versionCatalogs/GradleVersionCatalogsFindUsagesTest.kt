@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dsl.versionCatalogs
 
 import com.intellij.psi.PsiReference
@@ -6,9 +6,7 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.testFramework.runInEdtAndWait
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
-import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.params.ParameterizedTest
@@ -19,11 +17,11 @@ class GradleVersionCatalogsFindUsagesTest : GradleCodeInsightTestCase() {
   private fun testVersionCatalogFindUsages(version: GradleVersion, versionCatalogText: String, buildGradleText: String,
                                    checker: (Collection<PsiReference>) -> Unit) {
     checkCaret(versionCatalogText)
-    test(version, BASE_VERSION_CATALOG_FIXTURE) {
-      val versionCatalog = findOrCreateFile("gradle/libs.versions.toml", versionCatalogText)
-      findOrCreateFile("build.gradle", buildGradleText)
+    testEmptyProject(version) {
+      writeTextAndCommit("gradle/libs.versions.toml", versionCatalogText)
+      writeTextAndCommit("build.gradle", buildGradleText)
       runInEdtAndWait {
-        codeInsightFixture.configureFromExistingVirtualFile(versionCatalog)
+        codeInsightFixture.configureFromExistingVirtualFile(getFile("gradle/libs.versions.toml"))
         val elementAtCaret = codeInsightFixture.elementAtCaret
         assertNotNull(elementAtCaret)
         val usages = ReferencesSearch.search(elementAtCaret).findAll()
@@ -78,15 +76,27 @@ class GradleVersionCatalogsFindUsagesTest : GradleCodeInsightTestCase() {
     }
   }
 
-
-  companion object {
-    private val BASE_VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder
-      .create("GradleVersionCatalogs-find-usages-bare") {
-        withSettingsFile {
-          setProjectName("GradleVersionCatalogs-find-usages-bare")
-          enableFeaturePreview("VERSION_CATALOGS")
-        }
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testNestedProject(gradleVersion: GradleVersion) {
+    testEmptyProject(gradleVersion) {
+      writeTextAndCommit("gradle/libs.versions.toml", """
+      [libraries]
+      aaa-b<caret>bb = { group = "org.apache.groovy", name = "groovy", version = "4.0.2" }
+    """.trimIndent())
+      writeTextAndCommit("settings.gradle", """
+        rootProject.name = 'empty-project'
+        include 'app'
+      """.trimIndent())
+      writeTextAndCommit("build.gradle", "")
+      writeTextAndCommit("app/build.gradle", "libs.aaa.bbb")
+      runInEdtAndWait {
+        codeInsightFixture.configureFromExistingVirtualFile(getFile("gradle/libs.versions.toml"))
+        val elementAtCaret = codeInsightFixture.elementAtCaret
+        assertNotNull(elementAtCaret)
+        val usages = ReferencesSearch.search(elementAtCaret).findAll()
+        assertNotNull(usages.find { it.element.containingFile is GroovyFileBase })
       }
+    }
   }
-
 }

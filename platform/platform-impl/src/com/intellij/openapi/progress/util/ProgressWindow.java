@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util;
 
+import com.intellij.concurrency.ContextAwareRunnable;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
@@ -166,7 +167,8 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     // executed in a small amount of time. Problem: UI blinks and looks ugly if we show progress dialog that disappears shortly
     // for each of them. The solution is to postpone the tasks of showing progress dialog. Hence, it will not be shown at all
     // if the task is already finished when the time comes.
-    EdtScheduledExecutorService.getInstance().schedule(() -> {
+    EdtScheduledExecutorService.getInstance().schedule((ContextAwareRunnable) () -> {
+      // The `ContextAwareRunnable` here is actually wrong, but it is necessary now to prevent cancellation from leaked job from the context.
       if (isRunning()) {
         showDialog();
       }

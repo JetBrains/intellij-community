@@ -9,6 +9,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -20,7 +21,7 @@ public class PyTupleType extends PyClassTypeImpl implements PyCollectionType {
   private final boolean myHomogeneous;
 
   @Nullable
-  public static PyTupleType create(@NotNull PsiElement anchor, @NotNull List<PyType> elementTypes) {
+  public static PyTupleType create(@NotNull PsiElement anchor, @NotNull List<? extends PyType> elementTypes) {
     final PyClass tuple = PyBuiltinCache.getInstance(anchor).getClass(PyNames.TUPLE);
     if (tuple != null) {
       return new PyTupleType(tuple, elementTypes, false);
@@ -37,13 +38,13 @@ public class PyTupleType extends PyClassTypeImpl implements PyCollectionType {
     return null;
   }
 
-  public PyTupleType(@NotNull PyClass tupleClass, @NotNull List<PyType> elementTypes, boolean homogeneous) {
+  public PyTupleType(@NotNull PyClass tupleClass, @NotNull List<? extends PyType> elementTypes, boolean homogeneous) {
     this(tupleClass, elementTypes, homogeneous, false);
   }
 
-  protected PyTupleType(@NotNull PyClass tupleClass, @NotNull List<PyType> elementTypes, boolean homogeneous, boolean isDefinition) {
+  protected PyTupleType(@NotNull PyClass tupleClass, @NotNull List<? extends PyType> elementTypes, boolean homogeneous, boolean isDefinition) {
     super(tupleClass, isDefinition);
-    myElementTypes = elementTypes;
+    myElementTypes = new ArrayList<>(elementTypes);
     myHomogeneous = homogeneous;
   }
 
@@ -114,7 +115,7 @@ public class PyTupleType extends PyClassTypeImpl implements PyCollectionType {
   @NotNull
   @Override
   public List<PyType> getElementTypes() {
-    return myElementTypes;
+    return Collections.unmodifiableList(myElementTypes);
   }
 
   @Nullable

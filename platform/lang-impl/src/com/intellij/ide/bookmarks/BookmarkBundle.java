@@ -9,12 +9,11 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class BookmarkBundle extends DynamicBundle {
+public final class BookmarkBundle {
   private static final @NonNls String BUNDLE = "messages.BookmarkBundle";
-  private static final BookmarkBundle INSTANCE = new BookmarkBundle();
+  private static final DynamicBundle INSTANCE = new DynamicBundle(BookmarkBundle.class, BUNDLE);
 
   private BookmarkBundle() {
-    super(BUNDLE);
   }
 
   public static @Nls @NotNull String message(

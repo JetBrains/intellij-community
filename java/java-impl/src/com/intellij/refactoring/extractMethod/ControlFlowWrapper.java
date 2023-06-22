@@ -125,7 +125,7 @@ public final class ControlFlowWrapper {
     myFirstExitStatementCopy = (PsiStatement)first.copy();
   }
 
-  boolean isGenerateConditionalExit() {
+  public boolean isGenerateConditionalExit() {
     return myGenerateConditionalExit;
   }
 
@@ -148,7 +148,7 @@ public final class ControlFlowWrapper {
     PsiVariable[] myOutputVariables = ControlFlowUtil.getOutputVariables(myControlFlow, myFlowStart, myFlowEnd, myExitPoints.toIntArray());
     if (collectVariablesAtExitPoints) {
       //variables declared in selected block used in return statements are to be considered output variables when extracting guard methods
-      final Set<PsiVariable> outputVariables = ContainerUtil.set(myOutputVariables);
+      final Set<PsiVariable> outputVariables = ContainerUtil.newHashSet(myOutputVariables);
       for (PsiStatement statement : myExitStatements) {
         statement.accept(new JavaRecursiveElementVisitor() {
 
@@ -180,7 +180,7 @@ public final class ControlFlowWrapper {
     return myOutputVariables;
   }
 
-  boolean isReturnPresentBetween() {
+  public boolean isReturnPresentBetween() {
     return ControlFlowUtil.returnPresentBetween(myControlFlow, myFlowStart, myFlowEnd);
   }
 

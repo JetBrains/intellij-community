@@ -22,8 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-
-public class EmojiPicker extends JLayeredPane {
+public final class EmojiPicker extends JLayeredPane {
   private static final JBDimension DEFAULT_SIZE = new JBDimension(358, 415);
 
   private final List<EmojiCategory> myCategories;
@@ -84,9 +83,7 @@ public class EmojiPicker extends JLayeredPane {
   }
 
   private static void applyWindowMoveListener(Component c) {
-    WindowMoveListener listener = new WindowMoveListener(c);
-    c.addMouseListener(listener);
-    c.addMouseMotionListener(listener);
+    new WindowMoveListener(c).installTo(c);
   }
 
   void selectCategory(EmojiCategory category, boolean scrollToCategory) {
@@ -261,7 +258,7 @@ public class EmojiPicker extends JLayeredPane {
       return false;
     }
 
-    private int keyToOffset(int key, int positive, int negative) {
+    private static int keyToOffset(int key, int positive, int negative) {
       if (key == positive) return 1;
       if (key == negative) return -1;
       return 0;

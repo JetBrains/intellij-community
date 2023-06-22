@@ -15,6 +15,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.target.getEffectiveConfiguration
 import com.intellij.execution.util.ExecutionErrorDialog
 import com.intellij.execution.util.JavaParametersUtil
+import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
@@ -40,6 +41,7 @@ import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil
 import org.jetbrains.plugins.gradle.execution.target.GradleServerEnvironmentSetup
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
+import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getGradleIdentityPathOrNull
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
@@ -95,7 +97,9 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
       }
     }
     catch (e: CantRunException) {
-      ExecutionErrorDialog.show(e, GradleInspectionBundle.message("dialog.title.cannot.use.specified.jre"), project)
+      AppUIExecutor.onUiThread().expireWith(project).submit {
+        ExecutionErrorDialog.show(e, GradleInspectionBundle.message("dialog.title.cannot.use.specified.jre"), project)
+      }
       throw RuntimeException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"))
     }
     val taskSettings = ExternalSystemTaskExecutionSettings()
@@ -107,6 +111,7 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     taskSettings.externalProjectPath = gradleModuleData?.directoryToRunTask ?: GradleRunnerUtil.resolveProjectPath(module)
     val runAppTaskName = mainClass.name!! + ".main()"
     taskSettings.taskNames = listOf((gradleModuleData?.getTaskPath(runAppTaskName) ?: runAppTaskName))
+    customiseTaskExecutionsSettings(taskSettings, module)
 
     val executorId = executor?.id ?: DefaultRunExecutor.EXECUTOR_ID
     val environment = ExternalSystemUtil.createExecutionEnvironment(project, GradleConstants.SYSTEM_ID, taskSettings, executorId)
@@ -114,7 +119,7 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     val runnerAndConfigurationSettings = environment.runnerAndConfigurationSettings!!
     val gradleRunConfiguration = runnerAndConfigurationSettings.configuration as ExternalSystemRunConfiguration
 
-    val gradlePath = GradleProjectResolverUtil.getGradlePath(module) ?: return null
+    val gradlePath = getGradleIdentityPathOrNull(module) ?: return null
     val sourceSetName = when {
                           GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY == ExternalSystemApiUtil.getExternalModuleType(
                             module) -> GradleProjectResolverUtil.getSourceSetName(module)
@@ -126,13 +131,15 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
                                         runAppTaskName, mainClass, javaExePath, sourceSetName, javaModuleName)
     gradleRunConfiguration.putUserData<String>(GradleTaskManager.INIT_SCRIPT_KEY, initScript)
     gradleRunConfiguration.putUserData<String>(GradleTaskManager.INIT_SCRIPT_PREFIX_KEY, runAppTaskName)
-    (gradleRunConfiguration as GradleRunConfiguration).isScriptDebugEnabled = false
+    (gradleRunConfiguration as GradleRunConfiguration).isDebugServerProcess = false
 
     // reuse all before tasks except 'Make' as it doesn't make sense for delegated run
     gradleRunConfiguration.beforeRunTasks = RunManagerImpl.getInstanceImpl(project).getBeforeRunTasks(runProfile)
       .filter { it.providerId !== CompileStepBeforeRun.ID }
     return environment
   }
+
+  protected open fun customiseTaskExecutionsSettings(taskSettings: ExternalSystemTaskExecutionSettings, module: Module) {}
 
   companion object {
     fun createEscapedParameters(parameters: List<String>, prefix: String): String {
@@ -148,7 +155,7 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     private fun findJavaModuleName(sdk: Sdk, module: JavaRunConfigurationModule, mainClass: PsiClass): String? {
       return if (JavaSdkUtil.isJdkAtLeast(sdk, JavaSdkVersion.JDK_1_9)) {
         runReadAction {
-          DumbService.getInstance(module.project).computeWithAlternativeResolveEnabled<PsiJavaModule, RuntimeException> {
+          DumbService.getInstance(module.project).computeWithAlternativeResolveEnabled<PsiJavaModule?, RuntimeException> {
             JavaModuleGraphUtil.findDescriptorByElement(module.findClass(mainClass.qualifiedName))
           }?.name
         } ?: return null

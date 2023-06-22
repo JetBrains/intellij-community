@@ -223,7 +223,7 @@ public class ActionsTreeTest {
       }
     }
 
-    return DynamicTests.asDynamicTests(failures, "presentations are correct", "too many actions without text");
+    return DynamicTests.asDynamicTests(failures, "incorrect presentations");
   }
 
   private static void checkPresentationProperty(String name, String message, Object expected, Object actual) {

@@ -6,7 +6,6 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
@@ -15,6 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import kotlin.text.Regex;
@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.jetbrains.python.sdk.flavors.WinAppxToolsKt.getAppxFiles;
 import static com.jetbrains.python.sdk.flavors.WinAppxToolsKt.getAppxProduct;
@@ -50,11 +49,11 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
                     "IronPython", "ipy.exe");
 
   @NotNull
-  private final ClearableLazyValue<Set<String>> myRegistryCache =
-    ClearableLazyValue.createAtomic(() -> findInRegistry(getWinRegistryService()));
+  private final SynchronizedClearableLazy<Set<String>> myRegistryCache =
+    new SynchronizedClearableLazy<>(() -> findInRegistry(getWinRegistryService()));
   @NotNull
-  private final ClearableLazyValue<Set<String>> myAppxCache =
-    ClearableLazyValue.createAtomic(() -> getPythonsFromStore());
+  private final SynchronizedClearableLazy<Set<String>> myAppxCache = new SynchronizedClearableLazy<>(
+    WinPythonSdkFlavor::getPythonsFromStore);
 
   public static WinPythonSdkFlavor getInstance() {
     return PythonSdkFlavor.EP_NAME.findExtension(WinPythonSdkFlavor.class);

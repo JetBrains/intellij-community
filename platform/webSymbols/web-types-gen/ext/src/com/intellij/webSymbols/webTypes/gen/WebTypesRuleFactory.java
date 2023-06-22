@@ -1,16 +1,23 @@
 package com.intellij.webSymbols.webTypes.gen;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.sun.codemodel.*;
+import org.apache.commons.lang3.tuple.Pair;
 import org.jsonschema2pojo.Schema;
 import org.jsonschema2pojo.rules.Rule;
 import org.jsonschema2pojo.rules.RuleFactory;
 import org.jsonschema2pojo.util.ParcelableHelper;
 import org.jsonschema2pojo.util.ReflectionHelper;
 
+import java.util.*;
+
 public class WebTypesRuleFactory extends RuleFactory {
 
   private final WebTypesReflectionHelper myReflectionHelper = new WebTypesReflectionHelper(this);
   private final WebTypesSchemaStore mySchemaStore = new WebTypesSchemaStore();
+
+  private final Map<String, List<Pair<JsonNode, JType>>> typeCache = new HashMap<>();
+  private final Map<String, List<Pair<Set<String>, JType>>> primitiveTypeCache = new HashMap<>();
 
   @Override
   public WebTypesSchemaStore getSchemaStore() {
@@ -51,8 +58,38 @@ public class WebTypesRuleFactory extends RuleFactory {
     return myReflectionHelper;
   }
 
-  public Rule<JPackage, JType> getOneOfRule() {
-    return new WebTypesOneOfRule(this);
+  public Rule<JPackage, JType> getComplexTypeRule() {
+    return new WebTypesComplexTypeRule(this);
+  }
+
+  public JType getTypeFromCache(String nodeName, JsonNode node) {
+    var fromCache = typeCache.get(nodeName);
+    if (fromCache != null) {
+      var type = fromCache.stream().filter(it -> it.getKey().equals(node)).map(it -> it.getValue()).findFirst().orElse(null);
+      if (type != null) {
+        return type;
+      }
+    }
+    return null;
+  }
+
+  public void storeTypeInCache(String nodeName, JsonNode node, JType type) {
+    typeCache.computeIfAbsent(nodeName, it -> new ArrayList<>()).add(Pair.of(node, type));
+  }
+
+  public JType getPrimitiveTypeFromCache(String nodeName, Set<String> types) {
+    var fromCache = primitiveTypeCache.get(nodeName);
+    if (fromCache != null) {
+      var type = fromCache.stream().filter(it -> it.getKey().equals(types)).map(it -> it.getValue()).findFirst().orElse(null);
+      if (type != null) {
+        return type;
+      }
+    }
+    return null;
+  }
+
+  public void storePrimitiveTypeInCache(String nodeName, Set<String> types, JType type) {
+    primitiveTypeCache.computeIfAbsent(nodeName, it -> new ArrayList<>()).add(Pair.of(types, type));
   }
 
   public Schema resolveSchemaRef(Schema schema, String refPath) {

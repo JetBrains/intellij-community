@@ -27,8 +27,6 @@ import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.DelegatingFix;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jdom.Element;
@@ -86,9 +84,8 @@ public class EmptyStatementBodyInspection extends BaseInspection {
 
   @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    LocalQuickFix fix = ObjectUtils.tryCast(ArrayUtil.getFirstElement(infos), LocalQuickFix.class);
-    return fix == null ? null : new DelegatingFix(fix);
+  protected LocalQuickFix buildFix(Object... infos) {
+    return ObjectUtils.tryCast(ArrayUtil.getFirstElement(infos), LocalQuickFix.class);
   }
 
   @Override
@@ -163,11 +160,11 @@ public class EmptyStatementBodyInspection extends BaseInspection {
     }
 
     @NotNull
-    private LocalQuickFix createFix(@NotNull PsiStatement statement, PsiExpression expression) {
+    private static LocalQuickFix createFix(@NotNull PsiStatement statement, PsiExpression expression) {
       if (expression == null) {
         return new DeleteElementFix(statement);
       }
-      return new DeleteSideEffectsAwareFix(statement, expression);
+      return new DeleteSideEffectsAwareFix(statement, expression).asQuickFix();
     }
 
     private boolean isEmpty(PsiElement element) {

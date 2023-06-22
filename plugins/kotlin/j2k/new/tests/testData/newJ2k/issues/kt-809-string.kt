@@ -3,11 +3,11 @@ package demo
 import demo.One
 
 internal class Container {
-    var myString = "1"
+    var myString: String = "1"
 }
 
 internal object One {
-    var myContainer = Container()
+    var myContainer: Container = Container()
 }
 
 internal class StringContainer(s: String?)

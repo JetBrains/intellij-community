@@ -112,7 +112,6 @@ public interface ModifiableRootModel extends ModuleRootModel {
    * Adds dependencies on several {@code libraries} and sets the specified {@code scope} and {@code exported} flag for them. This works
    * faster than adding these dependencies one-by-one via {@link #addLibraryEntry}.
    */
-  @ApiStatus.Experimental
   void addLibraryEntries(@NotNull List<Library> libraries, @NotNull DependencyScope scope, boolean exported);
 
   @NotNull
@@ -125,7 +124,6 @@ public interface ModifiableRootModel extends ModuleRootModel {
    * Adds dependencies on several {@code modules} and sets the specified {@code scope} and {@code exported} flag for them. This works
    * faster than adding these dependencies one-by-one via {@link #addModuleOrderEntry}.
    */
-  @ApiStatus.Experimental
   void addModuleEntries(@NotNull List<Module> modules, @NotNull DependencyScope scope, boolean exported);
 
   @Nullable
@@ -192,8 +190,6 @@ public interface ModifiableRootModel extends ModuleRootModel {
   boolean isChanged();
 
   boolean isWritable();
-
-  <T extends OrderEntry> void replaceEntryOfType(@NotNull Class<T> entryClass, T entry);
 
   @Nullable
   String getSdkName();

@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.GutterMark;
@@ -34,26 +33,26 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
-public class FileLevelIntentionComponent extends EditorNotificationPanel {
+public final class FileLevelIntentionComponent extends EditorNotificationPanel {
   public FileLevelIntentionComponent(@NlsContexts.Label String description,
                                      @NotNull HighlightSeverity severity,
                                      @Nullable GutterMark gutterMark,
                                      @Nullable List<? extends Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> intentions,
-                                     @NotNull final PsiFile psiFile,
-                                     @NotNull final Editor editor, @NlsContexts.Tooltip @Nullable String tooltip) {
+                                     @NotNull PsiFile psiFile,
+                                     @NotNull Editor editor, @NlsContexts.Tooltip @Nullable String tooltip) {
     super(getColor(psiFile.getProject(), severity), getStatus(psiFile.getProject(), severity));
     Project project = psiFile.getProject();
-    final ShowIntentionsPass.IntentionsInfo info = new ShowIntentionsPass.IntentionsInfo();
+    ShowIntentionsPass.IntentionsInfo info = new ShowIntentionsPass.IntentionsInfo();
 
     if (intentions != null) {
       for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> intention : intentions) {
-        final HighlightInfo.IntentionActionDescriptor descriptor = intention.getFirst();
+        HighlightInfo.IntentionActionDescriptor descriptor = intention.getFirst();
         info.intentionsToShow.add(descriptor);
-        final IntentionAction action = descriptor.getAction();
+        IntentionAction action = descriptor.getAction();
         if (action instanceof EmptyIntentionAction) {
           continue;
         }
-        final String text = action.getText();
+        String text = action.getText();
         createActionLabel(text, () -> {
           PsiDocumentManager.getInstance(project).commitAllDocuments();
           ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, text);
@@ -68,7 +67,6 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
     }
 
     if (intentions != null && !intentions.isEmpty()) {
-
       IntentionAction intentionAction = intentions.get(0).getFirst().getAction();
       if (!(intentionAction instanceof UserDataHolder) ||
           !Boolean.FALSE.equals(((UserDataHolder)intentionAction).getUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY))) {
@@ -100,8 +98,7 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
     }
   }
 
-  @NotNull
-  private static Color getColor(@NotNull Project project, @NotNull HighlightSeverity severity) {
+  private static @NotNull Color getColor(@NotNull Project project, @NotNull HighlightSeverity severity) {
     if (SeverityRegistrar.getSeverityRegistrar(project).compare(severity, HighlightSeverity.ERROR) >= 0) {
       return LightColors.RED;
     }

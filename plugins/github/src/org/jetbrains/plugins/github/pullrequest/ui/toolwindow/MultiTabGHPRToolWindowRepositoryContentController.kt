@@ -93,9 +93,7 @@ internal class MultiTabGHPRToolWindowRepositoryContentController(
   private fun createAndAddListContent(): Content {
     val contentDisposable = Disposer.newDisposable()
     val allRepos = repositoryManager.knownRepositories.map(GHGitRepositoryMapping::repository)
-    val title = GithubBundle.message("tab.title.pull.requests.at",
-                                     GHUIUtil.getRepositoryDisplayName(allRepos,
-                                                                       dataContext.repositoryDataService.repositoryCoordinates))
+    val title = GHUIUtil.getRepositoryDisplayName(allRepos, dataContext.repositoryDataService.repositoryCoordinates)
 
     val component = createListPanel(contentDisposable)
     val content = contentManager.factory.createContent(component, title, false).apply {

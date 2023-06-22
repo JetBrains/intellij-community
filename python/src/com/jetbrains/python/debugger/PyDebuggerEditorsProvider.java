@@ -34,19 +34,16 @@ import org.jetbrains.annotations.Nullable;
 
 
 public class PyDebuggerEditorsProvider extends XDebuggerEditorsProvider {
-
-  @NotNull
   @Override
-  public FileType getFileType() {
+  public @NotNull FileType getFileType() {
     return PythonFileType.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public Document createDocument(@NotNull final Project project,
-                                 @NotNull String text,
-                                 @Nullable final XSourcePosition sourcePosition,
-                                 @NotNull EvaluationMode mode) {
+  public @NotNull Document createDocument(final @NotNull Project project,
+                                          @NotNull String text,
+                                          final @Nullable XSourcePosition sourcePosition,
+                                          @NotNull EvaluationMode mode) {
     text = text.trim();
     final PyExpressionCodeFragmentImpl fragment = new PyExpressionCodeFragmentImpl(project, "fragment.py", text, true);
 
@@ -57,11 +54,11 @@ public class PyDebuggerEditorsProvider extends XDebuggerEditorsProvider {
     return PsiDocumentManager.getInstance(project).getDocument(fragment);
   }
 
-  @Nullable
   @VisibleForTesting
-  public static PsiElement getContextElement(final Project project, XSourcePosition sourcePosition) {
+  public static @Nullable PsiElement getContextElement(final Project project, XSourcePosition sourcePosition) {
     if (sourcePosition != null) {
       final Document document = FileDocumentManager.getInstance().getDocument(sourcePosition.getFile());
+      if (document == null) return null;
       final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
       if (psiFile != null) {
         int offset = sourcePosition.getOffset();
@@ -72,6 +69,7 @@ public class PyDebuggerEditorsProvider extends XDebuggerEditorsProvider {
             if (element != null && !(element instanceof PsiWhiteSpace || element instanceof PsiComment)) {
               return PyPsiUtils.getStatement(element);
             }
+            if (element == null) return null;
             offset = element.getTextRange().getEndOffset();
           }
           while (offset < lineEndOffset);
@@ -81,7 +79,7 @@ public class PyDebuggerEditorsProvider extends XDebuggerEditorsProvider {
     return null;
   }
 
-  private static class PyInlineDebuggerHelper extends InlineDebuggerHelper {
+  private static final class PyInlineDebuggerHelper extends InlineDebuggerHelper {
     private static final PyInlineDebuggerHelper INSTANCE = new PyInlineDebuggerHelper();
 
     @Override
@@ -90,9 +88,8 @@ public class PyDebuggerEditorsProvider extends XDebuggerEditorsProvider {
     }
   }
 
-  @NotNull
   @Override
-  public InlineDebuggerHelper getInlineDebuggerHelper() {
+  public @NotNull InlineDebuggerHelper getInlineDebuggerHelper() {
     return PyInlineDebuggerHelper.INSTANCE;
   }
 }

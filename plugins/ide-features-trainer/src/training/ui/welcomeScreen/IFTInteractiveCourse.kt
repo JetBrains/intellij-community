@@ -2,10 +2,10 @@
 package training.ui.welcomeScreen
 
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.InteractiveCourseData
 import com.intellij.openapi.wm.InteractiveCourseFactory
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.InteractiveCoursePanel
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.HyperlinkAdapter
 import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBUI
@@ -29,21 +29,30 @@ internal class IFTInteractiveCourse : InteractiveCourseFactory {
 
   override val isActive: Boolean get() = LangManager.getInstance().getLangSupport()?.useUserProjects == false
 
-  override fun getInteractiveCourseComponent(): JComponent = IFTInteractiveCoursePanel()
+  override val isEnabled: Boolean = enableLessonsAndPromoters
+
+  override val disabledText: String = LearnBundle.message("welcome.tab.toggle.new.ui.hint")
+
+  override fun getInteractiveCourseComponent(): JComponent = IFTInteractiveCoursePanel(isEnabled, disabledText)
+
+  override fun getCourseData(): InteractiveCourseData {
+    return IFTInteractiveCourseData()
+  }
 }
 
-private class IFTInteractiveCoursePanel : InteractiveCoursePanel(IFTInteractiveCourseData(), enableLessonsAndPromoters) {
+private class IFTInteractiveCoursePanel(isEnabled: Boolean, disabledText: String) : InteractiveCoursePanel(IFTInteractiveCourseData(), isEnabled) {
+
   init {
     if (!enableLessonsAndPromoters) {
       add(JTextPane().apply {
         contentType = "text/html"
         addHyperlinkListener(object : HyperlinkAdapter() {
           override fun hyperlinkActivated(e: HyperlinkEvent) {
-            Registry.get("ide.experimental.ui").setValue(true)
+            ExperimentalUI.setNewUI(true)
           }
         })
         editorKit = HTMLEditorKitBuilder.simple()
-        text = LearnBundle.message("welcome.tab.toggle.new.ui.hint")
+        text = disabledText
         isEditable = false
         isOpaque = false
         highlighter = null

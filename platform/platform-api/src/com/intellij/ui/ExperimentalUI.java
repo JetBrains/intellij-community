@@ -1,9 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
-import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.NotRoamableUiSettings;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.IconLoader;
@@ -21,35 +23,82 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.plaf.ColorUIResource;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static java.time.temporal.ChronoUnit.DAYS;
+
 /**
  * Temporary utility class for migration to the new UI.
- * Do not use this class for plugin development.
+ * This is not a public API. For plugin development use {@link NewUI#isEnabled()}
  *
  * @author Konstantin Bulenkov
  */
 @ApiStatus.Internal
 public abstract class ExperimentalUI {
-  private final AtomicBoolean isIconPatcherSet = new AtomicBoolean();
-  private IconPathPatcher iconPathPatcher;
   public static final String KEY = "ide.experimental.ui";
+
+  public static final String NEW_UI_USED_PROPERTY = "experimental.ui.used.once";
+  public static final String NEW_UI_FIRST_SWITCH = "experimental.ui.first.switch";
+  public static final String NEW_UI_PROMO_BANNER_DISABLED_PROPERTY = "experimental.ui.promo.banner.disabled";
+
+  private static final String FIRST_PROMOTION_DATE_PROPERTY = "experimental.ui.first.promotion.localdate";
+
+  private final AtomicBoolean isIconPatcherSet = new AtomicBoolean();
+  @Nullable
+  private static volatile Boolean newUiOneSessionOverrideForThinClient = null;
+  private IconPathPatcher iconPathPatcher;
+
+  public static ExperimentalUI getInstance() {
+    return ApplicationManager.getApplication().getService(ExperimentalUI.class);
+  }
 
   @Contract(pure = true)
   public static boolean isNewUI() {
-    // The content of this method is duplicated to EmptyIntentionAction.isNewUi (because of modules dependency problem).
-    // Please, apply any modifications here and there synchronously. Or solve the dependency problem :)
-
-    return EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY) && isSupported();
+    Boolean override = newUiOneSessionOverrideForThinClient;
+    return override == null
+           ? EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY)
+           : override;
   }
 
-  public static boolean isSupported() {
-    // The content of this method is duplicated to EmptyIntentionAction.isNewUi (because of modules dependency problem).
-    // Please, apply any modifications here and there synchronously. Or solve the dependency problem :)
+  protected static boolean isNewUiOverriden() {
+    return newUiOneSessionOverrideForThinClient != null;
+  }
 
-    return true;
+  public static void overrideNewUiForOneSessionForThinClient(boolean newUi) {
+    newUiOneSessionOverrideForThinClient = newUi;
+    getInstance().lookAndFeelChanged();
+  }
+
+  public static void setNewUI(boolean newUI) {
+    getInstance().setNewUIInternal(newUI, true);
+  }
+
+  public void setNewUIInternal(boolean newUI, boolean suggestRestart) {
+
+  }
+
+  public static int getPromotionDaysCount() {
+    PropertiesComponent propertyComponent = PropertiesComponent.getInstance();
+    String value = propertyComponent.getValue(FIRST_PROMOTION_DATE_PROPERTY);
+    LocalDate now = LocalDate.now();
+
+    if (value == null) {
+      propertyComponent.setValue(FIRST_PROMOTION_DATE_PROPERTY, now.toString());
+      return 0;
+    }
+
+    try {
+      LocalDate firstDate = LocalDate.parse(value);
+      return (int)DAYS.between(firstDate, now);
+    }
+    catch (DateTimeParseException e) {
+      Logger.getInstance(ExperimentalUI.class).warn("Invalid stored date " + value);
+      propertyComponent.setValue(FIRST_PROMOTION_DATE_PROPERTY, now.toString());
+      return 0;
+    }
   }
 
   public static boolean isNewNavbar() {
@@ -58,10 +107,6 @@ public abstract class ExperimentalUI {
 
   public static boolean isEditorTabsWithScrollBar() {
     return isNewUI() && Registry.is("ide.experimental.ui.editor.tabs.scrollbar");
-  }
-
-  public static ExperimentalUI getInstance() {
-    return ApplicationManager.getApplication().getService(ExperimentalUI.class);
   }
 
   @SuppressWarnings("unused")
@@ -130,6 +175,7 @@ public abstract class ExperimentalUI {
   public abstract @NotNull Map<ClassLoader, Map<String, String>> getIconMappings();
 
   public abstract void onExpUIEnabled(boolean suggestRestart);
+
   public abstract void onExpUIDisabled(boolean suggestRestart);
 
   private static void patchUIDefaults(boolean isNewUiEnabled) {
@@ -138,10 +184,6 @@ public abstract class ExperimentalUI {
     }
 
     UIDefaults defaults = UIManager.getDefaults();
-    setUIProperty("EditorTabs.underlineArc", 4, defaults);
-    setUIProperty("ToolWindow.Button.selectedBackground", new ColorUIResource(0x3573f0), defaults);
-    setUIProperty("ToolWindow.Button.selectedForeground", new ColorUIResource(0xffffff), defaults);
-
     if (defaults.getColor("EditorTabs.hoverInactiveBackground") == null) {
       // avoid getting EditorColorsManager too early
       setUIProperty("EditorTabs.hoverInactiveBackground", (UIDefaults.LazyValue)__ -> {
@@ -163,23 +205,7 @@ public abstract class ExperimentalUI {
   private static void installInterFont() {
     if (UISettings.getInstance().getOverrideLafFonts()) {
       //todo[kb] add RunOnce
-      UISettings.getInstance().setOverrideLafFonts(false);
-    }
-  }
-
-  public static final class Icons {
-    public static final class Gutter {
-      public static final Icon Fold = loadIcon("expui/gutter/fold.svg");
-      public static final Icon FoldBottom = loadIcon("expui/gutter/foldBottom.svg");
-      public static final Icon Unfold = loadIcon("expui/gutter/unfold.svg");
-    }
-
-    public static final class General {
-      public static final Icon Search = loadIcon("expui/general/search.svg");
-    }
-
-    private static Icon loadIcon(String path) {
-      return IconLoader.getIcon(path, AllIcons .class.getClassLoader());
+      NotRoamableUiSettings.Companion.getInstance().setOverrideLafFonts(false);
     }
   }
 }

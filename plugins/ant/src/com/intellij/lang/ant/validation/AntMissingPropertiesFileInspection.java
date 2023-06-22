@@ -25,7 +25,6 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.DomHighlightingHelper;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,7 +40,7 @@ public class AntMissingPropertiesFileInspection extends AntInspection {
   }
 
   @Override
-  protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
+  protected void checkDomElement(@NotNull DomElement element, @NotNull DomElementAnnotationHolder holder, @NotNull DomHighlightingHelper helper) {
     if (element instanceof AntDomProperty property) {
       final GenericAttributeValue<PsiFileSystemItem> fileValue = property.getFile();
       final String fileName = fileValue.getStringValue();

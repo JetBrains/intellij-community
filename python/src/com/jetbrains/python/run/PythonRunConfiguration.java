@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -18,6 +19,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.run.configuration.PythonConfigurationFragmentedEditor;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +55,15 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
   }
 
   @Override
+  protected boolean isNewUiSupported() {
+    return true;
+  }
+
+  @Override
   protected SettingsEditor<? extends RunConfiguration> createConfigurationEditor() {
+    if (Registry.is("python.new.run.config", false)) {
+      return new PythonConfigurationFragmentedEditor(this);
+    }
     return new PythonRunConfigurationEditor(this);
   }
 

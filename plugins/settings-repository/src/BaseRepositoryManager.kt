@@ -25,7 +25,6 @@ import kotlin.concurrent.write
 import kotlin.io.path.exists
 
 abstract class BaseRepositoryManager(protected val dir: Path) : RepositoryManager {
-
   protected val lock: ReentrantReadWriteLock = ReentrantReadWriteLock()
 
   override fun processChildren(path: String, filter: (name: String) -> Boolean, processor: (name: String, inputStream: InputStream) -> Boolean) {

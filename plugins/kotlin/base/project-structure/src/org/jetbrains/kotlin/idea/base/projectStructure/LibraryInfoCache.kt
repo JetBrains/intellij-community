@@ -12,16 +12,21 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
+import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.PathUtil
 import com.intellij.util.messages.Topic
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider
+import org.jetbrains.kotlin.idea.base.platforms.detectLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.isKlibLibraryRootForPlatform
 import org.jetbrains.kotlin.idea.base.platforms.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
-import org.jetbrains.kotlin.idea.base.util.caching.LibraryEntityChangeListener
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -30,8 +35,10 @@ import org.jetbrains.kotlin.platform.impl.CommonIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.JsIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
+import org.jetbrains.kotlin.platform.impl.WasmIdePlatformKind
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
+import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.flattenTo
 
 class LibraryInfoCache(project: Project) : Disposable {
@@ -236,6 +243,7 @@ class LibraryInfoCache(project: Project) : Disposable {
             is JvmIdePlatformKind -> listOf(JvmLibraryInfo(project, key))
             is CommonIdePlatformKind -> createLibraryInfos(key, platformKind, ::CommonKlibLibraryInfo, ::CommonMetadataLibraryInfo)
             is JsIdePlatformKind -> createLibraryInfos(key, platformKind, ::JsKlibLibraryInfo, ::JsMetadataLibraryInfo)
+            is WasmIdePlatformKind -> createLibraryInfos(key, platformKind, ::WasmKlibLibraryInfo, ::WasmMetadataLibraryInfo)
             is NativeIdePlatformKind -> createLibraryInfos(key, platformKind, ::NativeKlibLibraryInfo, ::NativeMetadataLibraryInfo)
             else -> error("Unexpected platform kind: $platformKind")
         }.also {
@@ -301,18 +309,47 @@ class LibraryInfoCache(project: Project) : Disposable {
 
         private fun getPlatform(library: LibraryEx): TargetPlatform =
             if (!library.isDisposed) {
-                project.service<LibraryEffectiveKindProvider>().getEffectiveKind(library).platform
+                detectLibraryKind(library, project).platform
             } else {
                 JvmPlatforms.defaultJvmPlatform
             }
 
-        inner class ModelChangeListener(project: Project) : LibraryEntityChangeListener(project, afterChangeApplied = false) {
-            override fun entitiesChanged(outdated: List<Library>) {
-                val droppedLibraryInfos = invalidateKeysAndGetOutdatedValues(outdated.map { it as LibraryEx }).flattenTo(hashSetOf())
+        inner class ModelChangeListener(project: Project) : WorkspaceModelChangeListener {
+            override fun beforeChanged(event: VersionedStorageChange) {
+                val storageBefore = event.storageBefore
+                val libraryChanges = event.getChanges(LibraryEntity::class.java)
+                val moduleChanges = event.getChanges(ModuleEntity::class.java)
 
-                if (droppedLibraryInfos.isNotEmpty()) {
-                    removedLibraryInfoTracker.incModificationCount()
-                    project.messageBus.syncPublisher(LibraryInfoListener.TOPIC).libraryInfosRemoved(droppedLibraryInfos)
+                if (libraryChanges.none() && moduleChanges.none()) return
+
+                val outdatedLibraries: MutableList<Library> = libraryChanges
+                  .mapNotNull { it.oldEntity?.findLibraryBridge(storageBefore) }
+                  .toMutableList()
+
+                val oldLibDependencies = moduleChanges.mapNotNull {
+                    it.oldEntity?.dependencies?.filterIsInstance<ModuleDependencyItem.Exportable.LibraryDependency>()
+                }.flatten().associateBy { it.library }
+
+                val newLibDependencies = moduleChanges.mapNotNull {
+                    it.newEntity?.dependencies?.filterIsInstance<ModuleDependencyItem.Exportable.LibraryDependency>()
+                }.flatten().associateBy { it.library }
+
+                for (entry in oldLibDependencies.entries) {
+                    val value = entry.value
+                    if (value != newLibDependencies[entry.key]) {
+                        val libraryBridge = value.library.findLibraryBridge(storageBefore, project)
+                        outdatedLibraries.addIfNotNull(libraryBridge)
+                    }
+                }
+
+                if (outdatedLibraries.isNotEmpty()) {
+                    val droppedLibraryInfos =
+                      invalidateKeysAndGetOutdatedValues(outdatedLibraries.map { it as LibraryEx }).flattenTo(hashSetOf())
+
+                    if (droppedLibraryInfos.isNotEmpty()) {
+                        removedLibraryInfoTracker.incModificationCount()
+                        project.messageBus.syncPublisher(LibraryInfoListener.TOPIC).libraryInfosRemoved(droppedLibraryInfos)
+                    }
                 }
             }
         }

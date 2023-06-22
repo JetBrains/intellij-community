@@ -4,5 +4,3 @@ val a: Array<Int> = arrayOf(1)
 fun b(): Array<Array<Int>> {
     return <caret>arrayOf(a)
 }
-
-/* IGNORE_FIR */

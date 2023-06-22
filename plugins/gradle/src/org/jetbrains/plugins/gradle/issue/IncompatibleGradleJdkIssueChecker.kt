@@ -18,6 +18,7 @@ import org.jetbrains.jps.model.java.JdkVersionDetector
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleSettingsQuickFix
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleVersionQuickFix
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleWrapperSettingsOpenQuickFix
+import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler.getRootCauseAndLocation
 import org.jetbrains.plugins.gradle.util.*
 import java.io.File
@@ -65,26 +66,24 @@ class IncompatibleGradleJdkIssueChecker : GradleIssueChecker {
       }
     }
 
-    var isJavaGroovyCompatibilityIssue = false
-    var isJavaByteCodeCompatibilityIssue = false
-    if (javaVersionUsed != null && gradleVersionUsed != null && !isSupported(gradleVersionUsed, javaVersionUsed)) {
-      isJavaGroovyCompatibilityIssue = isJavaGroovyCompatibilityIssue(rootCauseText)
-      isJavaByteCodeCompatibilityIssue = isJavaByteCodeCompatibilityIssue(rootCauseText)
-    }
+    val isUnsupportedJavaVersionForGradle =
+      javaVersionUsed != null &&
+      gradleVersionUsed != null &&
+      !GradleJvmSupportMatrix.isSupported(gradleVersionUsed, javaVersionUsed)
 
-    if (!isUnsupportedClassVersionErrorIssue &&
+    if (!isUnsupportedJavaVersionForGradle &&
+        !isUnsupportedClassVersionErrorIssue &&
         !isUnsupportedJavaRuntimeIssue &&
         !isRemovedUnsafeDefineClassMethodInJDK11Issue &&
         !unableToStartDaemonProcessForJDK11 &&
-        !unableToStartDaemonProcessForJDK9 &&
-        !isJavaGroovyCompatibilityIssue &&
-        !isJavaByteCodeCompatibilityIssue) {
+        !unableToStartDaemonProcessForJDK9) {
       return null
     }
 
     val quickFixes = mutableListOf<BuildIssueQuickFix>()
-    val oldestCompatibleGradleVersion = javaVersionUsed?.let { suggestOldestCompatibleGradleVersion(it) } ?: GradleVersion.version("4.8.1")
-    val newestCompatibleGradleVersion = javaVersionUsed?.let { suggestLatestGradleVersion(it) }
+    val oldestCompatibleGradleVersion = javaVersionUsed?.let { GradleJvmSupportMatrix.suggestOldestSupportedGradleVersion(it) }
+                                        ?: GradleJvmSupportMatrix.getOldestRecommendedGradleVersionByIdea()
+    val newestCompatibleGradleVersion = javaVersionUsed?.let { GradleJvmSupportMatrix.suggestLatestSupportedGradleVersion(it) }
     val versionSuggestion = getSuggestedGradleVersion(newestCompatibleGradleVersion, oldestCompatibleGradleVersion)
 
     val issueDescription = StringBuilder()
@@ -101,7 +100,7 @@ class IncompatibleGradleJdkIssueChecker : GradleIssueChecker {
           .append("Unsupported Java. \n") // title
           .append("Your build is currently configured to use $incompatibleJavaVersion. You need to use at least Java 7.")
       }
-      isJavaGroovyCompatibilityIssue || isJavaByteCodeCompatibilityIssue -> {
+      isUnsupportedJavaVersionForGradle -> {
         issueDescription
           .append("Unsupported Java. \n") // title
           .append("Your build is currently configured to use Java $javaVersionUsed and Gradle ${gradleVersionUsed!!.version}.")
@@ -130,7 +129,7 @@ class IncompatibleGradleJdkIssueChecker : GradleIssueChecker {
     if (!isAndroidStudio) { // Android Studio doesn't have Gradle JVM setting
       val gradleSettingsFix = GradleSettingsQuickFix(
         issueData.projectPath, true,
-        { oldSettings, currentSettings -> oldSettings.gradleJvm != currentSettings.gradleJvm },
+        GradleSettingsQuickFix.GradleJvmChangeDetector,
         GradleBundle.message("gradle.settings.text.jvm.path")
       )
       quickFixes.add(gradleSettingsFix)
@@ -169,14 +168,6 @@ class IncompatibleGradleJdkIssueChecker : GradleIssueChecker {
     }
   }
 
-  private fun isJavaGroovyCompatibilityIssue(rootCauseText: String): Boolean {
-    return rootCauseText.startsWith("java.lang.NoClassDefFoundError: Could not initialize class org.codehaus.groovy.")
-  }
-
-  private fun isJavaByteCodeCompatibilityIssue(rootCauseText: String): Boolean {
-    return rootCauseText.contains("Unsupported class file major version")
-  }
-
   override fun consumeBuildOutputFailureMessage(message: String,
                                                 failureCause: String,
                                                 stacktrace: String?,
@@ -184,8 +175,7 @@ class IncompatibleGradleJdkIssueChecker : GradleIssueChecker {
                                                 parentEventId: Any,
                                                 messageConsumer: Consumer<in BuildEvent>): Boolean {
     // JDK compatibility issues should be handled by IncompatibleGradleJdkIssueChecker.check method based on exceptions come from Gradle TAPI
-    if (failureCause.startsWith("Could not create service of type ") && failureCause.contains(" using BuildScopeServices.")) return true
-    return false
+    return failureCause.startsWith("Could not create service of type ") && failureCause.contains(" using BuildScopeServices.")
   }
 
   companion object {
@@ -244,8 +234,10 @@ class IncompatibleGradleJdkIssueChecker : GradleIssueChecker {
 
     private fun getSuggestedJavaVersion(gradleVersionUsed: GradleVersion?, javaVersionUsed: JavaVersion?): String {
       val suggestedJavaVersion: String
-      val oldestCompatibleJavaVersion = gradleVersionUsed?.let { suggestOldestCompatibleJavaVersion(it) } ?: JavaVersion.compose(8)
-      val newestCompatibleJavaVersion = gradleVersionUsed?.let { suggestLatestJavaVersion(it) } ?: JavaVersion.compose(8)
+      val oldestCompatibleJavaVersion = gradleVersionUsed?.let { GradleJvmSupportMatrix.suggestOldestSupportedJavaVersion(it) }
+                                        ?: GradleJvmSupportMatrix.getOldestRecommendedJavaVersionByIdea()
+      val newestCompatibleJavaVersion = gradleVersionUsed?.let { GradleJvmSupportMatrix.suggestLatestSupportedJavaVersion(it) }
+                                        ?: GradleJvmSupportMatrix.getOldestRecommendedJavaVersionByIdea()
       if (javaVersionUsed != null) {
         when {
           javaVersionUsed < oldestCompatibleJavaVersion -> {

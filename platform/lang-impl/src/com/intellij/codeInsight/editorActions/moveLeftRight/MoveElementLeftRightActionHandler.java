@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.editorActions.moveLeftRight;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -15,20 +14,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Range;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
 
 public class MoveElementLeftRightActionHandler extends EditorWriteActionHandler.ForEachCaret {
   private static final Comparator<PsiElement> BY_OFFSET = Comparator.comparingInt(PsiElement::getTextOffset);
-
-  private static final Set<String> OUR_ACTIONS =
-    ContainerUtil.set(IdeActions.MOVE_ELEMENT_LEFT, IdeActions.MOVE_ELEMENT_RIGHT);
 
   private final boolean myIsLeft;
 

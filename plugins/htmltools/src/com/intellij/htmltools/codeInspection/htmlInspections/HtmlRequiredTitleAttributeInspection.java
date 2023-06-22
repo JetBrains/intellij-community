@@ -10,7 +10,6 @@ import com.intellij.htmltools.codeInspection.htmlInspections.htmlAddLabelToForm.
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,7 +19,7 @@ import java.util.Set;
 
 public class HtmlRequiredTitleAttributeInspection extends HtmlLocalInspectionTool {
   private static final Set<String>
-    ourElementsWithoutTitle = ContainerUtil.immutableSet("frame", "iframe", "dl", "a", "router-link");
+    ourElementsWithoutTitle = Set.of("frame", "iframe", "dl", "a", "router-link");
   private static final String TITLE = "title";
 
   @Override

@@ -1,18 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "UnstableApiUsage")
 
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.intellij.diagnostic.telemetry.forkJoinTask
-import com.intellij.diagnostic.telemetry.use
-import com.intellij.diagnostic.telemetry.useWithScope
+import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
+import com.intellij.util.containers.ContainerUtil
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.context.Context
+import io.opentelemetry.semconv.trace.attributes.SemanticAttributes
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.VisibleForTesting
@@ -40,15 +41,17 @@ class CompilationCacheUploadConfiguration(
   val uploadOnly: Boolean = false,
   branch: String? = null,
 ) {
-  val serverUrl: String = serverUrl ?: normalizeServerUrl()
-  val branch: String = branch ?: System.getProperty(branchPropertyName).also {
-    check(!it.isNullOrBlank()) {
-      "Git branch is not defined. Please set $branchPropertyName system property."
+  val serverUrl: String by lazy { serverUrl ?: normalizeServerUrl() }
+  val branch: String by lazy {
+    branch ?: System.getProperty(BRANCH_PROPERTY_NAME).also {
+      check(!it.isNullOrBlank()) {
+        "Git branch is not defined. Please set $BRANCH_PROPERTY_NAME system property."
+      }
     }
   }
 
   companion object {
-    private const val branchPropertyName = "intellij.build.compiled.classes.branch"
+    private const val BRANCH_PROPERTY_NAME = "intellij.build.compiled.classes.branch"
 
     private fun normalizeServerUrl(): String {
       val serverUrlPropertyName = "intellij.build.compiled.classes.server.url"
@@ -179,7 +182,7 @@ private fun isModuleOutputDirEmpty(moduleOutDir: Path): Boolean {
 }
 
 // TODO: Remove hardcoded constant
-internal const val uploadPrefix = "intellij-compile/v2"
+internal const val UPLOAD_PREFIX = "intellij-compile/v2"
 
 private fun upload(config: CompilationCacheUploadConfiguration,
                    zipDir: Path,
@@ -190,7 +193,7 @@ private fun upload(config: CompilationCacheUploadConfiguration,
   val metadataJson = Json.encodeToString(CompilationPartsMetadata(
     serverUrl = config.serverUrl,
     branch = config.branch,
-    prefix = uploadPrefix,
+    prefix = UPLOAD_PREFIX,
     files = items.associateTo(TreeMap()) { item ->
       item.name to item.hash!!
     },
@@ -242,7 +245,7 @@ fun fetchAndUnpackCompiledClasses(reportStatisticValue: (key: String, value: Str
     items.sortBy { it.name }
 
     var verifyTime = 0L
-    val upToDate = Collections.newSetFromMap<String>(ConcurrentHashMap())
+    val upToDate = ContainerUtil.newConcurrentSet<String>()
     spanBuilder("check previously unpacked directories").useWithScope { span ->
       verifyTime += checkPreviouslyUnpackedDirectories(items = items,
                                                        span = span,
@@ -517,3 +520,23 @@ private data class CompilationPartsMetadata(
    */
   val files: Map<String, String>,
 )
+
+/**
+ * Returns a new [ForkJoinTask] that performs the given function as its action within a trace, and returns
+ * a null result upon [ForkJoinTask.join].
+ *
+ * See [Span](https://opentelemetry.io/docs/reference/specification).
+ */
+inline fun <T> forkJoinTask(spanBuilder: SpanBuilder, crossinline operation: () -> T): ForkJoinTask<T> {
+  val context = Context.current()
+  return ForkJoinTask.adapt(Callable {
+    val thread = Thread.currentThread()
+    spanBuilder
+      .setParent(context)
+      .setAttribute(SemanticAttributes.THREAD_NAME, thread.name)
+      .setAttribute(SemanticAttributes.THREAD_ID, thread.id)
+      .useWithScope {
+        operation()
+      }
+  })
+}

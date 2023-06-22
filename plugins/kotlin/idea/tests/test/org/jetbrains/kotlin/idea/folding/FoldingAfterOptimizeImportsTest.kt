@@ -2,13 +2,13 @@
 
 package org.jetbrains.kotlin.idea.folding
 
-import com.intellij.codeInsight.folding.CodeFoldingManager
 import com.intellij.openapi.editor.FoldRegion
-import org.jetbrains.kotlin.idea.imports.KotlinImportOptimizer
-import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.TestMetadata
+import com.intellij.testFramework.EditorTestUtil
 import org.jetbrains.kotlin.idea.base.test.TestRoot
+import org.jetbrains.kotlin.idea.imports.KotlinImportOptimizer
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
@@ -26,7 +26,7 @@ class FoldingAfterOptimizeImportsTest : AbstractKotlinFoldingTest() {
         myFixture.configureByFile(fileName())
 
         doTestWithSettings(fileText) {
-            CodeFoldingManager.getInstance(myFixture.project)!!.buildInitialFoldings(editor)
+            EditorTestUtil.buildInitialFoldingsInBackground(editor)
             getFoldingRegion(0).checkRegion(false, findStringWithPrefixes("// REGION BEFORE: "))
 
             myFixture.project.executeWriteCommand(

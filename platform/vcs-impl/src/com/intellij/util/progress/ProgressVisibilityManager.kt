@@ -16,7 +16,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
  */
 abstract class ProgressVisibilityManager : Disposable {
   private val indicators: MutableList<ProgressIndicator> = ArrayList()
-  var disposed = false
+  var disposed: Boolean = false
     private set
 
   @RequiresEdt

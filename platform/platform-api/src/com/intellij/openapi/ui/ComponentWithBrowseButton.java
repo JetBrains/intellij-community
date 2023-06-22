@@ -18,13 +18,15 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.dsl.builder.DslComponentProperty;
 import com.intellij.ui.dsl.builder.VerticalComponentGap;
-import com.intellij.ui.dsl.gridLayout.Gaps;
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps;
+import com.intellij.ui.dsl.gridLayout.UnscaledGapsKt;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -90,11 +92,16 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     if (ScreenReader.isActive()) {
       myBrowseButton.setFocusable(true);
       myBrowseButton.getAccessibleContext().setAccessibleName(UIBundle.message("component.with.browse.button.accessible.name"));
+    } else if (Registry.is("ide.browse.button.always.focusable", false)) {
+      myBrowseButton.setFocusable(true);
     }
-    new LazyDisposable(this);
+    LazyDisposable.installOn(this);
 
-    Insets insets = myComponent.getInsets();
-    Gaps visualPaddings = new Gaps(insets.top, insets.left, insets.bottom, inlineBrowseButton ? insets.right : myBrowseButton.getInsets().right);
+    Insets unscaledInsets = UnscaledGapsKt.unscale(myComponent.getInsets());
+    if (!inlineBrowseButton) {
+      unscaledInsets.right = UnscaledGapsKt.unscale(myBrowseButton.getInsets().right);
+    }
+    UnscaledGaps visualPaddings = UnscaledGapsKt.toUnscaledGaps(unscaledInsets);
     putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, component);
     putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
     putClientProperty(DslComponentProperty.VISUAL_PADDINGS, visualPaddings);
@@ -326,7 +333,11 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
 
     private LazyDisposable(ComponentWithBrowseButton<?> component) {
       reference = new WeakReference<>(component);
-      new UiNotifyConnector.Once(component, this);
+    }
+
+    private static void installOn(ComponentWithBrowseButton<?> component) {
+      LazyDisposable disposable = new LazyDisposable(component);
+      UiNotifyConnector.Once.installOn(component, disposable);
     }
 
     @Override

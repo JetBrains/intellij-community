@@ -12,11 +12,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiLiteralExpression
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.workspaceModel.storage.CodeGeneratorVersions
-import org.jetbrains.kotlin.KtNodeTypes
+import com.intellij.platform.workspace.storage.CodeGeneratorVersions
 import org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex
-import org.jetbrains.kotlin.parsing.parseNumericLiteral
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 private val LOG = logger<WorkspaceImplObsoleteInspection>()
 
@@ -56,6 +55,6 @@ private class RegenerateWorkspaceModelFix(psiElement: PsiElement) : LocalQuickFi
   override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
     val projectFileIndex = ProjectRootManager.getInstance(project).fileIndex
     val module = projectFileIndex.getModuleForFile(file.virtualFile)
-    WorkspaceModelGenerator.generate(project, module!!)
+    WorkspaceModelGenerator.getInstance(project).generate(module!!)
   }
 }

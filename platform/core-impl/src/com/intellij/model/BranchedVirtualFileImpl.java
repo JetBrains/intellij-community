@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.model;
 
 import com.intellij.openapi.editor.Document;
@@ -43,8 +43,7 @@ final class BranchedVirtualFileImpl extends BranchedVirtualFile {
   }
 
   @Override
-  @NotNull
-  protected ModelBranchImpl getBranch() {
+  protected @NotNull ModelBranchImpl getBranch() {
     myBranch.checkBranchIsAlive();
     return myBranch;
   }
@@ -219,8 +218,7 @@ final class BranchedVirtualFileImpl extends BranchedVirtualFile {
     return result;
   }
 
-  @NotNull
-  private VirtualFile createFile() throws IOException {
+  private @NotNull VirtualFile createFile() throws IOException {
     myBranch.checkBranchIsAlive();
     String name = getName();
     VirtualFile originalParent = getParent().getOrCreateOriginal();

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.diagnostic.Checks;
@@ -9,6 +9,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.function.Supplier;
+
+import static com.intellij.util.MathUtil.clamp;
+import static java.lang.Math.round;
+import static java.lang.Math.sqrt;
 
 /**
  * @author Konstantin Bulenkov
@@ -226,7 +230,7 @@ public final class ColorUtil {
     if (balance >= 1) return c2;
     Supplier<Color> func = new MixedColorProducer(c1, c2, balance);
     return c1 instanceof JBColor || c2 instanceof JBColor ? JBColor.lazy(func) : func.get();
-    }
+  }
 
   /**
    * Returns the color that is the result of having a foreground color on top of a background color
@@ -250,5 +254,76 @@ public final class ColorUtil {
       return 0;
     }
     return (255 * foregroundAlpha * foregroundComponent + (255 - foregroundAlpha) * backgroundAlpha * backgroundComponent) / denominator;
+  }
+
+  /**
+   * Can be useful in case if you need to simulate transparency of the text.
+   *
+   * @param value coefficient of blend normalized 0..1
+   * @return the mixed color of bg and fg with given coefficient.
+   */
+  public static @NotNull Color blendColorsInRgb(@NotNull Color bg, @NotNull Color fg, double value) {
+    int red = blendRgb(bg.getRed(), fg.getRed(), value);
+    int green = blendRgb(bg.getGreen(), fg.getGreen(), value);
+    int blue = blendRgb(bg.getBlue(), fg.getBlue(), value);
+    return new Color(clamp(red, 0, 255),
+                     clamp(green, 0, 255),
+                     clamp(blue, 0, 255));
+  }
+
+  /**
+   * @param bg    background color value normalized 0..255
+   * @param fg    foreground color value normalized 0..255
+   * @param value coefficient of blend normalized 0..1
+   * @return interpolation of bg and fg values with given coefficient normalized to 0..255
+   */
+  private static int blendRgb(int bg, int fg, double value) {
+    return (int)round(sqrt(bg * bg * (1 - value) + fg * fg * value));
+  }
+
+  /**
+   * Returns the color that, placed underneath the colors background and foreground, would result in the worst contrast
+   */
+  @NotNull
+  public static Color worstContrastColor(@NotNull Color foreground, @NotNull Color background) {
+    int backgroundAlpha = background.getAlpha();
+    int r = worstContrastComponent(foreground.getRed(), background.getRed(), backgroundAlpha);
+    int g = worstContrastComponent(foreground.getGreen(), background.getGreen(), backgroundAlpha);
+    int b = worstContrastComponent(foreground.getBlue(), background.getBlue(), backgroundAlpha);
+    return new Color(r, g, b);
+  }
+
+  private static int worstContrastComponent(int foregroundComponent, int backgroundComponent, int backgroundAlpha) {
+    if (backgroundAlpha == 255) {
+      // Irrelevant since background is completely opaque in this case
+      return 0;
+    }
+    int component = (255 * foregroundComponent - backgroundAlpha * backgroundComponent) / (255 - backgroundAlpha);
+
+    return Math.max(0, Math.min(component, 255));
+  }
+
+  /**
+   * Provides the contrast ratio between two colors. For general text, the minimum recommended value is 7
+   * For large text, the recommended minimum value is 4.5
+   * <a href="http://www.w3.org/TR/WCAG20/#contrast-ratiodef">Source</a>
+   */
+  public static double calculateContrastRatio(@NotNull Color color1, @NotNull Color color2) {
+    double color1Luminance = calculateColorLuminance(color1);
+    double color2Luminance = calculateColorLuminance(color2);
+    return (Math.max(color1Luminance, color2Luminance) + 0.05) / (Math.min(color2Luminance, color1Luminance) + 0.05);
+  }
+
+  private static double calculateColorLuminance(@NotNull Color color) {
+    return calculateLuminanceContribution(color.getRed() / 255.0) * 0.2126 +
+           calculateLuminanceContribution(color.getGreen() / 255.0) * 0.7152 +
+           calculateLuminanceContribution(color.getBlue() / 255.0) * 0.0722;
+  }
+
+  private static double calculateLuminanceContribution(double colorValue) {
+    if (colorValue <= 0.03928) {
+      return colorValue / 12.92;
+    }
+    return Math.pow(((colorValue + 0.055) / 1.055), 2.4);
   }
 }

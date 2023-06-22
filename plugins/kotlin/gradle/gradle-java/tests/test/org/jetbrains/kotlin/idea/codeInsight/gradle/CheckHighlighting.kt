@@ -11,7 +11,9 @@ import org.jetbrains.kotlin.idea.codeMetaInfo.CodeMetaInfoTestCase
 import org.jetbrains.kotlin.idea.codeMetaInfo.findCorrespondingFileInTestDir
 import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingConfiguration
 import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.LineMarkerConfiguration
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.util.sourceRoots
+import org.junit.runners.model.MultipleFailureException
 import java.io.File
 import java.nio.file.Paths
 import kotlin.test.assertTrue
@@ -22,7 +24,8 @@ data class HighlightingCheck(
     private val testDataDirectory: File,
     private val testLineMarkers: Boolean = true,
     private val severityLevel: HighlightSeverity = HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING,
-    private val correspondingFilePostfix: String = ""
+    private val correspondingFilePostfix: String = "",
+    private val postprocessActualTestData: (String) -> String = { it }
 ) {
 
     private val checker = CodeMetaInfoTestCase(
@@ -39,22 +42,25 @@ data class HighlightingCheck(
 
 
     fun invokeOnAllModules() {
-        val modules = ModuleManager.getInstance(project).modules
+        val modules = ModuleManager.getInstance(project).modules.toList()
         assertTrue(modules.isNotEmpty(), "Expected at least one module")
-        modules.forEach(this::invoke)
+        modules.combineMultipleFailures(this::invoke)
     }
 
-    operator fun invoke(module: Module) {
+    operator fun invoke(module: Module) = combineMultipleFailures {
         for (sourceRoot in module.sourceRoots) {
             VfsUtilCore.processFilesRecursively(sourceRoot) { file ->
                 if (file.isDirectory || file.extension != "kt" && file.extension != "java" || file.path.contains("build/generated"))
                     return@processFilesRecursively true
                 runInEdtAndWait {
-                    checker.checkFile(
-                        file,
-                        file.findCorrespondingFileInTestDir(Paths.get(projectPath), testDataDirectory, correspondingFilePostfix),
-                        project
-                    )
+                    runAssertion {
+                        checker.checkFile(
+                            file,
+                            file.findCorrespondingFileInTestDir(Paths.get(projectPath), testDataDirectory, correspondingFilePostfix),
+                            project,
+                            postprocessActualTestData
+                        )
+                    }
                 }
                 true
             }

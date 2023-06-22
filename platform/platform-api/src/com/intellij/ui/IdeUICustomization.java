@@ -50,6 +50,13 @@ public class IdeUICustomization {
   }
 
   /**
+   * Allows to replace the description of the given action (only for the actions/groups that support this mechanism)
+   */
+  public @Nullable @Nls String getActionDescription(@NotNull String actionId) {
+    return null;
+  }
+
+  /**
    * Returns the name of the Version Control tool window
    */
   public @NotNull String getVcsToolWindowName() {

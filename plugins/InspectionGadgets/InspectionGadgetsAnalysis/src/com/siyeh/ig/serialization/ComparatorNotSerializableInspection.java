@@ -16,6 +16,7 @@
 package com.siyeh.ig.serialization;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
@@ -23,11 +24,9 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DelegatingFixFactory;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class ComparatorNotSerializableInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
@@ -38,8 +37,7 @@ public class ComparatorNotSerializableInspection extends BaseInspection implemen
   }
 
   @Override
-  @Nullable
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return DelegatingFixFactory.createMakeSerializableFix((PsiClass)infos[0]);
   }
 

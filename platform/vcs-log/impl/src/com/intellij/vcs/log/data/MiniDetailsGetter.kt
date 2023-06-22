@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data
 
 import com.github.benmanes.caffeine.cache.Caffeine
@@ -32,7 +32,7 @@ class MiniDetailsGetter internal constructor(project: Project,
   private val factory = project.getService(VcsLogObjectsFactory::class.java)
   private val cache = Caffeine.newBuilder().maximumSize(10000).build<Int, VcsCommitMetadata>()
   private val loader = SequentialLimitedLifoExecutor(this, MAX_LOADING_TASKS) { task: TaskDescriptor ->
-    doLoadCommitsData(task.commits, this::saveInCache)
+    doLoadCommitsData(task.commits) { commitId, data -> saveInCache(commitId, data) }
     notifyLoaded()
   }
 
@@ -111,23 +111,24 @@ class MiniDetailsGetter internal constructor(project: Project,
   @RequiresBackgroundThread
   @Throws(VcsException::class)
   override fun doLoadCommitsData(commits: IntSet, consumer: Consumer<in VcsCommitMetadata>) {
+    doLoadCommitsData(commits) { _, metadata -> consumer.consume(metadata) }
+  }
+
+  @RequiresBackgroundThread
+  @Throws(VcsException::class)
+  fun doLoadCommitsData(commits: IntSet, consumer: (Int, VcsCommitMetadata) -> Unit) {
     val dataGetter = index.dataGetter
     if (dataGetter == null) {
-      super.doLoadCommitsData(commits, consumer)
+      super.doLoadCommitsData(commits) { data -> consumer(storage.getCommitIndex(data.id, data.root), data) }
       return
     }
-    val notIndexed = IntOpenHashSet()
-    commits.forEach(IntConsumer { commit: Int ->
-      val metadata = IndexedDetails.createMetadata(commit, dataGetter, storage, factory)
-      if (metadata == null) {
-        notIndexed.add(commit)
-      }
-      else {
-        consumer.consume(metadata)
-      }
-    })
+
+    val metadata = IndexedDetails.createMetadata(commits, dataGetter, storage, factory)
+    metadata.forEach { (commit, metadata) -> consumer(commit, metadata) }
+    val notIndexed = commits - metadata.keys
+
     if (!notIndexed.isEmpty()) {
-      super.doLoadCommitsData(notIndexed, consumer)
+      super.doLoadCommitsData(notIndexed) { data -> consumer(storage.getCommitIndex(data.id, data.root), data) }
     }
   }
 
@@ -188,6 +189,11 @@ class MiniDetailsGetter internal constructor(project: Project,
         result[element] = value
       }
       return result
+    }
+
+    private operator fun IntSet.minus(other: IntSet): IntSet {
+      if (other.isEmpty()) return this
+      return filterNotTo(IntOpenHashSet()) { it in other }
     }
   }
 }

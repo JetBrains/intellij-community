@@ -16,7 +16,7 @@ public abstract class ValueSupplier<T, E extends Throwable> {
       public T get() throws E {
         T value = (myRef == null? null : myRef.get());
         if (value == null) {
-          myRef = new WeakReference<T>(value = delegate.get());
+          myRef = new WeakReference<>(value = delegate.get());
         }
         return value;
       }

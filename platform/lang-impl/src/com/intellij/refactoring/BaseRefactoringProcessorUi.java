@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.actions.VcsFacade;
@@ -15,6 +15,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
+
 final class BaseRefactoringProcessorUi {
   void displayPreview(Project project, ModelPatch patch) throws ProcessCanceledException {
     JComponent preview = VcsFacade.getInstance().createPatchPreviewComponent(project, patch);
@@ -27,7 +29,7 @@ final class BaseRefactoringProcessorUi {
   }
 
   ConflictsDialog createConflictsDialog(@NotNull Project project,
-                                        @NotNull MultiMap<PsiElement, String> conflicts,
+                                        @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts,
                                         @Nullable Runnable doRefactoringRunnable,
                                         boolean alwaysShowOkButton,
                                         boolean canShowConflictsInView) {

@@ -196,6 +196,9 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
 
       PsiModifierListOwner element = member.getMember();
       if (element instanceof PsiClass && ((PsiClass) element).isInterface()) return true;
+      if (element instanceof PsiEnumConstant) {
+        return false;
+      }
       if (element instanceof PsiField) {
         return element.hasModifierProperty(PsiModifier.STATIC);
       }
@@ -210,6 +213,9 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
         final PsiMethod superClassMethod = findSuperMethod(currentSuperClass, method);
         if (superClassMethod != null && !PsiUtil.isLanguageLevel8OrHigher(currentSuperClass)) return false;
         return !element.hasModifierProperty(PsiModifier.STATIC) || PsiUtil.isLanguageLevel8OrHigher(currentSuperClass);
+      }
+      if (element instanceof PsiClassInitializer) {
+        return false;
       }
       return true;
     }

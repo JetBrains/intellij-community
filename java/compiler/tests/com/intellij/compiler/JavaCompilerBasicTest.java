@@ -6,7 +6,6 @@ import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Compressor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -20,10 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Locale;
+import java.util.*;
 
 import static com.intellij.util.io.TestFileSystemItem.fs;
 
@@ -104,7 +100,7 @@ public class JavaCompilerBasicTest extends BaseCompilerTestCase {
     try (final JpsJavacFileManager fileManager = new JpsJavacFileManager(new DummyContext(stdFileManager), true, Collections.emptyList())) {
       fileManager.setLocation(StandardLocation.CLASS_OUTPUT, Collections.singleton(outputRoot));
 
-      final Iterable<JavaFileObject> files = fileManager.list(StandardLocation.CLASS_OUTPUT, "ppp", ContainerUtil.set(JavaFileObject.Kind.CLASS, JavaFileObject.Kind.OTHER), false);
+      final Iterable<JavaFileObject> files = fileManager.list(StandardLocation.CLASS_OUTPUT, "ppp", Set.of(JavaFileObject.Kind.CLASS, JavaFileObject.Kind.OTHER), false);
       final Iterator<JavaFileObject> resultIterator = files.iterator();
       assertTrue(resultIterator.hasNext());
       final JavaFileObject item = resultIterator.next();

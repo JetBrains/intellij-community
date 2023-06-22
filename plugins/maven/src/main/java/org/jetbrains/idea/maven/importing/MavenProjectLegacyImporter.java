@@ -8,7 +8,6 @@ import com.intellij.openapi.externalSystem.model.project.ProjectId;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.impl.ModulePathKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -22,12 +21,15 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.workspace.jps.serialization.impl.ModulePath;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.statistics.MavenImportCollector;
@@ -37,7 +39,9 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import java.io.IOException;
 import java.util.*;
 
-class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
+@ApiStatus.Internal
+@ApiStatus.Obsolete
+public class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
   private static final Logger LOG = Logger.getInstance(MavenProjectLegacyImporter.class);
   private final Map<VirtualFile, Module> myFileToModuleMapping;
   private volatile Set<MavenProject> myAllProjects;
@@ -277,16 +281,34 @@ class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
     }
   }
 
+  @TestOnly
+  // this is legacy code anyway
+  public static void setAnswerToDeleteObsoleteModulesQuestion(boolean answer) {
+    answerToDeleteObsoleteModulesQuestion = answer;
+  }
+  @TestOnly
+  public static Boolean getAnswerToDeleteObsoleteModulesQuestion() {
+    return answerToDeleteObsoleteModulesQuestion;
+  }
+  private static Boolean answerToDeleteObsoleteModulesQuestion = null;
+
   private boolean isDeleteObsoleteModules(@NotNull List<Module> obsoleteModules) {
     if (obsoleteModules.isEmpty()) {
       return false;
+    }
+    String message = MavenProjectBundle.message("maven.import.message.delete.obsolete", formatModules(obsoleteModules));
+    MavenLog.LOG.warn("Asking about deleting obsolete modules. " + message);
+    if (null != answerToDeleteObsoleteModulesQuestion) {
+      var delete = answerToDeleteObsoleteModulesQuestion;
+      MavenLog.LOG.warn("This should only happen in tests. Delete obsolete modules: " + delete);
+      answerToDeleteObsoleteModulesQuestion = null;
+      return delete;
     }
     if (!ApplicationManager.getApplication().isHeadlessEnvironment() || MavenUtil.isMavenUnitTestModeEnabled()) {
       final int[] result = new int[1];
       MavenUtil.invokeAndWait(myProject, myModelsProvider.getModalityStateForQuestionDialogs(),
                               () -> result[0] = Messages.showYesNoDialog(myProject,
-                                                                         MavenProjectBundle.message("maven.import.message.delete.obsolete",
-                                                                                                    formatModules(obsoleteModules)),
+                                                                         message,
                                                                          MavenProjectBundle.message("maven.project.import.title"),
                                                                          Messages.getQuestionIcon()));
 
@@ -397,9 +419,12 @@ class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
 
   private boolean ensureModuleCreated(MavenProject project) {
     Module existingModule = myMavenProjectToModule.get(project);
-    if (existingModule != null && existingModule != myPreviewModule) return false;
+    if (existingModule != null && existingModule != myPreviewModule) {
+      myCreatedModules.add(existingModule); // compatibility with workspace importer
+      return false;
+    }
     final String path = myMavenProjectToModulePath.get(project);
-    String moduleName = ModulePathKt.getModuleNameByFilePath(path);
+    String moduleName = ModulePath.Companion.getModuleNameByFilePath(path);
 
     // for some reason newModule opens the existing iml file, so we
     // have to remove it beforehand.

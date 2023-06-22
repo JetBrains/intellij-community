@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
@@ -38,8 +38,7 @@ import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.resolve.scopes.MemberScopeImpl
 import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
-import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.types.SimpleType
+import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.utils.Printer
 
 class CodeFragmentCodegenException(val reason: Exception) : Exception()
@@ -48,7 +47,7 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
 
     companion object {
         fun useIRFragmentCompiler(): Boolean =
-            Registry.get("debugger.kotlin.evaluator.use.jvm.ir.backend").asBoolean()
+            Registry.get("debugger.kotlin.evaluator.use.new.jvm.ir.backend").asBoolean()
     }
 
     data class CompilationResult(
@@ -60,11 +59,11 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
 
     fun compile(
         codeFragment: KtCodeFragment, filesToCompile: List<KtFile>,
-        bindingContext: BindingContext, moduleDescriptor: ModuleDescriptor
+        compilingStrategy: CodeFragmentCompilingStrategy, bindingContext: BindingContext, moduleDescriptor: ModuleDescriptor
     ): CompilationResult {
         val result = ReadAction.nonBlocking<Result<CompilationResult>> {
             try {
-                Result.success(doCompile(codeFragment, filesToCompile, bindingContext, moduleDescriptor))
+                Result.success(doCompile(codeFragment, filesToCompile, compilingStrategy, bindingContext, moduleDescriptor))
             } catch (ex: ProcessCanceledException) {
                 throw ex
             } catch (ex: Exception) {
@@ -74,17 +73,9 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
         return result.getOrThrow()
     }
 
-    private fun initBackend(codeFragment: KtCodeFragment): FragmentCompilerCodegen {
-        return if (useIRFragmentCompiler()) {
-            IRFragmentCompilerCodegen()
-        } else {
-            OldFragmentCompilerCodegen(codeFragment)
-        }
-    }
-
     private fun doCompile(
         codeFragment: KtCodeFragment, filesToCompile: List<KtFile>,
-        bindingContext: BindingContext, moduleDescriptor: ModuleDescriptor
+        compilingStrategy: CodeFragmentCompilingStrategy, bindingContext: BindingContext, moduleDescriptor: ModuleDescriptor
     ): CompilationResult {
         require(codeFragment is KtBlockCodeFragment || codeFragment is KtExpressionCodeFragment) {
             "Unsupported code fragment type: $codeFragment"
@@ -100,7 +91,7 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
         val defaultReturnType = moduleDescriptor.builtIns.unitType
         val returnType = getReturnType(codeFragment, bindingContext, defaultReturnType)
 
-        val fragmentCompilerBackend = initBackend(codeFragment)
+        val fragmentCompilerBackend = compilingStrategy.compilerBackend
 
         val compilerConfiguration = CompilerConfiguration().apply {
             languageVersionSettings = codeFragment.languageVersionSettings
@@ -134,6 +125,7 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
         try {
             KotlinCodegenFacade.compileCorrectFiles(generationState)
             return fragmentCompilerBackend.extractResult(methodDescriptor, parameterInfo, generationState).also {
+                compilingStrategy.onSuccess()
                 generationState.destroy()
             }
         } catch (e: ProcessCanceledException) {
@@ -194,10 +186,18 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
             CallableMemberDescriptor.Kind.SYNTHESIZED, classDescriptor.source
         )
 
+        val typeParameterUpperBoundEraser = TypeParameterUpperBoundEraser(ErasureProjectionComputer())
+        val erasureTypeAttributes = ErasureTypeAttributes(TypeUsage.COMMON)
+
+        fun upperBoundIfTypeParameter(type: KotlinType) =
+            TypeUtils.getTypeParameterDescriptorOrNull(type)
+                ?.let { typeParameterUpperBoundEraser.getErasedUpperBound(it, erasureTypeAttributes) }
+                ?: type
+
         val parameters = parameterInfo.parameters.mapIndexed { index, parameter ->
             ValueParameterDescriptorImpl(
                 methodDescriptor, null, index, Annotations.EMPTY, Name.identifier("p$index"),
-                parameter.targetType,
+                upperBoundIfTypeParameter(parameter.targetType),
                 declaresDefaultValue = false,
                 isCrossinline = false,
                 isNoinline = false,
@@ -208,7 +208,7 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
 
         methodDescriptor.initialize(
             null, classDescriptor.thisAsReceiverParameter, emptyList(), emptyList(),
-            parameters, returnType, Modality.FINAL, DescriptorVisibilities.PUBLIC
+            parameters, upperBoundIfTypeParameter(returnType), Modality.FINAL, DescriptorVisibilities.PUBLIC
         )
 
         val memberScope = EvaluatorMemberScopeForMethod(methodDescriptor)

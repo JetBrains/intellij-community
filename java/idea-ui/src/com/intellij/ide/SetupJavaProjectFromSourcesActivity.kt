@@ -14,13 +14,12 @@ import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl
 import com.intellij.notification.*
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.withBackgroundProgressIndicator
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil
@@ -34,16 +33,18 @@ import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isOpenedByPlatformProcessor
 import com.intellij.projectImport.ProjectOpenProcessor
 import com.intellij.util.SystemProperties
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 import javax.swing.event.HyperlinkEvent
 
-private val NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Build Script Found")
-private val SETUP_JAVA_PROJECT_IS_DISABLED = SystemProperties.getBooleanProperty("idea.java.project.setup.disabled", false)
+private val NOTIFICATION_GROUP: NotificationGroup
+  get() = NotificationGroupManager.getInstance().getNotificationGroup("Build Script Found")
 
 private const val SCAN_DEPTH_LIMIT = 5
 private const val MAX_ROOTS_IN_TRIVIAL_PROJECT_STRUCTURE = 3
 
-internal class SetupJavaProjectFromSourcesActivity : ProjectActivity {
+private class SetupJavaProjectFromSourcesActivity : ProjectActivity {
   init {
     if (ApplicationManager.getApplication().isHeadlessEnvironment) {
       throw ExtensionNotApplicableException.create()
@@ -51,157 +52,170 @@ internal class SetupJavaProjectFromSourcesActivity : ProjectActivity {
   }
 
   override suspend fun execute(project: Project) {
-    if (SETUP_JAVA_PROJECT_IS_DISABLED) {
+    if (SystemProperties.getBooleanProperty("idea.java.project.setup.disabled", false)) {
       return
     }
 
     if (!project.isOpenedByPlatformProcessor()) {
       return
     }
+
     val projectDir = project.baseDir ?: return
 
     // todo get current project structure, and later setup from sources only if it wasn't manually changed by the user
 
     val title = JavaUiBundle.message("task.searching.for.project.sources")
 
-    withBackgroundProgressIndicator(project, title) {
+    withBackgroundProgress(project, title) {
       val importers = searchImporters(projectDir)
       if (!importers.isEmpty) {
-        showNotificationToImport(project, projectDir, importers)
+        withContext(Dispatchers.EDT) {
+          setCompilerOutputPath(project, "${projectDir.path}/out")
+        }
+                
+        blockingContext {
+          showNotificationToImport(project, projectDir, importers)
+        }
       }
       else {
-        setupFromSources(project = project, projectDir = projectDir, indicator = ProgressManager.getGlobalProgressIndicator())
+        setupFromSources(project = project, projectDir = projectDir)
       }
     }
   }
+}
 
-  private fun searchImporters(projectDirectory: VirtualFile): ArrayListMultimap<ProjectOpenProcessor, VirtualFile> {
-    val providersAndFiles = ArrayListMultimap.create<ProjectOpenProcessor, VirtualFile>()
-    VfsUtil.visitChildrenRecursively(projectDirectory, object : VirtualFileVisitor<Void>(NO_FOLLOW_SYMLINKS, limit(SCAN_DEPTH_LIMIT)) {
-      override fun visitFileEx(file: VirtualFile): Result {
-        if (file.isDirectory && FileTypeRegistry.getInstance().isFileIgnored(file)) {
-          return SKIP_CHILDREN
-        }
+private fun searchImporters(projectDirectory: VirtualFile): ArrayListMultimap<ProjectOpenProcessor, VirtualFile> {
+  val providersAndFiles = ArrayListMultimap.create<ProjectOpenProcessor, VirtualFile>()
+  VfsUtil.visitChildrenRecursively(projectDirectory, object : VirtualFileVisitor<Void>(NO_FOLLOW_SYMLINKS, limit(SCAN_DEPTH_LIMIT)) {
+    override fun visitFileEx(file: VirtualFile): Result {
+      if (file.isDirectory && FileTypeRegistry.getInstance().isFileIgnored(file)) {
+        return SKIP_CHILDREN
+      }
 
-        val providers = ProjectOpenProcessor.EXTENSION_POINT_NAME.extensionList.filter { provider ->
-          provider.canOpenProject(file) &&
-          provider !is PlatformProjectOpenProcessor
-        }
+      val providers = ProjectOpenProcessor.EXTENSION_POINT_NAME.extensionList.filter { provider ->
+        provider.canOpenProject(file) &&
+        provider !is PlatformProjectOpenProcessor
+      }
 
-        for (provider in providers) {
-          val files = providersAndFiles.get(provider)
-          if (files.isEmpty()) {
-            files.add(file)
-          }
-          else if (!VfsUtilCore.isAncestor(files.last(), file, true)) { // add only top-level file/folders for each of providers
-            files.add(file)
-          }
+      for (provider in providers) {
+        val files = providersAndFiles.get(provider)
+        if (files.isEmpty()) {
+          files.add(file)
         }
-        return CONTINUE
+        else if (!VfsUtilCore.isAncestor(files.last(), file, true)) { // add only top-level file/folders for each of providers
+          files.add(file)
+        }
+      }
+      return CONTINUE
+    }
+  })
+  return providersAndFiles
+}
+
+
+private fun showNotificationToImport(project: Project,
+                                     projectDirectory: VirtualFile,
+                                     providersAndFiles: ArrayListMultimap<ProjectOpenProcessor, VirtualFile>) {
+  val showFileInProjectViewListener = object : NotificationListener.Adapter() {
+    override fun hyperlinkActivated(notification: Notification, e: HyperlinkEvent) {
+      val file = LocalFileSystem.getInstance().findFileByPath(e.description)
+      ProjectViewSelectInTarget.select(project, file, ProjectViewPane.ID, null, file, true)
+    }
+  }
+
+  val title: String
+  val content: String
+  if (providersAndFiles.keySet().size == 1) {
+    val processor = providersAndFiles.keySet().single()
+    val files = providersAndFiles[processor]
+    title = JavaUiBundle.message("build.script.found.notification", processor.name, files.size)
+    content = filesToLinks(files, projectDirectory)
+  }
+  else {
+    title = JavaUiBundle.message("build.scripts.from.multiple.providers.found.notification")
+    content = formatContent(providersAndFiles, projectDirectory)
+  }
+
+  val notification = NOTIFICATION_GROUP.createNotification(title, content, NotificationType.INFORMATION)
+    .setSuggestionType(true)
+    .setListener(showFileInProjectViewListener)
+
+  if (providersAndFiles.keySet().all { it.canImportProjectAfterwards() }) {
+    val actionName = JavaUiBundle.message("build.script.found.notification.import", providersAndFiles.keySet().size)
+    notification.addAction(NotificationAction.createSimpleExpiring(actionName) {
+      for ((provider, files) in providersAndFiles.asMap()) {
+        for (file in files) {
+          provider.importProjectAfterwards(project, file)
+        }
       }
     })
-    return providersAndFiles
   }
 
-  private fun showNotificationToImport(project: Project,
-                                       projectDirectory: VirtualFile,
-                                       providersAndFiles: ArrayListMultimap<ProjectOpenProcessor, VirtualFile>) {
-    val showFileInProjectViewListener = object : NotificationListener.Adapter() {
-      override fun hyperlinkActivated(notification: Notification, e: HyperlinkEvent) {
-        val file = LocalFileSystem.getInstance().findFileByPath(e.description)
-        ProjectViewSelectInTarget.select(project, file, ProjectViewPane.ID, null, file, true)
-      }
-    }
+  notification.notify(project)
+}
 
-    val title: String
-    val content: String
-    if (providersAndFiles.keySet().size == 1) {
-      val processor = providersAndFiles.keySet().single()
-      val files = providersAndFiles[processor]
-      title = JavaUiBundle.message("build.script.found.notification", processor.name, files.size)
-      content = filesToLinks(files, projectDirectory)
-    }
-    else {
-      title = JavaUiBundle.message("build.scripts.from.multiple.providers.found.notification")
-      content = formatContent(providersAndFiles, projectDirectory)
-    }
 
-    val notification = NOTIFICATION_GROUP.createNotification(title, content, NotificationType.INFORMATION)
-      .setSuggestionType(true)
-      .setListener(showFileInProjectViewListener)
+@NlsSafe
+private fun formatContent(providersAndFiles: Multimap<ProjectOpenProcessor, VirtualFile>,
+                          projectDirectory: VirtualFile): String {
+  return providersAndFiles.asMap().entries.joinToString("<br/>") { (provider, files) ->
+    provider.name + ": " + filesToLinks(files, projectDirectory)
+  }
+}
 
-    if (providersAndFiles.keySet().all { it.canImportProjectAfterwards() }) {
-      val actionName = JavaUiBundle.message("build.script.found.notification.import", providersAndFiles.keySet().size)
-      notification.addAction(NotificationAction.createSimpleExpiring(actionName) {
-        for ((provider, files) in providersAndFiles.asMap()) {
-          for (file in files) {
-            provider.importProjectAfterwards(project, file)
-          }
+@NlsSafe
+private fun filesToLinks(files: MutableCollection<VirtualFile>, projectDirectory: VirtualFile): String {
+  return files.joinToString { file -> "<a href='${file.path}'>${VfsUtil.getRelativePath(file, projectDirectory)}</a>" }
+}
+
+private suspend fun setupFromSources(project: Project, projectDir: VirtualFile) {
+  val builder = ProjectFromSourcesBuilderImpl(WizardContext(project, project), ModulesProvider.EMPTY_MODULES_PROVIDER)
+  val projectPath = projectDir.path
+  builder.baseProjectPath = projectPath
+  val roots = RootDetectionProcessor.detectRoots(File(projectPath))
+  val rootsMap = RootDetectionProcessor.createRootsMap(roots)
+  builder.setupProjectStructure(rootsMap)
+  for (detector in rootsMap.keySet()) {
+    val descriptor = builder.getProjectDescriptor(detector)
+
+    val moduleInsight = JavaModuleInsight(DelegatingProgressIndicator(), builder.existingModuleNames, builder.existingProjectLibraryNames)
+    descriptor.libraries = LibrariesDetectionStep.calculate(moduleInsight, builder)
+
+    moduleInsight.scanModules()
+    descriptor.modules = moduleInsight.suggestedModules
+  }
+
+  withContext(Dispatchers.EDT) {
+    builder.commit(project)
+
+    val compileOutput = if (projectPath.endsWith('/')) "${projectPath}out" else "$projectPath/out"
+    setCompilerOutputPath(project, compileOutput)
+  }
+
+  val modules = ModuleManager.getInstance(project).modules
+  if (modules.any { it is JavaModuleType }) {
+    withRawProgressReporter {
+      coroutineToIndicator {
+        findAndSetupSdk(project, ProgressManager.getGlobalProgressIndicator(), JavaSdk.getInstance()) {
+          JavaSdkUtil.applyJdkToProject(project, it)
         }
-      })
-    }
-
-    notification.notify(project)
-  }
-
-  @NlsSafe
-  private fun formatContent(providersAndFiles: Multimap<ProjectOpenProcessor, VirtualFile>,
-                            projectDirectory: VirtualFile): String {
-    return providersAndFiles.asMap().entries.joinToString("<br/>") { (provider, files) ->
-      provider.name + ": " + filesToLinks(files, projectDirectory)
-    }
-  }
-
-  @NlsSafe
-  private fun filesToLinks(files: MutableCollection<VirtualFile>, projectDirectory: VirtualFile) =
-    files.joinToString { file ->
-      "<a href='${file.path}'>${VfsUtil.getRelativePath(file, projectDirectory)}</a>"
-  }
-
-  private fun setupFromSources(project: Project,
-                               projectDir: VirtualFile,
-                               indicator: ProgressIndicator) {
-    val builder = ProjectFromSourcesBuilderImpl(WizardContext(project, project), ModulesProvider.EMPTY_MODULES_PROVIDER)
-    val projectPath = projectDir.path
-    builder.baseProjectPath = projectPath
-    val roots = RootDetectionProcessor.detectRoots(File(projectPath))
-    val rootsMap = RootDetectionProcessor.createRootsMap(roots)
-    builder.setupProjectStructure(rootsMap)
-    for (detector in rootsMap.keySet()) {
-      val descriptor = builder.getProjectDescriptor(detector)
-
-      val moduleInsight = JavaModuleInsight(DelegatingProgressIndicator(), builder.existingModuleNames, builder.existingProjectLibraryNames)
-      descriptor.libraries = LibrariesDetectionStep.calculate(moduleInsight, builder)
-
-      moduleInsight.scanModules()
-      descriptor.modules = moduleInsight.suggestedModules
-    }
-
-    ApplicationManager.getApplication().invokeAndWait {
-      builder.commit(project)
-
-      val compileOutput = if (projectPath.endsWith('/')) "${projectPath}out" else "$projectPath/out"
-      setCompilerOutputPath(project, compileOutput)
-    }
-
-    val modules = ModuleManager.getInstance(project).modules
-    if (modules.any { it is JavaModuleType }) {
-      findAndSetupSdk(project, indicator, JavaSdk.getInstance()) {
-        JavaSdkUtil.applyJdkToProject(project, it)
       }
     }
-
-    if (roots.size > MAX_ROOTS_IN_TRIVIAL_PROJECT_STRUCTURE) {
-      notifyAboutAutomaticProjectStructure(project)
-    }
   }
 
-  private fun notifyAboutAutomaticProjectStructure(project: Project) {
-    NOTIFICATION_GROUP.createNotification(JavaUiBundle.message("project.structure.automatically.detected.notification"), NotificationType.INFORMATION)
-      .addAction(NotificationAction.createSimpleExpiring(JavaUiBundle.message("project.structure.automatically.detected.notification.gotit.action")) {})
-      .addAction(NotificationAction.createSimpleExpiring(JavaUiBundle.message("project.structure.automatically.detected.notification.configure.action")) {
-        ProjectSettingsService.getInstance(project).openProjectSettings()
-      })
-      .notify(project)
+  if (roots.size > MAX_ROOTS_IN_TRIVIAL_PROJECT_STRUCTURE) {
+    notifyAboutAutomaticProjectStructure(project)
   }
+}
+
+private fun notifyAboutAutomaticProjectStructure(project: Project) {
+  NOTIFICATION_GROUP.createNotification(JavaUiBundle.message("project.structure.automatically.detected.notification"),
+                                        NotificationType.INFORMATION)
+    .addAction(NotificationAction.createSimpleExpiring(
+      JavaUiBundle.message("project.structure.automatically.detected.notification.gotit.action")) {})
+    .addAction(NotificationAction.createSimpleExpiring(
+      JavaUiBundle.message("project.structure.automatically.detected.notification.configure.action")) {
+      ProjectSettingsService.getInstance(project).openProjectSettings()
+    })
+    .notify(project)
 }

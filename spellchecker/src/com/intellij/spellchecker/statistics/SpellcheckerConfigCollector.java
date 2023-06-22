@@ -14,8 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.internal.statistic.beans.MetricEventFactoryKt.*;
-
 public final class SpellcheckerConfigCollector extends ProjectUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("spellchecker.settings.project", 2);
   private static final EventId1<Boolean> ALL_BUNDLED_ENABLED = GROUP.registerEvent("all.bundled.enabled",
@@ -38,7 +36,7 @@ public final class SpellcheckerConfigCollector extends ProjectUsagesCollector {
   protected @NotNull Set<MetricEvent> getMetrics(@NotNull Project project) {
     SpellCheckerSettings settings = SpellCheckerSettings.getInstance(project);
     Set<MetricEvent> result =
-      ContainerUtil.set(ALL_BUNDLED_ENABLED.metric(true),
+      ContainerUtil.newHashSet(ALL_BUNDLED_ENABLED.metric(true),
                         MAX_SPELLCHECKER_SUGGESTIONS.metric(5),
                         CUSTOM_DIC_COUNT.metric(settings.getCustomDictionariesPaths().size()),
                         USE_SINGLE_DICT_TO_SAVE.metric(settings.isUseSingleDictionaryToSave()));

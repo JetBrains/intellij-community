@@ -73,7 +73,7 @@ class JobExpiration(override val job: Job) : AbstractExpiration()
  * is really used, because registering a child Disposable within the Disposer tree happens lazily.
  */
 class DisposableExpiration(private val disposable: Disposable) : AbstractExpiration() {
-  override val job by lazy {
+  override val job: CompletableJob by lazy {
     SupervisorJob().also { job ->
       disposable.cancelJobOnDisposal(job, weaklyReferencedJob = true)  // the job doesn't leak through Disposer
     }
@@ -100,7 +100,7 @@ fun Expiration.Companion.composeExpiration(expirationSet: Collection<Expiration>
   }
 }
 
-fun Expiration.invokeOnExpiration(block: () -> Unit) = invokeOnExpiration(Runnable(block))
+fun Expiration.invokeOnExpiration(block: () -> Unit): Expiration.Handle = invokeOnExpiration(Runnable(block))
 
 fun Expiration.cancelJobOnExpiration(job: Job): Expiration.Handle {
   return invokeOnExpiration {

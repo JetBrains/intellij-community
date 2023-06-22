@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.ide.util.PropertiesComponent
@@ -27,15 +27,15 @@ private class MemorySizeConfigurator : ProjectActivity {
       LOG.info("Memory size configurator skipped: Unable to determine current -Xmx. VM options file is ${System.getProperty("jb.vmOptionsFile")}")
       return
     }
-    if (currentXmx > 750) {
+    if (currentXmx > DEFAULT_XMX) {
       // Memory has already been adjusted by the user manually
       return
     }
 
     val osMxBean = ManagementFactory.getOperatingSystemMXBean() as OperatingSystemMXBean
-    val totalPhysicalMemory = osMxBean.totalPhysicalMemorySize shr 20
+    val totalPhysicalMemory = osMxBean.totalMemorySize shr 20
 
-    val newXmx = MemorySizeConfiguratorService.getInstance().getSuggestedMemorySize(currentXmx, totalPhysicalMemory.toInt())
+    val newXmx = MemorySizeConfiguratorService.getInstance().getSuggestedMemorySize(totalPhysicalMemory.toInt())
 
     val currentXms = max(VMOptions.readOption(VMOptions.MemoryKind.MIN_HEAP, true),
                          VMOptions.readOption(VMOptions.MemoryKind.MIN_HEAP, false))
@@ -55,8 +55,17 @@ private class MemorySizeConfigurator : ProjectActivity {
     PropertiesComponent.getInstance().setValue("ide.memory.adjusted", true)
   }
 
+  @Suppress("CompanionObjectInExtension")
   companion object {
     val LOG = Logger.getInstance(MemorySizeConfigurator::class.java)
+
+    /** Must be the same as [org.jetbrains.intellij.build.impl.VmOptionsGenerator.DEFAULT_XMX]. */
+    const val DEFAULT_XMX = 2048
+    const val MAXIMUM_SUGGESTED_XMX = 4096
+
+    init {
+      require(MAXIMUM_SUGGESTED_XMX >= DEFAULT_XMX * 2)
+    }
   }
 }
 
@@ -66,7 +75,7 @@ open class MemorySizeConfiguratorService {
     fun getInstance(): MemorySizeConfiguratorService = service()
   }
 
-  open fun getSuggestedMemorySize(currentXmx: Int, totalPhysicalMemory: Int): Int {
-    return (totalPhysicalMemory / 8).coerceIn(750, 2048)
-  }
+  open fun getSuggestedMemorySize(totalPhysicalMemory: Int): Int =
+    if (MemorySizeConfigurator.DEFAULT_XMX > totalPhysicalMemory) 750.coerceAtMost(totalPhysicalMemory) // 750 is the old default
+    else (totalPhysicalMemory / 8).coerceIn(MemorySizeConfigurator.DEFAULT_XMX, MemorySizeConfigurator.MAXIMUM_SUGGESTED_XMX)
 }

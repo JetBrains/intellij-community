@@ -39,11 +39,6 @@ public final class JdkUtil {
    * see <a href="https://youtrack.jetbrains.com/issue/IDEA-126859#comment=27-778948">IDEA-126859</a> for additional details
    */
   public static final String PROPERTY_DO_NOT_ESCAPE_CLASSPATH_URL = "idea.do.not.escape.classpath.url";
-  /**
-   * @deprecated Please use ExecutionUtil.PROPERTY_DYNAMIC_CLASSPATH
-   */
-  @Deprecated(forRemoval = true)
-  public static final String PROPERTY_DYNAMIC_CLASSPATH = ExecutionUtil.PROPERTY_DYNAMIC_CLASSPATH;
 
   private JdkUtil() { }
 

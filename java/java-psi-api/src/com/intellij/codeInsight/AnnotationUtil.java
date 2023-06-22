@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.project.Project;
@@ -15,7 +15,6 @@ import org.jetbrains.annotations.*;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
-import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -187,7 +186,8 @@ public class AnnotationUtil {
     final PsiAnnotation[] annotations = modifierList.getAnnotations();
     ArrayList<PsiAnnotation> result = null;
     for (final PsiAnnotation psiAnnotation : annotations) {
-      if (annotationNames.contains(psiAnnotation.getQualifiedName())) {
+      String qualifiedName = psiAnnotation.getQualifiedName();
+      if (qualifiedName != null && annotationNames.contains(qualifiedName)) {
         if (result == null) result = new ArrayList<>();
         result.add(psiAnnotation);
       }
@@ -610,8 +610,7 @@ public class AnnotationUtil {
     PsiAnnotation annotation = findAnnotationInHierarchy(listOwner, Collections.singleton(annotationClass.getName()));
     if (annotation == null) return null;
     AnnotationInvocationHandler handler = new AnnotationInvocationHandler(annotationClass, annotation);
-    @SuppressWarnings("unchecked") T t = (T)Proxy.newProxyInstance(annotationClass.getClassLoader(), new Class<?>[]{annotationClass}, handler);
-    return t;
+    return ReflectionUtil.proxy(annotationClass, handler);
   }
 
   /**

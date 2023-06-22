@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment", "BlockingMethodInNonBlockingContext")
+@file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.idea
 
@@ -110,7 +110,7 @@ private fun disableInputMethodsImpl() {
 
 @Suppress("SSBasedInspection")
 private val LOG: Logger
-  get() = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
+  get() = Logger.getInstance("#com.intellij.ide.bootstrap.ApplicationLoader")
 
 // releases resources of input-methods support
 private fun freeIMRecursively(c: Component) {

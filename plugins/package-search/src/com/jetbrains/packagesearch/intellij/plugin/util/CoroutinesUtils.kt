@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.impl.ProgressManagerImpl
 import com.intellij.openapi.progress.impl.ProgressSuspender
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.util.flow.throttle
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.data.LoadingContainer
@@ -34,11 +35,33 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.scan
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
@@ -68,9 +91,16 @@ internal fun <T> Flow<T>.onEach(context: CoroutineContext, action: suspend (T) -
 internal fun <T, R> Flow<T>.map(context: CoroutineContext, action: suspend (T) -> R) =
     map { withContext(context) { action(it) } }
 
-suspend fun <T, R> Iterable<T>.parallelMap(transform: suspend CoroutineScope.(T) -> R) = coroutineScope {
-    map { async { transform(it) } }.awaitAll()
-}
+@ExperimentalStdlibApi
+private suspend fun currentCoroutineDispatcher() =
+    currentCoroutineContext()[CoroutineDispatcher] ?: error("Current coroutine has no dispatcher.")
+
+suspend fun <T, R> Iterable<T>.parallelMap(
+    maxConcurrency: Int = Runtime.getRuntime().availableProcessors(),
+    transform: suspend CoroutineScope.(T) -> R
+) =  withContext(currentCoroutineDispatcher().limitedParallelism(maxConcurrency)) {
+    map { async { transform(it) } }
+}.awaitAll()
 
 internal fun timer(each: Duration, emitAtStartup: Boolean = true) = flow {
     if (emitAtStartup) emit(Unit)
@@ -186,7 +216,7 @@ internal suspend fun showBackgroundLoadingBar(
                 @Suppress("HardCodedStringLiteral")
                 val channelsJob = launch {
                     if (isPausable) {
-                        ProgressSuspender.markSuspendable(indicator, PackageSearchBundle.message("packagesearch.ui.resume"))
+                        ProgressSuspender.markSuspendable(indicator as ProgressIndicatorEx, PackageSearchBundle.message("packagesearch.ui.resume"))
                             .isSuspendedFLow
                             .collectIn(this, isSuspendedChannel)
                     }
@@ -247,6 +277,7 @@ internal class BackgroundLoadingBarController(
     }
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("", ReplaceWith("com.intellij.openapi.application.writeAction(action)"))
 suspend fun <R> writeAction(action: () -> R): R = com.intellij.openapi.application.writeAction { action() }
 
@@ -276,4 +307,26 @@ internal fun <T> Flow<T>.replayOn(vararg replayFlows: Flow<*>) = channelFlow {
     var last: T? = null
     onEach { mutex.withLock { last = it } }.collectIn(this, this)
     merge(*replayFlows).collect { mutex.withLock { last?.let { send(it) } } }
+}
+
+internal fun <T1, T2, T3, T4, T5, T6, R> combine(
+    flow: Flow<T1>,
+    flow2: Flow<T2>,
+    flow3: Flow<T3>,
+    flow4: Flow<T4>,
+    flow5: Flow<T5>,
+    flow6: Flow<T6>,
+    transform: suspend (T1, T2, T3, T4, T5, T6) -> R
+): Flow<R> = combine(
+    combine(flow, flow2, flow3, ::Triple),
+    combine(flow4, flow5, flow6, ::Triple)
+) { t1, t2 ->
+    transform(
+        t1.first,
+        t1.second,
+        t1.third,
+        t2.first,
+        t2.second,
+        t2.third
+    )
 }

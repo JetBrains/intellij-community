@@ -16,6 +16,7 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -45,7 +46,7 @@ public class MapReplaceableByEnumMapInspection extends BaseInspection {
 
   @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     if (infos.length != 1) return null;
     PsiLocalVariable localVariable = (PsiLocalVariable)infos[0];
     PsiType[] parameters = CollectionReplaceableByEnumCollectionVisitor.extractParameterType(localVariable, 2);

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl;
 
 import com.intellij.compiler.ProblemsView;
@@ -10,6 +10,7 @@ import com.intellij.ide.errorTreeView.ErrorViewStructure;
 import com.intellij.ide.errorTreeView.GroupingElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -65,7 +66,7 @@ final class ProblemsViewImpl extends ProblemsView {
         doUpdateIcon(panel, toolWindow, null);
 
         myPanel = panel;
-      }, ModalityState.NON_MODAL);
+      }, ModalityState.nonModal());
     });
   }
 
@@ -84,7 +85,7 @@ final class ProblemsViewImpl extends ProblemsView {
       if (element instanceof GroupingElement) {
         if (scope != null) {
           final VirtualFile file = ((GroupingElement)element).getFile();
-          if (file != null && !scope.belongs(file.getUrl())) {
+          if (file != null && !ReadAction.compute(() -> scope.belongs(file.getUrl()))) {
             continue;
           }
         }

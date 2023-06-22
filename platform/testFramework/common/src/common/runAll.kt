@@ -40,11 +40,6 @@ fun runAllCatching(vararg actions: () -> Unit): Throwable? {
 }
 
 @TestOnly
-fun runAllCatching(actions: Iterable<() -> Unit>): Throwable? {
-  return actions.asSequence().runAllCatching()
-}
-
-@TestOnly
 fun <X> runAllCatching(items: Collection<X>, action: (X) -> Unit): Throwable? {
   return items.asSequence().map {
     {

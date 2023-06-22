@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.util.NotNullFactory;
@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Proxy;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -60,8 +59,7 @@ public final class ObjectUtils {
     }
     // java.lang.reflect.Proxy.ProxyClassFactory fails if the class is not available via the classloader.
     // We must use interface own classloader because classes from plugins are not available via ObjectUtils' classloader.
-    //noinspection unchecked
-    return (T)Proxy.newProxyInstance(ofInterface.getClassLoader(), new Class[]{ofInterface}, (__, method, args) -> {
+    return ReflectionUtil.proxy(ofInterface, (__, method, args) -> {
       if ("toString".equals(method.getName()) && args.length == 0) {
         return name;
       }
@@ -144,8 +142,9 @@ public final class ObjectUtils {
   }
 
   /**
-   * Do not use in Kotlin.
+   * @deprecated Use {@code if (obj != null) ...} instead
    */
+  @Deprecated
   public static <T> void consumeIfNotNull(@Nullable T obj, @NotNull Consumer<? super T> consumer) {
     if (obj != null) {
       consumer.consume(obj);

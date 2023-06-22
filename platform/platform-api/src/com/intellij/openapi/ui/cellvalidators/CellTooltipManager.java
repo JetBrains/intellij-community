@@ -44,7 +44,6 @@ public final class CellTooltipManager {
   private Dimension             popupSize;
   private boolean               isOverPopup;
   private boolean               isClosing;
-  private boolean               showUnderIcon;
   @ApiStatus.Experimental
   public CellTooltipManager(@NotNull Disposable parentDisposable) {
     this.parentDisposable = parentDisposable;
@@ -59,12 +58,6 @@ public final class CellTooltipManager {
   @ApiStatus.Experimental
   public CellTooltipManager withHyperlinkListener(@NotNull HyperlinkListener hyperlinkListener) {
     this.hyperlinkListener = hyperlinkListener;
-    return this;
-  }
-
-  @ApiStatus.Experimental
-  public CellTooltipManager showUnderIcon() {
-    showUnderIcon = true;
     return this;
   }
 
@@ -104,16 +97,6 @@ public final class CellTooltipManager {
           info = (ValidationInfo)unwrappedCellRenderer.getClientProperty(ValidatingTableCellRendererWrapper.CELL_VALIDATION_PROPERTY);
         }
       }
-      if (showUnderIcon) {
-        if (cellRenderer instanceof ValidatingTableCellRendererWrapper) {
-          Rectangle currentCell = cellComponentProvider.getCellRect(e);
-          Point point = e.getPoint();
-          point.translate(-currentCell.x, -currentCell.y);
-          if (point.x < currentCell.width - currentCell.height) {
-            info = null;
-          }
-        }
-      }
 
       if (info != null) {
         if (!info.equals(validationInfo)) {
@@ -139,14 +122,7 @@ public final class CellTooltipManager {
           Rectangle cellRect = cellComponentProvider.getCellRect(e);
           if (!cellRect.equals(this.cellRect)) {
             this.cellRect = cellRect;
-            Point point;
-            if (showUnderIcon) {
-              point = new Point(this.cellRect.x + this.cellRect.width - JBUIScale.scale(30),
-                                this.cellRect.y - JBUIScale.scale(6) - popupSize.height);
-            }
-            else {
-              point = new Point(this.cellRect.x + JBUIScale.scale(40), this.cellRect.y - JBUIScale.scale(6) - popupSize.height);
-            }
+            Point point = new Point(this.cellRect.x + JBUIScale.scale(40), this.cellRect.y - JBUIScale.scale(6) - popupSize.height);
             SwingUtilities.convertPointToScreen(point, cellComponentProvider.getOwner());
             cellPopup.setLocation(point);
           }
@@ -169,13 +145,7 @@ public final class CellTooltipManager {
       JComponent c = cellComponentProvider.getCellRendererComponent(e);
 
       Insets i = c != null ? c.getInsets() : JBInsets.emptyInsets();
-      Point point;
-      if (showUnderIcon) {
-        point = new Point(cellRect.x + cellRect.width - JBUIScale.scale(30), cellRect.y + i.top - JBUIScale.scale(6) - popupSize.height);
-      }
-      else {
-        point = new Point(cellRect.x + JBUIScale.scale(40), cellRect.y + i.top - JBUIScale.scale(6) - popupSize.height);
-      }
+      Point point = new Point(cellRect.x + JBUIScale.scale(40), cellRect.y + i.top - JBUIScale.scale(6) - popupSize.height);
       cellPopup.show(new RelativePoint(cellComponentProvider.getOwner(), point));
     }
   }

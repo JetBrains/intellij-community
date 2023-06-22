@@ -8,7 +8,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
-import com.intellij.navigation.TargetPresentation;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ToolbarLabelAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
@@ -32,6 +31,7 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -89,7 +89,7 @@ public class ImplementationViewComponent extends JPanel {
     return myElements != null && myElements.length > 0;
   }
 
-  private record FileDescriptor(@NotNull VirtualFile file, @NotNull TargetPresentation element) {
+  private record FileDescriptor(@NotNull VirtualFile file, int index, @NotNull TargetPresentation element) {
   }
 
   public ImplementationViewComponent(Collection<? extends ImplementationViewElement> elements,
@@ -353,10 +353,10 @@ public class ImplementationViewComponent extends JPanel {
       VirtualFile file = element.getContainingFile();
       if (file == null) continue;
       if (names.size() > 1) {
-        files.add(new FileDescriptor(file, getPresentation(element)));
+        files.add(new FileDescriptor(file, candidates.size(), getPresentation(element)));
       }
       else {
-        files.add(new FileDescriptor(file, getPresentation(element.getContainingMemberOrSelf())));
+        files.add(new FileDescriptor(file, candidates.size(), getPresentation(element.getContainingMemberOrSelf())));
       }
       candidates.add(element);
     }

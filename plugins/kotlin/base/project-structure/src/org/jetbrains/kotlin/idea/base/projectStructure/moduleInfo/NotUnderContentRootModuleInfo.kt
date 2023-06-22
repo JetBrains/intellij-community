@@ -36,7 +36,7 @@ class NotUnderContentRootModuleInfo(
         get() = KotlinBaseProjectStructureBundle.message("special.module.for.files.not.under.source.root")
 
     override val contentScope: GlobalSearchScope
-        get() = GlobalSearchScope.EMPTY_SCOPE
+        get() = file?.let(GlobalSearchScope::fileScope) ?: GlobalSearchScope.EMPTY_SCOPE
 
     //TODO: (module refactoring) dependency on runtime can be of use here
     override fun dependencies(): List<IdeaModuleInfo> = listOf(this)

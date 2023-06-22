@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
 import com.intellij.BundleBase;
@@ -13,8 +13,9 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.serviceContainer.NonInjectable;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.xmlb.annotations.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.function.Supplier;
 
 /**
  * Declares a named component that enables to configure settings.
@@ -51,17 +53,13 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
    * This causes a loading of plugin classes and increases the delay before showing the settings dialog.
    * It is highly recommended specifying the display name in XML to improve UI responsiveness.
    */
-  @Attribute("displayName")
-  @Nls(capitalization = Nls.Capitalization.Title)
-  public String displayName;
+  @Attribute("displayName") public @Nls(capitalization = Nls.Capitalization.Title) String displayName;
 
   /**
    * This attribute specifies the resource key in the specified {@link #bundle}.
    * This is another way to specify the {@link #displayName display name}.
    */
-  @Attribute("key")
-  @Nls(capitalization = Nls.Capitalization.Title)
-  public String key;
+  @Attribute("key") public @Nls(capitalization = Nls.Capitalization.Title) String key;
 
   /**
    * This attribute specifies the resource bundle that contains the specified {@link #key}.
@@ -70,30 +68,29 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
   @Attribute("bundle")
   public String bundle;
 
-  @NotNull
-  @NlsContexts.ConfigurableName
-  public String getDisplayName() {
+  public @NotNull @NlsContexts.ConfigurableName String getDisplayName() {
     if (displayName != null) {
       return displayName;
     }
 
     ResourceBundle resourceBundle = findBundle();
     if (resourceBundle == null || key == null) {
-      if (key == null) {
-        LOG.warn("Bundle key missed for " + displayName);
+      @NlsSafe String className;
+      if (providerClass == null) {
+        className = instanceClass == null ? implementationClass : instanceClass;
       }
       else {
-        LOG.warn("Bundle missed for " + displayName);
+        className = providerClass;
       }
 
-      if (providerClass == null) {
-        //noinspection HardCodedStringLiteral
-        return instanceClass == null ? implementationClass : instanceClass;
+      if (key == null) {
+        LOG.warn("Bundle key missed for " + className);
       }
       else {
-        //noinspection HardCodedStringLiteral
-        return providerClass;
+        LOG.warn("Bundle missed for " + key);
       }
+
+      return className;
     }
     else {
       return BundleBase.messageOrDefault(resourceBundle, key, null);
@@ -103,8 +100,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
   /**
    * @return a resource bundle using the specified base name or {@code null}
    */
-  @Nullable
-  public ResourceBundle findBundle() {
+  public @Nullable ResourceBundle findBundle() {
     String pathToBundle = findPathToBundle();
     if (pathToBundle == null) {
       // a path to bundle is not specified or cannot be found
@@ -114,8 +110,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
     return DynamicBundle.getResourceBundle(loader != null ? loader : getClass().getClassLoader(), pathToBundle);
   }
 
-  @Nullable
-  private String findPathToBundle() {
+  private @Nullable String findPathToBundle() {
     if (bundle == null && pluginDescriptor != null) {
       // can be unspecified
       return pluginDescriptor.getResourceBundleBaseName();
@@ -152,8 +147,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
   @Attribute("parentId")
   public String parentId;
 
-  @NotNull
-  public List<ConfigurableEP<?>> getChildren() {
+  public @NotNull List<ConfigurableEP<?>> getChildren() {
     for (ConfigurableEP<?> child : children) {
       child.componentManager = componentManager;
       child.pluginDescriptor = pluginDescriptor;
@@ -264,7 +258,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
   @Attribute("treeRenderer")
   public String treeRendererClass;
 
-  private final NotNullLazyValue<ObjectProducer> myProducer = NotNullLazyValue.atomicLazy(this::createProducer);
+  private final Supplier<ObjectProducer> producer = new SynchronizedClearableLazy<>(this::createProducer);
   private ComponentManager componentManager;
   private Project myProject;
 
@@ -290,8 +284,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
     componentManager = project;
   }
 
-  @NotNull
-  protected ObjectProducer createProducer() {
+  protected @NotNull ObjectProducer createProducer() {
     try {
       if (providerClass != null) {
         ConfigurableProvider provider = instantiateConfigurableProvider();
@@ -307,14 +300,16 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
         throw new PluginException("configurable class name is not set", pluginDescriptor == null ? null : pluginDescriptor.getPluginId());
       }
     }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
     catch (AssertionError | Exception | LinkageError error) {
       LOG.error(new PluginException(error, pluginDescriptor == null ? null : pluginDescriptor.getPluginId()));
     }
     return new ObjectProducer();
   }
 
-  @Nullable
-  public final ConfigurableProvider instantiateConfigurableProvider() {
+  public final @Nullable ConfigurableProvider instantiateConfigurableProvider() {
     return providerClass != null
            ? componentManager.instantiateClass(providerClass, pluginDescriptor)
            : null;
@@ -336,9 +331,8 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
     }
   }
 
-  @Nullable
-  public T createConfigurable() {
-    ObjectProducer producer = myProducer.getValue();
+  public @Nullable T createConfigurable() {
+    ObjectProducer producer = this.producer.get();
     if (producer.canCreateElement()) {
       @SuppressWarnings("unchecked")
       T configurable = (T)producer.createElement();
@@ -347,8 +341,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
     return null;
   }
 
-  @Nullable
-  public ConfigurableTreeRenderer createTreeRenderer() {
+  public @Nullable ConfigurableTreeRenderer createTreeRenderer() {
     if (treeRendererClass == null) {
       return null;
     }
@@ -374,7 +367,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
   }
 
   public boolean canCreateConfigurable() {
-    return myProducer.getValue().canCreateElement();
+    return producer.get().canCreateElement();
   }
 
   /**
@@ -383,9 +376,8 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
    *
    * @return the configurable's type or {@code null}
    */
-  @Nullable
-  public Class<?> getConfigurableType() {
-    return myProducer.getValue().getType();
+  public @Nullable Class<?> getConfigurableType() {
+    return producer.get().getType();
   }
 
   protected static class ObjectProducer {
@@ -403,8 +395,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
   }
 
   private static final class ProviderProducer extends ObjectProducer {
-    @NotNull
-    private final ConfigurableProvider myProvider;
+    private final @NotNull ConfigurableProvider myProvider;
 
     private ProviderProducer(@NotNull ConfigurableProvider provider) {
       myProvider = provider;

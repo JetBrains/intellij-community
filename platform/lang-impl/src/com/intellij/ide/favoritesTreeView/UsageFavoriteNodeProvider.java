@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -55,7 +54,7 @@ public class UsageFavoriteNodeProvider extends FavoriteNodeProvider {
   private static TreeSet<WorkingSetSerializable> createSet() {
     return new TreeSet<>((o1, o2) -> {
       assert o1.getId().equals(o2.getId());
-      return Comparing.compare(o1.getVersion(), o2.getVersion());
+      return Integer.compare(o1.getVersion(), o2.getVersion());
     });
   }
 

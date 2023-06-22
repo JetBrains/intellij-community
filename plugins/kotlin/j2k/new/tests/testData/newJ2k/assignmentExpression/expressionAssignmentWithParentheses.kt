@@ -10,5 +10,7 @@ internal object Test {
         while (b.also { a = it });
         do {
         } while (b.let { a = a xor it; a })
+        var i = 1
+        println((i + 1).also { i = it })
     }
 }

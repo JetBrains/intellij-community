@@ -1,4 +1,4 @@
-// "Create actual function for module testProjectName.main (JVM)" "true"
+// "Add missing actual declarations" "true"
 // ACTION: Convert function to property
 
 package my.pack

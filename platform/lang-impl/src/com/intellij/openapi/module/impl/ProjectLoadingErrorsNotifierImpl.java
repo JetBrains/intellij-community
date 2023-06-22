@@ -2,10 +2,7 @@
 package com.intellij.openapi.module.impl;
 
 import com.intellij.CommonBundle;
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginFeatureService;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.PluginSet;
+import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.advertiser.FeaturePluginData;
 import com.intellij.ide.plugins.advertiser.PluginData;
 import com.intellij.notification.NotificationAction;
@@ -78,8 +75,7 @@ public class ProjectLoadingErrorsNotifierImpl extends ProjectLoadingErrorsNotifi
 
       ConfigurationErrorType type = entry.getKey();
       String featureType = type.getFeatureType();
-      if (featureType != null &&
-          IdeaPluginDescriptorImpl.isOnDemandEnabled()) {
+      if (featureType != null && IdeaPluginDescriptorImplKt.isOnDemandPluginEnabled()) {
         descriptions.removeIf(isConfigurableLater(featureType));
       }
       if (descriptions.isEmpty()) {

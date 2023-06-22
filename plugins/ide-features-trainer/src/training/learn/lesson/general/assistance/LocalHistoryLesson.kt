@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.learn.lesson.general.assistance
 
 import com.intellij.CommonBundle
@@ -57,7 +57,8 @@ import java.awt.Rectangle
 import java.util.concurrent.CompletableFuture
 import javax.swing.JFrame
 
-class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.message("local.history.lesson.name")) {
+class LocalHistoryLesson(private val helpUrl: String = "local-history.html")
+  : KLesson("CodeAssistance.LocalHistory", LessonsBundle.message("local.history.lesson.name")) {
   override val languageId = "yaml"
   override val lessonType = LessonType.SCRATCH
   override val properties = LessonProperties(availableSince = "212.5284")
@@ -122,7 +123,7 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
 
     caret(textToDelete, select = true)
 
-    prepareRuntimeTask(ModalityState.NON_MODAL) {
+    prepareRuntimeTask(ModalityState.nonModal()) {
       FileDocumentManager.getInstance().saveDocument(editor.document)
     }
 
@@ -384,6 +385,6 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("local.history.help.link"),
-         LessonUtil.getHelpLink("local-history.html")),
+         LessonUtil.getHelpLink(helpUrl)),
   )
 }

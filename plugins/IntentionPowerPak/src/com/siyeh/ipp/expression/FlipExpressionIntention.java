@@ -15,8 +15,7 @@
  */
 package com.siyeh.ipp.expression;
 
-import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiJavaToken;
@@ -27,11 +26,11 @@ import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ipp.base.MutablyNamedIntention;
+import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class FlipExpressionIntention extends MutablyNamedIntention {
+public class FlipExpressionIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -39,7 +38,7 @@ public class FlipExpressionIntention extends MutablyNamedIntention {
   }
 
   @Override
-  public String getTextForElement(PsiElement element) {
+  public String getTextForElement(@NotNull PsiElement element) {
     final PsiPolyadicExpression expression = (PsiPolyadicExpression)element.getParent();
     final PsiExpression[] operands = expression.getOperands();
     final PsiJavaToken sign = expression.getTokenBeforeOperand(operands[1]);
@@ -61,8 +60,9 @@ public class FlipExpressionIntention extends MutablyNamedIntention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  protected void processIntention(@NotNull ActionContext context, @NotNull ModPsiUpdater updater, @NotNull PsiElement element) {
     final PsiJavaToken token = (PsiJavaToken)element;
+    int offset = context.offset();
     final PsiElement parent = token.getParent();
     if (!(parent instanceof PsiPolyadicExpression polyadicExpression)) {
       return;
@@ -86,13 +86,6 @@ public class FlipExpressionIntention extends MutablyNamedIntention {
     newExpression.append(prevOperand);
 
     PsiReplacementUtil.replaceExpression(polyadicExpression, newExpression.toString(), commentTracker);
-  }
-
-  @Override
-  protected void processIntention(Editor editor, @NotNull PsiElement element) {
-    final CaretModel caretModel = editor.getCaretModel();
-    final int offset = caretModel.getOffset();
-    super.processIntention(editor, element);
-    caretModel.moveToOffset(offset);
+    updater.moveTo(offset);
   }
 }

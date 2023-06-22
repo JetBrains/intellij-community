@@ -9,7 +9,6 @@ import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
-import com.intellij.ide.wizard.setupProjectFromBuilder
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
@@ -21,7 +20,6 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.asSafely
 import com.intellij.util.download.DownloadableFileSetVersions
-import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.config.loadLatestGroovyVersions
@@ -81,22 +79,12 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
     }
 
     override fun setupProject(project: Project) {
-      val groovySdkVersion = groovySdk.getVersion() ?: GROOVY_SDK_FALLBACK_VERSION
-      val builder = MavenGroovyNewProjectBuilder(groovySdkVersion).apply {
-        moduleJdk = sdk
-        name = parentStep.name
-        contentEntryPath = "${parentStep.path}/${parentStep.name}"
-
-        isCreatingNewProject = context.isCreatingNewProject
-
-        parentProject = parentData
-        aggregatorProject = parentData
-        projectId = MavenId(groupId, artifactId, version)
-        isInheritGroupId = parentData?.mavenId?.groupId == groupId
-        isInheritVersion = parentData?.mavenId?.version == version
-        createSampleCode = addSampleCode
+      linkMavenProject(project, MavenGroovyNewProjectBuilder()) { builder ->
+        groovySdk.getVersion()?.let { groovySdkVersion ->
+          builder.groovySdkVersion = groovySdkVersion
+        }
+        builder.createSampleCode = addSampleCode
       }
-      setupProjectFromBuilder(project, builder)
     }
 
     private fun ValidationInfoBuilder.validateGroovySdk(sdk: DistributionInfo?): ValidationInfo? {
@@ -141,7 +129,9 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
   private class AssetsStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
 
     override fun setupAssets(project: Project) {
-      addAssets(StandardAssetsProvider().getMavenIgnoreAssets())
+      if (context.isCreatingNewProject) {
+        addAssets(StandardAssetsProvider().getMavenIgnoreAssets())
+      }
     }
   }
 }

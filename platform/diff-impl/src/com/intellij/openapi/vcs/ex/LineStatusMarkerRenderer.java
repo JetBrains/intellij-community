@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.ex;
 
 import com.intellij.diff.util.DiffDrawUtil;
@@ -16,10 +16,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.markup.ActiveGutterRenderer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.MarkupEditorFilter;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -270,7 +267,7 @@ public abstract class LineStatusMarkerRenderer {
   }
 
 
-  private class MyActiveGutterRenderer implements ActiveGutterRenderer {
+  private class MyActiveGutterRenderer implements ActiveGutterRenderer, LineMarkerRendererEx {
     @Override
     public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {
       if (shouldPaintGutter()) {
@@ -296,6 +293,11 @@ public abstract class LineStatusMarkerRenderer {
     public Rectangle calcBounds(@NotNull Editor editor, int lineNum, @NotNull Rectangle preferredBounds) {
       if (!shouldPaintGutter()) return new Rectangle(-1, -1, 0, 0);
       return LineStatusMarkerRenderer.this.calcBounds(editor, lineNum, preferredBounds);
+    }
+
+    @Override
+    public @NotNull Position getPosition() {
+      return Position.CUSTOM;
     }
 
     @NotNull

@@ -1,5 +1,5 @@
 class Test {
-    var foo = 1
+    var foo: Int = 1
 
     init {
         foo = 2

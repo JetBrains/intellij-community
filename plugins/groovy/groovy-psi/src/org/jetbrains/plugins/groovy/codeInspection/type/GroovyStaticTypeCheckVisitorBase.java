@@ -30,7 +30,7 @@ public abstract class GroovyStaticTypeCheckVisitorBase extends GroovyTypeCheckVi
   @Override
   protected abstract void registerError(@NotNull PsiElement location,
                                         @InspectionMessage @NotNull String description,
-                                        LocalQuickFix @Nullable [] fixes,
+                                        @NotNull LocalQuickFix @Nullable [] fixes,
                                         @NotNull ProblemHighlightType highlightType);
 
   @Override

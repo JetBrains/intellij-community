@@ -3,7 +3,9 @@ package org.jetbrains.plugins.github.ui.cloneDialog
 
 import com.intellij.collaboration.async.disposingMainScope
 import com.intellij.collaboration.auth.ui.CompactAccountsPanelFactory
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.util.LinkActionMouseAdapter
 import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.dvcs.repo.ClonePathProvider
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
@@ -26,7 +28,9 @@ import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.ui.*
+import com.intellij.ui.CollectionListModel
+import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.Align
@@ -59,7 +63,10 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.*
 import java.awt.event.ActionEvent
 import java.nio.file.Paths
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.JComponent
+import javax.swing.JSeparator
+import javax.swing.ListModel
 import javax.swing.event.DocumentEvent
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
@@ -110,7 +117,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
       isFocusable = false
       selectionModel = loader.listSelectionModel
     }.also {
-      val mouseAdapter = GHRepositoryMouseAdapter(it)
+      val mouseAdapter = LinkActionMouseAdapter(it)
       it.addMouseListener(mouseAdapter)
       it.addMouseMotionListener(mouseAdapter)
       it.addListSelectionListener { evt ->
@@ -161,7 +168,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
           .resizableColumn()
           .align(Align.FILL)
       }.resizableRow()
-      row(GithubBundle.message("clone.dialog.directory.field")) {
+      row(CollaborationToolsBundle.message("clone.dialog.directory.to.clone.label.text")) {
         cell(directoryField)
           .align(AlignX.FILL)
           .validationOnApply {
@@ -176,7 +183,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
   private inner class ErrorHandler : GHRepositoryListCellRenderer.ErrorHandler {
 
     override fun getPresentableText(error: Throwable): @Nls String = when (error) {
-      is GithubMissingTokenException -> GithubBundle.message("account.token.missing")
+      is GithubMissingTokenException -> CollaborationToolsBundle.message("account.token.missing")
       is GithubAuthenticationException -> GithubBundle.message("credentials.invalid.auth.data", "")
       else -> GithubBundle.message("clone.error.load.repositories")
     }
@@ -272,11 +279,12 @@ internal abstract class GHCloneDialogExtensionComponentBase(
     val parent = Paths.get(directoryField.text).toAbsolutePath().parent
     val destinationValidation = CloneDvcsValidationUtils.createDestination(parent.toString())
     if (destinationValidation != null) {
-      LOG.error("Unable to create destination directory", destinationValidation.message)
+      LOG.error(CollaborationToolsBundle.message("clone.dialog.error.unable.to.create.destination.directory"),
+                destinationValidation.message)
       GithubNotifications.showError(project,
                                     GithubNotificationIdsHolder.CLONE_UNABLE_TO_CREATE_DESTINATION_DIR,
-                                    GithubBundle.message("clone.dialog.clone.failed"),
-                                    GithubBundle.message("clone.error.unable.to.create.dest.dir"))
+                                    CollaborationToolsBundle.message("clone.dialog.clone.failed"),
+                                    CollaborationToolsBundle.message("clone.dialog.error.unable.to.find.destination.directory"))
       return
     }
 
@@ -286,11 +294,11 @@ internal abstract class GHCloneDialogExtensionComponentBase(
       destinationParent = lfs.refreshAndFindFileByIoFile(parent.toFile())
     }
     if (destinationParent == null) {
-      LOG.error("Clone Failed. Destination doesn't exist")
+      LOG.error(CollaborationToolsBundle.message("clone.dialog.error.destination.not.exist"))
       GithubNotifications.showError(project,
                                     GithubNotificationIdsHolder.CLONE_UNABLE_TO_FIND_DESTINATION,
-                                    GithubBundle.message("clone.dialog.clone.failed"),
-                                    GithubBundle.message("clone.error.unable.to.find.dest"))
+                                    CollaborationToolsBundle.message("clone.dialog.clone.failed"),
+                                    CollaborationToolsBundle.message("clone.dialog.error.unable.to.find.destination.directory"))
       return
     }
     val directoryName = Paths.get(directoryField.text).fileName.toString()
@@ -300,7 +308,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
   }
 
   override fun onComponentSelected() {
-    dialogStateListener.onOkActionNameChanged(GithubBundle.message("clone.button"))
+    dialogStateListener.onOkActionNameChanged(message("clone.button"))
     updateSelectedUrl()
 
     val focusManager = IdeFocusManager.getInstance(project)

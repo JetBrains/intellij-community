@@ -3,10 +3,8 @@
 package org.jetbrains.kotlin.idea.gradleJava.configuration.mpp
 
 import com.intellij.openapi.externalSystem.model.DataNode
-import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import com.intellij.openapi.externalSystem.model.project.ModuleData
-import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.Key
@@ -19,6 +17,7 @@ import com.intellij.util.text.VersionComparatorUtil
 import org.gradle.tooling.model.UnsupportedMethodException
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
+import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.ManualLanguageFeatureSetting
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -27,21 +26,18 @@ import org.jetbrains.kotlin.idea.gradle.configuration.*
 import org.jetbrains.kotlin.idea.gradle.configuration.utils.UnsafeTestSourceSetHeuristicApi
 import org.jetbrains.kotlin.idea.gradle.configuration.utils.predictedProductionSourceSetName
 import org.jetbrains.kotlin.idea.gradleJava.configuration.*
-import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver.Companion.resourceType
-import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver.Companion.sourceType
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.KotlinMppGradleProjectResolverExtension.Result.Skip
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.fullName
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinCompilationImpl
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
-import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedExtractedArgsInfo
-import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedSerializedArgsInfo
 import org.jetbrains.kotlin.idea.gradleTooling.resolveAllDependsOnSourceSets
 import org.jetbrains.kotlin.idea.projectModel.*
 import org.jetbrains.kotlin.idea.util.NotNullableCopyableDataNodeUserDataProperty
 import org.jetbrains.kotlin.platform.impl.JsIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
+import org.jetbrains.kotlin.platform.impl.WasmIdePlatformKind
 import org.jetbrains.plugins.gradle.model.DefaultExternalSourceDirectorySet
 import org.jetbrains.plugins.gradle.model.DefaultExternalSourceSet
 import org.jetbrains.plugins.gradle.model.ExternalProject
@@ -59,16 +55,9 @@ import java.util.stream.Collectors
  * Creates and adds [GradleSourceSetData] nodes and [KotlinSourceSetInfo] for the given [moduleDataNode]
  * @param moduleDataNode: The node representing a specific Gradle project which contains multiplatform source sets
  */
-internal fun populateMppModuleDataNode(
-    gradleModule: IdeaModule,
-    moduleDataNode: DataNode<ModuleData>,
-    projectDataNode: DataNode<ProjectData>,
-    mppModel: KotlinMPPGradleModel,
-    resolverCtx: ProjectResolverContext,
-) {
-    KotlinMPPCompilerArgumentsCacheMergeManager.mergeCache(gradleModule, resolverCtx)
-    initializeModuleData(gradleModule, moduleDataNode, projectDataNode, mppModel, resolverCtx)
-    createMppGradleSourceSetDataNodes(gradleModule, moduleDataNode, mppModel, resolverCtx)
+internal fun populateMppModuleDataNode(context: KotlinMppGradleProjectResolver.Context) {
+    context.initializeModuleData()
+    context.createMppGradleSourceSetDataNodes()
 }
 
 internal fun shouldDelegateToOtherPlugin(compilation: KotlinCompilation): Boolean =
@@ -108,12 +97,13 @@ internal fun doCreateSourceSetInfo(
             when (it) {
                 is JvmIdePlatformKind -> KotlinPlatform.JVM
                 is JsIdePlatformKind -> KotlinPlatform.JS
+                is WasmIdePlatformKind -> KotlinPlatform.WASM
                 is NativeIdePlatformKind -> KotlinPlatform.NATIVE
                 else -> KotlinPlatform.COMMON
             }
         } ?: KotlinPlatform.COMMON
 
-        info.lazyCompilerArguments = lazy {
+        info.compilerArguments = CompilerArgumentsProvider {
             createCompilerArguments(emptyList(), compilerArgumentsPlatform).also {
                 it.multiPlatform = true
                 it.languageVersion = languageSettings.languageVersion
@@ -150,8 +140,6 @@ internal fun doCreateSourceSetInfo(
         )
     }
 
-    val cacheHolder = CompilerArgumentsCacheMergeManager.compilerArgumentsCacheHolder
-
     return KotlinSourceSetInfo(compilation).also { sourceSetInfo ->
         sourceSetInfo.moduleId = KotlinModuleUtils.getKotlinModuleId(gradleModule, compilation, resolverCtx)
         sourceSetInfo.gradleModuleId = GradleProjectResolverUtil.getModuleId(resolverCtx, gradleModule)
@@ -170,44 +158,18 @@ internal fun doCreateSourceSetInfo(
             KotlinModuleUtils.getGradleModuleQualifiedName(resolverCtx, gradleModule, it)
         }.toSet()
 
-        when (val cachedArgsInfo = compilation.cachedArgsInfo) {
-            is CachedExtractedArgsInfo -> {
-                val restoredArgs = lazy { CachedArgumentsRestoring.restoreExtractedArgs(cachedArgsInfo, cacheHolder) }
-                sourceSetInfo.lazyCompilerArguments = lazy { restoredArgs.value.currentCompilerArguments }
-                sourceSetInfo.lazyDefaultCompilerArguments = lazy { restoredArgs.value.defaultCompilerArguments }
-                sourceSetInfo.lazyDependencyClasspath =
-                    lazy { restoredArgs.value.dependencyClasspath.map { PathUtil.toSystemIndependentName(it) } }
-            }
-
-            is CachedSerializedArgsInfo -> {
-                val restoredArgs =
-                    lazy { CachedArgumentsRestoring.restoreSerializedArgsInfo(cachedArgsInfo, cacheHolder) }
-                sourceSetInfo.lazyCompilerArguments = lazy {
-                    createCompilerArguments(restoredArgs.value.currentCompilerArguments.toList(), compilation.platform).also {
-                        it.multiPlatform = true
-                    }
-                }
-                sourceSetInfo.lazyDefaultCompilerArguments = lazy {
-                    createCompilerArguments(restoredArgs.value.defaultCompilerArguments.toList(), compilation.platform)
-                }
-
-                sourceSetInfo.lazyDependencyClasspath = lazy {
-                    restoredArgs.value.dependencyClasspath.map { PathUtil.toSystemIndependentName(it) }
-                }
+        compilation.compilerArguments?.let { compilerArguments ->
+            sourceSetInfo.compilerArguments = CompilerArgumentsProvider {
+                createCompilerArguments(compilerArguments, compilation.platform)
             }
         }
         sourceSetInfo.addSourceSets(compilation.allSourceSets, compilation.fullName(), gradleModule, resolverCtx)
     }
 }
 
-private fun initializeModuleData(
-    gradleModule: IdeaModule,
-    moduleDataNode: DataNode<ModuleData>,
-    projectDataNode: DataNode<ProjectData>,
-    mppModel: KotlinMPPGradleModel,
-    resolverCtx: ProjectResolverContext
-) {
+private fun KotlinMppGradleProjectResolver.Context.initializeModuleData() {
     if (moduleDataNode.isMppDataInitialized) return
+
 
     /* Populate 'MPP_CONFIGURATION_ARTIFACTS' for every production source set */
     run {
@@ -216,9 +178,9 @@ private fun initializeModuleData(
         moduleDataNode.isMppDataInitialized = true
 
         // save artifacts locations.
-        val userData = projectDataNode.getUserData(KotlinMPPGradleProjectResolver.MPP_CONFIGURATION_ARTIFACTS)
+        val userData = projectDataNode.getUserData(KotlinMppGradleProjectResolver.MPP_CONFIGURATION_ARTIFACTS)
             ?: HashMap<String, MutableList<String>>().apply {
-                projectDataNode.putUserData(KotlinMPPGradleProjectResolver.MPP_CONFIGURATION_ARTIFACTS, this)
+                projectDataNode.putUserData(KotlinMppGradleProjectResolver.MPP_CONFIGURATION_ARTIFACTS, this)
             }
 
         mppModel.targets.filter { it.jar != null && it.jar!!.archiveFile != null }.forEach { target ->
@@ -252,21 +214,14 @@ private fun initializeModuleData(
     }
 }
 
-private fun createMppGradleSourceSetDataNodes(
-    gradleModule: IdeaModule,
-    mainModuleNode: DataNode<ModuleData>,
-    mppModel: KotlinMPPGradleModel,
-    resolverCtx: ProjectResolverContext
-) {
-    val mainModuleData = mainModuleNode.data
+private fun KotlinMppGradleProjectResolver.Context.createMppGradleSourceSetDataNodes() {
+    val mainModuleData = moduleDataNode.data
     val mainModuleConfigPath = mainModuleData.linkedExternalProjectPath
     val mainModuleFileDirectoryPath = mainModuleData.moduleFileDirectoryPath
 
-    val extensionContext = KotlinMppGradleProjectResolverExtension.Context(mppModel, resolverCtx, gradleModule, mainModuleNode)
     val extensionInstance = KotlinMppGradleProjectResolverExtension.buildInstance()
 
     val externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject::class.java) ?: return
-    val projectDataNode = ExternalSystemApiUtil.findParent(mainModuleNode, ProjectKeys.PROJECT) ?: return
 
     val moduleGroup: Array<String>? = if (!resolverCtx.isUseQualifiedModuleNames) {
         val gradlePath = gradleModule.gradleProject.path
@@ -288,7 +243,7 @@ private fun createMppGradleSourceSetDataNodes(
             it.archiveFile = target.jar?.archiveFile
             it.konanArtifacts = target.konanArtifacts
         }
-        mainModuleNode.createChild(KotlinTargetData.KEY, targetData)
+        moduleDataNode.createChild(KotlinTargetData.KEY, targetData)
 
         val compilationIds = LinkedHashSet<String>()
         for (compilation in target.compilations) {
@@ -297,7 +252,7 @@ private fun createMppGradleSourceSetDataNodes(
             if (existingSourceSetDataNode?.kotlinSourceSetData?.sourceSetInfo != null) continue
 
             /* Execute extensions and do not create any GradleSourceSetData node if any extension wants us to Skip */
-            if (extensionInstance.beforeMppGradleSourceSetDataNodeCreation(extensionContext, compilation) == Skip) {
+            if (extensionInstance.beforeMppGradleSourceSetDataNodeCreation(this, compilation) == Skip) {
                 continue
             }
 
@@ -350,7 +305,7 @@ private fun createMppGradleSourceSetDataNodes(
             }
 
             val compilationDataNode =
-                (existingSourceSetDataNode ?: mainModuleNode.createChild(GradleSourceSetData.KEY, compilationData)).also {
+                (existingSourceSetDataNode ?: moduleDataNode.createChild(GradleSourceSetData.KEY, compilationData)).also {
                     it.addChild(DataNode(KotlinSourceSetData.KEY, KotlinSourceSetData(kotlinSourceSet), it))
                 }
             if (existingSourceSetDataNode == null) {
@@ -358,7 +313,7 @@ private fun createMppGradleSourceSetDataNodes(
             }
 
             /* Execution all extensions after we freshly created a GradleSourceSetData node for the given compilation */
-            extensionInstance.afterMppGradleSourceSetDataNodeCreated(extensionContext, compilation, compilationDataNode)
+            extensionInstance.afterMppGradleSourceSetDataNodeCreated(this, compilation, compilationDataNode)
         }
 
         targetData.moduleIds = compilationIds
@@ -375,12 +330,12 @@ private fun createMppGradleSourceSetDataNodes(
         if (existingSourceSetDataNode?.kotlinSourceSetData != null) continue
 
         /* Execute extensions and do not create any GradleSourceSetData node if any extension wants us to Skip */
-        if (extensionInstance.beforeMppGradleSourceSetDataNodeCreation(extensionContext, sourceSet) == Skip) {
+        if (extensionInstance.beforeMppGradleSourceSetDataNodeCreation(this, sourceSet) == Skip) {
             continue
         }
 
         val sourceSetData = existingSourceSetDataNode?.data ?: createGradleSourceSetData(
-            sourceSet, gradleModule, mainModuleNode, resolverCtx
+            sourceSet, gradleModule, moduleDataNode, resolverCtx
         ).also {
             it.group = externalProject.group
             it.version = externalProject.version
@@ -418,9 +373,9 @@ private fun createMppGradleSourceSetDataNodes(
             }
         }
 
-        val kotlinSourceSet = KotlinMPPGradleProjectResolver.createSourceSetInfo(mppModel, sourceSet, gradleModule, resolverCtx) ?: continue
+        val kotlinSourceSet = KotlinMppGradleProjectResolver.createSourceSetInfo(mppModel, sourceSet, gradleModule, resolverCtx) ?: continue
 
-        val sourceSetDataNode = (existingSourceSetDataNode ?: mainModuleNode.createChild(GradleSourceSetData.KEY, sourceSetData)).also {
+        val sourceSetDataNode = (existingSourceSetDataNode ?: moduleDataNode.createChild(GradleSourceSetData.KEY, sourceSetData)).also {
             it.addChild(DataNode(KotlinSourceSetData.KEY, KotlinSourceSetData(kotlinSourceSet), it))
         }
         if (existingSourceSetDataNode == null) {
@@ -428,7 +383,7 @@ private fun createMppGradleSourceSetDataNodes(
         }
 
         /* Execution all extensions after we freshly created a GradleSourceSetData node for the given compilation */
-        extensionInstance.afterMppGradleSourceSetDataNodeCreated(extensionContext, sourceSet, sourceSetDataNode)
+        extensionInstance.afterMppGradleSourceSetDataNodeCreated(this, sourceSet, sourceSetDataNode)
     }
 }
 
@@ -530,7 +485,7 @@ private fun getInternalModuleName(
 
 //flag for avoid double resolve from KotlinMPPGradleProjectResolver and KotlinAndroidMPPGradleProjectResolver
 private var DataNode<ModuleData>.isMppDataInitialized
-        by NotNullableCopyableDataNodeUserDataProperty(Key.create<Boolean>("IS_MPP_DATA_INITIALIZED"), false)
+        by NotNullableCopyableDataNodeUserDataProperty(Key.create("IS_MPP_DATA_INITIALIZED"), false)
 
 private fun shouldDelegateToOtherPlugin(kotlinTarget: KotlinTarget): Boolean =
     kotlinTarget.platform == KotlinPlatform.ANDROID
@@ -585,7 +540,7 @@ private fun ExternalProject.notImportedCommonSourceSets() =
 
 private fun KotlinPlatform.isNotSupported() = IdePlatformKindTooling.getToolingIfAny(this) == null
 
-private fun createCompilerArguments(args: List<String>, platform: KotlinPlatform): CommonCompilerArguments {
+fun createCompilerArguments(args: List<String>, platform: KotlinPlatform): CommonCompilerArguments {
     val compilerArguments = IdePlatformKindTooling.getTooling(platform).kind.argumentsClass.newInstance()
     parseCommandLineArguments(args.toList(), compilerArguments)
     return compilerArguments

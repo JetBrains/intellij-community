@@ -24,7 +24,7 @@ internal class CDSStartupActivity : ProjectActivity {
   private val isExecuted = AtomicBoolean(false)
 
   //for tests
-  val setupResult = AtomicReference<String>(null)
+  val setupResult: AtomicReference<String> = AtomicReference<String>(null)
 
   override suspend fun execute(project: Project) {
     if (!isExecuted.compareAndSet(false, true) || !Registry.`is`("appcds.useStartupActivity")) {

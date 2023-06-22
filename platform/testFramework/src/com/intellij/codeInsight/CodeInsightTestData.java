@@ -3,6 +3,9 @@ package com.intellij.codeInsight;
 
 import com.intellij.testFramework.PsiTestData;
 
+/**
+ * @deprecated {@link com.intellij.testFramework.EditorTestUtil.CaretAndSelectionState} instead
+ */
 public class CodeInsightTestData extends PsiTestData{
   public int LINE_NUMBER = -1;
   public int COLUMN_NUMBER = -1;

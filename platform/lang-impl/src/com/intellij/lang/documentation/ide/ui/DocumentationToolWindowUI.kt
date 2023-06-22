@@ -81,7 +81,7 @@ internal class DocumentationToolWindowUI(
     EDT.assertIsEdt()
     if (state) {
       check(!isAutoUpdate)
-      autoUpdate = UiNotifyConnector(ui.scrollPane, autoUpdater).also {
+      autoUpdate = UiNotifyConnector.installOn(ui.scrollPane, autoUpdater).also {
         Disposer.register(this, it)
       }
     }

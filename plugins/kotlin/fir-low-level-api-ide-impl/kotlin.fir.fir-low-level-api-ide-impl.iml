@@ -25,7 +25,9 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1.2.0/opentest4j-1.2.0.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1.2.0/opentest4j-1.2.0-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="kotlin.base.util" />
@@ -48,5 +50,6 @@
     <orderEntry type="module" module-name="intellij.java.psi.impl" />
     <orderEntry type="module" module-name="kotlin.fir" scope="RUNTIME" />
     <orderEntry type="library" name="kotlinc.analysis-project-structure" level="project" />
+    <orderEntry type="module" module-name="kotlin.base.indices" scope="TEST" />
   </component>
 </module>

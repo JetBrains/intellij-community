@@ -4,29 +4,43 @@ package org.jetbrains.idea.maven.indices;
 import com.intellij.ide.projectWizard.ProjectWizardTestCase;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.maven.testFramework.MavenTestCase;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.maven.testFramework.utils.MavenImportingTestCaseKt;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.RunAll;
+import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.util.io.PathKt;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.wizards.MavenProjectBuilder;
 import org.jetbrains.idea.maven.wizards.MavenProjectImportProvider;
 
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class MavenMultiProjectImportTest extends ProjectWizardTestCase<AbstractProjectWizard> {
 
   private Path myDir;
+
+  @Override
+  public void tearDown() throws Exception {
+    new RunAll(
+      () -> {
+        super.tearDown();
+      },
+      () -> MavenServerManager.getInstance().shutdown(true)
+    ).run();
+  }
 
   public void testIndicesForDifferentProjectsShouldBeSameInstance() {
     myDir = getTempDir().newPath("", true);
@@ -56,8 +70,8 @@ public class MavenMultiProjectImportTest extends ProjectWizardTestCase<AbstractP
     MavenIndexHolder secondIndices = MavenIndicesManager.getInstance(project2).getIndex();
     assertThat(firstIndices.getIndices()).hasSize(2);
     assertThat(secondIndices.getIndices()).hasSize(2);
-    //    assertSame(firstIndices.getLocalIndex(), secondIndices.getLocalIndex());
-    //   assertSame(firstIndices.getRemoteIndices().get(0), secondIndices.getRemoteIndices().get(0));
+    assertSame(firstIndices.getLocalIndex(), secondIndices.getLocalIndex());
+    assertSame(firstIndices.getRemoteIndices().get(0), secondIndices.getRemoteIndices().get(0));
   }
 
   private VirtualFile createPomXml(String dir,
@@ -75,10 +89,7 @@ public class MavenMultiProjectImportTest extends ProjectWizardTestCase<AbstractP
     manager.initForTests();
     manager.waitForImportCompletion();
     manager.resetManagedFilesAndProfilesInTests(Collections.singletonList(file), MavenExplicitProfiles.NONE);
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      manager.scheduleImportInTests(Collections.singletonList(file));
-      manager.importProjects();
-    });
+    MavenImportingTestCaseKt.importMavenProjectsSync(manager, List.of(file));
 
     Promise<?> promise = manager.waitForImportCompletion();
     PlatformTestUtil.waitForPromise(promise);

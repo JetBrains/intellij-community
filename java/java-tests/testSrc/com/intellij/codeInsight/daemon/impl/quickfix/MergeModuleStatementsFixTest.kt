@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix
 
 import com.intellij.JavaTestUtil.getRelativeJavaTestDataPath
@@ -6,22 +6,23 @@ import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 
 class MergeModuleStatementsFixTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
-  override fun getBasePath() = getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/quickFix/mergeModuleStatementsFix"
+  override fun getBasePath(): String = getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/quickFix/mergeModuleStatementsFix"
 
-  fun testExports1() = doTest("exports", "my.api")
-  fun testExports2() = doTest("exports", "my.api")
-  fun testExports3() = doTest("exports", "my.api")
+  fun testExports1(): Unit = doTest("exports", "my.api")
+  fun testExports2(): Unit = doTest("exports", "my.api")
+  fun testExports3(): Unit = doTest("exports", "my.api")
 
-  fun testProvides1() = doTest("provides", "my.api.MyService")
-  fun testProvides2() = doTest("provides", "my.api.MyService")
-  fun testProvides3() = doTest("provides", "my.api.MyService")
+  fun testProvides1(): Unit = doTest("provides", "my.api.MyService")
+  fun testProvides2(): Unit = doTest("provides", "my.api.MyService")
+  fun testProvides3(): Unit = doTest("provides", "my.api.MyService")
 
-  fun testOpens1() = doTest("opens", "my.api")
-  fun testOpens2() = doTest("opens", "my.api")
-  fun testOpens3() = doTest("opens", "my.api")
+  fun testOpens1(): Unit = doTest("opens", "my.api")
+  fun testOpens2(): Unit = doTest("opens", "my.api")
+  fun testOpens3(): Unit = doTest("opens", "my.api")
 
 
   override fun setUp() {
@@ -53,6 +54,7 @@ class MergeModuleStatementsFixTest : LightJava9ModulesCodeInsightFixtureTestCase
 
     assertNotNull("No action \"$actionText\" in ${actions.map { it.text }}", action)
     myFixture.launchAction(action)
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.checkResultByFile("${testName}_after.java")
   }
 }

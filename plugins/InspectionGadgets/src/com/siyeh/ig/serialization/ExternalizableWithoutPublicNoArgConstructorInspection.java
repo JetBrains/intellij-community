@@ -1,15 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.serialization;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.AddDefaultConstructorFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.DelegatingFix;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 public class ExternalizableWithoutPublicNoArgConstructorInspection extends BaseInspection {
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiMethod constructor = (PsiMethod)infos[1];
     if (constructor == null) {
       final PsiClass aClass = (PsiClass)infos[0];
@@ -29,7 +29,7 @@ public class ExternalizableWithoutPublicNoArgConstructorInspection extends BaseI
         // can't create constructor for anonymous class
         return null;
       }
-      return new DelegatingFix(new AddDefaultConstructorFix(aClass, PsiModifier.PUBLIC));
+      return new AddDefaultConstructorFix(aClass, PsiModifier.PUBLIC).asQuickFix();
     }
     else {
       return new MakeConstructorPublicFix();
@@ -58,7 +58,7 @@ public class ExternalizableWithoutPublicNoArgConstructorInspection extends BaseI
     return null;
   }
 
-  private static class MakeConstructorPublicFix extends InspectionGadgetsFix {
+  private static class MakeConstructorPublicFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -67,8 +67,7 @@ public class ExternalizableWithoutPublicNoArgConstructorInspection extends BaseI
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement classNameIdentifier = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement classNameIdentifier, @NotNull ModPsiUpdater updater) {
       final PsiClass aClass = (PsiClass)classNameIdentifier.getParent();
       if (aClass == null) {
         return;

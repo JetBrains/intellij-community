@@ -11,6 +11,6 @@ public interface LafProvider {
   @NotNull PluggableLafInfo getLookAndFeelInfo();
 
   @NotNull default TargetUIType getTargetUI() {
-    return TargetUIType.CLASSIC;
+    return TargetUIType.UNSPECIFIED;
   }
 }

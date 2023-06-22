@@ -94,7 +94,7 @@ open class VcsQuickActionsToolbarPopup : IconWithTextAction(), CustomComponentAc
       VcsBundle.message("action.Vcs.Toolbar.QuickListPopupAction.text"),
       group, dataContext, JBPopupFactory.ActionSelectionAid.NUMBERING, true, null, -1,
       { action: AnAction? -> true }, ActionPlaces.RUN_TOOLBAR_LEFT_SIDE)
-    val component = e.inputEvent.component
+    val component = e.inputEvent!!.component
     popup.showUnderneathOf(component)
   }
 

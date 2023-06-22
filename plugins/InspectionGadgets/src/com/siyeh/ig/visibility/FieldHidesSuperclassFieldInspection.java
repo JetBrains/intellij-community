@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.visibility;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
@@ -44,7 +45,7 @@ public class FieldHidesSuperclassFieldInspection extends BaseInspection {
   public boolean ignoreStaticFields = true;
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new RenameFix();
   }
 

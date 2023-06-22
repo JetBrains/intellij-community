@@ -747,10 +747,10 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
     }
 
     @Override
-    public @NotNull List<XAttachDebugger> getAvailableDebuggers(@NotNull Project project,
-                                                                @NotNull XAttachHost attachHost,
-                                                                @NotNull ProcessInfo processInfo,
-                                                                @NotNull UserDataHolder contextHolder) {
+    public @NotNull List<? extends XAttachDebugger> getAvailableDebuggers(@NotNull Project project,
+                                                                          @NotNull XAttachHost attachHost,
+                                                                          @NotNull ProcessInfo processInfo,
+                                                                          @NotNull UserDataHolder contextHolder) {
       if (myFilterPID != null && processInfo.getPid() != myFilterPID) return Collections.emptyList();
       return myDebuggers;
     }

@@ -6,7 +6,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import com.intellij.util.ui.UIUtil;
+import kotlinx.coroutines.future.FutureKt;
 
 import javax.swing.*;
 
@@ -37,8 +37,8 @@ public class DeferredIconTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private static void ensureEvaluated(DeferredIconImpl<?> icon1) {
-    PlatformTestUtil.waitForFuture(icon1.scheduleEvaluation(new JLabel(), 0, 0), 10_000);
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.waitForFuture(FutureKt.asCompletableFuture(icon1.scheduleEvaluation(new JLabel(), 0, 0)), 10_000);
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     assertTrue(icon1.isDone());
   }
 }

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem
 import org.jetbrains.kotlin.tools.projectWizard.core.service.WizardKotlinVersion
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.GradleIR
 import org.jetbrains.kotlin.tools.projectWizard.library.LibraryArtifact
+import org.jetbrains.kotlin.tools.projectWizard.library.LibraryDescriptor
 import org.jetbrains.kotlin.tools.projectWizard.library.MavenArtifact
 import org.jetbrains.kotlin.tools.projectWizard.library.NpmArtifact
 import org.jetbrains.kotlin.tools.projectWizard.plugins.printer.BuildFilePrinter
@@ -33,9 +34,11 @@ data class ModuleDependencyIR(
                 +path.parts.joinToString(separator = "") { ":$it" }.quotified
             }
         }
+
         is MavenPrinter -> node("dependency") {
             pomIR.render(this)
         }
+
         else -> Unit
     }
 }
@@ -76,6 +79,18 @@ data class ArtifactBasedLibraryDependencyIR(
     override val dependencyType: DependencyType,
     val dependencyKind: DependencyKind = DependencyKind.implementation
 ) : LibraryDependencyIR {
+    constructor(
+        descriptor: LibraryDescriptor,
+        dependencyType: DependencyType,
+        dependencyKind: DependencyKind = DependencyKind.implementation
+    ) : this(
+        descriptor.artifact,
+        descriptor.version,
+        dependencyType,
+        dependencyKind
+    )
+
+
     override fun withDependencyType(type: DependencyType): ArtifactBasedLibraryDependencyIR =
         copy(dependencyType = type)
 
@@ -95,6 +110,7 @@ data class ArtifactBasedLibraryDependencyIR(
                 }
             }
         }
+
         is MavenPrinter -> {
             node("dependency") {
                 with(artifact as MavenArtifact) {
@@ -107,14 +123,15 @@ data class ArtifactBasedLibraryDependencyIR(
                 }
             }
         }
+
         else -> Unit
     }
 }
 
 
 abstract class KotlinLibraryDependencyIR(
-  private val artifactName: String,
-  override val dependencyType: DependencyType
+    private val artifactName: String,
+    override val dependencyType: DependencyType
 ) : LibraryDependencyIR {
     abstract val kotlinVersion: WizardKotlinVersion
     final override val version: Version get() = kotlinVersion.version
@@ -138,6 +155,7 @@ abstract class KotlinLibraryDependencyIR(
                     +"org.jetbrains.kotlin:kotlin-$artifactName".quotified
                 }
             }
+
             is MavenPrinter -> node("dependency") {
                 singleLineNode("groupId") { +"org.jetbrains.kotlin" }
                 singleLineNode("artifactId") {
@@ -194,7 +212,7 @@ enum class DependencyKind(val text: String) {
 
 enum class StdlibType(val artifact: String) {
     StdlibJdk7("stdlib-jdk7"),
-    StdlibJdk8("stdlib-jdk8"),
+    Stdlib("stdlib"),
     StdlibJs("stdlib-js"),
     StdlibWasm("stdlib-wasm"),
     StdlibCommon("stdlib-common"),

@@ -18,7 +18,6 @@ import com.intellij.ui.*
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.LabelPosition
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.table.JBTable
 import com.intellij.util.textCompletion.TextFieldWithCompletion
 import com.intellij.xdebugger.XDebuggerManager
@@ -46,7 +45,6 @@ import javax.swing.table.AbstractTableModel
 class PyUserTypeRenderersConfigurable : SearchableConfigurable {
 
   private val CONFIGURABLE_ID = "debugger.dataViews.python.type.renderers"
-  private val CONFIGURABLE_NAME = PyBundle.message("configurable.PyUserTypeRenderersConfigurable.display.name")
 
   private val PANEL_SPLIT_PROPORTION = 0.3f
 
@@ -162,7 +160,7 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
     }
   }
 
-  override fun getDisplayName(): String = CONFIGURABLE_NAME
+  override fun getDisplayName(): String = PyBundle.message("configurable.PyUserTypeRenderersConfigurable.display.name")
 
   override fun getId(): String = CONFIGURABLE_ID
 

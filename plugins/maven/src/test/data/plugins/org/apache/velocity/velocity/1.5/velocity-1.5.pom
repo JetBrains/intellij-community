@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?><project>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.apache.velocity</groupId>
+  <artifactId>velocity</artifactId>
+  <packaging>pom</packaging>
+  <name>Apache Velocity</name>
+  <version>1.5</version>
+  <description>Apache Velocity is a general purpose template engine.</description>
+  <url>http://velocity.apache.org/engine/releases/velocity-1.5/</url>
+  <issueManagement>
+    <system>JIRA</system>
+    <url>https://issues.apache.org/jira/browse/VELOCITY</url>
+  </issueManagement>
+  <inceptionYear>2000</inceptionYear>
+  <developers>
+    <developer>
+      <id>wglass</id>
+      <name>Will Glass-Husain</name>
+      <email>wglass@forio.com</email>
+      <organization>Forio Business Simulations</organization>
+      <roles>
+        <role>Java Developer</role>
+      </roles>
+    </developer>
+    <developer>
+      <id>geirm</id>
+      <name>Geir Magnusson Jr.</name>
+      <email>geirm@optonline.net</email>
+      <organization>Independent (DVSL Maven)</organization>
+      <roles>
+        <role>Java Developer</role>
+      </roles>
+    </developer>
+    <developer>
+      <id>dlr</id>
+      <name>Daniel Rall</name>
+      <email>dlr@finemaltcoding.com</email>
+      <organization>CollabNet, Inc.</organization>
+      <roles>
+        <role>Java Developer</role>
+      </roles>
+    </developer>
+    <developer>
+      <id>henning</id>
+      <name>Henning P. Schmiedehausen</name>
+      <email>hps@intermeta.de</email>
+      <organization>INTERMETA - Gesellschaft für Mehrwertdienste mbH</organization>
+      <roles>
+        <role>Java Developer</role>
+      </roles>
+      <timezone>2</timezone>
+    </developer>
+    <developer>
+      <id>nbubna</id>
+      <name>Nathan Bubna</name>
+      <email>nathan@esha.com</email>
+      <organization>ESHA Research</organization>
+      <roles>
+        <role>Java Developer</role>
+      </roles>
+    </developer>
+  </developers>
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <scm>
+    <connection>scm:svn:http://svn.apache.org/repos/asf/velocity/engine/tags/Velocity_1.5</connection>
+    <developerConnection>scm:svn:https://svn.apache.org/repos/asf/velocity/engine/tags/Velocity_1.5</developerConnection>
+    <url>http://svn.apache.org/viewvc/velocity/engine/tags/Velocity_1.5</url>
+  </scm>
+  <organization>
+    <name>The Apache Software Foundation</name>
+    <url>http://www.apache.org/</url>
+  </organization>
+  <build>
+    <sourceDirectory>src/java</sourceDirectory>
+    <testSourceDirectory>src/test</testSourceDirectory>
+    <defaultGoal>install</defaultGoal>
+    <plugins>
+      <plugin>
+        <artifactId>maven-site-plugin</artifactId>
+        <configuration>
+          <inputEncoding>UTF-8</inputEncoding>
+          <outputEncoding>UTF-8</outputEncoding>
+          <xdocDirectory>${basedir}/xdocs/docs</xdocDirectory>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  <repositories>
+    <repository>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <id>apache.snapshots</id>
+      <name>Apache Snapshot Repository</name>
+      <url>http://people.apache.org/repo/m2-snapshot-repository</url>
+    </repository>
+  </repositories>
+  <dependencies>
+    <dependency>
+      <groupId>commons-collections</groupId>
+      <artifactId>commons-collections</artifactId>
+      <version>3.1</version>
+    </dependency>
+    <dependency>
+      <groupId>commons-lang</groupId>
+      <artifactId>commons-lang</artifactId>
+      <version>2.1</version>
+    </dependency>
+    <dependency>
+      <groupId>oro</groupId>
+      <artifactId>oro</artifactId>
+      <version>2.0.8</version>
+    </dependency>
+    <dependency>
+      <groupId>jdom</groupId>
+      <artifactId>jdom</artifactId>
+      <version>1.0</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
+      <version>1.2.12</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>servlet-api</artifactId>
+      <version>2.3</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>logkit</groupId>
+      <artifactId>logkit</artifactId>
+      <version>2.0</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>ant</groupId>
+      <artifactId>ant</artifactId>
+      <version>1.6</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>werken-xpath</groupId>
+      <artifactId>werken-xpath</artifactId>
+      <version>0.9.4</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+  <reporting>
+    <plugins>
+      <plugin>
+        <artifactId>maven-project-info-reports-plugin</artifactId>
+        <reportSets>
+          <reportSet>
+            <reports>
+              <report>dependencies</report>
+              <report>issue-tracking</report>
+              <report>license</report>
+              <report>summary</report>
+              <report>scm</report>
+            </reports>
+          </reportSet>
+        </reportSets>
+      </plugin>
+      <plugin>
+        <artifactId>maven-changes-plugin</artifactId>
+        <configuration>
+          <component>12311337</component>
+          <filter>fixfor=12310253&amp;fixfor=12312142&amp;fixfor=12312057&amp;sorter/field=issuekey&amp;sorter/order=ASC</filter>
+          <maxEntries>500</maxEntries>
+          <teamlist>http://velocity.apache.org/who-we-are.html</teamlist>
+        </configuration>
+        <reportSets>
+          <reportSet>
+            <reports>
+              <report>changes-report</report>
+              <report>jira-report</report>
+            </reports>
+          </reportSet>
+        </reportSets>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>taglist-maven-plugin</artifactId>
+        <configuration>
+          <tag>TODO</tag>
+          <tag>FIXME</tag>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-jxr-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+          <links>
+            <link>http://java.sun.com/j2se/1.4.2/docs/api</link>
+            <link>http://jakarta.apache.org/oro/api</link>
+            <link>http://jakarta.apache.org/commons/lang/api-release</link>
+            <link>http://jakarta.apache.org/commons/collections/api-release</link>
+            <link>http://www.jdom.org/docs/apidocs</link>
+            <link>http://logging.apache.org/log4j/docs/api</link>
+            <link>http://excalibur.apache.org/apidocs</link>
+            <link>http://tomcat.apache.org/tomcat-4.1-doc/servletapi</link>
+          </links>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-changelog-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </reporting>
+  <distributionManagement>
+    <repository>
+      <id>apache.releases</id>
+      <name>Apache Release Distribution Repository</name>
+      <url>scp://people.apache.org/www/people.apache.org/repo/m2-ibiblio-rsync-repository</url>
+    </repository>
+    <snapshotRepository>
+      <id>apache.snapshots</id>
+      <name>Apache Development Snapshot Repository</name>
+      <url>scp://people.apache.org/www/people.apache.org/repo/m2-snapshot-repository</url>
+    </snapshotRepository>
+    <site>
+      <id>velocity.apache.org</id>
+      <url>scpexe://people.apache.org/www/velocity.apache.org/engine/releases/velocity-1.5/</url>
+    </site>
+    <status>deployed</status>
+  </distributionManagement>
+</project>

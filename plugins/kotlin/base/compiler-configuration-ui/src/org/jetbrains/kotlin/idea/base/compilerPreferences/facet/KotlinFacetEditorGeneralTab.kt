@@ -7,7 +7,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.HoverHyperlinkLabel
@@ -17,7 +16,6 @@ import org.jetbrains.kotlin.cli.common.arguments.*
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinBaseCompilerConfigurationUiBundle
 import org.jetbrains.kotlin.idea.base.compilerPreferences.configuration.KotlinCompilerConfigurableTab
-import org.jetbrains.kotlin.idea.base.util.invalidateProjectRoots
 import org.jetbrains.kotlin.idea.base.util.onTextChange
 import org.jetbrains.kotlin.idea.compiler.configuration.*
 import org.jetbrains.kotlin.idea.facet.KotlinFacetConfiguration
@@ -121,8 +119,11 @@ class KotlinFacetEditorGeneralTab(
             }
 
         fun initialize() {
+            class CommonCompilerArgumentsHolder: CommonCompilerArguments() {
+                override fun copyOf(): Freezable = copyCommonCompilerArguments(this, CommonCompilerArgumentsHolder())
+            }
             if (isMultiEditor) {
-                editableCommonArguments = object : CommonCompilerArguments() {}
+                editableCommonArguments = CommonCompilerArgumentsHolder()
                 editableJvmArguments = K2JVMCompilerArguments()
                 editableJsArguments = K2JSCompilerArguments()
                 editableCompilerSettings = CompilerSettings()

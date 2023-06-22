@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.JBPopupMenu
+import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
@@ -45,6 +46,7 @@ import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
 import javax.swing.Icon
 import javax.swing.JComponent
+import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
 
 /**
@@ -82,7 +84,7 @@ internal class SingleContentLayout(
     return (component as? DataProvider)?.let(SingleContentSupplier.KEY::getData)
   }
 
-  fun getSupplier() = getSingleContentOrNull()?.getSupplier()
+  fun getSupplier(): SingleContentSupplier? = getSingleContentOrNull()?.getSupplier()
 
   private fun getSingleContentOrNull(): Content? {
     return if (Registry.`is`("debugger.new.tool.window.layout.dnd", false)) {
@@ -294,6 +296,10 @@ internal class SingleContentLayout(
         title = displayName
       )
       label.toolTipText = displayName
+    }
+    if (ui.window.component.getClientProperty(ToolWindowContentUi.SHOW_BETA_LABEL) == true) {
+      label.icon = AllIcons.General.Beta
+      label.horizontalTextPosition = SwingConstants.LEFT
     }
   }
 
@@ -529,7 +535,7 @@ internal class SingleContentLayout(
       return true
     }
 
-    override fun showMorePopup() {
+    override fun showMorePopup(): JBPopup? {
       val contentToShow = labels
         .filter { it.bounds.width <= 0 }
         .map(MyContentTabLabel::getContent)
@@ -545,9 +551,10 @@ internal class SingleContentLayout(
         override fun getTextFor(value: SubContent) = value.displayName
       }
 
-      JBPopupFactory.getInstance()
+      val popup = JBPopupFactory.getInstance()
         .createListPopup(step)
-        .show(RelativePoint.getSouthWestOf(popupToolbar))
+      popup.show(RelativePoint.getSouthWestOf(popupToolbar))
+      return popup
     }
   }
 

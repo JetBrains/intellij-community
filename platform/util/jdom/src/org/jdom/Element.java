@@ -468,7 +468,7 @@ public class Element extends Content implements Parent, Serializable {
    * string if none
    */
   public String getText() {
-    if (content.size() == 0) {
+    if (content.isEmpty()) {
       return "";
     }
 
@@ -622,7 +622,6 @@ public class Element extends Content implements Parent, Serializable {
    * @return a <code>List</code> containing the mixed content of the
    * element: may contain <code>Text</code>,
    * <code>{@link Element}</code>, <code>{@link Comment}</code>,
-   * <code>{@link ProcessingInstruction}</code>,
    * <code>{@link CDATA}</code>, and
    * <code>{@link EntityRef}</code> objects.
    */
@@ -1437,13 +1436,20 @@ public class Element extends Content implements Parent, Serializable {
    * If no elements exist for the specified name and namespace, null is
    * returned.
    *
-   * @param cname local name of child element to match
-   * @param ns    <code>Namespace</code> to search within. A null implies Namespace.NO_NAMESPACE.
+   * @param cname local name of a child element to match
+   * @param namespace    <code>Namespace</code> to search within. A null implies Namespace.NO_NAMESPACE.
    * @return the first matching child element, or null if not found
    */
-  public Element getChild(String cname, Namespace ns) {
-    Iterator<Element> iterator = content.getView(new ElementFilter(cname, ns)).iterator();
-    return iterator.hasNext() ? iterator.next() : null;
+  public Element getChild(String cname, Namespace namespace) {
+    for (Content child : content) {
+      if (child instanceof Element) {
+        Element element = (Element)child;
+        if (element.name.equals(cname) && (namespace == null || namespace.equals(element.namespace))) {
+          return element;
+        }
+      }
+    }
+    return null;
   }
 
   /**
@@ -1455,8 +1461,17 @@ public class Element extends Content implements Parent, Serializable {
    * @param cname local name of child element to match
    * @return the first matching child element, or null if not found
    */
-  public Element getChild(String cname) {
+  public final Element getChild(String cname) {
     return getChild(cname, Namespace.NO_NAMESPACE);
+  }
+
+  public final Element getOrCreateChild(String name) {
+    Element child = getChild(name, Namespace.NO_NAMESPACE);
+    if (child == null) {
+      child = new Element(name);
+      content.add(child);
+    }
+    return child;
   }
 
   /**
@@ -1537,41 +1552,7 @@ public class Element extends Content implements Parent, Serializable {
     return deletedSome;
   }
 
-  /**
-   * Get the Namespaces that are in-scope on this Element. Element has the
-   * most complex rules for the namespaces-in-scope.
-   * <p>
-   * The scope is built up from a number of sources following the rules of
-   * XML namespace inheritance as follows:
-   * <ul>
-   * <li>The {@link Namespace#XML_NAMESPACE} is added
-   * <li>The element's namespace is added (commonly
-   * {@link Namespace#NO_NAMESPACE})
-   * <li>All the attributes are inspected and their Namespaces are included
-   * <li>All Namespaces declared on this Element using
-   * {@link #addNamespaceDeclaration(Namespace)} are included.
-   * <li>If the element has a parent then the parent's Namespace scope is
-   * inspected, and any prefixes in the parent scope that are not yet bound
-   * in this Element's scope are included.
-   * <li>If the default Namespace (the no-prefix namespace) has not been
-   * encountered for this Element then {@link Namespace#NO_NAMESPACE} is
-   * included.
-   * </ul>
-   * The Element's Namespace scope consist of it's inherited Namespaces and
-   * any modifications to that scope derived from the Element itself. If the
-   * element is detached then it's inherited scope consists of just
-   * If an element has no parent then
-   * <p>
-   * Note that the Element's Namespace will always be reported first.
-   * <p>
-   * <strong>Description copied from</strong>
-   * {@link NamespaceAware#getNamespacesInScope()}:
-   * <p>
-   * {@inheritDoc}
-   *
-   * @see NamespaceAware
-   */
-  public List<Namespace> getNamespacesInScope() {
+  public final List<Namespace> getNamespacesInScope() {
     // The assumption here is that all namespaces are valid,
     // that there are no namespace collisions on this element
 
@@ -1613,12 +1594,11 @@ public class Element extends Content implements Parent, Serializable {
       namespaces.put(Namespace.NO_NAMESPACE.getPrefix(), Namespace.NO_NAMESPACE);
     }
 
-    ArrayList<Namespace> al = new ArrayList<>(namespaces.size());
-    al.add(getNamespace());
+    List<Namespace> result = new ArrayList<>(namespaces.size());
+    result.add(getNamespace());
     namespaces.remove(getNamespacePrefix());
-    al.addAll(namespaces.values());
-
-    return Collections.unmodifiableList(al);
+    result.addAll(namespaces.values());
+    return result;
   }
 
   // used externally

@@ -1,10 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.options.*;
 import com.intellij.lang.Language;
@@ -29,12 +26,23 @@ import java.util.List;
 public class MigrateToOptControlInspection extends DevKitUastInspectionBase {
   private static final String OPT_PANE = "com.intellij.codeInspection.options.OptPane";
 
+  public MigrateToOptControlInspection() {
+    super(UMethod.class);
+  }
+
+  @Override
+  protected boolean isAllowed(@NotNull ProblemsHolder holder) {
+    return super.isAllowed(holder) &&
+           DevKitInspectionUtil.isClassAvailable(holder, OPT_PANE);
+  }
+
   @Override
   public ProblemDescriptor @Nullable [] checkMethod(@NotNull UMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (!method.getName().equals("createOptionsPanel")) return null;
     if (!method.getUastParameters().isEmpty()) return null;
     PsiClass psiClass = method.getJavaPsi().getContainingClass();
     if (psiClass == null || !InheritanceUtil.isInheritor(psiClass, "com.intellij.codeInspection.InspectionProfileEntry")) return null;
+
     Language language = psiClass.getLanguage();
     // Currently only Java and Kotlin are supported
     if (!language.equals(JavaLanguage.INSTANCE) && !language.getID().equals("kotlin")) return null;
@@ -77,9 +85,8 @@ public class MigrateToOptControlInspection extends DevKitUastInspectionBase {
               qualRef.getReceiver() instanceof USimpleNameReferenceExpression callRef &&
               var.equals(UastContextKt.toUElement(callRef.resolve())) &&
               qualRef.getSelector() instanceof UCallExpression call) {
-            String methodName = call.getMethodName();
             // TODO: support addDependentCheckBox
-            if (methodName != null && (methodName.equals("addCheckbox") || methodName.equals("addCheckboxEx"))) {
+            if (call.isMethodNameOneOf(List.of("addCheckbox", "addCheckboxEx"))) {
               List<UExpression> arguments = call.getValueArguments();
               if (arguments.size() == 2) {
                 String bindId = getExpressionText(arguments.get(1));
@@ -159,7 +166,8 @@ public class MigrateToOptControlInspection extends DevKitUastInspectionBase {
       StringBuilder builder = new StringBuilder();
       if (kotlin) {
         builder.append("override fun getOptionsPane() = ");
-      } else {
+      }
+      else {
         // Use short name for return type, as import will be added anyway when processing the body
         builder.append("@Override public @org.jetbrains.annotations.NotNull " + OPT_PANE + " getOptionsPane() {\nreturn ");
       }

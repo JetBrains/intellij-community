@@ -60,8 +60,8 @@ public class ComboBoxWithWidePopup<E> extends JComboBox<E> {
     return super.getPreferredSize().width;
   }
 
-  private class AdjustingListCellRenderer implements ListCellRenderer<E> {
-    private final ListCellRenderer<? super E> delegate;
+  public class AdjustingListCellRenderer implements ListCellRenderer<E> {
+    public final ListCellRenderer<? super E> delegate;
 
     AdjustingListCellRenderer(ListCellRenderer<? super E> delegate) {
       this.delegate = delegate;

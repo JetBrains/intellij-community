@@ -2,14 +2,14 @@
 package training.git.lesson
 
 import com.intellij.diff.tools.util.SimpleDiffPanel
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.ui.SearchTextField
+import com.intellij.ui.components.SearchFieldWithExtension
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.impl.VcsProjectLog
@@ -19,17 +19,19 @@ import com.intellij.vcs.log.ui.filter.UserFilterPopupComponent
 import com.intellij.vcs.log.ui.frame.MainFrame
 import com.intellij.vcs.log.ui.table.GraphTableModel
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
+import git4idea.i18n.GitBundle
 import git4idea.ui.branch.dashboard.CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY
 import git4idea.ui.branch.dashboard.SHOW_GIT_BRANCHES_LOG_PROPERTY
 import org.assertj.swing.fixture.JPanelFixture
 import org.assertj.swing.fixture.JTableFixture
 import training.dsl.*
 import training.git.GitLessonsBundle
+import training.git.GitLessonsUtil.clickTreeRow
 import training.git.GitLessonsUtil.highlightLatestCommitsFromBranch
 import training.git.GitLessonsUtil.highlightSubsequentCommitsInGitLog
+import training.git.GitLessonsUtil.openGitWindow
 import training.git.GitLessonsUtil.resetGitLogWindow
 import training.git.GitLessonsUtil.showWarningIfGitWindowClosed
-import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiUtil.findComponentWithTimeout
 import training.util.LessonEndInfo
 import java.util.regex.Pattern
@@ -44,13 +46,16 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
   override val testScriptProperties = TaskTestContext.TestScriptProperties(40)
 
   override val lessonContent: LessonContext.() -> Unit = {
-    task("ActivateVersionControlToolWindow") {
-      text(GitLessonsBundle.message("git.project.history.open.git.window", action(it)))
-      stateCheck {
-        val toolWindowManager = ToolWindowManager.getInstance(project)
-        toolWindowManager.getToolWindow(ToolWindowId.VCS)?.isVisible == true
+    task {
+      triggerAndBorderHighlight().component { stripe: ActionButton ->
+        stripe.action.templateText == IdeBundle.message("toolwindow.stripe.Version_Control")
       }
-      test { actions(it) }
+    }
+
+    task("ActivateVersionControlToolWindow") {
+      openGitWindow(GitLessonsBundle.message("git.project.history.open.git.window", action(it),
+                                             icon(AllIcons.Toolwindows.ToolWindowChanges),
+                                             strong(GitBundle.message("git4idea.vcs.name"))))
     }
 
     resetGitLogWindow()
@@ -63,15 +68,20 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
     }
 
     task {
-      text(GitLessonsBundle.message("git.project.history.commits.tree.explanation"))
       highlightLatestCommitsFromBranch(branchName)
+    }
+
+    task {
+      text(GitLessonsBundle.message("git.project.history.commits.tree.explanation"))
+      gotItStep(Balloon.Position.above, width = 0,
+                GitLessonsBundle.message("git.project.history.commits.tree.got.it"),
+                duplicateMessage = false)
       showWarningIfGitWindowClosed()
-      proceedLink()
     }
 
     task {
       var selectionCleared = false
-      triggerAndFullHighlight().treeItem { tree, path ->
+      triggerAndBorderHighlight().treeItem { tree, path ->
         (path.pathCount > 1 && path.getPathComponent(1).toString() == "HEAD_NODE").also {
           if (!selectionCleared) {
             tree.clearSelection()
@@ -88,19 +98,18 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
       text(GitLessonsBundle.message("git.project.history.click.head.tooltip", choice),
            LearningBalloonConfig(Balloon.Position.above, 250))
       triggerUI().component { ui: BranchFilterPopupComponent ->
-        ui.currentText?.contains("HEAD") == true
+        ui.currentText.contains("HEAD")
       }
       showWarningIfGitWindowClosed(restoreTaskWhenResolved = true)
       test {
         ideFrame {
-          val fixture = jTree { path -> path.getPathComponent(path.pathCount - 1).toString() == "HEAD_NODE" }
-          fixture.doubleClickPath("HEAD_NODE")
+          clickTreeRow(doubleClick = true) { item -> item.toString() == "HEAD_NODE" }
         }
       }
     }
 
     task {
-      triggerAndFullHighlight().component { _: UserFilterPopupComponent -> true }
+      triggerAndBorderHighlight().component { _: UserFilterPopupComponent -> true }
     }
 
     val meFilterText = VcsLogBundle.message("vcs.log.user.filter.me")
@@ -123,7 +132,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
     task {
       text(GitLessonsBundle.message("git.project.history.select.me", strong(meFilterText)))
       triggerUI().component { ui: UserFilterPopupComponent ->
-        ui.currentText?.contains(meFilterText) == true
+        ui.currentText.contains(meFilterText)
       }
       restoreByUi(delayMillis = defaultRestoreDelay)
       test {
@@ -135,7 +144,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
 
     task {
       text(GitLessonsBundle.message("git.project.history.apply.message.filter", code(textToFind), LessonUtil.rawEnter()))
-      triggerAndFullHighlight().component { ui: SearchTextField ->
+      triggerAndBorderHighlight().component { ui: SearchFieldWithExtension ->
         (UIUtil.getParentOfType(MainFrame::class.java, ui) != null).also {
           if (it) IdeFocusManager.getInstance(project).requestFocus(ui, true)
         }
@@ -154,7 +163,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
 
     task {
       text(GitLessonsBundle.message("git.project.history.select.commit"))
-      highlightSubsequentCommitsInGitLog(0)
+      highlightSubsequentCommitsInGitLog(startCommitRow = 0)
       triggerUI().component { ui: VcsLogGraphTable ->
         ui.selectedRow == 0
       }
@@ -172,32 +181,31 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
     }
 
     task {
+      triggerAndBorderHighlight().component { _: CommitDetailsListPanel -> true }
+    }
+
+    task {
       text(GitLessonsBundle.message("git.project.history.commit.details.explanation"))
-      proceedLink()
-      triggerAndBorderHighlight { usePulsation = true }.component { _: CommitDetailsListPanel -> true }
+      gotItStep(Balloon.Position.atLeft, width = 0,
+                GitLessonsBundle.message("git.project.history.commit.details.got.it"),
+                duplicateMessage = false)
       showWarningIfGitWindowClosed()
     }
 
     task {
-      before {
-        LearningUiHighlightingManager.clearHighlights()
-      }
-      text(GitLessonsBundle.message("git.project.history.click.changed.file"))
-      triggerAndFullHighlight().treeItem { _, path ->
+      triggerAndBorderHighlight().treeItem { _, path ->
         path.getPathComponent(path.pathCount - 1).toString().contains(".yml")
       }
+    }
+
+    task {
+      text(GitLessonsBundle.message("git.project.history.click.changed.file"))
+      text(GitLessonsBundle.message("git.project.history.click.changed.file.popup"),
+           LearningBalloonConfig(Balloon.Position.below, width = 0))
       triggerUI().component { _: SimpleDiffPanel -> true }
       showWarningIfGitWindowClosed()
       test {
-        ideFrame {
-          val treeNodeText = sampleFilePath
-          val fixture = jTree { path -> path.getPathComponent(path.pathCount - 1).toString().contains(treeNodeText) }
-          val row = invokeAndWaitIfNeeded {
-            val tree = fixture.target()
-            (0 until tree.rowCount).find { fixture.valueAt(it).toString().contains(treeNodeText) }
-          } ?: error("Failed to find row with text '$treeNodeText'")
-          fixture.doubleClickRow(row)
-        }
+        clickTreeRow(doubleClick = true) { item -> item.toString().contains(sampleFilePath) }
       }
     }
 

@@ -3,6 +3,7 @@ package com.intellij.execution.testframework;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IconProvider;
+import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.ui.IconManager;
@@ -16,9 +17,13 @@ import java.util.List;
 public class TestIconProvider extends IconProvider {
   @Override
   public Icon getIcon(@NotNull PsiElement element, int flags) {
-    final List<TestFramework> testFrameworks = TestFramework.EXTENSION_NAME.getExtensionList();
+    final List<TestFramework> testFrameworks =
+      TestFramework.EXTENSION_NAME.getExtensionList();
+    final Language language = element.getLanguage();
 
     for (TestFramework framework : testFrameworks) {
+      if (framework.getLanguage() != language) continue;
+
       try {
         if (framework.isIgnoredMethod(element)) {
           final Icon ignoredTestIcon = AllIcons.RunConfigurations.IgnoredTest;
@@ -31,6 +36,8 @@ public class TestIconProvider extends IconProvider {
     }
 
     for (TestFramework framework : testFrameworks) {
+      if (framework.getLanguage() != language) continue;
+
       try {
         if (framework.isTestMethod(element)) {
           LayeredIcon mark = new LayeredIcon(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method), AllIcons.RunConfigurations.TestMark, PlatformIcons.PUBLIC_ICON);

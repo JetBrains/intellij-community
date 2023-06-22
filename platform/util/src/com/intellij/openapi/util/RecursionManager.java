@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
@@ -61,8 +61,7 @@ public final class RecursionManager {
    * This is same as {@link RecursionGuard#doPreventingRecursion(Object, boolean, Computable)},
    * without a need to bother to create {@link RecursionGuard}.
    */
-  @Nullable
-  public static <T> T doPreventingRecursion(@NotNull Object key, boolean memoize, Computable<T> computation) {
+  public static @Nullable <T> T doPreventingRecursion(@NotNull Object key, boolean memoize, Computable<T> computation) {
     return createGuard(computation.getClass().getName()).doPreventingRecursion(key, memoize, computation);
   }
 
@@ -71,8 +70,7 @@ public final class RecursionManager {
    * @return a helper object which allows you to perform reentrancy-safe computations and check whether caching will be safe.
    * Don't use it unless you need to call it from several places in the code, inspect the computation stack and/or prohibit result caching.
    */
-  @NotNull
-  public static <Key> RecursionGuard<Key> createGuard(@NonNls final String id) {
+  public static @NotNull <Key> RecursionGuard<Key> createGuard(final @NonNls String id) {
     return new RecursionGuard<Key>() {
       @Override
       public <T, E extends Throwable> @Nullable T computePreventingRecursion(@NotNull Key key,
@@ -130,9 +128,8 @@ public final class RecursionManager {
         }
       }
 
-      @NotNull
       @Override
-      public List<Key> currentStack() {
+      public @NotNull List<Key> currentStack() {
         List<Key> result = new ArrayList<>();
         for (MyKey pair : ourStack.get().progressMap.keySet()) {
           if (pair.guardId.equals(id)) {
@@ -169,8 +166,8 @@ public final class RecursionManager {
    * Used in pair with {@link RecursionGuard.StackStamp#mayCacheNow()} to ensure that cached are only the reliable values,
    * not depending on anything incomplete due to recursive prevention policies.
    * A typical usage is this:
-   * {@code
-   *  RecursionGuard.StackStamp stamp = RecursionManager.createGuard("id").markStack();
+   * <pre>{@code
+   *   RecursionGuard.StackStamp stamp = RecursionManager.createGuard("id").markStack();
    *
    *   Result result = doComputation();
    *
@@ -178,11 +175,10 @@ public final class RecursionManager {
    *     cache(result);
    *   }
    *   return result;
-   * }
+   * }</pre>
    * @return an object representing the current stack state, managed by {@link RecursionManager}
    */
-  @NotNull
-  public static RecursionGuard.StackStamp markStack() {
+  public static @NotNull RecursionGuard.StackStamp markStack() {
     int stamp = ourStack.get().reentrancyCount;
     return new RecursionGuard.StackStamp() {
       @Override

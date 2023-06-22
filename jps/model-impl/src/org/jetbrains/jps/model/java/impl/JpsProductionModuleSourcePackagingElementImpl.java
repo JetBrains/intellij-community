@@ -8,7 +8,7 @@ import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 import org.jetbrains.jps.model.java.JpsProductionModuleSourcePackagingElement;
 import org.jetbrains.jps.model.module.JpsModuleReference;
 
-public class JpsProductionModuleSourcePackagingElementImpl extends JpsCompositeElementBase<JpsProductionModuleSourcePackagingElementImpl>
+public final class JpsProductionModuleSourcePackagingElementImpl extends JpsCompositeElementBase<JpsProductionModuleSourcePackagingElementImpl>
   implements JpsProductionModuleSourcePackagingElement {
 
   private static final JpsElementChildRole<JpsModuleReference>

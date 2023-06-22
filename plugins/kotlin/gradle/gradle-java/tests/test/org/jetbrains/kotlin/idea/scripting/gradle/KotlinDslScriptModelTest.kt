@@ -20,7 +20,7 @@ class KotlinDslScriptModelTest {
         val file = createTempDirectory("kotlinDslTest") / "build.gradle.kts"
         val line = 10
 
-        val mockScriptSource = TextResourceScriptSource(UriTextResource("build file", file.toFile(), IdentityFileResolver()))
+        val mockScriptSource = TextResourceScriptSource(UriTextResource("build file", file.toUri(), IdentityFileResolver()))
         val mockException = LocationAwareException(RuntimeException(), mockScriptSource, line)
         val fromException = parsePositionFromException(mockException.stackTraceToString())
         assertNotNull(fromException, "Position should be parsed")

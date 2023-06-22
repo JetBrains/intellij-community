@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import java.io.*;
@@ -145,6 +145,8 @@ public final class Runner {
       String timeoutStr = getArgument(args, "timeout");
       int timeout = timeoutStr != null ? Integer.parseInt(timeoutStr) : 0;
 
+      String cacheDir = getArgument(args, "cache-dir");
+
       PatchSpec spec = new PatchSpec()
         .setOldVersionDescription(oldVersionDesc)
         .setNewVersionDescription(newVersionDesc)
@@ -164,11 +166,13 @@ public final class Runner {
         .setWarnings(warnings)
         .setTimeout(timeout);
 
-      boolean success = create(spec);
+      boolean success = create(spec, cacheDir != null ? Paths.get(cacheDir) : null);
       System.exit(success ? 0 : 1);
     }
     else if (args.length >= 2 && ("install".equals(args[0]) || "apply".equals(args[0])) ||
              args.length >= 3 && ("batch-install".equals(args[0]))) {
+      LOG.info("JRE: " + System.getProperty("java.runtime.version", "unknown") + " @ " + System.getProperty("java.home"));
+
       String destPath = args[1];
 
       Path destDirectory = Paths.get(destPath);
@@ -287,6 +291,8 @@ public final class Runner {
       "                  patch will only be applied if it is guaranteed that the patched version will match exactly\n" +
       "                  the source of the patch. This means that unexpected files will be deleted and all existing files\n" +
       "                  will be validated\n" +
+      "    --cache-dir=<dir>: Sets directory where diffs can be cached.\n" +
+      "                  Useful when building several patches on folders with common files.\n" +
       "    --root=<dir>: Sets dir as the root directory of the patch. The root directory is the directory where the patch should be\n" +
       "                  applied to. For example on Mac, you can diff the two .app folders and set Contents as the root.\n" +
       "                  The root directory is relative to <old_folder> and uses forwards-slashes as separators.\n" +
@@ -300,13 +306,13 @@ public final class Runner {
       "  <folder>: The folder where product was installed. For example: c:/Program Files/JetBrains/IntelliJ IDEA 2017.3.4");
   }
 
-  private static boolean create(PatchSpec spec) {
+  private static boolean create(PatchSpec spec, Path cacheDir) {
     ConsoleUpdaterUI ui = new ConsoleUpdaterUI();
     boolean success = false;
 
     try {
       File tempPatchFile = Utils.getTempFile("patch");
-      PatchFileCreator.create(spec, tempPatchFile, ui);
+      PatchFileCreator.create(spec, tempPatchFile, ui, cacheDir);
 
       LOG.info("Packing JAR file: " + spec.getPatchFile());
       ui.startProcess("Packing JAR file '" + spec.getPatchFile() + "'...");

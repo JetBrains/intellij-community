@@ -6,6 +6,7 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.util.ThreadLocalCachedIntArray;
 import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.hints.FileTypeInputFilterPredicate;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
@@ -17,6 +18,8 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.*;
+
+import static com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy.BEFORE_SUBSTITUTION;
 
 /**
  * Implementation of <a href="https://en.wikipedia.org/wiki/Trigram">trigram index</a> for fast text search.
@@ -65,7 +68,7 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return file -> isIndexable(file.getFileType());
+    return new FileTypeInputFilterPredicate(BEFORE_SUBSTITUTION, fileType -> isIndexable(fileType));
   }
 
   @Override
@@ -75,12 +78,7 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
 
   @Override
   public int getVersion() {
-    return 3;
-  }
-
-  @Override
-  public boolean hasSnapshotMapping() {
-    return true;
+    return 4;
   }
 
   @Override

@@ -275,6 +275,10 @@ public final class PyTypeChecker {
       }
     }
 
+    if (ContainerUtil.exists(actual.getMembers(), x -> x instanceof PyLiteralStringType)) { // checking strictly separately until PY-24834 gets implemented
+      return ContainerUtil.and(actual.getMembers(), type -> match(expected, type, context).orElse(false));
+    }
+
     return ContainerUtil.or(actual.getMembers(), type -> match(expected, type, context).orElse(false));
   }
 
@@ -290,6 +294,9 @@ public final class PyTypeChecker {
   }
 
   private static boolean match(@NotNull PyUnionType expected, @NotNull PyType actual, @NotNull MatchContext context) {
+    if (expected.getMembers().contains(actual)) {
+      return true;
+    }
     return ContainerUtil.or(expected.getMembers(), type -> match(type, actual, context).orElse(true));
   }
 
@@ -320,6 +327,10 @@ public final class PyTypeChecker {
     if (actual instanceof PyTypedDictType) {
       final PyTypedDictType.TypeCheckingResult matchResult = PyTypedDictType.Companion.checkTypes(expected, (PyTypedDictType)actual, context, null);
       if (matchResult != null) return Optional.of(matchResult.getMatch());
+    }
+
+    if (expected instanceof PyLiteralStringType) {
+      return Optional.of(PyLiteralStringType.Companion.match((PyLiteralStringType)expected, actual));
     }
 
     final PyClass superClass = expected.getPyClass();
@@ -763,7 +774,7 @@ public final class PyTypeChecker {
   }
 
   public static boolean isUnknown(@Nullable PyType type, boolean genericsAreUnknown, @NotNull TypeEvalContext context) {
-    if (type == null || (genericsAreUnknown && type instanceof PyGenericType)) {
+    if (type == null || (genericsAreUnknown && type instanceof PyTypeParameterType)) {
       return true;
     }
     if (type instanceof PyFunctionType) {
@@ -1107,15 +1118,6 @@ public final class PyTypeChecker {
     }
     final List<PyType> types = ContainerUtil.map(arguments, context::getType);
     return match(container.getArgumentType(context), PyUnionType.union(types), context, substitutions);
-  }
-
-  /**
-   * @deprecated use {@link PyTypeChecker#unifyReceiverWithParamSpecs(PyExpression, TypeEvalContext)} instead
-   */
-  @Deprecated(forRemoval = true)
-  @NotNull
-  public static Map<PyGenericType, PyType> unifyReceiver(@Nullable PyExpression receiver, @NotNull TypeEvalContext context) {
-    return unifyReceiverWithParamSpecs(receiver, context).typeVars;
   }
 
   @NotNull

@@ -15,14 +15,14 @@ from _pydevd_bundle.pydevd_constants import dict_iter_items, dict_keys, IS_PY3K,
     GET_FRAME_RETURN_GROUP
 from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, StrPresentationProvider
 from _pydevd_bundle.pydevd_user_type_renderers_utils import try_get_type_renderer_for_var
-from _pydevd_bundle.pydevd_utils import take_first_n_coll_elements, is_pandas_container, is_string, pandas_to_str, \
-    should_evaluate_full_value, should_evaluate_shape
+from _pydevd_bundle.pydevd_utils import  is_string, should_evaluate_full_value, should_evaluate_shape
 from _pydevd_bundle.pydevd_vars import get_label, array_default_format, is_able_to_format_number, MAXIMUM_ARRAY_SIZE, \
     get_column_formatter_by_type, get_formatted_row_elements, DEFAULT_DF_FORMAT, DATAFRAME_HEADER_LOAD_MAX_SIZE
 from pydev_console.pydev_protocol import DebugValue, GetArrayResponse, ArrayData, ArrayHeaders, ColHeader, RowHeader, \
     UnsupportedArrayTypeException, ExceedingArrayDimensionsException
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate
 from _pydevd_bundle.pydevd_frame_type_handler import get_vars_handler, DO_NOT_PROCESS_VARS, THRIFT_COMMUNICATION_VARS_HANDLER
+from _pydevd_bundle.pydevd_repr_utils import get_value_repr
 
 try:
     import types
@@ -256,39 +256,23 @@ def frame_vars_to_struct(frame_f_locals, group_type, hidden_ns=None, user_type_r
     return type_handler.get_list()
 
 
-def _get_default_var_string_representation(v, _type, typeName, format):
-    try:
-        str_from_provider = _str_from_providers(v, _type, typeName)
-        if str_from_provider is not None:
-            value = str_from_provider
-        elif hasattr(v, '__class__'):
-            if v.__class__ == frame_type:
-                value = pydevd_resolver.frameResolver.get_frame_name(v)
+def _get_default_var_string_representation(v, _type, typeName, format, do_trim=True):
+    str_from_provider = _str_from_providers(v, _type, typeName)
+    if str_from_provider is not None:
+        return str_from_provider
 
-            elif v.__class__ in (list, tuple):
-                if len(v) > pydevd_resolver.MAX_ITEMS_TO_HANDLE:
-                    value = '%s' % take_first_n_coll_elements(
-                        v, pydevd_resolver.MAX_ITEMS_TO_HANDLE)
-                    value = value.rstrip(')]}') + '...'
-                else:
-                    value = '%s' % str(v)
-            else:
-                value = format % v
-        else:
-            value = str(v)
-    except:
-        try:
-            value = repr(v)
-        except:
-            value = 'Unable to get repr for %s' % v.__class__
-
-    return value
+    return get_value_repr(v, do_trim, format)
 
 
 def var_to_struct(val, name, format='%s', do_trim=True, evaluate_full_value=True, user_type_renderers=None):
     """ single variable or dictionary to Thrift struct representation """
 
     debug_value = DebugValue()
+
+    if name in DO_NOT_PROCESS_VARS:
+        debug_value.name = name
+        debug_value.value = val
+        return debug_value
 
     try:
         # This should be faster than isinstance (but we have to protect against not having a '__class__' attribute).
@@ -301,39 +285,32 @@ def var_to_struct(val, name, format='%s', do_trim=True, evaluate_full_value=True
     else:
         v = val
 
-    if name in DO_NOT_PROCESS_VARS:
-        debug_value.name = name
-        debug_value.value = val
-        return debug_value
-
     _type, typeName, resolver = get_type(v)
-    type_qualifier = getattr(_type, "__module__", "")
 
+    # type qualifier to struct
+    type_qualifier = getattr(_type, "__module__", "")
+    if type_qualifier:
+        debug_value.qualifier = type_qualifier
+
+    # type renderer to struct
     type_renderer = None
     if user_type_renderers is not None:
         type_renderer = try_get_type_renderer_for_var(v, user_type_renderers)
+    if type_renderer is not None:
+        debug_value.typeRendererId = type_renderer.to_type
 
-    var_custom_string_repr = None
+    # name and type to struct
+    debug_value.name = name
+    debug_value.type = typeName
+
+    # value to struct
     value = None
     if not evaluate_full_value:
         value = DEFAULT_VALUES_DICT[LOAD_VALUES_POLICY]
     elif type_renderer is not None:
-        var_custom_string_repr = type_renderer.evaluate_var_string_repr(v)
-        value = var_custom_string_repr
-
+        value = type_renderer.evaluate_var_string_repr(v)
     if value is None:
-        value = _get_default_var_string_representation(v, _type, typeName, format)
-
-    debug_value.name = name
-    debug_value.type = typeName
-
-    if type_qualifier:
-        debug_value.qualifier = type_qualifier
-
-    # cannot be too big... communication may not handle it.
-    if len(value) > MAXIMUM_VARIABLE_REPRESENTATION_SIZE and do_trim:
-        value = value[0:MAXIMUM_VARIABLE_REPRESENTATION_SIZE]
-        value += '...'
+        value = _get_default_var_string_representation(v, _type, typeName, format, do_trim)
 
     # fix to work with unicode values
     try:
@@ -346,10 +323,9 @@ def var_to_struct(val, name, format='%s', do_trim=True, evaluate_full_value=True
     except TypeError:  # in java, unicode is a function
         pass
 
-    if is_pandas_container(type_qualifier, typeName, v) and var_custom_string_repr is None:
-        value = pandas_to_str(v, typeName, value, pydevd_resolver.MAX_ITEMS_TO_HANDLE)
     debug_value.value = value
 
+    # shape to struct
     try:
         if should_evaluate_shape():
             if hasattr(v, 'shape') and not callable(v.shape):
@@ -359,6 +335,7 @@ def var_to_struct(val, name, format='%s', do_trim=True, evaluate_full_value=True
     except:
         pass
 
+    # additional info to struct
     if is_exception_on_eval:
         debug_value.isErrorOnEval = True
     else:
@@ -366,9 +343,6 @@ def var_to_struct(val, name, format='%s', do_trim=True, evaluate_full_value=True
             debug_value.isContainer = True
         else:
             pass
-
-    if type_renderer is not None:
-        debug_value.typeRendererId = type_renderer.to_type
 
     return debug_value
 

@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.Iconable.ICON_FLAG_VISIBILITY
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -28,7 +29,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
-import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 import kotlin.math.round
 
@@ -67,10 +67,12 @@ class FilePredictionNextCandidatesAction : AnAction() {
     val requestsCollectionPopup =
       JBPopupFactory.getInstance().createListPopup(object : BaseListPopupStep<FileCandidatePresentation>(title, presentation) {
         override fun getTextFor(value: FileCandidatePresentation?): String {
-          return value?.presentableName?.let {
-            val shortPath = StringUtil.shortenPathWithEllipsis(it, 50)
-            "$shortPath (${roundProbability(value.original)})"
-          } ?: super.getTextFor(value)
+          val presentableName = value?.presentableName
+          if (presentableName != null) {
+            val shortPath = StringUtil.shortenPathWithEllipsis(presentableName, 50)
+            return "$shortPath (${roundProbability(value.original)})"
+          }
+          return super.getTextFor(null)
         }
 
         override fun getIconFor(value: FileCandidatePresentation?): Icon? {
@@ -117,5 +119,5 @@ class FilePredictionNextCandidatesAction : AnAction() {
 
 private data class FileCandidatePresentation(val file: VirtualFile?,
                                              val icon: Icon?,
-                                             @Nls val presentableName: String,
+                                             @NlsSafe val presentableName: String,
                                              val original: FilePredictionCandidate)

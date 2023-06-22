@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph.impl.facade
 
 import com.intellij.util.NotNullFunction
@@ -65,9 +65,7 @@ class VisibleGraphImpl<CommitId : Any>(private val graphController: LinearGraphC
                                  permanentGraph.branchNodeIds, visibleRow, visibleRange)
   }
 
-  override fun getRecommendedWidth(): Int {
-    return printElementGenerator.getRecommendedWidth()
-  }
+  override fun getRecommendedWidth(): Int = printElementGenerator.recommendedWidth
 
   val linearGraph: LinearGraph
     get() = graphController.compiledGraph

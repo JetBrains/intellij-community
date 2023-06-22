@@ -52,12 +52,8 @@ public class ExternalSystemException extends RuntimeException {
     }
     
     StringWriter stringWriter = new StringWriter();
-    PrintWriter printWriter = new PrintWriter(stringWriter);
-    try {
+    try (PrintWriter printWriter = new PrintWriter(stringWriter)) {
       cause.printStackTrace(printWriter);
-    }
-    finally {
-      printWriter.close();
     }
     myOriginalReason = stringWriter.toString();
   }

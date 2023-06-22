@@ -7,45 +7,50 @@ import com.intellij.util.application
 import com.intellij.util.io.DataOutputStream
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.inputStream
+import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntCollection
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet
-import it.unimi.dsi.fastutil.ints.IntSet
+import it.unimi.dsi.fastutil.ints.IntList
+import org.jetbrains.annotations.TestOnly
 import java.io.DataInputStream
 import java.io.EOFException
 import java.io.IOException
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
+import kotlin.io.path.absolutePathString
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.div
 import kotlin.io.path.outputStream
 
 
-internal object PersistentDirtyFilesQueue {
-  private const val dirtyQueueFileName = "dirty-file-ids"
-
+object PersistentDirtyFilesQueue {
   private val isUnittestMode: Boolean
     get() = application.isUnitTestMode
 
-  private val dirtyFilesQueueFile: Path
-    get() = PathManager.getIndexRoot() / dirtyQueueFileName
+  @JvmStatic
+  fun getQueueFile(): Path = PathManager.getIndexRoot() / "dirty-file-ids"
 
-  fun removeCurrentFile() {
+  @JvmStatic
+  fun removeCurrentFile(queueFile: Path) {
     if (isUnittestMode) {
-      thisLogger().info("removing $dirtyQueueFileName")
+      thisLogger().info("removing ${queueFile.absolutePathString()}")
     }
     try {
-      dirtyFilesQueueFile.deleteIfExists()
+      queueFile.deleteIfExists()
     }
     catch (ignored: IOException) {
     }
   }
 
-  fun readIndexingQueue(): IntSet {
-    val result = IntOpenHashSet()
+  @JvmStatic
+  fun readIndexingQueue(queueFile: Path, currentVfsVersion: Long): IntList {
+    val result = IntArrayList()
     try {
-      DataInputStream(dirtyFilesQueueFile.inputStream().buffered()).use {
-        while (it.available() > -1) {
-          result.add(it.readInt())
+      DataInputStream(queueFile.inputStream().buffered()).use {
+        val storedVfsVersion = it.readLong()
+        if (storedVfsVersion == currentVfsVersion) {
+          while (it.available() > -1) {
+            result.add(it.readInt())
+          }
         }
       }
     }
@@ -54,7 +59,7 @@ internal object PersistentDirtyFilesQueue {
     catch (ignored: EOFException) {
     }
     catch (e: IOException) {
-      thisLogger().error(e)
+      thisLogger().info(e)
     }
     if (isUnittestMode) {
       thisLogger().info("read dirty file ids: ${result.toIntArray().contentToString()}")
@@ -62,13 +67,15 @@ internal object PersistentDirtyFilesQueue {
     return result
   }
 
-  fun storeIndexingQueue(fileIds: IntCollection) {
+  @JvmStatic
+  fun storeIndexingQueue(queueFile: Path, fileIds: IntCollection, vfsVersion: Long) {
     try {
       if (fileIds.isEmpty()) {
-        dirtyFilesQueueFile.deleteIfExists()
+        queueFile.deleteIfExists()
       }
-      dirtyFilesQueueFile.parent.createDirectories()
-      DataOutputStream(dirtyFilesQueueFile.outputStream().buffered()).use {
+      queueFile.parent.createDirectories()
+      DataOutputStream(queueFile.outputStream().buffered()).use {
+        it.writeLong(vfsVersion)
         fileIds.forEach { fileId ->
           it.writeInt(fileId)
         }

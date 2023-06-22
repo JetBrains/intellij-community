@@ -231,7 +231,7 @@ public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.configureByText("Test.java", "public class Test {} void <caret>method() {}");
     IntentionAction action = myFixture.findSingleIntention("Move member into class");
     myFixture.checkIntentionPreviewHtml(action,
-                                        "<p><icon src=\"source\"/>&nbsp;method &rarr; <icon src=\"target\"/>&nbsp;Test</p>");
+                                        "<p><icon src=\"source_method\"/>&nbsp;method &rarr; <icon src=\"target_Test\"/>&nbsp;Test</p>");
   }
 
   public void testNavigate() {

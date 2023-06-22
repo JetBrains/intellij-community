@@ -45,5 +45,8 @@
     <orderEntry type="library" name="kotlinc.high-level-api-fir" level="project" />
     <orderEntry type="module" module-name="kotlin.base.project-structure" />
     <orderEntry type="module" module-name="kotlin.code-insight.descriptions" />
+    <orderEntry type="module" module-name="kotlin.refactorings.common" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
   </component>
 </module>

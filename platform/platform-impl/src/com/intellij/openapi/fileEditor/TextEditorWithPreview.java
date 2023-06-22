@@ -3,21 +3,22 @@ package com.intellij.openapi.fileEditor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.icons.AllIcons;
+import com.intellij.icons.ExpUiIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -441,42 +442,12 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
 
   @Override
   public final @NotNull ActionGroup getTabActions() {
-    return new ConditionalActionGroup(createTabActions(), () -> isShowActionsInTabs());
+    AnAction[] actions = createTabActions();
+    return new ConditionalActionGroup(actions, () -> isShowActionsInTabs());
   }
 
   protected AnAction @NotNull [] createTabActions() {
-    return new AnAction[]{
-      //getSingleChangeViewModeAction(),
-      Separator.create(), //todo[konstantin.hudyakov] this separator will be hidden since toolbars can start with separator, but we need it according to mockups
-      getShowEditorAction(),
-      getShowEditorAndPreviewAction(),
-      getShowPreviewAction(),
-      Separator.create(),
-      //createTabViewModesPopupActionGroup()
-    };
-  }
-
-  private @NotNull ActionGroup createTabViewModesPopupActionGroup() {
-    ActionGroup group = createTabViewModesActionGroup();
-    group.setPopup(true);
-    Presentation presentation = group.getTemplatePresentation();
-    presentation.setText(IdeBundle.message("tab.view.modes"));
-    presentation.setIcon(AllIcons.General.ChevronDown);
-    presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
-    return group;
-  }
-
-  protected @NotNull ActionGroup createTabViewModesActionGroup() {
-    return new DefaultActionGroup(
-      createViewActionGroup(),
-      Separator.create(),
-      new ChangeEditorSplitAction(IdeBundle.message("tab.vertical.split"), false),
-      new ChangeEditorSplitAction(IdeBundle.message("tab.horizontal.split"), true)
-    );
-  }
-
-  protected @NotNull AnAction getSingleChangeViewModeAction() {
-    return new SingleChangeViewModeAction();
+    return createViewActionGroup().getChildren(null);
   }
 
   protected @NotNull ToggleAction getShowEditorAction() {
@@ -521,10 +492,15 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
       if (this == SHOW_EDITOR) return AllIcons.General.LayoutEditorOnly;
       if (this == SHOW_PREVIEW) return AllIcons.General.LayoutPreviewOnly;
       boolean isVerticalSplit = editor != null && editor.myIsVerticalSplit;
-      if (ExperimentalUI.isNewUI()) {
-        return isVerticalSplit ? IconLoader.getIcon("expui/general/editorPreviewVertical.svg", AllIcons.class)
-                               : IconLoader.getIcon("expui/general/editorPreview.svg", AllIcons.class);
-      }
+      return getEditorWithPreviewIcon(isVerticalSplit);
+    }
+  }
+
+  public static Icon getEditorWithPreviewIcon(boolean isVerticalSplit) {
+    if (ExperimentalUI.isNewUI()) {
+      return isVerticalSplit ? ExpUiIcons.General.EditorPreviewVertical : ExpUiIcons.General.EditorPreview;
+    }
+    else {
       return isVerticalSplit ? AllIcons.Actions.PreviewDetailsVertically : AllIcons.Actions.PreviewDetails;
     }
   }
@@ -551,7 +527,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
       if (state) {
         setLayout(myActionLayout);
       }
-      else if (!isShowActionsInTabs()) {
+      else {
         if (myActionLayout == Layout.SHOW_EDITOR_AND_PREVIEW) {
           mySplitter.setOrientation(!myIsVerticalSplit);
           myIsVerticalSplit = !myIsVerticalSplit;
@@ -563,62 +539,6 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
       e.getPresentation().setIcon(myActionLayout.getIcon(TextEditorWithPreview.this));
-    }
-  }
-
-  private class SingleChangeViewModeAction extends DumbAwareAction {
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      setLayout(getTargetLayout());
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      Layout targetLayout = getTargetLayout();
-      Presentation presentation = e.getPresentation();
-      presentation.setIcon(targetLayout.getIcon(TextEditorWithPreview.this));
-      presentation.setText(targetLayout.getName());
-      presentation.setDescription(targetLayout.getName());
-    }
-
-    private @NotNull Layout getTargetLayout() {
-      Layout curLayout = getLayout();
-      return switch (curLayout) {
-        case SHOW_EDITOR, SHOW_PREVIEW -> Layout.SHOW_EDITOR_AND_PREVIEW;
-        case SHOW_EDITOR_AND_PREVIEW -> Layout.SHOW_EDITOR;
-      };
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
-    }
-  }
-
-  private class ChangeEditorSplitAction extends DumbAwareToggleAction {
-    private final boolean myVerticalSplit;
-
-    protected ChangeEditorSplitAction(@Nls String text, boolean isVerticalSplit) {
-      super(text);
-      myVerticalSplit = isVerticalSplit;
-    }
-
-    @Override
-    public boolean isSelected(@NotNull AnActionEvent e) {
-      return TextEditorWithPreview.this.myIsVerticalSplit == myVerticalSplit;
-    }
-
-    @Override
-    public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      if (state) {
-        TextEditorWithPreview.this.myIsVerticalSplit = myVerticalSplit;
-        mySplitter.setOrientation(myVerticalSplit);
-      }
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
     }
   }
 

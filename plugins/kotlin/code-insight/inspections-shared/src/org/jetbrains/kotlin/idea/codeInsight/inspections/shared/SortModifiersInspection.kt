@@ -25,8 +25,7 @@ class SortModifiersInspection : AbstractApplicabilityBasedInspection<KtModifierL
         val modifiers = element.modifierKeywordTokens()
         if (modifiers.isEmpty()) return false
         val sortedModifiers = sortModifiers(modifiers)
-        if (modifiers == sortedModifiers && !element.modifiersBeforeAnnotations()) return false
-        return true
+        return modifiers != sortedModifiers || element.modifiersBeforeAnnotations()
     }
 
     override fun inspectionHighlightRangeInElement(element: KtModifierList): TextRange? {

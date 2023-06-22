@@ -18,10 +18,12 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel;
 import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel.CompletenessResult;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
@@ -29,7 +31,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import org.jetbrains.annotations.Nls;
@@ -65,11 +66,11 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
 
   @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new DeleteDefaultFix();
   }
 
-  public static class DeleteDefaultFix extends InspectionGadgetsFix {
+  public static class DeleteDefaultFix extends PsiUpdateModCommandQuickFix {
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
@@ -78,8 +79,8 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement().getParent();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
+      final PsiElement element = startElement.getParent();
       if (element instanceof PsiSwitchLabelStatementBase label) {
         DeleteSwitchLabelFix.deleteLabel(label);
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.TestAll;
@@ -21,7 +21,8 @@ import java.util.List;
 import java.util.prefs.Preferences;
 
 /**
- * This is should be first test in all tests so we can measure how long tests are starting up.
+ * This should be the first test in all test runs,
+ * so we can measure how long the tests are starting up.
  *
  * @author max
  */
@@ -98,7 +99,8 @@ public class _FirstInSuiteTest extends TestCase {
   @ReviseWhenPortedToJDK("13")
   public void testSymlinkAbility() {
     assertTrue(
-      String.format("Symlink creation not supported for %s on %s (%s)", SystemProperties.getUserName(), SystemInfo.OS_NAME, SystemInfo.OS_VERSION),
+      String.format("Symlink creation not supported for %s on %s (%s)",
+                    SystemProperties.getUserName(), SystemInfo.OS_NAME, SystemInfo.OS_VERSION),
       IoTestUtil.isSymLinkCreationSupported);
     assertEquals(
       "The `sun.io.useCanonCaches` makes `File#getCanonical*` methods unreliable and should be set to `false`",

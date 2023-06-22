@@ -296,7 +296,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
     }
 
     FrameworkSupportNodeBase.sortByName(roots,
-                                        (o1, o2) -> Comparing.compare(preselected.contains(o2.getId()), preselected.contains(o1.getId())));
+                                        (o1, o2) -> Boolean.compare(preselected.contains(o2.getId()), preselected.contains(o1.getId())));
     myRoots = roots;
     return associatedNodes.values();
   }

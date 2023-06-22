@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.completion.canBeUsedWithoutNameInCall
 import org.jetbrains.kotlin.idea.completion.collectAllArgumentsThatCanBeUsedWithoutName
-import org.jetbrains.kotlin.idea.intentions.RemoveAllArgumentNamesIntention.Companion.removeArgumentNames
+import org.jetbrains.kotlin.idea.intentions.RemoveAllArgumentNamesIntention.Holder.removeArgumentNames
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList

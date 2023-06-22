@@ -1,28 +1,14 @@
-/*
- * Copyright 2006-2021 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.AddToIgnoreIfAnnotatedByListQuickFix;
 import com.siyeh.ig.psiutils.InheritanceUtil;
 import com.siyeh.ig.ui.ExternalizableStringSet;
@@ -46,7 +32,7 @@ public class InterfaceNeverImplementedInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];
     return AddToIgnoreIfAnnotatedByListQuickFix.build(aClass, ignorableAnnotations);
   }

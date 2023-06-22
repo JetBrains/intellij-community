@@ -17,8 +17,10 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -26,7 +28,6 @@ import com.intellij.util.SmartList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
@@ -94,7 +95,7 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new SortModifiersFix();
   }
 
@@ -111,7 +112,7 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
                checkbox("typeUseWithType", InspectionGadgetsBundle.message("missorted.modifiers.typeuse.before.type.option"))));
   }
 
-  private class SortModifiersFix extends InspectionGadgetsFix {
+  private class SortModifiersFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -120,8 +121,7 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (!(element instanceof PsiModifierList)) {
         element = element.getParent();
         if (!(element instanceof PsiModifierList)) return;

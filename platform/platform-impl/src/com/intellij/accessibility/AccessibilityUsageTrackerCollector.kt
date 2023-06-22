@@ -22,11 +22,11 @@ internal class AccessibilityUsageTrackerCollector : CounterUsagesCollector() {
     private val GROUP = EventLogGroup("accessibility", 1)
 
     @JvmField
-    val SCREEN_READER_DETECTED = GROUP.registerEvent("screen.reader.detected")
+    val SCREEN_READER_DETECTED: EventId = GROUP.registerEvent("screen.reader.detected")
     @JvmField
-    val SCREEN_READER_SUPPORT_ENABLED = GROUP.registerEvent("screen.reader.support.enabled")
+    val SCREEN_READER_SUPPORT_ENABLED: EventId = GROUP.registerEvent("screen.reader.support.enabled")
     @JvmField
-    val SCREEN_READER_SUPPORT_ENABLED_VM = GROUP.registerEvent("screen.reader.support.enabled.in.vmoptions")
+    val SCREEN_READER_SUPPORT_ENABLED_VM: EventId = GROUP.registerEvent("screen.reader.support.enabled.in.vmoptions")
 
     @JvmStatic
     fun featureTriggered(feature: EventId) {

@@ -17,7 +17,7 @@ class GradleFindUsagesTest: GradleCodeInsightTestCase() {
   @BaseGradleVersionSource
   fun testCompletionForVersionCatalogProperty(gradleVersion: GradleVersion) {
     test(gradleVersion, VERSION_CATALOG_FIXTURE) {
-      val file = findOrCreateFile("build.gradle", """
+      writeTextAndCommit("build.gradle", """
         plugins {
           id 'java'
         }
@@ -27,7 +27,7 @@ class GradleFindUsagesTest: GradleCodeInsightTestCase() {
         }
       """.trimIndent())
       runInEdtAndWait {
-        codeInsightFixture.configureFromExistingVirtualFile(file)
+        codeInsightFixture.configureFromExistingVirtualFile(getFile("build.gradle"))
         val method = fixture.elementAtCaret // what
         val usages = ReferencesSearch.search(method).findAll()
         Assertions.assertTrue(usages.size == 1)
@@ -37,19 +37,18 @@ class GradleFindUsagesTest: GradleCodeInsightTestCase() {
   }
 
   companion object {
-    private val VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder
-      .create("GradleVersionCatalogs-findUsages") {
-        withSettingsFile {
-          setProjectName("GradleVersionCatalogs-findUsages")
-          enableFeaturePreview("VERSION_CATALOGS")
-        }
-        withFile("gradle/libs.versions.toml", /* language=TOML */ """
-      [versions]
-      groovy = "3.0.5"
- 
-      [libraries]
-      groovy-core = { module = "org.codehaus.groovy:groovy", version.ref = "groovy" }
-      """.trimIndent())
+
+    private val VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder.create("GradleVersionCatalogs-findUsages") {
+      withSettingsFile {
+        setProjectName("GradleVersionCatalogs-findUsages")
       }
+      withFile("gradle/libs.versions.toml", /* language=TOML */ """
+        [versions]
+        groovy = "3.0.5"
+        
+        [libraries]
+        groovy-core = { module = "org.codehaus.groovy:groovy", version.ref = "groovy" }
+      """.trimIndent())
+    }
   }
 }

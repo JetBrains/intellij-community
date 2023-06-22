@@ -4,6 +4,7 @@ package com.jetbrains.python.psi.resolve;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveResult;
 import com.intellij.util.containers.SortedList;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.List;
 import java.util.Objects;
@@ -59,6 +60,12 @@ public class RatedResolveResult implements ResolveResult {
    * For regular references.
    */
   public static final int RATE_NORMAL = 0;
+
+  @ApiStatus.Experimental
+  public static final int RATE_LIFTED_PY_FILE_OVERLOAD = -100;
+
+  @ApiStatus.Experimental
+  public static final int RATE_PY_FILE_OVERLOAD = -200;
 
   /**
    * For additional, less important results.

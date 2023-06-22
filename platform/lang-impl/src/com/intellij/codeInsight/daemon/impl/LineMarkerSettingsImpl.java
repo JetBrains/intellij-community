@@ -43,9 +43,8 @@ public class LineMarkerSettingsImpl extends LineMarkerSettings implements Persis
   @MapAnnotation
   public Map<String, Boolean> providers = new HashMap<>();
 
-  @Nullable
   @Override
-  public LineMarkerSettingsImpl getState() {
+  public @Nullable LineMarkerSettingsImpl getState() {
     return this;
   }
 

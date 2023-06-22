@@ -50,8 +50,7 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-class XsContentDFA extends XmlContentDFA {
-
+final class XsContentDFA extends XmlContentDFA {
   private final XSCMValidator myContentModel;
   private final SubstitutionGroupHandler myHandler;
   private final int[] myState;

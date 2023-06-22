@@ -1,4 +1,4 @@
-// "Create actual class for module proj_JVM (JVM)" "true"
+// "Add missing actual declarations" "true"
 
 import kotlin.random.Random
 

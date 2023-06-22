@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui.cloneDialog
 
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
@@ -72,7 +73,7 @@ private class GHCloneDialogExtensionComponent(project: Project, modalityState: M
 
   private fun createLoginWithTokenAction(account: GithubAccount?): AccountMenuItem.Action =
     AccountMenuItem.Action(
-      message("login.with.token.action"),
+      CollaborationToolsBundle.message("clone.dialog.login.with.token.action"),
       {
         switchToLogin(account)
         getLoginPanel()?.setTokenUi()

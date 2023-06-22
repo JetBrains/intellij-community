@@ -119,7 +119,7 @@ public class MoveHandler implements RefactoringActionHandler {
   public static void doMove(Project project, PsiElement @NotNull [] elements, PsiElement targetContainer, DataContext dataContext, MoveCallback callback) {
     if (elements.length == 0) return;
 
-    SlowOperations.allowSlowOperations(() -> {
+    try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
       if (DumbService.isDumb(project)) {
         MoveFilesOrDirectoriesHandler filesOrDirectoriesHandler = MoveHandlerDelegate.EP_NAME.findExtensionOrFail(MoveFilesOrDirectoriesHandler.class);
         if (filesOrDirectoriesHandler.canMove(elements, targetContainer, null)) {
@@ -141,7 +141,7 @@ public class MoveHandler implements RefactoringActionHandler {
           }
         }
       }
-    });
+    }
   }
 
   /**

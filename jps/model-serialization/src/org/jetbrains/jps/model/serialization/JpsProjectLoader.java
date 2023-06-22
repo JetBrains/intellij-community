@@ -45,7 +45,6 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
-import java.util.stream.Collectors;
 
 import static org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL;
 
@@ -402,9 +401,14 @@ public final class JpsProjectLoader extends JpsLoaderBase {
         else {
           // Copy the content roots that are defined in a separate tag, to a general content root component
           List<Element> components = data.getChildren("component");
-          Map<String, Element> componentsByName = components.stream().collect(Collectors.toMap(o -> o.getAttributeValue("name"), v -> v));
-          Element rootManager = componentsByName.get("NewModuleRootManager");
-          Element additionalElements = componentsByName.get("AdditionalModuleElements");
+          Element rootManager = null;
+          Element additionalElements = null;
+          for (Element component : components) {
+            String attributeValue = component.getAttributeValue("name");
+            if (attributeValue.equals("NewModuleRootManager")) rootManager = component;
+            if (attributeValue.equals("AdditionalModuleElements")) additionalElements = component;
+            if (rootManager != null && additionalElements != null) break;
+          }
           if (rootManager != null && additionalElements != null) {
             // Cleanup attributes that aren't needed
             additionalElements.removeAttribute("name");

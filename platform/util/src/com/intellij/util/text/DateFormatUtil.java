@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
 import com.intellij.UtilBundle;
@@ -41,6 +41,13 @@ public final class DateFormatUtil {
   private static final SyncDateFormat TIME_WITH_SECONDS_FORMAT;
   private static final SyncDateFormat DATE_TIME_FORMAT;
   private static final SyncDateFormat ISO8601_FORMAT;
+  private static final SyncDateFormat BASIC_24_HOUR_TIME_FORMAT = new SyncDateFormat(new SimpleDateFormat("HH:mm"));
+  private static final SyncDateFormat BASIC_24_HOUR_TIME_WITH_SECONDS_FORMAT = new SyncDateFormat(new SimpleDateFormat("HH:mm:ss"));
+  private static final SyncDateFormat BASIC_12_HOUR_TIME_FORMAT = new SyncDateFormat(new SimpleDateFormat("h:mm a"));
+  private static final SyncDateFormat BASIC_12_HOUR_TIME_WITH_SECONDS_FORMAT = new SyncDateFormat(new SimpleDateFormat("h:mm:ss a"));
+
+  @SuppressWarnings("StaticNonFinalField")
+  public static @Nullable Boolean USE_24_HOUR_TIME = null;
 
   static {
     SyncDateFormat[] formats = getDateTimeFormats();
@@ -69,11 +76,14 @@ public final class DateFormatUtil {
   }
 
   public static @NotNull SyncDateFormat getTimeFormat() {
-    return TIME_FORMAT;
+    if (USE_24_HOUR_TIME == null) return TIME_FORMAT;
+    return USE_24_HOUR_TIME ? BASIC_24_HOUR_TIME_FORMAT : BASIC_12_HOUR_TIME_FORMAT;
   }
 
+  @SuppressWarnings("IdentifierGrammar")
   public static @NotNull SyncDateFormat getTimeWithSecondsFormat() {
-    return TIME_WITH_SECONDS_FORMAT;
+    if (USE_24_HOUR_TIME == null) return TIME_WITH_SECONDS_FORMAT;
+    return USE_24_HOUR_TIME ? BASIC_24_HOUR_TIME_WITH_SECONDS_FORMAT : BASIC_12_HOUR_TIME_WITH_SECONDS_FORMAT;
   }
 
   public static @NotNull SyncDateFormat getDateTimeFormat() {
@@ -164,7 +174,7 @@ public final class DateFormatUtil {
     boolean isToday = currentYear == year && currentDayOfYear == dayOfYear;
     if (isToday) {
       String result = UtilBundle.message("date.format.today");
-      return formatTime ? result + " " + TIME_FORMAT.format(time) : result;
+      return formatTime ? result + " " + getTimeFormat().format(time) : result;
     }
 
     boolean isYesterdayOnPreviousYear =
@@ -172,7 +182,7 @@ public final class DateFormatUtil {
     boolean isYesterday = isYesterdayOnPreviousYear || (currentYear == year && currentDayOfYear == dayOfYear + 1);
     if (isYesterday) {
       String result = UtilBundle.message("date.format.yesterday");
-      return formatTime ? result + " " + TIME_FORMAT.format(time) : result;
+      return formatTime ? result + " " + getTimeFormat().format(time) : result;
     }
 
     return null;
@@ -217,16 +227,10 @@ public final class DateFormatUtil {
   }
 
   /** @deprecated use {@link com.intellij.ide.nls.NlsMessages#formatDateLong} */
-  @Deprecated
-  public static @NlsSafe @NotNull String formatAboutDialogDate(@NotNull Date date) {
-    return formatAboutDialogDate(date.getTime());
-  }
-
-  /** @deprecated use {@link com.intellij.ide.nls.NlsMessages#formatDateLong} */
   @ApiStatus.ScheduledForRemoval
   @Deprecated
-  public static @NlsSafe @NotNull String formatAboutDialogDate(long time) {
-    return DateFormat.getDateInstance(DateFormat.LONG, Locale.US).format(time);
+  public static @NlsSafe @NotNull String formatAboutDialogDate(@NotNull Date date) {
+    return DateFormat.getDateInstance(DateFormat.LONG, Locale.US).format(date.getTime());
   }
 
   /**

@@ -43,12 +43,7 @@ class AddDependencyAction : AnAction(
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
-        val project = e.project
-        val editor = e.getData(CommonDataKeys.EDITOR)
-
-        e.presentation.isEnabledAndVisible =
-            project != null && editor != null
-                && findSelectedModule(e, project.packageSearchProjectService.packageSearchModulesStateFlow.value) != null
+        e.presentation.isEnabledAndVisible = isEnabled(e)
     }
 
     override fun actionPerformed(e: AnActionEvent) {
@@ -84,5 +79,13 @@ class AddDependencyAction : AnAction(
         if (selectedDirectories.size != 1) return null
 
         return selectedDirectories.first()
+    }
+
+    private fun isEnabled(e: AnActionEvent): Boolean {
+        val project = e.project ?: return false
+        val file = e.getData(CommonDataKeys.EDITOR)?.virtualFile ?: return false
+
+        val module = findSelectedModule(e, project.packageSearchProjectService.packageSearchModulesStateFlow.value)
+        return module?.buildFile?.path?.equals(file.path) ?: false
     }
 }

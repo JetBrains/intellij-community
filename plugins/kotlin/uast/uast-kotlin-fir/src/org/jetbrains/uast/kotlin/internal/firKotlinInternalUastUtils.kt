@@ -10,11 +10,11 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
+import org.jetbrains.kotlin.analysis.api.getModule
 import org.jetbrains.kotlin.analysis.api.lifetime.KtAlwaysAccessibleLifetimeTokenFactory
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
-import org.jetbrains.kotlin.analysis.project.structure.getKtModule
 import org.jetbrains.kotlin.analysis.providers.DecompiledPsiDeclarationProvider.findPsi
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
@@ -27,8 +27,8 @@ import org.jetbrains.kotlin.type.MapPsiToAsmDesc
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.*
 import org.jetbrains.uast.kotlin.psi.UastFakeDeserializedLightMethod
-import org.jetbrains.uast.kotlin.psi.UastFakeLightMethod
-import org.jetbrains.uast.kotlin.psi.UastFakeLightPrimaryConstructor
+import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightMethod
+import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightPrimaryConstructor
 
 val firKotlinUastPlugin: FirKotlinUastLanguagePlugin by lz {
     UastLanguagePlugin.getInstances().single { it.language == KotlinLanguage.INSTANCE } as FirKotlinUastLanguagePlugin?
@@ -87,14 +87,14 @@ internal fun KtAnalysisSession.toPsiMethod(
             psi.primaryConstructor?.getRepresentativeLightMethod()?.let { return it }
             val lc = psi.toLightClass() ?: return null
             lc.constructors.firstOrNull()?.let { return it }
-            if (psi.isLocal) UastFakeLightPrimaryConstructor(psi, lc) else null
+            if (psi.isLocal) UastFakeSourceLightPrimaryConstructor(psi, lc) else null
         }
         is KtFunction -> {
             // For JVM-invisible methods, such as @JvmSynthetic, LC conversion returns nothing, so fake it
             fun handleLocalOrSynthetic(source: KtFunction): PsiMethod? {
-                val ktModule = source.getKtModule(context.project)
+                val ktModule = getModule(source)
                 if (ktModule !is KtSourceModule) return null
-                return getContainingLightClass(source)?.let { UastFakeLightMethod(source, it) }
+                return getContainingLightClass(source)?.let { UastFakeSourceLightMethod(source, it) }
             }
 
             when {
@@ -258,6 +258,15 @@ internal fun KtAnalysisSession.receiverType(
     )
 }
 
+internal fun KtAnalysisSession.isInheritedGenericType(ktType: KtType?): Boolean {
+    if (ktType == null) return false
+    return ktType is KtTypeParameterType &&
+        // explicitly nullable, e.g., T?
+        !ktType.isMarkedNullable &&
+        // non-null upper bound, e.g., T : Any
+        nullability(ktType) != KtTypeNullability.NON_NULLABLE
+}
+
 internal fun KtAnalysisSession.nullability(ktType: KtType?): KtTypeNullability? {
     if (ktType == null) return null
     if (ktType is KtErrorType) return null
@@ -267,17 +276,8 @@ internal fun KtAnalysisSession.nullability(ktType: KtType?): KtTypeNullability? 
         KtTypeNullability.NON_NULLABLE
 }
 
-internal fun KtAnalysisSession.nullability(ktCallableDeclaration: KtCallableDeclaration): KtTypeNullability? {
-    val ktType = (ktCallableDeclaration.getSymbol() as? KtCallableSymbol)?.returnType
-    return nullability(ktType)
-}
-
-internal fun KtAnalysisSession.nullability(ktDeclaration: KtDeclaration): KtTypeNullability? {
-    return nullability(ktDeclaration.getReturnKtType())
-}
-
-internal fun KtAnalysisSession.nullability(ktExpression: KtExpression): KtTypeNullability? {
-    return nullability(ktExpression.getKtType())
+internal fun KtAnalysisSession.getKtType(ktCallableDeclaration: KtCallableDeclaration): KtType? {
+    return (ktCallableDeclaration.getSymbol() as? KtCallableSymbol)?.returnType
 }
 
 /**

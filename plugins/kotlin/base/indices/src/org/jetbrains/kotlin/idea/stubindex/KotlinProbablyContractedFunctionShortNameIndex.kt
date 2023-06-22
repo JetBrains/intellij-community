@@ -5,17 +5,20 @@ package org.jetbrains.kotlin.idea.stubindex
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StringStubIndexExtension
-import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
-object KotlinProbablyContractedFunctionShortNameIndex : StringStubIndexExtension<KtNamedFunction>() {
-    private val KEY: StubIndexKey<String, KtNamedFunction> =
-        StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinProbablyContractedFunctionShortNameIndex")
+@ApiStatus.Internal
+class KotlinProbablyContractedFunctionShortNameIndex internal constructor() : StringStubIndexExtension<KtNamedFunction>() {
+    companion object Helper : KotlinStringStubIndexHelper<KtNamedFunction>(KtNamedFunction::class.java) {
+        override val indexKey: StubIndexKey<String, KtNamedFunction> =
+            StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinProbablyContractedFunctionShortNameIndex")
+    }
 
-    override fun getKey(): StubIndexKey<String, KtNamedFunction> = KEY
+    override fun getKey(): StubIndexKey<String, KtNamedFunction> = indexKey
 
-    override fun get(name: String, project: Project, scope: GlobalSearchScope): Collection<KtNamedFunction> {
-        return StubIndex.getElements(KEY, name, project, scope, KtNamedFunction::class.java)
+    override fun get(shortName: String, project: Project, scope: GlobalSearchScope): Collection<KtNamedFunction> {
+        return Helper[shortName, project, scope]
     }
 }

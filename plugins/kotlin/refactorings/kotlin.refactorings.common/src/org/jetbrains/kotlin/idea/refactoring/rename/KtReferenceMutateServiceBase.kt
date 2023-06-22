@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
+import org.jetbrains.kotlin.idea.kdoc.KDocElementFactory
 import org.jetbrains.kotlin.idea.refactoring.intentions.OperatorToFunctionConverter
 import org.jetbrains.kotlin.idea.references.*
 import org.jetbrains.kotlin.lexer.KtToken
@@ -38,7 +39,12 @@ abstract class KtReferenceMutateServiceBase : KtReferenceMutateService {
         return renameImplicitConventionalCall(newElementName)
     }
 
-    protected abstract fun KDocReference.renameTo(newElementName: String): PsiElement?
+    private fun KDocReference.renameTo(newElementName: String): PsiElement? {
+        val textRange = element.getNameTextRange()
+        val newText = textRange.replace(element.text, newElementName)
+        val newLink = KDocElementFactory(element.project).createNameFromText(newText)
+        return element.replace(newLink)
+    }
 
     private fun KtInvokeFunctionReference.renameTo(newElementName: String): PsiElement {
         val callExpression = expression

@@ -13,7 +13,9 @@ class PresentationEntryBuilder(val state: TinyTree<Any?>) {
   // the max possible depth is 100, so it is not scary to do it using stack recursion
   fun buildPresentationEntries(): Array<InlayPresentationEntry> {
     buildSubtreeForIdOnly(0)
-    require(entries.isNotEmpty())
+    if (entries.isEmpty()) {
+      throw NoPresentableEntriesException()
+    }
     return entries.toTypedArray()
   }
 

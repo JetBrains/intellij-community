@@ -30,7 +30,7 @@ interface TextMateBundleReader {
 typealias TextMateScopeName = CharSequence
 
 data class TextMateGrammar(val fileNameMatchers: Collection<TextMateFileNameMatcher>,
-                           val plist: Plist,
+                           val plist: Lazy<Plist>,
                            val overrideName: String?,
                            val overrideScopeName: String?)
 
@@ -56,7 +56,7 @@ fun readTextMateBundle(path: Path): TextMateBundleReader {
         val fileNameMatchers = plist.getPlistValue(Constants.FILE_TYPES_KEY, emptyList<Any>()).stringArray.flatMap { s ->
           listOf(TextMateFileNameMatcher.Name(s), TextMateFileNameMatcher.Extension(s))
         }
-                                    TextMateGrammar(fileNameMatchers = fileNameMatchers, plist = plist, overrideName = null, overrideScopeName = null)
+        TextMateGrammar(fileNameMatchers = fileNameMatchers, plist = lazy { plist }, overrideName = null, overrideScopeName = null)
       }
     }
 
@@ -85,7 +85,7 @@ fun readSublimeBundle(path: Path): TextMateBundleReader {
         val fileNameMatchers = plist.getPlistValue(Constants.FILE_TYPES_KEY, emptyList<Any>()).stringArray.flatMap { s ->
           listOf(TextMateFileNameMatcher.Name(s), TextMateFileNameMatcher.Extension(s))
         }
-        TextMateGrammar(fileNameMatchers = fileNameMatchers, plist = plist, overrideName = null, overrideScopeName = null)
+        TextMateGrammar(fileNameMatchers = fileNameMatchers, plist = lazy { plist }, overrideName = null, overrideScopeName = null)
       }
     }
 

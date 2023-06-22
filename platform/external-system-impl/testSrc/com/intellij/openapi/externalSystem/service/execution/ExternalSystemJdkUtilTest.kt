@@ -171,7 +171,7 @@ class ExternalSystemJdkUtilTest : UsefulTestCase() {
 class TestJavaDependentSdk(val sdk: Sdk) : MockSdk("TestJavaDependentSdk",
                                                    "fake/path",
                                                    "1.0",
-                                                   MultiMap.empty<OrderRootType, VirtualFile>(),
+                                                   MultiMap.empty(),
                                                    TestJavaDependentSdkType.getInstance())
 
 class TestJavaDependentSdkType(val myName: String): JavaDependentSdkType(myName) {

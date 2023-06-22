@@ -3,7 +3,7 @@ class Test {
   final String s;
 
     {
-        StringBuilder stringBuilder<caret> = new StringBuilder();
+        StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("foo");
         stringBuilder.append("bar");
         s = stringBuilder.toString();

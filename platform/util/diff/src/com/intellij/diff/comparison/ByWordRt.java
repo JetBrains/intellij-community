@@ -4,6 +4,7 @@ package com.intellij.diff.comparison;
 import com.intellij.diff.comparison.LineFragmentSplitter.WordBlock;
 import com.intellij.diff.comparison.iterables.DiffIterable;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
+import com.intellij.diff.comparison.iterables.SubiterableDiffIterable;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.DiffFragmentImpl;
 import com.intellij.diff.fragments.MergeWordFragment;
@@ -108,8 +109,11 @@ public final class ByWordRt {
 
     List<WordBlock> wordBlocks = new LineFragmentSplitter(text1, text2, words1, words2, wordChanges, indicator).run();
 
+    List<FairDiffIterable> subIterables = collectWordBlockSubIterables(wordChanges, wordBlocks);
+
     List<LineBlock> lineBlocks = new ArrayList<>(wordBlocks.size());
-    for (WordBlock block : wordBlocks) {
+    for (int i = 0; i < wordBlocks.size(); i++) {
+      WordBlock block = wordBlocks.get(i);
       Range offsets = block.offsets;
       Range words = block.words;
 
@@ -119,7 +123,7 @@ public final class ByWordRt {
       List<InlineChunk> subwords1 = words1.subList(words.start1, words.end1);
       List<InlineChunk> subwords2 = words2.subList(words.start2, words.end2);
 
-      FairDiffIterable subiterable = fair(subiterable(wordChanges, words.start1, words.end1, words.start2, words.end2));
+      FairDiffIterable subiterable = subIterables.get(i);
 
       FairDiffIterable delimitersIterable = matchAdjustmentDelimiters(subtext1, subtext2, subwords1, subwords2, subiterable,
                                                                       offsets.start1, offsets.start2, indicator);
@@ -134,6 +138,35 @@ public final class ByWordRt {
     }
 
     return lineBlocks;
+  }
+
+  @NotNull
+  private static List<FairDiffIterable> collectWordBlockSubIterables(@NotNull FairDiffIterable wordChanges,
+                                                                     @NotNull List<WordBlock> wordBlocks) {
+    List<Range> changed = new ArrayList<>();
+    for (Range range : wordChanges.iterateChanges()) {
+      changed.add(range);
+    }
+
+    int index = 0;
+
+    List<FairDiffIterable> subIterables = new ArrayList<>(wordBlocks.size());
+    for (WordBlock block : wordBlocks) {
+      Range words = block.words;
+
+      while (index < changed.size()) {
+        Range range = changed.get(index);
+        if (range.end1 < words.start1 || range.end2 < words.start2) {
+          index++;
+          continue;
+        }
+
+        break;
+      }
+
+      subIterables.add(fair(new SubiterableDiffIterable(changed, words.start1, words.end1, words.start2, words.end2, index)));
+    }
+    return subIterables;
   }
 
   //

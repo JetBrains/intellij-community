@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup.list;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
@@ -32,8 +33,10 @@ import com.intellij.ui.popup.NextStepHandler;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.ui.popup.util.PopupImplUtil;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -278,7 +281,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     registerAction("handleSelection1", KeyEvent.VK_ENTER, 0, new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        handleSelect(true);
+        handleSelect(true, createKeyEvent(e, KeyEvent.VK_ENTER));
       }
     });
 
@@ -290,7 +293,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
           if (nextExtendedButton(selected)) return;
         }
 
-        handleSelect(false);
+        handleRightKeyPressed(createKeyEvent(e, KeyEvent.VK_RIGHT));
       }
     });
 
@@ -305,6 +308,9 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
         if (isClosableByLeftArrow()) {
           goBack();
         }
+        else {
+          handleLeftKeyPressed(createKeyEvent(e, KeyEvent.VK_LEFT));
+        }
       }
     });
 
@@ -313,8 +319,8 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
       @Override
       public void valueChanged(ListSelectionEvent e) {
-        if (prevItemIndex == e.getFirstIndex()) return;
-        prevItemIndex = e.getFirstIndex();
+        if (prevItemIndex == myList.getSelectedIndex()) return;
+        prevItemIndex = myList.getSelectedIndex();
         myList.setSelectedButtonIndex(null);
       }
     });
@@ -323,6 +329,10 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
     myList.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     return myList;
+  }
+
+ protected @NotNull KeyEvent createKeyEvent(@NotNull ActionEvent e, int keyCode) {
+    return new KeyEvent(myList, KeyEvent.KEY_PRESSED, e.getWhen(), e.getModifiers(), keyCode, KeyEvent.CHAR_UNDEFINED);
   }
 
   private boolean nextExtendedButton(Object selected) {
@@ -334,6 +344,9 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     boolean changed = myList.setSelectedButtonIndex(++currentIndex);
     if (changed) {
       getContent().repaint();
+      if (myPopupInlineActionsSupport.isMoreButton(selected, currentIndex) && buttonsCount == 1) {
+        myPopupInlineActionsSupport.getInlineAction(selected, currentIndex, null).executeAction();
+      }
     }
     return true;
   }
@@ -458,7 +471,8 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     }
 
     PopupStep<?> nextStep;
-    try (AccessToken ignore = PopupImplUtil.prohibitFocusEventsInHandleSelect()) {
+    try (AccessToken ignore = PopupImplUtil.prohibitFocusEventsInHandleSelect();
+         AccessToken ignore2 = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
       if (listStep instanceof MultiSelectionListPopupStep<?>) {
         nextStep = ((MultiSelectionListPopupStep<Object>)listStep).onChosen(Arrays.asList(selectedValues), handleFinalChoices);
       }
@@ -470,6 +484,13 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       }
     }
     return handleNextStep(nextStep, selectedValues.length == 1 ? selectedValue : null, e);
+  }
+
+  protected void handleRightKeyPressed(@NotNull KeyEvent keyEvent) {
+    handleSelect(false, keyEvent);
+  }
+
+  protected void handleLeftKeyPressed(@NotNull KeyEvent keyEvent) {
   }
 
   private void disposePopup(@Nullable InputEvent e) {
@@ -518,6 +539,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     Point point = myList.indexToLocation(myList.getSelectedIndex());
     SwingUtilities.convertPointToScreen(point, myList);
     myChild = createPopup(this, nextStep, parentValue);
+    if (ScreenReader.isActive()) myChild.setRequestFocus(true);
     if (myChild instanceof ListPopup child) {
       for (ListSelectionListener listener : myList.getListSelectionListeners()) {
         child.addListSelectionListener(listener);
@@ -639,10 +661,13 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       ListPopupStep<Object> listStep = getListStep();
       Object selectedValue = myListModel.getElementAt(forIndex);
       if (withTimer) {
+        ClientId currentClientId = ClientId.getCurrent();
         myShowSubmenuTimer = new Timer(250, e -> {
-          if (!isDisposed() && myLastSelectedIndex == forIndex) {
-            disposeChildren();
-            showNextStepPopup(listStep.onChosen(selectedValue, false), selectedValue);
+          try (AccessToken ignore = ClientId.withClientId(currentClientId)) {
+            if (!isDisposed() && myLastSelectedIndex == forIndex) {
+              disposeChildren();
+              showNextStepPopup(listStep.onChosen(selectedValue, false), selectedValue);
+            }
           }
         });
         myShowSubmenuTimer.setRepeats(false);
@@ -767,6 +792,8 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   }
 
   private final class MyListSelectionModel extends DefaultListSelectionModel {
+    private boolean myInitialSelectionSet = false;
+
     private MyListSelectionModel() {
       setSelectionMode(isMultiSelectionEnabled() ? MULTIPLE_INTERVAL_SELECTION : SINGLE_SELECTION);
     }
@@ -783,7 +810,10 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       if (getSelectionMode() == SINGLE_SELECTION) {
         int index = findSelectableIndex(index0, getLeadSelectionIndex());
         if (0 <= index) super.setSelectionInterval(index, index);
-        if (index == 0) fireValueChanged(0, 0); // enforce listeners to be notified about initial selection
+        if (index == 0 && !myInitialSelectionSet) {
+          myInitialSelectionSet = true;
+          fireValueChanged(0, 0); // enforce listeners to be notified about initial selection
+        }
       }
       else {
         super.setSelectionInterval(index0, index1); // TODO: support when needed

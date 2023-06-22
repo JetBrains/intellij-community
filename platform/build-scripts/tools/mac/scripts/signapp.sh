@@ -15,6 +15,7 @@ NOTARIZE=$3
 BUNDLE_ID=$4
 CODESIGN_STRING=$5
 COMPRESS_INPUT=${6:-false}
+STAPLE=${7:-$NOTARIZE}
 
 cd "$(dirname "$0")"
 
@@ -87,10 +88,6 @@ function notarize() {
   retry "Notarization" 3 ./notarize.sh "$APPLICATION_PATH" "$APPLE_USERNAME" "$APPLE_PASSWORD" "$APP_NAME" "$BUNDLE_ID" "$FAKE_ROOT"
   set -x
   rm -rf "$FAKE_ROOT"
-
-  log "Stapling..."
-  # only unzipped application can be stapled
-  retry "Stapling" 3 xcrun stapler staple "$APPLICATION_PATH"
 }
 
 if [ "$NOTARIZE" = "yes" ]; then
@@ -98,6 +95,13 @@ if [ "$NOTARIZE" = "yes" ]; then
   notarize
 else
   log "Notarization disabled"
+fi
+
+if [ "$STAPLE" = "yes" ]; then
+  log "Stapling..."
+  # only unzipped application can be stapled
+  retry "Stapling" 3 xcrun stapler staple "$APPLICATION_PATH"
+else
   log "Stapling disabled"
 fi
 

@@ -5,6 +5,7 @@ import com.intellij.collaboration.auth.Account
 import com.intellij.collaboration.auth.AccountDetails
 import com.intellij.collaboration.auth.ServerAccount
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.codereview.Avatar
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.ui.*
@@ -76,7 +77,7 @@ internal class SimpleAccountsListCellRenderer<A : Account, D : AccountDetails>(
       foreground = secondaryTextColor
     }
     profilePicture.apply {
-      icon = detailsProvider.getIcon(account, 40)
+      icon = detailsProvider.getIcon(account, Avatar.Sizes.ACCOUNT)
     }
     fullName.apply {
       text = getDetails(account)?.name

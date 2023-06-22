@@ -24,6 +24,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
+import static com.intellij.xml.util.XmlUtil.isNotInjectedOrCustomHtmlFile;
+
 /**
  * @author Maxim Mossienko
  */
@@ -40,7 +42,8 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new XmlElementVisitor() {
-      @Override public void visitXmlTag(final @NotNull XmlTag tag) {
+      @Override
+      public void visitXmlTag(final @NotNull XmlTag tag) {
         if (XmlExtension.shouldIgnoreSelfClosingTag(tag) || !isTagWithEmptyEndNotAllowed(tag)) {
           return;
         }
@@ -49,9 +52,9 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
           return;
         }
 
-        ProblemHighlightType type = tag.getContainingFile().getContext() != null ?
-                                    ProblemHighlightType.INFORMATION :
-                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+        ProblemHighlightType type = isNotInjectedOrCustomHtmlFile(tag.getContainingFile())
+                                    ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+                                    : ProblemHighlightType.INFORMATION;
         // should not report INFORMATION in batch mode
         if (isOnTheFly || type != ProblemHighlightType.INFORMATION) {
           holder.registerProblem(tag,
@@ -72,9 +75,9 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
            (language.isKindOf(HTMLLanguage.INSTANCE) || language.isKindOf(XHTMLLanguage.INSTANCE)) ||
 
            (language.isKindOf(HTMLLanguage.INSTANCE) &&
-           !HtmlUtil.isSingleHtmlTag(tag, false) &&
-           tagName.indexOf(':') == -1 &&
-           !XmlExtension.isCollapsible(tag));
+            !HtmlUtil.isSingleHtmlTag(tag, false) &&
+            tagName.indexOf(':') == -1 &&
+            !XmlExtension.isCollapsible(tag));
   }
 
   @Override
@@ -85,25 +88,25 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
   }
 
   public static boolean tagIsWellFormed(XmlTag tag) {
-      boolean ok = false;
-      final PsiElement[] children = tag.getChildren();
-      for (PsiElement child : children) {
-          if (child instanceof XmlToken) {
-              final IElementType tokenType = ((XmlToken) child).getTokenType();
-              if (tokenType.equals(XmlTokenType.XML_EMPTY_ELEMENT_END) &&
-                  "/>".equals(child.getText())) {
-                  ok = true;
-              }
-              else if (tokenType.equals(XmlTokenType.XML_END_TAG_START)) {
-                  ok = true;
-              }
-          }
-          else if (child instanceof OuterLanguageElement) {
-              return false;
-          }
+    boolean ok = false;
+    final PsiElement[] children = tag.getChildren();
+    for (PsiElement child : children) {
+      if (child instanceof XmlToken) {
+        final IElementType tokenType = ((XmlToken)child).getTokenType();
+        if (tokenType.equals(XmlTokenType.XML_EMPTY_ELEMENT_END) &&
+            "/>".equals(child.getText())) {
+          ok = true;
+        }
+        else if (tokenType.equals(XmlTokenType.XML_END_TAG_START)) {
+          ok = true;
+        }
       }
+      else if (child instanceof OuterLanguageElement) {
+        return false;
+      }
+    }
 
-      return ok;
+    return ok;
   }
 
   private static class MyLocalQuickFix implements LocalQuickFix {

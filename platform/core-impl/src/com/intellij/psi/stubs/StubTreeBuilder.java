@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.diagnostic.PluginException;
@@ -85,8 +85,7 @@ public final class StubTreeBuilder {
     return null;
   }
 
-  @Nullable
-  public static Stub buildStubTree(@NotNull FileContent inputData) {
+  public static @Nullable Stub buildStubTree(@NotNull FileContent inputData) {
     StubBuilderType type = getStubBuilderType(inputData, false);
     if (type == null) return null;
     return buildStubTree(inputData, type);
@@ -109,8 +108,7 @@ public final class StubTreeBuilder {
     }
   }
 
-  @Nullable
-  public static Stub buildStubTree(@NotNull FileContent inputData, @NotNull StubBuilderType stubBuilderType) {
+  public static @Nullable Stub buildStubTree(@NotNull FileContent inputData, @NotNull StubBuilderType stubBuilderType) {
     Stub data = inputData.getUserData(stubElementKey);
     if (data != null) return data;
 
@@ -187,8 +185,7 @@ public final class StubTreeBuilder {
   }
 
   /** Order is deterministic. First element matches {@link FileViewProvider#getStubBindingRoot()} */
-  @NotNull
-  public static List<Pair<IStubFileElementType, PsiFile>> getStubbedRoots(@NotNull FileViewProvider viewProvider) {
+  public static @NotNull List<Pair<IStubFileElementType, PsiFile>> getStubbedRoots(@NotNull FileViewProvider viewProvider) {
     List<Trinity<Language, IStubFileElementType<?>, PsiFile>> roots =
       new SmartList<>();
     PsiFile stubBindingRoot = viewProvider.getStubBindingRoot();

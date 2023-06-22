@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
@@ -10,15 +11,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.AbstractJavaInplaceIntroducer;
+import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
-import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 
 public abstract class AbstractInplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
   private final SmartPsiElementPointer<PsiClass> myParentClass;
-  protected final OccurrenceManager myOccurrenceManager;
-
   private final SmartPsiElementPointer<PsiElement> myAnchorElement;
   private int myAnchorIdx = -1;
   private final SmartPsiElementPointer<PsiElement> myAnchorElementIfAll;
@@ -35,12 +33,10 @@ public abstract class AbstractInplaceIntroduceFieldPopup extends AbstractJavaInp
                                             @NlsContexts.Command String title,
                                             PsiClass parentClass,
                                             final PsiElement anchorElement,
-                                            final OccurrenceManager occurrenceManager,
                                             final PsiElement anchorElementIfAll) {
     super(project, editor, expr, localVariable, occurrences, typeSelectorManager, title);
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
     myParentClass = smartPointerManager.createSmartPsiElementPointer(parentClass);
-    myOccurrenceManager = occurrenceManager;
     myAnchorElement = anchorElement != null ? smartPointerManager.createSmartPsiElementPointer(anchorElement) : null;
     myAnchorElementIfAll = anchorElementIfAll != null ? smartPointerManager.createSmartPsiElementPointer(anchorElementIfAll) : null;
     for (int i = 0, occurrencesLength = occurrences.length; i < occurrencesLength; i++) {
@@ -91,6 +87,10 @@ public abstract class AbstractInplaceIntroduceFieldPopup extends AbstractJavaInp
     }
   }
 
+  protected void updateVariable(PsiVariable variable) {
+    myFieldRangeStart = myEditor.getDocument().createRangeMarker(variable.getTextRange());
+  }
+
   @Override
   protected PsiVariable getVariable() {
     if (myFieldRangeStart == null) return null;
@@ -109,5 +109,23 @@ public abstract class AbstractInplaceIntroduceFieldPopup extends AbstractJavaInp
 
   protected PsiClass getParentClass() {
     return myParentClass.getElement();
+  }
+
+  protected void performIntroduce(BaseExpressionToFieldHandler.Settings settings) {
+    WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).withGroupId(getCommandName()).run(() -> {
+      if (getLocalVariable() != null) {
+        final LocalToFieldHandler.IntroduceFieldRunnable fieldRunnable =
+          new LocalToFieldHandler.IntroduceFieldRunnable(false, (PsiLocalVariable)getLocalVariable(), getParentClass(), settings, myOccurrences);
+        fieldRunnable.run();
+        updateVariable(fieldRunnable.getField());
+      }
+      else {
+        final BaseExpressionToFieldHandler.ConvertToFieldRunnable convertToFieldRunnable =
+          new BaseExpressionToFieldHandler.ConvertToFieldRunnable(myExpr, settings, settings.getForcedType(), myOccurrences,
+                                                                  getAnchorElementIfAll(), getAnchorElement(), myEditor, getParentClass());
+        convertToFieldRunnable.run();
+        updateVariable(convertToFieldRunnable.getField());
+      }
+    });
   }
 }

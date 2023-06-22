@@ -21,10 +21,10 @@ data class GitLabNoteDTO(
     val diffRefs: GitLabDiffRefs,
     val filePath: String,
     val positionType: String,
-    val newLine: Int?,
     val newPath: String?,
-    val oldLine: Int?,
-    val oldPath: String?
+    val newLine: Int?,
+    val oldPath: String?,
+    val oldLine: Int?
   )
 
   data class UserPermissions(

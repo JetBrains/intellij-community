@@ -1,7 +1,7 @@
 // FIR_COMPARISON
 // FIR_IDENTICAL
-import dependency.*
-import java.util.*
+import dependency.Data
+import java.util.Date
 
 fun foo(): Dat<caret>
 

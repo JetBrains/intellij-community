@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.beans
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
 import java.util.*
 
 /**
@@ -18,8 +19,14 @@ import java.util.*
  * [com.intellij.internal.statistic.eventLog.events.VarargEventId.metric]
  */
 @ApiStatus.Internal
-class MetricEvent @JvmOverloads constructor(@NonNls val eventId: String, data: FeatureUsageData? = null) {
-  val data: FeatureUsageData = data ?: FeatureUsageData()
+class MetricEvent(@NonNls val eventId: String, data: FeatureUsageData? = null, recorderId: String) {
+  @TestOnly
+  @Deprecated("Recorder ID should be explicitly provided", replaceWith = ReplaceWith("MetricEvent(eventId, @Nullable data, recorderId)"),
+              DeprecationLevel.WARNING)
+  @JvmOverloads
+  constructor(@NonNls eventId: String, data: FeatureUsageData? = null) : this(eventId, data, "FUS")
+
+  val data: FeatureUsageData = data ?: FeatureUsageData(recorderId)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

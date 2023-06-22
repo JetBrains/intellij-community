@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.facet.isNewMultiPlatformModule
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
@@ -27,6 +28,7 @@ import org.jetbrains.kotlin.idea.run.forceGradleRunnerInMPP
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtFile
 
+@ApiStatus.Internal
 class KotlinJUnitRunConfigurationProducer : LazyRunConfigurationProducer<JUnitConfiguration>() {
     override fun getConfigurationFactory(): ConfigurationFactory {
         return JUnitConfigurationType.getInstance().configurationFactories[0]
@@ -56,7 +58,7 @@ class KotlinJUnitRunConfigurationProducer : LazyRunConfigurationProducer<JUnitCo
         }
 
         val element = context.location?.psiElement ?: return false
-        val javaEntity = JunitKotlinTestFrameworkProvider.getJavaEntity(element) ?: return false
+        val javaEntity = JunitKotlinTestFrameworkProvider.getInstance().getJavaEntity(element) ?: return false
 
         val testObject = configuration.testObject
         if (!testObject.isConfiguredByElement(configuration, javaEntity.testClass, javaEntity.method, null, null)) {
@@ -108,7 +110,7 @@ class KotlinJUnitRunConfigurationProducer : LazyRunConfigurationProducer<JUnitCo
             return false
         }
         
-        val testEntity = JunitKotlinTestFrameworkProvider.getJavaTestEntity(element, checkMethod = true) ?: return false
+        val testEntity = JunitKotlinTestFrameworkProvider.getInstance().getJavaTestEntity(element, checkMethod = true) ?: return false
 
         val originalModule = configuration.configurationModule.module
         val testMethod = testEntity.testMethod
@@ -128,7 +130,7 @@ class KotlinJUnitRunConfigurationProducer : LazyRunConfigurationProducer<JUnitCo
             ProgressManager.getInstance().runProcessWithProgressSynchronously(
                 ThrowableComputable {
                     runReadAction {
-                        JunitKotlinTestFrameworkProvider.getJavaTestEntity(fromContext.sourceElement, checkMethod = true)
+                        JunitKotlinTestFrameworkProvider.getInstance().getJavaTestEntity(fromContext.sourceElement, checkMethod = true)
                     }
                 },
                 KotlinJUnitBundle.message("progress.text.detect.test.framework"),

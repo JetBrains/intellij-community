@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -25,37 +24,32 @@ import com.intellij.vcs.log.impl.VcsProjectLog.ProjectLogListener
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.editor.VcsLogVirtualFileSystem
 import com.intellij.vcs.log.visible.filters.getPresentation
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.*
 
 class VcsLogTabsManager internal constructor(private val project: Project,
                                              private val uiProperties: VcsLogProjectTabsProperties,
-                                             parent: Disposable) {
+                                             private val logManager: VcsLogManager) {
   private var isLogDisposing = false
 
   // for statistics
   val tabs: Collection<String> get() = uiProperties.tabs.keys
 
-  init {
-    project.messageBus.connect(parent).subscribe(VcsProjectLog.VCS_PROJECT_LOG_CHANGED, object : ProjectLogListener {
-      override fun logCreated(manager: VcsLogManager) {
-        isLogDisposing = false
-        val savedTabs = uiProperties.tabs
-        if (savedTabs.isEmpty()) return
+  internal fun createTabs() {
+    val savedTabs = uiProperties.tabs
+    if (savedTabs.isEmpty()) return
 
-        ToolWindowManager.getInstance(project).invokeLater {
-          if (manager !== VcsProjectLog.getInstance(project).logManager) return@invokeLater
-          if (LOG.assertTrue(!manager.isDisposed, "Attempting to open tabs on disposed VcsLogManager")) {
-            reopenLogTabs(manager, savedTabs)
-          }
-        }
+    ToolWindowManager.getInstance(project).invokeLater {
+      if (LOG.assertTrue(!logManager.isDisposed, "Attempting to open tabs on disposed VcsLogManager")) {
+        reopenLogTabs(logManager, savedTabs)
       }
+    }
+  }
 
-      override fun logDisposed(manager: VcsLogManager) {
-        isLogDisposing = true
-      }
-    })
+  internal fun disposeTabs() {
+    isLogDisposing = true
   }
 
   @RequiresEdt
@@ -73,16 +67,15 @@ class VcsLogTabsManager internal constructor(private val project: Project,
     }
   }
 
-  fun openAnotherLogTab(manager: VcsLogManager, filters: VcsLogFilterCollection,
-                        location: VcsLogTabLocation): MainVcsLogUi {
-    val tabId = generateTabId(manager)
+  fun openAnotherLogTab(filters: VcsLogFilterCollection, location: VcsLogTabLocation): MainVcsLogUi {
+    val tabId = generateTabId(logManager)
     uiProperties.resetState(tabId)
     if (location === VcsLogTabLocation.EDITOR) {
       val editors = openEditorLogTab(tabId, true, filters)
       return findVcsLogUi(editors, MainVcsLogUi::class.java)!!
     }
     else if (location === VcsLogTabLocation.TOOL_WINDOW) {
-      return openToolWindowLogTab(manager, tabId, true, filters)
+      return openToolWindowLogTab(logManager, tabId, true, filters)
     }
     throw UnsupportedOperationException("Only log in editor or tool window is supported")
   }

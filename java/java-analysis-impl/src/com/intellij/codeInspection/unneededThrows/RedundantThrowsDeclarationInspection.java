@@ -23,6 +23,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -70,7 +71,7 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
     if (method.hasModifier(JvmModifier.NATIVE)) return null;
     if (JavaHighlightUtil.isSerializationRelatedMethod(method, method.getContainingClass())) return null;
 
-    final Set<PsiClass> unThrownSet = ContainerUtil.set(unThrown);
+    final Set<PsiClass> unThrownSet = ContainerUtil.newHashSet(unThrown);
 
     return RedundantThrowsDeclarationLocalInspection.getRedundantThrowsCandidates(method, IGNORE_ENTRY_POINTS)
       .filter(throwRefType -> unThrownSet.contains(throwRefType.getType().resolve()))
@@ -554,11 +555,9 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
       final PsiClass[] unThrown = refMethod.getUnThrownExceptions();
       if (unThrown == null) return res;
 
-      final Set<PsiClass> unThrownSet = ContainerUtil.set(unThrown);
-
       final List<PsiClassType> redundantThrows = RedundantThrowsDeclarationLocalInspection.getRedundantThrowsCandidates(psiMethod, myIgnoreEntryPoints)
         .map(ThrowRefType::getType)
-        .filter(type -> unThrownSet.contains(type.resolve()))
+        .filter(type -> ArrayUtil.contains(type.resolve(), unThrown))
         .toList();
 
       final StreamEx<PsiDocTag> javadocThrows = StreamEx.of(comment.getTags())

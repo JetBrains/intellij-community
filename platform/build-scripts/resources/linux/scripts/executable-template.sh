@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+# Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 # ---------------------------------------------------------------------
 # __product_full__ startup script.
@@ -145,9 +145,9 @@ IFS="$(printf '\n\t')"
 # shellcheck disable=SC2086
 exec "$JAVA_BIN" \
   -classpath "$CLASS_PATH" \
-  ${VM_OPTIONS} \
   "-XX:ErrorFile=$HOME/java_error_in___vm_options___%p.log" \
   "-XX:HeapDumpPath=$HOME/java_error_in___vm_options___.hprof" \
+  ${VM_OPTIONS} \
   "-Djb.vmOptionsFile=${USER_VM_OPTIONS_FILE:-${VM_OPTIONS_FILE}}" \
   ${IDE_PROPERTIES_PROPERTY} \
   __ide_jvm_args__ \

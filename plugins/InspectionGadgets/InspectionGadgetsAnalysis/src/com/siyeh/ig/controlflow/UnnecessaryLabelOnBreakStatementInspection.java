@@ -16,14 +16,15 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryLabelOnBreakStatementInspection extends BaseInspection implements CleanupLocalInspectionTool {
@@ -40,12 +41,12 @@ public class UnnecessaryLabelOnBreakStatementInspection extends BaseInspection i
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new UnnecessaryLabelOnBreakStatementFix();
   }
 
   private static class UnnecessaryLabelOnBreakStatementFix
-    extends InspectionGadgetsFix {
+    extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -55,8 +56,7 @@ public class UnnecessaryLabelOnBreakStatementInspection extends BaseInspection i
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement breakKeywordElement = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement breakKeywordElement, @NotNull ModPsiUpdater updater) {
       final PsiBreakStatement breakStatement =
         (PsiBreakStatement)breakKeywordElement.getParent();
       final PsiIdentifier identifier =

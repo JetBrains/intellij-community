@@ -25,14 +25,13 @@ data class TestResultEntity(
 
   @JsonProperty("run_order")
   val runOrder: Int,
-  val duration: Long, // in milliseconds
 
-  @JsonProperty("build_type")
-  val buildType: String,
+  @JsonProperty("duration_ms")
+  val durationMs: Long,
 
-  @JsonProperty("build_status_message")
-  val buildStatusMessage: String,
+  @JsonProperty("currently_investigated")
+  val currentlyInvestigated: Boolean,
 
   @JsonProperty("is_muted")
-  val isMuted: Boolean,
+  val isMuted: Boolean
 )

@@ -3,7 +3,6 @@ package com.intellij.ide.instrument;
 
 import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.*;
@@ -15,7 +14,7 @@ import static com.intellij.openapi.application.ex.ApplicationManagerEx.getApplic
 import static com.intellij.util.ui.EDT.isCurrentThreadEdt;
 
 public final class LockWrappingClassVisitor extends ClassVisitor {
-  private static final @NonNls Set<String> METHODS_TO_WRAP = ContainerUtil.set(
+  private static final @NonNls Set<String> METHODS_TO_WRAP = Set.of(
     "paint",
     "paintComponent",
     "paintChildren",

@@ -1,8 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.VisibleGraph;
@@ -14,6 +13,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 
 public class EmptyPermanentGraph implements PermanentGraph<Integer> {
 
@@ -45,7 +45,7 @@ public class EmptyPermanentGraph implements PermanentGraph<Integer> {
   }
 
   @Override
-  public @NotNull Condition<Integer> getContainedInBranchCondition(@NotNull Collection<? extends Integer> currentBranchHead) {
-    return Conditions.alwaysFalse();
+  public @NotNull Predicate<Integer> getContainedInBranchCondition(@NotNull Collection<? extends Integer> currentBranchHead) {
+    return Predicates.alwaysFalse();
   }
 }

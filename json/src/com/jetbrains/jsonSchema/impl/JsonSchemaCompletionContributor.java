@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -247,7 +247,7 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
     }
 
     // some schemas provide empty array / empty object in enum values...
-    private static final Set<String> filtered = ContainerUtil.set("[]", "{}", "[ ]", "{ }");
+    private static final Set<String> filtered = Set.of("[]", "{}", "[ ]", "{ }");
 
     private void suggestValues(JsonSchemaObject schema, boolean isSurelyValue) {
       suggestValuesForSchemaVariants(schema.getAnyOf(), isSurelyValue);
@@ -291,18 +291,16 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
         if (name == null) {
           return;
         }
-        if (name.equals("required")) {
-          addRequiredPropVariants();
-        }
-        else if (name.equals(JsonSchemaObject.X_INTELLIJ_LANGUAGE_INJECTION)) {
-          addInjectedLanguageVariants();
-        }
-        else if (name.equals("language")) {
-          JsonObjectValueAdapter parent = propertyAdapter.getParentObject();
-          if (parent != null) {
-            JsonPropertyAdapter adapter = myWalker.getParentPropertyAdapter(parent.getDelegate());
-            if (adapter != null && JsonSchemaObject.X_INTELLIJ_LANGUAGE_INJECTION.equals(adapter.getName())) {
-              addInjectedLanguageVariants();
+        switch (name) {
+          case "required" -> addRequiredPropVariants();
+          case JsonSchemaObject.X_INTELLIJ_LANGUAGE_INJECTION -> addInjectedLanguageVariants();
+          case "language" -> {
+            JsonObjectValueAdapter parent = propertyAdapter.getParentObject();
+            if (parent != null) {
+              JsonPropertyAdapter adapter = myWalker.getParentPropertyAdapter(parent.getDelegate());
+              if (adapter != null && JsonSchemaObject.X_INTELLIJ_LANGUAGE_INJECTION.equals(adapter.getName())) {
+                addInjectedLanguageVariants();
+              }
             }
           }
         }

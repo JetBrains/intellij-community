@@ -20,7 +20,7 @@ public class MockModule extends MockComponentManager implements Module {
     this(null, parentDisposable);
   }
 
-  public MockModule(@Nullable final Project project, @NotNull Disposable parentDisposable) {
+  public MockModule(@Nullable MockProject project, @NotNull Disposable parentDisposable) {
     super(project == null ? null : project.getPicoContainer(), parentDisposable);
     myProject = project;
   }
@@ -31,14 +31,12 @@ public class MockModule extends MockComponentManager implements Module {
   }
 
   @Override
-  @NotNull
-  public Path getModuleNioFile() {
+  public @NotNull Path getModuleNioFile() {
     return Paths.get("");
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope getModuleRuntimeScope(final boolean includeTests) {
+  public @NotNull GlobalSearchScope getModuleRuntimeScope(final boolean includeTests) {
     return new MockGlobalSearchScope();
   }
 
@@ -52,65 +50,55 @@ public class MockModule extends MockComponentManager implements Module {
     throw new UnsupportedOperationException("Method getModuleTestSourceScope is not yet implemented in " + getClass().getName());
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope getModuleScope() {
+  public @NotNull GlobalSearchScope getModuleScope() {
     return new MockGlobalSearchScope();
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope getModuleScope(boolean includeTests) {
+  public @NotNull GlobalSearchScope getModuleScope(boolean includeTests) {
     return new MockGlobalSearchScope();
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope getModuleTestsWithDependentsScope() {
+  public @NotNull GlobalSearchScope getModuleTestsWithDependentsScope() {
     return new MockGlobalSearchScope();
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope getModuleWithDependenciesAndLibrariesScope(final boolean includeTests) {
+  public @NotNull GlobalSearchScope getModuleWithDependenciesAndLibrariesScope(final boolean includeTests) {
     return new MockGlobalSearchScope();
 
     //throw new UnsupportedOperationException( "Method getModuleWithDependenciesAndLibrariesScope is not yet implemented in " + getClass().getName());
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope getModuleWithDependenciesScope() {
+  public @NotNull GlobalSearchScope getModuleWithDependenciesScope() {
     return new MockGlobalSearchScope();
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope getModuleContentWithDependenciesScope() {
+  public @NotNull GlobalSearchScope getModuleContentWithDependenciesScope() {
     throw new UnsupportedOperationException("Method getModuleContentWithDependenciesScope is not yet implemented in " + getClass().getName());
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope getModuleContentScope() {
+  public @NotNull GlobalSearchScope getModuleContentScope() {
     throw new UnsupportedOperationException("Method getModuleContentScope is not yet implemented in " + getClass().getName());
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope getModuleWithDependentsScope() {
+  public @NotNull GlobalSearchScope getModuleWithDependentsScope() {
     throw new UnsupportedOperationException("Method getModuleWithDependentsScope is not yet implemented in " + getClass().getName());
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope getModuleWithLibrariesScope() {
+  public @NotNull GlobalSearchScope getModuleWithLibrariesScope() {
     throw new UnsupportedOperationException("Method getModuleWithLibrariesScope is not yet implemented in " + getClass().getName());
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
@@ -125,19 +113,17 @@ public class MockModule extends MockComponentManager implements Module {
   }
 
   @Override
-  @Nullable
-  public String getOptionValue(@NotNull final String optionName) {
+  public @Nullable String getOptionValue(@NotNull String optionName) {
     throw new UnsupportedOperationException("Method getOptionValue is not yet implemented in " + getClass().getName());
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
   @Override
-  public void setOption(@NotNull final String optionName, @NotNull final String optionValue) {
+  public void setOption(@NotNull String optionName, @Nullable String optionValue) {
     throw new UnsupportedOperationException("Method setOption is not yet implemented in " + getClass().getName());
   }
 }

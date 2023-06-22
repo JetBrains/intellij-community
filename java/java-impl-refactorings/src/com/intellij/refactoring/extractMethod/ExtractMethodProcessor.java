@@ -9,7 +9,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.AnonymousTargetClassPresele
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
-import com.intellij.codeInsight.navigation.NavigationUtil;
+import com.intellij.codeInsight.navigation.PsiTargetNavigator;
 import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.dataFlow.StandardDataFlowRunner;
@@ -20,7 +20,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -1940,7 +1939,7 @@ public class ExtractMethodProcessor implements MatchProvider {
           return processor.execute(psiClasses[0]);
         }
         final PsiClass preselection = AnonymousTargetClassPreselectionUtil.getPreselection(classes.keySet(), psiClasses[0]);
-        NavigationUtil.getPsiElementPopup(psiClasses, new PsiClassListCellRenderer(), RefactoringBundle.message("choose.destination.class"), processor, preselection)
+        new PsiTargetNavigator<>(psiClasses).selection(preselection).createPopup(myProject, RefactoringBundle.message("choose.destination.class"), processor)
           .showInBestPositionFor(myEditor);
         return true;
       }

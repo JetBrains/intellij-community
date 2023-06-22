@@ -11,7 +11,7 @@ interface EditorColorScheme {
 
 class BundledEditorColorScheme(override val displayName: @Nls String, val scheme: EditorColorsScheme): EditorColorScheme {
   companion object {
-    fun fromManager(name: String) = EditorColorsManager.getInstance().getScheme(name)
+    fun fromManager(name: String): BundledEditorColorScheme? = EditorColorsManager.getInstance().getScheme(name)
       ?.let { BundledEditorColorScheme(it.displayName, it) }
   }
 }

@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.dropCurlyBrackets
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.core.*
+import org.jetbrains.kotlin.idea.core.moveInsideParenthesesAndReplaceWith
 import org.jetbrains.kotlin.idea.intentions.ConvertToBlockBodyIntention
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
@@ -234,7 +234,7 @@ internal class ExpressionReplacementPerformer(
 
                     if (parent is KtDeclarationWithBody) {
                         withElementToBeReplacedPreserved {
-                            ConvertToBlockBodyIntention.convert(parent)
+                            ConvertToBlockBodyIntention.Holder.convert(parent)
                         }
                         return (parent.bodyExpression as KtBlockExpression).statements.single()
                     }

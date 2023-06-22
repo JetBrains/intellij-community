@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.actions.CaretStopOptions;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.util.Disposer;
@@ -51,6 +52,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public boolean USE_CUSTOM_SOFT_WRAP_INDENT = true;
     public int CUSTOM_SOFT_WRAP_INDENT = 0;
     public boolean IS_VIRTUAL_SPACE = false;
+    public int VERTICAL_SCROLL_OFFSET = 1;
+    public int VERTICAL_SCROLL_JUMP = 0;
+    public int HORIZONTAL_SCROLL_OFFSET = 3;
+    public int HORIZONTAL_SCROLL_JUMP = 0;
     public boolean IS_CARET_INSIDE_TABS;
     @NonNls public String STRIP_TRAILING_SPACES = STRIP_TRAILING_SPACES_CHANGED;
     public boolean IS_ENSURE_NEWLINE_AT_EOF = false;
@@ -63,8 +68,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public int CARET_BLINKING_PERIOD = BLINKING_RANGE.initial;
     public boolean IS_RIGHT_MARGIN_SHOWN = true;
     public boolean ARE_LINE_NUMBERS_SHOWN = true;
+    public @NotNull EditorSettings.LineNumerationType LINE_NUMERATION = EditorSettings.LineNumerationType.ABSOLUTE;
     public boolean ARE_GUTTER_ICONS_SHOWN = true;
     public boolean IS_FOLDING_OUTLINE_SHOWN = true;
+    public boolean IS_FOLDING_OUTLINE_SHOWN_ONLY_ON_HOVER = true;
     public boolean IS_FOLDING_ENDINGS_SHOWN = false; //is not used in old UI
     public boolean SHOW_BREADCRUMBS_ABOVE = false;
     public boolean SHOW_BREADCRUMBS = true;
@@ -190,6 +197,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     Disposer.register(disposable, () -> myPropertyChangeSupport.removePropertyChangeListener(listener));
   }
 
+  protected void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {
+    myPropertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
+  }
+
   @NotNull
   @Override
   public OptionSet getState() {
@@ -229,7 +240,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     for (SoftWrapAppliancePlaces placeToStore : myPlacesToUseSoftWraps) {
       buffer.append(placeToStore).append(COMPOSITE_PROPERTY_SEPARATOR);
     }
-    if (buffer.length() > 0) {
+    if (!buffer.isEmpty()) {
       buffer.setLength(buffer.length() - 1);
     }
     myOptions.USE_SOFT_WRAPS = buffer.toString();
@@ -255,6 +266,14 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     myOptions.ARE_LINE_NUMBERS_SHOWN = val;
   }
 
+  public EditorSettings.LineNumerationType getLineNumeration() {
+    return myOptions.LINE_NUMERATION;
+  }
+
+  public void setLineNumeration(EditorSettings.LineNumerationType val) {
+    myOptions.LINE_NUMERATION = val;
+  }
+
   public boolean areGutterIconsShown() {
     return myOptions.ARE_GUTTER_ICONS_SHOWN;
   }
@@ -269,6 +288,14 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   public void setFoldingOutlineShown(boolean val) {
     myOptions.IS_FOLDING_OUTLINE_SHOWN = val;
+  }
+
+  public boolean isFoldingOutlineShownOnlyOnHover() {
+    return myOptions.IS_FOLDING_OUTLINE_SHOWN_ONLY_ON_HOVER;
+  }
+
+  public void setFoldingOutlineShownOnlyOnHover(boolean val) {
+    myOptions.IS_FOLDING_OUTLINE_SHOWN_ONLY_ON_HOVER = val;
   }
 
   public boolean isFoldingEndingsShown() {
@@ -440,6 +467,38 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   public void setCustomSoftWrapIndent(int indent) {
     myOptions.CUSTOM_SOFT_WRAP_INDENT = indent;
+  }
+
+  public int getVerticalScrollOffset() {
+    return myOptions.VERTICAL_SCROLL_OFFSET;
+  }
+
+  public void setVerticalScrollOffset(int offset) {
+    myOptions.VERTICAL_SCROLL_OFFSET = offset;
+  }
+
+  public int getHorizontalScrollOffset() {
+    return myOptions.HORIZONTAL_SCROLL_OFFSET;
+  }
+
+  public void setHorizontalScrollOffset(int offset) {
+    myOptions.HORIZONTAL_SCROLL_OFFSET = offset;
+  }
+
+  public int getVerticalScrollJump() {
+    return myOptions.VERTICAL_SCROLL_JUMP;
+  }
+
+  public void setVerticalScrollJump(int jump) {
+    myOptions.VERTICAL_SCROLL_JUMP = jump;
+  }
+
+  public int getHorizontalScrollJump() {
+    return myOptions.HORIZONTAL_SCROLL_JUMP;
+  }
+
+  public void setHorizontalScrollJump(int jump) {
+    myOptions.HORIZONTAL_SCROLL_JUMP = jump;
   }
 
   public boolean isVirtualSpace() {
@@ -772,4 +831,5 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   public void setInsertParenthesesAutomatically(boolean value) {
     myOptions.INSERT_PARENTHESES_AUTOMATICALLY = value;
   }
+
 }

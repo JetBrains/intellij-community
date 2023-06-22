@@ -51,9 +51,9 @@
     <orderEntry type="module" module-name="intellij.groovy.rt" scope="RUNTIME" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" name="gson" level="project" />
-    <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="protobuf" level="project" />
     <orderEntry type="module" module-name="intellij.devkit.jps" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.devkit.runtimeModuleRepository.jps" />
     <orderEntry type="module" module-name="intellij.java.guiForms.jps" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.idea.community.build.tasks" />
     <orderEntry type="module" module-name="intellij.tools.jps.antTasks" scope="RUNTIME" />
@@ -66,12 +66,13 @@
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
+    <orderEntry type="module" module-name="intellij.platform.runtime.repository" />
     <orderEntry type="library" name="okhttp" level="project" />
     <orderEntry type="library" name="zstd-jni" level="project" />
     <orderEntry type="library" name="zstd-jni-windows-aarch64" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.rt.java8" />
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
-    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="opentelemetry-extension-kotlin" level="project" />
     <orderEntry type="library" name="blockmap" level="project" />
     <orderEntry type="library" name="SSHJ" level="project" />
@@ -103,13 +104,14 @@
           <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/format-ripper/format-ripper/1.1.1/format-ripper-1.1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/format-ripper/format-ripper/1.1.1/format-ripper-1.1.1-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="library" name="jackson-datatype-joda" level="project" />
     <orderEntry type="library" name="http-client" level="project" />
     <orderEntry type="library" name="commons-codec" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-stdlib" level="project" />
     <orderEntry type="library" name="ktor-serialization-kotlinx-json" level="project" />
     <orderEntry type="library" name="ktor-client" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-slf4j" level="project" />
@@ -117,7 +119,7 @@
     <orderEntry type="library" name="Slf4j" level="project" />
     <orderEntry type="module-library">
       <library name="jetbrains.apple.notary.api.kotlin.client" type="repository">
-        <properties maven-id="org.jetbrains:apple-notary-api-kotlin-client:1.0.0-2.0.0">
+        <properties maven-id="org.jetbrains:apple-notary-api-kotlin-client:1.0.2">
           <exclude>
             <dependency maven-id="org.jetbrains:annotations" />
             <dependency maven-id="org.slf4j:slf4j-api" />
@@ -154,16 +156,24 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/apple-notary-api-kotlin-client/1.0.0-2.0.0/apple-notary-api-kotlin-client-1.0.0-2.0.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-s3/1.12.302/aws-java-sdk-s3-1.12.302.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-kms/1.12.302/aws-java-sdk-kms-1.12.302.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-core/1.12.302/aws-java-sdk-core-1.12.302.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/apple-notary-api-kotlin-client/1.0.2/apple-notary-api-kotlin-client-1.0.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-s3/1.12.431/aws-java-sdk-s3-1.12.431.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-kms/1.12.431/aws-java-sdk-kms-1.12.431.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-core/1.12.431/aws-java-sdk-core-1.12.431.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/software/amazon/ion/ion-java/1.0.2/ion-java-1.0.2.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/jmespath-java/1.12.302/jmespath-java-1.12.302.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/auth0/java-jwt/4.0.0/java-jwt-4.0.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/jmespath-java/1.12.431/jmespath-java-1.12.431.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/auth0/java-jwt/4.3.0/java-jwt-4.3.0.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/apple-notary-api-kotlin-client/1.0.2/apple-notary-api-kotlin-client-1.0.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-s3/1.12.431/aws-java-sdk-s3-1.12.431-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-kms/1.12.431/aws-java-sdk-kms-1.12.431-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-core/1.12.431/aws-java-sdk-core-1.12.431-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/software/amazon/ion/ion-java/1.0.2/ion-java-1.0.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/jmespath-java/1.12.431/jmespath-java-1.12.431-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/auth0/java-jwt/4.3.0/java-jwt-4.3.0-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
@@ -200,7 +210,13 @@
           <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/module/jackson-module-kotlin/2.14.1/jackson-module-kotlin-2.14.1.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-intellij/3.247/structure-intellij-3.247-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-base/3.247/structure-base-3.247-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/atteo/evo-inflector/1.3/evo-inflector-1.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jdom/jdom2/2.0.6.1/jdom2-2.0.6.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/module/jackson-module-kotlin/2.14.1/jackson-module-kotlin-2.14.1-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="library" name="jaxb-api" level="project" />
@@ -209,5 +225,6 @@
     <orderEntry type="library" scope="RUNTIME" name="kotlin-reflect" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="javax.activation" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="jsoup" level="project" />
+    <orderEntry type="library" name="ASM" level="project" />
   </component>
 </module>

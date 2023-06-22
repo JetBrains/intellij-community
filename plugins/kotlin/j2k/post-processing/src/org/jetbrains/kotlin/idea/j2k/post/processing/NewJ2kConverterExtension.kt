@@ -8,7 +8,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.psi.PsiJavaFile
 import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
 import org.jetbrains.kotlin.idea.configuration.getAbleToRunConfigurators
-import org.jetbrains.kotlin.idea.configuration.hasAnyKotlinRuntimeInScope
+import org.jetbrains.kotlin.idea.configuration.hasKotlinPluginEnabled
 import org.jetbrains.kotlin.idea.configuration.isModuleConfigured
 import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.nj2k.NewJ2kWithProgressProcessor
@@ -41,7 +41,7 @@ class NewJ2kConverterExtension : J2kConverterExtension() {
 
     private fun checkKotlinIsConfigured(project: Project, module: Module): Boolean {
         val kotlinIsConfigured =
-            hasAnyKotlinRuntimeInScope(module) || isModuleConfigured(module.toModuleGroup())
+            module.hasKotlinPluginEnabled() || isModuleConfigured(module.toModuleGroup())
         if (kotlinIsConfigured) return true
 
         val title = KotlinNJ2KServicesBundle.message("converter.kotlin.not.configured.title")
@@ -63,6 +63,7 @@ class NewJ2kConverterExtension : J2kConverterExtension() {
 
                 configurators.size == 1 -> configurators.single().configure(project, emptyList())
                 else -> {
+                    @Suppress("DEPRECATION")
                     val resultIndex = Messages.showChooseDialog( //TODO a better dialog?
                         project,
                         KotlinNJ2KServicesBundle.message("converter.kotlin.not.configured.choose.configurator"),

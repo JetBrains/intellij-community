@@ -9,8 +9,8 @@ import java.util.*
 //{
 // "buildNumber" : "221.4501.155",
 // "productCode" : "IU",
-//  "version" : "2022.1",
-//  "versionSuffix" : "EAP"
+// "version" : "2022.1",
+// "versionSuffix" : "EAP"
 //}
 data class ProductInfo(
   val buildNumber: @NlsSafe String,

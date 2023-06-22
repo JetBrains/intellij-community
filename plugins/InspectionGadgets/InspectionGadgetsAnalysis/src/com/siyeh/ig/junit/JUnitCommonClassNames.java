@@ -70,11 +70,12 @@ public final class JUnitCommonClassNames {
   public static final String ORG_JUNIT_JUPITER_API_EXTENSION_BEFORE_ALL_CALLBACK = "org.junit.jupiter.api.extension.BeforeAllCallback";
   public static final String ORG_JUNIT_JUPITER_API_EXTENSION_AFTER_ALL_CALLBACK = "org.junit.jupiter.api.extension.AfterAllCallback";
   public static final String ORG_JUNIT_JUPITER_API_EXTENSION_PARAMETER_RESOLVER = "org.junit.jupiter.api.extension.ParameterResolver";
-  public static final String ORG_JUNIT_JUPITER_API_EXTENSION = "org.junit.jupiter.api.extension.Extension";
+  public static final String ORG_JUNIT_JUPITER_API_EXTENSION_EXTENSION = "org.junit.jupiter.api.extension.Extension";
   public static final String ORG_JUNIT_JUPITER_API_BEFORE_ALL = "org.junit.jupiter.api.BeforeAll";
   public static final String ORG_JUNIT_JUPITER_API_AFTER_ALL = "org.junit.jupiter.api.AfterAll";
   public static final String ORG_JUNIT_JUPITER_API_BEFORE_EACH = "org.junit.jupiter.api.BeforeEach";
   public static final String ORG_JUNIT_JUPITER_API_AFTER_EACH = "org.junit.jupiter.api.AfterEach";
   public static final String ORG_JUNIT_EXPERIMENTAL_THEORIES_DATAPOINT = "org.junit.experimental.theories.DataPoint";
   public static final String ORG_JUNIT_EXPERIMENTAL_THEORIES_DATAPOINTS = "org.junit.experimental.theories.DataPoints";
+  public static final String ORG_JUNIT_EXPERIMENTAL_RUNNERS_ENCLOSED = "org.junit.experimental.runners.Enclosed";
 }

@@ -53,6 +53,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     return enabled ? myIcon : myDisabledIcon;
   }
   private boolean mySmallVariant = true;
+  private boolean myFontSet;
   protected @NlsContexts.PopupTitle String myPopupTitle;
 
 
@@ -166,7 +167,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       setHorizontalAlignment(LEFT);
       setFocusable(ScreenReader.isActive());
       putClientProperty("styleCombo", ComboBoxAction.this);
-      setMargin(JBUI.insets(0, 8, 0, 5));
+      setMargin();
       if (isSmallVariant()) {
         setFont(JBUI.Fonts.toolbarSmallComboBoxFont());
       }
@@ -204,6 +205,10 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       myPresentation.addPropertyChangeListener(evt -> {
         presentationChanged(evt);
       });
+    }
+
+    private void setMargin() {
+      setMargin(JBUI.insets(0, 8, 0, 5));
     }
 
     /**
@@ -341,7 +346,14 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
     @Override
     public Font getFont() {
+      if (myFontSet && ExperimentalUI.isNewUI()) return super.getFont();
       return isSmallVariant() ? UIUtil.getToolbarFont() : StartupUiUtil.getLabelFont();
+    }
+
+    @Override
+    public void setFont(Font font) {
+      super.setFont(font);
+      myFontSet = true;
     }
 
     @Override
@@ -374,7 +386,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       setUI(uiClassName == null ?
             BasicButtonUI.createUI(this) :
             UIManager.getUI(this));
-      setMargin(JBUI.insets(0, 8, 0, 5));
+      setMargin();
     }
 
     @ApiStatus.Experimental

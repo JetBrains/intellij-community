@@ -14,16 +14,17 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.util.containers.MultiMap
-import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyListener
-import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.orderToRemoveReplaceAdd
 import java.util.function.Supplier
 
 class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyIndex, Disposable {
@@ -77,7 +78,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     if (project.isDisposed) return
 
     // Roots changed event should be fired for the global libraries linked with module
-    val moduleChanges = event.getChanges(ModuleEntity::class.java)
+    val moduleChanges = event.getChanges(ModuleEntity::class.java).orderToRemoveReplaceAdd()
     for (change in moduleChanges) {
       change.oldEntity?.let { removeTrackedLibrariesAndJdkFromEntity(it) }
       change.newEntity?.let { addTrackedLibraryAndJdkFromEntity(it) }

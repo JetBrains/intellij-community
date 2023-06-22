@@ -5,9 +5,20 @@
             qualifiedName="org.jetbrains.kotlin.j2kConverterExtension"
             interface="org.jetbrains.kotlin.j2k.J2kConverterExtension"
             dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.kotlinIndicesHelperExtension"
+            interface="org.jetbrains.kotlin.idea.core.extension.KotlinIndicesHelperExtension"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.quickFixContributor"
+            interface="org.jetbrains.kotlin.idea.quickfix.QuickFixContributor"
+            dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="org.jetbrains.kotlin.idea.K1PluginStartupActivity"/>
+
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.Fe10ShortenReferencesFacility"/>
@@ -33,6 +44,9 @@
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.descriptors.Fe10AnalysisFacade"
             serviceImplementation="org.jetbrains.kotlin.base.fe10.analysis.IdeFe10AnalysisFacade"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.LibrarySourceScopeService"
+            serviceImplementation="org.jetbrains.kotlin.idea.decompiler.navigation.Fe10LibrarySourceScopeService"/>
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectService"/>
 
@@ -63,8 +77,6 @@
             implementation="org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineNonBlockingContextChecker"/>
     <codeInsight.blockingMethodChecker
             implementation="org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingMethodChecker"/>
-
-    <typeDeclarationProvider implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinTypeDeclarationProvider"/>
 
     <codeInsight.implementMethod language="kotlin"
                                  implementationClass="org.jetbrains.kotlin.idea.core.overrideImplement.ImplementMembersHandler"/>

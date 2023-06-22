@@ -9,12 +9,11 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-final class ActionsDeprecatedMessagesBundle extends DynamicBundle {
+final class ActionsDeprecatedMessagesBundle {
   private static final @NonNls String BUNDLE = "messages.ActionsDeprecatedMessagesBundle";
-  private static final ActionsDeprecatedMessagesBundle INSTANCE = new ActionsDeprecatedMessagesBundle();
+  private static final DynamicBundle INSTANCE = new DynamicBundle(ActionsDeprecatedMessagesBundle.class, BUNDLE);
 
   private ActionsDeprecatedMessagesBundle() {
-    super(BUNDLE);
   }
 
   public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {

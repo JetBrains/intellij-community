@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.ProblemsHolder;
@@ -15,8 +15,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
 import org.jetbrains.uast.*;
-import org.jetbrains.uast.util.UastExpressionUtils;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
+
+import java.util.List;
 
 public class UnsafeVfsRecursionInspection extends DevKitUastInspectionBase {
 
@@ -55,17 +56,15 @@ public class UnsafeVfsRecursionInspection extends DevKitUastInspectionBase {
   }
 
   private static boolean isVirtualFileGetChildrenMethodCall(@NotNull UExpression expression) {
-    PsiMethod getChildrenMethod = tryToResolveGetVisitChildrenMethod(expression);
+    PsiMethod getChildrenMethod = tryToResolveGetChildrenMethod(expression);
     if (getChildrenMethod == null) return false;
     return InheritanceUtil.isInheritor(getChildrenMethod.getContainingClass(), VIRTUAL_FILE_CLASS_NAME);
   }
 
   @Nullable
-  private static PsiMethod tryToResolveGetVisitChildrenMethod(@NotNull UExpression expression) {
-    if (expression instanceof UCallExpression methodCall && UastExpressionUtils.isMethodCall(methodCall)) {
-      if (GET_CHILDREN_METHOD_NAME.equals(methodCall.getMethodName())) {
-        return methodCall.resolve();
-      }
+  private static PsiMethod tryToResolveGetChildrenMethod(@NotNull UExpression expression) {
+    if (expression instanceof UCallExpression call && call.isMethodNameOneOf(List.of(GET_CHILDREN_METHOD_NAME))) {
+      return call.resolve();
     }
     else if (expression instanceof UQualifiedReferenceExpression qualifiedReference) {
       PsiElement selectorPsi = qualifiedReference.getSelector().getSourcePsi();
@@ -93,10 +92,8 @@ public class UnsafeVfsRecursionInspection extends DevKitUastInspectionBase {
         super.visitElement(element);
         UCallExpression potentialRecursiveCall = UastContextKt.toUElement(element, UCallExpression.class);
         if (potentialRecursiveCall == null) return;
-        if (!UastExpressionUtils.isMethodCall(potentialRecursiveCall)) return;
-        if (potentialRecursiveCall != getChildrenMethodCall &&
-            containingMethodName.equals(potentialRecursiveCall.getMethodName()) &&
-            expressionResolvesToMethod(potentialRecursiveCall, containingMethod)) {
+        if (!potentialRecursiveCall.isMethodNameOneOf(List.of(containingMethodName))) return;
+        if (potentialRecursiveCall != getChildrenMethodCall && expressionResolvesToMethod(potentialRecursiveCall, containingMethod)) {
           isInRecursiveCall.set(Boolean.TRUE);
         }
       }

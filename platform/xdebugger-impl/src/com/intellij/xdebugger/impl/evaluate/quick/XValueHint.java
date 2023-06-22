@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.evaluate.quick;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -14,6 +14,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -156,7 +157,7 @@ public class XValueHint extends AbstractValueHint {
   protected void evaluateAndShowHint() {
     AtomicBoolean showEvaluating = new AtomicBoolean(true);
     EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
-      if (myCurrentHint == null && showEvaluating.get()) {
+      if (!isShowing() && showEvaluating.get()) {
         SimpleColoredComponent component = HintUtil.createInformationComponent();
         component.append(XDebuggerUIConstants.getEvaluatingExpressionMessage());
         showHint(component);
@@ -183,7 +184,7 @@ public class XValueHint extends AbstractValueHint {
             XValueNodeImpl.buildText(valuePresenter, text, false);
 
             if (!hasChildren) {
-              showHint(createHintComponent(icon, text, valuePresenter, myFullValueEvaluator));
+              showTooltipPopup(createHintComponent(icon, text, valuePresenter, myFullValueEvaluator));
             }
             else if (getType() == ValueHintType.MOUSE_CLICK_HINT) {
               if (!myShown) {
@@ -201,12 +202,12 @@ public class XValueHint extends AbstractValueHint {
                 // first remove a shortcut created for any previous presentation (like "Collecting data...")
                 disposeVisibleHint();
                 myDisposable = Disposer.newDisposable();
-                ShortcutSet shortcut = ActionManager.getInstance().getAction("ShowErrorDescription").getShortcutSet();
+                ShortcutSet shortcut = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_ERROR_DESCRIPTION);
                 DumbAwareAction.create(e -> showTree(result))
                                .registerCustomShortcutSet(shortcut, getEditor().getContentComponent(), myDisposable);
               }
 
-              showHint(createExpandableHintComponent(icon, text, getShowPopupRunnable(result, myFullValueEvaluator), myFullValueEvaluator));
+              showTooltipPopup(createExpandableHintComponent(icon, text, getShowPopupRunnable(result, myFullValueEvaluator), myFullValueEvaluator));
             }
             myShown = true;
           }
@@ -230,8 +231,8 @@ public class XValueHint extends AbstractValueHint {
           if (getType() == ValueHintType.MOUSE_CLICK_HINT) {
             showHint(HintUtil.createErrorLabel(errorMessage));
           }
-          else if (myCurrentHint != null) {
-            myCurrentHint.hide();
+          else {
+            hideCurrentHint();
           }
         });
         LOG.debug("Cannot evaluate '" + myExpression + "':" + errorMessage);
@@ -268,17 +269,7 @@ public class XValueHint extends AbstractValueHint {
   }
 
   private void showTree(@NotNull XValue value) {
-    if (myCurrentHint != null) {
-      myCurrentHint.hide();
-    }
     showTreePopup(getTreeCreator(), Pair.create(value, myValueName));
-  }
-
-  private void showText(@NotNull String initialText, @NotNull XValue value, @Nullable XFullValueEvaluator evaluator) {
-    if (myCurrentHint != null) {
-      myCurrentHint.hide();
-    }
-    showTextPopup(getTreeCreator(), Pair.create(value, myValueName), initialText, evaluator);
   }
 
   private XDebuggerTreeCreator getTreeCreator() {
@@ -295,7 +286,7 @@ public class XValueHint extends AbstractValueHint {
   private Runnable getShowPopupRunnable(@NotNull XValue value, @Nullable XFullValueEvaluator evaluator) {
     if (value instanceof XValueTextProvider && ((XValueTextProvider)value).shouldShowTextValue()) {
       @NotNull String initialText = StringUtil.notNullize(((XValueTextProvider)value).getValueText());
-      return () -> showText(initialText, value, evaluator);
+      return () -> showTextPopup(getTreeCreator(), Pair.create(value, myValueName), initialText, evaluator);
     }
     return () -> showTree(value);
   }

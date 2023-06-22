@@ -79,7 +79,6 @@ interface ErrorNotifier {
   }
 }
 
-@RequiresEdt
 internal fun showUnsupportedVersionError(project: Project, version: GitVersion, errorNotifier: ErrorNotifier) {
   val description = if (version.type == GitVersion.Type.WSL1) unsupportedWslVersionDescription() else unsupportedVersionDescription()
   errorNotifier.showError(unsupportedVersionMessage(version), description, getLinkToConfigure(project))

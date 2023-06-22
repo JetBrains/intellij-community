@@ -29,7 +29,7 @@ import kotlin.reflect.KMutableProperty0
 @ApiStatus.ScheduledForRemoval
 @Deprecated("Mig Layout is going to be removed, IDEA-306719")
 internal class MigLayoutRow(private val parent: MigLayoutRow?,
-                            override val builder: MigLayoutBuilder,
+                            private val builder: MigLayoutBuilder,
                             val labeled: Boolean = false,
                             val noGrid: Boolean = false,
                             private val indent: Int /* level number (nested rows) */,
@@ -74,7 +74,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   }
 
   val components: MutableList<JComponent> = SmartList()
-  var rightIndex = Int.MAX_VALUE
+  var rightIndex: Int = Int.MAX_VALUE
 
   private var lastComponentConstraintsWithSplit: CC? = null
 
@@ -117,7 +117,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     body()
   }
 
-  override var enabled = true
+  override var enabled: Boolean = true
     set(value) {
       if (field == value) {
         return
@@ -143,7 +143,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       }
     }
 
-  override var visible = true
+  override var visible: Boolean = true
     set(value) {
       if (field == value) {
         return
@@ -167,7 +167,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       }
     }
 
-  override var subRowsEnabled = true
+  override var subRowsEnabled: Boolean = true
     set(value) {
       if (field == value) {
         return
@@ -182,7 +182,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       components.firstOrNull()?.parent?.repaint() // Repaint all dependent components in sync
     }
 
-  override var subRowsVisible = true
+  override var subRowsVisible: Boolean = true
     set(value) {
       if (field == value) {
         return
@@ -282,7 +282,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     val parentRow = createChildRow(indent = indent, title = title, isSeparated = isSeparated, incrementsIndent = isSeparated)
     parentRow.init()
     val result = parentRow.createChildRow()
-    result.placeholder()
+    result.internalPlaceholder()
     result.largeGapAfter()
     return result
   }

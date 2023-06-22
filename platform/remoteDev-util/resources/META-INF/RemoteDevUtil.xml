@@ -4,5 +4,11 @@
     <applicationService serviceInterface="com.intellij.remoteDev.downloader.JetBrainsClientDownloaderConfigurationProvider"
                         serviceImplementation="com.intellij.remoteDev.downloader.RealJetBrainsClientDownloaderConfigurationProvider"
                         testServiceImplementation="com.intellij.remoteDev.downloader.TestJetBrainsClientDownloaderConfigurationProvider"/>
+    <oTelExportersProvider implementation="com.intellij.remoteDev.tracing.RdctExportersProvider"/>
+    <oTelExportersProvider implementation="com.intellij.remoteDev.tracing.LuxExportersProvider"/>
+    <applicationInitializedListener implementation="com.intellij.remoteDev.tracing.CustomExportersListener"/>
+    <registryKey key="rdct.enable.per.connection.client.process" defaultValue="true"
+                 description="Use client handle lifetime to track the process of clients of the same version"
+                 restartRequired="false" />
   </extensions>
 </idea-plugin>

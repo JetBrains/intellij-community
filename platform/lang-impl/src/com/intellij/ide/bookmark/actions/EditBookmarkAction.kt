@@ -8,11 +8,10 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 
-internal class EditBookmarkAction : DumbAwareAction(BookmarkBundle.messagePointer("bookmark.edit.action.text")) {
-
+internal class EditBookmarkAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-  override fun update(event: AnActionEvent) = with(event.presentation) {
+  override fun update(event: AnActionEvent): Unit = with(event.presentation) {
     isEnabledAndVisible = process(event, false) != null
   }
 

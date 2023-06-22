@@ -4,6 +4,7 @@ package com.intellij.ide.todo;
 import com.intellij.ConfigurableFactory;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.todo.configurable.TodoConfigurable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
@@ -54,8 +55,15 @@ public class SetTodoFilterAction extends ActionGroup implements DumbAware {
                                   IdeBundle.messagePointer("action.todo.edit.filters.description"), AllIcons.General.Settings) {
                 @Override
                 public void actionPerformed(@NotNull AnActionEvent e) {
-                  final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
-                  util.editConfigurable(project, ConfigurableFactory.Companion.getInstance().getTodoConfigurable(project));
+                  TodoConfigurable todoConfigurable = ConfigurableFactory.Companion.getInstance().getTodoConfigurable(project);
+
+                  // Rider overrides the result of the method [getTodoConfigurable]
+                  if (todoConfigurable.getClass().equals(TodoConfigurable.class)) {
+                    ShowSettingsUtil.getInstance().showSettingsDialog(project, TodoConfigurable.class);
+                  }
+                  else {
+                    ShowSettingsUtil.getInstance().editConfigurable(project, todoConfigurable);
+                  }
                 }
               }
     );

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.diagnostic.VMOptions
@@ -100,8 +100,7 @@ private fun checkInstallationIntegrity() {
       // see `LinuxDistributionBuilder#generateVersionMarker`
       val markers = stream.filter { it.fileName.toString().startsWith("build-marker-") }.count()
       if (markers > 1) {
-        showNotification(key = "mixed.bag.installation", suppressable = false, action = null,
-                         ApplicationNamesInfo.getInstance().fullProductName)
+        showNotification("mixed.bag.installation", suppressable = false, action = null, ApplicationNamesInfo.getInstance().fullProductName)
       }
     }
   }
@@ -143,10 +142,7 @@ private suspend fun checkRuntime() {
     val downloadAction = NotificationAction.createSimpleExpiring(IdeBundle.message("bundled.jre.m1.arch.message.download")) {
       BrowserUtil.browse("https://www.jetbrains.com/products/#type=ide")
     }
-    showNotification(key = "bundled.jre.m1.arch.message",
-                     suppressable = true,
-                     action = downloadAction,
-                     ApplicationNamesInfo.getInstance().fullProductName)
+    showNotification("bundled.jre.m1.arch.message", suppressable = true, downloadAction, ApplicationNamesInfo.getInstance().fullProductName)
   }
   var jreHome = SystemProperties.getJavaHome()
 
@@ -164,7 +160,6 @@ private suspend fun checkRuntime() {
     if (Files.isRegularFile(configFile)) {
       switchAction = NotificationAction.createSimpleExpiring(IdeBundle.message("action.SwitchToJBR.text")) {
         try {
-          @Suppress("BlockingMethodInNonBlockingContext")
           Files.delete(configFile)
           ApplicationManagerEx.getApplicationEx().restart(true)
         }
@@ -177,9 +172,7 @@ private suspend fun checkRuntime() {
     }
   }
   jreHome = jreHome.removeSuffix("/Contents/Home")
-  showNotification(key = "bundled.jre.version.message",
-                   suppressable = false,
-                   action = switchAction,
+  showNotification("bundled.jre.version.message", suppressable = false, switchAction,
                    JavaVersion.current(), System.getProperty("java.vendor"), jreHome)
 }
 
@@ -194,7 +187,6 @@ private fun isModernJBR(): Boolean {
   return jbrVersion == null || JavaVersion.current() >= jbrVersion.version
 }
 
-@Suppress("BlockingMethodInNonBlockingContext")
 private suspend fun isJbrOperational(): Boolean {
   val bin = Path.of(PathManager.getBundledRuntimePath(), if (SystemInfoRt.isWindows) "bin/java.exe" else "bin/java")
   if (Files.isRegularFile(bin) && (SystemInfoRt.isWindows || Files.isExecutable(bin))) {
@@ -228,7 +220,7 @@ private fun checkReservedCodeCacheSize() {
     else {
       null
     }
-    showNotification("code.cache.warn.message", true, action, reservedCodeCacheSize, minReservedCodeCacheSize)
+    showNotification("code.cache.warn.message", suppressable = true, action, reservedCodeCacheSize, minReservedCodeCacheSize)
   }
 }
 
@@ -237,7 +229,7 @@ private suspend fun checkEnvironment() {
     .filter { `var` -> !System.getenv(`var`).isNullOrEmpty() }
     .toList()
   if (!usedVars.isEmpty()) {
-    showNotification("vm.options.env.vars", true, null, usedVars.joinToString(separator = ", "))
+    showNotification("vm.options.env.vars", suppressable = true, null, usedVars.joinToString(separator = ", "))
   }
 
   try {
@@ -247,7 +239,7 @@ private suspend fun checkEnvironment() {
       }
       val appName = ApplicationNamesInfo.getInstance().fullProductName
       val shell = System.getenv("SHELL")
-      showNotification("shell.env.loading.failed", true, action, appName, shell)
+      showNotification("shell.env.loading.failed", suppressable = true, action, appName, shell)
     }
   }
   catch (e: Exception) {
@@ -279,12 +271,12 @@ private fun checkTempDirEnvVars() {
     val value = System.getenv(name) ?: continue
     try {
       if (!Files.isDirectory(Path.of(value))) {
-        showNotification(key = "temp.dir.env.invalid", suppressable = false, action = null, name, value)
+        showNotification("temp.dir.env.invalid", suppressable = false, action = null, name, value)
       }
     }
     catch (e: Exception) {
       LOG.warn(e)
-      showNotification(key = "temp.dir.env.invalid", suppressable = false, action = null, name, value)
+      showNotification("temp.dir.env.invalid", suppressable = false, action = null, name, value)
     }
   }
 }
@@ -318,8 +310,7 @@ private fun showNotification(key: @PropertyKey(resourceBundle = "messages.IdeBun
 
 private const val NO_DISK_SPACE_THRESHOLD = (1 shl 20).toLong()
 private const val LOW_DISK_SPACE_THRESHOLD = (50 shl 20).toLong()
-// 500 MB/s is (somewhat outdated) peak SSD write speed
-private const val MAX_WRITE_SPEED_IN_BPS = (500 shl 20).toLong()
+private const val MAX_WRITE_SPEED_IN_BPS = (500 shl 20).toLong()  // 500 MB/s is (somewhat outdated) peak SSD write speed
 
 private fun startDiskSpaceMonitoring() {
   if (SystemProperties.getBooleanProperty("idea.no.system.path.space.monitoring", false)) {

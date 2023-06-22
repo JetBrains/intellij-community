@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.ide.ui.UISettings;
@@ -26,13 +26,11 @@ public final class EditorColorsUtil {
    * @return the appropriate color scheme for UI other than text editor (QuickDoc, UsagesView, etc.)
    * depending on the current LAF and current editor color scheme.
    */
-  @NotNull
-  public static EditorColorsScheme getGlobalOrDefaultColorScheme() {
+  public static @NotNull EditorColorsScheme getGlobalOrDefaultColorScheme() {
     return getColorSchemeForBackground(null);
   }
 
-  @Nullable
-  public static Color getGlobalOrDefaultColor(@NotNull ColorKey colorKey) {
+  public static @Nullable Color getGlobalOrDefaultColor(@NotNull ColorKey colorKey) {
     Color color = getColorSchemeForBackground(null).getColor(colorKey);
     return color != null? color : colorKey.getDefaultColor();
   }
@@ -41,8 +39,7 @@ public final class EditorColorsUtil {
    * @return the appropriate color scheme for UI other than text editor (QuickDoc, UsagesView, etc.)
    * depending on the current LAF, current editor color scheme and the component background.
    */
-  @NotNull
-  public static EditorColorsScheme getColorSchemeForComponent(@Nullable JComponent component) {
+  public static @NotNull EditorColorsScheme getColorSchemeForComponent(@Nullable JComponent component) {
     return getColorSchemeForBackground(component != null ? component.getBackground() : null);
   }
 
@@ -63,8 +60,7 @@ public final class EditorColorsUtil {
     return globalScheme;
   }
 
-  @NotNull
-  public static EditorColorsScheme getColorSchemeForPrinting() {
+  public static @NotNull EditorColorsScheme getColorSchemeForPrinting() {
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     return colorsManager.isDarkEditor() ? colorsManager.getScheme(EditorColorsManager.DEFAULT_SCHEME_NAME)
                                         : colorsManager.getGlobalScheme();

@@ -14,8 +14,6 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.Internal
 public interface CodeStyleCachingService {
 
-  Key<StackTraceElement[]> CALL_TRACE = Key.create(CodeStyleCachingService.class.getName() + ".call-trace");
-
   static CodeStyleCachingService getInstance(@NotNull Project project) {
     return project.getService(CodeStyleCachingService.class);
   }

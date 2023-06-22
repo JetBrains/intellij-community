@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -174,8 +175,7 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
     }
 
     ActionGroup gutterGroup = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_GUTTER_POPUP);
-    List<AnAction> result = new ArrayList<>();
-    ContainerUtil.addAll(result, gutterGroup.getChildren(e));
+    List<AnAction> result = new ArrayList<>(Arrays.asList(gutterGroup.getChildren(e)));
     result.add(Separator.getInstance());
     replaceOrAppend(result, editorSettingsGroup, new DefaultActionGroup(actions));
     return result.toArray(AnAction.EMPTY_ARRAY);

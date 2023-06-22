@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
+import com.intellij.openapi.externalSystem.statistics.runImportActivitySync
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.UnloadedModulesListStorage
@@ -24,17 +25,18 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.workspaceModel.ide.JpsImportedEntitySource
-import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.JpsImportedEntitySource
+import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.serialization.impl.FileInDirectorySourceNames
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.ide.impl.FileInDirectorySourceNames
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.execution.SyncBundle
@@ -141,9 +143,33 @@ internal class WorkspaceProjectImporter(
       }
       else {
         MavenLog.LOG.info("Project has been migrated to external project files storage")
+        notifyUserAboutExternalStorageMigration()
       }
     }
     return migratedToExternalStorage
+  }
+
+  private fun notifyUserAboutExternalStorageMigration() {
+    val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("Maven") ?: return
+
+    val showNotification = {
+      val notification = notificationGroup
+        .createNotification(
+          SyncBundle.message("maven.workspace.external.storage.notification.title"),
+          SyncBundle.message("maven.workspace.external.storage.notification.text"),
+          NotificationType.INFORMATION)
+
+      notification.addAction(object : AnAction(
+        SyncBundle.message("maven.sync.quickfixes.open.settings")) {
+        override fun actionPerformed(e: AnActionEvent) {
+          notification.expire()
+          ShowSettingsUtil.getInstance().showSettingsDialog(myProject, MavenProjectBundle.message("maven.tab.importing"))
+        }
+      })
+      notification.notify(myProject)
+    }
+
+    ApplicationManager.getApplication().invokeLater(showNotification, myProject.disposed)
   }
 
   private data class ProjectChangesInfo(val hasChanges: Boolean, val allProjectsToChanges: Map<MavenProject, MavenProjectChanges>) {
@@ -205,10 +231,10 @@ internal class WorkspaceProjectImporter(
                              val modules: MutableList<ModuleWithTypeData<ModuleEntity>>)
 
     val projectToModulesData = mutableMapOf<MavenProject, PartialModulesData>()
-    val unloadedModuleNames = UnloadedModulesListStorage.getInstance(myProject).unloadedModuleNames.toSet()
+    val unloadedModulesNameHolder = UnloadedModulesListStorage.getInstance(myProject).unloadedModuleNameHolder
 
     for (importData in sortProjectsToImportByPrecedence(context)) {
-      if (importData.moduleData.moduleName in unloadedModuleNames) continue
+      if (unloadedModulesNameHolder.isUnloaded(importData.moduleData.moduleName)) continue
 
       val moduleEntity = WorkspaceModuleImporter(myProject,
                                                  storageBeforeImport,
@@ -323,6 +349,8 @@ internal class WorkspaceProjectImporter(
       .filter { it.contentRoots.isEmpty() }
       .forEach { currentStorage.removeEntity(it) }
 
+    retainPreviouslyExcludedFolders(currentStorage, newStorage)
+
     currentStorage.replaceBySource({ isMavenEntity(it) }, newStorage)
 
     // Now we have some modules with duplicating content roots. One content root existed before and another one exported from maven.
@@ -367,6 +395,33 @@ internal class WorkspaceProjectImporter(
           currentStorage.removeEntity(from)
         }
       }
+  }
+
+  // if a folder was excluded in legacy import, keep it excluded in workspace import as well
+  private fun retainPreviouslyExcludedFolders(currentStorage: MutableEntityStorage, newStorage: MutableEntityStorage) {
+    val previouslyExcludedUrls = currentStorage.entities(ExcludeUrlEntity::class.java)
+    val newExcludedUrlMap = newStorage.entities(ExcludeUrlEntity::class.java).associateBy({ it.url }, { it })
+    val newContentRootMap = newStorage.entities(ContentRootEntity::class.java).associateBy({ it.url }, { it })
+    for (previouslyExcludedUrl in previouslyExcludedUrls) {
+      val url = previouslyExcludedUrl.url
+      if (!newExcludedUrlMap.containsKey(url)) {
+        var parentUrl: VirtualFileUrl? = url
+        while (parentUrl != null) {
+          val newContentRoot = newContentRootMap[parentUrl]
+          if (newContentRoot != null) {
+            if (!newContentRoot.excludedUrls.map { it.url }.contains(url)) {
+              newStorage.modifyEntity(newContentRoot) {
+                val excludedUrls = this.excludedUrls.toMutableList()
+                excludedUrls.add(ExcludeUrlEntity(url, previouslyExcludedUrl.entitySource))
+                this.excludedUrls = excludedUrls
+              }
+            }
+            break
+          }
+          parentUrl = virtualFileUrlManager.getParentVirtualUrl(parentUrl)
+        }
+      }
+    }
   }
 
   private fun mapEntitiesToModulesAndRunAfterModelApplied(appliedStorage: EntityStorage,
@@ -604,6 +659,12 @@ private class AfterImportConfiguratorsTask(private val contextData: UserDataHold
                        embeddersManager: MavenEmbeddersManager,
                        console: MavenConsole,
                        indicator: MavenProgressIndicator) {
+    runImportActivitySync(project, MavenUtil.SYSTEM_ID, AfterImportConfiguratorsTask::class.java) {
+      doPerform(project, indicator)
+    }
+  }
+
+  private fun doPerform(project: Project, indicator: MavenProgressIndicator) {
     val context = object : MavenAfterImportConfigurator.Context, UserDataHolder by contextData {
       override val project = project
       override val mavenProjectsWithModules = appliedProjectsWithModules.asSequence()

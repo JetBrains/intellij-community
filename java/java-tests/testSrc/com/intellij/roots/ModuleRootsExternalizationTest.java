@@ -79,7 +79,7 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
     PsiTestUtil.setCompilerOutputPath(module, classesFile.getUrl(), false);
     PsiTestUtil.setCompilerOutputPath(module, testClassesFile.getUrl(), true);
 
-    StoreUtil.saveDocumentsAndProjectSettings(myProject);
+    StoreUtil.saveSettings(myProject);
 
     assertEquals(
       """
@@ -116,7 +116,7 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
       extension.setJavadocUrls(new String[]{javadocUrl});
     });
 
-    StoreUtil.saveDocumentsAndProjectSettings(myProject);
+    StoreUtil.saveSettings(myProject);
 
     assertEquals(
       """
@@ -176,7 +176,7 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
     assertEquals(libraryIterator.next(), namedLibrary);
 
     ApplicationManager.getApplication().runWriteAction(rootModel::commit);
-    StoreUtil.saveDocumentsAndProjectSettings(myProject);
+    StoreUtil.saveSettings(myProject);
 
     assertEquals(
       """
@@ -213,7 +213,7 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
     final ModifiableRootModel rootModel = moduleRootManager.getModifiableModel();
     rootModel.getModuleExtension(CompilerModuleExtension.class).inheritCompilerOutputPath(true);
     ApplicationManager.getApplication().runWriteAction(rootModel::commit);
-    StoreUtil.saveDocumentsAndProjectSettings(myProject);
+    StoreUtil.saveSettings(myProject);
 
     assertEquals(
       """

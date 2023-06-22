@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.ActivityCategory
@@ -13,7 +13,8 @@ internal class MyComponentAdapter(private val componentKey: Class<*>,
                                   pluginDescriptor: PluginDescriptor,
                                   componentManager: ComponentManagerImpl,
                                   deferred: CompletableDeferred<Any>,
-                                  implementationClass: Class<*>?) : BaseComponentAdapter(componentManager, pluginDescriptor, deferred, implementationClass) {
+                                  implementationClass: Class<*>?) : BaseComponentAdapter(componentManager, pluginDescriptor, deferred,
+                                                                                         implementationClass) {
   override fun getComponentKey() = componentKey
 
   override fun isImplementationEqualsToInterface() = componentKey.name == implementationClassName
@@ -32,33 +33,27 @@ internal class MyComponentAdapter(private val componentKey: Class<*>,
   }
 
   override fun <T : Any> doCreateInstance(componentManager: ComponentManagerImpl, implementationClass: Class<T>): T {
-    try {
-      val instance = componentManager.instantiateClassWithConstructorInjection(implementationClass, componentKey, pluginId)
-      if (instance is Disposable) {
-        Disposer.register(componentManager.serviceParentDisposable, instance)
-      }
+    val instance = componentManager.instantiateClassWithConstructorInjection(implementationClass, componentKey, pluginId)
+    if (instance is Disposable) {
+      Disposer.register(componentManager.serviceParentDisposable, instance)
+    }
 
-      componentManager.initializeComponent(instance, serviceDescriptor = null, pluginId = pluginId)
+    componentManager.initializeComponent(instance, serviceDescriptor = null, pluginId = pluginId)
+    @Suppress("DEPRECATION")
+    if (instance is com.intellij.openapi.components.BaseComponent) {
       @Suppress("DEPRECATION")
-      if (instance is com.intellij.openapi.components.BaseComponent) {
-        @Suppress("DEPRECATION")
-        instance.initComponent()
-        if (instance !is Disposable) {
-          @Suppress("ObjectLiteralToLambda")
-          Disposer.register(componentManager.serviceParentDisposable, object : Disposable {
-            override fun dispose() {
-              @Suppress("DEPRECATION")
-              instance.disposeComponent()
-            }
-          })
-        }
+      instance.initComponent()
+      if (instance !is Disposable) {
+        @Suppress("ObjectLiteralToLambda")
+        Disposer.register(componentManager.serviceParentDisposable, object : Disposable {
+          override fun dispose() {
+            @Suppress("DEPRECATION")
+            instance.disposeComponent()
+          }
+        })
       }
-      return instance
     }
-    catch (t: Throwable) {
-      componentManager.handleInitComponentError(t, componentKey.name, pluginId)
-      throw t
-    }
+    return instance
   }
 
   override fun toString() = "ComponentAdapter(key=${getComponentKey()}, implementation=${implementationClassName}, plugin=$pluginId)"

@@ -104,7 +104,7 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
       if (myOriginalRange.contains(value.getTextRange())) {
         PsiElement child = value.getFirstChild();
         if (child != null &&
-            !containsQuoteChars(value) // For now we skip values containing quotes to be inserted/replaced
+            !containsQuoteChars(value) // For now, we skip values containing quotes to be inserted/replaced
           ) {
           if (child.getNode().getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER) {
             PsiElement lastChild = value.getLastChild();
@@ -157,18 +157,22 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
 
     @Override
     public void run() {
-      if (myDocument != null) {
-        myDocumentManager.doPostponedOperationsAndUnblockDocument(myDocument);
-        myContext.accept(this);
-        myDocumentManager.commitDocument(myDocument);
-      }
+      if (myDocument == null) return;
+      runSimple();
+      myDocumentManager.commitDocument(myDocument);
+    }
+
+    public void runSimple() {
+      if (myDocument == null) return;
+      myDocumentManager.doPostponedOperationsAndUnblockDocument(myDocument);
+      myContext.accept(this);
     }
 
     public static void runOnElement(@NotNull CodeStyleSettings.QuoteStyle quoteStyle, @NotNull PsiElement element) {
       CommonCodeStyleSettings settings = CodeStyle.getSettings(element.getContainingFile()).getCommonSettings(HTMLLanguage.INSTANCE);
       PostFormatProcessorHelper postFormatProcessorHelper = new PostFormatProcessorHelper(settings);
       postFormatProcessorHelper.setResultTextRange(element.getTextRange());
-      new HtmlQuotesConverter(quoteStyle, element, postFormatProcessorHelper).run();
+      new HtmlQuotesConverter(quoteStyle, element, postFormatProcessorHelper).runSimple();
     }
   }
 }

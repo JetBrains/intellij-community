@@ -16,12 +16,9 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ConvertSwitchToIfIntention;
-import com.intellij.codeInsight.daemon.impl.quickfix.UnwrapSwitchLabelFix;
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.SetInspectionOptionFix;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -29,9 +26,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.DelegatingFix;
-import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.SwitchUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +37,7 @@ import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection {
 
   private static final int DEFAULT_BRANCH_LIMIT = 2;
 
@@ -75,21 +70,21 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     boolean canFix = (Boolean)infos[2];
     boolean patternSwitch = (Boolean)infos[3];
-    List<InspectionGadgetsFix> fixes = new ArrayList<>();
+    List<LocalQuickFix> fixes = new ArrayList<>();
     if (canFix) {
       final Integer branchCount = (Integer)infos[0];
       fixes.add(new UnwrapSwitchStatementFix(branchCount));
     }
     if (patternSwitch) {
-      fixes.add(new DelegatingFix(new SetInspectionOptionFix(this, "ignorePatternSwitch",
-                                                             InspectionGadgetsBundle.message(
+      fixes.add(new SetInspectionOptionFix(this, "ignorePatternSwitch",
+                                           InspectionGadgetsBundle.message(
                                                                "switch.statement.with.too.few.branches.ignore.pattern.option"),
-                                                             true)));
+                                           true));
     }
-    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+    return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   @Override
@@ -101,6 +96,46 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new MinimumSwitchBranchesVisitor();
+  }
+
+  /**
+   * Unwraps switch expression if it consists of single expression-branch; does nothing otherwise
+   *
+   * @param switchExpression expression to unwrap
+   */
+  private static void unwrapExpression(@NotNull PsiSwitchExpression switchExpression) {
+    PsiExpression expression = getOnlyExpression(switchExpression);
+    if (expression == null) return;
+    PsiExpression selector = switchExpression.getExpression();
+    CommentTracker tracker = new CommentTracker();
+    if (selector != null) {
+      List<PsiExpression> expressions = SideEffectChecker.extractSideEffectExpressions(selector);
+      if (!expressions.isEmpty()) {
+        expressions.forEach(tracker::markUnchanged);
+        PsiStatement[] sideEffects = StatementExtractor.generateStatements(expressions, selector);
+        CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(switchExpression);
+        if (surrounder != null) {
+          CodeBlockSurrounder.SurroundResult result = surrounder.surround();
+          PsiStatement anchor = result.getAnchor();
+          for (PsiStatement effect : sideEffects) {
+            anchor.getParent().addBefore(effect, anchor);
+          }
+          switchExpression = (PsiSwitchExpression)result.getExpression();
+        }
+      }
+    }
+    tracker.replaceAndRestoreComments(switchExpression, expression);
+  }
+
+  @Nullable
+  private static PsiExpression getOnlyExpression(@NotNull PsiSwitchExpression switchExpression) {
+    PsiCodeBlock body = switchExpression.getBody();
+    if (body == null) return null;
+    PsiStatement[] statements = body.getStatements();
+    if (statements.length != 1 || !(statements[0] instanceof PsiSwitchLabeledRuleStatement rule)) return null;
+    PsiStatement ruleBody = rule.getBody();
+    if (!(ruleBody instanceof PsiExpressionStatement expressionStatement)) return null;
+    return expressionStatement.getExpression();
   }
 
   private class MinimumSwitchBranchesVisitor extends BaseInspectionVisitor {
@@ -145,7 +180,11 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
       else {
         PsiStatement[] statements = body.getStatements();
         if (statements.length == 1 && statements[0] instanceof PsiSwitchLabeledRuleStatement statement) {
-          fixIsAvailable = SwitchUtils.isDefaultLabel(statement) && statement.getBody() instanceof PsiExpressionStatement;
+          fixIsAvailable = SwitchUtils.isDefaultLabel(statement) &&
+                           statement.getBody() instanceof PsiExpressionStatement &&
+                           (block.getExpression() == null ||
+                            !SideEffectChecker.mayHaveSideEffects(block.getExpression()) ||
+                            CodeBlockSurrounder.canSurround(block.getExpression()));
         }
         else {
           fixIsAvailable = false;
@@ -155,7 +194,7 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
     }
   }
 
-  public static final class UnwrapSwitchStatementFix extends InspectionGadgetsFix {
+  public static final class UnwrapSwitchStatementFix extends PsiUpdateModCommandQuickFix {
     int myBranchCount;
 
     private UnwrapSwitchStatementFix(int branchCount) {
@@ -177,12 +216,12 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiSwitchBlock block = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiSwitchBlock.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
+      PsiSwitchBlock block = PsiTreeUtil.getParentOfType(startElement, PsiSwitchBlock.class);
       if (block instanceof PsiSwitchStatement) {
         ConvertSwitchToIfIntention.doProcessIntention((PsiSwitchStatement)block);
       } else if (block instanceof PsiSwitchExpression) {
-        UnwrapSwitchLabelFix.unwrapExpression((PsiSwitchExpression)block);
+        unwrapExpression((PsiSwitchExpression)block);
       }
     }
   }

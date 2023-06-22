@@ -19,15 +19,17 @@ import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Supplier;
+
 public abstract class Intention extends BaseElementAtCaretIntentionAction {
   @SafeFieldForPreview
-  private final NotNullLazyValue<PsiElementPredicate> myPredicate = NotNullLazyValue.atomicLazy(() -> getElementPredicate());
+  private final Supplier<PsiElementPredicate> myPredicate = new SynchronizedClearableLazy<>(() -> getElementPredicate());
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element){
@@ -52,7 +54,7 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
   PsiElement findMatchingElement(@Nullable PsiElement element, Editor editor) {
     if (element == null || !JavaLanguage.INSTANCE.equals(element.getLanguage())) return null;
 
-    PsiElementPredicate predicate = myPredicate.getValue();
+    PsiElementPredicate predicate = myPredicate.get();
 
     while (element != null) {
       if (!JavaLanguage.INSTANCE.equals(element.getLanguage())) {

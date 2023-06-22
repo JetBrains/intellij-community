@@ -3,6 +3,7 @@ package com.intellij.codeInsight.navigation;
 
 import com.intellij.model.Symbol;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.NotNull;
@@ -21,5 +22,5 @@ public interface SymbolTypeProvider {
    * when the caret is within a declaration of such variable,
    * or within a reference to this variable.
    */
-  @NotNull List<? extends @NotNull Symbol> getSymbolTypes(@NotNull Symbol symbol);
+  @NotNull List<? extends @NotNull Symbol> getSymbolTypes(@NotNull Project project, @NotNull Symbol symbol);
 }

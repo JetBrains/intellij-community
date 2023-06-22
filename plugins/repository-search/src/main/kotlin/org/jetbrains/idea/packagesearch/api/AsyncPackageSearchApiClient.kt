@@ -16,36 +16,29 @@
 
 package org.jetbrains.idea.packagesearch.api
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level.PROJECT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.util.concurrency.AppExecutorUtil
 import io.ktor.client.engine.HttpClientEngine
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.future.future
 import org.jetbrains.idea.packagesearch.DefaultPackageServiceConfig
 import org.jetbrains.idea.packagesearch.HashingAlgorithm
 import org.jetbrains.idea.packagesearch.PackageSearchServiceConfig
+import org.jetbrains.idea.packagesearch.SortMetric
 import org.jetbrains.packagesearch.api.v2.ApiPackagesResponse
 import org.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import java.util.concurrent.CompletableFuture
 
 @Service(PROJECT)
-internal class LifecycleScope : CoroutineScope, Disposable {
-  override val coroutineContext = SupervisorJob() + AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()
-  override fun dispose() = cancel()
-}
+internal class LifecycleScope(val cs: CoroutineScope)
 
 fun AsyncPackageSearchApiClient(
   project: Project,
   config: PackageSearchServiceConfig = service<DefaultPackageServiceConfig>(),
   engine: HttpClientEngine? = null
-) = AsyncPackageSearchApiClient(project.service<LifecycleScope>(), config, engine)
+) = AsyncPackageSearchApiClient(project.service<LifecycleScope>().cs, config, engine)
 
 class AsyncPackageSearchApiClient(
   private val scope: CoroutineScope,
@@ -59,9 +52,10 @@ class AsyncPackageSearchApiClient(
     searchQuery: String,
     onlyStable: Boolean,
     onlyMpp: Boolean,
+    sortMetric: SortMetric,
     repositoryIds: List<String>
   ): CompletableFuture<ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>> =
-    scope.future { myClient.packagesByQuery(searchQuery, onlyStable, onlyMpp, repositoryIds) }
+    scope.future { myClient.packagesByQuery(searchQuery, onlyStable, onlyMpp, sortMetric, repositoryIds) }
 
   fun suggestPackages(
     groupId: String?,

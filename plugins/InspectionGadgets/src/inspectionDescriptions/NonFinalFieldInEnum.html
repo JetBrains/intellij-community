@@ -1,6 +1,7 @@
 <html>
 <body>
-Reports non-final fields in enumeration types as they are rarely needed and provide a global mutable state.
+Reports non-final fields in enumeration types.
+Non-final fields introduce global mutable state, which is generally considered undesirable.
 <p><b>Example:</b></p>
 <pre><code>
   enum Enum {
@@ -28,6 +29,7 @@ Reports non-final fields in enumeration types as they are rarely needed and prov
   }
 </code></pre>
 <!-- tooltip end -->
-Configure the `Ignore field if quick-fix is not available` checkbox to only highlight fields that can be made final by the quick-fix.
+Use the `Ignore fields that cannot be made 'final'` option to only warn on fields
+that can be made final using the quick-fix.
 </body>
 </html>

@@ -28,7 +28,6 @@ import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vcs.impl.PartialChangesUtil.getPartialTracker
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.containers.ContainerUtil.newUnmodifiableList
 import com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptySet
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
@@ -122,10 +121,10 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   val vcses: Set<AbstractVcs> get() = unmodifiableOrEmptySet(_vcses.toSet())
 
   private val _commitExecutors = mutableListOf<CommitExecutor>()
-  val commitExecutors: List<CommitExecutor> get() = newUnmodifiableList(_commitExecutors)
+  val commitExecutors: List<CommitExecutor> get() = java.util.List.copyOf(_commitExecutors)
 
   private val _commitHandlers = mutableListOf<CheckinHandler>()
-  val commitHandlers: List<CheckinHandler> get() = newUnmodifiableList(_commitHandlers)
+  val commitHandlers: List<CheckinHandler> get() = java.util.List.copyOf(_commitHandlers)
 
   private val _commitOptions = MutableCommitOptions()
   val commitOptions: CommitOptions get() = _commitOptions.toUnmodifiableOptions()
@@ -258,6 +257,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     try {
       val handlers = commitHandlers
       val commitChecks = handlers
+        .filter { it.acceptExecutor(commitInfo.executor) }
         .map { it.asCommitCheck(commitInfo) }
         .filter { it.isEnabled() }
         .groupBy { it.getExecutionOrder() }
@@ -359,7 +359,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     fun getCommitExecutors(project: Project, vcses: Collection<AbstractVcs>): List<CommitExecutor> {
       return vcses.flatMap { it.commitExecutors } +
              ChangeListManager.getInstance(project).registeredExecutors +
-             LocalCommitExecutor.LOCAL_COMMIT_EXECUTOR.getExtensions(project)
+             CommitExecutor.LOCAL_COMMIT_EXECUTOR.getExtensions(project)
     }
 
     suspend fun runMetaHandlers(@Suppress("DEPRECATION") metaHandlers: List<CheckinMetaHandler>) {
@@ -464,7 +464,7 @@ private class ProxyCommitCheck(val checkinHandler: CheckinHandler,
     return DumbService.isDumbAware(checkinHandler)
   }
 
-  override fun isEnabled(): Boolean = checkinHandler.acceptExecutor(executor)
+  override fun isEnabled(): Boolean = true
 
   override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
     val result = blockingContext {

@@ -10,10 +10,10 @@ import com.intellij.ide.util.treeView.NodeDescriptor
 class BookmarksTreeStructure(val panel: BookmarksView) : AbstractTreeStructure() {
   private val root = RootNode(panel)
 
-  override fun commit() = Unit
-  override fun hasSomethingToCommit() = false
+  override fun commit(): Unit = Unit
+  override fun hasSomethingToCommit(): Boolean = false
 
-  override fun createDescriptor(element: Any, parent: NodeDescriptor<*>?) = element as NodeDescriptor<*>
+  override fun createDescriptor(element: Any, parent: NodeDescriptor<*>?): NodeDescriptor<*> = element as NodeDescriptor<*>
 
   override fun getRootElement(): Any = root
   override fun getParentElement(element: Any): Any? = element.asAbstractTreeNode?.parent

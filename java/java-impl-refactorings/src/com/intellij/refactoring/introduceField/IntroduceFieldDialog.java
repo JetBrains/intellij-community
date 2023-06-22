@@ -155,7 +155,7 @@ class IntroduceFieldDialog extends DialogWrapper {
 
     // We delay initialization of name field till dialog is shown, so that it will be executed in a different command and won't
     // be tied to any document changes performed in current command (and won't prevent undo for them later)
-    new UiNotifyConnector.Once(panel, new Activatable() {
+    UiNotifyConnector.Once.installOn(panel, new Activatable() {
       @Override
       public void showNotify() {
         myNameSuggestionsManager = new NameSuggestionsManager(myTypeSelector, myNameField,

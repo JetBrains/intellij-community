@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("PropertyName")
 
 package com.intellij.configurationStore.xml
@@ -432,7 +432,7 @@ internal class XmlSerializerTest {
         <vValue v="3"/>
       </bean>"""))
     assertThat(bean.intV).isEqualTo(2)
-    assertThat("[1, 2, 3]").isEqualTo(Arrays.asList(*bean.v).toString())
+    assertThat("[1, 2, 3]").isEqualTo(listOf(*bean.v).toString())
   }
 
   private class BeanWithPropertiesBoundToAttribute {

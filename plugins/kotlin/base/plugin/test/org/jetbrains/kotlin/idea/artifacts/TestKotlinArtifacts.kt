@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.idea.artifacts.KotlinNativePrebuiltDownloader.downlo
 import org.jetbrains.kotlin.idea.artifacts.KotlinNativePrebuiltDownloader.unpackPrebuildArchive
 import org.jetbrains.kotlin.idea.artifacts.KotlinNativeVersion
 import org.jetbrains.kotlin.idea.artifacts.NATIVE_PREBUILT_DEV_CDN_URL
+import org.jetbrains.kotlin.idea.artifacts.NATIVE_PREBUILT_RELEASE_CDN_URL
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinMavenUtils
 import org.jetbrains.kotlin.konan.target.HostManager
@@ -57,6 +58,13 @@ object TestKotlinArtifacts {
     @JvmStatic val kotlinStdlibJdk8: File by lazy { getJar("kotlin-stdlib-jdk8") }
     @JvmStatic val kotlinStdlibJdk8Sources: File by lazy { getSourcesJar("kotlin-stdlib-jdk8") }
     @JvmStatic val kotlinStdlibJs: File by lazy { getJar("kotlin-stdlib-js") }
+    @JvmStatic val kotlinStdlibWasm: File by lazy {
+        downloadOrReportUnavailability(
+            "kotlin-stdlib-wasm",
+            KotlinMavenUtils.findLibraryVersion(kotlincStdlibFileName),
+            ".klib"
+        )
+    }
     @JvmStatic val kotlinStdlibSources: File by lazy { getSourcesJar("kotlin-stdlib") }
     @JvmStatic val kotlinTest: File by lazy { getJar("kotlin-test") }
     @JvmStatic val kotlinTestJs: File by lazy { getJar("kotlin-test-js") }
@@ -125,7 +133,8 @@ object TestKotlinArtifacts {
         }
         val prebuilt = "kotlin-native-prebuilt-$platform-$version"
         val archiveName =  if (HostManager.hostIsMingw) "$prebuilt.zip" else "$prebuilt.tar.gz"
-        val downloadUrl = "$NATIVE_PREBUILT_DEV_CDN_URL/$version/$platform/$archiveName"
+        val cdnUrl = if ("dev" in version) NATIVE_PREBUILT_DEV_CDN_URL else NATIVE_PREBUILT_RELEASE_CDN_URL
+        val downloadUrl = "$cdnUrl/$version/$platform/$archiveName"
         val downloadOut = "${baseDir.absolutePath}/$archiveName"
         val libPath = "${baseDir.absolutePath}/$prebuilt/$prebuilt/$library"
         val libFile = File(libPath)

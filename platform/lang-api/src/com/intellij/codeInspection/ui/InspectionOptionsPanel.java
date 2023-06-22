@@ -19,10 +19,6 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 
-/**
- * @deprecated Use {@link InspectionProfileEntry#getOptionsPane} to provide a declarative representation of the options.
- */
-@Deprecated
 public class InspectionOptionsPanel extends JPanel {
 
   @Nullable
@@ -30,14 +26,26 @@ public class InspectionOptionsPanel extends JPanel {
   private final GridBag myConstraints = new GridBag();
   private boolean myHasGrowing = false;
 
+  /**
+   * @deprecated Use {@link InspectionProfileEntry#getOptionsPane} to provide a declarative representation of the options.
+   */
+  @Deprecated
   public InspectionOptionsPanel() {
     this((OptionAccessor)null);
   }
 
+  /**
+   * @deprecated Use {@link InspectionProfileEntry#getOptionsPane} to provide a declarative representation of the options.
+   */
+  @Deprecated
   public InspectionOptionsPanel(@NotNull InspectionProfileEntry owner) {
     this(new OptionAccessor.Default(owner));
   }
 
+  /**
+   * @deprecated Use {@link InspectionProfileEntry#getOptionsPane} to provide a declarative representation of the options.
+   */
+  @Deprecated
   public InspectionOptionsPanel(@Nullable OptionAccessor optionAccessor) {
     super(new GridBagLayout());
     myConstraints

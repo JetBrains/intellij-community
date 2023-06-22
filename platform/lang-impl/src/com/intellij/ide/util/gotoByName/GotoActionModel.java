@@ -11,6 +11,9 @@ import com.intellij.ide.ui.RegistryTextOptionDescriptor;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
+import com.intellij.internal.inspector.PropertyBean;
+import com.intellij.internal.inspector.UiInspectorContextProvider;
+import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.Utils;
@@ -33,7 +36,6 @@ import com.intellij.psi.codeStyle.WordPrefixMatcher;
 import com.intellij.ui.*;
 import com.intellij.ui.components.OnOffButton;
 import com.intellij.ui.render.IconCompOptionalCompPanel;
-import com.intellij.ui.render.RendererPanelsUtils;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
@@ -167,9 +169,9 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     myUpdateSession = newUpdateSession();
   }
 
-  public enum MatchedValueType { ABBREVIATION, INTENTION, TOP_HIT, OPTION, ACTION }
+  public enum MatchedValueType {ABBREVIATION, INTENTION, TOP_HIT, OPTION, ACTION}
 
-  public static class MatchedValue {
+  public static class MatchedValue implements UiInspectorContextProvider {
     @NotNull public final Object value;
     @NotNull final MatchedValueType type;
     @NotNull final String pattern;
@@ -284,6 +286,17 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
         return 3;
       }
       throw new IllegalArgumentException(value.getClass() + " - " + value);
+    }
+
+    @Override
+    public @NotNull List<PropertyBean> getUiInspectorContext() {
+      // Implement here, as GotoActionListCellRenderer is behind 9000 wrappers
+      List<PropertyBean> result = new ArrayList<>();
+      if (value instanceof ActionWrapper actionWrapper) {
+        result.add(new PropertyBean("Action ID", UiInspectorUtil.getActionId(actionWrapper.myAction), true));
+        result.add(new PropertyBean("Action Class", UiInspectorUtil.getClassPresentation(actionWrapper.myAction), true));
+      }
+      return result;
     }
 
     @Override
@@ -676,9 +689,9 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       if (byGroup != 0) return byGroup;
       int byDesc = StringUtil.compare(myPresentation.getDescription(), oPresentation.getDescription(), true);
       if (byDesc != 0) return byDesc;
-      int byClassHashCode = Comparing.compare(myAction.getClass().hashCode(), o.myAction.getClass().hashCode());
+      int byClassHashCode = Integer.compare(myAction.getClass().hashCode(), o.myAction.getClass().hashCode());
       if (byClassHashCode != 0) return byClassHashCode;
-      int byInstanceHashCode = Comparing.compare(myAction.hashCode(), o.myAction.hashCode());
+      int byInstanceHashCode = Integer.compare(myAction.hashCode(), o.myAction.hashCode());
       if (byInstanceHashCode != 0) return byInstanceHashCode;
       return 0;
     }
@@ -772,7 +785,8 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
           panel.setIcon(EMPTY_ICON);
         }
         String str = cutName((String)matchedValue, null, list, panel);
-        nameComponent.append(str, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, defaultActionForeground(isSelected, cellHasFocus, null)));
+        nameComponent.append(str, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN,
+                                                           defaultActionForeground(isSelected, cellHasFocus, null)));
         return panel;
       }
 
@@ -797,6 +811,9 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
 
         if (showIcon) {
           Icon icon = presentation.getIcon();
+          if (isSelected && presentation.getSelectedIcon() != null) {
+            icon = presentation.getSelectedIcon();
+          }
           panel.setIcon(createLayeredIcon(icon, disabled));
         }
 
@@ -865,7 +882,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
 
     @ActionText
     @NotNull
-    private static String calcHit(@NotNull OptionDescription value) {
+    public static String calcHit(@NotNull OptionDescription value) {
       if (value instanceof RegistryTextOptionDescriptor) {
         return value.getHit() + " = " + value.getValue();
       }
@@ -916,7 +933,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       Insets ipad = nameComponent.getIpad();
       int freeSpace = list.getWidth()
                       - (list.getInsets().right + list.getInsets().left)
-                      - RendererPanelsUtils.calculateNonResizeableWidth(panel)
+                      - panel.calculateNonResizeableWidth()
                       - (insets.right + insets.left)
                       - (ipad.right + ipad.left);
 
@@ -951,7 +968,8 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       SimpleTextAttributes plain = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, fg);
 
       if (name.startsWith("<html>")) {
-        new HtmlToSimpleColoredComponentConverter(HtmlToSimpleColoredComponentConverter.DEFAULT_TAG_HANDLER).appendHtml(nameComponent, name, plain);
+        new HtmlToSimpleColoredComponentConverter(HtmlToSimpleColoredComponentConverter.DEFAULT_TAG_HANDLER).appendHtml(nameComponent, name,
+                                                                                                                        plain);
         name = nameComponent.getCharSequence(false).toString();
       }
       else {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.uploader;
 
 import com.intellij.internal.statistic.config.StatisticsStringUtil;
@@ -25,6 +25,7 @@ public class EventLogExternalSendConfig implements EventLogSendConfig {
 
   private final boolean myIsSendEnabled;
 
+  private final boolean myIsEscapeEnabled;
 
   public EventLogExternalSendConfig(@NotNull String recorder,
                                     @NotNull String deviceId,
@@ -32,12 +33,23 @@ public class EventLogExternalSendConfig implements EventLogSendConfig {
                                     @NotNull MachineId machineId,
                                     @NotNull List<String> logs,
                                     boolean isSendEnabled) {
+    this(recorder, deviceId, bucket, machineId, logs, isSendEnabled, true);
+  }
+
+  public EventLogExternalSendConfig(@NotNull String recorder,
+                                    @NotNull String deviceId,
+                                    int bucket,
+                                    @NotNull MachineId machineId,
+                                    @NotNull List<String> logs,
+                                    boolean isSendEnabled,
+                                    boolean isEscapeEnabled) {
     myRecorderId = recorder;
     myDeviceId = deviceId;
     myBucket = bucket;
     myMachineId = machineId;
     myFilesProvider = new EventLogFileListProvider(logs);
     myIsSendEnabled = isSendEnabled;
+    myIsEscapeEnabled = isEscapeEnabled;
   }
 
   @Override
@@ -63,6 +75,11 @@ public class EventLogExternalSendConfig implements EventLogSendConfig {
   @Override
   public boolean isSendEnabled() {
     return myIsSendEnabled;
+  }
+
+  @Override
+  public boolean isEscapingEnabled() {
+    return myIsEscapeEnabled;
   }
 
   @NotNull
@@ -119,8 +136,14 @@ public class EventLogExternalSendConfig implements EventLogSendConfig {
       throw new ParseSendConfigurationException(ParseErrorType.NO_LOG_FILES);
     }
 
+    Boolean escape = getBooleanOption(EventLogUploaderOptions.ESCAPING_OPTION + recorderLowerCase, options);
+    if (escape == null) {
+      escape = true;
+    }
+
     List<String> files = StatisticsStringUtil.split(logs, File.pathSeparatorChar);
-    return new EventLogExternalSendConfig(recorderId, deviceOption, bucket, new MachineId(machineIdOption, idRevisionOption), files, true);
+    return new EventLogExternalSendConfig(
+      recorderId, deviceOption, bucket, new MachineId(machineIdOption, idRevisionOption), files, true, escape);
   }
 
   private static int getIntOption(@NotNull String name, @NotNull Map<String, String> options) {
@@ -132,6 +155,11 @@ public class EventLogExternalSendConfig implements EventLogSendConfig {
       // ignore
     }
     return -1;
+  }
+
+  private static Boolean getBooleanOption(@NotNull String name, @NotNull Map<String, String> options) {
+    String option = options.get(name);
+    return option != null ? Boolean.parseBoolean(option) : null;
   }
 
   public static class ParseSendConfigurationException extends Exception {

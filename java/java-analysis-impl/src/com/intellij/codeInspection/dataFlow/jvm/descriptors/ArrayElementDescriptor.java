@@ -7,10 +7,7 @@ import com.intellij.codeInspection.dataFlow.java.JavaDfaValueFactory;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;
-import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -46,13 +43,22 @@ public final class ArrayElementDescriptor extends JvmVariableDescriptor {
     DfaVariableValue qualifier = thisValue.getQualifier();
     DfType dfType = getDfType(qualifier);
     if (qualifier != null && dfType instanceof DfReferenceType) {
-      PsiVarDescriptor descriptor = ObjectUtils.tryCast(qualifier.getDescriptor(), PsiVarDescriptor.class);
+      VariableDescriptor qualDescriptor = qualifier.getDescriptor();
+      int depth = 1;
+      while (qualDescriptor instanceof ArrayElementDescriptor) {
+        depth++;
+        qualifier = qualifier.getQualifier();
+        if (qualifier == null) break;
+        qualDescriptor = qualifier.getDescriptor();
+      }
+      PsiVarDescriptor descriptor = ObjectUtils.tryCast(qualDescriptor, PsiVarDescriptor.class);
       if (descriptor != null) {
         PsiType psiType = descriptor.getType(qualifier);
-        if (psiType instanceof PsiArrayType) {
-          PsiType componentType = ((PsiArrayType)psiType).getComponentType();
-          return dfType.meet(DfaNullability.fromNullability(DfaPsiUtil.getTypeNullability(componentType)).asDfType());
+        for (int i = 0; i < depth; i++) {
+          if (!(psiType instanceof PsiArrayType arrayType)) return dfType;
+          psiType = arrayType.getComponentType();
         }
+        return dfType.meet(DfaNullability.fromNullability(DfaPsiUtil.getTypeNullability(psiType)).asDfType());
       }
     }
     return dfType;
@@ -178,5 +184,19 @@ public final class ArrayElementDescriptor extends JvmVariableDescriptor {
       return factory.fromDfType(targetType);
     }
     return DfaUtil.boxUnbox(factory.fromDfType(dfType), targetType);
+  }
+
+  /**
+   * @param array array value
+   * @return inherent type of array component
+   */
+  public static @NotNull DfType getArrayComponentType(@NotNull DfaValue array) {
+    DfType componentType = TypeConstraint.fromDfType(array.getDfType()).getArrayComponentType();
+    if (componentType instanceof DfReferenceType && 
+        array instanceof DfaVariableValue var && var.getDescriptor() instanceof PsiVarDescriptor varDescriptor &&
+        varDescriptor.getType(var.getQualifier()) instanceof PsiArrayType arrayType) {
+      return componentType.meet(DfaNullability.fromNullability(DfaPsiUtil.getTypeNullability(arrayType.getComponentType())).asDfType());
+    }
+    return componentType;
   }
 }

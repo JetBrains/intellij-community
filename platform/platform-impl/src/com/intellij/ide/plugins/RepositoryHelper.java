@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
@@ -25,7 +25,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Collectors;
+
+import static com.intellij.ide.plugins.BrokenPluginFileKt.isBrokenPlugin;
 
 /**
  * @author stathik
@@ -121,7 +122,7 @@ public final class RepositoryHelper {
         continue;
       }
 
-      if (PluginManagerCore.isBrokenPlugin(node) || PluginManagerCore.isIncompatible(node, build)) {
+      if (isBrokenPlugin(node) || PluginManagerCore.isIncompatible(node, build)) {
         LOG.debug("An incompatible plugin (id:" + pluginId + " repository:" + repositoryUrl + ")");
         continue;
       }

@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil;
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.generate.UastCodeGenerationPlugin;
@@ -46,17 +47,13 @@ public class UseJBColorInspection extends DevKitUastInspectionBase implements Cl
 
       @Override
       public boolean visitCallExpression(@NotNull UCallExpression expression) {
-        if (expression.getKind() == UastCallKind.CONSTRUCTOR_CALL) {
-          if (isAwtColorConstructor(expression) &&
-              isJBColorClassAccessible(expression) &&
-              !isUsedAsJBColorConstructorParameter(expression)) {
-            PsiElement sourcePsi = expression.getSourcePsi();
-            if (sourcePsi != null) {
-              LocalQuickFix[] fixes = sourcePsi.getLanguage().is(JavaLanguage.INSTANCE) ?
-                                      new LocalQuickFix[]{new ConvertToJBColorQuickFix()} :
-                                      LocalQuickFix.EMPTY_ARRAY;
-              holder.registerProblem(sourcePsi, DevKitBundle.message("inspections.awt.color.used"), fixes);
-            }
+        if (isAwtColorConstructor(expression) && isJBColorClassAccessible(holder) && !isUsedAsJBColorConstructorParameter(expression)) {
+          PsiElement sourcePsi = expression.getSourcePsi();
+          if (sourcePsi != null) {
+            LocalQuickFix[] fixes = sourcePsi.getLanguage().is(JavaLanguage.INSTANCE) ?
+                                    new LocalQuickFix[]{new ConvertToJBColorQuickFix()} :
+                                    LocalQuickFix.EMPTY_ARRAY;
+            holder.registerProblem(sourcePsi, DevKitBundle.message("inspections.awt.color.used"), fixes);
           }
         }
         return super.visitCallExpression(expression);
@@ -66,31 +63,25 @@ public class UseJBColorInspection extends DevKitUastInspectionBase implements Cl
         return isColorTypeConstructor(constructorCall, AWT_COLOR_CLASS_NAME);
       }
 
-      private static boolean isColorTypeConstructor(@NotNull UCallExpression constructorCall, @NotNull String colorClassName) {
-        PsiMethod constructor = constructorCall.resolve();
-        if (constructor == null) return false;
+      private static boolean isColorTypeConstructor(@NotNull UCallExpression call, @NotNull String colorClassName) {
+        PsiMethod constructor = call.resolve();
+        if (constructor == null || !constructor.isConstructor()) return false;
         PsiClass constructorClass = constructor.getContainingClass();
         if (constructorClass == null) return false;
         return colorClassName.equals(constructorClass.getQualifiedName());
       }
 
-      private static boolean isJBColorClassAccessible(@NotNull UElement uElement) {
-        PsiElement checkedPlace = uElement.getSourcePsi();
-        if (checkedPlace == null) return false;
-        Project project = checkedPlace.getProject();
-        PsiClass jbColorClass = JavaPsiFacade.getInstance(project).findClass(JB_COLOR_CLASS_NAME, checkedPlace.getResolveScope());
-        return jbColorClass != null;
+      private static boolean isJBColorClassAccessible(@NotNull ProblemsHolder holder) {
+        return DevKitInspectionUtil.isClassAvailable(holder, JB_COLOR_CLASS_NAME);
       }
 
       private static boolean isUsedAsJBColorConstructorParameter(@NotNull UExpression expression) {
         UCallExpression containingCall = UastContextKt.getUastParentOfType(expression.getSourcePsi(), UCallExpression.class, true);
-        return containingCall != null &&
-               containingCall.getKind() == UastCallKind.CONSTRUCTOR_CALL &&
-               isJBColorConstructor(containingCall);
+        return containingCall != null && isJBColorConstructor(containingCall);
       }
 
-      private static boolean isJBColorConstructor(@NotNull UCallExpression constructorCall) {
-        return isColorTypeConstructor(constructorCall, JB_COLOR_CLASS_NAME);
+      private static boolean isJBColorConstructor(@NotNull UCallExpression call) {
+        return isColorTypeConstructor(call, JB_COLOR_CLASS_NAME);
       }
 
       @Override
@@ -109,7 +100,7 @@ public class UseJBColorInspection extends DevKitUastInspectionBase implements Cl
 
       private void inspectExpression(@NotNull UReferenceExpression expression) {
         if (isAwtColorConstantReference(expression) &&
-            isJBColorClassAccessible(expression) &&
+            isJBColorClassAccessible(holder) &&
             !isUsedAsJBColorConstructorParameter(expression)) {
           PsiElement sourcePsi = expression.getSourcePsi();
           if (sourcePsi != null) {

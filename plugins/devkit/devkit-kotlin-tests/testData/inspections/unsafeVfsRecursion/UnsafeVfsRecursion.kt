@@ -1,5 +1,5 @@
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.LightVirtualFile
+import com.example.CustomVirtualFile
 
 
 class UnsafeVfsRecursion {
@@ -26,12 +26,12 @@ class UnsafeVfsRecursion {
     }
   }
 
-  fun processDirectoryRecursiveWhenPropertyAccessSyntaxUsedForGetChildrenAndSublassUsed(dir: LightVirtualFile) {
+  fun processDirectoryRecursiveWhenPropertyAccessSyntaxUsedForGetChildrenAndSublassUsed(dir: CustomVirtualFile) {
     for (file in <warning descr="'VirtualFile.getChildren()' called from a recursive method">dir.children</warning>) {
       if (!file.isDirectory()) {
         // process file
       }
-      else if (file is LightVirtualFile) {
+      else if (file is CustomVirtualFile) {
         processDirectoryRecursiveWhenPropertyAccessSyntaxUsedForGetChildrenAndSublassUsed(file) // recursive call
       }
     }

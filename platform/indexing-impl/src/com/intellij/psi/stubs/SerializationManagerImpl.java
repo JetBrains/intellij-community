@@ -10,7 +10,6 @@ import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.KeyedExtensionCollector;
-import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.tree.StubFileElementType;
@@ -65,15 +64,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
   public SerializationManagerImpl(@NotNull Supplier<? extends Path> nameStorageFile, boolean unmodifiable) {
     myFile = nameStorageFile;
     myUnmodifiable = unmodifiable;
-    try {
-      initialize();
-    }
-    finally {
-      if (!unmodifiable) {
-        ShutDownTracker.getInstance().registerShutdownTask(this::performShutdown, this);
-      }
-    }
-
+    initialize();
     StubElementTypeHolderEP.EP_NAME.addChangeListener(this::dropSerializerData, this);
   }
 

@@ -86,7 +86,7 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
 
   private fun getOrRefreshData(gradleModuleData: GradleModuleData): List<DependencyScopeNode> {
     return configurationNodesMap.computeIfAbsent(gradleModuleData.gradleProjectDir) {
-      gradleModuleData.getDependencies(project)
+      gradleModuleData.loadDependencies(project)
     }
   }
 
@@ -178,7 +178,7 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
 
     internal val MODULE_DATA = Key.create<ModuleData>("GradleDependencyAnalyzerContributor.ModuleData")
 
-    private fun GradleModuleData.getDependencies(project: Project): List<DependencyScopeNode> {
+    private fun GradleModuleData.loadDependencies(project: Project): List<DependencyScopeNode> {
       var dependencyScopeNodes: List<DependencyScopeNode> = emptyList()
       val outputFile = FileUtil.createTempFile("dependencies", ".json", true)
       val taskConfiguration =
@@ -198,7 +198,8 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
             val json = FileUtil.loadFile(outputFile)
             val gsonBuilder = GsonBuilder()
             gsonBuilder.registerTypeAdapter(DependencyNode::class.java, DependencyNodeDeserializer())
-            dependencyScopeNodes = gsonBuilder.create().fromJson(json, Array<DependencyScopeNode>::class.java).asList()
+            val scopeNodes = gsonBuilder.create().fromJson(json, Array<DependencyScopeNode>::class.java)
+            dependencyScopeNodes = scopeNodes?.asList() ?: emptyList()
           }
 
           override fun onFailure() {

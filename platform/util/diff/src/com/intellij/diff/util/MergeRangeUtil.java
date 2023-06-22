@@ -7,25 +7,25 @@ import com.intellij.diff.comparison.ComparisonUtil;
 import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.fragments.MergeWordFragment;
 import com.intellij.diff.tools.util.text.LineOffsets;
-import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.BiPredicate;
 import java.util.function.BooleanSupplier;
+import java.util.function.Predicate;
 
 import static com.intellij.diff.util.DiffRangeUtil.getLinesContent;
 
 public final class MergeRangeUtil {
   @NotNull
-  public static MergeConflictType getMergeType(@NotNull Condition<? super ThreeSide> emptiness,
+  public static MergeConflictType getMergeType(@NotNull Predicate<? super ThreeSide> emptiness,
                                                @NotNull BiPredicate<? super ThreeSide, ? super ThreeSide> equality,
                                                @Nullable BiPredicate<? super ThreeSide, ? super ThreeSide> trueEquality,
                                                @NotNull BooleanSupplier conflictResolver) {
-    boolean isLeftEmpty = emptiness.value(ThreeSide.LEFT);
-    boolean isBaseEmpty = emptiness.value(ThreeSide.BASE);
-    boolean isRightEmpty = emptiness.value(ThreeSide.RIGHT);
+    boolean isLeftEmpty = emptiness.test(ThreeSide.LEFT);
+    boolean isBaseEmpty = emptiness.test(ThreeSide.BASE);
+    boolean isRightEmpty = emptiness.test(ThreeSide.RIGHT);
     assert !isLeftEmpty || !isBaseEmpty || !isRightEmpty;
 
     if (isBaseEmpty) {
@@ -181,11 +181,11 @@ public final class MergeRangeUtil {
   }
 
   @NotNull
-  private static MergeConflictType getLeftToRightDiffType(@NotNull Condition<? super ThreeSide> emptiness,
+  private static MergeConflictType getLeftToRightDiffType(@NotNull Predicate<? super ThreeSide> emptiness,
                                                           @NotNull BiPredicate<? super ThreeSide, ? super ThreeSide> equality) {
-    boolean isLeftEmpty = emptiness.value(ThreeSide.LEFT);
-    boolean isBaseEmpty = emptiness.value(ThreeSide.BASE);
-    boolean isRightEmpty = emptiness.value(ThreeSide.RIGHT);
+    boolean isLeftEmpty = emptiness.test(ThreeSide.LEFT);
+    boolean isBaseEmpty = emptiness.test(ThreeSide.BASE);
+    boolean isRightEmpty = emptiness.test(ThreeSide.RIGHT);
     assert !isLeftEmpty || !isBaseEmpty || !isRightEmpty;
 
     if (isBaseEmpty) {

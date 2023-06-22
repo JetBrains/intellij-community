@@ -20,8 +20,6 @@ import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.*;
-import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
-import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -439,7 +437,7 @@ public final class GridCellImpl implements GridCell {
     private final ViewContextEx myContext;
 
     @Override
-    protected TabPainterAdapter createTabPainterAdapter() {
+    protected @NotNull TabPainterAdapter createTabPainterAdapter() {
       return new DefaultTabPainterAdapter(JBTabPainter.getDEBUGGER());
     }
 
@@ -468,22 +466,17 @@ public final class GridCellImpl implements GridCell {
     }
 
     @Override
-    protected SingleRowLayout createSingleRowLayout() {
-      return new ScrollableSingleRowLayout(this);
-    }
-
-    @Override
-    public void processDropOver(TabInfo over, RelativePoint point) {
+    public void processDropOver(@NotNull TabInfo over, @NotNull RelativePoint point) {
       ((RunnerContentUi)myContext).myTabs.processDropOver(over, point);
     }
 
     @Override
-    public Image startDropOver(TabInfo tabInfo, RelativePoint point) {
+    public @NotNull Image startDropOver(@NotNull TabInfo tabInfo, @NotNull RelativePoint point) {
       return ((RunnerContentUi)myContext).myTabs.startDropOver(tabInfo, point);
     }
 
     @Override
-    public void resetDropOver(TabInfo tabInfo) {
+    public void resetDropOver(@NotNull TabInfo tabInfo) {
       ((RunnerContentUi)myContext).myTabs.resetDropOver(tabInfo);
     }
 

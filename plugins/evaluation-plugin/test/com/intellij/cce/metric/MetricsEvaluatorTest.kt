@@ -18,7 +18,7 @@ class MetricsEvaluatorTest {
     private val sessionTop5 = Mockito.mock(Session::class.java)
     private val sessionNone = Mockito.mock(Session::class.java)
     private val defaultStrategy = CompletionStrategy(CompletionPrefix.NoPrefix, CompletionContext.ALL,
-                                                     emulateUser = false, completionGolf = false, filters = emptyMap()
+                                                     emulateUser = false, completionGolf = null, filters = emptyMap()
     )
 
     private const val EXPECTED = "expected"

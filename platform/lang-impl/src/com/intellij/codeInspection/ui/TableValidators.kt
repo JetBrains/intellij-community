@@ -1,9 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui
 
-import com.intellij.codeInspection.options.OptStringList
 import com.intellij.codeInspection.options.StringValidator
-import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -13,10 +11,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.ui.cellvalidators.CellComponentProvider
-import com.intellij.openapi.ui.cellvalidators.CellTooltipManager
-import com.intellij.openapi.ui.cellvalidators.TableCellValidator
-import com.intellij.openapi.ui.cellvalidators.ValidatingTableCellRendererWrapper
+import com.intellij.openapi.ui.cellvalidators.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.fields.ExtendableTextField
@@ -98,12 +93,12 @@ private class BackgroundValidationsHolder(val context: Disposable, val project: 
 
 private data class ValidationResult(val isDumbMode: Boolean = false, val value: String = "", var errorMessage: String?)
 
-internal fun addColumnValidators(table: ListTable, components: List<OptStringList>, parent: Disposable?, project: Project?) {
+internal fun addColumnValidators(table: ListTable, components: List<StringValidator?>, parent: Disposable?, project: Project?) {
   if (project == null || parent == null) return
   var hasInstalledValidators = false
   val validationHolder = BackgroundValidationsHolder(parent, project, table)
-  for ((index, child) in components.withIndex()) {
-    val validator = child.validator ?: continue
+  for ((index, validator) in components.withIndex()) {
+    validator ?: continue
     hasInstalledValidators = true
     validationHolder.setValidator(index, validator)
     val cellEditor = ExtendableTextField()
@@ -115,9 +110,11 @@ internal fun addColumnValidators(table: ListTable, components: List<OptStringLis
         val text = cellEditor.text ?: return@Supplier null
         val errorMessage = validator.getErrorMessage(project, text)
         if (errorMessage != null) {
-          ValidationInfo(errorMessage, cellEditor)
+          ValidationUtils.setExtension(cellEditor, ValidationUtils.WARNING_EXTENSION, true)
+          ValidationInfo(errorMessage, cellEditor).asWarning()
         }
         else {
+          ValidationUtils.setExtension(cellEditor, ValidationUtils.WARNING_EXTENSION, false)
           null
         }
       }
@@ -131,7 +128,6 @@ internal fun addColumnValidators(table: ListTable, components: List<OptStringLis
       .bindToEditorSize {
         cellEditor.preferredSize
       }
-      .withCustomIcon(AllIcons.Ide.FatalErrorRead)
       .withCellValidator(object : TableCellValidator {
         override fun validate(value: Any?, row: Int, column: Int): ValidationInfo? {
           val stringValue = (value as? String) ?: ""
@@ -139,7 +135,7 @@ internal fun addColumnValidators(table: ListTable, components: List<OptStringLis
           val previous = validationHolder.getResult(row, column, dumb)
           if (previous != null && stringValue == previous.value && dumb == previous.isDumbMode) {
             @NlsSafe val previousResult = previous.errorMessage ?: return null
-            return ValidationInfo(previousResult, null)
+            return ValidationInfo(previousResult, null).asWarning()
           }
           return null
         }
@@ -155,7 +151,6 @@ internal fun addColumnValidators(table: ListTable, components: List<OptStringLis
 
     CellTooltipManager(parent)
       .withCellComponentProvider(CellComponentProvider.forTable(table))
-      .showUnderIcon()
       .installOn(table)
   }
 }

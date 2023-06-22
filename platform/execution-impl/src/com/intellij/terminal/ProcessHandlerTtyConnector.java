@@ -5,6 +5,7 @@ import com.intellij.execution.process.BaseProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.PtyBasedProcess;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.remote.RemoteProcess;
 import com.intellij.util.ObjectUtils;
 import com.jediterm.core.util.TermSize;
 import com.jediterm.terminal.TtyConnector;
@@ -23,17 +24,11 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
 
   private final ProcessHandler myProcessHandler;
   private final Process myPtyProcess;
-  private final boolean myDestroyProcessOnClose;
   private final Charset myCharset;
 
   public ProcessHandlerTtyConnector(@NotNull ProcessHandler processHandler, @NotNull Charset charset) {
-    this(processHandler, charset, true);
-  }
-
-  public ProcessHandlerTtyConnector(@NotNull ProcessHandler processHandler, @NotNull Charset charset, boolean destroyProcessOnClose) {
     myProcessHandler = processHandler;
     myPtyProcess = getPtyProcess(processHandler);
-    myDestroyProcessOnClose = destroyProcessOnClose;
     myCharset = charset;
   }
 
@@ -55,9 +50,10 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
 
   @Override
   public void close() {
-    if (myDestroyProcessOnClose) {
-      myProcessHandler.destroyProcess();
-    }
+    // ProcessHandler shouldn't be disposed silently on TerminalExecutionConsole disposing.
+    // Normally, an attempt to close a console attached to a running process should be handled by
+    // BaseContentCloseListener which may ask user what do to. Alternatively, a client may handle it on its own.
+    // Generally, ConsoleView doesn't own an attached ProcessHandler instance.
   }
 
   @Override
@@ -69,6 +65,9 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
     }
     else if (myPtyProcess instanceof PtyBasedProcess ptyBasedProcess) {
       ptyBasedProcess.setWindowSize(termSize.getColumns(), termSize.getRows());
+    }
+    else if (myPtyProcess instanceof RemoteProcess remoteProcess) {
+      remoteProcess.setWindowSize(termSize.getColumns(), termSize.getRows());
     }
   }
 

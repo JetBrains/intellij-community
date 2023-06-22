@@ -21,6 +21,7 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -126,7 +127,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     }
   }
 
-  private static class MergeElseIfsFix implements LocalQuickFix {
+  private static class MergeElseIfsFix extends PsiUpdateModCommandQuickFix {
     @Nls
     @NotNull
     @Override
@@ -142,8 +143,8 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiIfStatement ifStatement = tryCast(descriptor.getStartElement().getParent(), PsiIfStatement.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiIfStatement ifStatement = tryCast(element.getParent(), PsiIfStatement.class);
       if (ifStatement == null) return;
       ElseIf elseIf = ElseIf.from(ifStatement, unwrap(ifStatement.getThenBranch()));
       if (elseIf == null) return;
@@ -210,7 +211,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
   }
 
 
-  private static final class ExtractCommonIfPartsFix implements LocalQuickFix {
+  private static final class ExtractCommonIfPartsFix extends PsiUpdateModCommandQuickFix {
     private final CommonPartType myType;
     private final boolean myMayChangeSemantics;
     private final boolean myIsOnTheFly;
@@ -237,8 +238,8 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiIfStatement.class, false);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(element, PsiIfStatement.class, false);
       if (ifStatement == null) return;
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       if (!(ifStatement.getParent() instanceof PsiCodeBlock)) {

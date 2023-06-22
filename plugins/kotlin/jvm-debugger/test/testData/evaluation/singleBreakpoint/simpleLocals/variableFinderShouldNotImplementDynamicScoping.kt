@@ -18,4 +18,4 @@ fun main() {
 }
 
 // EXPRESSION: x
-// RESULT: Cannot find local variable 'x' with type int
+// RESULT: 'x' is not captured

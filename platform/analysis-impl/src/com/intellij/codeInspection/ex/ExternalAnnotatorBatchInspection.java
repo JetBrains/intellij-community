@@ -20,7 +20,6 @@ import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.ExternalLanguageAnnotators;
-import com.intellij.lang.Language;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.FileViewProvider;
@@ -28,7 +27,6 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Set;
 
 public interface ExternalAnnotatorBatchInspection extends PairedUnfairLocalInspectionTool {
   @NotNull
@@ -46,13 +44,11 @@ public interface ExternalAnnotatorBatchInspection extends PairedUnfairLocalInspe
   default ProblemDescriptor @NotNull [] checkFile(@NotNull PsiFile file,
                                                   @NotNull GlobalInspectionContext context,
                                                   @NotNull InspectionManager manager) {
-    final String shortName = getShortName();
-    final FileViewProvider viewProvider = file.getViewProvider();
-    final Set<Language> relevantLanguages = ReadAction.compute(() -> viewProvider.getLanguages());
-    for (Language language : relevantLanguages) {
-      PsiFile psiRoot = ReadAction.compute(() -> viewProvider.getPsi(language));
-      final List<ExternalAnnotator<?,?>> externalAnnotators = ExternalLanguageAnnotators.allForFile(language, psiRoot);
+    String shortName = getShortName();
+    FileViewProvider viewProvider = file.getViewProvider();
 
+    for (PsiFile psiRoot : ReadAction.compute(() -> viewProvider.getAllFiles())) {
+      List<ExternalAnnotator<?,?>> externalAnnotators = ReadAction.compute(() -> ExternalLanguageAnnotators.allForFile(psiRoot.getLanguage(), psiRoot));
       for (ExternalAnnotator<?,?> annotator : externalAnnotators) {
         if (shortName.equals(annotator.getPairedBatchInspectionShortName())) {
           return ExternalAnnotatorInspectionVisitor.checkFileWithExternalAnnotator(file, manager, false, annotator);

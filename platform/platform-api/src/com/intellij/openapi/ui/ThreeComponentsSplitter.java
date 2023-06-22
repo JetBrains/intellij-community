@@ -657,7 +657,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       myIsFirst = isFirst;
       setOrientation(myVerticalSplit);
 
-      Disposer.register(parentDisposable, new UiNotifyConnector(this, new Activatable() {
+      Disposer.register(parentDisposable, UiNotifyConnector.installOn(this, new Activatable() {
         @Override
         public void showNotify() {
           initGlassPane(parentDisposable);

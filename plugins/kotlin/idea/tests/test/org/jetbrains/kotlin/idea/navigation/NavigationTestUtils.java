@@ -7,8 +7,10 @@ import com.intellij.codeInsight.navigation.GotoTargetHandler;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -77,28 +79,28 @@ public final class NavigationTestUtils {
     }
 
     public static String getNavigateElementsText(Project project, Collection<? extends PsiElement> navigableElements) {
-        MultiMap<PsiFile, Pair<Integer, Integer>> filesToNumbersAndOffsets = new MultiMap<>();
+        MultiMap<VirtualFile, Pair<Integer, Integer>> filesToNumbersAndOffsets = new MultiMap<>();
         int refNumber = 1;
         for (PsiElement navigationElement : navigableElements) {
             Pair<Integer, Integer> numberAndOffset = new Pair<>(refNumber++, navigationElement.getTextOffset());
-            filesToNumbersAndOffsets.putValue(navigationElement.getContainingFile(), numberAndOffset);
+            filesToNumbersAndOffsets.putValue(navigationElement.getContainingFile().getVirtualFile(), numberAndOffset);
         }
 
         if (filesToNumbersAndOffsets.isEmpty()) {
             return "<no references>";
         }
 
-        List<PsiFile> files = new ArrayList<>(filesToNumbersAndOffsets.keySet());
-        files.sort(Comparator.comparing(PsiFileSystemItem::getName));
+        List<VirtualFile> files = new ArrayList<>(filesToNumbersAndOffsets.keySet());
+        files.sort(Comparator.comparing(VirtualFile::getName));
 
         StringBuilder result = new StringBuilder();
-        for (PsiFile file : files) {
+        for (VirtualFile file : files) {
             List<Pair<Integer, Integer>> numbersAndOffsets = new ArrayList<>(filesToNumbersAndOffsets.get(file));
 
             numbersAndOffsets.sort(Collections.reverseOrder(
                     Comparator.comparingInt((Pair<Integer, Integer> t) -> t.second).thenComparingInt(t -> t.first)));
 
-            Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+            Document document = FileDocumentManager.getInstance().getDocument(file);
             TestCase.assertNotNull(document);
             StringBuilder resultForFile = new StringBuilder(document.getText());
             for (Pair<Integer, Integer> numberOffset : numbersAndOffsets) {

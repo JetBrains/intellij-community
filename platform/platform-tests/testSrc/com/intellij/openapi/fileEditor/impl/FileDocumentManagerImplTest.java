@@ -652,6 +652,47 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     assertEquals("unedited", myDocumentManager.getDocument(file).getText());
   }
 
+  public void testBeforeSaveAnyDocument_firedForUnchangedDocument() throws Exception {
+    VirtualFile file = createFile();
+    Document document = myDocumentManager.getDocument(file);
+    ArrayList<Document> firedDocuments = new ArrayList<>();
+
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
+      @Override
+      public void beforeAnyDocumentSaving(@NotNull Document document, boolean explicit) {
+        firedDocuments.add(document);
+      }
+    });
+
+    myDocumentManager.saveDocument(document);
+    assertOrderedEquals(firedDocuments, document);
+  }
+
+  public void testBeforeSaveAnyDocument_firedBeforeBeforeDocumentSaving() throws Exception {
+    VirtualFile file = createFile();
+    Document document = myDocumentManager.getDocument(file);
+    ArrayList<Document> firedDocuments = new ArrayList<>();
+    ArrayList<Document> reallySavedDocuments = new ArrayList<>();
+
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
+      @Override
+      public void beforeAnyDocumentSaving(@NotNull Document document, boolean explicit) {
+        firedDocuments.add(document);
+      }
+
+      @Override
+      public void beforeDocumentSaving(@NotNull Document document) {
+        reallySavedDocuments.add(document);
+        assertOrderedEquals(firedDocuments, document);
+      }
+    });
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, "xxx"));
+    myDocumentManager.saveDocument(document);
+    assertOrderedEquals(firedDocuments, document);
+    assertOrderedEquals(reallySavedDocuments, document);
+  }
+
   private static void checkDocumentFiles(List<? extends VirtualFile> files) throws Exception {
     FileDocumentManager fdm = FileDocumentManager.getInstance();
 

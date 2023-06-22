@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataOutputStream;
 import java.io.*;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -189,8 +190,7 @@ public final class IOUtil {
     return new String(buffer, 0, len, StandardCharsets.ISO_8859_1);
   }
 
-  @Nullable
-  private static String readLongString(@NotNull DataInput storage) throws IOException {
+  private static @Nullable String readLongString(@NotNull DataInput storage) throws IOException {
     String result = storage.readUTF();
     if (LONGER_THAN_64K_MARKER.equals(result)) {
       return readString(storage);
@@ -309,8 +309,7 @@ public final class IOUtil {
   /**
    * Consider to use {@link com.intellij.util.io.externalizer.StringCollectionExternalizer}.
    */
-  @NotNull
-  public static <C extends Collection<String>> C readStringCollection(@NotNull DataInput in,
+  public static @NotNull <C extends Collection<String>> C readStringCollection(@NotNull DataInput in,
                                                                       @NotNull IntFunction<? extends C> collectionGenerator)
     throws IOException {
     int size = DataInputOutputUtil.readINT(in);
@@ -324,8 +323,7 @@ public final class IOUtil {
   /**
    * Consider to use {@link com.intellij.util.io.externalizer.StringCollectionExternalizer}.
    */
-  @NotNull
-  public static List<String> readStringList(@NotNull DataInput in) throws IOException {
+  public static @NotNull List<String> readStringList(@NotNull DataInput in) throws IOException {
     return readStringCollection(in, ArrayList::new);
   }
 
@@ -338,6 +336,30 @@ public final class IOUtil {
         catch (IOException e) {
           log.error(e);
         }
+      }
+    }
+  }
+
+
+
+  private static final ByteBuffer ZEROES = ByteBuffer.allocateDirect(1);
+
+  /**
+   * Imitates 'fallocate' linux call: ensures file region [offsetInFile..offsetInFile+size) is allocated on disk.
+   * We can't call 'fallocate' directly, hence just write zeros into the channel.
+   */
+  public static void allocateFileRegion(final FileChannel channel,
+                                        final long offsetInFile,
+                                        final int size) throws IOException {
+    final long channelSize = channel.size();
+    if (channelSize < offsetInFile + size) {
+      //Assumes OS file cache page >= 1024, so writes land on each page at least once, and the write forces each
+      // page to be allocated (consume disk space):
+      final int stride = 1024;
+      for (long pos = Math.max(offsetInFile, channelSize);
+           pos < offsetInFile + size;
+           pos += stride) {
+        channel.write(ZEROES, pos);
       }
     }
   }
@@ -360,6 +382,7 @@ public final class IOUtil {
     }
   }
 
+  /** @return string with buffer content, as-if it is byte[], formatted by Arrays.toString(byte[]) */
   public static String toString(final @NotNull ByteBuffer buffer) {
     final byte[] bytes = new byte[buffer.capacity()];
     final ByteBuffer slice = buffer.duplicate();
@@ -369,14 +392,12 @@ public final class IOUtil {
     return Arrays.toString(bytes);
   }
 
-  @NotNull
-  public static String toHexString(final @NotNull ByteBuffer buffer) {
+  public static @NotNull String toHexString(final @NotNull ByteBuffer buffer) {
     return toHexString(buffer, /*pageSize: */ -1);
   }
 
-  @NotNull
-  public static String toHexString(final @NotNull ByteBuffer buffer,
-                                   final int pageSize) {
+  public static @NotNull String toHexString(final @NotNull ByteBuffer buffer,
+                                            final int pageSize) {
     final byte[] bytes = new byte[buffer.capacity()];
     final ByteBuffer slice = buffer.duplicate();
     slice.position(0)
@@ -385,14 +406,12 @@ public final class IOUtil {
     return toHexString(bytes, pageSize);
   }
 
-  @NotNull
-  public static String toHexString(final byte[] bytes) {
+  public static @NotNull String toHexString(final byte[] bytes) {
     return toHexString(bytes, /*pageSize: */-1);
   }
 
-  @NotNull
-  public static String toHexString(final byte[] bytes,
-                                   final int pageSize) {
+  public static @NotNull String toHexString(final byte[] bytes,
+                                            final int pageSize) {
     final StringBuilder sb = new StringBuilder(bytes.length * 3);
     for (int i = 0; i < bytes.length; i++) {
       final byte b = bytes[i];
@@ -410,4 +429,6 @@ public final class IOUtil {
     }
     return sb.toString();
   }
+
+
 }

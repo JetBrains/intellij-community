@@ -4,7 +4,10 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMemberDTO
@@ -25,22 +28,25 @@ class GitLabLazyProject(
   private val project: Project,
   parentCs: CoroutineScope,
   private val api: GitLabApi,
-  override val projectMapping: GitLabProjectMapping
+  override val projectMapping: GitLabProjectMapping,
+  private val tokenRefreshFlow: Flow<Unit>
 ) : GitLabProject {
 
   private val cs = parentCs.childScope()
 
   override val mergeRequests by lazy {
-    CachingGitLabProjectMergeRequestsStore(project, cs, api, projectMapping)
+    CachingGitLabProjectMergeRequestsStore(project, cs, api, projectMapping, tokenRefreshFlow)
   }
 
-  override suspend fun getLabels(): List<GitLabLabelDTO> =
-    withContext(cs.coroutineContext) {
-      api.loadAllProjectLabels(projectMapping.repository)
-    }
+  private val allLabels = cs.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
+    api.graphQL.loadAllProjectLabels(projectMapping.repository)
+  }
 
-  override suspend fun getMembers(): List<GitLabMemberDTO> =
-    withContext(cs.coroutineContext) {
-      api.getAllProjectMembers(projectMapping.repository)
-    }
+  private val allMembers = cs.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
+    api.graphQL.getAllProjectMembers(projectMapping.repository)
+  }
+
+  override suspend fun getLabels(): List<GitLabLabelDTO> = allLabels.await()
+
+  override suspend fun getMembers(): List<GitLabMemberDTO> = allMembers.await()
 }

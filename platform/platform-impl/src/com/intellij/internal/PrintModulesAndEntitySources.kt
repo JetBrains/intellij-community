@@ -2,10 +2,11 @@
 package com.intellij.internal
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.workspaceModel.ide.workspaceModel
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 
 class PrintModulesAndEntitySources : DumbAwareAction("Print Modules and Entity Sources to Log") {
   override fun actionPerformed(e: AnActionEvent) {
@@ -31,6 +32,6 @@ class PrintModulesAndEntitySources : DumbAwareAction("Print Modules and Entity S
   }
 
   companion object {
-    val log = logger<PrintModulesAndEntitySources>()
+    val log: Logger = logger<PrintModulesAndEntitySources>()
   }
 }

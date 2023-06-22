@@ -28,9 +28,9 @@ import org.jetbrains.annotations.Nullable;
 public class ResourceBundleEditorProblemDescriptor implements CommonProblemDescriptor {
   private final ProblemHighlightType myHighlightType;
   private final @InspectionMessage String myDescriptionTemplate;
-  private final QuickFix[] myFixes;
+  private final @NotNull QuickFix @NotNull [] myFixes;
 
-  public ResourceBundleEditorProblemDescriptor(final ProblemHighlightType type, @InspectionMessage String template, QuickFix... fixes) {
+  public ResourceBundleEditorProblemDescriptor(final ProblemHighlightType type, @InspectionMessage String template, @NotNull QuickFix @NotNull ... fixes) {
     myHighlightType = type;
     myDescriptionTemplate = template;
     myFixes = fixes;
@@ -48,7 +48,7 @@ public class ResourceBundleEditorProblemDescriptor implements CommonProblemDescr
   }
 
   @Override
-  public QuickFix @Nullable [] getFixes() {
+  public @NotNull QuickFix @Nullable [] getFixes() {
     return myFixes;
   }
 }

@@ -48,7 +48,7 @@ internal enum class NonModalCommitPromotionState {
   REJECTED
 }
 
-@Service
+@Service(Service.Level.PROJECT)
 internal class NonModalCommitPromoter(private val project: Project) {
   private val commitModeManager: CommitModeManager get() = CommitModeManager.getInstance(project)
 

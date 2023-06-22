@@ -43,7 +43,7 @@ import java.util.function.Function;
 public abstract class DebuggerUtils {
   private static final Logger LOG = Logger.getInstance(DebuggerUtils.class);
   private static final Key<Method> TO_STRING_METHOD_KEY = new Key<>("CachedToStringMethod");
-  public static final Set<String> ourPrimitiveTypeNames = ContainerUtil.set(
+  public static final Set<String> ourPrimitiveTypeNames = Set.of(
     "byte", "short", "int", "long", "float", "double", "boolean", "char"
   );
 
@@ -574,8 +574,8 @@ public abstract class DebuggerUtils {
                                 provider -> provider.isInsideSimpleGetter(contextElement));
   }
 
-  public static boolean isPrimitiveType(final String typeName) {
-    return ourPrimitiveTypeNames.contains(typeName);
+  public static boolean isPrimitiveType(String typeName) {
+    return typeName != null && ourPrimitiveTypeNames.contains(typeName);
   }
 
   protected record ArrayClass(String className, int dims) {

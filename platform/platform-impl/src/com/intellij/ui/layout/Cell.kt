@@ -90,7 +90,7 @@ internal fun <T> createPropertyBinding(prop: KMutableProperty0<T>, propType: Cla
 @ApiStatus.ScheduledForRemoval
 @Deprecated("Use MutableProperty and Kotlin UI DSL 2")
 fun <T> PropertyBinding<T>.toNullable(): PropertyBinding<T?> {
-  return PropertyBinding<T?>({ get() }, { set(it!!) })
+  return PropertyBinding({ get() }, { set(it!!) })
 }
 
 @ApiStatus.ScheduledForRemoval
@@ -248,12 +248,12 @@ fun <T : AbstractButton> CellBuilder<T>.withSelectedBinding(modelBinding: Proper
 @get:Deprecated("Use Kotlin UI DSL Version 2")
 @get:ApiStatus.ScheduledForRemoval
 @Deprecated("Use Kotlin UI DSL Version 2")
-val CellBuilder<AbstractButton>.selected
+val CellBuilder<AbstractButton>.selected: ComponentPredicate
   get() = component.selected
 
 @ApiStatus.ScheduledForRemoval
 @Deprecated("Use Kotlin UI DSL Version 2")
-internal const val UNBOUND_RADIO_BUTTON = "unbound.radio.button"
+internal const val UNBOUND_RADIO_BUTTON: String = "unbound.radio.button"
 
 // separate class to avoid row related methods in the `cell { } `
 @CellMarker
@@ -262,38 +262,38 @@ internal const val UNBOUND_RADIO_BUTTON = "unbound.radio.button"
 abstract class Cell : BaseBuilder {
   /**
    * Sets how keen the component should be to grow in relation to other component **in the same cell**. Use `push` in addition if need.
-   * If this constraint is not set the grow weight is set to 0 and the component will not grow (unless some automatic rule is not applied (see [com.intellij.ui.layout.panel])).
+   * If this constraint is not set the grow weight is set to 0 and the component will not grow (unless some automatic rule is not applied.
    * Grow weight will only be compared against the weights for the same cell.
    */
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
-  val growX = CCFlags.growX
+  val growX: CCFlags = CCFlags.growX
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
-  val growY = CCFlags.growY
+  val growY: CCFlags = CCFlags.growY
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
-  val grow = CCFlags.grow
+  val grow: CCFlags = CCFlags.grow
 
   /**
    * Makes the column that the component is residing in grow with `weight`.
    */
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
-  val pushX = CCFlags.pushX
+  val pushX: CCFlags = CCFlags.pushX
 
   /**
    * Makes the row that the component is residing in grow with `weight`.
    */
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
-  val pushY = CCFlags.pushY
+  val pushY: CCFlags = CCFlags.pushY
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
-  val push = CCFlags.push
+  val push: CCFlags = CCFlags.push
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
@@ -469,7 +469,7 @@ abstract class Cell : BaseBuilder {
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
-  fun textField(getter: () -> String, setter: (String) -> Unit, columns: Int? = null) = textField(PropertyBinding(getter, setter), columns)
+  fun textField(getter: () -> String, setter: (String) -> Unit, columns: Int? = null): CellBuilder<JBTextField> = textField(PropertyBinding(getter, setter), columns)
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
@@ -490,7 +490,7 @@ abstract class Cell : BaseBuilder {
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
   @ApiStatus.Internal
-  fun scrollableTextArea(getter: () -> String, setter: (String) -> Unit, rows: Int? = null) = scrollableTextArea(PropertyBinding(getter, setter), rows)
+  fun scrollableTextArea(getter: () -> String, setter: (String) -> Unit, rows: Int? = null): CellBuilder<JBTextArea> = scrollableTextArea(PropertyBinding(getter, setter), rows)
 
   @Deprecated("Use Kotlin UI DSL Version 2")
   private fun scrollableTextArea(binding: PropertyBinding<String>, rows: Int? = null): CellBuilder<JBTextArea> {
@@ -502,7 +502,7 @@ abstract class Cell : BaseBuilder {
 
   @JvmOverloads
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null, range: IntRange? = null): CellBuilder<JBTextField> {
     val binding = prop.toBinding()
     return textField(
@@ -534,7 +534,7 @@ abstract class Cell : BaseBuilder {
   }
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   @ApiStatus.Internal
   fun textFieldWithHistoryWithBrowseButton(
     getter: () -> String,
@@ -699,13 +699,9 @@ abstract class Cell : BaseBuilder {
   }
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun placeholder(): CellBuilder<JComponent> {
-    return component(JPanel().apply {
-      minimumSize = Dimension(0, 0)
-      preferredSize = Dimension(0, 0)
-      maximumSize = Dimension(0, 0)
-    })
+    return internalPlaceholder()
   }
 
   @ApiStatus.ScheduledForRemoval
@@ -726,6 +722,16 @@ abstract class Cell : BaseBuilder {
     constraints(*constraints)
     if (comment != null) comment(comment)
     if (growPolicy != null) growPolicy(growPolicy)
+  }
+
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2")
+  internal fun internalPlaceholder(): CellBuilder<JComponent>{
+    return component(JPanel().apply {
+      minimumSize = Dimension(0, 0)
+      preferredSize = Dimension(0, 0)
+      maximumSize = Dimension(0, 0)
+    })
   }
 }
 

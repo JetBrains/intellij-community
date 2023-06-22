@@ -4,6 +4,6 @@ internal class S {
     }
 
     companion object {
-        var myI = 10
+        var myI: Int = 10
     }
 }

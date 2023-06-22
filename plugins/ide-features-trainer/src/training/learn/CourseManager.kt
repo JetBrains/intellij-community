@@ -16,10 +16,7 @@ import com.intellij.util.KeyedLazyInstanceEP
 import com.intellij.util.containers.MultiMap
 import training.lang.LangManager
 import training.lang.LangSupport
-import training.learn.course.IftModule
-import training.learn.course.LearningCourse
-import training.learn.course.LearningCourseBase
-import training.learn.course.Lesson
+import training.learn.course.*
 import training.learn.lesson.LessonManager
 import training.statistic.LessonStartingWay
 import training.util.*
@@ -79,10 +76,10 @@ class CourseManager internal constructor() : Disposable {
       }
     }
 
-  val currentCourse: LearningCourse?
+  val currentCourses: List<LearningCourse>
     get() = LangManager.getInstance().getLanguageId()?.let { lang ->
-      COURSE_MODULES_EP.extensionList.find { lang.equals(it.language, ignoreCase = true) }?.instance
-    }
+      getLanguageEPs(getLanguageToEPs(), lang).map { it.instance }
+    } ?: emptyList()
 
   override fun dispose() {
   }
@@ -138,13 +135,26 @@ class CourseManager internal constructor() : Disposable {
   }
 
   private fun reloadLangModules() {
-    val extensions = COURSE_MODULES_EP.extensions.filter { courseCanBeUsed(it.language) }
-    for (e in extensions) {
-      val langSupport = LangManager.getInstance().getLangSupportById(e.language)
-      if (langSupport != null) {
+    val languageToEPs = getLanguageToEPs()
+    for (languageId in languageToEPs.keys) {
+      val langSupport = LangManager.getInstance().getLangSupportById(languageId) ?: continue
+      for (e in getLanguageEPs(languageToEPs, languageId)) {
         languageCourses.putValues(langSupport, createModules(e.instance, e.pluginDescriptor))
       }
     }
+  }
+
+  private fun getLanguageToEPs(): Map<String, List<LanguageExtensionPoint<LearningCourseBase>>> {
+    return COURSE_MODULES_EP.extensions.groupBy { it.language }.filterKeys { courseCanBeUsed(it) }
+  }
+
+  private fun getLanguageEPs(map: Map<String, List<LanguageExtensionPoint<LearningCourseBase>>>, languageId: String): List<LanguageExtensionPoint<LearningCourseBase>> {
+    return map[languageId]?.let {
+      val replacingCourse = it.firstOrNull { extensionPoint ->
+        extensionPoint.instance.otherCoursesMergeStrategy() == LearningCoursesMergeStrategy.REPLACE_MODULES
+      }
+      if (replacingCourse != null) listOf(replacingCourse) else it
+    } ?: emptyList()
   }
 
   private fun reloadCommonModules() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.build
 
 import com.intellij.compiler.BaseCompilerTestCase
@@ -25,7 +25,6 @@ import org.jetbrains.idea.devkit.module.PluginModuleType
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk
 import org.jetbrains.idea.devkit.projectRoots.Sandbox
 import java.io.File
-import java.util.*
 
 class PluginModuleCompilationTest : BaseCompilerTestCase() {
   override fun setUpJdk() {
@@ -74,7 +73,7 @@ class PluginModuleCompilationTest : BaseCompilerTestCase() {
   fun testRebuildSimpleProject() {
     setupSimplePluginProject()
     val log = rebuild()
-    assertThat(log.warnings).`as`("Rebuild finished with warnings: ${Arrays.toString(log.warnings)}").isEmpty()
+    assertThat(log.warnings).`as`("Rebuild finished with warnings: ${log.warnings.contentToString()}").isEmpty()
   }
 
   fun testPrepareSimpleProjectForDeployment() {
@@ -152,7 +151,7 @@ class PluginModuleCompilationTest : BaseCompilerTestCase() {
 
   private fun prepareForDeployment(module: Module) {
     val errorMessages = SmartList<String>()
-    PrepareToDeployAction.doPrepare(module, errorMessages, SmartList<String>())
+    PrepareToDeployAction.doPrepare(module, errorMessages, SmartList())
     assertThat(errorMessages).`as`("Building plugin zip finished with errors: $errorMessages").isEmpty()
   }
 

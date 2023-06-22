@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.devkit.actions;
 
 import com.intellij.ide.scratch.RootType;
@@ -82,7 +82,7 @@ final class SendEventLogAction extends AnAction {
         ApplicationManager.getApplication().invokeLater(
           () -> Messages.showMultilineInputDialog(project, "Result: " + code, "Statistics Result",
                                                   StringUtil.replace(result.getDescription(), ";", "\n"),
-                                                  null, null), ModalityState.NON_MODAL, project.getDisposed());
+                                                  null, null), ModalityState.nonModal(), project.getDisposed());
       }
 
       private StatisticsResult send() {
@@ -171,8 +171,14 @@ final class SendEventLogAction extends AnAction {
     }
 
     private static void append(@NotNull StringBuilder out, @NotNull List<LogEventRecordRequest> requests) {
+      boolean isFirst = true;
       for (LogEventRecordRequest request : requests) {
-        out.append(LogEventSerializer.INSTANCE.toString(request)).append(",");
+        if (isFirst) {
+          isFirst = false;
+        } else {
+          out.append(",");
+        }
+        out.append(LogEventSerializer.INSTANCE.toString(request));
       }
     }
   }

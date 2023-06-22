@@ -17,7 +17,6 @@ import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.ui.BrowseFolderRunnable;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
@@ -72,7 +71,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
 
   public JrePathEditor(boolean editable) {
     myComboBoxModel = new SortedComboBoxModel<>((o1, o2) -> {
-      int result = Comparing.compare(o1.getOrder(), o2.getOrder());
+      int result = Integer.compare(o1.getOrder(), o2.getOrder());
       if (result != 0) {
         return result;
       }

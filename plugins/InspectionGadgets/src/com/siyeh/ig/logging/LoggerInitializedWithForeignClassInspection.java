@@ -1,12 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.logging;
 
 import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInsight.options.JavaIdentifierValidator;
-import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -19,7 +18,6 @@ import com.intellij.util.xmlb.XmlSerializer;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -78,9 +76,9 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
   public @NotNull OptPane getOptionsPane() {
     return pane(
       table("",
-            stringList("loggerFactoryClassNames", InspectionGadgetsBundle.message("logger.factory.class.name"),
+            column("loggerFactoryClassNames", InspectionGadgetsBundle.message("logger.factory.class.name"),
                        new JavaClassValidator()),
-            stringList("loggerFactoryMethodNames", InspectionGadgetsBundle.message("logger.factory.method.name"),
+            column("loggerFactoryMethodNames", InspectionGadgetsBundle.message("logger.factory.method.name"),
                        new JavaIdentifierValidator())),
       checkbox("ignoreSuperClass", InspectionGadgetsBundle.message("logger.initialized.with.foreign.class.ignore.super.class.option")),
       checkbox("ignoreNonPublicClasses",
@@ -96,7 +94,7 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
 
   @Override
   @Nullable
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new LoggerInitializedWithForeignClassFix((String)infos[0]);
   }
 
@@ -141,7 +139,7 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
     });
   }
 
-  private static final class LoggerInitializedWithForeignClassFix extends InspectionGadgetsFix {
+  private static final class LoggerInitializedWithForeignClassFix extends PsiUpdateModCommandQuickFix {
 
     private final String newClassName;
 
@@ -162,8 +160,7 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (!(element instanceof PsiClassObjectAccessExpression classObjectAccessExpression)) {
         return;
       }

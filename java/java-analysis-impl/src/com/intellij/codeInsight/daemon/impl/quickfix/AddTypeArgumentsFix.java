@@ -2,12 +2,11 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.FileModifier;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -27,9 +26,8 @@ public final class AddTypeArgumentsFix extends MethodArgumentFix {
 
   @Override
   @NotNull
-  public String getText() {
-    PsiExpressionList list = myArgList.getElement();
-    if (list != null && list.getExpressionCount() == 1) {
+  public String getText(@NotNull PsiExpressionList list) {
+    if (list.getExpressionCount() == 1) {
       return QuickFixBundle.message("add.type.arguments.single.argument.text");
     }
 
@@ -38,8 +36,8 @@ public final class AddTypeArgumentsFix extends MethodArgumentFix {
 
   private static class MyFixerActionFactory extends ArgumentFixerActionFactory {
     @Override
-    public AddTypeArgumentsFix createFix(final PsiExpressionList list, final int i, final PsiType toType) {
-      return new AddTypeArgumentsFix(list, i, toType, this);
+    public IntentionAction createFix(final PsiExpressionList list, final int i, final PsiType toType) {
+      return new AddTypeArgumentsFix(list, i, toType, this).asIntention();
     }
 
     @Override
@@ -127,14 +125,6 @@ public final class AddTypeArgumentsFix extends MethodArgumentFix {
       }
     }
     return null;
-  }
-
-  @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    PsiExpressionList list = myArgList.getElement();
-    if (list == null) return null;
-    return new AddTypeArgumentsFix(PsiTreeUtil.findSameElementInCopy(list, target), myIndex, myToType,
-                                   myArgumentFixerActionFactory);
   }
 
   public static final ArgumentFixerActionFactory REGISTRAR = new AddTypeArgumentsFix.MyFixerActionFactory();

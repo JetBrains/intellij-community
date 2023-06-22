@@ -17,6 +17,7 @@ import com.intellij.util.io.DirectoryContentSpecKt;
 import kotlin.Unit;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Test;
 
 import java.io.File;
@@ -102,7 +103,8 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
                        </modules>
                        """);
 
-    configConfirmationForYesAnswer();
+    //configConfirmationForYesAnswer();
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
     importProject();
     assertModules("project", "m1");
   }
@@ -119,7 +121,9 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
                        </modules>
                        """);
 
-    configConfirmationForNoAnswer();
+    //configConfirmationForNoAnswer();
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(false);
+
     importProject();
     if (supportsKeepingModulesFromPreviousImport()) {
       assertModules("project", "m1", "m2");
@@ -140,14 +144,23 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
                          <module>m1</module>
                        </modules>
                        """);
-    AtomicInteger counter = configConfirmationForNoAnswer();
+    //AtomicInteger counter = configConfirmationForNoAnswer();
+    var counter = new AtomicInteger();
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(false);
 
     assertEquals(0, counter.get());
 
     importProject();
+    if (null == MavenProjectLegacyImporter.getAnswerToDeleteObsoleteModulesQuestion()) {
+      counter.incrementAndGet();
+    }
     assertEquals(supportsKeepingModulesFromPreviousImport() ? 1 : 0, counter.get());
 
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(false);
     importProject();
+    if (null == MavenProjectLegacyImporter.getAnswerToDeleteObsoleteModulesQuestion()) {
+      counter.incrementAndGet();
+    }
     assertEquals(supportsKeepingModulesFromPreviousImport() ? 1 : 0, counter.get());
   }
 
@@ -176,7 +189,8 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
 
     assertModules("project", "m1", "m2");
 
-    configConfirmationForYesAnswer();
+    //configConfirmationForYesAnswer();
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
 
     getMavenImporterSettings().setCreateModulesForAggregators(false);
     importProject();
@@ -195,8 +209,9 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testDoNotCreateModulesForNewlyCreatedAggregativeProjectsIfNotNecessary() {
+    //configConfirmationForYesAnswer();
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
     getMavenImporterSettings().setCreateModulesForAggregators(false);
-    configConfirmationForYesAnswer();
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -255,18 +270,21 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
                        </profiles>
                        """);
 
-    configConfirmationForYesAnswer(); // will ask about absent modules
+    //configConfirmationForYesAnswer();
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
 
     importProjectWithProfiles("profile1");
     assertModules("project", "m1");
 
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
     importProjectWithProfiles("profile2");
     assertModules("project", "m2");
   }
 
   @Test
   public void testChangingDependencyTypeToTestJar() {
-    configConfirmationForYesAnswer();
+    //configConfirmationForYesAnswer();
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
     VirtualFile m1 = createModulePom("m1", createPomXmlWithModuleDependency("jar"));
 
     VirtualFile m2 = createModulePom("m2", """
@@ -295,7 +313,7 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
       <version>1</version>
       """);
     importProject();
-    assertEquals("1.5", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")));
+    assertEquals("1.7", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")));
 
     createModulePom("m1", """
       <groupId>test</groupId>
@@ -341,7 +359,7 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
       <version>1</version>
       """);
     importProject();
-    assertEquals("1.5", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")));
+    assertEquals("1.7", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")));
   }
 
   private static String createPomXmlWithModuleDependency(final String dependencyType) {
@@ -385,9 +403,14 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
                       </build>
                       """);
 
-    AtomicInteger counter = configConfirmationForNoAnswer();
+    //AtomicInteger counter = configConfirmationForNoAnswer();
+    var counter = new AtomicInteger();
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(false);
     importProject();
     resolveDependenciesAndImport();
+    if (null == MavenProjectLegacyImporter.getAnswerToDeleteObsoleteModulesQuestion()) {
+      counter.incrementAndGet();
+    }
     assertEquals(0, counter.get());
   }
 
@@ -473,7 +496,8 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
 
     CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(myProject);
 
-    configConfirmationForYesAnswer();
+    //configConfirmationForYesAnswer();
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
     importProject();
     assertEquals(LanguageLevel.JDK_1_8, LanguageLevelUtil.getEffectiveLanguageLevel(getModule("project")));
     assertEquals(LanguageLevel.JDK_1_8, LanguageLevelUtil.getEffectiveLanguageLevel(getModule(mn("project", "m1"))));
@@ -528,7 +552,8 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
 
     CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(myProject);
 
-    configConfirmationForYesAnswer();
+    //configConfirmationForYesAnswer();
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
     importProject();
     assertEquals(LanguageLevel.JDK_1_8, LanguageLevelUtil.getEffectiveLanguageLevel(getModule(mn("project", "m1"))));
     assertEquals("1.8", compilerConfiguration.getBytecodeTargetLevel(getModule(mn("project", "m1"))));

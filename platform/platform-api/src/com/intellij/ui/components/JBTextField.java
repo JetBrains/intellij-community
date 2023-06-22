@@ -70,6 +70,12 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText, T
   }
 
   @Override
+  public void updateUI() {
+    super.updateUI();
+    if (getParent() != null) myEmptyText.resetFont();
+  }
+
+  @Override
   @SuppressWarnings("DuplicatedCode")
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);

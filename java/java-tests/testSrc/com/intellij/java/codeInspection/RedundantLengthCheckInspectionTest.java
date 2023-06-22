@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 public class RedundantLengthCheckInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_17;
+    return JAVA_20;
   }
 
   @Override

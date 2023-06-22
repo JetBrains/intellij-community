@@ -97,9 +97,9 @@ open class DirectoryBasedStorage(override val dir: Path,
     cachedVirtualFile = dir
   }
 
-  override fun createSaveSessionProducer(): SaveSessionProducer? = if (checkIsSavingDisabled()) null else MySaveSession(this, getStorageData())
+  override fun createSaveSessionProducer(): SaveSessionProducer? = if (checkIsSavingDisabled()) null else MySaveSessionProducer(this, getStorageData())
 
-  private class MySaveSession(private val storage: DirectoryBasedStorage, private val originalStates: StateMap) : SaveSessionBase(), SaveSession, DirectoryBasedSaveSessionProducer {
+  private class MySaveSessionProducer(private val storage: DirectoryBasedStorage, private val originalStates: StateMap) : SaveSessionProducerBase(), SaveSession, DirectoryBasedSaveSessionProducer {
     private var copiedStorageData: MutableMap<String, Any>? = null
 
     private val dirtyFileNames = HashSet<String>()

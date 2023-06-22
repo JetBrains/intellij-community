@@ -52,12 +52,12 @@ public class LanguagePanel extends AbstractInjectionPanel<BaseInjection> {
     super(injection, project);
     $$$setupUI$$$();
 
-    final String[] languageIDs = InjectedLanguage.getAvailableLanguageIDs();
+    final String[] languageIDs = ContainerUtil.map2Array(InjectedLanguage.getAvailableLanguages(), String.class, Language::getID);
     Arrays.sort(languageIDs, String::compareToIgnoreCase);
 
     myLanguage.setModel(new DefaultComboBoxModel<>(languageIDs));
     myLanguage.setRenderer(new ColoredListCellRenderer<>() {
-      final Set<String> IDs = ContainerUtil.set(languageIDs);
+      final Set<String> IDs = Set.of(languageIDs);
 
       @Override
       protected void customizeCellRenderer(@NotNull JList list, @Nls String s, int index, boolean selected, boolean hasFocus) {

@@ -4,8 +4,8 @@ package com.intellij.workspaceModel.ide.impl
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
-import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlImpl
-import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlImpl
+import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 
 class VirtualFileUrlBridge(id: Int, manager: VirtualFileUrlManagerImpl) :
   VirtualFileUrlImpl(id, manager), VirtualFilePointer {
@@ -25,9 +25,7 @@ class VirtualFileUrlBridge(id: Int, manager: VirtualFileUrlManagerImpl) :
 
     other as VirtualFileUrlBridge
 
-    if (id != other.id) return false
-
-    return true
+    return id == other.id
   }
 
   override fun hashCode(): Int = id

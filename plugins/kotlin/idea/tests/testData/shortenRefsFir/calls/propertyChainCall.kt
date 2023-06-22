@@ -1,4 +1,3 @@
-// FIR_COMPARISON
 package test.test2
 
 val foo = 1

@@ -8,7 +8,7 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.idea.base.highlighting.visitor.AbstractHighlightInfoHolderHighlightingVisitor
+import org.jetbrains.kotlin.idea.base.highlighting.visitor.AbstractHighlightingVisitor
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 abstract class AfterAnalysisHighlightingVisitor protected constructor(
     holder: HighlightInfoHolder,
     protected var bindingContext: BindingContext
-) : AbstractHighlightInfoHolderHighlightingVisitor(holder) {
+) : AbstractHighlightingVisitor(holder) {
 
     protected fun attributeKeyForDeclarationFromExtensions(element: PsiElement, descriptor: DeclarationDescriptor): TextAttributesKey? {
         @Suppress("DEPRECATION")

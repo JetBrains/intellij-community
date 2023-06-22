@@ -44,7 +44,7 @@ class GrChangeSignatureConflictSearcher {
     addMethodConflicts(conflictDescriptions);
     UsageInfo[] usagesIn = refUsages.get();
     RenameUtil.addConflictDescriptions(usagesIn, conflictDescriptions);
-    Set<UsageInfo> usagesSet = ContainerUtil.set(usagesIn);
+    Set<UsageInfo> usagesSet = ContainerUtil.newHashSet(usagesIn);
     RenameUtil.removeConflictUsages(usagesSet);
     if (myChangeInfo.isVisibilityChanged()) {
       try {

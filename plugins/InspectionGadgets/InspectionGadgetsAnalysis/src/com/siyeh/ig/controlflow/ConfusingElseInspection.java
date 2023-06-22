@@ -16,15 +16,16 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
@@ -64,11 +65,11 @@ public class ConfusingElseInspection extends BaseInspection implements CleanupLo
 
   @Override
   @Nullable
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new RemoveRedundantElseFix();
   }
 
-  private static class RemoveRedundantElseFix extends InspectionGadgetsFix {
+  private static class RemoveRedundantElseFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -77,8 +78,7 @@ public class ConfusingElseInspection extends BaseInspection implements CleanupLo
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement ifKeyword = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement ifKeyword, @NotNull ModPsiUpdater updater) {
       final PsiIfStatement ifStatement = (PsiIfStatement)ifKeyword.getParent();
       if (ifStatement == null) {
         return;

@@ -1,14 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest
 
+import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.codereview.action.ImmutableToolbarLabelAction
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUtil
-import com.intellij.icons.AllIcons
-import com.intellij.ide.actions.NonEmptyActionGroup
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.diff.impl.GenericDataProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.ChangeWrapper
@@ -23,17 +24,13 @@ import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.Processor
-import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.action.GHPRShowDiffActionProvider
-import org.jetbrains.plugins.github.pullrequest.comment.action.combined.GHPRCombinedDiffReviewResolvedThreadsToggleAction
 import org.jetbrains.plugins.github.pullrequest.comment.action.combined.GHPRCombinedDiffReviewThreadsReloadAction
-import org.jetbrains.plugins.github.pullrequest.comment.action.combined.GHPRCombinedDiffReviewThreadsToggleAction
 import org.jetbrains.plugins.github.pullrequest.data.GHPRFilesManager
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.util.ChangeDiffRequestProducerFactory
-import org.jetbrains.plugins.github.util.GHToolbarLabelAction
 import java.util.*
 
 internal class GHPRDiffPreview(private val prId: GHPRIdentifier?,
@@ -101,17 +98,12 @@ internal abstract class GHPRCombinedDiffPreviewBase(private val dataProvider: GH
     val context = model.context
     DiffUtil.putDataKey(context, GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER, dataProvider)
 
-    val viewOptionsGroup = NonEmptyActionGroup().apply {
-      isPopup = true
-      templatePresentation.text = GithubBundle.message("pull.request.diff.view.options")
-      templatePresentation.icon = AllIcons.Actions.Show
-      add(GHPRCombinedDiffReviewThreadsToggleAction(model))
-      add(GHPRCombinedDiffReviewResolvedThreadsToggleAction(model))
+    val genericDataProvider = GenericDataProvider().apply {
+      putData(GHPRActionKeys.COMBINED_DIFF_PREVIEW_MODEL, model)
     }
-
+    context.putUserData(DiffUserDataKeys.DATA_PROVIDER, genericDataProvider)
     context.putUserData(DiffUserDataKeys.CONTEXT_ACTIONS, listOf(
-      GHToolbarLabelAction(GithubBundle.message("pull.request.diff.review.label")),
-      viewOptionsGroup,
+      ImmutableToolbarLabelAction(CollaborationToolsBundle.message("review.diff.toolbar.label")),
       GHPRCombinedDiffReviewThreadsReloadAction(model),
       ActionManager.getInstance().getAction("Github.PullRequest.Review.Submit")))
   }
@@ -171,7 +163,11 @@ internal abstract class GHPRCombinedDiffPreviewBase(private val dataProvider: GH
 private class GHPRCombinedDiffPreviewModel(tree: ChangesTree,
                                            private val producerFactory: ChangeDiffRequestProducerFactory,
                                            parentDisposable: Disposable) :
-  CombinedDiffPreviewModel(tree, prepareCombinedDiffModelRequests(tree.project, tree.getAllChanges(producerFactory)), parentDisposable) {
+  CombinedDiffPreviewModel(tree, parentDisposable) {
+
+  init {
+    setBlocks(prepareCombinedDiffModelRequests(tree.project, tree.getAllChanges((producerFactory))))
+  }
 
   override fun iterateAllChanges(): Iterable<Wrapper> {
     return tree.iterateAllChanges(producerFactory)

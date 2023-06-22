@@ -1,6 +1,6 @@
 package com.jetbrains.performancePlugin.commands;
 
-import com.intellij.diagnostic.telemetry.IJNoopTracer;
+import com.intellij.platform.diagnostic.telemetry.IJNoopTracer;
 import com.intellij.openapi.ui.playback.commands.AbstractCommand;
 import com.jetbrains.performancePlugin.PerformanceTestSpan;
 import com.jetbrains.performancePlugin.SpanBuilderWithSystemInfoAttributes;

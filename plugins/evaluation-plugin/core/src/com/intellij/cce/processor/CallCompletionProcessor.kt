@@ -2,6 +2,7 @@ package com.intellij.cce.processor
 
 import com.intellij.cce.actions.*
 import com.intellij.cce.core.CodeFragment
+import com.intellij.cce.core.CodeLine
 import com.intellij.cce.core.CodeToken
 import com.intellij.cce.core.Language
 
@@ -13,16 +14,12 @@ class CallCompletionProcessor(private val text: String,
 
   override fun process(code: CodeFragment) {
     if (strategy.context == CompletionContext.ALL) {
-      for (token in code.getChildren()) {
-        processToken(token)
-      }
+      processTokens(code)
       return
     }
     previousTextStart = code.offset
 
-    for (token in code.getChildren()) {
-      processToken(token)
-    }
+    processTokens(code)
 
     if (previousTextStart < code.offset + code.length) {
 
@@ -37,6 +34,15 @@ class CallCompletionProcessor(private val text: String,
 
       addAction(MoveCaret(previousTextStart))
       addAction(PrintText(remainingText))
+    }
+  }
+
+  private fun processTokens(code: CodeFragment) {
+    for (child in code.getChildren()) {
+      when (child) {
+        is CodeToken -> processToken(child)
+        is CodeLine -> child.getChildren().forEach { processToken(it) }
+      }
     }
   }
 
@@ -77,7 +83,7 @@ class CallCompletionProcessor(private val text: String,
   }
 
   private fun prepareAllContext(token: CodeToken) {
-    addAction(DeleteRange(token.offset, token.offset + token.length))
+    addAction(DeleteRange(token.offset, token.offset + token.text.length))
     addAction(MoveCaret(token.offset))
   }
 
@@ -102,7 +108,7 @@ class CallCompletionProcessor(private val text: String,
         addAction(PrintText(previousText))
       }
 
-      previousTextStart = token.offset + token.length
+      previousTextStart = token.offset + token.text.length
       addAction(MoveCaret(token.offset))
     }
   }

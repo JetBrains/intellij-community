@@ -3,13 +3,12 @@ package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 
 import java.util.*;
 
-import static com.intellij.util.ObjectUtils.consumeIfNotNull;
 import static com.intellij.util.containers.ContainerUtil.iterateBackward;
-import static com.intellij.util.containers.ContainerUtil.map;
 
 public class DescriptorTree {
   private final HashMap<NodeDescriptor, List<NodeDescriptor>> myChildrenMap = new HashMap<>();
@@ -71,8 +70,10 @@ public class DescriptorTree {
       Pair<NodeDescriptor, NodeDescriptor> nodeInfo = stack.pop();
       NodeDescriptor child = nodeInfo.second;
       walker.visit(nodeInfo.first, child);
-      consumeIfNotNull(myChildrenMap.get(child),
-                       children -> iterateBackward(map(children, e -> new Pair<>(child, e))).forEach(stack::push));
+      List<NodeDescriptor> list = myChildrenMap.get(child);
+      if (list != null) {
+        iterateBackward(ContainerUtil.map(list, e -> new Pair<>(child, e))).forEach(stack::push);
+      }
     }
   }
 

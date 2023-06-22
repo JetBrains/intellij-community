@@ -412,9 +412,17 @@ class BaseInterpreterInterface(BaseCodeExecutor):
             traceback.print_exc()
             raise PythonUnhandledException(traceback.format_exc())
 
-    def execTableCommand(self, command, command_type):
+    #
+    def execTableCommand(self, command, command_type, start_index, end_index):
         try:
+            try:
+                start_index = int(start_index)
+                end_index = int(end_index)
+            except ValueError:
+                start_index = None
+                end_index = None
             success, res = exec_table_command(command, command_type,
+                                              start_index, end_index,
                                               self.get_namespace(),
                                               self.get_namespace())
             if success:

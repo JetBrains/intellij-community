@@ -8,6 +8,7 @@ class A private constructor() {
         val a = 5
     }
 }
+// PRODUCED_CLASS_NAMES: a.A
 
 //FILE: b/a.kt
 
@@ -19,3 +20,4 @@ class A public constructor() {
         val a = 5
     }
 }
+// PRODUCED_CLASS_NAMES: b.A

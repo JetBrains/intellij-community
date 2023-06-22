@@ -511,13 +511,14 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
       getColumnModel().getColumn(2).setMinWidth(preferred);
       getColumnModel().getColumn(2).setPreferredWidth(preferred);
       getColumnModel().getColumn(2).setMaxWidth(preferred);
-      new TableViewSpeedSearch<>(this) {
+      TableViewSpeedSearch<InjInfo> search = new TableViewSpeedSearch<>(this, null) {
         @Override
         protected String getItemText(@NotNull InjInfo element) {
           final BaseInjection injection = element.injection;
           return injection.getSupportId() + " " + injection.getInjectedLanguageId() + " " + injection.getDisplayName();
         }
       };
+      search.setupListeners();
     }
 
   }
@@ -863,6 +864,16 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
   }
 
   private record InjInfo(BaseInjection injection, CfgInfo cfgInfo, boolean bundled) {
+
+    @Override
+    public boolean equals(Object obj) {
+      return this == obj;
+    }
+
+    @Override
+    public int hashCode() {
+      return System.identityHashCode(this);
+    }
   }
 
   private static List<InjInfo> getInjInfoList(final CfgInfo[] infos) {

@@ -26,13 +26,13 @@ import java.util.*;
  */
 public final class JavacMain {
   //private static final boolean ECLIPSE_COMPILER_SINGLE_THREADED_MODE = Boolean.parseBoolean(System.getProperty("jdt.compiler.useSingleThread", "false"));
-  private static final Set<String> FILTERED_OPTIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
+  private static final Set<String> FILTERED_OPTIONS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
     "-d", "-classpath", "-cp", "--class-path", "-bootclasspath", "--boot-class-path"
   )));
-  private static final Set<String> FILTERED_SINGLE_OPTIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
+  private static final Set<String> FILTERED_SINGLE_OPTIONS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
     /*javac options*/  "-verbose", "-implicit:class", "-implicit:none", "-Xprefer:newer", "-Xprefer:source"
   )));
-  private static final Set<String> FILE_MANAGER_EARLY_INIT_OPTIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
+  private static final Set<String> FILE_MANAGER_EARLY_INIT_OPTIONS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
     "-encoding", "-extdirs", "-endorseddirs", "-processorpath", "--processor-path", "--processor-module-path", "-s", "-d", "-h"
   )));
 
@@ -238,10 +238,7 @@ public final class JavacMain {
 
       return task.call();
     }
-    catch(IllegalArgumentException e) {
-      diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, e.getMessage()));
-    }
-    catch(IllegalStateException e) {
+    catch(IllegalArgumentException | IllegalStateException e) {
       diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, e.getMessage()));
     }
     catch (CompilationCanceledException e) {
@@ -306,7 +303,7 @@ public final class JavacMain {
         );
         if (processorClassLoader != null) {
           if (processorNames != null) {
-            final List<Processor> loaded = new ArrayList<Processor>();
+            final List<Processor> loaded = new ArrayList<>();
             for (String procName : processorNames) {
               loaded.add((Processor)processorClassLoader.loadClass(procName).getDeclaredConstructor().newInstance());
             }
@@ -388,7 +385,7 @@ public final class JavacMain {
           putMethod.invoke(contextObject, JavaFileManager.class, APIWrappers.wrap(StandardJavaFileManager.class, currentManager, Object.class, delegateTo));
         }
         else {
-          installCallDispatcherRecursively(currentManager, delegateTo, new HashSet<Object>());
+          installCallDispatcherRecursively(currentManager, delegateTo, new HashSet<>());
         }
       }
     }
@@ -489,7 +486,7 @@ public final class JavacMain {
   }
 
   private static Iterable<String> prepareOptions(final Iterable<? extends String> options, @NotNull JavaCompilingTool compilingTool) {
-    final List<String> result = new ArrayList<String>(compilingTool.getDefaultCompilerOptions());
+    final List<String> result = new ArrayList<>(compilingTool.getDefaultCompilerOptions());
     boolean skip = false;
     for (String option : options) {
       if (FILTERED_OPTIONS.contains(option)) {
@@ -508,7 +505,7 @@ public final class JavacMain {
   }
 
   private static Iterable<? extends File> buildPlatformClasspath(Iterable<? extends File> platformClasspath, Iterable<String> options) {
-    final Map<PathOption, String> argsMap = new HashMap<PathOption, String>();
+    final Map<PathOption, String> argsMap = new HashMap<>();
     for (Iterator<String> iterator = options.iterator(); iterator.hasNext(); ) {
       final String arg = iterator.next();
       for (PathOption pathOption : PathOption.values()) {
@@ -521,7 +518,7 @@ public final class JavacMain {
       return platformClasspath;
     }
 
-    final List<File> result = new ArrayList<File>();
+    final List<File> result = new ArrayList<>();
     appendFiles(argsMap, PathOption.PREPEND_CP, result, false);
     appendFiles(argsMap, PathOption.ENDORSED, result, true);
     appendFiles(argsMap, PathOption.D_ENDORSED, result, true);

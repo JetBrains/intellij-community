@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.highlighting.highlighters
 
-import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -11,27 +11,27 @@ import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors
 import org.jetbrains.kotlin.psi.*
 
 internal class ExpressionsSmartcastHighlighter(
-    holder: AnnotationHolder,
-    project: Project,
-) : AfterResolveHighlighter(holder, project) {
+  project: Project,
+) : AfterResolveHighlighter(project) {
 
     context(KtAnalysisSession)
-    override fun highlight(element: KtElement) {
-        when (element) {
+    override fun highlight(element: KtElement): List<HighlightInfo.Builder> {
+        return when (element) {
             is KtExpression -> highlightExpression(element)
-            else -> {}
+            else -> emptyList()
         }
     }
 
     context(KtAnalysisSession)
-    private fun highlightExpression(expression: KtExpression) {
+    private fun highlightExpression(expression: KtExpression): List<HighlightInfo.Builder> {
+        val result = mutableListOf<HighlightInfo.Builder>()
         expression.getImplicitReceiverSmartCast().forEach {
             val receiverName = when (it.kind) {
                 KtImplicitReceiverSmartCastKind.EXTENSION -> KotlinBaseHighlightingBundle.message("extension.implicit.receiver")
                 KtImplicitReceiverSmartCastKind.DISPATCH -> KotlinBaseHighlightingBundle.message("implicit.receiver")
             }
 
-            createInfoAnnotation(
+            result.add(createInfoAnnotation(
                 expression,
                 KotlinBaseHighlightingBundle.message(
                     "0.smart.cast.to.1",
@@ -39,19 +39,19 @@ internal class ExpressionsSmartcastHighlighter(
                     it.type.asStringForDebugging()
                 ),
                 KotlinHighlightingColors.SMART_CAST_RECEIVER
-            )
+            ))
         }
         expression.getSmartCastInfo()?.let { info ->
-            createInfoAnnotation(
+            result.add(createInfoAnnotation(
                 getSmartCastTarget(expression),
                 KotlinBaseHighlightingBundle.message(
                     "smart.cast.to.0",
                     info.smartCastType.asStringForDebugging()
                 ),
                 KotlinHighlightingColors.SMART_CAST_VALUE
-            )
+            ))
         }
-
+        return result
     }
 }
 

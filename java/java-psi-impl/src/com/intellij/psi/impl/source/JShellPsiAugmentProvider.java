@@ -17,16 +17,18 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
  */
 public class JShellPsiAugmentProvider extends PsiAugmentProvider{
-  private static final Set<String> JSHELL_FIELD_MODIFIERS = ContainerUtil.immutableSet(PsiModifier.PUBLIC, PsiModifier.STATIC);
+  private static final Set<String> JSHELL_FIELD_MODIFIERS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(PsiModifier.PUBLIC, PsiModifier.STATIC)));
   @NotNull
   @Override
   protected Set<String> transformModifiers(@NotNull PsiModifierList modifierList, @NotNull Set<String> modifiers) {

@@ -1,3 +1,3 @@
 fun InstanceExplicit() {
-    val t = MainClass.Companion.T()
+    val t = MainClass.Companion
 }

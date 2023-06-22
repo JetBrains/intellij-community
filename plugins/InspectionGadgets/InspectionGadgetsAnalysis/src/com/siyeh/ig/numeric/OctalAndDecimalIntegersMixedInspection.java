@@ -15,12 +15,12 @@
  */
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,8 +39,8 @@ public class OctalAndDecimalIntegersMixedInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
-    return new InspectionGadgetsFix[]{
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
+    return new LocalQuickFix[]{
       new ConvertOctalLiteralsToDecimalsFix(),
       new RemoveLeadingZeroesFix()
     };

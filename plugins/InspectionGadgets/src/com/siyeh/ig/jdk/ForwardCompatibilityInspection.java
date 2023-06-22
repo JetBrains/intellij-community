@@ -1,13 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.jdk;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -108,7 +106,7 @@ public class ForwardCompatibilityInspection extends AbstractBaseJavaLocalInspect
     };
   }
 
-  private static class QualifyCallFix implements LocalQuickFix {
+  private static class QualifyCallFix extends PsiUpdateModCommandQuickFix {
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
@@ -117,8 +115,8 @@ public class ForwardCompatibilityInspection extends AbstractBaseJavaLocalInspect
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
       if (call == null) return;
       PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(call.getMethodExpression());
       if (qualifier == null) return;

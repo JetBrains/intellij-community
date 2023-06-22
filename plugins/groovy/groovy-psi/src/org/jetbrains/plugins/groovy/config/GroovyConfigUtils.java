@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.openapi.module.Module;
@@ -145,19 +145,20 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
 
   private static int getVersionPart(String[] parts, int index) {
     String part = index < parts.length ? parts[index] : "-4";
-    if (part.equals(SNAPSHOT)) {
-      return 999;
-    } else if (part.equals(ALPHA)) {
-      return -3;
-    } else if (part.equals(BETA)) {
-      return -2;
-    } else if (part.equals(RC)) {
-      return -1;
-    } else try {
-      return Integer.parseInt(part);
-    } catch (NumberFormatException __) {
-      return -4;
-    }
+    return switch (part) {
+      case SNAPSHOT -> 999;
+      case ALPHA -> -3;
+      case BETA -> -2;
+      case RC -> -1;
+      default -> {
+        try {
+          yield Integer.parseInt(part);
+        }
+        catch (NumberFormatException __) {
+          yield -4;
+        }
+      }
+    };
   }
 
   @NotNull
@@ -183,6 +184,6 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
   }
 
   public Collection<String> getSDKVersions(Library[] libraries) {
-    return ContainerUtil.map2List(libraries, library -> getSDKVersion(LibrariesUtil.getGroovyLibraryHome(library)));
+    return ContainerUtil.map(libraries, library -> getSDKVersion(LibrariesUtil.getGroovyLibraryHome(library)));
   }
 }

@@ -68,7 +68,7 @@ public abstract class AbstractFileHyperlinkFilter implements Filter {
       HyperlinkInfo info = null;
       boolean grayedHyperLink = false;
       if (file != null) {
-        info = new OpenFileHyperlinkInfo(myProject, file, link.getDocumentLine(), link.getDocumentColumn());
+        info = new OpenFileHyperlinkInfo(myProject, file, link.getDocumentLine(), link.getDocumentColumn(), link.getIsUseBrowser());
         grayedHyperLink = isGrayedHyperlink(file);
       }
       else if (supportVfsRefresh()) {

@@ -48,7 +48,7 @@ class Interpreter(private val invoker: CompletionInvoker,
               val sessionUuid = lookup.features?.common?.context?.get(CCE_SESSION_UID_FEATURE_NAME)
                                 ?: UUID.randomUUID().toString()
               val content = if (saveContent) invoker.getText() else null
-              session = Session(position, action.expectedText, content, action.nodeProperties, sessionUuid)
+              session = Session(position, action.expectedText, action.expectedText.length, content, action.nodeProperties, sessionUuid)
             }
             session.addLookup(lookup)
           }
@@ -73,7 +73,7 @@ class Interpreter(private val invoker: CompletionInvoker,
           isCanceled = handler.onSessionFinished(fileActions.path)
         }
         is CompletionGolfSession -> {
-          session = invoker.emulateCompletionGolfSession(action.expectedText, position, action.nodeProperties)
+          session = invoker.emulateCompletionGolfSession(action.expectedText, action.ranges, position)
           sessions.add(session)
           isCanceled = handler.onSessionFinished(filePath)
         }

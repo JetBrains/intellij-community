@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.tooling.builder
 import groovy.transform.CompileStatic
 import org.gradle.api.Project
 import org.gradle.api.plugins.ExtensionContainer
+import org.gradle.api.plugins.ExtensionsSchema
 import org.gradle.api.reflect.HasPublicType
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.NotNull
@@ -37,10 +38,13 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
       result.configurations.add(new DefaultGradleConfiguration(it.name, it.description, it.visible, true, extractStringList(it, "getDeclarationAlternatives")))
     }
 
-    def convention = project.convention
-    convention.plugins.each { key, value ->
-      result.conventions.add(new DefaultGradleConvention(key, getType(value)))
+    if (GradleVersion.current().baseVersion < GradleVersion.version("8.2")){
+      def convention = project.convention
+      convention.plugins.each { key, value ->
+        result.conventions.add(new DefaultGradleConvention(key, getType(value)))
+      }
     }
+
     def extensions = project.extensions
     extensions.extraProperties.properties.each { name, value ->
       if(name == 'extraModelBuilder' || name.contains('.')) return
@@ -52,7 +56,7 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
       def extension = it as ExtensionContainer
       List<String> keyList =
         GradleVersion.current() >= GradleVersion.version("4.5")
-          ? extension.extensionsSchema.collect { it["name"] as String }
+          ? extractKeys(extension)
           : extractKeysViaReflection(extension)
 
       for (name in keyList) {
@@ -62,6 +66,14 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
         def rootTypeFqn = getType(value)
         result.extensions.add(new DefaultGradleExtension(name, rootTypeFqn))
       }
+    }
+    return result
+  }
+
+  private static List<String> extractKeys(ExtensionContainer extension) {
+    List<String> result = []
+    for (final ExtensionsSchema.ExtensionSchema schema in extension.extensionsSchema) {
+      result.add(schema.name)
     }
     return result
   }

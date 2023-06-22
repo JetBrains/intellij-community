@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see DiffExtension
  * @see SuppressiveDiffTool
+ * @see com.intellij.diff.merge.MergeTool
  */
 public interface DiffTool {
   ExtensionPointName<DiffTool> EP_NAME = ExtensionPointName.create("com.intellij.diff.DiffTool");

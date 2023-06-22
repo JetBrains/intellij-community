@@ -46,7 +46,7 @@ public class AntLikePropertySelectionHandler extends ExtendWordSelectionHandlerB
   public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     TextRange range = e.getTextRange();
     char prevLeftChar = ' ';
-    for (int left = cursorOffset; left >= range.getStartOffset(); left--) {
+    for (int left = Math.min(cursorOffset, editor.getDocument().getTextLength() - 1); left >= range.getStartOffset(); left--) {
       char leftChar = editorText.charAt(left);
       if (leftChar == '}') return Collections.emptyList();
       if (leftChar == '$' && prevLeftChar == '{') {

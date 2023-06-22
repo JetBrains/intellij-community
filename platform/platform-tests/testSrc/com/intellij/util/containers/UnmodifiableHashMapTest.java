@@ -162,7 +162,7 @@ public class UnmodifiableHashMapTest {
         assertTrue(content.isEmpty());
         continue;
       }
-      Set<String> parts = ContainerUtil.set(content.split(", ", -1));
+      Set<String> parts = Set.of(content.split(", ", -1));
       assertEquals(size, parts.size());
       assertEquals(IntStreamEx.range(size).mapToObj(i -> i + "=" + i).toSet(), parts);
     }

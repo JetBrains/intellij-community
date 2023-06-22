@@ -79,7 +79,8 @@ public abstract class StaticMemberProcessor {
     }
 
     if (overloads.get(0).getParameterList().isEmpty()) {
-      overloads.add(0, overloads.remove(1));
+      overloads = new ArrayList<>(overloads);
+      ContainerUtil.swapElements(overloads, 0, 1);
     }
     return createLookupElement(overloads, containingClass, shouldImport);
   }

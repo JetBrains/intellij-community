@@ -33,7 +33,7 @@ public abstract class ToolbarUpdater implements Activatable {
 
   public ToolbarUpdater(@NotNull JComponent component) {
     myComponent = component;
-    new UiNotifyConnector(component, this);
+    UiNotifyConnector.installOn(component, this);
   }
 
   @Override

@@ -1,4 +1,4 @@
-Unclassified 11 val c = object : A() {}
-Unclassified 13 val d = object : T() {}
-Unclassified 6 val b = object : A() {}
-Unclassified 8 open class T : A()
+Unclassified 12 val c = object : A() {}
+Unclassified 14 val d = object : T() {}
+Unclassified 7 val b = object : A() {}
+Unclassified 9 open class T : A()

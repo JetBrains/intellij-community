@@ -10,15 +10,14 @@ import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isExtensionFunctionType
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.copied
+import org.jetbrains.kotlin.idea.base.searching.usages.ReferencesSearchScopeHelper
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.*
-import org.jetbrains.kotlin.idea.base.searching.usages.ReferencesSearchScopeHelper
 import org.jetbrains.kotlin.idea.inspections.RedundantLambdaOrAnonymousFunctionInspection
 import org.jetbrains.kotlin.idea.inspections.RedundantUnitExpressionInspection
 import org.jetbrains.kotlin.idea.intentions.*
@@ -34,8 +33,8 @@ import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.CompileTimeConstantUtils
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.*
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.LexicalScope
@@ -129,10 +128,15 @@ class CodeInliner<TCallElement : KtElement>(
 
         val lexicalScope = lexicalScopeElement.getResolutionScope(lexicalScopeElement.analyze(BodyResolveMode.PARTIAL_FOR_COMPLETION))
 
+        val importDescriptors = codeToInline.fqNamesToImport.mapNotNull { importPath ->
+            val importDescriptor = file.resolveImportReference(importPath.fqName).firstOrNull() ?: return@mapNotNull null
+            importPath to importDescriptor
+        }
+
         if (elementToBeReplaced is KtSafeQualifiedExpression && receiverType?.isMarkedNullable != false) {
             wrapCodeForSafeCall(receiver!!, receiverType, elementToBeReplaced)
         } else if (callElement is KtBinaryExpression && callElement.operationToken == KtTokens.IDENTIFIER) {
-            keepInfixFormIfPossible()
+            keepInfixFormIfPossible(importDescriptors.map { it.second })
         }
 
         codeToInline.convertToCallableReferenceIfNeeded(elementToBeReplaced)
@@ -157,8 +161,7 @@ class CodeInliner<TCallElement : KtElement>(
             }
         }
 
-        for (importPath in codeToInline.fqNamesToImport) {
-            val importDescriptor = file.resolveImportReference(importPath.fqName).firstOrNull() ?: continue
+        for ((importPath, importDescriptor) in importDescriptors) {
             ImportInsertHelper.getInstance(project).importDescriptor(file, importDescriptor, aliasName = importPath.alias)
         }
 
@@ -386,13 +389,16 @@ class CodeInliner<TCallElement : KtElement>(
         }
     }
 
-    private fun keepInfixFormIfPossible() {
+    private fun keepInfixFormIfPossible(importDescriptors: List<DeclarationDescriptor>) {
         if (codeToInline.statementsBefore.isNotEmpty()) return
         val dotQualified = codeToInline.mainExpression as? KtDotQualifiedExpression ?: return
         val receiver = dotQualified.receiverExpression
         if (!receiver[RECEIVER_VALUE_KEY]) return
         val call = dotQualified.selectorExpression as? KtCallExpression ?: return
         val nameExpression = call.calleeExpression as? KtSimpleNameExpression ?: return
+        val functionDescriptor =
+            importDescriptors.firstOrNull { it.name.asString() == nameExpression.text } as? FunctionDescriptor ?: return
+        if (!functionDescriptor.isInfix) return
         val argument = call.valueArguments.singleOrNull() ?: return
         if (argument.isNamed()) return
         val argumentExpression = argument.getArgumentExpression() ?: return
@@ -467,7 +473,7 @@ class CodeInliner<TCallElement : KtElement>(
 
                     if (!parameter.type.isExtensionFunctionType) return@run null
                     expression.functionLiteral.descriptor?.safeAs<FunctionDescriptor>()?.let { descriptor ->
-                        LambdaToAnonymousFunctionIntention.convertLambdaToFunction(expression, descriptor)
+                        LambdaToAnonymousFunctionIntention.Holder.convertLambdaToFunction(expression, descriptor)
                     }
                 } ?: expression
 

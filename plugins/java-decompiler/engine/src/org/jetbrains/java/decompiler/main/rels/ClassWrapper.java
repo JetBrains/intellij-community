@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.main.rels;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.main.CancellationManager;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.main.collectors.VarNamesCollector;
@@ -41,9 +42,8 @@ public class ClassWrapper {
     DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS_WRAPPER, this);
     DecompilerContext.getLogger().startClass(classStruct.qualifiedName);
 
-    int maxSec = Integer.parseInt(DecompilerContext.getProperty(IFernflowerPreferences.MAX_PROCESSING_METHOD).toString());
     boolean testMode = DecompilerContext.getOption(IFernflowerPreferences.UNIT_TEST_MODE);
-
+    CancellationManager cancellationManager = DecompilerContext.getCancellationManager();
     for (StructMethod mt : classStruct.getMethods()) {
       DecompilerContext.getLogger().startMethod(mt.getName() + " " + mt.getDescriptor());
 
@@ -59,40 +59,24 @@ public class ClassWrapper {
       boolean isError = false;
 
       try {
+        cancellationManager.checkCanceled();
         if (mt.containsCode()) {
-          if (maxSec == 0 || testMode) {
+          if (testMode) {
             root = MethodProcessorRunnable.codeToJava(classStruct, mt, md, varProc);
           }
           else {
-            MethodProcessorRunnable mtProc = new MethodProcessorRunnable(classStruct, mt, md, varProc, DecompilerContext.getCurrentContext());
-
-            Thread mtThread = new Thread(mtProc, "Java decompiler");
-            long stopAt = System.currentTimeMillis() + maxSec * 1000L;
-
-            mtThread.start();
-
-            while (!mtProc.isFinished()) {
-              try {
-                synchronized (mtProc.lock) {
-                  mtProc.lock.wait(200);
-                }
-              }
-              catch (InterruptedException e) {
-                killThread(mtThread);
-                throw e;
-              }
-
-              if (System.currentTimeMillis() >= stopAt) {
-                String message = "Processing time limit exceeded for method " + mt.getName() + ", execution interrupted.";
-                DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.ERROR);
-                killThread(mtThread);
-                isError = true;
-                break;
-              }
-            }
-
-            if (!isError) {
+            DecompilerContext context = DecompilerContext.getCurrentContext();
+            try {
+              cancellationManager.startMethod(classStruct.qualifiedName, mt.getName());
+              MethodProcessorRunnable mtProc =
+                new MethodProcessorRunnable(classStruct, mt, md, varProc, DecompilerContext.getCurrentContext());
+              mtProc.run();
+              cancellationManager.checkCanceled();
               root = mtProc.getResult();
+            }
+            finally {
+              DecompilerContext.setCurrentContext(context);
+              cancellationManager.finishMethod(classStruct.qualifiedName, mt.getName());
             }
           }
         }
@@ -108,6 +92,14 @@ public class ClassWrapper {
             varIndex += md.params[i].getStackSize();
           }
         }
+      }
+      catch (CancellationManager.TimeExceedException e) {
+        String message = "Processing time limit exceeded for method " + mt.getName() + ", execution interrupted.";
+        DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.ERROR);
+        isError = true;
+      }
+      catch (CancellationManager.CanceledException e) {
+        throw e;
       }
       catch (Throwable t) {
         String message = "Method " + mt.getName() + " " + mt.getDescriptor() + " couldn't be decompiled.";
@@ -181,11 +173,6 @@ public class ClassWrapper {
         });
       }
     }
-  }
-
-  @SuppressWarnings("deprecation")
-  private static void killThread(Thread thread) {
-    thread.stop();
   }
 
   public MethodWrapper getMethodWrapper(String name, String descriptor) {

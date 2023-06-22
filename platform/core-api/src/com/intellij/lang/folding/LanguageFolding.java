@@ -4,6 +4,7 @@ package com.intellij.lang.folding;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -11,6 +12,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,6 +82,7 @@ public final class LanguageFolding extends LanguageExtension<FoldingBuilder> {
                                                                                    @NotNull PsiElement root,
                                                                                    @NotNull Document document,
                                                                                    boolean quick) {
+    SlowOperations.assertSlowOperationsAreAllowed();
     try {
       if (!DumbService.isDumbAware(builder) && DumbService.getInstance(root.getProject()).isDumb()) {
         return FoldingDescriptor.EMPTY_ARRAY;

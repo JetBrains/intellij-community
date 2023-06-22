@@ -8,10 +8,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
+import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
+import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.sequence.AsSequenceTransformation
 import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.psi.KtProperty
@@ -117,7 +117,7 @@ abstract class AbstractLoopToCallChainIntention(
                 return buildPresentation(transformations.drop(1), transformations[0].presentation)
             }
 
-            return buildPresentation(transformations.drop(transformations.size - MAX), prevPresentation?.let { it + ".." } ?: "..")
+            return buildPresentation(transformations.drop(transformations.size - MAX), prevPresentation?.let { "$it.." } ?: "..")
         }
 
         var result: String? = prevPresentation
@@ -128,9 +128,9 @@ abstract class AbstractLoopToCallChainIntention(
         return result!!
     }
 
-    override fun applyTo(element: KtForExpression, editor: Editor?) = LoopToCallChainInspection.Fix(lazy).applyFix(element, editor)
-
-    companion object {
-        const val MAX = 3
+    override fun applyTo(element: KtForExpression, editor: Editor?) {
+        LoopToCallChainInspection.Fix(lazy).applyFix(element, editor)
     }
 }
+
+private const val MAX: Int = 3

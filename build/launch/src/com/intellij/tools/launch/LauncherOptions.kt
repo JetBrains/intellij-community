@@ -15,12 +15,12 @@ interface LauncherOptions {
   val runInDocker: Boolean get() = false
 }
 
-data class DockerNetwork(
+data class DockerNetworkEntry(
   val name: String,
-  val IPv4Address: String,
+  val IPAddress: String,
   val defaultGatewayIPv4Address: String?) {
   companion object {
-    val AUTO = DockerNetwork("AUTO", "AUTO", "AUTO")
+    val AUTO = DockerNetworkEntry("AUTO", "AUTO", "AUTO")
   }
 }
 
@@ -28,6 +28,6 @@ interface DockerLauncherOptions : LauncherOptions {
   val exposedPorts: List<Int> get() = debugPort?.let { listOf(it) }.orEmpty()
   val runBashBeforeJava: String? get() = null
   val address: InetAddress get() = InetAddress.getLoopbackAddress()
-  val network: DockerNetwork get() = DockerNetwork.AUTO
+  val network: DockerNetworkEntry get() = DockerNetworkEntry.AUTO
   val containerName: String
 }

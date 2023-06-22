@@ -18,7 +18,9 @@ import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindow
+import com.intellij.ui.JBColor
 import com.intellij.util.Alarm
+import com.intellij.util.ui.JBUI
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.codegen.state.GenerationState
@@ -161,6 +163,7 @@ class KotlinBytecodeToolWindow(private val myProject: Project, private val toolW
         myEditor = EditorFactory.getInstance().createEditor(
             EditorFactory.getInstance().createDocument(""), myProject, JavaFileType.INSTANCE, true
         )
+        myEditor.setBorder(null)
         add(myEditor.component)
 
         decompile = JButton(KotlinJvmBundle.message("button.text.decompile"))
@@ -197,6 +200,7 @@ class KotlinBytecodeToolWindow(private val myProject: Project, private val toolW
         optionPanel.add(ir)
         optionPanel.add(JLabel(KotlinJvmBundle.message("bytecode.toolwindow.label.jvm.target")))
         optionPanel.add(jvmTargets)
+        optionPanel.border = JBUI.Borders.customLineBottom(JBColor.border())
     }
 
     private fun decompileBytecode(decompilerFacade: KotlinJvmDecompilerFacade) {

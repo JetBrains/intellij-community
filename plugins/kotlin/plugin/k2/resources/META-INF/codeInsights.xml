@@ -5,5 +5,4 @@
             serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fir.codeInsight.SymbolBasedShortenReferencesFacility"/>
   </extensions>
-
 </idea-plugin>

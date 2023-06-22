@@ -16,13 +16,14 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -44,11 +45,11 @@ public class UnnecessaryQualifierForThisInspection extends BaseInspection implem
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new UnnecessaryQualifierForThisFix();
   }
 
-  private static class UnnecessaryQualifierForThisFix extends InspectionGadgetsFix {
+  private static class UnnecessaryQualifierForThisFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -58,8 +59,7 @@ public class UnnecessaryQualifierForThisInspection extends BaseInspection implem
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement qualifier = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement qualifier, @NotNull ModPsiUpdater updater) {
       final PsiElement parent = qualifier.getParent();
       CommentTracker tracker = new CommentTracker();
       if (parent instanceof PsiThisExpression) {

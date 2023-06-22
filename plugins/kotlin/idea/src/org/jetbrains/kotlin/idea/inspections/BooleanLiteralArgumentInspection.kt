@@ -46,7 +46,7 @@ class BooleanLiteralArgumentInspection(
             val valueArguments = call.valueArguments
 
             if (argumentExpression.safeAnalyzeNonSourceRootCode().diagnostics.forElement(argumentExpression).any { it.severity == Severity.ERROR }) return
-            if (AddNameToArgumentIntention.detectNameToAdd(argument, shouldBeLastUnnamed = false) == null) return
+            if (AddNameToArgumentIntention.Holder.detectNameToAdd(argument, shouldBeLastUnnamed = false) == null) return
 
             val resolvedCall = call.resolveToCall() ?: return
             if ((resolvedCall.resultingDescriptor as? ClassConstructorDescriptor)?.constructedClass?.fqNameOrNull() in ignoreConstructors) {
@@ -55,7 +55,7 @@ class BooleanLiteralArgumentInspection(
             if (!resolvedCall.candidateDescriptor.hasStableParameterNames()) return
             val languageVersionSettings = call.languageVersionSettings
             if (valueArguments.any {
-                    !AddNameToArgumentIntention.argumentMatchedAndCouldBeNamedInCall(it, resolvedCall, languageVersionSettings)
+                    !AddNameToArgumentIntention.Holder.argumentMatchedAndCouldBeNamedInCall(it, resolvedCall, languageVersionSettings)
                 }
             ) return
 

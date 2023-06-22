@@ -1,67 +1,68 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistics
 
-import com.google.gson.JsonArray
-import com.google.gson.JsonObject
-import com.google.gson.JsonPrimitive
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.ArrayNode
+import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.databind.node.ValueNode
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 object StatisticsTestEventValidator {
-  fun assertLogEventIsValid(json: JsonObject, isState: Boolean, vararg dataOptions: String) {
-    assertTrue(json.get("time").isJsonPrimitive)
+  fun assertLogEventIsValid(json: JsonNode, isState: Boolean, vararg dataOptions: String) {
+    assertTrue(json.get("time").isValueNode)
 
-    assertTrue(json.get("session").isJsonPrimitive)
-    assertTrue(isValid(json.get("session").asString))
+    assertTrue(json.get("session").isValueNode)
+    assertTrue(isValid(json.get("session").asText()))
 
-    assertTrue(json.get("bucket").isJsonPrimitive)
-    assertTrue(isValid(json.get("bucket").asString))
+    assertTrue(json.get("bucket").isValueNode)
+    assertTrue(isValid(json.get("bucket").asText()))
 
-    assertTrue(json.get("build").isJsonPrimitive)
-    assertTrue(isValid(json.get("build").asString))
+    assertTrue(json.get("build").isValueNode)
+    assertTrue(isValid(json.get("build").asText()))
 
-    assertTrue(json.get("group").isJsonObject)
-    assertTrue(json.getAsJsonObject("group").get("id").isJsonPrimitive)
-    assertTrue(json.getAsJsonObject("group").get("version").isJsonPrimitive)
-    assertTrue(isValid(json.getAsJsonObject("group").get("id").asString))
-    assertTrue(isValid(json.getAsJsonObject("group").get("version").asString))
+    assertTrue(json.get("group").isObject)
+    assertTrue(json.get("group").get("id").isValueNode)
+    assertTrue(json.get("group").get("version").isValueNode)
+    assertTrue(isValid(json.get("group").get("id").asText()))
+    assertTrue(isValid(json.get("group").get("version").asText()))
 
-    assertTrue(json.get("event").isJsonObject)
-    assertTrue(json.getAsJsonObject("event").get("id").isJsonPrimitive)
-    assertEquals(isState, json.getAsJsonObject("event").has("state"))
+    assertTrue(json.get("event").isObject)
+    assertTrue(json.get("event").get("id").isValueNode)
+    assertEquals(isState, json.get("event").has("state"))
     if (isState) {
-      assertTrue(json.getAsJsonObject("event").get("state").asBoolean)
+      assertTrue(json.get("event").get("state").asBoolean())
     }
 
-    assertEquals(!isState, json.getAsJsonObject("event").has("count"))
+    assertEquals(!isState, json.get("event").has("count"))
     if (!isState) {
-      assertTrue(json.getAsJsonObject("event").get("count").asJsonPrimitive.isNumber)
+      assertTrue(json.get("event").get("count").isNumber)
     }
 
-    assertTrue(json.getAsJsonObject("event").get("data").isJsonObject)
-    assertTrue(isValid(json.getAsJsonObject("event").get("id").asString))
+    assertTrue(json.get("event").get("data").isObject)
+    assertTrue(isValid(json.get("event").get("id").asText()))
 
-    val obj = json.getAsJsonObject("event").get("data").asJsonObject
+    val obj = json.get("event").get("data")
     validateJsonObject(dataOptions, obj)
   }
 
-  private fun validateJsonObject(dataOptions: Array<out String>, obj: JsonObject) {
+  private fun validateJsonObject(dataOptions: Array<out String>, obj: JsonNode) {
     for (option in dataOptions) {
       assertTrue(isValid(option))
       when (val jsonElement = obj.get(option)) {
-        is JsonPrimitive -> assertTrue(isValid(jsonElement.asString))
-        is JsonArray -> {
+        is ValueNode -> assertTrue(isValid(jsonElement.asText()))
+        is ArrayNode -> {
           for (dataPart in jsonElement) {
-            if (dataPart is JsonObject) {
-              validateJsonObject(dataPart.keySet().toTypedArray(), dataPart)
+            if (dataPart is ObjectNode) {
+              validateJsonObject(dataPart.fieldNames().asSequence().toSet().toTypedArray(), dataPart)
             }
             else {
-              assertTrue(isValid(dataPart.asString))
+              assertTrue(isValid(dataPart.asText()))
             }
           }
         }
-        is JsonObject -> {
-          validateJsonObject(jsonElement.keySet().toTypedArray(), jsonElement)
+        is ObjectNode -> {
+          validateJsonObject(jsonElement.fieldNames().asSequence().toSet().toTypedArray(), jsonElement)
         }
       }
     }

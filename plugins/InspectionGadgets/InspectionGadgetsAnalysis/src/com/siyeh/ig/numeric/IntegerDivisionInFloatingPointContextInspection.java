@@ -15,14 +15,15 @@
  */
 package com.siyeh.ig.numeric;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
@@ -60,7 +61,7 @@ public class IntegerDivisionInFloatingPointContextInspection extends BaseInspect
   }
 
   @Override
-  protected @Nullable InspectionGadgetsFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     String castTo = (String)infos[0];
     return new IntegerDivisionInFloatingPointContextFix(castTo);
   }
@@ -106,7 +107,7 @@ public class IntegerDivisionInFloatingPointContextInspection extends BaseInspect
     }
   }
 
-  private static class IntegerDivisionInFloatingPointContextFix extends InspectionGadgetsFix {
+  private static class IntegerDivisionInFloatingPointContextFix extends PsiUpdateModCommandQuickFix {
     private final String myCastTo;
 
     private IntegerDivisionInFloatingPointContextFix(String castTo) {
@@ -114,12 +115,13 @@ public class IntegerDivisionInFloatingPointContextInspection extends BaseInspect
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      if (!(descriptor.getPsiElement() instanceof PsiBinaryExpression expression)) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
+      if (!(startElement instanceof PsiPolyadicExpression expression)) {
         return;
       }
-
-      PsiExpression operand = expression.getLOperand();
+      PsiExpression[] operands = expression.getOperands();
+      if (operands.length < 1) return;
+      PsiExpression operand = operands[0];
       CommentTracker tracker = new CommentTracker();
       String text = tracker.text(operand, ParenthesesUtils.TYPE_CAST_PRECEDENCE);
       tracker.replace(operand, "(" + myCastTo + ")" + text);

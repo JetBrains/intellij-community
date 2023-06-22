@@ -1,14 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.eclipse.config
 
+import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
+import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
+import com.intellij.java.workspace.entities.asJavaSourceRoot
+import com.intellij.java.workspace.entities.javaSettings
 import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.workspaceModel.ide.toPath
-import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.bridgeEntities.asJavaSourceRoot
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.idea.eclipse.IdeaXml
 import org.jetbrains.idea.eclipse.conversion.EPathUtil
@@ -127,7 +130,7 @@ internal class EmlFileLoader(
     }
 
     if (sdkItem != null) {
-      (module as ModuleEntity.Builder).apply {
+      module.apply {
         val newDependencies = dependencies.map {
           when (it) {
             is ModuleDependencyItem.SdkDependency -> sdkItem
@@ -167,15 +170,15 @@ internal class EmlFileLoader(
   }
 
   private fun loadContentEntries(emlTag: Element, contentRoot: ContentRootEntity) {
-    val entriesElements = emlTag.getChildren(IdeaXml.CONTENT_ENTRY_TAG)
-    if (entriesElements.isNotEmpty()) {
-      entriesElements.forEach {
-        val url = virtualFileManager.fromUrl(it.getAttributeValue(IdeaXml.URL_ATTR)!!)
+    val entryElements = emlTag.getChildren(IdeaXml.CONTENT_ENTRY_TAG)
+    if (entryElements.isNotEmpty()) {
+      entryElements.forEach { entryTag ->
+        val url = virtualFileManager.fromUrl(entryTag.getAttributeValue(IdeaXml.URL_ATTR)!!)
         val contentRootEntity = contentRoot.module.contentRoots.firstOrNull { it.url == url }
                                 ?: ContentRootEntity(url, emptyList(), module.entitySource) {
                                   this.module = module
                                 }
-        loadContentEntry(it, contentRootEntity)
+        loadContentEntry(entryTag, contentRootEntity)
       }
     }
     else {

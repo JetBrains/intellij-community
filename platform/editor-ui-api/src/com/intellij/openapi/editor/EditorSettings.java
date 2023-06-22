@@ -1,8 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +30,7 @@ public interface EditorSettings {
   boolean isSelectionWhitespaceShown();
   void setSelectionWhitespaceShown(boolean val);
 
-  int getRightMargin(Project project);
+  int getRightMargin(@Nullable Project project);
   void setRightMargin(int myRightMargin);
 
   /**
@@ -74,7 +76,7 @@ public interface EditorSettings {
   boolean isUseTabCharacter(Project project);
   void setUseTabCharacter(boolean useTabCharacter);
 
-  int getTabSize(Project project);
+  int getTabSize(@Nullable Project project);
   void setTabSize(int tabSize);
 
   boolean isSmartHome();
@@ -82,6 +84,32 @@ public interface EditorSettings {
 
   boolean isVirtualSpace();
   void setVirtualSpace(boolean allow);
+
+  /**
+   * Vertical scroll offset - number of lines to keep above and below the caret.
+   * If the number is too big for the editor height, the caret will be centered.
+   */
+  int getVerticalScrollOffset();
+  void setVerticalScrollOffset(int val);
+
+  /**
+   * Vertical scroll jump - minimum number of lines to scroll at a time.
+   */
+  int getVerticalScrollJump();
+  void setVerticalScrollJump(int val);
+
+  /**
+   * Horizontal scroll offset - number of characters to keep to the left and right of the caret.
+   * If the number is too big for the editor width, the caret will be centered.
+   */
+  int getHorizontalScrollOffset();
+  void setHorizontalScrollOffset(int val);
+
+  /**
+   * Horizontal scroll jump - minimum number of characters to scroll horizontally at a time.
+   */
+  int getHorizontalScrollJump();
+  void setHorizontalScrollJump(int val);
 
   boolean isCaretInsideTabs();
   void setCaretInsideTabs(boolean allow);
@@ -176,17 +204,29 @@ public interface EditorSettings {
   boolean isShowingSpecialChars();
   void setShowingSpecialChars(boolean value);
 
+  LineNumerationType getLineNumerationType();
+  void setLineNumerationType(LineNumerationType value);
+
   /**
    * @deprecated This method is a stub. Related functionality has been moved to {@code VisualFormattingLayerService}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default @Nullable Boolean isShowVisualFormattingLayer() { return null; }
 
   /**
    * @deprecated This method is a stub. Related functionality has been moved to {@code VisualFormattingLayerService}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default void setShowVisualFormattingLayer(@Nullable Boolean showVisualFormattingLayer) {}
 
   boolean isInsertParenthesesAutomatically();
+
+  @ApiStatus.Experimental
+  void addEditorSettingsListener(@NotNull EditorSettingsListener listener, @NotNull Disposable parentDisposable);
+
+  enum LineNumerationType {
+    ABSOLUTE,
+    RELATIVE,
+    HYBRID,
+  }
 }

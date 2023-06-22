@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.debugger.ui.DebuggerContentInfo;
@@ -9,6 +9,7 @@ import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.execution.ui.UIExperiment;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.execution.ui.layout.impl.ViewImpl;
@@ -74,15 +75,16 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       }
     }
     XDebugSessionTab tab;
-    if (Registry.is("debugger.new.tool.window.layout")) {
-      tab = new XDebugSessionTab3(session, icon, environment);
+    if (UIExperiment.isNewDebuggerUIEnabled() || XDebugSessionTabCustomizerKt.forceShowNewDebuggerUi(session.getDebugProcess())) {
+      if (XDebugSessionTabCustomizerKt.allowFramesViewCustomization(session.getDebugProcess())) {
+        tab = new XDebugSessionTab3(session, icon, environment);
+      }
+      else {
+        tab = new XDebugSessionTabNewUI(session, icon, environment);
+      }
     }
     else {
-      if (DebuggerUIExperimentCollector.startExperiment()) {
-        tab = new XDebugSessionTab3(session, icon, environment);
-      } else {
-        tab = new XDebugSessionTab(session, icon, environment, true);
-      }
+      tab = new XDebugSessionTab(session, icon, environment, true);
     }
 
     tab.init(session);
@@ -147,6 +149,11 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   }
 
   protected void initDebuggerTab(XDebugSessionImpl session) {
+    createDefaultTabs(session);
+    CustomActionsListener.subscribe(this, () -> initToolbars(session));
+  }
+
+  protected final void createDefaultTabs(XDebugSessionImpl session) {
     Content framesContent = createFramesContent();
     myUi.addContent(framesContent, 0, PlaceInGrid.left, false);
 
@@ -155,8 +162,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }
 
     addVariablesAndWatches(session);
-
-    CustomActionsListener.subscribe(this, () -> initToolbars(session));
   }
 
   protected void initListeners(RunnerLayoutUi ui) {
@@ -174,7 +179,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   protected void addVariablesAndWatches(@NotNull XDebugSessionImpl session) {
     myUi.addContent(createVariablesContent(session), 0, PlaceInGrid.center, false);
     if (!myWatchesInVariables) {
-      myUi.addContent(createWatchesContent(session), 0, PlaceInGrid.right, false);
+      myUi.addContent(createWatchesContent(session, null), 0, PlaceInGrid.right, false);
     }
   }
 
@@ -243,8 +248,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     return result;
   }
 
-  protected Content createWatchesContent(@NotNull XDebugSessionImpl session) {
-    myWatchesView = new XWatchesViewImpl(session, myWatchesInVariables);
+  protected Content createWatchesContent(@NotNull XDebugSessionImpl session, @Nullable XWatchesViewImpl watchesView) {
+    myWatchesView = watchesView != null ? watchesView : new XWatchesViewImpl(session, myWatchesInVariables);
     registerView(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView);
     Content watchesContent = myUi.createContent(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView.getPanel(),
                                                 XDebuggerBundle.message("debugger.session.tab.watches.title"), null, myWatchesView.getDefaultFocusedComponent());
@@ -254,7 +259,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
   @NotNull
   private Content createFramesContent() {
-    XFramesView framesView = new XFramesView(myProject);
+    XFramesView framesView = new XFramesView(mySession);
     registerView(DebuggerContentInfo.FRAME_CONTENT, framesView);
     Content framesContent = myUi.createContent(DebuggerContentInfo.FRAME_CONTENT, framesView.getMainPanel(),
                                                XDebuggerBundle.message("debugger.session.tab.frames.title"), null, framesView.getDefaultFocusedComponent());
@@ -361,7 +366,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
   public void detachFromSession() {
     assert mySession != null;
-    DebuggerUIExperimentCollector.stopExperiment();
     mySession = null;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.ProjectTopics;
@@ -66,7 +66,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
         // Event does not allow to listen for 'getIgnoredFilesList' changes directly, listen for all generic events instead.
         boolean isGenericEvent = event.getAddedFileType() == null && event.getRemovedFileType() == null;
         if (isGenericEvent) {
-          ApplicationManager.getApplication().invokeLater(() -> markEverythingDirty(), ModalityState.NON_MODAL, myProject.getDisposed());
+          ApplicationManager.getApplication().invokeLater(() -> markEverythingDirty(), ModalityState.nonModal(), myProject.getDisposed());
         }
       }
     });
@@ -76,7 +76,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
         @Override
         public void rootsChanged(@NotNull ModuleRootEvent event) {
           // 'ProjectLevelVcsManager.getVcsFor' depends on excluded roots via 'ProjectLevelVcsManager.isIgnored'
-          ApplicationManager.getApplication().invokeLater(() -> markEverythingDirty(), ModalityState.NON_MODAL, myProject.getDisposed());
+          ApplicationManager.getApplication().invokeLater(() -> markEverythingDirty(), ModalityState.nonModal(), myProject.getDisposed());
         }
       });
       //busConnection.subscribe(AdditionalLibraryRootsListener.TOPIC, ((presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) -> {

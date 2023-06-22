@@ -1,12 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.util
 
-import com.intellij.ide.actions.ImportProjectAction
-import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.externalSystem.actionSystem.AnAsyncAction
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
@@ -15,7 +14,6 @@ import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
@@ -26,30 +24,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.awt.Component
 
-suspend fun openPlatformProjectAsync(projectDirectory: VirtualFile): Project {
-  return closeOpenedProjectsIfFailAsync {
-    ProjectManagerEx.getInstanceEx().openProjectAsync(
-      projectStoreBaseDir = projectDirectory.toNioPath(),
-      options = OpenProjectTask {
-        forceOpenInNewFrame = true
-        useDefaultProjectAsTemplate = false
-        isRefreshVfsNeeded = false
-      }
-    )!!
-  }
-}
 
-suspend fun importProjectAsync(
-  projectFile: VirtualFile,
-  systemId: ProjectSystemId? = null
+suspend fun performOpenAction(
+  action: AnAction,
+  project: Project? = null,
+  systemId: ProjectSystemId? = null,
+  selectedFile: VirtualFile? = null
 ): Project {
   return closeOpenedProjectsIfFailAsync {
     detectOpenedProject {
-      performAction(
-        action = ImportProjectAction(),
-        systemId = systemId,
-        selectedFile = projectFile
-      )
+      performAction(action, project, systemId, selectedFile)
     }
   }
 }
@@ -61,15 +45,21 @@ suspend fun performAction(
   selectedFile: VirtualFile? = null
 ) {
   withSelectedFileIfNeeded(selectedFile) {
+    val event = TestActionEvent.createTestEvent {
+      when {
+        ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID.`is`(it) -> systemId
+        CommonDataKeys.PROJECT.`is`(it) -> project
+        CommonDataKeys.VIRTUAL_FILE.`is`(it) -> selectedFile
+        else -> null
+      }
+    }
     withContext(Dispatchers.EDT) {
-      action.actionPerformed(TestActionEvent.createTestEvent {
-        when {
-          ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID.`is`(it) -> systemId
-          CommonDataKeys.PROJECT.`is`(it) -> project
-          CommonDataKeys.VIRTUAL_FILE.`is`(it) -> selectedFile
-          else -> null
-        }
-      })
+      if (action is AnAsyncAction) {
+        action.actionPerformedAsync(event)
+      }
+      else{
+        action.actionPerformed(event)
+      }
     }
   }
 }

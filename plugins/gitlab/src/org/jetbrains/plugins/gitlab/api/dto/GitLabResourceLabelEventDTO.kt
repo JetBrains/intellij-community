@@ -9,7 +9,7 @@ data class GitLabResourceLabelEventDTO(
   val action: String,
   val createdAt: Date,
   val id: Int,
-  val label: GitLabLabelRestDTO,
+  val label: GitLabLabelRestDTO?,
   val resourceId: Int,
   val resourceType: String,
   val user: GitLabUserDTO

@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.server;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.containers.ContainerUtil;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -14,7 +14,6 @@ import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.jps.api.RequestFuture;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -32,7 +31,7 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
   }
 
   private final Map<UUID, SessionData> mySessionDescriptors = new ConcurrentHashMap<>(16, 0.75f, 1);
-  private final Set<UUID> myCanceledSessions = ContainerUtil.newConcurrentSet();
+  private final Set<UUID> myCanceledSessions = ConcurrentCollectionFactory.createConcurrentSet();
 
   public void registerBuildMessageHandler(@NotNull final RequestFuture<? extends BuilderMessageHandler> future, @Nullable CmdlineRemoteProto.Message.ControllerMessage params) {
     final BuilderMessageHandler wrappedHandler = new DelegatingMessageHandler() {

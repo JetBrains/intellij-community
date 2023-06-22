@@ -1,5 +1,6 @@
 package com.intellij.webSymbols.documentation.impl
 
+import com.intellij.webSymbols.WebSymbolApiStatus
 import com.intellij.webSymbols.documentation.WebSymbolDocumentation
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
@@ -8,8 +9,7 @@ internal data class WebSymbolDocumentationImpl(override val name: String,
                                                override val definition: String,
                                                override val description: @Nls String?,
                                                override val docUrl: String?,
-                                               override val deprecated: Boolean,
-                                               override val experimental: Boolean,
+                                               override val apiStatus: WebSymbolApiStatus?,
                                                override val required: Boolean,
                                                override val defaultValue: String?,
                                                override val library: String?,
@@ -17,7 +17,7 @@ internal data class WebSymbolDocumentationImpl(override val name: String,
                                                override val descriptionSections: Map<@Nls String, @Nls String>,
                                                override val footnote: @Nls String?) : WebSymbolDocumentation {
   override fun isNotEmpty(): Boolean =
-    name != definition || description != null || docUrl != null || deprecated || experimental
+    name != definition || description != null || docUrl != null || apiStatus != null
     || required || defaultValue != null || library != null || descriptionSections.isNotEmpty() || footnote != null
 
   override fun withName(name: String): WebSymbolDocumentation =
@@ -32,11 +32,8 @@ internal data class WebSymbolDocumentationImpl(override val name: String,
   override fun withDocUrl(docUrl: String?): WebSymbolDocumentation =
     copy(docUrl = docUrl)
 
-  override fun withDeprecated(deprecated: Boolean): WebSymbolDocumentation =
-    copy(deprecated = deprecated)
-
-  override fun withExperimental(experimental: Boolean): WebSymbolDocumentation =
-    copy(experimental = experimental)
+  override fun withApiStatus(apiStatus: WebSymbolApiStatus?): WebSymbolDocumentation =
+    copy(apiStatus = apiStatus)
 
   override fun withRequired(required: Boolean): WebSymbolDocumentation =
     copy(required = required)
@@ -60,16 +57,14 @@ internal data class WebSymbolDocumentationImpl(override val name: String,
                     definition: String,
                     description: @Nls String?,
                     docUrl: String?,
-                    deprecated: Boolean,
-                    experimental: Boolean,
+                    apiStatus: WebSymbolApiStatus?,
                     required: Boolean,
                     defaultValue: String?,
                     library: String?,
                     icon: Icon?,
                     additionalSections: Map<@Nls String, @Nls String>,
                     footnote: @Nls String?): WebSymbolDocumentation =
-    copy(name = name, definition = definition, description = description, docUrl = docUrl, deprecated = deprecated,
-         experimental = experimental,
+    copy(name = name, definition = definition, description = description, docUrl = docUrl, apiStatus = apiStatus,
          required = required, defaultValue = defaultValue, library = library, icon = icon,
          descriptionSections = descriptionSections + additionalSections, footnote = footnote)
 

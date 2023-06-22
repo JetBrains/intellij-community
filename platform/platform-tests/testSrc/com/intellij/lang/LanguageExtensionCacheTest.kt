@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang
 
 import com.intellij.codeInsight.completion.CompletionExtension
@@ -22,6 +22,7 @@ import com.intellij.util.KeyedLazyInstance
 class LanguageExtensionCacheTest : LightPlatformTestCase() {
   private val myExtensionPointName = ExtensionPointName<KeyedLazyInstance<String>>("testLangExt")
   private val myCompletionExtensionPointName = ExtensionPointName<KeyedLazyInstance<String>>("testCompletionExt")
+
   private val myExtensionPointXML = """
       <extensionPoint qualifiedName="$myExtensionPointName" beanClass="com.intellij.lang.LanguageExtensionPoint">
         <with attribute="implementationClass" implements="java.lang.String"/>

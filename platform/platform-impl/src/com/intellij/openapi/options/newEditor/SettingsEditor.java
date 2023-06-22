@@ -18,6 +18,7 @@ import com.intellij.openapi.options.ex.MutableConfigurableGroup;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LoadingDecorator;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
@@ -255,6 +256,7 @@ public final class SettingsEditor extends AbstractEditor implements DataProvider
     right.add(BorderLayout.CENTER, myLoadingDecorator.getComponent());
     mySplitter = new OnePixelSplitter(false, myProperties.getFloat(SPLITTER_PROPORTION, SPLITTER_PROPORTION_DEFAULT_VALUE));
     mySplitter.setHonorComponentsMinimumSize(true);
+    mySplitter.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_FIRST_MIN_SIZE);
     mySplitter.setFirstComponent(left);
     mySplitter.setSecondComponent(right);
 

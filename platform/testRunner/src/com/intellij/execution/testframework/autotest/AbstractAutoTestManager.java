@@ -21,8 +21,8 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.ui.content.Content;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -35,10 +35,11 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 
 public abstract class AbstractAutoTestManager implements PersistentStateComponent<AbstractAutoTestManager.State> {
-  protected static final String AUTO_TEST_MANAGER_DELAY = "auto.test.manager.delay";
-  protected static final int AUTO_TEST_MANAGER_DELAY_DEFAULT = 3000;
+  private static final String AUTO_TEST_MANAGER_DELAY = "auto.test.manager.delay";
+  private static final int AUTO_TEST_MANAGER_DELAY_DEFAULT = 3000;
   private static final Key<ProcessListener> ON_TERMINATION_RESTARTER_KEY = Key.create("auto.test.manager.on.termination.restarter");
   private final Project myProject;
   private final Set<RunProfile> myEnabledRunProfiles = new HashSet<>();
@@ -48,11 +49,11 @@ public abstract class AbstractAutoTestManager implements PersistentStateComponen
   public AbstractAutoTestManager(@NotNull Project project) {
     myProject = project;
     myDelayMillis = PropertiesComponent.getInstance(project).getInt(AUTO_TEST_MANAGER_DELAY, AUTO_TEST_MANAGER_DELAY_DEFAULT);
-    myWatcher = createWatcher(project);
   }
 
-  private static @Nullable ExecutionEnvironment getCurrentEnvironment(@NotNull Content content) {
-    JComponent component = content.getComponent();
+  private static @Nullable ExecutionEnvironment getCurrentEnvironment(@NotNull RunContentDescriptor descriptor) {
+    JComponent component = descriptor.getComponent();
+    if (component == null) return null;
     return ExecutionDataKeys.EXECUTION_ENVIRONMENT.getData(DataManager.getInstance().getDataContext(component));
   }
 
@@ -70,7 +71,7 @@ public abstract class AbstractAutoTestManager implements PersistentStateComponen
     ExecutionUtil.restart(descriptor);
   }
 
-  public static void saveConfigurationState(State state, RunProfile profile) {
+  private static void saveConfigurationState(@NotNull State state, @NotNull RunProfile profile) {
     RunConfiguration runConfiguration = ObjectUtils.tryCast(profile, RunConfiguration.class);
     if (runConfiguration != null) {
       RunConfigurationDescriptor descriptor = new RunConfigurationDescriptor();
@@ -80,7 +81,7 @@ public abstract class AbstractAutoTestManager implements PersistentStateComponen
     }
   }
 
-  public static List<RunConfiguration> loadConfigurations(State state, Project project) {
+  private static @NotNull List<RunConfiguration> loadConfigurations(@NotNull State state, @NotNull Project project) {
     List<RunConfiguration> configurations = new ArrayList<>();
     RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
     List<RunConfigurationDescriptor> descriptors = ContainerUtil.notNullize(state.myEnabledRunConfigurations);
@@ -99,79 +100,80 @@ public abstract class AbstractAutoTestManager implements PersistentStateComponen
 
   protected abstract @NotNull AutoTestWatcher createWatcher(@NotNull Project project);
 
-  public void setAutoTestEnabled(@NotNull RunContentDescriptor descriptor, @NotNull ExecutionEnvironment environment, boolean enabled) {
-    Content content = descriptor.getAttachedContent();
-    if (content != null) {
-      if (enabled) {
-        myEnabledRunProfiles.add(environment.getRunProfile());
-        myWatcher.activate();
+  private void activateWatcher() {
+    if (myWatcher == null) {
+      myWatcher = createWatcher(myProject);
+    }
+    myWatcher.activate();
+  }
+
+  private void deactivateWatcher() {
+    if (myWatcher != null) {
+      myWatcher.deactivate();
+      myWatcher = null;
+    }
+  }
+
+  void setAutoTestEnabled(@NotNull RunContentDescriptor descriptor, @NotNull ExecutionEnvironment environment, boolean enabled) {
+    if (enabled) {
+      myEnabledRunProfiles.add(environment.getRunProfile());
+      activateWatcher();
+    }
+    else {
+      myEnabledRunProfiles.remove(environment.getRunProfile());
+      if (!hasEnabledAutoTests()) {
+        deactivateWatcher();
       }
-      else {
-        myEnabledRunProfiles.remove(environment.getRunProfile());
-        if (!hasEnabledAutoTests()) {
-          myWatcher.deactivate();
-        }
-        ProcessHandler processHandler = descriptor.getProcessHandler();
-        if (processHandler != null) {
-          clearRestarterListener(processHandler);
-        }
+      ProcessHandler processHandler = descriptor.getProcessHandler();
+      if (processHandler != null) {
+        clearRestarterListener(processHandler);
       }
     }
   }
 
   private boolean hasEnabledAutoTests() {
-    RunContentManager contentManager = RunContentManager.getInstance(myProject);
-    for (RunContentDescriptor descriptor : contentManager.getAllDescriptors()) {
-      if (isAutoTestEnabledForDescriptor(descriptor)) {
-        return true;
-      }
-    }
-    return false;
+    return ContainerUtil.exists(RunContentManager.getInstance(myProject).getAllDescriptors(), this::isAutoTestEnabled);
   }
 
-  public boolean isAutoTestEnabled(@NotNull RunContentDescriptor descriptor) {
-    return isAutoTestEnabledForDescriptor(descriptor);
+  boolean isAutoTestEnabled(@NotNull RunContentDescriptor descriptor) {
+    ExecutionEnvironment environment = getCurrentEnvironment(descriptor);
+    return environment != null && myEnabledRunProfiles.contains(environment.getRunProfile());
   }
 
-  private boolean isAutoTestEnabledForDescriptor(@NotNull RunContentDescriptor descriptor) {
-    Content content = descriptor.getAttachedContent();
-    if (content != null) {
-      ExecutionEnvironment environment = getCurrentEnvironment(content);
-      return environment != null && myEnabledRunProfiles.contains(environment.getRunProfile());
-    }
-    return false;
-  }
-
+  /**
+   * @deprecated use {@link #restartAllAutoTests(BooleanSupplier)} instead
+   */
+  @SuppressWarnings("unused")
+  @Deprecated(forRemoval = true)
   protected void restartAllAutoTests(int modificationStamp) {
-    RunContentManager contentManager = RunContentManager.getInstance(myProject);
-    boolean active = false;
-    for (RunContentDescriptor descriptor : contentManager.getAllDescriptors()) {
-      if (isAutoTestEnabledForDescriptor(descriptor)) {
-        restartAutoTest(descriptor, modificationStamp, myWatcher);
-        active = true;
-      }
+    restartAllAutoTests(() -> myWatcher != null);
+  }
+
+  @RequiresEdt(generateAssertion = false)
+  protected void restartAllAutoTests(@NotNull BooleanSupplier isUpToDate) {
+    List<RunContentDescriptor> autoTestDescriptors = RunContentManager.getInstance(myProject).getAllDescriptors().stream()
+      .filter(this::isAutoTestEnabled).toList();
+    for (RunContentDescriptor descriptor : autoTestDescriptors) {
+      restartAutoTest(descriptor, isUpToDate);
     }
-    if (!active) {
-      myWatcher.deactivate();
+    if (autoTestDescriptors.isEmpty()) {
+      deactivateWatcher();
     }
   }
 
-  private void restartAutoTest(@NotNull RunContentDescriptor descriptor,
-                               int modificationStamp,
-                               @NotNull AutoTestWatcher documentWatcher) {
+  private void restartAutoTest(@NotNull RunContentDescriptor descriptor, @NotNull BooleanSupplier isUpToDate) {
     ProcessHandler processHandler = descriptor.getProcessHandler();
     if (processHandler != null && !processHandler.isProcessTerminated()) {
-      scheduleRestartOnTermination(descriptor, processHandler, modificationStamp, documentWatcher);
+      scheduleRestartOnTermination(descriptor, processHandler, isUpToDate);
     }
     else {
       restart(descriptor);
     }
   }
 
-  private void scheduleRestartOnTermination(final @NotNull RunContentDescriptor descriptor,
-                                            final @NotNull ProcessHandler processHandler,
-                                            final int modificationStamp,
-                                            final @NotNull AutoTestWatcher watcher) {
+  private void scheduleRestartOnTermination(@NotNull RunContentDescriptor descriptor,
+                                            @NotNull ProcessHandler processHandler,
+                                            @NotNull BooleanSupplier isUpToDate) {
     ProcessListener restarterListener = ON_TERMINATION_RESTARTER_KEY.get(processHandler);
     if (restarterListener != null) {
       clearRestarterListener(processHandler);
@@ -181,7 +183,7 @@ public abstract class AbstractAutoTestManager implements PersistentStateComponen
       public void processTerminated(@NotNull ProcessEvent event) {
         clearRestarterListener(processHandler);
         ApplicationManager.getApplication().invokeLater(() -> {
-          if (isAutoTestEnabledForDescriptor(descriptor) && watcher.isUpToDate(modificationStamp)) {
+          if (isAutoTestEnabled(descriptor) && isUpToDate.getAsBoolean()) {
             restart(descriptor);
           }
         }, ModalityState.any());
@@ -196,13 +198,12 @@ public abstract class AbstractAutoTestManager implements PersistentStateComponen
   }
 
   void setDelay(int delay) {
+    PropertiesComponent.getInstance(myProject).setValue(AUTO_TEST_MANAGER_DELAY, delay, AUTO_TEST_MANAGER_DELAY_DEFAULT);
     myDelayMillis = delay;
-    myWatcher.deactivate();
-    myWatcher = createWatcher(myProject);
+    deactivateWatcher();
     if (hasEnabledAutoTests()) {
-      myWatcher.activate();
+      activateWatcher();
     }
-    PropertiesComponent.getInstance(myProject).setValue(AUTO_TEST_MANAGER_DELAY, myDelayMillis, AUTO_TEST_MANAGER_DELAY_DEFAULT);
   }
 
   @Override
@@ -220,7 +221,7 @@ public abstract class AbstractAutoTestManager implements PersistentStateComponen
     myEnabledRunProfiles.clear();
     myEnabledRunProfiles.addAll(configurations);
     if (!configurations.isEmpty()) {
-      myWatcher.activate();
+      activateWatcher();
     }
   }
 

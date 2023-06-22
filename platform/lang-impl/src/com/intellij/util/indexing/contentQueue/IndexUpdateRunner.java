@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.contentQueue;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,6 +29,7 @@ import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics;
+import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl;
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl;
 import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
 import com.intellij.util.progress.SubTaskProgressIndicator;
@@ -70,7 +71,7 @@ public final class IndexUpdateRunner {
   private final AtomicInteger myIndexingAttemptCount = new AtomicInteger();
   private final AtomicInteger myIndexingSuccessfulCount = new AtomicInteger();
 
-  private final boolean WRITE_INDEXES_ON_SEPARATE_THREAD = Boolean.getBoolean("idea.write.indexes.on.separate.thread");
+  private static final boolean WRITE_INDEXES_ON_SEPARATE_THREAD = Boolean.getBoolean("idea.write.indexes.on.separate.thread");
   private final ExecutorService myIndexWriteExecutor =
     WRITE_INDEXES_ON_SEPARATE_THREAD
     ? SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Index Write Thread")
@@ -132,7 +133,8 @@ public final class IndexUpdateRunner {
   public void indexFiles(@NotNull Project project,
                          @NotNull List<FileSet> fileSets,
                          @NotNull ProgressIndicator indicator,
-                         @NotNull ProjectIndexingHistoryImpl projectIndexingHistory) throws IndexingInterruptedException {
+                         @NotNull ProjectIndexingHistoryImpl projectIndexingHistory,
+                         @NotNull ProjectDumbIndexingHistoryImpl projectDumbIndexingHistory) throws IndexingInterruptedException {
     long startTime = System.nanoTime();
     try {
       doIndexFiles(project, fileSets, indicator);
@@ -145,6 +147,9 @@ public final class IndexUpdateRunner {
       long totalProcessingTimeInAllThreads = fileSets.stream().mapToLong(b -> b.statistics.getProcessingTimeInAllThreads()).sum();
       projectIndexingHistory.setVisibleTimeToAllThreadsTimeRatio(totalProcessingTimeInAllThreads == 0
                                                                  ? 0 : ((double)visibleProcessingTime) / totalProcessingTimeInAllThreads);
+      projectDumbIndexingHistory.setVisibleTimeToAllThreadsTimeRatio(totalProcessingTimeInAllThreads == 0
+                                                                     ? 0
+                                                                     : ((double)visibleProcessingTime) / totalProcessingTimeInAllThreads);
       if (myIndexWriteExecutor != null) {
         ProgressIndicatorUtils.awaitWithCheckCanceled(myIndexWriteExecutor.submit(EmptyRunnable.getInstance()));
       }

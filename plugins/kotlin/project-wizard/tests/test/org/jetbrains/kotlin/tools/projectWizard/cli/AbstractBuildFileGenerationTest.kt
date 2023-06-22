@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.tools.projectWizard.cli
 
-import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.LightPlatformTestCase
 import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.core.div
 import org.jetbrains.kotlin.tools.projectWizard.core.service.Services
@@ -13,7 +13,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
-abstract class AbstractBuildFileGenerationTest : UsefulTestCase() {
+abstract class AbstractBuildFileGenerationTest : LightPlatformTestCase() {
     abstract fun createWizard(directory: Path, buildSystem: BuildSystem, projectDirectory: Path): Wizard
 
     fun doTest(directoryPath: String) {

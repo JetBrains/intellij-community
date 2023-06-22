@@ -6,8 +6,9 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
+import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -25,21 +26,15 @@ class ImportStrategyDetector(originalKtFile: KtFile, project: Project) {
 
     private val excludedImports = analyzerServices.excludedImports
 
-    context (KtAnalysisSession)
-    internal fun detectImportStrategy(symbol: KtSymbol): ImportStrategy = when (symbol) {
-        is KtCallableSymbol -> detectImportStrategyForCallableSymbol(symbol)
-        is KtClassLikeSymbol -> detectImportStrategyForClassLikeSymbol(symbol)
-        else -> ImportStrategy.DoNothing
-    }
-
     context(KtAnalysisSession)
-    private fun detectImportStrategyForCallableSymbol(symbol: KtCallableSymbol): ImportStrategy {
-        if (symbol.symbolKind == KtSymbolKind.CLASS_MEMBER) return ImportStrategy.DoNothing
+    fun detectImportStrategyForCallableSymbol(symbol: KtCallableSymbol, isFunctionalVariableCall: Boolean = false): ImportStrategy {
+        val containingClassIsObject = symbol.originalContainingClassForOverride?.classKind?.isObject == true
+        if (symbol.symbolKind == KtSymbolKind.CLASS_MEMBER && !containingClassIsObject) return ImportStrategy.DoNothing
 
         val callableId = symbol.callableIdIfNonLocal?.asSingleFqName() ?: return ImportStrategy.DoNothing
         if (callableId.isAlreadyImported()) return ImportStrategy.DoNothing
 
-        return if (symbol.isExtension) {
+        return if (symbol.isExtension || isFunctionalVariableCall && (symbol.returnType as? KtFunctionalType)?.hasReceiver == true) {
             ImportStrategy.AddImport(callableId)
         } else {
             ImportStrategy.InsertFqNameAndShorten(callableId)
@@ -47,7 +42,9 @@ class ImportStrategyDetector(originalKtFile: KtFile, project: Project) {
     }
 
     context (KtAnalysisSession)
-    private fun detectImportStrategyForClassLikeSymbol(symbol: KtClassLikeSymbol): ImportStrategy {
+    fun detectImportStrategyForClassifierSymbol(symbol: KtClassifierSymbol): ImportStrategy {
+        if (symbol !is KtClassLikeSymbol) return ImportStrategy.DoNothing
+
         val classId = symbol.classIdIfNonLocal?.asSingleFqName() ?: return ImportStrategy.DoNothing
         if (classId.isAlreadyImported()) return ImportStrategy.DoNothing
         return ImportStrategy.InsertFqNameAndShorten(classId)

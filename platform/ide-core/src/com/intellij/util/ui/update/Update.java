@@ -1,38 +1,39 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.update;
 
+import com.intellij.concurrency.ThreadContext;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.util.concurrency.Propagation;
+import kotlin.Pair;
+import kotlin.coroutines.CoroutineContext;
+import kotlinx.coroutines.CompletableJob;
+import com.intellij.concurrency.ThreadContext;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.Propagation;
+import kotlin.coroutines.CoroutineContext;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
 /**
- * Describes a task for {@link MergingUpdateQueue}. Equal tasks (instances with the equal {@code identity} objects) are merged, i.e.
+ * Describes a task for {@link MergingUpdateQueue}. Equal tasks (instances with the equal {@code identity} objects) are merged, i.e.,
  * only the first of them is executed. If some tasks are more generic than others override {@link #canEat(Update)} method.
  *
  * @see MergingUpdateQueue
  */
 public abstract class Update extends ComparableObject.Impl implements Runnable {
-
   public static final int LOW_PRIORITY = 999;
   public static final int HIGH_PRIORITY = 10;
 
-  private boolean myProcessed;
-  private boolean myRejected;
+  private volatile boolean myProcessed;
+  private volatile boolean myRejected;
+  private final @Nullable CoroutineContext myContext;
+  private final @Nullable CompletableJob myJob;
+
   private final boolean myExecuteInWriteAction;
 
   private final int myPriority;
@@ -50,15 +51,22 @@ public abstract class Update extends ComparableObject.Impl implements Runnable {
   }
 
   public Update(@NonNls Object identity, boolean executeInWriteAction, int priority) {
-    super(identity);
+    this(identity, executeInWriteAction, priority,
+         AppExecutorUtil.propagateContextOrCancellation() ? Propagation.createChildContext() : new Pair<>(null, null));
+  }
+
+  private Update(@NonNls Object identity, boolean executeInWriteAction, int priority, @NotNull Pair<CoroutineContext, CompletableJob> pair) {
+    super(pair.getFirst() == null ? new Object[]{identity} : new Object[]{identity, ThreadContext.getContextSkeleton(pair.getFirst())});
     myExecuteInWriteAction = executeInWriteAction;
     myPriority = priority;
+    myContext = pair.getFirst();
+    myJob = pair.getSecond();
   }
 
   public boolean isDisposed() {
     return false;
   }
-  
+
   public boolean isExpired() {
     return false;
   }
@@ -84,17 +92,45 @@ public abstract class Update extends ComparableObject.Impl implements Runnable {
     return myPriority;
   }
 
+  final boolean actuallyCanEat(Update update) {
+    if (myContext != null) {
+      return update.myContext != null &&
+             ThreadContext.getContextSkeleton(myContext).equals(ThreadContext.getContextSkeleton(update.myContext)) &&
+             canEat(update);
+    }
+    else {
+      return update.myContext == null &&
+             canEat(update);
+    }
+  }
+
+  final void runUpdate() {
+    if (myContext == null) {
+      run();
+    } else try (AccessToken ignored = ThreadContext.installThreadContext(myContext, true)) {
+      if (myJob != null) {
+        Propagation.runAsCoroutine(myJob, this);
+      } else {
+        run();
+      }
+    }
+  }
+
+
   /**
-   * Override this method and return {@code true} if this task is more generic than the passed {@code update}, e.g. this tasks repaint the
-   * whole frame and the passed task repaint some component on the frame. In that case the less generic tasks will be removed from the queue
-   * before execution.
+   * Override this method and return {@code true} if this task is more generic than the passed {@code update}.
+   * For example, if this task repaints the whole frame and the passed task repaints some component on the frame,
+   * the less generic tasks will be removed from the queue before execution.
    */
-  public boolean canEat(Update update) {
+  public boolean canEat(@NotNull Update update) {
     return false;
   }
 
   public void setRejected() {
     myRejected = true;
+    if (myJob != null) {
+      myJob.cancel(null);
+    }
   }
 
   public boolean isRejected() {

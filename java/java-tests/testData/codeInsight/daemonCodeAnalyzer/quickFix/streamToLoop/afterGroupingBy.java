@@ -66,8 +66,8 @@ public class Main {
       TreeMap<Integer, List<Integer>> map = new TreeMap<>(Comparator.reverseOrder());
       for (String string : strings) {
           Integer len = string.length();
-          Integer integer = len * 2;
-          map.computeIfAbsent(string.length(), k -> new ArrayList<>()).add(integer);
+          Integer i = len * 2;
+          map.computeIfAbsent(string.length(), k -> new ArrayList<>()).add(i);
       }
       return map;
   }

@@ -4,13 +4,23 @@ package com.intellij.ide.lightEdit.menuBar;
 import com.intellij.ide.lightEdit.actions.*;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
+@Service(Service.Level.APP)
 public final class LightEditMainMenuHelper {
-  public @NotNull ActionGroup getMainMenuActionGroup() {
+
+  private final ActionGroup myGroup = createMainMenuActionGroup();
+
+  public static @NotNull ActionGroup getMainMenuActionGroup() {
+    return ApplicationManager.getApplication().getService(LightEditMainMenuHelper.class).myGroup;
+  }
+
+  private static @NotNull ActionGroup createMainMenuActionGroup() {
     DefaultActionGroup topGroup = new DefaultActionGroup();
     topGroup.add(
       createActionGroup(ActionsBundle.message("group.FileMenu.text"),

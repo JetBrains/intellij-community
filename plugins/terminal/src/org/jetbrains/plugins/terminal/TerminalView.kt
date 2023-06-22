@@ -60,6 +60,7 @@ class TerminalView(private val project: Project) {
   }
 
   companion object {
+    @Deprecated("Use TerminalToolWindowManager.getInstance() instead", ReplaceWith("TerminalToolWindowManager.getInstance(project)"))
     @JvmStatic
     fun getInstance(project: Project): TerminalView {
       return project.service<TerminalView>()

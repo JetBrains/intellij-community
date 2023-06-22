@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
@@ -148,8 +149,11 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
     Color color = EditorColorsUtil.getColor(component, key);
     assert color != null : "default color is not specified for " + key;
 
-    boolean useContrastScrollbars = UISettings.getShadowInstance().getUseContrastScrollbars();
-    if (useContrastScrollbars) color = updateTransparency(color, key);
+    boolean useContrastScrollbars = LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred() &&
+                                    UISettings.getInstance().getUseContrastScrollbars();
+    if (useContrastScrollbars) {
+      color = updateTransparency(color, key);
+    }
 
     return color;
   }

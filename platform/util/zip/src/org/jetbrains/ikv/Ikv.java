@@ -30,19 +30,14 @@ Little endian is used because both Intel and M1 CPU use little endian (saves a l
 @SuppressWarnings("DuplicatedCode")
 @ApiStatus.Internal
 public abstract class Ikv implements AutoCloseable {
-  protected ByteBuffer mappedBuffer;
+  private ByteBuffer mappedBuffer;
 
   private Ikv(ByteBuffer mappedBuffer) {
     this.mappedBuffer = mappedBuffer;
   }
 
-  public ByteBuffer getMappedBufferAt(int position) {
+  public final ByteBuffer getMappedBufferAt(int position) {
     return mappedBuffer.asReadOnlyBuffer().order(ByteOrder.LITTLE_ENDIAN).position(position);
-  }
-
-  public void readByteArrayAt(int position, byte[] data, int size) {
-    mappedBuffer.position(position);
-    mappedBuffer.get(data, 0, size);
   }
 
   public static final class SizeAwareIkv extends Ikv {
@@ -69,10 +64,7 @@ public abstract class Ikv implements AutoCloseable {
 
     public ByteBuffer getByteBufferByValue(long pair) {
       int start = (int)(pair >> 32);
-      ByteBuffer buffer = mappedBuffer.asReadOnlyBuffer().order(ByteOrder.LITTLE_ENDIAN);
-      buffer.position(start);
-      buffer.limit(start + (int)pair);
-      return buffer;
+      return getMappedBufferAt(start).limit(start + (int)pair);
     }
 
     public byte[] getByteArray(long key) {
@@ -86,8 +78,7 @@ public abstract class Ikv implements AutoCloseable {
     public byte[] getByteArrayByValue(long pair) {
       int start = (int)(pair >> 32);
       byte[] result = new byte[(int)pair];
-      mappedBuffer.position(start);
-      mappedBuffer.get(result, 0, result.length);
+      getMappedBufferAt(start).get(result, 0, result.length);
       return result;
     }
 
@@ -108,10 +99,7 @@ public abstract class Ikv implements AutoCloseable {
     // if size is known by the reader
     public ByteBuffer getUnboundedValue(int key) {
       int offset = index.get(key);
-      if (offset == -1) {
-        return null;
-      }
-      return mappedBuffer.asReadOnlyBuffer().position(offset).order(ByteOrder.LITTLE_ENDIAN);
+      return offset == -1 ? null : getMappedBufferAt(offset).order(ByteOrder.LITTLE_ENDIAN);
     }
   }
 

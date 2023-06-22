@@ -258,7 +258,7 @@ public final class PaintUtil {
   public static AffineTransform alignTxToInt(@NotNull Graphics2D g, @Nullable Point2D offset, boolean alignX, boolean alignY, RoundingMode rm) {
     try {
       AffineTransform tx = g.getTransform();
-      if (isFractionalScale(tx)) {
+      if (isFractionalScale(tx) && (tx.getType() & AffineTransform.TYPE_MASK_ROTATION) == 0) {
         double scaleX = tx.getScaleX();
         double scaleY = tx.getScaleY();
         AffineTransform alignedTx = new AffineTransform();

@@ -3,6 +3,7 @@ package com.intellij.psi.util;
 
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +25,19 @@ public final class PsiClassUtil {
       }
     }
     if (aClass.hasModifierProperty(PsiModifier.PRIVATE)) return false;
+    if (mustBePublic) {
+      PsiMethod[] constructors = aClass.getConstructors();
+      if (constructors.length > 0) {
+        boolean anyPublicConstructor = false;
+        for (PsiMethod constructor : constructors) {
+          if (constructor.getModifierList().hasModifierProperty(PsiModifier.PUBLIC)) {
+            anyPublicConstructor = true;
+            break;
+          }
+        }
+        if (!anyPublicConstructor) return false;
+      }
+    }
     if (mustNotBeAbstract && aClass.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
     return aClass.getContainingClass() == null || aClass.hasModifierProperty(PsiModifier.STATIC);
   }

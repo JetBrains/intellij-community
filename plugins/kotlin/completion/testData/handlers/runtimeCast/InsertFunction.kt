@@ -10,3 +10,4 @@ class Derived: Base() {
 }
 
 // RUNTIME_TYPE: Derived
+// AUTOCOMPLETE_SETTING: true

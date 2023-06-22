@@ -1,8 +1,16 @@
+// FIR_IDENTICAL
 interface Some {
     fun foo()
 }
 
 class Other {
+    fun test() {
+        val a = 1
+    }
+    fun otherTest() {
+
+    }
+
     override fun equals(other: Any?): Boolean {
         <selection><caret>return super.equals(other)</selection>
     }
@@ -13,13 +21,6 @@ class Other {
 
     override fun toString(): String {
         return super.toString()
-    }
-
-    fun test() {
-        val a = 1
-    }
-    fun otherTest() {
-
     }
 }
 

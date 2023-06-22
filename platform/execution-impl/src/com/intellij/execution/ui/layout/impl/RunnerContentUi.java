@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.execution.ExecutionBundle;
@@ -54,7 +54,6 @@ import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBInsets;
@@ -240,7 +239,13 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     getGrids().forEach(grid -> grid.setToolbarBefore(value));
 
     myContextActions.clear();
-    updateTabsUI(false);
+
+    rebuildToolbar();
+    Set<String> usedNames = new HashSet<>();
+    for (TabInfo each : myTabs.getTabs()) {
+      updateTabUI(each, usedNames);
+    }
+    myTabs.updateTabActions(false);
   }
 
   void setTopLeftActionsVisible(boolean visible) {
@@ -345,22 +350,25 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
         @Override
         public void mousePressed(MouseEvent e) {
-          ObjectUtils.consumeIfNotNull(InternalDecoratorImpl.Companion.findTopLevelDecorator(myComponent),
-                                       decorator -> decorator.activate(ToolWindowEventSource.ToolWindowHeader));
+          InternalDecoratorImpl topLevelDecorator = InternalDecoratorImpl.Companion.findTopLevelDecorator(myComponent);
+          if (topLevelDecorator != null) {
+            topLevelDecorator.activate(ToolWindowEventSource.ToolWindowHeader);
+          }
           myPressPoint = e.getPoint();
         }
 
         @Override
         public void mouseClicked(MouseEvent e) {
           if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 2) {
-            ObjectUtils.consumeIfNotNull(InternalDecoratorImpl.Companion.findTopLevelDecorator(myComponent),
-                                         decorator -> {
-                                           if (decorator.isHeaderVisible()) return;
-                                           String id = decorator.getToolWindowId();
-                                           ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(myProject);
-                                           ToolWindow window = manager.getToolWindow(id);
-                                           ObjectUtils.consumeIfNotNull(window, w -> manager.setMaximized(w, !manager.isMaximized(w)));
-                                         });
+            InternalDecoratorImpl topLevelDecorator = InternalDecoratorImpl.Companion.findTopLevelDecorator(myComponent);
+            if (topLevelDecorator != null && !topLevelDecorator.isHeaderVisible()) {
+              String id = topLevelDecorator.getToolWindowId();
+              ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(myProject);
+              ToolWindow window = manager.getToolWindow(id);
+              if (window != null) {
+                manager.setMaximized(window, !manager.isMaximized(window));
+              }
+            }
           }
         }
 
@@ -1088,8 +1096,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   private void setActions(@NotNull Wrapper placeHolder, @NotNull String place, @NotNull DefaultActionGroup group) {
     ActionToolbar tb = myActionManager.createActionToolbar(place, group, true);
     tb.setReservePlaceAutoPopupIcon(false);
-    // see IDEA-262878, evaluate action on the toolbar should get the editor data context
-    tb.setTargetComponent(UIExperiment.isNewDebuggerUIEnabled() ? myComponent : null);
+    tb.setTargetComponent(myComponent);
     tb.getComponent().setBorder(null);
     tb.getComponent().setOpaque(false);
 
@@ -1125,7 +1132,8 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       hasToolbarContent |= updateTabUI(each, usedNames);
     }
     int tabsCount = tabs.size() + myChildren.stream().mapToInt(child -> child.myTabs.getTabCount()).sum();
-    myTabs.getPresentation().setHideTabs(!hasToolbarContent && tabsCount <= 1 && myOriginal == null);
+    boolean hideTabs = !hasToolbarContent && tabsCount <= 1 && myOriginal == null;
+    myTabs.getPresentation().setHideTabs(hideTabs);
     myTabs.updateTabActions(validateNow);
 
     if (validateNow) {
@@ -2080,9 +2088,10 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     }
   }
 
-  private void fireContentClosed(Content content) {
+  private void fireContentClosed(@Nullable Content content) {
     for (Listener each : myDockingListeners) {
-      each.contentRemoved(content);
+      // dirty hack to not pass null here, listener implementation do not take this value into account
+      each.contentRemoved(content != null ? content : new Object());
     }
   }
 

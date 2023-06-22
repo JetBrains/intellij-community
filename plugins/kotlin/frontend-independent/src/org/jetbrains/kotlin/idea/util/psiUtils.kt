@@ -7,16 +7,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import org.jetbrains.kotlin.load.java.JvmAnnotationNames
 import org.jetbrains.kotlin.load.kotlin.header.KotlinClassHeader
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-
-fun ValueArgument.findSingleLiteralStringTemplateText(): String? {
-    return getArgumentExpression()
-        ?.safeAs<KtStringTemplateExpression>()
-        ?.entries
-        ?.singleOrNull()
-        ?.safeAs<KtLiteralStringTemplateEntry>()
-        ?.text
-}
 
 @Suppress("DeprecatedCallableAddReplaceWith")
 @Deprecated("The function is ad-hoc, has arbitrary naming and does not support extension receivers")

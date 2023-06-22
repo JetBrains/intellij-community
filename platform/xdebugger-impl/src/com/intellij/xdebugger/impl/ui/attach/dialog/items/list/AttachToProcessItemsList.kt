@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.attach.dialog.items.list
 
 import com.intellij.openapi.Disposable
@@ -5,6 +6,7 @@ import com.intellij.openapi.ui.setEmptyState
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.speedSearch.FilteringTableModel
 import com.intellij.ui.table.JBTable
+import com.intellij.util.ui.StatusText
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogState
 import com.intellij.xdebugger.impl.ui.attach.dialog.AttachItemsInfo
@@ -31,6 +33,8 @@ internal class AttachToProcessItemsList(itemNodes: List<AttachDialogElementNode>
   JBTable(FilteringTableModel(AttachToProcessTableModel(itemNodes, columnsLayout.getColumnsCount()), Any::class.java),
           AttachToProcessListColumnModel(columnsLayout)), AttachToProcessItemsListBase {
 
+  private val emptyText = AttachDialogEmptyText(this, filters)
+
   init {
     setShowGrid(false)
     intercellSpacing = Dimension(0, 0)
@@ -55,6 +59,8 @@ internal class AttachToProcessItemsList(itemNodes: List<AttachDialogElementNode>
     installSelectionOnFocus()
     installRowsHeightUpdater()
   }
+
+  override fun getEmptyText(): StatusText = emptyText
 
   override fun getCellRenderer(row: Int, column: Int): TableCellRenderer {
     val element = model.getValueAt<AttachDialogElementNode>(row) ?: throw IllegalStateException("Should not be null")

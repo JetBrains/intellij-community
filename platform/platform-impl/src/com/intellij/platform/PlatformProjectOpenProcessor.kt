@@ -1,6 +1,4 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("BlockingMethodInNonBlockingContext")
-
 package com.intellij.platform
 
 import com.intellij.ide.impl.OpenProjectTask
@@ -20,7 +18,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.progress.runBlockingModal
+import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.roots.ModuleRootManager
@@ -297,11 +295,15 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
           }
           else if (configurator.isEdtRequired) {
             withContext(Dispatchers.EDT) {
-              configurator.configureProject(project, virtualFile, moduleRef, newProject)
+              blockingContext {
+                configurator.configureProject(project, virtualFile, moduleRef, newProject)
+              }
             }
           }
           else {
-            configurator.configureProject(project, virtualFile, moduleRef, newProject)
+            blockingContext {
+              configurator.configureProject(project, virtualFile, moduleRef, newProject)
+            }
           }
         }
         catch (e: ProcessCanceledException) {
@@ -325,7 +327,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     @JvmStatic
     @RequiresEdt
     fun attachToProject(project: Project, projectDir: Path, callback: ProjectOpenedCallback?): Boolean {
-      return runBlockingModal(project, "") {
+      return runWithModalProgressBlocking(project, "") {
         attachToProjectAsync(projectToClose = project, projectDir = projectDir, callback = callback)
       }
     }
@@ -363,11 +365,11 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     }
   }
 
-  override fun canOpenProject(file: VirtualFile) = file.isDirectory
+  override fun canOpenProject(file: VirtualFile): Boolean = file.isDirectory
 
-  override fun isProjectFile(file: VirtualFile) = false
+  override fun isProjectFile(file: VirtualFile): Boolean = false
 
-  override fun lookForProjectsInDirectory() = false
+  override fun lookForProjectsInDirectory(): Boolean = false
 
   override fun doOpenProject(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
     val baseDir = virtualFile.toNioPath()
@@ -404,7 +406,7 @@ private fun openFileFromCommandLine(project: Project, file: Path, line: Int, col
         PsiNavigationSupport.getInstance().createNavigatable(project, virtualFile, -1)
       }
       navigatable.navigate(true)
-    }, ModalityState.NON_MODAL, project.disposed)
+    }, ModalityState.nonModal(), project.disposed)
   }
 }
 

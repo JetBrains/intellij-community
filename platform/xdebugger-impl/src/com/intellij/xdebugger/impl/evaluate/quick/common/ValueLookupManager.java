@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class ValueLookupManager
@@ -9,6 +9,7 @@ package com.intellij.xdebugger.impl.evaluate.quick.common;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorMouseHoverPopupManager;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseListener;
@@ -23,6 +24,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -96,7 +98,7 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
     for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
       QuickEvaluateHandler handler = support.getQuickEvaluateHandler();
       if (handler.isEnabled(myProject)) {
-        requestHint(handler, editor, point, type);
+        requestHint(handler, editor, point, e, type);
         return;
       }
     }
@@ -105,20 +107,24 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
     hideHint();
   }
 
-  private void requestHint(final QuickEvaluateHandler handler, final Editor editor, final Point point, @NotNull final ValueHintType type) {
+  private void requestHint(final QuickEvaluateHandler handler,
+                           final Editor editor,
+                           final Point point,
+                           @NotNull EditorMouseEvent e,
+                           @NotNull final ValueHintType type) {
     final Rectangle area = editor.getScrollingModel().getVisibleArea();
     cancelAll();
     if (type == ValueHintType.MOUSE_OVER_HINT) {
       if (Registry.is("debugger.valueTooltipAutoShow")) {
         myAlarm.addRequest(() -> {
           if (area.equals(editor.getScrollingModel().getVisibleArea())) {
-            showHint(handler, editor, point, type);
+            showHint(handler, editor, point, e, type);
           }
         }, getDelay(handler));
       }
     }
     else {
-      showHint(handler, editor, point, type);
+      showHint(handler, editor, point, e, type);
     }
   }
 
@@ -137,19 +143,27 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
     }
   }
 
-  public void showHint(@NotNull QuickEvaluateHandler handler, @NotNull Editor editor, @NotNull Point point, @NotNull ValueHintType type) {
-    PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(() -> doShowHint(handler, editor, point, type));
+  public void showHint(@NotNull QuickEvaluateHandler handler,
+                       @NotNull Editor editor,
+                       @NotNull Point point,
+                       @Nullable EditorMouseEvent e,
+                       @NotNull ValueHintType type) {
+    PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(() -> doShowHint(handler, editor, point, e, type));
   }
 
   private void doShowHint(@NotNull QuickEvaluateHandler handler,
                           @NotNull Editor editor,
                           @NotNull Point point,
+                          @Nullable EditorMouseEvent event,
                           @NotNull ValueHintType type) {
     cancelAll();
     if (editor.isDisposed() || !handler.canShowHint(myProject)) {
       return;
     }
     if (myRequest != null && myRequest.isInsideHint(editor, point)) {
+      return;
+    }
+    if (event != null && !event.isOverText()) { // do not trigger if there's no text below
       return;
     }
 
@@ -161,11 +175,19 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
     }
     myCancellableHint.hintPromise().onSuccess(hint -> {
       if (hint == null) {
-        UIUtil.invokeLaterIfNeeded(this::hideHint);
+        UIUtil.invokeLaterIfNeeded(() -> {
+          hideHint();
+          if (event != null) {
+            EditorMouseHoverPopupManager.getInstance().showInfoTooltip(event);
+          }
+        });
         return;
       }
       if (myRequest != null && myRequest.equals(hint)) {
         return;
+      }
+      if (event != null) {
+        hint.setEditorMouseEvent(event);
       }
       UIUtil.invokeLaterIfNeeded(() -> {
         if (!hint.canShowHint()) {

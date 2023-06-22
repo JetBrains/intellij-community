@@ -13,7 +13,7 @@ import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil
 public class CucumberJvmSMConverter {
   private static final String EXAMPLES_CAPTION = "Examples:";
   private static final String SCENARIO_OUTLINE_CAPTION = "Scenario: Line: ";
-  private final Map<String, String> pathToDescription = new HashMap<String, String>();
+  private final Map<String, String> pathToDescription = new HashMap<>();
   private String currentFilePath;
   private int currentScenarioOutlineLine;
   private String currentScenarioOutlineName;

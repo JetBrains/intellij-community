@@ -148,6 +148,10 @@ private fun parseMap(reader: JsonReaderEx): SourceMapDataImpl? {
         file = reader.nextNullableString()
       }
       "sourcesContent" -> {
+        if (reader.peek() == JsonToken.NULL) {
+          reader.nextNull()
+          continue
+        }
         reader.beginArray()
         if (reader.peek() != JsonToken.END_ARRAY) {
           sourcesContent = SmartList<String>()
@@ -280,7 +284,7 @@ private fun readSources(reader: JsonReaderEx, sourceRoot: String?): List<String>
     sources = emptyList()
   }
   else {
-    sources = SmartList<String>()
+    sources = SmartList()
     do {
       var sourceUrl: String = readSourcePath(reader)
       if (!sourceRoot.isNullOrEmpty()) {

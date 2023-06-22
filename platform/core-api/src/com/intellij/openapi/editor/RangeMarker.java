@@ -29,16 +29,14 @@ import java.util.Comparator;
  * shifts the marker forward or backward; adding or deleting text within the marker
  * increases or decreases the length of the marked range by the respective offset. Adding
  * text at the start or end of the marker optionally extends the marker, depending on
- * {@link #setGreedyToLeft(boolean)} and {@link #setGreedyToRight(boolean)} settings. Deleting
- * the entire text range containing the marker causes the marker to become invalid.
+ * {@link #setGreedyToLeft(boolean)} and {@link #setGreedyToRight(boolean)} settings.
+ * Deleting the entire text range containing the marker causes the marker to become invalid.
  * <p>
  * <b>A note about lifetime.</b>
  * Range markers are weakly referenced and eventually got garbage-collected
  * after a long and painful fight with the garbage collector.
- * So calling its {@link #dispose()} method is not strictly necessary
- * (exactly like helping an old lady to cross the road is not strictly compulsory)
- * but it wouldn't hurt, and would actually help GC when <strike>the old lady is struggling</strike>
- * the allocation rate is very high.
+ * So calling its {@link #dispose()} method is not strictly necessary, but might help GC, especially in high allocation rate cases.
+ * After {@link #dispose()} call the {@link #isValid()} method returns {@code false}, all other methods are <a href="https://en.wikipedia.org/wiki/Undefined_behavior">UB</a>.
  *
  * @see Document#createRangeMarker(int, int)
  */

@@ -18,12 +18,11 @@ internal class GitLabFileEditorProvider : FileEditorProvider, DumbAware {
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
     file as GitLabProjectVirtualFile
-    val connection = project.service<GitLabProjectConnectionManager>().connectionState.value
-                     ?: error("Not connected to GitLab repository")
+    val ctx = file.findContext() ?: error("Not context for $this")
 
     if (file !is GitLabMergeRequestTimelineFile) error("Unsupported file type")
 
-    return GitLabMergeRequestTimelineFileEditor(project, connection, file)
+    return GitLabMergeRequestTimelineFileEditor(project, ctx, file)
   }
 
   override fun getEditorTypeId(): String = "GitLab"

@@ -17,5 +17,5 @@ internal class ToggleShowDocsInPopupAction : ToggleAction(), DumbAware {
     DocumentationManager.skipPopup = !state
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 }

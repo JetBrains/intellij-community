@@ -1,32 +1,8 @@
 <idea-plugin>
   <actions>
-
     <group id="ToolsXmlGroup" popup="true" class="com.intellij.xml.actions.XmlActionsGroup">
-      <action id="ValidateXml" class="com.intellij.xml.actions.validate.ValidateXmlAction"/>
-      <action id="GenerateDTD" class="com.intellij.codeInsight.actions.GenerateDTDAction"/>
-      <action id="XSD2Document" class="com.intellij.xml.actions.xmlbeans.GenerateSchemaFromInstanceDocumentAction"/>
-      <action id="Document2XSD" class="com.intellij.xml.actions.xmlbeans.GenerateInstanceDocumentFromSchemaAction"/>
-      <separator/>
-
       <add-to-group group-id="ToolsMenu" anchor="before" relative-to-action="ExternalToolsGroup"/>
     </group>
-
-    <group id="XmlGenerateToolsGroup">
-      <separator/>
-      <reference ref="GenerateDTD" />
-      <reference ref="XSD2Document" />
-      <reference ref="Document2XSD" />
-      <separator/>
-      <add-to-group group-id="EditorPopupMenu" anchor="last"/>
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
-    </group>
-
-    <reference ref="ValidateXml">
-      <add-to-group group-id="EditorPopupMenu.Run" anchor="last"/>
-      <add-to-group group-id="ProjectViewPopupMenuRefactoringGroup" anchor="last"/>
-      <add-to-group group-id="EditorTabPopupMenuEx" anchor="last"/>
-    </reference>
-
     <group id="DomCollectionControl">
       <action id="DomCollectionControl.Add" class="com.intellij.util.xml.ui.DomCollectionControl$AddAction">
         <keyboard-shortcut first-keystroke="INSERT" keymap="$default"/>

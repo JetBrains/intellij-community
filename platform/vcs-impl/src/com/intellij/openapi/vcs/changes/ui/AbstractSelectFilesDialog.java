@@ -35,6 +35,19 @@ public abstract class AbstractSelectFilesDialog extends DialogWrapper {
     }
   }
 
+  @Override
+  protected void init() {
+    super.init();
+
+    ChangesTree changesTree = getFileList();
+    if (changesTree instanceof AsyncChangesTree asyncChangesTree) {
+      setOKActionEnabled(false);
+      asyncChangesTree.invokeAfterRefresh(() -> {
+        setOKActionEnabled(true);
+      });
+    }
+  }
+
   @NotNull
   protected abstract ChangesTree getFileList();
 

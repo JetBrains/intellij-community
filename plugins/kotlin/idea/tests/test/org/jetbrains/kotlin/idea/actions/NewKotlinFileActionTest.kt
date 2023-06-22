@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.actions
 
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
@@ -51,7 +50,7 @@ class NewKotlinFileActionTest : LightJavaCodeInsightFixtureTestCase() {
     }
 
     private fun validateName(name: String, errorMessage: String?) {
-        val actualError = createFileNameValidator.getErrorText(name)
-        Assert.assertEquals("Invalid error message", errorMessage, actualError)
+        val actualError = NewKotlinFileNameValidator.getErrorText(name)
+        assertEquals("Invalid error message", errorMessage, actualError)
     }
 }

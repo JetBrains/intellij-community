@@ -1,6 +1,7 @@
-package org.checkerframework.checker.tainting.qual
+import org.checkerframework.checker.tainting.qual.Untainted
+import org.checkerframework.checker.tainting.qual.Tainted
 
-class LocalInference {
+open class LocalInference {
   fun simpleInit() {
     val s1 = source()
     val s = s1
@@ -16,7 +17,7 @@ class LocalInference {
   fun recursive() {
     var s1 = source()
     val s = s1
-    <warning descr="[UNUSED_VALUE] The value 's' assigned to 'var s1: String defined in org.checkerframework.checker.tainting.qual.LocalInference.recursive' is never used">s1 =</warning> s
+    <warning descr="[UNUSED_VALUE] The value 's' assigned to 'var s1: String defined in LocalInference.recursive' is never used">s1 =</warning> s
     sink(<warning descr="Unsafe string is used as safe parameter">s</warning>)
   }
 
@@ -47,7 +48,7 @@ class LocalInference {
     sink(<warning descr="Unknown string is used as safe parameter">s</warning>)
   }
 
-  fun foo(): String {
+  open fun foo(): String {
     return ""
   }
 

@@ -45,13 +45,12 @@ class NotebookAboveCodeCellGutterLineMarkerRenderer(private val highlighter: Ran
 }
 
 class NotebookBelowCellCellGutterLineMarkerRenderer(private val highlighter: RangeHighlighter,
-                                                    inlayId: Long,
-                                                    private val customHeight: Int) : NotebookLineMarkerRenderer(inlayId) {
+                                                    inlayId: Long) : NotebookLineMarkerRenderer(inlayId) {
   override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
     editor as EditorImpl
     val lines = IntRange(editor.document.getLineNumber(highlighter.startOffset), editor.document.getLineNumber(highlighter.endOffset))
     val inlayBounds = getInlayBounds(editor, lines) ?: return
-    paintNotebookCellBackgroundGutter(editor, g, r, lines, inlayBounds.y, customHeight)
+    paintNotebookCellBackgroundGutter(editor, g, r, lines, inlayBounds.y, inlayBounds.height)
   }
 }
 
@@ -66,6 +65,8 @@ class MarkdownCellGutterLineMarkerRenderer(private val highlighter: RangeHighlig
 
 class NotebookCellLineNumbersLineMarkerRenderer(private val highlighter: RangeHighlighter) : NotebookLineMarkerRenderer() {
   override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
+    if (!editor.settings.isLineNumbersShown) return
+
     val lines = IntRange(editor.document.getLineNumber(highlighter.startOffset), editor.document.getLineNumber(highlighter.endOffset))
     val visualLineStart = editor.xyToVisualPosition(Point(0, g.clip.bounds.y)).line
     val visualLineEnd = editor.xyToVisualPosition(Point(0, g.clip.bounds.run { y + height })).line

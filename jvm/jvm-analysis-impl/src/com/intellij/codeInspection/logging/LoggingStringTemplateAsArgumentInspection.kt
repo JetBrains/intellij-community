@@ -26,7 +26,7 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 class LoggingStringTemplateAsArgumentInspection : AbstractBaseUastLocalInspectionTool() {
 
   @JvmField
-  var myLimitLevelType: LimitLevelType = LimitLevelType.ALL
+  var myLimitLevelType: LimitLevelType = LimitLevelType.DEBUG_AND_LOWER
 
   @JvmField
   var mySkipPrimitives: Boolean = true
@@ -130,7 +130,7 @@ class LoggingStringTemplateAsArgumentInspection : AbstractBaseUastLocalInspectio
         val notSkip: Boolean = when (loggerLevel) {
           Companion.LevelType.FATAL -> false
           Companion.LevelType.ERROR -> false
-          Companion.LevelType.WARNING -> myLimitLevelType.ordinal == LimitLevelType.WARN_AND_LOWER.ordinal
+          Companion.LevelType.WARN -> myLimitLevelType.ordinal == LimitLevelType.WARN_AND_LOWER.ordinal
           Companion.LevelType.INFO -> myLimitLevelType.ordinal <= LimitLevelType.INFO_AND_LOWER.ordinal
           Companion.LevelType.DEBUG -> myLimitLevelType.ordinal <= LimitLevelType.DEBUG_AND_LOWER.ordinal
           Companion.LevelType.TRACE -> myLimitLevelType.ordinal <= LimitLevelType.TRACE.ordinal

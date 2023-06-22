@@ -12,6 +12,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 @ApiStatus.Experimental
 @Suppress("FunctionName")
@@ -52,6 +53,9 @@ fun CoroutineScope.nestedDisposable(): Disposable {
     })
   }
 }
+
+fun CoroutineScope.launchNow(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> Unit): Job =
+  launch(context, CoroutineStart.UNDISPATCHED, block)
 
 @ApiStatus.Experimental
 fun <T1, T2, R> combineState(scope: CoroutineScope,
@@ -107,21 +111,6 @@ fun <T, M> StateFlow<T>.mapState(
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @ApiStatus.Experimental
-fun <T, R> StateFlow<T>.mapStateScoped(scope: CoroutineScope,
-                                       sharingStart: SharingStarted = SharingStarted.Eagerly,
-                                       mapper: (CoroutineScope, T) -> R): StateFlow<R> {
-  var nestedScope: CoroutineScope = scope.childScope()
-  val originalState = this
-  return drop(1).transformLatest { newValue ->
-    nestedScope.cancel()
-    nestedScope = scope.childScope()
-    val mapped = mapper(nestedScope, newValue)
-    emit(mapped)
-  }.stateIn(scope, sharingStart, mapper(nestedScope, originalState.value))
-}
-
-@OptIn(ExperimentalCoroutinesApi::class)
-@ApiStatus.Experimental
 fun <T, R> Flow<T>.mapScoped(mapper: suspend CoroutineScope.(T) -> R): Flow<R> {
   return transformLatest { newValue ->
     coroutineScope {
@@ -151,6 +140,15 @@ suspend fun <T> Flow<T>.collectWithPrevious(initial: T, collector: suspend (prev
   }
 }
 
+@ApiStatus.Experimental
+fun <T> Flow<T>.channelWithInitial(initialValue: T): Flow<T> =
+  channelFlow {
+    send(initialValue)
+    collect {
+      send(it)
+    }
+  }
+
 /**
  * Lazy shared flow that logs all exceptions as errors and never throws (beside cancellation)
  */
@@ -162,7 +160,15 @@ fun <ID : Any, T, R> Flow<Iterable<T>>.associateBy(sourceIdentifier: (T) -> ID,
                                                    destroy: suspend R.() -> Unit,
                                                    update: (suspend R.(T) -> Unit)? = null,
                                                    customHashingStrategy: HashingStrategy<ID>? = null)
-  : Flow<Map<ID, R>> =
+  : Flow<Map<ID, R>> = associateIndexedBy(sourceIdentifier, { cs, item, _ -> mapper(cs, item) }, destroy, update, customHashingStrategy)
+
+fun <ID : Any, T, R> Flow<Iterable<T>>.associateIndexedBy(
+  sourceIdentifier: (T) -> ID,
+  mapper: (CoroutineScope, item: T, index: Int) -> R,
+  destroy: suspend R.() -> Unit,
+  update: (suspend R.(T) -> Unit)? = null,
+  customHashingStrategy: HashingStrategy<ID>? = null
+): Flow<Map<ID, R>> =
   channelFlow {
     val cs = this
     var initial = true
@@ -196,7 +202,7 @@ fun <ID : Any, T, R> Flow<Iterable<T>>.associateBy(sourceIdentifier: (T) -> ID,
       }
 
       // add new or update existing
-      for (item in items) {
+      for ((index, item) in items.withIndex()) {
         val id = sourceIdentifier(item)
 
         val existing = result[id]
@@ -204,7 +210,7 @@ fun <ID : Any, T, R> Flow<Iterable<T>>.associateBy(sourceIdentifier: (T) -> ID,
           existing.update(item)
         }
         else {
-          result[id] = mapper(cs, item)
+          result[id] = mapper(cs, item, index)
           hasStructureChanges = true
         }
       }
@@ -222,3 +228,11 @@ fun <ID : Any, T, R> Flow<Iterable<T>>.mapCaching(sourceIdentifier: (T) -> ID,
                                                   destroy: suspend R.() -> Unit,
                                                   update: (suspend R.(T) -> Unit)? = null): Flow<List<R>> =
   associateBy(sourceIdentifier, mapper, destroy, update).map { it.values.toList() }
+
+fun <ID : Any, T, R> Flow<Iterable<T>>.mapCachingIndexed(sourceIdentifier: (T) -> ID,
+                                                         mapper: (CoroutineScope, T, index: Int) -> R,
+                                                         destroy: suspend R.() -> Unit,
+                                                         update: (suspend R.(T) -> Unit)? = null): Flow<List<R>> =
+  associateIndexedBy(sourceIdentifier, mapper, destroy, update).map { it.values.toList() }
+
+fun <T> Flow<Collection<T>>.mapFiltered(predicate: (T) -> Boolean): Flow<List<T>> = map { it.filter(predicate) }

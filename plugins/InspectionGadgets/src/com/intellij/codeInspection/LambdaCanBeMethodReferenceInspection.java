@@ -1,9 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.compiler.JavacQuirksInspectionVisitor;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.openapi.diagnostic.Attachment;
@@ -409,10 +408,10 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
         return qualifierByNew + ((PsiNewExpression)element).getTypeArgumentList().getText() + "::new";
       }
     }
-    else if (element instanceof PsiInstanceOfExpression) {
-      if(isSoleParameter(parameters, ((PsiInstanceOfExpression)element).getOperand())) {
-        PsiTypeElement type = ((PsiInstanceOfExpression)element).getCheckType();
-        if(type != null && !PsiUtilCore.hasErrorElementChild(type)) {
+    else if (element instanceof PsiInstanceOfExpression instanceOfExpression) {
+      if(isSoleParameter(parameters, instanceOfExpression.getOperand())) {
+        PsiTypeElement type = instanceOfExpression.getCheckType();
+        if(canUseTypeInClassExpression(type)) {
           return type.getText() + ".class::isInstance";
         }
       }
@@ -444,12 +443,18 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
     else if (element instanceof PsiTypeCastExpression castExpression) {
       if(isSoleParameter(parameters, castExpression.getOperand())) {
         PsiTypeElement type = castExpression.getCastType();
-        if (type != null && !PsiUtilCore.hasErrorElementChild(type)) {
+        if (canUseTypeInClassExpression(type)) {
           return type.getText() + ".class::cast";
         }
       }
     }
     return null;
+  }
+
+  private static boolean canUseTypeInClassExpression(PsiTypeElement type) {
+    return type != null && !PsiUtilCore.hasErrorElementChild(type) &&
+           SyntaxTraverser.psiTraverser(type).filter(PsiReferenceParameterList.class)
+             .find(list -> list.getTextLength() > 0) == null;
   }
 
   private static String getQualifierTextByNewExpression(PsiNewExpression element) {
@@ -552,8 +557,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
       return getClassReferenceName(nonAmbiguousContainingClass);
     }
 
-    if ((containingClass.isPhysical() || IntentionPreviewUtils.isPreviewElement(containingClass)) &&
-        !PsiTypesUtil.isGetClass(psiMethod) &&
+    if (!PsiUtil.isArrayClass(containingClass) && !PsiTypesUtil.isGetClass(psiMethod) &&
         ExpressionUtils.isReferenceTo(qualifierExpression, ArrayUtil.getFirstElement(parameters))) {
       return getClassReferenceName(containingClass);
     }

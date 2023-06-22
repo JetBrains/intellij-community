@@ -13,13 +13,13 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtil
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
+import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
 import org.jetbrains.annotations.Nls
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 import java.util.*

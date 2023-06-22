@@ -3,8 +3,6 @@
 
 package com.intellij.ui
 
-import com.intellij.notification.ActionCenter
-import com.intellij.notification.EventLog
 import com.intellij.notification.Notification
 import com.intellij.notification.impl.NotificationCollector
 import com.intellij.openapi.application.ApplicationManager
@@ -151,7 +149,6 @@ internal open class BalloonLayoutImpl(private val parent: JRootPane, insets: Ins
       this.layoutData.put(newBalloon, layoutData)
     }
     Disposer.register(newBalloon) {
-      clearNMore(newBalloon)
       remove(balloon = newBalloon, hide = false)
       queueRelayout()
     }
@@ -197,18 +194,11 @@ internal open class BalloonLayoutImpl(private val parent: JRootPane, insets: Ins
     fireRelayout()
   }
 
-  private fun clearNMore(balloon: Balloon) {
-    val layoutData = layoutData.get(balloon)
-    if (layoutData?.project != null && layoutData.mergeData != null) {
-      EventLog.clearNMore(layoutData.project, setOf(layoutData.groupId))
-    }
-  }
-
   protected open fun remove(balloon: Balloon, hide: Boolean) {
     balloons.remove(balloon)
     layoutData.remove(balloon)?.mergeData = null
     if (hide) {
-      balloon.hide(ActionCenter.isEnabled())
+      balloon.hide(true)
       fireRelayout()
     }
   }
@@ -251,6 +241,7 @@ internal open class BalloonLayoutImpl(private val parent: JRootPane, insets: Ins
   }
 
   protected fun relayout() {
+    if (layeredPane == null) return
     val size = layeredPane!!.size
     JBInsets.removeFrom(size, insets)
     val layoutRec = Rectangle(Point(insets.left, insets.top), size)

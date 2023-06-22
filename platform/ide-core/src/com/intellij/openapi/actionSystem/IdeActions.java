@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 /**
@@ -108,13 +108,13 @@ public interface IdeActions {
 
   String GROUP_MAIN_MENU = "MainMenu";
   String GROUP_MAIN_TOOLBAR = "MainToolBar";
+  String GROUP_MAIN_TOOLBAR_NEW_UI = "MainToolbarNewUI";
 
   String GROUP_MAIN_TOOLBAR_LEFT = "MainToolbarLeft";
   String GROUP_MAIN_TOOLBAR_CENTER = "MainToolbarCenter";
   String GROUP_MAIN_TOOLBAR_RIGHT = "MainToolbarRight";
-
   String GROUP_EXPERIMENTAL_TOOLBAR = "NewToolbarActions";
-  String GROUP_EXPERIMENTAL_TOOLBAR_XAMARIN = "NewToolbarActionsXamarin";
+  String GROUP_EXPERIMENTAL_TOOLBAR_RIGHT_SIDE = "RightToolbarSideGroup";
   String GROUP_EDITOR_POPUP = "EditorPopupMenu";
   String GROUP_BASIC_EDITOR_POPUP = "BasicEditorPopupMenu";
   String GROUP_CONSOLE_EDITOR_POPUP = "ConsoleEditorPopupMenu";
@@ -237,6 +237,7 @@ public interface IdeActions {
 
   String ACTION_TOGGLE_LINE_BREAKPOINT = "ToggleLineBreakpoint";
   String ACTION_RUN_TO_CURSOR = "RunToCursor";
+  String ACTION_RESET_FRAME = "Debugger.PopFrame";
 
   String ACTION_REFRESH = "Refresh";
 

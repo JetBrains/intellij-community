@@ -16,6 +16,7 @@
                                 implementationClass="org.jetbrains.idea.devkit.themes.ThemeJsonDocumentationProvider"/>
     <psi.referenceContributor language="XML" implementation="org.jetbrains.idea.devkit.themes.ThemeEPPathReferenceContributor"/>
     <localInspection language="UAST" shortName="UnregisteredNamedColor"
+                     projectType="INTELLIJ_PLUGIN"
                      groupBundle="messages.DevKitBundle" groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" isInternal="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.themes.UnregisteredNamedColorInspection"

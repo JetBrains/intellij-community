@@ -35,7 +35,7 @@ internal class IncorrectFormattingInspectionHelper(
       ?.toTypedArray()
   }
 
-  fun createGlobalReport() =
+  fun createGlobalReport(): ProblemDescriptor =
     manager.createProblemDescriptor(
       file,
       LangBundle.message("inspection.incorrect.formatting.global.problem.descriptor", file.name),

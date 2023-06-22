@@ -65,9 +65,6 @@ final class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBas
       }
       sentenceStart--;
     }
-    while (sentenceStart < end && Character.isWhitespace(editorText.charAt(sentenceStart))) {
-      sentenceStart++;
-    }
 
     int sentenceEnd = Math.max(0, end - 1);
 
@@ -77,6 +74,10 @@ final class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBas
       if (isSentenceEnd(editorText, sentenceEnd - 1)) {
         break;
       }
+    }
+
+    while (sentenceStart < sentenceEnd && Character.isWhitespace(editorText.charAt(sentenceStart))) {
+      sentenceStart++;
     }
     return new TextRange(sentenceStart, sentenceEnd);
   }

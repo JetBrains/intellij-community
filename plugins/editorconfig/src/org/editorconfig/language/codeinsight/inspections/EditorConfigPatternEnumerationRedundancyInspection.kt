@@ -6,12 +6,12 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import org.editorconfig.language.codeinsight.quickfixes.EditorConfigRemoveBracesQuickFix
 import org.editorconfig.language.messages.EditorConfigBundle
-import org.editorconfig.language.psi.EditorConfigPatternEnumeration
+import org.editorconfig.language.psi.EditorConfigEnumerationPattern
 import org.editorconfig.language.psi.EditorConfigVisitor
 
 class EditorConfigPatternEnumerationRedundancyInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : EditorConfigVisitor() {
-    override fun visitPatternEnumeration(patternEnumeration: EditorConfigPatternEnumeration) {
+    override fun visitEnumerationPattern(patternEnumeration: EditorConfigEnumerationPattern) {
       if (!containsIssue(patternEnumeration)) return
       val message = EditorConfigBundle.get("inspection.pattern-enumeration.redundant.message")
       holder.registerProblem(patternEnumeration, message, ProblemHighlightType.WARNING, EditorConfigRemoveBracesQuickFix())
@@ -19,7 +19,7 @@ class EditorConfigPatternEnumerationRedundancyInspection : LocalInspectionTool()
   }
 
   companion object {
-    fun containsIssue(patternEnumeration: EditorConfigPatternEnumeration) =
+    fun containsIssue(patternEnumeration: EditorConfigEnumerationPattern) =
       patternEnumeration.patternList.size <= 1
   }
 }

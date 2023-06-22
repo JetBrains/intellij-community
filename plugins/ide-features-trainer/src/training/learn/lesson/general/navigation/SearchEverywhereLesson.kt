@@ -3,6 +3,7 @@ package training.learn.lesson.general.navigation
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
+import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -35,6 +36,12 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
 
   private var backupPopupLocation: Point? = null
 
+  open val goToClassSearchQuery: String ="bufre"
+
+  open val projectFilesScopeName: String get() = ProjectScope.getProjectFilesScopeName()
+
+  open val showQuickDock: Boolean = true
+
   override val lessonContent: LessonContext.() -> Unit = {
     sdkConfigurationTasks()
 
@@ -64,9 +71,11 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
 
     task {
       triggerAndBorderHighlight().listItem { item ->
-        if (item is PsiNameIdentifierOwner)
-          item.name == requiredClassName
-        else item.isToStringContains(requiredClassName)
+        when (item) {
+          is PsiNameIdentifierOwner -> item.name == requiredClassName
+          is NavigationItem -> item.name.isToStringContains(requiredClassName)
+          else -> item.isToStringContains(requiredClassName)
+        }
       }
       restoreByUi()
     }
@@ -76,14 +85,16 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
       stateCheck {
         FileEditorManager.getInstance(project).selectedEditor?.file?.name.equals(resultFileName)
       }
-      restoreByUi()
+      restoreByUi(delayMillis = 500)
       test {
         Thread.sleep(500) // wait items loading
         val jList = previous.ui as? JList<*> ?: error("No list")
         val itemIndex = LessonUtil.findItem(jList) { item ->
-          if (item is PsiNameIdentifierOwner)
-            item.name == requiredClassName
-          else item.isToStringContains(requiredClassName)
+          when (item) {
+            is PsiNameIdentifierOwner -> item.name == requiredClassName
+            is NavigationItem -> item.name.isToStringContains(requiredClassName)
+            else -> item.isToStringContains(requiredClassName)
+          }
         } ?: error("No item")
 
         ideFrame {
@@ -96,7 +107,7 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
       LessonsBundle.message("search.everywhere.goto.class", action(it))
     }
 
-    task("bufre") {
+    task(goToClassSearchQuery) {
       text(LessonsBundle.message("search.everywhere.type.class.name", code(it)))
       stateCheck { checkWordInSearch(it) }
       restoreAfterStateBecomeFalse { !checkInsideSearchEverywhere() }
@@ -105,8 +116,10 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
 
     task(EverythingGlobalScope.getNameText()) {
       text(LessonsBundle.message("search.everywhere.use.all.places",
-                                 strong(ProjectScope.getProjectFilesScopeName()), strong(it)))
-      triggerAndFullHighlight().component { _: ActionButtonWithText -> true }
+                                 strong(projectFilesScopeName), strong(it)))
+      triggerAndFullHighlight().component { button: ActionButtonWithText ->
+        button.accessibleContext.accessibleName.isToStringContains(projectFilesScopeName)
+      }
       triggerUI().component { button: ActionButtonWithText ->
         button.accessibleContext.accessibleName == it
       }
@@ -118,11 +131,13 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
       }
     }
 
-    task("QuickJavaDoc") {
-      text(LessonsBundle.message("search.everywhere.quick.documentation", action(it)))
-      triggerOnQuickDocumentationPopup()
-      restoreByUi()
-      test { actions(it) }
+    if (showQuickDock) {
+      task("QuickJavaDoc") {
+        text(LessonsBundle.message("search.everywhere.quick.documentation", action(it)))
+        triggerOnQuickDocumentationPopup()
+        restoreByUi()
+        test { actions(it) }
+      }
     }
 
     task {

@@ -34,6 +34,6 @@ public class SwitchStatementsWithPatternsInspectionTest extends LightJavaInspect
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_17;
+    return JAVA_20;
   }
 }

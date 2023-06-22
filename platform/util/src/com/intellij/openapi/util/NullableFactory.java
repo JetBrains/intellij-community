@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
  * Deprecated. Use {@link java.util.function.Supplier} with {@code @Nullable} annotation on the type parameter instead.
  */
 @FunctionalInterface
-public interface NullableFactory<T> extends Factory<T>{
+public interface NullableFactory<T> extends Factory<@Nullable T> {
   @Override
   @Nullable
   T create();

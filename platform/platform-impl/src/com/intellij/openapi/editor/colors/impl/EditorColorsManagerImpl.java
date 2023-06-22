@@ -10,7 +10,6 @@ import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
@@ -48,6 +47,7 @@ import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
@@ -64,6 +64,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
+import kotlin.jvm.functions.Function1;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -75,9 +76,6 @@ import javax.swing.UIManager.LookAndFeelInfo;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.function.Function;
-
-import static com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser.installAndEnable;
 
 @State(
   name = "EditorColorsManagerImpl",
@@ -99,6 +97,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
 
   private State myState = new State();
   private boolean themeIsCustomized;
+  private boolean myInitialConfigurationLoaded = false;
 
   public EditorColorsManagerImpl() {
     this(SchemeManagerFactory.getInstance());
@@ -143,7 +142,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     @Override
     public @NotNull EditorColorsSchemeImpl createScheme(@NotNull SchemeDataHolder<? super EditorColorsSchemeImpl> dataHolder,
                                                         @NotNull String name,
-                                                        @NotNull Function<? super String, String> attributeProvider,
+                                                        @NotNull Function1<? super String, String> attributeProvider,
                                                         boolean isBundled) {
       EditorColorsSchemeImpl scheme = isBundled ? new BundledScheme() : new EditorColorsSchemeImpl(null);
       // todo be lazy
@@ -252,13 +251,8 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   // initScheme has to execute only after the LaF has been set in LafManagerImpl.initializeComponent
   private void initScheme(@NotNull UIManager.LookAndFeelInfo currentLaf) {
     EditorColorsScheme scheme = null;
-    String wizardEditorScheme = WelcomeWizardUtil.getWizardEditorScheme();
-    if (wizardEditorScheme != null) {
-      scheme = getScheme(wizardEditorScheme);
-      LOG.assertTrue(scheme != null, "Wizard scheme " + wizardEditorScheme + " not found");
-    }
 
-    if (!themeIsCustomized && scheme == null) {
+    if (!themeIsCustomized) {
       if (currentLaf instanceof UIThemeBasedLookAndFeelInfo) {
         String schemeName = ((UIThemeBasedLookAndFeelInfo)currentLaf).getTheme().getEditorSchemeName();
         if (schemeName != null) {
@@ -494,8 +488,9 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     mySchemeManager.setCurrent(scheme == null ? getDefaultScheme() : scheme, notify, processChangeSynchronously);
   }
 
-  private void setGlobalSchemeInner(@Nullable EditorColorsScheme scheme) {
-    mySchemeManager.setCurrent(scheme == null ? getDefaultScheme() : scheme, false);
+  private void setGlobalSchemeLoadedFromConfiguration(@Nullable EditorColorsScheme scheme) {
+    mySchemeManager.setCurrent(scheme == null ? getDefaultScheme() : scheme, myInitialConfigurationLoaded);
+    myInitialConfigurationLoaded = true;
   }
 
   private @NotNull EditorColorsScheme getDefaultScheme() {
@@ -562,7 +557,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   @Override
   public void noStateLoaded() {
     themeIsCustomized = false;
-    setGlobalSchemeInner(StartupUiUtil.isUnderDarcula() ? getScheme("Darcula") : getDefaultScheme());
+    setGlobalSchemeLoadedFromConfiguration(StartupUiUtil.isUnderDarcula() ? getScheme("Darcula") : getDefaultScheme());
   }
 
   @Override
@@ -579,15 +574,16 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
       Ref<EditorColorsScheme> schemeRef = Ref.create(colorsScheme);
       String schemeName = colorsScheme.getName();
       //todo[kb] remove after 23.1 EAPs
-      if (ExperimentalUI.isNewUI() && (schemeName.equals("_@user_Dark") || schemeName.equals("Dark"))) {
-        RunOnceUtil.runOnceForApp("force.switch.to.new.dark.editor.scheme", ()-> {
-          EditorColorsScheme newDark = mySchemeManager.findSchemeByName("New Dark RC");
+      // New Dark RC is renamed to Dark, switch the scheme accordingly
+      if (ExperimentalUI.isNewUI() && (schemeName.equals("_@user_New Dark RC") || schemeName.equals("New Dark RC"))) {
+        RunOnceUtil.runOnceForApp("force.switch.from.new.dark.editor.scheme", ()-> {
+          EditorColorsScheme newDark = mySchemeManager.findSchemeByName("Dark");
           if (newDark != null) {
             schemeRef.set(newDark);
           }
         });
       }
-      setGlobalSchemeInner(schemeRef.get());
+      setGlobalSchemeLoadedFromConfiguration(schemeRef.get());
       notifyAboutSolarizedColorSchemeDeprecationIfSet(colorsScheme);
     }
   }
@@ -596,7 +592,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   public void initializeComponent() {
     Activity activity = StartUpMeasurer.startActivity("editor color scheme initialization");
     // LafManager is initialized in EDT, so, that's ok to call it here
-    LookAndFeelInfo laf = LafManager.getInstance().getCurrentLookAndFeel();
+    LookAndFeelInfo laf = ApplicationManager.getApplication().isUnitTestMode() ? null : LafManager.getInstance().getCurrentLookAndFeel();
     // null in a headless mode
     if (laf != null) {
       initScheme(laf);
@@ -761,12 +757,12 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
                   }
                 });
 
-                installAndEnable(project, Sets.newHashSet(pluginId), notification::expire);
+                PluginsAdvertiser.installAndEnable(project, Sets.newHashSet(pluginId), notification::expire);
               }
             });
           }
           notification.notify(project);
-        }, ModalityState.NON_MODAL);
+        }, ModalityState.nonModal());
       }
     });
   }

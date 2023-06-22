@@ -24,7 +24,7 @@ import javax.swing.Icon
  * Do not use this project import builder directly.
  *
  * Internal stable Api
- * Use [com.intellij.ide.actions.ImportModuleAction.doImport] to import (attach) a new project.
+ * Use [com.intellij.ide.actions.ImportModuleAction.createFromWizard] to import (attach) a new project.
  * Use [com.intellij.ide.impl.ProjectUtil.openOrImport] to open (import) a new project.
  *
  * Internal experimental Api

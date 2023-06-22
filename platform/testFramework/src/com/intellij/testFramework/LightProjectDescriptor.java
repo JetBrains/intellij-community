@@ -59,8 +59,7 @@ public class LightProjectDescriptor {
     }
   }
 
-  @NotNull
-  public Module createMainModule(@NotNull Project project) {
+  public @NotNull Module createMainModule(@NotNull Project project) {
     return createModule(project, Paths.get(FileUtil.getTempDirectory(), TEST_MODULE_NAME + ".iml"));
   }
 
@@ -82,8 +81,7 @@ public class LightProjectDescriptor {
     });
   }
 
-  @NotNull
-  public String getModuleTypeId() {
+  public @NotNull String getModuleTypeId() {
     return EmptyModuleType.EMPTY_MODULE;
   }
 
@@ -93,8 +91,7 @@ public class LightProjectDescriptor {
    * behaviour use {@link #markDirForSourcesAsSourceRoot()}.
    * @see #markDirForSourcesAsSourceRoot()
    */
-  @Nullable
-  public VirtualFile createDirForSources(@NotNull Module module) {
+  public @Nullable VirtualFile createDirForSources(@NotNull Module module) {
     return createSourceRoot(module, "src");
   }
 
@@ -161,13 +158,11 @@ public class LightProjectDescriptor {
     WriteAction.run(() -> ProjectJdkTable.getInstance().addJdk(jdk, parentDisposable));
   }
 
-  @NotNull
-  protected JpsModuleSourceRootType<?> getSourceRootType() {
+  protected @NotNull JpsModuleSourceRootType<?> getSourceRootType() {
     return JavaSourceRootType.SOURCE;
   }
 
-  @Nullable
-  public Sdk getSdk() {
+  public @Nullable Sdk getSdk() {
     return null;
   }
 

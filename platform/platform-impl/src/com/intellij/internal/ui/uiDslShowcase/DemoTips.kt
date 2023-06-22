@@ -2,11 +2,9 @@
 package com.intellij.internal.ui.uiDslShowcase
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.JBUI
 
@@ -14,7 +12,7 @@ import com.intellij.util.ui.JBUI
 @Demo(title = "Tips",
   description = "Here are some useful tips and tricks",
   scrollbar = true)
-fun demoTips(parentDisposable: Disposable): DialogPanel {
+fun demoTips(): DialogPanel {
   val panel = panel {
     row {
       label("Bold text")
@@ -115,7 +113,7 @@ fun demoTips(parentDisposable: Disposable): DialogPanel {
             }
             row {
               radioButton("Value = 2, isSelected = true", 2)
-                .applyToComponent { isSelected = true }
+                .selected(true)
                 .comment("Initial bounded value is 0, this RadioButton is selected because initial bound variable value is not equal to values of RadioButton in the group and isSelected = true", maxLineLength = 40)
             }
           }.bind({ value }, { value = it })
@@ -124,10 +122,6 @@ fun demoTips(parentDisposable: Disposable): DialogPanel {
         .resizableColumn()
     }
   }
-
-  val disposable = Disposer.newDisposable()
-  panel.registerValidators(disposable)
-  Disposer.register(parentDisposable, disposable)
 
   return panel
 }

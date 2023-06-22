@@ -48,16 +48,18 @@ public class CodeBlockBlock extends AbstractJavaBlock {
                         JavaCodeStyleSettings javaSettings,
                         @NotNull FormattingMode formattingMode) {
     super(node, wrap, getAlignmentStrategy(alignment, node, settings), indent, settings, javaSettings, formattingMode);
-    if (isSwitchCodeBlock() && !settings.INDENT_CASE_FROM_SWITCH ||
-        (isLambdaCodeBlock() && settings.LAMBDA_BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED) ||
-        (isSwitchExpressionCodeBlock() &&
-         settings.BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED &&
-         !javaSettings.DOUBLY_SHIFTED_SWITCH_EXPRESSION_BODY)) {
+    if (codeBlockChildrenWithoutIndent(settings)) {
       myChildrenIndent = 0;
     }
     else {
       myChildrenIndent = 1;
     }
+  }
+
+  private boolean codeBlockChildrenWithoutIndent(CommonCodeStyleSettings settings) {
+    return (isSwitchCodeBlock() && !settings.INDENT_CASE_FROM_SWITCH) ||
+           (isLambdaCodeBlock() && settings.LAMBDA_BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED) ||
+           (isSwitchExpressionCodeBlock() && settings.BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED);
   }
 
   /**

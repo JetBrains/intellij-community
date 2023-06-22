@@ -53,8 +53,8 @@ class ClassDefinition(val name: String,
     get() = name.substringBefore('!')
 
   companion object {
-    const val OBJECT_PREAMBLE_SIZE = 8
-    const val ARRAY_PREAMBLE_SIZE = 12
+    const val OBJECT_PREAMBLE_SIZE: Int = 8
+    const val ARRAY_PREAMBLE_SIZE: Int = 12
 
     @NonNls
     fun computePrettyName(name: String): String {
@@ -83,7 +83,7 @@ class ClassDefinition(val name: String,
       }
     }
 
-    val CLASS_FIELD = InstanceField("<class>", -1, Type.OBJECT)
+    val CLASS_FIELD: InstanceField = InstanceField("<class>", -1, Type.OBJECT)
   }
 
   fun getSuperClass(classStore: ClassStore): ClassDefinition? {

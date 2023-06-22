@@ -56,6 +56,9 @@ class KotlinRefactoringSettings : PersistentStateComponent<KotlinRefactoringSett
     var MOVE_SEARCH_FOR_TEXT = true
 
     @JvmField
+    var MOVE_SEARCH_REFERENCES = true
+
+    @JvmField
     var MOVE_DELETE_EMPTY_SOURCE_FILES = true
 
     @JvmField

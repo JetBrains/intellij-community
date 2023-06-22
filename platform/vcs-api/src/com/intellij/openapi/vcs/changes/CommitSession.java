@@ -25,7 +25,7 @@ public interface CommitSession {
    * @deprecated Since version 7.0, implement {@link #getAdditionalConfigurationUI(Collection, String)} instead
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   default JComponent getAdditionalConfigurationUI() {
     return null;

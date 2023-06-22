@@ -3,45 +3,40 @@ package com.intellij.settingsSync
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.EventDispatcher
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
-internal class SettingsSyncEvents : Disposable {
+@ApiStatus.Internal
+class SettingsSyncEvents : Disposable {
 
-  private val settingsChangeDispatcher = EventDispatcher.create(SettingsChangeListener::class.java)
-  private val enabledStateChangeDispatcher = EventDispatcher.create(SettingsSyncEnabledStateListener::class.java)
-  private val categoriesChangeDispatcher = EventDispatcher.create(SettingsSyncCategoriesChangeListener::class.java)
+  private val eventDispatcher = EventDispatcher.create(SettingsSyncEventListener::class.java)
 
-  fun addSettingsChangedListener(settingsChangeListener: SettingsChangeListener) {
-    settingsChangeDispatcher.addListener(settingsChangeListener)
+  fun addListener(listener: SettingsSyncEventListener) {
+    eventDispatcher.addListener(listener)
   }
 
-  fun removeSettingsChangedListener(settingsChangeListener: SettingsChangeListener) {
-    settingsChangeDispatcher.removeListener(settingsChangeListener)
+  fun addListener(listener: SettingsSyncEventListener, parentDisposable: Disposable? = null) {
+    eventDispatcher.addListener(listener, parentDisposable ?: this)
+  }
+
+  fun removeListener(listener: SettingsSyncEventListener) {
+    eventDispatcher.removeListener(listener)
   }
 
   fun fireSettingsChanged(event: SyncSettingsEvent) {
-    settingsChangeDispatcher.multicaster.settingChanged(event)
-  }
-
-  fun addCategoriesChangeListener(categoriesChangeListener: SettingsSyncCategoriesChangeListener) {
-    categoriesChangeDispatcher.addListener(categoriesChangeListener)
-  }
-
-  fun removeCategoriesChangeListener(categoriesChangeListener: SettingsSyncCategoriesChangeListener) {
-    categoriesChangeDispatcher.removeListener(categoriesChangeListener)
+    eventDispatcher.multicaster.settingChanged(event)
   }
 
   fun fireCategoriesChanged() {
-    categoriesChangeDispatcher.multicaster.categoriesStateChanged()
-  }
-
-  fun addEnabledStateChangeListener(listener: SettingsSyncEnabledStateListener, parentDisposable: Disposable? = null) {
-    if (parentDisposable != null) enabledStateChangeDispatcher.addListener(listener, parentDisposable)
-    else enabledStateChangeDispatcher.addListener(listener, this)
+    eventDispatcher.multicaster.categoriesStateChanged()
   }
 
   fun fireEnabledStateChanged(syncEnabled: Boolean) {
-    enabledStateChangeDispatcher.multicaster.enabledStateChanged(syncEnabled)
+    eventDispatcher.multicaster.enabledStateChanged(syncEnabled)
+  }
+
+  fun fireRestartRequired(cause: String, details: String) {
+    eventDispatcher.multicaster.restartRequired(cause, details)
   }
 
   companion object {
@@ -49,11 +44,13 @@ internal class SettingsSyncEvents : Disposable {
   }
 
   override fun dispose() {
-    settingsChangeDispatcher.listeners.clear()
-    enabledStateChangeDispatcher.listeners.clear()
+    eventDispatcher.listeners.clear()
   }
 }
 
-interface SettingsSyncCategoriesChangeListener : EventListener {
-  fun categoriesStateChanged()
+interface SettingsSyncEventListener : EventListener {
+  fun categoriesStateChanged() {}
+  fun settingChanged(event: SyncSettingsEvent) {}
+  fun enabledStateChanged(syncEnabled: Boolean) {}
+  fun restartRequired(cause: String, details: String) {}
 }

@@ -1,4 +1,4 @@
 class Type {
-    void main(MainClass.Name.T t) {
+    void main(MainClass.Name t) {
     }
 }

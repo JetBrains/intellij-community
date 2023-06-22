@@ -41,9 +41,9 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.workspaceModel.ide.WorkspaceModel;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl;
-import com.intellij.workspaceModel.storage.MutableEntityStorage;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -171,7 +171,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   @NotNull
   public ModuleEditor getOrCreateModuleEditor(@NotNull Module module) {
-    LOG.assertTrue(getModule(module.getName()) != null, "Module has been deleted");
+    String moduleName = module.getName();
+    LOG.assertTrue(getModule(moduleName) != null, "Module " + moduleName + " has been deleted");
     ModuleEditor editor = getModuleEditor(module);
     if (editor == null) {
       editor = doCreateModuleEditor(module);
@@ -396,23 +397,23 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     var builder = runWizard(wizard);
     if (null == builder) return null;
 
-    final List<Module> modules = new ArrayList<>();
-    final List<Module> committedModules;
+    List<Module> modules;
     if (builder instanceof ProjectImportBuilder<?>) {
       var artifactModel = myProjectStructureConfigurable.getArtifactsStructureConfigurable().getModifiableArtifactModel();
-      committedModules = ((ProjectImportBuilder<?>)builder).commit(myProject, myModuleModel, this, artifactModel);
+      modules = ((ProjectImportBuilder<?>)builder).commit(myProject, myModuleModel, this, artifactModel);
     }
     else {
-      committedModules = builder.commit(myProject, myModuleModel, this);
+      modules = builder.commit(myProject, myModuleModel, this);
     }
-    if (committedModules != null) {
-      modules.addAll(committedModules);
+    if (null != modules && !modules.isEmpty()) {
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        for (Module module : modules) {
+          if (module != null && getModule(module.getName()) != null) {
+            getOrCreateModuleEditor(module);
+          }
+        }
+      });
     }
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      for (Module module : modules) {
-        getOrCreateModuleEditor(module);
-      }
-    });
     return modules;
   }
 
@@ -423,9 +424,9 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   @Nullable
-  public List<Module> addNewModule() {
+  public List<Module> addNewModule(@Nullable String defaultPath) {
     if (myProject.isDefault()) return null;
-    return addModule(this::createNewModuleWizard);
+    return addModule(() -> createNewModuleWizard(defaultPath));
   }
 
   private Module createModule(final ModuleBuilder builder) {
@@ -477,9 +478,9 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   @NotNull
-  private AbstractProjectWizard createNewModuleWizard() {
+  private AbstractProjectWizard createNewModuleWizard(@Nullable String defaultPath) {
     var wizardFactory = ApplicationManager.getApplication().getService(NewProjectWizardFactory.class);
-    return wizardFactory.create(myProject, this);
+    return wizardFactory.create(myProject, this, defaultPath);
   }
 
   public void deleteModules(@NotNull List<? extends ModuleEditor> selectedEditors) {
@@ -584,15 +585,17 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   @ApiStatus.Internal
   public interface NewProjectWizardFactory {
-    @NotNull NewProjectWizard create(@Nullable Project project, @NotNull ModulesProvider modulesProvider);
+    @NotNull NewProjectWizard create(@Nullable Project project, @NotNull ModulesProvider modulesProvider, @Nullable String defaultPath);
   }
 
   @ApiStatus.Internal
   public static class NewProjectWizardFactoryImpl implements NewProjectWizardFactory {
 
     @Override
-    public @NotNull NewProjectWizard create(@Nullable Project project, @NotNull ModulesProvider modulesProvider) {
-      return new NewProjectWizard(project, modulesProvider, null);
+    public @NotNull NewProjectWizard create(@Nullable Project project,
+                                            @NotNull ModulesProvider modulesProvider,
+                                            @Nullable String defaultPath) {
+      return new NewProjectWizard(project, modulesProvider, defaultPath);
     }
   }
 }

@@ -244,7 +244,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
         return editor == null ? super.getCellEditor(row, column) : editor;
       }
     };
-    TreeTableSpeedSearch speedSearch = new TreeTableSpeedSearch(treeTable);
+    TreeTableSpeedSearch speedSearch = TreeTableSpeedSearch.installOn(treeTable);
     speedSearch.setComparator(new SpeedSearchComparator(false));
     mySearchHelper = new SpeedSearchHelper(speedSearch);
 

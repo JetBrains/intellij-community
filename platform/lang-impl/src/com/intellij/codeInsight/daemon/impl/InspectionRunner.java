@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -9,6 +9,7 @@ import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobLauncherImpl;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -42,7 +43,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 
-class InspectionRunner {
+final class InspectionRunner {
   private final PsiFile myPsiFile;
   private final TextRange myRestrictRange;
   private final TextRange myPriorityRange;
@@ -120,8 +121,7 @@ class InspectionRunner {
       }
       //sort init according to the priorities saved earlier to run in order
       InspectionProfilerDataHolder profileData = InspectionProfilerDataHolder.getInstance(myPsiFile.getProject());
-      profileData.sort(myPsiFile, init);
-      profileData.retrieveFavoriteElements(myPsiFile, init);
+      profileData.sortAndRetrieveFavoriteElement(myPsiFile, init);
 
       // injected -> host
       Map<PsiFile, PsiElement> foundInjected = createInjectedFileMap();
@@ -137,6 +137,8 @@ class InspectionRunner {
       };
       visitElements(init, outside, false, finalPriorityRange, TOMB_STONE, afterOutside, foundInjected, injectedContexts,
                     toolWrappers, empty(), enabledToolsPredicate);
+      reportIdsOfInspectionsReportedAnyProblemToFUS(init);
+
       boolean isWholeFileInspectionsPass = !init.isEmpty() && init.get(0).tool.runForWholeFile();
       if (myIsOnTheFly && !isWholeFileInspectionsPass) {
         // do not save stats for batch process, there could be too many files
@@ -150,7 +152,20 @@ class InspectionRunner {
     return ContainerUtil.concat(init, redundantContexts, injectedContexts);
   }
 
-  private static long finalPriorityRange(@NotNull TextRange priorityRange, @NotNull List<? extends Divider.DividedElements> allDivided) {
+  private void reportIdsOfInspectionsReportedAnyProblemToFUS(@NotNull List<? extends InspectionContext> init) {
+    if (!StatisticsUploadAssistant.isCollectAllowedOrForced()) return;
+    Set<String> inspectionIdsReportedProblems = new HashSet<>();
+    InspectionProblemHolder holder;
+    for (InspectionContext context : init) {
+      holder = context.holder;
+      if (holder.anyProblemWasReported()) {
+        inspectionIdsReportedProblems.add(context.tool.getID());
+      }
+    }
+    InspectionUsageStorage.getInstance(myPsiFile.getProject()).reportInspectionsWhichReportedProblems(inspectionIdsReportedProblems);
+  }
+
+  private static long finalPriorityRange(@NotNull TextRange priorityRange, @NotNull List<Divider.DividedElements> allDivided) {
     long finalPriorityRange = allDivided.isEmpty() ? TextRangeScalarUtil.toScalarRange(priorityRange) : allDivided.get(0).priorityRange;
     for (int i = 1; i < allDivided.size(); i++) {
       Divider.DividedElements dividedElements = allDivided.get(i);
@@ -159,15 +174,13 @@ class InspectionRunner {
     return finalPriorityRange;
   }
 
-  @NotNull
-  private InspectionContext createTombStone() {
+  private @NotNull InspectionContext createTombStone() {
     LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(new LocalInspectionEP());
     InspectionProblemHolder holder = new InspectionProblemHolder(myPsiFile, tool, false, myInspectionProfileWrapper, empty());
     return new InspectionContext(tool, holder, new PsiElementVisitor() {});
   }
 
-  @NotNull
-  private static <T> Map<PsiFile, T> createInjectedFileMap() {
+  private static @NotNull <T> Map<PsiFile, T> createInjectedFileMap() {
     // TODO remove when injected PsiFile implemented equals() base on its offsets in the host
     return CollectionFactory.createCustomHashingStrategyMap(new HashingStrategy<>() {
       @Override
@@ -227,7 +240,7 @@ class InspectionRunner {
     }
     InspectionToolWrapper<?,?> toolWrapper = inspectionProfile.getInspectionTool(RedundantSuppressInspectionBase.SHORT_NAME, myPsiFile);
     Language fileLanguage = myPsiFile.getLanguage();
-    InspectionSuppressor suppressor = LanguageInspectionSuppressors.INSTANCE.forLanguage(fileLanguage);
+    InspectionSuppressor suppressor = ContainerUtil.find(LanguageInspectionSuppressors.INSTANCE.allForLanguage(fileLanguage), s -> s instanceof RedundantSuppressionDetector);
     if (!(suppressor instanceof RedundantSuppressionDetector redundantSuppressionDetector)) {
       return;
     }
@@ -254,11 +267,9 @@ class InspectionRunner {
     result.addAll(runner.inspect(wrappers, false, empty(), emptyCallback(), emptyCallback(), null));
   }
 
-  @NotNull
-  private static Consumer<InspectionContext> emptyCallback() { return __ -> { }; }
+  private static @NotNull Consumer<InspectionContext> emptyCallback() { return __ -> { }; }
 
-  @NotNull
-  private static BiPredicate<ProblemDescriptor, LocalInspectionToolWrapper> empty() { return (_1, _2) -> true; }
+  private static @NotNull BiPredicate<ProblemDescriptor, LocalInspectionToolWrapper> empty() { return (_1, _2) -> true; }
 
   private void visitElements(@NotNull List<? extends InspectionContext> init,
                              @NotNull List<? extends PsiElement> elements,
@@ -414,7 +425,7 @@ class InspectionRunner {
   }
 
   static class InspectionProblemHolder extends ProblemsHolder {
-    private @NotNull final LocalInspectionToolWrapper myToolWrapper;
+    private final @NotNull LocalInspectionToolWrapper myToolWrapper;
     private final InspectionProfileWrapper myProfileWrapper;
     private final BiPredicate<? super ProblemDescriptor, ? super LocalInspectionToolWrapper> applyIncrementallyCallback;
     volatile boolean applyIncrementally;
@@ -458,6 +469,10 @@ class InspectionRunner {
           otherStamp = System.nanoTime();
         }
       }
+    }
+
+    boolean anyProblemWasReported() {
+      return errorStamp > 0 || warningStamp > 0 || otherStamp > 0;
     }
   }
 

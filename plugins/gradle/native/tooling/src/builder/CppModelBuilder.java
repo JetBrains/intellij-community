@@ -93,7 +93,7 @@ public class CppModelBuilder implements ModelBuilderService {
         String cppComponentName = cppComponent.getName();
         String cppComponentBaseName = cppComponent.getBaseName().get();
 
-        Set<File> headerDirs = new LinkedHashSet<File>(cppComponent.getPrivateHeaderDirs().getFiles());
+        Set<File> headerDirs = new LinkedHashSet<>(cppComponent.getPrivateHeaderDirs().getFiles());
 
         CppComponentImpl ideCppComponent;
         if (cppComponent instanceof ProductionCppComponent) {
@@ -142,8 +142,8 @@ public class CppModelBuilder implements ModelBuilderService {
             compileTask.setQName(compileTaskName);
             compilationDetails.setCompileTask(compileTask);
 
-            Set<File> compileIncludePath = new LinkedHashSet<File>(cppBinary.getCompileIncludePath().getFiles());
-            Set<File> systemIncludes = new LinkedHashSet<File>();
+            Set<File> compileIncludePath = new LinkedHashSet<>(cppBinary.getCompileIncludePath().getFiles());
+            Set<File> systemIncludes = new LinkedHashSet<>();
             //Since Gradle 4.8, system header include directories should be accessed separately via the systemIncludes property
             //see https://github.com/gradle/gradle-native/blob/master/docs/RELEASE-NOTES.md#better-control-over-system-include-path-for-native-compilation---583
             if (IS_48_OR_BETTER) {
@@ -153,8 +153,8 @@ public class CppModelBuilder implements ModelBuilderService {
             else {
               systemIncludes.addAll(cppCompile.getIncludes().getFiles());
             }
-            compilationDetails.setSystemHeaderSearchPaths(new ArrayList<File>(systemIncludes));
-            compilationDetails.setUserHeaderSearchPaths(new ArrayList<File>(compileIncludePath));
+            compilationDetails.setSystemHeaderSearchPaths(new ArrayList<>(systemIncludes));
+            compilationDetails.setUserHeaderSearchPaths(new ArrayList<>(compileIncludePath));
             compilationDetails.setHeaderDirs(headerDirs);
 
             Set<SourceFile> sources = getSources(project, cppBinary, cppCompile);
@@ -165,7 +165,7 @@ public class CppModelBuilder implements ModelBuilderService {
             File cppCompilerExecutable = findCppCompilerExecutable(project, cppBinary);
             compilationDetails.setCompilerExecutable(cppCompilerExecutable);
 
-            List<String> compilerArgs = new ArrayList<String>(cppCompile.getCompilerArgs().getOrElse(Collections.<String>emptyList()));
+            List<String> compilerArgs = new ArrayList<>(cppCompile.getCompilerArgs().getOrElse(Collections.<String>emptyList()));
             compilationDetails.setAdditionalArgs(compilerArgs);
           }
 
@@ -193,7 +193,7 @@ public class CppModelBuilder implements ModelBuilderService {
   }
 
   private static Set<SourceFile> getSources(Project project, CppBinary cppBinary, CppCompile cppCompile) {
-    Set<SourceFile> sources = new LinkedHashSet<SourceFile>();
+    Set<SourceFile> sources = new LinkedHashSet<>();
     for (File file : cppBinary.getCppSource().getFiles()) {
       sources.add(new SourceFileImpl(file, null));
     }
@@ -340,11 +340,7 @@ public class CppModelBuilder implements ModelBuilderService {
       Logging.getLogger(CppModelBuilder.class)
         .warn("Can not find `" + methodName + "` for receiver [" + receiver + "], gradle version " + GradleVersion.current() , e);
     }
-    catch (IllegalAccessException e) {
-      Logging.getLogger(CppModelBuilder.class)
-        .warn("Can not call `" + methodName + "` for receiver [" + receiver + "], gradle version " + GradleVersion.current(), e);
-    }
-    catch (InvocationTargetException e) {
+    catch (IllegalAccessException | InvocationTargetException e) {
       Logging.getLogger(CppModelBuilder.class)
         .warn("Can not call `" + methodName + "` for receiver [" + receiver + "], gradle version " + GradleVersion.current(), e);
     }

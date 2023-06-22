@@ -16,7 +16,7 @@ private const val SECRET_SCHEMA_ATTRIBUTE_STRING = 0
 private const val DBUS_ERROR_SERVICE_UNKNOWN = 2
 private const val SECRET_ERROR_IS_LOCKED = 2
 
-// explicitly create pointer to be explicitly dispose it to avoid sensitive data in the memory
+// explicitly create a pointer to be explicitly disposing it to avoid sensitive data in the memory
 internal fun stringPointer(data: ByteArray, clearInput: Boolean = false): Memory {
   val pointer = Memory(data.size + 1L)
   pointer.write(0, data, 0, data.size)
@@ -27,7 +27,7 @@ internal fun stringPointer(data: ByteArray, clearInput: Boolean = false): Memory
   return pointer
 }
 
-// we use default collection, it seems no way to use custom
+// we use a default collection, it seems no way to use custom
 internal class SecretCredentialStore private constructor(schemeName: String) : CredentialStore {
   private val serviceAttributeNamePointer by lazy { stringPointer("service".toByteArray()) }
   private val accountAttributeNamePointer by lazy { stringPointer("account".toByteArray()) }
@@ -88,7 +88,7 @@ internal class SecretCredentialStore private constructor(schemeName: String) : C
           val serviceNamePointer = stringPointer(attributes.serviceName.toByteArray())
           if (userName == null) {
             library.secret_password_lookup_sync(schema, null, errorRef, serviceAttributeNamePointer, serviceNamePointer, null)?.let {
-              // Secret Service doesn't allow to get attributes, so, we store joined data
+              // Secret Service doesn't allow getting attributes, so, we store joined data
               return@Supplier splitData(it)
             }
           }
@@ -125,9 +125,10 @@ internal class SecretCredentialStore private constructor(schemeName: String) : C
       return
     }
 
-    val passwordPointer = stringPointer(credentials!!.serialize(!attributes.isPasswordMemoryOnly), true)
+    val passwordPointer = stringPointer(
+      joinData(credentials!!.userName, if (attributes.isPasswordMemoryOnly) null else credentials.password)!!, true)
     checkError("secret_password_store_sync") { errorRef ->
-      try {
+      passwordPointer.use {
         clearPassword(serviceNamePointer, null)
         if (accountName == null) {
           library.secret_password_store_sync(schema, null, serviceNamePointer, passwordPointer, null, errorRef,
@@ -140,9 +141,6 @@ internal class SecretCredentialStore private constructor(schemeName: String) : C
                                              accountAttributeNamePointer, stringPointer(accountName.toByteArray()),
                                              null)
         }
-      }
-      finally {
-        passwordPointer.close()
       }
     }
   }

@@ -37,16 +37,16 @@
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />
-    <orderEntry type="library" name="ASM" level="project" />
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="library" name="jackson-jr-objects" level="project" />
     <orderEntry type="library" name="jackson" level="project" />
-    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.immutableKeyValueStore" />
     <orderEntry type="module" module-name="intellij.platform.util.rt.java8" />
     <orderEntry type="module" module-name="intellij.java.rt" />
     <orderEntry type="module" module-name="intellij.platform.util.rt" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.impl" />
     <orderEntry type="library" scope="RUNTIME" name="Slf4j" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="slf4j-jdk14" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="bouncy-castle-provider" level="project" />
@@ -55,8 +55,6 @@
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="library" scope="TEST" name="memoryfilesystem" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
-    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
-    <orderEntry type="library" scope="TEST" name="commons-compress" level="project" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.base" />

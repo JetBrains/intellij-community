@@ -1,4 +1,3 @@
-// ALLOW_AST_ACCESS
 package test.kotlin
 
 fun foo(a: Any?, b: Any): Any? = a

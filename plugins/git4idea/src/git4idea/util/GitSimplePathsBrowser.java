@@ -20,8 +20,8 @@ import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.changes.ui.AsyncChangesTreeImpl;
 import com.intellij.openapi.vcs.changes.ui.ChangesTree;
-import com.intellij.openapi.vcs.changes.ui.ChangesTreeImpl;
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -52,7 +52,7 @@ public class GitSimplePathsBrowser extends JPanel {
   @NotNull
   private static ChangesTree createBrowser(@NotNull Project project, @NotNull Collection<String> absolutePaths) {
     List<FilePath> filePaths = toFilePaths(absolutePaths);
-    return new ChangesTreeImpl.FilePaths(project, false, false, filePaths);
+    return new AsyncChangesTreeImpl.FilePaths(project, false, false, filePaths);
   }
 
   @NotNull

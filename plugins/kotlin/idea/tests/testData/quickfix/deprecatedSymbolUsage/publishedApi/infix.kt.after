@@ -1,0 +1,12 @@
+// "Replace with generated @PublishedApi bridge call '`access$foo`(...)'" "true"
+open class A {
+    protected infix fun foo(p: Int) {
+    }
+
+    inline fun call() {
+        A() `access$foo` 8
+    }
+
+    @PublishedApi
+    internal infix fun `access$foo`(p: Int) = foo(p)
+}

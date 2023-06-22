@@ -2,14 +2,14 @@
 package org.jetbrains.intellij.build.images
 
 import com.intellij.util.concurrency.AppExecutorUtil
-import kotlinx.coroutines.runBlocking
+import org.jetbrains.intellij.build.images.sync.findProjectHomePath
 import org.jetbrains.intellij.build.images.sync.jpsProject
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
 
-fun main(args: Array<String>) {
+fun main() {
   try {
-    generateIconClasses(args.firstOrNull()?.let { Path.of(it) })
+    generateIconClasses()
   }
   finally {
     shutdownAppScheduledExecutorService()
@@ -33,7 +33,7 @@ data class IntellijIconClassGeneratorModuleConfig(
 
 abstract class IconClasses {
   open val homePath: String
-    get() = System.getProperty("user.dir")
+    get() = findProjectHomePath()
 
   open val modules: List<JpsModule>
     get() = jpsProject(homePath).modules
@@ -43,7 +43,7 @@ abstract class IconClasses {
   open fun getConfigForModule(moduleName: String): IntellijIconClassGeneratorModuleConfig? = null
 }
 
-internal fun generateIconClasses(dbFile: Path?, config: IconClasses = IntellijIconClassGeneratorConfig()) {
+internal fun generateIconClasses(config: IconClasses = IntellijIconClassGeneratorConfig()) {
   val home = Path.of(config.homePath)
 
   val modules = config.modules
@@ -58,13 +58,6 @@ internal fun generateIconClasses(dbFile: Path?, config: IconClasses = IntellijIc
     val generator = config.generator(home, modules)
     modules.parallelStream().forEach { generator.processModule(it, config.getConfigForModule(it.name)) }
     generator.printStats()
-  }
-
-  if (dbFile != null) {
-    val preCompiler = ImageSvgPreCompiler()
-    runBlocking {
-      preCompiler.preCompileIcons(modules, dbFile)
-    }
   }
 
   val checker = ImageSanityChecker(home)

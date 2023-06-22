@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.TextChange;
@@ -40,8 +26,7 @@ public class TextChangesStorage {
    *            text and that returned list is sorted by start offset in ascending order
    * @see #store(TextChange)
    */
-  @NotNull
-  public List<TextChangeImpl> getChanges() {
+  public @NotNull List<TextChangeImpl> getChanges() {
     if (myChanges.isEmpty()) return Collections.emptyList();
     List<TextChangeImpl> result = new ArrayList<>(myChanges.size());
 
@@ -59,8 +44,7 @@ public class TextChangesStorage {
    * @param end     target range end offset (exclusive)
    * @return        list that contains all registered changes that have intersections with the target text range
    */
-  @NotNull
-  public List<? extends TextChange> getChanges(int start, int end) {
+  public @NotNull List<? extends TextChange> getChanges(int start, int end) {
     assert start <= end;
     
     int changeStartIndex = getChangeIndex(start);
@@ -488,9 +472,8 @@ public class TextChangesStorage {
       return clientStartOffset + change.getText().length();
     }
     
-    @NonNls
     @Override
-    public String toString() {
+    public @NonNls String toString() {
       return "client start offset: " + clientStartOffset + ", change: " + change;
     }
   }

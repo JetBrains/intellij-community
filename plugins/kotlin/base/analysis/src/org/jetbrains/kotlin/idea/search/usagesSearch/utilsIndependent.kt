@@ -92,10 +92,12 @@ private fun processClassDelegationCallsToSpecifiedConstructor(
     constructorCallHandle: KotlinSearchUsagesSupport.ConstructorCallHandle,
     process: (KtCallElement) -> Boolean
 ): Boolean {
-    for (secondaryConstructor in klass.secondaryConstructors) {
-        val delegationCall = secondaryConstructor.getDelegationCall()
-        if (constructorCallHandle.referencedTo(delegationCall)) {
-            if (!process(delegationCall)) return false
+    if (!klass.containingKtFile.isCompiled) {
+        for (secondaryConstructor in klass.secondaryConstructors) {
+            val delegationCall = secondaryConstructor.getDelegationCall()
+            if (constructorCallHandle.referencedTo(delegationCall)) {
+                if (!process(delegationCall)) return false
+            }
         }
     }
     if (!klass.isEnum()) return true

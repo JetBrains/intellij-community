@@ -3,11 +3,11 @@ package com.intellij.collaboration.ui.codereview.list
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle.message
 import com.intellij.collaboration.ui.icon.OverlaidOffsetIconsIcon
+import com.intellij.collaboration.ui.util.CodeReviewColorUtil
 import com.intellij.ide.IdeTooltip
 import com.intellij.ide.IdeTooltipManager
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.list.SelectablePanel
@@ -40,10 +40,10 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
   private val tags = JLabel()
   private val state = JLabel().apply {
     border = JBUI.Borders.empty(0, 4)
-    foreground = stateForeground
+    foreground = CodeReviewColorUtil.Review.stateForeground
   }
   private val statePanel = StatePanel(state).apply {
-    background = stateBackground
+    background = CodeReviewColorUtil.Review.stateBackground
   }
   private val nonMergeable = JLabel()
   private val buildStatus = JLabel()
@@ -237,10 +237,6 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
 
   companion object {
     private const val MAX_PARTICIPANT_ICONS = 2
-
-    // TODO: register metadata provider somehow?
-    private val stateForeground = JBColor.namedColor("ReviewList.state.foreground", 0x797979)
-    private val stateBackground = JBColor.namedColor("ReviewList.state.background", 0xDFE1E5)
 
     /**
      * Draws a background with rounded corners

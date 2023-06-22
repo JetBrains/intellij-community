@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -8,7 +9,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.EqualsToEqualityFix;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ClassUtils;
@@ -33,7 +33,7 @@ public class ObjectEqualsCanBeEqualityInspection extends BaseInspection {
 
   @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final Boolean not = (Boolean)infos[0];
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)infos[1];
     return EqualsToEqualityFix.buildFix(methodCallExpression, not.booleanValue());

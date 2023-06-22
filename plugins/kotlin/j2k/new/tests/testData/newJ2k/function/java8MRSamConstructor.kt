@@ -14,7 +14,7 @@ internal class Test {
     constructor()
 
     companion object {
-        var field = Java8Class()
+        var field: Java8Class = Java8Class()
         fun staticFun(): Java8Class {
             return Java8Class()
         }

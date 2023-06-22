@@ -4,22 +4,21 @@ package com.intellij.openapi.project;
 import com.intellij.idea.TestFor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.MergingTaskQueue.SubmissionReceipt;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
-import org.junit.Ignore;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
+import java.util.function.Supplier;
 
 public class MergingTaskQueueTest extends BasePlatformTestCase {
   private final MergingTaskQueue myQueue = new MergingTaskQueue<>();
@@ -53,12 +52,12 @@ public class MergingTaskQueueTest extends BasePlatformTestCase {
   }
 
   static class LoggingTask implements MergeableQueueTask<LoggingTask> {
-    private final @Nullable List<@NotNull Integer> performLog;
-    private final @Nullable List<@NotNull Integer> disposeLog;
+    private final @Nullable Collection<@NotNull Integer> performLog;
+    private final @Nullable Collection<@NotNull Integer> disposeLog;
     private final BiFunction<@NotNull LoggingTask, @NotNull LoggingTask, @Nullable LoggingTask> tryMergeWithFn;
     private final int taskId;
 
-    LoggingTask(int taskId, @Nullable List<Integer> performLog, @Nullable List<Integer> disposeLog) {
+    LoggingTask(int taskId, @Nullable Collection<Integer> performLog, @Nullable Collection<Integer> disposeLog) {
       this(taskId, performLog, disposeLog, (thiz, other) -> null);
     }
 
@@ -66,7 +65,7 @@ public class MergingTaskQueueTest extends BasePlatformTestCase {
       this(taskId, null, null, tryMergeWithFn);
     }
 
-    LoggingTask(int taskId, @Nullable List<Integer> performLog, @Nullable List<Integer> disposeLog,
+    LoggingTask(int taskId, @Nullable Collection<Integer> performLog, @Nullable Collection<Integer> disposeLog,
                 @NotNull BiFunction<@NotNull LoggingTask, @NotNull LoggingTask, @Nullable LoggingTask> tryMergeWithFn) {
       this.performLog = performLog;
       this.disposeLog = disposeLog;
@@ -502,6 +501,36 @@ public class MergingTaskQueueTest extends BasePlatformTestCase {
 
     Assert.assertTrue(Disposer.isDisposed(task));
     Assert.assertTrue(myDisposeFlag.get());
+  }
+
+  public void testSubmittedTasksCounterDoesNotDecrease() {
+    AtomicInteger counter = new AtomicInteger(0);
+    Random random = new Random();
+
+    Supplier<LoggingTask> taskFactory = () -> new LoggingTask(counter.incrementAndGet(), (thiz, other) -> {
+      return switch (random.nextInt(4)) {
+        case 0 -> thiz;
+        case 1 -> other;
+        case 2 -> new LoggingTask(counter.incrementAndGet(), thiz.tryMergeWithFn);
+        default -> null;
+      };
+    });
+
+    SubmissionReceipt lastSubmissionReceipt = myQueue.addTask(taskFactory.get());
+    for (int i = 0; i < 100; i++) {
+      SubmissionReceipt submissionReceipt = myQueue.addTask(taskFactory.get());
+      assertFalse("old=" + lastSubmissionReceipt + " new=" + submissionReceipt, lastSubmissionReceipt.isAfter(submissionReceipt));
+      assertEquals(submissionReceipt, myQueue.getLatestSubmissionReceipt());
+      lastSubmissionReceipt = submissionReceipt;
+    }
+  }
+
+  public void testGetLatestSubmissionReceipt() {
+    SubmissionReceipt receiptWhenAdded = myQueue.addTask(new LoggingTask(1, null, null));
+    SubmissionReceipt receiptWhenQueried = myQueue.getLatestSubmissionReceipt();
+    assertEquals(receiptWhenAdded, receiptWhenQueried);
+    assertFalse(receiptWhenAdded.isAfter(receiptWhenQueried));
+    assertFalse(receiptWhenQueried.isAfter(receiptWhenAdded));
   }
 
   private static void await(@NotNull CyclicBarrier b) {

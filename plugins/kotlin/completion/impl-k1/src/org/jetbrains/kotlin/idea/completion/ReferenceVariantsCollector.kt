@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.PrefixMatcher
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.codeInsight.ReferenceVariantsHelper
 import org.jetbrains.kotlin.idea.core.KotlinIndicesHelper
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DataClassResolver
+import org.jetbrains.kotlin.resolve.DescriptorUtils.isEnumClass
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindExclude
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
@@ -115,6 +117,27 @@ class ReferenceVariantsCollector(
         consumer(basic)
         val extensions = collectExtensionVariants(config, basic).fixDescriptors()
         consumer(extensions)
+    }
+
+    data class ReferenceVariantsCollectors(
+        val basic: Lazy<ReferenceVariants>,
+        val extensions: Lazy<ReferenceVariants>
+    )
+
+    fun makeReferenceVariantsCollectors(descriptorKindFilter: DescriptorKindFilter): ReferenceVariantsCollectors {
+        val config = configuration(descriptorKindFilter)
+
+        val basic = lazy {
+            assert(!isCollectingFinished)
+            collectBasicVariants(config).fixDescriptors()
+        }
+
+        val extensions = lazy {
+            assert(!isCollectingFinished)
+            collectExtensionVariants(config, basic.value).fixDescriptors()
+        }
+
+        return ReferenceVariantsCollectors(basic, extensions)
     }
 
     private fun collectBasicVariants(filterConfiguration: FilterConfiguration): ReferenceVariants {
@@ -253,6 +276,10 @@ class ReferenceVariantsCollector(
         if (!configuration.dataClassComponentFunctions)
             variants = variants.filter { !isDataClassComponentFunction(it) }
 
+        if (configuration.excludeEnumEntries) {
+            variants = variants.filterNot(::isEnumEntriesProperty)
+        }
+
         return variants
     }
 
@@ -267,14 +294,19 @@ class ReferenceVariantsCollector(
             if (descriptor.isArtificialImportAliasedDescriptor) return false // do not exclude aliased descriptors - they cannot be completed via indices
             val containingPackage = descriptor.containingDeclaration as? PackageFragmentDescriptor ?: return false
             // TODO: temporary solution for Android synthetic extensions
-            if (containingPackage.fqName.asString().startsWith("kotlinx.android.synthetic.")) return false
-            return true
+            return !containingPackage.fqName.asString().startsWith("kotlinx.android.synthetic.")
         }
 
         override val fullyExcludedDescriptorKinds: Int get() = 0
     }
 
     private fun isDataClassComponentFunction(descriptor: DeclarationDescriptor): Boolean =
-        descriptor is FunctionDescriptor && descriptor.isOperator && DataClassResolver.isComponentLike(descriptor.name) && descriptor.kind == CallableMemberDescriptor.Kind
-            .SYNTHESIZED
+        descriptor is FunctionDescriptor && descriptor.isOperator &&
+                DataClassResolver.isComponentLike(descriptor.name) && descriptor.kind == CallableMemberDescriptor.Kind.SYNTHESIZED
+
+    private fun isEnumEntriesProperty(descriptor: DeclarationDescriptor): Boolean {
+        return descriptor.name == StandardNames.ENUM_ENTRIES &&
+                (descriptor as? CallableMemberDescriptor)?.kind == CallableMemberDescriptor.Kind.SYNTHESIZED &&
+                isEnumClass(descriptor.containingDeclaration)
+    }
 }

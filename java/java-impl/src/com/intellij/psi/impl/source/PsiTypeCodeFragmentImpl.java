@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,11 +19,11 @@ public class PsiTypeCodeFragmentImpl extends PsiCodeFragmentImpl implements PsiT
   private final boolean myAllowDisjunction;
   private final boolean myAllowConjunction;
 
-  public PsiTypeCodeFragmentImpl(final Project project,
-                                 final boolean isPhysical,
-                                 @NonNls final String name,
-                                 final CharSequence text,
-                                 final int flags,
+  public PsiTypeCodeFragmentImpl(Project project,
+                                 boolean isPhysical,
+                                 @NonNls String name,
+                                 CharSequence text,
+                                 int flags,
                                  PsiElement context) {
     super(project,
           isSet(flags, JavaCodeFragmentFactory.ALLOW_INTERSECTION) ? JavaElementType.TYPE_WITH_CONJUNCTIONS_TEXT : JavaElementType.TYPE_WITH_DISJUNCTIONS_TEXT,
@@ -62,7 +48,8 @@ public class PsiTypeCodeFragmentImpl extends PsiCodeFragmentImpl implements PsiT
     class MyTypeSyntaxException extends RuntimeException {
       final PsiErrorElement error;
 
-      MyTypeSyntaxException(final PsiErrorElement e) { super(e.getErrorDescription());
+      MyTypeSyntaxException(PsiErrorElement e) {
+        super(e.getErrorDescription());
         error = e;
       }
     }
@@ -91,7 +78,7 @@ public class PsiTypeCodeFragmentImpl extends PsiCodeFragmentImpl implements PsiT
     else if (type instanceof PsiDisjunctionType && !myAllowDisjunction) {
       throw new TypeSyntaxException("Disjunction not allowed: " + type);
     }
-    else if (type instanceof PsiDisjunctionType && !myAllowConjunction) {
+    else if (type instanceof PsiIntersectionType && !myAllowConjunction) {
       throw new TypeSyntaxException("Conjunction not allowed: " + type);
     }
     return type;

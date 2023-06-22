@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.codeInsight.intention.*;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.icons.AllIcons;
+import com.intellij.icons.ExpUiIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
@@ -307,7 +308,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
 
   private static @NotNull Icon getCloseIcon() {
     if (CLOSE_ICON == null) {
-      CLOSE_ICON = IconManager.getInstance().getIcon("expui/general/close.svg", AllIcons.class);
+      CLOSE_ICON = ExpUiIcons.General.Close;
     }
     return CLOSE_ICON;
   }
@@ -385,7 +386,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
 
   @Override
   public double getWeight() {
-    return 0;
+    return (this.getClass().hashCode() % Integer.MAX_VALUE) / (double) Integer.MAX_VALUE;
   }
 
   protected @Nullable @IntentionName String getIntentionActionText() {

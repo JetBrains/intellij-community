@@ -3,7 +3,6 @@ package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
-import org.jetbrains.intellij.build.impl.BaseLayout
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.kotlin.KotlinBinaries
 
@@ -44,8 +43,11 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     useSplash = true
     buildCrossPlatformDistribution = true
 
-    productLayout.productImplementationModules = listOf("intellij.platform.main")
-    productLayout.withAdditionalPlatformJar(BaseLayout.APP_JAR, "intellij.idea.community.resources")
+    /* main module for JetBrains Client isn't available in the intellij-community project, 
+       so this property is set only when IDEA CE is built from the intellij-ultimate project. */
+    embeddedJetBrainsClientMainModule = null
+
+    productLayout.productImplementationModules = listOf("intellij.platform.main", "intellij.idea.community.resources")
     productLayout.bundledPluginModules = IDEA_BUNDLED_PLUGINS
       .add("intellij.javaFX.community")
       .toMutableList()
@@ -71,6 +73,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     ))
 
     versionCheckerConfig = CE_CLASS_VERSIONS
+    buildDocAuthoringAssets = true
   }
 
   override suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {

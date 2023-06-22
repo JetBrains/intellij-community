@@ -4,6 +4,7 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUiSizes;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
@@ -33,7 +34,10 @@ import java.util.function.Supplier;
 
 public class ActionButtonWithText extends ActionButton {
   private static final int ICON_TEXT_SPACE = 2;
-  private static final int TEXT_ARROW_SPACE = 1;
+  /**
+   * @see ToolbarComboWidgetUiSizes#getGapBeforeExpandIcon()
+   */
+  private static final int TEXT_ARROW_SPACE = 2;
   private static final int BUTTONS_GAP = 4;
 
   private int myHorizontalTextPosition = SwingConstants.TRAILING;
@@ -165,12 +169,15 @@ public class ActionButtonWithText extends ActionButton {
     String description = myPresentation.getDescription();
     if (Registry.is("ide.helptooltip.enabled")) {
       HelpTooltip.dispose(this);
-      if (StringUtil.isNotEmpty(description)) {
-        HelpTooltip tooltip = new HelpTooltip().setDescription(description);
+      HelpTooltip tooltip = myPresentation.getClientProperty(CUSTOM_HELP_TOOLTIP);
+      if (StringUtil.isNotEmpty(description) && tooltip == null) {
+        tooltip = new HelpTooltip().setDescription(description);
         Boolean property = myPresentation.getClientProperty(SHORTCUT_SHOULD_SHOWN);
         if(property != null && property) {
           tooltip.setShortcut(getShortcutText());
         }
+      }
+      if (tooltip != null) {
         tooltip.installOn(this);
       }
     } else {

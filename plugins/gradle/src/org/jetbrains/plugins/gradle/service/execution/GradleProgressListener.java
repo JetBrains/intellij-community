@@ -10,22 +10,17 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
-import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor;
 import com.intellij.openapi.externalSystem.model.task.event.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
-import com.intellij.util.containers.ContainerUtil;
 import org.gradle.internal.impldep.com.google.gson.GsonBuilder;
-import org.gradle.tooling.ProgressEvent;
-import org.gradle.tooling.ProgressListener;
 import org.gradle.tooling.events.FinishEvent;
-import org.gradle.tooling.events.OperationResult;
+import org.gradle.tooling.events.ProgressEvent;
+import org.gradle.tooling.events.ProgressListener;
 import org.gradle.tooling.events.StatusEvent;
-import org.gradle.tooling.events.task.TaskProgressEvent;
-import org.gradle.tooling.events.test.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.tooling.Message;
@@ -42,7 +37,7 @@ import static org.jetbrains.plugins.gradle.tooling.internal.ExtraModelBuilder.MO
 /**
  * @author Vladislav.Soroka
  */
-public class GradleProgressListener implements ProgressListener, org.gradle.tooling.events.ProgressListener {
+public class GradleProgressListener implements ProgressListener, org.gradle.tooling.ProgressListener {
   private static final Logger LOG = Logger.getInstance(GradleProgressListener.class);
 
   private final ExternalSystemTaskNotificationListener myListener;
@@ -53,143 +48,60 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
   private static final String STARTING_GRADLE_DAEMON_EVENT = "Starting Gradle Daemon";
   private ExternalSystemTaskNotificationEvent myLastStatusChange = null;
 
-  public GradleProgressListener(@NotNull ExternalSystemTaskNotificationListener listener,
-                                @NotNull ExternalSystemTaskId taskId) {
+  public GradleProgressListener(
+    @NotNull ExternalSystemTaskNotificationListener listener,
+    @NotNull ExternalSystemTaskId taskId
+  ) {
     this(listener, taskId, null);
   }
 
-  public GradleProgressListener(@NotNull ExternalSystemTaskNotificationListener listener,
-                                @NotNull ExternalSystemTaskId taskId,
-                                @Nullable String buildRootDir) {
+  public GradleProgressListener(
+    @NotNull ExternalSystemTaskNotificationListener listener,
+    @NotNull ExternalSystemTaskId taskId,
+    @Nullable String buildRootDir
+  ) {
     myListener = listener;
     myTaskId = taskId;
-    myOperationId = (taskId.hashCode() + FileUtil.pathHashCode(buildRootDir == null ? UUID.randomUUID().toString() : buildRootDir)) + "_";
-  }
-
-  @Override
-  public void statusChanged(org.gradle.tooling.events.ProgressEvent event) {
-    GradleProgressEventConverter.EventId eventId = GradleProgressEventConverter.getEventId(event, myOperationId);
-    ExternalSystemTaskNotificationEvent progressBuildEvent =
-      GradleProgressEventConverter.createProgressBuildEvent(myTaskId, myTaskId, event);
-    sendProgressToOutputIfNeeded(event);
-    if (progressBuildEvent != null && event instanceof StatusEvent) {
-      // update IDE progress determinate indicator
-      myListener.onStatusChange(progressBuildEvent);
-    }
-
-    maybeUpdateTaskStatus(progressBuildEvent);
-
-    if (event instanceof TestOutputEvent) {
-      final ExternalSystemTaskNotificationEvent testNotificationEvent = convertToTestNotificationEvent((TestOutputEvent)event, eventId);
-      if (testNotificationEvent != null) {
-        myListener.onStatusChange(testNotificationEvent);
-      }
-    }
-
-    if (event instanceof TestProgressEvent) {
-      final ExternalSystemTaskNotificationEvent testNotificationEvent = convertToTestNotificationEvent((TestProgressEvent)event, eventId);
-      if (testNotificationEvent != null) {
-        myListener.onStatusChange(testNotificationEvent);
-      }
-    }
-
-
-    if (event instanceof TaskProgressEvent) {
-      ExternalSystemTaskNotificationEvent notificationEvent = GradleProgressEventConverter.convert(
-        myTaskId, event, new GradleProgressEventConverter.EventId(eventId.id, myTaskId));
-      myListener.onStatusChange(notificationEvent);
-    }
-  }
-
-  private ExternalSystemTaskNotificationEvent convertToTestNotificationEvent(TestOutputEvent outputEvent,
-                                                                             GradleProgressEventConverter.EventId eventId) {
-    TestOutputDescriptor descriptor = outputEvent.getDescriptor();
-    String prefix = outputEvent.getDescriptor().getDestination() == Destination.StdOut ? "StdOut" : "StdErr";
-    String message = prefix + outputEvent.getDescriptor().getMessage();
-    if (descriptor instanceof JvmTestOperationDescriptor) {
-      final TestOperationDescriptor operationDescriptor = convertDescriptor(outputEvent, (JvmTestOperationDescriptor)descriptor);
-      ExternalSystemMessageEvent<TestOperationDescriptor> event = new ExternalSystemMessageEventImpl<>(eventId.id.toString(),
-                                                                                                       eventId.parentId.toString(),
-                                                                                                       operationDescriptor,
-                                                                                                       message);
-      return new ExternalSystemTaskExecutionEvent(myTaskId, event);
-    }
-
-    return null;
-  }
-
-  private Failure convert(org.gradle.tooling.Failure gradleFailure) {
-    return new FailureImpl(gradleFailure.getMessage(),
-                           gradleFailure.getDescription(),
-                           ContainerUtil.map(gradleFailure.getCauses(), this::convert));
-  }
-
-  private ExternalSystemTaskNotificationEvent convertToTestNotificationEvent(TestProgressEvent testProgressEvent,
-                                                                             GradleProgressEventConverter.EventId eventId) {
-    org.gradle.tooling.events.test.TestOperationDescriptor descriptor = testProgressEvent.getDescriptor();
-
-    if (descriptor instanceof JvmTestOperationDescriptor) {
-      final TestOperationDescriptor operationDescriptor = convertDescriptor(testProgressEvent, (JvmTestOperationDescriptor)descriptor);
-      if (testProgressEvent instanceof TestStartEvent) {
-        ExternalSystemStartEvent<TestOperationDescriptor> event = new ExternalSystemStartEventImpl<>(eventId.id.toString(),
-                                                                                                     eventId.parentId.toString(),
-                                                                                                     operationDescriptor);
-        return new ExternalSystemTaskExecutionEvent(myTaskId, event);
-      }
-
-      if (testProgressEvent instanceof TestFinishEvent) {
-        TestOperationResult gradleResult = ((TestFinishEvent)testProgressEvent).getResult();
-
-        com.intellij.openapi.externalSystem.model.task.event.OperationResult operationResult = null;
-        if (gradleResult instanceof TestSuccessResult) {
-          operationResult = new SuccessResultImpl(gradleResult.getStartTime(), gradleResult.getEndTime(), true);
-        } else if (gradleResult instanceof TestFailureResult gradleFailure) {
-          operationResult = new FailureResultImpl(gradleFailure.getStartTime(), gradleFailure.getEndTime(), ContainerUtil.map(gradleFailure.getFailures(), this::convert));
-        } else  if (gradleResult instanceof TestSkippedResult) {
-          operationResult = new SkippedResultImpl(gradleResult.getStartTime(), gradleResult.getEndTime());
-        }
-
-        if (operationResult != null) {
-          ExternalSystemFinishEvent<TestOperationDescriptor> event =
-            new ExternalSystemFinishEventImpl<>(eventId.id.toString(),
-                                                eventId.parentId.toString(),
-                                                operationDescriptor,
-                                                operationResult);
-
-          return new ExternalSystemTaskExecutionEvent(myTaskId, event);
-        }
-      }
-    }
-
-    return null;
-  }
-
-  @NotNull
-  private static TestOperationDescriptor convertDescriptor(org.gradle.tooling.events.ProgressEvent testProgressEvent,
-                                                           JvmTestOperationDescriptor descriptor) {
-    String id = descriptor.getDisplayName();
-    boolean parentIsTest = descriptor.getParent() instanceof org.gradle.tooling.events.test.TestOperationDescriptor;
-    String parentId = parentIsTest ? descriptor.getParent().getDisplayName() : null;
-
-    return new TestOperationDescriptorImpl(descriptor.getDisplayName(),
-                                           testProgressEvent.getEventTime(),
-                                           descriptor.getSuiteName(),
-                                           descriptor.getClassName(),
-                                           descriptor.getMethodName()
-    );
+    myOperationId = taskId.hashCode() + ":" + FileUtil.pathHashCode(buildRootDir == null ? UUID.randomUUID().toString() : buildRootDir);
   }
 
   @Override
   public void statusChanged(ProgressEvent event) {
-    String eventDescription = event.getDescription();
-    if (maybeReportModelBuilderMessage(eventDescription)) {
-      return;
+    sendProgressToOutputIfNeeded(event);
+
+    var progressBuildEvent = GradleProgressEventConverter.convertProgressBuildEvent(myTaskId, myTaskId, event);
+    if (progressBuildEvent != null) {
+      if (event instanceof StatusEvent) {
+        // update IDE progress determinate indicator
+        myListener.onStatusChange(progressBuildEvent);
+      }
+      else if (!progressBuildEvent.equals(myLastStatusChange)) {
+        myListener.onStatusChange(progressBuildEvent);
+        myLastStatusChange = progressBuildEvent;
+      }
     }
-    ExternalSystemTaskNotificationEvent progressBuildEvent =
-      GradleProgressEventConverter.legacyCreateProgressBuildEvent(myTaskId, myTaskId, eventDescription);
-    maybeUpdateTaskStatus(progressBuildEvent);
-    myListener.onStatusChange(new ExternalSystemTaskNotificationEvent(myTaskId, eventDescription));
-    reportGradleDaemonStartingEvent(eventDescription);
+
+    var taskNotificationEvent = GradleProgressEventConverter.createTaskNotificationEvent(myTaskId, myOperationId, event);
+    if (taskNotificationEvent != null) {
+      myListener.onStatusChange(taskNotificationEvent);
+    }
+  }
+
+  @Override
+  public void statusChanged(org.gradle.tooling.ProgressEvent event) {
+    var eventDescription = event.getDescription();
+    if (!maybeReportModelBuilderMessage(eventDescription)) {
+      var progressBuildEvent = GradleProgressEventConverter.legacyConvertProgressBuildEvent(myTaskId, myTaskId, eventDescription);
+      if (progressBuildEvent != null && !progressBuildEvent.equals(myLastStatusChange)) {
+        myListener.onStatusChange(progressBuildEvent);
+        myLastStatusChange = progressBuildEvent;
+      }
+
+      var taskNotificationEvent = GradleProgressEventConverter.legacyConvertTaskNotificationEvent(myTaskId, eventDescription);
+      myListener.onStatusChange(taskNotificationEvent);
+
+      reportGradleDaemonStartingEvent(eventDescription);
+    }
   }
 
   private boolean maybeReportModelBuilderMessage(String eventDescription) {
@@ -221,16 +133,7 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
     return false;
   }
 
-  private void maybeUpdateTaskStatus(@Nullable ExternalSystemTaskNotificationEvent progressBuildEvent) {
-    if (progressBuildEvent != null) {
-      if (!progressBuildEvent.equals(myLastStatusChange)) {
-        myListener.onStatusChange(progressBuildEvent);
-        myLastStatusChange = progressBuildEvent;
-      }
-    }
-  }
-
-  private void sendProgressToOutputIfNeeded(org.gradle.tooling.events.ProgressEvent progressEvent) {
+  private void sendProgressToOutputIfNeeded(ProgressEvent progressEvent) {
     @NlsSafe final String operationName = progressEvent.getDescriptor().getName();
     if (progressEvent instanceof StatusEvent) {
       StatusEvent statusEvent = ((StatusEvent)progressEvent);
@@ -253,7 +156,7 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
     else if (progressEvent instanceof FinishEvent finishEvent) {
       StatusEvent statusEvent = myDownloadStatusEventIds.remove(operationName);
       if (statusEvent != null) {
-        OperationResult operationResult = finishEvent.getResult();
+        var operationResult = finishEvent.getResult();
         long duration = operationResult.getEndTime() - operationResult.getStartTime();
         long progress = statusEvent.getProgress() > 0 ? statusEvent.getProgress() : 0;
         long total = statusEvent.getTotal() > 0 ? statusEvent.getTotal() : 0;

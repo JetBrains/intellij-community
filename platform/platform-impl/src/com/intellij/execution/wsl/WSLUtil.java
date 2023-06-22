@@ -85,24 +85,6 @@ public final class WSLUtil {
     return StringUtil.isEmpty(localAppDataPath) ? null : Paths.get(localAppDataPath, "Microsoft\\WindowsApps");
   }
 
-  /**
-   * @return instance of WSL distribution or null if it's unavailable
-   * @deprecated Use {@link WslDistributionManager#getOrCreateDistributionByMsId(String)}
-   */
-  @Nullable
-  @Deprecated(forRemoval = true)
-  public static WSLDistribution getDistributionByMsId(@Nullable String name) {
-    if (name == null) {
-      return null;
-    }
-    for (WSLDistribution distribution : getAvailableDistributions()) {
-      if (name.equals(distribution.getMsId())) {
-        return distribution;
-      }
-    }
-    return null;
-  }
-
   public static boolean isSystemCompatible() {
     return SystemInfo.isWin10OrNewer;
   }

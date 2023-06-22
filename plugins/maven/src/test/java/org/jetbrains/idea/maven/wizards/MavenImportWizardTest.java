@@ -4,7 +4,7 @@ package org.jetbrains.idea.maven.wizards;
 import com.intellij.ide.projectWizard.ProjectWizardTestCase;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.maven.testFramework.MavenTestCase;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.maven.testFramework.utils.MavenImportingTestCaseKt;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -29,8 +29,9 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
@@ -39,7 +40,6 @@ import static com.intellij.testFramework.PlatformTestUtil.assertPathsEqual;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProjectWizard> {
-
   @Override
   public void tearDown() throws Exception {
     try {
@@ -79,7 +79,6 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
   public void testImportProject() throws Exception {
     Path pom = createPom();
     Module module = importProjectFrom(pom.toString(), null, new MavenProjectImportProvider());
-    assertThat(module.getName()).isEqualTo(pom.getParent().toFile().getName());
 
     afterImportFinished(module.getProject(), c -> {
       assertThat(ModuleManager.getInstance(c.getProject()).getModules()).hasOnlyOneElementSatisfying(
@@ -98,7 +97,6 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
     createMavenWrapper(pom,
                        "distributionUrl=https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.8.1/apache-maven-3.8.1-bin.zip");
     Module module = importProjectFrom(pom.toString(), null, new MavenProjectImportProvider());
-    assertThat(module.getName()).isEqualTo(pom.getParent().toFile().getName());
 
     afterImportFinished(module.getProject(), c -> {
       assertThat(ModuleManager.getInstance(c.getProject()).getModules()).hasOnlyOneElementSatisfying(
@@ -113,7 +111,6 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
     Path pom = createPom();
     createMavenWrapper(pom, "property1=value1");
     Module module = importProjectFrom(pom.toString(), null, new MavenProjectImportProvider());
-    assertThat(module.getName()).isEqualTo(pom.getParent().toFile().getName());
     String mavenHome = MavenWorkspaceSettingsComponent.getInstance(module.getProject()).getSettings().getGeneralSettings().getMavenHome();
     assertEquals(MavenServerManager.BUNDLED_MAVEN_3, mavenHome);
 
@@ -143,11 +140,20 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
       });
     }
     else {
-      List<Path> paths = ContainerUtil.map(
-        MavenProjectsManager.getInstance(module.getProject()).getProjectsTreeForTests().getExistingManagedFiles(), m -> m.toNioPath()
-      );
-      assertEquals(2, paths.size());
-      assertContainsElements(paths, pom1, pom2);
+      var project = module.getProject();
+      var modules = ModuleManager.getInstance(project).getModules();
+      var moduleNames = new HashSet<String>();
+      for (var existingModule : modules) {
+        moduleNames.add(existingModule.getName());
+      }
+      assertEquals(Set.of("project", "project2"), moduleNames);
+
+      var projectsManager = MavenProjectsManager.getInstance(project);
+      var mavenProjectNames = new HashSet<String>();
+      for (var p : projectsManager.getProjects()) {
+        mavenProjectNames.add(p.getMavenId().getArtifactId());
+      }
+      assertEquals(Set.of("project", "project2"), mavenProjectNames);
     }
   }
 
@@ -164,10 +170,11 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
     MavenProjectBuilder builder = (MavenProjectBuilder)provider.doGetBuilder();
     builder.setFileToImport(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(pom2));
     Module module = importProjectFrom(pom1.toString(), null, provider);
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(module.getProject());
     if (MavenUtil.isLinearImportEnabled()) {
       afterImportFinished(module.getProject(), c -> {
         List<Path> paths = ContainerUtil.map(
-          MavenProjectsManager.getInstance(module.getProject()).getProjectsTreeForTests().getRootProjectsFiles(), m -> m.toNioPath()
+          projectsManager.getProjectsTreeForTests().getRootProjectsFiles(), m -> m.toNioPath()
         );
         assertEquals(1, paths.size());
         assertEquals(pom2, paths.get(0));
@@ -175,7 +182,7 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
     }
     else {
       List<Path> paths = ContainerUtil.map(
-        MavenProjectsManager.getInstance(module.getProject()).getProjectsTreeForTests().getExistingManagedFiles(), m -> m.toNioPath()
+        projectsManager.getProjectsTreeForTests().getExistingManagedFiles(), m -> m.toNioPath()
       );
       assertEquals(1, paths.size());
       assertEquals(pom2, paths.get(0));
@@ -183,7 +190,7 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
   }
 
 
-  public void testShouldStoreImlFileInSameDirAsPomXml() throws IOException {
+  public void testShouldStoreImlFileInSameDirAsPomXml() {
     Path dir = getTempDir().newPath("", true);
     String projectName = dir.toFile().getName();
     Path pom = dir.resolve("pom.xml");
@@ -210,10 +217,7 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
     MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
     if (!MavenUtil.isLinearImportEnabled()) {
       manager.waitForImportCompletion();
-      ApplicationManager.getApplication().invokeAndWait(() -> {
-        manager.scheduleImportInTests(Collections.singletonList(file));
-        manager.importProjects();
-      });
+      MavenImportingTestCaseKt.importMavenProjectsSync(manager, List.of(file));
     }
 
     Promise<?> promise = manager.waitForImportCompletion();

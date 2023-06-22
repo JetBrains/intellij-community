@@ -624,7 +624,7 @@
     <xml.xmlExtension implementation="com.intellij.xml.HtmlXmlExtension" id="html"/>
 
     <lang.inspectionSuppressor language="XML" implementationClass="com.intellij.codeInspection.XmlInspectionSuppressor"/>
-    <smartPointer.anchorProvider implementation="com.intellij.psi.impl.smartPointers.XmlAnchorProvider"/>
+    <smartPointer.anchorProvider implementation="com.intellij.psi.impl.source.xml.XmlAnchorProvider"/>
 
 
     <editorFactoryListener implementation="com.intellij.codeInsight.editorActions.XmlTagNameSynchronizer$MyEditorFactoryListener"/>
@@ -669,12 +669,12 @@
     <psi.symbolReferenceProvider hostElementClass="com.intellij.psi.xml.XmlTag"
                                  hostLanguage="HtmlCompatible"
                                  implementationClass="com.intellij.html.webSymbols.elements.WebSymbolInTagNameRefProvider"
-                                 anyReferenceClass="true"
+                                 referenceClass="com.intellij.webSymbols.references.WebSymbolReference"
                                  targetClass="com.intellij.webSymbols.WebSymbol"/>
     <psi.symbolReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttribute"
                                  hostLanguage="HtmlCompatible"
                                  implementationClass="com.intellij.html.webSymbols.attributes.WebSymbolInAttributeNameRefProvider"
-                                 anyReferenceClass="true"
+                                 referenceClass="com.intellij.webSymbols.references.WebSymbolReference"
                                  targetClass="com.intellij.webSymbols.WebSymbol"/>
     <vetoRenameCondition implementation="com.intellij.html.webSymbols.HtmlWebSymbolRenameHandlerVeto"/>
     <xml.xmlExtension implementation="com.intellij.html.webSymbols.WebSymbolsXmlExtension" id="web-symbols"

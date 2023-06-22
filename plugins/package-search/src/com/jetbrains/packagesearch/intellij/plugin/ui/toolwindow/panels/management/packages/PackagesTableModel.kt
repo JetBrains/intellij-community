@@ -20,16 +20,18 @@ import com.intellij.util.ui.ListTableModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.ActionsColumn
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.NameColumn
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.ScopeColumn
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.ScoreColumn
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.VersionColumn
 
 internal class PackagesTableModel(
     val nameColumn: NameColumn,
     val scopeColumn: ScopeColumn,
     val versionColumn: VersionColumn,
+    val scoreColumn: ScoreColumn,
     val actionsColumn: ActionsColumn
-) : ListTableModel<PackagesTableItem<*>>(nameColumn, scopeColumn, versionColumn, actionsColumn) {
+) : ListTableModel<PackagesTableItem<*>>(nameColumn, scopeColumn, versionColumn, scoreColumn, actionsColumn) {
 
-    val columns by lazy { arrayOf(nameColumn, scopeColumn, versionColumn, actionsColumn) }
+    val columns by lazy { arrayOf(nameColumn, scopeColumn, versionColumn, scoreColumn, actionsColumn) }
 
     override fun getRowCount() = items.size
     override fun getColumnCount() = columns.size

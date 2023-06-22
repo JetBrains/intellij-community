@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -14,6 +13,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 /**
  * Allows plugins to handle the Move refactoring for a file in a custom way.
@@ -66,7 +67,7 @@ public abstract class MoveFileHandler {
    * @param elementsToMove all elements which were moved during refactoring, including those which won't be normally processed by the handler
    * @param usages         all usages found during refactoring
    */
-  public void detectConflicts(MultiMap<PsiElement, String> conflicts,
+  public void detectConflicts(MultiMap<PsiElement, @DialogMessage String> conflicts,
                               PsiElement[] elementsToMove,
                               UsageInfo[] usages,
                               PsiDirectory targetDirectory) {}
@@ -93,7 +94,7 @@ public abstract class MoveFileHandler {
   public static void detectConflicts(PsiElement[] elementsToMove,
                                      UsageInfo[] usageInfos,
                                      PsiDirectory targetDirectory,
-                                     MultiMap<PsiElement, String> conflicts) {
+                                     MultiMap<PsiElement, @DialogMessage String> conflicts) {
     for (MoveFileHandler handler : EP_NAME.getExtensionList()) {
       handler.detectConflicts(conflicts, elementsToMove, usageInfos, targetDirectory);
     }

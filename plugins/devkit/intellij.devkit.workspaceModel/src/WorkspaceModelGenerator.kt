@@ -2,34 +2,42 @@
 package com.intellij.devkit.workspaceModel
 
 import com.intellij.devkit.workspaceModel.codegen.writer.CodeWriter
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.SourceFolder
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import kotlinx.coroutines.*
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 
 private val LOG = logger<WorkspaceModelGenerator>()
 
-object WorkspaceModelGenerator {
-  const val GENERATED_FOLDER_NAME = "gen"
+@Service(Service.Level.PROJECT)
+class WorkspaceModelGenerator(private val project: Project, private val coroutineScope: CoroutineScope) {
 
-  fun generate(project: Project, module: Module) {
+  fun generate(module: Module) {
     val acceptedSourceRoots = getSourceRoot(module)
     if (acceptedSourceRoots.isEmpty()) {
       LOG.info("Acceptable module source roots not found")
       return
     }
-    acceptedSourceRoots.forEach{ sourceRoot ->
-      WriteAction.run<RuntimeException> {
-        CodeWriter.generate(project, module, sourceRoot.file!!) {
-          createGeneratedSourceFolder(module, sourceRoot)
+    coroutineScope.launch {
+      acceptedSourceRoots.map { sourceRoot ->
+        withContext(Dispatchers.EDT) {
+          System.setProperty(CODEGEN_REGISTRY_KEY, Registry.`is`(CODEGEN_REGISTRY_KEY).toString())
+          CodeWriter.generate(project, module, sourceRoot.file!!) {
+            createGeneratedSourceFolder(module, sourceRoot)
+          }
         }
       }
     }
@@ -82,5 +90,12 @@ object WorkspaceModelGenerator {
       if (javaSourceRootProperties == null) return@filter true
       return@filter !javaSourceRootProperties.isForGeneratedSources
     }
+  }
+
+  companion object {
+    const val GENERATED_FOLDER_NAME = "gen"
+    private const val CODEGEN_REGISTRY_KEY = "workspace.model.generator.keep.unknown.fields"
+
+    fun getInstance(project: Project): WorkspaceModelGenerator = project.service()
   }
 }

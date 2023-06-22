@@ -399,7 +399,6 @@ class PyTypeHintsInspection : PyInspection() {
             when (it) {
               PyTypingTypeProvider.ANY,
               PyTypingTypeProvider.UNION,
-              PyTypingTypeProvider.GENERIC,
               PyTypingTypeProvider.OPTIONAL,
               PyTypingTypeProvider.CLASS_VAR,
               PyTypingTypeProvider.NO_RETURN,
@@ -476,7 +475,7 @@ class PyTypeHintsInspection : PyInspection() {
                                   PyPsiBundle.message("INSP.type.hints.parameterized.generics.cannot.be.used.with.instance.class.checks"),
                                   ProblemHighlightType.GENERIC_ERROR,
                                   null,
-                                  if (base is PySubscriptionExpression) RemoveGenericParametersQuickFix() else null)
+                                  *(if (base is PySubscriptionExpression) arrayOf(RemoveGenericParametersQuickFix()) else LocalQuickFix.EMPTY_ARRAY))
                   return@forEach
                 }
               }
@@ -485,12 +484,13 @@ class PyTypeHintsInspection : PyInspection() {
             if (it is PyTypedElement) {
               val type = myTypeEvalContext.getType(it)
 
-              if (type is PyWithAncestors && PyTypingTypeProvider.isGeneric(type, myTypeEvalContext)) {
+              if (type is PyClassType && type.isDefinition) {
                 registerProblem(base,
                                 PyPsiBundle.message("INSP.type.hints.parameterized.generics.cannot.be.used.with.instance.class.checks"),
                                 ProblemHighlightType.GENERIC_ERROR,
                                 null,
-                                if (base is PySubscriptionExpression) RemoveGenericParametersQuickFix() else null)
+                                *(if (base is PySubscriptionExpression) arrayOf(RemoveGenericParametersQuickFix())
+                                else LocalQuickFix.EMPTY_ARRAY))
               }
             }
           }

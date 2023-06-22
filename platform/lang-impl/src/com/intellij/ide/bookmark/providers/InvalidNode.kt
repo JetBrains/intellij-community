@@ -13,7 +13,7 @@ private val STRIKEOUT = SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOU
 
 internal class UrlNode(project: Project, bookmark: InvalidBookmark) : BookmarkNode<InvalidBookmark>(project, bookmark) {
 
-  override fun getChildren() = emptyList<AbstractTreeNode<*>>()
+  override fun getChildren(): List<AbstractTreeNode<*>> = emptyList()
 
   override fun update(presentation: PresentationData) {
     presentation.setIcon(wrapIcon(null))

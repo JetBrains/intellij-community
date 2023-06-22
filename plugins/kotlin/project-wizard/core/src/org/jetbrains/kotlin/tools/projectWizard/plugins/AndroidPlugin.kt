@@ -36,6 +36,7 @@ class AndroidPlugin(context: Context) : Plugin(context) {
             tooltipText=KotlinNewProjectWizardBundle.message("plugin.android.setting.sdk.tooltip")
             isSavable = true
             isAvailable = isAndroidContainingProject
+            defaultValue = dynamic { AndroidSdkProvider.EP_NAME.extensions.firstNotNullOfOrNull { it.getSdkPath() } }
             shouldExists()
         }
 

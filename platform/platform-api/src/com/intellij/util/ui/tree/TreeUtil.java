@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.tree;
 
 import com.intellij.ide.ui.UISettings;
@@ -21,6 +21,7 @@ import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.tree.DelegatingEdtBgtTreeVisitor;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
@@ -1542,9 +1543,29 @@ public final class TreeUtil {
   }
 
   private static @NotNull Promise<TreePath> promiseMakeVisible(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull AsyncPromise<?> promise) {
-    return promiseVisit(tree, path -> {
-      if (promise.isCancelled()) return TreeVisitor.Action.SKIP_SIBLINGS;
-      TreeVisitor.Action action = visitor.visit(path);
+    return promiseVisit(tree, new MakeVisibleVisitor(tree, visitor, promise));
+  }
+
+  private static class MakeVisibleVisitor extends DelegatingEdtBgtTreeVisitor {
+
+    private final JTree tree;
+    private final @NotNull AsyncPromise<?> promise;
+
+    private MakeVisibleVisitor(@NotNull JTree tree, @NotNull TreeVisitor delegate, @NotNull AsyncPromise<?> promise) {
+      super(delegate);
+      this.tree = tree;
+      this.promise = promise;
+    }
+
+    @Nullable
+    @Override
+    public Action preVisitEDT(@NotNull TreePath path) {
+      return promise.isCancelled() ? TreeVisitor.Action.SKIP_SIBLINGS : null;
+    }
+
+    @NotNull
+    @Override
+    public Action postVisitEDT(@NotNull TreePath path, @NotNull TreeVisitor.Action action) {
       if (action == TreeVisitor.Action.CONTINUE || action == TreeVisitor.Action.INTERRUPT) {
         // do not expand children if parent path is collapsed
         if (!tree.isVisible(path)) {
@@ -1557,7 +1578,7 @@ public final class TreeUtil {
         if (action == TreeVisitor.Action.CONTINUE) expandPathWithDebug(tree, path);
       }
       return action;
-    });
+    }
   }
 
   /**
@@ -1781,12 +1802,15 @@ public final class TreeUtil {
 
     TreePath path = new TreePath(root);
     switch (visitor.visit(path)) {
-      case INTERRUPT:
+      case INTERRUPT -> {
         return path; // root path is found
-      case CONTINUE:
-        break; // visit children
-      default:
+      }
+      case CONTINUE -> {
+        // visit children
+      }
+      default -> {
         return null; // skip children
+      }
     }
     Deque<Deque<TreePath>> stack = new ArrayDeque<>();
     stack.push(children(model, path));
@@ -1801,17 +1825,15 @@ public final class TreeUtil {
       }
       else {
         switch (visitor.visit(next)) {
-          case INTERRUPT:
+          case INTERRUPT -> {
             return next; // path is found
-          case CONTINUE:
+          }
+          case CONTINUE -> {
             path = next;
             stack.push(children(model, path));
-            break;
-          case SKIP_SIBLINGS:
-            siblings.clear();
-            break;
-          case SKIP_CHILDREN:
-            break;
+          }
+          case SKIP_SIBLINGS -> siblings.clear();
+          case SKIP_CHILDREN -> {}
         }
       }
     }

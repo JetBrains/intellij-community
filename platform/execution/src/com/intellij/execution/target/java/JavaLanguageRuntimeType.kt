@@ -3,6 +3,7 @@ package com.intellij.execution.target.java
 
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.target.LanguageRuntimeType
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentType
@@ -17,22 +18,24 @@ import com.intellij.util.text.nullize
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.CompletableFuture
 import java.util.function.Supplier
+import javax.swing.Icon
 
 class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfiguration>(TYPE_ID) {
-  override val icon = AllIcons.FileTypes.Java
+  override val icon: Icon = AllIcons.FileTypes.Java
 
   @NlsSafe
-  override val displayName = "Java"
+  override val displayName: String = "Java"
 
   @Nls
-  override val configurableDescription = ExecutionBundle.message("JavaLanguageRuntimeType.configurable.description.configure.java")
+  override val configurableDescription: @Nls String =
+    ExecutionBundle.message("JavaLanguageRuntimeType.configurable.description.configure.java")
 
   @Nls
-  override val launchDescription = ExecutionBundle.message("JavaLanguageRuntimeType.launch.description.run.java.application")
+  override val launchDescription: @Nls String = ExecutionBundle.message("JavaLanguageRuntimeType.launch.description.run.java.application")
 
-  override fun isApplicableTo(runConfig: RunnerAndConfigurationSettings) = true
+  override fun isApplicableTo(runConfig: RunnerAndConfigurationSettings): Boolean = true
 
-  override fun createDefaultConfig() = JavaLanguageRuntimeConfiguration()
+  override fun createDefaultConfig(): JavaLanguageRuntimeConfiguration = JavaLanguageRuntimeConfiguration()
 
   override fun createSerializer(config: JavaLanguageRuntimeConfiguration): PersistentStateComponent<*> = config
 
@@ -62,8 +65,8 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
         }
 
         val versionPromise = if (config.javaVersionString.isBlank()) {
-          subject.promiseExecuteScript("java -version")
-            .thenApply { acceptJavaVersionOutput(it) }
+          subject.promiseExecuteScript(listOf("java", "-version"))
+            .thenApply { it.acceptJavaVersion() }
         }
         else {
           Introspector.DONE
@@ -83,35 +86,44 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
         }
       }
 
-      private fun acceptJavaVersionOutput(output: String?) {
-        output?.lines()?.firstNotNullOf {
-          kotlin.runCatching { JavaVersion.parse(it) }.getOrNull()
-        }?.let { config.javaVersionString = it.toString() }
+      private fun ProcessOutput.acceptJavaVersion() {
+        listOf(stderr, stdout)
+          .firstNotNullOfOrNull { tryParseJavaVersionFromOutput(it) }
+          ?.let { config.javaVersionString = it.toString() }
       }
     }
   }
 
-  override fun volumeDescriptors() = listOf(CLASS_PATH_VOLUME, AGENTS_VOLUME)
+  override fun volumeDescriptors(): List<VolumeDescriptor> = listOf(CLASS_PATH_VOLUME, AGENTS_VOLUME)
 
   override fun duplicateConfig(config: JavaLanguageRuntimeConfiguration): JavaLanguageRuntimeConfiguration =
     duplicatePersistentComponent(this, config)
 
   companion object {
     @JvmStatic
-    val TYPE_ID = "JavaLanguageRuntime"
+    val TYPE_ID: String = "JavaLanguageRuntime"
 
     @JvmStatic
-    val CLASS_PATH_VOLUME = VolumeDescriptor(JavaLanguageRuntimeType::class.qualifiedName + ":classPath",
-                                             ExecutionBundle.message("java.language.runtime.classpath.volume.label"),
-                                             ExecutionBundle.message("java.language.runtime.classpath.volume.description"),
-                                             ExecutionBundle.message("java.language.runtime.classpath.volume.browsing.title"),
-                                             "")
+    val CLASS_PATH_VOLUME: VolumeDescriptor = VolumeDescriptor(
+      JavaLanguageRuntimeType::class.qualifiedName + ":classPath",
+      ExecutionBundle.message("java.language.runtime.classpath.volume.label"),
+      ExecutionBundle.message("java.language.runtime.classpath.volume.description"),
+      ExecutionBundle.message("java.language.runtime.classpath.volume.browsing.title"),
+      ""
+    )
 
     @JvmStatic
-    val AGENTS_VOLUME = VolumeDescriptor(JavaLanguageRuntimeType::class.qualifiedName + ":agents",
-                                         ExecutionBundle.message("java.language.runtime.agents.volume.label"),
-                                         ExecutionBundle.message("java.language.runtime.agents.volume.description"),
-                                         ExecutionBundle.message("java.language.runtime.agents.volume.browsing.title"),
-                                         "")
+    val AGENTS_VOLUME: VolumeDescriptor = VolumeDescriptor(
+      JavaLanguageRuntimeType::class.qualifiedName + ":agents",
+      ExecutionBundle.message("java.language.runtime.agents.volume.label"),
+      ExecutionBundle.message("java.language.runtime.agents.volume.description"),
+      ExecutionBundle.message("java.language.runtime.agents.volume.browsing.title"),
+      ""
+    )
+
+    private fun tryParseJavaVersionFromOutput(output: String?): JavaVersion? =
+      output?.lines()?.firstNotNullOfOrNull {
+        kotlin.runCatching { JavaVersion.parse(it) }.getOrNull()
+      }
   }
 }

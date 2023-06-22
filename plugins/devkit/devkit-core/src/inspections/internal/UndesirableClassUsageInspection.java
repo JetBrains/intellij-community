@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.InspectionManager;
@@ -15,7 +15,6 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,16 +32,15 @@ import java.util.Objects;
 public class UndesirableClassUsageInspection extends DevKitUastInspectionBase {
 
   @NonNls
-  private static final Map<String, String> CLASSES = ContainerUtil.<String, String>immutableMapBuilder()
-    .put(JList.class.getName(), JBList.class.getName())
-    .put(JTable.class.getName(), JBTable.class.getName())
-    .put(JTree.class.getName(), Tree.class.getName())
-    .put(JScrollPane.class.getName(), JBScrollPane.class.getName())
-    .put(JTabbedPane.class.getName(), JBTabbedPane.class.getName())
-    .put(JComboBox.class.getName(), ComboBox.class.getName())
-    .put(QueryExecutor.class.getName(), QueryExecutorBase.class.getName())
-    .put(BufferedImage.class.getName(), "UIUtil.createImage()")
-    .build();
+  private static final Map<String, String> CLASSES = Map.of(
+    JList.class.getName(), JBList.class.getName(),
+    JTable.class.getName(), JBTable.class.getName(),
+    JTree.class.getName(), Tree.class.getName(),
+    JScrollPane.class.getName(), JBScrollPane.class.getName(),
+    JTabbedPane.class.getName(), JBTabbedPane.class.getName(),
+    JComboBox.class.getName(), ComboBox.class.getName(),
+    QueryExecutor.class.getName(), QueryExecutorBase.class.getName(),
+    BufferedImage.class.getName(), "UIUtil.createImage()");
 
   public UndesirableClassUsageInspection() {
     super(UField.class, UMethod.class);
@@ -69,10 +67,10 @@ public class UndesirableClassUsageInspection extends DevKitUastInspectionBase {
           final PsiClass psiClass = PsiTypesUtil.getPsiClass(expression.getReturnType());
           if (psiClass != null) {
             final String name = psiClass.getQualifiedName();
-            String replacement = CLASSES.get(name);
+            String replacement = name==null?null:CLASSES.get(name);
             if (replacement != null) {
               descriptors.add(
-                manager.createProblemDescriptor(Objects.requireNonNull(expression.getPsi()),
+                manager.createProblemDescriptor(Objects.requireNonNull(expression.getSourcePsi()),
                                                 DevKitBundle.message("inspections.undesirable.class.use.instead", replacement),
                                                 true,
                                                 ProblemHighlightType.LIKE_DEPRECATED, isOnTheFly));

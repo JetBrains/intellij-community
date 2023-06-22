@@ -4,7 +4,7 @@ Reports JUnit annotated methods when used in a test case from a different JUnit 
 the inspection checks the framework version of the super class when available. When a super class is not available it will use the most used
 framework in the test case.
 <p>Example (JUnit 4 annotation in JUnit 3 test case):</p>
-<pre><code>
+<pre><code lang="java">
   public class MyTest extends TestCase {
       @Test
       public void foo() { }
@@ -15,7 +15,7 @@ framework in the test case.
   }
 </code></pre>
 <p>After the quick-fix is applied:</p>
-<pre><code>
+<pre><code lang="java">
   public class MyTest extends TestCase {
       public void testFoo() {}
 
@@ -24,7 +24,7 @@ framework in the test case.
 </code></pre>
 
 <p>Example (JUnit 5 annotation in JUnit 4 test case):</p>
-<pre><code>
+<pre><code lang="java">
   public class MyTest {
       @BeforeAll // JUnit 5 lifecycle method
       public void initialize() { }
@@ -37,7 +37,7 @@ framework in the test case.
   }
 </code></pre>
 <p>After the quick-fix is applied:</p>
-<pre><code>
+<pre><code lang="java">
   public class MyTest {
       @BeforeClass // JUnit 4 lifecycle method
       public void initialize() { }

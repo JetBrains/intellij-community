@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
 import com.intellij.configurationStore.LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE
@@ -18,7 +18,6 @@ import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
@@ -190,7 +189,7 @@ class ProjectRule(private val runPostStartUpActivities: Boolean = false,
                   projectDescriptor: LightProjectDescriptor? = null) : ApplicationRule() {
   companion object {
     @JvmStatic
-    fun withRunningStartUpActivities() = ProjectRule(runPostStartUpActivities = true)
+    fun withRunningStartUpActivities(): ProjectRule = ProjectRule(runPostStartUpActivities = true)
 
     /**
      * Think twice before use. And then do not use it. To support the old code.
@@ -239,25 +238,28 @@ class ProjectRule(private val runPostStartUpActivities: Boolean = false,
  * Project created on request, so, could be used as a bare (only application).
  */
 @Suppress("DEPRECATION")
-class ProjectExtension(runPostStartUpActivities: Boolean = false, preloadServices: Boolean = false) : ApplicationExtension() {
-  private val projectObject = ProjectObject(runPostStartUpActivities, preloadServices, null)
+class ProjectExtension(val runPostStartUpActivities: Boolean = false, val preloadServices: Boolean = false) : ApplicationExtension() {
+  private var projectObject: ProjectObject? = null
 
   override fun beforeAll(context: ExtensionContext) {
     super.beforeAll(context)
-    projectObject.testClassName = sanitizeFileName(context.testClass.map { it.simpleName }.orElse(context.displayName).substringAfterLast('.'))
-    projectObject.projectTracker = (ProjectManager.getInstance() as TestProjectManager).startTracking()
-  }
-
-  override fun afterAll(context: ExtensionContext) {
-    projectObject.catchAndRethrow {
-      super.afterAll(context)
+    projectObject = ProjectObject(runPostStartUpActivities, preloadServices, null).also {
+      it.testClassName = sanitizeFileName(context.testClass.map { it.simpleName }.orElse(context.displayName).substringAfterLast('.'))
+      it.projectTracker = (ProjectManager.getInstance() as TestProjectManager).startTracking()
     }
   }
 
+  override fun afterAll(context: ExtensionContext) {
+    checkNotNull(projectObject).catchAndRethrow {
+      super.afterAll(context)
+    }
+    projectObject = null
+  }
+
   val project: ProjectEx
-    get() = projectObject.project
+    get() = checkNotNull(projectObject).project
   val module: Module
-    get() = projectObject.module
+    get() = checkNotNull(projectObject).module
 }
 
 /**
@@ -427,23 +429,17 @@ private fun Project.closeProject(save: Boolean = false) {
 }
 
 suspend fun Project.closeProjectAsync(save: Boolean = false) {
-  if (ApplicationManager.getApplication().isDispatchThread) {
-    runBlockingModal(this, "") {
-      ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(this@closeProjectAsync, save = save)
-    }
-  }
-  else {
-    ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(this, save = save)
-  }
+  ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(this, save = save)
 }
 
 suspend fun openProjectAsync(path: Path, vararg activities: ProjectActivity): Project {
-  return ProjectUtil.openOrImportAsync(path)!!
-    .withProjectAsync { project ->
-      for (activity in activities) {
-        activity.execute(project)
-      }
+  return closeOpenedProjectsIfFailAsync {
+    ProjectUtil.openOrImportAsync(path)!!
+  }.withProjectAsync { project ->
+    for (activity in activities) {
+      activity.execute(project)
     }
+  }
 }
 suspend fun openProjectAsync(virtualFile: VirtualFile, vararg activities: ProjectActivity): Project {
   return openProjectAsync(virtualFile.toNioPath(), *activities)

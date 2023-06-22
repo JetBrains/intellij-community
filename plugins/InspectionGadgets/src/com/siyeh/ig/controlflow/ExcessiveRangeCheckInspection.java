@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.*;
@@ -8,6 +8,8 @@ import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfLongType;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -194,7 +196,7 @@ public class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspecti
     }
   }
 
-  private static class ExcessiveRangeCheckFix implements LocalQuickFix {
+  private static class ExcessiveRangeCheckFix extends ModCommandQuickFix {
     private final String myReplacement;
 
     ExcessiveRangeCheckFix(String replacement) {
@@ -216,10 +218,13 @@ public class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspecti
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiPolyadicExpression expression = ObjectUtils.tryCast(descriptor.getStartElement(), PsiPolyadicExpression.class);
+    public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      return ModCommands.psiUpdate(descriptor.getStartElement(), e -> applyFix(e, descriptor.getTextRangeInElement()));
+    }
+
+    protected void applyFix(@NotNull PsiElement element, @NotNull TextRange range) {
+      PsiPolyadicExpression expression = ObjectUtils.tryCast(element, PsiPolyadicExpression.class);
       if (expression == null) return;
-      TextRange range = descriptor.getTextRangeInElement();
       PsiExpression[] allOperands = expression.getOperands();
       List<PsiExpression> operands = ContainerUtil.filter(allOperands, op -> range.contains(op.getTextRangeInParent()));
       if (operands.size() < 2) return;

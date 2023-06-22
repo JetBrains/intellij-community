@@ -12,11 +12,13 @@ open class GitLabMergeRequestDetails(
   open val createdAt: Date,
   open val author: GitLabUserDTO,
   open val mergeStatus: GitLabMergeStatus,
+  open val isMergeable: Boolean,
   open val state: GitLabMergeRequestState,
   open val draft: Boolean,
   open val assignees: List<GitLabUserDTO>,
   open val reviewers: List<GitLabUserDTO>,
-  open val webUrl: @NlsSafe String
+  open val webUrl: @NlsSafe String,
+  val labels: List<String>
 ) : GitLabMergeRequestId {
 
   companion object {
@@ -27,11 +29,13 @@ open class GitLabMergeRequestDetails(
         dto.createdAt,
         dto.author,
         dto.mergeStatusEnum,
+        dto.mergeable,
         dto.stateEnum,
         dto.draft,
         dto.assignees,
         dto.reviewers,
-        dto.webUrl
+        dto.webUrl,
+        dto.labels
       )
   }
 }

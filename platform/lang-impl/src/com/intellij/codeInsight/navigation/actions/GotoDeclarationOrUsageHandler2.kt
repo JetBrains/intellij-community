@@ -4,7 +4,6 @@ package com.intellij.codeInsight.navigation.actions
 import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.navigation.CtrlMouseData
-import com.intellij.codeInsight.navigation.CtrlMouseInfo
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationOnlyHandler2.gotoDeclaration
 import com.intellij.codeInsight.navigation.impl.*
 import com.intellij.find.actions.ShowUsagesAction.showUsages
@@ -31,13 +30,6 @@ object GotoDeclarationOrUsageHandler2 : CodeInsightActionHandler {
   private fun gotoDeclarationOrUsages(project: Project, editor: Editor, file: PsiFile, offset: Int): GTDUActionData? {
     return fromGTDProviders(project, editor, offset)?.toGTDUActionData()
            ?: gotoDeclarationOrUsages(file, offset)
-  }
-
-  @Suppress("DEPRECATION")
-  @Deprecated("Unused in v2 implementation")
-  @JvmStatic
-  fun getCtrlMouseInfo(editor: Editor, file: PsiFile, offset: Int): CtrlMouseInfo? {
-    return gotoDeclarationOrUsages(file.project, editor, file, offset)?.ctrlMouseInfo()
   }
 
   @JvmStatic

@@ -5,6 +5,8 @@
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-datetime-jvm/0.4.0/kotlinx-datetime-jvm-0.4.0.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-datetime-jvm/0.4.0/kotlinx-datetime-jvm-0.4.0-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>

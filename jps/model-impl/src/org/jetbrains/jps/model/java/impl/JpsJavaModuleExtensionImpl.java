@@ -2,7 +2,6 @@
 package org.jetbrains.jps.model.java.impl;
 
 import com.intellij.openapi.util.Comparing;
-import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsUrlList;
 import org.jetbrains.jps.model.ex.JpsCompositeElementBase;
@@ -10,7 +9,9 @@ import org.jetbrains.jps.model.impl.JpsUrlListRole;
 import org.jetbrains.jps.model.java.JpsJavaModuleExtension;
 import org.jetbrains.jps.model.java.LanguageLevel;
 
-public class JpsJavaModuleExtensionImpl extends JpsCompositeElementBase<JpsJavaModuleExtensionImpl> implements JpsJavaModuleExtension {
+import java.util.Objects;
+
+public final class JpsJavaModuleExtensionImpl extends JpsCompositeElementBase<JpsJavaModuleExtensionImpl> implements JpsJavaModuleExtension {
   private static final JpsUrlListRole JAVADOC_ROOTS_ROLE = new JpsUrlListRole("javadoc roots");
   private static final JpsUrlListRole ANNOTATIONS_ROOTS_ROLE = new JpsUrlListRole("annotation roots");
   private String myOutputUrl;

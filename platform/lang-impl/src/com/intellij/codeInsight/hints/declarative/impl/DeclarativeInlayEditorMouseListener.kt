@@ -26,6 +26,7 @@ class DeclarativeInlayEditorMouseListener : EditorMouseListener {
     }
     val controlDown = isControlDown(event)
     renderer.handleLeftClick(e, translated, controlDown)
+    inlay.update()
   }
 
   private fun isControlDown(e: MouseEvent): Boolean = (SystemInfo.isMac && e.isMetaDown) || e.isControlDown

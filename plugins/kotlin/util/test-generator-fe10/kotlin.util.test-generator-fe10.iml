@@ -40,5 +40,6 @@
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared.tests.k1" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.completion.tests-shared" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.completion.tests-k1" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests.k1" scope="TEST" />
   </component>
 </module>

@@ -18,7 +18,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.DumbModeListener
-import com.intellij.openapi.project.DumbService.isDumb
+import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
@@ -82,8 +82,8 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   }
 
   override fun vcsesChanged() {
-    initCommitHandlers()
     workflow.initCommitExecutors(getCommitExecutors(project, workflow.vcses) + RunCommitChecksExecutor)
+    initCommitHandlers()
 
     updateDefaultCommitActionEnabled()
     updateDefaultCommitActionName()
@@ -108,9 +108,11 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   override fun executionEnded() = updateDefaultCommitActionEnabled()
 
   override fun updateDefaultCommitActionName() {
-    val isAmend = amendCommitHandler.isAmendCommitMode
-    val isSkipCommitChecks = willSkipCommitChecks()
-    ui.defaultCommitActionName = getDefaultCommitActionName(workflow.vcses, isAmend, isSkipCommitChecks)
+    ui.defaultCommitActionName = getDefaultCommitActionName(amendCommitHandler.isAmendCommitMode, willSkipCommitChecks())
+  }
+
+  protected open fun getDefaultCommitActionName(isAmend: Boolean, isSkipCommitChecks: Boolean): @Nls String {
+    return getDefaultCommitActionName(workflow.vcses, isAmend, isSkipCommitChecks)
   }
 
   private fun getCommitActionTextForNotification(
@@ -320,6 +322,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     try {
       val handlers = workflow.commitHandlers
       val commitChecks = handlers
+        .filter { it.acceptExecutor(commitInfo.executor) }
         .map { it.asCommitCheck(commitInfo) }
         .filter { it.isEnabled() }
         .groupBy { it.getExecutionOrder() }

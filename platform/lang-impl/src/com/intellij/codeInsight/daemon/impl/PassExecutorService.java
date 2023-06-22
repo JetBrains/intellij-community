@@ -6,9 +6,12 @@ import com.intellij.codeHighlighting.EditorBoundHighlightingPass;
 import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,6 +34,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Functions;
@@ -230,18 +234,17 @@ final class PassExecutorService implements Disposable {
     }
   }
 
-  @NotNull
-  private ScheduledPass createScheduledPass(@NotNull FileEditor fileEditor,
-                                            @NotNull Document document,
-                                            @NotNull VirtualFile virtualFile,
-                                            @NotNull PsiFile psiFile,
-                                            @NotNull TextEditorHighlightingPass pass,
-                                            @NotNull Int2ObjectMap<ScheduledPass> toBeSubmitted,
-                                            @NotNull Int2ObjectMap<TextEditorHighlightingPass> id2Pass,
-                                            @NotNull List<ScheduledPass> freePasses,
-                                            @NotNull List<ScheduledPass> dependentPasses,
-                                            @NotNull DaemonProgressIndicator updateProgress,
-                                            @NotNull AtomicInteger threadsToStartCountdown) {
+  private @NotNull ScheduledPass createScheduledPass(@NotNull FileEditor fileEditor,
+                                                     @NotNull Document document,
+                                                     @NotNull VirtualFile virtualFile,
+                                                     @NotNull PsiFile psiFile,
+                                                     @NotNull TextEditorHighlightingPass pass,
+                                                     @NotNull Int2ObjectMap<ScheduledPass> toBeSubmitted,
+                                                     @NotNull Int2ObjectMap<TextEditorHighlightingPass> id2Pass,
+                                                     @NotNull List<ScheduledPass> freePasses,
+                                                     @NotNull List<ScheduledPass> dependentPasses,
+                                                     @NotNull DaemonProgressIndicator updateProgress,
+                                                     @NotNull AtomicInteger threadsToStartCountdown) {
     int passId = pass.getId();
     ScheduledPass scheduledPass = toBeSubmitted.get(passId);
     if (scheduledPass != null) return scheduledPass;
@@ -330,7 +333,7 @@ final class PassExecutorService implements Disposable {
     private final AtomicInteger myRunningPredecessorsCount = new AtomicInteger(0);
     private final List<ScheduledPass> mySuccessorsOnCompletion = new ArrayList<>();
     private final List<ScheduledPass> mySuccessorsOnSubmit = new ArrayList<>();
-    @NotNull private final DaemonProgressIndicator myUpdateProgress;
+    private final @NotNull DaemonProgressIndicator myUpdateProgress;
 
     private ScheduledPass(@NotNull FileEditor fileEditor,
                           @NotNull HighlightingPass pass,
@@ -378,16 +381,32 @@ final class PassExecutorService implements Disposable {
             }
 
             if (!myUpdateProgress.isCanceled() && !myProject.isDisposed()) {
-              try(AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(myFileEditor))) {
-                myPass.collectInformation(myUpdateProgress);
-              }
+              String fileName = myFileEditor.getFile().getName();
+              String passClassName = StringUtil.getShortName(myPass.getClass());
+              TraceUtil.runWithSpanThrows(HighlightingPassTracer.HIGHLIGHTING_PASS_TRACER, passClassName, span -> {
+                Activity startupActivity = StartUpMeasurer.startActivity("running " + passClassName);
+                boolean cancelled = false;
+                try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(myFileEditor))) {
+                  myPass.collectInformation(myUpdateProgress);
+                }
+                catch (ProcessCanceledException | CancellationException e) {
+                  cancelled = true;
+                  throw e;
+                }
+                finally {
+                  startupActivity.end();
+                  span.setAttribute(HighlightingPassTracer.FILE_ATTR_SPAN_KEY, fileName);
+                  span.setAttribute(HighlightingPassTracer.CANCELLED_ATTR_SPAN_KEY, Boolean.toString(cancelled));
+                }
+              });
             }
           }
           catch (ProcessCanceledException e) {
             log(myUpdateProgress, myPass, "Canceled ");
 
             if (!myUpdateProgress.isCanceled()) {
-              myUpdateProgress.cancel(e); //in case when some smart asses throw PCE just for fun
+              //in case some smart asses throw PCE just for fun
+              ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).stopProcess(true, "PCE was thrown by visitor");
             }
           }
           catch (RuntimeException | Error e) {
@@ -416,9 +435,8 @@ final class PassExecutorService implements Disposable {
       }
     }
 
-    @NonNls
     @Override
-    public String toString() {
+    public @NonNls String toString() {
       return "SP: " + myPass;
     }
 
@@ -543,7 +561,7 @@ final class PassExecutorService implements Disposable {
   }
 
   // return true if terminated
-  boolean waitFor(int millis) {
+  boolean waitFor(long millis) {
     long deadline = System.currentTimeMillis() + millis;
     try {
       for (Job<Void> job : mySubmittedPasses.values()) {

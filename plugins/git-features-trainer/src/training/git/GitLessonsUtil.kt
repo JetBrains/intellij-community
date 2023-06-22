@@ -1,30 +1,26 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.git
 
-import com.intellij.dvcs.push.VcsPushAction
-import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.icons.AllIcons
-import com.intellij.ide.ui.UISettings
-import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.Notifications
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.progress.impl.CoreProgressManager
+import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.BranchChangeListener
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.actions.commit.CommonCheckinProjectAction
-import com.intellij.openapi.vcs.update.CommonUpdateProjectAction
+import com.intellij.openapi.vcs.changes.ChangeListChange
+import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.SearchTextField
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.commit.CommitModeManager
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.impl.VcsLogContentUtil
@@ -39,11 +35,12 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import training.dsl.*
 import training.ui.LearningUiManager
+import java.awt.Point
 import java.awt.Rectangle
-import javax.swing.Icon
+import javax.swing.JCheckBox
+import javax.swing.tree.TreePath
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.reflect.KClass
 
 object GitLessonsUtil {
   // Git tool window must show to reset it
@@ -89,7 +86,7 @@ object GitLessonsUtil {
 
   fun TaskContext.highlightSubsequentCommitsInGitLog(startCommitRow: Int,
                                                      sequenceLength: Int = 1,
-                                                     highlightInside: Boolean = true,
+                                                     highlightInside: Boolean = false,
                                                      usePulsation: Boolean = false) {
     triggerAndBorderHighlight {
       this.highlightInside = highlightInside
@@ -100,7 +97,7 @@ object GitLessonsUtil {
   }
 
   fun TaskContext.highlightSubsequentCommitsInGitLog(sequenceLength: Int = 1,
-                                                     highlightInside: Boolean = true,
+                                                     highlightInside: Boolean = false,
                                                      usePulsation: Boolean = false,
                                                      startCommitPredicate: (VcsCommitMetadata) -> Boolean) {
     triggerAndBorderHighlight {
@@ -118,7 +115,7 @@ object GitLessonsUtil {
 
   fun TaskContext.highlightLatestCommitsFromBranch(branchName: String,
                                                    sequenceLength: Int = 1,
-                                                   highlightInside: Boolean = true,
+                                                   highlightInside: Boolean = false,
                                                    usePulsation: Boolean = false) {
     highlightSubsequentCommitsInGitLog(sequenceLength, highlightInside, usePulsation) l@{ commit ->
       val vcsData = VcsProjectLog.getInstance(project).dataManager ?: return@l false
@@ -159,6 +156,28 @@ object GitLessonsUtil {
           if (checkBranch(branchName)) completeStep()
         }
       })
+    }
+  }
+
+  fun TaskContext.triggerOnChangeCheckboxShown(changeFileName: String) {
+    triggerUI().componentPart l@{ ui: ChangesListView ->
+      // If commit tool window is opened using shortcut, all the files in the tree will be included
+      // so, we need to clear them
+      ui.inclusionModel.clearInclusion()
+
+      val path = TreeUtil.treePathTraverser(ui).find { it.getPathComponent(it.pathCount - 1).toString().contains(changeFileName) }
+                 ?: return@l null
+      val rect = ui.getPathBounds(path) ?: return@l null
+      Rectangle(rect.x, rect.y, 20, rect.height)
+    }
+  }
+
+  fun TaskContext.triggerOnOneChangeIncluded(changeFileName: String) {
+    triggerUI().component l@{ ui: ChangesListView ->
+      val includedChanges = ui.includedSet
+      if (includedChanges.size != 1) return@l false
+      val change = includedChanges.first() as? ChangeListChange ?: return@l false
+      change.virtualFile?.name == changeFileName
     }
   }
 
@@ -256,67 +275,56 @@ object GitLessonsUtil {
     }
   }
 
-  fun TaskContext.openPushDialogText(@Nls introduction: String) {
-    openGitDialogText(introduction, DvcsBundle.message("action.push").dropMnemonic(),
-                      "Vcs.Push", AllIcons.Vcs.Push, VcsPushAction::class)
+  fun TaskContext.openCommitWindow(@Nls introduction: String) {
+    val commitWindowName = VcsBundle.message("commit.dialog.configurable")
+    val openCommitWindowText = GitLessonsBundle.message("git.open.tool.window",
+                                                        action("CheckinProject"),
+                                                        icon(AllIcons.Actions.Commit),
+                                                        strong(commitWindowName))
+    text("$introduction $openCommitWindowText")
+    text(GitLessonsBundle.message("git.open.tool.window.balloon", strong(commitWindowName)),
+         LearningBalloonConfig(Balloon.Position.atRight, width = 0))
+    stateCheck {
+      ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.COMMIT)?.isVisible == true
+    }
   }
 
-  fun TaskContext.openUpdateDialogText(@Nls introduction: String) {
-    openGitDialogText(introduction, VcsBundle.message("action.display.name.update.scope", VcsBundle.message("update.project.scope.name")),
-                      "Vcs.UpdateProject", AllIcons.Actions.CheckOut, CommonUpdateProjectAction::class)
+  fun TaskContext.openGitWindow(@Nls stepText: String) {
+    text(stepText)
+    text(GitLessonsBundle.message("git.open.tool.window.balloon", strong(GitBundle.message("git4idea.vcs.name"))),
+         LearningBalloonConfig(Balloon.Position.atRight, width = 0))
+    stateCheck {
+      ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS)?.isVisible == true
+    }
+    test { actions("ActivateVersionControlToolWindow") }
   }
 
-  fun TaskContext.openCommitWindowText(@Nls introduction: String) {
-    val commitText = VcsBundle.message("commit.dialog.configurable")
-    openGitWindowText(introduction,
-                      GitLessonsBundle.message("git.open.tool.window", 0, action("CheckinProject"),
-                                               icon(AllIcons.Actions.Commit), strong(commitText)),
-                      GitLessonsBundle.message("git.open.tool.window", 1, action("CheckinProject"),
-                                               "", strong(commitText)),
-                      CommonCheckinProjectAction::class)
+  fun TaskTestContext.clickChangeElement(partOfText: String) {
+    val checkPath: (TreePath) -> Boolean = { p -> p.getPathComponent(p.pathCount - 1).toString().contains(partOfText) }
+    ideFrame {
+      val fixture = jTree(checkPath = checkPath)
+      val tree = fixture.target()
+      val pathRect = invokeAndWaitIfNeeded {
+        val path = TreeUtil.treePathTraverser(tree).find(checkPath)
+        tree.getPathBounds(path)
+      } ?: error("Failed to find path with text '$partOfText'")
+      val offset = JCheckBox().preferredSize.width / 2
+      robot.click(tree, Point(pathRect.x + offset, pathRect.y + offset))
+    }
   }
 
-  private fun <T : AnAction> TaskContext.openGitDialogText(@Nls introduction: String,
-                                                           @Nls dialogName: String,
-                                                           actionId: String,
-                                                           icon: Icon,
-                                                           actionClass: KClass<T>) {
-    openGitWindowText(introduction,
-                      GitLessonsBundle.message("git.open.dialog", 0, action(actionId), icon(icon), strong(dialogName)),
-                      GitLessonsBundle.message("git.open.dialog", 1, action(actionId), "", strong(dialogName)),
-                      actionClass)
-  }
-
-  private fun <T : AnAction> TaskContext.openGitWindowText(@Nls introduction: String,
-                                                           @Nls suggestionWithIcon: String,
-                                                           @Nls suggestionWithoutIcon: String,
-                                                           actionClass: KClass<T>) {
-    val ui = UISettings.getInstance()
-    if (ui.showMainToolbar && checkActionShownInToolbar(actionClass, "MainToolBar")
-        || !ui.showMainToolbar && ui.showNavigationBar && checkActionShownInToolbar(actionClass, "NavBarToolBar")
-    ) {
-      text("$introduction $suggestionWithIcon")
-      triggerAndFullHighlight { usePulsation = true }.component { button: ActionButton ->
-        actionClass.isInstance(button.action)
+  fun TaskTestContext.clickTreeRow(doubleClick: Boolean = false, rightClick: Boolean = false, rowItemPredicate: (Any) -> Boolean) {
+    ideFrame {
+      val tree = jTree { path -> rowItemPredicate(path.lastPathComponent) }
+      val rowToClick = invokeAndWaitIfNeeded {
+        val path = TreeUtil.treePathTraverser(tree.target()).find { path -> rowItemPredicate(path.lastPathComponent) }
+        tree.target().getRowForPath(path)
+      }
+      when {
+        doubleClick -> tree.doubleClickRow(rowToClick)
+        rightClick -> tree.rightClickRow(rowToClick)
+        else -> tree.clickRow(rowToClick)
       }
     }
-    else text("$introduction $suggestionWithoutIcon")
-  }
-
-  private fun checkActionShownInToolbar(actionClass: KClass<*>, toolbarName: String): Boolean {
-    return CustomActionsSchema.getInstance()
-      .getCorrectedAction(toolbarName)
-      ?.checkContainsActionRecursively(actionClass) == true
-  }
-
-  private fun AnAction.checkContainsActionRecursively(actionClass: KClass<*>): Boolean {
-    if (this !is ActionGroup) {
-      return actionClass.isInstance(this)
-    }
-    for (child in getChildren(null)) {
-      val contains = child.checkContainsActionRecursively(actionClass)
-      if (contains) return true
-    }
-    return false
   }
 }

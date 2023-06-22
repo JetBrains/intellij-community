@@ -23,9 +23,9 @@ private constructor(private val libraryName: @NlsSafe String?,
                     private val classRoots: List<VirtualFile>,
                     private val sourceRoots: List<VirtualFile>) : LibraryIndexableFilesIterator {
 
-  override fun getDebugName() = "Library ${presentableLibraryName} " +
-                                "(#${classRoots.validCount()} class roots, " +
-                                "#${sourceRoots.validCount()} source roots)"
+  override fun getDebugName(): String = "Library ${presentableLibraryName} " +
+                                        "(#${classRoots.validCount()} class roots, " +
+                                        "#${sourceRoots.validCount()} source roots)"
 
   override fun getIndexingProgressText(): String = IndexingBundle.message("indexable.files.provider.indexing.library.name",
                                                                           presentableLibraryName)

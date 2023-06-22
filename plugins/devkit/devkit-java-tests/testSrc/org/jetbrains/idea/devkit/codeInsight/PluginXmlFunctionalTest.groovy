@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.codeInsight
 
 import com.intellij.codeInsight.TargetElementUtil
@@ -91,28 +91,24 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
     String annotationsJar = PathUtil.getJarPathForClass(ApiStatus.class)
     moduleBuilder.addLibrary("annotations", annotationsJar)
-    String pathForClass = PathUtil.getJarPathForClass(XCollection.class)
-    moduleBuilder.addLibrary("util", pathForClass)
-    String platformApiJar = PathUtil.getJarPathForClass(JBList.class)
-    moduleBuilder.addLibrary("platform-api", platformApiJar)
-    String platformImplJar = PathUtil.getJarPathForClass(ITNReporter.class)
-    moduleBuilder.addLibrary("platform-impl", platformImplJar)
-    String langApiJar = PathUtil.getJarPathForClass(CompletionContributorEP.class)
-    moduleBuilder.addLibrary("lang-api", langApiJar)
-    String analysisApiJar = PathUtil.getJarPathForClass(LocalInspectionEP.class)
-    moduleBuilder.addLibrary("analysis-api", analysisApiJar)
-    String coreApiJar = PathUtil.getJarPathForClass(LanguageExtensionPoint.class) // FileTypeExtensionPoint is also there
-    moduleBuilder.addLibrary("core-api", coreApiJar)
-    String editorUIApi = PathUtil.getJarPathForClass(AnAction.class)
-    moduleBuilder.addLibrary("editor-ui-api", editorUIApi)
-    String coreImpl = PathUtil.getJarPathForClass(ServiceDescriptor.class)
-    moduleBuilder.addLibrary("coreImpl", coreImpl)
-    String ideCore = PathUtil.getJarPathForClass(Configurable.class)
-    moduleBuilder.addLibrary("ide-core", ideCore)
-    String ideCoreImpl = PathUtil.getJarPathForClass(NotificationGroupEP.class)
-    moduleBuilder.addLibrary("ide-core-impl", ideCoreImpl)
-
-    moduleBuilder.addLibrary("util-ui", PathUtil.getJarPathForClass(AllIcons.class))
+    String platformUtilJar = PathUtil.getJarPathForClass(XCollection.class)
+    moduleBuilder.addLibrary("platform-util", platformUtilJar)
+    String platformIdeJar = PathUtil.getJarPathForClass(JBList.class)
+    moduleBuilder.addLibrary("platform-ide", platformIdeJar)
+    String platformIdeImplJar = PathUtil.getJarPathForClass(ITNReporter.class)
+    moduleBuilder.addLibrary("platform-ide-impl", platformIdeImplJar)
+    String platformIdeCore = PathUtil.getJarPathForClass(Configurable.class)
+    moduleBuilder.addLibrary("platform-ide-core", platformIdeCore)
+    String platformIdeCoreImpl = PathUtil.getJarPathForClass(NotificationGroupEP.class)
+    moduleBuilder.addLibrary("platform-ide-core-impl", platformIdeCoreImpl)
+    String platformAnalysisJar = PathUtil.getJarPathForClass(LocalInspectionEP.class)
+    moduleBuilder.addLibrary("platform-analysis", platformAnalysisJar)
+    String platformCore = PathUtil.getJarPathForClass(LanguageExtensionPoint.class)
+    moduleBuilder.addLibrary("platform-core", platformCore)
+    String platformEditorJar = PathUtil.getJarPathForClass(AnAction.class)
+    moduleBuilder.addLibrary("platform-editor", platformEditorJar)
+    String platformUiUtilJar = PathUtil.getJarPathForClass(AllIcons.class)
+    moduleBuilder.addLibrary("platform-util-ui", platformUiUtilJar)
   }
 
   // Gradle-like setup, but JBList not in Library
@@ -172,11 +168,23 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                        " @Experimental public String experimentalAttribute; " +
                        "}")
     myFixture.addClass("package foo; import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval; " +
-                       "@ScheduledForRemoval(inVersion = \"removeVersion\") @Deprecated public class MyScheduledForRemovalEP {}")
+                       "@ScheduledForRemoval(inVersion = \"removeVersion\") " +
+                       "@Deprecated " +
+                       "public class MyScheduledForRemovalEP {" +
+                       " @com.intellij.util.xmlb.annotations.Attribute " +
+                       " @Deprecated" +
+                       " @ScheduledForRemoval " +
+                       " public String scheduledForRemovalAttribute; " +
+                       "}")
     myFixture.addClass("package foo; import org.jetbrains.annotations.ApiStatus.Internal; " +
                        "@Internal public class MyInternalEP {" +
                        " @com.intellij.util.xmlb.annotations.Attribute " +
                        " @Internal public String internalAttribute; " +
+                       "}")
+    myFixture.addClass("package foo; import org.jetbrains.annotations.ApiStatus.Obsolete; " +
+                       "@Obsolete public class MyObsoleteEP {" +
+                       " @com.intellij.util.xmlb.annotations.Attribute " +
+                       " @Obsolete public String obsoleteAttribute; " +
                        "}")
     myFixture.addClass("package foo; " +
                        "import com.intellij.util.xmlb.annotations.Attribute; " +
@@ -375,7 +383,6 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.checkResultByFile(getTestName(false) + "_after.xml")
   }
 
-  @SuppressWarnings("ComponentNotRegistered")
   void testShowPackagesInActionClass() {
     myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction { }")
     myFixture.addClass("package foo.goo; public class GooAction extends com.intellij.openapi.actionSystem.AnAction { }")
@@ -386,7 +393,6 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                   myFixture.lookup.advertisements.find { it.contains('to see inheritors of com.intellij.openapi.actionSystem.AnAction') })
   }
 
-  @SuppressWarnings("ComponentNotRegistered")
   void testShowAnActionInheritorsOnSmartCompletion() {
     myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction { }")
     myFixture.addClass("package foo.goo; public class GooAction extends com.intellij.openapi.actionSystem.AnAction { }")
@@ -443,7 +449,6 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                                      "myTag", "myTagWithoutAnnotation")
   }
 
-  @SuppressWarnings("ComponentNotRegistered")
   void testActionExtensionPointAttributeHighlighting() {
     myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction { }")
     doHighlightingTest("actionExtensionPointAttribute.xml", "MyActionAttributeEPBean.java")
@@ -465,7 +470,6 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     assertLookupElement(lookupElements, "MyLanguageID", null, "MyLanguage")
   }
 
-  @SuppressWarnings("ComponentNotRegistered")
   void testIconAttribute() {
     myFixture.addClass("package foo; public class FooAction extends com.intellij.openapi.actionSystem.AnAction { }")
 
@@ -690,7 +694,6 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
     myFixture.checkResultByFile(getTestName(true) + "_after.xml")
   }
 
-  @SuppressWarnings("ComponentNotRegistered")
   void testActionCompletion() {
     configureByFile()
     myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction { }")

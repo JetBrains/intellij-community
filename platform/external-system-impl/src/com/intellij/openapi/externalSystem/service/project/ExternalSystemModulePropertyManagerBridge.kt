@@ -8,16 +8,15 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.isExternalStorageEnabled
-import com.intellij.openapi.roots.ExternalProjectSystemRegistry
-import com.intellij.workspaceModel.ide.JpsFileEntitySource
-import com.intellij.workspaceModel.ide.JpsImportedEntitySource
-import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.platform.workspace.jps.JpsFileEntitySource
+import com.intellij.platform.workspace.jps.JpsImportedEntitySource
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.ExternalSystemModuleOptionsEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.getOrCreateExternalSystemModuleOptions
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity
+import org.jetbrains.jps.model.serialization.SerializationConstants
 
 class ExternalSystemModulePropertyManagerBridge(private val module: Module) : ExternalSystemModulePropertyManager() {
   private fun findEntity(): ExternalSystemModuleOptionsEntity? {
@@ -37,14 +36,26 @@ class ExternalSystemModulePropertyManagerBridge(private val module: Module) : Ex
     module as ModuleBridge
     if (moduleDiff != null) {
       val moduleEntity = module.findModuleEntity(moduleDiff) ?: return
-      val options = moduleDiff.getOrCreateExternalSystemModuleOptions(moduleEntity, moduleEntity.entitySource)
+      val options = moduleEntity.exModuleOptions ?: moduleDiff.run {
+        val entity = ExternalSystemModuleOptionsEntity(moduleEntity.entitySource) {
+          module = moduleEntity
+        }
+        moduleDiff.addEntity(entity)
+        entity
+      }
       moduleDiff.modifyEntity(ExternalSystemModuleOptionsEntity.Builder::class.java, options, action)
     }
     else {
       WriteAction.runAndWait<RuntimeException> {
         WorkspaceModel.getInstance(module.project).updateProjectModel("Modify external system module options") { builder ->
           val moduleEntity = module.findModuleEntity(builder) ?: return@updateProjectModel
-          val options = builder.getOrCreateExternalSystemModuleOptions(moduleEntity, moduleEntity.entitySource)
+          val options = moduleEntity.exModuleOptions ?: builder.run {
+            val entity = ExternalSystemModuleOptionsEntity(moduleEntity.entitySource) {
+              module = moduleEntity
+            }
+            builder.addEntity(entity)
+            entity
+          }
           builder.modifyEntity(ExternalSystemModuleOptionsEntity.Builder::class.java, options, action)
         }
       }
@@ -86,7 +97,7 @@ class ExternalSystemModulePropertyManagerBridge(private val module: Module) : Ex
   override fun getLinkedProjectId(): String? = findEntity()?.linkedProjectId
   override fun getRootProjectPath(): String? = findEntity()?.rootProjectPath
   override fun getLinkedProjectPath(): String? = findEntity()?.linkedProjectPath
-  override fun isMavenized(): Boolean = getExternalSystemId() == ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID
+  override fun isMavenized(): Boolean = getExternalSystemId() == SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID
 
   override fun setMavenized(mavenized: Boolean) {
     setMavenized(mavenized, getModuleDiff())
@@ -97,7 +108,7 @@ class ExternalSystemModulePropertyManagerBridge(private val module: Module) : Ex
       unlinkExternalOptions(storageBuilder)
     }
     editEntity(storageBuilder) {
-      externalSystem = if (mavenized) ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID else null
+      externalSystem = if (mavenized) SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID else null
     }
     updateSource(storageBuilder)
   }

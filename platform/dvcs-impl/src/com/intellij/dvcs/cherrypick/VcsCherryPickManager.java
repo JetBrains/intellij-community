@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.cherrypick;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
@@ -31,7 +32,7 @@ import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.CHERRY_PICK_ERRO
 public final class VcsCherryPickManager {
   private static final Logger LOG = Logger.getInstance(VcsCherryPickManager.class);
   private final @NotNull Project myProject;
-  private final @NotNull Set<CommitId> myIdsInProgress = ContainerUtil.newConcurrentSet();
+  private final @NotNull Set<CommitId> myIdsInProgress = ConcurrentCollectionFactory.createConcurrentSet();
   private final @NotNull BackgroundTaskQueue myTaskQueue;
 
   public VcsCherryPickManager(@NotNull Project project) {

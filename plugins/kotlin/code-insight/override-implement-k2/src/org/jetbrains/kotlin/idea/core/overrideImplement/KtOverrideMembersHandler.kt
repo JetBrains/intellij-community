@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.core.overrideImplement
 
+import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -25,12 +26,14 @@ open class KtOverrideMembersHandler : KtGenerateMembersHandler(false) {
 
     private fun KtAnalysisSession.collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> =
         classOrObject.getClassOrObjectSymbol()?.let { getOverridableMembers(it) }.orEmpty().map { (symbol, bodyType, containingSymbol) ->
+            @NlsSafe
+            val fqName = containingSymbol?.classIdIfNonLocal?.asSingleFqName()?.toString() ?: containingSymbol?.name?.asString()
             KtClassMember(
                 KtClassMemberInfo.create(
                     symbol,
                     symbol.render(renderer),
                     getIcon(symbol),
-                    containingSymbol?.classIdIfNonLocal?.asSingleFqName()?.toString() ?: containingSymbol?.name?.asString(),
+                    fqName,
                     containingSymbol?.let { getIcon(it) },
                 ),
                 bodyType,

@@ -11,28 +11,24 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.CommitContext;
-import com.intellij.openapi.vcs.changes.CommitSession;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor;
 import com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor.PatchBuilder;
 import com.intellij.openapi.vcs.changes.patch.PatchWriter;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager;
+import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.SessionDialog;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.PATCH_CREATION_FAILED;
@@ -64,12 +60,37 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
   }
 
   @Override
+  public void defaultUpdate(@NotNull AnActionEvent e) {
+    Change[] changes = e.getData(VcsDataKeys.CHANGES);
+    JBIterable<FilePath> unversioned = JBIterable.from(e.getData(ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY));
+    if (ArrayUtil.isEmpty(changes) && unversioned.isEmpty()) {
+      e.getPresentation().setEnabled(false);
+      return;
+    }
+
+    ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);
+    List<ShelvedChangeList> shelveChangelists = ShelvedChangesViewManager.getShelvedLists(e.getDataContext());
+    int changelistNum = changeLists == null ? 0 : changeLists.length;
+    changelistNum += shelveChangelists.size();
+    if (changelistNum > 1) {
+      e.getPresentation().setEnabled(false);
+      return;
+    }
+
+    e.getPresentation().setEnabled(true);
+  }
+
+  @Override
   public void defaultActionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     Change[] changes = e.getData(VcsDataKeys.CHANGES);
-    if (changes == null || changes.length == 0) {
-      return;
-    }
+    JBIterable<FilePath> unversioned = JBIterable.from(e.getData(ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY));
+
+    List<Change> allChanges = new ArrayList<>();
+    if (changes != null) ContainerUtil.addAll(allChanges, changes);
+    ContainerUtil.addAll(allChanges, unversioned.map(path -> new Change(null, new CurrentContentRevision(path))));
+    if (allChanges.isEmpty()) return;
+
     String commitMessage = extractCommitMessage(e);
     project = project == null ? ProjectManager.getInstance().getDefaultProject() : project;
 
@@ -86,7 +107,7 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
       patchBuilder = new CreatePatchCommitExecutor.DefaultPatchBuilder(project);
     }
 
-    createPatch(project, commitMessage, Arrays.asList(changes), mySilentClipboard, patchBuilder);
+    createPatch(project, commitMessage, allChanges, mySilentClipboard, patchBuilder);
   }
 
   @Nullable
@@ -169,16 +190,5 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
                                                          exception.getMessage());
       }
     }, VcsBundle.message("create.patch.commit.action.progress"), true, project);
-  }
-
-  @Override
-  public void defaultUpdate(@NotNull AnActionEvent e) {
-    Change[] changes = e.getData(VcsDataKeys.CHANGES);
-    ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);
-    List<ShelvedChangeList> shelveChangelists = ShelvedChangesViewManager.getShelvedLists(e.getDataContext());
-    int changelistNum = changeLists == null ? 0 : changeLists.length;
-    changelistNum += shelveChangelists.size();
-
-    e.getPresentation().setEnabled(changelistNum <= 1 && !ArrayUtil.isEmpty(changes));
   }
 }

@@ -23,6 +23,13 @@ import org.jetbrains.concurrency.Promises;
 import java.util.Collection;
 import java.util.HashSet;
 
+/**
+ * Command runs 'Inspect code' action.
+ * Run 'Inspect code' command in context defined by parameters.
+ * <p>
+ * Syntax: %inspectCode [directory]
+ * Example: %inspectCode src
+ */
 public class InspectionCommand extends AbstractCommand {
   public static final String PREFIX = CMD_PREFIX + "inspectCode";
 

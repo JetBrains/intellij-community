@@ -10,11 +10,21 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiClassUtil
 import com.theoryinpractice.testng.configuration.TestNGConfigurationProducer
 import com.theoryinpractice.testng.util.TestNGUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.codeInsight.FrameworkAvailabilityChecker
 import org.jetbrains.kotlin.idea.base.codeInsight.isFrameworkAvailable
 import org.jetbrains.kotlin.idea.extensions.KotlinTestFrameworkProvider
 
-object TestNgKotlinTestFrameworkProvider : KotlinTestFrameworkProvider {
+@ApiStatus.Internal
+class TestNgKotlinTestFrameworkProvider : KotlinTestFrameworkProvider {
+    companion object {
+        @JvmStatic
+        fun getInstance(): TestNgKotlinTestFrameworkProvider {
+            return KotlinTestFrameworkProvider.EP_NAME
+                .findExtensionOrFail(TestNgKotlinTestFrameworkProvider::class.java)
+        }
+    }
+
     override val canRunJvmTests: Boolean
         get() = true
 

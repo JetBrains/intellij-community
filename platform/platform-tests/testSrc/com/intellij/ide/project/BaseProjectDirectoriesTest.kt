@@ -9,9 +9,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
-import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
@@ -83,6 +84,27 @@ class BaseProjectDirectoriesTest {
     PsiTestUtil.removeContentEntry(module, outer)
     checkBaseDirectories(inner)
     listener.checkDiff(setOf(outer), setOf(inner))
+  }
+
+  @Test
+  fun `find content root for a file`() {
+    val module = projectModel.createModule()
+    val root = projectModel.baseProjectDir.newVirtualDirectory("root")
+    ModuleRootModificationUtil.addContentRoot(module, root)
+    checkBaseDirectories(root)
+
+    val dir = VfsTestUtil.createDir(root, "dir")
+    val fileInDir = VfsTestUtil.createFile(dir, "file.txt")
+
+    val service = BaseProjectDirectories.getInstance(projectModel.project)
+    assertSame(root, service.getBaseDirectoryFor(root))
+    assertSame(root, service.getBaseDirectoryFor(dir))
+    assertSame(root, service.getBaseDirectoryFor(fileInDir))
+
+    val externalDir = projectModel.baseProjectDir.newVirtualDirectory("extDir")
+    val externalFile = VfsTestUtil.createFile(externalDir, "file.txt")
+    assertNull(service.getBaseDirectoryFor(externalDir))
+    assertNull(service.getBaseDirectoryFor(externalFile))
   }
 
   private fun checkBaseDirectories(vararg files: VirtualFile) {

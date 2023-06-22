@@ -15,7 +15,9 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClassInitializer;
 import com.intellij.psi.PsiCodeBlock;
@@ -23,7 +25,6 @@ import com.intellij.psi.PsiElement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,11 +44,11 @@ public class EmptyInitializerInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new EmptyInitializerFix();
   }
 
-  private static class EmptyInitializerFix extends InspectionGadgetsFix {
+  private static class EmptyInitializerFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -57,13 +58,12 @@ public class EmptyInitializerInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       final PsiElement codeBlock = element.getParent();
-      assert codeBlock != null;
+      if (!(codeBlock instanceof PsiCodeBlock)) return;
       final PsiElement classInitializer = codeBlock.getParent();
-      assert classInitializer != null;
-      deleteElement(classInitializer);
+      if (!(classInitializer instanceof PsiClassInitializer)) return;
+      classInitializer.delete();
     }
   }
 

@@ -6,6 +6,7 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -68,8 +69,7 @@ public final class CommandLineWrapper {
     List<String> properties = Collections.emptyList();
     String[] mainArgs;
 
-    JarInputStream inputStream = new JarInputStream(new FileInputStream(jarFile));
-    try {
+    try (JarInputStream inputStream = new JarInputStream(new FileInputStream(jarFile))) {
       Manifest manifest = inputStream.getManifest();
 
       String vmOptions = manifest != null ? manifest.getMainAttributes().getValue("VM-Options") : null;
@@ -87,7 +87,6 @@ public final class CommandLineWrapper {
       }
     }
     finally {
-      inputStream.close();
       jarFile.deleteOnExit();
     }
 
@@ -100,7 +99,7 @@ public final class CommandLineWrapper {
   private static List<String> splitBySpaces(String parameterString) {
     parameterString = parameterString.trim();
 
-    List<String> params = new ArrayList<String>();
+    List<String> params = new ArrayList<>();
     StringBuilder token = new StringBuilder(128);
     boolean inQuotes = false;
     boolean escapedQuote = false;
@@ -148,7 +147,7 @@ public final class CommandLineWrapper {
    * args: "classpath file" [ @vm_params "VM options file" ] [ @app_params "args file" ] "main class" [ args ... ]
    */
   private static AppData loadMainClassWithCustomLoader(File classpathFile, String[] args) throws Exception {
-    List<URL> classpathUrls = new ArrayList<URL>();
+    List<URL> classpathUrls = new ArrayList<>();
     StringBuilder classpathString = new StringBuilder();
     List<String> pathElements = readLinesAndDeleteFile(classpathFile);
     for (String pathElement : pathElements) {
@@ -193,15 +192,13 @@ public final class CommandLineWrapper {
 
   /** @noinspection ResultOfMethodCallIgnored */
   private static List<String> readLinesAndDeleteFile(File file) throws IOException {
-    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
-    try {
-      List<String> lines = new ArrayList<String>();
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
+      List<String> lines = new ArrayList<>();
       String line;
       while ((line = reader.readLine()) != null) lines.add(line);
       return lines;
     }
     finally {
-      reader.close();
       file.delete();
     }
   }

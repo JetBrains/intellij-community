@@ -5,7 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ProjectTopics;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.highlighter.XmlFileType;
@@ -74,13 +74,13 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.OptionsMessageDialog;
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
-import com.intellij.workspaceModel.storage.EntityChange;
-import com.intellij.workspaceModel.storage.VersionedStorageChange;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleCustomImlDataEntity;
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
+import com.intellij.platform.workspace.storage.EntityChange;
+import com.intellij.platform.workspace.storage.VersionedStorageChange;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
+import com.intellij.platform.workspace.jps.entities.LibraryEntity;
+import com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntity;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
@@ -1028,7 +1028,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
                                 @NotNull String externalName,
                                 @NotNull String text) {
     String message = text + "; for signature: '" + externalName + "' in the file " + virtualFile.getName();
-    LOG.error(message, new Throwable(), AttachmentFactory.createAttachment(virtualFile));
+    LOG.error(message, new Throwable(), CoreAttachmentFactory.createAttachment(virtualFile));
   }
 
   public static boolean areExternalAnnotationsApplicable(@NotNull PsiModifierListOwner owner) {

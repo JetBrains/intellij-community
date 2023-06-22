@@ -20,10 +20,10 @@ import java.util.*;
 public class IDEATestNGRemoteListener {
 
   private final PrintStream myPrintStream;
-  private final List<String> myCurrentSuites = new ArrayList<String>();
-  private final Map<String, Integer> myInvocationCounts = new HashMap<String, Integer>();
-  private final Map<ExposedTestResult, String> myParamsMap = new HashMap<ExposedTestResult, String>();
-  private final Map<ExposedTestResult, DelegatedResult> myResults = new HashMap<ExposedTestResult, DelegatedResult>();
+  private final List<String> myCurrentSuites = new ArrayList<>();
+  private final Map<String, Integer> myInvocationCounts = new HashMap<>();
+  private final Map<ExposedTestResult, String> myParamsMap = new HashMap<>();
+  private final Map<ExposedTestResult, DelegatedResult> myResults = new HashMap<>();
   private int mySkipped = 0;
 
   public IDEATestNGRemoteListener() {
@@ -227,7 +227,7 @@ public class IDEATestNGRemoteListener {
     }
     Throwable ex = result.getThrowable();
     String methodName = getTestMethodNameWithParams(result);
-    final Map<String, String> attrs = new LinkedHashMap<String, String>();
+    final Map<String, String> attrs = new LinkedHashMap<>();
     attrs.put("name", methodName);
     final String failureMessage = ex != null ? ex.getMessage() : null;
     if (ex != null) {

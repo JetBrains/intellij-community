@@ -15,7 +15,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 public final class InspectionProfileLoadUtil {
-  private static String getProfileName(@NotNull Path file, @NotNull Element element) {
+  @NotNull
+  public static String getProfileName(@NotNull Path file, @NotNull Element element) {
     String name = null;
     for (Element option : element.getChildren("option")) {
       if ("myName".equals(option.getAttributeValue("name"))) {

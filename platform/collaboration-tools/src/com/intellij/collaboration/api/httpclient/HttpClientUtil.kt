@@ -5,7 +5,10 @@ import com.intellij.collaboration.api.HttpStatusErrorException
 import com.intellij.collaboration.api.httpclient.HttpClientUtil.CONTENT_ENCODING_GZIP
 import com.intellij.collaboration.api.httpclient.HttpClientUtil.CONTENT_ENCODING_HEADER
 import com.intellij.collaboration.api.logName
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.SystemInfo
 import java.io.InputStream
 import java.io.Reader
 import java.io.StringReader
@@ -18,11 +21,14 @@ import java.util.zip.GZIPInputStream
 
 object HttpClientUtil {
 
+  const val ACCEPT_ENCODING_HEADER = "Accept-Encoding"
   const val CONTENT_ENCODING_HEADER = "Content-Encoding"
   const val CONTENT_ENCODING_GZIP = "gzip"
 
   const val CONTENT_TYPE_HEADER = "Content-Type"
   const val CONTENT_TYPE_JSON = "application/json"
+
+  const val USER_AGENT_HEADER = "User-Agent"
 
   /**
    * Checks the status code of the response and throws [HttpStatusErrorException] if status code is not a successful one
@@ -66,6 +72,20 @@ object HttpClientUtil {
                                          reader: (Reader) -> T): T {
     checkStatusCodeWithLogging(logger, request.logName(), responseInfo.statusCode(), bodyStream)
     return responseReaderWithLogging(logger, request.logName(), bodyStream).use(reader)
+  }
+
+  /**
+   * Build the User-Agent header value for the [agentName]
+   * Append product, java and OS data
+   */
+  fun getUserAgentValue(agentName: String): String {
+    val ideName = ApplicationNamesInfo.getInstance().fullProductName.replace(' ', '-')
+    val ideBuild = ApplicationInfo.getInstance().build.asString()
+    val java = "JRE " + SystemInfo.JAVA_RUNTIME_VERSION
+    val os = SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION
+    val arch = SystemInfo.OS_ARCH
+
+    return "$agentName $ideName/$ideBuild ($java; $os; $arch)"
   }
 }
 

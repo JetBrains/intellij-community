@@ -1,15 +1,18 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder
 
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
-import com.intellij.codeInsight.navigation.NavigationUtil
+import com.intellij.codeInsight.navigation.activateFileWithPsiElement
 import com.intellij.codeInsight.template.*
 import com.intellij.codeInsight.template.impl.TemplateImpl
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
+import com.intellij.injected.editor.VirtualFileWindow
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -32,9 +35,9 @@ import org.jetbrains.kotlin.descriptors.impl.TypeParameterDescriptorImpl
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.copied
+import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
@@ -76,11 +79,11 @@ import org.jetbrains.kotlin.types.typeUtil.isAnyOrNullableAny
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.types.typeUtil.makeNullable
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import java.util.*
 import kotlin.math.max
-import org.jetbrains.kotlin.psi.psiUtil.parents
 
 /**
  * Represents a single choice for a type (e.g. parameter type or return type).
@@ -280,13 +283,13 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
             val project = config.currentFile.project
 
             if (containingElement.containingFile != config.currentFile) {
-                NavigationUtil.activateFileWithPsiElement(containingElement)
+                activateFileWithPsiElement(containingElement)
             }
 
             dialogWithEditor = if (containingElement is KtElement) {
                 ktFileToEdit = containingElement.containingKtFile
                 containingFileEditor = if (ktFileToEdit != config.currentFile) {
-                    FileEditorManager.getInstance(project).selectedTextEditor!!
+                    FileEditorManager.getInstance(project).selectedTextEditor ?: config.currentEditor!!
                 } else {
                     config.currentEditor!!
                 }
@@ -496,7 +499,9 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                                 && containingElement.isAncestor(config.originalElement)
                                 && callableInfo.kind != CallableKind.CONSTRUCTOR
                             ) "private "
-                            else if (isExtension) "private "
+                            else if (isExtension) {
+                                if (containingElement is KtFile && containingElement.isScript()) "" else "private "
+                            }
                             else ""
                         append(defaultVisibility)
                     }
@@ -586,7 +591,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                             buildString {
                                 append("\nget() {}")
                                 if (isVar) {
-                                    append("\nset() {}")
+                                    append("\nset(value) {}")
                                 }
                             }
                         } else ""
@@ -972,7 +977,10 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
             documentManager.doPostponedOperationsAndUnblockDocument(document)
 
             val caretModel = containingFileEditor.caretModel
-            caretModel.moveToOffset(ktFileToEdit.node.startOffset)
+            val injectedOffsetOrZero = if (ktFileToEdit.virtualFile is VirtualFileWindow) {
+                InjectedLanguageManager.getInstance(ktFileToEdit.project).injectedToHost(ktFileToEdit, ktFileToEdit.textOffset)
+            } else 0
+            caretModel.moveToOffset(ktFileToEdit.node.startOffset + injectedOffsetOrZero)
 
             val declaration = declarationPointer.element ?: return
 
@@ -1020,15 +1028,17 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                         if (brokenOff && !isUnitTestMode()) return
 
                         // file templates
-                        val newDeclaration = PsiTreeUtil.findElementOfClassAtOffset(
+                        val newDeclarationPointer = PsiTreeUtil.findElementOfClassAtOffset(
                             ktFileToEdit,
                             declarationMarker.startOffset,
                             declaration::class.java,
                             false
-                        ) ?: return
+                        )?.createSmartPointer() ?: return
 
                         if (IntentionPreviewUtils.isPreviewElement(config.currentFile)) return
-                        runWriteAction {
+
+                        WriteCommandAction.writeCommandAction(project).run<Throwable> {
+                            val newDeclaration = newDeclarationPointer.element ?: return@run
                             postprocessDeclaration(newDeclaration)
 
                             // file templates
@@ -1241,6 +1251,7 @@ internal fun KtNamedDeclaration.getReturnTypeReferences(): List<KtTypeReference>
     return when (this) {
         is KtCallableDeclaration -> listOfNotNull(typeReference)
         is KtClassOrObject -> superTypeListEntries.mapNotNull { it.typeReference }
+        is KtScript -> emptyList()
         else -> throw AssertionError("Unexpected declaration kind: $text")
     }
 }

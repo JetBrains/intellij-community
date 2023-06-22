@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea
 
 import com.google.common.collect.HashMultiset
 import com.intellij.dvcs.branch.DvcsSyncSettings.Value
+import com.intellij.ide.impl.isTrusted
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.beans.addBoolIfDiffers
 import com.intellij.internal.statistic.beans.addIfDiffers
@@ -24,13 +25,13 @@ import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.VcsLogUiImpl
+import git4idea.branch.GitBranchUtil
 import git4idea.config.*
 import git4idea.repo.GitCommitTemplateTracker
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.dashboard.CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY
 import git4idea.ui.branch.dashboard.SHOW_GIT_BRANCHES_LOG_PROPERTY
-import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.exists
@@ -38,7 +39,9 @@ import kotlin.io.path.exists
 class GitStatisticsCollector : ProjectUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  override fun getMetrics(project: Project): MutableSet<MetricEvent> {
+  override fun getMetrics(project: Project): Set<MetricEvent> {
+    if (!project.isTrusted()) return emptySet()
+
     val set = HashSet<MetricEvent>()
 
     val repositoryManager = GitUtil.getRepositoryManager(project)
@@ -73,7 +76,6 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
         LOCAL_BRANCHES with branches.localBranches.size,
         REMOTE_BRANCHES with branches.remoteBranches.size,
         REMOTES with repository.remotes.size,
-        WORKING_COPY_SIZE with repository.workingCopySize(),
         IS_WORKTREE_USED with repository.isWorkTreeUsed(),
         FS_MONITOR with repository.detectFsMonitor(),
       )
@@ -86,6 +88,8 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
       set.add(repositoryMetric)
     }
 
+    addCommonBranchesMetrics(repositories, set)
+
     addCommitTemplateMetrics(project, repositories, set)
 
     addGitLogMetrics(project, set)
@@ -93,7 +97,18 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
     return set
   }
 
-  private fun addCommitTemplateMetrics(project: Project, repositories: List<GitRepository>, set: java.util.HashSet<MetricEvent>) {
+  private fun addCommonBranchesMetrics(repositories: List<GitRepository>, set: MutableSet<MetricEvent>) {
+    val commonLocalBranches = GitBranchUtil.getCommonLocalBranches(repositories)
+    val commonRemoteBranches = GitBranchUtil.getCommonRemoteBranches(repositories)
+    if (commonLocalBranches.isEmpty() && commonRemoteBranches.isEmpty()) return
+
+    set.add(COMMON_BRANCHES_COUNT_EVENT.metric(
+      COMMON_LOCAL_BRANCHES with commonLocalBranches.size,
+      COMMON_REMOTE_BRANCHES with commonRemoteBranches.size
+    ))
+  }
+
+  private fun addCommitTemplateMetrics(project: Project, repositories: List<GitRepository>, set: MutableSet<MetricEvent>) {
     if (repositories.isEmpty()) return
 
     val templatesCount = project.service<GitCommitTemplateTracker>().templatesCount()
@@ -128,7 +143,7 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("git.configuration", 10)
+    private val GROUP = EventLogGroup("git.configuration", 12)
 
     private val REPO_SYNC_VALUE: EnumEventField<Value> = EventFields.Enum("value", Value::class.java) { it.name.lowercase() }
     private val REPO_SYNC: VarargEventId = GROUP.registerVarargEvent("repo.sync", REPO_SYNC_VALUE)
@@ -147,10 +162,14 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
     private val TYPE = EventFields.Enum("type", GitVersion.Type::class.java) { it.name }
     private val EXECUTABLE = GROUP.registerVarargEvent("executable", EventFields.Version, TYPE)
 
+    private val COMMON_LOCAL_BRANCHES = EventFields.RoundedInt("common_local_branches")
+    private val COMMON_REMOTE_BRANCHES = EventFields.RoundedInt("common_remote_branches")
+    private val COMMON_BRANCHES_COUNT_EVENT = GROUP.registerVarargEvent("common_branches_count",
+                                                                        COMMON_LOCAL_BRANCHES, COMMON_REMOTE_BRANCHES)
+
     private val LOCAL_BRANCHES = EventFields.RoundedInt("local_branches")
     private val REMOTE_BRANCHES = EventFields.RoundedInt("remote_branches")
     private val REMOTES = EventFields.RoundedInt("remotes")
-    private val WORKING_COPY_SIZE = EventFields.RoundedLong("working_copy_size")
     private val IS_WORKTREE_USED = EventFields.Boolean("is_worktree_used")
     private val FS_MONITOR = EventFields.Enum<FsMonitor>("fs_monitor")
     private val remoteTypes = setOf("github", "gitlab", "bitbucket",
@@ -164,7 +183,6 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
                                                        LOCAL_BRANCHES,
                                                        REMOTE_BRANCHES,
                                                        REMOTES,
-                                                       WORKING_COPY_SIZE,
                                                        IS_WORKTREE_USED,
                                                        FS_MONITOR,
                                                        *remoteTypesEventIds.toTypedArray()
@@ -191,45 +209,6 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
       return null
     }
   }
-}
-
-private const val MAX_SIZE: Long = 4L * 1024 * 1024 * 1024 // 4 GB
-private const val MAX_TIME: Long = 5 * 1000 * 60 // 5 min
-
-private fun Sequence<Long>.sumWithLimits(): Long {
-  var sum = 0L
-  val startTime = System.currentTimeMillis()
-  for (element in this) {
-    if (System.currentTimeMillis() - startTime > MAX_TIME)
-      return -1
-    sum += element
-    if (sum >= MAX_SIZE) return MAX_SIZE
-  }
-  return sum
-}
-
-/**
- * Calculates size of work tree in given [GitRepository]
- *
- * @return size in bytes or -1 if some IO error occurs
- */
-private fun GitRepository.workingCopySize(): Long = try {
-  val root = this.root.toNioPath().toFile()
-  root.walk()
-    .onEnter { it.name != GitUtil.DOT_GIT && !isInnerRepo(root, it) }
-    .filter { it.isFile }
-    .map { it.length() }
-    .sumWithLimits() // don't calculate working copy size over 4 gb to reduce CPU usage
-}
-catch (e: Exception) {
-  // if something goes wrong with file system operations
-  -1
-}
-
-private fun isInnerRepo(root: File, dir: File): Boolean {
-  if (root == dir) return false
-
-  return Path.of(dir.toString(), GitUtil.DOT_GIT).exists()
 }
 
 /**

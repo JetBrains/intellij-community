@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
  * This policy is to cancel.
  */
 public final class CancelPolicy implements ConflictResolutionPolicy {
-
     private static final CancelPolicy instance = new CancelPolicy();
 
     private CancelPolicy() {}

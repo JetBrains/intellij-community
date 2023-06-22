@@ -153,6 +153,11 @@ public abstract class PerformanceHighlightingTestGenerated extends AbstractPerfo
         public void testUnused() throws Exception {
             runTest("../idea/tests/testData/highlighter/suppress/Unused.kt");
         }
+
+        @TestMetadata("WithComment.kt")
+        public void testWithComment() throws Exception {
+            runTest("../idea/tests/testData/highlighter/suppress/WithComment.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -310,6 +315,11 @@ public abstract class PerformanceHighlightingTestGenerated extends AbstractPerfo
         @TestMetadata("TypeAlias2.kt")
         public void testTypeAlias2() throws Exception {
             runTest("../idea/tests/testData/highlighter/TypeAlias2.kt");
+        }
+
+        @TestMetadata("TypeAliasAnnotation.kt")
+        public void testTypeAliasAnnotation() throws Exception {
+            runTest("../idea/tests/testData/highlighter/TypeAliasAnnotation.kt");
         }
 
         @TestMetadata("TypesAndAnnotations.kt")

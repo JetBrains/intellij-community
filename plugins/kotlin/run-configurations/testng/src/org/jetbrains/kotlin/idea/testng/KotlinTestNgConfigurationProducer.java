@@ -41,7 +41,7 @@ public class KotlinTestNgConfigurationProducer extends TestNGConfigurationProduc
             @NotNull TestNGConfiguration configuration,
             @NotNull ConfigurationContext context, @NotNull PsiElement element
     ) {
-        KotlinTestFrameworkProvider.JavaEntity javaEntity = TestNgKotlinTestFrameworkProvider.INSTANCE.getJavaEntity(element);
+        KotlinTestFrameworkProvider.JavaEntity javaEntity = TestNgKotlinTestFrameworkProvider.getInstance().getJavaEntity(element);
         if (javaEntity == null || !hasDetectedTestFramework(javaEntity.getTestClass())) {
             return false;
         }
@@ -75,7 +75,7 @@ public class KotlinTestNgConfigurationProducer extends TestNGConfigurationProduc
             return false;
         }
 
-        JavaTestEntity testEntity = TestNgKotlinTestFrameworkProvider.INSTANCE.getJavaTestEntity(leaf, true);
+        JavaTestEntity testEntity = TestNgKotlinTestFrameworkProvider.getInstance().getJavaTestEntity(leaf, true);
         if (testEntity == null) {
             return false;
         }
@@ -85,7 +85,9 @@ public class KotlinTestNgConfigurationProducer extends TestNGConfigurationProduc
 
     @Override
     public void onFirstRun(ConfigurationFromContext configuration, @NotNull ConfigurationContext context, @NotNull Runnable startRunnable) {
-         JavaTestEntity testEntity = TestNgKotlinTestFrameworkProvider.INSTANCE.getJavaTestEntity(configuration.getSourceElement(), true);
+         JavaTestEntity testEntity = TestNgKotlinTestFrameworkProvider.getInstance()
+                 .getJavaTestEntity(configuration.getSourceElement(), true);
+
          if (testEntity == null) {
              super.onFirstRun(configuration, context, startRunnable);
              return;

@@ -6,6 +6,8 @@ import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
+import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
+import com.intellij.openapi.diff.impl.patch.PatchHunk
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.panels.Wrapper
@@ -13,7 +15,6 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentState
-import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChange
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHEditableHtmlPaneHandle
@@ -29,6 +30,7 @@ object GHPRReviewCommentComponent {
              comment: GHPRReviewCommentModel,
              ghostUser: GHUser,
              reviewDataProvider: GHPRReviewDataProvider,
+             htmlImageLoader: AsyncHtmlImageLoader,
              avatarIconsProvider: GHAvatarIconsProvider,
              suggestedChangeHelper: GHPRSuggestedChangeHelper,
              type: CodeReviewChatItemUIUtil.ComponentType,
@@ -40,7 +42,7 @@ object GHPRReviewCommentComponent {
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
 
-    val pendingLabel = CollaborationToolsUIUtil.createTagLabel(GithubBundle.message("pull.request.review.comment.pending"))
+    val pendingLabel = CollaborationToolsUIUtil.createTagLabel(CollaborationToolsBundle.message("review.thread.pending.tag"))
     val resolvedLabel = CollaborationToolsUIUtil.createTagLabel(CollaborationToolsBundle.message("review.thread.resolved.tag"))
 
     val commentWrapper = Wrapper().apply {
@@ -52,15 +54,13 @@ object GHPRReviewCommentComponent {
 
     Controller(project,
                thread, comment,
-               suggestedChangeHelper,
+               suggestedChangeHelper, htmlImageLoader,
                pendingLabel, resolvedLabel, commentWrapper,
                showResolvedMarker,
                maxTextWidth)
 
-    val editablePaneHandle = GHEditableHtmlPaneHandle(project, commentWrapper, comment::body) {
+    val editablePaneHandle = GHEditableHtmlPaneHandle(project, commentWrapper, maxTextWidth, comment::body) {
       reviewDataProvider.updateComment(EmptyProgressIndicator(), comment.id, it)
-    }.apply {
-      maxEditorWidth = maxTextWidth
     }
 
     val editButton = CodeReviewCommentUIUtil.createEditButton {
@@ -100,6 +100,7 @@ object GHPRReviewCommentComponent {
                            private val thread: GHPRReviewThreadModel,
                            private val comment: GHPRReviewCommentModel,
                            private val suggestedChangeHelper: GHPRSuggestedChangeHelper,
+                           private val htmlmageLoader: AsyncHtmlImageLoader,
                            private val pendingLabel: JComponent,
                            private val resolvedLabel: JComponent,
                            private val commentWrapper: Wrapper,
@@ -112,7 +113,7 @@ object GHPRReviewCommentComponent {
     }
 
     private fun update() {
-      val commentComponent = createCommentBodyComponent(project, suggestedChangeHelper, thread, comment.body, maxTextWidth)
+      val commentComponent = createCommentBodyComponent(project, suggestedChangeHelper, thread, htmlmageLoader, comment.body, maxTextWidth)
       commentWrapper.setContent(commentComponent)
       commentWrapper.repaint()
 
@@ -133,13 +134,16 @@ object GHPRReviewCommentComponent {
   fun createCommentBodyComponent(project: Project,
                                  suggestedChangeHelper: GHPRSuggestedChangeHelper,
                                  thread: GHPRReviewThreadModel,
+                                 htmlmageLoader: AsyncHtmlImageLoader,
                                  commentBody: @Nls String,
                                  maxTextWidth: Int): JComponent {
-    val commentComponentFactory = GHPRReviewCommentComponentFactory(project)
-    val commentComponent = if (GHSuggestedChange.containsSuggestedChange(commentBody)) {
-      val suggestedChange = GHSuggestedChange.create(commentBody,
-                                                     thread.diffHunk, thread.filePath,
-                                                     thread.startLine ?: thread.line, thread.line)
+    val commentComponentFactory = GHPRReviewCommentComponentFactory(project, htmlmageLoader)
+    val hunk = thread.patchHunk ?: PatchHunk(0, 0, 0, 0)
+    val lineIndex = thread.location?.second
+
+    val commentComponent = if (lineIndex != null && GHSuggestedChange.containsSuggestedChange(commentBody)) {
+      val startLineIndex = thread.startLocation?.second ?: lineIndex
+      val suggestedChange = GHSuggestedChange(commentBody, hunk, thread.filePath, startLineIndex, lineIndex)
       commentComponentFactory.createCommentWithSuggestedChangeComponent(thread, suggestedChange, suggestedChangeHelper, maxTextWidth)
     }
     else {
@@ -152,6 +156,7 @@ object GHPRReviewCommentComponent {
               thread: GHPRReviewThreadModel,
               ghostUser: GHUser,
               reviewDataProvider: GHPRReviewDataProvider,
+              htmlmageLoader: AsyncHtmlImageLoader,
               avatarIconsProvider: GHAvatarIconsProvider,
               suggestedChangeHelper: GHPRSuggestedChangeHelper,
               type: CodeReviewChatItemUIUtil.ComponentType,
@@ -162,7 +167,8 @@ object GHPRReviewCommentComponent {
       create(
         project,
         thread, comment, ghostUser,
-        reviewDataProvider, avatarIconsProvider,
+        reviewDataProvider,
+        htmlmageLoader, avatarIconsProvider,
         suggestedChangeHelper,
         type,
         showResolvedMarkerOnFirstComment,

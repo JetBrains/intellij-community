@@ -2,20 +2,18 @@
 
 package org.jetbrains.kotlin.idea.highlighting
 
-import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.psi.util.PsiUtilCore
 import org.jetbrains.kotlin.idea.base.highlighting.BeforeResolveHighlightingExtension
 import org.jetbrains.kotlin.idea.base.highlighting.textAttributesForClass
 import org.jetbrains.kotlin.idea.base.highlighting.textAttributesForKtParameterDeclaration
 import org.jetbrains.kotlin.idea.base.highlighting.textAttributesForKtPropertyDeclaration
 import org.jetbrains.kotlin.idea.base.highlighting.visitor.AbstractHighlightingVisitor
-import org.jetbrains.kotlin.idea.highlighter.*
-import org.jetbrains.kotlin.idea.highlighting.beforeResolve.AbstractBeforeResolveHighlightingVisitor
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors as Colors
 
-internal class DeclarationHighlightingVisitor(holder: AnnotationHolder) : AbstractBeforeResolveHighlightingVisitor(holder) {
+internal class DeclarationHighlightingVisitor(holder: HighlightInfoHolder) : AbstractHighlightingVisitor(holder) {
     override fun visitTypeAlias(typeAlias: KtTypeAlias) {
         highlightNamedDeclaration(typeAlias, Colors.TYPE_ALIAS)
         super.visitTypeAlias(typeAlias)
@@ -64,6 +62,6 @@ internal class DeclarationHighlightingVisitor(holder: AnnotationHolder) : Abstra
 }
 
 class DeclarationHighlightingExtension : BeforeResolveHighlightingExtension {
-    override fun createVisitor(holder: AnnotationHolder): AbstractHighlightingVisitor =
+    override fun createVisitor(holder: HighlightInfoHolder): AbstractHighlightingVisitor =
         DeclarationHighlightingVisitor(holder)
 }

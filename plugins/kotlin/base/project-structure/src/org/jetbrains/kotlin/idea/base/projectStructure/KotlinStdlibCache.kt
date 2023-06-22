@@ -22,10 +22,10 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.DumbModeAccessType
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.messages.MessageBusConnection
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinStdlibIndex
@@ -89,7 +89,7 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
         val libraryScope = LibraryScope(project, libraryInfo.library.getFiles(OrderRootType.CLASSES).toSet())
         return names.any { name ->
             DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
-                FileBasedIndex.getInstance().getContainingFilesIterator(KotlinStdlibIndex.KEY, name, libraryScope).hasNext()
+                FileBasedIndex.getInstance().getContainingFilesIterator(KotlinStdlibIndex.NAME, name, libraryScope).hasNext()
             })
         }
     }
@@ -235,9 +235,9 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
                 val stdLib = moduleSourceInfo?.module?.moduleWithLibrariesScope?.let index@{ scope ->
                     val stdlibManifests = DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
                         FileBasedIndex.getInstance().getContainingFiles(
-                            KotlinStdlibIndex.KEY,
-                            KotlinStdlibIndex.KOTLIN_STDLIB_NAME,
-                            scope
+                          KotlinStdlibIndex.NAME,
+                          KotlinStdlibIndex.KOTLIN_STDLIB_NAME,
+                          scope
                         )
                     })
 

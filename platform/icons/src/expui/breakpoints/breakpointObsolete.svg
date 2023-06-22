@@ -1,4 +1,4 @@
-<!-- Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
-<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path fill-rule="evenodd" clip-rule="evenodd" d="M11.5 6C11.5 9.03757 9.03757 11.5 6 11.5C2.96243 11.5 0.5 9.03757 0.5 6C0.5 2.96243 2.96243 0.5 6 0.5C9.03757 0.5 11.5 2.96243 11.5 6ZM6 2.1C6.49706 2.1 6.9 2.50294 6.9 3L6.9 6C6.9 6.49706 6.49706 6.9 6 6.9C5.50294 6.9 5.1 6.49706 5.1 6L5.1 3C5.1 2.50294 5.50294 2.1 6 2.1ZM6 9.7C6.55228 9.7 7 9.25228 7 8.7C7 8.14771 6.55228 7.7 6 7.7C5.44772 7.7 5 8.14771 5 8.7C5 9.25228 5.44772 9.7 6 9.7Z" fill="#E35252"/>
+<!-- Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M7 14C10.866 14 14 10.866 14 7C14 3.13401 10.866 0 7 0C3.13401 0 0 3.13401 0 7C0 10.866 3.13401 14 7 14ZM7.90049 3.5C7.90049 3.00294 7.49754 2.6 7.00049 2.6C6.50343 2.6 6.10049 3.00294 6.10049 3.5L6.10049 7C6.10049 7.49706 6.50343 7.9 7.00049 7.9C7.49755 7.9 7.90049 7.49706 7.90049 7L7.90049 3.5ZM7.00039 11.2C7.6079 11.2 8.10039 10.7075 8.10039 10.1C8.10039 9.49249 7.6079 9 7.00039 9C6.39288 9 5.90039 9.49249 5.90039 10.1C5.90039 10.7075 6.39288 11.2 7.00039 11.2Z" fill="#E55765"/>
 </svg>

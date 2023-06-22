@@ -92,7 +92,7 @@ public class VisiblePack implements VcsLogDataPack, UserDataHolder {
     return getVisibleGraph().getVisibleCommitCount() == 0;
   }
 
-  public VirtualFile getRoot(int row) {
+  public @Nullable VirtualFile getRoot(int row) {
     int head = myVisibleGraph.getRowInfo(row).getOneOfHeads();
     return myDataPack.getRefsModel().rootAtHead(head);
   }

@@ -35,7 +35,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
       }
 
       val rowGaps = allRowsGaps[i]
-      rowsGridBuilder.setRowGaps(VerticalGaps(top = rowGaps.top))
+      rowsGridBuilder.setRowGaps(UnscaledGapsY(top = rowGaps.top))
       val subRowVerticalAlign = if (row.resizableRow) VerticalAlign.FILL else VerticalAlign.CENTER
 
       when (row.rowLayout) {
@@ -43,7 +43,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
           val subGridBuilder = rowsGridBuilder.subGridBuilder(width = maxColumnsCount,
             horizontalAlign = HorizontalAlign.FILL,
             verticalAlign = subRowVerticalAlign,
-            gaps = Gaps(left = row.getIndent()))
+            gaps = UnscaledGaps(left = row.getIndent()))
           val cells = row.cells
 
           buildLabelRow(cells, 0, cells.size, row.rowLayout, subGridBuilder)
@@ -96,7 +96,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
       }
 
       row.rowComment?.let {
-        val gaps = Gaps(left = row.getIndent(), bottom = spacingConfiguration.verticalComponentGap)
+        val gaps = UnscaledGaps(left = row.getIndent(), bottom = spacingConfiguration.verticalComponentGap)
         val horizontalAlign = if (it.maxLineLength == MAX_LINE_LENGTH_WORD_WRAP) HorizontalAlign.FILL else HorizontalAlign.LEFT
         rowsGridBuilder.cell(it, maxColumnsCount, gaps = gaps, horizontalAlign = horizontalAlign)
         rowsGridBuilder.row()
@@ -199,7 +199,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
       }
       is PanelImpl -> {
         // todo visualPaddings
-        val gaps = cell.customGaps ?: Gaps(left = leftGap, right = rightGap)
+        val gaps = cell.customGaps ?: UnscaledGaps(left = leftGap, right = rightGap)
         val subGrid = builder.subGrid(width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
                                       resizableColumn = cell.resizableColumn, gaps = gaps)
 
@@ -207,7 +207,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
         subBuilder.build()
       }
       is PlaceholderBaseImpl -> {
-        val gaps = cell.customGaps ?: Gaps(left = leftGap, right = rightGap)
+        val gaps = cell.customGaps ?: UnscaledGaps(left = leftGap, right = rightGap)
         if (cell.resizableColumn) {
           builder.addResizableColumn()
         }
@@ -271,7 +271,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
       }
       else {
         val left = if (index == 0) firstCellIndent else 0
-        GeneratedComponentData(label, Gaps(top = spacingConfiguration.verticalComponentGap, left = left), HorizontalAlign.LEFT, index)
+        GeneratedComponentData(label, UnscaledGaps(top = spacingConfiguration.verticalComponentGap, left = left), HorizontalAlign.LEFT, index)
       }
     }
 
@@ -295,7 +295,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
       else {
         val left = getAdditionalHorizontalIndent(cell) + (if (index == 0) firstCellIndent else 0)
         val horizontalAlign = if (comment.maxLineLength == MAX_LINE_LENGTH_WORD_WRAP) HorizontalAlign.FILL else HorizontalAlign.LEFT
-        GeneratedComponentData(comment, Gaps(left = left, bottom = spacingConfiguration.verticalComponentGap), horizontalAlign, index)
+        GeneratedComponentData(comment, UnscaledGaps(left = left, bottom = spacingConfiguration.verticalComponentGap), horizontalAlign, index)
       }
     }
 
@@ -345,8 +345,8 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
       0
   }
 
-  private fun getRowsGaps(rows: List<RowImpl>): List<VerticalGaps> {
-    val result = mutableListOf<VerticalGaps>()
+  private fun getRowsGaps(rows: List<RowImpl>): List<UnscaledGapsY> {
+    val result = mutableListOf<UnscaledGapsY>()
 
     for ((i, row) in rows.withIndex()) {
       val rowGaps = getRowGaps(row, i == 0, i == rows.size - 1)
@@ -369,7 +369,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
     return result
   }
 
-  private fun getRowGaps(row: RowImpl, first: Boolean, last: Boolean): VerticalGaps {
+  private fun getRowGaps(row: RowImpl, first: Boolean, last: Boolean): UnscaledGapsY {
     val top = when (row.topGap) {
       TopGap.NONE -> 0
       TopGap.SMALL -> spacingConfiguration.verticalSmallGap
@@ -384,8 +384,11 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
       null -> if (last) 0 else row.internalBottomGap
     }
 
-    return if (top > 0 || bottom > 0) VerticalGaps(top = top, bottom = bottom) else VerticalGaps.EMPTY
+    return if (top > 0 || bottom > 0) UnscaledGapsY(top = top, bottom = bottom) else UnscaledGapsY.EMPTY
   }
 }
 
-private data class GeneratedComponentData(val component: JComponent, val gaps: Gaps, val horizontalAlign: HorizontalAlign, val column: Int)
+private data class GeneratedComponentData(val component: JComponent,
+                                          val gaps: UnscaledGaps,
+                                          val horizontalAlign: HorizontalAlign,
+                                          val column: Int)

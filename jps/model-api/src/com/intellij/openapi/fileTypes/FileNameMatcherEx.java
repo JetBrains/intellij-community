@@ -25,7 +25,7 @@ public abstract class FileNameMatcherEx implements FileNameMatcher {
   /**
    * @deprecated call {@link #acceptsCharSequence(CharSequence)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean acceptsCharSequence(@NotNull FileNameMatcher matcher, @NotNull CharSequence fileName) {
     return matcher.acceptsCharSequence(fileName);
   }

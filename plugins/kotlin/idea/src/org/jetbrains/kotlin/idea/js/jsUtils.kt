@@ -37,6 +37,6 @@ fun Module.asJsModule(): Module? = takeIf { it.platform.isJs() }
 
 val Module.shouldUseJpsOutput: Boolean
     get() {
-        val gradleFacade = KotlinGradleFacade.instance ?: return false
+        val gradleFacade = KotlinGradleFacade.getInstance() ?: return false
         return !(isGradleModule && gradleFacade.isDelegatedBuildEnabled(this))
     }

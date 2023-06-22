@@ -12,17 +12,18 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.service.project.IdeModelsProviderImpl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
-import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import org.jetbrains.kotlin.caches.project.cacheInvalidatingOnRootModifications
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
@@ -33,6 +34,7 @@ import org.jetbrains.kotlin.idea.base.platforms.StableModuleNameProvider
 import org.jetbrains.kotlin.idea.base.util.isAndroidModule
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
+import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
@@ -216,12 +218,6 @@ val Module.implementingModules: List<Module>
                 val result = mutableSetOf<Module>()
                 moduleManager.modules.filterTo(result) { it.facetSettings?.dependsOnModuleNames?.contains(thisModuleStableName) == true }
 
-                // HACK: we do not import proper dependsOn for android source-sets in M3,
-                // so add all Android modules that M2-implemention would've added,
-                // to at least not make things worse.
-                // See KT-33809 for details
-                implementingModulesM2(moduleManager).forEach { if (it !in result && it.isAndroidModule()) result += it }
-
                 result.toList()
             }
 
@@ -276,5 +272,12 @@ fun Module.externalSystemNativeMainRunTasks(): List<ExternalSystemNativeMainRunT
 
 private fun Module.externalSystemRunTasks(): List<ExternalSystemRunTask> {
     val settingsProvider = KotlinFacetSettingsProvider.getInstance(project) ?: return emptyList()
-    return settingsProvider.getInitializedSettings(this).externalSystemRunTasks
+    val settings = settingsProvider.getInitializedSettings(this)
+
+    //filter all K/JS run tasks if experimental features are disabled
+    if (!AdvancedSettings.getBoolean("kotlin.mpp.experimental")) {
+        return settings.externalSystemRunTasks.filter { it.kotlinPlatformId != KotlinPlatform.JS.id }
+    } else {
+        return settings.externalSystemRunTasks
+    }
 }

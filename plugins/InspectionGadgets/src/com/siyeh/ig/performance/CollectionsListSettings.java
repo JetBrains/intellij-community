@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.options.OptionController;
+import com.intellij.codeInspection.options.OptionContainer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.CommonClassNames;
@@ -21,7 +21,7 @@ import static com.intellij.codeInspection.options.OptPane.stringList;
 /**
  * @author Dmitry Batkovich
  */
-public abstract class CollectionsListSettings {
+public abstract class CollectionsListSettings implements OptionContainer {
   @NonNls
   public static final SortedSet<String> DEFAULT_COLLECTION_LIST;
 
@@ -89,9 +89,5 @@ public abstract class CollectionsListSettings {
                            QuickFixBundle.message("collection.addall.can.be.replaced.with.constructor.fix.options.label"),
                            new JavaClassValidator().withTitle(
                             QuickFixBundle.message("collection.addall.can.be.replaced.with.constructor.fix.options.dialog.title"))));
-  }
-  
-  public @NotNull OptionController getOptionController() {
-    return OptionController.fieldsOf(this);
   }
 }

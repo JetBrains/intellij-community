@@ -8,15 +8,16 @@ import com.intellij.ui.BadgeIcon
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.JBUI
+import javax.swing.Icon
 
 open class ProblemsViewIconUpdater(project: Project) {
   private val alarm = SingleAlarm({ ProblemsView.getToolWindow(project)?.setIcon(getIcon(getProblemCount(project))) }, 50, project)
   private val empty = Toolwindows.ToolWindowProblemsEmpty
   private val badge by lazy { BadgeIcon(empty, JBUI.CurrentTheme.IconBadge.ERROR) }
 
-  protected open fun getProblemCount(project: Project) = ProblemsCollector.getInstance(project).getProblemCount()
+  protected open fun getProblemCount(project: Project): Int = ProblemsCollector.getInstance(project).getProblemCount()
 
-  protected open fun getIcon(problemCount: Int) = when {
+  protected open fun getIcon(problemCount: Int): Icon = when {
     problemCount == 0 -> empty
     ExperimentalUI.isNewUI() -> badge
     else -> Toolwindows.ToolWindowProblems
@@ -24,6 +25,8 @@ open class ProblemsViewIconUpdater(project: Project) {
 
   companion object {
     @JvmStatic
-    fun update(project: Project) = project.getService(ProblemsViewIconUpdater::class.java)?.alarm?.cancelAndRequest()
+    fun update(project: Project):Unit? {
+      return project.getService(ProblemsViewIconUpdater::class.java)?.alarm?.cancelAndRequest()
+    }
   }
 }

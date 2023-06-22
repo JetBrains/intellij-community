@@ -86,9 +86,9 @@ class CreateServiceInterfaceOrClassTest : LightJava9ModulesCodeInsightFixtureTes
                           "}\n", true)
   }
 
-  fun testExistingLibraryPackage() = doTestNoAction("module foo.bar { uses java.io.<caret>MyService; }")
+  fun testExistingLibraryPackage(): Unit = doTestNoAction("module foo.bar { uses java.io.<caret>MyService; }")
 
-  fun testExistingLibraryOuterClass() = doTestNoAction("module foo.bar { uses java.io.File.<caret>MyService; }")
+  fun testExistingLibraryOuterClass(): Unit = doTestNoAction("module foo.bar { uses java.io.File.<caret>MyService; }")
 
   private fun doAction(interfaceFQN: String, moduleInfo: PsiJavaFile,
                        rootDirectory: PsiDirectory? = null, classKind: CreateClassKind = CreateClassKind.CLASS) {

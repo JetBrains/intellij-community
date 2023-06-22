@@ -72,10 +72,17 @@ public class MavenModel extends MavenModelBase {
   }
 
   public void setProfiles(List<MavenProfile> profiles) {
-    myProfiles = new ArrayList<MavenProfile>(profiles);
+    myProfiles = new ArrayList<>(profiles);
   }
 
   public MavenBuild getBuild() {
     return myBuild;
+  }
+
+  @Override
+  public String toString() {
+    return "{" +
+           "mavenId=" + myMavenId +
+           '}';
   }
 }

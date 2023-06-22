@@ -1,15 +1,14 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.attach.dialog
 
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.ui.StartupUiUtil
 import java.awt.Font
 import java.awt.FontMetrics
 import javax.swing.JComponent
 
-private val logger = Logger.getInstance(AttachToProcessDialog::class.java)
-
-fun getProcessName(textToTruncate: String, fontMetrics: FontMetrics, maxWidth: Int): @NlsSafe String {
+internal fun getProcessName(textToTruncate: String, fontMetrics: FontMetrics, maxWidth: Int): @NlsSafe String {
   if (textToTruncate.isEmpty()) return ""
 
   try {
@@ -18,14 +17,14 @@ fun getProcessName(textToTruncate: String, fontMetrics: FontMetrics, maxWidth: I
     }
   }
   catch (e: Exception) {
-    logger.error(e)
+    logger<AttachToProcessDialog>().error(e)
   }
   return textToTruncate
 }
 
-fun getComponentFont(component: JComponent): Font = component.font ?: StartupUiUtil.getLabelFont()
+internal fun getComponentFont(component: JComponent): Font = component.font ?: StartupUiUtil.labelFont
 
-fun truncateDescription(initDescription: String, fontMetrics: FontMetrics, maxWidth: Int): String {
+private fun truncateDescription(initDescription: String, fontMetrics: FontMetrics, maxWidth: Int): String {
   if (fontMetrics.stringWidth(initDescription) <= maxWidth) return initDescription
   val ellipsisWidth = fontMetrics.charWidth('\u2026')
   return "${findBestTruncateLength(initDescription, fontMetrics, maxWidth, 0, initDescription.length - 1, ellipsisWidth)}\u2026"

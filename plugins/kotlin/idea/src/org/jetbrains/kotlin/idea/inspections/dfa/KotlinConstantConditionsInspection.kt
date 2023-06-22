@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.inspections.dfa
 
 import com.intellij.codeInsight.PsiEquivalenceUtil
@@ -211,12 +211,14 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                             } else if (cv == ConstantValue.TRUE) {
                                 condition.siblings(forward = true, withSelf = false)
                                     .filterIsInstance<KtWhenCondition>()
+                                    .filter { cond -> cond.text.isNotEmpty() }
                                     .forEach { cond -> holder.registerProblem(cond, message) }
                                 val nextEntry = condition.parent as? KtWhenEntry ?: return@forEach
                                 nextEntry.siblings(forward = true, withSelf = false)
                                     .filterIsInstance<KtWhenEntry>()
                                     .filterNot { entry -> entry.isElse }
                                     .flatMap { entry -> entry.conditions.asSequence() }
+                                    .filter { cond -> cond.text.isNotEmpty() }
                                     .forEach { cond -> holder.registerProblem(cond, message) }
                             }
                         }

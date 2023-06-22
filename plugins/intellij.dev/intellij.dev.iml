@@ -8,5 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.dev.psiViewer" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.statistics.devkit" scope="RUNTIME" />
   </component>
 </module>

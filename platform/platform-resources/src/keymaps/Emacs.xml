@@ -337,4 +337,5 @@
   <action id="Diff.ApplyRightSide"/>
   <action id="EditorDecreaseFontSizeGlobal"/>
   <action id="EditorIncreaseFontSizeGlobal"/>
+  <action id="ZoomOutIdeAction"/>
 </keymap>

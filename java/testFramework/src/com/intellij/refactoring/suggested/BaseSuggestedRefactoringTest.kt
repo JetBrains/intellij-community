@@ -12,8 +12,8 @@ import org.junit.Assert.assertNotEquals
 abstract class BaseSuggestedRefactoringTest : LightJavaCodeInsightFixtureTestCaseWithUtils() {
   protected abstract val fileType: LanguageFileType
 
-  protected var ignoreErrorsBefore = false
-  protected var ignoreErrorsAfter = false
+  protected var ignoreErrorsBefore: Boolean = false
+  protected var ignoreErrorsAfter: Boolean = false
 
   override fun setUp() {
     ignoreErrorsBefore = false

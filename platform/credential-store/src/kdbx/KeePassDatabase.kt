@@ -5,7 +5,6 @@ import com.intellij.credentialStore.OneTimeString
 import com.intellij.credentialStore.createSecureRandom
 import com.intellij.credentialStore.generateBytes
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.util.getOrCreate
 import com.intellij.util.io.toByteArray
 import org.bouncycastle.crypto.SkippingStreamCipher
 import org.bouncycastle.crypto.engines.ChaCha7539Engine
@@ -21,6 +20,7 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.*
 
+@Suppress("ConstPropertyName")
 internal object KdbxDbElementNames {
   const val group = "Group"
   const val entry = "Entry"
@@ -55,7 +55,7 @@ private fun initCipherRandomly(secureRandom: SecureRandom, engine: SkippingStrea
 
 // we should on each save change protectedStreamKey for security reasons (as KeeWeb also does)
 // so, this requirement (is it really required?) can force us to re-encrypt all passwords on save
-class KeePassDatabase(private val rootElement: Element = createEmptyDatabase()) {
+class KeePassDatabase internal constructor(private val rootElement: Element = createEmptyDatabase()) {
   private var secureStringCipher = lazy {
     createRandomlyInitializedChaCha7539Engine(createSecureRandom())
   }
@@ -67,7 +67,7 @@ class KeePassDatabase(private val rootElement: Element = createEmptyDatabase()) 
   internal val rootGroup: KdbxGroup
 
   init {
-    val rootElement = rootElement.getOrCreate(KdbxDbElementNames.root)
+    val rootElement = rootElement.getOrCreateChild(KdbxDbElementNames.root)
     val groupElement = rootElement.getChild(KdbxDbElementNames.group)
     if (groupElement == null) {
       rootGroup = createGroup(this, null)
@@ -86,17 +86,17 @@ class KeePassDatabase(private val rootElement: Element = createEmptyDatabase()) 
     val kdbxHeader = KdbxHeader(secureRandom)
     kdbxHeader.writeKdbxHeader(outputStream)
 
-    val metaElement = rootElement.getOrCreate("Meta")
-    metaElement.getOrCreate("HeaderHash").text = Base64.getEncoder().encodeToString(kdbxHeader.headerHash)
-    metaElement.getOrCreate("MemoryProtection").getOrCreate("ProtectPassword").text = "True"
+    val metaElement = rootElement.getOrCreateChild("Meta")
+    metaElement.getOrCreateChild("HeaderHash").text = Base64.getEncoder().encodeToString(kdbxHeader.headerHash)
+    metaElement.getOrCreateChild("MemoryProtection").getOrCreateChild("ProtectPassword").text = "True"
 
     kdbxHeader.createEncryptedStream(credentials.key, outputStream).writer().use {
-      ProtectedXmlWriter(createSalsa20StreamCipher(kdbxHeader.protectedStreamKey)).printElement(it, rootElement, 0)
+      ProtectedXmlWriter(createChaCha20StreamCipher(kdbxHeader.protectedStreamKey)).printElement(it, rootElement, 0)
     }
 
     // should we init secureStringCipher if now we have secureRandom?
     // on first glance yes, because creating SkippingStreamCipher is very fast and not memory hungry, and creating SecureRandom is a cost operation,
-    // but no - no need to init because if save called, it means that database is dirty for some reasons already...
+    // but no - no need to init because if save called, it means that database is dirty for some reason already...
     // but yes - because maybe database is dirty due to change some unprotected value (url, user name).
     if (secureStringCipher.isInitialized()) {
       initCipherRandomly(secureRandom, secureStringCipher.value)
@@ -136,7 +136,7 @@ internal fun ensureElements(element: Element, childElements: Map<Array<String>, 
     if (result == null) {
       var currentElement = element
       for (elementName in elementPath) {
-        currentElement = currentElement.getOrCreate(elementName)
+        currentElement = currentElement.getOrCreateChild(elementName)
       }
       currentElement.text = value.value
     }

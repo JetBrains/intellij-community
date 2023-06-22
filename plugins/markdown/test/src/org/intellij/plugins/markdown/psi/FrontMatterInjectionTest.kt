@@ -2,9 +2,7 @@ package org.intellij.plugins.markdown.psi
 
 import com.intellij.lang.Language
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import com.intellij.testFramework.RegistryKeyRule
 import org.jetbrains.yaml.YAMLLanguage
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -12,9 +10,6 @@ import org.toml.lang.TomlLanguage
 
 @RunWith(JUnit4::class)
 class FrontMatterInjectionTest: LightPlatformCodeInsightTestCase() {
-  @get:Rule
-  val rule = RegistryKeyRule("markdown.experimental.frontmatter.support.enable", true)
-
   @Test
   fun `test yaml gets injected`() {
     val content = """

@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
 import com.intellij.openapi.progress.impl.ACCEPTABLE_FRACTION_OVERFLOW
 import com.intellij.openapi.progress.impl.ProgressState
 import com.intellij.openapi.progress.impl.TextDetailsProgressReporter
 import com.intellij.testFramework.UsefulTestCase.assertOrderedEquals
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.init
 import com.intellij.util.containers.tail

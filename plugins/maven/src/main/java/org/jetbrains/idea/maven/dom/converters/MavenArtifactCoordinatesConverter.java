@@ -59,7 +59,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       if (localIndex == null) return null;
       Path artifactPath = MavenUtil.getArtifactPath(Path.of(localIndex.getRepositoryPathOrUrl()), id, "pom", null);
       if (artifactPath != null && artifactPath.toFile().exists()) {
-        MavenIndicesManager.getInstance(contextProject).addArtifactIndexAsync(id, artifactPath.toFile());
+        MavenIndicesManager.getInstance(contextProject).scheduleArtifactIndexing(id, artifactPath.toFile());
         return s;
       }
       return null;
@@ -212,7 +212,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       PsiFile result = resolveBySpecifiedPath();
       if (result != null) return result;
 
-      result = resolveInProjects(id, projectsManager, psiManager);
+      result = resolveInProjects(id, projectsManager, context);
       if (result != null) return result;
 
       return resolveInLocalRepository(id, projectsManager, psiManager);
@@ -223,15 +223,16 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       return null;
     }
 
-    private PsiFile resolveInProjects(MavenId id, MavenProjectsManager projectsManager, PsiManager psiManager) {
-      MavenProject project = resolveMavenProject(id, projectsManager);
-      return project == null ? null : psiManager.findFile(project.getFile());
+    private PsiFile resolveInProjects(MavenId id, MavenProjectsManager projectsManager, ConvertContext context) {
+      MavenProject project = resolveMavenProject(id, projectsManager, context);
+      return project == null ? null : context.getPsiManager().findFile(project.getFile());
     }
 
-    private MavenProject resolveMavenProject(MavenId id, MavenProjectsManager projectsManager) {
-      if (MavenConsumerPomUtil.isConsumerPomResolutionApplicable(projectsManager.getProject())) {
+    private MavenProject resolveMavenProject(MavenId id, MavenProjectsManager projectsManager, ConvertContext context) {
+      if (MavenConsumerPomUtil.isAutomaticVersionFeatureEnabled(context)) {
         return projectsManager.findSingleProjectInReactor(id);
-      }  else {
+      }
+      else {
         return projectsManager.findProject(id);
       }
     }
@@ -310,7 +311,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
         }
       }
 
-      if (id.getVersion() == null) {
+      if (StringUtil.isEmpty(id.getVersion())) {
         MavenDomDependency managedDependency = MavenDomProjectProcessorUtils.searchManagingDependency((MavenDomDependency)parent);
         if (managedDependency != null) {
           final GenericDomValue<String> managedDependencyArtifactId = managedDependency.getArtifactId();

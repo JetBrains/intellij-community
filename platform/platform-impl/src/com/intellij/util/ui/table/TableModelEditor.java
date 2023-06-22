@@ -58,7 +58,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     table.setEnableAntialiasing(true);
     table.setPreferredScrollableViewportSize(JBUI.size(200, -1));
     table.setVisibleRowCount(JBTable.PREFERRED_SCROLLABLE_VIEWPORT_HEIGHT_IN_ROWS);
-    new TableSpeedSearch(table);
+    TableSpeedSearch.installOn(table);
     ColumnInfo firstColumn = columns[0];
     if ((firstColumn.getColumnClass() == boolean.class || firstColumn.getColumnClass() == Boolean.class) && firstColumn.getName().isEmpty()) {
       TableUtil.setupCheckboxColumn(table.getColumnModel().getColumn(0), 0);

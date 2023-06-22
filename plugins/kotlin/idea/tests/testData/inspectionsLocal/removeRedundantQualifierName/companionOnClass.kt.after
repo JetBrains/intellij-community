@@ -12,3 +12,5 @@ fun main() {
     val b = Foo.Companion.VARIABLE
     val c = Foo()
 }
+
+// IGNORE_FIR

@@ -1,9 +1,8 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.attach.dialog
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.ProcessInfo
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
@@ -39,8 +38,7 @@ suspend fun collectAttachProcessItemsGroupByProcessInfo(
 
     val allItems = mutableListOf<AttachToProcessItem>()
 
-    val filteredProcesses = processes.filter(getProcessPredicate())
-    val processesToAttachItems = filteredProcesses.associateWith { processInfo ->
+    val processesToAttachItems = processes.associateWith { processInfo ->
       coroutineContext.ensureActive()
 
       val providersWithItems = mutableMapOf<XAttachPresentationGroup<*>, MutableList<AttachToProcessItem>>()
@@ -75,13 +73,6 @@ suspend fun collectAttachProcessItemsGroupByProcessInfo(
     logger.error(t)
     return AttachItemsInfo.EMPTY
   }
-}
-
-private fun getProcessPredicate(): (ProcessInfo) -> Boolean {
-  val settingsGroup = ActionManager.getInstance().getAction("XDebugger.Attach.Dialog.Settings") as? DefaultActionGroup
-  val settingsActions = settingsGroup?.getChildren(null)
-  val processPredicates = settingsActions?.mapNotNull { (it as? ProcessPredicate)?.get() } ?: emptyList()
-  return { process -> processPredicates.all { it.test(process) } }
 }
 
 private fun getRecentItems(currentItems: List<AttachToProcessItem>,

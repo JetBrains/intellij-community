@@ -46,9 +46,4 @@ public final class PromptMacro extends PromptingMacro implements SecondQueueExpa
     return MessagesService.getInstance().showInputDialog(null, null, IdeCoreBundle.message("prompt.enter.parameters"), IdeCoreBundle.message("title.input"),
                                                          UIUtil.getQuestionIcon(), null, null, null, null);
   }
-
-  @Override
-  public void cachePreview(@NotNull DataContext dataContext) {
-    myCachedPreview = "<params>";
-  }
 }

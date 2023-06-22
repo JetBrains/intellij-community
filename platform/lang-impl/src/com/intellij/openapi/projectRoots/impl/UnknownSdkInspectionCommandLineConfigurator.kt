@@ -51,7 +51,7 @@ class UnknownSdkInspectionCommandLineConfigurator : CommandLineInspectionProject
     }
   }
 
-  override fun getName() = "sdk"
+  override fun getName(): String = "sdk"
 
   override fun getDescription(): String = ProjectBundle.message("config.unknown.sdk.commandline.configure")
 

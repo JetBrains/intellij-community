@@ -18,14 +18,15 @@ package com.siyeh.ig.fixes;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
@@ -37,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class EqualityToEqualsFix extends InspectionGadgetsFix {
+public class EqualityToEqualsFix extends PsiUpdateModCommandQuickFix {
 
   private final boolean myNegated;
 
@@ -70,11 +71,11 @@ public class EqualityToEqualsFix extends InspectionGadgetsFix {
     return new EqualityToEqualsFix(JavaTokenType.NE.equals(expression.getOperationTokenType()));
   }
 
-  public static InspectionGadgetsFix @NotNull [] buildEqualityFixes(PsiBinaryExpression expression) {
-    final List<InspectionGadgetsFix> result = new ArrayList<>(2);
+  public static LocalQuickFix @NotNull [] buildEqualityFixes(PsiBinaryExpression expression) {
+    final List<LocalQuickFix> result = new ArrayList<>(2);
     ContainerUtil.addIfNotNull(result, buildFix(expression));
     ContainerUtil.addIfNotNull(result, EqualityToSafeEqualsFix.buildFix(expression));
-    return result.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+    return result.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   @Nls
@@ -98,8 +99,7 @@ public class EqualityToEqualsFix extends InspectionGadgetsFix {
   }
 
   @Override
-  public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiElement comparisonToken = descriptor.getPsiElement();
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement comparisonToken, @NotNull ModPsiUpdater updater) {
     final PsiElement parent = comparisonToken.getParent();
     if (!(parent instanceof PsiBinaryExpression expression)) {
       return;

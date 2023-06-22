@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -18,6 +18,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.JBCheckBoxMenuItem;
+import com.intellij.ui.icons.IconUtilKt;
 import com.intellij.ui.mac.screenmenu.Menu;
 import com.intellij.ui.mac.screenmenu.MenuItem;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
@@ -241,7 +242,7 @@ public final class ActionMenuItem extends JBCheckBoxMenuItem {
 
   private Icon wrapNullIcon(Icon icon) {
     boolean isMainMenu = ActionPlaces.MAIN_MENU.equals(myPlace);
-    if (ActionMenu.isShowNoIcons() && isMainMenu) {
+    if (isMainMenu && ActionMenu.isShowNoIcons(myAction.getAction())) {
       return null;
     }
     if (!ActionMenu.isAligned() || !ActionMenu.isAlignedInGroup()) {
@@ -258,7 +259,7 @@ public final class ActionMenuItem extends JBCheckBoxMenuItem {
     if (icon != null) {
       if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
         // JDK can't paint correctly our HiDPI icons at the system menu bar
-        icon = IconLoader.INSTANCE.getMenuBarIcon(icon, myUseDarkIcons);
+        icon = IconUtilKt.getMenuBarIcon(icon, myUseDarkIcons);
       }
       else if (ActionMenu.shouldConvertIconToDarkVariant()) {
         icon = IconLoader.getDarkIcon(icon, true);

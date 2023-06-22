@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
 import com.intellij.psi.impl.PsiImplUtil;
@@ -6,7 +6,6 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.NamedStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,6 +13,10 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+
+import java.lang.ref.SoftReference;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 public class GrTypeDefinitionStub extends StubBase<GrTypeDefinition> implements NamedStub<GrTypeDefinition> {
   private static final int ANONYMOUS = 0x01;
@@ -54,7 +57,7 @@ public class GrTypeDefinitionStub extends StubBase<GrTypeDefinition> implements 
     String baseClassName = getBaseClassName();
     if (baseClassName == null) return null;
 
-    GrCodeReferenceElement reference = SoftReference.dereference(myStubBaseReference);
+    GrCodeReferenceElement reference = dereference(myStubBaseReference);
     if (reference == null) {
       reference = GroovyPsiElementFactory.getInstance(getProject()).createCodeReference(baseClassName, getPsi());
       myStubBaseReference = new SoftReference<>(reference);

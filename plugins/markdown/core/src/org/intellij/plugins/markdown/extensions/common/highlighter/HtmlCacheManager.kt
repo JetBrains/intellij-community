@@ -7,7 +7,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.processOpenedProjects
+import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.util.application
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
 import java.lang.ref.SoftReference
@@ -63,7 +63,7 @@ internal class HtmlCacheManager {
         return
       }
       application.serviceIfCreated<HtmlCacheManager>()?.invalidate()
-      processOpenedProjects { project ->
+      for (project in getOpenedProjects()) {
         project.serviceIfCreated<HtmlCacheManager>()?.invalidate()
       }
     }

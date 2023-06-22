@@ -6,6 +6,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -38,24 +39,33 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
+import org.jetbrains.kotlin.types.isFlexible
 import org.jetbrains.kotlin.types.isNullable
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 
 internal class RemoveExplicitPropertyTypeProcessing : InspectionLikeProcessingForElement<KtProperty>(KtProperty::class.java) {
     override fun isApplicableTo(element: KtProperty, settings: ConverterSettings?): Boolean {
+        if (element.isMember && !element.isPrivate()) return false
+
         val typeReference = element.typeReference
         if (typeReference == null || typeReference.annotationEntries.isNotEmpty()) return false
-        val needFieldTypes = settings?.specifyFieldTypeByDefault == true
-        val needLocalVariablesTypes = settings?.specifyLocalVariableTypeByDefault == true
 
+        val needLocalVariablesTypes = settings?.specifyLocalVariableTypeByDefault == true
         if (needLocalVariablesTypes && element.isLocal) return false
-        if (needFieldTypes && element.isMember) return false
+
         val initializer = element.initializer ?: return false
-        val withoutExpectedType =
+        val initializerType =
             initializer.analyzeInContext(initializer.getResolutionScope()).getType(initializer) ?: return false
-        val typeBeDescriptor = element.resolveToDescriptorIfAny().safeAs<CallableDescriptor>()?.returnType ?: return false
-        return KotlinTypeChecker.DEFAULT.equalTypes(withoutExpectedType, typeBeDescriptor)
+
+        // https://kotlinlang.org/docs/coding-conventions.html#platform-types
+        // Any property initialized with an expression of a platform type must declare its Kotlin type explicitly
+        if (element.isMember && initializerType.isFlexible()) {
+            return false
+        }
+
+        val propertyType = element.resolveToDescriptorIfAny().safeAs<CallableDescriptor>()?.returnType ?: return false
+        return KotlinTypeChecker.DEFAULT.equalTypes(initializerType, propertyType)
     }
 
     override fun apply(element: KtProperty) {
@@ -239,6 +249,13 @@ internal class UnresolvedVariableReferenceFromInitializerToThisReferenceProcessi
 }
 
 internal class VarToValProcessing : InspectionLikeProcessingForElement<KtProperty>(KtProperty::class.java) {
+    companion object {
+        private val JPA_COLUMN_ANNOTATIONS: Set<FqName> = setOf(
+            FqName("javax.persistence.Column"),
+            FqName("jakarta.persistence.Column"),
+        )
+    }
+
     private fun KtProperty.hasWriteUsages(): Boolean =
         ReferencesSearch.search(this, useScope).any { usage ->
             (usage as? KtSimpleNameReference)?.element?.let { nameReference ->
@@ -253,8 +270,14 @@ internal class VarToValProcessing : InspectionLikeProcessingForElement<KtPropert
     override fun isApplicableTo(element: KtProperty, settings: ConverterSettings?): Boolean {
         if (!element.isVar) return false
         if (!element.isPrivate()) return false
-        val descriptor = element.resolveToDescriptorIfAny() ?: return false
+        val descriptor = element.resolveToDescriptorIfAny() as? PropertyDescriptor ?: return false
         if (descriptor.overriddenDescriptors.any { it.safeAs<VariableDescriptor>()?.isVar == true }) return false
+
+        descriptor.backingField?.annotations?.let { annotations ->
+            JPA_COLUMN_ANNOTATIONS.forEach {
+                if (annotations.hasAnnotation(it)) return false
+            }
+        }
         return !element.hasWriteUsages()
     }
 
@@ -374,7 +397,7 @@ internal class RedundantExplicitTypeInspectionBasedProcessing : InspectionLikePr
 
     override fun apply(element: KtProperty) {
         element.typeReference = null
-        RemoveExplicitTypeIntention.removeExplicitType(element)
+        RemoveExplicitTypeIntention.Holder.removeExplicitType(element)
     }
 }
 

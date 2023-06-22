@@ -16,6 +16,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,7 +24,6 @@ import com.intellij.ui.ClientProperty;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.SearchFieldWithExtension;
-import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -49,10 +49,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
@@ -101,15 +101,14 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     myStructureFilterModel = new FileFilterModel(myLogData.getLogProviders().keySet(), myUiProperties, filters);
     myTextFilterModel = new TextFilterModel(myUiProperties, filters, parentDisposable);
 
-    TextFilterField myFilterField = new TextFilterField(myTextFilterModel, parentDisposable);
-
-    ActionToolbar toolbar = createTextActionsToolbar(myFilterField.getTextEditor());
-    mySearchComponent = new SearchFieldWithExtension(toolbar.getComponent(), myFilterField);
+    TextFilterField textFilterField = new TextFilterField(myTextFilterModel, parentDisposable);
+    ActionToolbar toolbar = createTextActionsToolbar(textFilterField.getTextEditor());
+    mySearchComponent = new SearchFieldWithExtension(toolbar.getComponent(), textFilterField);
 
     FilterModel[] models = {myBranchFilterModel, myUserFilterModel, myDateFilterModel, myStructureFilterModel, myTextFilterModel};
     for (FilterModel<?> model : models) {
       model.addSetFilterListener(() -> {
-        filterConsumer.consume(getFilters());
+        filterConsumer.accept(getFilters());
         myFilterListenerDispatcher.getMulticaster().onFiltersChanged();
         myBranchFilterModel.onStructureFilterChanged(myStructureFilterModel.getRootFilter(), myStructureFilterModel.getStructureFilter());
       });
@@ -126,7 +125,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
                                                           @NotNull String place,
                                                           @NotNull Presentation presentation,
                                                           Supplier<? extends @NotNull Dimension> minimumSize) {
-        MyActionButton button = new MyActionButton(action);
+        MyActionButton button = new MyActionButton(action, presentation);
         button.setFocusable(true);
         applyToolbarLook(look, presentation, button);
         return button;
@@ -141,8 +140,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
   }
 
   private static final class MyActionButton extends ActionButton {
-    MyActionButton(@NotNull AnAction action) {
-      super(action, action.getTemplatePresentation().clone(), "Vcs.Log.SearchTextField", ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+    MyActionButton(@NotNull AnAction action, @NotNull Presentation presentation) {
+      super(action, presentation, "Vcs.Log.SearchTextField", ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
       updateIcon();
     }
 
@@ -521,8 +520,6 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
   }
 
   protected static class TextFilterModel extends FilterModel.PairFilterModel<VcsLogTextFilter, VcsLogHashFilter> {
-    private @Nullable String myText;
-
     TextFilterModel(@NotNull MainVcsLogUiProperties properties,
                     @Nullable VcsLogFilterCollection filters,
                     @NotNull Disposable parentDisposable) {
@@ -546,8 +543,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
           }
         }
       };
-      properties.addChangeListener(listener);
-      Disposer.register(parentDisposable, () -> properties.removeChangeListener(listener));
+      properties.addChangeListener(listener, parentDisposable);
     }
 
     @Override
@@ -583,30 +579,10 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
     @NotNull
     String getText() {
-      if (myText != null) {
-        return myText;
-      }
-      else if (getFilter1() != null) {
+      if (getFilter1() != null) {
         return getFilter1().getText();
       }
-      else {
-        return "";
-      }
-    }
-
-    void setUnsavedText(@NotNull String text) {
-      myText = text;
-    }
-
-    boolean hasUnsavedChanges() {
-      if (myText == null) return false;
-      return getFilter1() == null || !myText.equals(getFilter1().getText());
-    }
-
-    @Override
-    public void setFilter(@Nullable FilterPair<VcsLogTextFilter, VcsLogHashFilter> filter) {
-      super.setFilter(filter);
-      myText = null;
+      return "";
     }
 
     @Override
@@ -788,21 +764,16 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
       super(VCS_LOG_TEXT_FILTER_HISTORY);
       myTextFilterModel = model;
       setText(myTextFilterModel.getText());
-      getTextEditor().addActionListener(e -> applyFilter());
+      getTextEditor().addActionListener(e -> applyFilter(true));
       addDocumentListener(new DocumentAdapter() {
         @Override
         protected void textChanged(@NotNull DocumentEvent e) {
-          try {
-            myTextFilterModel.setUnsavedText(e.getDocument().getText(0, e.getDocument().getLength()));
-          }
-          catch (BadLocationException ex) {
-            LOG.error(ex);
-          }
+          if (isFilterOnTheFlyEnabled()) applyFilter(false);
         }
       });
       myTextFilterModel.addSetFilterListener(() -> {
         String modelText = myTextFilterModel.getText();
-        if (!Objects.equals(getText(), modelText)) setText(modelText);
+        if (!isSameFilterAs(modelText)) setText(modelText);
       });
 
       getTextEditor().setToolTipText(createTooltipText());
@@ -815,9 +786,9 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
       return XmlStringUtil.wrapInHtml(text + shortcut);
     }
 
-    protected void applyFilter() {
+    private void applyFilter(boolean addToHistory) {
       myTextFilterModel.setFilterText(getText());
-      addCurrentTextToHistory();
+      if (addToHistory) addCurrentTextToHistory();
     }
 
     @Override
@@ -827,9 +798,13 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
     @Override
     protected void onFocusLost() {
-      if (myTextFilterModel.hasUnsavedChanges()) {
-        applyFilter();
-      }
+      if (!isSameFilterAs(myTextFilterModel.getText())) applyFilter(isFilterOnTheFlyEnabled());
+    }
+
+    private boolean isSameFilterAs(@NotNull String otherText) {
+      String thisText = getText();
+      if (StringUtil.isEmptyOrSpaces(thisText)) return StringUtil.isEmptyOrSpaces(otherText);
+      return Objects.equals(thisText, otherText);
     }
 
     @Override
@@ -838,6 +813,10 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
         return myUiProperties;
       }
       return null;
+    }
+
+    private static boolean isFilterOnTheFlyEnabled() {
+      return Registry.is("vcs.log.filter.text.on.the.fly");
     }
   }
 }

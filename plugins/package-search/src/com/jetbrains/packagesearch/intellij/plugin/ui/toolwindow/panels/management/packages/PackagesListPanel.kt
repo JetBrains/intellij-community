@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBPanelWithEmptyText
@@ -34,15 +35,7 @@ import com.jetbrains.packagesearch.intellij.plugin.fus.FUSGroupIds
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.ComponentActionWrapper
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.FilterOptions
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.InstalledDependenciesUsages
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ProjectDataProvider
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.SearchResultUiState
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.get
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.toUiPackageModel
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.*
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.PackageSearchPanelBase
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.PackageManagementPanel
@@ -51,56 +44,25 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.onOpacityChanged
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.onVisibilityChanged
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
-import com.jetbrains.packagesearch.intellij.plugin.util.CoroutineLRUCache
-import com.jetbrains.packagesearch.intellij.plugin.util.FeatureFlags
-import com.jetbrains.packagesearch.intellij.plugin.util.KotlinPluginStatus
-import com.jetbrains.packagesearch.intellij.plugin.util.PowerSaveModeState
-import com.jetbrains.packagesearch.intellij.plugin.util.combineLatest
-import com.jetbrains.packagesearch.intellij.plugin.util.hasKotlinModules
-import com.jetbrains.packagesearch.intellij.plugin.util.kotlinPluginStatusFlow
-import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
-import com.jetbrains.packagesearch.intellij.plugin.util.loadingContainer
-import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
-import com.jetbrains.packagesearch.intellij.plugin.util.logTrace
-import com.jetbrains.packagesearch.intellij.plugin.util.lookAndFeelFlow
-import com.jetbrains.packagesearch.intellij.plugin.util.modifyPackages
-import com.jetbrains.packagesearch.intellij.plugin.util.moduleChangesSignalFlow
-import com.jetbrains.packagesearch.intellij.plugin.util.onEach
-import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectCachesService
-import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
-import com.jetbrains.packagesearch.intellij.plugin.util.timer
+import com.jetbrains.packagesearch.intellij.plugin.util.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filterNot
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.idea.packagesearch.SortMetric
 import java.awt.BorderLayout
 import java.awt.Dimension
-import javax.swing.BorderFactory
-import javax.swing.Box
-import javax.swing.BoxLayout
-import javax.swing.JPanel
-import javax.swing.JScrollPane
-import javax.swing.JViewport
+import java.awt.event.ItemEvent
+import javax.swing.*
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.TimeSource
 import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
+@OptIn(kotlin.time.ExperimentalTime::class)
 internal class PackagesListPanel(
     private val project: Project,
     targetModulesFlow: Flow<TargetModules>,
@@ -145,6 +107,15 @@ internal class PackagesListPanel(
             isSelected = false
         }
 
+    private val sortByComboBoxLabel = JLabel().apply {
+        text = PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.sort.by")
+        border = emptyBorder(left = 6, right = 2)
+    }
+
+    private val sortByComboBox = ComboBox<SortMetric>(200).apply {
+        SortMetric.values().map { addItem(it) }
+    }
+
     private val searchFiltersToolbar = ActionManager.getInstance()
         .createActionToolbar("Packages.Manage", createActionGroup(), true)
         .apply {
@@ -159,6 +130,8 @@ internal class PackagesListPanel(
     private fun createActionGroup() = DefaultActionGroup().apply {
         add(ComponentActionWrapper { onlyStableCheckBox })
         add(ComponentActionWrapper { onlyMultiplatformCheckBox })
+        add(ComponentActionWrapper { sortByComboBoxLabel })
+        add(ComponentActionWrapper { sortByComboBox })
     }
 
     private val searchPanel = PackageSearchUI.headerPanel {
@@ -241,6 +214,7 @@ internal class PackagesListPanel(
     internal data class SearchCommandModel(
         val onlyStable: Boolean,
         val onlyMultiplatform: Boolean,
+        val sortMetric: SortMetric,
         val searchQuery: String,
     )
 
@@ -261,15 +235,17 @@ internal class PackagesListPanel(
         val searchResultsFlow = combineLatest(
             project.service<PackageManagementPanel.UIState>().packagesListPanel.onlyStableStateFlow,
             project.service<PackageManagementPanel.UIState>().packagesListPanel.onlyMultiplatformStateFlow,
+            project.service<PackageManagementPanel.UIState>().packagesListPanel.sortMetricStateFlow,
             project.service<PackageManagementPanel.UIState>().packagesListPanel.searchQueryStateFlow.debounce(150.milliseconds),
-            project.loadingContainer
-        ) { onlyStable, onlyMultiplatform, searchQuery ->
+            project.loadingContainer,
+        ) { onlyStable, onlyMultiplatform, sortMetric, searchQuery ->
             SearchResultsModel(
                 searchQuery = searchQuery,
-                apiSearchResults = searchCache.getOrTryPutDefault(SearchCommandModel(onlyStable, onlyMultiplatform, searchQuery)) {
+                apiSearchResults = searchCache.getOrTryPutDefault(SearchCommandModel(onlyStable, onlyMultiplatform, sortMetric, searchQuery)) {
                     dataProvider.doSearch(
                         searchQuery = searchQuery,
-                        filterOptions = FilterOptions(onlyStable, onlyMultiplatform)
+                        filterOptions = FilterOptions(onlyStable, onlyMultiplatform),
+                        sortMetric = sortMetric,
                     )
                 }
             )
@@ -282,11 +258,12 @@ internal class PackagesListPanel(
             targetModulesFlow,
             project.service<PackageManagementPanel.UIState>().packagesListPanel.onlyStableStateFlow,
             project.service<PackageManagementPanel.UIState>().packagesListPanel.onlyMultiplatformStateFlow,
+            project.service<PackageManagementPanel.UIState>().packagesListPanel.sortMetricStateFlow,
             searchResultsFlow,
             project.service<PackageManagementPanel.UIState>().packagesListPanel.searchResultsUiStateOverridesState,
             project.loadingContainer
         ) { installedDependencies, repositoriesDeclarationsByModule,
-            allKnownRepositories, targetModules, onlyStable, onlyMultiplatform,
+            allKnownRepositories, targetModules, onlyStable, onlyMultiplatform, sortMetric,
             (searchQuery, apiSearchResults),
             searchResultsUiStateOverridesState ->
 
@@ -336,6 +313,7 @@ internal class PackagesListPanel(
                 viewModel = PackagesTable.ViewModel(
                     items = tableItems,
                     onlyStable = onlyStable,
+                    sortMetric = sortMetric,
                     targetModules = targetModules,
                     knownRepositoriesInTargetModules = repositoriesDeclarationsByModule,
                     allKnownRepositories = allKnownRepositories
@@ -460,6 +438,17 @@ internal class PackagesListPanel(
                 project.service<PackageManagementPanel.UIState>().packagesListPanel.onlyMultiplatformStateFlow.emit(selected)
             }
             PackageSearchEventsLogger.logToggle(FUSGroupIds.ToggleTypes.OnlyKotlinMp, selected)
+        }
+
+        sortByComboBox.addItemListener { e ->
+            if (e.stateChange == ItemEvent.SELECTED) {
+                (e.item as? SortMetric)?.let { selected ->
+                    project.lifecycleScope.launch {
+                        project.service<PackageManagementPanel.UIState>().packagesListPanel.sortMetricStateFlow.emit(selected)
+                    }
+                    PackageSearchEventsLogger.logSortMetric(selected)
+                }
+            }
         }
     }
 

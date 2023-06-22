@@ -14,7 +14,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -132,7 +131,7 @@ public class SmartCompletionDecorator extends LookupElementDecorator<LookupEleme
     final PsiTypeParameter[] typeParameters = method.getTypeParameters();
     if (typeParameters.length == 0) return false;
 
-    final Set<PsiTypeParameter> set = ContainerUtil.set(typeParameters);
+    final Set<PsiTypeParameter> set = Set.of(typeParameters);
     for (final PsiParameter parameter : method.getParameterList().getParameters()) {
       if (PsiTypesUtil.mentionsTypeParameters(parameter.getType(), set)) return false;
     }

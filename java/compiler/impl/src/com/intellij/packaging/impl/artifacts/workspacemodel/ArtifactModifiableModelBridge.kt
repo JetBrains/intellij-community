@@ -17,17 +17,16 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.containers.mapInPlace
 import com.intellij.util.text.UniqueNameGenerator
-import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
-import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactId
-import com.intellij.workspaceModel.storage.bridgeEntities.CompositePackagingElementEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactEntity
-import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
+import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.java.workspace.entities.ArtifactEntity
+import com.intellij.java.workspace.entities.ArtifactId
+import com.intellij.java.workspace.entities.CompositePackagingElementEntity
+import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnBuilder
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 
 class ArtifactModifiableModelBridge(
   private val project: Project,
@@ -123,7 +122,7 @@ class ArtifactModifiableModelBridge(
 
     val fileManager = VirtualFileUrlManager.getInstance(project)
 
-    val source = JpsEntitySourceFactory.createEntitySourceForArtifact(project, externalSource)
+    val source = LegacyBridgeJpsEntitySourceFactory.createEntitySourceForArtifact(project, externalSource)
 
     val rootElementEntity = rootElement.getOrAddEntity(diff, source, project) as CompositePackagingElementEntity
     rootElement.forThisAndFullTree {
@@ -134,10 +133,10 @@ class ArtifactModifiableModelBridge(
     }
 
     val outputUrl = outputPath?.let { fileManager.fromPath(it) }
-    val artifactEntity = diff.addArtifactEntity(
-      uniqueName, artifactType.id, false,
-      outputUrl, rootElementEntity, source
-    )
+    val artifactEntity = diff addEntity ArtifactEntity(uniqueName, artifactType.id, false, source) {
+      this.outputUrl = outputUrl
+      this.rootElement = rootElementEntity
+    }
 
     val symbolicId = artifactEntity.symbolicId
     val modifiableArtifact = ArtifactBridge(symbolicId, versionedOnBuilder, project, eventDispatcher, null)

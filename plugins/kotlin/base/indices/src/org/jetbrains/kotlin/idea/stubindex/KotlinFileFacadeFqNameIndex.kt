@@ -5,17 +5,18 @@ package org.jetbrains.kotlin.idea.stubindex
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StringStubIndexExtension
-import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.psi.KtFile
 
-object KotlinFileFacadeFqNameIndex : StringStubIndexExtension<KtFile>() {
-    private val KEY: StubIndexKey<String, KtFile> =
-        StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeFqNameIndex")
+class KotlinFileFacadeFqNameIndex internal constructor() : StringStubIndexExtension<KtFile>() {
+    companion object Helper : KotlinStringStubIndexHelper<KtFile>(KtFile::class.java) {
+        override val indexKey: StubIndexKey<String, KtFile> =
+            StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeFqNameIndex")
+    }
 
-    override fun getKey(): StubIndexKey<String, KtFile> = KEY
+    override fun getKey(): StubIndexKey<String, KtFile> = indexKey
 
-    override fun get(key: String, project: Project, scope: GlobalSearchScope): Collection<KtFile> {
-        return StubIndex.getElements(KEY, key, project, scope, KtFile::class.java)
+    override fun get(fqName: String, project: Project, scope: GlobalSearchScope): Collection<KtFile> {
+        return Helper[fqName, project, scope]
     }
 }

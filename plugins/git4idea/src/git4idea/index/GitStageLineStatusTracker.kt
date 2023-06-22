@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index
 
 import com.intellij.diff.DiffApplicationSettings
@@ -23,6 +23,7 @@ import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.diff.LineStatusMarkerDrawUtil
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.MarkupEditorFilter
 import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory
@@ -39,8 +40,10 @@ import com.intellij.openapi.vcs.ex.*
 import com.intellij.openapi.vcs.ex.Range
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorTextField
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.PeekableIteratorWrapper
@@ -51,6 +54,7 @@ import git4idea.i18n.GitBundle
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.*
+import java.awt.geom.Path2D
 import java.util.*
 import javax.swing.*
 import kotlin.math.max
@@ -240,7 +244,7 @@ class GitStageLineStatusTracker(
 
     val filter = BlockFilter.create(toRevert, Side.RIGHT)
     updateDocument(ThreeSide.RIGHT, GitBundle.message("stage.revert.unstaged.range.command.name")) {
-      unstagedTracker.partiallyApplyBlocks(Side.RIGHT) { filter.matches(it) }
+      unstagedTracker.partiallyApplyBlocks(Side.RIGHT) { filter.asExclusionState(it) }
     }
   }
 
@@ -255,7 +259,7 @@ class GitStageLineStatusTracker(
 
     val filter = BlockFilter.create(toRevert, Side.RIGHT)
     updateDocument(ThreeSide.BASE, GitBundle.message("stage.add.range.command.name")) {
-      unstagedTracker.partiallyApplyBlocks(Side.LEFT) { filter.matches(it) }
+      unstagedTracker.partiallyApplyBlocks(Side.LEFT) { filter.asExclusionState(it) }
     }
   }
 
@@ -270,7 +274,7 @@ class GitStageLineStatusTracker(
 
     val filter = BlockFilter.create(toRevert, Side.LEFT)
     updateDocument(ThreeSide.BASE, GitBundle.message("stage.revert.staged.range.command.name")) {
-      stagedTracker.partiallyApplyBlocks(Side.RIGHT) { filter.matches(it) }
+      stagedTracker.partiallyApplyBlocks(Side.RIGHT) { filter.asExclusionState(it) }
     }
   }
 
@@ -279,6 +283,10 @@ class GitStageLineStatusTracker(
     fun matches(block: DocumentTracker.Block): Boolean {
       return matches(block, Side.LEFT, bitSet1) ||
              matches(block, Side.RIGHT, bitSet2)
+    }
+
+    fun asExclusionState(block: DocumentTracker.Block): RangeExclusionState {
+      return if (matches(block)) RangeExclusionState.Included else RangeExclusionState.Excluded
     }
 
     private fun matches(block: DocumentTracker.Block, blockSide: Side, bitSet: BitSet): Boolean {
@@ -354,15 +362,19 @@ class GitStageLineStatusTracker(
     }
 
     private fun paintStageLines(g: Graphics2D, editor: Editor, block: List<ChangedLines<StageLineFlags>>) {
+      val isNewUi = ExperimentalUI.isNewUI()
+
       val borderColor = LineStatusMarkerDrawUtil.getGutterBorderColor(editor)
 
       val area = LineStatusMarkerDrawUtil.getGutterArea(editor)
       val x = area.first
       val endX = area.second
-      val midX = (endX + x + 3) / 2
+      val midX = if (isNewUi) (endX + x) / 2 else (endX + x + 3) / 2
 
       val y = block.first().y1
       val endY = block.last().y2
+
+      val hoveredLine = (editor as EditorEx).gutterComponentEx.hoveredFreeMarkersLine
 
       for (change in block) {
         if (change.y1 != change.y2 &&
@@ -371,11 +383,11 @@ class GitStageLineStatusTracker(
           val end = change.y2
           val gutterColor = LineStatusMarkerDrawUtil.getGutterColor(change.type, editor)
 
-          if (change.flags.isStaged) {
-            LineStatusMarkerDrawUtil.paintRect(g, gutterColor, null, x, start, midX, end)
+          if (isNewUi && LineStatusMarkerDrawUtil.isRangeHovered(editor, hoveredLine, x, start, end)) {
+            g.paintUnStagedChange(change, gutterColor, x - 1, endX + 1, midX, start, end)
           }
           else {
-            LineStatusMarkerDrawUtil.paintRect(g, gutterColor, null, x, start, endX, end)
+            g.paintUnStagedChange(change, gutterColor, x, endX, midX, start, end)
           }
         }
       }
@@ -388,12 +400,20 @@ class GitStageLineStatusTracker(
             val end = change.y2
             val stagedBorderColor = LineStatusMarkerDrawUtil.getIgnoredGutterBorderColor(change.type, editor)
 
-            LineStatusMarkerDrawUtil.paintRect(g, null, stagedBorderColor, x, start, endX, end)
+            if (isNewUi && LineStatusMarkerDrawUtil.isRangeHovered(editor, hoveredLine, x, start, end)) {
+              LineStatusMarkerDrawUtil.paintRect(g, null, stagedBorderColor, x - 1, start, endX + 1, end)
+            } else {
+              LineStatusMarkerDrawUtil.paintRect(g, null, stagedBorderColor, x, start, endX, end)
+            }
           }
         }
       }
       else if (y != endY) {
-        LineStatusMarkerDrawUtil.paintRect(g, null, borderColor, x, y, endX, endY)
+        if (isNewUi && LineStatusMarkerDrawUtil.isRangeHovered(editor, hoveredLine, x, y, endY)) {
+          LineStatusMarkerDrawUtil.paintRect(g, null, borderColor, x - 1, y, endX + 1, endY)
+        } else {
+          LineStatusMarkerDrawUtil.paintRect(g, null, borderColor, x, y, endX, endY)
+        }
       }
 
       for (change in block) {
@@ -413,6 +433,41 @@ class GitStageLineStatusTracker(
           }
         }
       }
+    }
+
+    private fun Graphics2D.paintUnStagedChange(change: ChangedLines<StageLineFlags>, color: Color?,
+                                               x: Int, endX: Int, midX: Int,
+                                               start: Int, end: Int) {
+      if (change.flags.isStaged) {
+        if (ExperimentalUI.isNewUI()) {
+          paintHalfRoundedRect(color, x, start + 1, midX, end - 1, endX - x)
+        }
+        else {
+          LineStatusMarkerDrawUtil.paintRect(this, color, null, x, start, midX, end)
+        }
+      }
+      else {
+        LineStatusMarkerDrawUtil.paintRect(this, color, null, x, start, endX, end)
+      }
+    }
+
+    private fun Graphics2D.paintHalfRoundedRect(color: Color?, x1: Int, y1: Int, x2: Int, y2: Int, arc: Int) {
+      if (color == null) return
+      paintHalfRoundedRect(color, x1.toDouble(), y1.toDouble(), x2.toDouble(), y2.toDouble(), arc.toDouble())
+    }
+
+    private fun Graphics2D.paintHalfRoundedRect(color: Color, x1: Double, y1: Double, x2: Double, y2: Double, arc: Double) {
+      val path = Path2D.Double()
+      path.moveTo(x1, y1 + arc)
+      path.quadTo(x1, y1, x1 + arc, y1)
+      path.lineTo(x2, y1)
+      path.lineTo(x2, y2)
+      path.lineTo(x1 + arc, y2)
+      path.quadTo(x1, y2, x1, y2 - arc)
+      path.closePath()
+
+      this.color = color
+      PaintUtil.paintWithAA(this, RenderingHints.VALUE_ANTIALIAS_DEFAULT) { fill(path) }
     }
 
     private fun paintStripeTriangle(g: Graphics2D, editor: Editor, color: Color?, borderColor: Color?, x1: Int, x2: Int, y: Int) {

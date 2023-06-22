@@ -740,7 +740,7 @@ public final class HighlightMethodUtil {
     return null;
   }
 
-  /* see also PsiReferenceExpressionImpl.hasValidQualifier() */
+  /* see also PsiReferenceExpressionImpl.hasValidQualifier(), StaticImportResolveProcessor.checkStaticInterfaceMethodCallQualifier() */
   private static @NlsContexts.DetailedDescription String checkStaticInterfaceMethodCallQualifier(@NotNull PsiJavaCodeReferenceElement ref,
                                                                                                  @Nullable PsiElement scope,
                                                                                                  @NotNull PsiClass containingClass) {
@@ -868,11 +868,20 @@ public final class HighlightMethodUtil {
     }
     else if (candidates.length == 0) {
       PsiClass qualifierClass = RefactoringChangeUtil.getQualifierClass(referenceToMethod);
-      String qualifier = qualifierClass != null ? qualifierClass.getName() : null;
+      String className = qualifierClass != null ? qualifierClass.getName() : null;
+      PsiExpression qualifierExpression = referenceToMethod.getQualifierExpression();
 
-      description = qualifier != null
-                    ? JavaErrorBundle.message("ambiguous.method.call.no.match", referenceToMethod.getReferenceName(), qualifier)
-                    : JavaErrorBundle.message("cannot.resolve.method", referenceToMethod.getReferenceName() + buildArgTypesList(list, true));
+      if (className != null) {
+        description = JavaErrorBundle.message("ambiguous.method.call.no.match", referenceToMethod.getReferenceName(), className);
+      }
+      else {
+        description =
+          qualifierExpression != null &&
+          qualifierExpression.getType() instanceof PsiPrimitiveType primitiveType &&
+          !primitiveType.equals(PsiTypes.nullType()) && !primitiveType.equals(PsiTypes.voidType())
+          ? JavaErrorBundle.message("cannot.call.method.on.type", qualifierExpression.getText(), primitiveType.getPresentableText(false))
+          : JavaErrorBundle.message("cannot.resolve.method", referenceToMethod.getReferenceName() + buildArgTypesList(list, true));
+      }
       highlightInfoType = HighlightInfoType.WRONG_REF;
     }
     else {
@@ -1971,6 +1980,9 @@ public final class HighlightMethodUtil {
       ConstructorParametersFixer.registerFixActions(classReference, constructorCall, builder, fixRange);
       ChangeTypeArgumentsFix.registerIntentions(results, list, builder, aClass, fixRange);
     }
+    else if (aClass.isEnum()) {
+      ConstructorParametersFixer.registerFixActions(aClass, PsiSubstitutor.EMPTY, constructorCall, builder, fixRange);
+    }
     ChangeStringLiteralToCharInMethodCallFix.registerFixes(constructors, constructorCall, builder, fixRange);
     IntentionAction action = QUICK_FIX_FACTORY.createSurroundWithArrayFix(constructorCall, null);
     builder.registerFix(action, null, null, fixRange, null);
@@ -2123,7 +2135,7 @@ public final class HighlightMethodUtil {
       currentType = ((PsiPrimitiveType)currentType).getBoxedType(method);
     }
 
-    return Objects.requireNonNull(GenericsUtil.getLeastUpperBound(currentType, valueType, manager));
+    return Objects.requireNonNullElse(GenericsUtil.getLeastUpperBound(currentType, valueType, manager), Objects.requireNonNullElse(currentType, valueType));
   }
 
   static HighlightInfo.Builder checkRecordAccessorDeclaration(PsiMethod method) {

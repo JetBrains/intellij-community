@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -78,7 +79,7 @@ public class ReadWriteStringCanBeUsedInspection extends AbstractBaseJavaLocalIns
     };
   }
 
-  private static class ReplaceWithReadStringFix implements LocalQuickFix {
+  private static class ReplaceWithReadStringFix extends PsiUpdateModCommandQuickFix {
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
@@ -88,8 +89,8 @@ public class ReadWriteStringCanBeUsedInspection extends AbstractBaseJavaLocalIns
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiNewExpression newExpression = tryCast(descriptor.getStartElement().getParent(), PsiNewExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiNewExpression newExpression = tryCast(element.getParent(), PsiNewExpression.class);
       if (newExpression == null) return;
       PsiExpressionList newArgList = newExpression.getArgumentList();
       if (newArgList == null) return;
@@ -108,7 +109,7 @@ public class ReadWriteStringCanBeUsedInspection extends AbstractBaseJavaLocalIns
     }
   }
 
-  private static final class ReplaceWithWriteStringFix implements LocalQuickFix {
+  private static final class ReplaceWithWriteStringFix extends PsiUpdateModCommandQuickFix {
     private final boolean myMayNotWork;
 
     private ReplaceWithWriteStringFix(boolean mayNotWork) {
@@ -130,8 +131,8 @@ public class ReadWriteStringCanBeUsedInspection extends AbstractBaseJavaLocalIns
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodCallExpression writeCall = tryCast(descriptor.getStartElement().getParent().getParent(), PsiMethodCallExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiMethodCallExpression writeCall = tryCast(element.getParent().getParent(), PsiMethodCallExpression.class);
       if (!FILES_WRITE.test(writeCall)) return;
       PsiExpressionList argumentList = writeCall.getArgumentList();
       PsiExpression[] args = argumentList.getExpressions();

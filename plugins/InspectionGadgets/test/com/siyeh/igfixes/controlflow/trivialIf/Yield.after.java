@@ -3,7 +3,7 @@ class Main {
     System.out.println(switch(x) {
       case 1 -> false;
       default -> {
-          <caret>yield y <= 0;
+        <caret>  yield y <= 0;
       }
     });
   }

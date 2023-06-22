@@ -23,12 +23,12 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
-import com.intellij.workspaceModel.ide.workspaceModel
-import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactId
-import com.intellij.workspaceModel.storage.bridgeEntities.CustomPackagingElementEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
+import com.intellij.platform.workspace.storage.*
+import com.intellij.java.workspace.entities.ArtifactEntity
+import com.intellij.java.workspace.entities.ArtifactId
+import com.intellij.java.workspace.entities.CustomPackagingElementEntity
+import com.intellij.java.workspace.entities.modifyEntity
+import com.intellij.platform.backend.workspace.workspaceModel
 
 class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), Disposable {
 
@@ -39,7 +39,6 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
   internal val artifactWithDiffs: MutableList<ArtifactBridge> = mutableListOf()
 
   init {
-    (ArtifactPointerManager.getInstance(project) as ArtifactPointerManagerImpl).setArtifactManager(this)
     DynamicArtifactExtensionsLoaderBridge(this).installListeners(this)
   }
 
@@ -317,7 +316,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
 
   @RequiresWriteLock
   fun dropMappings(selector: (ArtifactEntity) -> Boolean) {
-    // XXX @RequiresReadLock annotation doesn't work for kt now
+    // XXX @RequiresWriteLock annotation doesn't work for kt now
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     (project.workspaceModel as WorkspaceModelImpl).updateProjectModelSilent("Drop artifact mappings") {
       val map = it.mutableArtifactsMap

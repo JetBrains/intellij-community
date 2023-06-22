@@ -9,6 +9,7 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -322,27 +323,28 @@ public class ParameterInfoComponent extends JPanel {
   }
 
   ParameterInfoControllerBase.Model update(boolean singleParameterInfo) {
-    return SlowOperations.allowSlowOperations(() -> doUpdate(singleParameterInfo));
-  }
-
-  private ParameterInfoControllerBase.Model doUpdate(boolean singleParameterInfo) {
     MyParameterContext context = new MyParameterContext(singleParameterInfo);
 
     int highlightedComponentIdx = -1;
-    for (int i = 0; i < myParameterInfoControllerData.getDescriptors().length; i++) {
+    Object[] descriptors = myParameterInfoControllerData.getDescriptors();
+    for (int i = 0; i < descriptors.length; i++) {
       context.i = i;
-      final Object o = myParameterInfoControllerData.getDescriptors()[i];
+      final Object o = descriptors[i];
 
-      boolean isHighlighted = myParameterInfoControllerData.getDescriptors()[i].equals(myParameterInfoControllerData.getHighlighted());
+      boolean isHighlighted = descriptors[i].equals(myParameterInfoControllerData.getHighlighted());
       if (isHighlighted) {
         context.result.highlightedSignature = i;
       }
-      if (singleParameterInfo && myParameterInfoControllerData.getDescriptors().length > 1 && !context.isHighlighted()) {
+      if (singleParameterInfo && descriptors.length > 1 && !context.isHighlighted()) {
         setVisible(i, false);
       }
       else {
         setVisible(i, true);
-        DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> myParameterInfoControllerData.getHandler().updateUI(o, context));
+        DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
+          try (AccessToken ignore = SlowOperations.knownIssue("IDEA-305563, EA-819694")) {
+            myParameterInfoControllerData.getHandler().updateUI(o, context);
+          }
+        });
 
         // ensure that highlighted element is visible
         if (context.isHighlighted()) {

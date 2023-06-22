@@ -7,10 +7,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.typing.PyProtocolsKt;
@@ -25,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.*;
 
 public class PyTypeCheckerInspection extends PyInspection {
@@ -43,14 +47,6 @@ public class PyTypeCheckerInspection extends PyInspection {
   public static class Visitor extends PyInspectionVisitor {
     public Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
       super(holder, context);
-    }
-
-    /**
-     * @deprecated do not use
-     */
-    @Deprecated(forRemoval = true)
-    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
     }
 
     // TODO: Visit decorators with arguments
@@ -226,7 +222,8 @@ public class PyTypeCheckerInspection extends PyInspection {
           }
         }
 
-        if (PyUtil.isInitMethod(node) && !(getExpectedReturnType(node) instanceof PyNoneType)) {
+        if (PyUtil.isInitMethod(node) && !(getExpectedReturnType(node) instanceof PyNoneType
+                                           || PyTypingTypeProvider.isNoReturn(node, myTypeEvalContext))) {
           registerProblem(annotation != null ? annotation.getValue() : node.getTypeComment(),
                           PyPsiBundle.message("INSP.type.checker.init.should.return.none"));
         }
@@ -428,20 +425,11 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
 
     @Nullable
-    private static PyParamSpecType getParamSpecTypeFromContainerParameters(@Nullable PyCallableParameter positionalContainer,
-                                                                           @Nullable PyCallableParameter keywordContainer) {
+    private PyParamSpecType getParamSpecTypeFromContainerParameters(@Nullable PyCallableParameter positionalContainer,
+                                                                    @Nullable PyCallableParameter keywordContainer) {
       if (positionalContainer == null && keywordContainer == null) return null;
       PyCallableParameter container = Objects.requireNonNullElse(positionalContainer, keywordContainer);
-
-      PyParameter parameter = container.getParameter();
-      if (!(parameter instanceof PyNamedParameter)) return null;
-      String annotationValue = ((PyNamedParameter)parameter).getAnnotationValue();
-      if (annotationValue == null ||
-          !(annotationValue.endsWith(".args") || annotationValue.endsWith(".kwargs")) ||
-          annotationValue.split("\\.").length != 2) return null;
-      String containerName = StringUtil.substringBeforeLast(annotationValue, ".");
-
-      return new PyParamSpecType(containerName);
+      return as(container.getType(myTypeEvalContext), PyParamSpecType.class);
     }
 
     private boolean matchParameterAndArgument(@Nullable PyType parameterType,

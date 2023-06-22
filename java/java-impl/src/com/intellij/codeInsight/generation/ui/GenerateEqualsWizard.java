@@ -400,7 +400,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
         }
       }
       else {
-        setErrorText("", comboBox);
+        setErrorText(null, comboBox);
       }
     }
 

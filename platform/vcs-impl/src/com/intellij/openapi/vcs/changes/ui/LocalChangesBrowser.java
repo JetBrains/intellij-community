@@ -19,10 +19,9 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.tree.DefaultTreeModel;
 import java.util.*;
 
-public abstract class LocalChangesBrowser extends ChangesBrowserBase implements Disposable {
+public abstract class LocalChangesBrowser extends AsyncChangesBrowserBase implements Disposable {
   @NotNull private final ToggleChangeDiffAction myToggleChangeDiffAction;
 
   public LocalChangesBrowser(@NotNull Project project) {
@@ -38,6 +37,7 @@ public abstract class LocalChangesBrowser extends ChangesBrowserBase implements 
 
   @Override
   public void dispose() {
+    shutdown();
   }
 
   @NotNull
@@ -49,7 +49,7 @@ public abstract class LocalChangesBrowser extends ChangesBrowserBase implements 
     );
   }
 
-  public void setIncludedChanges(@NotNull Collection<? extends Change> changes) {
+  public void setIncludedChangesBy(@NotNull Collection<? extends Change> changes) {
     List<Change> changesToInclude = new ArrayList<>(changes);
 
     Set<Change> otherChanges = new HashSet<>();
@@ -148,11 +148,13 @@ public abstract class LocalChangesBrowser extends ChangesBrowserBase implements 
 
     @NotNull
     @Override
-    protected DefaultTreeModel buildTreeModel() {
-      List<LocalChangeList> allLists = ChangeListManager.getInstance(myProject).getChangeLists();
-      List<LocalChangeList> selectedLists = ContainerUtil.filter(allLists, list -> !list.getChanges().isEmpty());
-      return TreeModelBuilder.buildFromChangeLists(myProject, getGrouping(), selectedLists,
-                                                   Registry.is("vcs.skip.single.default.changelist"));
+    protected AsyncChangesTreeModel getChangesTreeModel() {
+      return SimpleAsyncChangesTreeModel.create(grouping -> {
+        List<LocalChangeList> allLists = ChangeListManager.getInstance(myProject).getChangeLists();
+        List<LocalChangeList> selectedLists = ContainerUtil.filter(allLists, list -> !list.getChanges().isEmpty());
+        return TreeModelBuilder.buildFromChangeLists(myProject, grouping, selectedLists,
+                                                     Registry.is("vcs.skip.single.default.changelist"));
+      });
     }
   }
 
@@ -167,11 +169,13 @@ public abstract class LocalChangesBrowser extends ChangesBrowserBase implements 
 
     @NotNull
     @Override
-    protected DefaultTreeModel buildTreeModel() {
-      List<LocalChangeList> allLists = ChangeListManager.getInstance(myProject).getChangeLists();
-      List<LocalChangeList> selectedLists = ContainerUtil.filter(allLists, list -> myChangeListNames.contains(list.getName()));
-      return TreeModelBuilder.buildFromChangeLists(myProject, getGrouping(), selectedLists,
-                                                   Registry.is("vcs.skip.single.default.changelist"));
+    protected AsyncChangesTreeModel getChangesTreeModel() {
+      return SimpleAsyncChangesTreeModel.create(grouping -> {
+        List<LocalChangeList> allLists = ChangeListManager.getInstance(myProject).getChangeLists();
+        List<LocalChangeList> selectedLists = ContainerUtil.filter(allLists, list -> myChangeListNames.contains(list.getName()));
+        return TreeModelBuilder.buildFromChangeLists(myProject, grouping, selectedLists,
+                                                     Registry.is("vcs.skip.single.default.changelist"));
+      });
     }
   }
 
@@ -183,9 +187,11 @@ public abstract class LocalChangesBrowser extends ChangesBrowserBase implements 
 
     @NotNull
     @Override
-    protected DefaultTreeModel buildTreeModel() {
-      Collection<Change> allChanges = ChangeListManager.getInstance(myProject).getAllChanges();
-      return TreeModelBuilder.buildFromChanges(myProject, getGrouping(), allChanges, null);
+    protected AsyncChangesTreeModel getChangesTreeModel() {
+      return SimpleAsyncChangesTreeModel.create(grouping -> {
+        Collection<Change> allChanges = ChangeListManager.getInstance(myProject).getAllChanges();
+        return TreeModelBuilder.buildFromChanges(myProject, grouping, allChanges, null);
+      });
     }
   }
 }

@@ -474,7 +474,7 @@ abstract class ServiceViewModel implements Disposable, InvokerSupplier, ServiceM
     @Override
     protected List<? extends ServiceViewItem> doGetRoots() {
       ServiceViewItem service = myServiceRef.get();
-      return service == null ? Collections.emptyList() : Collections.singletonList(service);
+      return ContainerUtil.createMaybeSingletonList(service);
     }
 
     @Override

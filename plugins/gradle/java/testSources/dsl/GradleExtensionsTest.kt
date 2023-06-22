@@ -8,6 +8,8 @@ import org.jetbrains.plugins.gradle.service.resolve.GradleGroovyProperty
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
+import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
@@ -66,10 +68,16 @@ class GradleExtensionsTest : GradleCodeInsightTestCase() {
   }
 
   companion object {
-    val FIXTURE_BUILDER = GradleTestFixtureBuilder.buildFile("GradleExtensionsTest") {
-      withPrefix {
-        call("ext") {
-          assign("prop", 1)
+
+    private val FIXTURE_BUILDER = GradleTestFixtureBuilder.create("GradleExtensionsTest") { gradleVersion ->
+      withSettingsFile {
+        setProjectName("GradleExtensionsTest")
+      }
+      withBuildFile(gradleVersion) {
+        withPrefix {
+          call("ext") {
+            assign("prop", 1)
+          }
         }
       }
     }

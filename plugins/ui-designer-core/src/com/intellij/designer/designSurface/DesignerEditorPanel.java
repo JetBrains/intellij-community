@@ -15,7 +15,7 @@ import com.intellij.designer.palette.PaletteToolWindowManager;
 import com.intellij.designer.propertyTable.InplaceContext;
 import com.intellij.designer.propertyTable.PropertyTableTab;
 import com.intellij.designer.propertyTable.TablePanelActionPolicy;
-import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
@@ -39,8 +39,8 @@ import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLayeredPane;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.FixedHashMap;
@@ -359,7 +359,7 @@ public abstract class DesignerEditorPanel extends JPanel
   }
 
   protected Attachment[] getErrorAttachments(ErrorInfo info) {
-    return new Attachment[]{AttachmentFactory.createAttachment(myFile)};
+    return new Attachment[]{CoreAttachmentFactory.createAttachment(myFile)};
   }
 
   protected abstract void configureError(@NotNull ErrorInfo info);
@@ -1021,12 +1021,8 @@ public abstract class DesignerEditorPanel extends JPanel
   }
 
   private final class MyLayeredPane extends JBLayeredPane implements Scrollable {
-    @Override
-    public void doLayout() {
-      for (int i = getComponentCount() - 1; i >= 0; i--) {
-        Component component = getComponent(i);
-        component.setBounds(0, 0, getWidth(), getHeight());
-      }
+    private MyLayeredPane() {
+      setFullOverlayLayout(true);
     }
 
     @Override

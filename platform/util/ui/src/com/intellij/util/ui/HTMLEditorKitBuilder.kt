@@ -21,7 +21,7 @@ class HTMLEditorKitBuilder {
   /**
    * Allows replacing default [ExtendableHTMLViewFactory] extensions
    */
-  fun replaceViewFactoryExtensions(vararg extensions: (Element, View) -> View?) = apply {
+  fun replaceViewFactoryExtensions(vararg extensions: (Element, View) -> View?): HTMLEditorKitBuilder = apply {
     viewFactory = ExtendableHTMLViewFactory(extensions.asList())
   }
 
@@ -31,14 +31,14 @@ class HTMLEditorKitBuilder {
    * [extensions] take priority over default extensions, i.e. when [ExtendableHTMLViewFactory.Extensions.icons] extension is added
    * it will be invoked before the default icons extension
    */
-  fun withViewFactoryExtensions(vararg extensions: (Element, View) -> View?) = apply {
+  fun withViewFactoryExtensions(vararg extensions: (Element, View) -> View?): HTMLEditorKitBuilder = apply {
     viewFactory = ExtendableHTMLViewFactory(extensions.toList() + DEFAULT_EXTENSIONS)
   }
 
   /**
    * Optimized shorthand for [withViewFactoryExtensions] with [ExtendableHTMLViewFactory.Extensions.WORD_WRAP] extension
    */
-  fun withWordWrapViewFactory() = apply {
+  fun withWordWrapViewFactory(): HTMLEditorKitBuilder = apply {
     viewFactory = ExtendableHTMLViewFactory.DEFAULT_WORD_WRAP
   }
 
@@ -48,7 +48,7 @@ class HTMLEditorKitBuilder {
    *
    * By default [StyleSheetUtil.getDefaultStyleSheet] is used
    */
-  fun withStyleSheet(styleSheet: StyleSheet) = apply {
+  fun withStyleSheet(styleSheet: StyleSheet): HTMLEditorKitBuilder = apply {
     overriddenRootStyle = styleSheet
   }
 
@@ -58,7 +58,7 @@ class HTMLEditorKitBuilder {
    *
    * Does not affect custom stylesheet set by [withStyleSheet]
    */
-  fun withGapsBetweenParagraphs() = apply {
+  fun withGapsBetweenParagraphs(): HTMLEditorKitBuilder = apply {
     needGapsBetweenParagraphs = true
   }
 
@@ -66,7 +66,7 @@ class HTMLEditorKitBuilder {
    * By default, document created by [HTMLEditorKit.createDefaultDocument] applies all styles from [<style>] tags in the document
    * Sometimes we don't want to do that
    */
-  fun withoutContentCss() = apply {
+  fun withoutContentCss(): HTMLEditorKitBuilder = apply {
     loadCssFromFile = false
   }
 
@@ -74,7 +74,7 @@ class HTMLEditorKitBuilder {
    * Provides the way to use dynamic fonts in the document by designating some placeholder
    * Most prominent example is editor font [com.intellij.openapi.editor.impl.EditorCssFontResolver]
    */
-  fun withFontResolver(resolver: CSSFontResolver) = apply {
+  fun withFontResolver(resolver: CSSFontResolver): HTMLEditorKitBuilder = apply {
     fontResolver = resolver
   }
 
@@ -98,6 +98,6 @@ class HTMLEditorKitBuilder {
      * Create a simple editor kit with default values
      */
     @JvmStatic
-    fun simple() = HTMLEditorKitBuilder().build()
+    fun simple(): HTMLEditorKit = HTMLEditorKitBuilder().build()
   }
 }

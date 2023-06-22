@@ -13,8 +13,10 @@ import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.execution.test.runner.events.GradleFileComparisonEventPatcher;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,6 +25,7 @@ import java.util.Map;
  * @author Vladislav.Soroka
  */
 public class GradleTestsExecutionConsole extends SMTRunnerConsoleView implements BuildViewSettingsProvider {
+
   private final Map<String, SMTestProxy> testsMap = new HashMap<>();
   private final StringBuilder myBuffer = new StringBuilder();
   private final SMTRunnerEventsListener myEventPublisher;
@@ -30,10 +33,13 @@ public class GradleTestsExecutionConsole extends SMTRunnerConsoleView implements
   private final @Nullable ExternalSystemTaskId myTaskId;
   private boolean lastMessageWasEmptyLine;
 
+  private final GradleFileComparisonEventPatcher myComparisonEventPatcher = new GradleFileComparisonEventPatcher();
+
   public GradleTestsExecutionConsole(TestConsoleProperties consoleProperties,
                                      @Nullable String splitterProperty) {
     this(null, null, consoleProperties, splitterProperty);
   }
+
   public GradleTestsExecutionConsole(@Nullable Project project,
                                      @Nullable ExternalSystemTaskId taskId,
                                      @NotNull TestConsoleProperties consoleProperties,
@@ -46,6 +52,11 @@ public class GradleTestsExecutionConsole extends SMTRunnerConsoleView implements
 
   public SMTRunnerEventsListener getEventPublisher() {
     return myEventPublisher;
+  }
+
+  @ApiStatus.Internal
+  public GradleFileComparisonEventPatcher getFileComparisonEventPatcher() {
+    return myComparisonEventPatcher;
   }
 
   public Map<String, SMTestProxy> getTestsMap() {

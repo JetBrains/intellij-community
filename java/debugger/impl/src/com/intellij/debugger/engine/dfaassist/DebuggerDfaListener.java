@@ -5,6 +5,7 @@ import com.intellij.codeInspection.dataFlow.lang.DfaListener;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.xdebugger.impl.dfaassist.DfaHint;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;

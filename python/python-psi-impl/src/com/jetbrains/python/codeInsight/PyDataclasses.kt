@@ -32,7 +32,7 @@ object PyDataclassNames {
     const val DATACLASSES_FIELD = "dataclasses.field"
     const val DATACLASSES_REPLACE = "dataclasses.replace"
     const val DUNDER_POST_INIT = "__post_init__"
-    val DECORATOR_PARAMETERS = listOf("init", "repr", "eq", "order", "unsafe_hash", "frozen")
+    val DECORATOR_PARAMETERS = listOf("init", "repr", "eq", "order", "unsafe_hash", "frozen", "kw_only")
     val HELPER_FUNCTIONS = setOf(DATACLASSES_FIELDS, DATACLASSES_ASDICT, "dataclasses.astuple", DATACLASSES_REPLACE)
   }
 
@@ -343,6 +343,11 @@ private class PyDataclassParametersBuilder(private val type: Type, decorator: Qu
         "unsafe_hash" -> {
           unsafeHash = PyEvaluator.evaluateAsBoolean(value, DEFAULT_UNSAFE_HASH)
           unsafeHashArgument = argument
+          return
+        }
+        "kw_only" -> {
+          kwOnly = PyEvaluator.evaluateAsBoolean(value, DEFAULT_KW_ONLY)
+          kwOnlyArgument = argument
           return
         }
       }

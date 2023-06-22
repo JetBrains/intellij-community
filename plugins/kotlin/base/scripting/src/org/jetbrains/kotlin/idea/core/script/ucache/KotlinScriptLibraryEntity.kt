@@ -1,21 +1,20 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.ucache
 
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.SymbolicEntityId
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityWithSymbolicId
-import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
-import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.SymbolicEntityId
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
+import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import java.io.Serializable
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.Type
+import com.intellij.platform.workspace.storage.EntityType
 
 
 data class KotlinScriptLibraryRootTypeId(val name: String) : Serializable {
@@ -41,7 +40,7 @@ interface KotlinScriptLibraryEntity : WorkspaceEntityWithSymbolicId {
 
     val roots: List<KotlinScriptLibraryRoot>
 
-    var indexSourceRoots: Boolean
+    val indexSourceRoots: Boolean
 
     val usedInScripts: Set<KotlinScriptId>
 
@@ -50,8 +49,7 @@ interface KotlinScriptLibraryEntity : WorkspaceEntityWithSymbolicId {
 
     //region generated code
     @GeneratedCodeApiVersion(1)
-    interface Builder : KotlinScriptLibraryEntity, WorkspaceEntity.Builder<KotlinScriptLibraryEntity>,
-                        ObjBuilder<KotlinScriptLibraryEntity> {
+    interface Builder : KotlinScriptLibraryEntity, WorkspaceEntity.Builder<KotlinScriptLibraryEntity> {
         override var entitySource: EntitySource
         override var name: String
         override var roots: MutableList<KotlinScriptLibraryRoot>
@@ -59,18 +57,16 @@ interface KotlinScriptLibraryEntity : WorkspaceEntityWithSymbolicId {
         override var usedInScripts: MutableSet<KotlinScriptId>
     }
 
-    companion object : Type<KotlinScriptLibraryEntity, Builder>() {
+    companion object : EntityType<KotlinScriptLibraryEntity, Builder>() {
         @JvmOverloads
         @JvmStatic
         @JvmName("create")
-        operator fun invoke(
-            name: String,
-            roots: List<KotlinScriptLibraryRoot>,
-            indexSourceRoots: Boolean,
-            usedInScripts: Set<KotlinScriptId>,
-            entitySource: EntitySource,
-            init: (Builder.() -> Unit)? = null
-        ): KotlinScriptLibraryEntity {
+        operator fun invoke(name: String,
+                            roots: List<KotlinScriptLibraryRoot>,
+                            indexSourceRoots: Boolean,
+                            usedInScripts: Set<KotlinScriptId>,
+                            entitySource: EntitySource,
+                            init: (Builder.() -> Unit)? = null): KotlinScriptLibraryEntity {
             val builder = builder()
             builder.name = name
             builder.roots = roots.toMutableWorkspaceList()
@@ -85,6 +81,7 @@ interface KotlinScriptLibraryEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: KotlinScriptLibraryEntity, modification: KotlinScriptLibraryEntity.Builder.() -> Unit) =
-    modifyEntity(KotlinScriptLibraryEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: KotlinScriptLibraryEntity,
+                                      modification: KotlinScriptLibraryEntity.Builder.() -> Unit) = modifyEntity(
+    KotlinScriptLibraryEntity.Builder::class.java, entity, modification)
 //endregion

@@ -243,14 +243,10 @@ public abstract class PySkeletonGenerator {
           else if (msgType.equals("log")) {
             final String level = controlMessage.get("level").getAsString();
             final String message = controlMessage.get("message").getAsString();
-            if (level.equals("info")) {
-              Run.LOG.info(message);
-            }
-            else if (level.equals("debug")) {
-              Run.LOG.debug(message);
-            }
-            else if (level.equals("trace")) {
-              Run.LOG.trace(message);
+            switch (level) {
+              case "info" -> Run.LOG.info(message);
+              case "debug" -> Run.LOG.debug(message);
+              case "trace" -> Run.LOG.trace(message);
             }
           }
           else if (msgType.equals("generation_result")) {

@@ -266,7 +266,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
     }
 
     @Override
-    public boolean canEat(Update update) {
+    public boolean canEat(@NotNull Update update) {
       if (!(update instanceof AnalyzeElementUpdate other)) return false;
       return myElement.equals(other.myElement) && (!other.myCheck || myCheck) && (!other.myCollectUsages || myCollectUsages);
     }

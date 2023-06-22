@@ -119,9 +119,7 @@ public abstract class XDebuggerPopupPanel {
     myMainPanel.addToCenter(content);
     toolbar.setBackground(UIUtil.getToolTipActionBackground());
 
-    WindowMoveListener moveListener = new WindowMoveListener(myContent);
-    toolbar.addMouseListener(moveListener);
-    toolbar.addMouseMotionListener(moveListener);
+    new WindowMoveListener(myContent).installTo(toolbar);
 
     myContent
       .addToCenter(myMainPanel)

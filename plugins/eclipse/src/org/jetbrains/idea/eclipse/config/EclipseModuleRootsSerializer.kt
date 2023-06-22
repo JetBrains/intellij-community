@@ -4,6 +4,9 @@ package org.jetbrains.idea.eclipse.config
 import com.intellij.configurationStore.StorageManagerFileWriteRequestor
 import com.intellij.configurationStore.getOrCreateVirtualFile
 import com.intellij.configurationStore.runAsWriteActionIfNeeded
+import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
+import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
+import com.intellij.java.workspace.entities.javaSettings
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleTypeManager
@@ -12,23 +15,24 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.workspace.jps.JpsFileEntitySource
+import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.serialization.impl.*
 import com.intellij.util.Function
 import com.intellij.util.text.UniqueNameGenerator
-import com.intellij.workspaceModel.ide.JpsFileEntitySource
-import com.intellij.workspaceModel.ide.impl.jps.serialization.*
 import com.intellij.workspaceModel.ide.toPath
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jdom.output.EclipseJDOMUtil
+import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.eclipse.AbstractEclipseClasspathReader
 import org.jetbrains.idea.eclipse.AbstractEclipseClasspathReader.expandLinkedResourcesPath
+import org.jetbrains.idea.eclipse.EclipseBundle
 import org.jetbrains.idea.eclipse.EclipseXml
 import org.jetbrains.idea.eclipse.IdeaXml
 import org.jetbrains.idea.eclipse.conversion.DotProjectFileHelper
@@ -126,7 +130,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
                                 imlFileUrl: VirtualFileUrl,
                                 virtualUrlManager: VirtualFileUrlManager,
                                 moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity>) {
-    fun reportError(message: String) {
+    fun reportError(message: @Nls String) {
       errorReporter.reportError(message, storageRootUrl.append(EclipseXml.CLASSPATH_FILE))
     }
     fun getUrlByRelativePath(path: String): VirtualFileUrl {
@@ -157,12 +161,12 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
     classpathTag.getChildren(EclipseXml.CLASSPATHENTRY_TAG).forEachIndexed { index, entryTag ->
       val kind = entryTag.getAttributeValue(EclipseXml.KIND_ATTR)
       if (kind == null) {
-        reportError("'${EclipseXml.KIND_ATTR}' attribute is missing in '${EclipseXml.CLASSPATHENTRY_TAG}' tag")
+        reportError(EclipseBundle.message("error.message.0.attribute.is.missing.in.1.tag", EclipseXml.KIND_ATTR, EclipseXml.CLASSPATHENTRY_TAG))
         return@forEachIndexed
       }
       val path = entryTag.getAttributeValue(EclipseXml.PATH_ATTR)
       if (path == null) {
-        reportError("'${EclipseXml.PATH_ATTR}' attribute is missing in '${EclipseXml.CLASSPATHENTRY_TAG}' tag")
+        reportError(EclipseBundle.message("error.message.0.attribute.is.missing.in.1.tag", EclipseXml.PATH_ATTR,EclipseXml.CLASSPATHENTRY_TAG))
         return@forEachIndexed
       }
       val exported = EclipseXml.TRUE_VALUE == entryTag.getAttributeValue(EclipseXml.EXPORTED_ATTR)
@@ -201,9 +205,9 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
             sourceRoots.add(sourceRoot.url)
             dependencies.removeIf { it is ModuleDependencyItem.ModuleSourceDependency }
             dependencies.add(ModuleDependencyItem.ModuleSourceDependency)
-            editEclipseProperties {
-              it.expectedModuleSourcePlace = dependencies.size - 1
-              it.srcPlace = it.srcPlace.toMutableMap().also { it[srcUrl.url] = index }
+            editEclipseProperties { eclipseProperties ->
+              eclipseProperties.expectedModuleSourcePlace = dependencies.size - 1
+              eclipseProperties.srcPlace = eclipseProperties.srcPlace.toMutableMap().also { it[srcUrl.url] = index }
             }
           }
         }
@@ -271,7 +275,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
         EclipseXml.VAR_KIND -> {
           val slash = path.indexOf('/')
           if (slash == 0) {
-            reportError("'${EclipseXml.PATH_ATTR}' attribute format is incorrect for '${EclipseXml.VAR_KIND}': $path")
+            reportError(EclipseBundle.message("error.message.0.attribute.format.is.incorrect.for.1.2", EclipseXml.PATH_ATTR, EclipseXml.VAR_KIND, path))
             return@forEachIndexed
           }
           val libName = generateUniqueLibraryName(path, libraryNames)
@@ -341,9 +345,9 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
           else {
             val definedCons = EclipseNatureImporter.getAllDefinedCons()
             if (path in definedCons) {
-              editEclipseProperties {
-                it.knownCons += path
-                it.srcPlace = it.srcPlace.toMutableMap().also { it[path] = index }
+              editEclipseProperties { eclipseProperties ->
+                eclipseProperties.knownCons += path
+                eclipseProperties.srcPlace = eclipseProperties.srcPlace.toMutableMap().also { it[path] = index }
               }
             }
             else {
@@ -357,7 +361,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
           }
         }
         else -> {
-          reportError("Unknown '${EclipseXml.KIND_ATTR}' in '${EclipseXml.CLASSPATHENTRY_TAG}': $kind")
+          reportError(EclipseBundle.message("error.message.unknown.0.in.1.2", EclipseXml.KIND_ATTR, EclipseXml.CLASSPATHENTRY_TAG, kind))
         }
       }
     }
@@ -464,7 +468,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
           try {
             emlFile.delete(this)
           }
-          catch (e: IOException) {
+          catch (_: IOException) {
           }
         }
       }
@@ -495,7 +499,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
       when (item) {
         ModuleDependencyItem.ModuleSourceDependency -> {
           val shouldPlaceSeparately = eclipseProperties?.expectedModuleSourcePlace == itemIndex
-          val comparator = module.mainContentRoot?.getSourceRootsComparator() ?: compareBy<SourceRootEntity> { it.url.url }
+          val comparator = module.mainContentRoot?.getSourceRootsComparator() ?: compareBy { it.url.url }
           for (sourceRoot in sourceRoots.sortedWith(comparator)) {
             var relativePath = convertToEclipsePath(sourceRoot.url, module, entitySource, pathShortener)
             if (sourceRoot.contentRoot.url != module.mainContentRoot?.url) {
@@ -546,7 +550,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
                   addClasspathEntry(if (link) EclipseXml.LIB_KIND else EclipseXml.VAR_KIND, eclipseVariablePath)
                 }
                 else {
-                  LOG.assertTrue(!StringUtil.isEmptyOrSpaces(firstUrl), "Library: $libraryName")
+                  LOG.assertTrue(!firstUrl.isNullOrBlank(), "Library: $libraryName")
                   addClasspathEntry(EclipseXml.LIB_KIND, convertToEclipsePath(firstRoot, module, entitySource, pathShortener))
                 }
 

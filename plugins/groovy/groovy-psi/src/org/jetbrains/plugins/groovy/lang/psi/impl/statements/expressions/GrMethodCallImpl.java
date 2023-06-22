@@ -55,9 +55,15 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
 
   @Override
   public GroovyResolveResult @NotNull [] getCallVariants(@Nullable GrExpression upToArgument) {
+    return getCallVariants(upToArgument, true);
+  }
+
+  @Override
+  @NotNull
+  public GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument, boolean incompleteCode) {
     final GrExpression invoked = getInvokedExpression();
     if (!(invoked instanceof GrReferenceExpression)) return GroovyResolveResult.EMPTY_ARRAY;
-    return ((GrReferenceExpression)invoked).multiResolve(true);
+    return ((GrReferenceExpression)invoked).multiResolve(incompleteCode);
   }
 
   @Override

@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
@@ -185,7 +186,7 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
           LookupElementBuilder l = LookupElementBuilder
             .create(completionPath, completionPath.getName())
             .withIcon(lastField.getLookupIcon())
-            .withInsertHandler(new YamlKeyInsertHandlerImpl(needsSequenceItemMark, pathToInsert.get(0)))
+            .withInsertHandler(createKeyInsertHandler(params.getPosition().getProject(), needsSequenceItemMark, pathToInsert.get(0)))
             .withTypeText(lastField.getDefaultType().getDisplayName(), true)
             .withStrikeoutness(lastField.isDeprecated());
           result.addElement(l);
@@ -200,9 +201,16 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
             return !existingByKey.containsKey(l.getLookupString());
           });
 
-          registerBasicKeyCompletion(result, lookups, new YamlKeyInsertHandlerImpl(needsSequenceItemMark, childField));
+          registerBasicKeyCompletion(result, lookups,
+                                     createKeyInsertHandler(params.getPosition().getProject(), needsSequenceItemMark, childField));
         });
     }
+  }
+
+  protected @NotNull InsertHandler<LookupElement> createKeyInsertHandler(@Nullable Project project,
+                                                                         boolean needsSequenceItemMark,
+                                                                         @NotNull Field childField) {
+    return new YamlKeyInsertHandlerImpl(needsSequenceItemMark, childField);
   }
 
   private static boolean needsSequenceItem(@NotNull Field parentField) {

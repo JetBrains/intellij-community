@@ -1,14 +1,18 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.icons.ExpUiIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoActionAction;
 import com.intellij.ide.actions.SetShortcutAction;
+import com.intellij.ide.actions.searcheverywhere.footer.ActionExtendedInfoKt;
+import com.intellij.ide.actions.searcheverywhere.footer.ActionHistoryManager;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.util.gotoByName.GotoActionItemProvider;
 import com.intellij.ide.util.gotoByName.GotoActionModel;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,9 +26,12 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,12 +42,14 @@ import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText;
 
 public class ActionSearchEverywhereContributor implements WeightedSearchEverywhereContributor<GotoActionModel.MatchedValue>,
-                                                          LightEditCompatible {
+                                                          LightEditCompatible, SearchFieldActionsContributor,
+                                                          SearchEverywhereExtendedInfoProvider {
 
   private static final Logger LOG = Logger.getInstance(ActionSearchEverywhereContributor.class);
 
@@ -63,13 +72,38 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
     return IdeBundle.message("search.everywhere.group.name.actions");
   }
 
-  @NotNull
+  @Nullable
   @Override
   public String getAdvertisement() {
+    if (Registry.is("search.everywhere.footer.extended.info")) return null;
+
     ShortcutSet altEnterShortcutSet = getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS);
     @NlsSafe String altEnter = getFirstKeyboardShortcutText(altEnterShortcutSet);
     return IdeBundle.message("press.0.to.assign.a.shortcut", altEnter);
   }
+
+  @NotNull
+  @Override
+  public List<AnAction> createRightActions(@NotNull String pattern, @NotNull Runnable onChanged) {
+    if (!Registry.is("search.everywhere.recents.clear.action") || StringUtil.isNotEmpty(pattern)) return ContainerUtil.emptyList();
+
+    return Collections.singletonList(new AnAction(() -> LangBundle.message("action.clear.recent.actions.text"),
+                                                  () -> LangBundle.message("action.clear.recent.actions.description"),
+                                                  ExpUiIcons.Actions.ClearCash) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        ActionHistoryManager.getInstance().getState().getIds().clear();
+        onChanged.run();
+      }
+    });
+  }
+
+  @Nls
+  @Override
+  public @Nullable ExtendedInfo createExtendedInfo() {
+    return ActionExtendedInfoKt.createActionExtendedInfo(myProject);
+  }
+
 
   @NlsContexts.Checkbox
   public String includeNonProjectItemsText() {
@@ -92,6 +126,10 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
                                     @NotNull Processor<? super FoundItemDescriptor<GotoActionModel.MatchedValue>> consumer) {
 
     if (StringUtil.isEmptyOrSpaces(pattern)) {
+      if (Registry.is("search.everywhere.recents")) {
+        Set<String> ids = ActionHistoryManager.getInstance().getState().getIds();
+        myProvider.processActions(pattern, element -> consumer.process(new FoundItemDescriptor<>(element, element.getMatchingDegree())), ids);
+      }
       return;
     }
 
@@ -171,7 +209,7 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
   @Override
   public boolean processSelectedItem(@NotNull GotoActionModel.MatchedValue item, int modifiers, @NotNull String text) {
     if (modifiers == InputEvent.ALT_MASK) {
-      showAssignShortcutDialog(item);
+      showAssignShortcutDialog(myProject, item);
       return true;
     }
 
@@ -186,14 +224,31 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
       return false;
     }
 
+    if (Registry.is("search.everywhere.recents")) {
+      saveRecentAction(item);
+    }
+
     GotoActionAction.openOptionOrPerformAction(selected, text, myProject, myContextComponent.get(), modifiers);
     boolean inplaceChange = selected instanceof GotoActionModel.ActionWrapper
                             && ((GotoActionModel.ActionWrapper)selected).getAction() instanceof ToggleAction;
     return !inplaceChange;
   }
 
+  private static void saveRecentAction(@NotNull GotoActionModel.MatchedValue selected) {
+    AnAction action = getAction(selected);
+    if (action == null) return;
+
+    String id = ActionManager.getInstance().getId(action);
+    if (id == null) return;
+
+    Set<String> ids = ActionHistoryManager.getInstance().getState().getIds();
+    if (ids.size() < Registry.intValue("search.everywhere.recents.limit")) {
+      ids.add(id);
+    }
+  }
+
   @Nullable
-  private static AnAction getAction(@NotNull GotoActionModel.MatchedValue element) {
+  public static AnAction getAction(@NotNull GotoActionModel.MatchedValue element) {
     Object value = element.value;
     if (value instanceof GotoActionModel.ActionWrapper) {
       value = ((GotoActionModel.ActionWrapper)value).getAction();
@@ -201,7 +256,7 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
     return value instanceof AnAction ? (AnAction)value : null;
   }
 
-  private void showAssignShortcutDialog(@NotNull GotoActionModel.MatchedValue value) {
+  public static void showAssignShortcutDialog(@Nullable Project myProject, @NotNull GotoActionModel.MatchedValue value) {
     AnAction action = getAction(value);
     if (action == null) return;
 
@@ -231,5 +286,10 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
         initEvent.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT),
         initEvent.getData(CommonDataKeys.EDITOR));
     }
+  }
+
+  @Override
+  public boolean isEmptyPatternSupported() {
+    return true;
   }
 }

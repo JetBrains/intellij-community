@@ -5,10 +5,8 @@ import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.navigation.CtrlMouseData
-import com.intellij.codeInsight.navigation.CtrlMouseInfo
 import com.intellij.codeInsight.navigation.impl.*
-import com.intellij.codeInsight.navigation.impl.NavigationActionResult.MultipleTargets
-import com.intellij.codeInsight.navigation.impl.NavigationActionResult.SingleTarget
+import com.intellij.codeInsight.navigation.impl.NavigationActionResult.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbService
@@ -47,6 +45,9 @@ internal object GotoTypeDeclarationHandler2 : CodeInsightActionHandler {
       is SingleTarget -> {
         navigateRequest(project, actionResult.request)
       }
+      is LazySingleTarget -> {
+        navigateRequestLazy(project, actionResult.requestor)
+      }
       is MultipleTargets -> {
         val popup = createTargetPopup(
           CodeInsightBundle.message("choose.type.popup.title"),
@@ -62,13 +63,6 @@ internal object GotoTypeDeclarationHandler2 : CodeInsightActionHandler {
   private fun handleLookup(project: Project, editor: Editor, offset: Int): NavigationActionResult? {
     val fromLookup = TargetElementUtil.getTargetElementFromLookup(project) ?: return null
     return result(elementTypeTargets(editor, offset, listOf(fromLookup)))
-  }
-
-  @Suppress("DEPRECATION", "DeprecatedCallableAddReplaceWith")
-  @Deprecated("Unused in v2 implementation")
-  @JvmStatic
-  fun getCtrlMouseInfo(file: PsiFile, offset: Int): CtrlMouseInfo? {
-    return gotoTypeDeclaration(file, offset)?.ctrlMouseInfo()
   }
 
   @JvmStatic

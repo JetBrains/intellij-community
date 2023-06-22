@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table
 
 import com.intellij.ui.ColoredTableCellRenderer
 import com.intellij.ui.speedSearch.SpeedSearchUtil
+import com.intellij.vcs.log.VcsLogHighlighter
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer.VcsLogTableCellState
 import com.intellij.vcs.log.util.VcsLogUiUtil
 import org.jetbrains.annotations.Nls
@@ -36,9 +37,27 @@ class VcsLogStringCellRenderer internal constructor(
     }
   }
 
-  override fun getPreferredWidth(table: JTable): Int? {
-    val sample = contentSampleProvider?.let { provider -> provider() } ?: return null
-    return table.getFontMetrics(VcsLogGraphTable.getTableFont().deriveFont(Font.BOLD)).stringWidth(sample) +
+  override fun getPreferredWidth(): VcsLogCellRenderer.PreferredWidth {
+    val sample = contentSampleProvider?.invoke()
+    if (sample == null) {
+      return VcsLogCellRenderer.PreferredWidth.FromData { table, value, row, column ->
+        if (value.toString().isEmpty()) return@FromData null
+
+        val fontStyle = when ((table as VcsLogGraphTable).getStyle(row, column, false, false, false).textStyle) {
+          VcsLogHighlighter.TextStyle.BOLD -> Font.BOLD
+          VcsLogHighlighter.TextStyle.ITALIC -> Font.ITALIC
+          else -> null
+        }
+        getStringWidth(table, "$value*", fontStyle)
+      }
+    }
+    return VcsLogCellRenderer.PreferredWidth.Fixed { table -> getStringWidth(table, sample, Font.BOLD) }
+  }
+
+  private fun getStringWidth(table: JTable, sample: @Nls String, fontStyle: Int?): Int {
+    val tableFont = VcsLogGraphTable.getTableFont()
+    val derivedFont = fontStyle?.let { tableFont.deriveFont(it) } ?: tableFont
+    return table.getFontMetrics(derivedFont).stringWidth(sample) +
            VcsLogUiUtil.getHorizontalTextPadding(this)
   }
 }

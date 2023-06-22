@@ -38,7 +38,7 @@ public class ParamMatcher extends BaseMatcher {
     public ParamMatcher(XmlTag root, String[] excludedNames, String name) {
         myRoot = root;
         myName = name;
-        myExcludedNames = ContainerUtil.set(excludedNames);
+        myExcludedNames = ContainerUtil.immutableSet(excludedNames);
     }
 
     @Override

@@ -4,8 +4,8 @@ import com.intellij.ide.customize.transferSettings.providers.vswin.mappings.Font
 
 class FontsAndColorsParsedData(themeUuid: String) : VSParsedData {
   companion object {
-    const val key = "Environment_FontsAndColors"
+    const val key: String = "Environment_FontsAndColors"
   }
 
-  val theme = FontsAndColorsMappings.VsTheme.fromString(themeUuid)
+  val theme: FontsAndColorsMappings.VsTheme = FontsAndColorsMappings.VsTheme.fromString(themeUuid)
 }

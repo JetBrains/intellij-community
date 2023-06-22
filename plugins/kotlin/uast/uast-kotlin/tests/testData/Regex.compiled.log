@@ -101,6 +101,23 @@ UClass (name = Regex)
         UBlockExpression
     UMethod (name = writeReplace)
         UBlockExpression
+    UClass (name = Companion)
+        UMethod (name = Companion)
+        UMethod (name = fromLiteral)
+            UParameter (name = literal)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+            UBlockExpression
+        UMethod (name = escape)
+            UParameter (name = literal)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+            UBlockExpression
+        UMethod (name = escapeReplacement)
+            UParameter (name = literal)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+            UBlockExpression
+        UMethod (name = ensureUnicodeCase)
+            UParameter (name = flags)
+            UBlockExpression
     UClass (name = Serialized)
         UField (name = Companion)
             UAnnotation (fqName = null)
@@ -119,20 +136,3 @@ UClass (name = Regex)
             UBlockExpression
         UClass (name = Companion)
             UMethod (name = Companion)
-    UClass (name = Companion)
-        UMethod (name = Companion)
-        UMethod (name = fromLiteral)
-            UParameter (name = literal)
-                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
-            UBlockExpression
-        UMethod (name = escape)
-            UParameter (name = literal)
-                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
-            UBlockExpression
-        UMethod (name = escapeReplacement)
-            UParameter (name = literal)
-                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
-            UBlockExpression
-        UMethod (name = ensureUnicodeCase)
-            UParameter (name = flags)
-            UBlockExpression

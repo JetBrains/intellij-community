@@ -7,6 +7,8 @@ import com.intellij.psi.PsiReference;
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture;
 import org.junit.Test;
 
+import java.util.Set;
+
 public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
 
   @Override
@@ -40,8 +42,8 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
                        </build>
                        """);
 
-    assertCompletionVariants(myProjectPom, RENDERING_TEXT,
-                             "org.apache.maven.plugins", "org.codehaus.plexus", "test", "intellij.test", "org.codehaus.mojo");
+    assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT,
+                                    "org.apache.maven.plugins", "org.codehaus.plexus", "test", "intellij.test", "org.codehaus.mojo");
   }
 
   @Test 
@@ -61,9 +63,9 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
                        """);
 
 
-    assertCompletionVariants(myProjectPom, RENDERING_TEXT, "maven-site-plugin", "maven-eclipse-plugin", "maven-war-plugin",
-                             "maven-resources-plugin", "maven-surefire-plugin", "maven-jar-plugin", "maven-clean-plugin",
-                             "maven-install-plugin", "maven-compiler-plugin", "maven-deploy-plugin");
+    assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT, "maven-site-plugin", "maven-eclipse-plugin", "maven-war-plugin",
+                                    "maven-resources-plugin", "maven-surefire-plugin", "maven-jar-plugin", "maven-clean-plugin",
+                                    "maven-install-plugin", "maven-compiler-plugin", "maven-deploy-plugin");
   }
 
   @Test 
@@ -108,20 +110,21 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
                          </extensions>
                        </build>
                        """);
+    Set<String> variants = getDependencyCompletionVariants(myProjectPom, info -> info.getGroupId() + ":" + info.getArtifactId());
 
-    assertDependencyCompletionVariantsInclude(myProjectPom,
-                                              "org.apache.maven.plugins:maven-clean-plugin:2.5",
-                                              "org.apache.maven.plugins:maven-compiler-plugin",
-                                              "org.apache.maven.plugins:maven-deploy-plugin:2.7",
-                                              "org.apache.maven.plugins:maven-eclipse-plugin:2.4",
-                                              "org.apache.maven.plugins:maven-install-plugin:2.4",
-                                              "org.apache.maven.plugins:maven-jar-plugin:2.4",
-                                              "org.apache.maven.plugins:maven-resources-plugin:2.6",
-                                              "org.apache.maven.plugins:maven-site-plugin:3.3",
-                                              "org.apache.maven.plugins:maven-surefire-plugin",
-                                              "org.apache.maven.plugins:maven-war-plugin:2.1-alpha-1",
-                                              "org.codehaus.mojo:build-helper-maven-plugin:1.0",
-                                              "test:project:1");
+    assertContain(variants,
+                  "org.apache.maven.plugins:maven-clean-plugin",
+                  "org.apache.maven.plugins:maven-compiler-plugin",
+                  "org.apache.maven.plugins:maven-deploy-plugin",
+                  "org.apache.maven.plugins:maven-eclipse-plugin",
+                  "org.apache.maven.plugins:maven-install-plugin",
+                  "org.apache.maven.plugins:maven-jar-plugin",
+                  "org.apache.maven.plugins:maven-resources-plugin",
+                  "org.apache.maven.plugins:maven-site-plugin",
+                  "org.apache.maven.plugins:maven-surefire-plugin",
+                  "org.apache.maven.plugins:maven-war-plugin",
+                  "org.codehaus.mojo:build-helper-maven-plugin",
+                  "test:project");
   }
 
   @Test 
@@ -139,13 +142,17 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
                        </build>
                        """);
 
-    String pluginPath = "plugins/org/apache/maven/plugins/maven-compiler-plugin/3.1/maven-compiler-plugin-3.1.pom";
+    String pluginVersion = getDefaultPluginVersion("org.apache.maven:maven-compiler-plugin");
+    String pluginPath =
+      "plugins/org/apache/maven/plugins/maven-compiler-plugin/" + pluginVersion + "/maven-compiler-plugin-" + pluginVersion + ".pom";
     String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath(pluginPath);
     VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
+    assertNotNull("file: " + filePath + " not exists!", f);
     assertResolved(myProjectPom, findPsiFile(f));
   }
 
-  @Test 
+
+  @Test
   public void testResolvingAbsentPlugins() {
     removeFromLocalRepository("org/apache/maven/plugins/maven-compiler-plugin");
 

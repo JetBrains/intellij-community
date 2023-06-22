@@ -17,7 +17,6 @@ package com.siyeh.ig.maturity;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -32,8 +31,7 @@ import java.util.Set;
  */
 public class UseOfObsoleteDateTimeApiInspection extends BaseInspection {
 
-  static final Set<String> dateTimeNames = ContainerUtil
-    .set("java.util.Date", "java.util.Calendar", "java.util.GregorianCalendar", "java.util.TimeZone", "java.util.SimpleTimeZone");
+  static final Set<String> dateTimeNames = Set.of("java.util.Date", "java.util.Calendar", "java.util.GregorianCalendar", "java.util.TimeZone", "java.util.SimpleTimeZone");
 
   @NotNull
   @Override
@@ -62,7 +60,8 @@ public class UseOfObsoleteDateTimeApiInspection extends BaseInspection {
       final PsiElement target = referenceElement.resolve();
       if (!(target instanceof PsiClass targetClass)) return;
 
-      if (!dateTimeNames.contains(targetClass.getQualifiedName())) {
+      String qualifiedName = targetClass.getQualifiedName();
+      if (qualifiedName == null || !dateTimeNames.contains(qualifiedName)) {
         return;
       }
 

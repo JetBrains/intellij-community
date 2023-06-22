@@ -25,7 +25,8 @@ import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import javax.swing.*
 
-class FindInFilesLesson(override val sampleFilePath: String)
+class FindInFilesLesson(override val sampleFilePath: String,
+                        private val helpUrl: String = "finding-and-replacing-text-in-project.html")
   : KLesson("Find in files", LessonsBundle.message("find.in.files.lesson.name")) {
 
   override val lessonContent: LessonContext.() -> Unit = {
@@ -229,7 +230,7 @@ class FindInFilesLesson(override val sampleFilePath: String)
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("find.in.files.help.link"),
-         LessonUtil.getHelpLink("finding-and-replacing-text-in-project.html")),
+         LessonUtil.getHelpLink(helpUrl)),
   )
 }
 

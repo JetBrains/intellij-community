@@ -33,11 +33,22 @@ public class DynamicBundle extends AbstractBundle {
 
   private static @NotNull String ourLangTag = Locale.ENGLISH.toLanguageTag();
 
+  /**
+   * Creates a new instance of the message bundle. It's usually stored in a private static final field, and static methods delegating
+   * to its {@link #getMessage} and {@link #getLazyMessage} methods are added.
+   *
+   * @param bundleClass  any class from the module containing the bundle, it's used to locate the file with the messages
+   * @param pathToBundle qualified name of the file with the messages (without the extension, with slashes replaced by dots)
+   */
   public DynamicBundle(@NotNull Class<?> bundleClass, @NotNull String pathToBundle) {
     super(bundleClass, pathToBundle);
   }
 
-  public DynamicBundle(@NotNull String pathToBundle) {
+  /**
+   * Use this constructor in bundle classes which inherit from this class.
+   * Note that it's better to prefer delegation to inheritance, and use {@link #DynamicBundle(Class, String)} instead.
+   */
+  protected DynamicBundle(@NotNull String pathToBundle) {
     super(pathToBundle);
   }
 
@@ -182,6 +193,12 @@ public class DynamicBundle extends AbstractBundle {
     return (DefaultBundleService.isDefaultBundle() ? ourDefaultCache : ourCache)
       .computeIfAbsent(loader, __ -> CollectionFactory.createConcurrentSoftValueMap())
       .computeIfAbsent(pathToBundle, __ -> resolveResourceBundle(loader, pathToBundle));
+  }
+
+  public static @Nullable ResourceBundle getPluginBundle(@NotNull PluginDescriptor pluginDescriptor) {
+    ClassLoader classLoader = pluginDescriptor.getPluginClassLoader();
+    String baseName = pluginDescriptor.getResourceBundleBaseName();
+    return classLoader != null && baseName != null ? getResourceBundle(classLoader, baseName) : null;
   }
 
   private static @NotNull ResourceBundle resolveResourceBundle(@NotNull ClassLoader loader, @NonNls @NotNull String pathToBundle) {

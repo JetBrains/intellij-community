@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autolink
 
 import com.intellij.openapi.Disposable
@@ -11,6 +11,7 @@ import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileCha
 import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware.Companion.EP_NAME
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.startup.ProjectActivity
@@ -28,6 +29,7 @@ import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isNewProject
 import com.intellij.util.containers.DisposableWrapperList
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.VisibleForTesting
+import java.util.concurrent.CopyOnWriteArrayList
 
 @VisibleForTesting
 class UnlinkedProjectStartupActivity : ProjectActivity {
@@ -72,7 +74,12 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
       if (isExpectedAutoLink && unlinkedProjects.size == 1 && linkedProjects.isEmpty()) {
         val extension = unlinkedProjects.single()
         withContext(Dispatchers.EDT) {
-          extension.linkAndLoadProject(project, externalProjectPath)
+          if (extension is ExternalSystemUnlinkedProjectAsyncAware) {
+            extension.linkAndLoadProjectAsync(project, externalProjectPath)
+          }
+          else {
+            extension.linkAndLoadProject(project, externalProjectPath)
+          }
         }
         if (LOG.isDebugEnabled) {
           val projectId = extension.createProjectId(externalProjectPath)
@@ -122,13 +129,15 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
       extension.subscribe(project, object : ExternalSystemProjectLinkListener {
 
         override fun onProjectLinked(externalProjectPath: String) {
-          launch(extensionDisposable) {
+          @OptIn(DelicateCoroutinesApi::class)
+          GlobalScope.launch(extensionDisposable) {
             projectRoots.removeProjectRoot(externalProjectPath)
           }
         }
 
         override fun onProjectUnlinked(externalProjectPath: String) {
-          launch(extensionDisposable) {
+          @OptIn(DelicateCoroutinesApi::class)
+          GlobalScope.launch(extensionDisposable) {
             projectRoots.addProjectRoot(externalProjectPath)
           }
         }
@@ -158,10 +167,13 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
 
   private suspend fun updateNotification(project: Project, projectRoot: String, extension: ExternalSystemUnlinkedProjectAware) {
     when {
-      extension.isLinkedProject(project, projectRoot) ->
+      extension.isLinkedProject(project, projectRoot) -> blockingContext {
         expireNotification(project, projectRoot, extension)
+      }
       extension.hasBuildFiles(project, projectRoot) ->
-        notifyNotification(project, projectRoot, extension)
+        blockingContext {
+          notifyNotification(project, projectRoot, extension)
+        }
       else ->
         expireNotification(project, projectRoot, extension)
     }
@@ -241,7 +253,7 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
 
   private class ProjectRoots : Iterable<String> {
 
-    private val projectRoots = ArrayList<String>()
+    private val projectRoots = CopyOnWriteArrayList<String>()
     private val addListeners = DisposableWrapperList<suspend (String) -> Unit>()
     private val removeListeners = DisposableWrapperList<suspend (String) -> Unit>()
 

@@ -1,6 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
+import kotlinx.coroutines.CancellationException
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -9,8 +12,8 @@ class OperationResult<out T : Any> private constructor(
   private val valueNullable: T?,
   val exceptionClass: String
 ) {
-  val hasValue get() = valueNullable != null
-  val value get() = valueNullable!!
+  val hasValue: Boolean get() = valueNullable != null
+  val value: T get() = valueNullable!!
 
   infix fun <R : Any> fmap(action: (T) -> R): OperationResult<R> {
     if (hasValue) return fromValue(action(value))
@@ -21,7 +24,7 @@ class OperationResult<out T : Any> private constructor(
     fun <T : Any> fromValue(value: T): OperationResult<T> =
       OperationResult(value, "")
 
-    fun fromException(exceptionClass: String) =
+    fun fromException(exceptionClass: String): OperationResult<Nothing> =
       OperationResult(null, exceptionClass)
 
     /*
@@ -29,7 +32,7 @@ class OperationResult<out T : Any> private constructor(
      * this class is used only with T in {Unit, Int (with value >= 0), Boolean} and exception class name gets enumerated,
      * so it is possible to serialize it using only one Int field (4 bytes)
      */
-    const val SIZE_BYTES = Int.SIZE_BYTES
+    const val SIZE_BYTES: Int = Int.SIZE_BYTES
 
     inline fun <reified T : Any> OperationResult<T>.serialize(enumerator: (String) -> Int): Int {
       if (!hasValue) {
@@ -73,24 +76,37 @@ class OperationResult<out T : Any> private constructor(
         else -> throw IllegalStateException("OperationResult is not designed to be used with type-parameter " + T::class.java.name)
       }
     }
+
+    internal val LOG = Logger.getInstance(OperationResult::class.java)
   }
 }
 
 @OptIn(ExperimentalContracts::class)
-internal inline fun <R : Any> catchResult(processor: (result: OperationResult<R>) -> Unit, body: () -> R): R {
+internal inline fun <R : Any> catchResult(crossinline processor: (result: OperationResult<R>) -> Unit, body: () -> R): R {
   contract {
     callsInPlace(processor, InvocationKind.EXACTLY_ONCE)
     callsInPlace(body, InvocationKind.EXACTLY_ONCE)
   }
+  val safeProcessor = { result: OperationResult<R> ->
+    try {
+      processor(result)
+    } catch (e: Throwable) {
+      OperationResult.LOG.error(AssertionError("operation result processor must not throw an exception", e))
+    }
+  }
   return try {
     body().also {
-      processor(OperationResult.fromValue(it))
+      safeProcessor(OperationResult.fromValue(it))
     }
   }
   catch (e: Throwable) {
-    processor(OperationResult.fromException(e.javaClass.name))
+    if (e is ProcessCanceledException || e is CancellationException) {
+      // catchResult is currently used in write interceptors for VFS storages, cancellation of such operations is something strange
+      OperationResult.LOG.error("unexpected cancellation exception in catchResult: $e")
+    }
+    safeProcessor(OperationResult.fromException(e.javaClass.name))
     throw e
   }
 }
 
-internal inline infix fun <R : Any> (() -> R).catchResult(processor: (result: OperationResult<R>) -> Unit) = catchResult(processor, this)
+internal inline infix fun <R : Any> (() -> R).catchResult(crossinline processor: (result: OperationResult<R>) -> Unit) = catchResult(processor, this)

@@ -2,12 +2,12 @@
 internal class A {
     @Deprecated("")
     @Volatile
-    var field1 = 0
+    var field1: Int = 0
 
     @Transient
-    var field2 = 1
+    var field2: Int = 1
 
     // Should work even for bad modifiers
     @Strictfp
-    var field3 = 2.0
+    var field3: Double = 2.0
 }

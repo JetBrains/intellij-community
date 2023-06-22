@@ -17,6 +17,4 @@ interface GradleProjectTestFixture : IdeaTestFixture {
   val project: Project
 
   val module: Module
-
-  fun reloadProject()
 }

@@ -18,8 +18,8 @@ abstract class AbstractFloatingToolbarComponent : ActionToolbarImpl, FloatingToo
   private val _parentDisposable: Disposable?
   private val parentDisposable get() = _parentDisposable ?: this
 
-  private val transparentComponent by lazy { ToolbarTransparentComponent(this) }
-  private val componentAnimator by lazy { TransparentComponentAnimator(transparentComponent, parentDisposable) }
+  private val transparentComponent = ToolbarTransparentComponent()
+  private val componentAnimator = TransparentComponentAnimator(transparentComponent, parentDisposable)
 
   @Deprecated("Use constructor with parentDisposable")
   constructor(
@@ -68,11 +68,11 @@ abstract class AbstractFloatingToolbarComponent : ActionToolbarImpl, FloatingToo
     transparentComponent.fireActionsUpdated()
   }
 
-  override fun scheduleShow() = componentAnimator.scheduleShow()
+  override fun scheduleShow(): Unit = componentAnimator.scheduleShow()
 
-  override fun scheduleHide() = componentAnimator.scheduleHide()
+  override fun scheduleHide(): Unit = componentAnimator.scheduleHide()
 
-  override fun hideImmediately() = componentAnimator.hideImmediately()
+  override fun hideImmediately(): Unit = componentAnimator.hideImmediately()
 
   override fun paintComponent(g: Graphics) {
     val graphics = g.create()
@@ -111,9 +111,9 @@ abstract class AbstractFloatingToolbarComponent : ActionToolbarImpl, FloatingToo
     private val BACKGROUND = JBColor.namedColor("Toolbar.Floating.background", JBColor(0xEDEDED, 0x454A4D))
   }
 
-  private class ToolbarTransparentComponent(
-    private val toolbar: AbstractFloatingToolbarComponent
-  ) : TransparentComponent {
+  private inner class ToolbarTransparentComponent : TransparentComponent {
+
+    private val toolbar = this@AbstractFloatingToolbarComponent
 
     private var isVisible = false
     private var opacity: Float = 0.0f

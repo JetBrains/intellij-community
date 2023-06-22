@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.documentation;
 
 import com.google.common.base.Suppliers;
@@ -146,6 +146,6 @@ public class PythonExternalDocumentationProvider extends PythonDocumentationProv
       if (rc == Messages.OK) {
         ShowSettingsUtilImpl.showSettingsDialog(project, DOCUMENTATION_CONFIGURABLE_ID , "");
       }
-    }, ModalityState.NON_MODAL);
+    }, ModalityState.nonModal());
   }
 }

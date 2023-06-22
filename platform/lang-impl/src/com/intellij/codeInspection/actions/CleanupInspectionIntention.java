@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.actions;
 
@@ -13,6 +13,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.lang.LangBundle;
+import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
@@ -84,7 +85,7 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     return myQuickfix.getClass() != EmptyIntentionAction.class &&
-           (myQuickfix.startInWriteAction() || myQuickfix instanceof BatchQuickFix) &&
+           (myQuickfix.startInWriteAction() || myQuickfix instanceof BatchQuickFix || myQuickfix instanceof ModCommandQuickFix) &&
            editor != null &&
            !(myToolWrapper instanceof LocalInspectionToolWrapper && ((LocalInspectionToolWrapper)myToolWrapper).isUnfair());
   }

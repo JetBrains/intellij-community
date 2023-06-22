@@ -3,7 +3,6 @@ package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.openapi.project.Project
-import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
@@ -15,7 +14,7 @@ class SignatureBuilder(private val project: Project) {
   private val factory: PsiElementFactory = PsiElementFactory.getInstance(project)
 
   fun build(
-    context: PsiElement?,
+    targetClass: PsiClass,
     scope: List<PsiElement>,
     isStatic: Boolean = false,
     visibility: String?,
@@ -24,33 +23,40 @@ class SignatureBuilder(private val project: Project) {
     methodName: String = "extracted",
     inputParameters: List<InputParameter> = emptyList(),
     annotations: List<PsiAnnotation> = emptyList(),
-    thrownExceptions: List<PsiClassType> = emptyList(),
-    anchor: PsiMember
+    thrownExceptions: List<PsiClassType> = emptyList()
   ): PsiMethod {
 
     val parameterList = createParameterList(inputParameters, scope)
 
     val method = if (returnType != null) {
-      factory.createMethod(methodName, returnType, context)
+      factory.createMethod(methodName, returnType, targetClass)
     } else {
-      factory.createConstructor("methodName", context)
+      factory.createConstructor("methodName", targetClass)
     }
 
     copyNotPresentAnnotations(annotations, method)
-
-    val isInInterface = anchor.containingClass?.isInterface == true
-    val isJava8 = PsiUtil.getLanguageLevel(anchor) == LanguageLevel.JDK_1_8
-    val shouldHaveDefaultModifier = isJava8 && ! isStatic && isInInterface
 
     val typeParameterList = factory.createTypeParameterList()
     typeParameters.forEach { typeParameterList.add(it) }
     method.typeParameterList?.replace(typeParameterList)
     method.parameterList.replace(parameterList)
+
     method.modifierList.setModifierProperty(PsiModifier.STATIC, isStatic)
-    method.modifierList.setModifierProperty(PsiModifier.DEFAULT, shouldHaveDefaultModifier)
-    if (visibility != null) method.modifierList.setModifierProperty(visibility, true)
+    if (visibility != null && visibilityCanBeApplied(targetClass, visibility)) {
+      method.modifierList.setModifierProperty(visibility, true)
+    }
+    if (targetClass.isInterface && !method.hasModifierProperty(PsiModifier.STATIC) && method.hasModifierProperty(PsiModifier.PUBLIC)) {
+      method.modifierList.setModifierProperty(PsiModifier.DEFAULT, true)
+    }
     thrownExceptions.forEach { exception -> method.throwsList.add(factory.createReferenceElementByType(exception)) }
     return JavaCodeStyleManager.getInstance(method.project).shortenClassReferences(method) as PsiMethod
+  }
+
+  private fun visibilityCanBeApplied(targetClass: PsiClass, visibility: String): Boolean {
+    if (targetClass.isInterface) {
+      return PsiUtil.isLanguageLevel9OrHigher(targetClass) && visibility == PsiModifier.PRIVATE
+    }
+    return true
   }
 
   private fun createParameterList(inputParameters: List<InputParameter>, scope: List<PsiElement>): PsiParameterList {

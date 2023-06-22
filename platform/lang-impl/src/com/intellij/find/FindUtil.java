@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -121,7 +120,7 @@ public final class FindUtil {
     model.setRegularExpressions(with.isRegularExpressions());
     model.setSearchContext(with.getSearchContext());
 
-    if (saveFindString && !with.getStringToFind().isEmpty()) {
+    if (saveFindString) {
       model.setStringToFind(with.getStringToFind());
     }
 
@@ -150,7 +149,7 @@ public final class FindUtil {
     if (editor == null) return null;
     String selectedText = editor.getSelectionModel().getSelectedText();
     if (selectedText == null && Registry.is("ide.find.select.word.at.caret")) {
-      selectedText  = getWordAtCaret(editor, true);
+      selectedText = getWordAtCaret(editor, true);
     }
     return selectedText;
   }
@@ -946,13 +945,21 @@ public final class FindUtil {
                                           @NotNull @NlsContexts.TabTitle String title,
                                           @NotNull Project project) {
     if (targets.length == 0) return null;
-    PsiElement[] primary = sourceElement == null ? PsiElement.EMPTY_ARRAY : new PsiElement[]{sourceElement};
 
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
     SmartPsiElementPointer<?>[] pointers = Stream.of(targets).map(smartPointerManager::createSmartPsiElementPointer).toArray(SmartPsiElementPointer[]::new);
     // usage view will load document/AST so still referencing all these PSI elements might lead to out of memory
     //noinspection UnusedAssignment
     targets = PsiElement.EMPTY_ARRAY;
+    return showInUsageView(sourceElement, title, project, pointers);
+  }
+
+  @Nullable
+  public static UsageView showInUsageView(@Nullable PsiElement sourceElement,
+                                          @NlsContexts.TabTitle @NotNull String title,
+                                          @NotNull Project project,
+                                          SmartPsiElementPointer<?>[] pointers) {
+    PsiElement[] primary = sourceElement == null ? PsiElement.EMPTY_ARRAY : new PsiElement[]{sourceElement};
     return showInUsageView(sourceElement, pointers, p -> {
       PsiElement element = p.getElement();
       return element == null ? null : UsageInfoToUsageConverter.convert(primary, new UsageInfo(element));

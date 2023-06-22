@@ -2,6 +2,7 @@
 package com.intellij.openapi.roots.impl
 
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx
 import com.intellij.openapi.module.Module
@@ -12,13 +13,23 @@ import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_SOURCE
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_TEST_SOURCE
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.NOT_IN_PROJECT
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.UNDER_IGNORED
-import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.assertScope
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.assertInModule
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.assertScope
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
+import com.intellij.testFramework.workspaceModel.updateProjectModel
+import com.intellij.util.ThreeState
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
+import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
@@ -370,6 +381,38 @@ class ModuleRootsInProjectFileIndexTest {
       runWriteAction { fileTypeManager.ignoredFilesList = oldValue }
       assertInModule(file)
     }
+  }
+
+  @Test
+  fun `is in content by url for existing file`() {
+    val file = projectModel.baseProjectDir.newVirtualFile("module/file.txt")
+    PsiTestUtil.addContentRoot(module, moduleDir)
+    assertEquals(ThreeState.YES, WorkspaceFileIndex.getInstance(projectModel.project).isUrlInContent(file.url))
+  }
+
+  @Test
+  fun `is url in content for non existing file`() {
+    val moduleUrl = moduleDir.url
+    val rootUrl = "$moduleUrl/root"
+    val excludedUrl = "$moduleUrl/root/excluded"
+    val urlManager = VirtualFileUrlManager.getInstance(projectModel.project)
+    runWriteActionAndWait {
+      WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
+        val module = it.resolve(ModuleId(module.name))!!
+        it addEntity ContentRootEntity(urlManager.fromUrl(rootUrl),
+                                       emptyList<@NlsSafe String>(),
+                                       module.entitySource) {
+          excludedUrls = listOf(urlManager.fromUrl(excludedUrl)).map {
+            ExcludeUrlEntity(it, module.entitySource)
+          }
+          this.module = module
+        }
+      }
+    }
+    val workspaceFileIndex = WorkspaceFileIndex.getInstance(projectModel.project)
+    assertEquals(ThreeState.YES, workspaceFileIndex.isUrlInContent("$rootUrl/file.txt"))
+    assertEquals(ThreeState.NO, workspaceFileIndex.isUrlInContent("$excludedUrl/file.txt"))
+    assertEquals(ThreeState.NO, workspaceFileIndex.isUrlInContent("$moduleUrl/file.txt"))
   }
 
   private fun assertInModule(file: VirtualFile) {

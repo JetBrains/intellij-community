@@ -78,7 +78,8 @@ public final class KeyChooserDialog extends DialogWrapper{
     myModel = new MyTableModel();
     myTable = new JBTable(myModel);
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    new MySpeedSearch(myTable);
+    MySpeedSearch search = new MySpeedSearch(myTable);
+    search.setupListeners();
     myCenterPanel = ScrollPaneFactory.createScrollPane(myTable);
 
     myTable.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER,0), OK_ACTION);
@@ -264,8 +265,8 @@ public final class KeyChooserDialog extends DialogWrapper{
     private Object2IntMap<Object> myElements;
     private Object[] myElementsArray;
 
-    MySpeedSearch(final JTable component) {
-      super(component);
+    private MySpeedSearch(final JTable component) {
+      super(component, null);
     }
 
     @Override

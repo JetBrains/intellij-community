@@ -211,6 +211,11 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
 
   @NotNull
   public Collection<PsiField> getRequiredFields(@NotNull PsiClass psiClass) {
+    return getRequiredFields(psiClass, false);
+  }
+
+  @NotNull
+  Collection<PsiField> getRequiredFields(@NotNull PsiClass psiClass, boolean ignoreNonNull) {
     Collection<PsiField> result = new ArrayList<>();
     final boolean classAnnotatedWithValue = PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, LombokClassNames.VALUE);
 
@@ -218,8 +223,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       final PsiModifierList modifierList = psiField.getModifierList();
       if (null != modifierList) {
         final boolean isFinal = isFieldFinal(psiField, modifierList, classAnnotatedWithValue);
-        final boolean isNonNull =
-          PsiAnnotationSearchUtil.isAnnotatedWith(psiField, LombokUtils.NONNULL_ANNOTATIONS);
+        final boolean isNonNull = !ignoreNonNull && PsiAnnotationSearchUtil.isAnnotatedWith(psiField, LombokUtils.NONNULL_ANNOTATIONS);
         // accept initialized final or nonnull fields
         if ((isFinal || isNonNull) && !psiField.hasInitializer()) {
           result.add(psiField);

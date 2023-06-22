@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history
 
 import com.intellij.openapi.project.Project
@@ -10,7 +10,6 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.history.VcsFileRevision
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.Consumer
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitFileRevision
 import git4idea.GitRevisionNumber
@@ -24,6 +23,7 @@ import git4idea.log.GitLogProvider
 import git4idea.repo.GitRepositoryManager
 import org.jetbrains.annotations.NonNls
 import java.util.*
+import java.util.function.Consumer
 
 /**
  * An implementation of file history algorithm with renames detection.
@@ -58,7 +58,7 @@ class GitFileHistory private constructor(private val project: Project,
   private val path = VcsUtil.getLastCommitPath(project, path)
 
   @Throws(VcsException::class)
-  private fun load(consumer: Consumer<in GitFileRevision>, vararg parameters: String) {
+  private fun load(consumer: (GitFileRevision) -> Unit, vararg parameters: String) {
     val logParser = createLogParser(project)
     var startRevision: String? = startingRevision.asString()
     var startPath = path
@@ -74,7 +74,7 @@ class GitFileHistory private constructor(private val project: Project,
   private fun runGitLog(logParser: GitLogParser<GitLogFullRecord>,
                         startPath: FilePath,
                         startRevision: String,
-                        consumer: Consumer<in GitFileRevision>,
+                        consumer: (GitFileRevision) -> Unit,
                         vararg parameters: String): String? {
     val handler = createLogHandler(logParser, startPath, startRevision, *parameters)
     var skipFurtherOutput = false
@@ -86,7 +86,7 @@ class GitFileHistory private constructor(private val project: Project,
       }
       val revision = createGitFileRevision(project, root, record, startPath)
       lastCommit = record.hash
-      consumer.consume(revision)
+      consumer(revision)
     }
     Git.getInstance().runCommandWithoutCollectingOutput(handler)
     splitter.reportErrors()
@@ -171,7 +171,7 @@ class GitFileHistory private constructor(private val project: Project,
     private fun loadHistory(project: Project,
                             path: FilePath,
                             startingFrom: VcsRevisionNumber?,
-                            consumer: Consumer<in GitFileRevision>,
+                            consumer: (GitFileRevision) -> Unit,
                             vararg parameters: String) {
       val detectedRoot = GitUtil.getRootForFile(project, path)
       val repositoryRoot = GitLogProvider.getCorrectedVcsRoot(GitRepositoryManager.getInstance(project), detectedRoot, path)
@@ -185,7 +185,7 @@ class GitFileHistory private constructor(private val project: Project,
      * @param project           Context project.
      * @param path              FilePath which history is queried.
      * @param startingFrom      Revision from which to start file history, when null history is started from HEAD revision.
-     * @param consumer          This consumer is notified ([Consumer.consume] when new history records are retrieved.
+     * @param consumer          This consumer is notified ([Consumer.accept]) when new history records are retrieved.
      * @param exceptionConsumer This consumer is notified in case of error while executing git command.
      * @param parameters        Optional parameters which will be added to the git log command just before the path.
      */
@@ -197,10 +197,10 @@ class GitFileHistory private constructor(private val project: Project,
                     exceptionConsumer: Consumer<in VcsException>,
                     vararg parameters: String) {
       try {
-        loadHistory(project, path, startingFrom, consumer, *parameters)
+        loadHistory(project, path, startingFrom, consumer::accept, *parameters)
       }
       catch (e: VcsException) {
-        exceptionConsumer.consume(e)
+        exceptionConsumer.accept(e)
       }
     }
 

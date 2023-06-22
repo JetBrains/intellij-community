@@ -15,7 +15,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -81,7 +80,7 @@ public interface HighlightInfoType {
   /**
    * @see com.intellij.openapi.editor.impl.RangeHighlighterImpl#VISIBLE_IF_FOLDED
    */
-  Set<HighlightInfoType> VISIBLE_IF_FOLDED = ContainerUtil.immutableSet(
+  Set<HighlightInfoType> VISIBLE_IF_FOLDED = Set.of(
     ELEMENT_UNDER_CARET_READ, 
     ELEMENT_UNDER_CARET_WRITE,
     WARNING,

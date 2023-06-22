@@ -6,6 +6,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.jetbrains.annotations.ApiStatus
 import kotlin.time.Duration
 
 /**
@@ -75,7 +76,8 @@ suspend fun <X> SharedFlow<X>.collectLatestUndispatched(action: suspend (value: 
 private object UNINITIALIZED
 
 /**
- * Returns a cold flow, which pairs an original value with a previous value.
+ * Returns a cold flow containing the results of applying the given transform function
+ * to each pair of two adjacent elements in this flow.
  *
  * Example:
  * ```kotlin
@@ -84,27 +86,38 @@ private object UNINITIALIZED
  *   emit(2)
  *   emit(3)
  *   emit(4)
- * }.zipWithPrevious()
+ * }.zipWithNext { a, b ->
+ *   println("($a, $b)")
+ * }.collect()
  * ```
- * produces the following emissions
+ * produces the following output
  * ```
- * (1,2), (2,3), (3,4)
+ * (1,2)
+ * (2,3)
+ * (3,4)
  * ```
  *
- * The returned flow is empty if [this] flow is empty or emits a single element.
+ * The returned flow is empty if [this] flow is empty or emits only a single element.
+ *
+ * See also: [Sequence.zipWithNext]
  */
-fun <X> Flow<X>.zipWithPrevious(): Flow<Pair<X, X>> {
+fun <T, R> Flow<T>.zipWithNext(transform: suspend (a: T, b: T) -> R): Flow<R> {
   return flow {
-    @Suppress("UNCHECKED_CAST")
-    var previous: X = UNINITIALIZED as X
-    collect {
-      if (previous != UNINITIALIZED) {
-        emit(Pair(previous, it))
+    var current: Any? = UNINITIALIZED
+    collect { value ->
+      if (current !== UNINITIALIZED) {
+        @Suppress("UNCHECKED_CAST")
+        emit(transform(current as T, value))
       }
-      previous = it
+      current = value
     }
   }
 }
+
+/**
+ * See: [zipWithNext]
+ */
+fun <T> Flow<T>.zipWithNext(): Flow<Pair<T, T>> = zipWithNext { a, b -> a to b }
 
 /**
  * Returns a cold flow, which emits values of [this] flow in chunks no often than the given [duration][duration].
@@ -127,7 +140,7 @@ fun <X> Flow<X>.zipWithPrevious(): Flow<Pair<X, X>> {
  * [1, 2], [3], [4]
  * ```
  */
-fun <T> Flow<T>.debounceBatch(duration: Duration) = channelFlow {
+fun <T> Flow<T>.debounceBatch(duration: Duration): Flow<List<T>> = channelFlow {
   val mutex = Mutex()
   val buffer = mutableListOf<T>()
   var job: Job? = null
@@ -144,4 +157,18 @@ fun <T> Flow<T>.debounceBatch(duration: Duration) = channelFlow {
       }
     }
   }
+}
+
+
+/**
+ * Returns a state flow started in the given coroutine scope and containing the result of applying
+ * the given [transform] function to the initial value of the original state flow and each its update.
+ */
+@ApiStatus.Experimental
+fun <T, M> StateFlow<T>.mapStateIn(
+  coroutineScope: CoroutineScope,
+  started: SharingStarted = SharingStarted.Eagerly,
+  transform: (value: T) -> M
+): StateFlow<M> {
+  return map(transform).stateIn(coroutineScope, started = started, initialValue = transform(value))
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.reference.SoftReference;
@@ -143,9 +143,8 @@ final class WeakKeyIntValueHashMap<K> implements ObjectIntMap<K> {
         public Entry<K> next() {
           Object2IntMap.Entry<MyReference<K>> entry = tIterator.next();
           return new Entry<K>() {
-            @NotNull
             @Override
-            public K getKey() {
+            public @NotNull K getKey() {
               K v = SoftReference.dereference(entry.getKey());
               //noinspection unchecked
               return v == null ? (K)GCED : v;

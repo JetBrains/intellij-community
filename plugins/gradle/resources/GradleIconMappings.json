@@ -1,8 +1,7 @@
 {
   "icons": {
     "expui": {
-      "gradle.svg":
-      [
+      "gradle.svg": [
         "icons/gradle.svg",
         "icons/gradleFile.svg",
         "icons/toolWindowGradle.svg"

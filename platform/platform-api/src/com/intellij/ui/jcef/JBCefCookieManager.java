@@ -102,15 +102,6 @@ public final class JBCefCookieManager {
   }
 
   /**
-   * @see JBCefCookieManager#getCookies(String, Boolean, Integer)
-   * @deprecated use {@link #getCookies(String, Boolean)}
-   */
-  @Deprecated(forRemoval = true)
-  public @NotNull List<JBCefCookie> getCookies(@NotNull String url) {
-    return getCookies(url, false, null);
-  }
-
-  /**
    * WARNING: The method can lead to a freeze when called from a browser callback.
    * <p>
    * Gets cookies. Underlying native method is asynchronous.
@@ -342,34 +333,13 @@ public final class JBCefCookieManager {
   }
 
   /**
-   * Deletes all host and domain cookies matching |url| and |cookieName| values.
-   *
-   * @param doSync if {@code false}, underlying asynchronous native method {@link CefCookieManager#deleteCookies(String, String)} is used,
-   *               {@code true} - synchronous {@link JBCefCookieManager#deleteCookies(String, String, IntFunction, Integer)}.
-   *
-   * @deprecated use {@link #deleteCookies(String, String)}
-   */
-  @Deprecated(forRemoval = true)
-  public boolean deleteCookies(@Nullable String url,
-                               @Nullable String cookieName,
-                               boolean doSync)
-  {
-    if (doSync) {
-      return deleteCookies(url, cookieName, null);
-    }
-    else {
-      return myCefCookieManager.deleteCookies(url, cookieName);
-    }
-  }
-
-  /**
    * Deletes synchronously all host and domain cookies matching |url| and |cookieName| values with specified timeout.
    *
    * @see JBCefCookieManager#deleteCookies(String, String, IntFunction, Integer)
    *
    * @deprecated use {@link #deleteCookies(String, String)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean deleteCookies(@Nullable String url,
                                @Nullable String cookieName,
                                @Nullable Integer maxTimeToWait)

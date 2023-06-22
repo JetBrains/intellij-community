@@ -11,6 +11,7 @@ interface StepFactory {
 
   fun setupCompletionStep(): EvaluationStep
   fun setupStatsCollectorStep(): EvaluationStep?
+  fun setupFullLineStep(): EvaluationStep
   fun setupSdkStep(): EvaluationStep?
   fun checkSdkConfiguredStep(): EvaluationStep
 }

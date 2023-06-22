@@ -159,7 +159,7 @@ public class SameReturnValueInspection extends GlobalJavaBatchInspectionTool {
               if (node.getJumpTarget() == method) {
                 UExpression returnExpression = node.getReturnExpression();
                 if (returnExpression != null) {
-                  StreamEx.of(UastUtils.nonStructuralChildren(returnExpression)).forEach(returnExpressions::add);
+                  StreamEx.of(UastUtils.nonStructuralChildren(returnExpression)).into(returnExpressions);
                 }
               }
               return super.visitReturnExpression(node);

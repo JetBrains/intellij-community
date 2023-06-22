@@ -126,7 +126,7 @@ public class DefinitionReference extends PsiReferenceBase.Poly<XmlAttributeValue
   }
 
   @Override
-  public LocalQuickFix[] getQuickFixes() {
+  public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
     final XmlTag tag = PsiTreeUtil.getParentOfType(getElement(), XmlTag.class);
     assert tag != null;
     final RngGrammar scope = myValue.getParentOfType(RngGrammar.class, true);

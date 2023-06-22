@@ -70,6 +70,14 @@ final class ServiceViewNavBarPanel extends NavBarPanel {
     hideHint(true);
   }
 
+  @Override
+  public @Nullable Object getData(@NotNull String dataId) {
+    if (NAV_BAR_ACTION_HANDLER.is(dataId)) {
+      return this;
+    }
+    return super.getData(dataId);
+  }
+
   void hidePopup() {
     hideHint(false);
   }

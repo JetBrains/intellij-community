@@ -1,11 +1,11 @@
 package com.intellij.codeInspection.tests.java.test.junit
 
-import com.intellij.codeInspection.tests.ULanguage
+import com.intellij.codeInspection.tests.JvmLanguage
 import com.intellij.codeInspection.tests.test.junit.JUnit5AssertionsConverterInspectionTestBase
 
 class JavaJUnit5AssertionsConverterInspectionTest : JUnit5AssertionsConverterInspectionTestBase() {
   fun `test AssertArrayEquals`() {
-    myFixture.testQuickFix(ULanguage.JAVA, """
+    myFixture.testQuickFix(JvmLanguage.JAVA, """
       import static org.junit.Assert.*;
 
       import org.junit.jupiter.api.Test;
@@ -32,7 +32,7 @@ class JavaJUnit5AssertionsConverterInspectionTest : JUnit5AssertionsConverterIns
   }
 
   fun `test AssertArrayEquals message`() {
-    myFixture.testQuickFix(ULanguage.JAVA, """
+    myFixture.testQuickFix(JvmLanguage.JAVA, """
       import static org.junit.Assert.*;
 
       import org.junit.jupiter.api.Test;
@@ -59,7 +59,7 @@ class JavaJUnit5AssertionsConverterInspectionTest : JUnit5AssertionsConverterIns
   }
 
   fun `test AssertEquals`() {
-    myFixture.testQuickFix(ULanguage.JAVA, """
+    myFixture.testQuickFix(JvmLanguage.JAVA, """
       import static org.junit.Assert.*;
 
       import org.junit.jupiter.api.Test;
@@ -86,7 +86,7 @@ class JavaJUnit5AssertionsConverterInspectionTest : JUnit5AssertionsConverterIns
   }
 
   fun `test AssertNotEqualsWithDelta`() {
-    myFixture.testQuickFixUnavailable(ULanguage.JAVA, """
+    myFixture.testQuickFixUnavailable(JvmLanguage.JAVA, """
       import static org.junit.Assert.*;
 
       import org.junit.jupiter.api.Test;
@@ -101,7 +101,7 @@ class JavaJUnit5AssertionsConverterInspectionTest : JUnit5AssertionsConverterIns
   }
 
   fun `test AssertThat`() {
-    myFixture.testQuickFix(ULanguage.JAVA, """
+    myFixture.testQuickFix(JvmLanguage.JAVA, """
       import static org.junit.Assert.*;
 
       import org.hamcrest.Matcher;
@@ -130,7 +130,7 @@ class JavaJUnit5AssertionsConverterInspectionTest : JUnit5AssertionsConverterIns
   }
 
   fun `test AssertTrue`() {
-    myFixture.testQuickFix(ULanguage.JAVA, """
+    myFixture.testQuickFix(JvmLanguage.JAVA, """
       import static org.junit.Assert.*;
 
       import org.junit.jupiter.api.Test;
@@ -157,7 +157,7 @@ class JavaJUnit5AssertionsConverterInspectionTest : JUnit5AssertionsConverterIns
   }
 
   fun `test AssertTrue method reference`() {
-    myFixture.testQuickFix(ULanguage.JAVA, """
+    myFixture.testQuickFix(JvmLanguage.JAVA, """
       import org.junit.Assert;
       import org.junit.jupiter.api.Test;
       
@@ -190,7 +190,7 @@ class JavaJUnit5AssertionsConverterInspectionTest : JUnit5AssertionsConverterIns
   }
 
   fun `test AssumeTrue`() {
-    myFixture.testQuickFix(ULanguage.JAVA, """
+    myFixture.testQuickFix(JvmLanguage.JAVA, """
       import static org.junit.Assume.*;
 
       import org.junit.jupiter.api.Test;

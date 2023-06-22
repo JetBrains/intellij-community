@@ -4,7 +4,6 @@ package com.intellij.vcs.log.data;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
 import com.intellij.vcs.log.VcsRef;
@@ -15,7 +14,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class CompressedRefs {
+public final class CompressedRefs {
   private static final Logger LOG = Logger.getInstance(CompressedRefs.class);
 
   private final @NotNull VcsLogStorage myStorage;
@@ -27,12 +26,10 @@ public class CompressedRefs {
 
   public CompressedRefs(@NotNull Set<VcsRef> refs, @NotNull VcsLogStorage storage) {
     myStorage = storage;
-
-    Ref<VirtualFile> root = new Ref<>();
-
-    refs.forEach(ref -> {
-      assert root.get() == null || root.get().equals(ref.getRoot()) : "All references are supposed to be from the single root";
-      root.set(ref.getRoot());
+    VirtualFile root = null;
+    for (VcsRef ref : refs) {
+      assert root == null || root.equals(ref.getRoot()) : "All references are supposed to be from the single root";
+      root = ref.getRoot();
 
       int index = myStorage.getCommitIndex(ref.getCommitHash(), ref.getRoot());
       if (ref.getType().isBranch()) {
@@ -44,12 +41,11 @@ public class CompressedRefs {
           myTags.computeIfAbsent(index, key -> new IntArrayList()).add(refIndex);
         }
       }
-    });
+    }
     //noinspection SSBasedInspection
-    myTags.values().forEach(list -> {
+    for (IntArrayList list : myTags.values()) {
       list.trim();
-    });
-    myStorage.flush();
+    }
   }
 
   boolean contains(int index) {

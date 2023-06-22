@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import org.jetbrains.annotations.Contract;
@@ -14,9 +14,8 @@ import java.util.*;
  * @param <E> the list element type
  */
 public abstract class ImmutableList<E> extends AbstractCollection<E> implements List<E> {
-  @NotNull
   @Override
-  public Iterator<E> iterator() {
+  public @NotNull Iterator<E> iterator() {
     return new Itr();
   }
 
@@ -80,21 +79,18 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
     return -1;
   }
 
-  @NotNull
   @Override
-  public ListIterator<E> listIterator() {
+  public @NotNull ListIterator<E> listIterator() {
     return listIterator(0);
   }
 
-  @NotNull
   @Override
-  public ListIterator<E> listIterator(int index) {
+  public @NotNull ListIterator<E> listIterator(int index) {
     return new ListItr(index);
   }
 
-  @NotNull
   @Override
-  public ImmutableList<E> subList(int fromIndex, int toIndex) {
+  public @NotNull ImmutableList<E> subList(int fromIndex, int toIndex) {
     // optimization: do not excessively nest SubLists one into the other
     if (this instanceof SubList) {
       List<? extends E> original = ((SubList<? extends E>)this).l;
@@ -255,9 +251,8 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
   /**
    * @see ContainerUtil#immutableSingletonList(Object) for explanation
    */
-  @NotNull
   @Contract("_ -> new")
-  static <T> ImmutableList<T> singleton(T element) {
+  static @NotNull <T> ImmutableList<T> singleton(T element) {
     return new Singleton<>(element);
   }
   private static class Singleton<E> extends ImmutableList<E> {

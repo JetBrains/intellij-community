@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit2.properties
 
-import com.intellij.codeInsight.JavaLibraryModificationTracker
+import com.intellij.java.library.JavaLibraryModificationTracker
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiAnchor

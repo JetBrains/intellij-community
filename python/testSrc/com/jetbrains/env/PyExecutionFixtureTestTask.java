@@ -4,6 +4,9 @@ package com.jetbrains.env;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.util.projectWizard.EmptyModuleBuilder;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ActionsKt;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -13,6 +16,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,6 +28,7 @@ import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.fixtures.impl.ModuleFixtureBuilderImpl;
 import com.intellij.testFramework.fixtures.impl.ModuleFixtureImpl;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.extensions.ModuleExtKt;
 import com.jetbrains.python.PyNames;
@@ -45,6 +50,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -297,7 +304,25 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
 
     final VirtualFile sdkHomeFile = LocalFileSystem.getInstance().findFileByPath(sdkHome);
     Assert.assertNotNull("Interpreter file not found: " + sdkHome, sdkHomeFile);
-    final Sdk sdk = PySdkTools.createTempSdk(sdkHomeFile, sdkCreationType, myFixture.getModule(), myFixture.getTestRootDisposable());
+    CompletableFuture<Sdk> sdkRef = new CompletableFuture<>();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      try {
+        sdkRef.complete(PySdkTools.createTempSdk(sdkHomeFile, sdkCreationType, myFixture.getModule(), myFixture.getTestRootDisposable()));
+      }
+      catch (InvalidSdkException e) {
+        sdkRef.completeExceptionally(e);
+      }
+    });
+    Sdk sdk;
+    try {
+      sdk = sdkRef.join();
+    }
+    catch (CompletionException err) {
+      if (err.getCause() instanceof InvalidSdkException cause) throw cause;
+      if (err.getCause() instanceof Error cause) throw cause;
+      if (err.getCause() instanceof RuntimeException cause) throw cause;
+      throw err;
+    }
     // We use gradle script to create environment. This script utilizes Conda.
     // Conda supports 2 types of package installation: conda native and pip. We use pip.
     // PyCharm Conda support ignores packages installed via pip ("conda list -e" does it, see PyCondaPackageManagerImpl)

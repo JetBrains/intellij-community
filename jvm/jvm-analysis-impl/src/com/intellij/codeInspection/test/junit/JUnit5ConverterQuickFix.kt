@@ -19,7 +19,6 @@ import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.ArrayUtil
 import com.intellij.util.Processor
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.uast.*
 
@@ -57,7 +56,7 @@ class JUnit5ConverterQuickFix : LocalQuickFix, BatchQuickFix {
     : MigrationProcessor(
     project,
     migrationMap,
-    GlobalSearchScope.filesWithoutLibrariesScope(project, ContainerUtil.map(files) { it.sourcePsi.virtualFile })
+    GlobalSearchScope.filesWithoutLibrariesScope(project, files.map { it.sourcePsi.virtualFile })
   ) {
     private class DescriptionBasedUsageInfo(val descriptor: ProblemDescriptor) : UsageInfo(descriptor.psiElement)
 

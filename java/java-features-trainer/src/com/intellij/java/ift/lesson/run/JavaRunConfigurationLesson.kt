@@ -3,6 +3,7 @@ package com.intellij.java.ift.lesson.run
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.application.ApplicationConfiguration
 import com.intellij.icons.AllIcons
 import com.intellij.java.ift.JavaLessonsBundle
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -13,8 +14,20 @@ import training.learn.lesson.general.run.CommonRunConfigurationLesson
 import java.awt.Rectangle
 
 class JavaRunConfigurationLesson : CommonRunConfigurationLesson("java.run.configuration") {
-  override val sample: LessonSample = JavaRunLessonsUtils.demoSample
-  override val demoConfigurationName: String = JavaRunLessonsUtils.demoClassName
+  private val demoClassName = "Sample"
+
+  override val sample: LessonSample = parseLessonSample("""
+    public class $demoClassName {
+        public static void main(String[] args) {
+            System.out.println("It is a run configurations sample");
+            for (String arg: args) {
+                System.out.println("Passed argument: " + arg);
+            }
+        }
+    }
+  """.trimIndent())
+
+  override val demoConfigurationName: String = demoClassName
 
   override fun LessonContext.runTask() {
     task {
@@ -23,8 +36,10 @@ class JavaRunConfigurationLesson : CommonRunConfigurationLesson("java.run.config
     }
 
     task("RunClass") {
-      text(JavaLessonsBundle.message("java.run.configuration.lets.run", icon(AllIcons.Actions.Execute), action(it),
-                                     strong(ExecutionBundle.message("default.runner.start.action.text").dropMnemonic())))
+      text(JavaLessonsBundle.message("java.run.configuration.lets.run",
+                                     icon(AllIcons.RunConfigurations.TestState.Run),
+                                     strong(ExecutionBundle.message("default.runner.start.action.text").dropMnemonic()),
+                                     action(it)))
       timerCheck { configurations().isNotEmpty() }
       //Wait toolwindow
       checkToolWindowState("Run", true)
@@ -34,7 +49,16 @@ class JavaRunConfigurationLesson : CommonRunConfigurationLesson("java.run.config
     }
   }
 
-  override val sampleFilePath: String = "src/${JavaRunLessonsUtils.demoClassName}.java"
+  override fun LessonContext.addAnotherRunConfiguration() {
+    prepareRuntimeTask {
+      addNewRunConfigurationFromContext { runConfiguration ->
+        runConfiguration.name = demoWithParametersName
+        (runConfiguration as ApplicationConfiguration).programParameters = "hello world"
+      }
+    }
+  }
+
+  override val sampleFilePath: String = "src/${demoClassName}.java"
 }
 
 internal fun TaskContext.highlightRunGutters(highlightInside: Boolean = false, usePulsation: Boolean = false) {
@@ -44,10 +68,8 @@ internal fun TaskContext.highlightRunGutters(highlightInside: Boolean = false, u
   }.componentPart l@{ ui: EditorGutterComponentEx ->
     if (CommonDataKeys.EDITOR.getData(ui as DataProvider) != editor) return@l null
     val runGutterLines = (0 until editor.document.lineCount).mapNotNull { lineInd ->
-      val gutter = ui.getGutterRenderers(lineInd).singleOrNull() ?: return@mapNotNull null
-      if ((gutter as? LineMarkerInfo.LineMarkerGutterIconRenderer<*>)?.featureId == "run") {
+      if (ui.getGutterRenderers(lineInd).any { (it as? LineMarkerInfo.LineMarkerGutterIconRenderer<*>)?.featureId == "run" })
         lineInd
-      }
       else null
     }
     if (runGutterLines.size < 2) return@l null

@@ -1,4 +1,4 @@
-// "Replace with 'Factory()'" "true"
+// "Replace with 'Factory<T>()'" "true"
 // WITH_STDLIB
 
 class Foo<T> @Deprecated("", ReplaceWith("Factory<T>()")) constructor()

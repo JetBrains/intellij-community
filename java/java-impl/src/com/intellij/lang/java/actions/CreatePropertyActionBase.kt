@@ -49,7 +49,7 @@ internal abstract class CreatePropertyActionBase(
 
   internal fun getPropertyName() : String? = doGetPropertyInfo()?.first
 
-  override fun getRenderData() = JvmActionGroup.RenderData { propertyInfo.first }
+  override fun getRenderData(): JvmActionGroup.RenderData = JvmActionGroup.RenderData { propertyInfo.first }
 
   override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
     val copyClass = PsiTreeUtil.findSameElementInCopy(target, file)

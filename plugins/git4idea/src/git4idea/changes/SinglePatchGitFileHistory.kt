@@ -5,6 +5,10 @@ import com.intellij.openapi.diff.impl.patch.TextFilePatch
 
 class SinglePatchGitFileHistory(private val patch: TextFilePatch) : GitFileHistory {
 
+  override fun findStartCommit(): String? = patch.beforeVersionId
+
+  override fun findFirstParent(commitSha: String): String? = null
+
   override fun contains(commitSha: String, filePath: String): Boolean {
     return patch.filePath == filePath
   }
@@ -29,9 +33,7 @@ class SinglePatchGitFileHistory(private val patch: TextFilePatch) : GitFileHisto
     return -2*/
   }
 
-  override fun getPatches(parent: String, child: String, includeFirstKnownPatch: Boolean, includeLastPatch: Boolean): List<TextFilePatch> {
-    TODO("Not supported for now")
-  }
+  override fun getPatchesBetween(parent: String, child: String): List<TextFilePatch> = emptyList()
 
   companion object {
     private val TextFilePatch.filePath

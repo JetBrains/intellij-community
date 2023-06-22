@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.AbstractBundle;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ResourceBundle;
 
-public final class IntentionActionBean extends CustomLoadingExtensionPointBean<IntentionAction> {
+public final class IntentionActionBean extends CustomLoadingExtensionPointBean<CommonIntentionAction> {
   @Tag
   @RequiredElement
   public String className;
@@ -29,6 +29,13 @@ public final class IntentionActionBean extends CustomLoadingExtensionPointBean<I
 
   @Tag
   public String descriptionDirectoryName;
+
+  /**
+   * Should be set to true only for intention actions that do not modify code and can't provide meaningful
+   * before/after examples.
+   */
+  @Tag
+  public boolean skipBeforeAfter;
 
   @Override
   protected @Nullable String getImplementationClassName() {

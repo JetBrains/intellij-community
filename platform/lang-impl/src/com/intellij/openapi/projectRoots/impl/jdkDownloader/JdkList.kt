@@ -102,9 +102,9 @@ data class JdkItem(
     saveToFile(file)
   }
 
-  override fun toString() = "JdkItem($fullPresentationText, $url)"
+  override fun toString(): String = "JdkItem($fullPresentationText, $url)"
 
-  override fun hashCode() = sha256.hashCode()
+  override fun hashCode(): Int = sha256.hashCode()
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
@@ -155,13 +155,13 @@ data class JdkItem(
   /**
    * Returns versionString for the Java Sdk object in specific format
    */
-  val versionString
+  val versionString: String
     get() = JavaVersion.tryParse(jdkVersion)?.let(JdkVersionDetector::formatVersionString) ?: jdkVersion
 
-  val presentableVersionString
+  val presentableVersionString: String
     get() = JavaVersion.tryParse(jdkVersion)?.toFeatureMinorUpdateString() ?: jdkVersion
 
-  val presentableMajorVersionString
+  val presentableMajorVersionString: String
     get() = JavaVersion.tryParse(jdkVersion)?.toFeatureString() ?: jdkMajorVersion.toString()
 
   val versionPresentationText: String
@@ -206,22 +206,22 @@ data class JdkPlatform(
 )
 
 data class JdkPredicate(
-  private val ideBuildNumber: BuildNumber,
+  private val ideBuildNumber: BuildNumber?,
   private val supportedPlatforms: Set<JdkPlatform>,
 ) {
 
   companion object {
-    fun none() = JdkPredicate(ApplicationInfoImpl.getShadowInstance().build, emptySet())
+    fun none(): JdkPredicate = JdkPredicate(null, emptySet())
 
-    fun default() = createInstance(forWsl = false)
-    fun forWSL() = createInstance(forWsl = true)
+    fun default(): JdkPredicate = createInstance(forWsl = false)
+    fun forWSL(buildNumber: BuildNumber? = ApplicationInfoImpl.getShadowInstance().build): JdkPredicate = createInstance(forWsl = true, buildNumber)
 
     /**
      * Selects only JDKs that are for the same OS and CPU arch as the current Java process.
      */
-    fun forCurrentProcess() = JdkPredicate(ApplicationInfoImpl.getShadowInstance().build, setOf(JdkPlatform(currentOS, currentArch)))
+    fun forCurrentProcess(): JdkPredicate = JdkPredicate(null, setOf(JdkPlatform(currentOS, currentArch)))
 
-    private fun createInstance(forWsl: Boolean = false): JdkPredicate {
+    private fun createInstance(forWsl: Boolean = false, buildNumber: BuildNumber? = ApplicationInfoImpl.getShadowInstance().build): JdkPredicate {
       val x86_64 = "x86_64"
       val defaultPlatform = JdkPlatform(currentOS, x86_64)
       val platforms = when {
@@ -233,17 +233,17 @@ data class JdkPredicate(
         else -> listOf(defaultPlatform)
       }
 
-      return JdkPredicate(ApplicationInfoImpl.getShadowInstance().build, platforms.toSet())
+      return JdkPredicate(buildNumber, platforms.toSet())
     }
 
-    val currentOS = when {
+    val currentOS: String = when {
       SystemInfo.isWindows -> "windows"
       SystemInfo.isMac -> "macOS"
       SystemInfo.isLinux -> "linux"
       else -> error("Unsupported OS")
     }
 
-    val currentArch = when {
+    val currentArch: String = when {
       CpuArch.isArm64() -> "aarch64"
       else -> "x86_64"
     }
@@ -306,7 +306,7 @@ data class JdkPredicate(
       return filter["value"]?.asBoolean()
     }
 
-    if (type == "build_number_range") {
+    if (type == "build_number_range" && ideBuildNumber != null) {
       val fromBuild = filter["since"]?.asText()
       val untilBuild = filter["until"]?.asText()
 
@@ -350,7 +350,7 @@ data class JdkPredicate(
 }
 
 object JdkListParser {
-  fun readTree(rawData: ByteArray) = ObjectMapper().readTree(rawData) as? ObjectNode ?: error("Unexpected JSON data")
+  fun readTree(rawData: ByteArray): ObjectNode = ObjectMapper().readTree(rawData) as? ObjectNode ?: error("Unexpected JSON data")
 
   fun parseJdkList(tree: ObjectNode, filters: JdkPredicate): List<JdkItem> {
     val items = tree["jdks"] as? ArrayNode ?: error("`jdks` element is missing")
@@ -410,7 +410,7 @@ object JdkListParser {
 class JdkListDownloader : JdkListDownloaderBase() {
   companion object {
     @JvmStatic
-    fun getInstance() = service<JdkListDownloader>()
+    fun getInstance(): JdkListDownloader = service<JdkListDownloader>()
   }
 
   override val feedUrl: String

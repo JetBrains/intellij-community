@@ -6,5 +6,6 @@ import java.util.function.Supplier;
 /**
  * Please use {@link Supplier} instead
  */
+@FunctionalInterface
 public interface Getter<A> extends Supplier<A> {
 }

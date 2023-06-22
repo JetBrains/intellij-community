@@ -10,12 +10,12 @@ import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.configurationStore.SchemeDataHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectType;
 import com.intellij.openapi.project.ProjectTypeService;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.Strings;
@@ -422,12 +422,13 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     initInspectionTools();
 
     List<Tools> result = new ArrayList<>();
-    Collection<ProjectType> projectTypes = ProjectTypeService.getProjectTypes(project);
+    Set<String> projectTypes = ProjectTypeService.getProjectTypeIds(project);
+    boolean isTests = ApplicationManager.getApplication().isUnitTestMode();
 
     for (ToolsImpl toolList : myTools.values()) {
       if (toolList.isEnabled()) {
         InspectionToolWrapper<?, ?> toolWrapper = toolList.getTool();
-        if (!toolWrapper.isApplicable(projectTypes)) {
+        if (!isTests && !toolWrapper.isApplicable(projectTypes)) {
           continue;
         }
 

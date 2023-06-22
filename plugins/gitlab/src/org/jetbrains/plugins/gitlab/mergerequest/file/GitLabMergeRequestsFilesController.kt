@@ -5,6 +5,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -37,7 +38,7 @@ class GitLabMergeRequestsFilesControllerImpl(
     val fs = GitLabVirtualFileSystem.getInstance()
     val path = fs.getPath(connection.id, project, connection.repo.repository, mr, true)
     val file = fs.refreshAndFindFileByPath(path) ?: return
-    FileEditorManager.getInstance(project).openFile(file, focus)
+    VcsEditorTabFilesManager.getInstance().openFile(project, file, focus)
   }
 
   override suspend fun closeAllFiles() {

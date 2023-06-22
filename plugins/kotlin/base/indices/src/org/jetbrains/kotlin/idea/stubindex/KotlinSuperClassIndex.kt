@@ -3,21 +3,26 @@ package org.jetbrains.kotlin.idea.stubindex
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.stubs.StubIndex
+import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
-object KotlinSuperClassIndex : KotlinStringStubIndexExtension<KtClassOrObject>(KtClassOrObject::class.java) {
-    private val KEY: StubIndexKey<String, KtClassOrObject> =
-        StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinSuperClassIndex")
+class KotlinSuperClassIndex internal constructor() : StringStubIndexExtension<KtClassOrObject>() {
+    companion object Helper : KotlinStringStubIndexHelper<KtClassOrObject>(KtClassOrObject::class.java) {
+        @JvmStatic
+        @Suppress("DeprecatedCallableAddReplaceWith")
+        @Deprecated("Use the Helper object instead", level = DeprecationLevel.ERROR)
+        fun getInstance(): KotlinSuperClassIndex {
+            return KotlinSuperClassIndex()
+        }
 
-    override fun getKey(): StubIndexKey<String, KtClassOrObject> = KEY
-
-    override fun get(s: String, project: Project, scope: GlobalSearchScope): Collection<KtClassOrObject> {
-        return StubIndex.getElements(KEY, s, project, scope, KtClassOrObject::class.java)
+        override val indexKey: StubIndexKey<String, KtClassOrObject> =
+            StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinSuperClassIndex")
     }
 
-    @JvmStatic
-    @Deprecated("Use KotlinSuperClassIndex as an object.", ReplaceWith("KotlinSuperClassIndex"))
-    fun getInstance(): KotlinSuperClassIndex = KotlinSuperClassIndex
+    override fun getKey(): StubIndexKey<String, KtClassOrObject> = indexKey
+
+    override fun get(key: String, project: Project, scope: GlobalSearchScope): Collection<KtClassOrObject> {
+        return Helper[key, project, scope]
+    }
 }

@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsLogFilterCollection;
@@ -40,7 +41,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.vcs.log.impl.CustomVcsLogUiFactoryProvider.LOG_CUSTOM_UI_FACTORY_PROVIDER_EP;
 
-public final class VcsLogManager implements Disposable {
+public class VcsLogManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogManager.class);
 
   private final @NotNull Project myProject;
@@ -48,7 +49,7 @@ public final class VcsLogManager implements Disposable {
   private final @Nullable PairConsumer<? super VcsLogErrorHandler.Source, ? super Throwable> myRecreateMainLogHandler;
 
   private final @NotNull VcsLogData myLogData;
-  private final @NotNull VcsLogColorManagerImpl myColorManager;
+  private final @NotNull VcsLogColorManager myColorManager;
   private @Nullable VcsLogTabsWatcher myTabsLogRefresher;
   private final @NotNull PostponableLogRefresher myPostponableRefresher;
   private final @NotNull VcsLogStatusBarProgress myStatusBarProgress;
@@ -72,7 +73,7 @@ public final class VcsLogManager implements Disposable {
 
     refreshLogOnVcsEvents(logProviders, myPostponableRefresher, myLogData);
 
-    myColorManager = new VcsLogColorManagerImpl(logProviders.keySet());
+    myColorManager = VcsLogColorManagerFactory.create(logProviders.keySet());
     myStatusBarProgress = new VcsLogStatusBarProgress(myProject, logProviders, myLogData.getProgress());
 
     if (scheduleRefreshImmediately) {
@@ -115,7 +116,7 @@ public final class VcsLogManager implements Disposable {
     return myLogData;
   }
 
-  public @NotNull VcsLogColorManagerImpl getColorManager() {
+  public @NotNull VcsLogColorManager getColorManager() {
     return myColorManager;
   }
 
@@ -252,6 +253,7 @@ public final class VcsLogManager implements Disposable {
   }
 
   @Override
+  @RequiresBackgroundThread
   public void dispose() {
     // since disposing log triggers flushing indexes on disk we do not want to do it in EDT
     // disposing of VcsLogManager is done by manually executing dispose(@Nullable Runnable callback)
@@ -276,7 +278,7 @@ public final class VcsLogManager implements Disposable {
           ApplicationManager.getApplication().invokeLater(() -> myRecreateMainLogHandler.consume(source, throwable));
         }
         else {
-          LOG.error(throwable);
+          LOG.error(source != null ? "Vcs Log exception from " + source : throwable.getMessage(), throwable);
         }
 
         if (source == Source.Storage) {

@@ -33,14 +33,6 @@ public final class TextChunk {
     myText = text;
   }
 
-  /**
-   * @deprecated use {@link #TextChunk(TextAttributes, String)}
-   */
-  @Deprecated(forRemoval = true)
-  public TextChunk(@NotNull TextAttributes attributes, @NotNull String text, @Nullable UsageType type) {
-    this(attributes, text);
-  }
-
   @NotNull
   public TextAttributes getAttributes() {
     return TextAttributes.fromFlyweight(myAttributes);

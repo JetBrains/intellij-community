@@ -240,7 +240,7 @@ public final class ArtifactsStructureConfigurable extends BaseStructureConfigura
   }
 
   @Override
-  protected AbstractAddGroup createAddAction() {
+  protected AbstractAddGroup createAddAction(boolean fromPopup) {
     return new AbstractAddGroup(JavaUiBundle.message("add.new.header.text")) {
       @Override
       public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {

@@ -10,7 +10,6 @@ import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileSystemItemFilter;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -351,12 +350,9 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
           return true;
         }
       };
-
-      return AbstractTreeUi.calculateYieldingToWriteAction(() -> {
-        if (directory == null || !directory.isValid()) return Collections.emptyList();
-        directory.processChildren(processor);
-        return result;
-      });
+      if (directory == null || !directory.isValid()) return Collections.emptyList();
+      directory.processChildren(processor);
+      return result;
     }
   }
 }

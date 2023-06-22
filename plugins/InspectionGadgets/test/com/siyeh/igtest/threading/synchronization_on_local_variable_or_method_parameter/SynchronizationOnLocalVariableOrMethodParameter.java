@@ -102,4 +102,45 @@ class SynchronizationOnLocalVariableOrMethodParameter {
       System.out.println("field2");
     }
   }
+
+  private static final Object objectForAssignTest = new Object();
+
+  public static void simpleAssignTest() {
+    Object field = getField();
+    synchronized (field) {
+
+    }
+
+    Object newObject = newObject();
+    synchronized (<warning descr="Synchronization on local variable 'newObject'">newObject</warning>) {
+
+    }
+  }
+
+  public static void doubleAssign() {
+    Object field = getField();
+    field = objectForAssignTest;
+    synchronized (field) {
+
+    }
+
+    Object newObject = getField();
+    newObject = newObject();
+    synchronized (<warning descr="Synchronization on local variable 'newObject'">newObject</warning>) {
+
+    }
+    Integer i;
+    i = 1 + 1;
+    synchronized (<warning descr="Synchronization on local variable 'i'">i</warning>) {
+
+    }
+  }
+
+  private static Object getField() {
+    return objectForAssignTest;
+  }
+
+  private static Object newObject() {
+    return new Object();
+  }
 }

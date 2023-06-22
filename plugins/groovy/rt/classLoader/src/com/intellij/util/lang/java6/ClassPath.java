@@ -28,15 +28,15 @@ public final class ClassPath {
   private static final Set<String> loadedClassNames;
   private static final AtomicLong ourTotalTime = new AtomicLong();
   private static final AtomicInteger ourTotalRequests = new AtomicInteger();
-  private static final ThreadLocal<Boolean> doingTiming = new ThreadLocal<Boolean>();
+  private static final ThreadLocal<Boolean> doingTiming = new ThreadLocal<>();
 
-  private final List<URL> myUrls = new ArrayList<URL>();
-  private final List<Loader> myLoaders = new ArrayList<Loader>();
+  private final List<URL> myUrls = new ArrayList<>();
+  private final List<Loader> myLoaders = new ArrayList<>();
 
   private volatile boolean myAllUrlsWereProcessed;
 
   private final AtomicInteger myLastLoaderProcessed = new AtomicInteger();
-  private final Map<URL, Loader> myLoadersMap = new HashMap<URL, Loader>();
+  private final Map<URL, Loader> myLoadersMap = new HashMap<>();
   private final ClasspathCache myCache = new ClasspathCache();
   private final Set<URL> myURLsWithProtectionDomain;
 
@@ -194,7 +194,7 @@ public final class ClassPath {
 
   @NotNull
   public List<URL> getBaseUrls() {
-    List<URL> result = new ArrayList<URL>();
+    List<URL> result = new ArrayList<>();
     for (Loader loader : myLoaders) {
       result.add(loader.getBaseURL());
     }
@@ -241,7 +241,7 @@ public final class ClassPath {
       String[] referencedJars = loadManifestClasspath(loader);
       if (referencedJars != null) {
         long s2 = recordLoadingInfo ? System.nanoTime() : 0;
-        List<URL> urls = new ArrayList<URL>(referencedJars.length);
+        List<URL> urls = new ArrayList<>(referencedJars.length);
         for (String referencedJar : referencedJars) {
           try {
             urls.add(new URI(referencedJar).toURL());
@@ -309,7 +309,7 @@ public final class ClassPath {
       List<Loader> loaders = null;
 
       if (myCanUseCache && myAllUrlsWereProcessed) {
-        Collection<Loader> loadersSet = new LinkedHashSet<Loader>();
+        Collection<Loader> loadersSet = new LinkedHashSet<>();
         myCache.iterateLoaders(name, ourLoaderCollector, loadersSet, this, myShortName);
 
         if (name.endsWith("/")) {
@@ -319,7 +319,7 @@ public final class ClassPath {
           myCache.iterateLoaders(name + "/", ourLoaderCollector, loadersSet, this, myShortName);
         }
 
-        loaders = new ArrayList<Loader>(loadersSet);
+        loaders = new ArrayList<>(loadersSet);
       }
 
       myLoaders = loaders;

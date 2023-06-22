@@ -261,6 +261,7 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
     }
 
     showBrowserHover = !"false".equals(element.getAttributeValue("showHover"));
+    showBrowserHoverXml = "true".equals(element.getAttributeValue("showHoverXml"));
 
     List<ConfigurableWebBrowser> list = new ArrayList<>();
     for (Element child : element.getChildren("browser")) {

@@ -2,7 +2,6 @@
 package org.jetbrains.jps.devkit.threadingModelHelper;
 
 import com.intellij.compiler.instrumentation.FailSafeMethodVisitor;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.org.objectweb.asm.*;
 
 import java.util.HashMap;
@@ -29,7 +28,7 @@ public final class TMHInstrumenter {
   }
 
   public static boolean instrument(ClassReader classReader, ClassVisitor classWriter, boolean generateLineNumbers) {
-    return instrument(classReader, classWriter, ContainerUtil.immutableSet(
+    return instrument(classReader, classWriter, Set.of(
       new TMHAssertionGenerator.AssertEdt(),
       new TMHAssertionGenerator.AssertBackgroundThread(),
       new TMHAssertionGenerator.AssertReadAccess(),

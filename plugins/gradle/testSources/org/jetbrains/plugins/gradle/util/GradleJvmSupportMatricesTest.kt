@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.util
 
 import org.gradle.util.GradleVersion
-import org.junit.jupiter.api.Assertions.*
 
 class GradleJvmSupportMatricesTest : GradleJvmSupportMatricesTestCase() {
 
@@ -19,10 +18,10 @@ class GradleJvmSupportMatricesTest : GradleJvmSupportMatricesTestCase() {
     assertTrue(isSupported("0.9.2", 8))
     assertTrue(isSupported("3.0", 8))
     assertTrue(isSupported("4.0", 8))
-    assertFalse(isSupported("5.1", 8))
-    assertFalse(isSupported("5.4.1", 8))
-    assertFalse(isSupported("6.0", 8))
-    assertFalse(isSupported("7.1", 8))
+    assertTrue(isSupported("5.1", 8))
+    assertTrue(isSupported("5.4.1", 8))
+    assertTrue(isSupported("6.0", 8))
+    assertTrue(isSupported("7.1", 8))
     assertTrue(isSupported("7.2", 8))
     assertTrue(isSupported("7.5", 8))
 
@@ -47,65 +46,69 @@ class GradleJvmSupportMatricesTest : GradleJvmSupportMatricesTestCase() {
 
   fun `test suggesting gradle version for java version`() {
     val bundledGradleVersion = GradleVersion.current()
-    require(bundledGradleVersion >= GradleVersion.version("7.1"))
-
     assertEquals("4.10.3", suggestGradleVersion(6))
     assertEquals("4.10.3", suggestGradleVersion(7))
     assertEquals(bundledGradleVersion.version, suggestGradleVersion(8))
     assertEquals(bundledGradleVersion.version, suggestGradleVersion(11))
-    assertEquals(bundledGradleVersion.version, suggestGradleVersion(15))
     assertEquals(bundledGradleVersion.version, suggestGradleVersion(17))
-    assertEquals(bundledGradleVersion.version, suggestGradleVersion(18))
-    //assertEquals(bundledGradleVersion.version, suggestGradleVersion(19))
+    assertEquals(bundledGradleVersion.version, suggestGradleVersion(19))
+  }
+
+  fun `test suggesting latest gradle version for java version`() {
+    assertEquals("4.10.3", suggestLatestSupportedGradleVersion(6))
+    assertEquals("4.10.3", suggestLatestSupportedGradleVersion(7))
+    assertEquals("8.1", suggestLatestSupportedGradleVersion(8))
+    assertEquals("8.1", suggestLatestSupportedGradleVersion(11))
+    assertEquals("8.1", suggestLatestSupportedGradleVersion(17))
+    assertEquals("8.1", suggestLatestSupportedGradleVersion(19))
   }
 
   fun `test suggesting java version for gradle version`() {
-    assertEquals(8, suggestJavaVersion("0.9.2"))
-    assertEquals(8, suggestJavaVersion("2.0"))
-    assertEquals(8, suggestJavaVersion("3.0"))
-    assertEquals(9, suggestJavaVersion("4.3"))
-    assertEquals(10, suggestJavaVersion("4.7"))
-    assertEquals(11, suggestJavaVersion("5.0"))
-    assertEquals(11, suggestJavaVersion("5.1"))
-    assertEquals(12, suggestJavaVersion("5.4"))
-    assertEquals(13, suggestJavaVersion("6.0"))
-    assertEquals(14, suggestJavaVersion("6.3"))
-    assertEquals(15, suggestJavaVersion("6.7"))
-    assertEquals(16, suggestJavaVersion("7.1"))
-    assertEquals(17, suggestJavaVersion("7.2"))
-    assertEquals(17, suggestJavaVersion("7.4"))
-    assertEquals(18, suggestJavaVersion("7.5"))
-    assertEquals(18, suggestJavaVersion("7.5.1"))
-    assertEquals(19, suggestJavaVersion("7.6"))
+    assertEquals(8, suggestLatestSupportedJavaVersion("0.9.2"))
+    assertEquals(8, suggestLatestSupportedJavaVersion("2.0"))
+    assertEquals(8, suggestLatestSupportedJavaVersion("3.0"))
+    assertEquals(9, suggestLatestSupportedJavaVersion("4.3"))
+    assertEquals(10, suggestLatestSupportedJavaVersion("4.7"))
+    assertEquals(11, suggestLatestSupportedJavaVersion("5.0"))
+    assertEquals(11, suggestLatestSupportedJavaVersion("5.1"))
+    assertEquals(12, suggestLatestSupportedJavaVersion("5.4"))
+    assertEquals(13, suggestLatestSupportedJavaVersion("6.0"))
+    assertEquals(14, suggestLatestSupportedJavaVersion("6.3"))
+    assertEquals(15, suggestLatestSupportedJavaVersion("6.7"))
+    assertEquals(16, suggestLatestSupportedJavaVersion("7.1"))
+    assertEquals(17, suggestLatestSupportedJavaVersion("7.2"))
+    assertEquals(17, suggestLatestSupportedJavaVersion("7.4"))
+    assertEquals(18, suggestLatestSupportedJavaVersion("7.5"))
+    assertEquals(18, suggestLatestSupportedJavaVersion("7.5.1"))
+    assertEquals(19, suggestLatestSupportedJavaVersion("7.6"))
   }
 
   
   fun `test suggesting oldest compatible gradle version for java version`() {
-    assertEquals("3.0", suggestOldestCompatibleGradleVersion(6))
-    assertEquals("3.0", suggestOldestCompatibleGradleVersion(7))
-    assertEquals("3.0", suggestOldestCompatibleGradleVersion(8))
-    assertEquals("4.3", suggestOldestCompatibleGradleVersion(9))
-    assertEquals("4.7", suggestOldestCompatibleGradleVersion(10))
-    assertEquals("5.0", suggestOldestCompatibleGradleVersion(11))
-    assertEquals("5.4", suggestOldestCompatibleGradleVersion(12))
-    assertEquals("6.0", suggestOldestCompatibleGradleVersion(13))
-    assertEquals("6.3", suggestOldestCompatibleGradleVersion(14))
-    assertEquals("6.7", suggestOldestCompatibleGradleVersion(15))
-    assertEquals("7.0", suggestOldestCompatibleGradleVersion(16))
-    assertEquals("7.2", suggestOldestCompatibleGradleVersion(17))
-    assertEquals("7.5", suggestOldestCompatibleGradleVersion(18))
-    //assertEquals("7.6", suggestOldestCompatibleGradleVersion(19))
-    //assertEquals("7.6", suggestOldestCompatibleGradleVersion(24))
+    assertEquals("3.0", suggestOldestSupportedGradleVersion(6))
+    assertEquals("3.0", suggestOldestSupportedGradleVersion(7))
+    assertEquals("3.0", suggestOldestSupportedGradleVersion(8))
+    assertEquals("4.3", suggestOldestSupportedGradleVersion(9))
+    assertEquals("4.7", suggestOldestSupportedGradleVersion(10))
+    assertEquals("5.0", suggestOldestSupportedGradleVersion(11))
+    assertEquals("5.4", suggestOldestSupportedGradleVersion(12))
+    assertEquals("6.0", suggestOldestSupportedGradleVersion(13))
+    assertEquals("6.3", suggestOldestSupportedGradleVersion(14))
+    assertEquals("6.7", suggestOldestSupportedGradleVersion(15))
+    assertEquals("7.0", suggestOldestSupportedGradleVersion(16))
+    assertEquals("7.2", suggestOldestSupportedGradleVersion(17))
+    assertEquals("7.5", suggestOldestSupportedGradleVersion(18))
+    assertEquals("7.6", suggestOldestSupportedGradleVersion(19))
   }
 
   fun `test suggesting oldest compatible java version for gradle version`() {
-    assertEquals(7, suggestOldestCompatibleJavaVersion("2.0"))
-    assertEquals(7, suggestOldestCompatibleJavaVersion("3.0"))
-    assertEquals(8, suggestOldestCompatibleJavaVersion("5.0"))
-    assertEquals(9, suggestOldestCompatibleJavaVersion("5.1"))
-    assertEquals(9, suggestOldestCompatibleJavaVersion("7.1"))
-    assertEquals(8, suggestOldestCompatibleJavaVersion("7.2"))
-    assertEquals(8, suggestOldestCompatibleJavaVersion("7.5"))
-    assertEquals(8, suggestOldestCompatibleJavaVersion("7.6"))
+    assertEquals(8, suggestOldestSupportedJavaVersion("2.0"))
+    assertEquals(8, suggestOldestSupportedJavaVersion("3.0"))
+    assertEquals(8, suggestOldestSupportedJavaVersion("5.0"))
+    assertEquals(8, suggestOldestSupportedJavaVersion("5.1"))
+    assertEquals(8, suggestOldestSupportedJavaVersion("7.1"))
+    assertEquals(8, suggestOldestSupportedJavaVersion("7.2"))
+    assertEquals(8, suggestOldestSupportedJavaVersion("7.5"))
+    assertEquals(8, suggestOldestSupportedJavaVersion("7.6"))
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.PairFunction;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
@@ -29,6 +28,7 @@ import org.jetbrains.java.debugger.breakpoints.JavaBreakpointFiltersPanel;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
 
 import java.util.List;
+import java.util.function.BiFunction;
 
 /**
  * Base class for java line-connected breakpoints (line, method, field)
@@ -72,7 +72,7 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
   protected static boolean canPutAtElement(@NotNull final VirtualFile file,
                                            final int line,
                                            @NotNull Project project,
-                                           @NotNull PairFunction<? super PsiElement, ? super Document, Boolean> processor) {
+                                           @NotNull BiFunction<? super PsiElement, ? super Document, Boolean> processor) {
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     // JSPX supports jvm debugging, but not in XHTML files
     if (psiFile == null || psiFile.getViewProvider().getFileType() == StdFileTypes.XHTML) {
@@ -108,7 +108,7 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
           element = element.getParent();
         }
 
-        if (processor.fun(parent, document)) {
+        if (processor.apply(parent, document)) {
           res.set(true);
           return false;
         }

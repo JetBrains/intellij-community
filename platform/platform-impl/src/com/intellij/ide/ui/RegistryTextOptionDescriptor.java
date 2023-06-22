@@ -9,7 +9,7 @@ import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.Changeable;
-import com.intellij.ui.ColorChooser;
+import com.intellij.ui.ColorChooserService;
 import com.intellij.ui.ColorUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +50,7 @@ public class RegistryTextOptionDescriptor extends OptionDescription implements C
   @Override
   public void invokeInternalEditor() {
     if (myValue.getKey().contains("color") && ColorUtil.fromHex(myValue.asString(), null) != null) {
-      Color color = ColorChooser.chooseColor(IdeFrameImpl.getActiveFrame(), "Change Color For '" + myValue.getKey() + "'", ColorUtil.fromHex(myValue.asString()));
+      Color color = ColorChooserService.getInstance().showDialog(IdeFrameImpl.getActiveFrame(), "Change Color For '" + myValue.getKey() + "'", ColorUtil.fromHex(myValue.asString()));
       if (color != null) {
         myValue.setValue(ColorUtil.toHex(color));
       }

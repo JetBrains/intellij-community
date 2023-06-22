@@ -153,6 +153,11 @@ public abstract class HighlightingTestGenerated extends AbstractHighlightingTest
         public void testUnused() throws Exception {
             runTest("testData/highlighter/suppress/Unused.kt");
         }
+
+        @TestMetadata("WithComment.kt")
+        public void testWithComment() throws Exception {
+            runTest("testData/highlighter/suppress/WithComment.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -230,6 +235,11 @@ public abstract class HighlightingTestGenerated extends AbstractHighlightingTest
         @TestMetadata("KDoc.kt")
         public void testKDoc() throws Exception {
             runTest("testData/highlighter/KDoc.kt");
+        }
+
+        @TestMetadata("KotlinInJavaInjection.java")
+        public void testKotlinInJavaInjection() throws Exception {
+            runTest("testData/highlighter/KotlinInJavaInjection.java");
         }
 
         @TestMetadata("KotlinInjection.kt")
@@ -310,6 +320,11 @@ public abstract class HighlightingTestGenerated extends AbstractHighlightingTest
         @TestMetadata("TypeAlias2.kt")
         public void testTypeAlias2() throws Exception {
             runTest("testData/highlighter/TypeAlias2.kt");
+        }
+
+        @TestMetadata("TypeAliasAnnotation.kt")
+        public void testTypeAliasAnnotation() throws Exception {
+            runTest("testData/highlighter/TypeAliasAnnotation.kt");
         }
 
         @TestMetadata("TypesAndAnnotations.kt")

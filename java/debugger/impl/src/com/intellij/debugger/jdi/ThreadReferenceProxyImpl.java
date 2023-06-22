@@ -13,7 +13,6 @@ import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
@@ -40,7 +39,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
   private ThreeState myResumeOnHotSwap = ThreeState.UNSURE;
 
   public static final Comparator<ThreadReferenceProxyImpl> ourComparator = (th1, th2) -> {
-    int res = Comparing.compare(th2.isSuspended(), th1.isSuspended());
+    int res = Boolean.compare(th2.isSuspended(), th1.isSuspended());
     if (res == 0) {
       return th1.name().compareToIgnoreCase(th2.name());
     }
@@ -64,11 +63,13 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     return (VirtualMachineProxyImpl)myTimer;
   }
 
+  @NotNull
   public String name() {
     checkValid();
     if (myName == null) {
       try {
         myName = getThreadReference().name();
+        LOG.assertTrue(myName != null);
       }
       catch (ObjectCollectedException ignored) {
         myName = "";

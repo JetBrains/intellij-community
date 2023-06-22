@@ -30,6 +30,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public abstract class DiffPanelBase extends JPanel implements DataProvider {
   @Nullable protected final Project myProject;
@@ -83,6 +84,8 @@ public abstract class DiffPanelBase extends JPanel implements DataProvider {
   }
 
   protected void setCurrentCard(@NotNull String card, boolean keepFocus) {
+    if (Objects.equals(myCurrentCard, card)) return;
+
     Runnable task = () -> {
       myCardLayout.show(myContentPanel, card);
       myCurrentCard = card;

@@ -173,7 +173,9 @@ public final class TestWindowManager extends WindowManagerEx {
     }
 
     @Override
-    public @Nullable StatusBar createChild(@NotNull IdeFrame frame, @NotNull Function0<? extends FileEditor> editorProvider) {
+    public @Nullable StatusBar createChild(@NotNull Disposable disposable,
+                                           @NotNull IdeFrame frame,
+                                           @NotNull Function0<? extends FileEditor> editorProvider) {
       return null;
     }
 

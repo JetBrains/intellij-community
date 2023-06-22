@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.eval4j.jdi
 
@@ -56,7 +56,7 @@ open class JDIEval(
                     "(Ljava/lang/String;)Ljava/lang/Class;",
                     true
                 ),
-                listOf(vm.mirrorOf(classType.jdiName).asValue())
+                listOf(loadString(classType.jdiName))
             )
         } else {
             return invokeStaticMethod(
@@ -67,7 +67,7 @@ open class JDIEval(
                     true
                 ),
                 listOf(
-                    vm.mirrorOf(classType.jdiName).asValue(),
+                    loadString(classType.jdiName),
                     boolean(true),
                     classLoader.asValue()
                 )
@@ -164,6 +164,8 @@ open class JDIEval(
             return array.array().setValue(index.int, newValue.asJdiValue(vm, array.asmType.arrayElementType))
         } catch (e: IndexOutOfBoundsException) {
             throwInterpretingException(ArrayIndexOutOfBoundsException(e.message))
+        } catch (e: InvalidTypeException) {
+            throwInterpretingException(ArrayStoreException(e.message))
         }
     }
 
@@ -345,6 +347,10 @@ open class JDIEval(
         return obj.invokeMethod(thread, method, args, policy)
     }
 
+    open fun jdiNewInstance(clazz: ClassType, ctor: Method, args: List<jdi_Value?>, policy: Int): jdi_Value? {
+        return clazz.newInstance(thread, ctor, args, policy)
+    }
+
     override fun invokeMethod(instance: Value, methodDesc: MethodDescription, arguments: List<Value>, invokeSpecial: Boolean): Value {
         if (invokeSpecial && methodDesc.name == "<init>") {
             // Constructor call
@@ -352,7 +358,7 @@ open class JDIEval(
             val clazz = (instance as NewObjectValue).asmType.asReferenceType() as ClassType
             val args = mapArguments(arguments, ctor.safeArgumentTypes())
             args.disableCollection()
-            val result = mayThrow { clazz.newInstance(thread, ctor, args, invokePolicy) }.ifFail(ctor)
+            val result = mayThrow { jdiNewInstance(clazz, ctor, args, invokePolicy) }.ifFail(ctor)
             args.enableCollection()
             instance.value = result
             return result.asValue()
@@ -408,7 +414,7 @@ open class JDIEval(
                 "(Ljava/lang/String;[L${CLASS.internalName};)Ljava/lang/reflect/Method;",
                 true
             ),
-            listOf(vm.mirrorOf(methodDesc.name).asValue(), *methodDesc.parameterTypes.map { loadClass(it) }.toTypedArray())
+            listOf(loadString(methodDesc.name), *methodDesc.parameterTypes.map { loadClass(it) }.toTypedArray())
         )
 
         invokeMethod(

@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.regex.Pattern
 
 object InlayDumpUtil {
-  val inlayPattern: Pattern = Pattern.compile("<# block ([^#]*)#>(\r\n|\r|\n)|<#([^#]*)#>")
+  val inlayPattern: Pattern = Pattern.compile("/\\*<# block ([^#]*)#>\\*/(\r\n|\r|\n)|/\\*<#([^#]*)#>\\*/")
 
   fun removeHints(text: String) : String {
     return inlayPattern.matcher(text).replaceAll("")
@@ -67,10 +67,10 @@ object InlayDumpUtil {
       previousOffsetWithoutInlays += startOffset - previousOffsetWithInlays
       previousOffsetWithInlays = endOffset
       val content = text.subSequence(startOffset, endOffset)
-      if (content.startsWith("<# block")) {
+      if (content.startsWith("/*<# block")) {
         throw NotImplementedError("Block inlays are not yet supported")
       }
-      val strippedContent = content.substring(3, content.length - 3)
+      val strippedContent = content.substring(5, content.length - 5)
       offsetToContent.add(previousOffsetWithoutInlays to strippedContent)
     }
     return offsetToContent
@@ -90,12 +90,12 @@ object InlayDumpUtil {
 
     fun render(r: (EditorCustomElementRenderer, Inlay<*>) -> String): String {
       return buildString {
-        append("<# ")
+        append("/*<# ")
         if (type == InlayType.Block) {
           append("block ")
         }
         append(r(inlay.renderer, inlay))
-        append(" #>")
+        append(" #>*/")
         if (type == InlayType.Block) {
           append('\n')
         }
@@ -106,12 +106,12 @@ object InlayDumpUtil {
       val renderer = inlay.renderer
       if (renderer !is PresentationRenderer && renderer !is LinearOrderInlayRenderer<*>) error("renderer not supported")
       return buildString {
-        append("<# ")
+        append("/*<# ")
         if (type == InlayType.Block) {
           append("block ")
         }
         append(renderer.toString())
-        append(" #>")
+        append(" #>*/")
         if (type == InlayType.Block) {
           append('\n')
         }

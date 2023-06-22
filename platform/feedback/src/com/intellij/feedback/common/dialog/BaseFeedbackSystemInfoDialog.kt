@@ -2,6 +2,7 @@
 package com.intellij.feedback.common.dialog
 
 import com.intellij.feedback.common.bundle.CommonFeedbackBundle
+import com.intellij.feedback.localization.bundle.LocalizationFeedbackBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ex.MultiLineLabel
@@ -17,39 +18,43 @@ fun showFeedbackSystemInfoDialog(project: Project?,
                                  systemInfoData: CommonFeedbackSystemInfoData,
                                  addSpecificRows: Panel.() -> Unit = {}
 ) {
+  /**
+   * Temporary replaced CommonFeedbackBundle with LocalizationFeedbackBundle, because LFB will be localized, while
+   * CFB won't. TODO: Replace back when CFB is localized
+   */
   val infoPanel = panel {
     addSpecificRows()
-    row(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.os.version")) {
+    row(LocalizationFeedbackBundle.message("dialog.feedback.system.info.panel.os.version")) {
       label(systemInfoData.osVersion) //NON-NLS
     }
-    row(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.memory")) {
+    row(LocalizationFeedbackBundle.message("dialog.feedback.system.info.panel.memory")) {
       label(systemInfoData.getMemorySizeForDialog()) //NON-NLS
     }
-    row(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.cores")) {
+    row(LocalizationFeedbackBundle.message("dialog.feedback.system.info.panel.cores")) {
       label(systemInfoData.coresNumber.toString()) //NON-NLS
     }
-    row(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.app.version")) {
+    row(LocalizationFeedbackBundle.message("dialog.feedback.system.info.panel.app.version")) {
       cell(MultiLineLabel(systemInfoData.appVersionWithBuild)) //NON-NLS
     }
-    row(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.license.evaluation")) {
+    row(LocalizationFeedbackBundle.message("dialog.feedback.system.info.panel.license.evaluation")) {
       label(systemInfoData.getIsLicenseEvaluationForDialog()) //NON-NLS
     }
-    row(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.license.restrictions")) {
+    row(LocalizationFeedbackBundle.message("dialog.feedback.system.info.panel.license.restrictions")) {
       cell(MultiLineLabel(systemInfoData.getLicenseRestrictionsForDialog())) //NON-NLS
     }
-    row(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.runtime.version")) {
+    row(LocalizationFeedbackBundle.message("dialog.feedback.system.info.panel.runtime.version")) {
       label(systemInfoData.runtimeVersion) //NON-NLS
     }
-    row(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.internal.mode.enabled")) {
+    row(LocalizationFeedbackBundle.message("dialog.feedback.system.info.panel.internal.mode.enabled")) {
       label(systemInfoData.getIsInternalModeForDialog()) //NON-NLS
     }
-    row(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.registry")) {
+    row(LocalizationFeedbackBundle.message("dialog.feedback.system.info.panel.registry")) {
       cell(MultiLineLabel(systemInfoData.getRegistryKeysForDialog())) //NON-NLS
     }
-    row(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.disabled.plugins")) {
+    row(LocalizationFeedbackBundle.message("dialog.feedback.system.info.panel.disabled.plugins")) {
       cell(MultiLineLabel(systemInfoData.getDisabledBundledPluginsForDialog())) //NON-NLS
     }
-    row(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.nonbundled.plugins")) {
+    row(LocalizationFeedbackBundle.message("dialog.feedback.system.info.panel.nonbundled.plugins")) {
       cell(MultiLineLabel(systemInfoData.getNonBundledPluginsForDialog())) //NON-NLS
     }.bottomGap(BottomGap.MEDIUM)
   }.also {

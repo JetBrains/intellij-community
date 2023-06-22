@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.intention.AbstractIntentionAction;
@@ -50,15 +50,13 @@ public class GutterIntentionAction extends AbstractIntentionAction implements Co
       }));
   }
 
-  @NotNull
   @Override
-  public Priority getPriority() {
+  public @NotNull Priority getPriority() {
     return myAction instanceof PriorityAction ? ((PriorityAction)myAction).getPriority() : Priority.NORMAL;
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return myText;
   }
 
@@ -81,9 +79,8 @@ public class GutterIntentionAction extends AbstractIntentionAction implements Co
     return myIcon;
   }
 
-  @Nullable
   @Override
-  public ShortcutSet getShortcut() {
+  public @Nullable ShortcutSet getShortcut() {
     return myAction.getShortcutSet();
   }
 }

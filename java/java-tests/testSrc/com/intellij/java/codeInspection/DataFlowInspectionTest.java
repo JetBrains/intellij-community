@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
@@ -158,6 +159,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
 
   private void checkIntentionResult(String hint) {
     myFixture.launchAction(myFixture.findSingleIntention(hint));
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
     PsiTestUtil.checkPsiMatchesTextIgnoringNonCode(getFile());
   }
@@ -717,6 +719,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testPureMethodReadsMutableArray() { doTest(); }
   public void testBoxingInConstructorArguments() { doTest(); }
   public void testBoxingInArrayDeclaration() { doTest(); }
+  public void testBoxedBooleanNullableTrue() { doTestWith((__, insp) -> insp.REPORT_CONSTANT_REFERENCE_VALUES = true); }
   public void testNestedVersusSuper() { doTest(); }
   public void testChangeFieldUsedInPureMethod() { doTest(); }
   public void testSuppression() { doTest(); }
@@ -724,4 +727,6 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testTryWithResourcesCloseThrows() { doTest(); }
   public void testBooleanOrEquals() { doTest(); }
   public void testDuplicatedByPointlessBooleanInspection() { doTest(); }
+  public void testSystemOutNullSource() { doTest(); }
+  public void testPrimitiveTypeFieldInWrapper() { doTest(); }
 }

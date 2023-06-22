@@ -1,12 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.InspectionProfileEntry
+import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyConstructorNamedArgumentsInspection
 import org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyResultOfIncrementOrDecrementUsedInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
+import org.jetbrains.plugins.groovy.intentions.style.inference.MethodParameterAugmenter
 
 /**
  * @author Max Medvedev
@@ -177,6 +179,9 @@ class A {
   }
 
   void testNonInferrableArgsOfDefParams() {
+    def registryValue = Registry.is(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE)
+    Registry.get(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE).setValue(true)
+    try {
     doTestHighlighting('''\
 def foo0(def a) { }
 def bar0(def b) { foo0(b) }
@@ -187,6 +192,9 @@ def bar1(def b) { foo1(b) }
 def foo2(String a) { }
 def bar2(def b) { foo2(b) }
 ''')
+    } finally {
+      Registry.get(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE).setValue(registryValue)
+    }
   }
 
   void testPutAtApplicability() {

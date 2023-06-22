@@ -127,27 +127,29 @@ public class SelectWordHandler extends EditorActionHandler.ForEachCaret {
       }
     }
 
-    while (element instanceof PsiWhiteSpace || element != null && StringUtil.isEmptyOrSpaces(element.getText())) {
-      while (element.getNextSibling() == null) {
+    if (!(element instanceof PsiWhiteSpace && SelectWordUtil.canWhiteSpaceBeExpanded((PsiWhiteSpace) element, caretOffset, caret, caret.getEditor()))) {
+      while (element instanceof PsiWhiteSpace || element != null && StringUtil.isEmptyOrSpaces(element.getText())) {
+        while (element.getNextSibling() == null) {
+          if (element instanceof PsiFile) return null;
+          final PsiElement parent = element.getParent();
+          final PsiElement[] children = parent.getChildren();
+
+          if (children.length > 0 && children[children.length - 1] == element) {
+            element = parent;
+          }
+          else {
+            element = parent;
+            break;
+          }
+        }
+
         if (element instanceof PsiFile) return null;
-        final PsiElement parent = element.getParent();
-        final PsiElement[] children = parent.getChildren();
-
-        if (children.length > 0 && children[children.length - 1] == element) {
-          element = parent;
-        }
-        else {
-          element = parent;
-          break;
-        }
+        element = element.getNextSibling();
+        if (element == null) return null;
+        TextRange range = element.getTextRange();
+        if (range == null) return null; // Fix NPE (EA-29110)
+        caretOffset = range.getStartOffset();
       }
-
-      if (element instanceof PsiFile) return null;
-      element = element.getNextSibling();
-      if (element == null) return null;
-      TextRange range = element.getTextRange();
-      if (range == null) return null; // Fix NPE (EA-29110)
-      caretOffset = range.getStartOffset();
     }
 
     if (element instanceof OuterLanguageElement) {
@@ -208,9 +210,10 @@ public class SelectWordHandler extends EditorActionHandler.ForEachCaret {
 
   @Nullable
   private static PsiElement findElementAt(@NotNull final PsiFile file, final int caretOffset) {
-    PsiElement elementAt = file.findElementAt(caretOffset);
+    int offset = caretOffset > 0 && caretOffset == file.getTextLength()? caretOffset - 1 : caretOffset; // get element before caret if it is in the file end
+    PsiElement elementAt = file.findElementAt(offset);
     return elementAt != null && isLanguageExtension(file, elementAt)
-           ? file.getViewProvider().findElementAt(caretOffset, file.getLanguage())
+           ? file.getViewProvider().findElementAt(offset, file.getLanguage())
            : elementAt;
   }
 

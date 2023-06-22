@@ -13,9 +13,9 @@ import java.io.StringReader
 
 
 class MockInlayProvider(private val defaultBlackList: Set<String>): InlayParameterHintsProvider {
-  override fun getParameterHints(element: PsiElement) = emptyList<InlayInfo>()
-  override fun getHintInfo(element: PsiElement) = null
-  override fun getDefaultBlackList() = defaultBlackList
+  override fun getParameterHints(element: PsiElement): List<InlayInfo> = emptyList()
+  override fun getHintInfo(element: PsiElement): Nothing? = null
+  override fun getDefaultBlackList(): Set<String> = defaultBlackList
 }
 
 

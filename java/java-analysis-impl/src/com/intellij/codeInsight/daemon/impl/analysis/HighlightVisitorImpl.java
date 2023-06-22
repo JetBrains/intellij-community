@@ -5,7 +5,6 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.*;
-import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel;
 import com.intellij.codeInsight.daemon.impl.quickfix.AdjustFunctionContextFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -1070,9 +1069,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitRecordComponent(@NotNull PsiRecordComponent recordComponent) {
     super.visitRecordComponent(recordComponent);
     if (!myHolder.hasErrorResults()) add(HighlightUtil.checkRecordComponentVarArg(recordComponent));
-    if (!myHolder.hasErrorResults()) {
-      add(HighlightUtil.checkRecordComponentCStyleDeclaration(recordComponent));
-    }
+    if (!myHolder.hasErrorResults()) add(HighlightUtil.checkCStyleDeclaration(recordComponent));
     if (!myHolder.hasErrorResults()) add(HighlightUtil.checkRecordComponentName(recordComponent));
     if (!myHolder.hasErrorResults()) add(HighlightControlFlowUtil.checkRecordComponentInitialized(recordComponent));
     if (!myHolder.hasErrorResults()) add(HighlightUtil.checkRecordAccessorReturnType(recordComponent));
@@ -1086,6 +1083,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (parent instanceof PsiParameterList && parameter.isVarArgs()) {
       if (!myHolder.hasErrorResults()) add(checkFeature(parameter, HighlightingFeature.VARARGS));
       if (!myHolder.hasErrorResults()) add(GenericsHighlightUtil.checkVarArgParameterIsLast(parameter));
+      if (!myHolder.hasErrorResults()) add(HighlightUtil.checkCStyleDeclaration(parameter));
     }
     else if (parent instanceof PsiCatchSection) {
       if (!myHolder.hasErrorResults() && parameter.getType() instanceof PsiDisjunctionType) {
@@ -1931,7 +1929,15 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitDefaultCaseLabelElement(@NotNull PsiDefaultCaseLabelElement element) {
     super.visitDefaultCaseLabelElement(element);
-    add(checkFeature(element, HighlightingFeature.PATTERNS_IN_SWITCH));
+    // "case default:" will be highlighted as "The label for the default case must only use the 'default' keyword, without 'case'".
+    // see SwitchBlockHighlightingModel#checkSwitchLabelValues
+    // The "case default:" syntax was only allowed in outdated preview versions of Java (from Java 17 Preview to Java 19 Preview).
+    // And even if the "case default" syntax was allowed not only in outdated preview versions of Java, using "case default:"
+    // instead of "default:" looks weird. Therefore, for this case, we do not check the feature availability and do not
+    // suggest increasing the language level.
+    if (!(element.getParent() instanceof PsiCaseLabelElementList labelElementList) || labelElementList.getElementCount() != 1) {
+      add(checkFeature(element, HighlightingFeature.PATTERNS_IN_SWITCH));
+    }
   }
 
   @Override
@@ -2008,7 +2014,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (myHolder.hasErrorResults()) return;
       PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(TypeConversionUtil.erasure(itemType));
       if (selectorClass != null && (selectorClass.hasModifierProperty(SEALED) || selectorClass.isRecord())) {
-        if (!PatternsInSwitchBlockHighlightingModel.checkRecordExhaustiveness(Collections.singletonList(deconstructionPattern))) {
+        if (!PatternHighlightingModel.checkRecordExhaustiveness(Collections.singletonList(deconstructionPattern)).isExhaustive()) {
           add(createPatternIsNotExhaustiveError(deconstructionPattern, patternType, itemType));
         }
       }

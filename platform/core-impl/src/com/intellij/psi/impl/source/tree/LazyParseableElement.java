@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.diagnostic.PluginException;
@@ -33,7 +33,7 @@ public class LazyParseableElement extends CompositeElement {
    * Cached or non-parsed text of this element. Must be non-null if {@link #myParsed} is false.
    * Coordinated writes to (myParsed, myText) are guarded by {@link #myLock}
    * */
-  @NotNull private volatile Supplier<CharSequence> myText;
+  private volatile @NotNull Supplier<CharSequence> myText;
   private volatile boolean myParsed;
 
   public LazyParseableElement(@NotNull IElementType type, @Nullable CharSequence text) {
@@ -74,9 +74,8 @@ public class LazyParseableElement extends CompositeElement {
     }
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     CharSequence text = myText();
     if (text != null) {
       return text.toString();
@@ -87,8 +86,7 @@ public class LazyParseableElement extends CompositeElement {
   }
 
   @Override
-  @NotNull
-  public CharSequence getChars() {
+  public @NotNull CharSequence getChars() {
     CharSequence text = myText();
     if (text == null) {
       // use super.getText() instead of super.getChars() to avoid extra myText() call

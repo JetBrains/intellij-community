@@ -75,12 +75,7 @@ public class ExtensionPointDeclarationReferencesContributor extends PsiReference
   private static class ExtensionPointDeclarationReference extends PsiReferenceBase<PsiElement> implements PluginConfigReference {
 
     private ExtensionPointDeclarationReference(PsiElement psiElement) {
-      super(psiElement, PsiUtil.isIdeaProject(psiElement.getProject()) /* todo remove once all declarations are fixed */);
-    }
-
-    @Override
-    public boolean isHighlightedWhenSoft() {
-      return true;
+      super(psiElement);
     }
 
     @Override

@@ -88,7 +88,6 @@
       "doc_param_description_on_new_line": false,
       "doc_preserve_line_breaks": false,
       "doc_use_throws_not_exception_tag": true,
-      "doubly_shifted_switch_expression_body": true,
       "else_on_new_line": false,
       "enum_constants_wrap": "off",
       "extends_keyword_wrap": "off",

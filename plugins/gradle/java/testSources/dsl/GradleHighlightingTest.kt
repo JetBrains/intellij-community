@@ -9,9 +9,8 @@ import com.intellij.testFramework.assertInstanceOf
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder.Companion.EMPTY_PROJECT
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder.Companion.JAVA_PROJECT
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
+import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
@@ -23,7 +22,7 @@ class GradleHighlightingTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @BaseGradleVersionSource
   fun testConfiguration(gradleVersion: GradleVersion) {
-    test(gradleVersion, EMPTY_PROJECT) {
+    testEmptyProject(gradleVersion) {
       testHighlighting("""
         |configurations.create("myConfiguration")
         |configurations.myConfiguration {
@@ -51,7 +50,7 @@ class GradleHighlightingTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @BaseGradleVersionSource
   fun testGeneratedSetter(gradleVersion: GradleVersion) {
-    test(gradleVersion, JAVA_PROJECT) {
+    testJavaProject(gradleVersion) {
       fixture.enableInspections(GroovyAssignabilityCheckInspection::class.java)
       testHighlighting("""
         jar {
@@ -64,7 +63,7 @@ class GradleHighlightingTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @BaseGradleVersionSource
   fun testGeneratedSetter2(gradleVersion: GradleVersion) {
-    test(gradleVersion, JAVA_PROJECT) {
+    testJavaProject(gradleVersion) {
       fixture.enableInspections(GroovyAssignabilityCheckInspection::class.java)
       testHighlighting("""
         tasks.register('jc', Jar) {
@@ -225,11 +224,17 @@ class GradleHighlightingTest : GradleCodeInsightTestCase() {
   }
 
   companion object {
-    private val MY_CONFIGURATION_FIXTURE = GradleTestFixtureBuilder.buildFile("GradleHighlightingTest-myConfiguration") {
-      withPrefix {
-        call("configurations.create", "myConfiguration")
-        call("configurations.myConfiguration") {
-          assign("transitive", false)
+
+    private val MY_CONFIGURATION_FIXTURE = GradleTestFixtureBuilder.create("GradleHighlightingTest-myConfiguration") { gradleVersion ->
+      withSettingsFile {
+        setProjectName("GradleHighlightingTest-myConfiguration")
+      }
+      withBuildFile(gradleVersion) {
+        withPrefix {
+          call("configurations.create", "myConfiguration")
+          call("configurations.myConfiguration") {
+            assign("transitive", false)
+          }
         }
       }
     }
@@ -240,6 +245,7 @@ class GradleHighlightingTest : GradleCodeInsightTestCase() {
       }
       withDirectory("buildSrc/src/main/groovy")
       withDirectory("buildSrc/src/main/java")
+      withFile("buildSrc/settings.gradle", "")
     }
 
     private val BUILD_SRC_FIXTURE_2 = GradleTestFixtureBuilder.create("GradleHighlightingTest-buildSrc2") {

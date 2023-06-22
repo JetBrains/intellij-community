@@ -1,12 +1,19 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.util
 
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.ComboBoxWithActionsModel
 import com.intellij.collaboration.ui.setHtmlBody
+import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
+import com.intellij.vcs.log.ui.frame.ProgressStripe
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,16 +27,16 @@ import javax.swing.text.JTextComponent
 import kotlin.coroutines.CoroutineContext
 
 //TODO: generalise
-fun <T : Any> ComboBoxWithActionsModel<T>.bind(scope: CoroutineScope,
-                                               itemsState: StateFlow<Collection<T>>,
-                                               selectionState: MutableStateFlow<T?>,
-                                               sortComparator: Comparator<T>) {
+fun <T : Any> ComboBoxWithActionsModel<T>.bindIn(scope: CoroutineScope,
+                                                 itemsState: StateFlow<Collection<T>>,
+                                                 selectionState: MutableStateFlow<T?>,
+                                                 sortComparator: Comparator<T>) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     itemsState.collect {
       items = it.sortedWith(sortComparator)
     }
   }
-  addSelectionChangeListener(scope) {
+  addSelectionChangeListenerIn(scope) {
     selectionState.value = selectedItem?.wrappee
   }
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
@@ -42,12 +49,12 @@ fun <T : Any> ComboBoxWithActionsModel<T>.bind(scope: CoroutineScope,
 }
 
 //TODO: generalise
-fun <T : Any> ComboBoxWithActionsModel<T>.bind(scope: CoroutineScope,
-                                               itemsState: StateFlow<Collection<T>>,
-                                               selectionState: MutableStateFlow<T?>,
-                                               actionsState: StateFlow<List<Action>>,
-                                               sortComparator: Comparator<T>) {
-  bind(scope, itemsState, selectionState, sortComparator)
+fun <T : Any> ComboBoxWithActionsModel<T>.bindIn(scope: CoroutineScope,
+                                                 itemsState: StateFlow<Collection<T>>,
+                                                 selectionState: MutableStateFlow<T?>,
+                                                 actionsState: StateFlow<List<Action>>,
+                                                 sortComparator: Comparator<T>) {
+  bindIn(scope, itemsState, selectionState, sortComparator)
 
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     actionsState.collect {
@@ -56,7 +63,7 @@ fun <T : Any> ComboBoxWithActionsModel<T>.bind(scope: CoroutineScope,
   }
 }
 
-private fun <T> ComboBoxModel<T>.addSelectionChangeListener(scope: CoroutineScope, listener: () -> Unit) {
+private fun <T> ComboBoxModel<T>.addSelectionChangeListenerIn(scope: CoroutineScope, listener: () -> Unit) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     val dataListener = object : ListDataListener {
       override fun contentsChanged(e: ListDataEvent) {
@@ -76,7 +83,7 @@ private fun <T> ComboBoxModel<T>.addSelectionChangeListener(scope: CoroutineScop
   }
 }
 
-fun JComponent.bindVisibility(scope: CoroutineScope, visibilityFlow: Flow<Boolean>) {
+fun JComponent.bindVisibilityIn(scope: CoroutineScope, visibilityFlow: Flow<Boolean>) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     visibilityFlow.collect {
       isVisible = it
@@ -84,7 +91,7 @@ fun JComponent.bindVisibility(scope: CoroutineScope, visibilityFlow: Flow<Boolea
   }
 }
 
-fun JComponent.bindDisabled(scope: CoroutineScope, disabledFlow: Flow<Boolean>) {
+fun JComponent.bindDisabledIn(scope: CoroutineScope, disabledFlow: Flow<Boolean>) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     disabledFlow.collect {
       isEnabled = !it
@@ -92,7 +99,7 @@ fun JComponent.bindDisabled(scope: CoroutineScope, disabledFlow: Flow<Boolean>) 
   }
 }
 
-fun JTextComponent.bindText(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
+fun JTextComponent.bindTextIn(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     textFlow.collect {
       text = it
@@ -100,7 +107,7 @@ fun JTextComponent.bindText(scope: CoroutineScope, textFlow: Flow<@Nls String>) 
   }
 }
 
-fun JEditorPane.bindText(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
+fun JEditorPane.bindTextIn(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     textFlow.collect {
       text = it
@@ -109,7 +116,7 @@ fun JEditorPane.bindText(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
   }
 }
 
-fun JEditorPane.bindTextHtml(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
+fun JEditorPane.bindTextHtmlIn(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     textFlow.collect {
       setHtmlBody(it)
@@ -118,7 +125,7 @@ fun JEditorPane.bindTextHtml(scope: CoroutineScope, textFlow: Flow<@Nls String>)
   }
 }
 
-fun JLabel.bindText(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
+fun JLabel.bindTextIn(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     textFlow.collect {
       text = it
@@ -126,7 +133,7 @@ fun JLabel.bindText(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
   }
 }
 
-fun JLabel.bindIcon(scope: CoroutineScope, iconFlow: Flow<Icon?>) {
+fun JLabel.bindIconIn(scope: CoroutineScope, iconFlow: Flow<Icon?>) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     iconFlow.collect {
       icon = it
@@ -134,7 +141,7 @@ fun JLabel.bindIcon(scope: CoroutineScope, iconFlow: Flow<Icon?>) {
   }
 }
 
-fun JButton.bindText(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
+fun JButton.bindTextIn(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     textFlow.collect {
       text = it
@@ -142,7 +149,7 @@ fun JButton.bindText(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
   }
 }
 
-fun Action.bindText(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
+fun Action.bindTextIn(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     textFlow.collect {
       putValue(Action.NAME, it)
@@ -150,7 +157,34 @@ fun Action.bindText(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
   }
 }
 
-fun Action.bindEnabled(scope: CoroutineScope, enabledFlow: Flow<Boolean>) {
+fun Document.bindTextIn(cs: CoroutineScope, textFlow: MutableStateFlow<String>) {
+  cs.launchNow(CoroutineName("Downstream text binding for $this")) {
+    val listener = object : DocumentListener {
+      override fun documentChanged(event: DocumentEvent) {
+        textFlow.value = text
+      }
+    }
+    addDocumentListener(listener)
+    try {
+      awaitCancellation()
+    }
+    finally {
+      removeDocumentListener(listener)
+    }
+  }
+
+  cs.launchNow(CoroutineName("Upstream text binding for $this")) {
+    textFlow.collect {
+      if (text != it) {
+        writeAction {
+          setText(it)
+        }
+      }
+    }
+  }
+}
+
+fun Action.bindEnabledIn(scope: CoroutineScope, enabledFlow: Flow<Boolean>) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     enabledFlow.collect {
       isEnabled = it
@@ -158,7 +192,7 @@ fun Action.bindEnabled(scope: CoroutineScope, enabledFlow: Flow<Boolean>) {
   }
 }
 
-fun Wrapper.bindContent(scope: CoroutineScope, contentFlow: Flow<JComponent?>) {
+fun Wrapper.bindContentIn(scope: CoroutineScope, contentFlow: Flow<JComponent?>) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     contentFlow.collect {
       setContent(it)
@@ -167,12 +201,12 @@ fun Wrapper.bindContent(scope: CoroutineScope, contentFlow: Flow<JComponent?>) {
   }
 }
 
-fun <D> Wrapper.bindContent(scope: CoroutineScope, dataFlow: Flow<D>,
-                            componentFactory: (CoroutineScope, D) -> JComponent?) {
+fun <D> Wrapper.bindContentIn(scope: CoroutineScope, dataFlow: Flow<D>,
+                              componentFactory: CoroutineScope.(D) -> JComponent?) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     dataFlow.collectLatest {
       coroutineScope {
-        val component = componentFactory(this, it) ?: return@coroutineScope
+        val component = componentFactory(it) ?: return@coroutineScope
         setContent(component)
         repaint()
 
@@ -188,13 +222,29 @@ fun <D> Wrapper.bindContent(scope: CoroutineScope, dataFlow: Flow<D>,
   }
 }
 
-fun <D> JPanel.bindChild(scope: CoroutineScope, dataFlow: Flow<D>,
-                         constraints: Any? = null, index: Int? = null,
-                         componentFactory: (CoroutineScope, D) -> JComponent?) {
+fun ProgressStripe.bindProgressIn(scope: CoroutineScope, loadingFlow: Flow<Boolean>) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    loadingFlow.collect {
+      if (it) startLoadingImmediately() else stopLoading()
+    }
+  }
+}
+
+fun <T> JBList<T>.bindBusyIn(scope: CoroutineScope, busyFlow: Flow<Boolean>) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    busyFlow.collect { isBusy ->
+      setPaintBusy(isBusy)
+    }
+  }
+}
+
+fun <D> JPanel.bindChildIn(scope: CoroutineScope, dataFlow: Flow<D>,
+                           constraints: Any? = null, index: Int? = null,
+                           componentFactory: CoroutineScope.(D) -> JComponent?) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     dataFlow.collectLatest {
       coroutineScope {
-        val component = componentFactory(this, it) ?: return@coroutineScope
+        val component = componentFactory(it) ?: return@coroutineScope
         if (index != null) {
           add(component, constraints, index)
         }
@@ -255,6 +305,6 @@ class ActivatableCoroutineScopeProvider(private val context: () -> CoroutineCont
     currentConnection?.let {
       Disposer.dispose(it)
     }
-    currentConnection = UiNotifyConnector(component, this, false)
+    currentConnection = UiNotifyConnector.installOn(component, this, false)
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.test
 
 import com.intellij.analysis.JvmAnalysisBundle
@@ -9,7 +9,6 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptPane.checkbox
 import com.intellij.codeInspection.options.OptPane.pane
-import com.intellij.codeInspection.options.OptionController
 import com.intellij.codeInspection.registerUProblem
 import com.intellij.codeInspection.test.junit.HamcrestCommonClassNames.ORG_HAMCREST_MATCHER_ASSERT
 import com.intellij.psi.PsiCompiledElement
@@ -56,9 +55,6 @@ class TestMethodWithoutAssertionInspection : AbstractBaseUastLocalInspectionTool
     checkbox("assertKeywordIsAssertion", InspectionGadgetsBundle.message("assert.keyword.is.considered.an.assertion")),
     checkbox("ignoreIfExceptionThrown", InspectionGadgetsBundle.message("inspection.test.method.without.assertions.exceptions.option")),
   )
-
-  override fun getOptionController(): OptionController =
-    super.getOptionController().onPrefix("methodMatcher", methodMatcher.optionController)
 
   override fun readSettings(node: Element) {
     methodMatcher.readSettings(node)
@@ -118,8 +114,7 @@ private class TestMethodWithoutAssertionVisitor(
 
     override fun visitElement(node: UElement): Boolean {
       if (containsAssertion) return true
-      if (node.sourcePsi is PsiCompiledElement) return true // we don't expect assertions in libraries
-      return false
+      return node.sourcePsi is PsiCompiledElement // we don't expect assertions in libraries
     }
 
     override fun visitObjectLiteralExpression(node: UObjectLiteralExpression): Boolean = visitCallExpression(node)

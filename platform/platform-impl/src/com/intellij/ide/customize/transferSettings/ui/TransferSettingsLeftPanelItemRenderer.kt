@@ -6,7 +6,7 @@ import com.intellij.ide.customize.transferSettings.models.BaseIdeVersion
 import com.intellij.ide.customize.transferSettings.models.FailedIdeVersion
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -43,23 +43,23 @@ class TransferSettingsLeftPanelItemRenderer : ListCellRenderer<BaseIdeVersion> {
       row {
         icon(IconUtil.scale(item.icon, null, 35 / item.icon.iconWidth.toFloat()))
           .align(AlignY.CENTER)
-          .customize(Gaps(right = 10, left = 10)) // TODO: create a customizer and pass inset here
+          .customize(UnscaledGaps(right = 10, left = 10)) // TODO: create a customizer and pass inset here
         panel {
           row {
             if (item is FailedIdeVersion) {
-              icon(AllIcons.General.Warning).gap(RightGap.SMALL).customize(Gaps(right = 3))
+              icon(AllIcons.General.Warning).gap(RightGap.SMALL).customize(UnscaledGaps(right = 3))
             }
             label(item.name).bold().align(AlignY.TOP).applyToComponent {
               font = font.deriveFont(13f)
               foreground = fg
-            }.customize(Gaps())
+            }.customize(UnscaledGaps())
           }
           item.subName?.let { it: @NlsSafe String ->
             row {
               label(it).applyToComponent {
                 font = font.deriveFont(12f)
                 foreground = fg
-              }.customize(Gaps())
+              }.customize(UnscaledGaps())
             }.bottomGap(BottomGap.NONE)
           }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env;
 
 import com.intellij.execution.ExecutionException;
@@ -103,7 +103,7 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
     ApplicationManager.getApplication().invokeAndWait(() -> {
       // Print output of tests to console (because console may be scrolled)
       myProxyManager.getProxy().getAllTests().get(0).printOn(myExecutionConsole.getPrinter());
-    }, ModalityState.NON_MODAL);
+    }, ModalityState.nonModal());
   }
 
   /**

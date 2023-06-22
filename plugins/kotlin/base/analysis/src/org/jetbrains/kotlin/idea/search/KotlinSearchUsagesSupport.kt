@@ -45,9 +45,7 @@ interface KotlinSearchUsagesSupport {
 
                 if (!Name.isValidIdentifier(name)) return false
                 val nameIdentifier = Name.identifier(name)
-                if (!DataClassResolver.isComponentLike(nameIdentifier)) return false
-
-                return true
+                return DataClassResolver.isComponentLike(nameIdentifier)
             }
 
             return if (kotlinOptions.searchForComponentConventions) this else filter { !it.isComponentElement() }

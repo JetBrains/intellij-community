@@ -31,12 +31,12 @@ public final class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceR
   }
 
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return myModule.getName();
   }
 
   @Override
-  public Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry, TargetOutputIndex outputIndex) {
+  public @NotNull Collection<BuildTarget<?>> computeDependencies(@NotNull BuildTargetRegistry targetRegistry, @NotNull TargetOutputIndex outputIndex) {
     return Collections.emptyList();
   }
 
@@ -47,7 +47,7 @@ public final class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceR
 
   @NotNull
   @Override
-  public List<MavenResourceRootDescriptor> computeRootDescriptors(JpsModel model, ModuleExcludeIndex index, IgnoredFileIndex ignoredFileIndex, BuildDataPaths dataPaths) {
+  public List<MavenResourceRootDescriptor> computeRootDescriptors(@NotNull JpsModel model, @NotNull ModuleExcludeIndex index, @NotNull IgnoredFileIndex ignoredFileIndex, @NotNull BuildDataPaths dataPaths) {
     // todo: should we honor ignored and excluded roots here?
     final List<MavenResourceRootDescriptor> result = new ArrayList<>();
 
@@ -83,7 +83,7 @@ public final class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceR
 
   @Nullable
   @Override
-  public MavenResourceRootDescriptor findRootDescriptor(String rootId, BuildRootIndex rootIndex) {
+  public MavenResourceRootDescriptor findRootDescriptor(@NotNull String rootId, @NotNull BuildRootIndex rootIndex) {
     for (MavenResourceRootDescriptor descriptor : rootIndex.getTargetRoots(this, null)) {
       if (descriptor.getRootId().equals(rootId)) {
         return descriptor;
@@ -100,7 +100,7 @@ public final class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceR
 
   @NotNull
   @Override
-  public Collection<File> getOutputRoots(CompileContext context) {
+  public Collection<File> getOutputRoots(@NotNull CompileContext context) {
     MavenModuleResourceConfiguration configuration =
       getModuleResourcesConfiguration(context.getProjectDescriptor().dataManager.getDataPaths());
     if (configuration == null) return Collections.emptyList();
@@ -140,7 +140,7 @@ public final class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceR
   }
 
   @Override
-  public void writeConfiguration(ProjectDescriptor pd, PrintWriter out) {
+  public void writeConfiguration(@NotNull ProjectDescriptor pd, @NotNull PrintWriter out) {
     final BuildDataPaths dataPaths = pd.getTargetsState().getDataPaths();
     final MavenModuleResourceConfiguration configuration = getModuleResourcesConfiguration(dataPaths);
     if (configuration != null) {

@@ -105,7 +105,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
       if (!processor.setupDefaultValues(myChangeInfo, refUsages, myProject)) return false;
     }
     final UsageInfo[] usagesIn = refUsages.get();
-    Set<UsageInfo> usagesSet = ContainerUtil.set(usagesIn);
+    Set<UsageInfo> usagesSet = ContainerUtil.newHashSet(usagesIn);
 
     if (myChangeInfo instanceof JavaChangeInfoImpl &&
          ((JavaChangeInfo)myChangeInfo).isVisibilityChanged() && 

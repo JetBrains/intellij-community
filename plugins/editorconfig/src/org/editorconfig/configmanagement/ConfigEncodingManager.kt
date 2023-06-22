@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement
 
-import com.intellij.openapi.project.ProjectLocator
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.encoding.FileEncodingProvider
 import org.editorconfig.Utils
@@ -9,9 +9,8 @@ import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
 
 class ConfigEncodingManager : FileEncodingProvider {
-  override fun getEncoding(virtualFile: VirtualFile): Charset? {
-    val project = ProjectLocator.getInstance().guessProjectForFile(virtualFile)
-    return if (project != null && Utils.isEnabledFor(project, virtualFile))
+  override fun getEncoding(virtualFile: VirtualFile, project: Project): Charset? {
+    return if (Utils.isEnabledFor(project, virtualFile))
       EditorConfigEncodingCache.getInstance().getCachedEncoding(virtualFile)
     else
       null

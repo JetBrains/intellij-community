@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.openapi.Disposable;
@@ -17,14 +15,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.OutputStream;
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * Allows controlling and accessing the information about a running process.
+ */
 public abstract class ProcessHandler extends UserDataHolderBase {
   private static final Logger LOG = Logger.getInstance(ProcessHandler.class);
   /**
@@ -44,7 +42,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   private final ProcessListener myEventMulticaster;
   private final TasksRunner myAfterStartNotifiedRunner;
 
-  @Nullable private volatile Integer myExitCode;
+  private volatile @Nullable Integer myExitCode;
 
   protected ProcessHandler() {
     myEventMulticaster = createEventMulticaster();
@@ -69,18 +67,18 @@ public abstract class ProcessHandler extends UserDataHolderBase {
    * <p>This is an internal implementation of {@link #destroyProcess}. All subclasses must implement this method and perform the
    * destruction in this method. This method is called from {@link #destroyProcess} and it can be in any thread including the
    * event dispatcher thread. You should avoid doing any expensive operation directly in this method. Instead, you may post the work to
-   * background thread and return without waiting for it. If the performed destruction led to process termination,
+   * a background thread and return without waiting for it. If the performed destruction led to process termination,
    * {@link #notifyProcessTerminated(int)} must be called in any thread (not necessary from this method).
    */
   protected abstract void destroyProcessImpl();
 
   /**
-   * Performs detaching process.
+   * Performs detaching the process.
    *
    * <p>This is an internal implementation of {@link #detachProcess}. All subclasses must implement this method and perform the
    * detaching in this method. This method is called from {@link #detachProcess} and it can be in any thread including the
    * event dispatcher thread. You should avoid doing any expensive operation directly in this method. Instead, you may post the work to
-   * background thread and return without waiting for it. If the performed detaching is completed,
+   * a background thread and return without waiting for it. If the performed detaching is completed,
    * {@link #notifyProcessDetached()} must be called in any thread (not necessary from this method).
    */
   protected abstract void detachProcessImpl();
@@ -90,7 +88,8 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   /**
    * Wait for process execution.
    *
-   * @return true if target process has actually ended; false if we stopped watching the process execution and don't know if it has completed.
+   * @return true if the target process has actually ended;
+   * false if we stopped watching the process execution and don't know if it has completed.
    */
   public boolean waitFor() {
     try {
@@ -154,8 +153,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   /**
    * @return exit code if the process has already finished, null otherwise
    */
-  @Nullable
-  public Integer getExitCode() {
+  public @Nullable Integer getExitCode() {
     return myExitCode;
   }
 
@@ -163,7 +161,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
     myListeners.add(listener);
   }
 
-  public void addProcessListener(@NotNull final ProcessListener listener, @NotNull Disposable parentDisposable) {
+  public void addProcessListener(final @NotNull ProcessListener listener, @NotNull Disposable parentDisposable) {
     myListeners.add(listener);
     Disposer.register(parentDisposable, new Disposable() {
       @Override
@@ -222,8 +220,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
     myEventMulticaster.onTextAvailable(event, outputType);
   }
 
-  @Nullable
-  public abstract OutputStream getProcessInput();
+  public abstract @Nullable OutputStream getProcessInput();
 
   private void fireProcessWillTerminate(final boolean willBeDestroyed) {
     LOG.assertTrue(isStartNotified(), "All events should be fired after startNotify is called");
@@ -239,23 +236,67 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   }
 
   private ProcessListener createEventMulticaster() {
-    final Class<ProcessListener> listenerClass = ProcessListener.class;
-    return (ProcessListener)Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, new InvocationHandler() {
+    return new ProcessListener() {
       @Override
-      public Object invoke(Object object, Method method, Object[] params) throws Throwable {
+      public void startNotified(@NotNull ProcessEvent event) {
         for (ProcessListener listener : myListeners) {
           try {
-            method.invoke(listener, params);
+            listener.startNotified(event);
+          }
+          catch (ProcessCanceledException e) {
+            LOG.info(e);
           }
           catch (Throwable e) {
-            if (!isCanceledException(e)) {
-              LOG.error(e);
-            }
+            LOG.error(e);
           }
         }
-        return null;
       }
-    });
+
+      @Override
+      public void processTerminated(@NotNull ProcessEvent event) {
+        for (ProcessListener listener : myListeners) {
+          try {
+            listener.processTerminated(event);
+          }
+          catch (ProcessCanceledException e) {
+            LOG.info(e);
+          }
+          catch (Throwable e) {
+            LOG.error(e);
+          }
+        }
+      }
+
+      @Override
+      public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
+        for (ProcessListener listener : myListeners) {
+          try {
+            listener.processWillTerminate(event, willBeDestroyed);
+          }
+          catch (ProcessCanceledException e) {
+            LOG.info(e);
+          }
+          catch (Throwable e) {
+            LOG.error(e);
+          }
+        }
+      }
+
+      @Override
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+        for (ProcessListener listener : myListeners) {
+          try {
+            listener.onTextAvailable(event, outputType);
+          }
+          catch (ProcessCanceledException e) {
+            LOG.info(e);
+          }
+          catch (Throwable e) {
+            LOG.error(e);
+          }
+        }
+      }
+    };
   }
 
   private static boolean isCanceledException(Throwable e) {

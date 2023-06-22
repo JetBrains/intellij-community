@@ -16,7 +16,9 @@ import java.awt.datatransfer.SystemFlavorMap;
 import java.awt.datatransfer.Transferable;
 import java.io.File;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 public final class FileCopyPasteUtil {
   private static final Logger LOG = Logger.getInstance(FileCopyPasteUtil.class);
@@ -94,8 +96,8 @@ public final class FileCopyPasteUtil {
 
   public static @NotNull List<File> getFileListFromAttachedObject(Object attached) {
     List<File> result;
-    if (attached instanceof TransferableWrapper) {
-      result = ((TransferableWrapper)attached).asFileList();
+    if (attached instanceof FileFlavorProvider) {
+      result = ((FileFlavorProvider)attached).asFileList();
     }
     else if (attached instanceof DnDNativeTarget.EventInfo) {
       result = getFileList(((DnDNativeTarget.EventInfo)attached).getTransferable());

@@ -65,5 +65,22 @@ public class MavenServerExecutionResult implements Serializable {
       this.nativeMavenProject = nativeMavenProject;
       this.activatedProfiles = activatedProfiles;
     }
+
+    @Override
+    public String toString() {
+      return "{" +
+             "mavenModel=" + mavenModel +
+             '}';
+    }
+  }
+
+  @Override
+  public String toString() {
+    return "{" +
+           "projectData=" + projectData +
+           ", problems=" + problems +
+           ", unresolvedArtifacts=" + unresolvedArtifacts +
+           ", unresolvedProblems=" + unresolvedProblems +
+           '}';
   }
 }

@@ -187,7 +187,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
     myUiUpdater = new MergingUpdateQueue("FileChooserUpdater", 200, false, panel);
     Disposer.register(getDisposable(), myUiUpdater);
-    new UiNotifyConnector(panel, myUiUpdater);
+    UiNotifyConnector.installOn(panel, myUiUpdater);
 
     panel.setBorder(JBUI.Borders.empty());
 

@@ -9,10 +9,11 @@ import com.intellij.workspaceModel.ide.java.languageLevel
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridgeFactory
-import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.addJavaModuleSettingsEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
+import com.intellij.platform.workspace.storage.VersionedEntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
+import com.intellij.java.workspace.entities.javaSettings
+import com.intellij.java.workspace.entities.modifyEntity
 
 class LanguageLevelModuleExtensionBridge private constructor(private val module: ModuleBridge,
                                                              private val entityStorage: VersionedEntityStorage,
@@ -31,9 +32,11 @@ class LanguageLevelModuleExtensionBridge private constructor(private val module:
       }
     }
     else if (languageLevel != null) {
-      diff.addJavaModuleSettingsEntity(inheritedCompilerOutput = true, excludeOutput = true, compilerOutput = null,
-                                       compilerOutputForTests = null, languageLevelId = languageLevel.name, module = moduleEntity,
-                                       source = moduleEntity.entitySource)
+      diff addEntity JavaModuleSettingsEntity(inheritedCompilerOutput = true, excludeOutput = true,
+                                              entitySource = moduleEntity.entitySource) {
+        languageLevelId = languageLevel.name
+        module = moduleEntity
+      }
     }
   }
 
@@ -47,10 +50,10 @@ class LanguageLevelModuleExtensionBridge private constructor(private val module:
     throw UnsupportedOperationException("This method must not be called for extensions backed by workspace model")
   }
 
-  override fun commit() = Unit
-  override fun dispose() = Unit
+  override fun commit() {}
+  override fun dispose() {}
 
-  companion object : ModuleExtensionBridgeFactory<LanguageLevelModuleExtensionBridge> {
+  class Factory : ModuleExtensionBridgeFactory<LanguageLevelModuleExtensionBridge> {
     override fun createExtension(module: ModuleBridge,
                                  entityStorage: VersionedEntityStorage,
                                  diff: MutableEntityStorage?): LanguageLevelModuleExtensionBridge {

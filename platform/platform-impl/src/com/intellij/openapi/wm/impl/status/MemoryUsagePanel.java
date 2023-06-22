@@ -6,6 +6,8 @@ import com.intellij.ui.ClickListener;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.UIBundle;
+import com.intellij.util.LazyInitializer;
+import com.intellij.util.LazyInitializer.LazyValue;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -17,45 +19,21 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-public final class MemoryUsagePanel extends TextPanel implements CustomStatusBarWidget, Activatable {
+public final class MemoryUsagePanel implements CustomStatusBarWidget, Activatable {
   public static final String WIDGET_ID = "Memory";
 
-  private final Color myUsedColor = JBColor.namedColor("MemoryIndicator.usedBackground", new JBColor(Gray._185, Gray._110));
-  private final Color myUnusedColor = JBColor.namedColor("MemoryIndicator.allocatedBackground", new JBColor(Gray._215, Gray._90));
-  private final long myMaxMemory = Math.min(Runtime.getRuntime().maxMemory() >> 20, 9999);
-  private long myLastAllocated = -1;
-  private long myLastUsed = -1;
+  private final LazyValue<MemoryUsagePanelImpl> myComponent = LazyInitializer.create(MemoryUsagePanelImpl::new);
   private ScheduledFuture<?> myFuture;
-
-  public MemoryUsagePanel() {
-    setFocusable(false);
-    setTextAlignment(CENTER_ALIGNMENT);
-    new ClickListener() {
-      @Override
-      public boolean onClick(@NotNull MouseEvent event, int clickCount) {
-        //noinspection CallToSystemGC
-        System.gc();
-        updateState();
-        return true;
-      }
-    }.installOn(this, true);
-    setBorder(JBUI.Borders.empty(0, 2));
-    updateUI();
-
-    new UiNotifyConnector(this, this);
-  }
-
-  @Override
-  public Color getBackground() {
-    return null;
-  }
 
   @Override
   public void showNotify() {
-    myFuture = EdtExecutorService.getScheduledExecutorInstance().scheduleWithFixedDelay(this::updateState, 1, 5, TimeUnit.SECONDS);
+    myFuture = EdtExecutorService.getScheduledExecutorInstance().scheduleWithFixedDelay(
+      () -> myComponent.get().updateState(), 1, 5, TimeUnit.SECONDS
+    );
   }
 
   @Override
@@ -76,16 +54,65 @@ public final class MemoryUsagePanel extends TextPanel implements CustomStatusBar
     return WIDGET_ID;
   }
 
+  @Override
+  public JComponent getComponent() {
+    return myComponent.get();
+  }
+
+  public static boolean isInstance(@NotNull JComponent component) {
+    return component instanceof MemoryUsagePanelImpl;
+  }
+
+  // These three methods are purely for internal ABI compatibility, as some plugins use them.
+
+  public void addMouseListener(MouseListener l) {
+    myComponent.get().addMouseListener(l);
+  }
+
+  public MouseListener[] getMouseListeners() {
+    return myComponent.get().getMouseListeners();
+  }
+
+  public void removeMouseListener(MouseListener l) {
+    myComponent.get().removeMouseListener(l);
+  }
+
+private class MemoryUsagePanelImpl extends TextPanel {
+
+  private final Color myUsedColor = JBColor.namedColor("MemoryIndicator.usedBackground", new JBColor(Gray._185, Gray._110));
+  private final Color myUnusedColor = JBColor.namedColor("MemoryIndicator.allocatedBackground", new JBColor(Gray._215, Gray._90));
+  private final long myMaxMemory = Math.min(Runtime.getRuntime().maxMemory() >> 20, 9999);
+  private long myLastAllocated = -1;
+  private long myLastUsed = -1;
+
+  MemoryUsagePanelImpl() {
+    setFocusable(false);
+    setTextAlignment(CENTER_ALIGNMENT);
+    new ClickListener() {
+      @Override
+      public boolean onClick(@NotNull MouseEvent event, int clickCount) {
+        //noinspection CallToSystemGC
+        System.gc();
+        updateState();
+        return true;
+      }
+    }.installOn(this, true);
+    setBorder(JBUI.Borders.empty(0, 2));
+    updateUI();
+
+    UiNotifyConnector.installOn(this, MemoryUsagePanel.this);
+  }
+
+  @Override
+  public Color getBackground() {
+    return null;
+  }
+
   public void setShowing(boolean showing) {
     if (showing != isVisible()) {
       setVisible(showing);
       revalidate();
     }
-  }
-
-  @Override
-  public JComponent getComponent() {
-    return this;
   }
 
   @Override
@@ -142,4 +169,7 @@ public final class MemoryUsagePanel extends TextPanel implements CustomStatusBar
       setToolTipText(UIBundle.message("memory.usage.panel.message.tooltip", maxMem, allocatedMem, usedMem));
     }
   }
+
+}
+
 }

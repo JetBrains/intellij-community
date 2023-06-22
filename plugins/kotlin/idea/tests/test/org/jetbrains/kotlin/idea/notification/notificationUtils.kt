@@ -15,6 +15,14 @@ fun catchNotificationText(project: Project, action: () -> Unit): String? {
     return notifications.single().content
 }
 
+fun catchNotificationText(project: Project, groupId: String, action: () -> Unit): String? {
+    val notifications = catchNotifications(project, groupId, action).ifEmpty { return null }
+    return notifications.single().content
+}
+
+fun catchNotifications(project: Project, groupId: String, action: () -> Unit) =
+    catchNotifications(project, action).filter { it.groupId == groupId }
+
 fun catchNotifications(project: Project, action: () -> Unit): List<Notification> {
     val myDisposable = Disposer.newDisposable()
     try {

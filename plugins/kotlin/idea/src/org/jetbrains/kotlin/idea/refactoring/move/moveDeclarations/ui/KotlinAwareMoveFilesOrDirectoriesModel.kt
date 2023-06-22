@@ -14,8 +14,8 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectori
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.isInKotlinAwareSourceRoot
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinAwareMoveFilesOrDirectoriesProcessor
 import org.jetbrains.kotlin.idea.refactoring.move.getOrCreateDirectory
-import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.KotlinAwareMoveFilesOrDirectoriesProcessor
 import org.jetbrains.kotlin.idea.refactoring.move.updatePackageDirective
 import org.jetbrains.kotlin.idea.statistics.KotlinMoveRefactoringFUSCollector
 import org.jetbrains.kotlin.psi.KtElement
@@ -61,7 +61,7 @@ internal class KotlinAwareMoveFilesOrDirectoriesModel(
 
     private fun checkedGetTargetDirectory(): PsiDirectory {
         try {
-            return getOrCreateDirectory(targetDirectoryName, project)
+            return getOrCreateDirectory(project, targetDirectoryName)
         } catch (e: IncorrectOperationException) {
             throw ConfigurationException(KotlinBundle.message("text.cannot.create.target.directory.0", targetDirectoryName))
         }

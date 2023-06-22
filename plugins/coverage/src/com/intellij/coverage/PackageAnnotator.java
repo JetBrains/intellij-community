@@ -43,7 +43,6 @@ public final class PackageAnnotator {
   private final Project myProject;
   private final ProjectData myProjectData;
   private final JavaCoverageClassesAnnotator myAnnotator;
-  private final boolean myIgnoreEmptyPrivateConstructors;
   private final boolean myIgnoreImplicitConstructor;
   private final ProjectData myUnloadedClassesProjectData = new ProjectData();
   private JavaCoverageRunner myRunner;
@@ -52,13 +51,11 @@ public final class PackageAnnotator {
                           Project project,
                           ProjectData projectData,
                           JavaCoverageClassesAnnotator annotator,
-                          boolean ignoreEmptyPrivateConstructors,
                           boolean ignoreImplicitConstructor) {
     mySuite = suite;
     myProject = project;
     myProjectData = projectData;
     myAnnotator = annotator;
-    myIgnoreEmptyPrivateConstructors = ignoreEmptyPrivateConstructors;
     myIgnoreImplicitConstructor = ignoreImplicitConstructor;
     IDEACoverageRunner.setExcludeAnnotations(project, myProjectData);
     IDEACoverageRunner.setExcludeAnnotations(project, myUnloadedClassesProjectData);
@@ -188,7 +185,7 @@ public final class PackageAnnotator {
   }
 
   public static @NotNull File findRelativeFile(@NotNull String rootPackageVMName, File outputRoot) {
-    outputRoot = rootPackageVMName.length() > 0 ? new File(outputRoot, FileUtil.toSystemDependentName(rootPackageVMName)) : outputRoot;
+    outputRoot = !rootPackageVMName.isEmpty() ? new File(outputRoot, FileUtil.toSystemDependentName(rootPackageVMName)) : outputRoot;
     return outputRoot;
   }
 
@@ -214,7 +211,7 @@ public final class PackageAnnotator {
             for (File child : files) {
               if (isClassFile(child)) {
                 final String childName = getClassName(child);
-                final String classFqVMName = packageVMName.length() > 0 ? packageVMName + "/" + childName : childName;
+                final String classFqVMName = !packageVMName.isEmpty() ? packageVMName + "/" + childName : childName;
                 final String toplevelClassSrcFQName = getSourceToplevelFQName(classFqVMName);
                 if (toplevelClassSrcFQName.equals(qualifiedName)) {
                   final String className = classFqVMName.replace('/', '.');
@@ -265,7 +262,7 @@ public final class PackageAnnotator {
       }
       parent = virtualFile == null ? null : virtualFile.getParent();
       final String childName = getClassName(file);
-      final String classFqVMName = packageVMName.length() > 0 ? packageVMName + "/" + childName : childName;
+      final String classFqVMName = !packageVMName.isEmpty() ? packageVMName + "/" + childName : childName;
       final PackageAnnotator.ClassCoverageInfo
         info = collectClassCoverageInformation(file, psiClassRef.get(), classFqVMName.replace('/', '.'));
       if (info == null) continue;
@@ -385,7 +382,7 @@ public final class PackageAnnotator {
     catch (IOException e) {
       return null;
     }
-    UnloadedUtil.appendUnloadedClass(projectData, className, new ClassReader(content), mySuite.isTracingEnabled(), false, myIgnoreEmptyPrivateConstructors);
+    UnloadedUtil.appendUnloadedClass(projectData, className, new ClassReader(content), mySuite.isTracingEnabled(), false);
     return projectData.getClassData(className);
   }
 }

@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,10 +22,10 @@ public interface FileEncodingProvider {
 
   /**
    * @param virtualFile The virtual file to override encoding for.
+   * @param project The context project.
    * @return The encoding to be used for the given virtual file. <b>It should not depend on the current project. Otherwise it may
    * cause index inconsistencies.</b>
    */
   @Nullable
-  Charset getEncoding(@NotNull VirtualFile virtualFile);
-
+  Charset getEncoding(@NotNull VirtualFile virtualFile, Project project);
 }

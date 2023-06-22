@@ -1,19 +1,22 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl
 
+import com.intellij.diagnostic.runActivity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.VcsDirectoryMapping
+import com.intellij.openapi.vcs.VcsRootChecker
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx.MAPPING_DETECTION_LOG
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.vcsUtil.VcsUtil
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 
 internal class ModuleVcsDetector(private val project: Project) {
   private val vcsManager by lazy(LazyThreadSafetyMode.NONE) { ProjectLevelVcsManagerImpl.getInstanceImpl(project) }
@@ -27,8 +30,13 @@ internal class ModuleVcsDetector(private val project: Project) {
     project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, MyWorkspaceModelChangeListener())
 
     if (vcsManager.needAutodetectMappings() &&
-        vcsManager.haveDefaultMapping() == null) {
-      queue.queue(DisposableUpdate.createDisposable(queue, "initial scan") { autoDetectDefaultRoots() })
+        vcsManager.haveDefaultMapping() == null &&
+        VcsUtil.shouldDetectVcsMappingsFor(project)) {
+      queue.queue(DisposableUpdate.createDisposable(queue, "initial scan") {
+        runActivity("ModuleVcsDetector.autoDetectDefaultRoots") {
+          autoDetectDefaultRoots()
+        }
+      })
     }
   }
 
@@ -51,6 +59,19 @@ internal class ModuleVcsDetector(private val project: Project) {
           usedVcses.add(foundVcs)
         }
       }
+
+    val directMappings = detectedRoots.map { it.first }.toMutableSet()
+    for (rootChecker in VcsRootChecker.EXTENSION_POINT_NAME.extensionList) {
+      val vcs = vcsManager.findVcsByName(rootChecker.supportedVcs.name) ?: continue
+      val detectedMappings = rootChecker.detectProjectMappings(project, contentRoots, directMappings) ?: continue
+      if (detectedMappings.isEmpty()) continue
+
+      usedVcses.add(vcs)
+      for (file in detectedMappings) {
+        detectedRoots.add(Pair(file, vcs))
+      }
+    }
+
     if (detectedRoots.isEmpty()) return
     MAPPING_DETECTION_LOG.debug("ModuleVcsDetector.autoDetectDefaultRoots - detectedRoots", detectedRoots)
 
@@ -109,6 +130,8 @@ internal class ModuleVcsDetector(private val project: Project) {
     private val dirtyContentRoots = mutableSetOf<VirtualFile>()
 
     override fun contentRootsChanged(removed: List<VirtualFile>, added: List<VirtualFile>) {
+      if (!VcsUtil.shouldDetectVcsMappingsFor(project)) return
+
       if (added.isNotEmpty()) {
         MAPPING_DETECTION_LOG.debug("ModuleVcsDetector.contentRootsChanged - roots added", added)
         if (vcsManager.haveDefaultMapping() == null) {
@@ -151,7 +174,7 @@ internal class ModuleVcsDetector(private val project: Project) {
     }
 
     override fun getOrder(): Int {
-      return VcsInitObject.MAPPINGS.order + 10;
+      return VcsInitObject.MAPPINGS.order + 10
     }
   }
 }

@@ -44,7 +44,7 @@ public class ExtendSealedClassFix implements DefaultIntentionActionWithChoice {
   }
 
   @Override
-  public @NotNull List<ChoiceVariantIntentionAction> getVariants() {
+  public @NotNull List<@NotNull ChoiceVariantIntentionAction> getVariants() {
     PsiClass subclass = mySubclassPointer.getElement();
     PsiClass parentClass = myParentClassPointer.getElement();
     if (subclass == null || parentClass == null) return Collections.emptyList();

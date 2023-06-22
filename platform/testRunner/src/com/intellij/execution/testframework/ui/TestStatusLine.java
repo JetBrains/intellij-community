@@ -2,9 +2,7 @@
 package com.intellij.execution.testframework.ui;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.testframework.TestIconMapper;
 import com.intellij.execution.testframework.TestRunnerBundle;
-import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.openapi.progress.util.ColorProgressBar;
@@ -21,6 +19,7 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.Supplier;
 
 
 public class TestStatusLine extends NonOpaquePanel {
@@ -137,14 +136,13 @@ public class TestStatusLine extends NonOpaquePanel {
     myProgressBar.setIndeterminate(flag);
   }
 
-  public void onTestsDone(@Nullable TestStateInfo.Magnitude info) {
+  public void onTestsDone(@Nullable Supplier<? extends Icon> toolbarIconSupplier) {
     EdtInvocationManager.getInstance().invokeLater(() -> {
       myProgressPanel.remove(myProgressBar);
-      if (info != null) {
-        myState.setIcon(TestIconMapper.getToolbarIcon(info));
+      if (toolbarIconSupplier != null) {
+        myState.setIcon(toolbarIconSupplier.get());
       }
     });
-    
   }
 
   public void setStatusColor(Color color) {
@@ -160,17 +158,6 @@ public class TestStatusLine extends NonOpaquePanel {
     myProgressBar.setValue(fraction);
   }
 
-  /**
-   * @deprecated Usages should be deleted as progress is now incorporated into console
-   */
-  @Deprecated(forRemoval = true)
-  public void setPreferredSize(boolean orientation) {
-    final Dimension size = new JBDimension(orientation ? 150 : 450 , -1);
-    myProgressPanel.setMaximumSize(size);
-    myProgressPanel.setMinimumSize(size);
-    myProgressPanel.setPreferredSize(size);
-  }
-
   public void setText(@Nls String progressStatus_text) {
     UIUtil.invokeLaterIfNeeded(() -> {
       myState.clear();
@@ -179,7 +166,7 @@ public class TestStatusLine extends NonOpaquePanel {
     });
   }
 
-  @TestOnly
+  @NlsSafe
   @NotNull
   public String getStateText() {
     return myState.toString();

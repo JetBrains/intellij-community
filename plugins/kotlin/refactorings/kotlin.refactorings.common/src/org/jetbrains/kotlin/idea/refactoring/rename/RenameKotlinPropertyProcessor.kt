@@ -21,12 +21,11 @@ import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
-import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.codeUsageScope
+import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.references.KtDestructuringDeclarationReference
 import org.jetbrains.kotlin.idea.references.KtReference
-import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -166,7 +165,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
             } else
                 substitutedJavaElement
 
-            renameCallback.pass(elementToProcess)
+            renameCallback.accept(elementToProcess)
         }
 
         val deepestSuperDeclaration = findDeepestOverriddenDeclaration(callableDeclaration)

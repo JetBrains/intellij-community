@@ -104,7 +104,7 @@ class KotlinFindClassUsagesHandler(
             addTask {
                 request.searchInheritors().forEach(
                     PsiElementProcessorAdapter(
-                        PsiElementProcessor<PsiClass> { element ->
+                        PsiElementProcessor { element ->
                             runReadAction {
                                 if (!element.isValid) return@runReadAction false
                                 val isInterface = element.isInterface

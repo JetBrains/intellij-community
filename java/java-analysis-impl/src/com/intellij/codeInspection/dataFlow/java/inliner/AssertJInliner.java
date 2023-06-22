@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.java.inliner;
 
 import com.intellij.codeInsight.Nullability;
@@ -70,6 +70,8 @@ public class AssertJInliner implements CallInliner {
     SpecialField field = SpecialField.fromQualifierType(DfTypes.typedObject(type, Nullability.UNKNOWN));
     // Note that `new ContractFailureProblem(call)` cannot be extracted to a variable here, as its identity is necessary
     // for analysis (see DataFlowInstructionVisitor#myFailingCalls)
+    boolean container = field == SpecialField.COLLECTION_SIZE || field == SpecialField.ARRAY_LENGTH ||
+                        field == SpecialField.STRING_LENGTH || field == SpecialField.OPTIONAL_VALUE;
     switch (Objects.requireNonNull(call.getMethodExpression().getReferenceName())) {
       case "isNotNull", "have", "haveAtLeast", "haveAtLeastOne", "haveAtMost",
         "haveExactly", "hasOnlyElementsOfType", "hasOnlyElementsOfTypes" ->
@@ -77,7 +79,7 @@ public class AssertJInliner implements CallInliner {
       case "isNull" -> builder.ensure(RelationType.EQ, DfTypes.NULL, new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
       case "isPresent", "isNotEmpty", "isNotBlank" -> {
         builder.ensure(RelationType.NE, DfTypes.NULL, new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
-        if (field != null) {
+        if (container) {
           builder.unwrap(field);
           builder.ensure(RelationType.NE, field == SpecialField.OPTIONAL_VALUE ? DfTypes.NULL : DfTypes.intValue(0),
                          new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
@@ -85,7 +87,7 @@ public class AssertJInliner implements CallInliner {
       }
       case "isNotPresent", "isEmpty" -> {
         builder.ensure(RelationType.NE, DfTypes.NULL, new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
-        if (field != null) {
+        if (container) {
           builder.unwrap(field);
           builder.ensure(RelationType.EQ, field == SpecialField.OPTIONAL_VALUE ? DfTypes.NULL : DfTypes.intValue(0),
                          new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);

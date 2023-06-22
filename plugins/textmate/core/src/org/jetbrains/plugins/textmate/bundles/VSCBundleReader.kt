@@ -16,6 +16,7 @@ import org.jetbrains.plugins.textmate.language.preferences.TextMateShellVariable
 import org.jetbrains.plugins.textmate.language.preferences.TextMateSnippet
 import org.jetbrains.plugins.textmate.plist.CompositePlistReader
 import org.jetbrains.plugins.textmate.plist.JsonPlistReader
+import org.jetbrains.plugins.textmate.plist.Plist
 import org.jetbrains.plugins.textmate.plist.PlistValueType
 import java.io.InputStream
 
@@ -56,9 +57,10 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
   }
 
   override fun readGrammars(): Sequence<TextMateGrammar> {
-    return extension.contributes.grammars.asSequence().mapNotNull { grammar ->
-      val plist = resourceLoader(grammar.path)?.let { readPlist(it.buffered(), CompositePlistReader(), grammar.path) }
-                  ?: return@mapNotNull null
+    return extension.contributes.grammars.asSequence().map { grammar ->
+      val plist = lazy {
+        resourceLoader(grammar.path)?.let { readPlist(it.buffered(), CompositePlistReader(), grammar.path) } ?: Plist.EMPTY_PLIST
+      }
 
       val language = languages[grammar.language]
       val fileNameMatchers = language?.let {

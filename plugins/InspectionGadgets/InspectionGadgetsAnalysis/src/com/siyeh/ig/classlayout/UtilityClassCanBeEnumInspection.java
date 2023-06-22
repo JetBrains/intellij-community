@@ -1,8 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -12,7 +14,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.UtilityClassUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -33,11 +34,11 @@ public class UtilityClassCanBeEnumInspection extends BaseInspection implements C
 
   @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new UtilityClassCanBeEnumFix();
   }
 
-  private static class UtilityClassCanBeEnumFix extends InspectionGadgetsFix {
+  private static class UtilityClassCanBeEnumFix extends PsiUpdateModCommandQuickFix {
 
     @Nls
     @NotNull
@@ -47,8 +48,7 @@ public class UtilityClassCanBeEnumInspection extends BaseInspection implements C
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (!PsiUtil.isLanguageLevel5OrHigher(element)) {
         return;
       }
@@ -96,7 +96,7 @@ public class UtilityClassCanBeEnumInspection extends BaseInspection implements C
       if (aClass.isEnum()) {
         return;
       }
-      if (!UtilityClassUtil.isUtilityClass(aClass) || !UtilityClassUtil.hasPrivateEmptyOrNoConstructor(aClass)) {
+      if (!UtilityClassUtil.isUtilityClass(aClass, true, true) || !UtilityClassUtil.hasPrivateEmptyOrNoConstructor(aClass)) {
         return;
       }
       LocalSearchScope scope = null;

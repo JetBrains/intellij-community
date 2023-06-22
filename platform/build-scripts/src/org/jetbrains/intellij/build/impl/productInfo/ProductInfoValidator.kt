@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.productInfo
 
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -57,7 +57,7 @@ internal fun validateProductJson(jsonText: String,
   for (item in productJson.launch) {
     val os = item.os
     check(OsFamily.ALL.any { it.osName == os }) {
-      "Incorrect os name \'$os\' in $relativePathToProductJson/product-info.json"
+      "Incorrect os name \'$os\' in ${relativePathToProductJson}/${PRODUCT_INFO_FILE_NAME}"
     }
     checkFileExists(path = item.launcherPath,
                     description = "$os launcher",

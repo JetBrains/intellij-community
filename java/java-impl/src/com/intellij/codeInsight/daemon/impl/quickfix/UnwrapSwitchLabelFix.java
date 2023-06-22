@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -21,7 +21,6 @@ import com.intellij.util.SmartList;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -81,7 +80,7 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
       unwrapStatement(labelStatement, label, switchStatement);
     }
     else {
-      unwrapExpression((PsiSwitchExpression)block, label);
+      unwrapExpression((PsiSwitchExpression)block);
     }
   }
 
@@ -157,26 +156,13 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
     }
   }
 
-  /**
-   * Unwraps switch expression if it consists of single expression-branch; does nothing otherwise
-   *
-   * @param switchExpression expression to unwrap
-   */
-  public static void unwrapExpression(@NotNull PsiSwitchExpression switchExpression) {
-    unwrapExpression(switchExpression, null);
-  }
-
-  private static void unwrapExpression(@NotNull PsiSwitchExpression switchExpression, @Nullable PsiCaseLabelElement label) {
+  private static void unwrapExpression(@NotNull PsiSwitchExpression switchExpression) {
     PsiCodeBlock body = switchExpression.getBody();
     if (body == null) return;
     PsiStatement[] statements = body.getStatements();
     if (statements.length != 1 || !(statements[0] instanceof PsiSwitchLabeledRuleStatement rule)) return;
     PsiStatement ruleBody = rule.getBody();
-    if (!(ruleBody instanceof PsiExpressionStatement expressionStatement)) return;
-    if (label == null) {
-      new CommentTracker().replaceAndRestoreComments(switchExpression, expressionStatement.getExpression());
-      return;
-    }
+    if (!(ruleBody instanceof PsiExpressionStatement)) return;
     CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(switchExpression);
     if (surrounder != null) {
       CodeBlockSurrounder.SurroundResult surroundResult = surrounder.surround();
@@ -184,7 +170,7 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
       rule = (PsiSwitchLabeledRuleStatement)Objects.requireNonNull(switchExpression.getBody()).getStatements()[0];
       ruleBody = rule.getBody();
       if (ruleBody == null) return;
-      label = Objects.requireNonNull(rule.getCaseLabelElementList()).getElements()[0];
+      PsiCaseLabelElement label = Objects.requireNonNull(rule.getCaseLabelElementList()).getElements()[0];
       List<PsiLocalVariable> variables = collectVariables(label, switchExpression);
       if (variables.isEmpty()) {
         new CommentTracker().replaceAndRestoreComments(switchExpression, ((PsiExpressionStatement)ruleBody).getExpression());

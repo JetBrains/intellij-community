@@ -1,3 +1,4 @@
+<!--suppress PluginXmlDynamicPlugin -->
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.openapi.vcs.actions.VcsContextFactory"
@@ -45,9 +46,12 @@
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.VcsIgnoreManager"
                     serviceImplementation="com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl"/>
 
+    <!-- preload only for performance reasons -->
     <projectService serviceInterface="com.intellij.openapi.vcs.ProjectLevelVcsManager"
-                    serviceImplementation="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl"/>
-    <projectService serviceImplementation="com.intellij.openapi.vcs.impl.VcsInitialization"/>
+                    serviceImplementation="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl" preload="notHeadless"/>
+    <projectService serviceInterface="com.intellij.vcs.console.VcsConsoleTabService"
+                    serviceImplementation="com.intellij.vcs.console.VcsConsoleTabServiceImpl"
+                    headlessImplementation="com.intellij.vcs.console.MockVcsConsoleTabService"/>
     <postStartupActivity implementation="com.intellij.openapi.vcs.impl.VcsInitialization$StartUpActivity"/>
 
     <projectService serviceInterface="com.intellij.openapi.vcs.FileStatusManager"
@@ -94,12 +98,6 @@
       implementation="com.intellij.openapi.vcs.changes.actions.diff.DiffViewerCreatePatchActionProvider$Dialog"/>
     <openapi.vcs.changes.actions.CreatePatchFromChangesAction.Clipboard.ExtensionProvider
       implementation="com.intellij.openapi.vcs.changes.actions.diff.DiffViewerCreatePatchActionProvider$Clipboard"/>
-
-    <intentionAction>
-      <className>com.intellij.vcs.RollbackCurrentLineIntention</className>
-      <bundleName>messages.LangBundle</bundleName>
-      <categoryKey>intention.category.other</categoryKey>
-    </intentionAction>
 
     <openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesWithLocalActionProvider"/>
     <openapi.vcs.changes.actions.CreatePatchFromChangesAction.Dialog.ExtensionProvider implementation="com.intellij.openapi.vcs.history.actions.CreatePatchFromDirectoryAction"/>
@@ -345,6 +343,7 @@
     <notificationGroup id="External Executable Critical Failures" displayType="STICKY_BALLOON" bundle="messages.VcsBundle" key="notification.group.external.executable"/>
 
     <codeInsight.codeVisionProvider implementation="com.intellij.codeInsight.hints.VcsCodeVisionProvider"/>
+    <backgroundPostStartupActivity implementation="com.intellij.codeInsight.ChangesToolwindowPassCache"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
@@ -354,8 +353,6 @@
   <applicationListeners>
     <listener class="com.intellij.openapi.vcs.changes.patch.PatchClipboardListener"
               topic="com.intellij.openapi.application.ApplicationActivationListener"/>
-    <listener class="com.intellij.openapi.vcs.impl.VcsInitialization$ShutDownProjectListener"
-              topic="com.intellij.openapi.project.ProjectCloseListener"/>
     <listener class="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl$TrustListener"
               topic="com.intellij.ide.trustedProjects.TrustedProjectsListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>

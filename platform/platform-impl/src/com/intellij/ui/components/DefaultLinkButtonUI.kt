@@ -40,7 +40,7 @@ internal class DefaultLinkButtonUI : BasicButtonUI() {
   companion object {
     @JvmStatic
     @Suppress("UNUSED_PARAMETER")
-    fun createUI(c: JComponent?) = DefaultLinkButtonUI()
+    fun createUI(c: JComponent?): DefaultLinkButtonUI = DefaultLinkButtonUI()
   }
 
   private var cached: View? = null

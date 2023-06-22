@@ -16,9 +16,12 @@ import java.awt.*;
 import java.util.List;
 
 /**
- * Represents a toolbar with a visual presentation.
- * <p>
- * If the toolbar belongs to a specific component (e.g., a tool window panel), set it via {@link #setTargetComponent(JComponent)}.
+ * A toolbar containing action buttons.
+ * <ul>
+ * <li>Toolbars can be laid out horizontally or vertically.
+ * <li>Toolbars can have a border or be embedded seamlessly in the header of a tool window.
+ * </ul>
+ * If the toolbar belongs to a specific component (such as a tool window panel), set it via {@link #setTargetComponent(JComponent)}.
  *
  * @see ActionManager#createActionToolbar(String, ActionGroup, boolean)
  */

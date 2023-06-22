@@ -5,9 +5,9 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.CancellationException
 
-inline fun <reified T : Any> T.thisLogger() = Logger.getInstance(T::class.java)
+inline fun <reified T : Any> T.thisLogger(): Logger = Logger.getInstance(T::class.java)
 
-inline fun <reified T : Any> logger() = Logger.getInstance(T::class.java)
+inline fun <reified T : Any> logger(): Logger = Logger.getInstance(T::class.java)
 
 inline fun Logger.debug(e: Exception? = null, lazyMessage: () -> @NonNls String) {
   if (isDebugEnabled) {

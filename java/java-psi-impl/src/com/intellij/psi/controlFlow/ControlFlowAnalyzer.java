@@ -648,12 +648,9 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Override
   public void visitField(@NotNull PsiField field) {
-    final PsiExpression initializer = field.getInitializer();
-    if (initializer != null) {
-      startElement(field);
-      initializer.accept(this);
-      finishElement(field);
-    }
+    startElement(field);
+    processVariable(field);
+    finishElement(field);
   }
 
   @Override
@@ -979,7 +976,7 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
         if (labelElementList != null) {
           for (PsiCaseLabelElement element : labelElementList.getElements()) {
             if (element instanceof PsiDefaultCaseLabelElement ||
-                element instanceof PsiPattern && exprType != null && JavaPsiPatternUtil.isUnconditionalForType(element, exprType)) {
+                exprType != null && JavaPsiPatternUtil.isUnconditionalForType(element, exprType)) {
               needToCreateDefault = true;
               break;
             }

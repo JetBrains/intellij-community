@@ -20,7 +20,7 @@ import org.jetbrains.uast.util.classSetOf
 @JvmDefaultWithCompatibility
 interface UastLanguagePlugin {
   companion object {
-    val extensionPointName = ExtensionPointName<UastLanguagePlugin>("org.jetbrains.uast.uastLanguagePlugin")
+    val extensionPointName: ExtensionPointName<UastLanguagePlugin> = ExtensionPointName("org.jetbrains.uast.uastLanguagePlugin")
 
     fun getInstances(): Collection<UastLanguagePlugin> = extensionPointName.extensionList
 
@@ -49,7 +49,7 @@ interface UastLanguagePlugin {
    *
    * Priority is useful when a language N wraps its own elements (NElement) to, for example, Java's PsiElements,
    *  and Java resolves the reference to such wrapped PsiElements, not the original NElement.
-   * In this case N implementation can handle such wrappers in UastConverter earlier than Java's converter,
+   * In this case, N implementation can handle such wrappers in UastConverter earlier than Java's converter,
    *  so N language converter will have a higher priority.
    */
   val priority: Int
@@ -90,6 +90,38 @@ interface UastLanguagePlugin {
   fun getInitializerBody(element: PsiVariable): UExpression? {
     if (element is UVariable) return element.uastInitializer
     return (convertElementWithParent(element, null) as? UVariable)?.uastInitializer
+  }
+
+  fun getContainingAnnotationEntry(uElement: UElement?, annotationsHint: Collection<String>): Pair<UAnnotation, String?>? {
+    return getContainingUAnnotationEntry(uElement)
+  }
+
+  private fun getContainingUAnnotationEntry(uElement: UElement?): Pair<UAnnotation, String?>? {
+    fun tryConvertToEntry(uElement: UElement, parent: UElement, name: String?): Pair<UAnnotation, String?>? {
+      if (uElement !is UExpression) return null
+      val uAnnotation = parent.sourcePsi.toUElementOfType<UAnnotation>() ?: return null
+      val argumentSourcePsi = wrapULiteral(uElement).sourcePsi
+      return uAnnotation to (name ?: uAnnotation.attributeValues.find { wrapULiteral(it.expression).sourcePsi === argumentSourcePsi }?.name)
+    }
+
+    tailrec fun retrievePsiAnnotationEntry(uElement: UElement?, name: String?): Pair<UAnnotation, String?>? {
+      if (uElement == null) return null
+      val parent = uElement.uastParent ?: return null
+      return when (parent) {
+        is UAnnotation -> parent to name
+        is UReferenceExpression -> tryConvertToEntry(uElement, parent, name)
+        is UCallExpression ->
+          if (parent.hasKind(UastCallKind.NESTED_ARRAY_INITIALIZER))
+            retrievePsiAnnotationEntry(parent, null)
+          else
+            tryConvertToEntry(uElement, parent, name)
+        is UPolyadicExpression -> retrievePsiAnnotationEntry(parent, null)
+        is UNamedExpression -> retrievePsiAnnotationEntry(parent, parent.name)
+        else -> null
+      }
+    }
+
+    return retrievePsiAnnotationEntry(uElement, null)
   }
 
   /**

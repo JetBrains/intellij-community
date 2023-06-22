@@ -8,8 +8,10 @@
 :: Ensure IDE_HOME points to the directory where the IDE is installed.
 :: ---------------------------------------------------------------------
 SET "IDE_BIN_DIR=%~dp0"
+PUSHD %IDE_BIN_DIR%
+SET "IDE_BIN_DIR=%CD%"
+POPD
 FOR /F "delims=" %%i in ("%IDE_BIN_DIR%\..") DO SET "IDE_HOME=%%~fi"
-
 :: ---------------------------------------------------------------------
 :: Locate a JRE installation directory which will be used to run the IDE.
 :: Try (in order): @@product_uc@@_JDK, @@vm_options@@.jdk, ..\jbr, JDK_HOME, JAVA_HOME.
@@ -29,8 +31,7 @@ IF "%JRE%" == "" (
 )
 
 IF "%JRE%" == "" (
-  IF "%PROCESSOR_ARCHITECTURE%" == "AMD64" IF EXIST "%IDE_HOME%\jbr" SET "JRE=%IDE_HOME%\jbr"
-  IF "%PROCESSOR_ARCHITECTURE%" == "ARM64" IF EXIST "%IDE_HOME%\jbr" SET "JRE=%IDE_HOME%\jbr"
+  IF EXIST "%IDE_HOME%\jbr" SET "JRE=%IDE_HOME%\jbr"
 )
 
 IF "%JRE%" == "" (
@@ -104,9 +105,9 @@ IF "%VM_OPTIONS_FILE%%USER_VM_OPTIONS_FILE%" == "" (
 :: ---------------------------------------------------------------------
 "%JAVA_EXE%" ^
   -cp "%CLASS_PATH%" ^
-  %ACC% ^
   "-XX:ErrorFile=%USERPROFILE%\java_error_in_@@base_name@@_%%p.log" ^
   "-XX:HeapDumpPath=%USERPROFILE%\java_error_in_@@base_name@@.hprof" ^
+  %ACC% ^
   %IDE_PROPERTIES_PROPERTY% ^
   @@ide_jvm_args@@ ^
   @@main_class_name@@ ^

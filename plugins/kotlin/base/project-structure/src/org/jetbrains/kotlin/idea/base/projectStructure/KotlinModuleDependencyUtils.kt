@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.*
+import com.intellij.util.applyIf
 import org.jetbrains.kotlin.config.KotlinSourceRootType
 import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
@@ -26,11 +27,18 @@ class ModuleDependencyCollector(private val project: Project) {
         fun getInstance(project: Project): ModuleDependencyCollector = project.service()
     }
 
+    enum class CollectionMode {
+        COLLECT_IGNORED,
+        COLLECT_NON_IGNORED;
+    }
+
+
     fun collectModuleDependencies(
         module: Module,
         platform: TargetPlatform,
         sourceRootType: KotlinSourceRootType,
-        includeExportedDependencies: Boolean
+        includeExportedDependencies: Boolean,
+        collectionMode: CollectionMode = CollectionMode.COLLECT_NON_IGNORED,
     ): Collection<IdeaModuleInfo> {
         val debugInfo = if (LOG.isDebugEnabled) ArrayList<String>() else null
 
@@ -39,7 +47,7 @@ class ModuleDependencyCollector(private val project: Project) {
         val dependencyFilter = when {
             module.isHMPPEnabled -> HmppSourceModuleDependencyFilter(platform)
             else -> NonHmppSourceModuleDependenciesFilter(platform)
-        }
+        }.applyIf(collectionMode == CollectionMode.COLLECT_IGNORED, ::NegatedModuleDependencyFilter)
 
         val result = LinkedHashSet<IdeaModuleInfo>()
 

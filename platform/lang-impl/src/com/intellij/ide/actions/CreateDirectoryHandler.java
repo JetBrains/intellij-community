@@ -43,4 +43,10 @@ class CreateDirectoryHandler extends CreateGroupHandler {
   public String getErrorText(String inputString) {
     return myDelegate.getErrorText(inputString);
   }
+
+  @Override
+  public @Nullable String getWarningText(String inputString) {
+    return myDelegate.getWarningText(inputString);
+  }
+
 }

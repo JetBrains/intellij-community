@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable
 
 import com.intellij.codeInsight.intention.LowPriorityAction
-import com.intellij.codeInsight.navigation.NavigationUtil
+import com.intellij.codeInsight.navigation.activateFileWithPsiElement
 import com.intellij.ide.util.EditorHelper
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
@@ -15,9 +15,9 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.builtins.functions.FunctionClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
+import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
-import org.jetbrains.kotlin.idea.core.getOrCreateCompanionObject
 import org.jetbrains.kotlin.idea.quickfix.KotlinCrossLanguageQuickFixAction
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.*
 import org.jetbrains.kotlin.idea.refactoring.canRefactor
@@ -267,7 +267,7 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
 
         val editorForBuilder = EditorHelper.openInEditor(element)
         if (editorForBuilder != editor) {
-            NavigationUtil.activateFileWithPsiElement(element)
+            activateFileWithPsiElement(element)
         }
 
         val callableBuilder =

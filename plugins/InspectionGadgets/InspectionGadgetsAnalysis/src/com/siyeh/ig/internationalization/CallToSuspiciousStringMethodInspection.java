@@ -1,15 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.*;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.DelegatingFix;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,23 +32,21 @@ public class CallToSuspiciousStringMethodInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)infos[0];
-    final List<InspectionGadgetsFix> result = new ArrayList<>();
+    final List<LocalQuickFix> result = new ArrayList<>();
     final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
     final PsiModifierListOwner annotatableQualifier = NonNlsUtils.getAnnotatableQualifier(methodExpression);
     if (annotatableQualifier != null) {
-      final InspectionGadgetsFix fix =
-        new DelegatingFix(new AddAnnotationPsiFix(AnnotationUtil.NON_NLS, annotatableQualifier));
+      final LocalQuickFix fix = new AddAnnotationPsiFix(AnnotationUtil.NON_NLS, annotatableQualifier);
       result.add(fix);
     }
     final PsiModifierListOwner annotatableArgument = NonNlsUtils.getAnnotatableArgument(methodCallExpression);
     if (annotatableArgument != null) {
-      final InspectionGadgetsFix fix =
-        new DelegatingFix(new AddAnnotationPsiFix(AnnotationUtil.NON_NLS, annotatableArgument));
+      final LocalQuickFix fix = new AddAnnotationPsiFix(AnnotationUtil.NON_NLS, annotatableArgument);
       result.add(fix);
     }
-    return result.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+    return result.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   private static class CallToSuspiciousStringMethodVisitor extends BaseInspectionVisitor {

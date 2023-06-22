@@ -3,10 +3,12 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
 import com.intellij.ide.impl.ProjectUtilKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
@@ -15,6 +17,9 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.RegistryManager;
+import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -41,6 +46,7 @@ public final class ErrorStripeUpdateManager implements Disposable {
         }
       }
     }, this);
+    RegistryManager.getInstance().get("ide.highlighting.mode.essential").addListener(new EssentialHighlightingModeListener(), this);
   }
 
   @Override
@@ -55,12 +61,14 @@ public final class ErrorStripeUpdateManager implements Disposable {
     markup.setErrorPanelPopupHandler(new DaemonEditorPopup(myProject, editor));
     markup.setErrorStripTooltipRendererProvider(new DaemonTooltipRendererProvider(myProject, editor));
     markup.setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().getErrorStripeMarkMinHeight());
-    setOrRefreshErrorStripeRenderer(markup, psiFile);
+    if (psiFile != null) {
+      setOrRefreshErrorStripeRenderer(markup, psiFile);
+    }
   }
 
-  void setOrRefreshErrorStripeRenderer(@NotNull EditorMarkupModel editorMarkupModel, @Nullable PsiFile file) {
+  void setOrRefreshErrorStripeRenderer(@NotNull EditorMarkupModel editorMarkupModel, @NotNull PsiFile file) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (!editorMarkupModel.isErrorStripeVisible() || file == null || !DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(file)) {
+    if (!editorMarkupModel.isErrorStripeVisible()) {
       return;
     }
     ErrorStripeRenderer renderer = editorMarkupModel.getErrorStripeRenderer();
@@ -68,23 +76,25 @@ public final class ErrorStripeUpdateManager implements Disposable {
       EditorMarkupModelImpl markupModelImpl = (EditorMarkupModelImpl) editorMarkupModel;
       tlr.refresh(markupModelImpl);
       markupModelImpl.repaintTrafficLightIcon();
-      if (tlr.isValid()) return;
+      if (tlr.isValid()) {
+        return;
+      }
     }
     ModalityState modality = ModalityState.defaultModalityState();
     ProjectUtilKt.executeOnPooledThread(myProject, () -> {
       Editor editor = editorMarkupModel.getEditor();
-      if (editor.isDisposed()) {
+      if (ReadAction.compute(() -> editor.isDisposed() || !file.isValid() || !DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(file))) {
         return;
       }
 
       TrafficLightRenderer tlRenderer = createRenderer(editor, file);
       ApplicationManager.getApplication().invokeLater(() -> {
-        if (editor.isDisposed()) {
+        if (myProject.isDisposed() || editor.isDisposed()) {
           Disposer.dispose(tlRenderer); // would be registered in setErrorStripeRenderer() below
           return;
         }
         editorMarkupModel.setErrorStripeRenderer(tlRenderer);
-      }, modality, myProject.getDisposed());
+      }, modality);
     });
   }
 
@@ -95,5 +105,25 @@ public final class ErrorStripeUpdateManager implements Disposable {
       if (renderer != null) return renderer;
     }
     return new TrafficLightRenderer(myProject, editor);
+  }
+  
+  private class EssentialHighlightingModeListener implements RegistryValueListener {
+    @Override
+    public void afterValueChanged(@NotNull RegistryValue value) {
+      HighlightingSettingsPerFile.getInstance(myProject).incModificationCount();
+      for (FileEditor fileEditor : FileEditorManager.getInstance(myProject).getAllEditors()) {
+        if (fileEditor instanceof TextEditor) {
+          Editor editor = ((TextEditor)fileEditor).getEditor();
+          PsiFile file = myPsiDocumentManager.getCachedPsiFile(editor.getDocument());
+          repaintErrorStripePanel(editor, file);
+        }
+      }
+      
+      // Run all checks after disabling essential highlighting
+      if (!value.asBoolean()) {
+        DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
+        codeAnalyzer.restartToCompleteEssentialHighlighting();
+      }
+    }
   }
 }

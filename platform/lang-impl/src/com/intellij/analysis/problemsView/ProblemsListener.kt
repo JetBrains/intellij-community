@@ -6,7 +6,7 @@ import com.intellij.util.messages.Topic
 interface ProblemsListener {
   companion object {
     @JvmField
-    val TOPIC = Topic(ProblemsListener::class.java)
+    val TOPIC: Topic<ProblemsListener> = Topic(ProblemsListener::class.java)
   }
 
   fun problemAppeared(problem: Problem)

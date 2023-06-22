@@ -30,7 +30,7 @@ class PluginChunkDataSource(
   private var pointer: Int = 0
 
 
-  override fun hasNext() = curChunkData.size != 0
+  override fun hasNext(): Boolean = curChunkData.size != 0
 
   override fun next(): ByteArray {
     return if (curChunkData.size != 0) {

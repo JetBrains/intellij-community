@@ -44,7 +44,7 @@ object SpecifySuperTypeFixFactory {
     }
 
     private fun KtSuperExpression.specifySuperType(superType: TypeStringWithoutArgs) {
-        project.executeWriteCommand(KotlinBundle.message("intention.name.specify.supertype")) {
+        project.executeWriteCommand(KotlinBundle.message("name.specify.supertype.command.title")) {
             val label = this.labelQualifier?.text ?: ""
             val psiFactory = KtPsiFactory(project)
             val replaced = replace(psiFactory.createExpression("super<${superType.longTypeRepresentation}>$label")) as KtSuperExpression
@@ -75,7 +75,7 @@ object SpecifySuperTypeFixFactory {
         //  the candidate would not contain those being removed here.
         candidates.removeAll { superType ->
             candidates.any { otherSuperType ->
-                superType != otherSuperType && otherSuperType isSubTypeOf superType
+                !superType.isEqualTo(otherSuperType) && otherSuperType isSubTypeOf superType
             }
         }
         if (candidates.isEmpty()) return@diagnosticFixFactory listOf()

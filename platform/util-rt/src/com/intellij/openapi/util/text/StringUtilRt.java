@@ -328,7 +328,7 @@ public class StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static List<String> splitHonorQuotes(@NotNull String s, char separator) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     StringBuilder builder = new StringBuilder(s.length());
     char quote = 0;
     boolean isEscaped = false;
@@ -404,7 +404,11 @@ public class StringUtilRt {
    */
   @Contract(pure = true)
   public static boolean isQuotedString(@NotNull String s) {
-    return s.length() > 1 && (s.charAt(0) == '\'' || s.charAt(0) == '\"') && s.charAt(0) == s.charAt(s.length() - 1);
+    int length = s.length();
+    if (length <= 1) return false;
+    char firstChar = s.charAt(0);
+    if (firstChar != '\'' && firstChar != '\"') return false;
+    return firstChar == s.charAt(length - 1);
   }
 
   @NotNull

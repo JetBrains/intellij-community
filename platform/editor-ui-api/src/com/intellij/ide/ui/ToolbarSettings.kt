@@ -17,8 +17,8 @@ interface ToolbarSettings : PersistentStateComponent<ExperimentalToolbarSettings
      *     1 - first inclusion
      *     >1 - not first inclusion
      */
-    const val INCLUSION_STATE = "ide.widget.toolbar.first.inclusion"
-    const val ROLLBACK_ACTION_ID = "RunToolbarRollbackToPrevious"
+    const val INCLUSION_STATE: String = "ide.widget.toolbar.first.inclusion"
+    const val ROLLBACK_ACTION_ID: String = "RunToolbarRollbackToPrevious"
 
     @JvmStatic
     fun getInstance(): ToolbarSettings = ApplicationManager.getApplication().service<ToolbarSettings>()
@@ -36,5 +36,5 @@ interface ToolbarSettings : PersistentStateComponent<ExperimentalToolbarSettings
 class ExperimentalToolbarSettingsState : BaseState() {
   @get:ReportValue
   @get:OptionTag("SHOW_NEW_MAIN_TOOLBAR")
-  var showNewMainToolbar by property(false)
+  var showNewMainToolbar: Boolean by property(false)
 }

@@ -4,19 +4,20 @@ package org.jetbrains.kotlin.tools.projectWizard.templates
 
 
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.tools.projectWizard.Dependencies
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
-import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.WizardGradleRunConfiguration
 import org.jetbrains.kotlin.tools.projectWizard.WizardRunConfiguration
-import org.jetbrains.kotlin.tools.projectWizard.core.*
+import org.jetbrains.kotlin.tools.projectWizard.core.Reader
+import org.jetbrains.kotlin.tools.projectWizard.core.Writer
+import org.jetbrains.kotlin.tools.projectWizard.core.buildList
+import org.jetbrains.kotlin.tools.projectWizard.core.div
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.TemplateSetting
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.*
-import org.jetbrains.kotlin.tools.projectWizard.library.MavenArtifact
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.moduleType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
 import org.jetbrains.kotlin.tools.projectWizard.plugins.pomIR
-import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.DefaultRepository
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Repositories
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.SourcesetType
@@ -39,11 +40,10 @@ object KtorServerTemplate : Template() {
     override fun Writer.getRequiredLibraries(module: ModuleIR): List<DependencyIR> =
         withSettingsOf(module.originalModule) {
             buildList {
-                +DEPENDENCIES.KTOR_SERVER_NETTY
-                +ktorArtifactDependency("ktor-server-html-builder-jvm")
+                +ArtifactBasedLibraryDependencyIR(Dependencies.KTOR.KTOR_SERVER_NETTY, DependencyType.MAIN)
+                +ArtifactBasedLibraryDependencyIR(Dependencies.KTOR.KTOR_SERVER_HTML_BUILDER, DependencyType.MAIN)
                 +ArtifactBasedLibraryDependencyIR(
-                    MavenArtifact(Repositories.KOTLINX_HTML, "org.jetbrains.kotlinx", "kotlinx-html-jvm"),
-                    Versions.KOTLINX.KOTLINX_HTML,
+                    Dependencies.KOTLINX.KOTLINX_HTML,
                     DependencyType.MAIN
                 )
             }
@@ -51,7 +51,6 @@ object KtorServerTemplate : Template() {
 
     override fun Writer.getIrsToAddToBuildFile(module: ModuleIR): List<BuildSystemIR> = buildList {
         +RepositoryIR(Repositories.KTOR)
-        +RepositoryIR(DefaultRepository.JCENTER)
 
         val packageName = module.originalModule.javaPackage(pomIR()).asCodePackage()
         +runTaskIrs(mainClass = "$packageName.ServerKt")
@@ -73,13 +72,4 @@ object KtorServerTemplate : Template() {
     override val interceptionPoints: List<InterceptionPoint<Any>> = listOf(imports, routes, elements)
     override val settings: List<TemplateSetting<*, *>> = listOf()
 
-    private object DEPENDENCIES {
-        val KTOR_SERVER_NETTY = ktorArtifactDependency("ktor-server-netty")
-    }
 }
-
-private fun ktorArtifactDependency(@NonNls name: String) = ArtifactBasedLibraryDependencyIR(
-    MavenArtifact(Repositories.KTOR, "io.ktor", name),
-    Versions.KTOR,
-    DependencyType.MAIN
-)

@@ -23,7 +23,6 @@ abstract class AbstractGradleBuildRootsLocatorTest : TestCase() {
 
     override fun setUp() {
         super.setUp()
-
         val newDisposable = Disposer.newDisposable()
         locator = MyRootsLocator(newDisposable)
         disposable = newDisposable
@@ -81,7 +80,8 @@ abstract class AbstractGradleBuildRootsLocatorTest : TestCase() {
                         sourcePath = listOf(),
                         imports = listOf(),
                         messages = listOf()
-                    )
+                    ),
+                    null
                 )
             )
         }

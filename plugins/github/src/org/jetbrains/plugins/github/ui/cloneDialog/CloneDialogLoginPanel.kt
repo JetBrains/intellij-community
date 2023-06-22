@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.ui.cloneDialog
 
 import com.intellij.collaboration.async.disposingMainScope
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.ide.IdeBundle
@@ -37,7 +38,6 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.ui.GithubLoginPanel
-import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.SwingConstants
@@ -52,13 +52,10 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
 
   private val errorPanel = VerticalListPanel(10)
   private val loginPanel = GithubLoginPanel(GithubApiRequestExecutor.Factory.getInstance()) { name, server ->
-    if (account == null) accountManager.accountsState.value.none {
-      it.name == name && it.server.equals(server, true)
-    }
-    else true
+    if (account == null) accountManager.isAccountUnique(server, name) else true
   }
   private val inlineCancelPanel = simplePanel()
-  private val loginButton = JButton(message("button.login.mnemonic"))
+  private val loginButton = JButton(CollaborationToolsBundle.message("clone.dialog.button.login.mnemonic"))
   private val backLink = LinkLabel<Any?>(IdeBundle.message("button.back"), null).apply {
     verticalAlignment = SwingConstants.CENTER
   }

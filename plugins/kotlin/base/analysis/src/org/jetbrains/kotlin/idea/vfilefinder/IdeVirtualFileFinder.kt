@@ -15,7 +15,7 @@ import java.io.InputStream
 
 class IdeVirtualFileFinder(private val scope: GlobalSearchScope) : VirtualFileFinder() {
     override fun findMetadata(classId: ClassId): InputStream? {
-        val file = findVirtualFileWithHeader(classId.asSingleFqName(), KotlinMetadataFileIndex.KEY)?.takeIf { it.exists() } ?: return null
+        val file = findVirtualFileWithHeader(classId.asSingleFqName(), KotlinMetadataFileIndex.NAME)?.takeIf { it.exists() } ?: return null
 
         return try {
             file.inputStream
@@ -26,10 +26,10 @@ class IdeVirtualFileFinder(private val scope: GlobalSearchScope) : VirtualFileFi
 
     override fun findMetadataTopLevelClassesInPackage(packageFqName: FqName): Set<String>? = null
 
-    override fun hasMetadataPackage(fqName: FqName): Boolean = KotlinMetadataFilePackageIndex.hasSomethingInPackage(fqName, scope)
+    override fun hasMetadataPackage(fqName: FqName): Boolean = hasSomethingInPackage(KotlinMetadataFilePackageIndex.NAME, fqName, scope)
 
     override fun findBuiltInsData(packageFqName: FqName): InputStream? =
-        findVirtualFileWithHeader(packageFqName, KotlinBuiltInsMetadataIndex.KEY)?.inputStream
+        findVirtualFileWithHeader(packageFqName, KotlinBuiltInsMetadataIndex.NAME)?.inputStream
 
     override fun findSourceOrBinaryVirtualFile(classId: ClassId) = findVirtualFileWithHeader(classId)
 
@@ -40,7 +40,7 @@ class IdeVirtualFileFinder(private val scope: GlobalSearchScope) : VirtualFileFi
     }
 
     override fun findVirtualFileWithHeader(classId: ClassId): VirtualFile? =
-        findVirtualFileWithHeader(classId.asSingleFqName(), KotlinClassFileIndex.KEY)
+        findVirtualFileWithHeader(classId.asSingleFqName(), KotlinClassFileIndex.NAME)
 
     private fun findVirtualFileWithHeader(fqName: FqName, key: ID<FqName, Void>): VirtualFile? {
         val iterator = FileBasedIndex.getInstance().getContainingFilesIterator(key, fqName, scope)

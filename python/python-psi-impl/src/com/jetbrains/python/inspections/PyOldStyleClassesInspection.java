@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.google.common.collect.Lists;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -34,6 +33,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -58,7 +58,8 @@ public class PyOldStyleClassesInspection extends PyInspection {
     @Override
     public void visitPyClass(final @NotNull PyClass node) {
       final List<PyClassLikeType> expressions = node.getSuperClassTypes(myTypeEvalContext);
-      List<LocalQuickFix> quickFixes = Lists.newArrayList(new PyConvertToNewStyleQuickFix());
+      List<LocalQuickFix> quickFixes = new ArrayList<>();
+      quickFixes.add(new PyConvertToNewStyleQuickFix());
       if (!expressions.isEmpty()) {
         quickFixes.add(new PyChangeBaseClassQuickFix());
       }
@@ -91,7 +92,8 @@ public class PyOldStyleClassesInspection extends PyInspection {
           if (qName != null && qName.contains("PyQt")) return;
           if (!(type instanceof PyClassType)) return;
         }
-        List<LocalQuickFix> quickFixes = Lists.newArrayList(new PyConvertToNewStyleQuickFix());
+        List<LocalQuickFix> quickFixes = new ArrayList<>();
+        quickFixes.add(new PyConvertToNewStyleQuickFix());
         if (!types.isEmpty()) {
           quickFixes.add(new PyChangeBaseClassQuickFix());
         }

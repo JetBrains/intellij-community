@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -8,7 +8,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.InsertMissingTokenFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInspection.ConvertRecordToClassFix;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.psi.*;
@@ -30,8 +29,8 @@ public class JavaErrorQuickFixProvider implements ErrorQuickFixProvider {
       HighlightFixUtil.registerFixesForExpressionStatement((PsiStatement)parent, registrar);
     }
     if (parent instanceof PsiTryStatement && description.equals(JavaPsiBundle.message("expected.catch.or.finally"))) {
-      registrar.add(new AddExceptionToCatchFix(false));
-      registrar.add(new AddFinallyFix((PsiTryStatement)parent));
+      registrar.add(new AddExceptionToCatchFix(false).asIntention());
+      registrar.add(new AddFinallyFix((PsiTryStatement)parent).asIntention());
     }
     if (parent instanceof PsiSwitchLabeledRuleStatement && description.equals(JavaPsiBundle.message("expected.switch.rule"))) {
       IntentionAction action =
@@ -45,8 +44,7 @@ public class JavaErrorQuickFixProvider implements ErrorQuickFixProvider {
           case PsiKeyword.RECORD -> {
             HighlightUtil.registerIncreaseLanguageLevelFixes(errorElement, HighlightingFeature.RECORDS, registrar);
             if (ConvertRecordToClassFix.tryMakeRecord(errorElement) != null) {
-              IntentionAction action = PriorityIntentionActionWrapper.lowPriority(new ConvertRecordToClassFix(errorElement));
-              registrar.add(action);
+              registrar.add(new ConvertRecordToClassFix(errorElement).asIntention());
             }
           }
           case PsiKeyword.SEALED -> HighlightUtil.registerIncreaseLanguageLevelFixes(errorElement, HighlightingFeature.SEALED_CLASSES, registrar);

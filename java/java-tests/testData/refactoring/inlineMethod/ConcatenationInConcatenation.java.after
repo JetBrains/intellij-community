@@ -1,0 +1,6 @@
+class X {
+
+    String x() {
+        return "🤘" + "heavy" + "⚡️" + "metal" + "🤘";
+  }
+}

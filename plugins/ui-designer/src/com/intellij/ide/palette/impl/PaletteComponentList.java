@@ -13,7 +13,6 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ListActions;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +29,6 @@ public final class PaletteComponentList extends JBList {
   private final PaletteGroup myGroup;
   private int myHoverIndex = -1;
   private int myBeforeClickSelectedRow = -1;
-  private int myDropTargetIndex = -1;
   private boolean myNeedClearSelection = false;
 
   public PaletteComponentList(Project project, PaletteWindow palette, PaletteGroup group) {
@@ -142,13 +140,6 @@ public final class PaletteComponentList extends JBList {
     }
   }
 
-  private void setDropTargetIndex(final int index) {
-    if (index != myDropTargetIndex) {
-      myDropTargetIndex = index;
-      repaint();
-    }
-  }
-
   @Override public void updateUI() {
     setUI(new ComponentListUI());
     invalidate();
@@ -191,28 +182,6 @@ public final class PaletteComponentList extends JBList {
     setSelectedIndex(indexToSelect);
     if (indexToSelect >= 0) {
       ensureIndexIsVisible(indexToSelect);
-    }
-  }
-
-  @Override protected void paintComponent(Graphics g) {
-    super.paintComponent(g);
-    if (myDropTargetIndex >= 0) {
-      int dropLineY;
-      Rectangle rc;
-      if (myDropTargetIndex == myGroup.getItems().length) {
-        rc = getCellBounds(myDropTargetIndex-1, myDropTargetIndex-1);
-        dropLineY = (int)rc.getMaxY()-1;
-      }
-      else {
-        rc = getCellBounds(myDropTargetIndex, myDropTargetIndex);
-        dropLineY = rc.y;
-      }
-      Graphics2D g2d = (Graphics2D) g;
-      g2d.setColor(PlatformColors.BLUE);
-      g2d.setStroke(new BasicStroke(2.0f));
-      g2d.drawLine(rc.x, dropLineY, rc.x+rc.width, dropLineY);
-      g2d.drawLine(rc.x, dropLineY-2, rc.x, dropLineY+2);
-      g2d.drawLine(rc.x+rc.width, dropLineY-2, rc.x+rc.width, dropLineY+2);
     }
   }
 

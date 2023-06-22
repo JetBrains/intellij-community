@@ -26,7 +26,7 @@ import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.psi.search.scope.packageSet.NamedScope
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
-import com.intellij.ui.ColorChooser.chooseColor
+import com.intellij.ui.ColorChooserService
 import com.intellij.ui.ColorUtil.toHex
 import com.intellij.ui.CommonActionsPanel
 import com.intellij.ui.FileColorManager
@@ -50,9 +50,9 @@ import javax.swing.table.AbstractTableModel
 import javax.swing.table.DefaultTableCellRenderer
 
 internal class FileColorsConfigurable(project: Project) : SearchableConfigurable, NoScroll {
-  override fun getId() = "reference.settings.ide.settings.file-colors"
-  override fun getDisplayName() = message("configurable.file.colors")
-  override fun getHelpTopic() = id
+  override fun getId(): String = "reference.settings.ide.settings.file-colors"
+  override fun getDisplayName(): @Nls String = message("configurable.file.colors")
+  override fun getHelpTopic(): String = id
 
   private val enabledFileColors = object : CheckBoxConfigurable() {
     override fun createCheckBox(): JCheckBox {
@@ -106,7 +106,8 @@ internal class FileColorsConfigurable(project: Project) : SearchableConfigurable
 
   private val manager = FileColorManager.getInstance(project) as FileColorManagerImpl
   private val colorsTableModel = FileColorsTableModel(manager)
-  private val configurables = listOf(enabledFileColors, useInEditorTabs, useInProjectView, colorsTableModel)
+  // order matters: color changes should be applied before enabling it in the editor/project view
+  private val configurables = listOf(enabledFileColors, colorsTableModel, useInEditorTabs, useInProjectView)
 
   // UnnamedConfigurable
 
@@ -142,10 +143,10 @@ internal class FileColorsConfigurable(project: Project) : SearchableConfigurable
     return panel
   }
 
-  override fun isModified() = configurables.any { it.isModified }
-  override fun apply() = configurables.forEach { it.apply() }
-  override fun reset() = configurables.forEach { it.reset() }
-  override fun disposeUIResources() = configurables.forEach { it.disposeUIResources() }
+  override fun isModified(): Boolean = configurables.any { it.isModified }
+  override fun apply(): Unit = configurables.forEach { it.apply() }
+  override fun reset(): Unit = configurables.forEach { it.reset() }
+  override fun disposeUIResources(): Unit = configurables.forEach { it.disposeUIResources() }
 }
 
 // table support
@@ -189,7 +190,7 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
     val name = value as? String ?: return null
     if (null != manager.getColor(name)) return name
     val parent = table ?: return null
-    return chooseColor(parent, message("settings.file.colors.dialog.choose.color"), null)?.let { toHex(it) }
+    return ColorChooserService.instance.showDialog(null, parent, message("settings.file.colors.dialog.choose.color"), null)?.let { toHex(it) }
   }
 
   private fun resolveDuplicate(scopeName: String, colorName: String, toSharedList: Boolean): Boolean {
@@ -359,7 +360,7 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
     table.tableHeader.defaultRenderer = TableHeaderRenderer()
     table.setDefaultRenderer(String::class.java, TableScopeRenderer(manager))
     // configure color renderer and its editor
-    val editor = ComboBox<String>(getColors().toTypedArray())
+    val editor: ComboBox<String> = ComboBox(getColors().toTypedArray())
     editor.renderer = ComboBoxColorRenderer(manager)
     table.setDefaultEditor(FileColorConfiguration::class.java, DefaultCellEditor(editor))
     table.setDefaultRenderer(FileColorConfiguration::class.java, TableColorRenderer(manager))

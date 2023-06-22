@@ -42,39 +42,6 @@ public abstract class Fe10BindingQuickFixTestGenerated extends AbstractFe10Bindi
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../idea/tests/testData/quickfix/canBePrimaryConstructorProperty")
-    public static class CanBePrimaryConstructorProperty extends AbstractFe10BindingQuickFixTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("commentAfter.kt")
-        public void testCommentAfter() throws Exception {
-            runTest("../idea/tests/testData/quickfix/canBePrimaryConstructorProperty/commentAfter.kt");
-        }
-
-        @TestMetadata("commentAhead.kt")
-        public void testCommentAhead() throws Exception {
-            runTest("../idea/tests/testData/quickfix/canBePrimaryConstructorProperty/commentAhead.kt");
-        }
-
-        @TestMetadata("protectedOpenVar.kt")
-        public void testProtectedOpenVar() throws Exception {
-            runTest("../idea/tests/testData/quickfix/canBePrimaryConstructorProperty/protectedOpenVar.kt");
-        }
-
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("../idea/tests/testData/quickfix/canBePrimaryConstructorProperty/simple.kt");
-        }
-
-        @TestMetadata("vararg.kt")
-        public void testVararg() throws Exception {
-            runTest("../idea/tests/testData/quickfix/canBePrimaryConstructorProperty/vararg.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/quickfix/kdocMissingDocumentation")
     public static class KdocMissingDocumentation extends AbstractFe10BindingQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {

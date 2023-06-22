@@ -34,7 +34,7 @@ class JarApplicationRunConfigurationImporter : RunConfigurationImporter {
   override fun canImport(typeName: String): Boolean = typeName == "jarApplication"
 
   override fun getConfigurationFactory(): ConfigurationFactory =
-    ConfigurationTypeUtil.findConfigurationType<JarApplicationConfigurationType>(
+    ConfigurationTypeUtil.findConfigurationType(
       JarApplicationConfigurationType::class.java
     ).configurationFactories[0]
 }

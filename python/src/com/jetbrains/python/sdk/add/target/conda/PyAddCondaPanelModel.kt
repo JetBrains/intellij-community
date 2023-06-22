@@ -2,7 +2,9 @@
 package com.jetbrains.python.sdk.add.target.conda
 
 import com.intellij.execution.target.FullPathOnTarget
+import com.intellij.execution.target.LanguageRuntimeType
 import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
@@ -39,7 +41,8 @@ import kotlin.coroutines.CoroutineContext
  */
 class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfiguration?,
                            private val existingSdks: List<Sdk>,
-                           val project: Project) {
+                           val project: Project,
+                           val introspectable: LanguageRuntimeType.Introspectable? = null) {
   private val propertyGraph = PropertyGraph()
 
   /**
@@ -129,6 +132,10 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
    */
   private var condaEnvs: Result<CondaInfo> = Result.failure(Exception(PyBundle.message("python.sdk.conda.no.exec")))
 
+  private val targetCommandExecutor: TargetCommandExecutor =
+    if (introspectable != null) IntrospectableCommandExecutor(introspectable)
+    else TargetEnvironmentRequestCommandExecutor(targetConfiguration?.createEnvironmentRequest(project) ?: LocalTargetEnvironmentRequest())
+
   /**
    * To be called when user sets path to conda and clicks "Load Envs".
    *
@@ -139,7 +146,7 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
                                 progressSink: ProgressSink? = null): Result<List<PyCondaEnv>> = withContext(uiContext) {
     val path = condaPathTextBoxRwProp.get()
     progressSink?.text(PyBundle.message("python.sdk.conda.getting.list.envs"))
-    PyCondaEnv.getEnvs(PyCondaCommand(path.trim(), targetConfiguration))
+    PyCondaEnv.getEnvs(targetCommandExecutor, path.trim())
       .onFailure {
         condaEnvs = Result.failure(it)
         condaEnvModel.removeAllElements()
@@ -167,6 +174,8 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
 
   private fun condaPathIsValid(path: FullPathOnTarget): Boolean = path.matches(condaPathRegex)
 
+  fun isCondaPathValid() = condaPathIsValid(condaPathTextBoxRwProp.get())
+
 
   /**
    * Detects condas in well-known locations so user doesn't have to provide conda path
@@ -176,14 +185,13 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
         // Already set, no need to detect
         condaPathTextBoxRwProp.get().isNotBlank()
       }) return
-    val condaPath = suggestCondaPath(targetConfiguration)
+    val condaPath = suggestCondaPath(targetCommandExecutor)
     if (condaPath == null) {
       withContext(uiContext) {
         condaPathTextBoxRwProp.set("")
       }
       return
     }
-
     withContext(uiContext) {
       condaPathTextBoxRwProp.set(condaPath)
       // Since path is set, lets click button on behalf of user
@@ -217,9 +225,13 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
   /**
    * User clicked on "OK" after choosing either create new or use existing env.
    * The process of creation reported to [progressSink]. Result is SDK or error.
+   *
+   * @param targetConfiguration the target configuration with the corresponding data saved, it must *not* implement
+   * [com.intellij.execution.target.IncompleteTargetEnvironmentConfiguration]
    */
   suspend fun onCondaCreateSdkClicked(uiContext: CoroutineContext,
-                                      progressSink: ProgressSink?): Result<Sdk> {
+                                      progressSink: ProgressSink?,
+                                      targetConfiguration: TargetEnvironmentConfiguration?): Result<Sdk> {
 
     val pyCondaCommand = PyCondaCommand(condaPathTextBoxRwProp.get(), targetConfiguration, project)
     if (condaActionUseExistingEnvRadioRwProp.get()) {

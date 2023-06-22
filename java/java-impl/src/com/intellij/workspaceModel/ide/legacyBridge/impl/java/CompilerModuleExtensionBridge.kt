@@ -11,14 +11,14 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridgeFactory
-import com.intellij.workspaceModel.ide.toVirtualFileUrl
-import com.intellij.workspaceModel.ide.virtualFile
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.JavaModuleSettingsEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addJavaModuleSettingsEntity
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.backend.workspace.virtualFile
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.VersionedEntityStorage
+import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
+import com.intellij.java.workspace.entities.javaSettings
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 
 class CompilerModuleExtensionBridge(
   private val module: ModuleBridge,
@@ -64,9 +64,9 @@ class CompilerModuleExtensionBridge(
 
   override fun getModifiableModel(writable: Boolean): ModuleExtension = throw UnsupportedOperationException()
 
-  override fun commit() = Unit
+  override fun commit(): Unit = Unit
   override fun isChanged(): Boolean = changed
-  override fun dispose() = Unit
+  override fun dispose(): Unit = Unit
 
   private fun updateJavaSettings(updater: JavaModuleSettingsEntity.Builder.() -> Unit) {
     if (diff == null) {
@@ -77,15 +77,15 @@ class CompilerModuleExtensionBridge(
                        ?: error("Could not find entity for $module, ${module.hashCode()}, diff: ${entityStorage.base}")
     val moduleSource = moduleEntity.entitySource
 
-    val oldJavaSettings = javaSettings ?: diff.addJavaModuleSettingsEntity(
-      inheritedCompilerOutput = true,
-      excludeOutput = true,
-      compilerOutputForTests = null,
-      compilerOutput = null,
-      languageLevelId = null,
-      module = moduleEntity,
-      source = moduleSource
-    )
+    val oldJavaSettings = javaSettings ?: (diff addEntity JavaModuleSettingsEntity(inheritedCompilerOutput = true,
+                                                                                   excludeOutput = true,
+                                                                                   entitySource = moduleSource
+    ) {
+      compilerOutput = null
+      compilerOutputForTests = null
+      languageLevelId = null
+      module = moduleEntity
+    })
 
     diff.modifyEntity(JavaModuleSettingsEntity.Builder::class.java, oldJavaSettings, updater)
     changed = true
@@ -155,7 +155,7 @@ class CompilerModuleExtensionBridge(
     return result.toTypedArray()
   }
 
-  companion object : ModuleExtensionBridgeFactory<CompilerModuleExtensionBridge> {
+  class Factory : ModuleExtensionBridgeFactory<CompilerModuleExtensionBridge> {
     override fun createExtension(module: ModuleBridge,
                                  entityStorage: VersionedEntityStorage,
                                  diff: MutableEntityStorage?): CompilerModuleExtensionBridge =

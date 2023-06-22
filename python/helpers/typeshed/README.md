@@ -17,6 +17,9 @@ contributors can be found in [CONTRIBUTING.md](CONTRIBUTING.md).  **Please read
 it before submitting pull requests; do not report issues with annotations to
 the project the stubs are for, but instead report them here to typeshed.**
 
+Further documentation on stub files, typeshed, and Python's typing system in
+general, can also be found at https://typing.readthedocs.io/en/latest/.
+
 Typeshed supports Python versions 2.7 and 3.7 and up.
 
 ## Using

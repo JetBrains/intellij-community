@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Interface which should be implemented in order to disable specific range highlighters
@@ -34,5 +35,5 @@ public interface MarkupEditorFilter {
    * @param editor the editor to check for.
    * @return true if the highlighter is available, false otherwise.
    */
-  boolean avaliableIn(Editor editor);
+  boolean avaliableIn(@NotNull Editor editor);
 }

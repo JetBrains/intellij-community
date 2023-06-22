@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.DeprecatedProjectBuilderForImport;
 import com.intellij.projectImport.ProjectImportBuilder;
@@ -32,7 +33,6 @@ import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
 import org.jetbrains.idea.maven.importing.MavenImportUtil;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
@@ -49,8 +49,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import static icons.OpenapiIcons.RepositoryLibraryLogo;
 import static org.jetbrains.idea.maven.server.MavenServerManager.WRAPPED_MAVEN;
@@ -59,7 +57,7 @@ import static org.jetbrains.idea.maven.server.MavenServerManager.WRAPPED_MAVEN;
  * Do not use this project import builder directly.
  * <p>
  * Internal stable Api
- * Use {@link com.intellij.ide.actions.ImportModuleAction#doImport} to import (attach) a new project.
+ * Use {@link com.intellij.ide.actions.ImportModuleAction#createFromWizard} to import (attach) a new project.
  * Use {@link com.intellij.ide.impl.ProjectUtil#openOrImport} to open (import) a new project.
  */
 public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> implements DeprecatedProjectBuilderForImport {
@@ -70,7 +68,6 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
 
     private MavenGeneralSettings myGeneralSettingsCache;
     private MavenImportingSettings myImportingSettingsCache;
-
     private Path myImportRootDirectory;
     private VirtualFile myImportProjectFile;
     private List<VirtualFile> myFiles;
@@ -126,12 +123,48 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     return true;
   }
 
+  public VirtualFile getProjectFileToImport() {
+    var projectFile = getParameters().myImportProjectFile;
+    if (null != projectFile) return projectFile;
+
+    var importRootDirectory = getParameters().myImportRootDirectory;
+    if (null != importRootDirectory) {
+      return VirtualFileManager.getInstance().findFileByNioPath(importRootDirectory);
+    }
+
+    return null;
+  }
+
+  private List<Module> commitWithAsyncBuilder(Project project,
+                                              ModifiableModuleModel model,
+                                              ModulesProvider modulesProvider,
+                                              ModifiableArtifactModel artifactModel) {
+    var projectFile = getProjectFileToImport();
+    if (null == projectFile) {
+      LOG.warn("Project file missing");
+      return List.of();
+    }
+
+    IdeUIModifiableModelsProvider modelsProvider = null;
+    if (model != null) {
+      modelsProvider = new IdeUIModifiableModelsProvider(project, model, (ModulesConfigurator)modulesProvider, artifactModel);
+    }
+
+    return new MavenProjectAsyncBuilder().commitSync(project, projectFile, modelsProvider);
+  }
+
 
   @Override
   public List<Module> commit(Project project,
                              ModifiableModuleModel model,
                              ModulesProvider modulesProvider,
                              ModifiableArtifactModel artifactModel) {
+    // TODO: registry key
+    var asyncBuilder = true;
+    if (asyncBuilder) {
+      return commitWithAsyncBuilder(project, model, modulesProvider, artifactModel);
+    }
+
     boolean isVeryNewProject = project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == Boolean.TRUE;
     MavenImportingSettings importingSettings = getImportingSettings();
     if (isVeryNewProject) {
@@ -196,7 +229,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
                          importingSettings, generalSettings);
   }
 
-  @Nullable
+  @NotNull
   private List<Module> performImport(Project project,
                                      ModifiableModuleModel model,
                                      ModulesProvider modulesProvider,
@@ -237,28 +270,32 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
       manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(selectedProjects), selectedProfiles, null);
     }
 
-    manager.waitForReadingCompletion();
     //noinspection UnresolvedPluginConfigReference
     if (ApplicationManager.getApplication().isHeadlessEnvironment() &&
         !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode() &&
         (!MavenUtil.isMavenUnitTestModeEnabled() ||
          Registry.is("ide.force.maven.import", false)) // workaround for inspection integration test
     ) {
-      Promise<List<Module>> promise = manager.scheduleImportAndResolve();
-      manager.waitForResolvingCompletion();
-      try {
-        return promise.blockingGet(0);
-      }
-      catch (TimeoutException | ExecutionException e) {
-        throw new RuntimeException(e);
-      }
+      return manager.importMavenProjectsSync(Map.of(), null);
     }
 
-    boolean isFromUI = model != null;
-    if (isFromUI) {
-      return manager.importProjects(new IdeUIModifiableModelsProvider(project, model, (ModulesConfigurator)modulesProvider, artifactModel));
+    var projectsToImport = new HashMap<MavenProject, MavenProjectChanges>();
+    for (var selectedProject : selectedProjects) {
+      var projectToImport = manager.getProjectsTree().findProject(selectedProject.getFile());
+      if (null != projectToImport) {
+        projectsToImport.put(projectToImport, MavenProjectChanges.ALL);
+      }
     }
-    return manager.importProjects();
+    boolean isFromUI = model != null;
+    List<Module> createdModules;
+    if (isFromUI) {
+      var modelsProvider = new IdeUIModifiableModelsProvider(project, model, (ModulesConfigurator)modulesProvider, artifactModel);
+      createdModules = manager.importMavenProjectsSync(projectsToImport, modelsProvider);
+    }
+    else {
+      createdModules = manager.importMavenProjectsSync(projectsToImport, null);
+    }
+    return createdModules;
   }
 
   private @Nullable Module createPreviewModule(Project project, List<MavenProject> selectedProjects) {
@@ -327,20 +364,9 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     });
   }
 
-  @Deprecated(forRemoval = true)
-  public boolean setSelectedProfiles(MavenExplicitProfiles profiles) {
-    return runConfigurationProcess(MavenProjectBundle.message("maven.scanning.projects"), new MavenTask() {
-      @Override
-      public void run(MavenProgressIndicator indicator) {
-        readMavenProjectTree(indicator);
-        indicator.setText2("");
-      }
-    });
-  }
-
   private static boolean runConfigurationProcess(@NlsContexts.DialogTitle String message, MavenTask p) {
     try {
-      MavenUtil.run(null, message, p);
+      MavenUtil.run(message, p);
     }
     catch (MavenProcessCanceledException e) {
       return false;
@@ -351,7 +377,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
   private void readMavenProjectTree(MavenProgressIndicator process) {
     MavenProjectsTree tree = new MavenProjectsTree(getProjectOrDefault());
     tree.addManagedFilesWithProfiles(getParameters().myFiles, MavenExplicitProfiles.NONE);
-    tree.updateAll(false, getGeneralSettings(), process);
+    tree.updateAll(false, getGeneralSettings(), process.getIndicator());
 
     getParameters().myMavenProjectTree = tree;
     getParameters().mySelectedProjects = tree.getRootProjects();
@@ -386,7 +412,6 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     if (getParameters().myGeneralSettingsCache == null) {
       ApplicationManager.getApplication().runReadAction(() -> {
         getParameters().myGeneralSettingsCache = getDirectProjectsSettings().getGeneralSettings().clone();
-        getParameters().myGeneralSettingsCache.setUseMavenConfig(true);
         List<VirtualFile> rootFiles = getParameters().myFiles;
         if (rootFiles == null) {
           rootFiles = Collections.singletonList(LocalFileSystem.getInstance().findFileByNioFile(getRootPath()));

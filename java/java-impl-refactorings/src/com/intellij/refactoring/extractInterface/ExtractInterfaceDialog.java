@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractInterface;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -34,11 +20,12 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.Set;
 
 class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
 
-  ExtractInterfaceDialog(Project project, PsiClass sourceClass) {
-    super(project, sourceClass, collectMembers(sourceClass), ExtractInterfaceHandler.getRefactoringName());
+  ExtractInterfaceDialog(Project project, PsiClass sourceClass, Set<PsiElement> selectedMembers) {
+    super(project, sourceClass, collectMembers(sourceClass, selectedMembers), ExtractInterfaceHandler.getRefactoringName());
     for (MemberInfo memberInfo : myMemberInfos) {
       final PsiMember member = memberInfo.getMember();
       if (member instanceof PsiMethod &&
@@ -50,8 +37,8 @@ class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
     init();
   }
 
-  private static List<MemberInfo> collectMembers(PsiClass c) {
-    return MemberInfo.extractClassMembers(c, new MemberInfoBase.Filter<>() {
+  private static List<MemberInfo> collectMembers(PsiClass c, Set<PsiElement> selectedMembers) {
+    List<MemberInfo> infos = MemberInfo.extractClassMembers(c, new MemberInfoBase.Filter<>() {
       @Override
       public boolean includeMember(PsiMember element) {
         if (element instanceof PsiMethod) {
@@ -72,6 +59,12 @@ class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
         return false;
       }
     }, true);
+    for (MemberInfo info : infos) {
+      if (selectedMembers.contains(info.getMember())) {
+        info.setChecked(true);
+      }
+    }
+    return infos;
   }
 
   @Override

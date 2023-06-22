@@ -288,4 +288,5 @@
     <mouse-shortcut keystroke="ctrl button2"/>
   </action>
   <action id="CheckinProject"/>
+  <action id="ZoomOutIdeAction"/>
 </keymap>

@@ -5,6 +5,7 @@ import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.JvmtiError;
@@ -41,6 +42,11 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
   private final Map<Requestor, Set<EventRequest>> myRequestorToBelongedRequests = new HashMap<>();
   private EventRequestManager myEventRequestManager;
+
+  /**
+   * It specifies the thread performing suspend-all stepping.
+   * All events in other threads are ignored.
+   */
   private @Nullable ThreadReference myFilterThread;
 
   public RequestManagerImpl(DebugProcessImpl debugProcess) {
@@ -347,7 +353,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     LOG.assertTrue(findRequestor(request) != null);
     try {
       final ThreadReference filterThread = myFilterThread;
-      if (filterThread != null) {
+      if (filterThread != null && DebuggerSession.filterBreakpointsDuringSteppingUsingDebuggerEngine()) {
         if (request instanceof BreakpointRequest) {
           ((BreakpointRequest)request).addThreadFilter(filterThread);
         }
@@ -362,13 +368,13 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     }
     catch (InternalException e) {
       switch (e.errorCode()) {
-        case JvmtiError.DUPLICATE : LOG.info(e); break;
+        case JvmtiError.DUPLICATE -> LOG.info(e);
+        case JvmtiError.NOT_FOUND -> {
+          //event request not found
+          //there could be no requests after hotswap
+        }
 
-        case JvmtiError.NOT_FOUND : break;
-        //event request not found
-        //there could be no requests after hotswap
-
-        default: LOG.error(e);
+        default -> LOG.error(e);
       }
     }
     return CompletableFuture.completedFuture(null);

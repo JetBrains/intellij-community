@@ -92,7 +92,7 @@ public class BrowserStarter {
     if (isOutdated()) {
       LOG.info("Opening " + hostAndPort + " aborted");
     }
-    else if (NetUtils.canConnectToRemoteSocket(hostAndPort.getHost(), hostAndPort.getPort())) {
+    else if (canConnect(hostAndPort.getHost(), hostAndPort.getPort())) {
       openPageNow();
     }
     else if (attemptNumber < myMaximumAttempt) {
@@ -107,6 +107,21 @@ public class BrowserStarter {
     else {
       LOG.info("#" + attemptNumber + " check " + hostAndPort + " failed. Too many failed checks. Failed to open " + hostAndPort);
       showBrowserOpenTimeoutNotification();
+    }
+  }
+
+  private static boolean canConnect(String host, int port) {
+    if (NetUtils.canConnectToRemoteSocket(host, port)) {
+      return true;
+    }
+    else if ("localhost".equals(host)) {
+      // `new Socket("localhost", port)` cannot connect to IPv6-only socket
+      // without -Djava.net.preferIPv6Addresses=true
+      // => try IPv6 localhost explicitly
+      return NetUtils.canConnectToRemoteSocket("::1", port);
+    }
+    else {
+      return false;
     }
   }
 
@@ -127,13 +142,13 @@ public class BrowserStarter {
     JobScheduler.getScheduler().schedule(() -> openPageNow(), 1000, TimeUnit.MILLISECONDS);
   }
 
-  private void openPageNow() {
+  protected void openPageNow() {
     if (!isOutdated()) {
       JavaScriptDebuggerStarter.Util.startDebugOrLaunchBrowser(myRunConfiguration, mySettings);
     }
   }
 
-  private boolean isOutdated() {
+  protected boolean isOutdated() {
     return myOutdated.getAsBoolean();
   }
 

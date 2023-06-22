@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.application.ApplicationManager
@@ -33,7 +33,6 @@ class PythonPackagesUpdater : ProjectActivity {
     }
   }
 
-  @Suppress("BlockingMethodInNonBlockingContext")
   private fun cacheExpired(path: Path): Boolean {
     val fileTime = Files.getLastModifiedTime(path)
     val expirationTime = fileTime.toInstant().plus(Duration.ofDays(1))

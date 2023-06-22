@@ -10,6 +10,10 @@ public class IncorrectPlacement extends <warning descr="Nullability annotation i
     IncorrectPlacement.@Nullable Inner a2;
   }
   
+  void fqn() {
+    <warning descr="Annotation on fully-qualified name must be placed before the last component">@Nullable</warning> java.lang.String[] strs;
+  }
+  
   <warning descr="Primitive type members cannot be annotated">@NotNull</warning> int[] data;
   
   class Inner {}

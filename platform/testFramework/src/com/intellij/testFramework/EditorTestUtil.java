@@ -3,14 +3,19 @@ package com.intellij.testFramework;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory;
+import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.lang.Language;
+import com.intellij.lang.folding.FoldingBuilder;
+import com.intellij.lang.folding.LanguageFolding;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -18,6 +23,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
@@ -30,22 +36,27 @@ import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManage
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
-import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
+import com.intellij.openapi.fileEditor.impl.text.CodeFoldingState;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,7 +67,7 @@ import java.awt.geom.Rectangle2D;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.locks.LockSupport;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
@@ -695,16 +706,8 @@ public final class EditorTestUtil {
     return result[0];
   }
 
-  public static void waitForLoading(Editor editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    if (EditorUtil.isRealFileEditor(editor)) {
-      UIUtil.dispatchAllInvocationEvents(); // if editor is loaded synchronously,
-                                            // background loading thread stays blocked in 'invokeAndWait' call
-      while (!AsyncEditorLoader.isEditorLoaded(editor)) {
-        LockSupport.parkNanos(100_000_000);
-        UIUtil.dispatchAllInvocationEvents();
-      }
-    }
+  @RequiresEdt
+  public static void waitForLoading(@SuppressWarnings("unused") Editor editor) {
   }
 
   public static void testUndoInEditor(@NotNull Editor editor, @NotNull Runnable runnable) {
@@ -783,8 +786,7 @@ public final class EditorTestUtil {
     List<Integer> offs = ContainerUtil.map(caretModel.getAllCarets(), Caret::getOffset);
     List<Integer> caretsOffsets = offs.isEmpty() ? List.of(-1) : offs;
     caretModel.removeSecondaryCarets();
-    CharSequence documentSequence = editor.getDocument().getCharsSequence();
-
+    CharSequence documentSequence = InjectedLanguageEditorUtil.getTopLevelEditor(editor).getDocument().getCharsSequence();
 
     IdentifierHighlighterPassFactory.doWithHighlightingEnabled(fixture.getProject(), fixture.getProjectDisposable(), () -> {
       for (Integer caretsOffset : caretsOffsets) {
@@ -794,7 +796,7 @@ public final class EditorTestUtil {
 
         UsefulTestCase.assertSameLinesWithFile(
           answersFilePath,
-          renderTextWithHighlihgtingInfos(fixture.doHighlighting(), documentSequence, acceptableKeyNames),
+          renderTextWithHighlightingInfos(fixture.doHighlighting(), documentSequence, acceptableKeyNames),
           () -> "Failed at:\n " +
                 documentSequence.subSequence(0, caretsOffset) +
                 "<caret>" +
@@ -803,7 +805,7 @@ public final class EditorTestUtil {
       }});
   }
 
-  private static @NotNull String renderTextWithHighlihgtingInfos(@NotNull List<? extends HighlightInfo> highlightInfos,
+  private static @NotNull String renderTextWithHighlightingInfos(@NotNull List<? extends HighlightInfo> highlightInfos,
                                                                  @NotNull CharSequence documentSequence,
                                                                  @Nullable Set<String> acceptableKeyNames) {
     List<Pair<Integer, String>> sortedMarkers = highlightInfos.stream()
@@ -956,5 +958,44 @@ public final class EditorTestUtil {
         encodingProjectManager.setDefaultCharsetName(oldProject);
       }
     }
-  }}
+  }
+
+  public static void buildInitialFoldingsInBackground(@NotNull Editor editor) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    assert !ApplicationManager.getApplication().isWriteAccessAllowed();
+    CodeFoldingState foldingState;
+    try {
+      foldingState = ReadAction.nonBlocking(() -> {
+          Project project = editor.getProject();
+          if (project == null || editor.isDisposed()) {
+            return null;
+          }
+          if (!((FoldingModelEx)editor.getFoldingModel()).isFoldingEnabled()) {
+            return null;
+          }
+          Document document = editor.getDocument();
+          PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+          if (psiFile == null || !supportsDumbModeFolding(psiFile)) {
+            return null;
+          }
+          return CodeFoldingManager.getInstance(project).buildInitialFoldings(document);
+        })
+        .submit(AppExecutorUtil.getAppExecutorService()).get();
+    }
+    catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
+    if (foldingState != null) {
+      foldingState.setToEditor(editor);
+    }
+  }
+  private static boolean supportsDumbModeFolding(@NotNull PsiFile file) {
+    FileViewProvider viewProvider = file.getViewProvider();
+    for (Language language : viewProvider.getLanguages()) {
+      FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(language);
+      if (foldingBuilder != null && !DumbService.isDumbAware(foldingBuilder)) return false;
+    }
+    return true;
+  }
+}
 

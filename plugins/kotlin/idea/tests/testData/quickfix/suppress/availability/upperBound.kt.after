@@ -1,0 +1,5 @@
+// "Suppress 'FINAL_UPPER_BOUND' for class Some" "true"
+
+class ReferenceInClassWhereConstraint
+@Suppress("FINAL_UPPER_BOUND")
+class Some<T> where T: ReferenceInClas<caret>sWhereConstraint

@@ -170,11 +170,13 @@ abstract class ToolWindowManager {
    * @see AllIcons.Actions#MoveToBottomLeft ... com.intellij.icons.AllIcons.Actions#MoveToWindow icon set
    */
   open fun getLocationIcon(id: String, fallbackIcon: Icon): Icon = fallbackIcon
+
+  open fun isStripeButtonShow(toolWindow: ToolWindow): Boolean = false
 }
 
 class RegisterToolWindowTaskBuilder @PublishedApi internal constructor(private val id: String) {
   @JvmField
-  var anchor = ToolWindowAnchor.BOTTOM
+  var anchor: ToolWindowAnchor = ToolWindowAnchor.BOTTOM
   @JvmField
   var stripeTitle: Supplier<@NlsContexts.TabTitle String>? = null
   @JvmField

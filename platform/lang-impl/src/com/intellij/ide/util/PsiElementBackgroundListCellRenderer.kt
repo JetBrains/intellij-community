@@ -4,8 +4,8 @@ package com.intellij.ide.util
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PsiElementListCellRenderer.ItemMatchers
 import com.intellij.navigation.LocationPresentation
-import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.ui.popup.util.PopupUtil
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiElement
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ColoredListCellRenderer
@@ -34,7 +34,7 @@ internal class PsiElementBackgroundListCellRenderer(
 
   private val myComponent = PsiElementListCellRendererComponent()
 
-  var usedInPopup = false
+  var usedInPopup: Boolean = false
     set(value) {
       if (ExperimentalUI.isNewUI()) {
         PopupUtil.configListRendererFixedHeight(myComponent)

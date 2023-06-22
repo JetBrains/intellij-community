@@ -131,8 +131,14 @@ public abstract class ProjectLevelVcsManager {
   @Deprecated(forRemoval = true)
   public abstract void addMessageToConsoleWindow(@Nls String message, TextAttributes attributes);
 
+  /**
+   * @see com.intellij.vcs.console.VcsConsoleTabService
+   */
   public abstract void addMessageToConsoleWindow(@Nls @Nullable String message, @NotNull ConsoleViewContentType contentType);
 
+  /**
+   * @see com.intellij.vcs.console.VcsConsoleTabService
+   */
   public abstract void addMessageToConsoleWindow(@Nullable VcsConsoleLine line);
 
   public abstract @NotNull VcsShowSettingOption getStandardOption(@NotNull VcsConfiguration.StandardOption option,
@@ -214,36 +220,37 @@ public abstract class ProjectLevelVcsManager {
   public abstract @NotNull VcsAnnotationLocalChangesListener getAnnotationLocalChangesListener();
 
   /**
-   * Shows VCS console.
-   * <p>
-   * Does nothing if {@code vcs.showConsole} turned off.
+   * @deprecated Use {@link com.intellij.vcs.console.VcsConsoleTabService}
    */
   @RequiresEdt
+  @Deprecated
   public abstract void showConsole();
 
   /**
-   * Shows VCS console and then performs the given command.
-   * <p>
-   * Does nothing if {@code vcs.showConsole} turned off.
+   * @deprecated Use {@link com.intellij.vcs.console.VcsConsoleTabService}
    */
   @RequiresEdt
+  @Deprecated
   public abstract void showConsole(@Nullable Runnable then);
 
   /**
-   * Navigates to the end in VCS console.
+   * @deprecated Use {@link com.intellij.vcs.console.VcsConsoleTabService}
    */
   @RequiresEdt
+  @Deprecated
   public abstract void scrollConsoleToTheEnd();
+
+  /**
+   * @deprecated Use {@link com.intellij.vcs.console.VcsConsoleTabService}
+   */
+  @RequiresEdt
+  @Deprecated
+  public abstract boolean isConsoleVisible();
 
   /**
    * Execute the task on pooled thread, delayed until core vcs services are initialized.
    */
   public abstract void runAfterInitialization(@NotNull Runnable runnable);
-
-  /**
-   * Checks whether VCS console is enabled and VCS tool window exists.
-   */
-  public abstract boolean isConsoleVisible();
 
   /**
    * Whether vcs mappings were already processed after opening the project.

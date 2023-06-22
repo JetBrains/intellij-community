@@ -13,7 +13,7 @@ final class EmptyListIterator<E> extends EmptyIterator<E> implements ListIterato
   private EmptyListIterator() {
   }
 
-  private static final EmptyListIterator<Object> INSTANCE = new EmptyListIterator<Object>();
+  private static final EmptyListIterator<Object> INSTANCE = new EmptyListIterator<>();
 
   public static <E> EmptyListIterator<E> getInstance() {
     //noinspection unchecked

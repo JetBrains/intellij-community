@@ -22,5 +22,7 @@
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.java.psi" />
+    <orderEntry type="module" module-name="kotlin.base.code-insight" />
+    <orderEntry type="module" module-name="kotlin.base.statistics" />
   </component>
 </module>

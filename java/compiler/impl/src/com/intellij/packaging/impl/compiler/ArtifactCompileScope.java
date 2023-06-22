@@ -14,7 +14,6 @@ import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.elements.ArtifactElementType;
 import com.intellij.packaging.impl.elements.ProductionModuleOutputElementType;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,7 +72,7 @@ public final class ArtifactCompileScope {
     }
 
     Set<Artifact> artifacts = new HashSet<>();
-    final Set<Module> modules = ContainerUtil.set(compileScope.getAffectedModules());
+    final Set<Module> modules = Set.of(compileScope.getAffectedModules());
     final List<Module> allModules = Arrays.asList(ModuleManager.getInstance(project).getModules());
     for (Artifact artifact : artifactManager.getArtifacts()) {
       if (artifact.isBuildOnMake()) {

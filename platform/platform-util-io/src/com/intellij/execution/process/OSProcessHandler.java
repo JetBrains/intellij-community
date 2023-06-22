@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.diagnostic.LoadingState;
@@ -52,7 +52,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
 
   public static @NotNull ModalityState getDefaultModality() {
     Application app = ApplicationManager.getApplication();
-    return app == null ? ModalityState.NON_MODAL : app.getDefaultModalityState();
+    return app == null ? ModalityState.nonModal() : app.getDefaultModalityState();
   }
 
   /**
@@ -179,7 +179,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
 
   @Override
   protected void onOSProcessTerminated(int exitCode) {
-    if (myModality != ModalityState.NON_MODAL) {
+    if (myModality != ModalityState.nonModal()) {
       ProgressManager.getInstance().runProcess(() -> super.onOSProcessTerminated(exitCode), new EmptyProgressIndicator(myModality));
     }
     else {

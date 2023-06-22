@@ -17,7 +17,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.io.PathExecLazyValue;
 import com.intellij.ui.UIBundle;
@@ -27,9 +26,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Supplier;
 
 final class GoToWslHomeAction extends FileChooserAction implements LightEditCompatible {
-  private static final NotNullLazyValue<Boolean> ourHasWsl = PathExecLazyValue.create("wsl.exe");
+  private static final Supplier<Boolean> ourHasWsl = PathExecLazyValue.create("wsl.exe");
 
   @Override
   protected void update(@NotNull FileChooserPanel panel, @NotNull AnActionEvent e) {
@@ -46,7 +46,7 @@ final class GoToWslHomeAction extends FileChooserAction implements LightEditComp
       }
     });
 
-    if (vms.size() == 0) {
+    if (vms.isEmpty()) {
       Messages.showWarningDialog(e.getProject(), UIBundle.message("file.chooser.wsl.missing.text"), UIBundle.message("file.chooser.wsl.missing.title"));
     }
     else if (vms.size() == 1) {

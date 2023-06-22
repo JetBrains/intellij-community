@@ -23,10 +23,11 @@ public final class ContainerUtilRt {
    * @deprecated Use {@link ArrayList#ArrayList()} instead
    */
   @NotNull
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @Contract(value = " -> new", pure = true)
   public static <T> ArrayList<T> newArrayList() {
-    return new ArrayList<T>();
+    return new ArrayList<>();
   }
 
   /**
@@ -37,7 +38,7 @@ public final class ContainerUtilRt {
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <T> ArrayList<T> newArrayList(@NotNull T... elements) {
-    ArrayList<T> list = new ArrayList<T>(elements.length);
+    ArrayList<T> list = new ArrayList<>(elements.length);
     Collections.addAll(list, elements);
     return list;
   }
@@ -50,7 +51,7 @@ public final class ContainerUtilRt {
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <T> LinkedHashSet<T> newLinkedHashSet(@NotNull T... elements) {
-    return new LinkedHashSet<T>(Arrays.asList(elements));
+    return new LinkedHashSet<>(Arrays.asList(elements));
   }
 
   /**
@@ -149,7 +150,7 @@ public final class ContainerUtilRt {
   @ApiStatus.ScheduledForRemoval
   public static <T, V> List<V> map2List(@NotNull Collection<? extends T> collection, @NotNull Function<? super T, ? extends V> mapper) {
     if (collection.isEmpty()) return emptyList();
-    List<V> list = new ArrayList<V>(collection.size());
+    List<V> list = new ArrayList<>(collection.size());
     for (final T t : collection) {
       list.add(mapper.fun(t));
     }

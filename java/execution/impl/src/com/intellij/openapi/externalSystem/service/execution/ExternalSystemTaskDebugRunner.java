@@ -81,8 +81,10 @@ public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
   }
 
   @Nullable
-  private RunContentDescriptor doGetRunContentDescriptor(@NotNull ExternalSystemRunnableState state,
-                                                         @NotNull ExecutionEnvironment environment) throws ExecutionException {
+  private static RunContentDescriptor doGetRunContentDescriptor(
+    @NotNull ExternalSystemRunnableState state,
+    @NotNull ExecutionEnvironment environment
+  ) throws ExecutionException {
     RunContentDescriptor runContentDescriptor = createProcessToDebug(state, environment);
     if (runContentDescriptor == null) return null;
 
@@ -92,24 +94,30 @@ public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
     if (executionConsole instanceof BuildView) {
       return runContentDescriptor;
     }
-    RunContentDescriptor descriptor =
-      new RunContentDescriptor(runContentDescriptor.getExecutionConsole(), runContentDescriptor.getProcessHandler(),
-                               runContentDescriptor.getComponent(), runContentDescriptor.getDisplayName(),
-                               runContentDescriptor.getIcon(), null,
-                               runContentDescriptor.getRestartActions()) {
-        @Override
-        public boolean isHiddenContent() {
-          return true;
-        }
-      };
+    RunContentDescriptor descriptor = new RunContentDescriptor(
+      runContentDescriptor.getExecutionConsole(),
+      runContentDescriptor.getProcessHandler(),
+      runContentDescriptor.getComponent(),
+      runContentDescriptor.getDisplayName(),
+      runContentDescriptor.getIcon(),
+      null,
+      runContentDescriptor.getRestartActions()
+    ) {
+      @Override
+      public boolean isHiddenContent() {
+        return true;
+      }
+    };
     descriptor.setRunnerLayoutUi(runContentDescriptor.getRunnerLayoutUi());
     return descriptor;
   }
 
   @NotNull
-  private XDebugProcess jvmProcessToDebug(@NotNull XDebugSession session,
-                                          ExternalSystemRunnableState state,
-                                          @NotNull ExecutionEnvironment env) throws ExecutionException {
+  private static XDebugProcess jvmProcessToDebug(
+    @NotNull XDebugSession session,
+    ExternalSystemRunnableState state,
+    @NotNull ExecutionEnvironment env
+  ) throws ExecutionException {
     String debugPort = String.valueOf(state.getDebugPort());
     RemoteConnection connection = state.isDebugServerProcess()
                                   ? new RemoteConnection(true, "127.0.0.1", debugPort, true)
@@ -135,8 +143,10 @@ public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
   }
 
   @Nullable
-  private RunContentDescriptor createProcessToDebug(ExternalSystemRunnableState state,
-                                                    @NotNull ExecutionEnvironment env) throws ExecutionException {
+  private static RunContentDescriptor createProcessToDebug(
+    ExternalSystemRunnableState state,
+    @NotNull ExecutionEnvironment env
+  ) throws ExecutionException {
 
     RunContentDescriptor result;
 
@@ -145,8 +155,7 @@ public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
         @Override
         @NotNull
         public XDebugProcess start(@NotNull XDebugSession session) throws ExecutionException {
-          XDebugProcess nonJvmDebugProcess = state.startDebugProcess(session, env);
-          return nonJvmDebugProcess != null ? nonJvmDebugProcess : jvmProcessToDebug(session, state, env);
+          return jvmProcessToDebug(session, state, env);
         }
       }).getRunContentDescriptor();
     }

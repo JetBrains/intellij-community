@@ -44,7 +44,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
     }
     return o1.getName().compareToIgnoreCase(o2.getName());
   };
-  static final String STUB_SCHEMA_NAME = "New Schema";
+  static final @Nls String STUB_SCHEMA_NAME = JsonBundle.message("new.schema");
   private @Nls String myError;
 
   @NotNull

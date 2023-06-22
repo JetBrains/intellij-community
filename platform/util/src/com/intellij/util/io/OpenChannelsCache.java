@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.io.FileChannelInterruptsRetryer.FileChannelIdempotentOperation;
 import com.intellij.util.io.stats.CachedChannelsStatistics;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -9,13 +10,23 @@ import org.jetbrains.annotations.NotNull;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.OpenOption;
+import java.nio.file.Path;
 import java.util.*;
+
+import static java.nio.file.StandardOpenOption.*;
 
 /**
  * Cache of {@link FileChannel}s.
  * Cache eviction policy is kind of FIFO -- the first channel cached is the first candidate to drop
  * from the cache, given it is not used right now.
+ * <p>
+ * Cache provides 2 ways to access FileChannel: {@link #executeOp(Path, FileChannelOperation, boolean)} and {@link #executeIdempotentOp(Path, FileChannelIdempotentOperation, boolean)}.
+ * In a first method lambda supplied with {@link ResilientFileChannel} channel wrapper -- see its description for details
+ * about that 'reliable' means there. In the second method lambda must be idempotent, but supplied with direct {@link FileChannel}
+ * without wrapping.
  */
 @ApiStatus.Internal
 final class OpenChannelsCache { // TODO: Will it make sense to have a background thread, that flushes the cache by timeout?
@@ -25,8 +36,7 @@ final class OpenChannelsCache { // TODO: Will it make sense to have a background
   private int myLoadCount;
 
   //@GuardedBy("myCacheLock")
-  @NotNull
-  private final Map<Path, ChannelDescriptor> myCache;
+  private final @NotNull Map<Path, ChannelDescriptor> myCache;
 
   private final transient Object myCacheLock = new Object();
 
@@ -42,17 +52,21 @@ final class OpenChannelsCache { // TODO: Will it make sense to have a background
   }
 
   @FunctionalInterface
-  interface ChannelProcessor<T> {
-    T process(@NotNull FileChannel channel) throws IOException;
+  public interface FileChannelOperation<T> {
+    T execute(@NotNull ResilientFileChannel channel) throws IOException;
   }
 
   /**
-   * Parameter {@param processor} should be idempotent because sometimes calculation might be restarted
-   * when file channel was closed by thread interruption
+   * Note: implementation supplies {@link ResilientFileChannel} to processor. {@link ResilientFileChannel}
+   * is a FileChannel implementation that tries to ensure each FileChannel operation is completed,
+   * or not started at all, but not interrupted in the middle. If something interrupts 'elementary'
+   * FileChannel ops, like read/write -- those ops are retried, invisibly for processor -- see class
+   * description for details. But it comes with small performance cost, and als the {@link ResilientFileChannel}
+   * does not implement some FileChannel operations, so be aware.
    */
-  <T> T useChannel(@NotNull Path path,
-                   @NotNull ChannelProcessor<T> processor,
-                   boolean read) throws IOException {
+  <T> T executeOp(final @NotNull Path path,
+                  final @NotNull FileChannelOperation<T> operation,
+                  final boolean read) throws IOException {
     ChannelDescriptor descriptor;
     synchronized (myCacheLock) {
       descriptor = myCache.get(path);
@@ -87,7 +101,7 @@ final class OpenChannelsCache { // TODO: Will it make sense to have a background
 
     //channel access is NOT guarded by the myCacheLock
     try {
-      return processor.process(descriptor.getChannel());
+      return operation.execute(descriptor.channel());
     }
     finally {
       synchronized (myCacheLock) {
@@ -95,6 +109,57 @@ final class OpenChannelsCache { // TODO: Will it make sense to have a background
       }
     }
   }
+
+  /**
+   * Parameter {@param operation} should be idempotent because sometimes calculation might be restarted
+   * when file channel was closed by thread interruption
+   */
+  <T> T executeIdempotentOp(final @NotNull Path path,
+                            final @NotNull FileChannelIdempotentOperation<T> operation,
+                            final boolean read) throws IOException {
+    ChannelDescriptor descriptor;
+    synchronized (myCacheLock) {
+      descriptor = myCache.get(path);
+      if (descriptor == null) {
+        boolean somethingDropped = releaseOverCachedChannels();
+        descriptor = new ChannelDescriptor(path, read);
+        myCache.put(path, descriptor);
+        if (somethingDropped) {
+          myMissCount++;
+        }
+        else {
+          myLoadCount++;
+        }
+      }
+      else if (!read && descriptor.isReadOnly()) {
+        if (descriptor.isLocked()) {
+          descriptor = new ChannelDescriptor(path, false);
+        }
+        else {
+          // re-open as write
+          closeChannel(path);
+          descriptor = new ChannelDescriptor(path, false);
+          myCache.put(path, descriptor);
+        }
+        myMissCount++;
+      }
+      else {
+        myHitCount++;
+      }
+      descriptor.lock();
+    }
+
+    //channel access is NOT guarded by the myCacheLock
+    try {
+      return descriptor.channel().executeOperation(operation);
+    }
+    finally {
+      synchronized (myCacheLock) {
+        descriptor.unlock();
+      }
+    }
+  }
+
 
   void closeChannel(Path path) throws IOException {
     synchronized (myCacheLock) {
@@ -130,18 +195,19 @@ final class OpenChannelsCache { // TODO: Will it make sense to have a background
   }
 
   static final class ChannelDescriptor implements Closeable {
-    private int myLockCount = 0;
-    private final @NotNull UnInterruptibleFileChannel myChannel;
-    private final boolean myReadOnly;
+    private static final OpenOption[] MODIFIABLE_OPTS = {READ, WRITE, CREATE};
+    private static final OpenOption[] READ_ONLY_OPTS = {READ};
 
-    private static final OpenOption[] MODIFIABLE_OPTS = {StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE};
-    private static final OpenOption[] READ_ONLY_OPTS = {StandardOpenOption.READ};
+    private int lockCount = 0;
+    private final @NotNull ResilientFileChannel channel;
+    private final boolean readOnly;
+
 
     ChannelDescriptor(@NotNull Path file, boolean readOnly) throws IOException {
-      myReadOnly = readOnly;
-      myChannel = Objects.requireNonNull(FileUtilRt.doIOOperation(lastAttempt -> {
+      this.readOnly = readOnly;
+      channel = Objects.requireNonNull(FileUtilRt.doIOOperation(lastAttempt -> {
         try {
-          return new UnInterruptibleFileChannel(file, readOnly ? READ_ONLY_OPTS : MODIFIABLE_OPTS);
+          return new ResilientFileChannel(file, readOnly ? READ_ONLY_OPTS : MODIFIABLE_OPTS);
         }
         catch (NoSuchFileException ex) {
           Path parent = file.getParent();
@@ -157,36 +223,36 @@ final class OpenChannelsCache { // TODO: Will it make sense to have a background
     }
 
     boolean isReadOnly() {
-      return myReadOnly;
+      return readOnly;
     }
 
     void lock() {
-      myLockCount++;
+      lockCount++;
     }
 
     void unlock() {
-      myLockCount--;
+      lockCount--;
     }
 
     boolean isLocked() {
-      return myLockCount != 0;
+      return lockCount != 0;
     }
 
-    @NotNull UnInterruptibleFileChannel getChannel() {
-      return myChannel;
+    @NotNull ResilientFileChannel channel() {
+      return channel;
     }
 
     @Override
     public void close() throws IOException {
-      myChannel.close();
+      channel.close();
     }
 
     @Override
     public String toString() {
       return "ChannelDescriptor{" +
-             "locks=" + myLockCount +
-             ", channel=" + myChannel +
-             ", readOnly=" + myReadOnly +
+             "locks=" + lockCount +
+             ", channel=" + channel +
+             ", readOnly=" + readOnly +
              '}';
     }
   }

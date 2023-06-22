@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.inspectopedia.extractor.data;
 
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +26,7 @@ public class Inspection implements Comparable<Inspection> {
   public String briefDescription = "";
   public String extendedDescription = "";
   public boolean hasOptionsPanel = false;
-  public OptionsPanelInfo optionsPanelInfo = null;
+  public List<OptionsPanelInfo> options = null;
 
   public Inspection(String id,
                     String name,
@@ -38,7 +38,7 @@ public class Inspection implements Comparable<Inspection> {
                     boolean appliesToDialects,
                     boolean partOfCodeCleanup,
                     boolean enabledByDefault,
-                    OptionsPanelInfo optionsPanelInfo) {
+                    List<OptionsPanelInfo> options) {
     this.id = id;
     this.name = name;
     this.severity = severity;
@@ -49,8 +49,8 @@ public class Inspection implements Comparable<Inspection> {
     this.appliesToDialects = appliesToDialects;
     this.isCleanup = partOfCodeCleanup;
     this.isEnabledDefault = enabledByDefault;
-    this.hasOptionsPanel = optionsPanelInfo != null;
-    this.optionsPanelInfo = optionsPanelInfo;
+    this.hasOptionsPanel = options != null;
+    this.options = options;
   }
 
   public Inspection() {
@@ -132,13 +132,13 @@ public class Inspection implements Comparable<Inspection> {
            language.equals(that.language) &&
            Objects.equals(briefDescription, that.briefDescription) &&
            Objects.equals(extendedDescription, that.extendedDescription) &&
-           Objects.equals(optionsPanelInfo, that.optionsPanelInfo);
+           Objects.equals(options, that.options);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(id, name, severity, path, language, appliesToDialects, isCleanup, isEnabledDefault, briefDescription,
-                        extendedDescription, hasOptionsPanel, optionsPanelInfo);
+                        extendedDescription, hasOptionsPanel, options);
   }
 
   @Override

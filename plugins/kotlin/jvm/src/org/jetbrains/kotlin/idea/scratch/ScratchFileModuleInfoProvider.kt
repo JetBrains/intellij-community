@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.idea.core.script.ScriptRelatedModuleNameFile
 import org.jetbrains.kotlin.idea.util.projectStructure.getModule
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition.Companion.STD_SCRIPT_SUFFIX
 
-class ScratchFileModuleInfoProvider() : ScratchFileListener {
+class ScratchFileModuleInfoProvider : ScratchFileListener {
     companion object {
         private val LOG = logger<ScratchFileModuleInfoProvider>()
     }

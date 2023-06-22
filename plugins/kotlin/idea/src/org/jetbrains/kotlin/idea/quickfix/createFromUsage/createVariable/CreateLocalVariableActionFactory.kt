@@ -58,7 +58,7 @@ object CreateLocalVariableActionFactory : KotlinSingleIntentionActionFactory() {
 
             val actualContainer = when (container) {
                 is KtBlockExpression -> container
-                else -> ConvertToBlockBodyIntention.convert(container as KtDeclarationWithBody, true).bodyExpression!!
+                else -> ConvertToBlockBodyIntention.Holder.convert(container as KtDeclarationWithBody, true).bodyExpression!!
             } as KtBlockExpression
 
             if (actualContainer != container) {

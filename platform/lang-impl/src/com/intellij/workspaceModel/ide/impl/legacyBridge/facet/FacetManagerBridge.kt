@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.facet
 
-import com.google.common.collect.HashBiMap
 import com.intellij.facet.*
 import com.intellij.facet.impl.FacetModelBase
 import com.intellij.facet.impl.FacetUtil
@@ -15,23 +14,23 @@ import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.util.JDOMExternalizable
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.workspaceModel.ide.JpsImportedEntitySource
-import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.platform.workspace.jps.JpsImportedEntitySource
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
-import com.intellij.workspaceModel.ide.impl.jps.serialization.CustomFacetRelatedEntitySerializer
+import com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializationContext
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor
 import com.intellij.workspaceModel.ide.toExternalSource
-import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleSettingsBase
-import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
+import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.jps.entities.FacetEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleSettingsBase
+import com.intellij.platform.workspace.jps.entities.modifyEntity
 import org.jetbrains.jps.model.serialization.facet.FacetState
 
 class FacetManagerBridge(module: Module) : FacetManagerBase() {
-  internal val module = module as ModuleBridge
-  internal val model = FacetModelBridge(this.module)
+  internal val module: ModuleBridge = module as ModuleBridge
+  internal val model: FacetModelBridge = FacetModelBridge(this.module)
 
   private fun isThisModule(moduleEntity: ModuleEntity) = moduleEntity.name == module.name
 
@@ -87,7 +86,7 @@ class FacetManagerBridge(module: Module) : FacetManagerBase() {
       FacetUtil.loadFacetConfiguration(configuration, config)
       val name = state.name
       val facet: F = createFacet(module, type, name, configuration, underlyingFacet)
-      if (facet is JDOMExternalizable) {
+      if (facet is JDOMExternalizable && config != null) {
         //todo[nik] remove
         facet.readExternal(config)
       }
@@ -132,7 +131,7 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
     // Initialize facet bridges after loading from cache
     val moduleEntity = (moduleBridge.diff ?: moduleBridge.entityStorage.current).resolve(moduleBridge.moduleEntityId)
                        ?: error("Module entity should be available")
-    val facetTypeToSerializer = CustomFacetRelatedEntitySerializer.EP_NAME.extensionList.associateBy { it.supportedFacetType }
+    val facetTypeToSerializer = BaseIdeSerializationContext.CUSTOM_FACET_RELATED_ENTITY_SERIALIZER_EP.extensionList.associateBy { it.supportedFacetType }
     WorkspaceFacetContributor.EP_NAME.extensions.forEach { facetContributor ->
       if (facetContributor.rootEntityType != FacetEntity::class.java) {
         facetContributor.getRootEntitiesByModuleEntity(moduleEntity).forEach {
@@ -200,15 +199,6 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
       facet.readExternal(loadedConfiguration)
     }
     return facet
-  }
-
-  fun populateFrom(mapping: HashBiMap<FacetEntity, Facet<*>>) {
-    updateDiffOrStorage {
-      for ((entity, facet) in mapping) {
-        this.addMapping(entity, facet)
-      }
-    }
-    facetsChanged()
   }
 
   public override fun facetsChanged() {

@@ -193,7 +193,7 @@ private val inspectionLikePostProcessingGroup =
         RemoveRedundantOverrideVisibilityProcessing(),
         MoveLambdaOutsideParenthesesProcessing(),
         intentionBasedProcessing(ConvertToStringTemplateIntention(), writeActionNeeded = false) {
-            ConvertToStringTemplateIntention.shouldSuggestToConvert(it)
+            ConvertToStringTemplateIntention.Holder.shouldSuggestToConvert(it)
         },
         intentionBasedProcessing(UsePropertyAccessSyntaxIntention(), writeActionNeeded = false),
         UninitializedVariableReferenceFromInitializerToThisReferenceProcessing(),
@@ -226,7 +226,6 @@ private val inspectionLikePostProcessingGroup =
         intentionBasedProcessing(RemoveUnnecessaryParenthesesIntention()),
         intentionBasedProcessing(DestructureIntention(), writeActionNeeded = false),
         inspectionBasedProcessing(SimplifyAssertNotNullInspection()),
-        intentionBasedProcessing(RemoveRedundantCallsOfConversionMethodsIntention()),
         LiftReturnInspectionBasedProcessing(),
         LiftAssignmentInspectionBasedProcessing(),
         intentionBasedProcessing(RemoveEmptyPrimaryConstructorIntention()),
@@ -295,7 +294,7 @@ private fun shouldConvertToRawString(element: KtBinaryExpression): Boolean {
     fun KtStringTemplateEntry.isNewline(): Boolean =
         this is KtEscapeStringTemplateEntry && unescapedValue == "\n"
 
-    val middleNewlinesExist = ConvertToStringTemplateIntention.buildReplacement(element)
+    val middleNewlinesExist = ConvertToStringTemplateIntention.Holder.buildReplacement(element)
         .entries
         .dropLastWhile { it.isNewline() }
         .any { it.isNewline() }

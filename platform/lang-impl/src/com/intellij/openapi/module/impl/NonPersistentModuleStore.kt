@@ -43,7 +43,7 @@ private object NonPersistentStateStorageManager : StateStorageManager {
   override val componentManager: ComponentManager? = null
   override fun getStateStorage(storageSpec: Storage): StateStorage = NonPersistentStateStorage
   override fun addStreamProvider(provider: StreamProvider, first: Boolean) = Unit
-  override fun removeStreamProvider(clazz: Class<out StreamProvider>) = Unit
+  override fun removeStreamProvider(aClass: Class<out StreamProvider>) = Unit
   override fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation): StateStorage? = null
   override fun expandMacro(collapsedPath: String): Path = Path.of(collapsedPath)
 }

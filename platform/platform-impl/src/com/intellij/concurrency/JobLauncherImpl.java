@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.concurrency;
 
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,11 +10,11 @@ import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
-import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
+import kotlin.coroutines.CoroutineContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +26,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 public final class JobLauncherImpl extends JobLauncher {
   static final int CORES_FORK_THRESHOLD = 1;
@@ -162,6 +164,7 @@ public final class JobLauncherImpl extends JobLauncher {
   private static final class VoidForkJoinTask implements Job<Void> {
     private final Runnable myAction;
     private final Consumer<? super Future<?>> myOnDoneCallback;
+    private final CoroutineContext myContext;
     private enum Status { STARTED, EXECUTED } // null=not yet executed, STARTED=started execution, EXECUTED=finished
     private volatile Status myStatus;
     private final ForkJoinTask<Void> myForkJoinTask = new ForkJoinTask<>() {
@@ -178,7 +181,9 @@ public final class JobLauncherImpl extends JobLauncher {
       protected boolean exec() {
         myStatus = Status.STARTED;
         try {
-          myAction.run();
+          try (AccessToken ignored = ThreadContext.installThreadContext(myContext, true)) {
+            myAction.run();
+          }
           complete(null); // complete manually before calling callback
         }
         catch (Throwable throwable) {
@@ -188,7 +193,9 @@ public final class JobLauncherImpl extends JobLauncher {
         finally {
           myStatus = Status.EXECUTED;
           if (myOnDoneCallback != null) {
-            myOnDoneCallback.consume(this);
+            try (AccessToken ignored = ThreadContext.installThreadContext(myContext, true)) {
+              myOnDoneCallback.accept(this);
+            }
           }
         }
         return true;
@@ -198,6 +205,7 @@ public final class JobLauncherImpl extends JobLauncher {
     private VoidForkJoinTask(@NotNull Runnable action, @Nullable Consumer<? super Future<?>> onDoneCallback) {
       myAction = action;
       myOnDoneCallback = onDoneCallback;
+      myContext = ThreadContext.currentThreadContext().minusKey(kotlinx.coroutines.Job.Key);
     }
 
     private void submit() {
@@ -273,6 +281,8 @@ public final class JobLauncherImpl extends JobLauncher {
       private final int mySeq;
       private final T myFirstTask;
 
+      private final CoroutineContext myContext = ThreadContext.currentThreadContext();
+
       private MyProcessQueueTask(int seq, @Nullable T firstTask) {
         mySeq = seq;
         myFirstTask = firstTask;
@@ -294,7 +304,7 @@ public final class JobLauncherImpl extends JobLauncher {
                 result[0] = true;
                 break;
               }
-              try {
+              try (AccessToken ignored = ThreadContext.installThreadContext(myContext, true)) {
                 ProgressManager.checkCanceled();
                 if (!thingProcessor.process(element)) {
                   break;

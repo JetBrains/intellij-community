@@ -1,11 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.configurationStore.saveSettings
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
+import com.intellij.ide.plugins.ContainerDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.startup.StartupManagerEx
@@ -17,10 +17,9 @@ import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.client.ClientAwareComponentManager
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.impl.stores.IProjectStore
-import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
@@ -32,7 +31,6 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.FrameTitleBuilder
-import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.project.ProjectStoreOwner
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.serviceContainer.ComponentManagerImpl
@@ -42,10 +40,10 @@ import com.intellij.util.childScope
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.messages.impl.MessageBusEx
+import com.intellij.util.namedChildScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -55,16 +53,20 @@ import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
 
 @Internal
-open class ProjectImpl(filePath: Path, projectName: String?)
-  : ClientAwareComponentManager(ApplicationManager.getApplication() as ComponentManagerImpl), ProjectEx, ProjectStoreOwner {
+open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName: String?)
+  : ClientAwareComponentManager(parent = parent,
+                                coroutineScope = parent.getCoroutineScope().namedChildScope("ProjectImpl")), ProjectEx, ProjectStoreOwner {
   companion object {
-    protected val LOG = Logger.getInstance(ProjectImpl::class.java)
+    private val LOG = logger<ProjectImpl>()
 
     @Internal
-    val RUN_START_UP_ACTIVITIES = Key.create<Boolean>("RUN_START_UP_ACTIVITIES")
+    val RUN_START_UP_ACTIVITIES: Key<Boolean> = Key.create("RUN_START_UP_ACTIVITIES")
 
     @JvmField
-    val CREATION_TIME = Key.create<Long>("ProjectImpl.CREATION_TIME")
+    val CREATION_TIME: Key<Long> = Key.create("ProjectImpl.CREATION_TIME")
+
+    @JvmField
+    val PROJECT_PATH = Key.create<Path>("ProjectImpl.PROJECT_PATH")
 
     @TestOnly
     const val LIGHT_PROJECT_NAME: @NonNls String = "light_temp"
@@ -73,55 +75,40 @@ open class ProjectImpl(filePath: Path, projectName: String?)
 
     @TestOnly
     @JvmField
-    val CREATION_TEST_NAME = Key.create<String>("ProjectImpl.CREATION_TEST_NAME")
+    val CREATION_TEST_NAME: Key<String> = Key.create("ProjectImpl.CREATION_TEST_NAME")
 
     @TestOnly
     @JvmField
-    val USED_TEST_NAMES = Key.create<String>("ProjectImpl.USED_TEST_NAMES")
+    val USED_TEST_NAMES: Key<String> = Key.create("ProjectImpl.USED_TEST_NAMES")
 
-    internal fun CoroutineScope.preloadServicesAndCreateComponents(project: ProjectImpl, preloadServices: Boolean) {
-      if (preloadServices) {
-        val app = ApplicationManager.getApplication()
-        if (project.isLight || app.isHeadlessEnvironment || app.isUnitTestMode) {
-          launch {
-            project.serviceAsync<FileEditorManager>().join()
-            project.serviceAsync<WolfTheProblemSolver>().join()
-            project.serviceAsync<DaemonCodeAnalyzer>().join()
-          }
-        }
-
-        // for light projects, preload only services that are essential
-        // ("await" means "project component loading activity is completed only when all such services are completed")
-        project.preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
-                                activityPrefix = "project ",
-                                syncScope = this,
-                                onlyIfAwait = project.isLight,
-                                asyncScope = project.asyncPreloadServiceScope)
-      }
-
-      launch {
-        project.createComponentsNonBlocking()
-      }
+    // for light projects, preload only services that are essential
+    // ("await" means "project component loading activity is completed only when all such services are completed")
+    internal fun CoroutineScope.preloadServices(project: ProjectImpl) {
+      project.preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
+                              activityPrefix = "project ",
+                              syncScope = this,
+                              onlyIfAwait = project.isLight,
+                              asyncScope = project.asyncPreloadServiceScope)
     }
   }
 
   // used by Rider
   @Internal
   @JvmField
-  val asyncPreloadServiceScope = coroutineScope.childScope()
+  val asyncPreloadServiceScope: CoroutineScope = coroutineScope.childScope()
 
   private val earlyDisposable = AtomicReference(Disposer.newDisposable())
 
   @Volatile
-  var isTemporarilyDisposed = false
+  var isTemporarilyDisposed: Boolean = false
     private set
 
   private val isLight: Boolean
 
   private var cachedName: String?
 
-  private var componentStoreValue = SynchronizedClearableLazy {
-    ApplicationManager.getApplication().getService(ProjectStoreFactory::class.java).createStore(this)
+  private val componentStoreValue = SynchronizedClearableLazy {
+    ApplicationManager.getApplication().service<ProjectStoreFactory>().createStore(this)
   }
 
   init {
@@ -178,21 +165,15 @@ open class ProjectImpl(filePath: Path, projectName: String?)
           val frame = WindowManager.getInstance().getFrame(this) ?: return@Runnable
           val title = FrameTitleBuilder.getInstance().getProjectTitle(this) ?: return@Runnable
           frame.title = title
-        }, ModalityState.NON_MODAL, disposed)
+        }, ModalityState.nonModal(), disposed)
       }
     }
   }
 
-  final override var componentStore: IProjectStore
+  final override val componentStore: IProjectStore
     get() = componentStoreValue.value
-    set(value) {
-      if (componentStoreValue.isInitialized()) {
-        throw java.lang.IllegalStateException("store is already initialized")
-      }
-      componentStoreValue.value = value
-    }
 
-  final override fun getProjectFilePath() = componentStore.projectFilePath.systemIndependentPath
+  final override fun getProjectFilePath(): String = componentStore.projectFilePath.systemIndependentPath
 
   final override fun getProjectFile(): VirtualFile? {
     return LocalFileSystem.getInstance().findFileByNioFile(componentStore.projectFilePath)
@@ -204,9 +185,9 @@ open class ProjectImpl(filePath: Path, projectName: String?)
     return LocalFileSystem.getInstance().findFileByNioFile(componentStore.projectBasePath)
   }
 
-  final override fun getBasePath() = componentStore.projectBasePath.systemIndependentPath
+  final override fun getBasePath(): String = componentStore.projectBasePath.systemIndependentPath
 
-  final override fun getPresentableUrl() = componentStore.presentableUrl
+  final override fun getPresentableUrl(): String = componentStore.presentableUrl
 
   override fun getLocationHash(): String {
     val store = componentStore
@@ -218,7 +199,6 @@ open class ProjectImpl(filePath: Path, projectName: String?)
     }
     else {
       path = store.projectFilePath
-      @Suppress("UsePropertyAccessSyntax")
       prefix = getName()
     }
     return "$prefix${Integer.toHexString(path.systemIndependentPath.hashCode())}"
@@ -228,10 +208,10 @@ open class ProjectImpl(filePath: Path, projectName: String?)
     return LocalFileSystem.getInstance().findFileByNioFile(componentStore.workspacePath)
   }
 
-  final override fun isLight() = isLight
+  final override fun isLight(): Boolean = isLight
 
   @Internal
-  final override fun activityNamePrefix() = "project "
+  final override fun activityNamePrefix(): String = "project "
 
   @TestOnly
   fun setTemporarilyDisposed(value: Boolean) {
@@ -291,7 +271,7 @@ open class ProjectImpl(filePath: Path, projectName: String?)
                                  "}---end of dispose trace---\n")
   }
 
-  final override fun isDisposed() = super.isDisposed() || isTemporarilyDisposed
+  final override fun isDisposed(): Boolean = super.isDisposed() || isTemporarilyDisposed
 
   @Synchronized
   final override fun dispose() {
@@ -354,7 +334,7 @@ open class ProjectImpl(filePath: Path, projectName: String?)
     return projectManager != null && projectManager.isProjectOpened(this)
   }
 
-  override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl) = pluginDescriptor.projectContainerDescriptor
+  override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor = pluginDescriptor.projectContainerDescriptor
 
   override fun scheduleSave() {
     SaveAndSyncHandler.getInstance().scheduleSave(SaveAndSyncHandler.SaveTask(project = this))

@@ -77,7 +77,7 @@ public class TargetOptionsComponent extends JPanel {
     targetLevelColumn.setMinWidth(width);
     targetLevelColumn.setMaxWidth(width);
 
-    new TableSpeedSearch(myTable);
+    TableSpeedSearch.installOn(myTable);
 
     JLabel label = new JLabel(JavaCompilerBundle.message("settings.project.bytecode.version"));
     label.setLabelFor(myCbProjectTargetLevel);

@@ -13,9 +13,9 @@ import org.jetbrains.annotations.Nullable;
 public interface ExceptionLineRefiner {
   /**
    * @param element element to check
-   * @return element to position caret to if element matches; null if it doesn't match
+   * @return element to position caret to (on the same line) and reason if the element matches; null if it doesn't match
    */
-  @Nullable PsiElement matchElement(@NotNull PsiElement element);
+  @Nullable ExceptionLineRefiner.RefinerMatchResult matchElement(@NotNull PsiElement element);
 
   /**
    * @return ExceptionInfo object associated with this refiner if it matches some exception
@@ -26,11 +26,40 @@ public interface ExceptionLineRefiner {
 
   /**
    * Provides a way to merge several lines into single refiner.
-   * 
+   *
    * @param line next line
    * @return ExceptionLineRefiner if next line is successfully consumed; null otherwise
    */
   default @Nullable ExceptionLineRefiner consumeNextLine(String line) {
     return null;
+  }
+
+  /**
+   * @param target the closest psi element to the reason, which is placed on the line from a stacktrace
+   * @param reason reason of exception
+   * <p>
+   * Example:
+   * <p>
+   * <pre>
+   * {@code
+   *
+   * (line: 5)    public static void main(String[] args) {
+   * (line: 6)        String text = null;
+   * (line: 7)        text
+   * (line: 8)                .
+   * (line: 9)                trim();
+   *              }
+   * }
+   * </pre>
+   * Stacktrace: ClassName.main(ClassName.java:9) <p>
+   * In this case, reason - <code>text</code>, target - <code>trim</code>
+   */
+  record RefinerMatchResult(@NotNull PsiElement target, @NotNull PsiElement reason){
+
+    @Nullable
+    public static ExceptionLineRefiner.RefinerMatchResult of(@Nullable PsiElement element) {
+      if (element == null) return null;
+      return new RefinerMatchResult(element, element);
+    }
   }
 }

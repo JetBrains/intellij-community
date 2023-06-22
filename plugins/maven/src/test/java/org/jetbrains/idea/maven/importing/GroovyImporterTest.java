@@ -8,7 +8,9 @@ import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.testFramework.RunAll;
 import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.plugins.groovy.compiler.GreclipseIdeaCompilerSettings;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.junit.Test;
@@ -108,11 +110,11 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
     assertSources("project",
                   "src/main/groovy",
                   "src/main/java");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
     assertTestSources("project",
                       "src/test/groovy",
                       "src/test/java");
-    assertTestResources("project", "src/test/resources");
+    assertDefaultTestResources("project");
   }
 
   @Test
@@ -142,11 +144,11 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
     assertSources("project",
                   "src/main/groovy",
                   "src/main/java");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
     assertTestSources("project",
                       "src/test/groovy",
                       "src/test/java");
-    assertTestResources("project", "src/test/resources");
+    assertDefaultTestResources("project");
   }
 
   @Test
@@ -176,11 +178,11 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
     assertSources("project",
                   "src/main/groovy",
                   "src/main/java");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
     assertTestSources("project",
                       "src/test/groovy",
                       "src/test/java");
-    assertTestResources("project", "src/test/resources");
+    assertDefaultTestResources("project");
   }
 
   @Test
@@ -248,11 +250,11 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
     assertSources("project",
                   "src/main/groovy",
                   "src/main/java");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
     assertTestSources("project",
                       "src/test/groovy",
                       "src/test/java");
-    assertTestResources("project", "src/test/resources");
+    assertDefaultTestResources("project");
 
     GreclipseIdeaCompilerSettings compilerSettings = myProject.getService(GreclipseIdeaCompilerSettings.class);
     assertEquals(LocalFileSystem.getInstance().findFileByIoFile(batchJar).getPath(), compilerSettings.getState().greclipsePath);
@@ -315,11 +317,11 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
     assertSources("project",
                   "src/main/groovy",
                   "src/main/java");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
     assertTestSources("project",
                       "src/test/groovy",
                       "src/test/java");
-    assertTestResources("project", "src/test/resources");
+    assertDefaultTestResources("project");
 
     GreclipseIdeaCompilerSettings compilerSettings = myProject.getService(GreclipseIdeaCompilerSettings.class);
     assertEquals(LocalFileSystem.getInstance().findFileByIoFile(batchJar).getPath(), compilerSettings.getState().greclipsePath);
@@ -355,10 +357,10 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
                               <configuration>
                                 <sources>
                                   <fileset>
-                                    <directory>${pom.basedir}/src/foo1</directory>
+                                    <directory>${project.basedir}/src/foo1</directory>
                                   </fileset>
                                   <fileset>
-                                    <directory>${pom.basedir}/src/foo2</directory>
+                                    <directory>${project.basedir}/src/foo2</directory>
                                   </fileset>
                                 </sources>
                               </configuration>
@@ -371,10 +373,10 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
                               <configuration>
                                 <sources>
                                   <fileset>
-                                    <directory>${pom.basedir}/src/test-foo1</directory>
+                                    <directory>${project.basedir}/src/test-foo1</directory>
                                   </fileset>
                                   <fileset>
-                                    <directory>${pom.basedir}/src/test-foo2</directory>
+                                    <directory>${project.basedir}/src/test-foo2</directory>
                                   </fileset>
                                 </sources>
                               </configuration>
@@ -391,12 +393,12 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
                   "src/foo1",
                   "src/foo2",
                   "src/main/java");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
     assertTestSources("project",
                       "src/test-foo1",
                       "src/test-foo2",
                       "src/test/java");
-    assertTestResources("project", "src/test/resources");
+    assertDefaultTestResources("project");
   }
 
   @Test
@@ -429,10 +431,10 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
                               <configuration>
                                 <sources>
                                   <fileset>
-                                    <directory>${pom.basedir}/src/foo1</directory>
+                                    <directory>${project.basedir}/src/foo1</directory>
                                   </fileset>
                                   <fileset>
-                                    <directory>${pom.basedir}/src/foo2</directory>
+                                    <directory>${project.basedir}/src/foo2</directory>
                                   </fileset>
                                 </sources>
                               </configuration>
@@ -445,10 +447,10 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
                               <configuration>
                                 <sources>
                                   <fileset>
-                                    <directory>${pom.basedir}/src/test-foo1</directory>
+                                    <directory>${project.basedir}/src/test-foo1</directory>
                                   </fileset>
                                   <fileset>
-                                    <directory>${pom.basedir}/src/test-foo2</directory>
+                                    <directory>${project.basedir}/src/test-foo2</directory>
                                   </fileset>
                                 </sources>
                               </configuration>
@@ -465,12 +467,12 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
                   "src/foo1",
                   "src/foo2",
                   "src/main/java");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
     assertTestSources("project",
                       "src/test-foo1",
                       "src/test-foo2",
                       "src/test/java");
-    assertTestResources("project", "src/test/resources");
+    assertDefaultTestResources("project");
   }
 
   @Test
@@ -583,8 +585,8 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
       assertTestSources("project",
                         "src/test/java");
     }
-    assertResources("project", "src/main/resources");
-    assertTestResources("project", "src/test/resources");
+    assertDefaultResources("project");
+    assertDefaultTestResources("project");
 
     assertExcludes("project", "target");
   }
@@ -648,8 +650,8 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
       assertTestSources("project",
                         "src/test/java");
     }
-    assertResources("project", "src/main/resources");
-    assertTestResources("project", "src/test/resources");
+    assertDefaultResources("project");
+    assertDefaultTestResources("project");
 
     assertExcludes("project", "target");
   }
@@ -836,17 +838,17 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
                     "src/main/groovy",
                     "src/main/java",
                     "target/generated-sources/xxx");
-      assertResources("project", "src/main/resources");
+      assertDefaultResources("project");
       assertTestSources("project", "src/test/groovy", "src/test/java");
-      assertTestResources("project", "src/test/resources");
+      assertDefaultTestResources("project");
     }
     else {
       assertSources("project",
                     "src/main/java",
                     "target/generated-sources/xxx");
-      assertResources("project", "src/main/resources");
+      assertDefaultResources("project");
       assertTestSources("project", "src/test/java");
-      assertTestResources("project", "src/test/resources");
+      assertDefaultTestResources("project");
     }
 
     assertExcludes("project", "target");

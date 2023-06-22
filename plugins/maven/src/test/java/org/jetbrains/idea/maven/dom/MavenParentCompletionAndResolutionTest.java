@@ -104,6 +104,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertResolved(m, findPsiFile(myProjectPom));
   }
 
+  @Test
   public void testResolutionOutsideOfTheProject() throws Exception {
     importProject("""
                     <groupId>test</groupId>
@@ -251,7 +252,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                     """);
 
     myFixture.enableInspections(MavenRedundantGroupIdInspection.class);
-    checkHighlighting(myProjectPom);
+    checkHighlighting();
   }
 
   @Test

@@ -232,24 +232,25 @@ class UAssertHint private constructor(override val argIndex: Int,
 
   companion object {
     @JvmStatic
-    fun createAssertEqualsUHint(expression: UCallExpression): UAssertHint? = create(expression) { methodName ->
+    fun createAssertEqualsHint(expression: UCallExpression): UAssertHint? = create(expression) { methodName ->
       if ("assertEquals" == methodName) 2 else null
     }
 
     @JvmStatic
-    fun createAssertNotEqualsUHint(expression: UCallExpression): UAssertHint? = create(expression) { methodName ->
+    fun createAssertNotEqualsHint(expression: UCallExpression): UAssertHint? = create(expression) { methodName ->
       if ("assertNotEquals" == methodName) 2 else null
     }
 
     @JvmStatic
-    fun createAssertSameUHint(expression: UCallExpression): UAssertHint? = create(expression) { methodName ->
+    fun createAssertSameHint(expression: UCallExpression): UAssertHint? = create(expression) { methodName ->
       if ("assertSame" == methodName) 2 else null
     }
 
     @JvmStatic
-    fun createAssertNotSameUHint(expression: UCallExpression): UAssertHint? = create(expression) { methodName ->
+    fun createAssertNotSameHint(expression: UCallExpression): UAssertHint? = create(expression) { methodName ->
       if ("assertNotSame" == methodName) 2 else null
     }
+
     @JvmStatic
     fun create(expression: UCallExpression, methodNameToParamCount: (String) -> Int?): UAssertHint? {
       val methodName = expression.methodName ?: return null

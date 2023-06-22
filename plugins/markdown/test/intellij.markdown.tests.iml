@@ -24,5 +24,6 @@
     <orderEntry type="library" name="jetbrains.markdown" level="project" />
     <orderEntry type="module" module-name="intellij.toml" />
     <orderEntry type="module" module-name="intellij.yaml" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
   </component>
 </module>

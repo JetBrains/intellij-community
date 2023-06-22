@@ -25,13 +25,12 @@ import com.intellij.ui.components.*
 import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.components.*
-import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.ui.dsl.gridLayout.VerticalGaps
-import com.intellij.ui.layout.*
-import com.intellij.ui.popup.PopupState
+import com.intellij.ui.dsl.gridLayout.unscale
+import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.Function
 import com.intellij.util.MathUtil
 import com.intellij.util.ui.JBEmptyBorder
@@ -52,10 +51,10 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
                             private val parent: PanelImpl,
                             rowLayout: RowLayout) : Row {
 
-  var rowLayout = rowLayout
+  var rowLayout: RowLayout = rowLayout
     private set
 
-  var resizableRow = false
+  var resizableRow: Boolean = false
     private set
 
   var rowComment: DslLabel? = null
@@ -67,7 +66,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   /**
    * Used if topGap is not set, skipped for first row
    */
-  var internalTopGap = 0
+  var internalTopGap: Int = 0
 
   var bottomGap: BottomGap? = null
     private set
@@ -75,9 +74,9 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   /**
    * Used if bottomGap is not set, skipped for last row
    */
-  var internalBottomGap = 0
+  var internalBottomGap: Int = 0
 
-  val cells = mutableListOf<CellBaseImpl<*>?>()
+  val cells: MutableList<CellBaseImpl<*>?> = mutableListOf()
 
   private var visible = true
   private var enabled = true
@@ -98,19 +97,11 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun <T : JComponent> cell(component: T, viewComponent: JComponent): CellImpl<T> {
-    val result = CellImpl(dialogPanelConfig, component, this, viewComponent)
-    cells.add(result)
-
-    if (component is JRadioButton) {
-      @Suppress("UNCHECKED_CAST")
-      registerRadioButton(result as CellImpl<JRadioButton>, null)
-    }
-
-    return result
+    return cellImpl(component, viewComponent)
   }
 
   override fun <T : JComponent> cell(component: T): CellImpl<T> {
-    return cell(component, component)
+    return cellImpl(component, component)
   }
 
   override fun cell() {
@@ -118,7 +109,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun <T : JComponent> scrollCell(component: T): CellImpl<T> {
-    return cell(component, JBScrollPane(component))
+    return cellImpl(component, JBScrollPane(component))
   }
 
   override fun placeholder(): PlaceholderImpl {
@@ -320,10 +311,6 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(BrowserLink(text, url))
   }
 
-  override fun <T> dropDownLink(item: T, items: List<T>, onSelected: ((T) -> Unit)?, updateText: Boolean): Cell<DropDownLink<T>> {
-    return cell(DropDownLink(item, items, onSelect = { t -> onSelected?.let { it(t) } }, updateText = updateText))
-  }
-
   override fun <T> dropDownLink(item: T, items: List<T>): Cell<DropDownLink<T>> {
     return cell(DropDownLink(item, items, onSelect = { }, updateText = true))
   }
@@ -426,7 +413,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     textArea.columns = COLUMNS_SHORT
     textArea.font = JBFont.regular()
     textArea.emptyText.setFont(JBFont.regular())
-    textArea.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY)
+    textArea.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
     return scrollCell(textArea)
   }
 
@@ -446,6 +433,10 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun customize(customRowGaps: VerticalGaps): Row {
+    return customize(UnscaledGapsY(customRowGaps.top.unscale(), customRowGaps.bottom.unscale()))
+  }
+
+  override fun customize(customRowGaps: UnscaledGapsY): Row {
     internalTopGap = customRowGaps.top
     internalBottomGap = customRowGaps.bottom
     topGap = null
@@ -477,12 +468,23 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
       "Button group must be defined before using radio button")
     buttonsGroup.add(cell, value)
   }
+
+  private fun <T : JComponent> cellImpl(component: T, viewComponent: JComponent): CellImpl<T> {
+    val result = CellImpl(dialogPanelConfig, component, this, viewComponent)
+    cells.add(result)
+
+    registerCreationStacktrace(component)
+
+    if (component is JRadioButton) {
+      @Suppress("UNCHECKED_CAST")
+      registerRadioButton(result as CellImpl<JRadioButton>, null)
+    }
+
+    return result
+  }
 }
 
 private class PopupActionGroup(private val actions: Array<AnAction>): ActionGroup(), DumbAware {
-
-  private val popupState = PopupState.forPopup()
-
   init {
     isPopup = true
     templatePresentation.isPerformGroup = actions.isNotEmpty()
@@ -491,13 +493,8 @@ private class PopupActionGroup(private val actions: Array<AnAction>): ActionGrou
   override fun getChildren(e: AnActionEvent?): Array<AnAction> = actions
 
   override fun actionPerformed(e: AnActionEvent) {
-    if (popupState.isRecentlyHidden) {
-      return
-    }
-
     val popup = JBPopupFactory.getInstance().createActionGroupPopup(null, this, e.dataContext,
       JBPopupFactory.ActionSelectionAid.MNEMONICS, true)
-    popupState.prepareToShow(popup)
     PopupUtil.showForActionButtonEvent(popup, e)
   }
 }

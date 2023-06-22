@@ -1,11 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
@@ -15,6 +13,8 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 public final class ConflictsUtil {
   private ConflictsUtil() {
@@ -40,8 +40,8 @@ public final class ConflictsUtil {
 
   public static void checkMethodConflicts(@Nullable PsiClass aClass,
                                           @Nullable PsiMethod refactoredMethod,
-                                          final PsiMethod prototype,
-                                          final MultiMap<PsiElement, @NlsContexts.DialogMessage String> conflicts) {
+                                          PsiMethod prototype,
+                                          MultiMap<PsiElement, @DialogMessage String> conflicts) {
     if (prototype == null) return;
     String protoMethodInfo = getMethodPrototypeString(prototype);
 
@@ -63,9 +63,7 @@ public final class ConflictsUtil {
         final String classDescr = aClass instanceof PsiAnonymousClass ?
                                   JavaRefactoringBundle.message("current.class") :
                                   RefactoringUIUtil.getDescription(aClass, false);
-        conflicts.putValue(method, RefactoringBundle.message("method.0.is.already.defined.in.the.1",
-                                                protoMethodInfo,
-                                                classDescr));
+        conflicts.putValue(method, RefactoringBundle.message("method.0.is.already.defined.in.the.1", protoMethodInfo, classDescr));
       }
       else { // method somewhere in base class
         if (JavaPsiFacade.getInstance(method.getProject()).getResolveHelper().isAccessible(method, aClass, null)) {
@@ -111,7 +109,7 @@ public final class ConflictsUtil {
     );
   }
 
-  public static void checkFieldConflicts(@Nullable PsiClass aClass, String newName, final MultiMap<PsiElement, String> conflicts) {
+  public static void checkFieldConflicts(@Nullable PsiClass aClass, String newName, MultiMap<PsiElement, @DialogMessage String> conflicts) {
     PsiField existingField = aClass != null ? aClass.findFieldByName(newName, true) : null;
     if (existingField != null) {
       if (aClass.equals(existingField.getContainingClass())) {

@@ -3,11 +3,11 @@ package demo
 import demo.One
 
 internal class Container {
-    var myBoolean = true
+    var myBoolean: Boolean = true
 }
 
 internal object One {
-    var myContainer = Container()
+    var myContainer: Container = Container()
 }
 
 internal class Test {

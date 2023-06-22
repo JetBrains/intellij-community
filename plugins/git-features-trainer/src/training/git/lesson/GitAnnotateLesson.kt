@@ -99,6 +99,8 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
       }
     }
 
+    waitBeforeContinue(500)
+
     lateinit var openFirstDiffTaskId: TaskContext.TaskId
     task {
       openFirstDiffTaskId = taskId
@@ -219,7 +221,7 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
     task {
       text(GitLessonsBundle.message("git.annotate.click.annotation"))
       highlightAnnotation(secondDiffSplitter, secondStateText, highlightRight = true)
-      triggerAndBorderHighlight { usePulsation = true }.component { ui: CommitDetailsListPanel ->
+      triggerAndBorderHighlight().component { ui: CommitDetailsListPanel ->
         val textPanel = UIUtil.findComponentOfType(ui, HtmlPanel::class.java)
         textPanel?.text?.contains(partOfTargetCommitMessage) == true
       }
@@ -258,6 +260,10 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
         }
       }
     }
+
+    // There can be no selected editor at this moment, because of closing diffs from the previous task
+    // and internal recalculation inside FileEditorManager, so wait little bit
+    waitBeforeContinue(500)
 
     if (isAnnotateShortcutSet()) {
       task("Annotate") {

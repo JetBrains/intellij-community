@@ -3,6 +3,7 @@ package com.intellij.codeInspection.blockingCallsDetection;
 
 import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.*;
@@ -27,10 +28,12 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
 
   public BlockingMethodInNonBlockingContextInspection() {
     myConsiderUnknownContextBlocking = true;
+    myConsiderSuspendContextNonBlocking = true;
   }
 
-  public BlockingMethodInNonBlockingContextInspection(boolean considerUnknownContextBlocking) {
+  public BlockingMethodInNonBlockingContextInspection(boolean considerUnknownContextBlocking, boolean considerSuspendContextNonBlocking) {
     myConsiderUnknownContextBlocking = considerUnknownContextBlocking;
+    myConsiderSuspendContextNonBlocking = considerSuspendContextNonBlocking;
   }
 
   public static final List<String> DEFAULT_BLOCKING_ANNOTATIONS = List.of(
@@ -47,12 +50,15 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
   public List<String> myBlockingAnnotations = new ArrayList<>(DEFAULT_BLOCKING_ANNOTATIONS);
   public List<String> myNonBlockingAnnotations = new ArrayList<>(DEFAULT_NONBLOCKING_ANNOTATIONS);
   public boolean myConsiderUnknownContextBlocking;
+  public boolean myConsiderSuspendContextNonBlocking;
 
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
       checkbox("myConsiderUnknownContextBlocking",
                JvmAnalysisBundle.message("jvm.inspections.blocking.method.consider.unknown.context.blocking")),
+      checkbox("myConsiderSuspendContextNonBlocking",
+               JvmAnalysisBundle.message("jvm.inspections.blocking.method.consider.suspend.context.non.blocking")),
       stringList("myBlockingAnnotations", JvmAnalysisBundle.message("jvm.inspections.blocking.method.annotation.blocking"),
                  new JavaClassValidator().withTitle(
                     JvmAnalysisBundle.message("jvm.inspections.blocking.method.annotation.configure.add.blocking.title"))
@@ -82,7 +88,7 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
   }
 
   public BlockingCallInspectionSettings getSettings() {
-    return new BlockingCallInspectionSettings(myConsiderUnknownContextBlocking);
+    return new BlockingCallInspectionSettings(myConsiderUnknownContextBlocking, myConsiderSuspendContextNonBlocking);
   }
 
   private static @NotNull List<NonBlockingContextChecker> getNonBlockingContextCheckers(@NotNull PsiFile file,
@@ -144,19 +150,23 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
       if (contextType instanceof ContextType.Blocking) {
         return;
       }
-      if (contextType instanceof ContextType.Unsure && myConsiderUnknownContextBlocking && myHolder.isOnTheFly()) {
-        myHolder.registerProblem(elementToHighLight,
-                                 JvmAnalysisBundle.message("jvm.inspections.blocking.method.consider.unknown.context.nonblocking"),
-                                 ProblemHighlightType.INFORMATION,
-                                 new ConsiderUnknownContextBlockingFix(false));
-        return;
-      }
       ProgressIndicatorProvider.checkCanceled();
 
       PsiMethod referencedMethod = callExpression.resolve();
       if (referencedMethod == null) return;
 
       if (!isMethodOrSupersBlocking(referencedMethod, myBlockingMethodCheckers, mySettings)) return;
+
+      if (contextType instanceof ContextType.Unsure && myConsiderUnknownContextBlocking) {
+        if (myHolder.isOnTheFly()) {
+          myHolder.registerProblem(
+            elementToHighLight,
+            JvmAnalysisBundle.message("jvm.inspections.blocking.method.consider.unknown.context.nonblocking"),
+            ProblemHighlightType.INFORMATION,
+            new ConsiderUnknownContextBlockingFix(false));
+        }
+        return;
+      }
 
       ElementContext elementContext = new ElementContext(element, mySettings);
       StreamEx<LocalQuickFix> fixesStream = StreamEx.of(myBlockingMethodCheckers)
@@ -277,7 +287,7 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
     return first.getPriority() > second.getPriority() ? first : second;
   }
 
-  private class ConsiderUnknownContextBlockingFix implements LocalQuickFix {
+  private class ConsiderUnknownContextBlockingFix implements LocalQuickFix, LowPriorityAction {
     private final boolean considerUnknownContextBlocking;
 
     private ConsiderUnknownContextBlockingFix(boolean considerUnknownContextBlocking) {

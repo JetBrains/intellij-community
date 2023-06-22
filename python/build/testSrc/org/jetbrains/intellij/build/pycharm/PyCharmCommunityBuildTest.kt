@@ -5,7 +5,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.util.io.Compressor
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
-import org.jetbrains.intellij.build.testFramework.runTestBuild
+import com.intellij.platform.buildScripts.testFramework.runTestBuild
 import org.junit.Test
 import java.nio.file.Files
 import java.nio.file.Path

@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +19,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 
 /**
  * Collects incoming requests into a list, and provides them to the underlying background task via {@link #popRequests()}. <br/>
@@ -45,14 +45,22 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
 
   private boolean myIsClosed = false;
 
-  public SingleTaskController(@NotNull @NonNls String name,
-                              @NotNull Consumer<? super Result> handler,
-                              @NotNull Disposable parent) {
+  public SingleTaskController(@NotNull @NonNls String name, @NotNull Disposable parent, @NotNull Consumer<? super Result> handler) {
     myName = name;
     myResultHandler = handler;
     myAwaitingRequests = new LinkedList<>();
 
     Disposer.register(parent, this);
+  }
+
+  /**
+   * @deprecated use {@link SingleTaskController#SingleTaskController(String, Disposable, Consumer)} constructor.
+   */
+  @Deprecated
+  public SingleTaskController(@NotNull @NonNls String name,
+                              @NotNull com.intellij.util.Consumer<? super Result> handler,
+                              @NotNull Disposable parent) {
+    this(name, parent, result -> handler.consume(result));
   }
 
   /**
@@ -149,7 +157,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
    */
   public final void taskCompleted(@Nullable Result result) {
     if (result != null) {
-      myResultHandler.consume(result);
+      myResultHandler.accept(result);
       debug("Handled result: " + result);
     }
     synchronized (LOCK) {
@@ -209,7 +217,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
                             ApplicationManager.getApplication().isUnitTestMode();
       try {
         int timeout;
-        if (longTimeOut) timeout = 1000;
+        if (longTimeOut) timeout = disposeLongTimeout();
         else timeout = 20;
 
         task.waitFor(timeout, TimeUnit.MILLISECONDS);
@@ -223,6 +231,10 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
         if (longTimeOut) LOG.warn(formMessage("Wait time out "), e);
       }
     }
+  }
+
+  protected int disposeLongTimeout() {
+    return 1000;
   }
 
   public interface SingleTask {

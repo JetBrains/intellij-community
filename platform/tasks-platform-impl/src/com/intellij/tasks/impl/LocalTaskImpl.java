@@ -9,6 +9,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.*;
 import com.intellij.tasks.timeTracking.model.WorkItem;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.xmlb.annotations.*;
 import icons.TasksIcons;
 import org.jetbrains.annotations.Nls;
@@ -285,7 +286,7 @@ public class LocalTaskImpl extends LocalTask {
       case BUG -> TasksIcons.Bug;
       case EXCEPTION -> TasksIcons.Exception;
       case FEATURE -> AllIcons.Nodes.Favorite;
-      case OTHER -> issue ? AllIcons.FileTypes.Any_type : AllIcons.FileTypes.Unknown;
+      case OTHER -> issue ? AllIcons.FileTypes.Any_type : EmptyIcon.ICON_0;
     };
   }
 

@@ -113,6 +113,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     myEditor = EditorFactory.getInstance().createEditor(myDocument);
     myEditor.getSettings().setCaretRowShown(false);
     myEditorPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
+    myEditor.getContentComponent().setFocusable(true);
 
     setupPlaceholdersComment();
     String advertiser = repository.getRepositoryType().getAdvertiser();

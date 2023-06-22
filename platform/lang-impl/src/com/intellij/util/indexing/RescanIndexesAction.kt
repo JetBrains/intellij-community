@@ -6,7 +6,7 @@ import com.intellij.lang.LangBundle
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
-import com.intellij.openapi.project.DumbModeTask
+import com.intellij.openapi.project.FilesScanningTask
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.stubs.StubTreeBuilder
@@ -85,8 +85,8 @@ class RescanIndexesAction : RecoveryAction {
         }
       }
 
-      override fun tryMergeWith(taskFromQueue: UnindexedFilesScanner): UnindexedFilesScanner? =
-        if (project == taskFromQueue.myProject && taskFromQueue.javaClass == javaClass) this else null
+      override fun tryMergeWith(taskFromQueue: FilesScanningTask): UnindexedFilesScanner? =
+        if (taskFromQueue.javaClass == javaClass) this else null
     }.queue(project)
     try {
       return ProgressIndicatorUtils.awaitWithCheckCanceled(historyFuture).extractConsistencyProblems() +

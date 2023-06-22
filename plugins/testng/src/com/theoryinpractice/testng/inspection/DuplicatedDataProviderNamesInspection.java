@@ -63,7 +63,7 @@ public class DuplicatedDataProviderNamesInspection extends AbstractBaseJavaLocal
           LOG.assertTrue(nameElement != null);
           PsiElement problemElement = PsiTreeUtil.isAncestor(aClass, nameElement, false) ? nameElement : method.getNameIdentifier();
           LOG.assertTrue(problemElement != null);
-          descriptors.add(manager.createProblemDescriptor(problemElement, description, isOnTheFly, LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.ERROR));
+          descriptors.add(manager.createProblemDescriptor(problemElement, description, isOnTheFly, LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
         }
       }
     }

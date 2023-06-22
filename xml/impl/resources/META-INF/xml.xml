@@ -20,7 +20,6 @@
     <definitionsSearch implementation="com.intellij.xml.impl.schema.SchemaDefinitionsSearch"/>
     <listSplitJoinContext language="XML" implementationClass="com.intellij.codeInsight.intentions.XmlAttributesSplitJoinContext"/>
     <projectConfigurable groupId="language"
-                         groupWeight="110"
                          instance="com.intellij.javaee.ExternalResourceConfigurable"
                          key="xml.external.resource.display.name"
                          bundle="messages.XmlBundle"
@@ -35,6 +34,7 @@
                     key="configurable.XMLCatalogConfigurable.display.name"
                     id="xml.catalog"/>
     </projectConfigurable>
+    <codeCompletionConfigurable instance="com.intellij.application.options.XmlCodeCompletionConfigurable"/>
 
     <metaLanguage implementation="com.intellij.lang.html.HtmlCompatibleMetaLanguage"/>
     <html.compatibleLanguage language="HTML"/>

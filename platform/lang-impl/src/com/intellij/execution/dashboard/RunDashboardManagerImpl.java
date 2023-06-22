@@ -13,12 +13,19 @@ import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.services.ServiceEventListener;
+import com.intellij.execution.services.ServiceViewDescriptor;
 import com.intellij.execution.services.ServiceViewManager;
-import com.intellij.execution.services.ServiceViewManagerImpl;
-import com.intellij.execution.ui.*;
+import com.intellij.execution.services.ServiceViewUIUtils;
+import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManager;
+import com.intellij.execution.ui.RunContentManagerImpl;
+import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -32,10 +39,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.ui.ClientProperty;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.SideBorder;
+import com.intellij.ui.components.JBPanelWithEmptyText;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,6 +60,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import static com.intellij.execution.dashboard.RunDashboardServiceViewContributor.RUN_DASHBOARD_CONTENT_TOOLBAR;
 
 @State(name = "RunDashboard", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class RunDashboardManagerImpl implements RunDashboardManager, PersistentStateComponent<RunDashboardManagerImpl.State> {
@@ -69,6 +84,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   private String myToolWindowId;
   private final Predicate<Content> myReuseCondition;
   private final AtomicBoolean myListenersInitialized = new AtomicBoolean();
+  private JComponent myEmptyContent;
 
   public RunDashboardManagerImpl(@NotNull Project project) {
     myProject = project;
@@ -98,7 +114,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
       @Override
       public void extensionRemoved(@NotNull Object extension, @NotNull PluginDescriptor pluginDescriptor) {
         myProject.getMessageBus().syncPublisher(ServiceEventListener.TOPIC).handle(
-          ServiceEventListener.ServiceEvent.createSyncResetEvent(RunDashboardServiceViewContributor.class));
+          ServiceEventListener.ServiceEvent.createUnloadSyncResetEvent(RunDashboardServiceViewContributor.class));
       }
     };
     CUSTOMIZER_EP_NAME.addExtensionPointListener(dashboardUpdater, myProject);
@@ -220,9 +236,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
         myToolWindowId = ToolWindowId.SERVICES;
       }
       else {
-        String toolWindowId =
-          ((ServiceViewManagerImpl)ServiceViewManager.getInstance(myProject))
-            .getToolWindowId(RunDashboardServiceViewContributor.class);
+        String toolWindowId = ServiceViewManager.getInstance(myProject).getToolWindowId(RunDashboardServiceViewContributor.class);
         myToolWindowId = toolWindowId != null ? toolWindowId : ToolWindowId.SERVICES;
       }
     }
@@ -409,9 +423,12 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   }
 
   private List<RunContentDescriptor> getConfigurationDescriptors(@NotNull RunConfiguration configuration) {
-    return ExecutionManagerImpl.getInstance(myProject).getDescriptors(s -> configuration.equals(s.getConfiguration()) ||
-                                                                           configuration.equals(
-                                                                             getBaseConfiguration(s.getConfiguration())));
+    ExecutionManager instance = ExecutionManager.getInstance(myProject);
+    if (!(instance instanceof ExecutionManagerImpl)) {
+      return Collections.emptyList();
+    }
+    return ((ExecutionManagerImpl)instance).getDescriptors(s -> configuration.equals(s.getConfiguration()) ||
+                                                                configuration.equals(getBaseConfiguration(s.getConfiguration())));
   }
 
   @Override
@@ -625,10 +642,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     RunContentDescriptor descriptor = RunContentManagerImpl.getRunContentDescriptorByContent(content);
     RunnerLayoutUiImpl ui = getRunnerLayoutUi(descriptor);
     if (ui != null) {
-      if (UIExperiment.isNewDebuggerUIEnabled()) {
-        ui.setTopLeftActionsVisible(visible);
-      }
-      else {
+      if (!ServiceViewUIUtils.isNewServicesUIEnabled()) {
         ui.setLeftToolbarVisible(visible);
       }
       ui.setContentToolbarBefore(visible);
@@ -698,6 +712,29 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
       result.addAll(provider.getDefaultTypeIds(myProject));
     }
     return result;
+  }
+
+  JComponent getEmptyContent() {
+    if (myEmptyContent == null) {
+      JBPanelWithEmptyText textPanel = new JBPanelWithEmptyText()
+        .withEmptyText(ExecutionBundle.message("run.dashboard.configurations.message"));
+      textPanel.setFocusable(true);
+      JPanel mainPanel = new NonOpaquePanel(new BorderLayout());
+      mainPanel.add(textPanel, BorderLayout.CENTER);
+      if (ServiceViewUIUtils.isNewServicesUIEnabled()) {
+        if (ActionManager.getInstance().getAction(RUN_DASHBOARD_CONTENT_TOOLBAR) instanceof ActionGroup group) {
+          group.registerCustomShortcutSet(textPanel, myProject);
+          ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.SERVICES_TOOLBAR, group, true);
+          toolbar.setTargetComponent(textPanel);
+          mainPanel.add(ServiceViewUIUtils.wrapServicesAligned(toolbar), BorderLayout.NORTH);
+          toolbar.getComponent().setBorder(JBUI.Borders.emptyTop(1));
+          textPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
+        }
+      }
+      ClientProperty.put(mainPanel, ServiceViewDescriptor.ACTION_HOLDER_KEY, Boolean.TRUE);
+      myEmptyContent = mainPanel;
+    }
+    return myEmptyContent;
   }
 
   @Override
@@ -825,8 +862,9 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
       if (onAdd) {
         RunConfigurationNode node = createNode(content);
         if (node != null) {
-          var shouldActivate = node.getConfigurationSettings().isActivateToolWindowBeforeRun();
-          ServiceViewManager.getInstance(myProject).select(node, RunDashboardServiceViewContributor.class, shouldActivate, false);
+          RunnerAndConfigurationSettings settings = node.getConfigurationSettings();
+          ServiceViewManager.getInstance(myProject).select(node, RunDashboardServiceViewContributor.class,
+                                                           settings.isActivateToolWindowBeforeRun(), settings.isFocusToolWindowBeforeRun());
         }
       }
     }

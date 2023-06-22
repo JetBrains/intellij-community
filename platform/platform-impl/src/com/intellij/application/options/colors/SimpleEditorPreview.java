@@ -249,6 +249,7 @@ public class SimpleEditorPreview implements PreviewPanel {
     }
     if (needScroll && minOffset != Integer.MAX_VALUE) {
       LogicalPosition pos = myEditor.offsetToLogicalPosition(minOffset);
+      myEditor.getCaretModel().moveToOffset(minOffset);
       myEditor.getScrollingModel().scrollTo(pos, ScrollType.MAKE_VISIBLE);
     }
   }

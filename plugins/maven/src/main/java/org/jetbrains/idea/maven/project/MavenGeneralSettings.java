@@ -15,6 +15,7 @@ import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.config.MavenConfig;
 import org.jetbrains.idea.maven.config.MavenConfigParser;
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
@@ -40,13 +41,13 @@ public class MavenGeneralSettings implements Cloneable {
   private boolean nonRecursive = false;
   private boolean alwaysUpdateSnapshots = false;
   private boolean showDialogWithAdvancedSettings = false;
-  private boolean useMavenConfig = false;
+  private boolean useMavenConfig = true;
   private String threads;
+  private boolean emulateTerminal = false;
 
   private MavenExecutionOptions.LoggingLevel outputLevel = MavenExecutionOptions.LoggingLevel.INFO;
   MavenExecutionOptions.ChecksumPolicy checksumPolicy = MavenExecutionOptions.ChecksumPolicy.NOT_SET;
   private MavenExecutionOptions.FailureMode failureBehavior = MavenExecutionOptions.FailureMode.NOT_SET;
-  private MavenExecutionOptions.PluginUpdatePolicy pluginUpdatePolicy = MavenExecutionOptions.PluginUpdatePolicy.DEFAULT;
 
   private transient File myEffectiveLocalRepositoryCache;
   private transient File myEffectiveLocalHomeCache;
@@ -79,6 +80,10 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   public void changed() {
+    changed(true);
+  }
+
+  public void changed(boolean fireUpdate) {
     if (myBulkUpdateLevel > 0) return;
 
     myEffectiveLocalRepositoryCache = null;
@@ -86,19 +91,9 @@ public class MavenGeneralSettings implements Cloneable {
     myEffectiveLocalHomeCache = null;
     myEffectiveSuperPomCache = null;
     mavenConfigCache = null;
-    fireChanged();
-  }
-
-  @Property
-  @NotNull
-  public MavenExecutionOptions.PluginUpdatePolicy getPluginUpdatePolicy() {
-    return pluginUpdatePolicy;
-  }
-
-  public void setPluginUpdatePolicy(MavenExecutionOptions.PluginUpdatePolicy value) {
-    if (value == null) return; // null may come from deserializer
-    this.pluginUpdatePolicy = value;
-    changed();
+    if (fireUpdate) {
+      fireChanged();
+    }
   }
 
   @Property
@@ -134,7 +129,7 @@ public class MavenGeneralSettings implements Cloneable {
    */
   @Transient
   @NotNull
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public MavenExecutionOptions.LoggingLevel getLoggingLevel() {
     return getOutputLevel();
   }
@@ -170,6 +165,15 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   public void setMavenHome(@NotNull final String mavenHome) {
+    setMavenHome(mavenHome, true);
+  }
+
+  @TestOnly
+  public void setMavenHomeNoFire(@NotNull final String mavenHome) {
+    setMavenHome(mavenHome, false);
+  }
+
+  private void setMavenHome(@NotNull final String mavenHome, boolean fireChanged) {
     final File mavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(mavenHome);
     final File bundledMavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(MavenServerManager.BUNDLED_MAVEN_3);
 
@@ -180,7 +184,9 @@ public class MavenGeneralSettings implements Cloneable {
     if (!Objects.equals(this.mavenHome, mavenHomeToSet)) {
       this.mavenHome = mavenHomeToSet;
       myDefaultPluginsCache = null;
-      changed();
+      if (fireChanged) {
+        changed();
+      }
     }
   }
 
@@ -387,6 +393,17 @@ public class MavenGeneralSettings implements Cloneable {
     }
   }
 
+  public boolean isEmulateTerminal() {
+    return emulateTerminal;
+  }
+
+  public void setEmulateTerminal(boolean emulateTerminal) {
+    if (!Comparing.equal(this.emulateTerminal, emulateTerminal)) {
+      this.emulateTerminal = emulateTerminal;
+      changed();
+    }
+  }
+
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -395,7 +412,6 @@ public class MavenGeneralSettings implements Cloneable {
 
     if (nonRecursive != that.nonRecursive) return false;
     if (outputLevel != that.outputLevel) return false;
-    if (pluginUpdatePolicy != that.pluginUpdatePolicy) return false;
     if (alwaysUpdateSnapshots != that.alwaysUpdateSnapshots) return false;
     if (showDialogWithAdvancedSettings != that.showDialogWithAdvancedSettings) return false;
     if (printErrorStackTraces != that.printErrorStackTraces) return false;
@@ -408,6 +424,7 @@ public class MavenGeneralSettings implements Cloneable {
     if (!mavenHome.equals(that.mavenHome)) return false;
     if (!mavenSettingsFile.equals(that.mavenSettingsFile)) return false;
     if (!Objects.equals(threads, that.threads)) return false;
+    if (emulateTerminal != that.emulateTerminal) return false;
 
     return true;
   }
@@ -425,7 +442,7 @@ public class MavenGeneralSettings implements Cloneable {
     result = 31 * result + outputLevel.hashCode();
     result = 31 * result + checksumPolicy.hashCode();
     result = 31 * result + failureBehavior.hashCode();
-    result = 31 * result + pluginUpdatePolicy.hashCode();
+    result = 31 * result + (emulateTerminal ? 1 : 0);
     return result;
   }
 
@@ -507,7 +524,7 @@ public class MavenGeneralSettings implements Cloneable {
     threads = threadsConfig;
 
     if (needUpdate) {
-      changed();
+      changed(false);
     }
     mavenConfigCache = config;
   }
@@ -520,7 +537,12 @@ public class MavenGeneralSettings implements Cloneable {
     MavenProjectsManager instance = myProject != null ? MavenProjectsManager.getInstance(myProject) : null;
     if (instance == null) return null;
 
-    updateFromMavenConfig(MavenUtil.collectFiles(instance.getRootProjects()));
+    var files = MavenUtil.collectFiles(instance.getRootProjects());
+    if (files.isEmpty()) {
+      files = instance.getProjectsTree().getExistingManagedFiles();
+    }
+
+    updateFromMavenConfig(files);
     return mavenConfigCache;
   }
 

@@ -87,7 +87,7 @@ public class Maven3ServerIndexFetcher extends AbstractResourceFetcher {
       myWagon.disconnect();
     }
     catch (ConnectionException ex) {
-      Maven3ServerGlobals.getLogger().warn(ex);
+      MavenServerGlobals.getLogger().warn(ex);
     }
   }
 

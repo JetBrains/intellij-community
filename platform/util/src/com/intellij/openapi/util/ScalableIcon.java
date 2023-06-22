@@ -27,13 +27,5 @@ public interface ScalableIcon extends Icon {
    * @param scaleFactor scale
    * @return scaled icon instance
    */
-  @NotNull
-  Icon scale(float scaleFactor);
-
-  default Icon scaleToWidth(float newWidth) {
-    if (newWidth != getIconWidth()) {
-      return scale(newWidth / getIconWidth());
-    }
-    return this;
-  }
+  @NotNull Icon scale(float scaleFactor);
 }

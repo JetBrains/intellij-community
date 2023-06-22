@@ -1,1 +1,1 @@
-Implicit 'invoke' 13 Foo()
+Implicit 'invoke' 14 Foo()

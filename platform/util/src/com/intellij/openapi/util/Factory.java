@@ -15,10 +15,17 @@
  */
 package com.intellij.openapi.util;
 
+import java.util.function.Supplier;
+
 /**
  * Deprecated. Please use {@link java.util.function.Supplier} instead
  */
 @FunctionalInterface
-public interface Factory<T> {
+public interface Factory<T> extends Supplier<T> {
   T create();
+
+  @Override
+  default T get() {
+    return create();
+  }
 }

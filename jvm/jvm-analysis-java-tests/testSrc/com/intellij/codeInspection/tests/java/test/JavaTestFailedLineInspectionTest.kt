@@ -1,12 +1,12 @@
 package com.intellij.codeInspection.tests.java.test
 
-import com.intellij.codeInspection.tests.ULanguage
+import com.intellij.codeInspection.tests.JvmLanguage
 import com.intellij.codeInspection.tests.test.TestFailedLineInspectionTestBase
 
 class JavaTestFailedLineInspectionTest : TestFailedLineInspectionTestBase() {
   fun `test non qualified call`() {
     doTest(
-      lang = ULanguage.JAVA,
+      lang = JvmLanguage.JAVA,
       text = """
         public class MainTest extends junit.framework.TestCase {
           public void testFoo() {
@@ -30,7 +30,7 @@ class JavaTestFailedLineInspectionTest : TestFailedLineInspectionTestBase() {
 
   fun `test qualified call`() {
     doTest(
-      lang = ULanguage.JAVA,
+      lang = JvmLanguage.JAVA,
       text = """
         public class QualifiedTest extends junit.framework.TestCase {
           public void testFoo() {

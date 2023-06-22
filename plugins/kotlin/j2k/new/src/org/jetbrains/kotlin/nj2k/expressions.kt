@@ -104,16 +104,8 @@ fun useExpression(
 ): JKExpression {
     val useSymbol = symbolProvider.provideMethodSymbol("kotlin.io.use")
     val lambdaParameter = if (variableIdentifier != null) JKParameter(JKTypeElement(JKNoType), variableIdentifier) else null
-
-    val lambda = JKLambdaExpression(
-        body,
-        listOfNotNull(lambdaParameter)
-    )
-    val methodCall =
-        JKCallExpressionImpl(
-            useSymbol,
-            listOf(lambda).toArgumentList()
-        )
+    val lambda = JKLambdaExpression(body, listOfNotNull(lambdaParameter))
+    val methodCall = JKCallExpressionImpl(useSymbol, listOf(lambda).toArgumentList())
     return JKQualifiedExpression(receiver, methodCall)
 }
 
@@ -239,14 +231,8 @@ fun JKClass.getOrCreateCompanionObject(): JKClass =
             .also { classBody.declarations += it }
 
 fun runExpression(body: JKStatement, symbolProvider: JKSymbolProvider): JKExpression {
-    val lambda = JKLambdaExpression(
-        body,
-        emptyList()
-    )
-    return JKCallExpressionImpl(
-        symbolProvider.provideMethodSymbol("kotlin.run"),
-        JKArgumentList(lambda)
-    )
+    val lambda = JKLambdaExpression(body)
+    return JKCallExpressionImpl(symbolProvider.provideMethodSymbol("kotlin.run"), JKArgumentList(lambda))
 }
 
 fun assignmentStatement(target: JKVariable, expression: JKExpression, symbolProvider: JKSymbolProvider): JKKtAssignmentStatement =

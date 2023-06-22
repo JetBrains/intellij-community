@@ -23,7 +23,7 @@ internal class C {
     fun f1() {}
 
     //simple one line comment for field
-    var j = 0
+    var j: Int = 0
 
     //double c style
     //comment before function
@@ -31,7 +31,7 @@ internal class C {
 
     //double c style
     //comment before field
-    var k = 0
+    var k: Int = 0
     //combination
     /** of
      */
@@ -49,8 +49,8 @@ internal class C {
      * different
      */
     //comments
-    var l = 0
+    var l: Int = 0
 
     /*two*/ /*comments*/ /*line*/
-    var z = 0
+    var z: Int = 0
 }

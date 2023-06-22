@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
@@ -75,6 +76,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static com.intellij.testFramework.ServiceContainerUtil.registerExtension;
+
 public class FileTypesTest extends HeavyPlatformTestCase {
   private static final Logger LOG = Logger.getInstance(FileTypesTest.class);
 
@@ -86,7 +89,8 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     // we test against myFileTypeManager instance only, standard FileTypeManager.getInstance() must not be changed in any way
-    myFileTypeManager = new FileTypeManagerImpl();
+    //noinspection deprecation
+    myFileTypeManager = new FileTypeManagerImpl(myProject.getCoroutineScope());
     myFileTypeManager.listenAsyncVfsEvents();
     myFileTypeManager.initializeComponent();
     myFileTypeManager.getRegisteredFileTypes();
@@ -301,6 +305,35 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     assertEquals(PlainTextFileType.INSTANCE, psiFile.getFileType());
   }
 
+  public void testFreezedTemporarilyFileTypeHasHighestPriority() throws IOException {
+    File dir = createTempDirectory();
+    VirtualFile vDir = getVirtualFile(dir);
+    VirtualFile vFile = createChildData(vDir, "test.txt");
+    setFileText(vFile, "text");
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+
+    assertEquals("Sanity: PlainText should be autodetected during indexing", PlainTextFileType.INSTANCE, getFileType(vFile));
+
+    MyTestFileType overrideFileType = new MyTestFileType();
+    FileTypeOverrider overrider = file -> {
+      if (file.equals(vFile)) {
+        return overrideFileType;
+      }
+      else {
+        return null;
+      }
+    };
+    registerExtension(ApplicationManager.getApplication(), FileTypeOverrider.EP_NAME, overrider, getTestRootDisposable());
+    assertEquals("Sanity: overrideFileType should override default plain text", overrideFileType, getFileType(vFile));
+
+    MyCustomImageFileType freezedFileType = new MyCustomImageFileType();
+    myFileTypeManager.freezeFileTypeTemporarilyWithProvidedValueIn(vFile, freezedFileType, () -> {
+      assertEquals("freezed type should override everything (1)", freezedFileType, myFileTypeManager.getFileTypeByFile(vFile));
+      assertEquals("freezed type should override everything (2)", freezedFileType, myFileTypeManager.getFileTypeByFile(vFile, null));
+      assertTrue("isFileOfType should be consistent with getFileTypeByFile", myFileTypeManager.isFileOfType(vFile, freezedFileType));
+    });
+  }
+
   public void testFileTypeChooser() throws IOException {
     File dir = createTempDirectory();
     File file = FileUtil.createTempFile(dir, "x", "xxx_xx_xx", true);
@@ -355,7 +388,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     assertNotNull(project);
     assertFalse(project.equals(PlainTextFileType.INSTANCE));
 
-    Set<VirtualFile> detectorCalled = ContainerUtil.newConcurrentSet();
+    Set<VirtualFile> detectorCalled = ConcurrentCollectionFactory.createConcurrentSet();
     FileTypeRegistry.FileTypeDetector detector = new FileTypeRegistry.FileTypeDetector() {
       @Override
       public @Nullable FileType detect(@NotNull VirtualFile file, @NotNull ByteSequence firstBytes, @Nullable CharSequence firstCharsIfText) {
@@ -783,7 +816,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     UserBinaryFileType stuffType = new UserBinaryFileType() {};
     stuffType.setName("stuffType");
 
-    Set<VirtualFile> detectorCalled = ContainerUtil.newConcurrentSet();
+    Set<VirtualFile> detectorCalled = ConcurrentCollectionFactory.createConcurrentSet();
 
     FileTypeRegistry.FileTypeDetector detector = new FileTypeRegistry.FileTypeDetector() {
       @Override
@@ -1387,7 +1420,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   }
 
   public void testDetectorMustWorkForEmptyFileNow() throws IOException {
-    Set<VirtualFile> detectorCalled = ContainerUtil.newConcurrentSet();
+    Set<VirtualFile> detectorCalled = ConcurrentCollectionFactory.createConcurrentSet();
     String magicName = "blah-blah.to.detect";
     FileTypeRegistry.FileTypeDetector detector = (file, __, ___) -> {
       detectorCalled.add(file);

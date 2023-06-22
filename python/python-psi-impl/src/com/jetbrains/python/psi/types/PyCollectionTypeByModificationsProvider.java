@@ -80,7 +80,7 @@ public final class PyCollectionTypeByModificationsProvider extends PyTypeProvide
     if (argumentTypes.size() == 1) {
       final PyType type = ContainerUtil.getFirstItem(argumentTypes);
       if (type instanceof PyTupleType tuple) {
-        argumentTypes = tuple.getElementTypes();
+        argumentTypes = new ArrayList<>(tuple.getElementTypes());
       }
       else if (type == null) {
         argumentTypes.add(null);

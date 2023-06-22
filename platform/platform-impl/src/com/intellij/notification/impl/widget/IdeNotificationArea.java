@@ -14,6 +14,7 @@ import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.*;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.LazyInitializer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -25,14 +26,19 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
-public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget, IconLikeCustomStatusBarWidget {
+public class IdeNotificationArea implements CustomStatusBarWidget, IconLikeCustomStatusBarWidget {
   public static final String WIDGET_ID = "Notifications";
   private static final BadgeIconSupplier NOTIFICATION_ICON = new BadgeIconSupplier(AllIcons.Toolwindows.Notifications);
 
+  private final @NotNull LazyInitializer.LazyValue<JLabel> myComponent;
   private @Nullable StatusBar myStatusBar;
 
   public IdeNotificationArea() {
-    setBorder(JBUI.CurrentTheme.StatusBar.Widget.iconBorder());
+    myComponent = LazyInitializer.create(() -> {
+      var result = new JLabel();
+      result.setBorder(JBUI.CurrentTheme.StatusBar.Widget.iconBorder());
+      return result;
+    });
   }
 
   @Override
@@ -43,7 +49,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
   @Override
   public void dispose() {
     myStatusBar = null;
-    UIUtil.dispose(this);
+    UIUtil.dispose(myComponent.get());
   }
 
   @Override
@@ -55,14 +61,14 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
         @Override
         public boolean onClick(@NotNull MouseEvent e, int clickCount) {
           if (!project.isDisposed()) {
-            EventLog.toggleLog(project, null);
+            ActionCenter.toggleLog(project);
           }
           return true;
         }
-      }.installOn(this, true);
+      }.installOn(myComponent.get(), true);
 
       Application app = ApplicationManager.getApplication();
-      app.getMessageBus().connect(this).subscribe(LogModel.LOG_MODEL_CHANGED, () -> app.invokeLater(() -> updateStatus(project)));
+      app.getMessageBus().connect(this).subscribe(ActionCenter.MODEL_CHANGED, () -> app.invokeLater(() -> updateStatus(project)));
       updateStatus(project);
     }
   }
@@ -76,27 +82,16 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
     if (project == null || project.isDisposed()) {
       return;
     }
-    List<Notification> notifications;
-    if (ActionCenter.isEnabled()) {
-      notifications = NotificationsToolWindowFactory.Companion.getStateNotifications(project);
-    }
-    else {
-      notifications = EventLog.getLogModel(project).getNotifications();
-    }
+    List<Notification> notifications = NotificationsToolWindowFactory.Companion.getStateNotifications(project);
     updateIconOnStatusBar(notifications);
 
     int count = notifications.size();
-    setToolTipText(count > 0 ? UIBundle.message("status.bar.notifications.widget.tooltip", count) 
+    myComponent.get().setToolTipText(count > 0 ? UIBundle.message("status.bar.notifications.widget.tooltip", count)
                              : UIBundle.message("status.bar.notifications.widget.no.notification.tooltip"));
   }
 
   private void updateIconOnStatusBar(List<? extends Notification> notifications) {
-    if (ActionCenter.isEnabled()) {
-      setIcon(getActionCenterNotificationIcon(notifications));
-    }
-    else {
-      setIcon(createIconWithNotificationCount(this, NotificationType.getDominatingType(notifications), notifications.size(), false));
-    }
+    myComponent.get().setIcon(getActionCenterNotificationIcon(notifications));
   }
 
   public static @NotNull Icon getActionCenterNotificationIcon(List<? extends Notification> notifications) {
@@ -126,7 +121,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
 
   @Override
   public JComponent getComponent() {
-    return this;
+    return myComponent.get();
   }
 
   private static Icon getPendingNotificationsIcon(NotificationType maximumType, boolean forToolWindow) {

@@ -22,7 +22,7 @@ public final class InternalIdeaContentRoot implements IdeaContentRoot {
   private Set<InternalIdeaSourceDirectory> testDirectories = emptyDomainObjectSet();
   private Set<InternalIdeaSourceDirectory> resourceDirectories = emptyDomainObjectSet();
   private Set<InternalIdeaSourceDirectory> testResourceDirectories = emptyDomainObjectSet();
-  private Set<File> excludeDirectories = new LinkedHashSet<File>();
+  private Set<File> excludeDirectories = new LinkedHashSet<>();
 
   private final GradleVersionComparator myGradleVersionComparator;
 

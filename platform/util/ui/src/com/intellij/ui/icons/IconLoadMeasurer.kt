@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.icons
 
 import com.intellij.diagnostic.StartUpMeasurer
@@ -9,30 +9,30 @@ import java.util.concurrent.atomic.LongAdder
 @ApiStatus.Internal
 object IconLoadMeasurer {
   @JvmField
-  val svgDecoding = Counter("svg-decode")
+  val svgDecoding: Counter = Counter("svg-decode")
   private val svgLoading = Counter("svg-load")
   @JvmField
-  val svgPreBuiltLoad = Counter("svg-prebuilt")
+  val svgPreBuiltLoad: Counter = Counter("svg-prebuilt")
   @JvmField
-  val svgCacheWrite = Counter("svg-cache-write")
+  val svgCacheWrite: Counter = Counter("svg-cache-write")
   @JvmField
-  val svgCacheRead = Counter("svg-cache-read")
+  val svgCacheRead: Counter = Counter("svg-cache-read")
   @JvmField
-  val pngDecoding = Counter("png-decode")
+  val pngDecoding: Counter = Counter("png-decode")
 
   private val pngLoading = Counter("png-load")
 
   @JvmField
-  val findIcon = Counter("find-icon")
+  val findIcon: Counter = Counter("find-icon")
   @JvmField
-  val findIconLoad = Counter("find-icon-load")
+  val findIconLoad: Counter = Counter("find-icon-load")
   @JvmField
-  val loadFromUrl = Counter("load-from-url")
+  val loadFromUrl: Counter = Counter("load-from-url")
   @JvmField
-  val loadFromResources = Counter("load-from-resource")
+  val loadFromResources: Counter = Counter("load-from-resource")
 
   /**
-   * Get icon for action. Measured to understand impact.
+   * Get icon for action. Measured to understand the impact.
    */
   @JvmField
   val actionIcon: Counter = Counter("action-icon")

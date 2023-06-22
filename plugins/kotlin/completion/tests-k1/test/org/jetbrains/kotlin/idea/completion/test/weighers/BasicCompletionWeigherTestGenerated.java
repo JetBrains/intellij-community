@@ -274,6 +274,11 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
             runTest("../testData/weighers/basic/expectedType/ifConditionQualified.kt");
         }
 
+        @TestMetadata("MatchingNullableType.kt")
+        public void testMatchingNullableType() throws Exception {
+            runTest("../testData/weighers/basic/expectedType/MatchingNullableType.kt");
+        }
+
         @TestMetadata("returnFromFunction.kt")
         public void testReturnFromFunction() throws Exception {
             runTest("../testData/weighers/basic/expectedType/returnFromFunction.kt");
@@ -287,6 +292,11 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
         @TestMetadata("returnFromLambda.kt")
         public void testReturnFromLambda() throws Exception {
             runTest("../testData/weighers/basic/expectedType/returnFromLambda.kt");
+        }
+
+        @TestMetadata("typeParameter.kt")
+        public void testTypeParameter() throws Exception {
+            runTest("../testData/weighers/basic/expectedType/typeParameter.kt");
         }
 
         @TestMetadata("whileConditionQualified.kt")
@@ -315,6 +325,11 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
         @TestMetadata("ImportedFirst.kt")
         public void testImportedFirst() throws Exception {
             runTest("../testData/weighers/basic/parameterNameAndType/ImportedFirst.kt");
+        }
+
+        @TestMetadata("LocalClass.kt")
+        public void testLocalClass() throws Exception {
+            runTest("../testData/weighers/basic/parameterNameAndType/LocalClass.kt");
         }
 
         @TestMetadata("MoreWordsMatchFirst.kt")
@@ -348,6 +363,11 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
         @TestMetadata("AfterNullable.kt")
         public void testAfterNullable() throws Exception {
             runTest("../testData/weighers/basic/AfterNullable.kt");
+        }
+
+        @TestMetadata("AlphabeticalOrder.kt")
+        public void testAlphabeticalOrder() throws Exception {
+            runTest("../testData/weighers/basic/AlphabeticalOrder.kt");
         }
 
         @TestMetadata("CallableReference_NothingLast.kt")
@@ -445,9 +465,19 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
             runTest("../testData/weighers/basic/LambdaSignature.kt");
         }
 
+        @TestMetadata("LocalClass.kt")
+        public void testLocalClass() throws Exception {
+            runTest("../testData/weighers/basic/LocalClass.kt");
+        }
+
         @TestMetadata("LocalFileBeforeImported.kt")
         public void testLocalFileBeforeImported() throws Exception {
             runTest("../testData/weighers/basic/LocalFileBeforeImported.kt");
+        }
+
+        @TestMetadata("LocalFunctionInClassMethod.kt")
+        public void testLocalFunctionInClassMethod() throws Exception {
+            runTest("../testData/weighers/basic/LocalFunctionInClassMethod.kt");
         }
 
         @TestMetadata("LocalValuesAndParams.kt")
@@ -463,6 +493,26 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
         @TestMetadata("LocalsPropertiesKeywords.kt")
         public void testLocalsPropertiesKeywords() throws Exception {
             runTest("../testData/weighers/basic/LocalsPropertiesKeywords.kt");
+        }
+
+        @TestMetadata("MethodsFromAnyExplicitReceiver.kt")
+        public void testMethodsFromAnyExplicitReceiver() throws Exception {
+            runTest("../testData/weighers/basic/MethodsFromAnyExplicitReceiver.kt");
+        }
+
+        @TestMetadata("MethodsFromAnyExplicitReceiver2.kt")
+        public void testMethodsFromAnyExplicitReceiver2() throws Exception {
+            runTest("../testData/weighers/basic/MethodsFromAnyExplicitReceiver2.kt");
+        }
+
+        @TestMetadata("MethodsFromAnyImplicitReceivers.kt")
+        public void testMethodsFromAnyImplicitReceivers() throws Exception {
+            runTest("../testData/weighers/basic/MethodsFromAnyImplicitReceivers.kt");
+        }
+
+        @TestMetadata("MethodsFromIntersectionType.kt")
+        public void testMethodsFromIntersectionType() throws Exception {
+            runTest("../testData/weighers/basic/MethodsFromIntersectionType.kt");
         }
 
         @TestMetadata("NamedArgumentNonTypableVariables.kt")

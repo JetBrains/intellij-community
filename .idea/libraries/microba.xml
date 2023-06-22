@@ -1,11 +1,12 @@
 <component name="libraryTable">
-  <library name="microba">
+  <library name="microba" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.michaelbaranov.microba:microba:0.4.5-jb.1" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/microba.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/michaelbaranov/microba/microba/0.4.5-jb.1/microba-0.4.5-jb.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/microba-src.zip!/src/main/java" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/michaelbaranov/microba/microba/0.4.5-jb.1/microba-0.4.5-jb.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

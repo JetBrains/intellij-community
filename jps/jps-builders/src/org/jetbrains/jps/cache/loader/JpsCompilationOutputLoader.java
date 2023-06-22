@@ -1,7 +1,5 @@
 package org.jetbrains.jps.cache.loader;
 
-import com.google.common.hash.Hasher;
-import com.google.common.hash.Hashing;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.io.FileUtil;
@@ -12,15 +10,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.builders.JpsBuildBundle;
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
+import org.jetbrains.jps.builders.java.ResourcesTargetType;
 import org.jetbrains.jps.cache.client.JpsServerClient;
 import org.jetbrains.jps.cache.model.AffectedModule;
 import org.jetbrains.jps.cache.model.BuildTargetState;
 import org.jetbrains.jps.cache.model.JpsLoaderContext;
 import org.jetbrains.jps.cache.model.OutputLoadResult;
+import org.jetbrains.xxh3.Xxh3;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -31,10 +31,10 @@ import static org.jetbrains.jps.cache.JpsCachesLoaderUtil.EXECUTOR_SERVICE;
 
 class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResult>> {
   private static final Logger LOG = Logger.getInstance(JpsCompilationOutputLoader.class);
-  private static final String RESOURCES_PRODUCTION = "resources-production";
-  private static final String JAVA_PRODUCTION = "java-production";
-  private static final String RESOURCES_TEST = "resources-test";
-  private static final String JAVA_TEST = "java-test";
+  private static final String RESOURCES_PRODUCTION = ResourcesTargetType.PRODUCTION.getTypeId();
+  private static final String JAVA_PRODUCTION = JavaModuleBuildTargetType.PRODUCTION.getTypeId();
+  private static final String RESOURCES_TEST = ResourcesTargetType.TEST.getTypeId();
+  private static final String JAVA_TEST = JavaModuleBuildTargetType.TEST.getTypeId();
   private static final String PRODUCTION = "production";
   private static final String TEST = "test";
   private final JpsServerClient myClient;
@@ -302,8 +302,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
   }
 
   private static String calculateStringHash(String content) {
-    Hasher hasher = Hashing.murmur3_128().newHasher();
-    return hasher.putString(content, StandardCharsets.UTF_8).hash().toString();
+    return String.valueOf(Xxh3.hash(content));
   }
 
   @TestOnly

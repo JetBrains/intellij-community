@@ -155,7 +155,7 @@ class JKIfElseExpression(
 
 class JKLambdaExpression(
     statement: JKStatement,
-    parameters: List<JKParameter>,
+    parameters: List<JKParameter> = emptyList(),
     functionalType: JKTypeElement = JKTypeElement(JKNoType),
     returnType: JKTypeElement = JKTypeElement(JKContextType),
     override val expressionType: JKType? = null,

@@ -281,13 +281,6 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                 "RPAREN_ON_NEW_LINE_IN_DECONSTRUCTION_PATTERN",
                                 ApplicationBundle.message("wrapping.rpar.on.new.line"),
                                 deconstructionComponentsGroup);
-
-      //switch expression
-      String switchExpressionComponentsGroup = JavaBundle.message("wrapping.switch.expressions");
-      consumer.showCustomOption(JavaCodeStyleSettings.class,
-                                "DOUBLY_SHIFTED_SWITCH_EXPRESSION_BODY",
-                                JavaBundle.message("wrapping.brace.placement.switch.expression.doubly.shifted"),
-                                switchExpressionComponentsGroup);
     }
     else if (settingsType == SettingsType.BLANK_LINES_SETTINGS) {
       consumer.showAllStandardOptions();

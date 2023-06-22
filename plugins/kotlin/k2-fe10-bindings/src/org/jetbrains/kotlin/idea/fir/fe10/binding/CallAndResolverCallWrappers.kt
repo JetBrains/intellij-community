@@ -146,8 +146,7 @@ class CallAndResolverCallWrappers(bindingContext: KtSymbolBasedBindingContext) {
     }
 
     private fun getConstructorResolvedDelegationCall(constructor: ConstructorDescriptor): ResolvedCall<ConstructorDescriptor>? {
-        val constructorPSI = constructor.safeAs<KtSymbolBasedConstructorDescriptor>()?.ktSymbol?.psi
-        when (constructorPSI) {
+        when (val constructorPSI = constructor.safeAs<KtSymbolBasedConstructorDescriptor>()?.ktSymbol?.psi) {
             is KtSecondaryConstructor -> {
                 val delegationCall = constructorPSI.getDelegationCall()
                 val ktCallInfo = context.withAnalysisSession { delegationCall.resolveCall() }
@@ -161,7 +160,7 @@ class CallAndResolverCallWrappers(bindingContext: KtSymbolBasedBindingContext) {
                 return FunctionFe10WrapperResolvedCall(psiCall, constructorCall, diagnostic, context) as ResolvedCall<ConstructorDescriptor>
             }
             null -> return null
-            else -> context.implementationPlanned() // todo: Primary Constructor delegated call
+            else -> if (constructorPSI is KtPrimaryConstructor && !constructorPSI.hasBody()) return null else context.implementationPlanned() // todo: Primary Constructor delegated call
         }
     }
 

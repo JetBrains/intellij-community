@@ -4,7 +4,7 @@ package com.intellij.dev.psiViewer.formatter;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.dev.psiViewer.PsiViewerDialog;
 import com.intellij.dev.psiViewer.ViewerPsiBasedTree;
-import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageFormatting;
@@ -141,7 +141,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
     if (blockNode == null) {
       PsiViewerDialog.LOG.error("PsiViewer: rootNode not found\nCurrent language: " + rootElement.getContainingFile().getLanguage(),
                                 (Throwable)null,
-                                AttachmentFactory.createAttachment(rootElement.getContainingFile().getOriginalFile().getVirtualFile()));
+                                CoreAttachmentFactory.createAttachment(rootElement.getContainingFile().getOriginalFile().getVirtualFile()));
       blockNode = findBlockNode(rootPsi);
     }
 

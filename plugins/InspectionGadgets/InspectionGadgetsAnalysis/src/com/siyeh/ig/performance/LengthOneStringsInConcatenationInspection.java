@@ -16,16 +16,18 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -48,11 +50,11 @@ public class LengthOneStringsInConcatenationInspection extends BaseInspection im
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new ReplaceStringsWithCharsFix();
   }
 
-  private static class ReplaceStringsWithCharsFix extends InspectionGadgetsFix {
+  private static class ReplaceStringsWithCharsFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -61,8 +63,8 @@ public class LengthOneStringsInConcatenationInspection extends BaseInspection im
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiLiteralExpression expression = (PsiLiteralExpression)descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
+      final PsiLiteralExpression expression = (PsiLiteralExpression)startElement;
       if (ExpressionUtils.isConversionToStringNecessary(expression, false)) {
         return;
       }

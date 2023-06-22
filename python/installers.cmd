@@ -4,8 +4,9 @@ GOTO :CMDSCRIPT
 ::CMDLITERAL
 
 set -eux
-exec "$(cd "$(dirname "$0")"; pwd)/../platform/jps-bootstrap/jps-bootstrap.sh" "$@" intellij.pycharm.community.build PyCharmCommunityInstallersBuildTarget
+root="$(cd "$(dirname "$0")" && cd .. && pwd)"
+exec "$root/platform/jps-bootstrap/jps-bootstrap.sh" "$@" "$root" intellij.pycharm.community.build PyCharmCommunityInstallersBuildTarget
 :CMDSCRIPT
 
-call "%~dp0\..\platform\jps-bootstrap\jps-bootstrap.cmd" %* intellij.pycharm.community.build PyCharmCommunityInstallersBuildTarget
+call "%~dp0\..\platform\jps-bootstrap\jps-bootstrap.cmd" %* "%~dp0\.." intellij.pycharm.community.build PyCharmCommunityInstallersBuildTarget
 EXIT /B %ERRORLEVEL%

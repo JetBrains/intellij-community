@@ -77,7 +77,7 @@ public final class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
           JBPopupFactory.getInstance()
             .createListPopupBuilder(dictList)
             .setTitle(SpellCheckerBundle.message("select.dictionary.title"))
-            .setItemChoosenCallback(
+            .setItemChosenCallback(
               () ->
                 CommandProcessor.getInstance().executeCommand(
                   project,

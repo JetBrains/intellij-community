@@ -42,11 +42,10 @@ public class ComponentNotRegisteredInspection extends DevKitJvmInspection {
   public boolean IGNORE_NON_PUBLIC = true;
 
   private static final Map<ComponentType, RegistrationCheckerUtil.RegistrationType> COMPONENT_TYPE_TO_REGISTRATION_TYPE =
-    ContainerUtil.<ComponentType, RegistrationCheckerUtil.RegistrationType>immutableMapBuilder()
-      .put(ComponentType.APPLICATION, RegistrationCheckerUtil.RegistrationType.APPLICATION_COMPONENT)
-      .put(ComponentType.PROJECT, RegistrationCheckerUtil.RegistrationType.PROJECT_COMPONENT)
-      .put(ComponentType.MODULE, RegistrationCheckerUtil.RegistrationType.MODULE_COMPONENT)
-      .build();
+    Map.of(
+      ComponentType.APPLICATION, RegistrationCheckerUtil.RegistrationType.APPLICATION_COMPONENT,
+      ComponentType.PROJECT, RegistrationCheckerUtil.RegistrationType.PROJECT_COMPONENT,
+      ComponentType.MODULE, RegistrationCheckerUtil.RegistrationType.MODULE_COMPONENT);
 
   @Override
   public @NotNull OptPane getOptionsPane() {

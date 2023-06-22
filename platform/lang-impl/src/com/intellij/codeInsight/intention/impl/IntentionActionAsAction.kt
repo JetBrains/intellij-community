@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -14,7 +14,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
  * The wrapper actions are created and managed by [IntentionShortcutManager].
  */
 class IntentionActionAsAction(intention: IntentionAction)
-  : AnAction({CodeInsightBundle.message("intention.action.wrapper.name", intention.familyName)}) {
+  : AnAction({ CodeInsightBundle.message("intention.action.wrapper.name", intention.familyName) }) {
 
   private val actionId = intention.wrappedActionId
 
@@ -36,7 +36,7 @@ class IntentionActionAsAction(intention: IntentionAction)
     e.presentation.isEnabled = findIntention()?.isAvailable(project, editor, file) == true
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   private fun findIntention(): IntentionAction? = IntentionShortcutManager.getInstance().findIntention(actionId)
 }

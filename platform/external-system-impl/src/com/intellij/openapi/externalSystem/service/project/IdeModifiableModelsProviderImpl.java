@@ -36,16 +36,15 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ClassMap;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.workspaceModel.ide.WorkspaceModel;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.TestModulePropertiesBridge;
 import com.intellij.workspaceModel.ide.legacyBridge.*;
-import com.intellij.workspaceModel.storage.MutableEntityStorage;
-import com.intellij.workspaceModel.storage.VersionedEntityStorage;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
+import com.intellij.platform.workspace.storage.VersionedEntityStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -164,7 +163,7 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
         for (Module module : modules) {
           module.putUserData(MODIFIABLE_MODELS_PROVIDER_KEY, null);
         }
-        Set<Module> existingModules = ContainerUtil.set(modules);
+        Set<Module> existingModules = Set.of(modules);
         rootModels = myModifiableRootModels.entrySet().stream().filter(entry -> existingModules.contains(entry.getKey())).map(Map.Entry::getValue).toArray(ModifiableRootModel[]::new);
         ((ModifiableModuleModelBridge)myModifiableModuleModel).prepareForCommit();
       }

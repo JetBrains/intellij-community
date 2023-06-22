@@ -10,4 +10,4 @@ fun buildTemplates(): List<Family> {
     return templates
 }
 
-// ELEMENT: Family.Collections
+// ELEMENT: Collections

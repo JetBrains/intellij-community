@@ -21,7 +21,7 @@ class GradleBuildIssuesMiscImportingTest : BuildViewMessagesImportingTestCase() 
     importProject("""
       List list = new ArrayList()
       while (true) {
-         list.add(new Object())
+         list.add(new byte[1024 * 1024])
       }
       """.trimIndent())
 

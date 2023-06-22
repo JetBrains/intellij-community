@@ -17,7 +17,7 @@ import java.nio.file.Path;
 /**
  * Represents a module in an IDEA project.
  *
- * @see ModuleManager#getModules()
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/module.html">IntelliJ Platform Docs</a>
  */
 @SuppressWarnings("DeprecatedIsStillUsed")
 public interface Module extends ComponentManager, AreaInstance, Disposable {

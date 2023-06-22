@@ -3,10 +3,13 @@ package org.jetbrains.kotlin.idea.debugger.test
 
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.execution.process.ProcessOutputTypes
+import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
 import org.jetbrains.kotlin.idea.debugger.test.util.FramePrinter
 
 abstract class AbstractKotlinVariablePrintingTest : KotlinDescriptorTestCaseWithStepping() {
+    override fun useIrBackend() = true
+
     override fun doMultiFileTest(files: TestFiles, preferences: DebuggerPreferences) {
         for (i in 0..countBreakpointsNumber(files.wholeFile)) {
             doOnBreakpoint {
@@ -21,4 +24,10 @@ abstract class AbstractKotlinVariablePrintingTest : KotlinDescriptorTestCaseWith
             print(out, ProcessOutputTypes.SYSTEM)
             resume(this@printFrame)
         }
+}
+
+abstract class AbstractK1IdeK2CodeKotlinVariablePrintingTest : AbstractKotlinVariablePrintingTest() {
+    override val compileWithK2 = true
+
+    override fun lambdasGenerationScheme() = JvmClosureGenerationScheme.INDY
 }

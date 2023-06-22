@@ -50,7 +50,7 @@ class croniter(Iterator[Any]):
         day_or: bool = ...,
         max_years_between_matches: int | None = ...,
         is_prev: bool = ...,
-        hash_id: str | bytes | None = ...,  # unicode not accepted on python 2
+        hash_id: str | bytes | None = ...,
     ) -> None: ...
     # Most return value depend on ret_type, which can be passed in both as a method argument and as
     # a constructor argument.

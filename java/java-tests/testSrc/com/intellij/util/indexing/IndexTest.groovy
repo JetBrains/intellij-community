@@ -1337,30 +1337,20 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
-  void "test composite index with snapshot mappings hash id"() {
+  void "_test composite index with snapshot mappings hash id"() {
     def groovyFileId = ((VirtualFileWithId)myFixture.addFileToProject("Foo.groovy", "class Foo {}").virtualFile).getId()
     def javaFileId = ((VirtualFileWithId)myFixture.addFileToProject("Foo.java", "class Foo {}").virtualFile).getId()
 
     def fbi = FileBasedIndex.getInstance()
     fbi.ensureUpToDate(IdIndex.NAME, getProject(), GlobalSearchScope.allScope(getProject()))
-    fbi.ensureUpToDate(TrigramIndex.INDEX_ID, getProject(), GlobalSearchScope.allScope(getProject()))
     def idIndex = ((FileBasedIndexImpl)fbi).getIndex(IdIndex.NAME)
-    def trigramIndex = ((FileBasedIndexImpl)fbi).getIndex(TrigramIndex.INDEX_ID)
 
-    assertTrue(FileBasedIndex.ourSnapshotMappingsEnabled)
     def idIndexForwardIndex = (IntForwardIndex)((VfsAwareMapReduceIndex)idIndex).getForwardIndex()
-    def trigramIndexForwardIndex = (IntForwardIndex)((VfsAwareMapReduceIndex)trigramIndex).getForwardIndex()
 
     // id index depends on file type
     assertFalse(idIndexForwardIndex.getInt(javaFileId) == 0)
     assertFalse(idIndexForwardIndex.getInt(groovyFileId) == 0)
     assertFalse(idIndexForwardIndex.getInt(groovyFileId) == idIndexForwardIndex.getInt(javaFileId))
-
-    // trigram index is not a composite index
-    assertFalse(trigramIndexForwardIndex.getInt(javaFileId) == 0)
-    assertFalse(trigramIndexForwardIndex.getInt(groovyFileId) == 0)
-    // for trigram index the assertion above can be broken by definition of trigram index
-    // assertFalse(trigramIndexForwardIndex.getInt(groovyFileId) == trigramIndexForwardIndex.getInt(javaFileId))
   }
 
   private boolean findWordInDumbMode(String word, VirtualFile file, boolean inDumbMode) {

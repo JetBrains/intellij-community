@@ -1,5 +1,5 @@
-// "Suppress 'REDUNDANT_NULLABLE' for class C" "true"
+// "Suppress 'DIVISION_BY_ZERO' for class C" "true"
 
 class C {
-    fun foo(): String?<caret>? = null
+    fun foo() = 2 / <caret>0
 }

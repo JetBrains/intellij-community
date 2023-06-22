@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
 import com.siyeh.InspectionGadgetsBundle;
@@ -97,8 +97,8 @@ public class ExtractParameterAsLocalVariableFixTest extends IGQuickFixesTestCase
       "class X {\n" +
       "    void m() {\n" +
       "        for (String s : new String[]{\"one\", \"two\", \"three\"}) {\n" +
-      "            String s1 = s;\n" +
-      "            s1 = \"four\";\n" +
+      "            String string = s;\n" +
+      "            string = \"four\";\n" +
       "        }\n" +
       "    }\n" +
       "}"
@@ -187,9 +187,9 @@ public class ExtractParameterAsLocalVariableFixTest extends IGQuickFixesTestCase
            "class Foo {\n" +
            "    Foo(Object o ) {\n" +
            "        super();\n" +
-           "        Object o1 = o;\n" +
-           "        if (o1 != null) {\n" +
-           "            o1 = o1.toString();\n" +
+           "        Object object = o;\n" +
+           "        if (object != null) {\n" +
+           "            object = object.toString();\n" +
            "        }\n" +
            "    }\n" +
            "}");

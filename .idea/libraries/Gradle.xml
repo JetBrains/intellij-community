@@ -1,14 +1,11 @@
 <component name="libraryTable">
   <library name="Gradle" type="repository">
-    <properties maven-id="org.jetbrains.intellij.deps:gradle-api:7.5.1" />
-    <ANNOTATIONS>
-      <root url="file://$PROJECT_DIR$/plugins/gradle/anno" />
-    </ANNOTATIONS>
+    <properties maven-id="org.jetbrains.intellij.deps:gradle-api:8.2-rc-2" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/7.5.1/gradle-api-7.5.1.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api-impldep/7.5.1/gradle-api-impldep-7.5.1.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-wrapper/7.5.1/gradle-wrapper-7.5.1.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-launcher/7.5.1/gradle-launcher-7.5.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/8.2-rc-2/gradle-api-8.2-rc-2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api-impldep/8.2-rc-2/gradle-api-impldep-8.2-rc-2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-wrapper/8.2-rc-2/gradle-wrapper-8.2-rc-2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-launcher/8.2-rc-2/gradle-launcher-8.2-rc-2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

@@ -1,11 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -13,15 +14,13 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 /**
  * @author Bas Leijdekkers
@@ -48,11 +47,11 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspec
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new UnnecessarilyQualifiedInnerClassAccessFix();
   }
 
-  private static class UnnecessarilyQualifiedInnerClassAccessFix extends InspectionGadgetsFix {
+  private static class UnnecessarilyQualifiedInnerClassAccessFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -62,8 +61,7 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspec
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiJavaCodeReferenceElement referenceElement)) {
         return;

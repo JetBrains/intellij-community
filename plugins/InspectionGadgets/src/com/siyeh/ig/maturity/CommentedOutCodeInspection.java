@@ -1,11 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.maturity;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -19,7 +20,6 @@ import com.intellij.util.ThreeState;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
@@ -52,11 +52,15 @@ public class CommentedOutCodeInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
-    return new InspectionGadgetsFix[] { new DeleteCommentedOutCodeFix(), new UncommentCodeFix() };
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
+    int lines = (int)infos[0];
+    return new LocalQuickFix[]{new DeleteCommentedOutCodeFix(), new UncommentCodeFix(),
+      new SetInspectionOptionFix(
+        this, "minLines", InspectionGadgetsBundle.message("inspection.commented.out.code.disable.short.fragments"), lines + 1),
+    };
   }
 
-  private static class DeleteCommentedOutCodeFix extends InspectionGadgetsFix {
+  private static class DeleteCommentedOutCodeFix extends PsiUpdateModCommandQuickFix {
 
     private DeleteCommentedOutCodeFix() {}
 
@@ -67,8 +71,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (!(element instanceof PsiComment comment)) {
         return;
       }
@@ -83,12 +86,12 @@ public class CommentedOutCodeInspection extends BaseInspection {
         toDelete.forEach(PsiElement::delete);
       }
       else {
-        deleteElement(element);
+        element.delete();
       }
     }
   }
 
-  private static class UncommentCodeFix extends InspectionGadgetsFix {
+  private static class UncommentCodeFix extends PsiUpdateModCommandQuickFix {
 
     private UncommentCodeFix() {}
 
@@ -99,8 +102,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (!(element instanceof PsiComment comment)) {
         return;
       }
@@ -174,10 +176,11 @@ public class CommentedOutCodeInspection extends BaseInspection {
       }
       else {
         final String text = getCommentText(comment);
-        if (StringUtil.countNewLines(text) + 1 < minLines || isCode(text, comment) != ThreeState.YES) {
+        final int lines = StringUtil.countNewLines(text) + 1;
+        if (lines < minLines || isCode(text, comment) != ThreeState.YES) {
           return;
         }
-        registerErrorAtOffset(comment, 0, 2, StringUtil.countNewLines(text) + 1);
+        registerErrorAtOffset(comment, 0, 2, lines);
       }
     }
   }

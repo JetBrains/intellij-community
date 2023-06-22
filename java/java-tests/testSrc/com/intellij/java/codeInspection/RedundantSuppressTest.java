@@ -1,10 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
-import com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitorBasedInspection;
-import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.PossibleHeapPollutionVarargsInspection;
-import com.intellij.codeInspection.RedundantSuppressInspection;
+import com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.emptyMethod.EmptyMethodInspection;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
@@ -14,6 +12,7 @@ import com.intellij.codeInspection.i18n.I18nInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.codeInspection.miscGenerics.RawUseOfParameterizedTypeInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
+import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.injected.MyTestInjector;
 import com.intellij.testFramework.JavaInspectionTestCase;
@@ -22,6 +21,7 @@ import com.siyeh.ig.dataflow.UnnecessaryLocalVariableInspection;
 import com.siyeh.ig.inheritance.RefusedBequestInspection;
 import com.siyeh.ig.internationalization.UnnecessaryUnicodeEscapeInspection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -42,7 +42,7 @@ public class RedundantSuppressTest extends JavaInspectionTestCase {
                                              new LocalInspectionToolWrapper(new UnnecessaryUnicodeEscapeInspection()),
                                              new LocalInspectionToolWrapper(new RefusedBequestInspection()),
                                              new GlobalInspectionToolWrapper(new EmptyMethodInspection()),
-                                             new GlobalInspectionToolWrapper(new DefaultHighlightVisitorBasedInspection.AnnotatorBasedInspection()),
+                                             new GlobalInspectionToolWrapper(new HighlightVisitorBasedInspection().setRunAnnotators(true)),
                                              new GlobalInspectionToolWrapper(new UnusedDeclarationInspection()));
 
     myWrapper = new GlobalInspectionToolWrapper(new RedundantSuppressInspection() {
@@ -105,6 +105,21 @@ public class RedundantSuppressTest extends JavaInspectionTestCase {
     testInjector.injectAll(myFixture.getTestRootDisposable());
 
     doTest();
+  }
+
+  public void testAdditionalEmptySuppressor() {
+    LanguageInspectionSuppressors.INSTANCE.addExplicitExtension(Language.findLanguageByID("UAST"), new InspectionSuppressor() {
+      @Override
+      public boolean isSuppressedFor(@NotNull PsiElement element, @NotNull String toolId) {
+        return false;
+      }
+
+      @Override
+      public SuppressQuickFix @NotNull [] getSuppressActions(@Nullable PsiElement element, @NotNull String toolId) {
+        return SuppressQuickFix.EMPTY_ARRAY;
+      }
+    }, getTestRootDisposable());
+    doTest("redundantSuppress/defaultFile", myWrapper, true);
   }
 
   private void doTest() {

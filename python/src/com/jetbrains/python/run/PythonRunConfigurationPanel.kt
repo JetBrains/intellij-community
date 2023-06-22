@@ -82,12 +82,12 @@ internal class PythonRunConfigurationPanel(configuration: PythonRunConfiguration
       collapsibleGroup(PyBundle.message("runcfg.labels.execution")) {
         row {
           emulateTerminalCheckbox = checkBox(PyBundle.message("form.python.run.configuration.emulate.terminal.in.output.console"))
-            .applyToComponent { isSelected = true }
+            .selected(true)
             .component
         }
         row {
           showCommandLineCheckbox = checkBox(PyBundle.message("form.python.run.configuration.run.with.python.console"))
-            .applyToComponent { isSelected = true }
+            .selected(true)
             .component
         }
         row {

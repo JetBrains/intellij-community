@@ -88,7 +88,7 @@ object DebuggerUtils {
             }
 
             val singleFile = runReadAction {
-                val matchingFiles = KotlinFileFacadeFqNameIndex.get(partFqName.asString(), project, scope)
+                val matchingFiles = KotlinFileFacadeFqNameIndex[partFqName.asString(), project, scope]
                 PackagePartClassUtils.getFilesWithCallables(matchingFiles).singleOrNull { it.name == fileName }
             }
 

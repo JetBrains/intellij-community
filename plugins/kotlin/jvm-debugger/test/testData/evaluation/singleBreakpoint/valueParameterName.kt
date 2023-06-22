@@ -10,7 +10,7 @@ fun String.foo() {
     )
     val b = Foo(
         //Breakpoint!
-        a = this
+        a = this + ""
     )
 }
 

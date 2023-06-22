@@ -1,10 +1,10 @@
 class LocalVariable {
   public void test() {
-    Integer <caret>arr1 [] [] = new Integer[][]{{3, 3, 3}, {3, 3, 3}};
-    Integer <caret>arr2 @Required   []  [] = new Integer[][]{{3, 3, 3}, {3, 3, 3}};
-    Integer <caret>arr3 @Required   [] @Preliminary   @Required  [] = new Integer[][]{{3, 3, 3}, {3, 3, 3}};
-    Integer  @Required []  <caret>arr4 @Preliminary @Required [] = new Integer[][]{{3, 3, 3}, {3, 3, 3}};
-    Integer  @Required []  <caret>arr5 [] = new Integer[][]{{3, 3, 3}, {3, 3, 3}};
-    Integer [] <caret>arr6 @Preliminary   [];
+    Integer arr1 [] []<caret> = new Integer[][]{{3, 3, 3}, {3, 3, 3}};
+    Integer arr2 @Required   []  [] = new Integer[][]{{3, 3, 3}, {3, 3, 3}};
+    Integer arr3 @Required   [] @Preliminary   @Required  [] = new Integer[][]{{3, 3, 3}, {3, 3, 3}};
+    Integer  @Required []  arr4 @Preliminary @Required [] = new Integer[][]{{3, 3, 3}, {3, 3, 3}};
+    Integer  @Required []  arr5 [] = new Integer[][]{{3, 3, 3}, {3, 3, 3}};
+    Integer [] arr6 @Preliminary   [];
   }
 }

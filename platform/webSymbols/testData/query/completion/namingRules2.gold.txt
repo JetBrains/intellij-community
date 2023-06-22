@@ -3,7 +3,7 @@
   name: "prop-one",
   priority: NORMAL,
   source: {
-   matchedName: "js/properties/propOne",
+   matchedName: "js/custom-properties/propOne",
    origin: "vue@3.0.0 (vue)",
    complete: true,
    priority: NORMAL,
@@ -19,7 +19,7 @@
   name: "prop-two-three",
   priority: NORMAL,
   source: {
-   matchedName: "js/properties/propTwo-Three",
+   matchedName: "js/custom-properties/propTwo-Three",
    origin: "vue@3.0.0 (vue)",
    complete: true,
    priority: NORMAL,

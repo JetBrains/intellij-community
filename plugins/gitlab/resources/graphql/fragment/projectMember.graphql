@@ -1,0 +1,8 @@
+fragment projectMember on ProjectMember {
+    createdBy {
+        ...user
+    }
+    project {
+        ...project
+    }
+}

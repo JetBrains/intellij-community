@@ -8,17 +8,13 @@ import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.text.*
 import com.intellij.grazie.utils.*
 import com.intellij.openapi.application.ex.ApplicationUtil
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.openapi.util.ClassLoaderUtil
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.Predicates
-import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.*
 import com.intellij.openapi.vcs.ui.CommitMessage
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.containers.Interner
 import kotlinx.coroutines.Dispatchers
@@ -41,9 +37,12 @@ open class LanguageToolChecker : TextChecker() {
   }
 
   override fun check(extracted: TextContent): List<Problem> {
-    return CachedValuesManager.getManager(extracted.containingFile.project).getCachedValue(extracted) {
-      CachedValueProvider.Result.create(doCheck(extracted), extracted.containingFile)
+    var result = cacheKey.get(extracted)
+    if (result == null) {
+      result = doCheck(extracted)
+      extracted.putUserDataIfAbsent(cacheKey, result)
     }
+    return result
   }
 
   private fun doCheck(extracted: TextContent): List<Problem> {
@@ -174,6 +173,7 @@ open class LanguageToolChecker : TextChecker() {
 
   companion object {
     private val logger = LoggerFactory.getLogger(LanguageToolChecker::class.java)
+    private val cacheKey = Key.create<List<Problem>>("grazie.LT.problem.cache")
     private val interner = Interner.createWeakInterner<String>()
     private val sentenceSeparationRules = setOf("LC_AFTER_PERIOD", "PUNT_GEEN_HL", "KLEIN_NACH_PUNKT")
     private val openClosedRangeStart = Regex("[\\[(].+?(\\.\\.|:|,).+[])]")
@@ -195,7 +195,7 @@ open class LanguageToolChecker : TextChecker() {
     private fun isGitCherryPickedFrom(match: RuleMatch, text: TextContent): Boolean {
       return match.rule.id == "EN_COMPOUNDS" && match.fromPos > 0 && text.startsWith("(cherry picked from", match.fromPos - 1) &&
              (text.domain == TextContent.TextDomain.LITERALS ||
-              text.domain == TextContent.TextDomain.PLAIN_TEXT && CommitMessage.isCommitMessage(text.containingFile))
+              text.domain == TextContent.TextDomain.PLAIN_TEXT && runReadAction { CommitMessage.isCommitMessage(text.containingFile) })
     }
 
     private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {

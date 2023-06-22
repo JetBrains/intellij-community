@@ -534,10 +534,10 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
     }
   }
 
-  private static void checkRecursiveConstructors(AnnotationHolder holder, PsiMethod[] constructors) {
+  private static void checkRecursiveConstructors(AnnotationHolder holder, PsiMethod @NotNull[] constructors) {
     Map<PsiMethod, PsiMethod> nodes = new HashMap<>(constructors.length);
 
-    Set<PsiMethod> set = ContainerUtil.set(constructors);
+    Set<PsiMethod> set = Set.of(constructors);
 
     for (PsiMethod constructor : constructors) {
       if (!(constructor instanceof GrMethod)) continue;
@@ -549,7 +549,7 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
       if (statements.length <= 0 || !(statements[0] instanceof GrConstructorInvocation)) continue;
 
       final PsiMethod resolved = ((GrConstructorInvocation)statements[0]).resolveMethod();
-      if (!set.contains(resolved)) continue;
+      if (resolved == null || !set.contains(resolved)) continue;
 
       nodes.put(constructor, resolved);
     }

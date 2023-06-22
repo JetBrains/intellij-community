@@ -60,25 +60,20 @@ internal class WebSymbolNamesProviderImpl(
                         kind: SymbolKind,
                         name: String,
                         target: WebSymbolNamesProvider.Target): List<String> =
-    webSymbolsFramework?.getNames(namespace, kind, name, target)?.takeIf { it.isNotEmpty() }
-    ?: when (target) {
-      CODE_COMPLETION_VARIANTS -> {
-        nameVariantsProviders[WebSymbolQualifiedKind(namespace, kind)]?.getNames(name)
-        ?: listOf(name)
-      }
-      NAMES_MAP_STORAGE -> {
-        canonicalNamesProviders[WebSymbolQualifiedKind(namespace, kind)]?.getNames(name)
-      }
-      NAMES_QUERY -> {
-        (matchNamesProviders[WebSymbolQualifiedKind(namespace, kind)]
-         ?: canonicalNamesProviders[WebSymbolQualifiedKind(namespace, kind)])
-          ?.getNames(name)
-      }
+    when (target) {
+      CODE_COMPLETION_VARIANTS -> nameVariantsProviders[WebSymbolQualifiedKind(namespace, kind)]
+      NAMES_MAP_STORAGE -> canonicalNamesProviders[WebSymbolQualifiedKind(namespace, kind)]
+      NAMES_QUERY -> matchNamesProviders[WebSymbolQualifiedKind(namespace, kind)]
+                     ?: canonicalNamesProviders[WebSymbolQualifiedKind(namespace, kind)]
     }
-    ?: listOf(
-      if (namespace == WebSymbol.NAMESPACE_CSS || namespace == WebSymbol.NAMESPACE_HTML)
-        name.lowercase(Locale.US)
-      else name)
+      ?.getNames(name)
+    ?: webSymbolsFramework
+      ?.getNames(namespace, kind, name, target)
+      ?.takeIf { it.isNotEmpty() }
+    ?: if (target != CODE_COMPLETION_VARIANTS && (namespace == WebSymbol.NAMESPACE_CSS || namespace == WebSymbol.NAMESPACE_HTML))
+      listOf(name.lowercase(Locale.US))
+    else
+      listOf(name)
 
   override fun adjustRename(namespace: SymbolNamespace,
                             kind: SymbolKind,

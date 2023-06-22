@@ -1,6 +1,6 @@
 // "Cast expression to 'int'" "true-preview"
 class a {
  void f() {
-   int[] ii = {<caret>(int) 1.3};
+   int[] ii = {(int) <caret>1.3};
  }
 }

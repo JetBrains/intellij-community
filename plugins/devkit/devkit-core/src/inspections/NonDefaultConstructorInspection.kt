@@ -1,10 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.lang.jvm.JvmClassKind
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
@@ -12,7 +11,6 @@ import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiParameterList
 import com.intellij.psi.util.InheritanceUtil
-import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.Nls
@@ -35,8 +33,7 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass::class.j
   override fun checkClass(aClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
     val javaPsi = aClass.javaPsi
     // Groovy from test data - ignore it
-    if (javaPsi.language.id == "Groovy" || javaPsi.classKind != JvmClassKind.CLASS ||
-        PsiUtil.isInnerClass(javaPsi) || PsiUtil.isLocalOrAnonymousClass(javaPsi) || PsiUtil.isAbstractClass(javaPsi) ||
+    if (javaPsi.language.id == "Groovy" || !ExtensionUtil.isExtensionPointImplementationCandidate(javaPsi) ||
         javaPsi.hasModifierProperty(PsiModifier.PRIVATE) /* ignore private classes */) {
       return null
     }
@@ -53,7 +50,7 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass::class.j
     // hack, allow Project-level @Service
     var isServiceAnnotation = false
     var extensionPoint: ExtensionPoint? = null
-    if (javaPsi.hasAnnotation("com.intellij.openapi.components.Service")) {
+    if (isLightService(aClass)) {
       area = null
       isService = true
       isServiceAnnotation = true

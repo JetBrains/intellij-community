@@ -426,6 +426,11 @@
       }
     },
 
+    "WindowControls": {
+      "foreground": "#050708",
+      "inactiveForeground": "#9B9C9C"
+    },
+
     "control": "#f2f2f2",
     "darcula.selectionBackground": "#4A6EB7",
     "darcula.selectionForeground": "#ffffff",

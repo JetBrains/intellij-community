@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.tree
 
+import com.intellij.dvcs.branch.BranchType
 import com.intellij.dvcs.branch.GroupingKey.GROUPING_BY_DIRECTORY
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -74,10 +75,13 @@ class GitBranchesTreeMultiRepoModel(
   }
 
   private fun getTopLevelNodes(): List<Any> {
-    return topLevelActions + repositories + branchesSubtreeSeparator + GitBranchType.LOCAL + GitBranchType.REMOTE
+    val topNodes = topLevelActions + repositories
+    val localAndRemoteNodes = getLocalAndRemoteTopLevelNodes(commonLocalBranchesTree, commonRemoteBranchesTree)
+
+    return if (localAndRemoteNodes.isEmpty()) topNodes else topNodes + branchesSubtreeSeparator + localAndRemoteNodes
   }
 
-  private fun getBranchTreeNodes(branchType: GitBranchType, path: List<String>): List<Any> {
+  private fun getBranchTreeNodes(branchType: BranchType, path: List<String>): List<Any> {
     val branchesMap: Map<String, Any> = when {
       GitBranchType.LOCAL == branchType -> commonLocalBranchesTree.tree
       GitBranchType.REMOTE == branchType -> commonRemoteBranchesTree.tree

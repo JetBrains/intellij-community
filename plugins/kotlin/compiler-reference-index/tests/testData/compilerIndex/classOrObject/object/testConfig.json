@@ -1,8 +1,11 @@
 {
     "mainFile": "MyObject.kt",
     "usages": [
-        "JavaUsage.java",
+        "JavaInstanceUsage.java",
+        "JavaTypeUsage.java",
+        "MethodUsage.kt",
         "MyObject.kt",
+        "TypeUsage.kt",
         "Usage.kt"
     ]
 }

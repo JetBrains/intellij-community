@@ -21,6 +21,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.stripe.ErrorStripe;
 import com.intellij.ui.stripe.ErrorStripePainter;
 import com.intellij.ui.stripe.TreeUpdater;
@@ -95,7 +96,7 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
 
     initTree();
 
-    Disposer.register(this, new UiNotifyConnector(myTree, new Activatable() {
+    Disposer.register(this, UiNotifyConnector.installOn(myTree, new Activatable() {
       private boolean showing;
 
       @Override
@@ -153,7 +154,6 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
     });
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
-    myTree.expandPath(new TreePath(myTree.getModel().getRoot()));
 
     EditSourceOnDoubleClickHandler.install(myTree);
     EditSourceOnEnterKeyHandler.install(myTree);
@@ -161,13 +161,14 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
     ToolTipManager.sharedInstance().registerComponent(myTree);
     TreeUtil.installActions(myTree);
 
-    new MySpeedSearch(myTree);
+    TreeUIHelper.getInstance().installTreeSpeedSearch(myTree);
 
     myTree.addKeyListener(new PsiCopyPasteManager.EscapeHandler());
     CustomizationUtil.installPopupHandler(myTree, IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionPlaces.PROJECT_VIEW_POPUP);
   }
 
   protected void onSelectionChanged() {
+    if (myProject.isDisposed()) return;
     myProject.getMessageBus().syncPublisher(PROJECT_VIEW_SELECTION_TOPIC).onChanged();
 
     if (myTree != null && myTree.getSelectionModel() != null) {
@@ -237,8 +238,15 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
   }
 
   protected static final class MySpeedSearch extends TreeSpeedSearch {
-    MySpeedSearch(JTree tree) {
-      super(tree);
+    private MySpeedSearch(JTree tree) {
+      super(tree, (Void)null);
+    }
+
+    @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
+    public static @NotNull MySpeedSearch installOn(JTree tree) {
+      MySpeedSearch search = new MySpeedSearch(tree);
+      search.setupListeners();
+      return search;
     }
 
     @Override

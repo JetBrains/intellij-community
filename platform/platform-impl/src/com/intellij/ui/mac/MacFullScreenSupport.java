@@ -1,10 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac;
 
 import com.apple.eawt.FullScreenListener;
 import com.apple.eawt.FullScreenUtilities;
 import com.apple.eawt.event.FullScreenEvent;
-import com.intellij.ui.FullScreeSupport;
+import com.intellij.ui.FullScreenSupport;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -16,7 +16,7 @@ import java.awt.*;
  * @author Alexander Lobas
  */
 @SuppressWarnings("unused")
-public class MacFullScreenSupport implements FullScreeSupport {
+public class MacFullScreenSupport implements FullScreenSupport {
   private FullScreenListener myListener;
   private boolean myIsFullScreen;
 

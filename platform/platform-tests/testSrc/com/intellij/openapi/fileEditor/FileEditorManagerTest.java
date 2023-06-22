@@ -23,7 +23,6 @@ import com.intellij.testFramework.FileEditorManagerTestCase;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assume;
@@ -33,6 +32,8 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+
+import static com.intellij.testFramework.CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents;
 
 public class FileEditorManagerTest extends FileEditorManagerTestCase {
   public void testTabOrder() {
@@ -258,7 +259,8 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
       FileEditor[] editors = manager.openFile(file, false);
       assertEquals(ContainerUtil.map(editors, ed-> ed + " of " + ed.getClass()).toString(), 1, editors.length);
       DumbServiceImpl.getInstance(getProject()).setDumb(false);
-      UIUtil.dispatchAllInvocationEvents();
+      manager.waitForAsyncUpdateOnDumbModeFinished();
+      executeSomeCoroutineTasksAndDispatchAllInvocationEvents(getProject());
       assertEquals(2, manager.getAllEditors(file).length);
     }
     finally {

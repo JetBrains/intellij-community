@@ -1,10 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.devkit.actions.scheme
 
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
-import com.google.gson.JsonObject
-import com.google.gson.JsonSyntaxException
+import com.fasterxml.jackson.core.JacksonException
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
@@ -13,6 +11,7 @@ import com.intellij.codeInspection.InspectionEngine
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.internal.statistic.StatisticsBundle
+import com.intellij.internal.statistic.config.SerializationHelper
 import com.intellij.internal.statistic.eventLog.events.scheme.GroupDescriptor
 import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule
 import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule.Companion.EMPTY_RULES
@@ -36,7 +35,7 @@ import com.intellij.psi.PsiFileFactory
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.JBGaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.layout.selected
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.PairProcessor
@@ -99,16 +98,16 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
       buttonsGroup {
         row {
           allowAllEventsRadioButton = radioButton(StatisticsBundle.message("stats.allow.all.events"))
+            .selected(!initialGroup.useCustomRules)
             .applyToComponent {
-              isSelected = !initialGroup.useCustomRules
               addChangeListener { updateRulesOption() }
             }.component
         }
         row {
           customRulesRadioButton = radioButton(StatisticsBundle.message("stats.use.custom.validation.rules"))
             .gap(RightGap.SMALL)
+            .selected(initialGroup.useCustomRules)
             .applyToComponent {
-              isSelected = initialGroup.useCustomRules
               addChangeListener { updateRulesOption() }
             }.component
           contextHelp(StatisticsBundle.message("stats.test.scheme.custom.rules.help"))
@@ -138,7 +137,7 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
       comment(StatisticsBundle.message("stats.validation.rules.format"))
     }
   }.apply {
-    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, JBGaps(left = 2))
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps(left = 2))
   }
 
   private fun updateGenerateSchemeButton() {
@@ -246,11 +245,10 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
 
   private fun createEventsScheme(generatedScheme: List<GroupDescriptor>): HashMap<String, String> {
     val eventsScheme = HashMap<String, String>()
-    val gson = GsonBuilder().setPrettyPrinting().create()
     for (group in generatedScheme) {
       val validationRules = createValidationRules(group)
       if (validationRules != null) {
-        eventsScheme[group.id] = gson.toJson(validationRules)
+        eventsScheme[group.id] = SerializationHelper.serialize(validationRules)
       }
     }
     return eventsScheme
@@ -335,10 +333,11 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
 
     private fun isValidJson(customRules: String): Boolean {
       try {
-        Gson().fromJson(customRules, JsonObject::class.java)
+        val mapper = ObjectMapper()
+        mapper.readTree(customRules)
         return true
       }
-      catch (e: JsonSyntaxException) {
+      catch (e: JacksonException) {
         return false
       }
     }

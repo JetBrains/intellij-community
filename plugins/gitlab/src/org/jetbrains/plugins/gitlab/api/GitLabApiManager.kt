@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gitlab.api
 
 import com.intellij.openapi.components.Service
-import kotlinx.coroutines.flow.StateFlow
 
 @Service
 class GitLabApiManager {

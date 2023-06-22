@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.remoteDev.connection.CodeWithMeSessionInfoProvider
+import com.intellij.remoteDev.connection.JetbrainsClientDownloadInfo
 import com.intellij.remoteDev.connection.StunTurnServerInfo
 import com.intellij.remoteDev.downloader.exceptions.CodeWithMeUnavailableException
 import com.intellij.util.io.HttpRequests
@@ -32,7 +32,7 @@ object ThinClientSessionInfoFetcher {
     return stream.use { it.readAllBytes() }
   }
 
-  fun getSessionUrl(joinLinkUrl: URI): CodeWithMeSessionInfoProvider {
+  fun getSessionUrl(joinLinkUrl: URI): JetbrainsClientDownloadInfo {
     val url = createUrl(joinLinkUrl)
     val requestString = objectMapper.value.createObjectNode().apply {
       put("clientBuildNumber", currentBuildNumber())
@@ -75,17 +75,12 @@ object ThinClientSessionInfoFetcher {
 
         val sessionInfo = objectMapper.value.reader().readTree(jsonResponseString)
         val jreUrlNode = sessionInfo["compatibleJreUrl"]
-        return@connect object : CodeWithMeSessionInfoProvider {
-          override val hostBuildNumber = sessionInfo["hostBuildNumber"].asText()
-          override val compatibleClientUrl = sessionInfo["compatibleClientUrl"].asText()
-          override val isUnattendedMode = false
-          override val compatibleJreUrl = if (jreUrlNode.isNull) null else jreUrlNode.asText()
-          override val hostFeaturesToEnable: Set<String>
-            get() = throw UnsupportedOperationException("hostFeaturesToEnable field should not be used")
-          override val stunTurnServers: List<StunTurnServerInfo>
-            get() = throw UnsupportedOperationException("stunTurnServers field should not be used")
-          override val downloadPgpPublicKeyUrl: String? = sessionInfo["downloadPgpPublicKeyUrl"]?.asText()
-        }
+        return@connect JetbrainsClientDownloadInfo(
+          hostBuildNumber = sessionInfo["hostBuildNumber"].asText(),
+          compatibleClientUrl = sessionInfo["compatibleClientUrl"].asText(),
+          compatibleJreUrl = if (jreUrlNode.isNull) null else jreUrlNode.asText(),
+          downloadPgpPublicKeyUrl = sessionInfo["downloadPgpPublicKeyUrl"]?.asText()
+        )
       }
   }
 

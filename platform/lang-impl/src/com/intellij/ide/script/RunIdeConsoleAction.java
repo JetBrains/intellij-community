@@ -37,8 +37,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Consumer;
@@ -226,20 +224,16 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
     int line = document.getLineNumber(selectedRange.getStartOffset());
     int lineStart = document.getLineStartOffset(line);
     int lineEnd = document.getLineEndOffset(line);
+    String lineText = document.getText(TextRange.create(lineStart, lineEnd));
 
     // try to detect a non-trivial composite PSI element if there's a PSI file
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    if (file != null && file.getFirstChild() != null && file.getFirstChild() != file.getLastChild()) {
-      PsiElement e1 = file.findElementAt(lineStart);
-      PsiElement e2 = file.findElementAt(lineEnd > lineStart ? lineEnd - 1 : lineEnd);
-      while (e1 != e2 && (e1 instanceof PsiWhiteSpace || e1 != null && StringUtil.isEmptyOrSpaces(e1.getText()))) {
-        e1 = ObjectUtils.chooseNotNull(e1.getNextSibling(), PsiTreeUtil.getDeepestFirst(e1.getParent()));
-      }
-      while (e1 != e2 && (e2 instanceof PsiWhiteSpace || e2 != null && StringUtil.isEmptyOrSpaces(e2.getText()))) {
-        e2 = ObjectUtils.chooseNotNull(e2.getPrevSibling(), PsiTreeUtil.getDeepestLast(e2.getParent()));
-      }
-      if (e1 instanceof LeafPsiElement) e1 = e1.getParent();
-      if (e2 instanceof LeafPsiElement) e2 = e2.getParent();
+    if (file != null && !StringUtil.isEmptyOrSpaces(lineText)) {
+      int start = lineStart, end = lineEnd;
+      while (start < end && Character.isWhitespace(lineText.charAt(start - lineStart))) start ++;
+      while (end > start && Character.isWhitespace(lineText.charAt(end - 1 - lineStart))) end --;
+      PsiElement e1 = file.findElementAt(start);
+      PsiElement e2 = file.findElementAt(end > start ? end - 1 : end);
       PsiElement parent = e1 != null && e2 != null ? PsiTreeUtil.findCommonParent(e1, e2) : ObjectUtils.chooseNotNull(e1, e2);
       if (parent != null && parent != file) {
         TextRange combined = parent.getTextRange().union(TextRange.create(lineStart, lineEnd));
@@ -247,7 +241,7 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
         return document.getText(combined);
       }
     }
-    return document.getText(TextRange.create(lineStart, lineEnd));
+    return lineText;
   }
 
   private static void selectContent(RunContentDescriptor descriptor) {

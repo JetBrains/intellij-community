@@ -7,7 +7,6 @@ import com.intellij.vcs.log.graph.utils.impl.CompressedIntList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.List;
 
 public class GraphLayoutImpl implements GraphLayout {
   @NotNull private final IntList myLayoutIndex;

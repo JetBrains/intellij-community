@@ -10,8 +10,8 @@ import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.Iconable
 import com.intellij.ui.ExperimentalUI
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinIconProvider
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -31,7 +31,7 @@ open class KotlinDefaultNamedDeclarationPresentation(private val declaration: Kt
     override fun getLocationString(): String? {
         if ((declaration is KtFunction && declaration.isLocal) || (declaration is KtClassOrObject && declaration.isLocal)) {
             val containingDeclaration = declaration.getStrictParentOfType<KtNamedDeclaration>() ?: return null
-            val containerName = containingDeclaration.fqName ?: containingDeclaration.name
+            val containerName = containingDeclaration.fqName ?: containingDeclaration.name ?: return null
             return getPresentationInContainer(containerName.toString())
         }
 
@@ -51,7 +51,7 @@ open class KotlinDefaultNamedDeclarationPresentation(private val declaration: Kt
         val receiverTypeRef = (declaration as? KtCallableDeclaration)?.receiverTypeReference
         return when {
             receiverTypeRef != null -> {
-                getPresentationTextForReceiver(receiverTypeRef.text, containerText)
+                getPresentationTextForReceiver(receiverTypeRef.getTypeText(), containerText)
             }
             parent is KtFile -> getPresentationText(containerText)
             else -> getPresentationInContainer(containerText)
@@ -87,7 +87,7 @@ open class KotlinFunctionPresentation(
 
             append("(")
             append(function.valueParameters.joinToString {
-                (if (it.isVarArg) "vararg " else "") + (it.typeReference?.text ?: "")
+                (if (it.isVarArg) "vararg " else "") + (it.typeReference?.getTypeText() ?: "")
             })
             append(")")
         }

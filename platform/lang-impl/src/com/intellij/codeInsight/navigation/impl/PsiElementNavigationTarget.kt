@@ -1,11 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.codeInsight.navigation.targetPresentation
 import com.intellij.model.Pointer
-import com.intellij.navigation.NavigationRequest
-import com.intellij.navigation.NavigationTarget
-import com.intellij.navigation.TargetPresentation
+import com.intellij.platform.backend.navigation.NavigationRequest
+import com.intellij.platform.backend.navigation.NavigationTarget
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.suggested.createSmartPointer
 
@@ -15,7 +15,7 @@ internal class PsiElementNavigationTarget(private val myElement: PsiElement) : N
     myElement.createSmartPointer(), ::PsiElementNavigationTarget
   )
 
-  override fun presentation(): TargetPresentation = targetPresentation(myElement)
+  override fun computePresentation(): TargetPresentation = targetPresentation(myElement)
 
   override fun navigationRequest(): NavigationRequest? = myElement.psiNavigatable()?.navigationRequest()
 
@@ -25,9 +25,7 @@ internal class PsiElementNavigationTarget(private val myElement: PsiElement) : N
 
     other as PsiElementNavigationTarget
 
-    if (myElement != other.myElement) return false
-
-    return true
+    return myElement == other.myElement
   }
 
   override fun hashCode(): Int {

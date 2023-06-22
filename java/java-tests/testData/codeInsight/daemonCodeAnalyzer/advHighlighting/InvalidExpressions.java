@@ -50,6 +50,9 @@ public class a12 {
 
     <error descr="Cannot resolve method 'foo123Unresolved' in 'a12'">foo123Unresolved</error>(<error descr="Expression expected">String</error>);
     <error descr="Cannot resolve method 'foo123Unresolved' in 'a12'">foo123Unresolved</error>(<error descr="Cannot resolve symbol 'xxxx'">xxxx</error>);
+    int i = 0;
+    System.out.println(i.<error descr="Cannot access member because 'i' has primitive type int">x</error>);
+    System.out.println(true.<error descr="Cannot call method because 'true' has primitive type boolean">toString</error>());
 
     <error descr="Cannot resolve method 'xxxxxx' in 'a12'">xxxxxx</error>(<error descr="Cannot resolve symbol 'xxxxxx'">xxxxxx</error>);
 

@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.idea.migration.KotlinMigrationBundle
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestTasksProvider
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
+import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getGradleIdentityPathOrNull
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Ignore
@@ -121,6 +122,32 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
+    @TargetVersions("6.0+")
+    fun testProjectWithSubmodule() {
+        importProjectFromTestData()
+        runInEdtAndWait {
+            runWriteAction {
+                val module = ModuleManager.getInstance(myProject).findModuleByName("project.submodule.main")!!
+                val moduleGroup = module.toModuleGroup()
+                assertEquals(ConfigureKotlinStatus.CAN_BE_CONFIGURED, findGradleModuleConfigurator().getStatus(moduleGroup))
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("6.0+")
+    fun testProjectWithSubmoduleKts() {
+        importProjectFromTestData()
+        runInEdtAndWait {
+            runWriteAction {
+                val module = ModuleManager.getInstance(myProject).findModuleByName("project.submodule.main")!!
+                val moduleGroup = module.toModuleGroup()
+                assertEquals(ConfigureKotlinStatus.CAN_BE_CONFIGURED, findGradleModuleConfigurator().getStatus(moduleGroup))
+            }
+        }
+    }
+
+    @Test
     fun testConfigure10() {
         val files = importProjectFromTestData()
 
@@ -137,6 +164,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
+    @TargetVersions("4.4 <=> 6.7.1")
     fun testConfigureKotlinWithPluginsBlock() {
         val files = importProjectFromTestData()
 
@@ -185,7 +213,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("4.4+")
+    @TargetVersions("4.4 <=> 6.7.1")
     fun testConfigureJvmWithBuildGradle() {
         val files = importProjectFromTestData()
 
@@ -202,7 +230,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("4.4+")
+    @TargetVersions("4.4 <=> 6.7.1")
     fun testConfigureJvmWithBuildGradleKts() {
         val files = importProjectFromTestData()
 
@@ -219,7 +247,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("4.4+")
+    @TargetVersions("5.6.4 <=> 6.7.1")
     fun testConfigureJvmMilestoneWithBuildGradle() {
         val files = importProjectFromTestData()
 
@@ -236,7 +264,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("4.4+")
+    @TargetVersions("5.6.4 <=> 6.7.1")
     fun testConfigureJvmMilestoneWithBuildGradleKts() {
         val files = importProjectFromTestData()
 
@@ -248,6 +276,150 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
                 configurator.configureWithVersion(myProject, listOf(module), IdeKotlinVersion.get("1.6.20-M1"), collector)
 
                 checkFiles(files)
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("5.6.4")
+    fun testConfigureJvmKotlin17WithBuildGradleSourceCompat16() { // jvmTarget = 1.8 expected to be used instead of 1.6
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val module = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                configurator.configureWithVersion(myProject, listOf(module), IdeKotlinVersion.get("1.7.0"), collector)
+
+                checkFiles(files)
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("5.6.4")
+    fun testConfigureJvmKotlin17WithBuildGradleTargetCompat16() { // jvmTarget = 1.8 expected to be used instead of 1.6
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val module = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                configurator.configureWithVersion(myProject, listOf(module), IdeKotlinVersion.get("1.7.0"), collector)
+
+                checkFiles(files)
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("4.4 <=> 6.7.1")
+    fun testConfigureAllModulesInJvmProjectGroovy() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val rootModule = ModuleManager.getInstance(myProject).findModuleByName("project")!!
+                val subModule = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                configurator.configureWithVersion(myProject, listOf(rootModule, subModule), IdeKotlinVersion.get("1.8.0"), collector)
+
+                val subModules = listOf("app")
+                checkFilesInMultimoduleProject(files, subModules)
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("4.4 <=> 6.7.1")
+    fun testConfigureAllModulesInJvmProjectKts() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val rootModule = ModuleManager.getInstance(myProject).findModuleByName("project")!!
+                val subModule = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                configurator.configureWithVersion(myProject, listOf(rootModule, subModule), IdeKotlinVersion.get("1.8.0"), collector)
+
+                val subModules = listOf("app")
+                checkFilesInMultimoduleProject(files, subModules)
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("4.4 <=> 6.7.1")
+    fun testConfigureRootModuleInJvmProjectGroovy() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val rootModule = ModuleManager.getInstance(myProject).findModuleByName("project")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                configurator.configureWithVersion(myProject, listOf(rootModule), IdeKotlinVersion.get("1.8.0"), collector)
+
+                val subModules = listOf("app")
+                checkFilesInMultimoduleProject(files, subModules)
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("4.4 <=> 6.7.1")
+    fun testConfigureRootModuleInJvmProjectKts() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val rootModule = ModuleManager.getInstance(myProject).findModuleByName("project")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                configurator.configureWithVersion(myProject, listOf(rootModule), IdeKotlinVersion.get("1.8.0"), collector)
+
+                val subModules = listOf("app")
+                checkFilesInMultimoduleProject(files, subModules)
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("4.4 <=> 6.7.1")
+    fun testConfigureSubModuleInJvmProjectGroovy() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val subModule = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                configurator.configureWithVersion(myProject, listOf(subModule), IdeKotlinVersion.get("1.8.0"), collector)
+
+                val subModules = listOf("app")
+                checkFilesInMultimoduleProject(files, subModules)
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("4.4 <=> 6.7.1")
+    fun testConfigureSubModuleInJvmProjectKts() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val subModule = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                configurator.configureWithVersion(myProject, listOf(subModule), IdeKotlinVersion.get("1.8.0"), collector)
+
+                val subModules = listOf("app")
+                checkFilesInMultimoduleProject(files, subModules)
             }
         }
     }
@@ -272,6 +444,120 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
         }
     }
 
+    private fun runJvmToolchainTest() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val module = ModuleManager.getInstance(myProject).findModuleByName("project")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                configurator.configureWithVersion(myProject, listOf(module), IdeKotlinVersion.get("1.8.0"), collector)
+
+                checkFiles(files)
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testConfigureKotlinJvmToolchainOnlySourceCompat() {
+        runJvmToolchainTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testConfigureKotlinJvmToolchainOnlySourceCompatKts() {
+        runJvmToolchainTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testConfigureKotlinJvmToolchainSourceCompatWithDot() {
+        runJvmToolchainTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testConfigureKotlinJvmToolchainDiffSourceAndTarget() {
+        runJvmToolchainTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testConfigureKotlinJvmToolchainDiffSourceAndTargetKts() {
+        runJvmToolchainTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testConfigureKotlinJvmToolchainMultipleTarget() {
+        runJvmToolchainTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testConfigureKotlinJvmToolchainOnlyTargetCompat() {
+        runJvmToolchainTest()
+    }
+
+    @Test
+    @TargetVersions("7.6")
+    fun testTargetCompatibilityDefinedViaJavaDot() {
+        runJvmToolchainTest()
+    }
+
+    /* This test doesn't work because configureEach is lazy and target compatibility is calculated on the base of installed on a machine JDK
+    or using Gradle JDK. May be fixed in KTIJ-25827
+     */
+/*    @Test
+    @TargetVersions("5.6.4")
+    fun testTakeTargetCompatibilityFromConfigureEachKts() {
+        runJvmToolchainTest()
+    }*/
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testConfigureKotlinJvmToolchainIgnoreIfJavaToolchain() {
+        runJvmToolchainTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testConfigureKotlinJvmToolchainIgnoreIfJavaToolchainKts() {
+        runJvmToolchainTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testConfigureKotlinJvmToolchainIgnoreIfJavaDotToolchain() {
+        runJvmToolchainTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testConfigureKotlinJvmToolchainIgnoreIfJavaDotToolchainKts() {
+        runJvmToolchainTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testConfigureKotlinJvmToolchainIgnoreIfJavaToolchainInOneLine() {
+        runJvmToolchainTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testConfigureKotlinJvmToolchainIgnoreIfJavaToolchainInOneLineKts() {
+        runJvmToolchainTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testConfigureKotlinJvmToolchainSetterKts() {
+        runJvmToolchainTest()
+    }
+
     @Test
     fun testListNonConfiguredModules() {
         importProjectFromTestData()
@@ -293,6 +579,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
+    @TargetVersions("<7.6")
     fun testListNonConfiguredModulesConfigured() {
         importProjectFromTestData()
 
@@ -311,6 +598,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
+    @TargetVersions("<7.6")
     fun testListNonConfiguredModulesConfiguredOnlyTest() {
         importProjectFromTestData()
 
@@ -346,7 +634,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
             ExternalSystemUtil.getExternalProjectInfo(module.project, GradleConstants.SYSTEM_ID, projectPath)
                 ?: return ContainerUtil.emptyList()
         val tasks: List<String>
-        val gradlePath = GradleProjectResolverUtil.getGradlePath(module)
+        val gradlePath = getGradleIdentityPathOrNull(module)
             ?: return ContainerUtil.emptyList()
         val taskPrefix = if (StringUtil.endsWithChar(gradlePath, ':')) gradlePath else "$gradlePath:"
         val moduleNode = GradleProjectResolverUtil.findModule(externalProjectInfo.externalProjectStructure, projectPath)
@@ -597,8 +885,8 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
         }
     }
 
-    @TargetVersions("4.7+")
     @Test
+    @TargetVersions("4.7+")
     fun testEnableFeatureSupportToExistentArgumentsWithXFlag() = testEnableFeatureSupportToExistentArguments()
 
     @Test
@@ -665,6 +953,86 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     @Test
     @TargetVersions("4.7+")
     fun testEnableFeatureSupportGSKWithSpecifyingPluginThroughIdAndXFlag() = testEnableFeatureSupportGSK()
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testAddToolchainAndFoojayKts() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val rootModule = ModuleManager.getInstance(myProject).findModuleByName("project")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                configurator.configureWithVersion(myProject, listOf(rootModule), IdeKotlinVersion.get("1.8.0"), collector)
+                checkFiles(files)
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testAddToolchainAndFoojayGroovy() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val rootModule = ModuleManager.getInstance(myProject).findModuleByName("project")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                configurator.configureWithVersion(myProject, listOf(rootModule), IdeKotlinVersion.get("1.8.0"), collector)
+                checkFiles(files)
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6")
+    fun testDontAddFoojayIfItsAlreadyAddedKts() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val rootModule = ModuleManager.getInstance(myProject).findModuleByName("project")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                configurator.configureWithVersion(myProject, listOf(rootModule), IdeKotlinVersion.get("1.8.0"), collector)
+                checkFiles(files)
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6")
+    fun testDontAddFoojayIfItsAlreadyAddedGroovy() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val rootModule = ModuleManager.getInstance(myProject).findModuleByName("project")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                configurator.configureWithVersion(myProject, listOf(rootModule), IdeKotlinVersion.get("1.8.0"), collector)
+                checkFiles(files)
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6")
+    fun testDontAddToolchainIfJvmTargetCompatibilityIs6() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val rootModule = ModuleManager.getInstance(myProject).findModuleByName("project")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                configurator.configureWithVersion(myProject, listOf(rootModule), IdeKotlinVersion.get("1.8.0"), collector)
+                checkFiles(files)
+            }
+        }
+    }
 
     override fun testDataDirName(): String = "configurator"
 }

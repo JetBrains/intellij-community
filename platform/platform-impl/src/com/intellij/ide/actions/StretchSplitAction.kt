@@ -77,7 +77,7 @@ abstract class StretchSplitAction(private val direction: StretchDirection) : Dum
     e.presentation.isEnabled = enabled
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   class StretchToTop: StretchSplitAction(TOP)
   class StretchToLeft: StretchSplitAction(LEFT)

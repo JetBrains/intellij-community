@@ -101,7 +101,7 @@ class ScriptClassRootsCache(
             return HeavyScriptInfo(configuration, roots, compose(roots), sdk)
         }
 
-        return if (sdk == null || scriptsAsEntities) {
+        return if (sdk == null) {
             heavyInfoForRoots(vfsRoots)
         } else {
             val sdkClasses = sdk.rootProvider.getFiles(OrderRootType.CLASSES).toList()
@@ -153,9 +153,8 @@ class ScriptClassRootsCache(
         getHeavyScriptInfo(file.path)?.classFiles ?: emptyList()
 
     fun getScriptDependenciesSourceFiles(file: VirtualFile): List<VirtualFile> {
-        val scriptInfo = getLightScriptInfo(file.path) ?: return emptyList()
-        val configuration = scriptInfo.buildConfiguration() ?: return emptyList()
-        return configuration.dependenciesSources.mapNotNull { classpathEntryToVfs(it.toPath()) }
+        return getHeavyScriptInfo(file.path)?.scriptConfiguration?.dependenciesSources?.mapNotNull { classpathEntryToVfs(it.toPath()) }
+            ?: emptyList()
     }
 
     fun getScriptDependenciesSdkFiles(file: VirtualFile, rootType: OrderRootType): List<VirtualFile> {

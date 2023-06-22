@@ -27,15 +27,15 @@ data class RuntimeChooserCustomItem(
 object RuntimeChooserAddCustomItem : RuntimeChooserItem()
 
 object RuntimeChooserCustom {
-  val sdkType
+  val sdkType: SdkType?
     get() = SdkType
       .getAllTypes()
       .singleOrNull(SimpleJavaSdkType.notSimpleJavaSdkTypeIfAlternativeExistsAndNotDependentSdkType()::value)
 
-  val isActionAvailable
+  val isActionAvailable: Boolean
     get() = sdkType != null
 
-  val jdkDownloaderExtensionProvider = DataProvider { dataId ->
+  val jdkDownloaderExtensionProvider: DataProvider = DataProvider { dataId ->
     when {
       JDK_DOWNLOADER_EXT.`is`(dataId) -> jdkDownloaderExtension
       else -> null
@@ -87,7 +87,7 @@ object RuntimeChooserCustom {
     }.queue()
   }
 
-  fun importDetectedItem(homePath: String, model: RuntimeChooserModel) {
+  fun importDetectedItem(homePath: String, model: RuntimeChooserModel, hideLogs: Boolean = false) {
     object : Task.Backgroundable(null, LangBundle.message("progress.title.choose.ide.runtime.scanning.jdk"), true) {
       override fun run(indicator: ProgressIndicator) {
         RuntimeChooserJreValidator.testNewJdkUnderProgress(
@@ -102,7 +102,9 @@ object RuntimeChooserCustom {
             }
 
             override fun onError(message: String) { }
-          })
+          },
+          hideLogs,
+        )
       }
     }.queue()
   }

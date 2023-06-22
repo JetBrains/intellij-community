@@ -102,8 +102,9 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
     else {
       ResolveResult[] resolveResults = contextRef.multiResolve(false);
       for (ResolveResult resolveResult : resolveResults) {
-        if (resolveResult.getElement() != null) {
-          result.add((PsiFileSystemItem)resolveResult.getElement());
+        PsiElement element = resolveResult.getElement();
+        if (element != null) {
+          result.add((PsiFileSystemItem)element);
         }
       }
     }
@@ -584,7 +585,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
   }
 
   @Override
-  public LocalQuickFix[] getQuickFixes() {
+  public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
     final List<LocalQuickFix> result = new ArrayList<>();
     for (final FileReferenceHelper helper : getHelpers()) {
       result.addAll(helper.registerFixes(this));

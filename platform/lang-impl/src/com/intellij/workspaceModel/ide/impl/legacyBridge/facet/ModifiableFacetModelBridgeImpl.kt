@@ -11,21 +11,23 @@ import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.platform.workspace.jps.CustomModuleEntitySource
+import com.intellij.platform.workspace.jps.JpsFileEntitySource
+import com.intellij.platform.workspace.jps.JpsImportedEntitySource
+import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.workspaceModel.ide.CustomModuleEntitySource
-import com.intellij.workspaceModel.ide.JpsFileEntitySource
-import com.intellij.workspaceModel.ide.JpsImportedEntitySource
-import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.facetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.mutableFacetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableFacetModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import org.jetbrains.annotations.TestOnly
 
 class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
@@ -61,7 +63,11 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
       val facetConfigurationXml = FacetUtil.saveFacetConfiguration(facet)?.let { JDOMUtil.write(it) }
       val underlyingEntity = facet.underlyingFacet?.let { diff.facetMapping().getEntities(it).single() as FacetEntity }
       val facetTypeId = if (facet !is InvalidFacet) facet.type.stringId else facet.configuration.facetState.facetType
-      val entity = diff.addFacetEntity(facet.name, facetTypeId, facetConfigurationXml, moduleEntity, underlyingEntity, source)
+      val entity = diff addEntity FacetEntity(facet.name, moduleEntity.symbolicId, facetTypeId, source) {
+        configurationXmlTag = facetConfigurationXml
+        module = moduleEntity
+        underlyingFacet = underlyingEntity
+      }
       diff.mutableFacetMapping().addMapping(entity, facet)
       facet.externalSource = externalSource
     }
@@ -144,11 +150,52 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
       diff.mutableFacetMapping().removeMapping(facetEntity)
       diff.mutableFacetMapping().addMapping(newEntity, facet)
     }
-    allFacets.filter { it is FacetBridge<*> }
-      .forEach { facet ->
+    val (facetBridges, commonFacets) = allFacets.partition { it is FacetBridge<*> }
+      facetBridges.forEach { facet ->
         facet as FacetBridge<*>
         facet.updateInStorage(diff)
       }
+    commonFacets.forEach { facet ->
+      mapping.getEntities(facet).forEach { facetEntity ->
+
+        // Update external system of existing facets
+        facetEntity as FacetEntity
+        val facetExternalSource = facet.externalSource
+        val newSource = getUpdatedEntitySource(facetExternalSource, facetEntity)
+        if (newSource != null) {
+          diff.modifyEntity(facetEntity) {
+            this.entitySource = newSource
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * This method returns an updated entity source to have the same external source as [facetExternalSource]
+   * It'll return null if no update is required
+   */
+  private fun getUpdatedEntitySource(facetExternalSource: ProjectModelExternalSource?,
+                                     facetEntity: FacetEntity): EntitySource? {
+    val entitySource = facetEntity.entitySource
+    val newSource = if (facetExternalSource == null) {
+      if (entitySource is JpsImportedEntitySource) {
+        entitySource.internalFile
+      }
+      else null
+    }
+    else {
+      if (entitySource !is JpsImportedEntitySource) {
+        if (entitySource is JpsProjectFileEntitySource) JpsImportedEntitySource(entitySource, facetExternalSource.id,
+                                                                                moduleBridge.project.isExternalStorageEnabled)
+        else null
+      }
+      else {
+        if (facetExternalSource.id == entitySource.externalSystemId) null
+        else entitySource.copy(externalSystemId = facetExternalSource.id)
+      }
+    }
+    return newSource
   }
 
   override fun getAllFacets(): Array<Facet<*>> {

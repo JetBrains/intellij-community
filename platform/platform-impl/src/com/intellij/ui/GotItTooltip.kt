@@ -34,7 +34,7 @@ import javax.swing.text.*
 
 @Service(Service.Level.APP)
 class GotItTooltipService {
-  val isFirstRun = checkFirstRun()
+  val isFirstRun: Boolean = checkFirstRun()
 
   private fun checkFirstRun(): Boolean {
     val prevRunBuild = PropertiesComponent.getInstance().getValue("gotit.previous.run")
@@ -269,47 +269,51 @@ class GotItTooltip(@NonNls val id: String,
    * and gets not empty bounds.
    */
   override fun show(component: JComponent, pointProvider: (Component, Balloon) -> Point) {
-    if (canShow()) {
-      if (component.isShowing) {
-        if (!component.bounds.isEmpty) {
-          showImpl(component, pointProvider)
-        }
-        else {
-          component.addComponentListener(object : ComponentAdapter() {
-            override fun componentResized(event: ComponentEvent) {
-              if (!event.component.bounds.isEmpty) {
-                showImpl(event.component as JComponent, pointProvider)
-              }
-            }
-          }.also { Disposer.register(this, Disposable { component.removeComponentListener(it) }) })
-        }
+    if (!canShow()) {
+      Disposer.dispose(this)
+      return
+    }
+
+    if (component.isShowing) {
+      if (!component.bounds.isEmpty) {
+        showImpl(component, pointProvider)
       }
       else {
-        component.addAncestorListener(object : AncestorListenerAdapter() {
-          override fun ancestorAdded(ancestorEvent: AncestorEvent) {
-            if (!ancestorEvent.component.bounds.isEmpty) {
-              showImpl(ancestorEvent.component, pointProvider)
-            }
-            else {
-              ancestorEvent.component.addComponentListener(object : ComponentAdapter() {
-                override fun componentResized(componentEvent: ComponentEvent) {
-                  if (!componentEvent.component.bounds.isEmpty) {
-                    showImpl(componentEvent.component as JComponent, pointProvider)
-                  }
-                }
-              }.also { Disposer.register(this@GotItTooltip, Disposable { component.removeComponentListener(it) }) })
+        component.addComponentListener(object : ComponentAdapter() {
+          override fun componentResized(event: ComponentEvent) {
+            if (!event.component.bounds.isEmpty) {
+              showImpl(event.component as JComponent, pointProvider)
             }
           }
-
-          override fun ancestorRemoved(ancestorEvent: AncestorEvent) {
-            balloon?.let {
-              it.hide(true)
-              GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.AncestorRemoved)
-            }
-            balloon = null
-          }
-        }.also { Disposer.register(this, Disposable { component.removeAncestorListener(it) }) })
+        }.also { Disposer.register(this, Disposable { component.removeComponentListener(it) }) })
       }
+    }
+    else {
+      component.addAncestorListener(object : AncestorListenerAdapter() {
+        override fun ancestorAdded(ancestorEvent: AncestorEvent) {
+          val ancestorComponent = ancestorEvent.component
+          if (!ancestorComponent.bounds.isEmpty) {
+            showImpl(ancestorComponent, pointProvider)
+          }
+          else {
+            ancestorComponent.addComponentListener(object : ComponentAdapter() {
+              override fun componentResized(componentEvent: ComponentEvent) {
+                if (!componentEvent.component.bounds.isEmpty) {
+                  showImpl(componentEvent.component as JComponent, pointProvider)
+                }
+              }
+            }.also { Disposer.register(this@GotItTooltip, Disposable { ancestorComponent.removeComponentListener(it) }) })
+          }
+        }
+
+        override fun ancestorRemoved(ancestorEvent: AncestorEvent) {
+          balloon?.let {
+            it.hide(true)
+            GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.AncestorRemoved)
+          }
+          balloon = null
+        }
+      }.also { Disposer.register(this, Disposable { component.removeAncestorListener(it) }) })
     }
   }
 
@@ -324,7 +328,7 @@ class GotItTooltip(@NonNls val id: String,
       }
     }
     else {
-      hidePopup()
+      Disposer.dispose(this)
     }
   }
 
@@ -362,7 +366,10 @@ class GotItTooltip(@NonNls val id: String,
           Disposer.dispose(dispatcherDisposable)
 
           if (event.isOk) {
-            currentlyShown?.nextToShow = null
+            currentlyShown?.let { tooltip ->
+              Disposer.dispose(tooltip)
+              tooltip.nextToShow = null
+            }
             currentlyShown = null
 
             gotIt()
@@ -423,7 +430,7 @@ class GotItTooltip(@NonNls val id: String,
     return balloon
   }
 
-  fun gotIt() = gotIt("$PROPERTY_PREFIX.$id")
+  fun gotIt(): Unit = gotIt("$PROPERTY_PREFIX.$id")
 
   private fun scheduleNext(tooltip: GotItTooltip, show: () -> Unit) {
     nextToShow = tooltip
@@ -483,7 +490,7 @@ class GotItTooltip(@NonNls val id: String,
   }
 
   companion object {
-    const val PROPERTY_PREFIX = "got.it.tooltip"
+    const val PROPERTY_PREFIX: String = "got.it.tooltip"
 
     private val BALLOON_PROPERTY = Key<Balloon>("$PROPERTY_PREFIX.balloon")
 

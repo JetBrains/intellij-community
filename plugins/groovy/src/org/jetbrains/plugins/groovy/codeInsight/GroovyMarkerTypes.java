@@ -6,9 +6,9 @@ import com.intellij.codeInsight.daemon.impl.GutterIconTooltipHelper;
 import com.intellij.codeInsight.daemon.impl.LineMarkerNavigator;
 import com.intellij.codeInsight.daemon.impl.MarkerType;
 import com.intellij.codeInsight.daemon.impl.PsiElementListNavigator;
-import com.intellij.codeInsight.navigation.BackgroundUpdaterTask;
+import com.intellij.codeInsight.navigation.PsiTargetNavigator;
+import com.intellij.codeInsight.navigation.TargetUpdaterTask;
 import com.intellij.ide.util.MethodCellRenderer;
-import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.ide.util.PsiElementRenderingInfo;
 import com.intellij.ide.util.PsiMethodRenderingInfo;
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -239,37 +239,31 @@ public final class GroovyMarkerTypes {
           return;
         }
 
-
-        //collect all overrings (including fields with implicit accessors and method with default parameters)
-        final PsiElementProcessor.CollectElementsWithLimit<PsiMethod> collectProcessor =
-          new PsiElementProcessor.CollectElementsWithLimit<>(2, new HashSet<>());
-        if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
-          for (GrMethod m : PsiImplUtil.getMethodOrReflectedMethods(method)) {
-            OverridingMethodsSearch.search(m).forEach(new ReadActionProcessor<>() {
-              @Override
-              public boolean processInReadAction(PsiMethod psiMethod) {
-                if (psiMethod instanceof GrReflectedMethod) {
-                  psiMethod = ((GrReflectedMethod)psiMethod).getBaseMethod();
-                }
-                return collectProcessor.execute(psiMethod);
-              }
-            });
-          }
-        }), JavaAnalysisBundle.message("searching.for.overriding.methods"), true, method.getProject(), (JComponent)e.getComponent())) {
-          return;
-        }
-
-        PsiMethod[] overridings = collectProcessor.toArray(PsiMethod.EMPTY_ARRAY);
-        if (overridings.length == 0) return;
-
-        PsiElementListCellRenderer<PsiMethod> renderer = new MethodCellRenderer(!PsiUtil.allMethodsHaveSameSignature(overridings));
-        Arrays.sort(overridings, renderer.getComparator());
-        final OverridingMethodsUpdater methodsUpdater = new OverridingMethodsUpdater(method, renderer);
-        PsiElementListNavigator.openTargets(e, overridings, methodsUpdater.getCaption(overridings.length),
-                                            GroovyBundle.message("overriding.methods.of.0", method.getName()),
-                                            renderer, methodsUpdater);
+        final OverridingMethodsUpdater methodsUpdater = new OverridingMethodsUpdater(method);
+        new PsiTargetNavigator<>(() -> getOverridingMethods(method, (JComponent)e.getComponent()))
+          .tabTitle(GroovyBundle.message("overriding.methods.of.0", method.getName()))
+          .updater(methodsUpdater)
+          .navigate(e, null, element.getProject());
       }
     });
+
+  private static @NotNull Collection<PsiMethod> getOverridingMethods(GrMethod method, JComponent component) {
+    //collect all overriding methods (including fields with implicit accessors and method with default parameters)
+    final PsiElementProcessor.CollectElementsWithLimit<PsiMethod> collectProcessor =
+      new PsiElementProcessor.CollectElementsWithLimit<>(2, new HashSet<>());
+    for (GrMethod m : PsiImplUtil.getMethodOrReflectedMethods(method)) {
+      OverridingMethodsSearch.search(m).forEach(new ReadActionProcessor<>() {
+        @Override
+        public boolean processInReadAction(PsiMethod psiMethod) {
+          if (psiMethod instanceof GrReflectedMethod) {
+            psiMethod = ((GrReflectedMethod)psiMethod).getBaseMethod();
+          }
+          return collectProcessor.execute(psiMethod);
+        }
+      });
+    }
+    return collectProcessor.getCollection();
+  }
 
   private GroovyMarkerTypes() {
   }
@@ -306,16 +300,16 @@ public final class GroovyMarkerTypes {
     return result;
   }
 
-  private static class OverridingMethodsUpdater extends BackgroundUpdaterTask {
+  private static class OverridingMethodsUpdater extends TargetUpdaterTask {
     private final GrMethod myMethod;
 
-    OverridingMethodsUpdater(GrMethod method, PsiElementListCellRenderer renderer) {
-      super(method.getProject(), JavaAnalysisBundle.message("searching.for.overriding.methods"), createComparatorWrapper(renderer.getComparator()));
+    OverridingMethodsUpdater(@NotNull GrMethod method) {
+      super(method.getProject(), JavaAnalysisBundle.message("searching.for.overriding.methods"));
       myMethod = method;
     }
 
     @Override
-    public @Nls String getCaption(int size) {
+    public @Nls @NotNull String getCaption(int size) {
       return myMethod.hasModifierProperty(PsiModifier.ABSTRACT) ?
              DaemonBundle.message("navigation.title.implementation.method", myMethod.getName(), size) :
              DaemonBundle.message("navigation.title.overrider.method", myMethod.getName(), size);

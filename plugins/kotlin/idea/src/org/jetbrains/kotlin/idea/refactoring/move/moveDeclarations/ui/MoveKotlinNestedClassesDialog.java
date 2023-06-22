@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringUtilKt;
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo;
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberSelectionPanel;
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberSelectionTable;
-import org.jetbrains.kotlin.idea.refactoring.move.MoveUtilsKt;
+import org.jetbrains.kotlin.idea.refactoring.move.MoveUtilKt;
 import org.jetbrains.kotlin.idea.refactoring.ui.KotlinTypeReferenceEditorComboWithBrowseButton;
 import org.jetbrains.kotlin.psi.*;
 
@@ -272,7 +272,7 @@ public class MoveKotlinNestedClassesDialog extends RefactoringDialog {
             return;
         }
 
-        MoveUtilsKt.logFusForMoveRefactoring(
+        MoveUtilKt.logFusForMoveRefactoring(
                 modelResult.getElementsCount(),
                 modelResult.getEntityToMove(),
                 modelResult.getDestination(),

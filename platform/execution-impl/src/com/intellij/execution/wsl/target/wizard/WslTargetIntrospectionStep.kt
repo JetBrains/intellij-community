@@ -68,7 +68,7 @@ internal class WslTargetIntrospectionStep(model: WslTargetWizardModel) : WslTarg
     introspectionFinished = false
     ApplicationManager.getApplication().executeOnPooledThread {
       val introspectable = WslTargetIntrospectable(distribution, console)
-      introspectable.promiseExecuteScript("pwd").thenApply {
+      introspectable.promiseExecuteScript(listOf("pwd")).thenApply {
         if (it != null) {
           model.subject.projectRootOnTarget = "${it}/${model.project.name}"
         }

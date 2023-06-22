@@ -24,8 +24,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.remoteDev.RemoteDevSystemSettings
 import com.intellij.remoteDev.RemoteDevUtilBundle
-import com.intellij.remoteDev.connection.CodeWithMeSessionInfoProvider
-import com.intellij.remoteDev.connection.StunTurnServerInfo
+import com.intellij.remoteDev.connection.JetbrainsClientDownloadInfo
 import com.intellij.remoteDev.util.*
 import com.intellij.util.PlatformUtils
 import com.intellij.util.application
@@ -43,6 +42,7 @@ import com.jetbrains.infra.pgpVerifier.PgpSignaturesVerifier
 import com.jetbrains.infra.pgpVerifier.PgpSignaturesVerifierLogger
 import com.jetbrains.infra.pgpVerifier.Sha256ChecksumSignatureVerifier
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.lifetime.isAlive
 import com.jetbrains.rd.util.reactive.fire
 import com.sun.jna.platform.win32.Kernel32
 import com.sun.jna.platform.win32.WinBase
@@ -79,10 +79,16 @@ object CodeWithMeClientDownloader {
   val cwmJbrManifestFilter: (Path) -> Boolean = { !it.isDirectory() || isSymlink(it) }
 
   fun getJetBrainsClientManifestFilter(clientBuildNumber: String): (Path) -> Boolean {
-    if (isClientWithBundledJre(clientBuildNumber)) {
-      return { !it.isDirectory() || isSymlink(it) }
+    val universalFilter: (Path) -> Boolean = if (isClientWithBundledJre(clientBuildNumber)) {
+      { !it.isDirectory() || isSymlink(it) }
     } else {
-      return { !isJbrSymlink(it) && (!it.isDirectory() || isSymlink(it)) }
+      { !isJbrSymlink(it) && (!it.isDirectory() || isSymlink(it)) }
+    }
+
+    when {
+      SystemInfoRt.isMac -> return { it.name != ".DS_Store" && universalFilter.invoke(it) }
+      SystemInfoRt.isWindows -> return { !it.name.equals("Thumbs.db", ignoreCase = true) && universalFilter.invoke(it) }
+      else -> return universalFilter
     }
   }
 
@@ -142,7 +148,7 @@ object CodeWithMeClientDownloader {
     else -> "JetBrainsClient"
   }
 
-  fun createSessionInfo(clientBuildVersion: String, jreBuild: String?, unattendedMode: Boolean): CodeWithMeSessionInfoProvider {
+  fun createSessionInfo(clientBuildVersion: String, jreBuild: String?, unattendedMode: Boolean): JetbrainsClientDownloadInfo {
     val isSnapshot = "SNAPSHOT" in clientBuildVersion
     if (isSnapshot) {
       LOG.warn("Thin client download from sources may result in failure due to different sources on host and client, " +
@@ -217,15 +223,12 @@ object CodeWithMeClientDownloader {
       RemoteDevSystemSettings.getPgpPublicKeyUrl().value
     } else null
 
-    val sessionInfo = object : CodeWithMeSessionInfoProvider {
-      override val hostBuildNumber = hostBuildNumber
-      override val compatibleClientUrl = clientDownloadUrl
-      override val isUnattendedMode = unattendedMode
-      override val compatibleJreUrl = jreDownloadUrl
-      override val hostFeaturesToEnable: Set<String>? = null
-      override val stunTurnServers: List<StunTurnServerInfo>? = null
-      override val downloadPgpPublicKeyUrl: String? = pgpPublicKeyUrl
-    }
+    val sessionInfo = JetbrainsClientDownloadInfo(
+      hostBuildNumber = hostBuildNumber,
+      compatibleClientUrl = clientDownloadUrl,
+      compatibleJreUrl = jreDownloadUrl,
+      downloadPgpPublicKeyUrl = pgpPublicKeyUrl
+    )
 
     LOG.info("Generated session info: $sessionInfo")
     return sessionInfo
@@ -252,13 +255,15 @@ object CodeWithMeClientDownloader {
   @ApiStatus.Experimental
   fun downloadClientAndJdk(clientBuildVersion: String,
                            progressIndicator: ProgressIndicator): ExtractedJetBrainsClientData? {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
 
-    val jdkBuild = if (isClientWithBundledJre(clientBuildVersion)) null else {
+    val jdkBuildProgressIndicator = progressIndicator.createSubProgress(0.1)
+    val jdkBuild = if (isClientWithBundledJre(clientBuildVersion)) {
+      jdkBuildProgressIndicator.fraction = 1.0
+      null
+    } else {
       // Obsolete since 2022.3. Now the client has JRE bundled in
-
       LOG.info("Downloading Thin Client jdk-build.txt")
-      val jdkBuildProgressIndicator = progressIndicator.createSubProgress(0.1)
       jdkBuildProgressIndicator.text = RemoteDevUtilBundle.message("thinClientDownloader.checking")
 
       val clientDistributionName = getClientDistributionName(clientBuildVersion)
@@ -292,18 +297,47 @@ object CodeWithMeClientDownloader {
   fun downloadClientAndJdk(clientBuildVersion: String,
                            jreBuild: String?,
                            progressIndicator: ProgressIndicator): ExtractedJetBrainsClientData? {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
 
     val sessionInfo = createSessionInfo(clientBuildVersion, jreBuild, true)
     return downloadClientAndJdk(sessionInfo, progressIndicator)
   }
 
+  fun isClientDownloaded(
+    clientBuildVersion: String,
+  ): Boolean {
+    val clientUrl = createSessionInfo(clientBuildVersion, null, true).compatibleClientUrl
+    val tempDir = FileUtil.createTempDirectory("jb-cwm-dl", null).toPath()
+    val guestData = DownloadableFileData.build(
+      url = URI.create(clientUrl),
+      tempDir = tempDir,
+      cachesDir = config.clientCachesDir,
+      includeInManifest = getJetBrainsClientManifestFilter(clientBuildVersion),
+    )
+    return isAlreadyDownloaded(guestData)
+  }
+
+  fun extractedClientData(clientBuildVersion: String): ExtractedJetBrainsClientData? {
+    if (!isClientDownloaded(clientBuildVersion)) {
+      return null
+    }
+    val clientUrl = createSessionInfo(clientBuildVersion, null, true).compatibleClientUrl
+    val tempDir = FileUtil.createTempDirectory("jb-cwm-dl", null).toPath()
+    val guestData = DownloadableFileData.build(
+      url = URI.create(clientUrl),
+      tempDir = tempDir,
+      cachesDir = config.clientCachesDir,
+      includeInManifest = getJetBrainsClientManifestFilter(clientBuildVersion),
+    )
+    return ExtractedJetBrainsClientData(clientDir = guestData.targetPath, jreDir = null, version = clientBuildVersion)
+  }
+
   /**
    * @returns Pair(path/to/thin/client, path/to/jre)
    */
-  fun downloadClientAndJdk(sessionInfoResponse: CodeWithMeSessionInfoProvider,
+  fun downloadClientAndJdk(sessionInfoResponse: JetbrainsClientDownloadInfo,
                            progressIndicator: ProgressIndicator): ExtractedJetBrainsClientData? {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
 
     val tempDir = FileUtil.createTempDirectory("jb-cwm-dl", null).toPath()
     LOG.info("Downloading Thin Client in $tempDir...")
@@ -445,9 +479,15 @@ object CodeWithMeClientDownloader {
           FileUtil.delete(data.targetPath)
 
           require(data.targetPath.notExists()) { "Target path \"${data.targetPath}\" for $archivePath already exists" }
-          FileManifestUtil.decompressWithManifest(archivePath, data.targetPath, data.includeInManifest)
+          FileManifestUtil.decompressWithManifest(
+            archiveFile = archivePath,
+            targetDir = data.targetPath,
+            includeModifiedDate = config.modifiedDateInManifestIncluded,
+            includeInManifest = data.includeInManifest,
+            progress = dataProgressIndicator.createSubProgress(0.25)
+          )
 
-          require(FileManifestUtil.isUpToDate(data.targetPath, data.includeInManifest)) {
+          require(FileManifestUtil.isUpToDate(data.targetPath, config.modifiedDateInManifestIncluded, data.includeInManifest)) {
             "Manifest verification failed for archive: $archivePath -> ${data.targetPath}"
           }
 
@@ -494,12 +534,12 @@ object CodeWithMeClientDownloader {
   }
 
   private fun isAlreadyDownloaded(fileData: DownloadableFileData): Boolean {
-    val extractDirectory = FileManifestUtil.getExtractDirectory(fileData.targetPath, fileData.includeInManifest)
+    val extractDirectory = FileManifestUtil.getExtractDirectory(fileData.targetPath, config.modifiedDateInManifestIncluded, fileData.includeInManifest)
     return extractDirectory.isUpToDate && !fileData.targetPath.fileName.toString().contains("SNAPSHOT")
   }
 
   private fun downloadWithRetries(url: URI, path: Path, progressIndicator: ProgressIndicator) {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
 
     @Suppress("LocalVariableName")
     val MAX_ATTEMPTS = 5
@@ -652,11 +692,17 @@ object CodeWithMeClientDownloader {
     else executable.resolveSibling("jetbrains_client64.vmoptions")
     service<JetBrainsClientDownloaderConfigurationProvider>().patchVmOptions(vmOptionsFile, URI(url))
 
+    val clientEnvironment = mutableMapOf<String, String>()
+    if (Registry.`is`("rdct.enable.per.connection.client.process") && ClientVersionUtil.isJBCSeparateConfigSupported(extractedJetBrainsClientData.version)) {
+      clientEnvironment["JBC_SEPARATE_CONFIG"] = "true"
+    }
+
     if (SystemInfo.isWindows) {
-      val hProcess = WindowsFileUtil.windowsShellExecute(
+      val hProcess = WindowsFileUtil.windowsCreateProcess(
         executable = executable,
         workingDirectory = extractedJetBrainsClientData.clientDir,
-        parameters = parameters
+        parameters = parameters,
+        environment = clientEnvironment
       )
 
       @Suppress("LocalVariableName")
@@ -693,6 +739,8 @@ object CodeWithMeClientDownloader {
 
       fun doRunProcess() {
         val commandLine = GeneralCommandLine(fullLauncherCmd + parameters)
+          .withEnvironment(clientEnvironment)
+
         config.modifyClientCommandLine(commandLine)
 
         LOG.info("Starting JetBrains Client process (attempts left: $attemptCount): ${commandLine}")
@@ -720,7 +768,7 @@ object CodeWithMeClientDownloader {
               }
             } else {
               // if process exited abnormally but took longer than 10 seconds, it's likely to be an issue with connection instead of Mac-specific bug
-              if ((System.currentTimeMillis() - lastProcessStartTime) < 10_000 ) {
+              if ((System.currentTimeMillis() - lastProcessStartTime) < 10_000 && lifetime.isAlive) {
                 if (attemptCount > 0) {
                   LOG.info("Previous attempt to start guest process failed, will try again in one second")
                   EdtScheduledExecutorService.getInstance().schedule({ doRunProcess() }, ModalityState.any(), 1, TimeUnit.SECONDS)

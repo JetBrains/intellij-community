@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
@@ -32,10 +33,7 @@ import com.intellij.model.psi.PsiSymbolReferenceService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -71,6 +69,7 @@ import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.UIUtil;
@@ -113,8 +112,6 @@ import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.text.StringUtil.splitByLines;
 import static com.intellij.testFramework.UsefulTestCase.assertSameLines;
-import static com.intellij.util.ObjectUtils.consumeIfNotNull;
-import static com.intellij.util.containers.ContainerUtil.map2List;
 import static com.intellij.util.containers.ContainerUtil.sorted;
 import static org.junit.Assert.*;
 
@@ -261,8 +258,8 @@ public final class PlatformTestUtil {
   public static void assertTreeEqual(@NotNull JTree tree, @NotNull String expected, boolean checkSelected, boolean ignoreOrder) {
     String treeStringPresentation = print(tree, checkSelected);
     if (ignoreOrder) {
-      List<String> actualLines = sorted(map2List(splitByLines(treeStringPresentation), String::trim));
-      List<String> expectedLines = sorted(map2List(splitByLines(expected), String::trim));
+      List<String> actualLines = sorted(ContainerUtil.map(splitByLines(treeStringPresentation), String::trim));
+      List<String> expectedLines = sorted(ContainerUtil.map(splitByLines(expected), String::trim));
       assertEquals("Expected:\n" + expected + "\nActual:\n" + treeStringPresentation, expectedLines, actualLines);
     }
     else {
@@ -379,6 +376,10 @@ public final class PlatformTestUtil {
     }
   }
 
+  public static <T> T waitForFuture(@NotNull Future<T> future) {
+    return waitForFuture(future, MAX_WAIT_TIME);
+  }
+
   public static <T> T waitForFuture(@NotNull Future<T> future, long timeoutMillis) {
     assertDispatchThreadWithoutWriteAccess();
     long start = System.currentTimeMillis();
@@ -440,7 +441,7 @@ public final class PlatformTestUtil {
                                    "; alarm passed=" + alarmInvoked1.get() +
                                    "; modality1=" + initialModality +
                                    "; modality2=" + ModalityState.current() +
-                                   "; non-modal=" + (initialModality == ModalityState.NON_MODAL) +
+                                   "; non-modal=" + (initialModality == ModalityState.nonModal()) +
                                    "; invokeLater passed=" + runnableInvoked.get() +
                                    "; pooled alarm passed=" + pooledRunnableInvoked.get() +
                                    "; app.disposed=" + app.isDisposed() +
@@ -481,7 +482,7 @@ public final class PlatformTestUtil {
   public static void dispatchAllEventsInIdeEventQueue() {
     assertEventQueueDispatchThread();
     while (true) {
-      try {
+      try (AccessToken ignored = ThreadContext.resetThreadContext()) {
         if (dispatchNextEventIfAny() == null) break;
       }
       catch (InterruptedException e) {
@@ -1158,11 +1159,15 @@ public final class PlatformTestUtil {
     while (true) {
       try {
         if (System.currentTimeMillis() - start > timeoutInSeconds * 1000L) {
-          consumeIfNotNull(callback, Runnable::run);
+          if (callback != null) {
+            callback.run();
+          }
           fail(errorMessageSupplier.get());
         }
         if (condition.getAsBoolean()) {
-          consumeIfNotNull(callback, Runnable::run);
+          if (callback != null) {
+            callback.run();
+          }
           break;
         }
         dispatchAllEventsInIdeEventQueue();

@@ -1,12 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.intention.LowPriorityAction;
-import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
@@ -30,6 +27,7 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -118,20 +116,20 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
           RenameCatchParameterFix renameFix = new RenameCatchParameterFix(generateName(block));
           AddCatchBodyFix addBodyFix = getAddBodyFix(block);
           holder.registerProblem(catchToken, InspectionGadgetsBundle.message("inspection.catch.ignores.exception.empty.message"),
-                                 renameFix, addBodyFix, fix);
+                                 LocalQuickFix.notNullElements(renameFix, addBodyFix, fix));
         }
         else if (!VariableAccessUtils.variableIsUsed(parameter, section)) {
           if (!m_ignoreNonEmptyCatchBlock &&
               (!m_ignoreCatchBlocksWithComments || PsiTreeUtil.getChildOfType(block, PsiComment.class) == null)) {
             holder.registerProblem(identifier, InspectionGadgetsBundle.message("inspection.catch.ignores.exception.unused.message"),
-                                   new RenameFix(generateName(block), false, false), fix);
+                                   LocalQuickFix.notNullElements(new RenameFix(generateName(block), false, false), fix));
           }
         }
         else {
           String className = mayIgnoreVMException(parameter, block);
           if (className != null) {
             String message = InspectionGadgetsBundle.message("inspection.catch.ignores.exception.vm.ignored.message", className);
-            holder.registerProblem(catchToken, message, fix);
+            holder.registerProblem(catchToken, message, LocalQuickFix.notNullElements(fix));
           }
         }
       }
@@ -158,7 +156,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
        * @param block     a catch block body
        * @return class name of important VM exception (like NullPointerException) if given catch block may ignore it
        */
-      private @Nullable String mayIgnoreVMException(PsiParameter parameter, PsiCodeBlock block) {
+      private static @Nullable String mayIgnoreVMException(PsiParameter parameter, PsiCodeBlock block) {
         PsiType type = parameter.getType();
         if (!type.equalsToText(CommonClassNames.JAVA_LANG_THROWABLE) &&
             !type.equalsToText(CommonClassNames.JAVA_LANG_EXCEPTION) &&
@@ -268,7 +266,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
     return new VariableNameGenerator(block, VariableKind.LOCAL_VARIABLE).byName(IGNORED_PARAMETER_NAME).generate(true);
   }
 
-  private static class AddCatchBodyFix implements LocalQuickFix, LowPriorityAction {
+  private static class AddCatchBodyFix extends PsiUpdateModCommandQuickFix implements LowPriorityAction {
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @Override
     @NotNull
@@ -277,8 +275,8 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiCatchSection catchSection = ObjectUtils.tryCast(descriptor.getPsiElement().getParent(), PsiCatchSection.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiCatchSection catchSection = ObjectUtils.tryCast(element.getParent(), PsiCatchSection.class);
       if (catchSection == null) return;
       PsiParameter parameter = catchSection.getParameter();
       if (parameter == null) return;
@@ -307,7 +305,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
     }
   }
 
-  private static final class RenameCatchParameterFix implements LocalQuickFix {
+  private static final class RenameCatchParameterFix extends PsiUpdateModCommandQuickFix {
     private final String myName;
 
     private RenameCatchParameterFix(String name) {
@@ -328,8 +326,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiCatchSection catchSection)) return;
       final PsiParameter parameter = catchSection.getParameter();

@@ -52,7 +52,7 @@ class TypeConverter(val converter: Converter) {
             return ErrorType().assignNoPrototype()
         }
 
-        val result = type.accept<Type>(TypeVisitor(converter, type, mutability, inAnnotationType))!!.assignNoPrototype()
+        val result = type.accept(TypeVisitor(converter, type, mutability, inAnnotationType))!!.assignNoPrototype()
 
         typesBeingConverted.remove(type)
 

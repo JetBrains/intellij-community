@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -26,8 +26,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.ui.impl.DialogWrapperPeerImpl.isDisableAutoRequestFocus;
+import static com.intellij.openapi.wm.impl.WindowManagerImplKt.IDE_FRAME_EVENT_LOG;
 
-public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
+public abstract class IdeFrameDecorator {
   static final String FULL_SCREEN = "ide.frame.full.screen";
 
   protected final IdeFrameImpl frame;
@@ -36,8 +37,11 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
     this.frame = frame;
   }
 
-  @Override
   public abstract boolean isInFullScreen();
+
+  public void setStoredFullScreen() {
+    notifyFrameComponents(true);
+  }
 
   public void setProject() {
   }
@@ -97,54 +101,68 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
 
     @Override
     public @NotNull CompletableFuture<@Nullable Boolean> toggleFullScreen(boolean state) {
-      Rectangle bounds = frame.getBounds();
-      int extendedState = frame.getExtendedState();
-      JRootPane rootPane = frame.getRootPane();
-      if (state && extendedState == Frame.NORMAL) {
-        frame.setNormalBounds(bounds);
-      }
-      GraphicsDevice device = ScreenUtil.getScreenDevice(bounds);
-      if (device == null) {
-        return CompletableFuture.completedFuture(null);
-      }
+      CompletableFuture<Boolean> promise = new CompletableFuture<>();
 
-      Component toFocus = frame.getMostRecentFocusOwner();
-      Rectangle defaultBounds = device.getDefaultConfiguration().getBounds();
-      try {
-        frame.setTogglingFullScreenInProgress(true);
-        rootPane.putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, Boolean.TRUE);
-        frame.dispose();
-        frame.setUndecorated(state);
-      }
-      finally {
-        if (state) {
-          frame.setBounds(defaultBounds);
-        }
-        else {
-          Rectangle o = frame.getNormalBounds();
-          if (o != null) {
-            frame.setBounds(o);
+      SwingUtilities.invokeLater(() -> {
+        Rectangle bounds = frame.getBounds();
+        int extendedState = frame.getExtendedState();
+        JRootPane rootPane = frame.getRootPane();
+        if (state && extendedState == Frame.NORMAL) {
+          frame.setNormalBounds(bounds);
+          if (IDE_FRAME_EVENT_LOG.isDebugEnabled()) { // avoid unnecessary concatenation
+            IDE_FRAME_EVENT_LOG.debug("Saved normal bounds of the frame before entering full screen: " + frame.getNormalBounds());
           }
         }
-        frame.setVisible(true);
-        rootPane.putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, null);
-
-        if (!state && (extendedState & Frame.MAXIMIZED_BOTH) != 0) {
-          frame.setExtendedState(extendedState);
+        GraphicsDevice device = ScreenUtil.getScreenDevice(bounds);
+        if (device == null) {
+          promise.complete(null);
+          return;
         }
-        notifyFrameComponents(state);
-
-        if (toFocus != null && !(toFocus instanceof JRootPane)) {
-          // Window 'forgets' last focused component on disposal, so we need to restore it explicitly.
-          // Special case is toggling fullscreen mode from menu. In this case menu UI moves focus to the root pane before performing
-          // the action. We shouldn't explicitly request focus in this case - menu UI will restore the focus without our help.
-          toFocus.requestFocusInWindow();
+        Component toFocus = frame.getMostRecentFocusOwner();
+        Rectangle defaultBounds = device.getDefaultConfiguration().getBounds();
+        if (state) {
+          frame.setScreenBounds(defaultBounds);
+          if (IDE_FRAME_EVENT_LOG.isDebugEnabled()) { // avoid unnecessary concatenation
+            IDE_FRAME_EVENT_LOG.debug("Saved screen bounds of the frame before entering full screen: " + frame.getScreenBounds());
+          }
         }
-      }
-      EventQueue.invokeLater(() -> {
-        frame.setTogglingFullScreenInProgress(false);
+        try {
+          frame.togglingFullScreenInProgress = true;
+          rootPane.putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, Boolean.TRUE);
+          frame.dispose();
+          frame.setUndecorated(state);
+        }
+        finally {
+          if (state) {
+            frame.setBounds(defaultBounds);
+          }
+          else {
+            Rectangle o = frame.getNormalBounds();
+            if (o != null) {
+              frame.setBounds(o);
+            }
+          }
+          frame.setVisible(true);
+          rootPane.putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, null);
+
+          if (!state && (extendedState & Frame.MAXIMIZED_BOTH) != 0) {
+            frame.setExtendedState(extendedState);
+          }
+          notifyFrameComponents(state);
+
+          if (toFocus != null && !(toFocus instanceof JRootPane)) {
+            // Window 'forgets' last focused component on disposal, so we need to restore it explicitly.
+            // Special case is toggling fullscreen mode from menu. In this case menu UI moves focus to the root pane before performing
+            // the action. We shouldn't explicitly request focus in this case - menu UI will restore the focus without our help.
+            toFocus.requestFocusInWindow();
+          }
+        }
+        EventQueue.invokeLater(() -> {
+          frame.togglingFullScreenInProgress = false;
+        });
+        promise.complete(state);
       });
-      return CompletableFuture.completedFuture(state);
+      return promise;
     }
   }
 
@@ -204,8 +222,11 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
     }
   }
 
+  public void appClosing() {
+  }
+
   public static boolean isCustomDecorationAvailable() {
-    return (SystemInfoRt.isMac || SystemInfoRt.isWindows) && JBR.isCustomWindowDecorationSupported();
+    return (SystemInfoRt.isMac || SystemInfo.isWin8OrNewer) && JBR.isWindowDecorationsSupported();
   }
 
   private static final AtomicReference<Boolean> isCustomDecorationActiveCache = new AtomicReference<>();

@@ -77,7 +77,7 @@ abstract class SimpleTabTitleUpdater(private val tree: ChangesTree, private val 
   }
 
   private fun getTab(): Content? {
-    return ChangesViewContentManager.getInstance(tree.project).findContents { it.tabName == tabName }.firstOrNull()
+    return ChangesViewContentManager.getInstance(tree.project).findContent(tabName)
   }
 
   override fun dispose() {

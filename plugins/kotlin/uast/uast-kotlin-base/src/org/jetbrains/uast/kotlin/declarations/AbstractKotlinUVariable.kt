@@ -54,7 +54,11 @@ abstract class AbstractKotlinUVariable(
 
     override val uAnnotations by lz {
         val sourcePsi = sourcePsi ?: return@lz psi.annotations.map { WrappedUAnnotation(it, this) }
-        val annotations = SmartList<UAnnotation>(KotlinNullabilityUAnnotation(baseResolveProviderService, sourcePsi, this))
+        val annotations = SmartList<UAnnotation>()
+        val hasInheritedGenericType = baseResolveProviderService.hasInheritedGenericType(sourcePsi)
+        if (!hasInheritedGenericType) {
+            annotations.add(KotlinNullabilityUAnnotation(baseResolveProviderService, sourcePsi, this))
+        }
         if (sourcePsi is KtModifierListOwner) {
             sourcePsi.annotationEntries
                 .filter { acceptsAnnotationTarget(it.useSiteTarget?.getAnnotationUseSiteTarget()) }
@@ -75,7 +79,9 @@ abstract class AbstractKotlinUVariable(
                 is KtNamedDeclaration -> sourcePsi.nameIdentifier
                 is KtTypeReference -> sourcePsi.typeElement?.let {
                     // receiver param in extension function
-                    (it as? KtUserType)?.referenceExpression?.getIdentifier() ?: it
+                    // Unwrap the type if the receiver param is nullable
+                    val typeElement = (it as? KtNullableType)?.innerType ?: it
+                    (typeElement as? KtUserType)?.referenceExpression?.getIdentifier() ?: it
                 } ?: sourcePsi
                 is KtNameReferenceExpression -> sourcePsi.getReferencedNameElement()
                 is KtBinaryExpression, is KtCallExpression -> null // e.g. `foo("Lorem ipsum") ?: foo("dolor sit amet")`

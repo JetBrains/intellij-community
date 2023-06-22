@@ -9,8 +9,8 @@ class C {
       System.out.println("1");
       throw e;
     }
-    catch (Exception exception) {}
-    <caret>catch (Throwable throwable) {
+    catch (<caret>Exception exception) {}
+    catch (Throwable throwable) {
       System.out.println("1");
     }
   }

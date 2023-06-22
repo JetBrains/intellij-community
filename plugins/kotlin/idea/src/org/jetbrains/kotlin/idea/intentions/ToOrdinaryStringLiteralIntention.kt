@@ -5,8 +5,8 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.name.FqName
@@ -17,11 +17,8 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 class ToOrdinaryStringLiteralIntention : SelfTargetingOffsetIndependentIntention<KtStringTemplateExpression>(
     KtStringTemplateExpression::class.java,
-    KotlinBundle.lazyMessage("to.ordinary.string.literal")
+    KotlinBundle.lazyMessage("convert.to.ordinary.string.literal")
 ), LowPriorityAction {
-    companion object {
-        private val TRIM_INDENT_FUNCTIONS = listOf(FqName("kotlin.text.trimIndent"), FqName("kotlin.text.trimMargin"))
-    }
 
     override fun isApplicableTo(element: KtStringTemplateExpression): Boolean {
         return element.text.startsWith("\"\"\"")
@@ -100,3 +97,8 @@ class ToOrdinaryStringLiteralIntention : SelfTargetingOffsetIndependentIntention
         val stringTemplateText: String
     )
 }
+
+private val TRIM_INDENT_FUNCTIONS: List<FqName> = listOf(
+    FqName("kotlin.text.trimIndent"),
+    FqName("kotlin.text.trimMargin")
+)

@@ -5,6 +5,5 @@ interface LoginTokenGenerator {
 
   fun canGenerateToken(serverUri: String): Boolean
 
-  fun generateToken(serverUri: String): String?
-
+  fun generateToken(serverUri: String)
 }

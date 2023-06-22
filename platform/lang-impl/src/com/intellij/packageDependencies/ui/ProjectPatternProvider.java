@@ -19,6 +19,7 @@ package com.intellij.packageDependencies.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -38,6 +39,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.FilePatternPackageSet;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -151,6 +153,12 @@ public class ProjectPatternProvider extends PatternDialectProvider {
   @Override
   public Icon getIcon() {
     return AllIcons.General.ProjectTab;
+  }
+
+  @Nls
+  @Override
+  public @NotNull String getHintMessage() {
+    return LangBundle.message("package.pattern.provider.hint.label");
   }
 
   private static final class CompactEmptyMiddlePackagesAction extends ToggleAction {

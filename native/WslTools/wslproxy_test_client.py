@@ -11,7 +11,7 @@ def read_stderr(stderr):
             print(f"STDERR: {text}")
 
 
-process = subprocess.Popen("./wslproxy", shell=False,
+process = subprocess.Popen(["./wslproxy", "--loopback"], shell=False,
                            stdin=subprocess.PIPE,
                            stdout=subprocess.PIPE,
                            stderr=subprocess.PIPE)

@@ -6,25 +6,20 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.platform.workspace.storage.EntityStorage
 
 /**
- * @return corresponding [com.intellij.openapi.module.Module] or null if module is unloaded
+ * @return corresponding [com.intellij.openapi.module.Module] or `null` if this entity isn't added to the project model yet.
  */
 fun ModuleEntity.findModule(snapshot: EntityStorage): ModuleBridge? {
   return snapshot.moduleMap.getDataByEntity(this)
-}
-
-/**
- * Check if the module is unloaded. **Note** even if the module is unloaded all related entities will continue store at project model
- * thus the changes with these entities will be available for listening via [com.intellij.workspaceModel.ide.WorkspaceModelChangeListener]
- */
-fun ModuleEntity.isModuleUnloaded(snapshot: EntityStorage): Boolean {
-  return this.findModule(snapshot) == null
 }
 
 /**
@@ -35,7 +30,7 @@ fun ModuleEntity.getModuleLevelLibraries(snapshot: EntityStorage): Sequence<Libr
 }
 
 /**
- * Due to the current project model limitations we don't directly store [com.intellij.workspaceModel.storage.bridgeEntities.SdkEntity],
+ * Due to the current project model limitations we don't directly store [com.intellij.platform.workspace.storage.bridgeEntities.SdkEntity],
  * but indirectly [Sdk] can be calculated via [ModuleDependencyItem] related to the module. This method can be used to get [Sdk]
  * if it's assigned to the module as a dependency. [com.intellij.openapi.roots.impl.SdkFinder] and [com.intellij.openapi.projectRoots.ProjectJdkTable]
  * should be used to search for SDKs not bound to any module.

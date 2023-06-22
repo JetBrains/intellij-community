@@ -3,6 +3,7 @@ package com.intellij.grazie.grammar
 
 import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use TextProblem instead")
 class Typo {
   /**

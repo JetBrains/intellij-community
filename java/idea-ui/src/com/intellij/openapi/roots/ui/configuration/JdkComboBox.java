@@ -35,15 +35,6 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
    * @deprecated since {@link #setSetupButton} methods are deprecated, use the
    * more specific constructor to pass all parameters
    */
-  @Deprecated(forRemoval = true)
-  public JdkComboBox(@NotNull final ProjectSdksModel jdkModel) {
-    this(jdkModel, null);
-  }
-
-  /**
-   * @deprecated since {@link #setSetupButton} methods are deprecated, use the
-   * more specific constructor to pass all parameters
-   */
   @Deprecated
   public JdkComboBox(@NotNull final ProjectSdksModel jdkModel,
                      @Nullable Condition<? super SdkTypeId> filter) {
@@ -104,7 +95,11 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
         onNewSdkAdded.consume(sdk);
       }
     };
-    setRenderer(new SdkListPresenter(() -> ((JdkComboBoxModel)this.getModel()).myInnerModel).forType(JdkComboBox::unwrapItem));
+    setRenderer(SdkListPresenter.create(
+      this,
+      () -> ((JdkComboBoxModel)this.getModel()).myInnerModel,
+      item -> unwrapItem(item)
+    ));
     reloadModel();
   }
 

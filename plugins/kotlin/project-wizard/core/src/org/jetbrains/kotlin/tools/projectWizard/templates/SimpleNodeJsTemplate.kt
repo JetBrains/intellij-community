@@ -3,19 +3,25 @@
 package org.jetbrains.kotlin.tools.projectWizard.templates
 
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.tools.projectWizard.Dependencies
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
-import org.jetbrains.kotlin.tools.projectWizard.Versions
-import org.jetbrains.kotlin.tools.projectWizard.core.*
+import org.jetbrains.kotlin.tools.projectWizard.core.Reader
+import org.jetbrains.kotlin.tools.projectWizard.core.Writer
+import org.jetbrains.kotlin.tools.projectWizard.core.asPath
+import org.jetbrains.kotlin.tools.projectWizard.core.buildList
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.TemplateSetting
-import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.*
-import org.jetbrains.kotlin.tools.projectWizard.library.MavenArtifact
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.ArtifactBasedLibraryDependencyIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.DependencyIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.DependencyType
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.ModuleIR
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JsNodeTargetConfigurator
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.MppModuleConfigurator.getTestFramework
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.NodeJsSinglePlatformModuleConfigurator
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.isPresent
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.moduleType
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
-import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.DefaultRepository.Companion.JCENTER
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.SourcesetType
 
@@ -53,12 +59,7 @@ object SimpleNodeJsTemplate : Template() {
         buildList {
             if (this@SimpleNodeJsTemplate.useKotlinxNodejs.reference.settingValue()) {
                 +ArtifactBasedLibraryDependencyIR(
-                    MavenArtifact(
-                        JCENTER,
-                        "org.jetbrains.kotlinx",
-                        "kotlinx-nodejs"
-                    ),
-                    Versions.KOTLINX.KOTLINX_NODEJS,
+                    Dependencies.KOTLINX.KOTLINX_NODEJS,
                     DependencyType.MAIN
                 )
             }
@@ -69,7 +70,10 @@ object SimpleNodeJsTemplate : Template() {
         withSettingsOf(module.originalModule) {
             buildList {
                 +(FileTemplateDescriptor("$id/main.kt.vm", mainFile.asPath()) asSrcOf SourcesetType.main)
-                +(FileTemplateDescriptor("$id/GreetingTest.kt.vm") asSrcOf SourcesetType.test)
+
+                if (getTestFramework(module.originalModule).isPresent) {
+                    +(FileTemplateDescriptor("$id/GreetingTest.kt.vm") asSrcOf SourcesetType.test)
+                }
             }
         }
 }

@@ -1,5 +1,9 @@
 import com.intellij.openapi.util.Couple
 import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.Pair.create
+import com.intellij.openapi.util.Pair.pair
+import com.intellij.openapi.util.Pair.create as createAlias
+import com.intellij.openapi.util.Pair.pair as pairAlias
 
 internal class PairUsedInsteadOfCouple {
 
@@ -44,6 +48,14 @@ internal class PairUsedInsteadOfCouple {
     takePair(Pair.create("a", 2)) // correct
     takePair(Couple.of("a", "b")) // correct
     takePair(Couple.of(1, 2)) // correct
+
+    // method imports:
+    takePair(<warning descr="Replace with 'Couple.of()'">create(1, 2)</warning>)
+    takePair(<warning descr="Replace with 'Couple.of()'">pair("a", "b")</warning>)
+
+    // method import with alias:
+    takePair(<warning descr="Replace with 'Couple.of()'">createAlias(1, 2)</warning>)
+    takePair(<warning descr="Replace with 'Couple.of()'">pairAlias("a", "b")</warning>)
   }
 
   @Suppress("UNUSED_PARAMETER")

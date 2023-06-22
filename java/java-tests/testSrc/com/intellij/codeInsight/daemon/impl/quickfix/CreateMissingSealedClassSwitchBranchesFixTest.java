@@ -14,6 +14,6 @@ public class CreateMissingSealedClassSwitchBranchesFixTest extends LightQuickFix
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_17;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_20;
   }
 }

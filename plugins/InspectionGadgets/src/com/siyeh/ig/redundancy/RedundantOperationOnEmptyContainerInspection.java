@@ -72,7 +72,7 @@ public class RedundantOperationOnEmptyContainerInspection extends AbstractBaseJa
           if (ExpressionUtils.isVoidContext(call)) {
             fix = new DeleteElementFix(call, InspectionGadgetsBundle.message("remove.call.fix.family.name"));
           }
-          holder.registerProblem(container, msg, fix, getFindCauseFix(container));
+          holder.registerProblem(container, msg, LocalQuickFix.notNullElements(fix, getFindCauseFix(container)));
         }
       }
 

@@ -1,1 +1,1 @@
-AtomicReference v = new AtomicReference(...)
+AtomicReference<String> v = new AtomicReference<>(...)

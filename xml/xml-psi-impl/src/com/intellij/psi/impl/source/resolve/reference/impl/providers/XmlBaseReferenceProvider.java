@@ -68,6 +68,6 @@ public class XmlBaseReferenceProvider extends PsiReferenceProvider {
       tag = tag.getParentTag();
     }
     PsiDirectory directory = file.getContainingDirectory();
-    return directory == null ? Collections.emptyList() : Collections.singletonList(directory);
+    return ContainerUtil.createMaybeSingletonList(directory);
   }
 }

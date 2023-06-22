@@ -1,0 +1,11 @@
+package foo
+
+import java.util.LinkedList
+
+class Some
+
+fun foo() {
+    val some = LinkedList<<caret>>()
+}
+
+// ELEMENT: LinkedList

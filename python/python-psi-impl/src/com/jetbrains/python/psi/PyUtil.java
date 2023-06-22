@@ -19,6 +19,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -134,7 +135,7 @@ public final class PyUtil {
    * @return the representation.
    */
   @NotNull
-  @NonNls
+  @NlsSafe
   public static String getReadableRepr(PsiElement elt, final boolean cutAtEOL) {
     if (elt == null) return "null!";
     ASTNode node = elt.getNode();
@@ -643,19 +644,19 @@ public final class PyUtil {
    * @param <P>     key type
    */
   @NotNull
-  public static <T, P> T getParameterizedCachedValue(@NotNull PsiElement element, @Nullable P param, @NotNull NotNullFunction<P, T> f) {
+  public static <T, P> T getParameterizedCachedValue(@NotNull PsiElement element, @Nullable P param, @NotNull Function<P, @NotNull T> f) {
     final T result = getNullableParameterizedCachedValue(element, param, f);
     assert result != null;
     return result;
   }
 
   /**
-   * Same as {@link #getParameterizedCachedValue(PsiElement, Object, NotNullFunction)} but allows nulls.
+   * Same as {@link #getParameterizedCachedValue(PsiElement, Object, Function)} but allows nulls.
    */
   @Nullable
   public static <T, P> T getNullableParameterizedCachedValue(@NotNull PsiElement element,
                                                              @Nullable P param,
-                                                             @NotNull NullableFunction<P, T> f) {
+                                                             @NotNull Function<P, @Nullable T> f) {
     final CachedValuesManager manager = CachedValuesManager.getManager(element.getProject());
     final Map<Optional<P>, Optional<T>> cache = CachedValuesManager.getCachedValue(element, manager.getKeyForClass(f.getClass()), () -> {
       // concurrent hash map is a null-hostile collection

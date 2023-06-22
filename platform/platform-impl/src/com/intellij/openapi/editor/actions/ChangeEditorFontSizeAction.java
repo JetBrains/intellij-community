@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.application.options.EditorFontsConstants;
+import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -32,11 +33,16 @@ public abstract class ChangeEditorFontSizeAction extends AnAction implements Dum
   public void actionPerformed(@NotNull AnActionEvent e) {
     final EditorImpl editor = getEditor(e);
     if (editor != null) {
-      final float size = editor.getFontSize2D() + myStep;
-      if (size >= 8 && size <= EditorFontsConstants.getMaxEditorFontSize()) {
+      float step = myStep;
+      if (myGlobal) {
+        step *= UISettingsUtils.getInstance().getCurrentIdeScale();
+      }
+      final float size = editor.getFontSize2D() + step;
+      final float unscaledSize = UISettingsUtils.scaleFontSize(size, 1 / UISettingsUtils.getInstance().getCurrentIdeScale());
+      if (unscaledSize >= 8 && unscaledSize <= EditorFontsConstants.getMaxEditorFontSize()) {
         editor.setFontSize(size);
         if (myGlobal) {
-          editor.adjustGlobalFontSize(size);
+          editor.adjustGlobalFontSize(unscaledSize);
         }
       }
     }

@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("BlockingMethodInNonBlockingContext", "ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet")
 package org.jetbrains.intellij.build
 
 import io.ktor.client.HttpClient
@@ -194,28 +194,24 @@ fun closeKtorClient() {
 
 private val fileLocks = StripedMutex()
 
-suspend fun downloadAsBytes(url: String): ByteArray {
-  return spanBuilder("download").setAttribute("url", url).useWithScope2 {
+suspend fun downloadAsBytes(url: String): ByteArray =
+  spanBuilder("download").setAttribute("url", url).useWithScope2 {
     withContext(Dispatchers.IO) {
       httpClient.value.get(url).body()
     }
   }
-}
 
-suspend fun downloadAsText(url: String): String {
-  return spanBuilder("download").setAttribute("url", url).useWithScope2 {
+suspend fun downloadAsText(url: String): String =
+  spanBuilder("download").setAttribute("url", url).useWithScope2 {
     withContext(Dispatchers.IO) {
       httpClient.value.get(url).bodyAsText()
     }
   }
-}
 
-fun downloadFileToCacheLocationSync(url: String, communityRoot: BuildDependenciesCommunityRoot): Path {
-  @Suppress("RAW_RUN_BLOCKING")
-  return runBlocking(Dispatchers.IO) {
+fun downloadFileToCacheLocationSync(url: String, communityRoot: BuildDependenciesCommunityRoot): Path =
+  runBlocking(Dispatchers.IO) {
     downloadFileToCacheLocation(url, communityRoot)
   }
-}
 
 suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDependenciesCommunityRoot): Path {
   BuildDependenciesDownloader.cleanUpIfRequired(communityRoot)
@@ -225,7 +221,6 @@ suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDepende
   val lock = fileLocks.getLock(targetPath.hashCode())
   lock.lock()
   try {
-    val now = Instant.now()
     if (Files.exists(target)) {
       Span.current().addEvent("use asset from cache", Attributes.of(
         AttributeKey.stringKey("url"), url,
@@ -233,7 +228,7 @@ suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDepende
       ))
 
       // update file modification time to maintain FIFO caches i.e. in persistent cache folder on TeamCity agent
-      Files.setLastModifiedTime(target, FileTime.from(now))
+      Files.setLastModifiedTime(target, FileTime.from(Instant.now()))
       return target
     }
 
@@ -243,7 +238,7 @@ suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDepende
       suspendingRetryWithExponentialBackOff {
         // save to the same disk to ensure that move will be atomic and not as a copy
         val tempFile = target.parent
-          .resolve("${target.fileName}-${(now.epochSecond - 1634886185).toString(36)}-${now.nano.toString(36)}".take(255))
+          .resolve("${target.fileName}-${(Instant.now().epochSecond - 1634886185).toString(36)}-${Instant.now().nano.toString(36)}".take(255))
         Files.deleteIfExists(tempFile)
         try {
           val response = httpSpaceClient.value.prepareGet(url).execute {
@@ -297,7 +292,6 @@ suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDepende
 
 fun CoroutineScope.readChannel(file: Path): ByteReadChannel {
   return writer(CoroutineName("file-reader") + Dispatchers.IO, autoFlush = false) {
-    @Suppress("BlockingMethodInNonBlockingContext")
     FileChannel.open(file, StandardOpenOption.READ).use { fileChannel ->
       @Suppress("DEPRECATION")
       channel.writeSuspendSession {

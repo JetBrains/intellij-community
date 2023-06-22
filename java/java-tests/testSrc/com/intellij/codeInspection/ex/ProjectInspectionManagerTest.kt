@@ -80,12 +80,12 @@ class ProjectInspectionManagerTest {
       file.delete()
 
       refreshProjectConfigDir(project)
-      StoreReloadManager.getInstance().reloadChangedStorageFiles()
+      StoreReloadManager.getInstance(project).reloadChangedStorageFiles()
       assertThat(projectInspectionProfileManager.state).isEmpty()
 
       file.write(doNotUseProjectProfileData)
       refreshProjectConfigDir(project)
-      StoreReloadManager.getInstance().reloadChangedStorageFiles()
+      StoreReloadManager.getInstance(project).reloadChangedStorageFiles()
       assertThat(projectInspectionProfileManager.state).isEqualTo(doNotUseProjectProfileState)
     }
   }
@@ -149,7 +149,7 @@ class ProjectInspectionManagerTest {
       </component>""".trimIndent())
 
       refreshProjectConfigDir(project)
-      StoreReloadManager.getInstance().reloadChangedStorageFiles()
+      StoreReloadManager.getInstance(project).reloadChangedStorageFiles()
       assertThat(projectInspectionProfileManager.currentProfile.getToolDefaultState("Convert2Diamond", project).level).isEqualTo(
         HighlightDisplayLevel.ERROR)
     }
@@ -202,7 +202,7 @@ class ProjectInspectionManagerTest {
       </component>""")
 
       refreshProjectConfigDir(project)
-      StoreReloadManager.getInstance().reloadChangedStorageFiles()
+      StoreReloadManager.getInstance(project).reloadChangedStorageFiles()
 
       assertThat(profileManager.currentProfile.isProjectLevel).isTrue()
       assertThat(profileManager.currentProfile.name).isEqualTo("Project Default")
@@ -212,7 +212,7 @@ class ProjectInspectionManagerTest {
       writeDefaultProfile(profileDir)
 
       refreshProjectConfigDir(project)
-      StoreReloadManager.getInstance().reloadChangedStorageFiles()
+      StoreReloadManager.getInstance(project).reloadChangedStorageFiles()
 
       assertThat(profileManager.currentProfile.name).isEqualTo("Project Default")
 

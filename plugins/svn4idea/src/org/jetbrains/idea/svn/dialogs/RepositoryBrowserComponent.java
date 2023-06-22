@@ -199,7 +199,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
       ScrollPaneFactory.createScrollPane(myRepositoryTree, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
     add(scrollPane, BorderLayout.CENTER);
     myRepositoryTree.setCellRenderer(new SvnRepositoryTreeCellRenderer());
-    TreeSpeedSearch search = new TreeSpeedSearch(myRepositoryTree, false, o -> {
+    TreeSpeedSearch search = TreeSpeedSearch.installOn(myRepositoryTree, false, o -> {
       Object component = o.getLastPathComponent();
       if (component instanceof RepositoryTreeNode) {
         return ((RepositoryTreeNode)component).getURL().toDecodedString();

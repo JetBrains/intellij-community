@@ -241,6 +241,8 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   @NotNull
   final Promise<? super Object> select(final Configurable configurable) {
     assert !myDisposed : "Already disposed";
+    long startTime = System.currentTimeMillis();
+    final boolean loadedFromCache = myCardPanel.getValue(configurable, false) != null;
     ActionCallback callback = myCardPanel.select(configurable, false);
     callback
       .doWhenDone(() -> {
@@ -248,7 +250,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
         updateCurrent(configurable, false);
         postUpdateCurrent(configurable);
         if (configurable != null) {
-          FeatureUsageUiEventsKt.getUiEventLogger().logSelectConfigurable(configurable);
+          FeatureUsageUiEventsKt.getUiEventLogger().logSelectConfigurable(configurable, loadedFromCache, System.currentTimeMillis() - startTime);
         }
       });
     return Promises.toPromise(callback);

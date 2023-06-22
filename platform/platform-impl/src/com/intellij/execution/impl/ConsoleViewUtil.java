@@ -6,7 +6,6 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
@@ -68,10 +67,8 @@ public final class ConsoleViewUtil {
       editorSettings.setShowingSpecialChars(false);
       editor.getGutterComponentEx().setPaintBackground(false);
 
-      DelegateColorScheme scheme = updateConsoleColorScheme(editor.getColorsScheme());
-      if (UISettings.getInstance().getPresentationMode()) {
-        scheme.setEditorFontSize(UISettingsUtils.getInstance().getPresentationModeFontSize());
-      }
+      EditorColorsScheme scheme = updateConsoleColorScheme(editor.getColorsScheme(), editor);
+      scheme.setEditorFontSize(UISettingsUtils.getInstance().getScaledConsoleFontSize());
       editor.setColorsScheme(scheme);
       editor.setHighlighter(new NullEditorHighlighter());
     });
@@ -97,6 +94,11 @@ public final class ConsoleViewUtil {
 
     @Override
     public void setColorScheme(@NotNull EditorColorsScheme scheme) {}
+  }
+
+  public static @NotNull EditorColorsScheme updateConsoleColorScheme(@NotNull EditorColorsScheme scheme, EditorEx editor) {
+    // Bounded to the editor delegate color scheme helps to reflect console font size settings changes during custom IDE scale
+    return editor.createBoundColorSchemeDelegate(updateConsoleColorScheme(scheme));
   }
 
   public static @NotNull DelegateColorScheme updateConsoleColorScheme(@NotNull EditorColorsScheme scheme) {

@@ -15,8 +15,8 @@ public final class ClassSetImportModelProvider implements ProjectImportModelProv
   @NotNull private final Set<Class<?>> buildModelClasses;
 
   public ClassSetImportModelProvider(@NotNull Set<Class<?>> projectModelClasses, @NotNull Set<Class<?>> buildModelClasses) {
-    this.projectModelClasses = new LinkedHashSet<Class<?>>(projectModelClasses);
-    this.buildModelClasses = new LinkedHashSet<Class<?>>(buildModelClasses);
+    this.projectModelClasses = new LinkedHashSet<>(projectModelClasses);
+    this.buildModelClasses = new LinkedHashSet<>(buildModelClasses);
   }
 
   @Override

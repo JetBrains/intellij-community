@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.hints.HintWidthAdjustment
@@ -25,6 +25,7 @@ import org.intellij.lang.annotations.JdkConstants
 import java.awt.*
 import java.awt.font.FontRenderContext
 import javax.swing.UIManager
+import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -63,7 +64,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
     return calcHintTextWidth(text, fontMetrics)
   }
 
-  protected open fun useEditorFont() = useEditorFontFromSettings()
+  protected open fun useEditorFont(): Boolean = useEditorFontFromSettings()
 
   companion object {
     @JvmStatic
@@ -171,7 +172,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
 
         val backgroundBlendedGrayed = backgroundBlended.toGray()
         val textGrayed = attributes.foregroundColor.toGray()
-        val delta = Math.abs(backgroundBlendedGrayed - textGrayed)
+        val delta = abs(backgroundBlendedGrayed - textGrayed)
         return delta < 10
       }
       return false
@@ -242,7 +243,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
         EditorColorsManager.getInstance().globalScheme.editorFontName
       }
       else {
-        StartupUiUtil.getLabelFont().family
+        StartupUiUtil.labelFont.family
       }
       if (metrics != null && !metrics.isActual(editor, size, fontType, familyName)) {
         metrics = null
@@ -255,7 +256,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
     }
 
     @JvmStatic
-    fun useEditorFontFromSettings() = EditorSettingsExternalizable.getInstance().isUseEditorFontInInlays
+    fun useEditorFontFromSettings(): Boolean = EditorSettingsExternalizable.getInstance().isUseEditorFontInInlays
 
     private fun getFont(editor: Editor, useEditorFont: Boolean): Font {
       return getFontMetrics(editor, useEditorFont).font

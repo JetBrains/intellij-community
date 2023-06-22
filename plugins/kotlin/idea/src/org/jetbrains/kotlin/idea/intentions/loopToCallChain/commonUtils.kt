@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.intentions.loopToCallChain
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
-import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
@@ -30,10 +29,6 @@ fun KtExpression.isConstant(): Boolean {
     val bindingContext = analyze(BodyResolveMode.PARTIAL)
     return ConstantExpressionEvaluator.getConstant(this, bindingContext) != null
 }
-
-fun KtExpression?.isTrueConstant() = this != null && node?.elementType == KtNodeTypes.BOOLEAN_CONSTANT && text == "true"
-
-fun KtExpression?.isFalseConstant() = this != null && node?.elementType == KtNodeTypes.BOOLEAN_CONSTANT && text == "false"
 
 private val ZERO_VALUES = setOf(0, 0L, 0f, 0.0)
 

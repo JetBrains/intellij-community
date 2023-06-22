@@ -24,21 +24,25 @@ import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
+import org.intellij.lang.annotations.Language
 
 @CompileStatic
 class NonSourceInspectionTest extends JavaCodeInsightFixtureTestCase {
-
   void "test inspection outside source root"() {
     PsiTestUtil.removeAllRoots(module, ModuleRootManager.getInstance(module).sdk)
     PsiTestUtil.addSourceRoot(module, myFixture.tempDirFixture.findOrCreateDir("src"))
-    
-    myFixture.addFileToProject("src/foo/GenericQuery.java", """
+
+    @Language("JAVA")
+    def generic = """
 package foo;
 public interface GenericQuery<T> {
     public T execute();
 }
-""")
-    def file = myFixture.addFileToProject("SomeClass.java", """
+"""
+    myFixture.addFileToProject("src/foo/GenericQuery.java", generic)
+
+    @Language("JAVA")
+    def some = """
 import foo.GenericQuery;
 import java.util.Collection;
 
@@ -50,7 +54,8 @@ class SomeClass {
 }
 
 
-""")
+"""
+    def file = myFixture.addFileToProject("SomeClass.java", some)
 
     def wrapper = new LocalInspectionToolWrapper(new UncheckedWarningLocalInspection())
     def context = InspectionManager.getInstance(project).createNewGlobalContext()
@@ -61,14 +66,17 @@ class SomeClass {
     PsiTestUtil.removeAllRoots(module, ModuleRootManager.getInstance(module).sdk)
     PsiTestUtil.addSourceRoot(module, myFixture.tempDirFixture.findOrCreateDir("src"))
 
-    myFixture.addFileToProject("src/Foo.java", """
+    @Language("JAVA")
+    def foo = """
 class Foo<T> {
     public Foo(T x) {
     }
 }
-""")
+"""
+    myFixture.addFileToProject("src/Foo.java", foo)
 
-    myFixture.configureByText("Foo.java", """
+    @Language("JAVA")
+    def foo2 = """
 class Foo<T> {
     public Foo(T x) {
     }
@@ -79,10 +87,10 @@ class Bar extends Foo<String> {
         sup<caret>er("a");
     }
 }
-""")
+"""
+    myFixture.configureByText("Foo.java", foo2)
 
     assert myFixture.file.physical
     assert assertInstanceOf(myFixture.elementAtCaret, PsiMethod).name == 'Foo'
   }
-  
 }

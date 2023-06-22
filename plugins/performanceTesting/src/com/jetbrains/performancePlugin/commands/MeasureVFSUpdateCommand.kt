@@ -12,6 +12,11 @@ import java.util.*
 import kotlin.io.path.Path
 import kotlin.io.path.div
 
+/**
+ * Measure VFS update time.
+ * Command creates a file with random name in the project root and waits till VFS noticed the files
+ * Syntax: %measureVFSUpdate [path inside the project]
+ */
 class MeasureVFSUpdateCommand(text: String, line: Int) : AbstractCallbackBasedCommand(text, line) {
 
   companion object {

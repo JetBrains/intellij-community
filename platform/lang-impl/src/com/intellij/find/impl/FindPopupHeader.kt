@@ -14,7 +14,8 @@ import com.intellij.ui.StateRestoringCheckBox
 import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.dsl.gridLayout.toUnscaledGaps
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.MathUtil
 import com.intellij.util.ui.EmptyIcon
@@ -54,8 +55,8 @@ internal class FindPopupHeader(project: Project, filterContextButton: ActionButt
             .component
 
           if (ExperimentalUI.isNewUI()) {
-            val headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets()
-            titleCell.customize(Gaps(top = headerInsets.top, bottom = headerInsets.bottom, right = JBUI.scale(12)))
+            val headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets().toUnscaledGaps()
+            titleCell.customize(UnscaledGaps(top = headerInsets.top, bottom = headerInsets.bottom, right = 12))
             infoLabel.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
           }
           else {

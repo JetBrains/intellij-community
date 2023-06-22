@@ -264,6 +264,7 @@ public class BuildTargetSourcesState implements BuildListener {
       .flatMap(List::stream)
       .mapToLong(x -> x)
       .toArray();
+    if (longs.length == 0) return Optional.empty();
     return Optional.of(Xxh3HashingService.getLongsHash(longs));
   }
 
@@ -277,7 +278,9 @@ public class BuildTargetSourcesState implements BuildListener {
       return Optional.empty();
     }
 
-    long stringHash = getStringHash(toRelative(file, rootPath));
+    String relativePath = toRelative(file, rootPath);
+    if (relativePath.isEmpty()) return Optional.empty();
+    long stringHash = getStringHash(relativePath);
     return Optional.of(Xxh3HashingService.getLongsHash(stringHash, fileHash));
   }
 

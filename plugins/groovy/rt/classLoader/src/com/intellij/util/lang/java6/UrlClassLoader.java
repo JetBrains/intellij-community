@@ -25,7 +25,7 @@ import java.util.*;
  */
 public class UrlClassLoader extends ClassLoader {
   static final String CLASS_EXTENSION = ".class";
-  private static final ThreadLocal<Boolean> ourSkipFindingResource = new ThreadLocal<Boolean>();
+  private static final ThreadLocal<Boolean> ourSkipFindingResource = new ThreadLocal<>();
   private static final boolean ourClassPathIndexEnabled = Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "true"));
 
   private static final Set<Class<?>> ourParallelCapableLoaders;
@@ -113,7 +113,7 @@ public class UrlClassLoader extends ClassLoader {
         return urls(((URLClassLoader)classLoader).getURLs());
       }
       String[] parts = System.getProperty("java.class.path").split(System.getProperty("path.separator"));
-      myURLs = new ArrayList<URL>(parts.length);
+      myURLs = new ArrayList<>(parts.length);
       for (String s : parts) {
         try {
           myURLs.add(new File(s).toURI().toURL());
@@ -189,7 +189,7 @@ public class UrlClassLoader extends ClassLoader {
 
     @NotNull
     public Builder autoAssignUrlsWithProtectionDomain() {
-      Set<URL> result = new HashSet<URL>();
+      Set<URL> result = new HashSet<>();
       for (URL url : myURLs) {
         if (isUrlNeedsProtectionDomain(url)) {
           result.add(url);

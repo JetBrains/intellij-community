@@ -16,6 +16,7 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.ClassUtil;
 import org.jetbrains.annotations.NotNull;
 
 class CanBeStaticVisitor extends JavaRecursiveElementWalkingVisitor {
@@ -29,15 +30,21 @@ class CanBeStaticVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
+  public void visitThisExpression(@NotNull PsiThisExpression expression) {
+    canBeStatic = false;
+    stopWalking();
+  }
+
+  @Override
   public void visitReferenceExpression(@NotNull PsiReferenceExpression ref) {
-    if (!canBeStatic) {
-      return;
-    }
     super.visitReferenceExpression(ref);
     PsiElement element = ref.resolve();
 
-    if (element instanceof PsiModifierListOwner && !((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) {
+    if (element instanceof PsiModifierListOwner owner &&
+        !owner.hasModifierProperty(PsiModifier.STATIC) &&
+        !(owner instanceof PsiClass cls && ClassUtil.isTopLevelClass(cls))) {
       canBeStatic = false;
+      stopWalking();
     }
   }
 

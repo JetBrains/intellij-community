@@ -20,6 +20,14 @@ import static com.intellij.psi.codeStyle.CodeStyleDefaults.DEFAULT_INDENT_SIZE;
 import static com.intellij.psi.codeStyle.CodeStyleDefaults.DEFAULT_TAB_SIZE;
 import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.INDENT_SETTINGS;
 
+/**
+ * A specialized option group for editing indent options.
+ * <p>
+ *   <em>Implementation note:</em> make sure all the necessary Swing components are only created
+ *   in the {@link #createPanel()} and/or {@link #addComponents()} methods and not in the
+ *   constructor or field/property initializers. See {@link OptionGroup} for details.
+ * </p>
+ */
 public class IndentOptionsEditor extends OptionGroup implements CodeStyleSettingsCustomizable {
 
   private JTextField myIndentField;

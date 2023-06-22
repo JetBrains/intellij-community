@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
+import com.intellij.openapi.diff.impl.patch.PatchHunk
+import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.plugins.github.api.data.GHCommitHash
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
@@ -17,9 +19,12 @@ interface GHPRReviewThreadModel : ListModel<GHPRReviewCommentModel> {
   val isOutdated: Boolean
   val commit: GHCommitHash?
   val filePath: String
+  val patchHunk: PatchHunk?
   val diffHunk: String
-  val line: Int
-  val startLine: Int?
+  val originalLocation: DiffLineLocation?
+  val originalStartLocation: DiffLineLocation?
+  val location: DiffLineLocation?
+  val startLocation: DiffLineLocation?
 
   val collapsedState: MutableStateFlow<Boolean>
 

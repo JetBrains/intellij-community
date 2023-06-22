@@ -72,7 +72,7 @@ data class Constraints(
   /**
    * Gaps between grid cell bounds and components visual bounds (visual bounds is component bounds minus [visualPaddings])
    */
-  val gaps: Gaps = Gaps.EMPTY,
+  val gaps: UnscaledGaps = UnscaledGaps.EMPTY,
 
   /**
    * Gaps between component bounds and its visual bounds. Can be used when component has focus ring outside of
@@ -84,7 +84,7 @@ data class Constraints(
    * 3. Cells that contain [JComponent] with own [GridLayout] calculate and update [visualPaddings] automatically.
    * To disable this behaviour set [GridLayoutComponentProperty.SUB_GRID_AUTO_VISUAL_PADDINGS] to false
    */
-  var visualPaddings: Gaps = Gaps.EMPTY,
+  var visualPaddings: UnscaledGaps = UnscaledGaps.EMPTY,
 
   /**
    * All components from the same width group will have the same width equals to maximum width from the group.

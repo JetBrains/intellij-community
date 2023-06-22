@@ -2,16 +2,20 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.ide.RecentProjectsManager
-import com.intellij.notification.ActionCenter
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
@@ -40,14 +44,17 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Rectangle
 import java.awt.Window
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.accessibility.AccessibleContext
 import javax.swing.*
+
+private const val INIT_BOUNDS_KEY = "InitBounds"
+
+private val LOG: Logger
+  get() = logger<ProjectFrameHelper>()
 
 open class ProjectFrameHelper internal constructor(
   val frame: IdeFrameImpl,
@@ -73,7 +80,9 @@ open class ProjectFrameHelper internal constructor(
   private var activationTimestamp: Long? = null
 
   init {
-    setupCloseAction()
+    frame.defaultCloseOperation = WindowConstants.DO_NOTHING_ON_CLOSE
+    frame.addWindowListener(WindowCloseListener)
+
     @Suppress("LeakingThis")
     rootPane = createIdeRootPane(loadingState)
     frame.doSetRootPane(rootPane)
@@ -100,8 +109,8 @@ open class ProjectFrameHelper internal constructor(
       override val helper: IdeFrame
         get() = this@ProjectFrameHelper
 
-      override val frameDecorator: IdeFrameImpl.FrameDecorator?
-        get() = this@ProjectFrameHelper.frameDecorator
+      override val isInFullScreen: Boolean
+        get() = frameDecorator?.isInFullScreen ?: false
 
       override fun dispose() {
         if (isTemporaryDisposed(frame)) {
@@ -112,20 +121,16 @@ open class ProjectFrameHelper internal constructor(
         }
       }
     })
+    if (frameDecorator != null && getReusedFullScreenState()) {
+      frameDecorator.setStoredFullScreen()
+    }
     frame.background = JBColor.PanelBackground
     rootPane.preInit(isInFullScreen = { isInFullScreen })
 
-    balloonLayout = if (ActionCenter.isEnabled()) {
-      ActionCenterBalloonLayout(rootPane, JBUI.insets(8))
-    }
-    else {
-      BalloonLayoutImpl(rootPane, JBUI.insets(8))
-    }
+    balloonLayout = ActionCenterBalloonLayout(rootPane, JBUI.insets(8))
   }
 
   companion object {
-    private val LOG = logger<ProjectFrameHelper>()
-
     @JvmStatic
     fun getFrameHelper(window: Window?): ProjectFrameHelper? {
       if (window == null) {
@@ -146,19 +151,6 @@ open class ProjectFrameHelper internal constructor(
 
     internal fun appendTitlePart(sb: StringBuilder, s: String?) {
       appendTitlePart(sb, s, " \u2013 ")
-    }
-
-    private fun appendTitlePart(builder: StringBuilder, s: String?, separator: String) {
-      if (!s.isNullOrBlank()) {
-        if (builder.isNotEmpty()) {
-          builder.append(separator)
-        }
-        builder.append(s)
-      }
-    }
-
-    private fun isTemporaryDisposed(frame: RootPaneContainer?): Boolean {
-      return ClientProperty.isTrue(frame?.rootPane, ScreenUtil.DISPOSE_TEMPORARY)
     }
   }
 
@@ -186,15 +178,14 @@ open class ProjectFrameHelper internal constructor(
     if (SystemInfoRt.isMac) {
       frame.iconImage = null
     }
-    else if (SystemInfoRt.isLinux) {
-      frame.addComponentListener(object : ComponentAdapter() {
-        override fun componentShown(e: ComponentEvent) {
-          frame.removeComponentListener(this)
-          IdeMenuBar.installAppMenuIfNeeded(frame)
-        }
-      })
-      // in production (not from sources) makes sense only on Linux
-      AppUIUtil.updateWindowIcon(frame)
+    else {
+      if (SystemInfoRt.isLinux) {
+        IdeMenuBar.installAppMenuIfNeeded(frame)
+      }
+
+      // in production (not from sources) it makes sense only on Linux
+      // or on Windows (for products that don't use a native launcher, e.g., MPS)
+      updateAppWindowIcon(frame)
     }
     return frame
   }
@@ -207,25 +198,6 @@ open class ProjectFrameHelper internal constructor(
   }
 
   override fun getComponent(): JComponent? = frame.rootPane
-
-  private fun setupCloseAction() {
-    frame.defaultCloseOperation = WindowConstants.DO_NOTHING_ON_CLOSE
-    val helper = createCloseProjectWindowHelper()
-    frame.addWindowListener(object : WindowAdapter() {
-      override fun windowClosing(e: WindowEvent) {
-        if (isTemporaryDisposed(frame) || LaterInvocator.isInModalContext(frame, project)) {
-          return
-        }
-
-        val app = ApplicationManager.getApplication()
-        if (app != null && !app.isDisposed) {
-          helper.windowClosing(project)
-        }
-      }
-    })
-  }
-
-  protected open fun createCloseProjectWindowHelper(): CloseProjectWindowHelper = CloseProjectWindowHelper()
 
   override fun getStatusBar(): IdeStatusBarImpl? = rootPane.statusBar
 
@@ -324,29 +296,53 @@ open class ProjectFrameHelper internal constructor(
     }
   }
 
-  override fun getProject() = project
+  override fun getProject(): Project? = project
 
-  @RequiresEdt
-  fun setProject(project: Project) {
+  // any activities that will not access a workspace model
+  internal suspend fun setRawProject(project: Project) {
     if (this.project === project) {
       return
     }
 
     this.project = project
-    rootPane.setProject(project)
+
+    withContext(Dispatchers.EDT) {
+      applyInitBounds()
+    }
     frameDecorator?.setProject()
+  }
+
+  internal suspend fun setProject(project: Project) {
+    rootPane.setProject(project)
     activationTimestamp?.let {
       RecentProjectsManager.getInstance().setActivationTimestamp(project, it)
     }
   }
 
+  @RequiresEdt
+  internal fun setInitBounds(bounds: Rectangle?) {
+    if (bounds != null && frame.isInFullScreen) {
+      frame.rootPane.putClientProperty(INIT_BOUNDS_KEY, bounds)
+    }
+  }
+
+  private fun applyInitBounds() {
+    if (isInFullScreen) {
+      val bounds = rootPane.getClientProperty(INIT_BOUNDS_KEY)
+      rootPane.putClientProperty(INIT_BOUNDS_KEY, null)
+      if (bounds is Rectangle) {
+        ProjectFrameBounds.getInstance(project!!).markDirty(bounds)
+        IDE_FRAME_EVENT_LOG.debug { "Applied init bounds for full screen from client property: $bounds" }
+      }
+    }
+    else {
+      ProjectFrameBounds.getInstance(project!!).markDirty(frame.bounds)
+      IDE_FRAME_EVENT_LOG.debug { "Applied init bounds for non-fullscreen from the frame: ${frame.bounds}" }
+    }
+  }
+
   open suspend fun installDefaultProjectStatusBarWidgets(project: Project) {
     rootPane.statusBar!!.init(project)
-
-    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      val navBar = rootPane.navBarStatusWidgetComponent ?: return@withContext
-      statusBar!!.setCentralWidget(IdeStatusBarImpl.NAVBAR_WIDGET_KEY, navBar)
-    }
   }
 
   fun appClosing() {
@@ -359,6 +355,8 @@ open class ProjectFrameHelper internal constructor(
       balloonLayout = null
       (it as BalloonLayoutImpl).dispose()
     }
+
+    frame.removeWindowListener(WindowCloseListener)
 
     // clear both our and swing hard refs
     if (ApplicationManager.getApplication().isUnitTestMode) {
@@ -393,6 +391,16 @@ open class ProjectFrameHelper internal constructor(
     }
   }
 
+  fun storeStateForReuse() {
+    frame.reusedFullScreenState = frameDecorator != null && frameDecorator.isInFullScreen
+  }
+
+  private fun getReusedFullScreenState(): Boolean {
+    val reusedFullScreenState = frame.reusedFullScreenState
+    frame.reusedFullScreenState = false
+    return reusedFullScreenState
+  }
+
   private fun temporaryFixForIdea156004(state: Boolean): Boolean {
     if (SystemInfoRt.isMac) {
       try {
@@ -400,7 +408,7 @@ open class ProjectFrameHelper internal constructor(
         modalBlockerField.isAccessible = true
         val modalBlocker = modalBlockerField.get(frame) as? Window
         if (modalBlocker != null) {
-          ApplicationManager.getApplication().invokeLater({ toggleFullScreen(state) }, ModalityState.NON_MODAL)
+          ApplicationManager.getApplication().invokeLater({ toggleFullScreen(state) }, ModalityState.nonModal())
           return true
         }
       }
@@ -424,4 +432,40 @@ open class ProjectFrameHelper internal constructor(
 
   internal val isTabbedWindow: Boolean
     get() = frameDecorator?.isTabbedWindow ?: false
+
+  internal fun getDecorator(): IdeFrameDecorator? = frameDecorator
+
+  open fun windowClosing(project: Project) {
+    CloseProjectWindowHelper().windowClosing(project)
+  }
+}
+
+private fun isTemporaryDisposed(frame: RootPaneContainer?): Boolean {
+  return ClientProperty.isTrue(frame?.rootPane, ScreenUtil.DISPOSE_TEMPORARY)
+}
+
+// static object to ensure that we do not retain a project
+private object WindowCloseListener : WindowAdapter() {
+  override fun windowClosing(e: WindowEvent) {
+    val frame = e.window as? IdeFrameImpl ?: return
+    val frameHelper = frame.frameHelper?.helper as? ProjectFrameHelper ?: return
+    val project = frameHelper.project ?: return
+    if (isTemporaryDisposed(frame) || LaterInvocator.isInModalContext(frame, project)) {
+      return
+    }
+
+    val app = ApplicationManager.getApplication()
+    if (app != null && !app.isDisposed) {
+      frameHelper.windowClosing(project)
+    }
+  }
+}
+
+private fun appendTitlePart(builder: StringBuilder, s: String?, separator: String) {
+  if (!s.isNullOrBlank()) {
+    if (builder.isNotEmpty()) {
+      builder.append(separator)
+    }
+    builder.append(s)
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +37,7 @@ public final class CompactDataInput implements DataInput {
   @Override
   public int skipBytes(int n) throws IOException {
     int total = 0;
-    int cur = 0;
+    int cur;
 
     while ((total<n) && ((cur = (int) in.skip(n-total)) > 0)) {
         total += cur;
@@ -130,9 +130,8 @@ public final class CompactDataInput implements DataInput {
     throw new UnsupportedOperationException("readLine is not implemented!");
   }
 
-  @NotNull
   @Override
-  public String readUTF() throws IOException {
+  public @NotNull String readUTF() throws IOException {
     return IOUtil.readUTFFast(readBuffer, this);
   }
 }

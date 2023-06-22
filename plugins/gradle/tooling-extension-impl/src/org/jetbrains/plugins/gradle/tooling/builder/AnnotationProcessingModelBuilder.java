@@ -42,12 +42,12 @@ public class AnnotationProcessingModelBuilder extends AbstractModelBuilderServic
       return null;
     }
 
-    final SourceSetContainer container = JavaPluginUtil.getSourceSetContainer(project);
+    final SourceSetContainer container = JavaPluginUtil.getJavaPluginAccessor(project).getSourceSetContainer();
     if (container == null) {
       return null;
     }
 
-    Map<String, AnnotationProcessingConfig> sourceSetConfigs = new HashMap<String, AnnotationProcessingConfig>();
+    Map<String, AnnotationProcessingConfig> sourceSetConfigs = new HashMap<>();
 
     IdeaModule ideaModule = null;
     IdeaPlugin plugin = project.getPlugins().findPlugin(IdeaPlugin.class);
@@ -64,7 +64,7 @@ public class AnnotationProcessingModelBuilder extends AbstractModelBuilderServic
         if (path != null) {
           final Set<File> files = path.getFiles();
           if (!files.isEmpty()) {
-            List<String> annotationProcessorArgs = new ArrayList<String>();
+            List<String> annotationProcessorArgs = new ArrayList<>();
             List<String> args = isAtLeastGradle4_5 ? options.getAllCompilerArgs() : options.getCompilerArgs();
             for (String arg : args) {
               if (arg.startsWith("-A")) {

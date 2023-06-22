@@ -187,7 +187,7 @@ public class ConfigFilesTreeBuilder {
   }
 
   public static void installSearch(JTree tree) {
-    new TreeSpeedSearch(tree, false, treePath -> {
+    TreeSpeedSearch.installOn(tree, false, treePath -> {
       final Object object = ((DefaultMutableTreeNode)treePath.getLastPathComponent()).getUserObject();
       if (object instanceof Module) {
         return ((Module)object).getName();

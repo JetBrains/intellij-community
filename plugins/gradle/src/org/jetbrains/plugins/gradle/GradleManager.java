@@ -34,8 +34,8 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.UnindexedFilesScannerExecutor;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -44,7 +44,6 @@ import com.intellij.psi.search.ExecutionSearchScopes;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Function;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.indexing.UnindexedFilesScannerExecutor;
 import com.intellij.util.messages.MessageBusConnection;
 import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
@@ -64,6 +63,7 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.findAll;
@@ -182,6 +182,7 @@ public final class GradleManager
 
       for (BuildParticipant buildParticipant : compositeBuild.getCompositeParticipants()) {
         if (pathsEqual(buildParticipant.getRootPath(), projectPath)) continue;
+        if (Path.of(buildParticipant.getRootPath()).endsWith(GradleConstants.BUILD_SRC_NAME)) continue;
         if (buildParticipant.getProjects().stream().anyMatch(path -> pathsEqual(path, projectPath))) {
           continue;
         }

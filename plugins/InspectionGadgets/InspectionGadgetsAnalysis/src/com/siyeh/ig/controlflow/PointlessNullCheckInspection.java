@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
 import com.intellij.psi.*;
@@ -12,7 +13,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RemoveRedundantPolyadicOperandFix;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +44,7 @@ public class PointlessNullCheckInspection extends BaseInspection implements Clea
 
   @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiExpression expression = (PsiExpression)infos[0];
     return new RemoveRedundantPolyadicOperandFix(expression.getText());
   }

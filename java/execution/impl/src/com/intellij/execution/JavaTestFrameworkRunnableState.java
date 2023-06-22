@@ -12,11 +12,9 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.target.*;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
-import com.intellij.execution.testDiscovery.JavaAutoRunManager;
+import com.intellij.execution.testDiscovery.JvmToggleAutoTestAction;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
-import com.intellij.execution.testframework.autotest.AbstractAutoTestManager;
-import com.intellij.execution.testframework.autotest.ToggleAutoTestAction;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
@@ -320,17 +318,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     rerunFailedTestsAction.setModelProvider(() -> viewer);
 
     final DefaultExecutionResult result = new DefaultExecutionResult(consoleView, handler);
-    result.setRestartActions(rerunFailedTestsAction, new ToggleAutoTestAction() {
-      @Override
-      public boolean isDelayApplicable() {
-        return false;
-      }
-
-      @Override
-      public AbstractAutoTestManager getAutoTestManager(Project project) {
-        return JavaAutoRunManager.getInstance(project);
-      }
-    });
+    result.setRestartActions(rerunFailedTestsAction, new JvmToggleAutoTestAction());
 
     JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(getConfiguration(), handler, runnerSettings);
     return result;

@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.tools.projectWizard.core.entity.*
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.properties.PluginProperty
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.properties.PluginPropertyReference
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.properties.PropertyContext
-import org.jetbrains.kotlin.tools.projectWizard.core.entity.properties.PropertyReference
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.properties.PropertyEntityReference
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.*
 import org.jetbrains.kotlin.tools.projectWizard.core.service.ServicesManager
 import org.jetbrains.kotlin.tools.projectWizard.core.service.SettingSavingWizardService
@@ -127,7 +127,7 @@ class Context private constructor(
         val <T : Any> PluginProperty<T>.propertyValue: T
             get() = propertyContext[this] ?: error("No value is present for property `$this`")
 
-        val <T : Any> PropertyReference<T>.propertyValue: T
+        val <T : Any> PropertyEntityReference<T>.propertyValue: T
             get() = propertyContext[this] ?: error("No value is present for property `$this`")
 
         val <V : Any, T : SettingType<V>> SettingReference<V, T>.settingValue: V
@@ -197,7 +197,7 @@ class Context private constructor(
             updater: suspend ComputeContext<*>.(T) -> TaskResult<T>
         ): TaskResult<Unit> = reference.update(updater)
 
-        fun <T : Any> PropertyReference<T>.update(
+        fun <T : Any> PropertyEntityReference<T>.update(
             updater: suspend ComputeContext<*>.(T) -> TaskResult<T>
         ): TaskResult<Unit> = compute {
             val (newValue) = updater(propertyValue)
@@ -212,7 +212,7 @@ class Context private constructor(
             values: List<T>
         ): TaskResult<Unit> = reference.addValues(values)
 
-        fun <T : Any> PropertyReference<List<T>>.addValues(
+        fun <T : Any> PropertyEntityReference<List<T>>.addValues(
             values: List<T>
         ): TaskResult<Unit> = update { oldValues -> success(oldValues + values) }
 
@@ -225,7 +225,7 @@ class Context private constructor(
             settingContext[this] = newValue
         }
 
-        fun <V : Any> PropertyReference<V>.initDefaultValue(newValue: V) {
+        fun <V : Any> PropertyEntityReference<V>.initDefaultValue(newValue: V) {
             propertyContext[this] = property.defaultValue
         }
 

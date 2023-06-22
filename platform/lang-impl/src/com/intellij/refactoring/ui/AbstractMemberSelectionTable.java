@@ -8,8 +8,12 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.ui.cellvalidators.TableCellValidator;
+import com.intellij.openapi.ui.cellvalidators.ValidatingTableCellRendererWrapper;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
@@ -81,7 +85,20 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     setModel(myTableModel);
 
     TableColumnModel model = getColumnModel();
-    model.getColumn(DISPLAY_NAME_COLUMN).setCellRenderer(new MyTableRenderer<>(this));
+    model.getColumn(DISPLAY_NAME_COLUMN).setCellRenderer(
+      new ValidatingTableCellRendererWrapper(new MyTableRenderer<>(this)).withCellValidator(new TableCellValidator() {
+        @Override
+        public ValidationInfo validate(Object value, int row, int column) {
+          MemberInfoData data = getMemberInfoData(row);
+          if (data == null) return null;
+          return switch (data.problem) {
+            case MemberInfoModel.ERROR -> new ValidationInfo("");
+            case MemberInfoModel.WARNING -> new ValidationInfo("").asWarning();
+            default -> null;
+          };
+        }
+      })
+    );
     TableColumn checkBoxColumn = model.getColumn(CHECKED_COLUMN);
     TableUtil.setupCheckboxColumn(checkBoxColumn);
     checkBoxColumn.setCellRenderer(new MyBooleanRenderer<>(this));
@@ -99,7 +116,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     setIntercellSpacing(new Dimension(0, 0));
 
     new MyEnableDisableAction().register();
-    new TableSpeedSearch(this);
+    TableSpeedSearch.installOn(this);
   }
 
   @NotNull
@@ -432,20 +449,11 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
         setIcon(AnimatedIcon.Default.INSTANCE);
         return;
       }
+
       setToolTipText(data.tooltip());
       setIcon(data.icon());
       setEnabled(data.isEditable());
-      if (value == null) return;
-
-      final int problem = data.problem();
-      Color c = null;
-      if (problem == MemberInfoModel.ERROR) {
-        c = JBColor.RED;
-      }
-      else if (problem == MemberInfoModel.WARNING && !isSelected) {
-        c = JBColor.BLUE;
-      }
-      append((String)value, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, c));
+      if (value instanceof @NlsSafe String s) append(s);
     }
   }
 

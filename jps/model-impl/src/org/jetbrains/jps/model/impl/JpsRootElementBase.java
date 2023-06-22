@@ -16,29 +16,20 @@
 package org.jetbrains.jps.model.impl;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.JpsEventDispatcher;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.ex.JpsCompositeElementBase;
 
 public abstract class JpsRootElementBase<E extends JpsRootElementBase<E>> extends JpsCompositeElementBase<E> {
   private final JpsModel myModel;
-  private final JpsEventDispatcher myEventDispatcher;
 
-  protected JpsRootElementBase(@NotNull JpsModel model, JpsEventDispatcher eventDispatcher) {
+  protected JpsRootElementBase(@NotNull JpsModel model) {
     super();
     myModel = model;
-    myEventDispatcher = eventDispatcher;
   }
 
-  protected JpsRootElementBase(JpsCompositeElementBase<E> original, JpsModel model, JpsEventDispatcher dispatcher) {
+  protected JpsRootElementBase(JpsCompositeElementBase<E> original, JpsModel model) {
     super(original);
     myModel = model;
-    myEventDispatcher = dispatcher;
-  }
-
-  @Override
-  protected JpsEventDispatcher getEventDispatcher() {
-    return myEventDispatcher;
   }
 
   @NotNull

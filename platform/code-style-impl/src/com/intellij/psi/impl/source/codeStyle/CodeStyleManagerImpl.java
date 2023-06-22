@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.CodeStyleBundle;
@@ -9,13 +9,11 @@ import com.intellij.formatting.service.FormattingServiceUtil;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -29,8 +27,8 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.text.CharArrayUtil;
@@ -115,12 +113,10 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
   }
 
   @Override
-  public void reformatTextWithContext(@NotNull PsiFile file,
-                                      @NotNull ChangedRangesInfo info) throws IncorrectOperationException
-  {
+  public void reformatChanges(@NotNull PsiFile file,
+                              @NotNull ChangedRangesInfo info) throws IncorrectOperationException {
     ensureDocumentCommitted(file);
     FormatTextRanges formatRanges = new FormatTextRanges(info, ChangedRangesUtil.processChangedRanges(file, info));
-    formatRanges.setExtendToContext(true);
     reformatText(file, formatRanges);
   }
 
@@ -520,7 +516,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
 
   @Override
   public void scheduleReformatWhenSettingsComputed(@NotNull PsiFile file) {
-    if (ModelBranch.getPsiBranch(file) != null) {
+    if (LightVirtualFile.shouldSkipEventSystem(file.getViewProvider().getVirtualFile())) {
       commitAndFormat(file);
       return;
     }
@@ -540,7 +536,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
           commandRunnable.run();
         }
         else {
-          ApplicationManager.getApplication().invokeLater(commandRunnable, ModalityState.NON_MODAL, file.getProject().getDisposed());
+          ApplicationManager.getApplication().invokeLater(commandRunnable, ModalityState.nonModal(), file.getProject().getDisposed());
         }
       }
     );

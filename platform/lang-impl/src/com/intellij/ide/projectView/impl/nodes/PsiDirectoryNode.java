@@ -1,13 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl.nodes;
 
-import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.NodeSortOrder;
 import com.intellij.ide.projectView.NodeSortSettings;
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.CompoundIconProvider;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.PathElementIdProvider;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
@@ -46,7 +47,7 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Set;
 
-public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements NavigatableWithText {
+public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements NavigatableWithText, PathElementIdProvider {
   // the chain from a parent directory to this one usually contains only one virtual file
   private final Set<VirtualFile> chain = new SmartHashSet<>();
 
@@ -138,6 +139,12 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     data.setLocationString(ProjectViewDirectoryHelper.getInstance(project).getLocationString(psiDirectory, false, false));
 
     setupIcon(data, psiDirectory);
+  }
+
+  @Override
+  public @NotNull String getPathElementId() {
+    var value = getEqualityObject();
+    return value == null ? "" : value.toString();
   }
 
   protected static boolean canRealModuleNameBeHidden() {

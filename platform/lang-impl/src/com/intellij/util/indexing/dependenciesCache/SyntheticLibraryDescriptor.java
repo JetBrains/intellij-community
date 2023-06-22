@@ -12,6 +12,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.roots.SyntheticLibraryIndexableFilesIteratorImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Set;
@@ -82,6 +83,7 @@ class SyntheticLibraryDescriptor {
   }
 
   @NotNull
+  @Unmodifiable
   public Set<VirtualFile> getAllRoots() {
     return ContainerUtil.union(sourceRoots, binaryRoots);
   }

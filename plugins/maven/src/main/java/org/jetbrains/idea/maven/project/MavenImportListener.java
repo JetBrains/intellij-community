@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.module.Module;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
 
 import java.util.Collection;
 import java.util.List;
@@ -16,7 +15,7 @@ public interface MavenImportListener {
   @Topic.ProjectLevel
   Topic<MavenImportListener> TOPIC = Topic.create("Maven import notifications", MavenImportListener.class);
 
-  default void importStarted(MavenImportSpec spec) { }
+  default void importStarted() { }
 
   void importFinished(@NotNull Collection<MavenProject> importedProjects, @NotNull List<Module> newModules);
 }

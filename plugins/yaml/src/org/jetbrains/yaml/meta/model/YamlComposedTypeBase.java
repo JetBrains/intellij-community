@@ -43,8 +43,8 @@ public abstract class YamlComposedTypeBase extends YamlMetaType {
 
   protected abstract YamlMetaType composeTypes(YamlMetaType... types);
 
-  protected YamlComposedTypeBase(@NotNull String typeName, List<YamlMetaType> types) {
-    super(typeName);
+  protected YamlComposedTypeBase(@NotNull String typeName, @NotNull String displayName, List<YamlMetaType> types) {
+    super(typeName, displayName);
     assert types.size() > 1 : "Nothing to compose: " + types;
     myTypes = copyList(types);
   }

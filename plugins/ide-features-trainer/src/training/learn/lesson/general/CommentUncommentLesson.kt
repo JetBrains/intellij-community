@@ -11,7 +11,9 @@ import training.dsl.TaskRuntimeContext
 import training.learn.LessonsBundle.message
 import training.learn.course.KLesson
 
-class CommentUncommentLesson(private val sample: LessonSample, private val blockCommentsAvailable: Boolean = false)
+class CommentUncommentLesson(private val sample: LessonSample,
+                             private val blockCommentsAvailable: Boolean = false,
+                             private val helpUrl: String = "working-with-source-code.html#editor_lines_code_blocks")
   : KLesson("Comment line",
             if(blockCommentsAvailable)
               message("comment.block.lesson.name")
@@ -70,7 +72,7 @@ class CommentUncommentLesson(private val sample: LessonSample, private val block
   }
 
   override val helpLinks: Map<String, String> get() = mapOf(
-    Pair(message("help.lines.of.code"),
-         LessonUtil.getHelpLink("working-with-source-code.html#editor_lines_code_blocks")),
+    Pair(message("help.code.comment"),
+         LessonUtil.getHelpLink(helpUrl)),
   )
 }

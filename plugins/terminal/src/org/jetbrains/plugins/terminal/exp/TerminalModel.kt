@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.concurrency.Semaphore
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.CursorShape
 import com.jediterm.terminal.RequestOrigin
@@ -12,8 +13,12 @@ import com.jediterm.terminal.emulator.mouse.MouseMode
 import com.jediterm.terminal.model.*
 import com.jediterm.terminal.model.JediTerminal.ResizeHandler
 import java.awt.Dimension
+import java.util.concurrent.CopyOnWriteArrayList
+import kotlin.math.min
 
 class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: StyleState) {
+  val commandExecutionSemaphore: Semaphore = Semaphore()
+
   val width: Int
     get() = textBuffer.width
   val height: Int
@@ -23,6 +28,8 @@ class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: 
     private set
   var cursorY: Int = 0
     private set
+
+  var isCommandRunning: Boolean = false
 
   var cursorShape: CursorShape = CursorShape.BLINK_BLOCK
     set(value) {
@@ -132,6 +139,32 @@ class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: 
     textBuffer.processScreenLines(yStart, count, consumer)
   }
 
+  fun getAllText(updatedCursorX: Int = cursorX, updatedCursorY: Int = cursorY): String {
+    return getLinesText(-historyLinesCount, screenLinesCount, updatedCursorX, updatedCursorY)
+  }
+
+  fun getScreenText(): String {
+    return getLinesText(0, screenLinesCount, cursorX, cursorY)
+  }
+
+  private fun getLinesText(fromLine: Int, toLine: Int, updatedCursorX: Int, updatedCursorY: Int): String {
+    val builder = StringBuilder()
+    for (ind in fromLine until toLine) {
+      var text = getLine(ind).text
+      if (ind == updatedCursorY - 1) {
+        text = text.substring(0, min(updatedCursorX, text.length))
+      }
+      builder.append(text)
+      if (text.isNotEmpty()) {
+        builder.append('\n')
+      }
+    }
+    return if (builder.isNotEmpty()) {
+      builder.dropLast(1).toString()  // remove last line break
+    }
+    else builder.toString()
+  }
+
   //-------------------MODIFICATION METHODS------------------------------------------------
 
   fun scrollArea(scrollRegionTop: Int, scrollRegionBottom: Int, dy: Int) {
@@ -155,6 +188,8 @@ class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: 
   fun clearLines(beginY: Int, endY: Int) {
     textBuffer.clearLines(beginY, endY)
   }
+
+  fun clearHistory() = textBuffer.clearHistory()
 
   fun eraseLine(line: Int, limit: Int) {
     textBuffer.getLine(line).deleteCharacters(limit)
@@ -202,24 +237,41 @@ class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: 
     method.invoke(textBuffer)
   }
 
-  fun clearAllExceptPrompt() {
-    textBuffer.scrollArea(1, 1 - cursorY, height)
+  fun clearAllExceptPrompt(promptLines: Int = 1) {
+    textBuffer.scrollArea(1, promptLines - cursorY, height)
     textBuffer.clearHistory()
-    cursorY = 1
+    cursorY = promptLines
   }
 
-  fun lock() = textBuffer.lock()
+  fun lockContent() = textBuffer.lock()
 
-  fun unlock() = textBuffer.unlock()
+  fun unlockContent() = textBuffer.unlock()
 
+  inline fun <T> withContentLock(callable: () -> T): T {
+    lockContent()
+    return try {
+      callable()
+    }
+    finally {
+      unlockContent()
+    }
+  }
 
   //---------------------LISTENERS----------------------------------------------
 
-  private val terminalListeners: MutableList<TerminalListener> = mutableListOf()
-  private val cursorListeners: MutableList<CursorListener> = mutableListOf()
+  private val terminalListeners: MutableList<TerminalListener> = CopyOnWriteArrayList()
+  private val cursorListeners: MutableList<CursorListener> = CopyOnWriteArrayList()
 
   fun addContentListener(listener: ContentListener, parentDisposable: Disposable? = null) {
-    val terminalListener = TerminalModelListener { listener.onContentChanged() }
+    val terminalListener = object : TerminalModelListenerEx {
+      override fun modelChanged() {
+        listener.onContentChanged()
+      }
+
+      override fun textWritten(x: Int, y: Int, text: String) {
+        listener.onTextWritten(x, y, text)
+      }
+    }
     textBuffer.addModelListener(terminalListener)
     if (parentDisposable != null) {
       Disposer.register(parentDisposable) {
@@ -228,16 +280,28 @@ class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: 
     }
   }
 
-  fun addTerminalListener(listener: TerminalListener) {
+  fun addTerminalListener(listener: TerminalListener, parentDisposable: Disposable? = null) {
     terminalListeners.add(listener)
+    if (parentDisposable != null) {
+      Disposer.register(parentDisposable) {
+        terminalListeners.remove(listener)
+      }
+    }
   }
 
-  fun addCursorListener(listener: CursorListener) {
+  fun addCursorListener(listener: CursorListener, parentDisposable: Disposable? = null) {
     cursorListeners.add(listener)
+    if (parentDisposable != null) {
+      Disposer.register(parentDisposable) {
+        cursorListeners.remove(listener)
+      }
+    }
   }
 
   interface ContentListener {
     fun onContentChanged() {}
+
+    fun onTextWritten(x: Int, y: Int, text: String) {}
   }
 
   interface TerminalListener {

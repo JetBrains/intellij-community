@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.psi.PsiClass;
@@ -27,7 +27,7 @@ public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
 
   private final T myDefinition;
   private final GrCodeMembersProvider<? super T> myCodeMembersProvider;
-  private final Collection<?> myDependencies = Collections.singletonList(PsiModificationTracker.MODIFICATION_COUNT);
+  private static final Collection<?> myDependencies = Collections.singletonList(PsiModificationTracker.MODIFICATION_COUNT);
 
   public GrTypeDefinitionMembersCache(@NotNull T definition) {
     this(definition, BodyCodeMembersProvider.INSTANCE);

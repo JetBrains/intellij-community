@@ -38,8 +38,8 @@ public class MavenDuplicatePluginInspection extends DomElementsInspection<MavenD
   }
 
   @Override
-  public void checkFileElement(DomFileElement<MavenDomProjectModel> domFileElement,
-                               DomElementAnnotationHolder holder) {
+  public void checkFileElement(@NotNull DomFileElement<MavenDomProjectModel> domFileElement,
+                               @NotNull DomElementAnnotationHolder holder) {
     MavenDomProjectModel projectModel = domFileElement.getRootElement();
 
     MultiMap<Pair<String,String>, MavenDomPlugin> duplicates = MultiMap.createSet();

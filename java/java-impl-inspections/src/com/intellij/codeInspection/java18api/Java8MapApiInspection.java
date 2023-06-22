@@ -4,12 +4,12 @@ package com.intellij.codeInspection.java18api;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -127,13 +127,13 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
                                QuickFixBundle.message("java.8.map.api.inspection.description", fix.myMethodName), fix);
       }
 
-      private boolean hasMapUsages(@NotNull MapLoopCondition condition, @Nullable PsiExpression value) {
+      private static boolean hasMapUsages(@NotNull MapLoopCondition condition, @Nullable PsiExpression value) {
         return !VariableAccessUtils.getVariableReferences(condition.getMap(), value).stream()
           .map(ExpressionUtils::getCallForQualifier)
           .allMatch(call -> condition.isValueAccess(call));
       }
 
-      private boolean isUsedAsReference(@NotNull PsiElement value, @NotNull MapLoopCondition condition) {
+      private static boolean isUsedAsReference(@NotNull PsiElement value, @NotNull MapLoopCondition condition) {
         return !VariableAccessUtils.getVariableReferences(condition.getIterParam(), value).stream()
           .map(ExpressionUtils::getCallForQualifier)
           .allMatch(KEY_VALUE_GET_METHODS);
@@ -271,7 +271,7 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
     return StringUtil.toLowerCase(nameCandidate);
   }
 
-  private static class ReplaceWithSingleMapOperation implements LocalQuickFix {
+  private static class ReplaceWithSingleMapOperation extends PsiUpdateModCommandQuickFix {
     private final String myMethodName;
     private final SmartPsiElementPointer<PsiMethodCallExpression> myCallPointer;
     private final SmartPsiElementPointer<PsiExpression> myValuePointer;
@@ -286,93 +286,83 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
     }
 
     @Override
-    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-      PsiMethodCallExpression call = myCallPointer.getElement();
-      PsiExpression value = myValuePointer.getElement();
-      PsiElement result = myResultPointer.getElement();
-      if (call == null || value == null || result == null) return null;
-      return new ReplaceWithSingleMapOperation(myMethodName, PsiTreeUtil.findSameElementInCopy(call, target),
-                                               PsiTreeUtil.findSameElementInCopy(value, target), 
-                                               PsiTreeUtil.findSameElementInCopy(result, target));
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement outerElement = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiIfStatement.class,
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiElement outerElement = PsiTreeUtil.getParentOfType(element, PsiIfStatement.class,
                                                             PsiConditionalExpression.class, PsiForeachStatement.class);
       if (outerElement == null) return;
       MapCondition condition = outerElement instanceof PsiForeachStatement ?
                                MapLoopCondition.create((PsiForeachStatement)outerElement) :
                                fromConditional(outerElement, true);
       if(condition == null) return;
-      PsiMethodCallExpression call = myCallPointer.getElement();
+      PsiMethodCallExpression call = updater.getWritable(myCallPointer.getElement());
       if (call == null) return;
       PsiExpressionList argsList = call.getArgumentList();
       PsiExpression[] args = argsList.getExpressions();
       if(args.length == 0) return;
       if ((myMethodName.equals("merge") || myMethodName.equals("replaceAll")) && args.length != 2) return;
-      PsiExpression value = myValuePointer.getElement();
+      PsiExpression value = updater.getWritable(myValuePointer.getElement());
       if (value == null) return;
-      PsiElement result = myResultPointer.getElement();
+      PsiElement result = updater.getWritable(myResultPointer.getElement());
       if(result == null) return;
 
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       CommentTracker ct = new CommentTracker();
       ExpressionUtils.bindCallTo(call, myMethodName);
       PsiExpression replacement;
-      if(myMethodName.equals("computeIfAbsent")) {
-        PsiExpression key = args[0];
-        List<PsiReferenceExpression> refs = Collections.emptyList();
-        String nameCandidate = "k";
-        if(key instanceof PsiReferenceExpression && ((PsiReferenceExpression)key).getQualifier() == null) {
-          // try to use lambda parameter if key is simple reference and has the same type as map keys
-          PsiMethod method = call.resolveMethod();
-          if(method != null) {
-            PsiType argType = method.getParameterList().getParameters()[0].getType();
-            PsiType mapKeyType = call.resolveMethodGenerics().getSubstitutor().substitute(argType);
-            PsiType keyType = key.getType();
+      switch (myMethodName) {
+        case "computeIfAbsent" -> {
+          PsiExpression key = args[0];
+          List<PsiReferenceExpression> refs = Collections.emptyList();
+          String nameCandidate = "k";
+          if (key instanceof PsiReferenceExpression && ((PsiReferenceExpression)key).getQualifier() == null) {
+            // try to use lambda parameter if key is simple reference and has the same type as map keys
+            PsiMethod method = call.resolveMethod();
+            if (method != null) {
+              PsiType argType = method.getParameterList().getParameters()[0].getType();
+              PsiType mapKeyType = call.resolveMethodGenerics().getSubstitutor().substitute(argType);
+              PsiType keyType = key.getType();
 
-            if(mapKeyType != null && keyType != null && keyType.isAssignableFrom(mapKeyType)) {
-              PsiElement target = ((PsiReferenceExpression)key).resolve();
-              refs = target == null ? Collections.emptyList() :
-                     StreamEx.of(PsiTreeUtil.collectElementsOfType(value, PsiReferenceExpression.class))
-                       .filter(ref -> ref.getQualifierExpression() == null && ref.isReferenceTo(target)).toList();
-              if (!refs.isEmpty()) {
-                nameCandidate = getNameCandidate(((PsiReferenceExpression)key).getReferenceName());
+              if (mapKeyType != null && keyType != null && keyType.isAssignableFrom(mapKeyType)) {
+                PsiElement target = ((PsiReferenceExpression)key).resolve();
+                refs = target == null ? Collections.emptyList() :
+                       StreamEx.of(PsiTreeUtil.collectElementsOfType(value, PsiReferenceExpression.class))
+                         .filter(ref -> ref.getQualifierExpression() == null && ref.isReferenceTo(target)).toList();
+                if (!refs.isEmpty()) {
+                  nameCandidate = getNameCandidate(((PsiReferenceExpression)key).getReferenceName());
+                }
               }
             }
           }
+          String varName = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName(nameCandidate, value, true);
+          for (PsiReferenceExpression ref : refs) {
+            ExpressionUtils.bindReferenceTo(ref, varName);
+          }
+          replacement = factory.createExpressionFromText(varName + " -> " + ct.text(value), value);
         }
-        String varName = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName(nameCandidate, value, true);
-        for(PsiReferenceExpression ref : refs) {
-          ExpressionUtils.bindReferenceTo(ref, varName);
+        case "merge" -> {
+          MapCheckCondition checkCondition = ObjectUtils.tryCast(condition, MapCheckCondition.class);
+          if (checkCondition == null) return;
+          PsiExpression absentValue = args[1];
+          String aVar = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName("a", value, true);
+          String bVar = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName("b", value, true);
+          for (PsiElement e : PsiTreeUtil.collectElements(value, e -> PsiEquivalenceUtil.areElementsEquivalent(e, absentValue))) {
+            ct.replace(e, factory.createIdentifier(bVar));
+          }
+          for (PsiElement e : PsiTreeUtil
+            .collectElements(value, e -> checkCondition.extractGetCall(e) != null || checkCondition.isValueReference(e))) {
+            ct.replace(e, factory.createIdentifier(aVar));
+          }
+          replacement = factory.createExpressionFromText("(" + aVar + "," + bVar + ") -> " + ct.text(value), value);
         }
-        replacement = factory.createExpressionFromText(varName + " -> " + ct.text(value), value);
-      } else if (myMethodName.equals("merge")) {
-        MapCheckCondition checkCondition = ObjectUtils.tryCast(condition, MapCheckCondition.class);
-        if (checkCondition == null) return;
-        PsiExpression absentValue = args[1];
-        String aVar = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName("a", value, true);
-        String bVar = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName("b", value, true);
-        for(PsiElement e : PsiTreeUtil.collectElements(value, e -> PsiEquivalenceUtil.areElementsEquivalent(e, absentValue))) {
-          ct.replace(e, factory.createIdentifier(bVar));
+        case "replaceAll" -> {
+          MapLoopCondition loopCondition = ObjectUtils.tryCast(condition, MapLoopCondition.class);
+          if (loopCondition == null) return;
+          String kVar = suggestKeyName(loopCondition, value);
+          String vVar = new VariableNameGenerator(value, VariableKind.PARAMETER).byName("v", "value").generate(true);
+          replacement = createLambdaForLoopReplacement(factory, kVar, vVar, loopCondition, value, ct);
+          ct.delete(args);
         }
-        for (PsiElement e : PsiTreeUtil
-          .collectElements(value, e -> checkCondition.extractGetCall(e) != null || checkCondition.isValueReference(e))) {
-          ct.replace(e, factory.createIdentifier(aVar));
-        }
-        replacement = factory.createExpressionFromText("("+aVar+","+bVar+") -> "+ct.text(value), value);
-      }
-      else if (myMethodName.equals("replaceAll")) {
-        MapLoopCondition loopCondition = ObjectUtils.tryCast(condition, MapLoopCondition.class);
-        if (loopCondition == null) return;
-        String kVar = suggestKeyName(loopCondition, value);
-        String vVar = new VariableNameGenerator(value, VariableKind.PARAMETER).byName("v", "value").generate(true);
-        replacement = createLambdaForLoopReplacement(factory, kVar, vVar, loopCondition, value, ct);
-        ct.delete(args);
-      }
-      else {
-        replacement = ct.markUnchanged(value);
+        default -> replacement = ct.markUnchanged(value);
       }
       PsiElement newArg;
       if (args.length == 2 && !myMethodName.equals("merge") && !myMethodName.equals("replaceAll")) {

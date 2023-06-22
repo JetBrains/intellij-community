@@ -7,3 +7,5 @@ fun foo(i : Int) {
         true -> 2
     }
 }
+
+// IGNORE_FIR

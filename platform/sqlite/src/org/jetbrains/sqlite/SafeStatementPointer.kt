@@ -5,50 +5,24 @@ package org.jetbrains.sqlite
  * A class for safely wrapping calls to a native pointer to a statement, ensuring no other thread
  * has access to the pointer while it is run
  */
-internal class SafeStatementPointer(
-  // store a reference to the DB, to lock it before any safe function is called. This avoids
-  // deadlocking by locking the DB. All calls with the raw pointer are synchronized with the DB
-  // anyway, so making a separate lock would be pointless
-  private val db: SqliteDb,
-  @JvmField
-  internal val pointer: Long,
-) {
+internal class SafeStatementPointer(private val connection: SqliteConnection, @JvmField internal val pointer: Long) {
   /**
    * Check whether this pointer has been closed
    */
   @Volatile
-  var isClosed = false
+  var isClosed: Boolean = false
     private set
 
-  // to return on subsequent calls to close() after this ptr has been closed
-  private var closeOperationStatus = 0
-
-  // to throw on subsequent calls to close, after this ptr has been closed if the close function threw an exception
-  private var closeException: Exception? = null
-
-  /**
-   * Close this pointer
-   *
-   * @return the return code of the close callback function
-   */
-  fun close(): Int = synchronized(db) { internalClose() }
-
-  internal fun internalClose(): Int {
-    // if this is already closed, return or throw the previous result
+  internal fun close(db: SqliteDb) {
     if (isClosed) {
-      closeException?.let {
-        throw it
-      }
-      return closeOperationStatus
+      return
     }
 
     try {
-      closeOperationStatus = db.finalize(this, pointer)
-      return closeOperationStatus
-    }
-    catch (e: Exception) {
-      closeException = e
-      throw e
+      val status = db.finalize(this, pointer)
+      if (status != SqliteCodes.SQLITE_OK && status != SqliteCodes.SQLITE_MISUSE) {
+        throw db.newException(status)
+      }
     }
     finally {
       isClosed = true
@@ -61,8 +35,8 @@ internal class SafeStatementPointer(
    * @param task the function to run
    * @return the return of the passed in function
    */
-  inline fun safeRunInt(task: (db: SqliteDb, statementPointer: Long) -> Int): Int {
-    synchronized(db) {
+  inline fun safeRunInt(task: (db: NativeDB, statementPointer: Long) -> Int): Int {
+    connection.useDb { db ->
       ensureOpen()
       return task(db, pointer)
     }
@@ -75,7 +49,7 @@ internal class SafeStatementPointer(
    * @return the return code of the function
    */
   inline fun <T> safeRun(task: (db: SqliteDb, statementPointer: Long) -> T): T {
-    synchronized(db) {
+    connection.useDb { db ->
       ensureOpen()
       return task(db, pointer)
     }

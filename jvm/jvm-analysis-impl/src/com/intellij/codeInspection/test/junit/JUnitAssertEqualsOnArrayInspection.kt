@@ -28,7 +28,7 @@ class JUnitAssertEqualsOnArrayInspection : AbstractBaseUastLocalInspectionTool()
 
 private class JUnitAssertEqualsOnArrayVisitor(private val holder: ProblemsHolder) : AbstractUastNonRecursiveVisitor() {
   override fun visitCallExpression(node: UCallExpression): Boolean {
-    val assertHint = UAssertHint.createAssertEqualsUHint(node)
+    val assertHint = UAssertHint.createAssertEqualsHint(node)
     val containingClassForDecl = node.resolve()?.containingClass ?: return true
     if (containingClassForDecl.qualifiedName?.contains("junit") != true) return true // no assertArrayEquals for testng
     val firstArgType = assertHint?.firstArgument?.getExpressionType() ?: return true

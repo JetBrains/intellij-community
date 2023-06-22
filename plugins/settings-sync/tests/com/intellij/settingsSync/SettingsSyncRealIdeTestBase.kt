@@ -2,6 +2,7 @@ package com.intellij.settingsSync
 
 import com.intellij.configurationStore.ApplicationStoreImpl
 import com.intellij.configurationStore.StateLoadPolicy
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -74,7 +75,7 @@ internal open class SettingsSyncRealIdeTestBase: SettingsSyncTestBase() {
     return this
   }
 
-  class TestComponentStore(configDir: Path) : ApplicationStoreImpl() {
+  class TestComponentStore(configDir: Path) : ApplicationStoreImpl(ApplicationManager.getApplication()) {
     override val loadPolicy: StateLoadPolicy
       get() = StateLoadPolicy.LOAD
 

@@ -12,6 +12,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -67,7 +68,7 @@ public abstract class SdkType implements SdkTypeId {
   @NotNull
   public Collection<String> suggestHomePaths() {
     String home = suggestHomePath();
-    return home != null ? Collections.singletonList(home) : Collections.emptyList();
+    return ContainerUtil.createMaybeSingletonList(home);
   }
 
   /**

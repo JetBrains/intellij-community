@@ -5,10 +5,11 @@ package org.jetbrains.kotlin.idea.gradleJava.run
 import com.intellij.execution.Location
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
-import org.jetbrains.kotlin.asJava.elements.KtLightElement
-import org.jetbrains.kotlin.asJava.classes.KtFakeLightClass
+import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.classes.KtFakeLightMethod
+import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.toFakeLightClass
+import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -20,7 +21,7 @@ internal fun getTestMethodForKotlinTest(location: Location<*>): PsiMethod? {
         else -> psi
     }
     val function = leaf?.getParentOfType<KtNamedFunction>(false) ?: return null
-    return KtFakeLightMethod.get(function)
+    return LightClassUtil.getLightClassMethod(function) ?: KtFakeLightMethod.get(function)
 }
 
 internal fun getTestClassForKotlinTest(location: Location<*>): PsiClass? {
@@ -29,5 +30,5 @@ internal fun getTestClassForKotlinTest(location: Location<*>): PsiClass? {
         else -> psi
     }
     val owner = leaf?.getParentOfType<KtDeclaration>(false) as? KtClassOrObject ?: return null
-    return owner.toFakeLightClass()
+    return owner.toLightClass() ?: owner.toFakeLightClass()
 }

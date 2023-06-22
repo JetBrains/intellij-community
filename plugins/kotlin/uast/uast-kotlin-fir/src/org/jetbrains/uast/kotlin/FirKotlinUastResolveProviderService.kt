@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.project.structure.KtLibraryModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
-import org.jetbrains.kotlin.analysis.project.structure.getKtModule
+import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -38,6 +38,8 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     private val KtExpression.parentValueArgument: ValueArgument?
         get() = parents.firstOrNull { it is ValueArgument } as? ValueArgument
+
+    fun isSupportedElement(psiElement: PsiElement): Boolean
 
     override fun convertToPsiAnnotation(ktElement: KtElement): PsiAnnotation? {
         return ktElement.toLightAnnotation()
@@ -133,16 +135,16 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         includeExplicitParameters: Boolean
     ): List<KotlinUParameter> {
         analyzeForUast(ktLambdaExpression) {
-            val valueParameters = ktLambdaExpression.functionLiteral.getAnonymousFunctionSymbol().valueParameters
-            if (includeExplicitParameters && valueParameters.isEmpty()) {
-                val expectedType = ktLambdaExpression.getExpectedType() as? KtFunctionalType
-                val lambdaImplicitReceiverType = expectedType?.ownTypeArguments?.get(0)?.type?.asPsiType(
+            val anonymousFunctionSymbol = ktLambdaExpression.functionLiteral.getAnonymousFunctionSymbol()
+            val parameters = mutableListOf<KotlinUParameter>()
+            if (includeExplicitParameters && anonymousFunctionSymbol.receiverParameter != null) {
+                val lambdaImplicitReceiverType = anonymousFunctionSymbol.receiverParameter!!.type.asPsiType(
                     ktLambdaExpression,
                     allowErrorTypes = false,
                     KtTypeMappingMode.DEFAULT_UAST,
                     isAnnotationMethod = false
                 ) ?: UastErrorType
-                return listOf(
+                parameters.add(
                     KotlinUParameter(
                         UastKotlinPsiParameterBase(
                             name = LAMBDA_THIS_PARAMETER_NAME,
@@ -158,7 +160,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                     )
                 )
             }
-            return valueParameters.map { p ->
+            anonymousFunctionSymbol.valueParameters.mapTo(parameters) { p ->
                 val psiType = p.returnType.asPsiType(
                     ktLambdaExpression,
                     allowErrorTypes = false,
@@ -179,6 +181,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                     parent
                 )
             }
+            return parameters
         }
     }
 
@@ -360,8 +363,10 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             return resolveSyntheticJavaPropertyAccessorCall(ktExpression)
         }
 
+        val project = ktExpression.project
+
         val resolvedTargetElement = analyzeForUast(ktExpression) {
-            psiForUast(resolvedTargetSymbol, ktExpression.project)
+            psiForUast(resolvedTargetSymbol, project)
         }
 
         // Shortcut: if the resolution target is compiled class/member, package info, or pure Java declarations,
@@ -373,16 +378,18 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             return resolvedTargetElement
         }
 
-        when ((resolvedTargetElement as? KtDeclaration)?.getKtModule(ktExpression.project)) {
-            is KtSourceModule -> {
-                // `getMaybeLightElement` tries light element conversion first, and then something else for local declarations.
-                resolvedTargetElement.getMaybeLightElement(ktExpression)?.let { return it }
+        if (resolvedTargetElement != null) {
+            when (ProjectStructureProvider.getModule(project, resolvedTargetElement, null)) {
+                is KtSourceModule -> {
+                    // `getMaybeLightElement` tries light element conversion first, and then something else for local declarations.
+                    resolvedTargetElement.getMaybeLightElement(ktExpression)?.let { return it }
+                }
+                is KtLibraryModule -> {
+                    // For decompiled declarations, we can try light element conversion (only).
+                    (resolvedTargetElement as? KtDeclaration)?.toLightElements()?.singleOrNull()?.let { return it }
+                }
+                else -> {}
             }
-            is KtLibraryModule -> {
-                // For decompiled declarations, we can try light element conversion (only).
-                (resolvedTargetElement as? KtDeclaration)?.toLightElements()?.singleOrNull()?.let { return it }
-            }
-            else -> {}
         }
 
         fun resolveToPsiClassOrEnumEntry(classOrObject: KtClassOrObject): PsiElement? {
@@ -581,23 +588,40 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
+    override fun hasInheritedGenericType(psiElement: PsiElement): Boolean {
+        return when (psiElement) {
+            is KtTypeReference ->
+                analyzeForUast(psiElement) {
+                    isInheritedGenericType(psiElement.getKtType())
+                }
+            is KtCallableDeclaration ->
+                analyzeForUast(psiElement) {
+                    isInheritedGenericType(getKtType(psiElement))
+                }
+            is KtDestructuringDeclaration ->
+                analyzeForUast(psiElement) {
+                    isInheritedGenericType(psiElement.getReturnKtType())
+                }
+            else -> false
+        }
+    }
+
     override fun nullability(psiElement: PsiElement): KtTypeNullability? {
-        if (psiElement is KtTypeReference) {
-            analyzeForUast(psiElement) {
-                nullability(psiElement.getKtType())?.let { return it }
-            }
+        return when (psiElement) {
+            is KtTypeReference ->
+                analyzeForUast(psiElement) {
+                    nullability(psiElement.getKtType())
+                }
+            is KtCallableDeclaration ->
+                analyzeForUast(psiElement) {
+                    nullability(getKtType(psiElement))
+                }
+            is KtDestructuringDeclaration ->
+                analyzeForUast(psiElement) {
+                    nullability(psiElement.getReturnKtType())
+                }
+            else -> null
         }
-        if (psiElement is KtCallableDeclaration) {
-            analyzeForUast(psiElement) {
-                nullability(psiElement)?.let { return it }
-            }
-        }
-        if (psiElement is KtDestructuringDeclaration) {
-            analyzeForUast(psiElement) {
-                nullability(psiElement)?.let { return it }
-            }
-        }
-        return null
     }
 
     override fun evaluate(uExpression: UExpression): Any? {

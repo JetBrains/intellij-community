@@ -51,6 +51,7 @@ object Patterns {
     val JAVA: ModelMatcher = forExtension("java")
     val WS_KTS: ModelMatcher = forExtension("ws.kts")
 
+    val KT_OR_JAVA: ModelMatcher = forRegex("^(.+)\\.(kt|java)$")
     val KT_OR_KTS: ModelMatcher = forRegex("^(.+)\\.(kt|kts)$")
     val KT_WITHOUT_DOTS: ModelMatcher = forRegex("^([^.]+)\\.kt$")
     val KT_OR_KTS_WITHOUT_DOTS: ModelMatcher = forRegex("^([^.]+)\\.(kt|kts)$")

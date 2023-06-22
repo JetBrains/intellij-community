@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.vfs.newvfs.persistent.FileNameCache;
 import com.intellij.util.containers.CollectionFactory;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;

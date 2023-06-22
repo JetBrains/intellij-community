@@ -2,33 +2,28 @@
 package com.intellij.packaging.impl.artifacts.workspacemodel
 
 import com.intellij.configurationStore.deserializeInto
+import com.intellij.java.workspace.entities.*
 import com.intellij.openapi.module.ModulePointerManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.packaging.artifacts.ArtifactPointerManager
 import com.intellij.packaging.elements.CompositePackagingElement
 import com.intellij.packaging.elements.PackagingElement
 import com.intellij.packaging.elements.PackagingElementFactory
 import com.intellij.packaging.impl.artifacts.UnknownPackagingElementTypeException
 import com.intellij.packaging.impl.elements.*
-import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.VersionedEntityStorage
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.util.JpsPathUtil
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.locks.Condition
-import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
-private val rwLock: ReadWriteLock = if (
-  Registry.`is`("ide.new.project.model.artifacts.sync.initialization")
-) ReentrantReadWriteLock()
-else EmptyReadWriteLock()
+private val rwLock: ReadWriteLock = ReentrantReadWriteLock()
 
 /**
  * We use VersionedEntityStorage here instead of the builder/snapshot because we need an actual data of the storage for double check
@@ -232,7 +227,7 @@ fun PackagingElementEntity.toElement(
             }
           }
           else {
-            (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent("Apply packaging elements mappings (toElement)") {
+            (project.workspaceModel as WorkspaceModelImpl).updateProjectModelSilent("Apply packaging elements mappings (toElement)") {
               val mutableMapping = it.mutableElements
               for ((entity, mapping) in mappingsCollector) {
                 mutableMapping.addMapping(entity, mapping)
@@ -295,38 +290,6 @@ private fun List<PackagingElementEntity>.pushTo(
 ) {
   val children = this.map { it.toElement(project, storage, addToMapping = false, mappingsCollector = mappingsCollector) }.toList()
   children.reversed().forEach { element.addFirstChild(it) }
-}
-
-private class EmptyReadWriteLock : ReadWriteLock {
-  override fun readLock(): Lock = EmptyLock
-
-  override fun writeLock(): Lock = EmptyLock
-}
-
-private object EmptyLock : Lock {
-  override fun lock() {
-    // Nothing
-  }
-
-  override fun lockInterruptibly() {
-    // Nothing
-  }
-
-  override fun tryLock(): Boolean {
-    throw UnsupportedOperationException()
-  }
-
-  override fun tryLock(time: Long, unit: TimeUnit): Boolean {
-    throw UnsupportedOperationException()
-  }
-
-  override fun unlock() {
-    // Nothing
-  }
-
-  override fun newCondition(): Condition {
-    throw UnsupportedOperationException()
-  }
 }
 
 // Instruments for testing code with unexpected exceptions

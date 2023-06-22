@@ -17,7 +17,6 @@ import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
 import com.intellij.openapi.progress.*
-import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -25,9 +24,7 @@ import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
@@ -73,10 +70,9 @@ import java.util.concurrent.CompletableFuture
 import kotlin.Result
 
 private val LOG = Logger.getInstance(ProjectUtil::class.java)
-private var ourProjectsPath: String? = null
+private var ourProjectPath: String? = null
 
 object ProjectUtil {
-  const val DEFAULT_PROJECT_NAME = "default"
   private const val PROJECTS_DIR = "projects"
   private const val PROPERTY_PROJECT_PATH = "%s.project.path"
 
@@ -134,10 +130,12 @@ object ProjectUtil {
    */
   @JvmStatic
   fun openOrImport(path: String, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
-    return openOrImport(Path.of(path), OpenProjectTask {
-      this.projectToClose = projectToClose
-      this.forceOpenInNewFrame = forceOpenInNewFrame
-    })
+    return runUnderModalProgressIfIsEdt {
+      openOrImportAsync(Path.of(path), OpenProjectTask {
+        this.projectToClose = projectToClose
+        this.forceOpenInNewFrame = forceOpenInNewFrame
+      })
+    }
   }
 
   @JvmStatic
@@ -260,7 +258,7 @@ object ProjectUtil {
       return null
     }
     StartupManager.getInstance(project).runAfterOpened {
-      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, project.disposed) {
+      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.nonModal(), project.disposed) {
         val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW)
         toolWindow?.activate(null)
       }
@@ -413,6 +411,7 @@ object ProjectUtil {
     return mode
   }
 
+  @ScheduledForRemoval
   @Deprecated("Use {@link #isSameProject(Path, Project)} ",
               ReplaceWith("projectFilePath != null && isSameProject(Path.of(projectFilePath), project)",
                           "com.intellij.ide.impl.ProjectUtil.isSameProject", "java.nio.file.Path"))
@@ -464,6 +463,7 @@ object ProjectUtil {
    * behaviour, and should only be used in special cases, when we know that user definitely expects it.
    */
   @JvmStatic
+  @RequiresEdt
   fun focusProjectWindow(project: Project?, stealFocusIfAppInactive: Boolean = false) {
     val frame = WindowManager.getInstance().getFrame(project) ?: return
     val appIsActive = KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow != null
@@ -558,18 +558,18 @@ object ProjectUtil {
       return PathManager.getAbsolutePath(fromSettings)
     }
 
-    if (ourProjectsPath == null) {
+    if (ourProjectPath == null) {
       val produceName = ApplicationNamesInfo.getInstance().productName.lowercase()
       val propertyName = String.format(PROPERTY_PROJECT_PATH, produceName)
       val propertyValue = System.getProperty(propertyName)
-      ourProjectsPath = if (propertyValue != null) {
+      ourProjectPath = if (propertyValue != null) {
         PathManager.getAbsolutePath(StringUtil.unquoteString(propertyValue, '\"'))
       }
       else {
         projectsDirDefault
       }
     }
-    return ourProjectsPath!!
+    return ourProjectPath!!
   }
 
   private val projectsDirDefault: String
@@ -589,8 +589,9 @@ object ProjectUtil {
   }
 
   @JvmStatic
+  @RequiresEdt
   fun openOrCreateProject(name: String, file: Path): Project? {
-    return runBlockingUnderModalProgress {
+    return runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
       openOrCreateProjectInner(name, file)
     }
   }
@@ -608,7 +609,6 @@ object ProjectUtil {
       return projectManager.openProjectAsync(existingFile, OpenProjectTask { runConfigurators = true })
     }
 
-    @Suppress("BlockingMethodInNonBlockingContext")
     val created = try {
       withContext(Dispatchers.IO) {
         !Files.exists(file) && Files.createDirectories(file) != null || Files.isDirectory(file)
@@ -675,7 +675,7 @@ object ProjectUtil {
     val canAttach = ProjectAttachProcessor.canAttachToProject()
     val preferAttach = currentProject != null &&
                        canAttach &&
-                       (PlatformUtils.isDataGrip() && !ProjectUtilCore.isValidProjectPath(file) || PlatformUtils.isDataSpell())
+                       (PlatformUtils.isDataGrip() && !ProjectUtilCore.isValidProjectPath(file))
     if (preferAttach && attachToProjectAsync(projectToClose = currentProject!!, projectDir = file, callback = null)) {
       return null
     }
@@ -699,63 +699,41 @@ object ProjectUtil {
   }
 }
 
-private val delegateToCoroutineOnlyRunBlocking: Boolean = System.getProperty("ide.use.coroutine.only.runBlocking", "true").toBoolean()
-
-@Suppress("DeprecatedCallableAddReplaceWith")
 @Internal
 @ScheduledForRemoval
 @Deprecated(
-  "Use runBlockingModal on EDT with proper owner and title, " +
-  "or runBlockingCancellable(+withBackgroundProgressIndicator with proper title) on BGT"
+  "Use runWithModalProgressBlocking on EDT with proper owner and title, " +
+  "or runBlockingCancellable(+withBackgroundProgress with proper title) on BGT"
 )
-// inline is not used - easier debug
 fun <T> runUnderModalProgressIfIsEdt(task: suspend CoroutineScope.() -> T): T {
-  if (!ApplicationManager.getApplication().isDispatchThread) {
-    if (delegateToCoroutineOnlyRunBlocking) {
-      return runBlockingMaybeCancellable(task)
-    }
-    return runBlocking(CoreProgressManager.getCurrentThreadProgressModality().asContextElement()) { task() }
+  if (ApplicationManager.getApplication().isDispatchThread) {
+    return runWithModalProgressBlocking(ModalTaskOwner.guess(), "", TaskCancellation.cancellable(), task)
   }
-  return runBlockingUnderModalProgress(task = task)
-}
-
-@Suppress("DeprecatedCallableAddReplaceWith")
-@Internal
-@RequiresEdt
-@ScheduledForRemoval
-@Deprecated("Use runBlockingModal with proper owner and title")
-fun <T> runBlockingUnderModalProgress(@NlsContexts.ProgressTitle title: String = "",
-                                      project: Project? = null,
-                                      task: suspend CoroutineScope.() -> T): T {
-  if (delegateToCoroutineOnlyRunBlocking) {
-    val owner = if (project == null) ModalTaskOwner.guess() else ModalTaskOwner.project(project)
-    return runBlockingModalWithRawProgressReporter(owner, title, TaskCancellation.cancellable(), task)
+  else {
+    return runBlockingMaybeCancellable(task)
   }
-  return ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
-    val modalityState = CoreProgressManager.getCurrentThreadProgressModality()
-    runBlocking(modalityState.asContextElement()) {
-      task()
-    }
-  }, title, true, project)
 }
 
 @Suppress("DeprecatedCallableAddReplaceWith")
 @Internal
 @Deprecated(message = "temporary solution for old code in java", level = DeprecationLevel.ERROR)
 fun Project.executeOnPooledThread(task: Runnable) {
-  coroutineScope.launch { task.run() }
+  @Suppress("DEPRECATION")
+  coroutineScope.launch { blockingContext { task.run() } }
 }
 
-@Suppress("DeprecatedCallableAddReplaceWith")
+@ScheduledForRemoval
 @Internal
 @Deprecated(message = "temporary solution for old code in java", level = DeprecationLevel.ERROR)
 fun <T> Project.computeOnPooledThread(task: Callable<T>): CompletableFuture<T> {
-  return coroutineScope.async { task.call() }.asCompletableFuture()
+  @Suppress("DEPRECATION")
+  return coroutineScope.async { blockingContext { task.call() } }.asCompletableFuture()
 }
 
 @Suppress("DeprecatedCallableAddReplaceWith")
 @Internal
 @Deprecated(message = "temporary solution for old code in java", level = DeprecationLevel.ERROR)
 fun Project.executeOnPooledIoThread(task: Runnable) {
-  coroutineScope.launch(Dispatchers.IO) { task.run() }
+  @Suppress("DEPRECATION")
+  coroutineScope.launch(Dispatchers.IO) { blockingContext { task.run() } }
 }

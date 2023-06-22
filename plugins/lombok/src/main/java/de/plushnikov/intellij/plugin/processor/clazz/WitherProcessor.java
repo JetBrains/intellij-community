@@ -32,12 +32,25 @@ public class WitherProcessor extends AbstractClassProcessor {
   protected Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     Collection<String> result = new ArrayList<>();
 
-    final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiClass).withFluent(false);
-    for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {
-      result.add(LombokUtils.getWitherName(psiField, accessorsInfo));
+    final Collection<? extends PsiVariable> possibleWithElements = getPossibleWithElements(psiClass);
+    if (!possibleWithElements.isEmpty()) {
+      final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiClass).withFluent(false);
+      for (PsiVariable possibleWithElement : possibleWithElements) {
+        result.add(LombokUtils.getWitherName(possibleWithElement, accessorsInfo));
+      }
     }
 
     return result;
+  }
+
+  @NotNull
+  private static Collection<? extends PsiVariable> getPossibleWithElements(@NotNull PsiClass psiClass) {
+    if (psiClass.isRecord()) {
+      return List.of(psiClass.getRecordComponents());
+    }
+    else {
+      return PsiClassUtil.collectClassFieldsIntern(psiClass);
+    }
   }
 
   @Override
@@ -58,7 +71,7 @@ public class WitherProcessor extends AbstractClassProcessor {
   }
 
   private static void validateVisibility(@NotNull PsiAnnotation psiAnnotation, @NotNull ProblemSink builder) {
-    if(null == LombokProcessorUtil.getMethodModifier(psiAnnotation)) {
+    if (null == LombokProcessorUtil.getMethodModifier(psiAnnotation)) {
       builder.markFailed();
     }
   }
@@ -95,6 +108,7 @@ public class WitherProcessor extends AbstractClassProcessor {
   @NotNull
   private static Collection<PsiField> getWitherFields(@NotNull PsiClass psiClass) {
     Collection<PsiField> witherFields = new ArrayList<>();
+
     for (PsiField psiField : psiClass.getFields()) {
       boolean createWither = true;
       PsiModifierList modifierList = psiField.getModifierList();
@@ -120,7 +134,8 @@ public class WitherProcessor extends AbstractClassProcessor {
   public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
     final PsiClass containingClass = psiField.getContainingClass();
     if (null != containingClass) {
-      if (PsiClassUtil.getNames(getWitherFields(containingClass)).contains(psiField.getName())) {
+      final Collection<PsiField> witherFields = getWitherFields(containingClass);
+      if (PsiClassUtil.getNames(witherFields).contains(psiField.getName())) {
         return LombokPsiElementUsage.READ_WRITE;
       }
     }

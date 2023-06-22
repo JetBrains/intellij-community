@@ -1,4 +1,4 @@
-// "Create actual enum class for module testModule_JS (JS)" "true"
+// "Add missing actual declarations" "true"
 
 expect enum class <caret>MyEnum {
     FIRST,

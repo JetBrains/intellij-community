@@ -158,6 +158,11 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
       isParameterSetOrOrderChanged = true;
     }
     else {
+      boolean isVararg = newParms.length > 0 && newParms[newParms.length - 1].isVarargType();
+      if (wasVararg != isVararg) {
+        // Need to trigger possible argument changes
+        isParameterSetOrOrderChanged = true;
+      }
       for(int i = 0; i < newParms.length; i++){
         ParameterInfoImpl parmInfo = newParms[i];
 

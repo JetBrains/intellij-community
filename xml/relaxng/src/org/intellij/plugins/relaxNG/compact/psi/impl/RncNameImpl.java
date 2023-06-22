@@ -157,7 +157,7 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
   }
 
   @Override
-  public LocalQuickFix @Nullable [] getQuickFixes() {
+  public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
     if (getPrefix() != null) {
       return new LocalQuickFix[] { new CreateDeclFix(this) };
     }

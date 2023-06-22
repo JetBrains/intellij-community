@@ -128,6 +128,10 @@ public class PersistentSubIndexerVersionEnumerator<SubIndexerVersion> implements
     writeNextVersion();
   }
 
+  public boolean isDirty() {
+    return myMap.isDirty() || myNextVersion != myWrittenNextVersion;
+  }
+
   private void writeNextVersion() throws IOException {
     if (myNextVersion != myWrittenNextVersion) {
       FileUtil.writeToFile(getNextVersionFile(myFile), String.valueOf(myNextVersion));

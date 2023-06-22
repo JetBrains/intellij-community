@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -249,7 +249,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
             s1 = (String)getModifiers.invoke(appleLaf, new Object[] {Integer.valueOf(j1), Boolean.FALSE});
           }
           catch (Exception e) {
-            s1 = KeymapUtil.getKeyModifiersTextForMacOSLeopard(j1);
+            s1 = MacKeymapUtil.getKeyModifiersTextForMacOSLeopard(j1);
           }
         }
         else {
@@ -553,10 +553,13 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     @Override
     public void mouseReleased(MouseEvent e){
       MenuSelectionManager manager=MenuSelectionManager.defaultManager();
-      Point p=e.getPoint();
-      if(p.x>=0&&p.x<menuItem.getWidth()&&p.y>=0&&p.y<menuItem.getHeight()){
-        doClick(manager,e);
-      } else{
+      Point p = e.getPoint();
+      if (p.x >= 0 && p.x < menuItem.getWidth() && p.y >= 0 && p.y < menuItem.getHeight()) {
+        if (e.getButton() == MouseEvent.BUTTON1) {
+          doClick(manager, e);
+        }
+      }
+      else {
         manager.processMouseEvent(e);
       }
     }

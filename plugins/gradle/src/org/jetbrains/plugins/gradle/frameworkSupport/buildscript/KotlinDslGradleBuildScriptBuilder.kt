@@ -2,11 +2,13 @@
 package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
 
 import org.gradle.util.GradleVersion
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.frameworkSupport.script.KotlinScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 import kotlin.apply as applyKt
 
-class KotlinDslGradleBuildScriptBuilder private constructor(
+@ApiStatus.Internal
+class KotlinDslGradleBuildScriptBuilder(
   gradleVersion: GradleVersion
 ) : AbstractGradleBuildScriptBuilder<KotlinDslGradleBuildScriptBuilder>(gradleVersion) {
 
@@ -18,11 +20,4 @@ class KotlinDslGradleBuildScriptBuilder private constructor(
     withPostfix {
       callIfNotEmpty("tasks.test", configure)
     }
-
-  companion object {
-
-    @JvmStatic
-    fun create(gradleVersion: GradleVersion): GradleBuildScriptBuilder<*> =
-      KotlinDslGradleBuildScriptBuilder(gradleVersion)
-  }
 }

@@ -8,12 +8,12 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
+import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
-import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.EntityStorage
 
 internal class GlobalChangedRepositoryLibrarySynchronizer(private val queue: LibrarySynchronizationQueue,
                                                           private val disposable: Disposable)

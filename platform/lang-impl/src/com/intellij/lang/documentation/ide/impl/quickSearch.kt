@@ -13,8 +13,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ex.WindowManagerEx
-import com.intellij.platform.documentation.impl.DocumentationRequest
-import com.intellij.platform.documentation.impl.documentationRequest
+import com.intellij.platform.backend.documentation.impl.DocumentationRequest
+import com.intellij.platform.backend.documentation.impl.documentationRequest
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.popup.HintUpdateSupply
@@ -69,6 +69,9 @@ private class QuickSearchPopupContext(
   private val searchComponent: QuickSearchComponent,
 ) : UpdatingPopupContext(project) {
 
+  // otherwise, selecting SE items by mouse would close the popup
+  override val closeOnClickOutside: Boolean get() = false
+
   override fun setUpPopup(popup: AbstractPopup, popupUI: DocumentationPopupUI) {
     super.setUpPopup(popup, popupUI)
     searchComponent.registerHint(popup)
@@ -87,6 +90,8 @@ private class HintUpdateSupplyPopupContext(
   private val referenceComponent: Component,
   private val hintUpdateSupply: HintUpdateSupply,
 ) : UpdatingPopupContext(project) {
+
+  override val closeOnClickOutside: Boolean get() = true
 
   override fun setUpPopup(popup: AbstractPopup, popupUI: DocumentationPopupUI) {
     super.setUpPopup(popup, popupUI)

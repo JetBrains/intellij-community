@@ -1,4 +1,4 @@
 class C {
-<caret>  /** comment */
+<selection><caret>  </selection>/** comment */
   int a;
 }

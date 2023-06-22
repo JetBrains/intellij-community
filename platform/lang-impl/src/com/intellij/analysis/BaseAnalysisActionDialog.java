@@ -110,7 +110,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
                                                           getAdditionalActionSettings(myProject));
 
     preselectButton();
-    new RadioUpDownListener(radioButtons.toArray(new JRadioButton[0]));
+    RadioUpDownListener.installOn(radioButtons.toArray(new JRadioButton[0]));
 
     panel.setPreferredSize(panel.getMinimumSize());
     return panel;

@@ -1,12 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.actions;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +18,7 @@ import java.beans.PropertyChangeListener;
 public abstract class DocumentsSynchronizer {
   @NotNull protected final Document myDocument1;
   @NotNull protected final Document myDocument2;
-  @Nullable private final Project myProject;
+  @Nullable protected final Project myProject;
 
   protected boolean myDuringModification = false;
 
@@ -61,25 +62,6 @@ public abstract class DocumentsSynchronizer {
 
   protected abstract void onDocumentChanged2(@NotNull DocumentEvent event);
 
-  @RequiresEdt
-  protected void replaceString(@NotNull final Document document,
-                               final int startOffset,
-                               final int endOffset,
-                               @NotNull final CharSequence newText) {
-    try {
-      myDuringModification = true;
-      CommandProcessor.getInstance().executeCommand(
-        myProject,
-        () -> ApplicationManager.getApplication().runWriteAction(() -> document.replaceString(startOffset, endOffset, newText)),
-        DiffBundle.message("synchronize.document.and.its.fragment"),
-        document
-      );
-    }
-    finally {
-      myDuringModification = false;
-    }
-  }
-
   public void startListen() {
     myDocument1.addDocumentListener(myListener1);
     myDocument2.addDocumentListener(myListener2);
@@ -90,5 +72,14 @@ public abstract class DocumentsSynchronizer {
     myDocument1.removeDocumentListener(myListener1);
     myDocument2.removeDocumentListener(myListener2);
     myDocument1.removePropertyChangeListener(myROListener);
+  }
+
+  public static @NotNull Document createFakeDocument(@NotNull Document original) {
+    EditorFactoryImpl editorFactory = (EditorFactoryImpl)EditorFactory.getInstance();
+    boolean acceptsSlashR = original instanceof DocumentImpl && ((DocumentImpl)original).acceptsSlashR();
+    boolean writeThreadOnly = original instanceof DocumentImpl && ((DocumentImpl)original).isWriteThreadOnly();
+    Document document = editorFactory.createDocument("", acceptsSlashR, !writeThreadOnly);
+    document.putUserData(UndoManager.ORIGINAL_DOCUMENT, original);
+    return document;
   }
 }

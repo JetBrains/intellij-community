@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.tooling.builder
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.file.FileVisitDetails
-import org.gradle.api.file.RegularFile
 import org.gradle.api.java.archives.Manifest
 import org.gradle.api.plugins.WarPlugin
 import org.gradle.api.tasks.bundling.War
@@ -20,7 +19,7 @@ import org.jetbrains.plugins.gradle.tooling.internal.web.WebConfigurationImpl
 import org.jetbrains.plugins.gradle.tooling.internal.web.WebResourceImpl
 
 import static org.jetbrains.plugins.gradle.tooling.internal.ExtraModelBuilder.reportModelBuilderFailure
-import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.reflectiveGetProperty
+import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.reflectiveCall
 
 /**
  * @author Vladislav.Soroka
@@ -31,6 +30,7 @@ class WarModelBuilderImpl extends AbstractModelBuilderService {
   private static final String WEB_APP_DIR_NAME_PROPERTY = "webAppDirName"
   private static is4OrBetter = GradleVersion.current().baseVersion >= GradleVersion.version("4.0")
   private static is6OrBetter = GradleVersion.current().baseVersion >= GradleVersion.version("6.0")
+  private static is82OrBetter = GradleVersion.current().baseVersion >= GradleVersion.version("8.2")
 
 
   @Override
@@ -44,20 +44,28 @@ class WarModelBuilderImpl extends AbstractModelBuilderService {
     final WarPlugin warPlugin = project.plugins.findPlugin(WarPlugin)
     if (warPlugin == null) return null
 
-    final String webAppDirName = !project.hasProperty(WEB_APP_DIR_NAME_PROPERTY) ?
-                                 "src/main/webapp" : String.valueOf(project.property(WEB_APP_DIR_NAME_PROPERTY))
-
-    final File webAppDir = !project.hasProperty(WEB_APP_DIR_PROPERTY) ? new File(project.projectDir, webAppDirName) :
-                           (File)project.property(WEB_APP_DIR_PROPERTY)
-
     def warModels = []
 
     project.tasks.each { Task task ->
       if (task instanceof War) {
+        File webAppDir
+        String webAppDirName
+
+        if (is82OrBetter) {
+          webAppDir = task.webAppDirectory.asFile.get()
+          webAppDirName = webAppDir.getName()
+        } else {
+          webAppDirName = !project.hasProperty(WEB_APP_DIR_NAME_PROPERTY) ?
+                                       "src/main/webapp" : String.valueOf(project.property(WEB_APP_DIR_NAME_PROPERTY))
+
+          webAppDir = !project.hasProperty(WEB_APP_DIR_PROPERTY) ? new File(project.projectDir, webAppDirName) :
+                                 (File)project.property(WEB_APP_DIR_PROPERTY)
+        }
+
 
         final WarModelImpl warModel =
-          is6OrBetter ? new WarModelImpl(reflectiveGetProperty(task, "getArchiveFileName", String), webAppDirName, webAppDir) :
-          new WarModelImpl((task as War).archiveName, webAppDirName, webAppDir)
+          is6OrBetter ? new WarModelImpl(task.getArchiveFileName().get(), webAppDirName, webAppDir) :
+          new WarModelImpl(reflectiveCall(task, "getArchiveName", String), webAppDirName, webAppDir)
 
 
         final List<WebConfiguration.WebResource> webResources = []
@@ -91,7 +99,8 @@ class WarModelBuilderImpl extends AbstractModelBuilderService {
         }
 
         warModel.webResources = webResources
-        warModel.archivePath = is6OrBetter ? reflectiveGetProperty(warTask, "getArchiveFile", RegularFile).asFile : warTask.archivePath
+        warModel.archivePath = is6OrBetter ? warTask.archiveFile.get().asFile
+                                           : warTask.archivePath
 
         Manifest manifest = warTask.manifest
         if (manifest != null) {

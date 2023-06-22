@@ -236,12 +236,13 @@ public class ToBeMergedDialog extends DialogWrapper {
       }
     };
     myRevisionsList.setExpandableItemsEnabled(false);
-    new TableViewSpeedSearch<>(myRevisionsList) {
+    TableViewSpeedSearch<SvnChangeList> search = new TableViewSpeedSearch<>(myRevisionsList, null) {
       @Override
       protected String getItemText(@NotNull SvnChangeList element) {
         return element.getComment();
       }
     };
+    search.setupListeners();
     myRevisionsList.setModelAndUpdateColumns(myRevisionsModel);
     myRevisionsList.setTableHeader(null);
     myRevisionsList.setShowGrid(false);

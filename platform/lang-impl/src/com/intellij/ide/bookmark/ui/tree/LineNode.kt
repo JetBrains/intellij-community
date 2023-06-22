@@ -5,14 +5,15 @@ import com.intellij.ide.bookmark.LineBookmark
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleTextAttributes
 
 class LineNode(project: Project, bookmark: LineBookmark) : BookmarkNode<LineBookmark>(project, bookmark) {
 
-  override fun getVirtualFile() = value.file
+  override fun getVirtualFile(): VirtualFile = value.file
 
-  override fun isAlwaysLeaf() = true
-  override fun getChildren() = emptyList<AbstractTreeNode<*>>()
+  override fun isAlwaysLeaf(): Boolean = true
+  override fun getChildren(): List<AbstractTreeNode<*>> = emptyList()
 
   override fun update(presentation: PresentationData) {
     val line = value.line + 1

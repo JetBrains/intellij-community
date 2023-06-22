@@ -19,7 +19,7 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.SingleAlarm;
+import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtilities;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +28,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class ContentTabLabel extends ContentLabel {
   private static final int MAX_WIDTH = JBUIScale.scale(400);
@@ -39,7 +40,6 @@ public class ContentTabLabel extends ContentLabel {
   private final TabContentLayout myLayout;
 
   private @NlsContexts.Label String myText;
-  private final SingleAlarm myRevalidateAlarm;
 
   @Override
   protected void handleMouseClick(@NotNull MouseEvent e) {
@@ -68,6 +68,7 @@ public class ContentTabLabel extends ContentLabel {
     updateText();
   }
 
+  private boolean textUpdateScheduled;
   private void updateText() {
     try {
       if (myText != null && myText.startsWith("<html>")) {
@@ -91,8 +92,16 @@ public class ContentTabLabel extends ContentLabel {
     }
     finally {
       //noinspection ConstantConditions
-      if (myContent != null && !(myContent instanceof SingleContentLayout.SubContent) && !Disposer.isDisposed(myContent)) {
-        myRevalidateAlarm.request();
+      if (myContent != null && !(myContent instanceof SingleContentLayout.SubContent) && !Disposer.isDisposed(myContent) && !textUpdateScheduled) {
+        textUpdateScheduled = true;
+        EdtScheduledExecutorService.getInstance().schedule(() -> {
+          textUpdateScheduled = false;
+          Container parent = getParent();
+          if (parent != null) {
+            parent.revalidate();
+            parent.repaint();
+          }
+        }, 50, TimeUnit.MILLISECONDS);
       }
     }
   }
@@ -117,13 +126,6 @@ public class ContentTabLabel extends ContentLabel {
       SwingUtilities.invokeLater(this::updateCloseIcon);
     }
     setMaximumSize(new Dimension(MAX_WIDTH, getMaximumSize().height));
-    myRevalidateAlarm = new SingleAlarm(() -> {
-      Container parent = getParent();
-      if (parent != null) {
-        parent.revalidate();
-        parent.repaint();
-      }
-    }, 50, myContent);
   }
 
   @Override

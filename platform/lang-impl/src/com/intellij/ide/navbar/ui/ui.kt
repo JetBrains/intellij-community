@@ -21,7 +21,7 @@ internal fun navBarItemBackground(selected: Boolean, focused: Boolean): Color {
 }
 
 internal fun  navBarItemForeground(selected: Boolean, focused: Boolean, inactive: Boolean): Color? {
-  return if (StartupUiUtil.isUnderDarcula()) {
+  return if (StartupUiUtil.isUnderDarcula) {
     if (inactive) {
       Gray._140
     }
@@ -48,14 +48,15 @@ internal fun defaultNavBarItemForeground(selected: Boolean, focused: Boolean, in
 
 internal fun navBarItemFont(): Font? {
   if (!ExperimentalUI.isNewUI() && UISettings.getInstance().useSmallLabelsOnTabs) {
-    return RelativeFont.SMALL.derive(StartupUiUtil.getLabelFont())
+    return RelativeFont.SMALL.derive(StartupUiUtil.labelFont)
   }
   return JBUI.CurrentTheme.StatusBar.font()
 }
 
 internal fun navBarItemInsets(): Insets {
   return if (ExperimentalUI.isNewUI()) {
-    JBUI.insets("StatusBar.Breadcrumbs.itemBackgroundInsets", JBUI.insets(1))
+    JBUI.insets("StatusBar.Breadcrumbs.itemBackgroundInsets",
+                if (ExperimentalUI.isNewUI()) JBUI.insets(2, 4) else JBUI.insets(1))
   }
   else {
     JBInsets.emptyInsets()
@@ -74,7 +75,7 @@ internal fun navBarItemPadding(floating: Boolean): Insets {
     return JBUI.insets("StatusBar.Breadcrumbs.floatingItemInsets", JBUI.insets(1))
   }
   else {
-    return JBUI.insets("StatusBar.Breadcrumbs.itemInsets", JBUI.insets(2, 0))
+    return JBUI.CurrentTheme.StatusBar.Breadcrumbs.itemInsets()
   }
 }
 

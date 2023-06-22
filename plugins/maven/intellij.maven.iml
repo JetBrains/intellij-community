@@ -59,8 +59,8 @@
     <orderEntry type="module" module-name="intellij.platform.jps.build" />
     <orderEntry type="module" module-name="intellij.maven.errorProne.compiler" scope="RUNTIME" />
     <orderEntry type="library" name="NanoXML" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage" />
-    <orderEntry type="module" module-name="intellij.platform.workspaceModel.jps" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
     <orderEntry type="module" module-name="intellij.repository.search" />
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
@@ -71,15 +71,27 @@
     <orderEntry type="module" module-name="intellij.properties.psi.impl" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
     <orderEntry type="library" name="fastutil-min" level="project" />
-    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
-    <orderEntry type="library" name="Velocity" level="project" />
+    <orderEntry type="library" name="commons-lang" level="project" />
     <orderEntry type="module" module-name="intellij.idea.community.build.dependencies" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.performanceTesting" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
+    <orderEntry type="module-library">
+      <library name="jetbrains.idea.maven.indexer.api.rt" type="repository">
+        <properties maven-id="org.jetbrains.idea.maven:maven-indexer-api-rt:2023.2" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/idea/maven/maven-indexer-api-rt/2023.2/maven-indexer-api-rt-2023.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
   <component name="copyright">
     <Base>

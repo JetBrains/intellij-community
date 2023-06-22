@@ -1,2 +1,2 @@
-Annotation 5 @MyAnnotation
-Unclassified 7 MyAnnotation::class.java
+Annotation 6 @MyAnnotation
+Unclassified 8 MyAnnotation::class.java

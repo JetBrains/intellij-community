@@ -99,7 +99,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
     columnModel.getColumn(myTableModel.ELEMENT_COLUMN_INDEX).setCellRenderer(new MyElementColumnCellRenderer());
     add(pane, BorderLayout.CENTER);
 
-    TableSpeedSearch speedSearch = new TableSpeedSearch(myTable);
+    TableSpeedSearch speedSearch = TableSpeedSearch.installOn(myTable);
     speedSearch.setFilteringMode(true);
     myTable.setRowSorter(new TableRowSorter<>(myTable.getModel()));
     myTable.registerKeyboardAction(

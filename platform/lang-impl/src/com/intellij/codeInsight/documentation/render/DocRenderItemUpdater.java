@@ -1,12 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation.render;
 
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.CustomFoldRegion;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
+import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +25,18 @@ public final class DocRenderItemUpdater implements Runnable {
 
   static DocRenderItemUpdater getInstance() {
     return ApplicationManager.getApplication().getService(DocRenderItemUpdater.class);
+  }
+
+  public static void updateRenderers(@NotNull Collection<? extends DocRenderItem> items, boolean recreateContent) {
+    getInstance().updateFoldRegions(ContainerUtil.mapNotNull(items, i -> i.getFoldRegion()), recreateContent);
+  }
+
+  static void updateRenderers(@NotNull Editor editor, boolean recreateContent) {
+    if (recreateContent) {
+      DocRenderer.clearCachedLoadingPane(editor);
+    }
+    Collection<? extends DocRenderItem> items = DocRenderItemManager.getInstance().getItems(editor);
+    if (items != null) updateRenderers(items, recreateContent);
   }
 
   void updateFoldRegions(@NotNull Collection<? extends CustomFoldRegion> foldRegions, boolean recreateContent) {
@@ -64,7 +78,7 @@ public final class DocRenderItemUpdater implements Runnable {
     }
     while (!toProcess.isEmpty() && System.currentTimeMillis() < deadline);
     keepers.values().forEach(k -> k.restorePosition(false));
-    if (!myQueue.isEmpty()) SwingUtilities.invokeLater(this);
+    if (!myQueue.isEmpty()) SwingUtilities.invokeLater(ThreadContext.captureThreadContext(this));
   }
 
   private static int getVisibleOffset(Editor editor, Object2IntMap<Editor> memoMap) {

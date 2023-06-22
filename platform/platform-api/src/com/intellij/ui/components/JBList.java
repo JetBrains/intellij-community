@@ -10,6 +10,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
+import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu;
@@ -41,6 +42,10 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
 
   private @Nullable AsyncProcessIcon myBusyIcon;
   private boolean myBusy;
+
+  private int myDropTargetIndex = -1;
+  private @NotNull Function<? super Integer, Integer> offsetFromElementTopForDnD = dropTargetIndex -> 0;
+
 
   public JBList() {
     init();
@@ -169,10 +174,40 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     }
   }
 
+  public void setDropTargetIndex(int index) {
+    if (index != myDropTargetIndex) {
+      myDropTargetIndex = index;
+      repaint();
+    }
+  }
+
+  public void setOffsetFromElementTopForDnD(@NotNull Function<? super Integer, Integer> offsetFromElementTopForDnD) {
+    this.offsetFromElementTopForDnD = offsetFromElementTopForDnD;
+  }
+
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
     myEmptyText.paint(this, g);
+    if (myDropTargetIndex < 0) {
+      return;
+    }
+    int dropLineY;
+    Rectangle rc;
+    if (myDropTargetIndex == getModel().getSize()) {
+      rc = getCellBounds(myDropTargetIndex-1, myDropTargetIndex-1);
+      dropLineY = (int)rc.getMaxY()-1;
+    }
+    else {
+      rc = getCellBounds(myDropTargetIndex, myDropTargetIndex);
+      dropLineY = rc.y + offsetFromElementTopForDnD.fun(myDropTargetIndex);
+    }
+    Graphics2D g2d = (Graphics2D) g;
+    g2d.setColor(PlatformColors.BLUE);
+    g2d.setStroke(new BasicStroke(2.0f));
+    g2d.drawLine(rc.x, dropLineY, rc.x+rc.width, dropLineY);
+    g2d.drawLine(rc.x, dropLineY-2, rc.x, dropLineY+2);
+    g2d.drawLine(rc.x+rc.width, dropLineY-2, rc.x+rc.width, dropLineY+2);
   }
 
   @Override
@@ -294,6 +329,35 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
       return;
     }
     super.setCellRenderer(new ExpandedItemListCellRendererWrapper<>(cellRenderer, myExpandableItemsHandler));
+  }
+
+
+  /**
+   * @see com.intellij.ui.treeStructure.Tree#getScrollableUnitIncrement(Rectangle, int, int)
+   */
+  @Override
+  public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+    int increment = super.getScrollableUnitIncrement(visibleRect, orientation, direction);
+    return adjustIncrement(visibleRect, orientation, direction, increment);
+  }
+
+  @Override
+  public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
+    int increment = super.getScrollableBlockIncrement(visibleRect, orientation, direction);
+    // in case of scrolling list up using a single wheel rotation, the block increment is used to calculate min scroll as
+    // currScroll - blockIncrement
+    // the resulting y-position of visible rect never exceed min scroll
+
+    // see javax.swing.plaf.basic.BasicScrollPaneUI.Handler.mouseWheelMoved -> vertical handling part -> limitScroll
+    return adjustIncrement(visibleRect, orientation, direction, increment);
+  }
+
+
+  private static int adjustIncrement(Rectangle visibleRect, int orientation, int direction, int increment) {
+    if (increment == 0 && orientation == SwingConstants.VERTICAL && direction < 0) {
+      return visibleRect.y;
+    }
+    return increment;
   }
 
   public void installCellRenderer(final @NotNull NotNullFunction<? super E, ? extends JComponent> fun) {

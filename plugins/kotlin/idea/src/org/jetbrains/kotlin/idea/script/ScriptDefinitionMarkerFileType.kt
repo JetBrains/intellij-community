@@ -7,7 +7,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.scripting.definitions.SCRIPT_DEFINITION_MARKERS_PATH
 
 object ScriptDefinitionMarkerFileType: FakeFileType() {
-    private val markerPathComponents = SCRIPT_DEFINITION_MARKERS_PATH.split('/').filter { it.isNotEmpty() }.reversed()
+    private val markerPathComponents: Array<String> = SCRIPT_DEFINITION_MARKERS_PATH.split('/').filter { it.isNotEmpty() }.reversed().toTypedArray()
+    val lastPathSegment: String
+        get() = markerPathComponents.first()
 
     override fun getName(): String = "script-definition-marker"
 
@@ -16,10 +18,13 @@ object ScriptDefinitionMarkerFileType: FakeFileType() {
 
     override fun getDefaultExtension(): String = ""
 
-    override fun isMyFileType(file: VirtualFile): Boolean {
-        var parentPath = file
+    override fun isMyFileType(file: VirtualFile): Boolean =
+      file.parent?.let(::isParentOfMyFileType) ?: false
+
+    fun isParentOfMyFileType(file: VirtualFile): Boolean {
+        var parentPath = file.takeIf { it.isDirectory } ?: return false
         for (pathComponent in markerPathComponents) {
-            parentPath = parentPath.parent?.takeIf { it.name == pathComponent } ?: return false
+            parentPath = parentPath.takeIf { it.name == pathComponent }?.parent ?: return false
         }
         return true
     }

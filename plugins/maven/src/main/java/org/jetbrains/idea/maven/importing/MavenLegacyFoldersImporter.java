@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
 import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.module.Module;
@@ -415,9 +416,10 @@ class MavenLegacyFoldersImporter {
     if (sourceFolder == null) return false;
 
     MavenProjectsManager mavenProjectsManager = MavenProjectsManager.getInstance(project);
-    MavenProject containingProject = mavenProjectsManager.findContainingProject(sourceFolder);
+
+    MavenProject containingProject = ReadAction.compute(() -> mavenProjectsManager.findContainingProject(sourceFolder));
     if (containingProject != null) {
-      Module module = mavenProjectsManager.findModule(containingProject);
+      Module module = ReadAction.compute(() -> mavenProjectsManager.findModule(containingProject));
       if (module == null) return false;
 
       for (ContentEntry contentEntry : ModuleRootManager.getInstance(module).getContentEntries()) {
@@ -483,15 +485,9 @@ class MavenLegacyFoldersImporter {
 
   private void configGeneratedSourceFolder(@NotNull File targetDir, final JavaSourceRootType rootType) {
     switch (myImportingSettings.getGeneratedSourcesFolder()) {
-      case GENERATED_SOURCE_FOLDER:
-        myModel.addGeneratedJavaSourceFolder(targetDir.getPath(), rootType);
-        break;
-
-      case SUBFOLDER:
-        addAllSubDirsAsGeneratedSources(targetDir, rootType);
-        break;
-
-      case AUTODETECT:
+      case GENERATED_SOURCE_FOLDER -> myModel.addGeneratedJavaSourceFolder(targetDir.getPath(), rootType);
+      case SUBFOLDER -> addAllSubDirsAsGeneratedSources(targetDir, rootType);
+      case AUTODETECT -> {
         Collection<JavaModuleSourceRoot> sourceRoots = JavaSourceRootDetectionUtil.suggestRoots(targetDir);
 
         for (JavaModuleSourceRoot root : sourceRoots) {
@@ -504,10 +500,10 @@ class MavenLegacyFoldersImporter {
         }
 
         addAllSubDirsAsGeneratedSources(targetDir, rootType);
-        break;
-
-      case IGNORE:
-        break; // Ignore.
+      }
+      case IGNORE -> {
+        // Ignore.
+      }
     }
   }
 

@@ -34,7 +34,7 @@ class AsyncFilesChangesListener(
     filesProvider.supply(parentDisposable) { filesToWatch ->
       val index = CanonicalPathPrefixTreeFactory.createSet(filesToWatch)
       val updatedWatchedFiles = updatedFilesSnapshot.flatMap { (path, modificationData) ->
-        index.getDescendantSequence(path)
+        index.getDescendants(path)
           .map { it to modificationData }
       }
       if (updatedWatchedFiles.isNotEmpty()) {

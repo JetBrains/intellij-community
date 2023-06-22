@@ -6,7 +6,6 @@ package com.intellij.openapi.keymap.impl
 import com.intellij.configurationStore.LazySchemeProcessor
 import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.WelcomeWizardUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ConfigImportHelper
@@ -26,12 +25,10 @@ import com.intellij.ui.AppUIUtil
 import com.intellij.util.ResourceUtil
 import com.intellij.util.containers.ContainerUtil
 import org.jdom.Element
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import java.util.function.Function
 import java.util.function.Predicate
 
-const val KEYMAPS_DIR_PATH = "keymaps"
+const val KEYMAPS_DIR_PATH: String = "keymaps"
 
 private const val ACTIVE_KEYMAP = "active_keymap"
 private const val NAME_ATTRIBUTE = "name"
@@ -46,7 +43,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
 
   companion object {
     @JvmStatic
-    var isKeymapManagerInitialized = false
+    var isKeymapManagerInitialized: Boolean = false
       private set
   }
 
@@ -54,7 +51,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
     schemeManager = SchemeManagerFactory.getInstance().create(KEYMAPS_DIR_PATH, object : LazySchemeProcessor<Keymap, KeymapImpl>() {
       override fun createScheme(dataHolder: SchemeDataHolder<KeymapImpl>,
                                 name: String,
-                                attributeProvider: Function<in String, String?>,
+                                attributeProvider: (String) -> String?,
                                 isBundled: Boolean) = KeymapImpl(name, dataHolder)
       override fun onCurrentSchemeSwitched(oldScheme: Keymap?,
                                            newScheme: Keymap?,
@@ -73,7 +70,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
     }, settingsCategory = SettingsCategory.KEYMAP)
 
     val defaultKeymapManager = DefaultKeymap.getInstance()
-    val systemDefaultKeymap = WelcomeWizardUtil.getWizardMacKeymap() ?: defaultKeymapManager.defaultKeymapName
+    val systemDefaultKeymap = defaultKeymapManager.defaultKeymapName
     for (keymap in defaultKeymapManager.keymaps) {
       schemeManager.addScheme(keymap)
       if (keymap.name == systemDefaultKeymap) {

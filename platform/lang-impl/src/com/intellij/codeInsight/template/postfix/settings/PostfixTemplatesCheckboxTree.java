@@ -21,12 +21,10 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -42,9 +40,10 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.*;
+import java.util.function.Function;
 
 public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Disposable {
-  private static final Factory<Set<PostfixTemplateCheckedTreeNode>> myNodesComparator = () -> new TreeSet<>((o1, o2) -> {
+  private static final Function<Object, Set<PostfixTemplateCheckedTreeNode>> myNodesComparator = __ -> new TreeSet<>((o1, o2) -> {
     PostfixTemplate template1 = o1.getTemplate();
     PostfixTemplate template2 = o2.getTemplate();
     int compare = Comparing.compare(template1.getPresentableName(), template2.getPresentableName());
@@ -139,7 +138,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
     for (Map.Entry<PostfixTemplateProvider, Collection<PostfixTemplate>> entry : providerToTemplates.entrySet()) {
       PostfixTemplateProvider provider = entry.getKey();
       String languageId = getProvidersToLanguages().get(provider);
-      Set<PostfixTemplateCheckedTreeNode> nodes = ContainerUtil.getOrCreate(languageToNodes, languageId, myNodesComparator);
+      Set<PostfixTemplateCheckedTreeNode> nodes = languageToNodes.computeIfAbsent(languageId, myNodesComparator);
       for (PostfixTemplate template : entry.getValue()) {
         nodes.add(new PostfixTemplateCheckedTreeNode(template, provider, false));
       }
@@ -187,8 +186,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
     final Map<String, Set<String>> result = new HashMap<>();
     visitTemplateNodes(template -> {
       if (!template.isChecked()) {
-        Set<String> templatesForProvider =
-          ContainerUtil.getOrCreate(result, template.getTemplateProvider().getId(), PostfixTemplatesSettings.SET_FACTORY);
+        Set<String> templatesForProvider = result.computeIfAbsent(template.getTemplateProvider().getId(), __ -> new HashSet<>());
         templatesForProvider.add(template.getTemplate().getId());
       }
     });

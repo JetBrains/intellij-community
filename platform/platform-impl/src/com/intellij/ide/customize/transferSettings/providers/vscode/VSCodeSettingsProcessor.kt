@@ -14,27 +14,27 @@ class VSCodeSettingsProcessor {
   companion object {
     private val homeDirectory = System.getProperty("user.home")
 
-    internal val vsCodeHome = when {
+    internal val vsCodeHome: String = when {
       SystemInfo.isMac -> "$homeDirectory/Library/Application Support/Code"
       SystemInfo.isWindows -> "${WindowsEnvVariables.applicationData}/Code"
       else -> "$homeDirectory/.config/Code"
     }
 
-    internal val storageFile = File("$vsCodeHome/storage.json")
-    internal val rapidRenderFile = File("$vsCodeHome/rapid_render.json")
-    internal val keyBindingsFile = File("$vsCodeHome/User/keybindings.json")
-    internal val generalSettingsFile = File("$vsCodeHome/User/settings.json")
-    internal val pluginsDirectory = File("$homeDirectory/.vscode/extensions")
-    internal val database = File("$vsCodeHome/User/globalStorage/state.vscdb")
+    internal val storageFile: File = File("$vsCodeHome/storage.json")
+    internal val rapidRenderFile: File = File("$vsCodeHome/rapid_render.json")
+    internal val keyBindingsFile: File = File("$vsCodeHome/User/keybindings.json")
+    internal val generalSettingsFile: File = File("$vsCodeHome/User/settings.json")
+    internal val pluginsDirectory: File = File("$homeDirectory/.vscode/extensions")
+    internal val database: File = File("$vsCodeHome/User/globalStorage/state.vscdb")
 
-    fun getDefaultSettings() = Settings(
+    fun getDefaultSettings(): Settings = Settings(
       laf = KnownLafs.Darcula,
       syntaxScheme = KnownColorSchemes.Darcula,
       keymap = if (SystemInfoRt.isMac) KnownKeymaps.VSCodeMac else KnownKeymaps.VSCode
     )
   }
 
-  fun willDetectAtLeastSomething() = keyBindingsFile.exists() || pluginsDirectory.exists() || storageFile.exists() || generalSettingsFile.exists()
+  fun willDetectAtLeastSomething(): Boolean = keyBindingsFile.exists() || pluginsDirectory.exists() || storageFile.exists() || generalSettingsFile.exists()
 
   fun getProcessedSettings(): Settings {
     val settings = getDefaultSettings()

@@ -93,7 +93,7 @@ public class PyBroadExceptionInspection extends PyInspection {
           if (e instanceof PyReferenceExpression ref) {
             PsiElement resolved = ref.getReference().resolve();
             if (resolved != null) {
-              if (resolved.getText().equals(text)) {
+              if (text.equals(resolved.getText())) {
                 return true;
               }
             }

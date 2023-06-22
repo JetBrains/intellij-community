@@ -1,5 +1,5 @@
 // COMPILER_ARGUMENTS: -XXLanguage:+EnumEntries
-// WITH_LIBRARY: /enum/kotlin
+// WITH_LIBRARY: ../../libSources/enum/kotlin
 // !LANGUAGE: -XXLanguage:-EnumEntries
 
 import library.kotlin.test.LibraryEnumKt;

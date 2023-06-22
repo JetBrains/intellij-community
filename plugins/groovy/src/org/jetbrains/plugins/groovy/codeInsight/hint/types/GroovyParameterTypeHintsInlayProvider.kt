@@ -5,7 +5,7 @@ import com.intellij.codeInsight.hints.*
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.GroovyLanguage
 import javax.swing.JPanel

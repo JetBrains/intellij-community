@@ -1,14 +1,17 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere
 
+import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.ui.components.JBList
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
+import javax.swing.ListCellRenderer
 
 @ApiStatus.Internal
-abstract class SearchEverywhereMlService {
+interface SearchEverywhereMlService {
   companion object {
     val EP_NAME: ExtensionPointName<SearchEverywhereMlService> = ExtensionPointName.create("com.intellij.searchEverywhereMlService")
 
@@ -32,25 +35,32 @@ abstract class SearchEverywhereMlService {
    * This method can return false if ML-ranking is disabled and no experiments are allowed
    * (see [com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlExperiment.isAllowed])
    */
-  abstract fun isEnabled(): Boolean
+  fun isEnabled(): Boolean
 
-  abstract fun onSessionStarted(project: Project?, mixedListInfo: SearchEverywhereMixedListInfo)
+  fun onSessionStarted(project: Project?, mixedListInfo: SearchEverywhereMixedListInfo)
 
   @Contract("_, _, _ -> new")
-  abstract fun createFoundElementInfo(contributor: SearchEverywhereContributor<*>,
+  fun createFoundElementInfo(contributor: SearchEverywhereContributor<*>,
                                       element: Any,
                                       priority: Int): SearchEverywhereFoundElementInfo
 
-  abstract fun onSearchRestart(project: Project?, tabId: String, reason: SearchRestartReason,
+  fun onSearchRestart(project: Project?, tabId: String, reason: SearchRestartReason,
                                keysTyped: Int, backspacesTyped: Int, searchQuery: String,
-                               previousElementsProvider: () -> List<SearchEverywhereFoundElementInfo>)
+                               previousElementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
+                               searchScope: ScopeDescriptor?, isSearchEverywhere: Boolean)
 
-  abstract fun onItemSelected(project: Project?, indexes: IntArray, selectedItems: List<Any>, closePopup: Boolean,
-                              elementsProvider: () -> List<SearchEverywhereFoundElementInfo>)
+  fun onItemSelected(project: Project?, tabId: String,
+                              indexes: IntArray, selectedItems: List<Any>,
+                              elementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
+                              closePopup: Boolean)
 
-  abstract fun onSearchFinished(project: Project?, elementsProvider: () -> List<SearchEverywhereFoundElementInfo>)
+  fun onSearchFinished(project: Project?, elementsProvider: () -> List<SearchEverywhereFoundElementInfo>)
 
-  abstract fun notifySearchResultsUpdated()
+  fun notifySearchResultsUpdated()
 
-  abstract fun onDialogClose()
+  fun onDialogClose()
+
+  fun wrapRenderer(renderer: ListCellRenderer<Any>, listModel: SearchListModel): ListCellRenderer<Any>
+
+  fun buildListener(listModel: SearchListModel, resultsList: JBList<Any>, selectionTracker: SEListSelectionTracker): SearchListener?
 }

@@ -26,8 +26,6 @@ import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.declarationsSearch.findDeepestSuperMethodsKotlinAware
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
-import org.jetbrains.kotlin.utils.checkWithAttachment
 
 class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
 
@@ -138,7 +136,7 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
             } else {
                 substitutedJavaElement
             }
-            renameCallback.pass(elementToProcess)
+            renameCallback.accept(elementToProcess)
         }
 
         substituteForExpectOrActual(element)?.let { return preprocessAndPass(it) }
@@ -231,6 +229,19 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
             }
         }
         renameRefactoringSupport.prepareForeignUsagesRenaming(element, newName, allRenames, scope)
+
+        val file = element.containingFile as? KtFile ?: return
+
+        if (file.declarations.singleOrNull() == element) {
+            file.virtualFile?.let { virtualFile ->
+                val nameWithoutExtensions = virtualFile.nameWithoutExtension
+                if (nameWithoutExtensions == originalName) {
+                    val newFileName = newName + "." + virtualFile.extension
+                    allRenames[file] = newFileName
+                    forElement(file).prepareRenaming(file, newFileName, allRenames)
+                }
+            }
+        }
     }
 
     override fun renameElement(element: PsiElement, newName: String, usages: Array<UsageInfo>, listener: RefactoringElementListener?) {

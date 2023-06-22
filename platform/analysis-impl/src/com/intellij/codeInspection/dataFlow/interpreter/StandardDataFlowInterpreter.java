@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.interpreter;
 
 import com.intellij.codeInspection.dataFlow.lang.DfaListener;
@@ -368,6 +368,6 @@ public class StandardDataFlowInterpreter implements DataFlowInterpreter {
         attachments = ArrayUtil.append(attachments, new Attachment("memory_state.txt", memStateText));
       }
     }
-    LOG.error("Dataflow interpretation error", e, attachments);
+    LOG.error("Dataflow interpretation error (wasForciblyMerged = " + myWasForciblyMerged + ")", e, attachments);
   }
 }

@@ -72,7 +72,6 @@ import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.ByteArrayInputStream;
 
 /**
  * Image editor UI
@@ -296,7 +295,9 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     ZoomOptions zoomOptions = getZoomOptions();
 
     if (zoomOptions.isSmartZooming() && !zoomModel.isZoomLevelChanged()) {
-      Double smartZoomFactor = getSmartZoomFactor(zoomOptions);
+      Double smartZoomFactor =
+        zoomOptions.getSmartZoomFactor(imageComponent.getDocument().getBounds(), myScrollPane.getViewport().getExtentSize(),
+                                       ImageComponent.IMAGE_INSETS);
       if (smartZoomFactor != null) {
         zoomModel.setZoomFactor(smartZoomFactor);
         return true;
@@ -404,8 +405,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
 
       if (IfsUtil.isSVG(file)) {
         try {
-          return Math.max(1, SVGLoader.getMaxZoomFactor(file.getPath(), new ByteArrayInputStream(file.contentsToByteArray()),
-                                                        ScaleContext.create(editor.getComponent())));
+          return Math.max(1, SVGLoader.INSTANCE.getMaxZoomFactor(file.contentsToByteArray(), ScaleContext.create(editor.getComponent())));
         }
         catch (Throwable t) {
           Logger.getInstance(ImageEditorUI.class).warn(t);
@@ -452,7 +452,9 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     public void fitZoomToWindow() {
       ZoomOptions zoomOptions = getZoomOptions();
 
-      Double smartZoomFactor = getSmartZoomFactor(zoomOptions);
+      Double smartZoomFactor =
+        zoomOptions.getSmartZoomFactor(imageComponent.getDocument().getBounds(), myScrollPane.getViewport().getExtentSize(),
+                                       ImageComponent.IMAGE_INSETS);
       if (smartZoomFactor != null) {
         zoomModel.setZoomFactor(smartZoomFactor);
       }
@@ -532,36 +534,6 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     public void setCustomZoomOptions(@Nullable ZoomOptions zoomOptions) {
       myCustomZoomOptions = zoomOptions;
     }
-  }
-
-  @Nullable
-  private Double getSmartZoomFactor(@NotNull ZoomOptions zoomOptions) {
-    Rectangle bounds = imageComponent.getDocument().getBounds();
-    if (bounds == null) return null;
-    if (bounds.getWidth() == 0 || bounds.getHeight() == 0) return null;
-    int width = bounds.width;
-    int height = bounds.height;
-
-    Dimension preferredMinimumSize = zoomOptions.getPrefferedSize();
-    if (width < preferredMinimumSize.width &&
-        height < preferredMinimumSize.height) {
-      double factor = (preferredMinimumSize.getWidth() / (double)width +
-                       preferredMinimumSize.getHeight() / (double)height) / 2.0d;
-      return Math.ceil(factor);
-    }
-
-    Dimension canvasSize = myScrollPane.getViewport().getExtentSize();
-    canvasSize.height -= ImageComponent.IMAGE_INSETS * 2;
-    canvasSize.width -= ImageComponent.IMAGE_INSETS * 2;
-    if (canvasSize.width <= 0 || canvasSize.height <= 0) return null;
-
-    if (canvasSize.width < width ||
-        canvasSize.height < height) {
-      return Math.min((double)canvasSize.height / height,
-                      (double)canvasSize.width / width);
-    }
-
-    return 1.0d;
   }
 
   private void updateImageComponentSize() {

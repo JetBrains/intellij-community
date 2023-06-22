@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinx-coroutines-debug" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-debug:1.6.4" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-debug:1.7.1" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-debug/1.6.4/kotlinx-coroutines-debug-1.6.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-debug/1.7.1/kotlinx-coroutines-debug-1.7.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-debug/1.6.4/kotlinx-coroutines-debug-1.6.4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-debug/1.7.1/kotlinx-coroutines-debug-1.7.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

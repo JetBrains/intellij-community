@@ -5,6 +5,7 @@ import com.intellij.configurationStore.serialize
 import com.intellij.externalSystem.ImportedLibraryProperties
 import com.intellij.externalSystem.ImportedLibraryType
 import com.intellij.java.library.MavenCoordinates
+import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
 import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.module.impl.ModuleManagerEx
 import com.intellij.openapi.project.Project
@@ -14,16 +15,16 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.util.containers.addIfNotNull
-import com.intellij.workspaceModel.ide.impl.FileInDirectorySourceNames
-import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
-import com.intellij.workspaceModel.ide.toVirtualFileUrl
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.platform.workspace.jps.serialization.impl.FileInDirectorySourceNames
+import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.importing.MavenImportUtil
 import org.jetbrains.idea.maven.importing.StandardMavenModuleType
 import org.jetbrains.idea.maven.importing.tree.MavenModuleImportData
@@ -34,6 +35,7 @@ import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenImportingSettings
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.utils.MavenLog
+import org.jetbrains.jps.model.serialization.SerializationConstants
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 internal class WorkspaceModuleImporter(
@@ -53,8 +55,8 @@ internal class WorkspaceModuleImporter(
     val baseModuleDir = importData.mavenProject.directoryFile.toVirtualFileUrl(virtualFileUrlManager)
     val moduleName = importData.moduleData.moduleName
 
-    val moduleLibrarySource = JpsEntitySourceFactory.createEntitySourceForModule(project, baseModuleDir, externalSource,
-                                                                                 existingEntitySourceNames,
+    val moduleLibrarySource = LegacyBridgeJpsEntitySourceFactory.createEntitySourceForModule(project, baseModuleDir, externalSource,
+                                                                                             existingEntitySourceNames,
                                                                                  moduleName + ModuleManagerEx.IML_EXTENSION)
 
     val originalModule = storageBeforeImport.resolve(ModuleId(moduleName))
@@ -66,7 +68,7 @@ internal class WorkspaceModuleImporter(
   }
 
   private fun reuseOrCreateProjectLibrarySource(libraryName: String): EntitySource {
-    return JpsEntitySourceFactory.createEntitySourceForProjectLibrary(project, externalSource, existingEntitySourceNames, libraryName)
+    return LegacyBridgeJpsEntitySourceFactory.createEntitySourceForProjectLibrary(project, externalSource, existingEntitySourceNames, libraryName)
   }
 
   private fun createModuleEntity(moduleName: String,
@@ -225,7 +227,7 @@ internal class WorkspaceModuleImporter(
                                                                                     mavenArtifact.version,
                                                                                     mavenArtifact.packaging,
                                                                                     mavenArtifact.classifier)).state) ?: return
-    libPropertiesElement.name = JpsLibraryTableSerializer.PROPERTIES_TAG;
+    libPropertiesElement.name = JpsLibraryTableSerializer.PROPERTIES_TAG
     val xmlTag = JDOMUtil.writeElement(libPropertiesElement)
     builder addEntity LibraryPropertiesEntity(libraryKind.kindId, libraryEntity.entitySource) {
       library = libraryEntity
@@ -274,7 +276,7 @@ internal class WorkspaceModuleImporter(
   companion object {
     val JAVADOC_TYPE: LibraryRootTypeId = LibraryRootTypeId("JAVADOC")
 
-    val EXTERNAL_SOURCE_ID get() = ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID
+    val EXTERNAL_SOURCE_ID get() = SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID
   }
 
   class ExternalSystemData(val moduleEntity: ModuleEntity, val mavenProjectFilePath: String, val mavenModuleType: StandardMavenModuleType) {

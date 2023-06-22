@@ -5,70 +5,77 @@ import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
 import com.intellij.collaboration.ui.toolwindow.ReviewListTabComponentDescriptor
 import com.intellij.collaboration.ui.toolwindow.ReviewTabsComponentFactory
-import com.intellij.collaboration.ui.util.bindDisabled
-import com.intellij.collaboration.ui.util.bindVisibility
+import com.intellij.collaboration.ui.util.bindDisabledIn
+import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.util.URIUtil
 import com.intellij.ide.DataManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.util.ui.UIUtil
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorComponentFactory
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModelImpl
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
+import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
-import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffBridgeRepository
+import org.jetbrains.plugins.gitlab.mergerequest.diff.ChangesSelection
+import org.jetbrains.plugins.gitlab.mergerequest.diff.ChangesSelection.Companion.toSelection
+import org.jetbrains.plugins.gitlab.mergerequest.diff.isEqual
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContext
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContextHolder
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestDetailsComponentFactory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModelImpl
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import java.awt.BorderLayout
 import java.awt.event.ActionEvent
 import javax.swing.*
 
 internal class GitLabReviewTabComponentFactory(
   private val project: Project,
-  private val toolwindowViewModel: GitLabToolwindowViewModel,
-) : ReviewTabsComponentFactory<GitLabReviewTab, GitLabToolwindowProjectContext> {
+  private val toolwindowViewModel: GitLabProjectUIContextHolder,
+) : ReviewTabsComponentFactory<GitLabReviewTab, GitLabProjectUIContext> {
   override fun createReviewListComponentDescriptor(
     cs: CoroutineScope,
-    projectContext: GitLabToolwindowProjectContext
+    projectContext: GitLabProjectUIContext
   ): ReviewListTabComponentDescriptor {
+    GitLabStatistics.logMrListOpened()
     return GitLabReviewListTabComponentDescriptor(project, cs, toolwindowViewModel.accountManager, projectContext)
   }
 
   override fun createTabComponent(cs: CoroutineScope,
-                                  projectContext: GitLabToolwindowProjectContext,
+                                  projectContext: GitLabProjectUIContext,
                                   reviewTabType: GitLabReviewTab): JComponent {
     return when (reviewTabType) {
       is GitLabReviewTab.ReviewSelected -> {
+        GitLabStatistics.logMrDetailsOpened()
         createReviewDetailsComponent(cs, projectContext, reviewTabType.reviewId)
       }
     }
   }
 
   override fun createEmptyTabContent(cs: CoroutineScope): JComponent {
+    GitLabStatistics.logMrTwLoginOpened()
     return createSelectorsComponent(cs)
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
   private fun createReviewDetailsComponent(
     cs: CoroutineScope,
-    projectContext: GitLabToolwindowProjectContext,
+    ctx: GitLabProjectUIContext,
     reviewId: GitLabMergeRequestId
   ): JComponent {
-    val conn = projectContext.connection
-    val reviewDetailsVm = GitLabMergeRequestDetailsLoadingViewModelImpl(cs, conn.currentUser, conn.projectData, reviewId).apply {
+    val reviewDetailsVm = GitLabMergeRequestDetailsLoadingViewModelImpl(project, cs, ctx.currentUser, ctx.projectData, reviewId).apply {
       requestLoad()
     }
 
@@ -76,20 +83,38 @@ internal class GitLabReviewTabComponentFactory(
       (it as? GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Result)?.detailsVm
     }.filterNotNull()
 
+    val contextHolder = project.service<GitLabProjectUIContextHolder>()
+    val accountManager = contextHolder.accountManager
+    val accountVm = GitLabAccountViewModelImpl(project, cs, ctx.account, accountManager)
+
     cs.launch(Dispatchers.EDT, start = CoroutineStart.UNDISPATCHED) {
       detailsVmFlow.flatMapLatest {
-        it.detailsInfoVm.showTimelineRequests
+        it.showTimelineRequests
       }.collect {
-        projectContext.filesController.openTimeline(reviewId, true)
+        ctx.filesController.openTimeline(reviewId, true)
+      }
+    }
+
+    val diffBridge = ctx.getDiffBridge(reviewId)
+    cs.launch(Dispatchers.EDT, start = CoroutineStart.UNDISPATCHED) {
+      detailsVmFlow.flatMapLatest {
+        it.changesVm.changesSelection
+      }.collectLatest {
+        diffBridge.setChanges(it.toSelection())
       }
     }
 
     cs.launch(Dispatchers.EDT, start = CoroutineStart.UNDISPATCHED) {
-      val diffBridge = project.service<GitLabMergeRequestDiffBridgeRepository>().get(conn, reviewId)
-      detailsVmFlow.flatMapLatest {
-        it.changesVm.selectedChanges
-      }.collectLatest {
-        diffBridge.setChanges(it)
+      detailsVmFlow.collectLatest { detailsVm ->
+        diffBridge.displayedChanges.collectLatest { changes ->
+          if (changes !is ChangesSelection.Multiple) {
+            diffBridge.selectedChange.distinctUntilChanged { old, new ->
+              if (old == null || new == null) false else old.isEqual(new)
+            }.filterNotNull().collect {
+              detailsVm.changesVm.selectChange(it)
+            }
+          }
+        }
       }
     }
 
@@ -97,16 +122,18 @@ internal class GitLabReviewTabComponentFactory(
       detailsVmFlow.flatMapLatest {
         it.changesVm.showDiffRequests
       }.collect {
-        projectContext.filesController.openDiff(reviewId, true)
+        ctx.filesController.openDiff(reviewId, true)
       }
     }
 
 
-    val avatarIconsProvider = projectContext.avatarIconProvider
-    return GitLabMergeRequestDetailsComponentFactory.createDetailsComponent(project, cs, reviewDetailsVm, avatarIconsProvider).also {
+    val avatarIconsProvider = ctx.avatarIconProvider
+    return GitLabMergeRequestDetailsComponentFactory.createDetailsComponent(
+      project, cs, reviewDetailsVm, accountVm, avatarIconsProvider
+    ).also {
       DataManager.registerDataProvider(it) { dataId ->
         when {
-          GitLabMergeRequestsActionKeys.FILES_CONTROLLER.`is`(dataId) -> projectContext.filesController
+          GitLabMergeRequestsActionKeys.FILES_CONTROLLER.`is`(dataId) -> ctx.filesController
           else -> null
         }
       }
@@ -114,15 +141,25 @@ internal class GitLabReviewTabComponentFactory(
   }
 
   private fun createSelectorsComponent(cs: CoroutineScope): JComponent {
+    val preferences = project.service<GitLabMergeRequestsPreferences>()
     // TODO: move vm creation to another place
     val selectorVm = GitLabRepositoryAndAccountSelectorViewModel(
       cs, toolwindowViewModel.projectsManager, toolwindowViewModel.accountManager,
       onSelected = { mapping, account ->
         withContext(cs.coroutineContext) {
           toolwindowViewModel.connectionManager.openConnection(mapping, account)
+          preferences.selectedRepoAndAccount = mapping to account
         }
       }
     )
+
+    preferences.selectedRepoAndAccount?.let { (repo, account) ->
+      with(selectorVm) {
+        repoSelectionState.value = repo
+        accountSelectionState.value = account
+        submitSelection()
+      }
+    }
 
     val accountsDetailsProvider = GitLabAccountsDetailsProvider(cs) {
       // TODO: separate loader
@@ -149,13 +186,13 @@ internal class GitLabReviewTabComponentFactory(
         val account = req.account
         if (account == null) {
           val (newAccount, token) = GitLabLoginUtil.logInViaToken(project, selectors, req.repo.repository.serverPath) { server, name ->
-            req.accounts.none { it.server == server || it.name == name }
+            GitLabLoginUtil.isAccountUnique(req.accounts, server, name)
           } ?: return@collect
           req.login(newAccount, token)
         }
         else {
           val token = GitLabLoginUtil.updateToken(project, selectors, account) { server, name ->
-            req.accounts.none { it.server == server || it.name == name }
+            GitLabLoginUtil.isAccountUnique(req.accounts, server, name)
           } ?: return@collect
           req.login(account, token)
         }
@@ -163,6 +200,7 @@ internal class GitLabReviewTabComponentFactory(
     }
 
     return JPanel(BorderLayout()).apply {
+      background = UIUtil.getListBackground()
       add(selectors, BorderLayout.NORTH)
     }
   }
@@ -178,8 +216,8 @@ internal class GitLabReviewTabComponentFactory(
           vm.requestTokenLogin(false, true)
         }
 
-        bindDisabled(scope, vm.busyState)
-        bindVisibility(scope, vm.tokenLoginAvailableState)
+        bindDisabledIn(scope, vm.busyState)
+        bindVisibilityIn(scope, vm.tokenLoginAvailableState)
       }
     )
   }

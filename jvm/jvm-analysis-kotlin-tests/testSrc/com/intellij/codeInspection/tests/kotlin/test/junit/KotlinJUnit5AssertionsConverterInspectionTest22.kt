@@ -1,12 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.tests.kotlin.test.junit
 
-import com.intellij.codeInspection.tests.ULanguage
+import com.intellij.codeInspection.tests.JvmLanguage
 import com.intellij.codeInspection.tests.test.junit.JUnit5AssertionsConverterInspectionTestBase
 
 class KotlinJUnit5AssertionsConverterInspectionTest22 : JUnit5AssertionsConverterInspectionTestBase() {
   fun `test AssertArrayEquals`() {
-    myFixture.testQuickFix(ULanguage.KOTLIN, """
+    myFixture.testQuickFix(JvmLanguage.KOTLIN, """
       import org.junit.Assert.*
       import org.junit.jupiter.api.Test
 
@@ -31,7 +31,7 @@ class KotlinJUnit5AssertionsConverterInspectionTest22 : JUnit5AssertionsConverte
   }
 
   fun `test AssertArrayEquals message`() {
-    myFixture.testQuickFix(ULanguage.KOTLIN, """
+    myFixture.testQuickFix(JvmLanguage.KOTLIN, """
       import org.junit.Assert.*
       import org.junit.jupiter.api.Test
 
@@ -56,7 +56,7 @@ class KotlinJUnit5AssertionsConverterInspectionTest22 : JUnit5AssertionsConverte
   }
 
   fun `test AssertEquals`() {
-    myFixture.testQuickFix(ULanguage.KOTLIN, """
+    myFixture.testQuickFix(JvmLanguage.KOTLIN, """
       import org.junit.Assert.*
       import org.junit.jupiter.api.Test
 
@@ -81,7 +81,7 @@ class KotlinJUnit5AssertionsConverterInspectionTest22 : JUnit5AssertionsConverte
   }
 
   fun `test AssertNotEqualsWithDelta`() {
-    myFixture.testQuickFixUnavailable(ULanguage.KOTLIN, """
+    myFixture.testQuickFixUnavailable(JvmLanguage.KOTLIN, """
       import org.junit.Assert.*
       import org.hamcrest.Matcher;
       import org.junit.jupiter.api.Test
@@ -96,7 +96,7 @@ class KotlinJUnit5AssertionsConverterInspectionTest22 : JUnit5AssertionsConverte
   }
 
   fun `test AssertThat`() {
-    myFixture.testQuickFix(ULanguage.KOTLIN, """
+    myFixture.testQuickFix(JvmLanguage.KOTLIN, """
       import org.junit.Assert.*
       import org.hamcrest.Matcher
       import org.junit.jupiter.api.Test
@@ -123,7 +123,7 @@ class KotlinJUnit5AssertionsConverterInspectionTest22 : JUnit5AssertionsConverte
   }
 
   fun `test AssertTrue`() {
-    myFixture.testQuickFix(ULanguage.KOTLIN, """
+    myFixture.testQuickFix(JvmLanguage.KOTLIN, """
       import org.junit.Assert.*
       import org.junit.jupiter.api.Test
 
@@ -148,7 +148,7 @@ class KotlinJUnit5AssertionsConverterInspectionTest22 : JUnit5AssertionsConverte
   }
 
   fun `test AssertTrue method reference`() {
-    myFixture.testQuickFix(ULanguage.KOTLIN, """
+    myFixture.testQuickFix(JvmLanguage.KOTLIN, """
       import org.junit.Assert
       import org.junit.jupiter.api.Test
 
@@ -181,7 +181,7 @@ class KotlinJUnit5AssertionsConverterInspectionTest22 : JUnit5AssertionsConverte
   }
 
   fun `test AssumeTrue`() {
-    myFixture.testQuickFix(ULanguage.KOTLIN, """
+    myFixture.testQuickFix(JvmLanguage.KOTLIN, """
       import org.junit.Assume.*
       import org.junit.jupiter.api.Test
 

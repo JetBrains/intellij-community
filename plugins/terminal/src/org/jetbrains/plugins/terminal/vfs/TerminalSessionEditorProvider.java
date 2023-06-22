@@ -13,6 +13,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.terminal.ui.TerminalWidget;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner;
+import org.jetbrains.plugins.terminal.ShellStartupOptions;
+import org.jetbrains.plugins.terminal.ShellStartupOptionsKt;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
 
 public class TerminalSessionEditorProvider implements FileEditorProvider, DumbAware {
@@ -24,18 +26,20 @@ public class TerminalSessionEditorProvider implements FileEditorProvider, DumbAw
   @NotNull
   @Override
   public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
+    TerminalSessionVirtualFileImpl terminalFile = (TerminalSessionVirtualFileImpl)file;
     if (file.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN) != null) {
-      return new TerminalSessionEditor(project, (TerminalSessionVirtualFileImpl)file);
+      return new TerminalSessionEditor(project, terminalFile);
     }
     else {
-      TerminalSessionVirtualFileImpl terminalFile = (TerminalSessionVirtualFileImpl)file;
       TerminalWidget widget = terminalFile.getTerminalWidget();
 
-      String workingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(widget, file.getName());
+      String workingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(widget);
       Disposable tempDisposable = Disposer.newDisposable();
-      TerminalWidget newWidget = new LocalTerminalDirectRunner(project).startShellTerminalWidget(tempDisposable, workingDirectory, true);
-      TerminalSessionVirtualFileImpl newSessionVirtualFile = new TerminalSessionVirtualFileImpl(
-        terminalFile.getName(), newWidget, terminalFile.getSettingsProvider());
+      ShellStartupOptions options = ShellStartupOptionsKt.shellStartupOptions(workingDirectory);
+      TerminalWidget newWidget = new LocalTerminalDirectRunner(project).startShellTerminalWidget(tempDisposable, options, true);
+      TerminalSessionVirtualFileImpl newSessionVirtualFile = new TerminalSessionVirtualFileImpl(terminalFile.getName(),
+                                                                                                newWidget,
+                                                                                                terminalFile.getSettingsProvider());
       TerminalSessionEditor editor = new TerminalSessionEditor(project, newSessionVirtualFile);
       Disposer.dispose(tempDisposable); // newWidget's parent disposable should be changed now
       return editor;

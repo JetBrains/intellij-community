@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.merge
 
 import com.intellij.diff.DiffEditorTitleCustomizer
@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
-import com.intellij.util.Consumer
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsCommitMetadata
@@ -321,7 +320,7 @@ internal fun getTitleWithCommitsRangeDetailsCustomizer(
         readFullDetails(
           repository.project,
           repository.root,
-          Consumer { commit ->
+          { commit ->
             val commitMetadata = VcsCommitMetadataImpl(
               commit.id, commit.parents, commit.commitTime, commit.root, commit.subject,
               commit.author, commit.fullMessage, commit.committer, commit.authorTime)

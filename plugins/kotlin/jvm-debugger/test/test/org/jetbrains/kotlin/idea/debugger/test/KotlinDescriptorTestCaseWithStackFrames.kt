@@ -33,6 +33,8 @@ abstract class KotlinDescriptorTestCaseWithStackFrames : KotlinDescriptorTestCas
 
     private val agentList = mutableListOf<JpsMavenRepositoryLibraryDescriptor>()
 
+    override fun useIrBackend(): Boolean = true
+
     private fun out(frame: XStackFrame) {
         out(INDENT_FRAME, frame.javaClass.simpleName + " FRAME:" + XDebuggerTestUtil.getFramePresentation(frame))
         outVariables(frame)
@@ -157,7 +159,7 @@ abstract class KotlinDescriptorTestCaseWithStackFrames : KotlinDescriptorTestCas
         val (_, groupId: String, artifactId: String, version: String, agent: String) = result.groupValues
         if ("-javaagent" == agent)
             agentList.add(JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version, false))
-        addMavenDependency(compilerFacility, groupId, artifactId, version)
+        addMavenDependency(compilerFacility, groupId, artifactId, version, module)
     }
 
     override fun createJavaParameters(mainClass: String?): JavaParameters {

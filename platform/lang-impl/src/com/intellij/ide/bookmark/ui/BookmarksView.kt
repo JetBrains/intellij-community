@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.ui
 
+import com.intellij.execution.Location
 import com.intellij.ide.DefaultTreeExpander
 import com.intellij.ide.OccurenceNavigator
 import com.intellij.ide.bookmark.*
@@ -20,12 +21,13 @@ import com.intellij.openapi.actionSystem.impl.PopupMenuPreloader
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState.stateForComponent
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.Companion.OPEN_IN_PREVIEW_TAB
+import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
-import com.intellij.ui.TreeSpeedSearch
+import com.intellij.ui.TreeUIHelper
 import com.intellij.ui.preview.DescriptorPreview
 import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.RestoreSelectionListener
@@ -35,11 +37,15 @@ import com.intellij.util.Alarm.ThreadToUse
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.SingleAlarm
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.toArray
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
+import org.jetbrains.annotations.Nls
+import org.jetbrains.concurrency.Promise
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
+import javax.swing.tree.TreePath
 
 class BookmarksView(val project: Project, showToolbar: Boolean?)
   : Disposable, DataProvider, OccurenceNavigator, OnePixelSplitter(false, .3f, .1f, .9f) {
@@ -48,7 +54,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     val BOOKMARKS_VIEW: DataKey<BookmarksView> = DataKey.create("BOOKMARKS_VIEW")
   }
 
-  val isPopup = showToolbar == null
+  val isPopup: Boolean = showToolbar == null
 
   fun interface EditSourceListener { fun onEditSource() }
   private val editSourceListeners: MutableList<EditSourceListener> = mutableListOf()
@@ -59,17 +65,17 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   private val selectionAlarm = SingleAlarm(this::selectionChanged, 50, this, ThreadToUse.SWING_THREAD, stateForComponent(this))
 
   private val structure = BookmarksTreeStructure(this)
-  val model = StructureTreeModel(structure, FolderNodeComparator(project), this)
-  val tree = DnDAwareTree(AsyncTreeModel(model, this))
+  val model: StructureTreeModel<BookmarksTreeStructure> = StructureTreeModel(structure, FolderNodeComparator(project), this)
+  val tree: DnDAwareTree = DnDAwareTree(AsyncTreeModel(model, this))
   private val treeExpander = DefaultTreeExpander(tree)
   private val panel = BorderLayoutPanel()
   private val updater = FolderNodeUpdater(this)
   private val ideView = IdeViewForBookmarksView(this)
 
-  val selectedNode
+  val selectedNode: AbstractTreeNode<*>?
     get() = TreeUtil.getAbstractTreeNode(TreeUtil.getSelectedPathIfOne(tree))
 
-  val selectedNodes
+  val selectedNodes: List<AbstractTreeNode<*>>?
     get() = tree.selectionPaths?.mapNotNull { TreeUtil.getAbstractTreeNode(it) }?.ifEmpty { null }
 
   private val previousOccurrence
@@ -85,7 +91,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     }
 
 
-  override fun dispose() = preview.close()
+  override fun dispose(): Unit = preview.close()
 
   override fun getData(dataId: String): Any? = when {
     BOOKMARKS_VIEW.`is`(dataId) -> this
@@ -100,28 +106,31 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     else -> null
   }
 
-  private fun getSlowData(dataId: String, selection: List<AbstractTreeNode<*>>?) = when {
+  @RequiresBackgroundThread
+  private fun getSlowData(dataId: String, selection: List<AbstractTreeNode<*>>?): Any? = when {
     PlatformDataKeys.VIRTUAL_FILE.`is`(dataId) -> selection?.firstOrNull()?.asVirtualFile
     PlatformDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> selection?.mapNotNull { it.asVirtualFile }?.ifEmpty { null }?.toTypedArray()
+    PlatformCoreDataKeys.MODULE.`is`(dataId) -> selection?.firstOrNull()?.module
+    Location.DATA_KEY.`is`(dataId) -> selection?.firstOrNull()?.location
     else -> null
   }
 
-  override fun getNextOccurenceActionName() = BookmarkBundle.message("bookmark.go.to.next.occurence.action.text")
-  override fun getPreviousOccurenceActionName() = BookmarkBundle.message("bookmark.go.to.previous.occurence.action.text")
+  override fun getNextOccurenceActionName(): @Nls String = BookmarkBundle.message("bookmark.go.to.next.occurence.action.text")
+  override fun getPreviousOccurenceActionName(): @Nls String = BookmarkBundle.message("bookmark.go.to.previous.occurence.action.text")
 
-  override fun hasNextOccurence() = nextOccurrence != null
-  override fun hasPreviousOccurence() = previousOccurrence != null
+  override fun hasNextOccurence(): Boolean = nextOccurrence != null
+  override fun hasPreviousOccurence(): Boolean = previousOccurrence != null
 
-  override fun goNextOccurence() = nextOccurrence?.let { go(it) }
-  override fun goPreviousOccurence() = previousOccurrence?.let { go(it) }
+  override fun goNextOccurence(): OccurenceNavigator.OccurenceInfo? = nextOccurrence?.let { go(it) }
+  override fun goPreviousOccurence(): OccurenceNavigator.OccurenceInfo? = previousOccurrence?.let { go(it) }
   private fun go(occurrence: BookmarkOccurrence): OccurenceNavigator.OccurenceInfo? {
     select(occurrence.group, occurrence.bookmark).onSuccess { navigateToSource(true) }
     return null
   }
 
-  fun select(file: VirtualFile) = updater.updateImmediately { select(VirtualFileVisitor(file, null), true) }
-  fun select(group: BookmarkGroup) = select(GroupBookmarkVisitor(group), true)
-  fun select(group: BookmarkGroup, bookmark: Bookmark) = select(GroupBookmarkVisitor(group, bookmark), false)
+  fun select(file: VirtualFile): Unit = updater.updateImmediately { select(VirtualFileVisitor(file, null), true) }
+  fun select(group: BookmarkGroup): Promise<TreePath> = select(GroupBookmarkVisitor(group), true)
+  fun select(group: BookmarkGroup, bookmark: Bookmark): Promise<TreePath> = select(GroupBookmarkVisitor(group, bookmark), false)
   private fun select(visitor: TreeVisitor, centered: Boolean) = TreeUtil.promiseMakeVisible(tree, visitor).onSuccess {
     tree.selectionPath = it
     TreeUtil.scrollToVisible(tree, it, centered)
@@ -129,12 +138,12 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   }
 
   @Suppress("UNNECESSARY_SAFE_CALL")
-  override fun saveProportion() = when (isPopup) {
+  override fun saveProportion(): Unit = when (isPopup) {
     true -> state?.proportionPopup = proportion
     else -> state?.proportionView = proportion
   }
 
-  override fun loadProportion() = when (isPopup) {
+  override fun loadProportion(): Unit = when (isPopup) {
     true -> proportion = state.proportionPopup
     else -> proportion = state.proportionView
   }
@@ -144,7 +153,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     selectionChanged(false)
   }
 
-  val groupLineBookmarks = object : Option {
+  val groupLineBookmarks: Option = object : Option {
     override fun isEnabled() = !isPopup
     override fun isSelected() = isEnabled && state.groupLineBookmarks
     override fun setSelected(selected: Boolean) {
@@ -152,7 +161,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
       model.invalidateAsync()
     }
   }
-  val autoScrollFromSource = object : Option {
+  val autoScrollFromSource: Option = object : Option {
     override fun isEnabled() = false // TODO: select in target
     override fun isSelected() = state.autoscrollFromSource
     override fun setSelected(selected: Boolean) {
@@ -160,7 +169,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
       selectionAlarm.cancelAndRequest()
     }
   }
-  val autoScrollToSource = object : Option {
+  val autoScrollToSource: Option = object : Option {
     override fun isEnabled() = openInPreviewTab.isEnabled
     override fun isSelected() = state.autoscrollToSource
     override fun setSelected(selected: Boolean) {
@@ -168,7 +177,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
       selectionAlarm.cancelAndRequest()
     }
   }
-  val openInPreviewTab = object : Option {
+  val openInPreviewTab: Option = object : Option {
     override fun isEnabled() = isVertical || !state.showPreview
     override fun isSelected() = UISettings.getInstance().openInPreviewTabIfPossible
     override fun setSelected(selected: Boolean) {
@@ -176,7 +185,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
       selectionAlarm.cancelAndRequest()
     }
   }
-  val showPreview = object : Option {
+  val showPreview: Option = object : Option {
     override fun isAlwaysVisible() = !isVertical
     override fun isEnabled() = !isVertical && selectedNode?.canNavigateToSource() ?: false
     override fun isSelected() = state.showPreview
@@ -200,6 +209,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
 
   private fun navigateToSource(requestFocus: Boolean) {
     val node = selectedNode ?: return
+    if (node.asVirtualFile?.fileType == FileTypes.UNKNOWN) { return }
     val task = Runnable { OpenSourceUtil.navigateToSource(requestFocus, false, node) }
     ApplicationManager.getApplication()?.invokeLater(task, stateForComponent(tree)) { project.isDisposed }
   }
@@ -236,7 +246,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
       override fun focusGained(event: FocusEvent?) = selectionAlarm.cancelAndRequest()
     })
 
-    TreeSpeedSearch(tree)
+    TreeUIHelper.getInstance().installTreeSpeedSearch(tree)
     TreeUtil.promiseSelectFirstLeaf(tree)
     tree.registerNavigateOnEnterAction { editSourceListeners.forEach { it.onEditSource() } }
     EditSourceOnDoubleClickHandler.install(tree) { editSourceListeners.forEach { it.onEditSource() } }

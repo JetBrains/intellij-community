@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm;
 
 import com.intellij.reference.SoftReference;
@@ -42,8 +42,11 @@ public class FocusWatcher implements ContainerListener, FocusListener {
   }
 
   @Override
-  public final void componentAdded(final ContainerEvent e) {
-    installImpl(e.getChild());
+  public final void componentAdded(ContainerEvent e) {
+    Component component = e.getChild();
+    if (component != null) {
+      installImpl(component);
+    }
   }
 
   @Override
@@ -87,7 +90,7 @@ public class FocusWatcher implements ContainerListener, FocusListener {
     if (e.isTemporary() || !component.isShowing()) {
       return;
     }
-    if (component instanceof JTextComponent) {
+    if (component instanceof JTextComponent && ((JTextComponent)component).isEditable()) {
       SwingUndoUtil.addUndoRedoActions((JTextComponent)component);
     }
     setFocusedComponentImpl(component, e);
@@ -118,12 +121,15 @@ public class FocusWatcher implements ContainerListener, FocusListener {
     installImpl(component);
   }
 
-  private void installImpl(Component component) {
+  private void installImpl(@NotNull Component component) {
     if (component instanceof Container container) {
       synchronized (container.getTreeLock()) {
         int componentCount = container.getComponentCount();
         for (int i = 0; i < componentCount; i++) {
-          installImpl(container.getComponent(i));
+          Component child = container.getComponent(i);
+          if (child != null) {
+            installImpl(child);
+          }
         }
         container.addContainerListener(this);
       }

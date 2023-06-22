@@ -53,11 +53,6 @@
  */
 package org.jdom;
 
-import org.jdom.output.XMLOutputter;
-
-import java.io.IOException;
-import java.io.StringWriter;
-
 /**
  * An XML comment. Methods allow the user to get and set the text of the
  * comment.
@@ -142,12 +137,6 @@ public final class Comment extends Content {
 
   @Override
   public String toString() {
-    StringWriter out = new StringWriter();
-    try {
-      new XMLOutputter().output(this, out);
-    }
-    catch (IOException ignored) {
-    }
-    return "[Comment: " + out + "]";
+    return "[Comment: " + text + "]";
   }
 }

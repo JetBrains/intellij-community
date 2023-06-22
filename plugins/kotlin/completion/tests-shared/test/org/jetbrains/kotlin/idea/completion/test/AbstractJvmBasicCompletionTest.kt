@@ -10,12 +10,7 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 
 abstract class AbstractJvmBasicCompletionTest : KotlinFixtureCompletionBaseTestCase() {
-    override fun getProjectDescriptor(): LightProjectDescriptor = object : KotlinJdkAndLibraryProjectDescriptor(
-      libraryFiles = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance().libraryFiles,
-      librarySourceFiles = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance().librarySourceFiles,
-    ) {
-        override fun getSdk(): Sdk = IdeaTestUtil.getMockJdk18()
-    }
+    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinJdkAndLibraryProjectDescriptorOnJdk8
 
     override fun getPlatform() = JvmPlatforms.jvm8
     override fun defaultCompletionType() = CompletionType.BASIC
@@ -40,4 +35,11 @@ abstract class AbstractJvmBasicCompletionTest : KotlinFixtureCompletionBaseTestC
 
         super.configureFixture(testPath)
     }
+}
+
+object KotlinJdkAndLibraryProjectDescriptorOnJdk8 : KotlinJdkAndLibraryProjectDescriptor(
+    libraryFiles = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance().libraryFiles,
+    librarySourceFiles = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance().librarySourceFiles,
+) {
+    override fun getSdk(): Sdk = IdeaTestUtil.getMockJdk18()
 }

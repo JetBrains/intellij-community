@@ -12,7 +12,7 @@ sealed class Binder {
 
   internal abstract fun bindParams(pointer: Long, db: SqliteDb)
 
-  internal abstract fun executeBatch(pointer: Long, db: SqliteDb)
+  internal abstract fun executeBatch(pointer: Long, db: NativeDB)
 
   internal abstract fun clearBatch()
 }
@@ -29,7 +29,7 @@ object EmptyBinder : Binder() {
 
   override fun addBatch() = throw IllegalStateException()
 
-  override fun executeBatch(pointer: Long, db: SqliteDb) = throw IllegalStateException()
+  override fun executeBatch(pointer: Long, db: NativeDB) = throw IllegalStateException()
 
   override fun clearBatch() {
   }
@@ -70,7 +70,7 @@ class ObjectBinder(paramCount: Int, batchCountHint: Int = 1) : BaseBinder(paramC
     }
   }
 
-  override fun executeBatch(pointer: Long, db: SqliteDb) {
+  override fun executeBatch(pointer: Long, db: NativeDB) {
     for (batchIndex in 0 until batchQueryCount) {
       db.reset(pointer)
       for (position in 0 until paramCount) {
@@ -79,6 +79,7 @@ class ObjectBinder(paramCount: Int, batchCountHint: Int = 1) : BaseBinder(paramC
 
       stepInBatch(statementPointer = pointer, db = db, batchIndex = batchIndex)
     }
+    db.reset(pointer)
   }
 
   override fun clearBatch() {
@@ -91,6 +92,20 @@ class ObjectBinder(paramCount: Int, batchCountHint: Int = 1) : BaseBinder(paramC
     batch[batchPosition] = v1
   }
 
+  fun bind(v1: Any?, v2: Any?) {
+    assert(paramCount == 2)
+    batch[batchPosition] = v1
+    batch[batchPosition + 1] = v2
+  }
+
+  fun bind(v1: Any?, v2: Any?, v3: Any?, v4: Any?) {
+    assert(paramCount == 4)
+    batch[batchPosition] = v1
+    batch[batchPosition + 1] = v2
+    batch[batchPosition + 2] = v3
+    batch[batchPosition + 3] = v4
+  }
+
   fun bind(v1: Any?, v2: Any?, v3: Any?, v4: Any?, v5: Any?) {
     assert(paramCount == 5)
     batch[batchPosition] = v1
@@ -98,5 +113,21 @@ class ObjectBinder(paramCount: Int, batchCountHint: Int = 1) : BaseBinder(paramC
     batch[batchPosition + 2] = v3
     batch[batchPosition + 3] = v4
     batch[batchPosition + 4] = v5
+  }
+
+  fun bindMultiple(vararg values: Any?) {
+    assert(values.size == paramCount)
+    System.arraycopy(values, 0, batch, batchPosition, paramCount)
+  }
+
+  fun bind(v1: Any?, v2: Any?, v3: Any?, v4: Any?, v5: Any?, v6: Any?, v7: Any?) {
+    assert(paramCount == 7)
+    batch[batchPosition] = v1
+    batch[batchPosition + 1] = v2
+    batch[batchPosition + 2] = v3
+    batch[batchPosition + 3] = v4
+    batch[batchPosition + 4] = v5
+    batch[batchPosition + 5] = v6
+    batch[batchPosition + 6] = v7
   }
 }

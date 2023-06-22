@@ -36,9 +36,7 @@ public final class CaretSpecificDataContext extends DataContextWrapper {
     return new CaretSpecificDataContext(delegate, caret);
   }
 
-  /** @deprecated Use {@link #create(DataContext, Caret)} instead */
-  @Deprecated(forRemoval = true)
-  public CaretSpecificDataContext(@NotNull DataContext delegate, @NotNull Caret caret) {
+  private CaretSpecificDataContext(@NotNull DataContext delegate, @NotNull Caret caret) {
     super(delegate);
     myCaret = caret;
     Project project = super.getData(CommonDataKeys.PROJECT);

@@ -5,6 +5,6 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
 
 class DeleteUnreachableTest : LightQuickFixParameterizedTestCase() {
 
-  override fun getBasePath() = "/codeInsight/daemonCodeAnalyzer/quickFix/deleteUnreachable"
+  override fun getBasePath(): String = "/codeInsight/daemonCodeAnalyzer/quickFix/deleteUnreachable"
 
 }

@@ -15,10 +15,11 @@
  */
 package org.jetbrains.idea.maven.project.importing;
 
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
 
 import java.io.IOException;
@@ -34,7 +35,7 @@ public abstract class MavenProjectsTreeTestCase extends MavenMultiVersionImporti
   @Override
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
-    myTree = new MavenProjectsTree(myProject);
+    myTree = MavenProjectsManager.getInstance(myProject).getProjectsTree();
   }
 
   protected void updateAll(VirtualFile... files) {
@@ -43,15 +44,15 @@ public abstract class MavenProjectsTreeTestCase extends MavenMultiVersionImporti
 
   protected void updateAll(List<String> profiles, VirtualFile... files) {
     myTree.resetManagedFilesAndProfiles(asList(files), new MavenExplicitProfiles(profiles));
-    myTree.updateAll(false, getMavenGeneralSettings(), getMavenProgressIndicator());
+    myTree.updateAll(false, getMavenGeneralSettings(), getMavenProgressIndicator().getIndicator());
   }
 
   protected void update(VirtualFile file) {
-    myTree.update(asList(file), false, getMavenGeneralSettings(), getMavenProgressIndicator());
+    myTree.update(asList(file), false, getMavenGeneralSettings(), getMavenProgressIndicator().getIndicator());
   }
 
   protected void deleteProject(VirtualFile file) {
-    myTree.delete(asList(file), getMavenGeneralSettings(), getMavenProgressIndicator());
+    myTree.delete(asList(file), getMavenGeneralSettings(), getMavenProgressIndicator().getIndicator());
   }
 
   protected void updateTimestamps(final VirtualFile... files) throws IOException {

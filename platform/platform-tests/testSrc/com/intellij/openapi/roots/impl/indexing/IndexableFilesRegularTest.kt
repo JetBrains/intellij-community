@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl.indexing
 
 import com.intellij.openapi.application.runWriteAction
@@ -16,10 +16,12 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.UsageSearchContext
 import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexEx
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.IndexableSetContributor
+import com.intellij.util.indexing.roots.IndexableEntityProviderMethods
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -192,12 +194,14 @@ class IndexableFilesRegularTest : IndexableFilesBaseTest() {
         additionalRootJava = file("AdditionalRoot.java", "class AdditionalRoot {}")
       }
     }
+    val additionalProjectRootsFile = additionalProjectRoots.file  // load VFS synchronously outside read action
+    val additionalRootsFile = additionalRoots.file                // load VFS synchronously outside read action
     val contributor = object : IndexableSetContributor() {
       override fun getAdditionalProjectRootsToIndex(project: Project): Set<VirtualFile> =
-        setOf(additionalProjectRoots.file)
+        setOf(additionalProjectRootsFile)
 
       override fun getAdditionalRootsToIndex(): Set<VirtualFile> =
-        setOf(additionalRoots.file)
+        setOf(additionalRootsFile)
     }
     maskIndexableSetContributors(contributor)
     assertIndexableFiles(additionalProjectRootJava.file, additionalRootJava.file)
@@ -263,14 +267,20 @@ class IndexableFilesRegularTest : IndexableFilesBaseTest() {
         }
       }
     }
-    val excludedFile = sourceFileExcludedByCondition.file //to avoid synchronous refresh outside EDT under read lock
+    val excludedFile = sourceFileExcludedByCondition.file              // load VFS synchronously outside read action
+    val sourcesDirFile = sourcesDir.file                               // load VFS synchronously outside read action
+    val moduleExcludedSourcesDirFile = moduleExcludedSourcesDir.file   // load VFS synchronously outside read action
+    val binariesDirFile = binariesDir.file                             // load VFS synchronously outside read action
+    val moduleExcludedBinariesDirFile = moduleExcludedBinariesDir.file // load VFS synchronously outside read action
+    val sourcesExcludedDirFile = sourcesExcludedDir.file               // load VFS synchronously outside read action
+    val binariesExcludedDirFile = binariesExcludedDir.file             // load VFS synchronously outside read action
     val additionalLibraryRootsProvider = object : AdditionalLibraryRootsProvider() {
       override fun getAdditionalProjectLibraries(project: Project): List<SyntheticLibrary> {
         return listOf(
           SyntheticLibrary.newImmutableLibrary(
-            listOf(sourcesDir.file, moduleExcludedSourcesDir.file),
-            listOf(binariesDir.file, moduleExcludedBinariesDir.file),
-            setOf(sourcesExcludedDir.file, binariesExcludedDir.file)
+            listOf(sourcesDirFile, moduleExcludedSourcesDirFile),
+            listOf(binariesDirFile, moduleExcludedBinariesDirFile),
+            setOf(sourcesExcludedDirFile, binariesExcludedDirFile)
           ) { file -> file == excludedFile }
         )
       }
@@ -377,6 +387,9 @@ class IndexableFilesRegularTest : IndexableFilesBaseTest() {
     }
     val fileBasedIndexEx = FileBasedIndex.getInstance() as FileBasedIndexEx
     val providers = fileBasedIndexEx.getIndexableFilesProviders(project)
-    UsefulTestCase.assertSize(1, providers)
+    assertSameElements(providers.map { it.origin },
+                       (IndexableEntityProviderMethods.createModuleContentIterators(module) +
+                        IndexableEntityProviderMethods.createModuleContentIterators(otherModule) +
+                        IndexableEntityProviderMethods.createLibraryIterators("libraryName", project)).map { it.origin })
   }
 }

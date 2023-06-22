@@ -388,7 +388,7 @@ private fun filterTopPriorityResults(resolved: List<PsiElement>, module: Module?
   if (resolved.isEmpty()) return emptyList()
 
   val groupedResults = resolved.groupByTo(sortedMapOf<Priority, MutableList<PsiElement>>()) { resolvedElementPriority(it, module) }
-  val skeletons = groupedResults.remove(Priority.SKELETON) ?: emptyList<PsiElement>()
+  val skeletons = groupedResults.remove(Priority.SKELETON) ?: emptyList()
 
   if (groupedResults.topResultIs(Priority.NAMESPACE_PACKAGE)) return groupedResults[Priority.NAMESPACE_PACKAGE]!! + skeletons
   groupedResults.remove(Priority.NAMESPACE_PACKAGE)

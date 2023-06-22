@@ -40,19 +40,19 @@ class WebSymbolsQueryExecutorFactoryImpl(private val project: Project) : WebSymb
     getCustomScope(location).forEach(scopeList::add)
     val internalMode = ApplicationManager.getApplication().isInternal
     val originalLocation = location?.originalElement
-    scopeList.addAll(WebSymbolsQueryConfigurator.EP_NAME.extensionList.flatMap { provider ->
-      provider.getScope(project, originalLocation, context, allowResolve)
+    scopeList.addAll(WebSymbolsQueryConfigurator.EP_NAME.extensionList.flatMap { queryConfigurator ->
+      queryConfigurator.getScope(project, originalLocation, context, allowResolve)
         .also {
-          //check provider
+          // check configurator
           if (internalMode && Math.random() < 0.2) {
-            val newContext = provider.getScope(project, originalLocation, context, allowResolve)
-            if (newContext != it) {
+            val newScope = queryConfigurator.getScope(project, originalLocation, context, allowResolve)
+            if (newScope != it) {
               logger<WebSymbolsQueryExecutorFactory>().error(
-                "Provider $provider should provide additional context, which is the same (by equals()), when called with the same arguments: $it != $newContext")
+                "Query configurator $queryConfigurator should provide scope, which is the same (by equals()), when called with the same arguments: $it != $newScope")
             }
-            if (newContext.hashCode() != it.hashCode()) {
+            if (newScope.hashCode() != it.hashCode()) {
               logger<WebSymbolsQueryExecutorFactory>().error(
-                "Provider $provider should provide additional context, which has the same hashCode(), when called with the same arguments: $it != $newContext")
+                "Query configurator $queryConfigurator should provide scope, which has the same hashCode(), when called with the same arguments: $it != $newScope")
             }
           }
         }
@@ -60,7 +60,7 @@ class WebSymbolsQueryExecutorFactoryImpl(private val project: Project) : WebSymb
 
     return WebSymbolsQueryExecutorImpl(scopeList,
                                        createNamesProvider(project, originalLocation, context),
-                                       WebSymbolsQueryResultsCustomizerFactory.getScope(location, context),
+                                       WebSymbolsQueryResultsCustomizerFactory.getQueryResultsCustomizer(location, context),
                                        context,
                                        allowResolve)
   }

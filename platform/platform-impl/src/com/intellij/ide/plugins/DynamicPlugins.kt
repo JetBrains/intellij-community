@@ -14,9 +14,8 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.actions.RevealFileAction
+import com.intellij.ide.cancelAndJoinBlocking
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.ide.impl.runBlockingUnderModalProgress
-import com.intellij.ide.joinBlocking
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.ui.TopHitCache
@@ -35,6 +34,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
+import com.intellij.openapi.actionSystem.impl.canUnloadActionGroup
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
@@ -50,8 +50,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.keymap.impl.BundledKeymapBean
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.PotemkinProgress
+import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -89,8 +91,6 @@ import java.util.*
 import java.util.function.Predicate
 import javax.swing.JComponent
 import javax.swing.ToolTipManager
-import kotlin.collections.component1
-import kotlin.collections.component2
 
 private val LOG = logger<DynamicPlugins>()
 private val classloadersFromUnloadedPlugins = mutableMapOf<PluginId, WeakList<PluginClassLoader>>()
@@ -262,7 +262,7 @@ object DynamicPlugins {
     }
 
     checkNoComponentsOrServiceOverrides(module)?.let { return it }
-    ActionManagerImpl.checkUnloadActions(module)?.let { return it }
+    checkUnloadActions(module)?.let { return it }
 
     for (moduleRef in module.content.modules) {
       if (pluginSet.isModuleEnabled(moduleRef.name)) {
@@ -387,7 +387,7 @@ object DynamicPlugins {
     if (options.save) {
       runInAutoSaveDisabledMode {
         FileDocumentManager.getInstance().saveAllDocuments()
-        runBlockingUnderModalProgress {
+        runWithModalProgressBlocking(project?.let { ModalTaskOwner.project(it) } ?: ModalTaskOwner.guess(), "") {
           saveProjectsAndApp(true)
         }
       }
@@ -415,27 +415,27 @@ object DynamicPlugins {
       this.isUpdate = isUpdate
     }
 
-    fun withWaitForClassloaderUnload(waitForClassloaderUnload: Boolean) = also {
+    fun withWaitForClassloaderUnload(waitForClassloaderUnload: Boolean): UnloadPluginOptions = also {
       this.waitForClassloaderUnload = waitForClassloaderUnload
     }
 
-    fun withDisable(disable: Boolean) = also {
+    fun withDisable(disable: Boolean): UnloadPluginOptions = also {
       this.disable = disable
     }
 
-    fun withRequireMemorySnapshot(requireMemorySnapshot: Boolean) = also {
+    fun withRequireMemorySnapshot(requireMemorySnapshot: Boolean): UnloadPluginOptions = also {
       this.requireMemorySnapshot = requireMemorySnapshot
     }
 
-    fun withUnloadWaitTimeout(unloadWaitTimeout: Int) = also {
+    fun withUnloadWaitTimeout(unloadWaitTimeout: Int): UnloadPluginOptions = also {
       this.unloadWaitTimeout = unloadWaitTimeout
     }
 
-    fun withSave(save: Boolean) = also {
+    fun withSave(save: Boolean): UnloadPluginOptions = also {
       this.save = save
     }
 
-    fun withCheckImplementationDetailDependencies(checkImplementationDetailDependencies: Boolean) = also {
+    fun withCheckImplementationDetailDependencies(checkImplementationDetailDependencies: Boolean): UnloadPluginOptions = also {
       this.checkImplementationDetailDependencies = checkImplementationDetailDependencies
     }
   }
@@ -547,7 +547,7 @@ object DynamicPlugins {
     }
     finally {
       IdeEventQueue.getInstance().flushQueue()
-      joinPluginScopes(classLoaders)
+      cancelAndJoinPluginScopes(classLoaders)
 
       // do it after IdeEventQueue.flushQueue() to ensure that Disposer.isDisposed(...) works as expected in flushed tasks.
       Disposer.clearDisposalTraces()   // ensure we don't have references to plugin classes in disposal backtraces
@@ -961,12 +961,12 @@ private fun clearNewFocusOwner() {
   }
 }
 
-private fun joinPluginScopes(classLoaders: WeakList<PluginClassLoader>) {
+private fun cancelAndJoinPluginScopes(classLoaders: WeakList<PluginClassLoader>) {
   if (!Registry.`is`("ide.await.scope.completion")) {
     return
   }
   for (classLoader in classLoaders) {
-    joinBlocking(classLoader.pluginCoroutineScope, "Plugin ${classLoader.pluginId}") { job ->
+    cancelAndJoinBlocking(classLoader.pluginCoroutineScope, "Plugin ${classLoader.pluginId}") { job, _ ->
       while (job.isActive) {
         ProgressManager.checkCanceled()
         IdeEventQueue.getInstance().flushQueue()
@@ -1033,7 +1033,7 @@ private fun processImplementationDetailDependenciesOnPlugin(pluginDescriptor: Id
 }
 
 /**
- * Load all sub plugins that depend on specified [dependencyPlugin].
+ * @return a Set of modules that depend on [dependencyPlugin]
  */
 private fun optionalDependenciesOnPlugin(
   dependencyPlugin: IdeaPluginDescriptorImpl,
@@ -1041,27 +1041,28 @@ private fun optionalDependenciesOnPlugin(
   pluginSet: PluginSet,
 ): Set<IdeaPluginDescriptorImpl> {
   // 1. collect optional descriptors
-  val modulesToMain = LinkedHashMap<IdeaPluginDescriptorImpl, IdeaPluginDescriptorImpl>()
+  val dependentPluginsAndItsModule = ArrayList<Pair<IdeaPluginDescriptorImpl, IdeaPluginDescriptorImpl>>()
 
   processOptionalDependenciesOnPlugin(dependencyPlugin, pluginSet, isLoaded = false) { main, module ->
-    modulesToMain[module] = main
+    dependentPluginsAndItsModule.add(main to module)
     true
   }
 
-  if (modulesToMain.isEmpty()) {
+  if (dependentPluginsAndItsModule.isEmpty()) {
     return emptySet()
   }
 
   // 2. sort topologically
-  val topologicalComparator = PluginSetBuilder(modulesToMain.values)
+  val topologicalComparator = PluginSetBuilder(dependentPluginsAndItsModule.map { it.first })
     .moduleGraph
     .topologicalComparator
+  dependentPluginsAndItsModule.sortWith(Comparator { o1, o2 -> topologicalComparator.compare(o1.first, o2.first) })
 
-  return modulesToMain.toSortedMap(topologicalComparator)
-    .filter { (moduleDescriptor, mainDescriptor) ->
+  return dependentPluginsAndItsModule.distinct()
+    .filter { (mainDescriptor, moduleDescriptor) ->
       // 3. setup classloaders
       classLoaderConfigurator.configureDependency(mainDescriptor, moduleDescriptor)
-    }.keys
+    }.map { it.second }.toSet()
 }
 
 private fun loadModules(
@@ -1098,15 +1099,9 @@ private fun analyzeSnapshot(hprofPath: String, pluginId: PluginId): String {
 }
 
 private fun createDisposeTreePredicate(pluginDescriptor: IdeaPluginDescriptorImpl): Predicate<Disposable>? {
-  val classLoader = pluginDescriptor.pluginClassLoader as? PluginClassLoader
-                    ?: return null
+  val classLoader = pluginDescriptor.pluginClassLoader as? PluginClassLoader ?: return null
   return Predicate {
-    if (it is PluginManager.PluginAwareDisposable) {
-      it.classLoaderId == classLoader.instanceId
-    }
-    else {
-      it::class.java.classLoader === classLoader
-    }
+    it::class.java.classLoader === classLoader
   }
 }
 
@@ -1384,4 +1379,16 @@ private fun clearCachedValues() {
   for (project in ProjectUtil.getOpenProjects()) {
     (CachedValuesManager.getManager(project) as? CachedValuesManagerImpl)?.clearCachedValues()
   }
+}
+
+private fun checkUnloadActions(module: IdeaPluginDescriptorImpl): String? {
+  for (descriptor in module.actions) {
+    val element = descriptor.element
+    val elementName = descriptor.name
+    if (elementName != ActionDescriptorName.action &&
+        !(elementName == ActionDescriptorName.group && canUnloadActionGroup(element)) && elementName != ActionDescriptorName.reference) {
+      return "Plugin $module is not unload-safe because of action element $elementName"
+    }
+  }
+  return null
 }

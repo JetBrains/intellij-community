@@ -7,13 +7,13 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
  */
 public interface SpaceAllocationStrategy {
   /**
-   * @return how long buffers create for a new record (i.e. in {@link StreamlinedBlobStorage#writeToRecord(int, StreamlinedBlobStorage.Writer)}
+   * @return how long buffers create for a new record (i.e. in {@link StreamlinedBlobStorage#writeToRecord(int, ByteBufferWriter)}
    * there recordId=NULL_ID)
    */
   int defaultCapacity();
 
   /**
-   * @return if a writer in a {@link StreamlinedBlobStorage#writeToRecord(int, StreamlinedBlobStorage.Writer)}
+   * @return if a writer in a {@link StreamlinedBlobStorage#writeToRecord(int, ByteBufferWriter)}
    * returns buffer of (length, capacity) -- how big record to allocate for the data? Buffer actual size (limit-position)
    * and buffer.capacity is considered. returned value must be >= actualLength
    */

@@ -139,12 +139,13 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
 
     CommentTracker tracker = new CommentTracker();
     String text = "try (" + variable.getTypeElement().getText() + " " + variable.getName() + " = " + tracker.text(initializer) + ") {}";
-    PsiTryStatement armStatement = (PsiTryStatement)tracker.replaceAndRestoreComments(declaration, text);
+    PsiTryStatement armStatement = (PsiTryStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText(text, declaration);
 
     List<PsiElement> toFormat = null;
     if (last != null) {
-      toFormat = moveStatements(last, armStatement);
+      toFormat = moveStatements(last, declaration, armStatement);
     }
+    armStatement = (PsiTryStatement)tracker.replaceAndRestoreComments(declaration, armStatement);
 
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
     PsiElement formattedElement = codeStyleManager.reformat(armStatement);
@@ -165,16 +166,16 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
     }
   }
 
-  private static List<PsiElement> moveStatements(PsiElement last, PsiTryStatement statement) {
-    PsiCodeBlock tryBlock = statement.getTryBlock();
-    assert tryBlock != null : statement.getText();
-    PsiElement parent = statement.getParent();
+  private static List<PsiElement> moveStatements(PsiElement last, PsiElement declaration, PsiTryStatement armStatement) {
+    PsiCodeBlock tryBlock = armStatement.getTryBlock();
+    assert tryBlock != null : armStatement.getText();
+    PsiElement parent = declaration.getParent();
     LocalSearchScope scope = new LocalSearchScope(parent);
 
     List<PsiElement> toFormat = new SmartList<>();
     PsiElement stopAt = last.getNextSibling();
 
-    PsiElement i = statement.getNextSibling();
+    PsiElement i = declaration.getNextSibling();
     while (i != null && i != stopAt) {
       PsiElement child = i;
       i = PsiTreeUtil.skipWhitespacesAndCommentsForward(i);
@@ -194,12 +195,12 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
 
         if (!contained) {
           PsiLocalVariable var = (PsiLocalVariable)declared;
-          PsiElementFactory factory = JavaPsiFacade.getElementFactory(statement.getProject());
+          PsiElementFactory factory = JavaPsiFacade.getElementFactory(declaration.getProject());
 
           String name = var.getName();
           PsiDeclarationStatement declarationStatement = factory.createVariableDeclarationStatement(name, var.getType(), null);
           PsiUtil.setModifierProperty((PsiLocalVariable)declarationStatement.getDeclaredElements()[0], PsiModifier.FINAL, var.hasModifierProperty(PsiModifier.FINAL));
-          toFormat.add(parent.addBefore(declarationStatement, statement));
+          toFormat.add(parent.addBefore(declarationStatement, declaration));
 
           CommentTracker commentTracker = new CommentTracker();
           PsiExpression varInit = var.getInitializer();
@@ -217,7 +218,7 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
       }
     }
 
-    PsiElement first = statement.getNextSibling();
+    PsiElement first = declaration.getNextSibling();
     tryBlock.addRangeBefore(first, last, tryBlock.getRBrace());
     parent.deleteChildRange(first, last);
 

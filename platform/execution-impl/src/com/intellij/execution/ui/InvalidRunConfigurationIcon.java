@@ -3,8 +3,9 @@ package com.intellij.execution.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.IconReplacer;
-import com.intellij.ui.IconWithOverlay;
+import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.icons.IconReplacer;
+import com.intellij.ui.icons.IconWithOverlay;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,4 +41,13 @@ public class InvalidRunConfigurationIcon extends IconWithOverlay {
     return new InvalidRunConfigurationIcon(replacer.replaceIcon(Objects.requireNonNull(getIcon(0))),
                                            replacer.replaceIcon(Objects.requireNonNull(getIcon(1))));
   }
+
+  @Override
+  public @NotNull LayeredIcon copy() {
+    return new InvalidRunConfigurationIcon(
+      Objects.requireNonNull(getIcon(0)),
+      Objects.requireNonNull(getIcon(1))
+    );
+  }
+
 }

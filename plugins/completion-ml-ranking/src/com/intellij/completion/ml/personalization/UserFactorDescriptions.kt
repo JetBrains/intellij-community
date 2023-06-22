@@ -40,6 +40,8 @@ object UserFactorDescriptions {
       Descriptor.register("mnemonicsUsage", ::MnemonicsUsageUpdater, ::MnemonicsUsageReader)
     val PREFIX_MATCHING_TYPE: UserFactorDescription<PrefixMatchingTypeUpdater, PrefixMatchingTypeReader> =
       Descriptor.register("prefixMatchingType", ::PrefixMatchingTypeUpdater, ::PrefixMatchingTypeReader)
+    val TEMPLATES_USAGE: UserFactorDescription<TemplatesUsageUpdater, TemplatesUsageReader> =
+      Descriptor.register("templatesUsage", ::TemplatesUsageUpdater, ::TemplatesUsageReader)
 
     fun isKnownFactor(id: String): Boolean = id in IDS
 

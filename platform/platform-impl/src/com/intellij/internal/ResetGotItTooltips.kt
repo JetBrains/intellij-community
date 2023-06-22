@@ -11,7 +11,7 @@ import com.intellij.ui.GotItTooltip
 
 internal class ResetGotItTooltips : AnAction(), DumbAware {
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     (PropertiesComponent.getInstance() as? BasePropertyService)?.removeIf {

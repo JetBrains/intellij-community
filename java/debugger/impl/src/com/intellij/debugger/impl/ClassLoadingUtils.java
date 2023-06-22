@@ -10,7 +10,6 @@ import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.jetbrains.jdi.MethodImpl;
 import com.sun.jdi.*;
 import one.util.streamex.StreamEx;
@@ -91,7 +90,7 @@ public final class ClassLoadingUtils {
           ClassLoaderReference classLoader = getClassLoader(evaluationContext, process);
           try (InputStream stream = cls.getResourceAsStream('/' + name.replace('.', '/') + ".class")) {
             if (stream == null) return null;
-            defineClass(name, StreamUtil.readBytes(stream), evaluationContext, process, classLoader);
+            defineClass(name, stream.readAllBytes(), evaluationContext, process, classLoader);
             ((EvaluationContextImpl)evaluationContext).setClassLoader(classLoader);
             return (ClassType)process.findClass(evaluationContext, name, classLoader);
           }

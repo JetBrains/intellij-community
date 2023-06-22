@@ -1,4 +1,6 @@
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBUI.Borders.empty
+import com.intellij.util.ui.JBUI.Borders.empty as emptyAlias
 import javax.swing.border.Border
 
 internal class UseJBUIBordersEmptyThatCanBeSimplified {
@@ -35,8 +37,15 @@ internal class UseJBUIBordersEmptyThatCanBeSimplified {
 
     // more specific imports:
     JBUI.Borders.<warning descr="Empty border creation can be simplified">empty(0)</warning>
-    JBUI.Borders.<warning descr="Empty border creation can be simplified">empty(0)</warning>
     takeBorder(JBUI.Borders.<warning descr="Empty border creation can be simplified">empty(0, 0, 0, 0)</warning>)
+
+    // static method imports:
+    <warning descr="Empty border creation can be simplified">empty(0)</warning>
+    takeBorder(JBUI.Borders.<warning descr="Empty border creation can be simplified">empty(0, 0, 0, 0)</warning>)
+
+    // static method imported with alias:
+    <warning descr="Empty border creation can be simplified">emptyAlias(0)</warning>
+    takeBorder(<warning descr="Empty border creation can be simplified">emptyAlias(0, 0, 0, 0)</warning>)
 
     // constant used to check expressions evaluation:
     takeBorder(JBUI.Borders.<warning descr="Empty border creation can be simplified">empty(ONE, ZERO, 0, ZERO)</warning>)

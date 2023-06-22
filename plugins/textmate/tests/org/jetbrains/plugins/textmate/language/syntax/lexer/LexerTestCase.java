@@ -70,7 +70,7 @@ abstract public class LexerTestCase extends UsefulTestCase {
     Iterator<TextMateGrammar> grammars = TestUtil.readBundle(getBundleName()).readGrammars().iterator();
     while (grammars.hasNext()) {
       TextMateGrammar grammar = grammars.next();
-      CharSequence rootScope = mySyntaxTable.loadSyntax(grammar.getPlist(), myInterner);
+      CharSequence rootScope = mySyntaxTable.loadSyntax(grammar.getPlist().getValue(), myInterner);
       grammar.getFileNameMatchers().forEach(matcher -> {
         myLanguageDescriptors.put(matcher, rootScope);
       });
@@ -85,7 +85,7 @@ abstract public class LexerTestCase extends UsefulTestCase {
       Iterator<TextMateGrammar> extraGrammars = TestUtil.readBundle(bundleName).readGrammars().iterator();
       while (extraGrammars.hasNext()) {
         TextMateGrammar grammar = extraGrammars.next();
-        mySyntaxTable.loadSyntax(grammar.getPlist(), myInterner);
+        mySyntaxTable.loadSyntax(grammar.getPlist().getValue(), myInterner);
       }
     }
     mySyntaxTable.compact();

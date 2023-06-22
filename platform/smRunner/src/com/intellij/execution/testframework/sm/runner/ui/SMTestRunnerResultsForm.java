@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -17,10 +17,12 @@ import com.intellij.execution.testframework.sm.TestHistoryConfiguration;
 import com.intellij.execution.testframework.sm.runner.*;
 import com.intellij.execution.testframework.sm.runner.history.ImportedTestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction;
+import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.util.treeView.IndexComparator;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -49,6 +51,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.ApiStatus;
@@ -173,7 +176,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       if (ScrollToTestSourceAction.isScrollEnabled(this)) {
         ReadAction
           .nonBlocking(() -> TestsUIUtil.getOpenFileDescriptor(testProxy, this))
-          .finishOnUiThread(ModalityState.NON_MODAL, descriptor -> {
+          .finishOnUiThread(ModalityState.nonModal(), descriptor -> {
             if (descriptor != null) {
               OpenSourceUtil.navigate(false, descriptor);
             }
@@ -646,7 +649,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     if (testingFinished) {
       boolean noTestsWereRun = myTotalTestCount == 0 && (myTestsRootNode.wasLaunched() || !myTestsRootNode.isTestsReporterAttached());
-      myStatusLine.onTestsDone(noTestsWereRun ? null : myTestsRootNode.getMagnitudeInfo());
+      myStatusLine.onTestsDone(noTestsWereRun ? null : () -> {
+        TestStateInfo.Magnitude magnitude = myTestsRootNode.getMagnitudeInfo();
+        if (magnitude == null) return null;
+        return TestIconMapper.getToolbarIcon(magnitude, myTestsRootNode.hasErrors(), () -> myTestsRootNode.hasPassedTests());
+      });
       final Color editorBackground = EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
       myConsole.setBorder(new CompoundBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT | SideBorder.TOP),
                                              new SideBorder(editorBackground, SideBorder.LEFT)));
@@ -654,6 +661,10 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       repaint();
       // else color will be according failed/passed tests
     }
+
+    UIUtil.invokeLaterIfNeeded(() -> {
+      myTreeView.setAccessibleStatus(myStatusLine.getStateText());
+    });
   }
 
   private boolean isUndefined() {
@@ -761,6 +772,15 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   public String getHistoryFileName() {
     return myHistoryFileName;
+  }
+
+  AnAction[] getToolbarActions() { return myToolbarPanel.actionsToMerge; }
+
+  AnAction[] getAdditionalToolbarActions() { return myToolbarPanel.additionalActionsToMerge; }
+
+  void hideToolbar() {
+    myToolbarPanel.setVisible(false);
+    myLeftPane.setBorder(JBUI.Borders.empty());
   }
 
   private static class MySaveHistoryTask extends Task.Backgroundable {

@@ -39,6 +39,7 @@ public class SplitButtonAction extends ActionGroup implements CustomComponentAct
   public SplitButtonAction(@NotNull ActionGroup actionGroup) {
     myActionGroup = actionGroup;
     setPopup(true);
+    getTemplatePresentation().copyFrom(actionGroup.getTemplatePresentation());
   }
 
   public @NotNull ActionGroup getActionGroup() {
@@ -167,7 +168,7 @@ public class SplitButtonAction extends ActionGroup implements CustomComponentAct
 
       int x = baseRect.x + baseRect.width - JBUIScale.scale(3) - ARROW_DOWN.getIconWidth();
       int y = baseRect.y + (baseRect.height - ARROW_DOWN.getIconHeight()) / 2 + JBUIScale.scale(1);
-      look.paintIcon(g, this, ARROW_DOWN, x, y);
+      ARROW_DOWN.paintIcon(this, g, x, y);
 
       x -= JBUIScale.scale(4);
       int popState = getPopState();

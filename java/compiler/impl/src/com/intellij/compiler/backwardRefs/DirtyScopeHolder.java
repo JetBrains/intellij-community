@@ -3,6 +3,7 @@ package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
@@ -33,13 +34,13 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
-import com.intellij.workspaceModel.storage.EntityChange;
-import com.intellij.workspaceModel.storage.VersionedStorageChange;
-import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
+import com.intellij.platform.workspace.storage.EntityChange;
+import com.intellij.platform.workspace.storage.VersionedStorageChange;
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +62,7 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
   private final List<ExcludeEntryDescription> myExcludedDescriptions = new SmartList<>(); // guarded by myLock
   private boolean myCompilationPhase; // guarded by myLock
   private volatile GlobalSearchScope myExcludedFilesScope; // calculated outside myLock
-  private final Set<String> myCompilationAffectedModules = ContainerUtil.newConcurrentSet(); // used outside myLock
+  private final Set<String> myCompilationAffectedModules = ConcurrentCollectionFactory.createConcurrentSet(); // used outside myLock
 
   private final FileTypeRegistry myFileTypeRegistry = FileTypeRegistry.getInstance();
 
@@ -125,6 +126,7 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
             addToDirtyModules(ModuleEntityUtils.findModule(newEntity.getModule(), event.getStorageAfter()));
           }
         }
+        clearDisposedModules();
       }
     });
   }
@@ -333,14 +335,10 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
     }
   }
 
-  private void removeFromDirtyModules(@NotNull Module module) {
+  private void clearDisposedModules() {
     synchronized (myLock) {
-      if (myCompilationPhase) {
-        myChangedModulesDuringCompilation.remove(module);
-      }
-      else {
-        myVFSChangedModules.remove(module);
-      }
+      myChangedModulesDuringCompilation.removeIf(module -> module.isDisposed());
+      myVFSChangedModules.removeIf(module -> module.isDisposed());
     }
   }
 

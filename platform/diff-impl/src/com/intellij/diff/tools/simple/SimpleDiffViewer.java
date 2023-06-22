@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.simple;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.actions.AllLinesIterator;
 import com.intellij.diff.actions.BufferedLineIterator;
@@ -15,6 +16,7 @@ import com.intellij.diff.tools.util.side.TwosideContentPanel;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
 import com.intellij.diff.tools.util.text.TwosideTextDiffProvider;
 import com.intellij.diff.util.*;
+import com.intellij.diff.util.Range;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -23,6 +25,7 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -34,10 +37,7 @@ import com.intellij.ui.DirtyUI;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -164,7 +164,8 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
     return myFoldingModel;
   }
 
-  boolean needAlignChanges() {
+  @ApiStatus.Internal
+  public boolean needAlignChanges() {
     return Boolean.TRUE.equals(myRequest.getUserData(DiffUserDataKeys.ALIGNED_TWO_SIDED_DIFF))
            || getTextSettings().isEnableAligningChangesMode();
   }
@@ -262,7 +263,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
     };
   }
 
-  private void clearDiffPresentation() {
+  protected void clearDiffPresentation() {
     myModel.clear();
 
     myPanel.resetNotifications();
@@ -310,7 +311,12 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
     DiffUtil.moveCaret(getEditor1(), line1);
     DiffUtil.moveCaret(getEditor2(), line2);
 
-    getSyncScrollSupport().makeVisible(getCurrentSide(), line1, endLine1, line2, endLine2, animated);
+    if (ClientId.isCurrentlyUnderLocalId()) {
+      getSyncScrollSupport().makeVisible(getCurrentSide(), line1, endLine1, line2, endLine2, animated);
+    }
+    else {
+      getCurrentEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
+    }
   }
 
   protected boolean doScrollToContext(@NotNull DiffNavigationContext context) {
@@ -559,7 +565,8 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
   private class ReplaceSelectedChangesAction extends ApplySelectedChangesActionBase {
     ReplaceSelectedChangesAction(@NotNull Side focusedSide) {
       super(focusedSide.other());
-      setShortcutSet(ActionManager.getInstance().getAction(focusedSide.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide")).getShortcutSet());
+      setShortcutSet(ActionManager.getInstance().getAction(focusedSide.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide"))
+                       .getShortcutSet());
     }
 
     @NotNull
@@ -585,7 +592,8 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
   private class AppendSelectedChangesAction extends ApplySelectedChangesActionBase {
     AppendSelectedChangesAction(@NotNull Side focusedSide) {
       super(focusedSide.other());
-      setShortcutSet(ActionManager.getInstance().getAction(focusedSide.select("Diff.AppendLeftSide", "Diff.AppendRightSide")).getShortcutSet());
+      setShortcutSet(ActionManager.getInstance().getAction(focusedSide.select("Diff.AppendLeftSide", "Diff.AppendRightSide"))
+                       .getShortcutSet());
     }
 
     @NotNull

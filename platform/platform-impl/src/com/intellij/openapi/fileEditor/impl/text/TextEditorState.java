@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,25 +13,25 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 public final class TextEditorState implements FileEditorState {
-  @NotNull CaretState @NotNull [] CARETS = new CaretState[0];
-
-  int RELATIVE_CARET_POSITION; // distance from primary caret to the top of editor's viewable area in pixels
-
-  /**
-   * State which describes how editor is folded.
-   * This field can be {@code null}.
-   */
-  private CodeFoldingState myFoldingState;
-  private Supplier<? extends CodeFoldingState> myDelayedFoldInfoProducer;
-
   private static final int MIN_CHANGE_DISTANCE = 4;
 
+  @NotNull CaretState @NotNull [] CARETS = new CaretState[0];
+
+  // distance from primary caret to the top of editor's viewable area in pixels
+  int relativeCaretPosition;
+
   /**
-   * Folding state is more complex than, say, line/column number, that's why it's deserialization can be performed only when
-   * necessary pre-requisites are met (e.g. corresponding {@link Document} is created).
+   * State, which describes how an editor is folded.
+   */
+  private @Nullable CodeFoldingState myFoldingState;
+  private Supplier<? extends CodeFoldingState> myDelayedFoldInfoProducer;
+
+  /**
+   * Folding state is more complex than, say, line/column number, that's why it's a deserialization can be performed only when
+   * necessary pre-requisites are met (e.g., corresponding {@link Document} is created).
    * <p/>
    * However, we can't be sure that those conditions are met on IDE startup (when editor states are read). Current method allows
-   * to register a closure within the current state object which returns folding info if possible.
+   *  registering a closure within the current state object which returns folding info if possible.
    *
    * @param producer  delayed folding info producer
    */
@@ -67,7 +68,7 @@ public final class TextEditorState implements FileEditorState {
     }
 
     if (!Arrays.equals(CARETS, textEditorState.CARETS)) return false;
-    if (RELATIVE_CARET_POSITION != textEditorState.RELATIVE_CARET_POSITION) return false;
+    if (relativeCaretPosition != textEditorState.relativeCaretPosition) return false;
     CodeFoldingState localFoldingState = getFoldingState();
     CodeFoldingState theirFoldingState = textEditorState.getFoldingState();
     return Objects.equals(localFoldingState, theirFoldingState);
@@ -82,9 +83,7 @@ public final class TextEditorState implements FileEditorState {
   public boolean canBeMergedWith(@NotNull FileEditorState otherState, @NotNull FileEditorStateLevel level) {
     if (!(otherState instanceof TextEditorState other)) return false;
     return level == FileEditorStateLevel.NAVIGATION &&
-           CARETS.length == 1 &&
-           other.CARETS.length == 1 &&
-           Math.abs(CARETS[0].LINE - other.CARETS[0].LINE) < MIN_CHANGE_DISTANCE;
+           ArrayUtil.areEqual(CARETS, other.CARETS, (a, b) -> Math.abs(a.LINE - b.LINE) < MIN_CHANGE_DISTANCE);
   }
 
   @Override
@@ -92,7 +91,7 @@ public final class TextEditorState implements FileEditorState {
     return Arrays.toString(CARETS);
   }
 
-  static class CaretState {
+  static final class CaretState {
     int LINE;
     int COLUMN;
     boolean LEAN_FORWARD;

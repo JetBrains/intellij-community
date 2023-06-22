@@ -700,8 +700,6 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
     if (externalProject != null) {
       String directoryToRunTask = gradleModuleData.getDirectoryToRunTask();
       boolean isSimpleTaskNameAllowed = directoryToRunTask.equals(moduleConfigPath);
-      String compositeBuildGradlePath = gradleModuleData.getCompositeBuildGradlePath();
-      boolean compositeBuildTasksShouldBeUsed = !compositeBuildGradlePath.isEmpty();
 
       for (ExternalTask task : externalProject.getTasks().values()) {
         String taskGroup = task.getGroup();
@@ -710,12 +708,12 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
         }
         boolean inherited = StringUtil.equals(task.getName(), task.getQName());
         String taskFullName;
-        if (compositeBuildTasksShouldBeUsed) {
+        if (gradleModuleData.isIncludedBuild()) {
           if (inherited) {
             // running a task for all subprojects using the qualified task name is not supported for included builds
             continue;
           }
-          taskFullName = gradleModuleData.getTaskPath(task.getName(), true);
+          taskFullName = gradleModuleData.getTaskPathOfSimpleTaskName(task.getName());
         }
         else {
           taskFullName = isSimpleTaskNameAllowed ? task.getName() : task.getQName();
@@ -726,6 +724,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
         taskData.setGroup(taskGroup);
         taskData.setType(task.getType());
         taskData.setTest(task.isTest());
+        taskData.setJvmTest(task.isJvmTest());
         ideModule.createChild(ProjectKeys.TASK, taskData);
         taskData.setInherited(inherited);
         tasks.add(taskData);

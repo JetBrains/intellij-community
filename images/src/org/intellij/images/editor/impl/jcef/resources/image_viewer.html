@@ -13,7 +13,6 @@
       position: absolute;
       left: 0;
       top: 0;
-      z-index: 50;
     }
 
     #zoom_anchor_cross_in_viewport {
@@ -26,7 +25,6 @@
       position: absolute;
       left: 0;
       top: 0;
-      z-index: 50;
     }
 
     body {
@@ -41,7 +39,6 @@
       position: absolute;
       top: 0;
       left: 0;
-      z-index: 30;
       opacity: 0.5;
     }
 
@@ -52,7 +49,6 @@
       right: 0;
       font-family: monospace;
       white-space: pre;
-      z-index: 30;
       opacity: 0.5;
     }
 
@@ -76,8 +72,9 @@
 
     #svg_canvas {
       transform-origin: 0 0;
-      width: fit-content;
-      height: fit-content;
+      width: 0;
+      height: 0;
+      overflow: hidden;
       position: absolute;
       top: 50%;
       left: 50%;
@@ -88,21 +85,14 @@
       position: absolute;
       display: block;
       transform-origin: 0 0;
-      z-index: 10;
     }
 
     #chessboard {
       position: absolute;
       width: 100%;
       height: 100%;
-      background-color: #ffffff;
-      background-image: linear-gradient(45deg, #C0C0C0 25%, transparent 25%),
-      linear-gradient(-45deg, #C0C0C0 25%, transparent 25%),
-      linear-gradient(45deg, transparent 75%, #C0C0C0 75%),
-      linear-gradient(-45deg, transparent 75%, #C0C0C0 75%);
-      background-size: 20px 20px;
-      background-position: 0 0, 0 10px, 10px -10px, -10px 0;
-      z-index: 5;
+      background: repeating-conic-gradient(#808080 0% 25%, #FFFFFF 0% 50%) 50% / 30px 30px;
+      background-position: 0 0;
     }
 
     #pixel_grid {
@@ -110,7 +100,6 @@
       width: 100%;
       height: 100%;
       margin: 0;
-      z-index: 15;
       background-image: linear-gradient(to right, grey 1px, transparent 1px),
       linear-gradient(to bottom, grey 1px, transparent 1px);
       background-size: 1px 1px;
@@ -123,15 +112,21 @@
       height: 100%;
       border: 1px solid gray;
       mix-blend-mode: difference;
-      z-index: 20;
     }
   </style>
+
+  <link type="text/css" href="overlayscrollbars.css" rel="stylesheet" />
+  <script type="text/javascript" src="overlayscrollbars.browser.es6.js"></script>
+
   <link id="scrollbars_style" rel="stylesheet" type="text/css" href="scrollbars.css"/>
+  <link id="chessboard_style" rel="stylesheet" type="text/css" href="chessboard.css"/>
+  <link id="pixel_grid_style" rel="stylesheet" type="text/css" href="pixel_grid.css"/>
+
   <title>Image viewer</title>
 </head>
 
 <body>
-<div id="control_panel" style="display: none">
+<div id="control_panel" style="display: none; z-index: 30">
   <input type="text" style="width: 100%;" id="url_input">
   <button onclick="zoomIn()">+</button>
   <button onclick="zoomOut()">-</button>
@@ -146,46 +141,48 @@
 </div>
 
 <div id="container">
-  <div id="zoom_anchor_cross_in_viewport" style="display: none"></div>
+  <div id="zoom_anchor_cross_in_viewport" style="display: none; z-index: 50;"></div>
   <div id="view_port">
     <div id="svg_canvas">
-      <object id="image"></object>
-      <div id="chessboard" style="display: none"></div>
-      <div id="pixel_grid" style="display: none"></div>
-      <div id="image_border" style="display: none"></div>
-      <div id="zoom_anchor_cross_on_canvas" style="display: none"></div>
+      <object id="image" style="z-index: 10"></object>
+      <div id="chessboard" class="chessboard_base chessboard_style" style="display: none; z-index: 5;"></div>
+      <div id="pixel_grid" style="display: none; z-index: 15;"></div>
+      <div id="image_border" style="display: none; z-index: 20;"></div>
+      <div id="zoom_anchor_cross_on_canvas" style="display: none; z-index: 50;"></div>
     </div>
   </div>
 </div>
 
-<div id="info_panel" style="display: none">No data</div>
+<div id="info_panel" style="display: none; z-index: 30">No data</div>
 
 <!--Place the script at the end to make sure that the DOM is ready at this point-->
 <script>
   const gIsDebug = (new URL(window.location.href).searchParams.get('debug') != null)
 
-  const MIN_GRID_ZOOM = 10
+  const MIN_GRID_ZOOM = 3
   const MAX_ZOOM = 150
   const MIN_IMAGE_SIZE = 5
   const ViewerStatus = {
+    INIT: 'INIT',
     OK: 'OK',
     ERROR: 'ERROR'
   }
 
   const gState = {
     'zoom': 1.0,
-    'url': '',
     'grid_visible': false,
     'chessboard_visible': false,
-    'status': ViewerStatus.OK
+    'status': ViewerStatus.INIT
   }
 
   let gUrl = ''
 
+  const overlayScrollbars = OverlayScrollbarsGlobal.OverlayScrollbars(document.getElementById('view_port'), {});
+
   const gUI = {
     'image': document.getElementById('image'),
     'canvas': document.getElementById('svg_canvas'),
-    'view_port': document.getElementById('view_port'),
+    'view_port': overlayScrollbars.elements().viewport,
     'chessboard': document.getElementById('chessboard'),
     'pixel_grid': document.getElementById('pixel_grid'),
     'control_panel': document.getElementById('control_panel'),
@@ -194,7 +191,9 @@
   }
 
   const gStyles = {
-    'scrollbars': document.getElementById('scrollbars_style')
+    'scrollbars': document.getElementById('scrollbars_style'),
+    'chessboard': document.getElementById('chessboard_style'),
+    'pixel_grid': document.getElementById('pixel_grid_style')
   }
   let sendInfo = function (info_string) {}
 
@@ -242,22 +241,32 @@
   }
 
   // Fixes the image, if not possible sets the error message
-  function _verifyImage() {
-    let image = gUI.image.contentDocument
-    if (!image) {
+  function _sanitizeImage() {
+    let imageDocument = gUI.image.contentDocument
+    if (!imageDocument) {
+      _setError()
       return
     }
-    for (let e of image.getElementsByTagName('svg')) {
-      if (e.getAttribute('height') || e.getAttribute('width')) continue
+    let images = imageDocument.getElementsByTagName('svg')
+    if (images.length === 0) {
+      _setError()
+      return
+    }
+
+    for (let e of images) {
+      let heightAttribute = e.getAttribute('height')
+      let widthAttribute = e.getAttribute('width')
+      if ((heightAttribute || widthAttribute) && !(heightAttribute?.endsWith('%') || widthAttribute?.endsWith('%'))) continue
 
       let vb = e.viewBox
       if (!vb || !vb.baseVal) {
         _setError()
       }
       e.setAttribute('width', vb.baseVal.width + 'px')
+      e.setAttribute('height', vb.baseVal.height + 'px')
     }
 
-    if (image.getElementsByTagName('parsererror').length > 0) {
+    if (imageDocument.getElementsByTagName('parsererror').length > 0) {
       _setError()
     }
     else {
@@ -274,7 +283,7 @@
     gUI.view_port.addEventListener('scroll', () => _updateInfo())
 
     gUI.image.addEventListener('load', () => {
-      _verifyImage()
+      _sanitizeImage()
       setZoom(gState.zoom)
     })
 
@@ -382,17 +391,19 @@
   function setImageUrl(url) {
     if (!url) return
 
-    let size_observer = new ResizeObserver(() => {
-      setZoom(gState.zoom)
-    })
-    size_observer.observe(gUI.image)
+    if (gState.status === ViewerStatus.INIT) {
+      let size_observer = new ResizeObserver(() => {
+        setZoom(gState.zoom)
+      })
+      size_observer.observe(gUI.image)
 
-    let image_loaded_listener = function () {
-      size_observer.unobserve(gUI.image)
-      size_observer.disconnect()
-      gUI.image.removeEventListener('load', image_loaded_listener)
+      let remove_observer = function () {
+        size_observer.unobserve(gUI.image)
+        size_observer.disconnect()
+        gUI.image.removeEventListener('load', remove_observer)
+      }
+      gUI.image.addEventListener('load', remove_observer)
     }
-    gUI.image.addEventListener('load', image_loaded_listener)
 
     if (gIsDebug) {
       let url_input = document.getElementById("url_input")
@@ -445,6 +456,14 @@
     gStyles.scrollbars.href = _setTimestamp(url)
   }
 
+  function loadChessboardStyle(url) {
+    gStyles.chessboard.href = _setTimestamp(url)
+  }
+
+  function loadPixelGridStyle(url) {
+    gStyles.pixel_grid.href = _setTimestamp(url)
+  }
+
   function _setTimestamp(url) {
     let patched_url = new URL(url)
     patched_url.searchParams.set('timestamp', new Date().getTime().toString())
@@ -453,6 +472,8 @@
 
   function reloadStyles() {
     loadScrollbarsStyle(gStyles.scrollbars.href)
+    loadChessboardStyle(gStyles.chessboard.href)
+    loadPixelGridStyle(gStyles.pixel_grid.href)
   }
 </script>
 

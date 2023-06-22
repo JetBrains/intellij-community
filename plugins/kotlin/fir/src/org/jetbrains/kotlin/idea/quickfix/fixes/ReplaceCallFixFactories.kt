@@ -2,13 +2,12 @@
 
 package org.jetbrains.kotlin.idea.quickfix.fixes
 
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
 import org.jetbrains.kotlin.idea.quickfix.ReplaceImplicitReceiverCallFix
 import org.jetbrains.kotlin.idea.quickfix.ReplaceInfixOrOperatorCallFix
 import org.jetbrains.kotlin.idea.quickfix.ReplaceWithSafeCallFix
@@ -99,8 +98,8 @@ object ReplaceCallFixFactories {
     private fun KtAnalysisSession.shouldHaveNotNullType(expression: KtExpression): Boolean {
         // This function is used to determine if we may need to add an elvis operator after the safe call. For example, to replace
         // `s.length` in `val x: Int = s.length` with a safe call, it should be replaced with `s.length ?: <caret>`.
-        val expectedType = expression.getExpectedType()
-        return expectedType?.nullability == KtTypeNullability.NON_NULLABLE
+        val expectedType = expression.getExpectedType() ?: return false
+        return expectedType.nullability == KtTypeNullability.NON_NULLABLE && !expectedType.isUnit
     }
 
     context(KtAnalysisSession)

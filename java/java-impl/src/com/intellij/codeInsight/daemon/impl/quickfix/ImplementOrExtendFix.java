@@ -2,75 +2,50 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.pom.Navigatable;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModCommandService;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.siyeh.ig.psiutils.TypeUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class ImplementOrExtendFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+public final class ImplementOrExtendFix extends PsiUpdateModCommandAction<PsiClass> {
 
-  @SafeFieldForPreview private final SmartPsiElementPointer<PsiClass> mySubclassPointer;
-  @SafeFieldForPreview private final SmartPsiElementPointer<PsiClass> myParentClassPointer;
-  private final boolean myOnTheFly;
+  private final SmartPsiElementPointer<PsiClass> myParentClassPointer;
   private final @IntentionName String myName;
+  private final boolean myExternal;
 
-  private ImplementOrExtendFix(@NotNull PsiElement place, @NotNull PsiClass subclass, @NotNull PsiClass parentClass, boolean onTheFly) {
-    super(place);
-    mySubclassPointer = SmartPointerManager.createPointer(subclass);
+  private ImplementOrExtendFix(@NotNull PsiClass subclass, @NotNull PsiClass parentClass) {
+    super(subclass);
+    myExternal = subclass.getContainingFile() != parentClass.getContainingFile();
     myParentClassPointer = SmartPointerManager.createPointer(parentClass);
-    myOnTheFly = onTheFly;
     myName = parentClass.isInterface() && !subclass.isInterface()
              ? QuickFixBundle.message("implement.or.extend.fix.implement.text", subclass.getName(), parentClass.getName())
              : QuickFixBundle.message("implement.or.extend.fix.extend.text", subclass.getName(), parentClass.getName());
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
-    // can happen during batch-inspection if resolution has already been applied
-    // to plugin.xml or java class
-    PsiClass subclass = mySubclassPointer.getElement();
-    if (subclass == null || !subclass.isValid()) return;
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiClass subclass, @NotNull ModPsiUpdater updater) {
     PsiClass parentClass = myParentClassPointer.getElement();
     if (parentClass == null) return;
-    boolean external = file != subclass.getContainingFile();
 
     PsiElement e = implementOrExtend(parentClass, subclass);
-    if (myOnTheFly && external && e instanceof Navigatable) ((Navigatable)e).navigate(true);
+    if (myExternal && e != null) {
+      updater.moveTo(e);
+    }
   }
 
   @Override
-  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
-    return mySubclassPointer.getElement();
-  }
-
-  @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    PsiClass subclass = mySubclassPointer.getElement();
-    PsiClass copy = PsiTreeUtil.findSameElementInCopy(subclass, target);
-    PsiElement place = myStartElement.getElement();
-    PsiClass parentClass = myParentClassPointer.getElement();
-    if (copy == null || place == null || parentClass == null) return null;
-    return new ImplementOrExtendFix(place, copy, parentClass, myOnTheFly);
-  }
-
-  @Override
-  public @IntentionName @NotNull String getText() {
-    return myName;
+  protected @NotNull Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiClass element) {
+    return Presentation.of(myName);
   }
 
   @Override
@@ -78,13 +53,20 @@ public final class ImplementOrExtendFix extends LocalQuickFixAndIntentionActionO
     return QuickFixBundle.message("implement.or.extend.fix.family");
   }
 
-  public static IntentionAction[] createActions(@NotNull PsiElement place, @NotNull PsiClass subclass,
-                                                @NotNull PsiClass parentClass, boolean onTheFly) {
-    return ContainerUtil.map2Array(createFixes(place, subclass, parentClass, onTheFly), IntentionAction.class, f -> (IntentionAction)f);
+  public static IntentionAction[] createActions(@NotNull PsiClass subclass,
+                                                @NotNull PsiClass parentClass) {
+    return StreamEx.of(createFixes(subclass, parentClass))
+      .map(fix -> {
+        if (fix instanceof IntentionAction action) return action;
+        ModCommandAction modCommandAction = ModCommandService.getInstance().unwrap(fix);
+        return modCommandAction == null ? null : modCommandAction.asIntention();
+      })
+      .nonNull()
+      .toArray(IntentionAction.EMPTY_ARRAY);
   }
 
-  public static LocalQuickFix @NotNull [] createFixes(@NotNull PsiElement place, @NotNull PsiClass subclass,
-                                                      @NotNull PsiClass parentClass, boolean onTheFly) {
+  public static LocalQuickFix @NotNull [] createFixes(@NotNull PsiClass subclass,
+                                                      @NotNull PsiClass parentClass) {
     if (!parentClass.isInterface() && (subclass.isInterface() || subclass.isRecord() || subclass.isEnum())) {
       return LocalQuickFix.EMPTY_ARRAY;
     }
@@ -101,7 +83,7 @@ public final class ImplementOrExtendFix extends LocalQuickFixAndIntentionActionO
 
     LocalQuickFix[] fixes = ExtendSealedClassFix.createFixes(parentClass, subclass);
     if (fixes != null) return fixes;
-    return new LocalQuickFix[]{ new ImplementOrExtendFix(place, subclass, parentClass, onTheFly) };
+    return new LocalQuickFix[]{new ImplementOrExtendFix(subclass, parentClass).asQuickFix()};
   }
 
   static boolean hasNonObjectParent(@NotNull PsiClass psiClass) {
@@ -130,6 +112,6 @@ public final class ImplementOrExtendFix extends LocalQuickFixAndIntentionActionO
     }
     PsiElementFactory elementFactory = JavaPsiFacade.getInstance(parentClass.getProject()).getElementFactory();
     PsiJavaCodeReferenceElement parentReference = elementFactory.createReferenceElementByType(elementFactory.createType(parentClass));
-    return targetList.add(parentReference);
+    return JavaCodeStyleManager.getInstance(subclass.getProject()).shortenClassReferences(targetList.add(parentReference));
   }
 }

@@ -1,4 +1,3 @@
-// AFTER-WARNING: 'open' has no effect in a final class
 interface A {
     val s: String
 }
@@ -10,8 +9,8 @@ interface B {
 abstract class C(open val d: Double)
 
 class D :  A, C, B {
-    open val y: Int
-    override val d: Double
+    val y: Int
+    final override val d: Double
 
     constructor(y: Int, d: Double) : super(d) {
         this.y = y
@@ -20,7 +19,7 @@ class D :  A, C, B {
         this.x = y * y
     }
 
-    override val s: String
+    final override val s: String
 
-    override val x: Int
+    final override val x: Int
 }

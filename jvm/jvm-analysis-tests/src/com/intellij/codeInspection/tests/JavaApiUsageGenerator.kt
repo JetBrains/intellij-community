@@ -23,12 +23,13 @@ import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 import kotlin.io.path.writeLines
 
+/**
+ * Generator which is used to generate required api files for [com.intellij.codeInspection.JavaApiUsageInspection].
+ */
 @Ignore
 class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor(): LightProjectDescriptor = object : ProjectDescriptor(LANGUAGE_LEVEL) {
-    override fun getSdk(): Sdk {
-      return IdeaTestUtil.createMockJdk("java-gen", JDK_HOME)
-    }
+    override fun getSdk(): Sdk = IdeaTestUtil.createMockJdk("java-gen", JDK_HOME)
   }
 
   /**
@@ -145,9 +146,9 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
     private const val NEW_API_DIR = "REPLACE_ME"
     private const val OLD_API_DIR = "REPLACE_ME"
 
-    private const val PREVIEW_JDK_HOME = "/home/me/.jdks/openjdk-18"
-    private const val JDK_HOME = "/home/me/.jdks/openjdk-18"
-    private val LANGUAGE_LEVEL = LanguageLevel.JDK_19
-    private const val SINCE_VERSION = "19"
+    private const val PREVIEW_JDK_HOME = "/home/me/.jdks/openjdk-20"
+    private const val JDK_HOME = "/home/me/.jdks/openjdk-20"
+    private val LANGUAGE_LEVEL = LanguageLevel.JDK_20
+    private const val SINCE_VERSION = "20"
   }
 }

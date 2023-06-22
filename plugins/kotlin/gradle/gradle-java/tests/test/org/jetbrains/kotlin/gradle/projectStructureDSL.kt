@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.kotlin.config.ExternalSystemTestRunTask
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.gradleJava.configuration.kotlinGradleProjectDataOrFail
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinImportingDiagnostic
+import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.utils.addToStdlib.filterIsInstanceWithChecker
 import org.jetbrains.plugins.gradle.util.GradleUtil
@@ -60,6 +62,7 @@ class ProjectInfo(
     private var allModulesAsserter: (ModuleInfo.() -> Unit)? = null
     private val moduleInfos = moduleManager.modules.associateWith { module -> ModuleInfo(module, this) }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use .forEachModule instead. This method is error prone and has to be called before 'module(..)' in order to run")
     fun allModules(body: ModuleInfo.() -> Unit) {
         assert(allModulesAsserter == null)
@@ -135,8 +138,8 @@ class ModuleInfo(val module: Module, val projectInfo: ProjectInfo) {
         }
     }
 
-    fun externalSystemTestTask(taskName: String, projectId: String, targetName: String) {
-        expectedExternalSystemTestTasks.add(ExternalSystemTestRunTask(taskName, projectId, targetName))
+    fun externalSystemTestTask(taskName: String, projectId: String, targetName: String, platform: KotlinPlatform) {
+        expectedExternalSystemTestTasks.add(ExternalSystemTestRunTask(taskName, projectId, targetName, platform.id))
     }
 
     fun languageVersion(expectedVersion: String) {

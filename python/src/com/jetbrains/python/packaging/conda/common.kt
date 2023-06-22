@@ -5,12 +5,17 @@ import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
 import com.jetbrains.python.packaging.repository.PyPackageRepository
+import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 
-class CondaPackage(name: String, version: String, val installedWithPip: Boolean = false) : PythonPackage(name, version)
-
+class CondaPackage(name: String, version: String, val installedWithPip: Boolean = false) : PythonPackage(name, version) {
+  override fun toString(): String {
+    return "CondaPackage(name='$name', version='$version', installedWithPip=$installedWithPip)"
+  }
+}
 
 class CondaPackageSpecification(override val name: String,
-                                override val version: String?) : PythonPackageSpecification {
+                                override val version: String?,
+                                override val relation: PyRequirementRelation? = null) : PythonPackageSpecification {
   override val repository: PyPackageRepository = CondaPackageRepository
 
   override fun buildInstallationString(): List<String> {
@@ -31,7 +36,7 @@ class CondaPackageDetails(override val name: String,
 }
 
 object CondaPackageRepository : PyPackageRepository("Conda", "", "") {
-  override fun createPackageSpecification(packageName: String, version: String?): PythonPackageSpecification {
-    return CondaPackageSpecification(packageName, null)
+  override fun createPackageSpecification(packageName: String, version: String?, relation: PyRequirementRelation?): PythonPackageSpecification {
+    return CondaPackageSpecification(packageName, version, relation)
   }
 }

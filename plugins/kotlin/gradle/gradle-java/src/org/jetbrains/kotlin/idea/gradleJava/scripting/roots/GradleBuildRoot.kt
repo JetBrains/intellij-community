@@ -114,7 +114,7 @@ class Imported(
                 script.file,
                 script.classPath,
                 script.sourcePath,
-                GradleScriptInfo(this, definition, script)
+                GradleScriptInfo(this, definition, script, builder.project)
             )
         }
     }

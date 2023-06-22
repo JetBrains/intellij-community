@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.google.common.collect.Lists
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
@@ -105,7 +104,7 @@ class ChangeMemberFunctionSignatureFix private constructor(
         private fun signatureToMatch(function: FunctionDescriptor, superFunction: FunctionDescriptor): Signature {
             val superParameters = superFunction.valueParameters
             val parameters = function.valueParameters
-            val newParameters = Lists.newArrayList(superParameters)
+            val newParameters = superParameters.toMutableList()
 
             // Parameters in superFunction, which are matched in new function signature:
             val matched = BitSet(superParameters.size)

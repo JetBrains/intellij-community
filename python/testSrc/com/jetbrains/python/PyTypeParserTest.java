@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
 import com.intellij.psi.PsiFile;
@@ -115,7 +115,7 @@ public class PyTypeParserTest extends PyTestCase {
     myFixture.configureByFile("typeParser/typeParser.py");
     final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "T");
     assertNotNull(type);
-    assertInstanceOf(type, PyGenericType.class);
+    assertInstanceOf(type, PyTypeVarType.class);
     assertEquals("T", type.getName());
   }
 
@@ -167,8 +167,8 @@ public class PyTypeParserTest extends PyTestCase {
       myFixture.configureByFile("typeParser/typeParser.py");
       final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "T <= str or unicode");
       assertNotNull(type);
-      assertInstanceOf(type, PyGenericType.class);
-      final PyGenericType genericType = (PyGenericType)type;
+      assertInstanceOf(type, PyTypeVarType.class);
+      final PyTypeVarType genericType = (PyTypeVarType)type;
       final PyType bound = genericType.getBound();
       assertInstanceOf(bound, PyUnionType.class);
     });
@@ -213,6 +213,18 @@ public class PyTypeParserTest extends PyTestCase {
     assertClassType(list.get(2), "bytes");
   }
 
+  public void testUnionOfUnion() {
+    myFixture.configureByFile("typeParser/typeParser.py");
+    final PyUnionType type = (PyUnionType)PyTypeParser.getTypeByName(myFixture.getFile(), "(int or bytes) or (str or bytes)");
+    assertNotNull(type);
+    final Collection<PyType> members = type.getMembers();
+    assertEquals(3, members.size());
+    final List<PyType> list = new ArrayList<>(members);
+    assertClassType(list.get(0), "int");
+    assertClassType(list.get(1), "bytes");
+    assertClassType(list.get(2), "str");
+  }
+
   public void testCallableType() {
     myFixture.configureByFile("typeParser/typeParser.py");
     final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "(int, T) -> T");
@@ -221,7 +233,7 @@ public class PyTypeParserTest extends PyTestCase {
     assertNotNull(callableType);
     final TypeEvalContext context = getTypeEvalContext();
     final PyType returnType = callableType.getReturnType(context);
-    assertInstanceOf(returnType, PyGenericType.class);
+    assertInstanceOf(returnType, PyTypeVarType.class);
     final List<PyCallableParameter> parameterTypes = callableType.getParameters(context);
     assertNotNull(parameterTypes);
     assertEquals(2, parameterTypes.size());

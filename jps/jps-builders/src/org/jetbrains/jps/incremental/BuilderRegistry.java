@@ -28,7 +28,7 @@ public final class BuilderRegistry {
   private final List<TargetBuilder<?,?>> myTargetBuilders = new ArrayList<>();
   private final FileFilter myModuleBuilderFileFilter;
 
-  public static BuilderRegistry getInstance() {
+  public static @NotNull BuilderRegistry getInstance() {
     return Holder.ourInstance;
   }
 

@@ -12,7 +12,6 @@ import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
-import java.util.*
 import kotlin.io.path.name
 
 // https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
@@ -22,14 +21,14 @@ import kotlin.io.path.name
 class PluginLoadingResult(private val checkModuleDependencies: Boolean = !PlatformUtils.isIntelliJ()) {
   private val incompletePlugins = HashMap<PluginId, IdeaPluginDescriptorImpl>()
 
-  @JvmField val enabledPluginsById = HashMap<PluginId, IdeaPluginDescriptorImpl>()
+  @JvmField val enabledPluginsById: HashMap<PluginId, IdeaPluginDescriptorImpl> = HashMap()
 
   private val idMap = HashMap<PluginId, IdeaPluginDescriptorImpl>()
   @JvmField var duplicateModuleMap: MutableMap<PluginId, MutableList<IdeaPluginDescriptorImpl>>? = null
   private val pluginErrors = HashMap<PluginId, PluginLoadingError>()
 
   @VisibleForTesting
-  @JvmField val shadowedBundledIds: MutableSet<PluginId> = Collections.newSetFromMap(HashMap())
+  @JvmField val shadowedBundledIds: MutableSet<PluginId> = HashSet()
 
   @get:TestOnly
   val hasPluginErrors: Boolean

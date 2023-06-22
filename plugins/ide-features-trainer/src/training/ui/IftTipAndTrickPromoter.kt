@@ -19,7 +19,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import training.learn.CourseManager
 import training.learn.LearnBundle
-import training.learn.course.LearningCourse
 import training.statistic.LessonStartingWay
 import training.statistic.StatisticBase
 import training.util.enableLessonsAndPromoters
@@ -28,7 +27,7 @@ import javax.swing.BoxLayout
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-class IftTipAndTrickPromoter : TipAndTrickPromotionFactory {
+private class IftTipAndTrickPromoter : TipAndTrickPromotionFactory {
   override fun createPromotionPanel(project: Project, tip: TipAndTrickBean): JPanel? {
     if (!enableLessonsAndPromoters) return null
     val lessonId = findLessonIdForTip(tip) ?: return null
@@ -36,9 +35,8 @@ class IftTipAndTrickPromoter : TipAndTrickPromotionFactory {
   }
 
   private fun findLessonIdForTip(tip: TipAndTrickBean): String? {
-    val course: LearningCourse = CourseManager.instance.currentCourse ?: return null
-    val lessonIdToTipsMap = course.getLessonIdToTipsMap()
-    val lessonIds = lessonIdToTipsMap.filterValues { it.contains(tip.id) }.keys
+    val lessonIdToTipsMaps = CourseManager.instance.currentCourses.map { it.getLessonIdToTipsMap() }
+    val lessonIds = lessonIdToTipsMaps.map { it.filterValues { tipIds -> tipIds.contains(tip.id) }.keys }.flatten()
     if (lessonIds.isNotEmpty()) {
       if (lessonIds.size > 1) {
         thisLogger().warn("$tip declared as suitable in more than one lesson: $lessonIds")

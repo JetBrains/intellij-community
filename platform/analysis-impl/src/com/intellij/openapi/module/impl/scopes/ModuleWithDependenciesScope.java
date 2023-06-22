@@ -41,9 +41,8 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
   public static final int LIBRARIES = 0x02;
   public static final int MODULES = 0x04;
   public static final int TESTS = 0x08;
-  public static final int CONTENT = 0x20;
 
-  @MagicConstant(flags = {COMPILE_ONLY, LIBRARIES, MODULES, TESTS, CONTENT})
+  @MagicConstant(flags = {COMPILE_ONLY, LIBRARIES, MODULES, TESTS})
   @interface ScopeConstant {}
 
   private static final Key<CachedValue<ConcurrentMap<Integer, VirtualFileEnumeration>>> CACHED_FILE_ID_ENUMERATIONS_KEY =
@@ -57,6 +56,7 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
   private volatile Set<Module> myModules;
   private final Object2IntMap<VirtualFile> myRoots;
   private final UserDataHolderBase myUserDataHolderBase = new UserDataHolderBase();
+  private final SingleFileSourcesTracker mySingleFileSourcesTracker;
 
   ModuleWithDependenciesScope(@NotNull Module module, @ScopeConstant int options) {
     super(module.getProject());
@@ -64,29 +64,19 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
     myOptions = options;
     myProjectFileIndex = (ProjectFileIndexImpl)ProjectRootManager.getInstance(module.getProject()).getFileIndex();
     myRoots = calcRoots(null);
+    mySingleFileSourcesTracker = SingleFileSourcesTracker.getInstance(module.getProject());
   }
 
   private Object2IntMap<VirtualFile> calcRoots(@Nullable ModelBranch branch) {
     Set<VirtualFile> roots = new LinkedHashSet<>();
-    if (hasOption(CONTENT)) {
-      Set<Module> modules = calcModules();
-      myModules = new HashSet<>(modules);
-      for (Module m : modules) {
-        for (ContentEntry entry : ModuleRootManager.getInstance(m).getContentEntries()) {
-          ContainerUtil.addIfNotNull(roots, branch == null ? entry.getFile() : branch.findFileByUrl(entry.getUrl()));
-        }
-      }
-    }
-    else {
-      OrderRootsEnumerator en = getOrderEnumeratorForOptions().roots(entry -> {
-        if (entry instanceof ModuleOrderEntry || entry instanceof ModuleSourceOrderEntry) return OrderRootType.SOURCES;
-        return OrderRootType.CLASSES;
-      });
-      if (branch == null) {
-        Collections.addAll(roots, en.getRoots());
-      } else {
-        roots.addAll(ContainerUtil.mapNotNull(en.getUrls(), branch::findFileByUrl));
-      }
+    OrderRootsEnumerator en = getOrderEnumeratorForOptions().roots(entry -> {
+      if (entry instanceof ModuleOrderEntry || entry instanceof ModuleSourceOrderEntry) return OrderRootType.SOURCES;
+      return OrderRootType.CLASSES;
+    });
+    if (branch == null) {
+      Collections.addAll(roots, en.getRoots());
+    } else {
+      roots.addAll(ContainerUtil.mapNotNull(en.getUrls(), branch::findFileByUrl));
     }
 
     int i = 1;
@@ -109,9 +99,7 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
 
   @NotNull
   private Set<Module> calcModules() {
-    // In the case that hasOption(CONTENT), the order of the modules set matters for
-    // ordering the content roots, so use a LinkedHashSet
-    Set<Module> modules = new LinkedHashSet<>();
+    Set<Module> modules = new HashSet<>();
     OrderEnumerator en = getOrderEnumeratorForOptions();
     en.forEach(each -> {
       if (each instanceof ModuleOrderEntry) {
@@ -162,12 +150,11 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
-    Object2IntMap<VirtualFile> roots = getRoots(file);
-    if (hasOption(CONTENT)) {
-      return roots.containsKey(myProjectFileIndex.getContentRootForFile(file));
-    }
+    // in case of single file source
+    if (mySingleFileSourcesTracker.isSourceDirectoryInModule(file, myModule)) return true;
+
     VirtualFile root = myProjectFileIndex.getModuleSourceOrLibraryClassesRoot(file);
-    return root != null && roots.containsKey(root);
+    return root != null && getRoots(file).containsKey(root);
   }
 
   private Object2IntMap<VirtualFile> getRoots(@NotNull VirtualFile file) {
@@ -188,8 +175,8 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
 
   @Override
   public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-    VirtualFile r1 = getFileRoot(file1);
-    VirtualFile r2 = getFileRoot(file2);
+    VirtualFile r1 = myProjectFileIndex.getModuleSourceOrLibraryClassesRoot(file1);
+    VirtualFile r2 = myProjectFileIndex.getModuleSourceOrLibraryClassesRoot(file2);
     if (Comparing.equal(r1, r2)) return 0;
 
     if (r1 == null) return -1;
@@ -201,14 +188,6 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
     if (i1 == 0 && i2 == 0) return 0;
     if (i1 > 0 && i2 > 0) return i2 - i1;
     return i1 > 0 ? 1 : -1;
-  }
-
-  @Nullable
-  private VirtualFile getFileRoot(@NotNull VirtualFile file) {
-    if (hasOption(CONTENT)) {
-      return myProjectFileIndex.getContentRootForFile(file);
-    }
-    return myProjectFileIndex.getModuleSourceOrLibraryClassesRoot(file);
   }
 
   @TestOnly

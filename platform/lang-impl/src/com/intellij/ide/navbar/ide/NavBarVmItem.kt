@@ -3,8 +3,11 @@ package com.intellij.ide.navbar.ide
 
 import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.NavBarItemPresentation
+import com.intellij.ide.navbar.impl.isModuleContentRoot
 import com.intellij.ide.navbar.vm.NavBarPopupItem
 import com.intellij.model.Pointer
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.readAction
 
 internal class NavBarVmItem(
   val pointer: Pointer<out NavBarItem>,
@@ -32,5 +35,18 @@ internal class NavBarVmItem(
 
   override fun toString(): String {
     return texts
+  }
+}
+
+internal suspend fun <T> NavBarVmItem.fetch(selector: NavBarItem.() -> T): T? {
+  return readAction {
+    pointer.dereference()?.selector()
+  }
+}
+
+internal fun List<NavBarItem>.toVmItems(): List<NavBarVmItem> {
+  ApplicationManager.getApplication().assertReadAccessAllowed()
+  return map {
+    NavBarVmItem(it.createPointer(), it.presentation(), it.isModuleContentRoot(), it.javaClass)
   }
 }

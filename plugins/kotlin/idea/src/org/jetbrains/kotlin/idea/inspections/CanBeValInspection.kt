@@ -137,7 +137,7 @@ class CanBeValInspection : AbstractKotlinInspection() {
         private fun canReach(
             from: Instruction,
             targets: Set<Instruction>,
-            visited: HashSet<Instruction> = HashSet<Instruction>()
+            visited: HashSet<Instruction> = HashSet()
         ): Boolean {
             // special algorithm for linear code to avoid too deep recursion
             var instruction = from

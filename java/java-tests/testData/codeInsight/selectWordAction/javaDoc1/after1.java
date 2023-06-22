@@ -1,6 +1,6 @@
 public class Test {
-<caret><selection>  /**
-   *
+<selection>  /**
+   *<caret>
    */ 
 </selection>  void foo() {
     

@@ -22,7 +22,7 @@ class AddNamesToFollowingArgumentsIntention : SelfTargetingIntention<KtValueArgu
         // Shadowed by AddNameToArgument
         if (argumentList.arguments.lastOrNull { !it.isNamed() } == element) return false
         val expression = element.getArgumentExpression() ?: return false
-        AddNameToArgumentIntention.detectNameToAdd(element, shouldBeLastUnnamed = false) ?: return false
+        AddNameToArgumentIntention.Holder.detectNameToAdd(element, shouldBeLastUnnamed = false) ?: return false
 
         if (expression is KtLambdaExpression) {
             val range = expression.textRange
@@ -37,7 +37,7 @@ class AddNamesToFollowingArgumentsIntention : SelfTargetingIntention<KtValueArgu
         val callElement = argumentList.parent as? KtCallElement ?: return
         val resolvedCall = callElement.resolveToCall() ?: return
         for (argument in argumentList.arguments.dropWhile { it != element }) {
-            AddNameToArgumentIntention.apply(argument, resolvedCall)
+            AddNameToArgumentIntention.Holder.apply(argument, resolvedCall)
         }
     }
 }

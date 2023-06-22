@@ -449,7 +449,7 @@ public class GeneralCommandLine implements UserDataHolder {
    * Executed with pre-filled ProcessBuilder as the param and
    * gives the last chance to configure starting process
    * parameters before a process is started
-   * @param builder filed ProcessBuilder
+   * @param builder filled ProcessBuilder
    */
   protected @NotNull ProcessBuilder buildProcess(@NotNull ProcessBuilder builder) {
     return builder;

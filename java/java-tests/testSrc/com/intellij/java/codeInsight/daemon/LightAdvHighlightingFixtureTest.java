@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
@@ -8,6 +8,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.java.JavaDocumentationProvider;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -259,6 +260,7 @@ public class LightAdvHighlightingFixtureTest extends LightJavaCodeInsightFixture
     doTest();
     IntentionAction action = myFixture.findSingleIntention("Remove 'for' statement");
     myFixture.launchAction(action);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 

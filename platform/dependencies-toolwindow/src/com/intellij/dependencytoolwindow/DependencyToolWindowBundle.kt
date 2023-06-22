@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 import java.util.function.Supplier
 
-internal object DependencyToolWindowBundle : DynamicBundle(BUNDLE_NAME) {
+object DependencyToolWindowBundle : DynamicBundle(BUNDLE_NAME) {
   @Nls
   fun messagePointer(@PropertyKey(resourceBundle = BUNDLE_NAME) key: String, vararg params: Any): Supplier<String> {
     return getLazyMessage(key, *params)

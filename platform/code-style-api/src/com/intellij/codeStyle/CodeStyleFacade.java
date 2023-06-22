@@ -53,11 +53,5 @@ public abstract class CodeStyleFacade {
   @Deprecated(forRemoval = true)
   public abstract boolean useTabCharacter(final FileType fileType);
 
-  /**
-   * @deprecated Use {@code getLineSeparator()} method of {@code CodeStyle.getSettings(PsiFile)} or
-   *             {@code CodeStyle.getSettings(Project)} if there is no {@code PsiFile}
-   */
-  @Deprecated(forRemoval = true)
-  public abstract String getLineSeparator();
 
 }

@@ -1,12 +1,12 @@
 package com.intellij.codeInspection.tests.java
 
 import com.intellij.codeInspection.tests.CallMatcherTestBase
-import com.intellij.codeInspection.tests.ULanguage
+import com.intellij.codeInspection.tests.JvmLanguage
 import com.siyeh.ig.callMatcher.CallMatcher
 
 class JavaCallMatcherTest : CallMatcherTestBase() {
   fun testInstanceMethodCall() {
-    checkMatchCall(ULanguage.JAVA, CallMatcher.instanceCall("Foo", "bar").parameterCount(0), """
+    checkMatchCall(JvmLanguage.JAVA, CallMatcher.instanceCall("Foo", "bar").parameterCount(0), """
       class Foo { void bar() { } }
       
       class Main { void main() { new Foo().bar(); } }
@@ -14,7 +14,7 @@ class JavaCallMatcherTest : CallMatcherTestBase() {
   }
 
   fun testMultipleArgumentsCall() {
-    checkMatchCall(ULanguage.JAVA, CallMatcher.instanceCall("Foo", "bar").parameterCount(3), """
+    checkMatchCall(JvmLanguage.JAVA, CallMatcher.instanceCall("Foo", "bar").parameterCount(3), """
       class Foo { void bar(int x, int y, int z) { } }
       
       class Main { void main() { new Foo().bar(0, 0, 0); } }
@@ -22,7 +22,7 @@ class JavaCallMatcherTest : CallMatcherTestBase() {
   }
 
   fun testMultipleArgumentTypes() {
-    checkMatchCall(ULanguage.JAVA, CallMatcher.instanceCall("Foo", "bar").parameterTypes("int", "long", "double"), """
+    checkMatchCall(JvmLanguage.JAVA, CallMatcher.instanceCall("Foo", "bar").parameterTypes("int", "long", "double"), """
       class Foo { void bar(int x, long y, double z) { } }
       
       class Main { void main() { new Foo().bar(0, 0L, 0.0d); } }
@@ -30,7 +30,7 @@ class JavaCallMatcherTest : CallMatcherTestBase() {
   }
 
   fun testInstanceMethodReference() {
-    checkMatchCallableReference(ULanguage.JAVA, CallMatcher.instanceCall("java.lang.String", "concat").parameterCount(1), """
+    checkMatchCallableReference(JvmLanguage.JAVA, CallMatcher.instanceCall("java.lang.String", "concat").parameterCount(1), """
       import java.util.function.BiFunction;
       
       class Foo { void bar(BiFunction<String, String, String> arg) { }  }
@@ -40,7 +40,7 @@ class JavaCallMatcherTest : CallMatcherTestBase() {
   }
 
   fun testMethodReferenceArgumentTypes() {
-    checkMatchCallableReference(ULanguage.JAVA, CallMatcher.instanceCall("java.lang.String", "concat").parameterTypes("java.lang.String"), """  
+    checkMatchCallableReference(JvmLanguage.JAVA, CallMatcher.instanceCall("java.lang.String", "concat").parameterTypes("java.lang.String"), """  
       import java.util.function.BiFunction;
       
       class Foo { void bar(BiFunction<String, String, String> arg) { }  }

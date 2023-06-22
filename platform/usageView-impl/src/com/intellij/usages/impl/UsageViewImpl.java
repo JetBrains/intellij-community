@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.find.FindManager;
 import com.intellij.icons.AllIcons;
@@ -169,8 +170,8 @@ public class UsageViewImpl implements UsageViewEx {
     .createBoundedApplicationPoolExecutor("Usage View Update Requests", AppExecutorUtil.getAppExecutorService(),
                                           JobSchedulerImpl.getJobPoolParallelism(), this);
   private final List<ExcludeListener> myExcludeListeners = ContainerUtil.createConcurrentList();
-  private final Set<Pair<Class<? extends PsiReference>, Language>> myReportedReferenceClasses =
-    ContainerUtil.newConcurrentSet();
+  private final Set<Pair<Class<? extends PsiReference>, Language>> myReportedReferenceClasses
+    = ConcurrentCollectionFactory.createConcurrentSet();
 
   private Runnable fusRunnable = () -> {
     if (myTree == null) return;
@@ -1311,7 +1312,7 @@ public class UsageViewImpl implements UsageViewEx {
 
   void drainQueuedUsageNodes() {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    UIUtil.invokeAndWaitIfNeeded((Runnable)this::fireEvents);
+    UIUtil.invokeAndWaitIfNeeded(this::fireEvents);
   }
 
   @Override
@@ -2273,35 +2274,6 @@ public class UsageViewImpl implements UsageViewEx {
 
   public UsageTarget @NotNull [] getTargets() {
     return myTargets;
-  }
-
-  /**
-   * @deprecated store origin usage elsewhere
-   */
-  @Deprecated private Usage myOriginUsage;
-
-  /**
-   * The element the "find usages" action was invoked on.
-   * E.g., if the "find usages" was invoked on the reference "getName(2)" pointing to the method "getName()" then the origin usage is this reference.
-   *
-   * @deprecated store origin usage elsewhere
-   */
-  @Deprecated(forRemoval = true)
-  public void setOriginUsage(@NotNull Usage usage) {
-    myOriginUsage = usage;
-  }
-
-  /**
-   * true if the {@param usage} points to the element the "find usages" action was invoked on
-   *
-   * @deprecated store origin usage elsewhere
-   */
-  @Deprecated(forRemoval = true)
-  public boolean isOriginUsage(@NotNull Usage usage) {
-    return
-      myOriginUsage instanceof UsageInfo2UsageAdapter &&
-      usage instanceof UsageInfo2UsageAdapter &&
-      ((UsageInfo2UsageAdapter)usage).getUsageInfo().equals(((UsageInfo2UsageAdapter)myOriginUsage).getUsageInfo());
   }
 
   private boolean isFilterDuplicateLines() {

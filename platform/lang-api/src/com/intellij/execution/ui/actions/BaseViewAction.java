@@ -24,8 +24,7 @@ public abstract class BaseViewAction extends DumbAwareAction {
     ViewContext context = getViewFacade(e);
     Content[] content = getContent(e);
 
-    if (context != null && content != null &&
-        !containsInvalidContent(content)) {
+    if (context != null && content != null && !containsInvalidContent(content)) {
       update(e, context, content);
     }
     else {
@@ -43,16 +42,20 @@ public abstract class BaseViewAction extends DumbAwareAction {
     return false;
   }
 
-  protected void update(AnActionEvent e, ViewContext context, Content[] content) {
+  protected void update(@NotNull AnActionEvent e, @NotNull ViewContext context, Content @NotNull [] content) {
   }
 
   @Override
-  public final void actionPerformed(final @NotNull AnActionEvent e) {
-    actionPerformed(e, getViewFacade(e), getContent(e));
+  public final void actionPerformed(@NotNull AnActionEvent e) {
+    ViewContext context = getViewFacade(e);
+    Content[] content = getContent(e);
+    if (context != null && content != null && !containsInvalidContent(content)) {
+      actionPerformed(e, context, content);
+    }
   }
 
 
-  protected abstract void actionPerformed(AnActionEvent e, ViewContext context, Content[] content);
+  protected abstract void actionPerformed(@NotNull AnActionEvent e, @NotNull ViewContext context, Content @NotNull [] content);
 
 
   private static @Nullable ViewContext getViewFacade(@NotNull AnActionEvent e) {

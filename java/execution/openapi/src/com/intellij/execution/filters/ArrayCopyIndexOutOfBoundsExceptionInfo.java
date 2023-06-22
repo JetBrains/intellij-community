@@ -2,6 +2,7 @@
 package com.intellij.execution.filters;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -26,10 +27,12 @@ public class ArrayCopyIndexOutOfBoundsExceptionInfo extends ExceptionInfo {
   }
 
   @Override
-  @Nullable PsiElement matchSpecificExceptionElement(@NotNull PsiElement element) {
-    if (!(element instanceof PsiIdentifier)) return null;
-    if (!element.textMatches("arraycopy")) return null;
-    PsiElement ref = element.getParent();
+  @Nullable ExceptionLineRefiner.RefinerMatchResult matchSpecificExceptionElement(@NotNull PsiElement current) {
+    if(!(current instanceof PsiJavaToken && current.textMatches("("))) return null;
+    PsiElement prevElement = PsiTreeUtil.prevVisibleLeaf(current);
+    if (!(prevElement instanceof PsiIdentifier)) return null;
+    if (!prevElement.textMatches("arraycopy")) return null;
+    PsiElement ref = prevElement.getParent();
     if (!(ref instanceof PsiReferenceExpression)) return null;
     PsiMethodCallExpression call = ObjectUtils.tryCast(ref.getParent(), PsiMethodCallExpression.class);
     if (call == null) return null;
@@ -39,7 +42,7 @@ public class ArrayCopyIndexOutOfBoundsExceptionInfo extends ExceptionInfo {
     if (method == null) return null;
     PsiClass containingClass = method.getContainingClass();
     if (containingClass == null || !"java.lang.System".equals(containingClass.getQualifiedName())) return null;
-    return args[myParameter];
+    return onTheSameLineFor(current, args[myParameter], true);
   }
 
   public static ExceptionInfo tryCreate(int offset, String message) {

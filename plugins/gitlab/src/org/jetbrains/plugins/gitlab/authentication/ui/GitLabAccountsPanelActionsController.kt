@@ -25,5 +25,5 @@ internal class GitLabAccountsPanelActionsController(private val project: Project
   }
 
   private fun isAccountUnique(serverPath: GitLabServerPath, username: String) =
-    model.accounts.none { it.server == serverPath || it.name == username }
+    GitLabLoginUtil.isAccountUnique(model.accounts, serverPath, username)
 }

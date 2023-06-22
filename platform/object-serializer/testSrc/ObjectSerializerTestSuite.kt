@@ -32,7 +32,8 @@ class ObjectSerializerTestSuite {
 
 internal val defaultTestWriteConfiguration = WriteConfiguration(binary = false)
 
-// don't use serialization filter in tests to make sure that test are closer to production usage (e.g. not null arg was not caught by tests because of null filtration)
+// don't use serialization filter in tests to make sure that the test is closer to production usage
+// (e.g. not null arg was not caught by tests because of null filtration)
 internal fun <T : Any> test(bean: T,
                             testName: TestName,
                             writeConfiguration: WriteConfiguration,

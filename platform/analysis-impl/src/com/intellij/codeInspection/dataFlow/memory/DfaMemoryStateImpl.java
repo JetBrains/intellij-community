@@ -228,6 +228,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         }
       }
     }
+    else if (isUnstableValue(value)) {
+      applyDerivedVariablesEquivalence(var, value);
+    }
   }
 
   protected DfType filterDfTypeOnAssignment(DfaVariableValue var, @NotNull DfType dfType) {
@@ -1491,10 +1494,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       - Ephemeral flag is the same
       - Stack depth is the same
       - All DfaControlTransferValues in the stack are the same (otherwise finally blocks may not complete successfully)
+      - All sentinels in the stack are the same (otherwise we may screw up the unrolled loops)
       - Top-of-stack value is the same (otherwise we may prematurely merge true/false on TOS right before jump which is very undesired)
      */
-    return StreamEx.of(myStack).<Object>mapLastOrElse(val -> ObjectUtils.tryCast(val, DfaControlTransferValue.class),
-                                                      Function.identity())
+    return StreamEx.of(myStack).<Object>mapLastOrElse(
+        val -> val instanceof DfaControlTransferValue || val == myFactory.getSentinel() ? val : null,
+        Function.identity())
       .append(isEphemeral()).toImmutableList();
   }
 

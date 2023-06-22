@@ -4,6 +4,7 @@ package com.intellij.openapi.externalSystem.dependency.analyzer
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 
 /**
@@ -43,9 +44,9 @@ interface DependencyAnalyzerView : DataProvider {
   fun setSelectedDependency(module: Module, path: List<Dependency.Data>, scope: String)
 
   companion object {
-    const val ACTION_PLACE = "ExternalSystem.DependencyAnalyzerView.ActionPlace"
-    val VIEW = DataKey.create<DependencyAnalyzerView>("ExternalSystem.DependencyAnalyzerView.View")
-    val DEPENDENCY = DataKey.create<Dependency>("ExternalSystem.DependencyAnalyzerView.Dependency")
-    val DEPENDENCIES = DataKey.create<Dependency>("ExternalSystem.DependencyAnalyzerView.Dependencies")
+    const val ACTION_PLACE: String = "ExternalSystem.DependencyAnalyzerView.ActionPlace"
+    val VIEW: DataKey<DependencyAnalyzerView> = DataKey.create<DependencyAnalyzerView>("ExternalSystem.DependencyAnalyzerView.View")
+    val DEPENDENCY: DataKey<DependencyAnalyzerDependency> = DataKey.create<Dependency>("ExternalSystem.DependencyAnalyzerView.Dependency")
+    val DEPENDENCIES: DataKey<DependencyAnalyzerDependency> = DataKey.create<Dependency>("ExternalSystem.DependencyAnalyzerView.Dependencies")
   }
 }

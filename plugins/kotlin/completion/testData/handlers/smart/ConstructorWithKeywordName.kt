@@ -7,3 +7,5 @@ fun foo(p: `class`<`interface`>){}
 fun f(){
     foo(<caret>)
 }
+
+// AUTOCOMPLETE_SETTING: true

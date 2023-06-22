@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -125,15 +126,19 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     }
 
     private void highlightDefaultDuplicate(@NotNull BranchBase<?> branch) {
+      List<LocalQuickFix> fixes = new ArrayList<>();
       LocalQuickFix deleteCaseFix = branch.deleteCaseFix();
+      ContainerUtil.addIfNotNull(fixes, deleteCaseFix);
       LocalQuickFix mergeWithDefaultFix = branch.mergeWithDefaultFix();
-      if (deleteCaseFix == null && mergeWithDefaultFix == null) return;
-      registerProblem(branch, branch.getDefaultBranchMessage(), deleteCaseFix, mergeWithDefaultFix);
+      ContainerUtil.addIfNotNull(fixes, mergeWithDefaultFix);
+      if (!fixes.isEmpty()) {
+        registerProblem(branch, branch.getDefaultBranchMessage(), fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+      }
     }
 
     private void registerProblem(@NotNull BranchBase<?> duplicate,
                                  @NotNull @InspectionMessage String message,
-                                 LocalQuickFix @NotNull ... fixes) {
+                                 @NotNull LocalQuickFix @NotNull ... fixes) {
       ProblemDescriptor descriptor = InspectionManager.getInstance(myHolder.getProject())
         .createProblemDescriptor(duplicate.myStatements[0], duplicate.myStatements[duplicate.myStatements.length - 1],
                                  message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
@@ -288,7 +293,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     return false;
   }
 
-  private static class MergeBranchesFix implements LocalQuickFix {
+  private static class MergeBranchesFix extends PsiUpdateModCommandQuickFix {
     @NotNull private final String mySwitchLabelText;
 
     MergeBranchesFix(@NotNull String switchLabelText) {
@@ -310,9 +315,9 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       BranchFixContext context = new BranchFixContext();
-      if (context.prepare(descriptor.getStartElement(), branch -> mySwitchLabelText.equals(branch.getSwitchLabelText()))) {
+      if (context.prepare(element, branch -> mySwitchLabelText.equals(branch.getSwitchLabelText()))) {
         context.moveBranchLabel();
         context.deleteRedundantComments();
         context.deleteStatements();
@@ -320,7 +325,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     }
   }
 
-  private static class MergeWithDefaultBranchFix implements LocalQuickFix {
+  private static class MergeWithDefaultBranchFix extends PsiUpdateModCommandQuickFix {
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
@@ -329,9 +334,9 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       BranchFixContext context = new BranchFixContext();
-      if (context.prepare(descriptor.getStartElement(), Branch::isDefault)) {
+      if (context.prepare(element, Branch::isDefault)) {
         context.moveBranchLabel();
         context.deleteRedundantComments();
         context.deleteStatements();
@@ -344,9 +349,9 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
    */
   private static class MergeWithDefaultRuleFix extends MergeWithDefaultBranchFix {
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       RuleFixContext context = new RuleFixContext();
-      if (context.prepare(descriptor.getStartElement(), BranchBase::isDefault)) {
+      if (context.prepare(element, BranchBase::isDefault)) {
         context.copyCaseValues(true);
         context.deleteRedundantComments();
         context.deleteRule();
@@ -354,7 +359,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     }
   }
 
-  private static class DeleteRedundantBranchFix implements LocalQuickFix {
+  private static class DeleteRedundantBranchFix extends PsiUpdateModCommandQuickFix {
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
@@ -371,9 +376,9 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       BranchFixContext context = new BranchFixContext();
-      if (context.prepare(descriptor.getStartElement(), BranchBase::isDefault)) {
+      if (context.prepare(element, BranchBase::isDefault)) {
         context.deleteBranchLabel();
         if (!context.myBranchToDelete.hasSingleNullCase()) {
           /*
@@ -381,19 +386,19 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
              case R():
              case null:
              case S():
-               <caret>System.out.println(42); // Branch in 'switch' is a duplicate of the default branch
-               break;
+               <caret>return 42; // Branch in 'switch' is a duplicate of the default branch
              case String s:
-               System.out.println(0);
-               break;
+               return 0;
              default:
-               System.out.println(42);
+               return 42;
            }
 
            The 'case R():' and 'case S():' statements can be removed as redundant,
            because the corresponding branch is a duplicate of the default branch.
            But the 'default' case does not handle null values, so we cannot delete
            the 'case null:' and the 'return 42;' statement.
+
+           See com.intellij.java.codeInspection.DuplicateBranchesInSwitchFixTest [DeleteRedundantBranch7.java]
           */
           context.deleteStatements();
         }
@@ -439,7 +444,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
 
       myNextFromLabelToMergeWith = PsiTreeUtil.skipWhitespacesForward(myLabelToMergeWith);
 
-      myCommentsToMergeWith = ContainerUtil.set(myBranchToMergeWith.myCommentTexts);
+      myCommentsToMergeWith = ContainerUtil.immutableSet(myBranchToMergeWith.myCommentTexts);
       return true;
     }
 
@@ -605,7 +610,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
       if (labelElementList == null) return false;
       PsiCaseLabelElement[] elements = labelElementList.getElements();
-      return ContainerUtil.exists(elements, ExpressionUtils::isNullLiteral);
+      return ContainerUtil.exists(elements, el -> el instanceof PsiExpression expr && ExpressionUtils.isNullLiteral(expr));
     }
 
     boolean isDefault() {
@@ -968,7 +973,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       PsiCaseLabelElement[] elements = labelElementList.getElements();
       return !ContainerUtil.exists(elements, element -> element instanceof PsiPattern ||
                                                         element instanceof PsiPatternGuard ||
-                                                        ExpressionUtils.isNullLiteral(element));
+                                                        element instanceof PsiExpression expr && ExpressionUtils.isNullLiteral(expr));
     }
 
     @Override
@@ -1008,7 +1013,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     }
   }
 
-  private static class MergeRulesFix implements LocalQuickFix {
+  private static class MergeRulesFix extends PsiUpdateModCommandQuickFix {
     @NotNull private final String mySwitchLabelText;
 
     MergeRulesFix(@NotNull String switchLabelText) {
@@ -1030,9 +1035,9 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       RuleFixContext context = new RuleFixContext();
-      if (context.prepare(descriptor.getStartElement(), rule -> mySwitchLabelText.equals(rule.getSwitchLabelText()))) {
+      if (context.prepare(element, rule -> mySwitchLabelText.equals(rule.getSwitchLabelText()))) {
         context.copyCaseValues(false);
         context.deleteRedundantComments();
         context.deleteRule();
@@ -1040,7 +1045,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     }
   }
 
-  private static class DeleteRedundantRuleFix implements LocalQuickFix {
+  private static class DeleteRedundantRuleFix extends PsiUpdateModCommandQuickFix {
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
@@ -1057,9 +1062,9 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       RuleFixContext context = new RuleFixContext();
-      if (context.prepare(descriptor.getStartElement(), Rule::isDefault)) {
+      if (context.prepare(element, Rule::isDefault)) {
         context.deleteRedundantComments();
         context.deleteRule();
       }
@@ -1100,7 +1105,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
           }
         }
       }
-      myCommentsToMergeWith = ContainerUtil.set(myRuleToMergeWith.myCommentTexts);
+      myCommentsToMergeWith = ContainerUtil.immutableSet(myRuleToMergeWith.myCommentTexts);
       return true;
     }
 

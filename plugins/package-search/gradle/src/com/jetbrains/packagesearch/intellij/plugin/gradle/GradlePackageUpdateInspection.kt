@@ -24,9 +24,10 @@ import com.jetbrains.packagesearch.intellij.plugin.gradle.GradlePackageVersionRa
 
 internal class GradlePackageUpdateInspection : PackageUpdateInspection() {
 
-    override fun getStaticDescription(): String = PackageSearchBundle.getMessage("packagesearch.inspection.upgrade.description.gradle")
-    override fun selectPsiElementIndex(dependencyDeclarationIndexes: DependencyDeclarationIndexes) =
-        dependencyDeclarationIndexes.coordinatesStartIndex
+    override fun getStaticDescription(): String = PackageSearchBundle.message("packagesearch.inspection.upgrade.description.gradle")
+    override fun selectPsiElementIndex(dependencyDeclarationIndexes: DependencyDeclarationIndexes): Int {
+        return dependencyDeclarationIndexes.coordinatesStartIndex
+    }
 
     override fun shouldCheckFile(file: PsiFile): Boolean =
         hasSupportFor(file)

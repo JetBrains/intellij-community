@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.concurrency.JobScheduler;
@@ -42,7 +42,7 @@ import static com.intellij.util.MessageBusUtil.invokeLaterIfNeededOnSyncPublishe
 import static com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptyList;
 
 
-@Service
+@Service(Service.Level.PROJECT)
 @State(
   name = "CommittedChangesCache",
   storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)}
@@ -212,7 +212,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
         else if (!myDisposed) {
           myConsumer.consume(new ArrayList<>(myResult));
         }
-      }, ModalityState.NON_MODAL);
+      }, ModalityState.nonModal());
     }
   }
 
@@ -780,7 +780,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
       myRefreshingIncomingChanges = false;
       debug("Incoming changes refresh complete, clearing cached incoming changes");
       notifyReloadIncomingChanges();
-    }, ModalityState.NON_MODAL, myProject.getDisposed());
+    }, ModalityState.nonModal(), myProject.getDisposed());
   }
 
   public void refreshAllCachesAsync(final boolean initIfEmpty, final boolean inBackground) {

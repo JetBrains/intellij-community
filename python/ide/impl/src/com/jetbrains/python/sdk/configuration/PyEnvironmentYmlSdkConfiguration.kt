@@ -82,7 +82,7 @@ class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExtension {
   private fun askForEnvData(module: Module, source: Source): PyAddNewCondaEnvFromFilePanel.Data? {
     val environmentYml = getEnvironmentYml(module) ?: return null
     // Again: only local conda is supported for now
-    val condaExecutable = runBlocking { suggestCondaPath(null) }?.let { LocalFileSystem.getInstance().findFileByPath(it) }
+    val condaExecutable = runBlocking { suggestCondaPath() }?.let { LocalFileSystem.getInstance().findFileByPath(it) }
 
     if (source == Source.INSPECTION && CondaEnvSdkFlavor.validateCondaPath(condaExecutable?.path, PathInfo.localPathInfoProvider) == null) {
       PySdkConfigurationCollector.logCondaEnvDialogSkipped(module.project, source, executableToEventField(condaExecutable?.path))

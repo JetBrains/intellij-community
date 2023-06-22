@@ -1,82 +1,99 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.diff
 
-import com.intellij.collaboration.ui.CollaborationToolsUIUtil.COMPONENT_SCOPE_KEY
+import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.ui.codereview.diff.viewer.EditorMapped
+import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.util.Disposer
-import com.intellij.ui.ClientProperty
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.JComponent
 
 @ApiStatus.Experimental
-class EditorLineInlaysController<VM : Any>(
+class EditorLineInlaysController<VM : EditorMapped>(
   parentCs: CoroutineScope,
-  inlayVms: Flow<Map<Int, List<VM>>>,
+  inlayVms: Flow<Collection<VM>>,
   private val vmKeyExtractor: (VM) -> Any,
-  private val componentFactory: (CoroutineScope, VM) -> JComponent,
-  private val inlaysManager: EditorComponentInlaysManager
+  private val inlaysManager: EditorComponentInlaysManager,
+  private val componentFactory: CoroutineScope.(VM) -> JComponent
 ) {
 
-  private val cs = parentCs.childScope(Dispatchers.Main.immediate)
-  private val componentByKey: MutableMap<Any, JComponent> = ConcurrentHashMap()
+  private val cs = parentCs.childScope(
+    Dispatchers.Default +
+    CoroutineName("com.intellij.collaboration.ui.codereview.diff.EditorLineInlaysController"))
+
+  private val controllersByVmKey: MutableMap<Any, InlayController<VM>> = ConcurrentHashMap()
 
   init {
-    cs.launch(start = CoroutineStart.UNDISPATCHED) {
+    cs.launchNow {
       inlayVms.collect { vms ->
         val vmsByKey = mutableMapOf<Any, VM>()
 
-        for ((line, vmsOnLine) in vms) {
-          for (vm in vmsOnLine) {
-            vmsByKey[getKey(line, vm)] = vm
-          }
+        for (vm in vms) {
+          vmsByKey[vmKeyExtractor(vm)] = vm
         }
 
         // remove missing
-        val iter = componentByKey.iterator()
+        val iter = controllersByVmKey.iterator()
         while (iter.hasNext()) {
-          val (key, component) = iter.next()
+          val (key, ctrl) = iter.next()
           if (!vmsByKey.containsKey(key)) {
             iter.remove()
-            val componentCs = ClientProperty.get(component, COMPONENT_SCOPE_KEY)
-            cs.launch {
-              componentCs?.coroutineContext?.get(Job)?.cancelAndJoin()
-            }
+            ctrl.destroy()
           }
         }
 
         //add new
-        for ((line, vmsOnLine) in vms) {
-          for (vm in vmsOnLine) {
-            val key = getKey(line, vm)
-            if (componentByKey.contains(key)) continue
-
-            val component = insert(line, vm) ?: continue
-            componentByKey[key] = component
-          }
+        for (vm in vms) {
+          val key = vmKeyExtractor(vm)
+          if (controllersByVmKey.contains(key)) continue
+          controllersByVmKey[key] = InlayController(cs, inlaysManager, vm, componentFactory)
         }
       }
     }
   }
+}
 
-  private fun insert(line: Int, inlayVm: VM): JComponent? {
-    val cs = cs.childScope()
-    val component = componentFactory(cs, inlayVm).also {
-      ClientProperty.put(it, COMPONENT_SCOPE_KEY, cs)
+private class InlayController<VM : EditorMapped>(
+  parentCs: CoroutineScope,
+  inlaysManager: EditorComponentInlaysManager,
+  vm: VM,
+  componentFactory: CoroutineScope.(VM) -> JComponent
+) {
+  private val cs = parentCs.childScope(
+    Dispatchers.Main.immediate +
+    CoroutineName("com.intellij.collaboration.ui.codereview.diff.EditorLineInlaysController.InlayController"))
+
+  private var inlay: Inlay<*>? = null
+
+  init {
+    cs.launchNow {
+      combine(vm.line, vm.isVisible, ::Pair)
+        .distinctUntilChanged()
+        .collectLatest { (line, isVisible) ->
+          coroutineScope {
+            withContext(NonCancellable) {
+              inlay?.let(Disposer::dispose)
+            }
+            if (line != null && isVisible) {
+              val component = componentFactory(vm)
+              inlay = inlaysManager.insertAfter(line, component)
+              awaitCancellation()
+            }
+          }
+        }
+    }.invokeOnCompletion {
+      inlay?.let(Disposer::dispose)
     }
-    val inlay = inlaysManager.insertAfter(line, component) ?: return null
-    cs.launch(start = CoroutineStart.UNDISPATCHED) {
-      try {
-        awaitCancellation()
-      }
-      catch (e: Exception) {
-        Disposer.dispose(inlay)
-      }
-    }
-    return component
   }
 
-  private fun getKey(line: Int, vm: VM): Any = line to vmKeyExtractor(vm)
+  suspend fun destroy() {
+    cs.coroutineContext[Job]?.cancelAndJoin()
+  }
 }

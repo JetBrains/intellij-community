@@ -30,7 +30,7 @@ interface InlayHintsProviderFactory {
 
   companion object {
     @JvmStatic
-    val EP: ExtensionPointName<InlayHintsProviderFactory> = ExtensionPointName<InlayHintsProviderFactory>("com.intellij.codeInsight.inlayProviderFactory")
+    val EP: ExtensionPointName<InlayHintsProviderFactory> = ExtensionPointName("com.intellij.codeInsight.inlayProviderFactory")
   }
 }
 

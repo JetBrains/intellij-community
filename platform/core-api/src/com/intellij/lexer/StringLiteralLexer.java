@@ -96,10 +96,7 @@ public class StringLiteralLexer extends LexerBase {
     }
 
     if (nextChar == 'x' && myAllowHex) {
-      for(int i = myStart + 2; i < myStart + 4; i++) {
-        if (i >= myEnd || !StringUtil.isHexDigit(myBuffer.charAt(i))) return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN;
-      }
-      return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN;
+      return getHexCodedEscapeSeq();
     }
 
     switch (nextChar) {
@@ -140,9 +137,21 @@ public class StringLiteralLexer extends LexerBase {
     return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN;
   }
 
+
+  protected IElementType getHexCodedEscapeSeq() {
+    // \xFF
+    return getStandardLimitedHexCodedEscapeSeq(4);
+  }
+
   @NotNull
   protected IElementType getUnicodeEscapeSequenceType() {
-    for (int i = myStart + 2; i < myStart + 6; i++) {
+    // \uFFFF
+    return getStandardLimitedHexCodedEscapeSeq(6);
+  }
+
+  @NotNull
+  protected IElementType getStandardLimitedHexCodedEscapeSeq(int offsetLimit) {
+    for (int i = myStart + 2; i < myStart + offsetLimit; i++) {
       if (i >= myEnd || !StringUtil.isHexDigit(myBuffer.charAt(i))) return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN;
     }
     return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN;

@@ -37,14 +37,13 @@ interface PythonConsoleRemoteProcessCreator<T> {
 
   companion object {
     @JvmField
-    val EP_NAME: ExtensionPointName<PythonConsoleRemoteProcessCreator<Any>> = ExtensionPointName.create<PythonConsoleRemoteProcessCreator<Any>>(
+    val EP_NAME: ExtensionPointName<PythonConsoleRemoteProcessCreator<Any>> = ExtensionPointName.create(
       "Pythonid.remoteConsoleProcessCreator")
   }
 }
 
-data class RemoteConsoleProcessData(val remoteProcessHandlerBase: ProcessHandler,
-                                    val pydevConsoleCommunication: PydevConsoleCommunication,
-                                    val commandLine: String?,
+data class RemoteConsoleProcessData(val pydevConsoleCommunication: PydevConsoleCommunication,
+                                    val commandLine: String,
                                     val process: Process,
                                     val socketProvider: PyRemoteSocketToLocalHostProvider)
 

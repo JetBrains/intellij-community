@@ -57,6 +57,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 public class CreateDirectoryOrPackageAction extends AnAction implements DumbAware {
   public static final ExtensionPointName<CreateDirectoryCompletionContributor> EP = new ExtensionPointName<>("com.intellij.createDirectoryCompletionContributor");
@@ -140,8 +141,8 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
       return;
     }
 
-    final PsiDirectory[] directories = view.getDirectories();
-    if (directories.length == 0) {
+    List<@NotNull PsiDirectory> directories = Stream.of(view.getDirectories()).filter(d -> d != null).toList();
+    if (directories.isEmpty()) {
       presentation.setEnabledAndVisible(false);
       return;
     }
@@ -183,8 +184,12 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
         final String text = nameField.getText();
         validator.checkInput(text);
         String errorText = validator.getErrorText(text);
+        String warningText = validator.getWarningText(text);
         if (errorText != null) {
           contentPanel.setError(errorText);
+        }
+        else if (warningText != null) {
+          contentPanel.setWarning(warningText);
         }
         else if (contentPanel.hasError()) {
           contentPanel.setError(null);

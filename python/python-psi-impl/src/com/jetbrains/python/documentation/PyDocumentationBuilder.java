@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.documentation;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.openapi.util.NlsSafe;
@@ -27,7 +28,6 @@ import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
-import com.jetbrains.python.toolbox.ChainIterable;
 import com.jetbrains.python.toolbox.Maybe;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -41,15 +41,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Pattern;
 
-import static com.jetbrains.python.documentation.DocumentationBuilderKit.*;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 public class PyDocumentationBuilder {
   private final PsiElement myElement;
   private final PsiElement myOriginalElement;
-  private final HtmlBuilder myProlog;      // definition header
-  private final HtmlBuilder myBody;        // definition main part
-  private final HtmlBuilder myContent;     // sequence for doc string
+  private final HtmlBuilder myProlog;      // definition header (link to class or module)
+  private final HtmlBuilder myBody;        // definition main part (signature / element description)
+  private final HtmlBuilder myContent;     // main part of docstring
   private final HtmlBuilder mySections;
   private final List<FormatterDocFragment> myFormatterFragments;
   private final Map<String, HtmlBuilder> mySectionsMap = FactoryMap.createMap(item -> new HtmlBuilder(), LinkedHashMap::new);
@@ -123,15 +122,15 @@ public class PyDocumentationBuilder {
     }
     else {
       final HtmlBuilder result = new HtmlBuilder();
-      if (!myProlog.isEmpty() || !myBody.isEmpty()) {
-        final HtmlBuilder definitionBuilder = new HtmlBuilder();
+      final HtmlBuilder definitionBuilder = new HtmlBuilder();
+
+      if (!myProlog.isEmpty()) {
         definitionBuilder.append(myProlog);
-        if (!myBody.isEmpty() && !myProlog.isEmpty()) {
-          definitionBuilder.br();
-        }
-        definitionBuilder.append(myBody);
-        result.append(definitionBuilder.wrapWith("pre").wrapWith(DocumentationMarkup.DEFINITION_ELEMENT));
       }
+      if (!myBody.isEmpty()) {
+        definitionBuilder.append(myBody.wrapWith("pre").wrapWith(DocumentationMarkup.DEFINITION_ELEMENT));
+      }
+      result.append(definitionBuilder);
       if (!myContent.isEmpty()) {
         result.append(myContent.wrapWith(DocumentationMarkup.CONTENT_ELEMENT));
       }
@@ -202,7 +201,7 @@ public class PyDocumentationBuilder {
     final HtmlChunk link = func != null ? getLinkToFunction(func, true) : HtmlChunk.text(PyNames.UNNAMED_ELEMENT);
     final String parameterName = parameter.getName();
     if (link != null && parameterName != null) {
-      myProlog.appendRaw(PyPsiBundle.message("QDOC.parameter.name.of.link", HtmlChunk.text(parameterName).bold(), link));
+      myBody.appendRaw(PyPsiBundle.message("QDOC.parameter.name.of.link", HtmlChunk.text(parameterName).bold(), link)).br();
     }
 
     if (func != null) {
@@ -221,7 +220,7 @@ public class PyDocumentationBuilder {
     myBody.append(PythonDocumentationProvider.describeParameter(parameter, myContext));
   }
 
-  private @NotNull HtmlChunk runFormatterService(@NotNull @NlsSafe String description) {
+  private @NotNull HtmlChunk runFormatterService(@NotNull @Nls String description) {
     final DocstringFormatterRequest output =
       PyStructuredDocstringFormatter.formatDocstring(myElement, new DocstringFormatterRequest(description, Collections.emptyList()),
                                                      List.of(PyStructuredDocstringFormatter.FORMATTER_FRAGMENTS_FLAG));
@@ -258,7 +257,7 @@ public class PyDocumentationBuilder {
     final Maybe<PyCallable> accessor = property.getByDirection(direction);
     final HtmlChunk link = getLinkToClass(cls, true);
     if (link != null) {
-      myProlog.appendRaw(PyPsiBundle.message("QDOC.property.name.of.link", HtmlChunk.text(propertyName).bold(), link));
+      myBody.appendRaw(PyPsiBundle.message("QDOC.property.name.of.link", HtmlChunk.text(propertyName).bold(), link)).br();
     }
 
     // Choose appropriate docstring
@@ -291,7 +290,7 @@ public class PyDocumentationBuilder {
       myContent.append(safeRunFormatterService(elementDefinition, docstring));
     }
     mySectionsMap.get(PyPsiBundle.message("QDOC.accessor.kind")).append(getAccessorKind(direction))
-                 .append(accessor.valueOrNull() == null ? " " + PyPsiBundle.message("QDOC.not.defined.in.parentheses") : "");
+      .append(accessor.valueOrNull() == null ? " " + PyPsiBundle.message("QDOC.not.defined.in.parentheses") : "");
 
     // Choose appropriate definition to display
     if (accessor.valueOrNull() != null) {
@@ -327,17 +326,22 @@ public class PyDocumentationBuilder {
     if (PyUtil.isTopLevel(elementDefinition)) {
       final PsiFile containing = elementDefinition.getContainingFile();
       if (containing instanceof PyFile) {
-        final String link = getLinkToModule((PyFile)containing);
-        if (link != null) {
-          myProlog.appendRaw(link);
+        final HtmlChunk linkToModule = getLinkToModule((PyFile)containing);
+        if (linkToModule != null) {
+          myProlog.append(HtmlChunk.div()
+                            .setClass("bottom")
+                            .children(
+                              HtmlChunk.icon("AllIcons.Nodes.Package", AllIcons.Nodes.Package),
+                              HtmlChunk.nbsp(),
+                              linkToModule.code()
+                            ));
         }
       }
     }
 
     if (elementDefinition instanceof PyClass pyClass) {
-      myBody.append(PythonDocumentationProvider.describeDecorators(pyClass, WRAP_IN_ITALIC, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, BR, BR));
-      myBody.append(
-        PythonDocumentationProvider.describeClass(pyClass, WRAP_IN_BOLD, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, true, myContext));
+      myBody.append(PythonDocumentationProvider.describeDecorators(pyClass, HtmlChunk.br()));
+      myBody.append(PythonDocumentationProvider.describeClass(pyClass, myContext));
       if (effectiveDocstring != null) {
         // add class attributes described either in the init doc or class doc
         addAttributesSection(effectiveDocstring);
@@ -352,15 +356,20 @@ public class PyDocumentationBuilder {
       }
     }
     else if (elementDefinition instanceof PyFunction pyFunction) {
-      myBody.append(
-        PythonDocumentationProvider.describeDecorators(pyFunction, WRAP_IN_ITALIC, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, BR, BR));
+      myBody.append(PythonDocumentationProvider.describeDecorators(pyFunction, HtmlChunk.br()));
       myBody.append(PythonDocumentationProvider.describeFunction(pyFunction, myContext, false));
 
       final PyClass pyClass = pyFunction.getContainingClass();
       if (!isProperty && pyClass != null) {
         final HtmlChunk link = getLinkToClass(pyClass, true);
         if (link != null) {
-          myProlog.append(link);
+          myProlog.append(HtmlChunk.div()
+                            .setClass("bottom")
+                            .children(
+                              HtmlChunk.icon("AllIcons.Nodes.Class", AllIcons.Nodes.Class),
+                              HtmlChunk.nbsp(),
+                              link.code()
+                            ));
         }
       }
       if (effectiveDocstring != null) {
@@ -442,11 +451,12 @@ public class PyDocumentationBuilder {
       String targetName = target.getName();
       if (link != null && targetName != null) {
         if (PyUtil.isInstanceAttribute(target)) {
-          myProlog.appendRaw(PyPsiBundle.message("QDOC.instance.attribute", HtmlChunk.text(targetName).bold(), link));
+          myBody.appendRaw(PyPsiBundle.message("QDOC.instance.attribute", HtmlChunk.text(targetName).bold(), link));
         }
         else {
-          myProlog.appendRaw(PyPsiBundle.message("QDOC.class.attribute", HtmlChunk.text(targetName).bold(), link));
+          myBody.appendRaw(PyPsiBundle.message("QDOC.class.attribute", HtmlChunk.text(targetName).bold(), link));
         }
+        myBody.br();
       }
       // if there is no separate doc for attribute we will try to take it from class doc
       if (getEffectiveDocStringExpression(target) == null) {
@@ -548,10 +558,10 @@ public class PyDocumentationBuilder {
       return null;
     }
     final boolean isConstructor = PyUtil.isInitOrNewMethod(pyFunction);
-    Iterable<PyClass> classes = pyClass.getAncestorClasses(myContext);
+    List<PyClass> classes = pyClass.getAncestorClasses(myContext);
     if (isConstructor) {
       // look at our own class again and maybe inherit class's doc
-      classes = new ChainIterable<>(pyClass).add(classes);
+      classes = ContainerUtil.prepend(classes, pyClass);
     }
     for (PyClass ancestor : classes) {
       PyStringLiteralExpression docstringElement = null;
@@ -624,7 +634,7 @@ public class PyDocumentationBuilder {
     // reconstruct back, dropping first empty fragment as needed
     boolean isFirstLine = true;
     final int tabSize = PythonCodeStyleService.getInstance().getTabSize(element.getContainingFile());
-    for (String line : updatedLines) {
+    for (@NlsSafe String line : updatedLines) {
       if (isFirstLine && ourSpacesPattern.matcher(line).matches()) continue; // ignore all initial whitespace
       if (isFirstLine) {
         isFirstLine = false;
@@ -639,8 +649,7 @@ public class PyDocumentationBuilder {
       if (leadingTabs > 0) {
         line = StringUtil.repeatSymbol(' ', tabSize * leadingTabs) + line.substring(leadingTabs);
       }
-      final @NonNls String html = combUp(line);
-      result.appendRaw(html);
+      result.append(HtmlChunk.text(line));
     }
     return result.toFragment();
   }
@@ -649,7 +658,7 @@ public class PyDocumentationBuilder {
     // what to prepend to a module description?
     final VirtualFile file = followed.getVirtualFile();
     if (file == null) {
-      myProlog.append(HtmlChunk.text(PyPsiBundle.message("QDOC.module.path.unknown")).wrapWith(HtmlChunk.tag("small")));
+      myBody.append(HtmlChunk.text(PyPsiBundle.message("QDOC.module.path.unknown")).wrapWith(HtmlChunk.tag("small")));
     }
     else {
       final QualifiedName name = QualifiedNameFinder.findShortestImportableQName(followed);
@@ -657,31 +666,35 @@ public class PyDocumentationBuilder {
         @NonNls String qualifiedName =
           ObjectUtils.chooseNotNull(QualifiedNameFinder.canonizeQualifiedName(followed, name, null), name).toString();
         if (PyUtil.isPackage(followed)) {
-          myProlog.appendRaw(PyPsiBundle.message("QDOC.package", HtmlChunk.text(qualifiedName).bold()));
+          myBody.appendRaw(PyPsiBundle.message("QDOC.package.name", HtmlChunk.text(qualifiedName).bold()));
         }
         else {
-          myProlog.appendRaw(PyPsiBundle.message("QDOC.module", HtmlChunk.text(qualifiedName).bold()));
+          myBody.appendRaw(PyPsiBundle.message("QDOC.module.name", HtmlChunk.text(qualifiedName).bold()));
         }
       }
       else {
         @NonNls final String path = file.getPath();
-        myProlog.append(HtmlChunk.raw(path).wrapWith(HtmlChunk.tag("span").attr("path", path)));
+        myBody.append(HtmlChunk.raw(path).wrapWith(HtmlChunk.tag("span").attr("path", path)));
       }
     }
   }
 
-  @NlsSafe
   @Nullable
-  private static String getLinkToModule(@NotNull PyFile module) {
+  private static HtmlChunk getLinkToModule(@NotNull PyFile module) {
     final QualifiedName name = QualifiedNameFinder.findCanonicalImportPath(module, null);
     if (name != null) {
       return PyDocumentationLink.toModule(name.toString(), name.toString());
     }
     final VirtualFile vFile = module.getVirtualFile();
-    return vFile != null ? vFile.getPath() : null;
+    if (vFile != null) {
+      @NlsSafe String vFilePath = vFile.getPath();
+      return HtmlChunk.raw(vFilePath);
+    }
+    else {
+      return null;
+    }
   }
 
-  @NlsSafe
   @Nullable
   private HtmlChunk getLinkToClass(@NotNull PyClass pyClass, boolean preferQualifiedName) {
     final String qualifiedName = pyClass.getQualifiedName();
@@ -693,17 +706,14 @@ public class PyDocumentationBuilder {
     }
 
     if (qualifiedName != null) {
-      final @NlsSafe String linkToPossibleClass = PyDocumentationLink.toPossibleClass(linkText, qualifiedName, pyClass, myContext);
-      return HtmlChunk.raw(linkToPossibleClass);
+      return PyDocumentationLink.toClass(pyClass, linkText);
     }
     else if (PsiTreeUtil.getParentOfType(myElement, PyClass.class, false) == pyClass) {
-      final @NlsSafe String linkToContainingClass = PyDocumentationLink.toContainingClass(linkText);
-      return HtmlChunk.raw(linkToContainingClass);
+      return PyDocumentationLink.toContainingClass(linkText);
     }
     return HtmlChunk.raw(linkText);
   }
 
-  @NlsSafe
   @Nullable
   private static HtmlChunk getLinkToFunction(@NotNull PyFunction function, boolean preferQualifiedName) {
     final String qualifiedName = function.getQualifiedName();
@@ -717,8 +727,7 @@ public class PyDocumentationBuilder {
     }
 
     if (qualifiedName != null) {
-      final @NlsSafe String link = PyDocumentationLink.toFunction(linkText, function);
-      return HtmlChunk.raw(link);
+      return PyDocumentationLink.toFunction(linkText, function);
     }
     return HtmlChunk.raw(linkText);
   }
@@ -739,7 +748,7 @@ public class PyDocumentationBuilder {
   }
 
   static final class DocstringFormatterRequest {
-    @NotNull private final String body;
+    @NotNull private final @NlsSafe String body;
     @NotNull private final List<FormatterDocFragment> fragments;
 
     DocstringFormatterRequest() {
@@ -769,19 +778,19 @@ public class PyDocumentationBuilder {
       return Objects.hash(body, fragments);
     }
 
-    @NlsSafe @NotNull String getBody() {
+    @NotNull @NlsSafe String getBody() {
       return body;
     }
 
-    @NlsSafe @NotNull List<FormatterDocFragment> getFragments() {
+    @NotNull List<FormatterDocFragment> getFragments() {
       return fragments;
     }
   }
 
   private static final class FormatterDocFragment {
-    @NlsSafe private static final String NDASH = " &ndash; ";
-    @NlsSafe private final String myName;
-    @NlsSafe private final String myDescription;
+    private static final @NlsSafe String NDASH = " &ndash; ";
+    private final @NlsSafe String myName;
+    private final @NlsSafe String myDescription;
     private final FormatterDocFragmentType myFragmentType;
 
     private FormatterDocFragment(@NotNull String name, @NotNull String description, @NotNull FormatterDocFragmentType type) {

@@ -15,15 +15,16 @@
  */
 package com.siyeh.ig.abstraction;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -70,11 +71,11 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new DeclareCollectionAsInterfaceFix((String)infos[0]);
   }
 
-  private static class DeclareCollectionAsInterfaceFix extends InspectionGadgetsFix {
+  private static class DeclareCollectionAsInterfaceFix extends PsiUpdateModCommandQuickFix {
 
     private final String typeString;
 
@@ -96,8 +97,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiJavaCodeReferenceElement referenceElement)) {
         return;

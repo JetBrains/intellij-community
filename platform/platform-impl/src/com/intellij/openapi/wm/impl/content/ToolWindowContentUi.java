@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.IdeBundle;
@@ -9,10 +9,10 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
@@ -37,7 +37,6 @@ import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.content.tabs.TabbedContentAction;
 import com.intellij.ui.layout.migLayout.MigLayoutUtilKt;
 import com.intellij.ui.layout.migLayout.patched.MigLayout;
-import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.tabs.impl.MorePopupAware;
 import com.intellij.util.Alarm;
 import com.intellij.util.ContentUtilEx;
@@ -64,8 +63,11 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   // when client property is put in toolwindow component, hides toolwindow label
   @NonNls public static final String HIDE_ID_LABEL = "HideIdLabel";
   @NonNls public static final Key<Boolean> ALLOW_DND_FOR_TABS = Key.create("AllowDragAndDropForTabs");
+  // when client property is set to true in toolwindow component, the toolbar is always visible in the tool window header
+  @NonNls public static final Key<Boolean> DONT_HIDE_TOOLBAR_IN_HEADER = Key.create("DontHideToolbarInHeader");
   @NonNls private static final String TOOLWINDOW_UI_INSTALLED = "ToolWindowUiInstalled";
   public static final DataKey<BaseLabel> SELECTED_CONTENT_TAB_LABEL = DataKey.create("SELECTED_CONTENT_TAB_LABEL");
+  @ApiStatus.Internal public static final Key<Boolean> SHOW_BETA_LABEL = Key.create("ShowBetaLabel");
 
   private final @NotNull ContentManager contentManager;
   int dropOverIndex = -1;
@@ -510,7 +512,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
       }
 
       private boolean isToolWindowDrag(MouseEvent e) {
-        if (!Registry.is("ide.new.tool.window.dnd")) {
+        if (!AdvancedSettings.getBoolean("ide.tool.window.header.dnd")) {
           return false;
         }
 
@@ -757,12 +759,6 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   }
 
   public static void toggleContentPopup(@NotNull ToolWindowContentUi content, @NotNull ContentManager contentManager) {
-    toggleContentPopup(content, contentManager, null);
-  }
-
-  static void toggleContentPopup(@NotNull ToolWindowContentUi content,
-                                 @NotNull ContentManager contentManager,
-                                 @Nullable PopupState<JBPopup> popupState) {
     SelectContentStep step = new SelectContentStep(contentManager.getContents());
     Content selectedContent = contentManager.getSelectedContent();
     if (selectedContent != null) {
@@ -770,7 +766,6 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     }
 
     ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
-    if (popupState != null) popupState.prepareToShow(popup);
     content.getCurrentLayout().showContentPopup(popup);
 
     if (selectedContent instanceof TabbedContent) {

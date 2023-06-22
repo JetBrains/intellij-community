@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.execution.ExecutionException;
@@ -26,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.popup.async.AsyncPopupStep;
 import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.ui.popup.list.ListPopupWrapper;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.StatusText;
@@ -98,13 +99,21 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
 
-        List<AttachItem> allItems = ContainerUtil.immutableList(getTopLevelItems(indicator, project));
+        List<AttachItem> allItems = Collections.unmodifiableList(getTopLevelItems(indicator, project));
+
+        if (Registry.is("xdebugger.silently.attach.to.process.if.only.one")) {
+          AttachToProcessItem singleItem = getSingleItemIfItsAttachToProcess(allItems);
+          if (singleItem != null) {
+            singleItem.startDebugSession(project);
+            return;
+          }
+        }
 
         ApplicationManager.getApplication().invokeLater(() -> {
           AttachListStep step = new AttachListStep(allItems, XDebuggerBundle.message("xdebugger.attach.popup.title.default"), project);
 
           final ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
-          final JList mainList = ((ListPopupImpl)popup).getList();
+          final JList mainList = ((ListPopupImpl) ListPopupWrapper.getRootPopup(popup)).getList();
 
           ListSelectionListener listener = event -> {
             if (event.getValueIsAdjusting()) return;
@@ -136,6 +145,18 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
         }, project.getDisposed());
       }
     }.queue();
+  }
+
+  private static @Nullable AttachToProcessItem getSingleItemIfItsAttachToProcess(List<AttachItem> items) {
+    String recentGroupName = XDebuggerBundle.message("xdebugger.attach.toLocal.popup.recent");
+
+    List<AttachItem> nonRecentItems = items.stream().filter(i -> !i.getGroup().getGroupName().equals(recentGroupName)).limit(2).toList();
+    if (nonRecentItems.size() != 1) return null;
+
+    AttachItem single = nonRecentItems.get(0);
+    if (!(single instanceof AttachToProcessItem)) return null;
+
+    return (AttachToProcessItem)single;
   }
 
   protected List<XAttachHostProvider<XAttachHost>> getAvailableHosts() {

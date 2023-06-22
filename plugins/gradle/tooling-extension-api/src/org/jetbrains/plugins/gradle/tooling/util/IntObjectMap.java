@@ -9,12 +9,12 @@ import org.jetbrains.annotations.NotNull;
  * @author Vladislav.Soroka
  */
 public class IntObjectMap<T> {
-  private final IntObjectHashMap<T> myObjectsMap = new IntObjectHashMap<T>(new IntObjectHashMap.ArrayProducer<T[]>() {
-      @Override
-      public T[] produce(int s) {
-        return (T[])(s == 0 ? ArrayUtilRt.EMPTY_OBJECT_ARRAY : new Object[s]);
-      }
-    });
+  private final IntObjectHashMap<T> myObjectsMap = new IntObjectHashMap<>(new IntObjectHashMap.ArrayProducer<T[]>() {
+    @Override
+    public T[] produce(int s) {
+      return (T[])(s == 0 ? ArrayUtilRt.EMPTY_OBJECT_ARRAY : new Object[s]);
+    }
+  });
 
   public T computeIfAbsent(int objectID, @NotNull ObjectFactory<T> objectFactory) {
     T object = myObjectsMap.get(objectID);

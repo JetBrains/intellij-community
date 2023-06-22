@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reflectiveAccess;
 
 import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -123,7 +124,7 @@ public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalI
           if (isDeclared && field.getContainingClass() != ownerClass.getPsiClass()) {
             LocalQuickFix fix = field.hasModifierProperty(PsiModifier.PUBLIC) ? new UseAppropriateMethodFix("getField") : null;
             holder.registerProblem(nameExpression, JavaBundle.message(
-              "inspection.reflection.member.access.field.not.in.class", fieldName, ownerClass.getPsiClass().getQualifiedName()), fix);
+              "inspection.reflection.member.access.field.not.in.class", fieldName, ownerClass.getPsiClass().getQualifiedName()), LocalQuickFix.notNullElements(fix));
             return;
           }
           if (!isDeclared && !field.hasModifierProperty(PsiModifier.PUBLIC)) {
@@ -160,7 +161,7 @@ public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalI
             return;
           }
           if (isDeclared && matchingMethod.getContainingClass() != ownerClass.getPsiClass()) {
-            LocalQuickFix fix = matchingMethod.hasModifierProperty(PsiModifier.PUBLIC) ? new UseAppropriateMethodFix("getMethod") : null;
+            LocalQuickFix[] fix = matchingMethod.hasModifierProperty(PsiModifier.PUBLIC) ? new LocalQuickFix[] {new UseAppropriateMethodFix("getMethod")} : LocalQuickFix.EMPTY_ARRAY;
             holder.registerProblem(nameExpression, JavaBundle.message(
               "inspection.reflection.member.access.method.not.in.class", methodName, ownerClass.getPsiClass().getQualifiedName()), fix);
             return;
@@ -235,7 +236,7 @@ public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalI
     return JavaLangClassMemberReference.matchMethod(methods, argumentTypes);
   }
 
-  static final class UseAppropriateMethodFix implements LocalQuickFix {
+  static final class UseAppropriateMethodFix extends PsiUpdateModCommandQuickFix {
     private final String myProperMethod;
 
     UseAppropriateMethodFix(String method) {
@@ -257,8 +258,7 @@ public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalI
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getStartElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiExpressionList expressionList = PsiTreeUtil.getNonStrictParentOfType(element, PsiExpressionList.class);
       if (expressionList == null) return;
       PsiMethodCallExpression call = ObjectUtils.tryCast(expressionList.getParent(), PsiMethodCallExpression.class);

@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.problems.ProblemImpl;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,7 +19,10 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.Problem;
@@ -49,7 +53,6 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
   private WolfTheProblemSolverImpl(@NotNull Project project) {
     myProject = project;
     myWolfListeners = new WolfListeners(project, this);
-    Disposer.register(this, myWolfListeners);
   }
 
   @Override
@@ -72,8 +75,8 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
     }
   }
 
-  private static class ProblemFileInfo {
-    private final Collection<Problem> problems = ContainerUtil.newConcurrentSet();
+  private static final class ProblemFileInfo {
+    private final Collection<Problem> problems = ConcurrentCollectionFactory.createConcurrentSet();
     private volatile boolean hasSyntaxErrors;
 
     @Override
@@ -128,14 +131,14 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
     }
   }
 
-  // returns true if car has been cleaned
+  // returns true if the car has been cleaned
   private boolean orderVincentToCleanTheCar(@NotNull VirtualFile file, @NotNull ProgressIndicator progressIndicator) throws ProcessCanceledException {
     if (!isToBeHighlighted(file)) {
       clearProblems(file);
-      return true; // file is going to be red waved no more
+      return true; // the file is going to be red waved no more
     }
     if (hasSyntaxErrors(file)) {
-      // optimization: it's no use anyway to try clean the file with syntax errors, only changing the file itself can help
+      // optimization: it's no use anyway to try to clean the file with syntax errors, only changing the file itself can help
       return false;
     }
     if (myProject.isDisposed()) return false;
@@ -146,33 +149,17 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
     if (document == null) return false;
 
     AtomicReference<HighlightInfo> error = new AtomicReference<>();
-    AtomicBoolean hasErrorElement = new AtomicBoolean();
+    boolean hasErrorElement = false;
     try {
       ProperTextRange visibleRange = new ProperTextRange(0, document.getTextLength());
       HighlightingSessionImpl.getOrCreateHighlightingSession(psiFile, (DaemonProgressIndicator)progressIndicator, visibleRange);
-      GeneralHighlightingPass pass = new GeneralHighlightingPass(psiFile, document, 0, document.getTextLength(),
-                                                                 false, visibleRange, null, HighlightInfoProcessor.getEmpty()) {
-        @NotNull
-        @Override
-        protected HighlightInfoHolder createInfoHolder(@NotNull PsiFile file) {
-          return new HighlightInfoHolder(file) {
-            @Override
-            public boolean add(@Nullable HighlightInfo info) {
-              if (info != null && info.getSeverity() == HighlightSeverity.ERROR) {
-                error.set(info);
-                hasErrorElement.set(myHasErrorElement);
-                throw new ProcessCanceledException();
-              }
-              return super.add(info);
-            }
-          };
-        }
-      };
+      GeneralHighlightingPass pass = new NasueousGeneralHighlightingPass(psiFile, document, visibleRange, error);
       pass.collectInformation(progressIndicator);
+      hasErrorElement = pass.myHasErrorElement;
     }
     catch (ProcessCanceledException e) {
       if (error.get() != null) {
-        ProblemImpl problem = new ProblemImpl(file, error.get(), hasErrorElement.get());
+        ProblemImpl problem = new ProblemImpl(file, error.get(), hasErrorElement);
         reportProblems(file, Collections.singleton(problem));
       }
       return false;
@@ -188,7 +175,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
   }
 
   private boolean willBeHighlightedAnyway(@NotNull VirtualFile file) {
-    // opened in some editor, and hence will be highlighted automatically sometime later
+    // opened in some editor and hence will be highlighted automatically sometime later
     FileEditor[] selectedEditors = FileEditorManager.getInstance(myProject).getSelectedEditors();
     for (FileEditor editor : selectedEditors) {
       if (!(editor instanceof TextEditor)) continue;
@@ -219,11 +206,6 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
   @Override
   public boolean hasProblemFilesBeneath(@NotNull Module scope) {
     return hasProblemFilesBeneath(virtualFile -> ModuleUtilCore.moduleContainsFile(scope, virtualFile, false));
-  }
-
-  @Override
-  public void addProblemListener(@NotNull WolfTheProblemSolver.ProblemListener listener, @NotNull Disposable parentDisposable) {
-    myProject.getMessageBus().connect(parentDisposable).subscribe(com.intellij.problems.ProblemListener.TOPIC, listener);
   }
 
   @Override
@@ -269,12 +251,14 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
   public void weHaveGotProblems(@NotNull VirtualFile virtualFile, @NotNull List<? extends Problem> problems) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     if (problems.isEmpty()) return;
-    if (!isToBeHighlighted(virtualFile)) return;
-    weHaveGotNonIgnorableProblems(virtualFile, problems);
+    if (isToBeHighlighted(virtualFile)) {
+      weHaveGotNonIgnorableProblems(virtualFile, problems);
+    }
   }
 
   @Override
   public void weHaveGotNonIgnorableProblems(@NotNull VirtualFile virtualFile, @NotNull List<? extends Problem> problems) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     if (problems.isEmpty()) return;
     ProblemFileInfo storedProblems = myProblems.computeIfAbsent(virtualFile, __ -> new ProblemFileInfo());
     boolean fireListener = storedProblems.problems.isEmpty();
@@ -291,6 +275,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
   }
 
   private void fireProblemsAppeared(@NotNull VirtualFile file) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     myProject.getMessageBus().syncPublisher(com.intellij.problems.ProblemListener.TOPIC).problemsAppeared(file);
   }
 
@@ -357,7 +342,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     if (!isToBeHighlighted(file)) return;
 
-    Set<Object> problems = myProblemsFromExternalSources.computeIfAbsent(file, __ -> ContainerUtil.newConcurrentSet());
+    Set<Object> problems = myProblemsFromExternalSources.computeIfAbsent(file, __ -> ConcurrentCollectionFactory.createConcurrentSet());
     boolean isNewFileForExternalSource = problems.isEmpty();
     problems.add(source);
 
@@ -391,10 +376,13 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
     }
   }
 
-  @NotNull
-  private static TextRange getTextRange(@NotNull VirtualFile virtualFile, int line, int column) {
+  private static @NotNull TextRange getTextRange(@NotNull VirtualFile virtualFile, int line, int column) {
     Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
-    if (line > document.getLineCount()) line = document.getLineCount();
+    assert document != null;
+    int lineCount = document.getLineCount();
+    if (line > lineCount) {
+      line = lineCount;
+    }
     line = line <= 0 ? 0 : line - 1;
     int offset = document.getLineStartOffset(line) + (column <= 0 ? 0 : column - 1);
     return new TextRange(offset, offset);
@@ -407,14 +395,42 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
     return ContainerUtil.process(myProblemsFromExternalSources.keySet(), processor);
   }
 
-  @NotNull
   @TestOnly
-  public static WolfTheProblemSolver createTestInstance(@NotNull Project project){
+  public static @NotNull WolfTheProblemSolver createTestInstance(@NotNull Project project){
     assert ApplicationManager.getApplication().isUnitTestMode();
     return new WolfTheProblemSolverImpl(project);
   }
   @TestOnly
   void waitForFilesQueuedForInvalidationAreProcessed() {
     myWolfListeners.waitForFilesQueuedForInvalidationAreProcessed();
+  }
+
+  /**
+   * GHP, which throws as soon as it found an error in the file
+   */
+  private static class NasueousGeneralHighlightingPass extends GeneralHighlightingPass {
+    private final @NotNull AtomicReference<? super HighlightInfo> myError;
+
+    NasueousGeneralHighlightingPass(@NotNull PsiFile psiFile,
+                                    @NotNull Document document,
+                                    @NotNull ProperTextRange visibleRange,
+                                    @NotNull AtomicReference<? super HighlightInfo> error) {
+      super(psiFile, document, 0, document.getTextLength(), false, visibleRange, null, HighlightInfoProcessor.getEmpty());
+      myError = error;
+    }
+
+    @Override
+    protected @NotNull HighlightInfoHolder createInfoHolder(@NotNull PsiFile file) {
+      return new HighlightInfoHolder(file) {
+        @Override
+        public boolean add(@Nullable HighlightInfo info) {
+          if (info != null && info.getSeverity() == HighlightSeverity.ERROR) {
+            myError.set(info);
+            throw new ProcessCanceledException();
+          }
+          return super.add(info);
+        }
+      };
+    }
   }
 }

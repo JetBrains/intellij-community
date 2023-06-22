@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.TreeSet;
@@ -100,6 +101,18 @@ public final class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
       configFiles.putValue(descriptor.getMetaData(), descriptor);
     }
     onChange();
+  }
+
+  @Override
+  public void setConfigFileItems(@NotNull List<ConfigFileItem> configFileItems) {
+    var configFileInfos = new ArrayList<ConfigFileInfo>();
+    for (var configFileItem : configFileItems) {
+      var metadata = myMetaDataProvider.findMetaData(configFileItem.getId());
+      if (null != metadata) {
+        configFileInfos.add(new ConfigFileInfo(metadata, configFileItem.getUrl()));
+      }
+    }
+    setConfigFileInfos(configFileInfos);
   }
 
   private void onChange() {

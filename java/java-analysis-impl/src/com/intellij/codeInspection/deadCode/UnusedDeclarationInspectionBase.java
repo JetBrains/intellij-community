@@ -179,7 +179,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     if (!equalsToText(parameters.get(0).getType(), "java.io.ObjectOutputStream")) return false;
     if (method.isStatic()) return false;
     UClass aClass = UDeclarationKt.getContainingDeclaration(method, UClass.class);
-    return !(aClass != null && !isSerializable(aClass, refClass));
+    return aClass == null || isSerializable(aClass, refClass);
   }
 
   private static boolean isReadObjectMethod(@NotNull UMethod method, @Nullable RefClass refClass) {
@@ -190,7 +190,17 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     if (!equalsToText(parameters.get(0).getType(), "java.io.ObjectInputStream")) return false;
     if (method.isStatic()) return false;
     UClass aClass = UDeclarationKt.getContainingDeclaration(method, UClass.class);
-    return !(aClass != null && !isSerializable(aClass, refClass));
+    return aClass == null || isSerializable(aClass, refClass);
+  }
+
+  private static boolean isReadObjectNoDataMethod(@NotNull UMethod method, @Nullable RefClass refClass) {
+    String name = method.getName();
+    if (!"readObjectNoData".equals(name)) return false;
+    if (!method.getUastParameters().isEmpty()) return false;
+    if (!equalsToText(method.getReturnType(), PsiKeyword.VOID)) return false;
+    if (method.isStatic()) return false;
+    UClass aClass = UDeclarationKt.getContainingDeclaration(method, UClass.class);
+    return aClass == null || isSerializable(aClass, refClass);
   }
 
   private static boolean isWriteReplaceMethod(@NotNull UMethod method, @Nullable RefClass refClass) {
@@ -201,7 +211,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     if (!equalsToText(method.getReturnType(), CommonClassNames.JAVA_LANG_OBJECT)) return false;
     if (method.isStatic()) return false;
     UClass aClass = UDeclarationKt.getContainingDeclaration(method, UClass.class);
-    return !(aClass != null && !isSerializable(aClass, refClass));
+    return aClass == null || isSerializable(aClass, refClass);
   }
 
   private static boolean isReadResolveMethod(@NotNull UMethod method, @Nullable RefClass refClass) {
@@ -212,7 +222,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     if (!equalsToText(method.getReturnType(), CommonClassNames.JAVA_LANG_OBJECT)) return false;
     if (method.isStatic()) return false;
     final UClass aClass = UDeclarationKt.getContainingDeclaration(method, UClass.class);
-    return !(aClass != null && !isSerializable(aClass, refClass));
+    return aClass == null || isSerializable(aClass, refClass);
   }
 
   private static boolean equalsToText(PsiType type, String text) {
@@ -509,8 +519,12 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   }
 
   private static boolean isSerializablePatternMethod(@NotNull UMethod psiMethod, @Nullable RefClass refClass) {
-    return isReadObjectMethod(psiMethod, refClass) || isWriteObjectMethod(psiMethod, refClass) || isReadResolveMethod(psiMethod, refClass) ||
-           isWriteReplaceMethod(psiMethod, refClass) || isExternalizableNoParameterConstructor(psiMethod, refClass);
+    return isReadObjectMethod(psiMethod, refClass) ||
+           isReadObjectNoDataMethod(psiMethod, refClass) ||
+           isWriteObjectMethod(psiMethod, refClass) ||
+           isReadResolveMethod(psiMethod, refClass) ||
+           isWriteReplaceMethod(psiMethod, refClass) ||
+           isExternalizableNoParameterConstructor(psiMethod, refClass);
   }
 
   private static boolean belongsToRepeatableAnnotationContainer(@NotNull UMethod uMethod, @Nullable RefClass ownerRefClass) {

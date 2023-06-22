@@ -207,7 +207,7 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
           }
 
           @Override
-          public QuickFix @Nullable [] getFixes() {
+          public @NotNull QuickFix @Nullable [] getFixes() {
             return null;
           }
         };

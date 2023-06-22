@@ -196,6 +196,10 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
     doTest();
   }
 
+  public void testSubstringFromFormatDictVariable() {
+    doTest();
+  }
+
   // PY-3654
   public void testSubstringFromFormatSingleValue() {
     doTest();

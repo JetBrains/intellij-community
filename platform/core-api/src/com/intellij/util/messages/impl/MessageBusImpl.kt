@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.util.messages.impl
 
-import com.intellij.codeWithMe.ClientId.Companion.withClientId
+import com.intellij.codeWithMe.ClientId
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
@@ -18,6 +18,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.lang.invoke.MethodHandle
 import java.lang.reflect.InvocationHandler
@@ -41,13 +42,13 @@ open class MessageBusImpl : MessageBus {
 
   companion object {
     @JvmField
-    internal val LOG = Logger.getInstance(MessageBusImpl::class.java)
+    internal val LOG: Logger = Logger.getInstance(MessageBusImpl::class.java)
   }
 
   @JvmField
   internal val publisherCache: ConcurrentMap<Topic<*>, Any> = ConcurrentHashMap()
   @JvmField
-  internal val subscribers = ConcurrentLinkedQueue<MessageHandlerHolder>()
+  internal val subscribers: ConcurrentLinkedQueue<MessageHandlerHolder> = ConcurrentLinkedQueue<MessageHandlerHolder>()
 
   // caches subscribers for this bus and its children or parents, depending on the topic's broadcast policy
   @JvmField
@@ -127,8 +128,15 @@ open class MessageBusImpl : MessageBus {
     @Suppress("UNCHECKED_CAST")
     return publisherCache.computeIfAbsent(topic) { topic1 ->
       val aClass = topic1.listenerClass
-      Proxy.newProxyInstance(aClass.classLoader, arrayOf(aClass), createPublisher(topic1, topic1.broadcastDirection))
+      val publisher = createPublisher(topic = topic1, direction = topic1.broadcastDirection)
+      Proxy.newProxyInstance(aClass.classLoader, arrayOf(aClass), publisher)
     } as L
+  }
+
+  override fun <L : Any> syncAndPreloadPublisher(topic: Topic<L>): L {
+    val publisher = syncPublisher(topic)
+    (Proxy.getInvocationHandler(publisher) as MessagePublisher<*>).preload()
+    return publisher
   }
 
   internal open fun <L> createPublisher(topic: Topic<L>, direction: BroadcastDirection): MessagePublisher<L> {
@@ -300,6 +308,16 @@ open class MessageBusImpl : MessageBus {
     }
     subscriberCache.clear()
   }
+
+  @TestOnly
+  fun sortSubscribers(topic: Topic<*>, comparator: Comparator<in Any?>) {
+    subscriberCache.compute(topic) { _, array ->
+      if (array == null) throw AssertionError("No subscribers for topic yet. Nothing to sort.")
+      val sorted = arrayOf(*array)
+      sorted.sortWith(comparator)
+      sorted
+    }
+  }
 }
 
 @Internal
@@ -361,7 +379,7 @@ class RootBus(owner: MessageBusOwner) : CompositeMessageBus(owner) {
 
 internal class MessageQueue {
   @JvmField
-  val queue = ArrayDeque<Message>()
+  val queue: ArrayDeque<Message> = ArrayDeque<Message>()
 
   @JvmField
   var current: Message? = null
@@ -398,7 +416,7 @@ private fun pumpWaiting(jobQueue: MessageQueue) {
 }
 
 private fun deliverMessage(job: Message, jobQueue: MessageQueue, prevError: Throwable?): Throwable? {
-  withClientId(job.clientId).use {
+  ClientId.withClientId(job.clientId).use {
     jobQueue.current = job
     val handlers = job.handlers
     var error = prevError
@@ -429,7 +447,6 @@ private fun deliverMessage(job: Message, jobQueue: MessageQueue, prevError: Thro
   }
 }
 
-@Internal
 internal open class MessagePublisher<L>(@JvmField protected val topic: Topic<L>,
                                         @JvmField protected val bus: MessageBusImpl) : InvocationHandler {
   final override fun invoke(proxy: Any, method: Method, args: Array<Any?>?): Any? {
@@ -464,6 +481,9 @@ internal open class MessagePublisher<L>(@JvmField protected val topic: Topic<L>,
 
     executeOrAddToQueue(topic, method, args, handlers, queue, null, bus)?.let(::throwError)
     return true
+  }
+
+  open fun preload() {
   }
 }
 
@@ -502,6 +522,12 @@ internal fun executeOrAddToQueue(topic: Topic<*>,
 
 @Internal
 internal class ToParentMessagePublisher<L>(topic: Topic<L>, bus: MessageBusImpl) : MessagePublisher<L>(topic, bus), InvocationHandler {
+  override fun preload() {
+    // expected the only parent (project -> app)
+    getOrComputeHandlers(bus)
+    bus.parentBus?.let(::getOrComputeHandlers)
+  }
+
   // args not-null
   override fun publish(method: Method, args: Array<Any?>?, queue: MessageQueue?): Boolean {
     var error: Throwable? = null
@@ -509,15 +535,7 @@ internal class ToParentMessagePublisher<L>(topic: Topic<L>, bus: MessageBusImpl)
     var hasHandlers = false
     while (true) {
       // computeIfAbsent cannot be used here: https://youtrack.jetbrains.com/issue/IDEA-250464
-      var handlers = parentBus.subscriberCache.get(topic)
-      if (handlers == null) {
-        handlers = parentBus.computeSubscribers(topic)
-        val existing = parentBus.subscriberCache.putIfAbsent(topic, handlers)
-        if (existing != null) {
-          handlers = existing
-        }
-      }
-
+      val handlers = getOrComputeHandlers(parentBus)
       if (handlers.isNotEmpty()) {
         hasHandlers = true
         error = executeOrAddToQueue(topic = topic,
@@ -533,6 +551,18 @@ internal class ToParentMessagePublisher<L>(topic: Topic<L>, bus: MessageBusImpl)
 
     error?.let(::throwError)
     return hasHandlers
+  }
+
+  private fun getOrComputeHandlers(parentBus: MessageBusImpl): Array<Any?> {
+    var handlers = parentBus.subscriberCache.get(topic)
+    if (handlers == null) {
+      handlers = parentBus.computeSubscribers(topic)
+      val existing = parentBus.subscriberCache.putIfAbsent(topic, handlers)
+      if (existing != null) {
+        return existing
+      }
+    }
+    return handlers
   }
 }
 
@@ -571,7 +601,7 @@ private fun clearSubscriberCacheOnConnectionTerminated(topicAndHandlerPairs: Arr
 private fun removeDisposedHandlers(topicAndHandlerPairs: Array<Any>, index: Int, topic: Topic<*>, bus: MessageBusImpl) {
   val cachedHandlers = bus.subscriberCache.remove(topic) ?: return
   val handler = topicAndHandlerPairs[index + 1]
-  // during immediate delivery, execution of one handler can lead to dispose of some connection
+  // during immediate delivery, execution of one handler can lead to dispose of some connection,
   // and as a result, other handlers may become obsolete
   if (topic.isImmediateDelivery) {
     var i = 0

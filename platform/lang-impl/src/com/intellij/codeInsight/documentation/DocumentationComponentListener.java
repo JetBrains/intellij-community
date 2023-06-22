@@ -9,7 +9,7 @@ import java.awt.*;
 /**
  * @deprecated Unused in v2 implementation.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface DocumentationComponentListener {
   Topic<DocumentationComponentListener> TOPIC = new Topic<>(DocumentationComponentListener.class.getSimpleName(),
                                                             DocumentationComponentListener.class);

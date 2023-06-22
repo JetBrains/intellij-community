@@ -8,18 +8,18 @@ import com.intellij.openapi.project.Project
 class BookmarksViewState : BaseState() {
   companion object {
     @JvmStatic
-    fun getInstance(project: Project) = project.getService(BookmarksViewStateComponent::class.java).state
+    fun getInstance(project: Project): BookmarksViewState = project.getService(BookmarksViewStateComponent::class.java).state
   }
 
-  var proportionPopup by property(0.3f)
-  var proportionView by property(0.5f)
+  var proportionPopup: Float by property(0.3f)
+  var proportionView: Float by property(0.5f)
 
-  var groupLineBookmarks by property(true)
-  var rewriteBookmarkType by property(false)
-  var askBeforeDeletingLists by property(true)
-  var autoscrollFromSource by property(false)
-  var autoscrollToSource by property(false)
-  var showPreview by property(false)
+  var groupLineBookmarks: Boolean by property(true)
+  var rewriteBookmarkType: Boolean by property(false)
+  var askBeforeDeletingLists: Boolean by property(true)
+  var autoscrollFromSource: Boolean by property(false)
+  var autoscrollToSource: Boolean by property(false)
+  var showPreview: Boolean by property(false)
 }
 
 @State(name = "BookmarksViewState", storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE))])

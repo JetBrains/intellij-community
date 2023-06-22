@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -50,6 +51,18 @@ public final class SelectInAction extends DumbAwareAction implements PerformWith
   private static void invoke(@NotNull DataContext dataContext, @NotNull SelectInContext context) {
     List<SelectInTarget> targetVector = SelectInManager.getInstance(context.getProject()).getTargetList();
     ListPopup popup;
+    if (Registry.is("ide.selectIn.experimental.popup", true)) {
+      popup = createActionPopup(dataContext, context, targetVector);
+    }
+    else {
+      popup = createLegacyPopup(dataContext, context, targetVector);
+    }
+    popup.showInBestPositionFor(dataContext);
+  }
+
+  @NotNull
+  private static ListPopup createLegacyPopup(@NotNull DataContext dataContext, @NotNull SelectInContext context, List<SelectInTarget> targetVector) {
+    ListPopup popup;
     if (targetVector.isEmpty()) {
       DefaultActionGroup group = new DefaultActionGroup();
       group.add(new NoTargetsAction());
@@ -59,8 +72,28 @@ public final class SelectInAction extends DumbAwareAction implements PerformWith
     else {
       popup = JBPopupFactory.getInstance().createListPopup(new SelectInActionsStep(targetVector, context));
     }
+    return popup;
+  }
 
-    popup.showInBestPositionFor(dataContext);
+  @NotNull
+  private static ListPopup createActionPopup(@NotNull DataContext dataContext, @NotNull SelectInContext context, List<SelectInTarget> targetVector) {
+    DefaultActionGroup group = new DefaultActionGroup();
+    if (targetVector.isEmpty()) {
+      group.add(new NoTargetsAction());
+    }
+    else {
+      for (int i = 0; i < targetVector.size(); i++) {
+        SelectInTarget target = targetVector.get(i);
+        group.add(SelectInTargetActionKt.createSelectInTargetAction(target, context));
+      }
+    }
+    return JBPopupFactory.getInstance().createActionGroupPopup(
+      IdeBundle.message("title.popup.select.target"),
+      group,
+      dataContext,
+      JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING,
+      true
+    );
   }
 
   private static final class SelectInActionsStep extends BaseListPopupStep<SelectInTarget> {

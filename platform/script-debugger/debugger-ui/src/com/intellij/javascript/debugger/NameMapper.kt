@@ -122,7 +122,7 @@ open class NameMapper(private val document: Document, private val transpiledDocu
 
   fun addMapping(generatedName: String, sourceName: String) {
     if (rawNameToSource == null) {
-      rawNameToSource = HashMap<String, String>()
+      rawNameToSource = HashMap()
     }
     rawNameToSource!!.put(generatedName, sourceName)
   }

@@ -41,6 +41,9 @@
         "filenames": [
           "git-rebase-todo"
         ],
+        "filenamePatterns": [
+          "**/rebase-merge/done"
+        ],
         "configuration": "./languages/git-rebase.language-configuration.json"
       },
       {

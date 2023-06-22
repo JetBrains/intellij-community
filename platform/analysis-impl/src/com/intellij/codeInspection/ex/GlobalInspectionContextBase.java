@@ -359,10 +359,11 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
   @NotNull
   public Map<String, Tools> getTools() {
-    if (myTools == null) {
+    Map<String, Tools> tools = myTools;
+    if (tools == null) {
       throw new IllegalStateException("Tools are not initialized. Please call initializeTools() before use");
     }
-    return myTools;
+    return tools;
   }
 
   protected void appendJobDescriptor(@NotNull JobDescriptor job) {

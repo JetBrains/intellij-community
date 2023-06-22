@@ -6,12 +6,12 @@ package com.intellij.lang.documentation.ide
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
 import com.intellij.lang.documentation.ide.ui.DocumentationUI
 import com.intellij.model.Pointer
-import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.documentation.DocumentationTarget
-import com.intellij.platform.documentation.impl.DocumentationRequest
+import com.intellij.platform.backend.documentation.DocumentationTarget
+import com.intellij.platform.backend.documentation.impl.DocumentationRequest
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.util.ui.EDT
 import org.jetbrains.annotations.ApiStatus.Experimental
 import javax.swing.JComponent

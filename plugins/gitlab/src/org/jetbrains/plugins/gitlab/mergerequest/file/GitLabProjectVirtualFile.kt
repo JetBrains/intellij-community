@@ -11,6 +11,8 @@ import com.intellij.vcs.editor.ComplexPathVirtualFileSystem
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContext
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContextHolder
 
 abstract class GitLabProjectVirtualFile(override val connectionId: String,
                                         val project: Project,
@@ -19,12 +21,10 @@ abstract class GitLabProjectVirtualFile(override val connectionId: String,
 
   override fun getFileSystem(): ComplexPathVirtualFileSystem<*> = GitLabVirtualFileSystem.getInstance()
 
-  override fun isValid(): Boolean = findConnection() != null
+  override fun isValid(): Boolean = findContext() != null
 
-  protected fun findConnection(): GitLabProjectConnection? =
-    project.serviceIfCreated<GitLabProjectConnectionManager>()?.connectionState?.value?.takeIf {
-      glProject == it.repo.repository
-    }
+  fun findContext(): GitLabProjectUIContext? = project.serviceIfCreated<GitLabProjectUIContextHolder>()
+    ?.projectContext?.value?.takeIf { it.connectionId == connectionId }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

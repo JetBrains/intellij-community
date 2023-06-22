@@ -19,7 +19,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-6702
   public void testYieldFromType() {
-    doTest("str | int | float",
+    doTest("LiteralString | int | float",
            """
              def subgen():
                  for i in [1, 2, 3]:
@@ -49,7 +49,7 @@ public class Py3TypeTest extends PyTestCase {
                  expr = yield from y
                  return expr
              """);
-    doTest("str",
+    doTest("LiteralString",
            """
              def a():
                  yield 1
@@ -611,7 +611,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-22513
   public void testGenericKwargs() {
-    doTest("dict[str, int | str]",
+    doTest("dict[str, int | LiteralString]",
            """
              from typing import Any, Dict, TypeVar
 
@@ -1132,13 +1132,13 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testFStringLiteralType() {
-    doTest("str",
+    doTest("LiteralString",
            "expr = f'foo'");
   }
 
   // PY-35885
   public void testFunctionDunderDoc() {
-    doTest("str",
+    doTest("LiteralString",
            """
              def example():
                  ""\"Example Docstring""\"
@@ -1172,8 +1172,7 @@ public class Py3TypeTest extends PyTestCase {
   public void testParamSpecExample() {
     doTest("(a: str, b: bool) -> str",
            """
-             from collections.abc import Callable
-             from typing import ParamSpec
+             from typing import Callable, ParamSpec
 
              P = ParamSpec("P")
 
@@ -1186,6 +1185,71 @@ public class Py3TypeTest extends PyTestCase {
 
 
              expr = changes_return_type_to_str(returns_int)""");
+  }
+
+  // PY-59127
+  public void testParamSpecInImportedFile() {
+    doMultiFileTest("(a: str, b: bool) -> str",
+                    """
+                      from mod import changes_return_type_to_str
+                            
+                      def returns_int(a: str, b: bool) -> int:
+                          return 42
+
+                      expr = changes_return_type_to_str(returns_int)
+                      """);
+  }
+
+  public void testParamSpecArgsKwargsInAnnotations() {
+    doTest("(c: (ParamSpec(\"P\")) -> int, ParamSpec(\"P\"), ParamSpec(\"P\")) -> None", """
+      from typing import Callable, ParamSpec
+      
+      P = ParamSpec('P')
+      
+      def func(c: Callable[P, int], *args: P.args, **kwargs: P.kwargs) -> None:
+          ...
+      
+      expr = func
+      """);
+  }
+
+  public void testParamSpecArgsKwargsInTypeComments() {
+    doTest("(c: (ParamSpec(\"P\")) -> int, ParamSpec(\"P\"), ParamSpec(\"P\")) -> None", """
+      from typing import Callable, ParamSpec
+      
+      P = ParamSpec('P')
+      
+      def func(c, # type: Callable[P, int]
+               *args, # type: P.args
+               **kwargs, # type: P.kwargs
+               ):
+          # type: (...) -> None
+          ...
+      
+      expr = func
+      """);
+  }
+
+  public void testParamSpecArgsKwargsInFunctionTypeComment() {
+    doTest("(c: (ParamSpec(\"P\")) -> int, ParamSpec(\"P\"), ParamSpec(\"P\")) -> None", """
+      from typing import Callable, ParamSpec
+      
+      P = ParamSpec('P')
+      
+      def func(c, *args, **kwargs):
+          # type: (Callable[P, int], *P.args, **P.kwargs) -> None
+          ...
+      
+      expr = func
+      """);
+  }
+
+  public void testParamSpecArgsKwargsInImportedFile() {
+    doMultiFileTest("(c: (ParamSpec(\"P\")) -> int, ParamSpec(\"P\"), ParamSpec(\"P\")) -> None", """
+      from mod import func
+            
+      expr = func
+      """);
   }
 
   // PY-49935
@@ -1370,8 +1434,7 @@ public class Py3TypeTest extends PyTestCase {
   public void testParamSpecConcatenateAdd() {
     doTest("(str, x: int, args: tuple[bool, ...]) -> bool",
            """
-             from collections.abc import Callable
-             from typing import Concatenate, ParamSpec
+             from typing import Callable, Concatenate, ParamSpec
 
              P = ParamSpec("P")
 
@@ -1389,8 +1452,7 @@ public class Py3TypeTest extends PyTestCase {
   public void testParamSpecConcatenateAddSeveralParameters() {
     doTest("(str, bool, x: int, args: tuple[bool, ...]) -> bool",
            """
-             from collections.abc import Callable
-             from typing import Concatenate, ParamSpec
+             from typing import Callable, Concatenate, ParamSpec
 
              P = ParamSpec("P")
 
@@ -1408,8 +1470,7 @@ public class Py3TypeTest extends PyTestCase {
   public void testParamSpecConcatenateRemove() {
     doTest("(args: tuple[bool, ...]) -> bool",
            """
-             from collections.abc import Callable
-             from typing import Concatenate, ParamSpec
+             from typing import Callable, Concatenate, ParamSpec
 
              P = ParamSpec("P")
 
@@ -1427,8 +1488,7 @@ public class Py3TypeTest extends PyTestCase {
   public void testParamSpecConcatenateTransform() {
     doTest("(str, args: tuple[bool, ...]) -> bool",
            """
-             from collections.abc import Callable
-             from typing import Concatenate, ParamSpec
+             from typing import Callable, Concatenate, ParamSpec
 
              P = ParamSpec("P")
 
@@ -1515,9 +1575,9 @@ public class Py3TypeTest extends PyTestCase {
       """;
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     PyExpression dict = myFixture.findElementByText("{'foo': self.foo}", PyExpression.class);
-    assertExpressionType("dict[str, Any]", dict);
+    assertExpressionType("dict[LiteralString, Any]", dict);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
-    assertExpressionType("dict[str, Any]", expr);
+    assertExpressionType("dict[LiteralString, Any]", expr);
   }
 
   public void testRecursiveDictTopDown() {
@@ -1530,9 +1590,9 @@ public class Py3TypeTest extends PyTestCase {
       """;
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
-    assertExpressionType("dict[str, Any]", expr);
+    assertExpressionType("dict[LiteralString, Any]", expr);
     PyExpression dict = myFixture.findElementByText("{'foo': self.foo}", PyExpression.class);
-    assertExpressionType("dict[str, Any]", dict);
+    assertExpressionType("dict[LiteralString, Any]", dict);
   }
 
   // PY-52656
@@ -1561,7 +1621,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-16622
   public void testVariableEnumValueType() {
-    doTest("str",
+    doTest("LiteralString",
            """
              from enum import Enum
 
@@ -1596,8 +1656,8 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-54336
   public void testCyclePreventionDuringGenericsSubstitution() {
-    PyGenericType typeVarT = new PyGenericType("T", null, false);
-    PyGenericType typeVarV = new PyGenericType("V", null, false);
+    PyGenericType typeVarT = new PyTypeVarTypeImpl("T", null);
+    PyGenericType typeVarV = new PyTypeVarTypeImpl("V", null);
     TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
     PyType substituted;
 
@@ -1659,12 +1719,256 @@ public class Py3TypeTest extends PyTestCase {
   public void testLiteralStringValidLocations() {
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
-      () -> doTest("str",
+      () -> doTest("LiteralString",
                    """
                      from typing_extensions import LiteralString
                      def my_function(literal_string: LiteralString) -> LiteralString: ...
                      expr = my_function("42")""")
     );
+  }
+
+  // PY-59795
+  public void testDictTypeFromValueModificationsConsidersOnlyRelevantAssignments() {
+    doTest("dict[LiteralString, int]",
+           """
+             d = {}
+             d['foo'] = 1
+             unrelated = {}
+             unrelated[2] = 'bar'
+             expr = d
+             """);
+  }
+
+  // PY-59795
+  public void testNestedTypedDictFromValueModifications() {
+    myFixture.configureByText(PythonFileType.INSTANCE,
+                              """
+                                d = {}
+                                d['foo'] = {'key': 'value'}
+                                d['bar'] = {'key': 'value'}
+                                expr = d
+                                """);
+    PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
+    TypeEvalContext context = TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile());
+    PyTypedDictType topLevelTypedDict = assertInstanceOf(context.getType(expr), PyTypedDictType.class);
+    assertSize(2, topLevelTypedDict.getFields().entrySet());
+
+    PyTypedDictType.FieldTypeAndTotality fooField = topLevelTypedDict.getFields().get("foo");
+    assertNotNull(fooField);
+    PyTypedDictType fooFieldTypedDict = assertInstanceOf(fooField.getType(), PyTypedDictType.class);
+    assertEquals("key", assertOneElement(fooFieldTypedDict.getFields().keySet()));
+
+    PyTypedDictType.FieldTypeAndTotality barField = topLevelTypedDict.getFields().get("bar");
+    assertNotNull(barField);
+    PyTypedDictType barFieldTypedDict = assertInstanceOf(barField.getType(), PyTypedDictType.class);
+    assertEquals("key", assertOneElement(barFieldTypedDict.getFields().keySet()));
+
+    assertProjectFilesNotParsed(expr.getContainingFile());
+  }
+
+  // PY-53612
+  public void testLiteralStringConcatenation() {
+    doTest("LiteralString",
+           """
+             from typing_extensions import LiteralString
+             x: LiteralString
+             y: LiteralString
+             expr = x + y""");
+    doTest("str",
+           """
+             from typing_extensions import LiteralString
+             x: LiteralString
+             y: str
+             expr = x + y""");
+    doTest("str",
+           """
+             from typing_extensions import LiteralString
+             x: str
+             y: LiteralString
+             expr = x + y""");
+  }
+
+  // PY-53612
+  public void testLiteralStringJoin() {
+    doTest("LiteralString",
+           """
+             from typing_extensions import LiteralString
+             x: LiteralString
+             xs: list[LiteralString]
+             expr = x.join(xs)""");
+    doTest("str",
+           """
+             from typing_extensions import LiteralString
+             x: str
+             xs: list[LiteralString]
+             expr = x.join(xs)""");
+    doTest("str",
+           """
+             from typing_extensions import LiteralString
+             x: LiteralString
+             xs: list[str]
+             expr = x.join(xs)""");
+  }
+
+  // PY-53612
+  public void testLiteralStringInFString() {
+    doTest("LiteralString",
+           """
+             from typing_extensions import LiteralString
+             name = "foo"
+             age: LiteralString = "42"
+             expr = f"Hello, {name.capitalize()}. You are {age}."\s""");
+    doTest("str",
+           """
+             from typing_extensions import LiteralString
+             name = "foo"
+             age: str = str(42)
+             expr = f"Hello, {name.capitalize()}. You are {age}."\s""");
+  }
+
+  // PY-53612
+  public void testLiteralStringInStringFormat() {
+    doTest("LiteralString",
+           """
+             from typing_extensions import LiteralString
+             name: LiteralString = "foo"
+             age: LiteralString = "42"
+             string: LiteralString = "Hello, {name}. You are {age}"
+             expr = string.format(name=name.capitalize(), age=age)""");
+    doTest("str",
+           """
+             from typing_extensions import LiteralString
+             name: LiteralString = "foo"
+             age = str(42)
+             string: LiteralString = "Hello, {name}. You are {age}"
+             expr = string.format(name=name.capitalize(), age=age)""");
+  }
+
+  // PY-53612
+  public void testBinaryExprTypeWithLiteralString() {
+    doTest("int",
+           "expr = 1 + 2");
+    doTest("LiteralString",
+           "expr = '1' + '2'");
+    doTest("LiteralString",
+           "expr = '%s' % ('a')");
+    doTest("list[int]",
+           "expr = [1] + [2]");
+  }
+
+  // PY-53612
+  public void testDictTypeByModificationsWithLiteralString() {
+    doTest("dict[LiteralString, int | LiteralString]",
+           """
+             def f():
+                 expr = {'a': 3}
+                 expr['b'] = "s"
+                 """
+    );
+
+    doTest("dict[LiteralString, int | LiteralString]",
+           """
+             def f():
+                 expr = {'a': 3}
+                 expr['b'] = "s"
+                 """
+    );
+
+    doTest("dict[LiteralString, int | list[int]]",
+           """
+             def f():
+                 expr = {}
+                 expr['a'] = 0
+                 expr['c'] = [1, 2]"""
+    );
+
+    doTest("dict[LiteralString, int | Any]",
+           """
+             def f():
+                 expr = {'b': D()}
+                 expr['a'] = 2
+             """
+    );
+
+    doTest("dict[LiteralString, int | LiteralString]",
+           """
+             def f():
+                 expr = {'a': 3}
+                 expr['b'], t = "s", 12"""
+    );
+
+    doTest("dict[LiteralString, int | Any]",
+           """
+             def f():
+                 expr = {'a': 3}
+                 expr['a'] = var
+             """
+    );
+
+    doTest("dict[LiteralString, int]",
+           """
+             def f():
+                 expr = {'a': 3, 'b': 4}
+             """
+    );
+
+    doTest("dict[LiteralString, int | LiteralString]",
+           """
+             def f():
+                 expr = {'a': 3}
+                 expr.update({'a': 'str'})
+             """
+    );
+
+    doTest("dict[LiteralString, int | Any]",
+           """
+             def f():
+                 expr = {'a': 3}
+                 expr.update({'b': var})
+             """
+    );
+
+    doTest("dict[LiteralString, int]",
+           """
+             def f():
+                 expr = {}
+                 expr.update(a=1, b=2)"""
+    );
+
+    doTest("dict[int | LiteralString, int | LiteralString]",
+           """
+             def f():
+                 expr = {1: '3'}
+                 expr.update(a=1, b=2)"""
+    );
+
+    doTest("dict[LiteralString, int | LiteralString]",
+           """
+             def f():
+                 expr = {}
+                 expr['a'] = 23
+                 expr.update(a='m', b='n')"""
+    );
+
+    doTest("dict[LiteralString, int | LiteralString]",
+           """
+             def f():
+                 b, expr = 23, {'a': 3}
+                 expr['b'] = 'l'"""
+    );
+
+    doTest("dict[LiteralString, int]",
+           """
+             def f():    expr = {'a': 1}
+                 def inner():
+                     expr['b'] = 'a'
+             """
+    );
+  }
+
+  public void testDictCallOnDictLiteralResult() {
+    doTest("dict[LiteralString, int]",
+           "expr = dict({'a': 1})");
   }
 
   private void doTest(final String expectedType, final String text) {

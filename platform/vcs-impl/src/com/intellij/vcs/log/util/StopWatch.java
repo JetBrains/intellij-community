@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.util;
 
-import com.intellij.diagnostic.telemetry.TraceManager;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -12,6 +12,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.intellij.vcs.log.util.StopWatchScopeKt.*;
 
 @NonNls
 public final class StopWatch {
@@ -29,7 +31,7 @@ public final class StopWatch {
   @NotNull private final Map<VirtualFile, Long> myDurationPerRoot;
 
   private StopWatch(@NotNull String operation) {
-    mySpan = TraceManager.INSTANCE.getTracer("stopWatch").spanBuilder(operation).startSpan();
+    mySpan = TelemetryManager.getInstance().getTracer(StopWatchScope).spanBuilder(operation).startSpan();
     myOperation = operation;
     myStartTime = System.currentTimeMillis();
     myDurationPerRoot = new HashMap<>();

@@ -5,6 +5,7 @@ import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -732,6 +733,21 @@ public class ApplicationImplTest extends LightPlatformTestCase {
           });
         }
       });
+    }
+    finally {
+      Disposer.dispose(disposable);
+    }
+  }
+
+
+  public void testCleanersAreRunOnApplicationReset() {
+    Disposable disposable = Disposer.newDisposable();
+    try {
+      ProgressManager.getInstance();
+      assertNotNull(ProgressManager.getInstanceOrNull());
+      MockApplication application = new MockApplication(disposable);
+      ApplicationManager.setApplication(application, disposable);
+      assertNull(ProgressManager.getInstanceOrNull());
     }
     finally {
       Disposer.dispose(disposable);

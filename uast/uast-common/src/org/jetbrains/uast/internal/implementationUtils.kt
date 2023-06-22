@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.internal
 
-import com.intellij.diagnostic.AttachmentFactory
+import com.intellij.diagnostic.CoreAttachmentFactory
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.PsiElement
@@ -40,7 +40,7 @@ fun <U : UElement> Class<out UElement>.accommodate(a1: UElementAlternative<out U
   else null
 }
 
-inline fun <reified U : UElement> alternative(noinline make: () -> U?) = UElementAlternative(U::class.java, make)
+inline fun <reified U : UElement> alternative(noinline make: () -> U?): UElementAlternative<U> = UElementAlternative(U::class.java, make)
 
 class UElementAlternative<U : UElement>(val uType: Class<U>, val make: () -> U?)
 
@@ -52,7 +52,7 @@ private val isInsideReporting = ThreadLocal<Boolean>()
 
 private val conversionLoggerCollector = ThreadLocalTroubleCollector()
 
-val CONVERSION_LOGGER = conversionLoggerCollector.logger
+val CONVERSION_LOGGER: ThreadLocalTroubleCollector.Logger = conversionLoggerCollector.logger
 
 fun <T : UElement> convertOrReport(psiElement: PsiElement, parent: UElement, expectedType: Class<T>): T? {
 
@@ -73,7 +73,7 @@ fun <T : UElement> convertOrReport(psiElement: PsiElement, parent: UElement, exp
     result.add(Attachment("uast-plugins.list", UastFacade.languagePlugins.joinToString("\n") { it.javaClass.toString() }))
     result.add(runCatching { psiElement.containingFile }
                  .mapCatching { it.virtualFile }
-                 .fold({ AttachmentFactory.createAttachment(it) }, { Attachment("containingFile-exception.txt", it.stackTraceToString()) }))
+                 .fold({ CoreAttachmentFactory.createAttachment(it) }, { Attachment("containingFile-exception.txt", it.stackTraceToString()) }))
   }.toTypedArray()
 
   val plugin = parent.sourcePsi?.let { UastFacade.findPlugin(it) } ?: UastFacade.findPlugin(psiElement)
@@ -97,10 +97,10 @@ fun <T : UElement> convertOrReport(psiElement: PsiElement, parent: UElement, exp
 
 internal inline fun <T, R> ThreadLocal<T>.withValue(value: T, block: () -> R): R {
   val old = this.get()
-  if (old == value) return block.invoke();
+  if (old == value) return block.invoke()
   try {
     this.set(value)
-    return block.invoke();
+    return block.invoke()
   }
   finally {
     if (old == null)

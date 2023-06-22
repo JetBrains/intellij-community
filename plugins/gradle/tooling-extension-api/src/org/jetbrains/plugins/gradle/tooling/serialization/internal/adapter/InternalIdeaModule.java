@@ -23,7 +23,7 @@ public final class InternalIdeaModule implements IdeaModule {
   private String description;
   private InternalIdeaProject parent;
   private Set<InternalIdeaContentRoot> contentRoots = emptyDomainObjectSet();
-  private List<InternalIdeaDependency> dependencies = new LinkedList<InternalIdeaDependency>();
+  private List<InternalIdeaDependency> dependencies = new LinkedList<>();
   private InternalGradleProject gradleProject;
   private InternalIdeaCompilerOutput compilerOutput;
   private InternalIdeaJavaLanguageSettings javaLanguageSettings;

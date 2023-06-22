@@ -78,8 +78,7 @@ class ScriptSdksBuilder(
         } ?: return null
 
         return runReadAction { ProjectJdkTable.getInstance() }.allJdks
-            .find { it.homeDirectory == javaHomeVF }
-            ?.takeIf { it.canBeUsedForScript() }
+            .firstOrNull { it.homeDirectory == javaHomeVF && it.canBeUsedForScript()}
     }
 
     private fun addDefaultSdk(): Sdk? =
@@ -116,7 +115,12 @@ class ScriptSdksBuilder(
         return null
     }
 
-    private fun Sdk.canBeUsedForScript() = this != remove && sdkType is JavaSdkType
+    private fun Sdk.canBeUsedForScript() = this != remove && sdkType is JavaSdkType && hasValidClassPathRoots()
+
+    private fun Sdk.hasValidClassPathRoots(): Boolean {
+        val rootClasses = rootProvider.getFiles(OrderRootType.CLASSES)
+        return rootClasses.isNotEmpty() && rootClasses.all { it.isValid }
+    }
 
     fun toStorage(storage: ScriptClassRootsStorage) {
         storage.sdks = sdks.values.mapNotNullTo(mutableSetOf()) { it?.name }

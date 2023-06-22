@@ -1,8 +1,8 @@
 // ERROR: Property must be initialized or be abstract
 class Test {
     private val s: String
-    var b = false
-    var d = 0.0
+    var b: Boolean = false
+    var d: Double = 0.0
 
     constructor() {
         b = true

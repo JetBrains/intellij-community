@@ -61,11 +61,12 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Override
   public void importProject(@NonNls @Language("Groovy") String config) throws IOException {
-    config += """
-
+    boolean useConventions = isGradleOlderThan("8.2");
+    config += "\n\n def useConventions = " + useConventions + "\n" + """
       allprojects {
         afterEvaluate {
-          if(convention.findPlugin(JavaPluginConvention)) {
+          if((useConventions && convention.findPlugin(JavaPluginConvention) != null)
+           || (!useConventions && extensions.findByType(JavaPluginExtension) != null)) {
             sourceSets.each { SourceSet sourceSet ->
               tasks.create(name: 'print'+ sourceSet.name.capitalize() +'CompileDependencies') {
                 doLast { println sourceSet.compileClasspath.files.collect {it.name}.join(' ') }
@@ -134,7 +135,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
           Module moduleDep = ((ModuleOrderEntry)entry).getModule();
           String sourceSetDepName = getSourceSetName(moduleDep);
           // for simplicity, only project dependency on 'default' configuration allowed here
-          assert sourceSetDepName != "main";
+          assert "main".equals(sourceSetDepName);
 
           String gradleProjectDepName = trimStart(trimEnd(getExternalProjectId(moduleDep), ":main"), ":");
           String version = getExternalProjectVersion(moduleDep);
@@ -481,17 +482,14 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModules("project", "project.p1", "project.p2");
 
     final List<LibraryOrderEntry> moduleLibDepsP1 = getModuleLibDeps("project.p1", "Gradle: dep");
-    final boolean isGradleNewerThen_2_4 = GradleVersion.version(gradleVersion).getBaseVersion().compareTo(GradleVersion.version("2.4")) > 0;
     for (LibraryOrderEntry libDep : moduleLibDepsP1) {
-      assertEquals("Dependency must be " + (isGradleNewerThen_2_4 ? "module" : "project") + " level: " + libDep.toString(),
-                   isGradleNewerThen_2_4, libDep.isModuleLevel());
+      assertTrue("Dependency must be module level: " + libDep.toString(), libDep.isModuleLevel());
       assertEquals("Wrong library dependency", depP1Jar.getUrl(), libDep.getLibrary().getUrls(OrderRootType.CLASSES)[0]);
     }
 
     final List<LibraryOrderEntry> moduleLibDepsP2 = getModuleLibDeps("project.p2", "Gradle: dep");
     for (LibraryOrderEntry libDep : moduleLibDepsP2) {
-      assertEquals("Dependency must be " + (isGradleNewerThen_2_4 ? "module" : "project") + " level: " + libDep.toString(),
-                   isGradleNewerThen_2_4, libDep.isModuleLevel());
+      assertTrue("Dependency must be module level: " + libDep.toString(), libDep.isModuleLevel());
       assertEquals("Wrong library dependency", depP2Jar.getUrl(), libDep.getLibrary().getUrls(OrderRootType.CLASSES)[0]);
     }
   }
@@ -572,7 +570,9 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       "    group 'server'\n" +
       "    version '1.0-SNAPSHOT'\n" +
       "    apply plugin: 'java'\n" +
-      "    sourceCompatibility = 1.8\n" +
+      (isGradleNewerOrSameAs("8.2")
+       ? "  java { sourceCompatibility = 1.8 }\n"
+       : "    sourceCompatibility = 1.8\n") +
       "}\n" +
       "\n" +
       "project(':api') {\n" +
@@ -771,12 +771,19 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
             .addPostfix("configurations { tests }")
             .withTask("testJar", "Jar", task -> {
               task.code("dependsOn testClasses");
-              if (isGradleNewerOrSameAs("7.0")) {
+              if (isGradleNewerOrSameAs("8.2")) {
+                task.code("archiveBaseName = \"${project.base.archivesName}-tests\"");
+              } else if (isGradleNewerOrSameAs("7.0")) {
                 task.code("archiveBaseName = \"${project.archivesBaseName}-tests\"");
               } else {
                 task.code("baseName = \"${project.archivesBaseName}-tests\"");
               }
-              task.code("classifier 'tests'");
+              if (isGradleOlderThan("8.0")) {
+                task.code("classifier 'test'");
+              }
+              else {
+                task.code("archiveClassifier = 'test'");
+              }
               task.code("from sourceSets.test.output");
               return null;
             })
@@ -812,6 +819,146 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModules("project", "project.api", "project.impl");
 
     assertModuleModuleDepScope("project.impl", "project.api", DependencyScope.TEST);
+  }
+
+
+  @Test
+  public void testProjectDependencyOnCustomArtifacts() throws Exception {
+    createSettingsFile("include 'api', 'impl' ");
+    String archiveBaseName = (isGradleOlderThan("7.0") ? "baseName" : "archiveBaseName") + " = 'my-archive'\n";
+
+    importProject(
+      createBuildScriptBuilder()
+        .allprojects(TestGradleBuildScriptBuilder::withJavaPlugin)
+        .project(":api", it -> {
+          it
+            .addPostfix("""
+                          configurations { myConfig }
+                          sourceSets { mySourceSet }
+                          tasks.create("myJar", Jar) {
+                            dependsOn compileMySourceSetJava
+                          """ +  archiveBaseName + """
+                            from sourceSets.mySourceSet.output
+                          }
+                          artifacts { myConfig myJar }
+                          """);
+        })
+        .project(":impl", it -> {
+          it.addImplementationDependency(it.project(":api", "myConfig"));
+        })
+        .generate()
+    );
+
+    assertModules("project", "project.main", "project.test",
+                  "project.api", "project.api.main", "project.api.test", "project.api.mySourceSet",
+                  "project.impl", "project.impl.main", "project.impl.test");
+
+    assertModuleModuleDepScope("project.impl.main", "project.api.mySourceSet", DependencyScope.COMPILE);
+  }
+
+  @Test
+  public void testProjectDependencyOnCustomArtifacts2() throws Exception {
+    createSettingsFile("include 'api', 'impl' ");
+    String archiveBaseName = (isGradleOlderThan("7.0") ? "baseName" : "archiveBaseName") + " = 'my-archive'\n";
+
+    String propertyBasedFromClasses;
+    if (isGradleOlderThan("4.0")) {
+      propertyBasedFromClasses = "new File(project.buildDir, 'classes/mySourceSet')";
+    } else if (isGradleOlderThan("4.1")) {
+      propertyBasedFromClasses = "new File(project.buildDir, 'classes/java/mySourceSet')";
+    } else {
+      propertyBasedFromClasses = "project.layout.getBuildDirectory().dir('classes/java/mySourceSet')";
+    }
+
+    importProject(
+      createBuildScriptBuilder()
+        .allprojects(TestGradleBuildScriptBuilder::withJavaPlugin)
+        .project(":api", it -> {
+          it
+            .addPostfix("""
+                          configurations { myConfig }
+                          sourceSets { mySourceSet }
+                          tasks.create("myJar", Jar) {
+                            dependsOn compileMySourceSetJava
+                          """ + archiveBaseName + """
+                           from\s""" + propertyBasedFromClasses + """
+                            from new File(project.buildDir, "resources/mySourceSet")
+                          }
+                          artifacts { myConfig myJar }
+                          """);
+        })
+        .project(":impl", it -> {
+          it.addImplementationDependency(it.project(":api", "myConfig"));
+        })
+        .generate()
+    );
+
+    assertModules("project", "project.main", "project.test",
+                  "project.api", "project.api.main", "project.api.test", "project.api.mySourceSet",
+                  "project.impl", "project.impl.main", "project.impl.test");
+
+    assertModuleModuleDepScope("project.impl.main", "project.api.mySourceSet", DependencyScope.COMPILE);
+  }
+
+  @Test
+  @TargetVersions("7.0+")
+  public void testProjectJarTaskWithUnresolvableProvider() throws Exception {
+    createProjectSubFile("settings.gradle", settingsScript(it -> {
+      it.setProjectName("project");
+    }));
+    createProjectSubFile("build.gradle", script(it -> {
+      it.withJavaPlugin();
+      it.addPostfix("""
+                      tasks.create('customJar', Jar) {
+                        // unresolvable provider
+                        from jar.archiveFile.map { it }
+                      }
+                      """);
+    }));
+    importProject();
+
+    assertModules("project", "project.main", "project.test");
+  }
+
+  /**
+   * At the moment, IDEA does not support depending on an artifact containing output of multiple source sets.
+   * There is only one source set to choose as the module dependency.
+   * "Owning" sourceSet should be preferred for a jar task with name equal to sourceSet.getJarTaskName()
+   */
+  @Test
+  public void testProjectDependencyOnArtifactsContainingMultipleSourceSets() throws Exception {
+    createSettingsFile("include 'api', 'impl' ");
+    String archiveBaseName = (isGradleOlderThan("7.0") ? "baseName" : "archiveBaseName") + " = 'my-archive'\n";
+
+    importProject(
+      createBuildScriptBuilder()
+        .allprojects(TestGradleBuildScriptBuilder::withJavaPlugin)
+        .project(":api", it -> {
+          it
+            .addPostfix("""
+                          configurations { myConfig }
+                          sourceSets { mainX }
+                          jar { from sourceSets.mainX.output }
+                          def mainXJarTask = tasks.create(sourceSets.mainX.getJarTaskName(), Jar) {
+                            """ +  archiveBaseName + """
+                            from sourceSets.mainX.output
+                          }
+                          artifacts { myConfig mainXJarTask }
+                          """);
+        })
+        .project(":impl", it -> {
+          it.addImplementationDependency(it.project(":api"));
+          it.addTestImplementationDependency(it.project(":api", "myConfig"));
+        })
+        .generate()
+    );
+
+    assertModules("project", "project.main", "project.test",
+                  "project.api", "project.api.main", "project.api.test", "project.api.mainX",
+                  "project.impl", "project.impl.main", "project.impl.test");
+
+    assertModuleModuleDeps("project.impl.main", "project.api.main"); // does not depend on mainX
+    assertModuleModuleDeps("project.impl.test", "project.impl.main", "project.api.main", "project.api.mainX");
   }
 
   @Test
@@ -950,7 +1097,12 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
             .withJavaPlugin()
             .addPostfix("configurations { tests.extendsFrom testRuntime }")
             .withTask("testJar", "Jar", task -> {
-              task.code("classifier 'test'");
+              if (isGradleOlderThan("8.0")) {
+                task.code("classifier 'test'");
+              }
+              else {
+                task.code("archiveClassifier = 'test'");
+              }
               task.code("from project.sourceSets.test.output");
               return null;
             })
@@ -1053,7 +1205,12 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
             .withJavaPlugin()
             .addPrefix("configurations { testArtifacts }")
             .withTask("testJar", "Jar", task -> {
-              task.code("classifier 'tests'");
+              if (isGradleOlderThan("8.0")) {
+                task.code("classifier 'test'");
+              }
+              else {
+                task.code("archiveClassifier = 'test'");
+              }
               task.code("from sourceSets.test.output");
               return null;
             })
@@ -1095,7 +1252,12 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
             .withJavaPlugin()
             .addPrefix("configurations { testArtifacts }")
             .withTask("testJar", "Jar", task -> {
-              task.code("classifier 'tests'");
+              if (isGradleOlderThan("8.0")) {
+                task.code("classifier 'test'");
+              }
+              else {
+                task.code("archiveClassifier = 'test'");
+              }
               task.code("from sourceSets.test.output");
               return null;
             })
@@ -1150,7 +1312,12 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
             .withJavaPlugin()
             .addPrefix("configurations { testArtifacts }")
             .withTask("testJar", "Jar", task -> {
-              task.code("classifier 'tests'");
+              if (isGradleOlderThan("8.0")) {
+                task.code("classifier 'test'");
+              }
+              else {
+                task.code("archiveClassifier = 'test'");
+              }
               task.code("from sourceSets.test.output");
               return null;
             })
@@ -1198,14 +1365,22 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     importProject(
       createBuildScriptBuilder()
         .subprojects(p -> {
-          p
-            .withJavaPlugin()
-            .addPrefix("configurations.all {",
+          p.withJavaPlugin();
+          if (isGradleOlderThan("8.0")) {
+            p.addPrefix("configurations.all {",
                        "  resolutionStrategy.dependencySubstitution {",
                        "    substitute module('mygroup:core') with project(':core')",
                        "    substitute project(':util') with module('junit:junit:4.11')",
                        "  }",
                        "}");
+          } else {
+            p.addPrefix("configurations.all {",
+                        "  resolutionStrategy.dependencySubstitution {",
+                        "    substitute module('mygroup:core') using project(':core')",
+                        "    substitute project(':util') using module('junit:junit:4.11')",
+                        "  }",
+                        "}");
+          }
         })
         .project(":core", p -> {
           p
@@ -1253,13 +1428,22 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
         })
         .project(":app", it -> {
           it.addRuntimeOnlyDependency("org.hamcrest:hamcrest-core:1.3")
-            .addTestImplementationDependency("project:modA:1.0.0")
-            .addPostfix("configurations.all {",
-                        "  resolutionStrategy.dependencySubstitution {",
-                        "    substitute module('project:modA:1.0.0') with project(':modA')",
-                        "    substitute module('project:modB:1.0.0') with project(':modB')",
-                        "  }",
-                        "}");
+            .addTestImplementationDependency("project:modA:1.0.0");
+          if (isGradleOlderThan("8.0")) {
+            it.addPostfix("configurations.all {",
+                          "  resolutionStrategy.dependencySubstitution {",
+                          "    substitute module('project:modA:1.0.0') with project(':modA')",
+                          "    substitute module('project:modB:1.0.0') with project(':modB')",
+                          "  }",
+                          "}");
+          } else {
+            it.addPostfix("configurations.all {",
+                          "  resolutionStrategy.dependencySubstitution {",
+                          "    substitute module('project:modA:1.0.0') using project(':modA')",
+                          "    substitute module('project:modB:1.0.0') using project(':modB')",
+                          "  }",
+                          "}");
+          }
         })
         .project(":modA", it -> { it.addApiDependency(it.project(":modB")); })
         .project(":modB", it -> { it.addApiDependency("org.hamcrest:hamcrest-core:1.3"); })

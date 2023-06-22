@@ -14,7 +14,6 @@ import com.intellij.serialization.PropertyMapping
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.config.ExternalSystemRunTask
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinImportingDiagnosticsContainer
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinPlatformContainerImpl
 import org.jetbrains.kotlin.idea.projectModel.KonanArtifactModel
 import org.jetbrains.kotlin.idea.projectModel.KotlinComponent
@@ -24,6 +23,7 @@ import org.jetbrains.kotlin.idea.util.CopyableDataNodeUserDataProperty
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
 import java.io.Serializable
+import java.lang.ref.WeakReference
 import com.intellij.openapi.externalSystem.model.Key as ExternalKey
 
 @Deprecated(
@@ -51,25 +51,8 @@ class KotlinSourceSetInfo @PropertyMapping("kotlinComponent") constructor(val ko
         get() = actualPlatforms.platforms.singleOrNull() ?: KotlinPlatform.COMMON
 
     @Transient
-    @Deprecated("Use lazyDefaultCompilerArguments instead!", ReplaceWith("lazyDefaultCompilerArguments"), DeprecationLevel.ERROR)
-    var defaultCompilerArguments: CommonCompilerArguments? = null
+    var compilerArguments: CompilerArgumentsProvider? = null
 
-    @Transient
-    var lazyDefaultCompilerArguments: Lazy<CommonCompilerArguments>? = null
-
-    @Transient
-    @Deprecated("Use lazyCompilerArguments instead!", ReplaceWith("lazyCompilerArguments"), DeprecationLevel.ERROR)
-    var compilerArguments: CommonCompilerArguments? = null
-
-    @Transient
-    var lazyCompilerArguments: Lazy<CommonCompilerArguments>? = null
-
-    @Transient
-    @Deprecated("Use lazyDependencyClasspath instead!", ReplaceWith("lazyDependencyClasspath"), DeprecationLevel.ERROR)
-    var dependencyClasspath: List<String> = emptyList()
-
-    @Transient
-    var lazyDependencyClasspath: Lazy<List<String>> = lazy { emptyList() }
     var isTestModule: Boolean = false
     var sourceSetIdsByName: MutableMap<String, String> = LinkedHashMap()
 
@@ -79,6 +62,20 @@ class KotlinSourceSetInfo @PropertyMapping("kotlinComponent") constructor(val ko
     var dependsOn: Set<String> = emptySet()
     var additionalVisible: Set<String> = emptySet()
     var externalSystemRunTasks: Collection<ExternalSystemRunTask> = emptyList()
+
+}
+
+interface CompilerArgumentsProvider {
+    fun get(): CommonCompilerArguments
+}
+
+fun CompilerArgumentsProvider(weakLazy: () -> CommonCompilerArguments) = object : CompilerArgumentsProvider {
+    private var cachedValue: WeakReference<CommonCompilerArguments>? = null
+    override fun get(): CommonCompilerArguments {
+        return cachedValue?.get() ?: weakLazy().also { value ->
+            cachedValue = WeakReference(value)
+        }
+    }
 }
 
 class KotlinSourceSetData @PropertyMapping("sourceSetInfo") constructor(val sourceSetInfo: KotlinSourceSetInfo) :

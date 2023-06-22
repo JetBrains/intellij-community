@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,11 +88,9 @@ public class FrequentlyUsedInheritorInspectionTest extends CompilerReferencesTes
     for (Pair<String, Integer> pair : expectedResults) {
       IntentionAction action = myFixture.findSingleIntention("Make extends '" + pair.getFirst());
       IntentionAction intentionAction = IntentionActionDelegate.unwrap(action);
-      if (intentionAction instanceof QuickFixWrapper) {
-        ChangeSuperClassFix changeSuperClassFix = getQuickFixFromWrapper((QuickFixWrapper)intentionAction);
-        if (changeSuperClassFix != null) {
-          actualSet.add(Pair.create(changeSuperClassFix.getNewSuperClass().getQualifiedName(), changeSuperClassFix.getInheritorCount()));
-        }
+      ChangeSuperClassFix changeSuperClassFix = ObjectUtils.tryCast(QuickFixWrapper.unwrap(intentionAction), ChangeSuperClassFix.class);
+      if (changeSuperClassFix != null) {
+        actualSet.add(Pair.create(changeSuperClassFix.getNewSuperClass().getQualifiedName(), changeSuperClassFix.getInheritorCount()));
       }
     }
     final Set<Pair<String, Integer>> expectedSet = ContainerUtil.newHashSet(expectedResults);
@@ -115,15 +114,6 @@ public class FrequentlyUsedInheritorInspectionTest extends CompilerReferencesTes
     IntentionAction fix = assertOneElement(fixes);
     myFixture.launchAction(fix);
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
-  }
-
-  @Nullable
-  private static ChangeSuperClassFix getQuickFixFromWrapper(final QuickFixWrapper quickFixWrapper) {
-    final LocalQuickFix quickFix = quickFixWrapper.getFix();
-    if (quickFix instanceof ChangeSuperClassFix) {
-      return (ChangeSuperClassFix)quickFix;
-    }
-    return null;
   }
 
   @Override

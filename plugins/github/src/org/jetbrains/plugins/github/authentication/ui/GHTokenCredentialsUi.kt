@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.authentication.ui
 
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.ide.BrowserUtil.browse
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.ui.ValidationInfo
@@ -39,7 +40,7 @@ internal class GHTokenCredentialsUi(
     row(message("credentials.server.field")) { cell(serverTextField).align(AlignX.FILL) }
     row(message("credentials.token.field")) {
       cell(tokenTextField)
-        .comment(message("login.insufficient.scopes", GHSecurityUtil.MASTER_SCOPES))
+        .comment(CollaborationToolsBundle.message("clone.dialog.insufficient.scopes", GHSecurityUtil.MASTER_SCOPES))
         .align(AlignX.FILL)
         .resizableColumn()
       button(message("credentials.button.generate")) { browseNewTokenUrl() }

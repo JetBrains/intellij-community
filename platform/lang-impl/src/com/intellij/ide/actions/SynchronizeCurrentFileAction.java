@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.actions.VcsFacade;
@@ -10,13 +10,13 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -43,19 +43,21 @@ public final class SynchronizeCurrentFileAction extends DumbAwareAction {
     synchronizeFiles(files, project, true);
   }
 
+  /** Regular clients should use {@link com.intellij.openapi.vfs.VfsUtil#markDirtyAndRefresh}. */
+  @ApiStatus.Internal
   public static void synchronizeFiles(@NotNull Collection<? extends VirtualFile> files, @NotNull Project project, boolean async) {
     if (files.isEmpty()) return;
 
-    for (VirtualFile file : files) {
-      VirtualFileSystem fs = file.getFileSystem();
-      if (fs instanceof ArchiveFileSystem) {
-        ((ArchiveFileSystem)fs).clearArchiveCache(file);
+    for (var file : files) {
+      if (file.getFileSystem() instanceof ArchiveFileSystem afs) {
+        afs.clearArchiveCache(file);
       }
-
-      if (file.isDirectory()) file.getChildren();
-      if (file instanceof NewVirtualFile) {
-        ((NewVirtualFile)file).markClean();
-        ((NewVirtualFile)file).markDirtyRecursively();
+      if (file.isDirectory()) {
+        file.getChildren();
+      }
+      if (file instanceof NewVirtualFile nvf) {
+        nvf.markClean();
+        nvf.markDirtyRecursively();
       }
     }
 

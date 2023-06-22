@@ -121,6 +121,7 @@ private object AnalysisApiBasedKotlinEditorTextProvider : KotlinEditorTextProvid
             is KtDeclaration, is KtFile -> null
             is KtIfExpression -> if (candidate.`else` != null) candidate else null
             is KtStatementExpression, is KtLabeledExpression -> null
+            is KtStringTemplateExpression -> if (isStringTemplateAllowed(candidate, allowMethodCalls)) candidate else null
             is KtConstantExpression -> calculateCandidate(candidate.parent, allowMethodCalls)
             else -> when (val parent = candidate.parent) {
                 is KtThisExpression -> parent
@@ -180,6 +181,10 @@ private object AnalysisApiBasedKotlinEditorTextProvider : KotlinEditorTextProvid
             else -> false
         }
     }
+
+    private fun isStringTemplateAllowed(candidate: KtStringTemplateExpression, allowMethodCalls: Boolean) =
+        !candidate.text.startsWith("\"\"\"") || allowMethodCalls
+
 
     private val NOT_ACCEPTED_AS_CONTEXT_TYPES = arrayOf(
         KtUserType::class.java,

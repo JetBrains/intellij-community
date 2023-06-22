@@ -17,8 +17,10 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.ui.mac.MacFullScreenControlsManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -61,6 +63,10 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction implements 
 
     PropertiesComponent.getInstance().setValue(LAST_ENTER_VALUE, String.valueOf(enter));
 
+    if (SystemInfo.isMac) {
+      MacFullScreenControlsManager.INSTANCE.updateForDistractionFreeMode(enter);
+    }
+
     applyAndSave(PropertiesComponent.getInstance(),
                  UISettings.getInstance(),
                  ToolbarSettings.getInstance(),
@@ -99,6 +105,7 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction implements 
     p.setValue(before + "SHOW_NEW_MAIN_TOOLBAR", String.valueOf(toolbarSettings.isVisible())); toolbarSettings.setVisible(p.getBoolean(after + "SHOW_NEW_MAIN_TOOLBAR", value));
 
     p.setValue(before + "IS_FOLDING_OUTLINE_SHOWN", String.valueOf(eo.IS_FOLDING_OUTLINE_SHOWN));  eo.IS_FOLDING_OUTLINE_SHOWN = p.getBoolean(after + "IS_FOLDING_OUTLINE_SHOWN", value);
+    p.setValue(before + "IS_FOLDING_OUTLINE_SHOWN_ONLY_ON_HOVER", String.valueOf(eo.IS_FOLDING_OUTLINE_SHOWN_ONLY_ON_HOVER));  eo.IS_FOLDING_OUTLINE_SHOWN_ONLY_ON_HOVER = p.getBoolean(after + "IS_FOLDING_OUTLINE_SHOWN_ONLY_ON_HOVER", value);
     p.setValue(before + "IS_WHITESPACES_SHOWN",     String.valueOf(eo.IS_WHITESPACES_SHOWN));      eo.IS_WHITESPACES_SHOWN     = p.getBoolean(after + "IS_WHITESPACES_SHOWN", value);
     p.setValue(before + "ARE_LINE_NUMBERS_SHOWN",   String.valueOf(eo.ARE_LINE_NUMBERS_SHOWN));    eo.ARE_LINE_NUMBERS_SHOWN   = p.getBoolean(after + "ARE_LINE_NUMBERS_SHOWN", value);
     p.setValue(before + "ARE_GUTTER_ICONS_SHOWN",   String.valueOf(eo.ARE_GUTTER_ICONS_SHOWN));    eo.ARE_GUTTER_ICONS_SHOWN   = p.getBoolean(after + "ARE_GUTTER_ICONS_SHOWN", value);

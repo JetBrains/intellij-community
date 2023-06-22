@@ -1,10 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.impl.CustomFileTemplate;
-import com.intellij.model.ModelBranch;
 import com.intellij.model.ModelBranchUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -23,8 +22,8 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import org.apache.velocity.VelocityContext;
@@ -40,6 +39,7 @@ import javax.swing.*;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 public final class FileTemplateUtil {
@@ -61,7 +61,7 @@ public final class FileTemplateUtil {
   private static String @NotNull [] calculateAttributes(@NotNull String templateContent, @NotNull Set<String> propertiesNames, boolean includeDummies, @NotNull Project project) throws ParseException {
     final Set<String> unsetAttributes = new LinkedHashSet<>();
     final Set<String> definedAttributes = new HashSet<>();
-    SimpleNode template = VelocityTemplateContext.withContext(project, ()->VelocityWrapper.parse(new StringReader(templateContent), "MyTemplate"));
+    SimpleNode template = VelocityTemplateContext.withContext(project, ()->VelocityWrapper.parse(new StringReader(templateContent)));
     collectAttributes(unsetAttributes, definedAttributes, template, propertiesNames, includeDummies, new HashSet<>(), project);
     for (String definedAttribute : definedAttributes) {
       unsetAttributes.remove(definedAttribute);
@@ -106,7 +106,7 @@ public final class FileTemplateUtil {
               includedTemplate = templateManager.getPattern(s);
             }
             if (includedTemplate != null && visitedIncludes.add(s)) {
-              SimpleNode template = VelocityWrapper.parse(new StringReader(includedTemplate.getText()), "MyTemplate");
+              SimpleNode template = VelocityWrapper.parse(new StringReader(includedTemplate.getText()));
               collectAttributes(referenced, defined, template, propertiesNames, includeDummies, visitedIncludes, project);
             }
           }
@@ -223,7 +223,7 @@ public final class FileTemplateUtil {
                                                       IdeBundle.message("title.velocity.error")));
       }
       else {
-        exceptionHandler.consume(e);
+        exceptionHandler.accept(e);
       }
     }
     final String result = stringWriter.toString();
@@ -321,7 +321,7 @@ public final class FileTemplateUtil {
       () -> template.getText(props_));
     String templateText = StringUtil.convertLineSeparators(mergedText);
 
-    if (ModelBranch.getPsiBranch(directory) != null) {
+    if (LightVirtualFile.shouldSkipEventSystem(directory.getVirtualFile())) {
       return handler.createFromTemplate(project, directory, fileName_, template, templateText, props_);
     }
 

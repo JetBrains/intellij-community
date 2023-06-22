@@ -205,12 +205,12 @@ class GridLayoutTest {
     val labels = mutableListOf<List<JLabel>>()
     val columnsCount = 4
     val rowsCount = 5
-    val columnGaps = (0 until columnsCount).map { HorizontalGaps(it * 20, it * 20 + 10) }
+    val columnGaps = (0 until columnsCount).map { UnscaledGapsX(it * 20, it * 20 + 10) }
     val builder = RowsGridBuilder(panel)
       .columnsGaps(columnGaps)
 
     for (y in 0 until rowsCount) {
-      builder.row(VerticalGaps(y * 15, y * 15 + 5))
+      builder.row(UnscaledGapsY(y * 15, y * 15 + 5))
       val row = mutableListOf<JLabel>()
       for (x in 1..columnsCount) {
         val label = label()

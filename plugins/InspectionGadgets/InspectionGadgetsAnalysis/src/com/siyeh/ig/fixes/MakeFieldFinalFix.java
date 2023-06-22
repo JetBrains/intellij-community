@@ -1,30 +1,17 @@
-/*
- * Copyright 2007-2014 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.FinalUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class MakeFieldFinalFix extends InspectionGadgetsFix {
+public final class MakeFieldFinalFix extends PsiUpdateModCommandQuickFix {
 
   private final String fieldName;
 
@@ -33,7 +20,7 @@ public final class MakeFieldFinalFix extends InspectionGadgetsFix {
   }
 
   @Nullable
-  public static InspectionGadgetsFix buildFix(PsiField field) {
+  public static LocalQuickFix buildFix(PsiField field) {
     if (!FinalUtils.canBeFinal(field)) {
       return null;
     }
@@ -42,7 +29,7 @@ public final class MakeFieldFinalFix extends InspectionGadgetsFix {
   }
 
   @NotNull
-  public static InspectionGadgetsFix buildFixUnconditional(PsiField field) {
+  public static LocalQuickFix buildFixUnconditional(PsiField field) {
     return new MakeFieldFinalFix(field.getName());
   }
 
@@ -60,8 +47,7 @@ public final class MakeFieldFinalFix extends InspectionGadgetsFix {
   }
 
   @Override
-  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiElement element = descriptor.getPsiElement();
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     final PsiField field;
     if (element instanceof PsiReferenceExpression referenceExpression) {
       final PsiElement target = referenceExpression.resolve();

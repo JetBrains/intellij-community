@@ -1,10 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.ui.comment
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNote
+import org.jetbrains.plugins.gitlab.mergerequest.data.MutableGitLabNote
 import org.jetbrains.plugins.gitlab.util.SingleCoroutineLauncher
 
 interface GitLabNoteAdminActionsViewModel {
@@ -18,8 +20,10 @@ interface GitLabNoteAdminActionsViewModel {
   fun delete()
 }
 
+private val LOG = logger<GitLabNoteAdminActionsViewModel>()
+
 @OptIn(ExperimentalCoroutinesApi::class)
-class GitLabNoteAdminActionsViewModelImpl(parentCs: CoroutineScope, private val note: GitLabNote)
+class GitLabNoteAdminActionsViewModelImpl(parentCs: CoroutineScope, private val note: MutableGitLabNote)
   : GitLabNoteAdminActionsViewModel {
 
   private val cs = parentCs.childScope()
@@ -52,6 +56,7 @@ class GitLabNoteAdminActionsViewModelImpl(parentCs: CoroutineScope, private val 
       }
       catch (e: Exception) {
         if (e is CancellationException) throw e
+        LOG.warn(e)
         //TODO: handle???
       }
     }

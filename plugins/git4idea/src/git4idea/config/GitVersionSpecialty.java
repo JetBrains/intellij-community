@@ -310,6 +310,17 @@ public enum GitVersionSpecialty {
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(2, 34, 0, 0));
     }
+  },
+
+  /**
+   * Earlier versions support 'core.fsconfig' option with full executable path only.
+   * If 'true' value is specified for them, 'git status' command stops functioning, always returning an empty list.
+   */
+  SUPPORTS_BOOLEAN_FSMONITOR_OPTION {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 36, 0, 0));
+    }
   };
 
   public abstract boolean existsIn(@NotNull GitVersion version);

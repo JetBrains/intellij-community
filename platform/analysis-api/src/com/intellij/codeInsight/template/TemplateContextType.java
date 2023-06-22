@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,13 +6,12 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.openapi.util.ClearableLazyValue.createAtomic;
 import static com.intellij.openapi.util.NlsContexts.Label;
 
 /**
@@ -21,7 +20,7 @@ import static com.intellij.openapi.util.NlsContexts.Label;
  */
 public abstract class TemplateContextType {
   String myContextId;
-  ClearableLazyValue<@Nullable TemplateContextType> myBaseContextType;
+  SynchronizedClearableLazy<@Nullable TemplateContextType> myBaseContextType;
 
   private final @NotNull @Label String myPresentableName;
 
@@ -47,22 +46,20 @@ public abstract class TemplateContextType {
     myContextId = id;
     myPresentableName = presentableName;
     Class<? extends TemplateContextType> actualBaseClass = baseContextType != null ? baseContextType : EverywhereContextType.class;
-    myBaseContextType = createAtomic(() -> LiveTemplateContextService.getInstance().getTemplateContextType(actualBaseClass));
+    myBaseContextType = new SynchronizedClearableLazy(() -> LiveTemplateContextService.getInstance().getTemplateContextType(actualBaseClass));
   }
 
   /**
    * @return context presentable name for templates editor
    */
-  @NotNull
-  public @Label String getPresentableName() {
+  public @NotNull @Label String getPresentableName() {
     return myPresentableName;
   }
 
   /**
    * @return unique ID to be used on configuration files to flag if this context is enabled for particular template
    */
-  @NotNull
-  public final String getContextId() {
+  public final @NotNull String getContextId() {
     if (myContextId == null) {
       throw new AssertionError("contextId must be set for liveTemplateContext " + this);
     }
@@ -96,8 +93,7 @@ public abstract class TemplateContextType {
    * @return syntax highlighter that going to be used in live template editor for template with context type enabled. If several context
    * types are enabled - first registered wins.
    */
-  @Nullable
-  public SyntaxHighlighter createHighlighter() {
+  public @Nullable SyntaxHighlighter createHighlighter() {
     return null;
   }
 

@@ -4,6 +4,6 @@ class Main {
   }
 
   public static void main(String... args) {
-      <caret>printBool(args.length != 0);
+    <caret>  printBool(args.length != 0);
   }
 }

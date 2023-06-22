@@ -489,10 +489,10 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
 
   private void backspace(ConsoleViewImpl consoleView) {
     Editor editor = consoleView.getEditor();
-    Set<Shortcut> backShortcuts = ContainerUtil.set(ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_BACKSPACE).getShortcutSet().getShortcuts());
+    Set<Shortcut> backShortcuts = Set.of(ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_BACKSPACE).getShortcutSet().getShortcuts());
     List<AnAction> actions = ActionUtil.getActions(consoleView.getEditor().getContentComponent());
     AnAction handler = ContainerUtil.find(actions,
-      a -> ContainerUtil.set(a.getShortcutSet().getShortcuts()).equals(backShortcuts));
+      a -> Set.of(a.getShortcutSet().getShortcuts()).equals(backShortcuts));
     CommandProcessor.getInstance().executeCommand(getProject(),
                                                   () -> EditorTestUtil.executeAction(editor, true, handler),
                                                   "", null, editor.getDocument());

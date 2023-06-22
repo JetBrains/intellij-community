@@ -5,7 +5,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.libraries.Library
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
+import com.intellij.platform.workspace.jps.entities.LibraryId
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.*

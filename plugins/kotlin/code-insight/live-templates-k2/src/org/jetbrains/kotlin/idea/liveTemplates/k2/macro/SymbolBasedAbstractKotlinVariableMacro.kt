@@ -10,6 +10,7 @@ import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.base.codeInsight.ExpectedExpressionMatcherProvider
@@ -68,7 +69,7 @@ abstract class SymbolBasedAbstractKotlinVariableMacro : KotlinMacro() {
                     if (filterByExpectedType) get(contextElement) else null
                 }
 
-                val scope = file.getScopeContextForPosition(contextElement).scopes
+                val scope = file.getScopeContextForPosition(contextElement).getCompositeScope { it !is KtScopeKind.ImportingScope }
                 val variables = scope.getCallableSymbols()
                     .filterIsInstance<KtVariableLikeSymbol>()
                     .filter { !it.name.isSpecial && shouldDisplayVariable(it, file) }

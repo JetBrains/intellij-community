@@ -1,17 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.codeInsight.navigation.CtrlMouseData
-import com.intellij.codeInsight.navigation.CtrlMouseInfo
-import com.intellij.codeInsight.navigation.impl.NavigationActionResult.MultipleTargets
-import com.intellij.codeInsight.navigation.impl.NavigationActionResult.SingleTarget
+import com.intellij.codeInsight.navigation.impl.NavigationActionResult.*
 import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiSymbolService
 import com.intellij.model.psi.impl.TargetData
 import com.intellij.model.psi.impl.declaredReferencedData
-import com.intellij.navigation.NavigationTarget
 import com.intellij.navigation.SymbolNavigationService
 import com.intellij.openapi.project.Project
+import com.intellij.platform.backend.navigation.NavigationTarget
+import com.intellij.psi.PsiCompiledElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.ApiStatus
@@ -27,10 +26,6 @@ fun gotoDeclaration(file: PsiFile, offset: Int): GTDActionData? {
  */
 @ApiStatus.Internal
 interface GTDActionData {
-
-  @Suppress("DEPRECATION")
-  @Deprecated("Unused in v2 implementation")
-  fun ctrlMouseInfo(): CtrlMouseInfo?
 
   fun ctrlMouseData(): CtrlMouseData?
 
@@ -57,10 +52,6 @@ internal fun TargetData.toGTDActionData(project: Project): GTDActionData {
 @Internal
 class TargetGTDActionData(private val project: Project, private val targetData: TargetData) : GTDActionData {
 
-  @Suppress("DEPRECATION")
-  @Deprecated("Unused in v2 implementation")
-  override fun ctrlMouseInfo(): CtrlMouseInfo? = targetData.ctrlMouseInfo()
-
   override fun ctrlMouseData(): CtrlMouseData? = targetData.ctrlMouseData(project)
 
   override fun result(): NavigationActionResult? {
@@ -69,33 +60,41 @@ class TargetGTDActionData(private val project: Project, private val targetData: 
       extractSingleTargetResult(symbol, navigationProvider)?.let { result -> return result }
     }
 
-    data class GTDSingleTarget(val navigationTarget: NavigationTarget, val navigationProvider: Any?)
+    data class GTDSingleTarget(val navigationTarget: NavigationTarget, val navigationProvider: Any?, val lazy: Boolean)
 
     val result = SmartList<GTDSingleTarget>()
+    val psiSymbolService = PsiSymbolService.getInstance()
     for ((symbol, navigationProvider) in targetData.targets) {
+      val elementFromSymbol = psiSymbolService.extractElementFromSymbol(targetData.targets[0].symbol)
+      val showLazy = elementFromSymbol is PsiCompiledElement
       for (navigationTarget in SymbolNavigationService.getInstance().getNavigationTargets(project, symbol)) {
-        result += GTDSingleTarget(navigationTarget, navigationProvider)
+        result += GTDSingleTarget(navigationTarget, navigationProvider, showLazy)
       }
     }
     return when (result.size) {
       0 -> null
       1 -> {
         // don't compute presentation for single target
-        val (navigationTarget, navigationProvider) = result.single()
-        navigationTarget.navigationRequest()?.let { request ->
-          SingleTarget(request, navigationProvider)
+        val (navigationTarget, navigationProvider, showLazy) = result.single()
+        if (!showLazy) {
+          navigationTarget.navigationRequest()?.let { request ->
+            SingleTarget(request, navigationProvider)
+          }
+        }
+        else {
+          LazySingleTarget(navigationTarget::navigationRequest, navigationProvider)
         }
       }
       else -> {
         val targets = result.map { (navigationTarget, navigationProvider) ->
-          LazyTargetWithPresentation(navigationTarget::navigationRequest, navigationTarget.presentation(), navigationProvider)
+          LazyTargetWithPresentation(navigationTarget::navigationRequest, navigationTarget.computePresentation(), navigationProvider)
         }
         MultipleTargets(targets)
       }
     }
   }
 
-  fun isDeclared() = targetData is TargetData.Declared
+  fun isDeclared(): Boolean = targetData is TargetData.Declared
 
   private fun extractSingleTargetResult(symbol: Symbol, navigationProvider: Any?): SingleTarget? {
     val el = PsiSymbolService.getInstance().extractElementFromSymbol(symbol) ?: return null

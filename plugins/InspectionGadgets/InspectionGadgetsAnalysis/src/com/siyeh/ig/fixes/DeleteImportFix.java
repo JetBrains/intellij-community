@@ -15,14 +15,14 @@
  */
 package com.siyeh.ig.fixes;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
-public class DeleteImportFix extends InspectionGadgetsFix {
+public class DeleteImportFix extends PsiUpdateModCommandQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
@@ -30,8 +30,7 @@ public class DeleteImportFix extends InspectionGadgetsFix {
   }
 
   @Override
-  public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiElement importStatement = descriptor.getPsiElement();
-    deleteElement(importStatement);
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement importStatement, @NotNull ModPsiUpdater updater) {
+    importStatement.delete();
   }
 }

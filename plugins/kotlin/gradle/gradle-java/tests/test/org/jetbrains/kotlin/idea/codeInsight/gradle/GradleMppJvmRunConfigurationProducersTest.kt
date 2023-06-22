@@ -8,11 +8,11 @@ import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.listRe
 import org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMultiplatformAllInDirectoryConfigurationProducer
 import org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMultiplatformAllInPackageConfigurationProducer
 import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigurationProducerTestCase
+import org.jetbrains.plugins.gradle.execution.test.producer.GradleTestRunConfigurationProducerTestCase
 import org.jetbrains.plugins.gradle.execution.test.runner.TestClassGradleConfigurationProducer
 import org.jetbrains.plugins.gradle.execution.test.runner.TestMethodGradleConfigurationProducer
-import org.jetbrains.plugins.gradle.testFramework.util.buildSettings
-import org.jetbrains.plugins.gradle.testFramework.util.buildscript
+import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.jetbrains.plugins.gradle.util.findChildByType
 import org.jetbrains.plugins.gradle.util.runReadActionAndWait
 import org.junit.Test
@@ -109,11 +109,11 @@ class GradleMppJvmRunConfigurationProducersTest4 : GradleTestRunConfigurationPro
             """.trimIndent()
         )
 
-        createProjectSubFile("settings.gradle", buildSettings {
+        createSettingsFile {
             setProjectName("project")
-        })
+        }
 
-        createProjectSubFile("build.gradle", buildscript {
+        createBuildFile {
             withPlugin("org.jetbrains.kotlin.multiplatform", KotlinGradlePluginVersions.lastStable.toString())
             withPrefix {
                 code(
@@ -153,7 +153,7 @@ class GradleMppJvmRunConfigurationProducersTest4 : GradleTestRunConfigurationPro
             """.trimIndent()
                 )
             }
-        })
+        }
 
         importProject()
         assertModulesContains(

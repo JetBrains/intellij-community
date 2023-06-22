@@ -1,12 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
+import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
-import java.util.function.Supplier;
 
 import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.cancelActionsToBeCancelledBeforeWrite;
 
@@ -37,12 +36,12 @@ import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.cancelAc
  */
 final class ReadMostlyRWLock {
 
-  static final byte INITIAL = 0;
-  static final byte WRITE_REQUESTED = 1; // this writer is requesting or obtained the write access
-  static final byte WRITE_ACQUIRED = 2; // this writer obtained the write lock
+  private static final byte INITIAL = 0;
+  private static final byte WRITE_REQUESTED = 1; // this writer is requesting or obtained the write access
+  private static final byte WRITE_ACQUIRED = 2; // this writer obtained the write lock
 
   @NotNull final Thread writeThread;
-  private final AtomicBoolean writeIntent = new AtomicBoolean(false);
+  private final AtomicBoolean writeIntent = new AtomicBoolean(!StartupUtil.isImplicitReadOnEDTDisabled());
   // All reader threads are registered here. Dead readers are garbage collected in writeUnlock().
   private final ConcurrentList<Reader> readers = ContainerUtil.createConcurrentList();
 
@@ -54,9 +53,9 @@ final class ReadMostlyRWLock {
   // (we have to reduce frequency of this "dead readers GC" activity because Thread.isAlive() turned out to be too expensive)
   private volatile long deadReadersGCStamp;
 
-  // This flag should be set by write thread only, and checked by same thread, so
-  // no "volatile" needed
-  private boolean allowImplicitRead = true;
+  // This flag should be set by write thread only, but can be checked by any thread
+  // for example in startRead() method. Should be volatile.
+  private volatile boolean allowImplicitRead = true;
 
   ReadMostlyRWLock(@NotNull Thread writeThread) {
     this.writeThread = writeThread;
@@ -71,8 +70,6 @@ final class ReadMostlyRWLock {
     Reader(@NotNull Thread readerThread) {
       thread = readerThread;
     }
-
-    private ProcessingContext processingContext;
 
     @Override
     @NonNls
@@ -103,8 +100,9 @@ final class ReadMostlyRWLock {
 
   boolean isReadLockedByThisThread() {
     // If implicit read lock is disabled, don't check for write thread, check for true read lock
-    if (allowImplicitRead)
+    if (allowImplicitRead) {
       checkReadThreadAccess();
+    }
     Reader status = R.get();
     return status.readRequested;
   }
@@ -147,11 +145,11 @@ final class ReadMostlyRWLock {
 
   void endRead(Reader status) {
     // If implicit read lock is disabled, don't check for write thread, check for true read lock
-    if (allowImplicitRead)
+    if (allowImplicitRead) {
       checkReadThreadAccess();
+    }
     if (status != null) {
       status.readRequested = false;
-      status.processingContext = null;
     }
     if (isWriteRequested()) {
       LockSupport.unpark(writeThread);  // parked by writeLock()
@@ -185,33 +183,6 @@ final class ReadMostlyRWLock {
     return R.get().impatientReads;
   }
 
-
-  ProcessingContext getProcessingContext() {
-    if (Thread.currentThread() == writeThread) return writeActionProcessingContext;
-    Reader reader = R.get();
-    if (!reader.readRequested) return null;
-    ProcessingContext context = reader.processingContext;
-    if (context == null) {
-      context = reader.processingContext = new ProcessingContext();
-    }
-    return context;
-  }
-
-  private ProcessingContext writeActionProcessingContext = null;
-
-  <T> T allowProcessingContextInWriteAction(Supplier<T> supplier) {
-    if (Thread.currentThread() != writeThread || writeActionProcessingContext != null) {
-      return supplier.get();
-    }
-    try {
-      writeActionProcessingContext = new ProcessingContext();
-      return supplier.get();
-    }
-    finally {
-      writeActionProcessingContext = null;
-    }
-  }
-
   /**
    * Executes a {@code runnable} in an "impatient" mode.
    * In this mode any attempt to grab read lock
@@ -220,8 +191,9 @@ final class ReadMostlyRWLock {
    */
   void executeByImpatientReader(@NotNull Runnable runnable) throws ApplicationUtil.CannotRunReadActionException {
     // If implicit read lock is disabled, don't check for write thread, check for true read lock
-    if (allowImplicitRead)
+    if (allowImplicitRead) {
       checkReadThreadAccess();
+    }
     Reader status = R.get();
     boolean old = status.impatientReads;
     try {
@@ -386,7 +358,7 @@ final class ReadMostlyRWLock {
     return allowImplicitRead;
   }
 
-  void setImplicitReadAllowance(boolean enable) {
+  void setAllowImplicitRead(boolean enable) {
     allowImplicitRead = enable;
   }
 

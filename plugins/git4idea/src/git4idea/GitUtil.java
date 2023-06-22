@@ -44,18 +44,12 @@ import git4idea.changes.GitChangeUtils;
 import git4idea.changes.GitCommittedChangeList;
 import git4idea.commands.*;
 import git4idea.i18n.GitBundle;
-import git4idea.repo.GitBranchTrackInfo;
-import git4idea.repo.GitRemote;
-import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
+import git4idea.repo.*;
 import git4idea.util.GitSimplePathsBrowser;
 import git4idea.util.GitUIUtil;
 import git4idea.util.StringScanner;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -107,9 +101,12 @@ public final class GitUtil {
    * Returns the Git repository location for the given repository root directory, or null if nothing can be found.
    * Able to find the real repository root of a submodule or of a working tree.
    * <p/>
-   * More precisely: checks if there is {@code .git} directory or file directly under rootDir. <br/>
+   * More precisely: checks if there is {@code .git} directory or file directly under rootDir.<br/>
    * If there is a directory, performs a quick check that it looks like a Git repository;<br/>
-   * if it is a file, follows the path written inside this file to find the actual repo dir.
+   * if it is a file, follows the path written inside this file to find the actual repo dir ('git worktree').
+   *
+   * @return Directory containing the {@link GitRepositoryFiles#HEAD}/{@link GitRepositoryFiles#INDEX}/etc. files
+   * @see #isGitRoot(Path)
    */
   @Nullable
   public static VirtualFile findGitDir(@NotNull VirtualFile rootDir) {
@@ -351,13 +348,15 @@ public final class GitUtil {
   }
 
   /**
-   * Return a git root for the file path (the parent directory with ".git" subdirectory).
+   * Return a git root for the file path, by walking the FS up.
    * Uses nio to access the file system.
+   * <p>
+   * See {@link #isGitRoot(Path)} for obsolete reason.
    *
-   * @return git root for the file or null if the file is not under git
-   * @see GitRepositoryManager#getRepositoryForFile(FilePath)
+   * @return git root (folder containing the '.git') or null
    */
   @Nullable
+  @ApiStatus.Obsolete
   public static VirtualFile findGitRootFor(@NotNull Path path) {
     try {
       Path root = path;
@@ -375,6 +374,10 @@ public final class GitUtil {
     }
   }
 
+  /**
+   * @deprecated Prefer using {@link #isGitRoot(Path)} instead.
+   */
+  @Deprecated
   public static boolean isGitRoot(@NotNull File folder) {
     try {
       return isGitRoot(folder.toPath());
@@ -386,8 +389,11 @@ public final class GitUtil {
   }
 
   /**
-   * Check if the virtual file under git
+   * Check if the file is under git, by walking the FS up.
+   * <p>
+   * See {@link #isGitRoot(Path)} for obsolete reason.
    */
+  @ApiStatus.Obsolete
   public static boolean isUnderGit(@NotNull VirtualFile vFile) {
     try {
       return findGitRootFor(vFile.toNioPath()) != null;
@@ -399,8 +405,11 @@ public final class GitUtil {
   }
 
   /**
-   * Check if the file path is under git
+   * Check if the file is under git, by walking the FS up.
+   * <p>
+   * See {@link #isGitRoot(Path)} for obsolete reason.
    */
+  @ApiStatus.Obsolete
   public static boolean isUnderGit(@NotNull FilePath path) {
     try {
       return findGitRootFor(Paths.get(path.getPath())) != null;
@@ -464,7 +473,8 @@ public final class GitUtil {
   public static void getLocalCommittedChanges(final Project project,
                                               final VirtualFile root,
                                               final Consumer<? super GitHandler> parametersSpecifier,
-                                              final Consumer<? super GitCommittedChangeList> consumer, boolean skipDiffsForMerge) throws VcsException {
+                                              final Consumer<? super GitCommittedChangeList> consumer,
+                                              boolean skipDiffsForMerge) throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     h.setSilent(true);
     h.addParameters("--pretty=format:%x04%x01" + GitChangeUtils.COMMITTED_CHANGELIST_FORMAT, "--name-status");
@@ -497,8 +507,8 @@ public final class GitUtil {
   }
 
   public static List<GitCommittedChangeList> getLocalCommittedChanges(final Project project,
-                                                                   final VirtualFile root,
-                                                                   final Consumer<? super GitHandler> parametersSpecifier)
+                                                                      final VirtualFile root,
+                                                                      final Consumer<? super GitHandler> parametersSpecifier)
     throws VcsException {
     final List<GitCommittedChangeList> rc = new ArrayList<>();
 
@@ -718,8 +728,9 @@ public final class GitUtil {
 
   /**
    * git diff --name-only [--cached]
-   * @return true if there is anything in the unstaged/staging area, false if the unstaged/staging area is empty.
+   *
    * @param staged if true checks the staging area, if false checks unstaged files.
+   * @return true if there is anything in the unstaged/staging area, false if the unstaged/staging area is empty.
    */
   public static boolean hasLocalChanges(boolean staged, Project project, VirtualFile root) throws VcsException {
     GitLineHandler diff = new GitLineHandler(project, root, GitCommand.DIFF);
@@ -805,7 +816,7 @@ public final class GitUtil {
   @NlsSafe
   @NotNull
   public static String cleanupErrorPrefixes(@NotNull @NlsSafe String msg) {
-    final @NonNls String[] PREFIXES = { "fatal:", "error:" };
+    final @NonNls String[] PREFIXES = {"fatal:", "error:"};
     msg = msg.trim();
     for (String prefix : PREFIXES) {
       if (msg.startsWith(prefix)) {
@@ -977,6 +988,10 @@ public final class GitUtil {
     refreshVfs(repository.getRoot(), changes);
   }
 
+  /**
+   * @deprecated Prefer using {@link #isGitRoot(Path)} instead.
+   */
+  @Deprecated
   public static boolean isGitRoot(@NotNull @NonNls String rootDir) {
     try {
       return isGitRoot(Paths.get(rootDir));
@@ -987,6 +1002,18 @@ public final class GitUtil {
     }
   }
 
+  /**
+   * Check if the directory is a valid git root, by parsing the .git file/directory.
+   * <p>
+   * Typically, IDE should use its configured VCS directories, via {@link ProjectLevelVcsManager#getVcsFor(FilePath)} or
+   * {@link GitRepositoryManager#getRepositoryForFile(VirtualFile)}.
+   * While there are exist valid usages of this method, it is marked as Obsolete to make sure it is used only when actually needed.
+   * <p>
+   * If it's used to detect new VCS mappings, consider checking {@link VcsUtil#shouldDetectVcsMappingsFor(Project)} first.
+   *
+   * @see #findGitDir(VirtualFile)
+   */
+  @ApiStatus.Obsolete
   public static boolean isGitRoot(@NotNull Path rootDir) {
     Path dotGit = rootDir.resolve(DOT_GIT);
     BasicFileAttributes attributes;

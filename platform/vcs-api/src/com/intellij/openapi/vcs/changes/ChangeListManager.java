@@ -32,7 +32,7 @@ public abstract class ChangeListManager implements ChangeListModification {
    *
    * @deprecated Method does nothing by itself, use {@link VcsDirtyScopeManager} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void scheduleUpdate();
 
   /**
@@ -188,7 +188,7 @@ public abstract class ChangeListManager implements ChangeListModification {
   @NotNull
   public abstract FileStatus getStatus(@NotNull VirtualFile file);
 
-  public abstract boolean isUnversioned(VirtualFile file);
+  public abstract boolean isUnversioned(@NotNull VirtualFile file);
 
   @NotNull
   public abstract List<FilePath> getUnversionedFilesPaths();
@@ -224,7 +224,7 @@ public abstract class ChangeListManager implements ChangeListModification {
 
 
   /**
-   * @deprecated use {@link LocalCommitExecutor#LOCAL_COMMIT_EXECUTOR} extension point
+   * @deprecated use {@link CommitExecutor#LOCAL_COMMIT_EXECUTOR} extension point
    */
   @Deprecated(forRemoval = true)
   public abstract void registerCommitExecutor(@NotNull CommitExecutor executor);

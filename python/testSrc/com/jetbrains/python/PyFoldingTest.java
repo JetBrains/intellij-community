@@ -1,11 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
-import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.folding.impl.EditorFoldingInfo;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.psi.PsiElement;
+import com.intellij.testFramework.EditorTestUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 
@@ -68,7 +68,7 @@ public class PyFoldingTest extends PyTestCase {
 
   public void testCollapseExpandDocCommentsTokenType() {
     myFixture.configureByFile(collapseExpandDocCommentsTokenTypeFile());
-    CodeFoldingManager.getInstance(myFixture.getProject()).buildInitialFoldings(myFixture.getEditor());
+    EditorTestUtil.buildInitialFoldingsInBackground(myFixture.getEditor());
     checkCollapseExpand(true);
     checkCollapseExpand(false);
   }

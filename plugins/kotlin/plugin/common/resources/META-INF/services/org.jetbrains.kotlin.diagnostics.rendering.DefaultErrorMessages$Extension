@@ -1,5 +1,0 @@
-# Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-# Note that this file is also present in compiler/cli/src/META-INF/services
-org.jetbrains.kotlin.resolve.jvm.diagnostics.DefaultErrorMessagesJvm
-org.jetbrains.kotlin.js.resolve.diagnostics.DefaultErrorMessagesJs
-org.jetbrains.kotlin.resolve.konan.diagnostics.DefaultErrorMessagesNative

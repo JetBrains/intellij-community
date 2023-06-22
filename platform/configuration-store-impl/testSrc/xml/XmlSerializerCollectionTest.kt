@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DEPRECATION")
 
 package com.intellij.configurationStore.xml
@@ -134,7 +134,7 @@ internal class XmlSerializerCollectionTest {
   fun java9ImmutableSet() {
     class Bean {
       @XCollection
-      var foo = java.util.Set.of("a", "b")
+      var foo = mutableSetOf("a", "b")
     }
 
     val bean = Bean()
@@ -152,7 +152,7 @@ internal class XmlSerializerCollectionTest {
   fun immutableCollections() {
     class Bean {
       @XCollection
-      val firstElement: List<String> = Arrays.asList("gradle")
+      val firstElement: List<String> = listOf("gradle")
       @XCollection
       val secondElement: List<String> = Collections.singletonList("maven")
     }

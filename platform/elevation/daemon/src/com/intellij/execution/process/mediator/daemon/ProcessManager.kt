@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process.mediator.daemon
 
 import com.google.protobuf.ByteString
@@ -116,7 +116,6 @@ internal class ProcessManager : Closeable {
       STDIN -> process.outputStream
       else -> throw IllegalArgumentException("Unknown process input FD $fd for PID $handleId")
     }
-    @Suppress("BlockingMethodInNonBlockingContext")
     withContext(Dispatchers.IO) {
       outputStream.use { outputStream ->
         with(currentCoroutineContext()) {
@@ -167,7 +166,6 @@ internal class ProcessManager : Closeable {
         synchronized(this) {
           check(_process == null) { "Process has already been initialized" }
           lifetimeJob.ensureActive()
-          @Suppress("BlockingMethodInNonBlockingContext")
           _process = processBuilder.start()
         }
       }

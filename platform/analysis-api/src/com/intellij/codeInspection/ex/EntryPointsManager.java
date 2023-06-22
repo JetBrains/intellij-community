@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * User: anna
@@ -29,7 +29,18 @@ public abstract class EntryPointsManager implements Disposable {
 
   public abstract boolean isAddNonJavaEntries();
 
+  /**
+   * Show UI to configure entry points and implicitly written field annotations, if applicable
+   */
   public abstract void configureAnnotations();
+
+  /**
+   * Show UI to configure entry points annotations, if applicable
+   * @param implicitWritesOnly whether to configure implicitly written fields only (no entry points)
+   */
+  public void configureAnnotations(boolean implicitWritesOnly) {
+    configureAnnotations();
+  }
 
   public abstract boolean isEntryPoint(@NotNull PsiElement element);
 

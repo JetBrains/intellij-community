@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
 import com.intellij.idea.Bombed;
 import com.intellij.idea.ExcludeFromTestDiscovery;
 import com.intellij.idea.HardwareAgentRequired;
+import com.intellij.idea.IgnoreJUnit3;
 import com.intellij.nastradamus.NastradamusClient;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -223,7 +224,7 @@ public class TestCaseLoader {
 
   private static boolean matchesBucketViaNastradamus(@NotNull String testIdentifier) {
     try {
-      return nastradamusClient.isClassInBucket(testIdentifier);
+      return nastradamusClient.isClassInBucket(testIdentifier, (testClassName) -> matchesCurrentBucketViaHashing(testClassName));
     }
     catch (Exception e) {
       // if fails, just fallback to consistent hashing
@@ -312,7 +313,7 @@ public class TestCaseLoader {
 
     try {
       var testRunRequest = nastradamusClient.collectTestRunResults();
-      nastradamusClient.sendTestRunResults(testRunRequest);
+      nastradamusClient.sendTestRunResults(testRunRequest, IS_NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED);
     }
     catch (Exception e) {
       System.err.println("Unexpected error happened during sending test results to Nastradamus");
@@ -418,7 +419,10 @@ public class TestCaseLoader {
     if (!myForceLoadPerformanceTests && !shouldIncludePerformanceTestCase(testCaseClass.getSimpleName())) return true;
     String className = testCaseClass.getName();
 
-    return !myTestClassesFilter.matches(className, moduleName) || isBombed(testCaseClass) || isExcludeFromTestDiscovery(testCaseClass);
+    return !myTestClassesFilter.matches(className, moduleName) ||
+           isBombed(testCaseClass) ||
+           testCaseClass.isAnnotationPresent(IgnoreJUnit3.class) ||
+           isExcludeFromTestDiscovery(testCaseClass);
   }
 
   private static boolean isExcludeFromTestDiscovery(Class<?> c) {

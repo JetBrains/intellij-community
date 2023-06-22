@@ -4,7 +4,8 @@ package com.intellij.serialization
 import com.amazon.ion.IonType
 import com.intellij.util.ArrayUtil
 
-internal class ArrayBinding(private val itemClass: Class<*>, context: BindingInitializationContext) : BaseCollectionBinding(itemClass, context) {
+internal class ArrayBinding(private val itemClass: Class<*>,
+                            context: BindingInitializationContext) : BaseCollectionBinding(itemClass, context) {
   override fun deserialize(context: ReadContext, hostObject: Any?) = readArray(context, hostObject)
 
   override fun deserialize(hostObject: Any, property: MutableAccessor, context: ReadContext) {
@@ -27,7 +28,9 @@ internal class ArrayBinding(private val itemClass: Class<*>, context: BindingIni
 
     writer.stepIn(IonType.LIST)
     val consumer = createItemConsumer(context)
-    array.forEach { consumer.accept(it) }
+    for (item in array) {
+      consumer(item)
+    }
     writer.stepOut()
   }
 

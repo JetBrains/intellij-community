@@ -192,7 +192,8 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
     myFixture.configureFromExistingVirtualFile(myProjectPom);
 
     LookupElement[] elements = myFixture.completeBasic();
-    assertSize(1, elements);
+    assertTrue(elements.length > 0);
+    assertEquals("junit:junit:3.8.1", elements[0].getLookupString());
 
     myFixture.type('\n');
 

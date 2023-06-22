@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 import ppp.MyClassB
 
 fun foo(myCla<caret>)

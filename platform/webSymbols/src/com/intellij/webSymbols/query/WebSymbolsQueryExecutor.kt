@@ -8,6 +8,12 @@ import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.context.WebSymbolsContext.Companion.KIND_FRAMEWORK
 
+/**
+ * To create a query executor use [WebSymbolsQueryExecutorFactory].
+ * The query executor will be configured by all the registered [WebSymbolsQueryConfigurator]'s
+ * based on the provided source code location. Configurators will provide initial Web Symbol scopes,
+ * rules for calculating Web Symbols context and rules for symbol names conversion.
+ */
 /*
  * INAPPLICABLE_JVM_NAME -> https://youtrack.jetbrains.com/issue/KT-31420
  **/

@@ -4,24 +4,19 @@ package org.jetbrains.intellij.build.impl
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ArrayNode
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromStream
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuiltinModulesFileData
 
 import java.nio.file.Files
 import java.nio.file.Path
 
-private val objectMapper = ObjectMapper()
-
-internal fun readBuiltinModulesFile(file: Path): BuiltinModulesFileData {
-  val root = Files.newInputStream(file).use { ObjectMapper().readTree(it) }
-  return BuiltinModulesFileData(
-    getStringArrayJsonValue(file, root, "plugins"),
-    getStringArrayJsonValue(file, root, "modules"),
-    getStringArrayJsonValue(file, root, "extensions"),
-  )
+fun readBuiltinModulesFile(file: Path): BuiltinModulesFileData {
+  return Files.newInputStream(file).use { Json.decodeFromStream<BuiltinModulesFileData>(it) }
 }
 
-internal fun customizeBuiltinModulesAllowOnlySpecified(
+fun customizeBuiltinModulesAllowOnlySpecified(
   context: BuildContext,
   builtinModulesFile: Path,
   moduleNames: List<String>?,
@@ -29,6 +24,8 @@ internal fun customizeBuiltinModulesAllowOnlySpecified(
   fileExtensions: List<String>?,
 ) {
   context.messages.info("File $builtinModulesFile before modification:\n" + Files.readString(builtinModulesFile))
+
+  val objectMapper = ObjectMapper()
 
   val root = objectMapper.readTree(builtinModulesFile.toFile())
   if (moduleNames != null) {
@@ -40,18 +37,12 @@ internal fun customizeBuiltinModulesAllowOnlySpecified(
   }
 
   if (fileExtensions != null) {
-    setArrayNodeElementsInBuiltinModules(builtinModulesFile, root, "extensions", fileExtensions)
+    setArrayNodeElementsInBuiltinModules(builtinModulesFile, root, "fileExtensions", fileExtensions)
   }
 
   Files.write(builtinModulesFile, objectMapper.writeValueAsBytes(root))
 
   context.messages.info("File $builtinModulesFile AFTER modification:\n" + Files.readString(builtinModulesFile))
-}
-
-private fun getStringArrayJsonValue(file: Path, root: JsonNode, sectionName: String): List<String> {
-  val node = root.get(sectionName) as ArrayNode?
-             ?: throw IllegalStateException("'$sectionName' was not found in $file:\n" + Files.readString(file))
-  return node.toList().map { it.asText() }
 }
 
 private fun setArrayNodeElementsInBuiltinModules(file: Path,

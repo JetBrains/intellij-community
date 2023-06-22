@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -46,13 +47,13 @@ public class FocusModeModel implements Disposable {
   private RangeMarker myFocusModeRange;
 
   private final List<FocusModeModelListener> mySegmentListeners = new SmartList<>();
-  private final RangeMarkerTree<FocusRegion> myFocusMarkerTree;
+  private final RangeMarkerTree<RangeMarkerEx> myFocusMarkerTree;
 
   public FocusModeModel(@NotNull EditorImpl editor) {
     myEditor = editor;
     myFocusMarkerTree = new RangeMarkerTree<>(editor.getDocument());
 
-    myEditor.getScrollingModel().addVisibleAreaListener(e -> {
+    myEditor.getScrollingModel().addVisibleAreaListener(e -> ReadAction.run(() -> {
       AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
       if (event instanceof MouseEvent && !EditorUtil.isPrimaryCaretVisible(myEditor)) {
         clearFocusMode(); // clear when scrolling with touchpad or mouse and primary caret is out the visible area
@@ -60,7 +61,7 @@ public class FocusModeModel implements Disposable {
       else {
         myEditor.applyFocusMode(); // apply the focus mode when jumping to the next line, e.g. Cmd+G
       }
-    });
+    }));
 
     CaretModelImpl caretModel = myEditor.getCaretModel();
     caretModel.addCaretListener(new CaretListener() {
@@ -95,11 +96,11 @@ public class FocusModeModel implements Disposable {
     });
   }
 
-  public RangeMarker getFocusModeRange() {
+  RangeMarker getFocusModeRange() {
     return myFocusModeRange;
   }
 
-  public void applyFocusMode(@NotNull Caret caret) {
+  void applyFocusMode(@NotNull Caret caret) {
     // Focus mode should not be applied when idea is used as rd server (for example, centaur mode).
     if (ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) return;
 
@@ -124,7 +125,7 @@ public class FocusModeModel implements Disposable {
     }
   }
 
-  public void clearFocusMode() {
+  void clearFocusMode() {
     myFocusModeMarkup.forEach(myEditor.getMarkupModel()::removeHighlighter);
     myFocusModeMarkup.clear();
     if (myFocusModeRange != null) {
@@ -133,27 +134,21 @@ public class FocusModeModel implements Disposable {
     }
   }
 
-  public boolean isInFocusMode(@NotNull RangeMarker region) {
+  boolean isInFocusMode(@NotNull RangeMarker region) {
     return myFocusModeRange != null && !intersects(myFocusModeRange, region);
   }
 
-  /**
-   * Find or create and get new focus region.
-   *
-   * Return pair or focus region and found / created status.
-   */
   @NotNull
-  public FocusRegion createFocusRegion(int start, int end) {
-    FocusRegion marker = new FocusRegion(myEditor, start, end);
+  public RangeMarker createFocusRegion(int start, int end) {
+    RangeMarkerEx marker = new RangeMarkerImpl(myEditor.getDocument(), start, end, false, false);
     myFocusMarkerTree.addInterval(marker, start, end, false, false, true, 0);
     mySegmentListeners.forEach(l -> l.focusRegionAdded(marker));
     return marker;
   }
 
-  @SuppressWarnings("Duplicates")
   @Nullable
-  public FocusRegion findFocusRegion(int start, int end) {
-    FocusRegion[] found = new FocusRegion[1];
+  public RangeMarker findFocusRegion(int start, int end) {
+    RangeMarker[] found = new RangeMarker[1];
     myFocusMarkerTree.processOverlappingWith(start, end, range -> {
       if (range.getStartOffset() == start && range.getEndOffset() == end) {
         found[0] = range;
@@ -164,8 +159,8 @@ public class FocusModeModel implements Disposable {
     return found[0];
   }
 
-  public void removeFocusRegion(FocusRegion marker) {
-    boolean removed = myFocusMarkerTree.removeInterval(marker);
+  public void removeFocusRegion(@NotNull RangeMarker marker) {
+    boolean removed = myFocusMarkerTree.removeInterval((RangeMarkerEx)marker);
     if (removed) mySegmentListeners.forEach(l -> l.focusRegionRemoved(marker));
   }
 
@@ -175,7 +170,7 @@ public class FocusModeModel implements Disposable {
   }
 
   @NotNull
-  private Segment enlargeFocusRangeIfNeeded(Segment range) {
+  private Segment enlargeFocusRangeIfNeeded(@NotNull Segment range) {
     int originalStart = range.getStartOffset();
     DocumentEx document = myEditor.getDocument();
     int start = DocumentUtil.getLineStartOffset(originalStart, document);
@@ -223,8 +218,7 @@ public class FocusModeModel implements Disposable {
   }
 
   public interface FocusModeModelListener {
-    void focusRegionAdded(FocusRegion newRegion);
-
-    void focusRegionRemoved(FocusRegion oldRegion);
+    void focusRegionAdded(@NotNull Segment newRegion);
+    void focusRegionRemoved(@NotNull Segment oldRegion);
   }
 }

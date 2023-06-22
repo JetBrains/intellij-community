@@ -61,6 +61,8 @@ class UserFactorsManagerImpl : UserFactorsManager {
 
         register(MnemonicsRatio())
 
+        register(TemplatesRatio())
+
         for (type in PrefixMatchingType.values())
             register(PrefixMatchingTypeRatio(type))
     }

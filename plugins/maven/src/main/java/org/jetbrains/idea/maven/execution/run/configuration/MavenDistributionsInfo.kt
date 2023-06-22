@@ -48,10 +48,10 @@ class MavenDistributionsInfo : DistributionsInfo {
     fun asDistributionInfo(mavenHome: String): DistributionInfo {
       val info = MavenVersionAwareSupportExtension.MAVEN_VERSION_SUPPORT.extensionList.map {
         it.asDistributionInfo(mavenHome)
-      }.firstOrNull();
+      }.firstOrNull()
 
-      if (info != null) return info;
-      val version = MavenServerManager.getMavenVersion(mavenHome)
+      if (info != null) return info
+      val version = MavenUtil.getMavenVersionByMavenHome(mavenHome)
       return when (mavenHome) {
         MavenServerManager.WRAPPED_MAVEN -> WrappedDistributionInfo()
         else -> LocalDistributionInfo(mavenHome)
@@ -62,7 +62,7 @@ class MavenDistributionsInfo : DistributionsInfo {
 
       val home = MavenVersionAwareSupportExtension.MAVEN_VERSION_SUPPORT.extensionList.map {
         it.asMavenHome(distribution)
-      }.firstOrNull();
+      }.firstOrNull()
       if (home != null) return home
       return when (distribution) {
         is WrappedDistributionInfo -> MavenServerManager.WRAPPED_MAVEN

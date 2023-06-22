@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.concurrency;
 
 import com.intellij.diagnostic.PluginException;
@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 
 /**
  * Invitation-only service for running short-lived computing-intensive IO-free tasks on all available CPU cores.
@@ -88,6 +88,5 @@ public abstract class JobLauncher {
    * This will cause deadlock since this thread pool is an easily exhaustible resource.
    * Use {@link com.intellij.openapi.application.Application#executeOnPooledThread(Runnable)} instead
    */
-  @NotNull
-  public abstract Job<Void> submitToJobThread(@NotNull final Runnable action, @Nullable Consumer<? super Future<?>> onDoneCallback);
+  public abstract @NotNull Job<Void> submitToJobThread(final @NotNull Runnable action, @Nullable Consumer<? super Future<?>> onDoneCallback);
 }

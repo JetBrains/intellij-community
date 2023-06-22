@@ -157,7 +157,7 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
         emailRow(userData)
         appInfoRow()
 
-        row("Files: ") {}
+        row(SettingsSyncBundle.message("troubleshooting.dialog.files")) {}
         generateFileSubTree(this, rootNode)
       }
     }

@@ -12,7 +12,8 @@ final public class GitCommandProvider implements CommandProvider {
   public @NotNull Map<String, CreateCommand> getCommands() {
     return Map.ofEntries(
       Map.entry(GitCheckoutCommand.PREFIX, GitCheckoutCommand::new),
-      Map.entry(ShowFileHistoryCommand.PREFIX, ShowFileHistoryCommand::new)
+      Map.entry(ShowFileHistoryCommand.PREFIX, ShowFileHistoryCommand::new),
+      Map.entry(GitCommitCommand.PREFIX, GitCommitCommand::new)
     );
   }
 }

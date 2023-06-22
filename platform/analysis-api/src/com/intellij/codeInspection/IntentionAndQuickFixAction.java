@@ -2,12 +2,12 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,21 +26,15 @@ import org.jetbrains.annotations.Nullable;
 public abstract class IntentionAndQuickFixAction implements LocalQuickFix, IntentionAction {
 
   @Override
-  @IntentionName
-  @NotNull
-  public abstract String getName();
+  public abstract @IntentionName @NotNull String getName();
 
   @Override
-  @IntentionFamilyName
-  @NotNull
-  public abstract String getFamilyName();
+  public abstract @IntentionFamilyName @NotNull String getFamilyName();
 
   public abstract void applyFix(@NotNull Project project, PsiFile file, @Nullable Editor editor);
 
   @Override
-  @IntentionName
-  @NotNull
-  public String getText() {
+  public @IntentionName @NotNull String getText() {
     return getName();
   }
 
@@ -50,7 +44,7 @@ public abstract class IntentionAndQuickFixAction implements LocalQuickFix, Inten
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     applyFix(project, file, editor);
   }
 
@@ -65,10 +59,5 @@ public abstract class IntentionAndQuickFixAction implements LocalQuickFix, Inten
   @Override
   public boolean startInWriteAction() {
     return true;
-  }
-
-  @Override
-  public final @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-    throw new AssertionError("Should never be reached for an IntentionAction");
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -157,12 +157,6 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
     );
   }
 
-  @Override
-  public @NotNull OptionController getOptionController() {
-    return super.getOptionController()
-      .onPrefix("myMethodMatcher", myMethodMatcher.getOptionController());
-  }
-
   @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
@@ -261,10 +255,16 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
         return !MethodUtils.hasCanIgnoreReturnValueAnnotation(method, null);
       }
 
-      final PsiAnnotation annotation = findCheckReturnValueAnnotation(method);
-      if (!myMethodMatcher.matches(method) && annotation == null) return false;
       if (isHardcodedException(call)) return false;
-      PsiElement stop = annotation == null ? null : (PsiElement)annotation.getOwner();
+      PsiElement stop;
+      if (!myMethodMatcher.matches(method)) {
+        final PsiAnnotation annotation = findCheckReturnValueAnnotation(method);
+        if (annotation == null) return false;
+        stop = (PsiElement)annotation.getOwner();
+      }
+      else {
+        stop = null;
+      }
       return !MethodUtils.hasCanIgnoreReturnValueAnnotation(method, stop);
     }
 

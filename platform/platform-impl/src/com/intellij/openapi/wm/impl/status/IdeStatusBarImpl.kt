@@ -1,12 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "OVERRIDE_DEPRECATION", "ReplacePutWithAssignment", "LeakingThis")
 
 package com.intellij.openapi.wm.impl.status
 
+import com.intellij.accessibility.AccessibilityUtils
+import com.intellij.codeWithMe.ClientId
 import com.intellij.diagnostic.runActivity
 import com.intellij.ide.HelpTooltipManager
 import com.intellij.ide.IdeEventQueue
-import com.intellij.ide.ui.UISettings
 import com.intellij.internal.statistic.service.fus.collectors.StatusBarPopupShown
 import com.intellij.internal.statistic.service.fus.collectors.StatusBarWidgetClicked
 import com.intellij.openapi.Disposable
@@ -19,10 +20,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.LoadingOrder.Orderable
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.progress.ModalTaskOwner
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.TaskInfo
-import com.intellij.openapi.progress.runBlockingModal
+import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.impl.ProgressState
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.BalloonHandler
@@ -46,14 +46,13 @@ import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.border.name
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.popup.NotificationPopup
-import com.intellij.ui.popup.PopupState
+import com.intellij.ui.util.height
 import com.intellij.util.EventDispatcher
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -67,15 +66,16 @@ import javax.accessibility.AccessibleRole
 import javax.swing.*
 import javax.swing.border.CompoundBorder
 import javax.swing.event.HyperlinkListener
+import kotlin.math.max
 
 private const val UI_CLASS_ID = "IdeStatusBarUI"
 private val WIDGET_ID = Key.create<String>("STATUS_BAR_WIDGET_ID")
 private val MIN_ICON_HEIGHT = JBUI.scale(18 + 1 + 1)
 
 open class IdeStatusBarImpl internal constructor(
+  private val disposable: Disposable,
   private val frameHelper: ProjectFrameHelper,
   addToolWindowWidget: Boolean,
-  private var editorProvider: () -> FileEditor? = createDefaultEditorProvider(frameHelper),
 ) : JComponent(), Accessible, StatusBarEx, DataProvider {
   private val infoAndProgressPanel: InfoAndProgressPanel
 
@@ -94,16 +94,20 @@ open class IdeStatusBarImpl internal constructor(
   private var effectComponent: JComponent? = null
   private var info: @NlsContexts.StatusBarText String? = null
 
-  private val initialEditorProvider = editorProvider
+  private var preferredTextHeight: Int = 0
+
+  private var editorProvider: () -> FileEditor? = createDefaultEditorProvider(frameHelper)
 
   private val children = LinkedHashSet<IdeStatusBarImpl>()
   private val listeners = EventDispatcher.create(StatusBarListener::class.java)
 
-  companion object {
-    internal val HOVERED_WIDGET_ID = DataKey.create<String>("HOVERED_WIDGET_ID")
-    internal val WIDGET_EFFECT_KEY = Key.create<WidgetEffect>("TextPanel.widgetEffect")
+  private val progressFlow = MutableSharedFlow<ProgressSetChangeEvent>(replay = 1, extraBufferCapacity = Int.MAX_VALUE)
 
-    const val NAVBAR_WIDGET_KEY = "NavBar"
+  companion object {
+    internal val HOVERED_WIDGET_ID: DataKey<String> = DataKey.create("HOVERED_WIDGET_ID")
+    internal val WIDGET_EFFECT_KEY: Key<WidgetEffect> = Key.create("TextPanel.widgetEffect")
+
+    const val NAVBAR_WIDGET_KEY: String = "NavBar"
   }
 
   override fun findChild(c: Component): StatusBar {
@@ -123,12 +127,13 @@ open class IdeStatusBarImpl internal constructor(
     }
   }
 
-  override fun createChild(frame: IdeFrame, editorProvider: () -> FileEditor?): StatusBar {
+  override fun createChild(disposable: Disposable, frame: IdeFrame, editorProvider: () -> FileEditor?): StatusBar {
     EDT.assertIsEdt()
-    val bar = IdeStatusBarImpl(frameHelper = frameHelper, addToolWindowWidget = false, editorProvider = editorProvider)
+    val bar = IdeStatusBarImpl(disposable = disposable, frameHelper = frameHelper, addToolWindowWidget = false)
+    bar.editorProvider = editorProvider
     bar.isVisible = isVisible
     children.add(bar)
-    Disposer.register(frameHelper) { children.remove(bar) }
+    Disposer.register(disposable) { children.remove(bar) }
     for (eachBean in widgetMap.values) {
       if (eachBean.widget is Multiframe) {
         bar.addWidget(widget = eachBean.widget.copy(), position = eachBean.position, anchor = eachBean.order)
@@ -160,25 +165,25 @@ open class IdeStatusBarImpl internal constructor(
     rightPanel.border = JBUI.Borders.emptyLeft(1)
     add(rightPanel, BorderLayout.EAST)
 
-    infoAndProgressPanel = InfoAndProgressPanel(UISettings.shadowInstance)
-    ClientProperty.put(infoAndProgressPanel, WIDGET_ID, infoAndProgressPanel.ID())
-    centerPanel.add(infoAndProgressPanel)
+    infoAndProgressPanel = InfoAndProgressPanel(this)
+    ClientProperty.put(infoAndProgressPanel.component, WIDGET_ID, infoAndProgressPanel.ID())
+    centerPanel.add(infoAndProgressPanel.component)
     widgetMap.put(infoAndProgressPanel.ID(), WidgetBean(widget = infoAndProgressPanel,
                                                         position = Position.CENTER,
-                                                        component = infoAndProgressPanel,
+                                                        component = infoAndProgressPanel.component,
                                                         order = LoadingOrder.ANY))
-    Disposer.register(frameHelper, infoAndProgressPanel)
+    Disposer.register(disposable, infoAndProgressPanel)
 
     registerCloneTasks()
 
     if (addToolWindowWidget) {
-      val toolWindowWidget = ToolWindowsWidget(frameHelper, this)
+      val toolWindowWidget = ToolWindowsWidget(disposable, this)
       val toolWindowWidgetComponent = wrapCustomStatusBarWidget(toolWindowWidget)
       widgetMap.put(toolWindowWidget.ID(), WidgetBean(widget = toolWindowWidget,
                                                       position = Position.LEFT,
                                                       component = toolWindowWidgetComponent,
                                                       order = LoadingOrder.ANY))
-      Disposer.register(frameHelper, toolWindowWidget)
+      Disposer.register(disposable, toolWindowWidget)
       toolWindowWidgetComponent.border = if (SystemInfoRt.isMac) JBUI.Borders.empty(2, 0, 2, 4) else JBUI.Borders.empty()
       leftPanel().add(toolWindowWidgetComponent)
     }
@@ -187,13 +192,13 @@ open class IdeStatusBarImpl internal constructor(
 
     enableEvents(AWTEvent.MOUSE_EVENT_MASK)
     enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK)
-    IdeEventQueue.getInstance().addDispatcher({ e -> if (e is MouseEvent) dispatchMouseEvent(e) else false }, frameHelper)
+    IdeEventQueue.getInstance().addDispatcher({ e -> if (e is MouseEvent) dispatchMouseEvent(e) else false }, disposable)
   }
 
   override fun getPreferredSize(): Dimension {
     val size = super.getPreferredSize()!!
     val insets = insets
-    val minHeight = insets.top + insets.bottom + MIN_ICON_HEIGHT
+    val minHeight = insets.top + insets.bottom + max(MIN_ICON_HEIGHT, preferredTextHeight)
     return Dimension(size.width, size.height.coerceAtLeast(minHeight))
   }
 
@@ -240,13 +245,19 @@ open class IdeStatusBarImpl internal constructor(
 
   @ApiStatus.Experimental
   @RequiresEdt
-  fun setCentralWidget(id: String, component: JComponent) {
-    val widget = object : StatusBarWidget {
-      override fun ID(): String = id
+  fun setCentralWidget(id: String, component: JComponent?) {
+    if (component == null) {
+      widgetMap.remove(id)
     }
-    widgetMap.put(id, WidgetBean(widget = widget, position = Position.CENTER, component = component, order = LoadingOrder.ANY))
+    else {
+      val widget = object : StatusBarWidget {
+        override fun ID(): String = id
+      }
+      widgetMap.put(id, WidgetBean(widget = widget, position = Position.CENTER, component = component, order = LoadingOrder.ANY))
+    }
+
     infoAndProgressPanel.setCentralComponent(component)
-    infoAndProgressPanel.revalidate()
+    infoAndProgressPanel.component.revalidate()
   }
 
   /**
@@ -270,7 +281,9 @@ open class IdeStatusBarImpl internal constructor(
   internal suspend fun init(project: Project, extraItems: List<kotlin.Pair<StatusBarWidget, LoadingOrder>> = emptyList()) {
     val service = project.service<StatusBarWidgetsManager>()
     val items = runActivity("status bar pre-init") {
-      service.init()
+      blockingContext {
+        service.init()
+      }
     }
     runActivity("status bar init") {
       doInit(widgets = items + extraItems, parentDisposable = service)
@@ -281,14 +294,18 @@ open class IdeStatusBarImpl internal constructor(
     val items: List<WidgetBean> = runActivity("status bar widget creating") {
       widgets.map { (widget, anchor) ->
         val component = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          val component = wrap(widget)
-          if (component is StatusBarWidgetWrapper) {
-            component.beforeUpdate()
+          blockingContext {
+            val component = wrap(widget)
+            if (component is StatusBarWidgetWrapper) {
+              component.beforeUpdate()
+            }
+            component
           }
-          component
         }
         val item = WidgetBean(widget = widget, position = Position.RIGHT, component = component, order = anchor)
-        widget.install(this)
+        blockingContext {
+          widget.install(this)
+        }
         Disposer.register(parentDisposable, widget)
         item
       }
@@ -358,7 +375,7 @@ open class IdeStatusBarImpl internal constructor(
     val component = wrap(widget)
 
     widgetMap.put(widget.ID(), WidgetBean(widget = widget, position = position, component = component, order = anchor))
-    Disposer.register(frameHelper, widget)
+    Disposer.register(disposable, widget)
 
     widget.install(this)
 
@@ -418,10 +435,43 @@ open class IdeStatusBarImpl internal constructor(
   override fun getInfo(): @NlsContexts.StatusBarText String? = info
 
   override fun addProgress(indicator: ProgressIndicatorEx, info: TaskInfo) {
+    notifyProgressAdded(indicator, info)
     infoAndProgressPanel.addProgress(indicator, info)
   }
 
-  override fun getBackgroundProcesses(): List<Pair<TaskInfo, ProgressIndicator>> = infoAndProgressPanel.backgroundProcesses
+  private fun notifyProgressAdded(indicator: ProgressIndicatorEx, info: TaskInfo) {
+    EDT.assertIsEdt()
+    check(progressFlow.tryEmit(ProgressSetChangeEvent(Triple(info, indicator, ClientId.current), infoAndProgressPanel.backgroundProcesses)))
+  }
+
+  @ApiStatus.Internal
+  fun notifyProgressRemoved() {
+    EDT.assertIsEdt()
+    check(progressFlow.tryEmit(ProgressSetChangeEvent(null, infoAndProgressPanel.backgroundProcesses)))
+  }
+
+  /**
+   * Reports currently displayed progresses and the ones that will be displayed in future (never ending flow).
+   *
+   * NOTE: correct client id value is reported only for newly appearing progresses, older ones are reported with local client id.
+   * This isn't a problem for current usage, when the subscription is performed on first remote client's connection, but may need to be
+   * corrected for potential future usages.
+   */
+  @ApiStatus.Internal
+  fun getVisibleProcessFlow(): Flow<VisibleProgress> = flow {
+    var firstTime = true
+    progressFlow.collect { event ->
+      if (firstTime) {
+        firstTime = false
+        event.existingVisibleProgresses.forEach { emit(it) }
+      }
+      event.newVisibleProgress?.let { emit(it) }
+    }
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  override fun getBackgroundProcesses(): List<Pair<TaskInfo, ProgressIndicator>> =
+    infoAndProgressPanel.backgroundProcesses as List<Pair<TaskInfo, ProgressIndicator>>
 
   override fun setProcessWindowOpen(open: Boolean) {
     infoAndProgressPanel.isProcessWindowOpen = open
@@ -483,7 +533,7 @@ open class IdeStatusBarImpl internal constructor(
 
   private fun paintWidgetEffectBackground(g: Graphics) {
     val effectComponent = effectComponent ?: return
-    if (!effectComponent.isEnabled || !UIUtil.isAncestor(this, effectComponent) || effectComponent is MemoryUsagePanel) {
+    if (!effectComponent.isEnabled || !UIUtil.isAncestor(this, effectComponent) || MemoryUsagePanel.isInstance(effectComponent)) {
       return
     }
 
@@ -512,7 +562,7 @@ open class IdeStatusBarImpl internal constructor(
   private fun dispatchMouseEvent(e: MouseEvent): Boolean {
     val rightPanel = rightPanel.takeIf { it.isVisible } ?: return false
     val component = e.component ?: return false
-    if (ComponentUtil.getWindow(frameHelper.frame) !== ComponentUtil.getWindow(component)) {
+    if (ComponentUtil.getWindow(this) !== ComponentUtil.getWindow(component)) {
       applyWidgetEffect(null, null)
       return false
     }
@@ -581,6 +631,7 @@ open class IdeStatusBarImpl internal constructor(
         }
       }
     })
+    preferredTextHeight = TextPanel.computeTextHeight() + JBUI.CurrentTheme.StatusBar.Widget.border().getBorderInsets(null).height
   }
 
   override fun getComponentGraphics(g: Graphics): Graphics {
@@ -646,12 +697,13 @@ open class IdeStatusBarImpl internal constructor(
 
   @ApiStatus.Internal
   fun resetEditorProvider() {
-    editorProvider = initialEditorProvider
+    editorProvider = createDefaultEditorProvider(frameHelper)
   }
 
   override fun getAccessibleContext(): AccessibleContext {
     if (accessibleContext == null) {
       accessibleContext = AccessibleIdeStatusBarImpl()
+      accessibleContext.accessibleName = UIBundle.message("status.bar.accessible.group.name")
     }
     return accessibleContext
   }
@@ -677,7 +729,7 @@ open class IdeStatusBarImpl internal constructor(
       .collectCloneableProjects()
       .map { it.cloneableProject }
       .forEach { addProgress(indicator = it.progressIndicator, info = it.cloneTaskInfo) }
-    ApplicationManager.getApplication().messageBus.connect(frameHelper)
+    ApplicationManager.getApplication().messageBus.connect(disposable)
       .subscribe(CloneableProjectsService.TOPIC, object : CloneProjectListener {
         override fun onCloneAdded(progressIndicator: ProgressIndicatorEx, taskInfo: TaskInfo) {
           addProgress(progressIndicator, taskInfo)
@@ -686,7 +738,7 @@ open class IdeStatusBarImpl internal constructor(
   }
 
   protected inner class AccessibleIdeStatusBarImpl : AccessibleJComponent() {
-    override fun getAccessibleRole(): AccessibleRole = AccessibleRole.PANEL
+    override fun getAccessibleRole(): AccessibleRole = AccessibilityUtils.GROUPED_ELEMENTS
   }
 }
 
@@ -713,7 +765,7 @@ private class WidgetBean(
 
 @RequiresEdt
 internal fun createComponentByWidgetPresentation(presentation: WidgetPresentation, project: Project, scope: CoroutineScope): JComponent {
-  val toolTipTextSupplier = { runBlockingModal(project, title = "") { presentation.getTooltipText() } }
+  val toolTipTextSupplier = { runWithModalProgressBlocking(project, title = "") { presentation.getTooltipText() } }
   return when (presentation) {
     is TextWidgetPresentation -> {
       val panel = TextPanel(toolTipTextSupplier)
@@ -745,6 +797,7 @@ internal fun createComponentByWidgetPresentation(presentation: WidgetPresentatio
             withContext(Dispatchers.EDT) {
               panel.icon = icon
               panel.isVisible = icon != null
+              panel.repaint()
             }
           }
       }
@@ -770,7 +823,7 @@ private fun configurePresentationComponent(presentation: WidgetPresentation, pan
     StatusBarWidgetClickListener(it).installOn(panel, true)
   }
   ClientProperty.put(panel, HelpTooltipManager.SHORTCUT_PROPERTY,
-                     Supplier { runBlockingModal(ModalTaskOwner.component(panel), title = "") { presentation.getShortcutText() } })
+                     Supplier { runWithModalProgressBlocking(ModalTaskOwner.component(panel), title = "") { presentation.getShortcutText() } })
 }
 
 private fun wrap(widget: StatusBarWidget): JComponent {
@@ -811,11 +864,13 @@ private fun wrapCustomStatusBarWidget(widget: CustomStatusBarWidget): JComponent
 
 private fun createDefaultEditorProvider(frameHelper: ProjectFrameHelper): () -> FileEditor? {
   return p@{
-    (frameHelper.project ?: return@p null).service<StatusBarWidgetsManager>().dataContext.currentFileEditor.value
+    val project = frameHelper.project ?: return@p null
+    project.service<StatusBarWidgetsManager>().dataContext.currentFileEditor.value
   }
 }
 
-private class IconPresentationComponent(private val presentation: IconPresentation) : WithIconAndArrows(), StatusBarWidgetWrapper {
+private class IconPresentationComponent(private val presentation: IconPresentation) : WithIconAndArrows(presentation::getTooltipText),
+                                                                                      StatusBarWidgetWrapper {
   init {
     setTextAlignment(CENTER_ALIGNMENT)
     border = JBUI.CurrentTheme.StatusBar.Widget.iconBorder()
@@ -849,25 +904,19 @@ private class TextPresentationComponent(
   }
 }
 
-private class MultipleTextValues(private val presentation: MultipleTextValuesPresentation) : WithIconAndArrows(), StatusBarWidgetWrapper {
+private class MultipleTextValues(private val presentation: MultipleTextValuesPresentation)
+  : WithIconAndArrows(presentation::getTooltipText), StatusBarWidgetWrapper {
+
   init {
     isVisible = !presentation.getSelectedValue().isNullOrEmpty()
     setTextAlignment(CENTER_ALIGNMENT)
     border = JBUI.CurrentTheme.StatusBar.Widget.border()
     object : ClickListener() {
-      val myPopupState = PopupState.forPopup()
-
       override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
-        if (myPopupState.isRecentlyHidden) {
-          // do not show new popup
-          return false
-        }
-
         val popup = presentation.getPopup() ?: return false
         StatusBarPopupShown.log(presentation::class.java)
         val dimension = getSizeFor(popup)
         val at = Point(0, -dimension.height)
-        myPopupState.prepareToShow(popup)
         popup.show(RelativePoint(event.component, at))
         return true
       }
@@ -936,4 +985,60 @@ private class StatusBarPanel(layout: LayoutManager) : JPanel(layout) {
     font = JBUI.CurrentTheme.StatusBar.font()
   }
 
+}
+
+@ApiStatus.Internal
+class VisibleProgress(val title: @NlsContexts.ProgressTitle String,
+                      val clientId: ClientId,
+                      val canceler: (() -> Unit)?,
+                      val state: Flow<ProgressState> /* finite */) {
+  override fun toString(): String {
+    return "VisibleProgress['$title', ${if (canceler == null) "non-" else ""}cancelable]"
+  }
+}
+
+private val EMPTY_PROGRESS = ProgressState(null, null, -1.0)
+
+private fun createVisibleProgress(indicator: ProgressIndicatorEx, info: TaskInfo, clientId: ClientId): VisibleProgress {
+  val stateFlow = MutableStateFlow(EMPTY_PROGRESS)
+  val updater = {
+    stateFlow.value = ProgressState(indicator.text, indicator.text2, if (indicator.isIndeterminate) -1.0 else indicator.fraction)
+  }
+
+  val activeFlow = MutableStateFlow(true)
+  val finisher = { activeFlow.value = false }
+
+  indicator.addStateDelegate(object : AbstractProgressIndicatorExBase() {
+    override fun onProgressChange() {
+      super.onProgressChange()
+      updater.invoke()
+    }
+
+    override fun finish(task: TaskInfo) {
+      super.finish(task)
+      if (task == info) {
+        finisher.invoke()
+      }
+    }
+  })
+  if (indicator.isFinished(info)) {
+    finisher.invoke()
+  }
+  else {
+    updater.invoke()
+  }
+  val stateFlowTillCompletion = stateFlow
+    .combine(activeFlow) { state, active -> state.takeIf { active } }
+    .takeWhile { it != null }.map { it!! }
+  return VisibleProgress(info.title, clientId, { indicator.cancel() }.takeIf { info.isCancellable }, stateFlowTillCompletion)
+}
+
+private class ProgressSetChangeEvent(private val newProgress: Triple<TaskInfo, ProgressIndicatorEx, ClientId>?,
+                                     private val existingProgresses: List<Pair<TaskInfo, ProgressIndicatorEx>>) {
+  val newVisibleProgress by lazy {
+    newProgress?.let { createVisibleProgress(it.second, it.first, it.third) }
+  }
+  val existingVisibleProgresses by lazy {
+    existingProgresses.map { createVisibleProgress(it.second, it.first, ClientId.localId) }
+  }
 }

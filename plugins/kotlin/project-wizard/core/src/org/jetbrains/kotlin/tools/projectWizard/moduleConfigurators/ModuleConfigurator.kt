@@ -27,7 +27,7 @@ import kotlin.properties.ReadOnlyProperty
 interface ModuleConfiguratorContext {
     val <V : Any, T : SettingType<V>> ModuleConfiguratorSetting<V, T>.reference: ModuleConfiguratorSettingReference<V, T>
 
-    val <T : Any> ModuleConfiguratorProperty<T>.reference: PropertyReference<T>
+    val <T : Any> ModuleConfiguratorProperty<T>.reference: PropertyEntityReference<T>
 }
 
 class ModuleBasedConfiguratorContext(
@@ -37,8 +37,8 @@ class ModuleBasedConfiguratorContext(
     override val <V : Any, T : SettingType<V>> ModuleConfiguratorSetting<V, T>.reference: ModuleConfiguratorSettingReference<V, T>
         get() = ModuleBasedConfiguratorSettingReference(configurator, module, this)
 
-    override val <T : Any> ModuleConfiguratorProperty<T>.reference: PropertyReference<T>
-        get() = ModuleConfiguratorPropertyReference<T>(configurator, module, this)
+    override val <T : Any> ModuleConfiguratorProperty<T>.reference: PropertyEntityReference<T>
+        get() = ModuleConfiguratorPropertyReference(configurator, module, this)
 }
 
 class IdBasedConfiguratorContext(
@@ -48,7 +48,7 @@ class IdBasedConfiguratorContext(
     override val <V : Any, T : SettingType<V>> ModuleConfiguratorSetting<V, T>.reference: ModuleConfiguratorSettingReference<V, T>
         get() = IdBasedConfiguratorSettingReference(configurator, moduleId, this)
 
-    override val <T : Any> ModuleConfiguratorProperty<T>.reference: PropertyReference<T>
+    override val <T : Any> ModuleConfiguratorProperty<T>.reference: PropertyEntityReference<T>
         get() = error("Should not be called as IdBasedConfiguratorContext used only for parsing settings")
 }
 
@@ -296,7 +296,8 @@ interface ModuleConfigurator : DisplayableSettingItem, EntitiesOwnerDescriptor {
     ): List<FileTemplate> = emptyList()
 
     companion object {
-        val ALL by lazy {
+        @Suppress("RemoveExplicitTypeArguments")
+        val ALL: List<ModuleConfigurator> by lazy {
             buildList<ModuleConfigurator> {
                 +RealNativeTargetConfigurator.configurators
                 +NativeForCurrentSystemTarget

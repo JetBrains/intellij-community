@@ -137,6 +137,16 @@ public abstract class ShortenRefsTestGenerated extends AbstractShortenRefsTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("filteredClassImport.kt")
+        public void testFilteredClassImport() throws Exception {
+            runTest("testData/shortenRefs/java/filteredClassImport.kt");
+        }
+
+        @TestMetadata("filteredClassNoImports.kt")
+        public void testFilteredClassNoImports() throws Exception {
+            runTest("testData/shortenRefs/java/filteredClassNoImports.kt");
+        }
+
         @TestMetadata("innerClassImport.kt")
         public void testInnerClassImport() throws Exception {
             runTest("testData/shortenRefs/java/innerClassImport.kt");
@@ -299,6 +309,11 @@ public abstract class ShortenRefsTestGenerated extends AbstractShortenRefsTest {
         @TestMetadata("ClassSameNameAsPackage.kt")
         public void testClassSameNameAsPackage() throws Exception {
             runTest("testData/shortenRefs/type/ClassSameNameAsPackage.kt");
+        }
+
+        @TestMetadata("ClassSameNameAsPackageWithSpace.kt")
+        public void testClassSameNameAsPackageWithSpace() throws Exception {
+            runTest("testData/shortenRefs/type/ClassSameNameAsPackageWithSpace.kt");
         }
 
         @TestMetadata("delegationSpecifier.kt")

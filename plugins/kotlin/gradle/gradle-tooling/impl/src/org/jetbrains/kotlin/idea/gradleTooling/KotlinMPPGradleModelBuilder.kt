@@ -6,7 +6,6 @@ import org.gradle.api.Project
 import org.gradle.api.logging.Logging
 import org.jetbrains.kotlin.idea.gradleTooling.GradleImportProperties.*
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel.Companion.NO_KOTLIN_NATIVE_HOME
-import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheMapperImpl
 import org.jetbrains.kotlin.idea.gradleTooling.builders.KotlinSourceSetBuilder
 import org.jetbrains.kotlin.idea.gradleTooling.builders.KotlinTargetBuilder
 import org.jetbrains.kotlin.idea.gradleTooling.builders.buildIdeaKotlinDependenciesContainer
@@ -48,7 +47,6 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
                 importReflection = KotlinMultiplatformImportReflection(kotlinExtensionReflection),
                 kotlinExtensionReflection = kotlinExtensionReflection,
                 kotlinGradlePluginVersion = kotlinExtensionReflection.parseKotlinGradlePluginVersion(),
-                compilerArgumentsCacheMapper = CompilerArgumentsCacheMapperImpl(),
                 modelBuilderContext = builderContext ?: return null
             )
 
@@ -76,7 +74,6 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
                 kotlinNativeHome = kotlinNativeHome,
                 dependencyMap = importingContext.dependencyMapper.toDependencyMap(),
                 dependencies = dependenciesContainer,
-                cacheAware = importingContext.compilerArgumentsCacheMapper,
                 kotlinGradlePluginVersion = importingContext.kotlinGradlePluginVersion
             ).apply {
                 kotlinImportingDiagnostics += collectDiagnostics(importingContext)

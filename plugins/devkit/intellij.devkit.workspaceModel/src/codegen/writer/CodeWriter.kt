@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel.codegen.writer
 
+import com.intellij.devkit.workspaceModel.CodegenJarLoader
 import com.intellij.devkit.workspaceModel.DevKitWorkspaceModelBundle
 import com.intellij.devkit.workspaceModel.metaModel.WorkspaceMetaModelProvider
 import com.intellij.lang.ASTNode
@@ -19,26 +20,25 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
-import com.intellij.util.concurrency.annotations.RequiresWriteLock
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.FactoryMap
 import com.intellij.util.containers.MultiMap
-import com.intellij.workspaceModel.codegen.SKIPPED_TYPES
 import com.intellij.workspaceModel.codegen.deft.meta.CompiledObjModule
+import com.intellij.workspaceModel.codegen.engine.CodeGenerator
 import com.intellij.workspaceModel.codegen.engine.GeneratedCode
 import com.intellij.workspaceModel.codegen.engine.GenerationProblem
-import com.intellij.workspaceModel.codegen.engine.impl.CodeGeneratorImpl
-import com.intellij.workspaceModel.codegen.javaFullName
-import com.intellij.workspaceModel.codegen.utils.Imports
+import com.intellij.workspaceModel.codegen.engine.SKIPPED_TYPES
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.children
 import org.jetbrains.kotlin.resolve.ImportPath
+import java.util.*
 
 private val LOG = logger<CodeWriter>()
 
 object CodeWriter {
-  @RequiresWriteLock
-  fun generate(project: Project,
+  @RequiresEdt
+  suspend fun generate(project: Project,
                module: Module,
                sourceFolder: VirtualFile,
                targetFolderGenerator: () -> VirtualFile?) {
@@ -53,10 +53,12 @@ object CodeWriter {
       return@processFilesRecursively true
     }
     if (ktClasses.isEmpty()) return
+    val classLoader = CodegenJarLoader.getInstance(project).getClassLoader()
+    val serviceLoader = ServiceLoader.load(CodeGenerator::class.java, classLoader).findFirst()
+    if (serviceLoader.isEmpty) error("Can't load generator")
 
     val objModules = loadObjModules(ktClasses, module)
-    
-    val codeGenerator = CodeGeneratorImpl()
+    val codeGenerator = serviceLoader.get()
     val results = objModules.map { codeGenerator.generate(it) }
     val generatedCode = results.flatMap { it.generatedCode }
     val problems = results.flatMap { it.problems }
@@ -86,7 +88,8 @@ object CodeWriter {
             indicator.fraction = 0.2 * i / generatedCode.size
             if (code.target.name in SKIPPED_TYPES) return@forEachIndexed
 
-            val apiInterfaceName = code.target.javaFullName.decoded
+            val target = code.target
+            val apiInterfaceName = "${target.module.name}.${target.name}"
             val apiClass = ktClasses[apiInterfaceName] ?: error("Cannot find API class by $apiInterfaceName")
             val apiFile = apiClass.containingKtFile
             val apiImports = importsByFile.getValue(apiFile)

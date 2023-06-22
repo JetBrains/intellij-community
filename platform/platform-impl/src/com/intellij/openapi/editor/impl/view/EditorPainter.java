@@ -137,6 +137,7 @@ public final class EditorPainter implements TextDrawingCallback {
     private final List<RangeHighlighter> myForegroundCustomHighlighters = new SmartList<>();
     private final ScaleContext myScaleContext;
     private MarginPositions myMarginPositions;
+    private final CaretDataInView myCaretDataInView;
 
     private Session(EditorView view, Graphics2D g) {
       myView = view;
@@ -166,6 +167,7 @@ public final class EditorPainter implements TextDrawingCallback {
       myBackgroundColor = myEditor.getBackgroundColor();
       myMarginColumns = myEditor.getSettings().getRightMargin(myEditor.getProject());
       myScaleContext = ScaleContext.create(myGraphics);
+      myCaretDataInView = myEditor.isPaintSelection()? new CaretDataInView(myEditor, myStartOffset, myEndOffset) : null;
     }
 
     private void paint() {
@@ -765,7 +767,7 @@ public final class EditorPainter implements TextDrawingCallback {
       for (int i = start; i < end; i++) {
         int charOffset = isRtl ? baseStartOffset - i - 1 : baseStartOffset + i;
         char c = myText.charAt(charOffset);
-        if (" \t\u3000".indexOf(c) >= 0 && whitespacePaintingStrategy.showWhitespaceAtOffset(charOffset, myEditor)) {
+        if (" \t\u3000".indexOf(c) >= 0 && whitespacePaintingStrategy.showWhitespaceAtOffset(charOffset, myCaretDataInView)) {
           int startX = (int)fragment.offsetToX(x, startOffset, isRtl ? baseStartOffset - i : baseStartOffset + i);
           int endX = (int)fragment.offsetToX(x, startOffset, isRtl ? baseStartOffset - i - 1 : baseStartOffset + i + 1);
 
@@ -1635,22 +1637,15 @@ public final class EditorPainter implements TextDrawingCallback {
       }
     }
 
-    private boolean showWhitespaceAtOffset(int offset, Editor editor) {
+    private boolean showWhitespaceAtOffset(int offset, CaretDataInView caretData) {
       if (!myWhitespaceShown) return false;
       if (offset < currentLeadingEdge ? myLeadingWhitespaceShown :
           offset >= currentTrailingEdge ? myTrailingWhitespaceShown :
           myInnerWhitespaceShown) {
         return true;
       } else {
-        return mySelectionWhitespaceShown && isOffsetInSelection(editor, offset);
+        return mySelectionWhitespaceShown && caretData != null && caretData.isOffsetInSelection(offset);
       }
-    }
-
-    private static boolean isOffsetInSelection(Editor editor, int offset) {
-      CaretModel caretModel = editor.getCaretModel();
-      return caretModel.getAllCarets().stream()
-        .filter(caret -> caret.hasSelection())
-        .anyMatch(it -> it.getSelectionRange().contains(offset));
     }
   }
 
@@ -1821,6 +1816,35 @@ public final class EditorPainter implements TextDrawingCallback {
     private MarginPositions(int size) {
       x = new float[size];
       y = new int[size];
+    }
+  }
+
+  private static class CaretDataInView {
+    private final int[] selectionStarts;
+    private final int[] selectionEnds;
+    private final int caretCount;
+
+    private CaretDataInView(Editor editor, int startOffset, int endOffset) {
+      List<Caret> carets = editor.getCaretModel().getAllCarets();
+      selectionStarts = new int[carets.size()];
+      selectionEnds = new int[carets.size()];
+
+      int i = 0;
+      for (Caret caret : carets) {
+        if (!caret.hasSelection()) continue;
+        if (caret.getSelectionStart() >= endOffset || caret.getSelectionEnd() <= startOffset) continue;
+        selectionStarts[i] = caret.getSelectionStart();
+        selectionEnds[i] = caret.getSelectionEnd();
+        ++i;
+      }
+      caretCount = i;
+    }
+
+    private boolean isOffsetInSelection(int offset) {
+      for (int i = 0; i < caretCount; ++i) {
+        if (offset >= selectionStarts[i] && offset < selectionEnds[i]) return true;
+      }
+      return false;
     }
   }
 }

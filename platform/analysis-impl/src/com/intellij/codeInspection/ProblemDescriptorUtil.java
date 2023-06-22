@@ -279,7 +279,7 @@ public final class ProblemDescriptorUtil {
                                                        int endOffset,
                                                        @NotNull @InspectionMessage String message,
                                                        boolean isAfterEndOfLine,
-                                                       LocalQuickFix @NotNull [] quickFixes) {
+                                                       @NotNull LocalQuickFix @NotNull [] quickFixes) {
     if (severity == HighlightSeverity.INFORMATION ||
         startOffset == endOffset && !isAfterEndOfLine) {
       return null;
@@ -323,7 +323,7 @@ public final class ProblemDescriptorUtil {
     return new TextRange(startOffset - elementTextRange.getStartOffset(), endOffset - elementTextRange.getStartOffset());
   }
 
-  private static LocalQuickFix @NotNull [] toLocalQuickFixes(@Nullable List<? extends Annotation.QuickFixInfo> fixInfos,
+  private static @NotNull LocalQuickFix @NotNull [] toLocalQuickFixes(@Nullable List<? extends Annotation.QuickFixInfo> fixInfos,
                                                              @NotNull Map<IntentionAction, LocalQuickFix> quickFixMappingCache) {
     if (fixInfos == null || fixInfos.isEmpty()) {
       return LocalQuickFix.EMPTY_ARRAY;

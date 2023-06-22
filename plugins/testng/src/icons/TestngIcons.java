@@ -14,5 +14,5 @@ public final class TestngIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, TestngIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon TestNG = load("resources/testNG.svg", -865369335, 0);
+  /** 16x16 */ public static final @NotNull Icon TestNG = load("resources/testNG.svg", 151232233, 0);
 }

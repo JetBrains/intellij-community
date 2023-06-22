@@ -7,8 +7,6 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.FunctionUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -342,78 +340,87 @@ public class DefaultActionGroup extends ActionGroup {
    * @param e not used
    */
   @Override
-  public final synchronized AnAction @NotNull [] getChildren(@Nullable AnActionEvent e, @NotNull ActionManager actionManager) {
-    boolean hasNulls = false;
-    // Mix sorted actions and pairs
-    int sortedSize = mySortedChildren.size();
-    int pairsSize = myPairs.size();
-    AnAction[] children = new AnAction[sortedSize + pairsSize];
-    for (int i = 0; i < sortedSize; i++) {
-      AnAction action = mySortedChildren.get(i);
-      if (action == null) {
-        LOG.error("Empty sorted child: " + this + ", " + getClass() + "; index=" + i);
-      }
-      if (action instanceof ActionStubBase) {
-        action = unStub(actionManager, (ActionStubBase)action);
-        if (action != null) {
-          mySortedChildren.set(i, action);
+  public final AnAction @NotNull [] getChildren(@Nullable AnActionEvent e, @NotNull ActionManager actionManager) {
+    int modCount;
+    AnAction[] actionOrStubs;
+    synchronized (this) {
+      modCount = myModificationStamp;
+      actionOrStubs = getChildActionsOrStubs();
+    }
+    while (true) {
+      Map<ActionStubBase, AnAction> stubMap = null;
+      boolean hasNulls = false;
+      for (AnAction o : actionOrStubs) {
+        hasNulls |= o == null;
+        if (!(o instanceof ActionStubBase stub)) continue;
+        try {
+          AnAction action = actionManager.getAction(stub.getId());
+          if (action == null) {
+            LOG.error("Null action returned for stub in group " + this + " of class " + getClass() + ", id=" + stub.getId());
+          }
+          else {
+            if (stubMap == null) stubMap = new HashMap<>();
+            stubMap.put(stub, action);
+          }
+        }
+        catch (ProcessCanceledException ex) {
+          throw ex;
+        }
+        catch (Throwable ex) {
+          LOG.error(ex);
         }
       }
-
-      hasNulls |= action == null;
-      children[i] = action;
-      if (action == null && sortedSize == mySortedChildren.size() + 1) {
-        sortedSize--;
-        //noinspection AssignmentToForLoopParameter
-        i--;
+      if (stubMap == null && !hasNulls) {
+        return actionOrStubs;
       }
-    }
-    for (int i = 0; i < pairsSize; i++) {
-      Pair<AnAction, Constraints> pair = myPairs.get(i);
-      AnAction action = pair.first;
-      if (action == null) {
-        LOG.error("Empty pair child: " + this + ", " + getClass() + "; index=" + i);
-      }
-      else if (action instanceof ActionStubBase) {
-        action = unStub(actionManager, (ActionStubBase)action);
-        if (action != null) {
-          myPairs.set(i, Pair.create(action, pair.second));
+      synchronized (this) {
+        if (modCount != myModificationStamp) {
+          modCount = myModificationStamp;
+          actionOrStubs = getChildActionsOrStubs();
+        }
+        else {
+          replaceStubsAndNulls(stubMap != null ? stubMap : Collections.emptyMap());
+          return getChildActionsOrStubs();
         }
       }
-
-      hasNulls |= action == null;
-      children[i + sortedSize] = action;
-      if (action == null && pairsSize == myPairs.size() + 1) {
-        pairsSize--;
-        //noinspection AssignmentToForLoopParameter
-        i--;
-      }
     }
-
-    if (hasNulls) {
-      return ContainerUtil.mapNotNull(children, FunctionUtil.id(), AnAction.EMPTY_ARRAY);
-    }
-    return children;
   }
 
-  private @Nullable AnAction unStub(@NotNull ActionManager actionManager, @NotNull ActionStubBase stub) {
-    try {
-      AnAction action = actionManager.getAction(stub.getId());
+  private synchronized void replaceStubsAndNulls(@NotNull Map<ActionStubBase, AnAction> stubMap) {
+    for (ListIterator<AnAction> it = mySortedChildren.listIterator(); it.hasNext();) {
+      AnAction action = it.next();
       if (action == null) {
-        if (containsAction((AnAction)stub)) {
-          LOG.error("Null action returned for stub in group " + this + " of class " + getClass() + ", id=" + stub.getId());
-        }
-        return null;
+        LOG.error("Empty sorted child: " + this + ", " + getClass() + "; index=" + it.previousIndex());
+        it.remove();
       }
-      replace((AnAction)stub, action);
-      return action;
+      else if (action instanceof ActionStubBase) {
+        AnAction replacement = stubMap.get((ActionStubBase)action);
+        if (replacement != null) {
+          it.set(replacement);
+          replace(action, replacement);
+        }
+        else {
+          it.remove();
+        }
+      }
     }
-    catch (ProcessCanceledException ex) {
-      throw ex;
-    }
-    catch (Throwable e1) {
-      LOG.error(e1);
-      return null;
+    for (ListIterator<Pair<AnAction, Constraints>> it = myPairs.listIterator(); it.hasNext(); ) {
+      Pair<AnAction, Constraints> pair = it.next();
+      AnAction action = pair.first;
+      if (action == null) {
+        LOG.error("Empty pair child: " + this + ", " + getClass() + "; index=" + it.previousIndex());
+        it.remove();
+      }
+      else if (action instanceof ActionStubBase) {
+        AnAction replacement = stubMap.get((ActionStubBase)action);
+        if (replacement != null) {
+          it.set(Pair.create(replacement, pair.second));
+          replace(action, replacement);
+        }
+        else {
+          it.remove();
+        }
+      }
     }
   }
 

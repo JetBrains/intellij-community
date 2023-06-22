@@ -26,7 +26,7 @@ abstract class GHListLoaderBase<T>(protected val progressManager: ProgressManage
   }
 
   private val errorChangeEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
-  override var error: Throwable? by Delegates.observable<Throwable?>(null) { _, _, _ ->
+  override var error: Throwable? by Delegates.observable(null) { _, _, _ ->
     errorChangeEventDispatcher.multicaster.eventOccurred()
   }
 
@@ -85,7 +85,7 @@ abstract class GHListLoaderBase<T>(protected val progressManager: ProgressManage
 
   override fun reset() {
     lastFuture = lastFuture.handle { _, _ ->
-      listOf<T>()
+      listOf()
     }
     progressIndicator.cancel()
     progressIndicator = NonReusableEmptyProgressIndicator()

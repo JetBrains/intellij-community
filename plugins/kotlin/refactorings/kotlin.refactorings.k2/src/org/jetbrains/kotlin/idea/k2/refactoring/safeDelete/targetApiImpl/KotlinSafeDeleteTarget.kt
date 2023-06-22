@@ -3,7 +3,8 @@ package org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.targetApiImpl
 
 import com.intellij.find.usages.api.PsiUsage
 import com.intellij.model.Pointer
-import com.intellij.navigation.TargetPresentation
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.refactoring.safeDelete.api.PsiSafeDeleteDeclarationUsage
 import com.intellij.refactoring.safeDelete.api.SafeDeleteTarget
 import com.intellij.refactoring.safeDelete.impl.DefaultPsiSafeDeleteDeclarationUsage
@@ -30,7 +31,8 @@ class KotlinSafeDeleteTarget(val ktElement: KtElement) : SafeDeleteTarget {
     }
 
     override fun targetPresentation(): TargetPresentation {
-        return TargetPresentation.builder((ktElement as? KtNamed)?.nameAsName?.asString() ?: "")
+        @NlsSafe val text = (ktElement as? KtNamed)?.nameAsName?.asString() ?: ""
+        return TargetPresentation.builder(text)
            // .icon(ktElement.getIcon(0))
             .presentation()
     }

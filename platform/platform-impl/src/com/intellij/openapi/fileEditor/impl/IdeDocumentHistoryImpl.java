@@ -88,6 +88,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   private boolean myCurrentCommandHasChanges;
   private final Set<VirtualFile> myChangedFilesInCurrentCommand = new HashSet<>();
   private boolean myCurrentCommandHasMoves;
+  private boolean myReallyExcludeCurrentCommandFromNavigation;
 
   private final SynchronizedClearableLazy<PersistentHashMap<String, Long>> recentFileTimestampMap;
 
@@ -264,8 +265,16 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
   @Override
   public final void onSelectionChanged() {
-    myCurrentCommandIsNavigation = true;
+    if (!myReallyExcludeCurrentCommandFromNavigation) {
+      myCurrentCommandIsNavigation = true;
+    }
     myCurrentCommandHasMoves = true;
+  }
+
+  @Override
+  public void reallyExcludeCurrentCommandAsNavigation() {
+    myReallyExcludeCurrentCommandFromNavigation = true;
+    myCurrentCommandIsNavigation = false;
   }
 
   final void onCommandStarted() {
@@ -273,6 +282,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     myCurrentCommandIsNavigation = false;
     myCurrentCommandHasChanges = false;
     myCurrentCommandHasMoves = false;
+    myReallyExcludeCurrentCommandFromNavigation = false;
     myChangedFilesInCurrentCommand.clear();
   }
 
@@ -330,7 +340,9 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
   @Override
   public final void includeCurrentCommandAsNavigation() {
-    myCurrentCommandIsNavigation = true;
+    if (!myReallyExcludeCurrentCommandFromNavigation) {
+      myCurrentCommandIsNavigation = true;
+    }
   }
 
   @Override
@@ -484,7 +496,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     for (int i = myCurrentIndex - 1; i >= 0; i--) {
       PlaceInfo info = myChangePlaces.get(i);
       if (currentPlace == null || !isSame(currentPlace, info)) {
-        executeCommand(() -> gotoPlaceInfo(info), "", null);
+        executeCommand(() -> gotoPlaceInfo(info, true), "", null);
         myCurrentIndex = i;
         break;
       }
@@ -565,11 +577,11 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   }
 
   @Override
-  public void gotoPlaceInfo(@NotNull PlaceInfo info, boolean wasActive) {
+  public void gotoPlaceInfo(@NotNull PlaceInfo info, boolean requestFocus) {
     FileEditorManagerEx editorManager = getFileEditorManager();
     FileEditorOpenOptions openOptions = new FileEditorOpenOptions()
       .withUsePreviewTab(info.isPreviewTab())
-      .withRequestFocus(wasActive);
+      .withRequestFocus(requestFocus);
     var editorsWithProviders = editorManager.openFile(info.getFile(), info.getWindow(), openOptions);
 
     editorManager.setSelectedEditor(info.getFile(), info.getEditorTypeId());

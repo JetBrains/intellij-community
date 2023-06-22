@@ -10,11 +10,6 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class MavenMigrateTest : KotlinMavenImportingTestCase() {
-    override fun setUp() {
-        super.setUp()
-        createStdProjectFolders()
-    }
-
     fun testMigrateApiAndLanguageVersions() {
         val notifications = doMigrationTest(
             before = """

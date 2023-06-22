@@ -1,10 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.BundleBase;
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.*;
@@ -12,6 +14,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.ui.*;
+import com.intellij.ui.icons.HiDPIImage;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
@@ -19,6 +22,7 @@ import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
@@ -65,6 +69,9 @@ import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
@@ -131,7 +138,7 @@ public final class UIUtil {
     return 500;
   }
 
-  private static final NotNullLazyValue<Boolean> X_RENDER_ACTIVE = NotNullLazyValue.atomicLazy(() -> {
+  private static final Supplier<Boolean> X_RENDER_ACTIVE = new SynchronizedClearableLazy<>(() -> {
     if (!SystemInfoRt.isXWindow) {
       return false;
     }
@@ -312,7 +319,6 @@ public final class UIUtil {
 
   public static final char MNEMONIC = BundleBase.MNEMONIC;
   public static final @NlsSafe String HTML_MIME = "text/html";
-  public static final @NonNls String JSLIDER_ISFILLED = "JSlider.isFilled";
   public static final @NonNls String TABLE_FOCUS_CELL_BACKGROUND_PROPERTY = "Table.focusCellBackground";
   /**
    * Prevent component DataContext from returning parent editor
@@ -400,22 +406,6 @@ public final class UIUtil {
         return ourRetina.get();
       }
     }
-  }
-
-  /**
-   * @deprecated use {@link ClientProperty#get(Component, Object)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static Object getWindowClientProperty(Window window, @NotNull Object key) {
-    return ClientProperty.get(window, key);
-  }
-
-  /**
-   * @deprecated use {@link ClientProperty#put(Window, Object, Object)}  instead
-   */
-  @Deprecated(forRemoval = true)
-  public static void putWindowClientProperty(Window window, @NotNull Object key, Object value) {
-    ClientProperty.put(window, key, value);
   }
 
   /**
@@ -642,9 +632,11 @@ public final class UIUtil {
 
     for (int i = 0; i < text.length(); i++) {
       char ch = text.charAt(i);
-      currentAtom.append(ch);
 
-      if (ch == separator) {
+      boolean lineBreak = ch == '\n';
+      if (!lineBreak) currentAtom.append(ch);
+
+      if (lineBreak || ch == separator) {
         currentLine.append(currentAtom);
         currentAtom.setLength(0);
       }
@@ -652,8 +644,8 @@ public final class UIUtil {
       String s = currentLine.toString() + currentAtom;
       int width = fontMetrics.stringWidth(s);
 
-      if (width >= widthLimit - fontMetrics.charWidth('w')) {
-        if (currentLine.length() > 0) {
+      if (lineBreak || width >= widthLimit - fontMetrics.charWidth('w')) {
+        if (!currentLine.isEmpty()) {
           lines.add(currentLine.toString());
           currentLine = new StringBuilder();
         }
@@ -675,7 +667,6 @@ public final class UIUtil {
   public static void setActionNameAndMnemonic(@NotNull @Nls String text, @NotNull Action action) {
     assignMnemonic(text, action);
 
-    //noinspection HardCodedStringLiteral
     text = text.replaceAll("&", "");
     action.putValue(Action.NAME, text);
   }
@@ -946,10 +937,6 @@ public final class UIUtil {
     return UIManager.getFont("Menu.font");
   }
 
-  public static Color getSeparatorShadow() {
-    return UIManager.getColor("Separator.shadow");
-  }
-
   /**
    * @deprecated use {@link JBUI.CurrentTheme.CustomFrameDecorations#separatorForeground()}
    */
@@ -1145,6 +1132,12 @@ public final class UIUtil {
     );
   }
 
+  /**
+   * @param c1 first color to mix
+   * @param c2 second color to mix
+   * @param factor impact of color specified in {@code c2}
+   * @return Mixed color
+   */
   public static @NotNull Color mix(@NotNull Color c1, final Color c2, final double factor) {
     assert 0 <= factor && factor <= 1.0 : factor;
     final double backFactor = 1.0 - factor;
@@ -1199,30 +1192,6 @@ public final class UIUtil {
     return SystemInfoRt.isMac ? mouseEvent.isMetaDown() : mouseEvent.isControlDown();
   }
 
-  public static String @NotNull [] getValidFontNames(final boolean familyName) {
-    Set<String> result = new TreeSet<>();
-
-    // adds fonts that can display symbols at [A, Z] + [a, z] + [0, 9]
-    for (Font font : GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts()) {
-      try {
-        if (FontUtil.isValidFont(font)) {
-          result.add(familyName ? font.getFamily() : font.getName());
-        }
-      }
-      catch (Exception ignore) {
-        // JRE has problems working with the font. Just skip.
-      }
-    }
-
-    // add label font (if isn't listed among above)
-    Font labelFont = StartupUiUtil.getLabelFont();
-    if (labelFont != null && FontUtil.isValidFont(labelFont)) {
-      result.add(familyName ? labelFont.getFamily() : labelFont.getName());
-    }
-
-    return ArrayUtilRt.toStringArray(result);
-  }
-
   public static String @NotNull [] getStandardFontSizes() {
     return STANDARD_FONT_SIZES;
   }
@@ -1269,10 +1238,6 @@ public final class UIUtil {
     sb.append(Integer.toHexString(color.getGreen()));
     if (color.getBlue() < 16) sb.append('0');
     sb.append(Integer.toHexString(color.getBlue()));
-  }
-
-  public static void drawDottedRectangle(@NotNull Graphics g, @NotNull Rectangle r) {
-    drawDottedRectangle(g, r.x, r.y, r.x + r.width, r.y + r.height);
   }
 
   /**
@@ -1515,7 +1480,7 @@ public final class UIUtil {
    */
   public static @NotNull BufferedImage createImage(GraphicsConfiguration gc, double width, double height, int type, @NotNull RoundingMode rm) {
     if (JreHiDpiUtil.isJreHiDPI(gc)) {
-      return RetinaImage.create(gc, width, height, type, rm);
+      return new HiDPIImage(gc, width, height, type, rm);
     }
     //noinspection UndesirableClassUsage
     return new BufferedImage(rm.round(width), rm.round(height), type);
@@ -1545,7 +1510,7 @@ public final class UIUtil {
    * @param g target graphics container
    */
   public static void setupComposite(@NotNull Graphics2D g) {
-    g.setComposite(X_RENDER_ACTIVE.getValue() ? AlphaComposite.SrcOver : AlphaComposite.Src);
+    g.setComposite(X_RENDER_ACTIVE.get() ? AlphaComposite.SrcOver : AlphaComposite.Src);
   }
 
   /**
@@ -1556,7 +1521,9 @@ public final class UIUtil {
    */
   @TestOnly
   public static void dispatchAllInvocationEvents() {
-    EDT.dispatchAllInvocationEvents();
+    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+      EDT.dispatchAllInvocationEvents();
+    }
   }
 
   public static void addAwtListener(@NotNull AWTEventListener listener, long mask, @NotNull Disposable parent) {
@@ -1565,10 +1532,6 @@ public final class UIUtil {
 
   public static void addParentChangeListener(@NotNull Component component, @NotNull PropertyChangeListener listener) {
     component.addPropertyChangeListener("ancestor", listener);
-  }
-
-  public static void removeParentChangeListener(@NotNull Component component, @NotNull PropertyChangeListener listener) {
-    component.removePropertyChangeListener("ancestor", listener);
   }
 
   public static void drawVDottedLine(@NotNull Graphics2D g, int lineX, int startY, int endY, final @Nullable Color bgColor, final Color fgColor) {
@@ -1676,12 +1639,15 @@ public final class UIUtil {
    */
   @ApiStatus.Experimental
   public static @Nullable Component getParent(@NotNull Component component) {
-    Component realParent = component.getParent();
-    if (realParent != null) {
-      return realParent;
-    }
     WeakReference<Component> ref = ClientProperty.get(component, FOSTER_PARENT);
-    return ref != null ? ref.get() : null;
+    if (ref != null) {
+      Component fosterParent = ref.get();
+      if (fosterParent != null) {
+        return fosterParent;
+      }
+    }
+
+    return component.getParent();
   }
 
   /**
@@ -1782,7 +1748,11 @@ public final class UIUtil {
   /**
    * Provides all input event modifiers including deprecated, since they are still used in IntelliJ platform
    */
-  @MagicConstant(flags = {Event.SHIFT_MASK, Event.CTRL_MASK, Event.META_MASK, Event.ALT_MASK, InputEvent.SHIFT_DOWN_MASK, InputEvent.CTRL_DOWN_MASK, InputEvent.META_DOWN_MASK, InputEvent.ALT_DOWN_MASK, InputEvent.BUTTON1_DOWN_MASK, InputEvent.BUTTON2_DOWN_MASK, InputEvent.BUTTON3_DOWN_MASK, InputEvent.ALT_GRAPH_DOWN_MASK})
+  @MagicConstant(flags = {
+    Event.SHIFT_MASK, Event.CTRL_MASK, Event.META_MASK, Event.ALT_MASK, InputEvent.SHIFT_DOWN_MASK,
+    InputEvent.CTRL_DOWN_MASK, InputEvent.META_DOWN_MASK, InputEvent.ALT_DOWN_MASK, InputEvent.BUTTON1_DOWN_MASK,
+    InputEvent.BUTTON2_DOWN_MASK, InputEvent.BUTTON3_DOWN_MASK, InputEvent.ALT_GRAPH_DOWN_MASK,
+  })
   public static int getAllModifiers(@NotNull InputEvent event) {
     return event.getModifiers() | event.getModifiersEx();
   }
@@ -1794,14 +1764,6 @@ public final class UIUtil {
 
   public static @Nullable Component findNearestOpaque(Component c) {
     return ComponentUtil.findParentByCondition(c, Component::isOpaque);
-  }
-
-  /**
-   * @deprecated use {@link ComponentUtil#findParentByCondition(Component, java.util.function.Predicate)}
-   */
-  @Deprecated(forRemoval = true)
-  public static Component findParentByCondition(@Nullable Component c, @NotNull Condition<? super Component> condition) {
-    return ComponentUtil.findParentByCondition(c, it -> condition.value(it));
   }
 
   //x and y should be from {0, 0} to {parent.getWidth(), parent.getHeight()}
@@ -1885,7 +1847,7 @@ public final class UIUtil {
    * @deprecated use {@link com.intellij.openapi.wm.IdeFocusManager}
    */
   @Deprecated
-  public static void requestFocus(final @NotNull JComponent c) {
+  public static void requestFocus(@NotNull JComponent c) {
     if (c.isShowing()) {
       c.requestFocus();
     }
@@ -1894,7 +1856,7 @@ public final class UIUtil {
     }
   }
 
-  //Whitelist for component types that provide obvious 'focused' view
+  // whitelist for component types that provide obvious 'focused' view
   public static boolean canDisplayFocusedState(@NotNull Component component) {
     return component instanceof JTextComponent || component instanceof AbstractButton || component instanceof JComboBox;
   }
@@ -2060,8 +2022,8 @@ public final class UIUtil {
   public static @NotNull @NlsSafe String toHtml(@NotNull @Nls String html, final int hPadding) {
     final @NlsSafe String withClosedTag = CLOSE_TAG_PATTERN.matcher(html).replaceAll("<$1$2></$1>");
     Font font = StartupUiUtil.getLabelFont();
-    @NonNls String family = font != null ? font.getFamily() : "Tahoma";
-    int size = font != null ? font.getSize() : JBUIScale.scale(11);
+    @NonNls String family = font.getFamily();
+    int size = font.getSize();
     return "<html><style>body { font-family: "
            + family + "; font-size: "
            + size + ";} ul li {list-style-type:circle;}</style>"
@@ -2070,31 +2032,6 @@ public final class UIUtil {
 
   public static @NotNull String addPadding(@NotNull String html, int hPadding) {
     return String.format("<p style=\"margin: 0 %dpx 0 %dpx;\">%s</p>", hPadding, hPadding, html);
-  }
-
-  public static @NotNull String convertSpace2Nbsp(@NotNull String html) {
-    @NonNls StringBuilder result = new StringBuilder();
-    int currentPos = 0;
-    int braces = 0;
-    while (currentPos < html.length()) {
-      String each = html.substring(currentPos, currentPos + 1);
-      if ("<".equals(each)) {
-        braces++;
-      }
-      else if (">".equals(each)) {
-        braces--;
-      }
-
-      if (" ".equals(each) && braces == 0) {
-        result.append("&nbsp;");
-      }
-      else {
-        result.append(each);
-      }
-      currentPos++;
-    }
-
-    return result.toString();
   }
 
   /**
@@ -2117,8 +2054,8 @@ public final class UIUtil {
    * DO NOT INVOKE THIS METHOD FROM UNDER READ ACTION.
    *
    * @param runnable a runnable to invoke
-   * @see #invokeAndWaitIfNeeded(ThrowableRunnable)
    */
+  @ApiStatus.Obsolete
   public static void invokeAndWaitIfNeeded(@NotNull Runnable runnable) {
     EdtInvocationManager.invokeAndWaitIfNeeded(runnable);
   }
@@ -2133,41 +2070,12 @@ public final class UIUtil {
    * DO NOT INVOKE THIS METHOD FROM UNDER READ ACTION.
    *
    * @param computable a runnable to invoke
-   * @see #invokeAndWaitIfNeeded(ThrowableRunnable)
    */
-  public static <T> T invokeAndWaitIfNeeded(final @NotNull Computable<T> computable) {
+  @ApiStatus.Obsolete
+  public static <T> T invokeAndWaitIfNeeded(@NotNull Computable<T> computable) {
     final Ref<T> result = Ref.create();
-    invokeAndWaitIfNeeded((Runnable)() -> result.set(computable.compute()));
+    EdtInvocationManager.invokeAndWaitIfNeeded(() -> result.set(computable.compute()));
     return result.get();
-  }
-
-  /**
-   * Please use Application.invokeAndWait() with a modality state (or ModalityUiUtil, or TransactionGuard methods), unless you work with Swings internals
-   * and 'runnable' deals with Swings components only and doesn't access any PSI, VirtualFiles, project/module model or other project settings.<p/>
-   *
-   * Invoke and wait in the event dispatch thread
-   * or in the current thread if the current thread
-   * is event queue thread.
-   * DO NOT INVOKE THIS METHOD FROM UNDER READ ACTION.
-   *
-   * @param runnable a runnable to invoke
-   */
-  public static void invokeAndWaitIfNeeded(final @NotNull ThrowableRunnable<?> runnable) throws Throwable {
-    if (EDT.isCurrentThreadEdt()) {
-      runnable.run();
-    }
-    else {
-      final Ref<Throwable> ref = Ref.create();
-      EdtInvocationManager.getInstance().invokeAndWait(() -> {
-        try {
-          runnable.run();
-        }
-        catch (Throwable throwable) {
-          ref.set(throwable);
-        }
-      });
-      if (!ref.isNull()) throw ref.get();
-    }
   }
 
   public static void maybeInstall(@NotNull InputMap map, String action, KeyStroke stroke) {
@@ -2221,40 +2129,12 @@ public final class UIUtil {
     return g instanceof PrintGraphics || g instanceof PrinterGraphics;
   }
 
-  public static int getSelectedButton(@NotNull ButtonGroup group) {
-    Enumeration<AbstractButton> enumeration = group.getElements();
-    int i = 0;
-    while (enumeration.hasMoreElements()) {
-      AbstractButton button = enumeration.nextElement();
-      if (group.isSelected(button.getModel())) {
-        return i;
-      }
-      i++;
-    }
-    return -1;
-  }
-
-  public static void setSelectedButton(@NotNull ButtonGroup group, int index) {
-    Enumeration<AbstractButton> enumeration = group.getElements();
-    int i = 0;
-    while (enumeration.hasMoreElements()) {
-      AbstractButton button = enumeration.nextElement();
-      group.setSelected(button.getModel(), index == i);
-      i++;
-    }
-  }
-
   public static boolean isSelectionButtonDown(@NotNull MouseEvent e) {
     return e.isShiftDown() || e.isControlDown() || e.isMetaDown();
   }
 
   public static boolean isToggleListSelectionEvent(@NotNull MouseEvent e) {
     return SwingUtilities.isLeftMouseButton(e) && (SystemInfoRt.isMac ? e.isMetaDown() : e.isControlDown()) && !e.isPopupTrigger();
-  }
-
-  @SuppressWarnings("deprecation")
-  public static void setComboBoxEditorBounds(int x, int y, int width, int height, @NotNull JComponent editor) {
-    editor.reshape(x, y, width, height);
   }
 
   /**
@@ -2626,22 +2506,6 @@ public final class UIUtil {
     addInsets(component, insets.top, insets.left, insets.bottom, insets.right);
   }
 
-  public static void adjustWindowToMinimumSize(final Window window) {
-    if (window == null) return;
-    final Dimension minSize = window.getMinimumSize();
-    final Dimension size = window.getSize();
-    final Dimension newSize = new Dimension(Math.max(size.width, minSize.width), Math.max(size.height, minSize.height));
-
-    if (!newSize.equals(size)) {
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(() -> {
-        if (window.isShowing()) {
-          window.setSize(newSize);
-        }
-      });
-    }
-  }
-
   public static int getLcdContrastValue() {
     int lcdContrastValue = LoadingState.APP_STARTED.isOccurred() ? Registry.intValue("lcd.contrast.value", 0) : 0;
     if (lcdContrastValue == 0) {
@@ -2738,7 +2602,9 @@ public final class UIUtil {
     if (component instanceof AbstractButton) candidate = ((AbstractButton)component).getText();
     if (StringUtil.isNotEmpty(candidate)) {
       candidate = candidate.replaceAll("<a href=\"#inspection/[^)]+\\)", "");
-      if (builder.length() > 0) builder.append(' ');
+      if (!builder.isEmpty()) {
+        builder.append(' ');
+      }
       builder.append(StringUtil.removeHtmlTags(candidate).trim());
     }
     if (component instanceof Container) {
@@ -2886,12 +2752,11 @@ public final class UIUtil {
   }
 
   public static int getLineHeight(@NotNull JTextComponent textComponent) {
-    return textComponent.getFontMetrics(textComponent.getFont()).getHeight();
+    return getLineHeight((JComponent)textComponent);
   }
 
-  public static int getUnscaledLineHeight(@NotNull JComponent component) {
-    Font baseFont = component.getFont().deriveFont(JBUIScale.DEF_SYSTEM_FONT_SIZE);
-    return component.getFontMetrics(baseFont).getHeight();
+  public static int getLineHeight(@NotNull JComponent component) {
+    return component.getFontMetrics(component.getFont()).getHeight();
   }
 
   /**
@@ -3423,6 +3288,26 @@ public final class UIUtil {
     });
   }
 
+  public static Future<?> runOnceWhenResized(@NotNull Component component, @NotNull Runnable runnable) {
+    var future = new CompletableFuture<>();
+    component.addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent e) {
+        component.removeComponentListener(this);
+        if (!future.isCancelled()) {
+          try {
+            runnable.run();
+            future.complete(null);
+          }
+          catch (Throwable ex) {
+            future.completeExceptionally(ex);
+          }
+        }
+      }
+    });
+    return future;
+  }
+
   public static Font getLabelFont() {
     return StartupUiUtil.getLabelFont();
   }
@@ -3444,7 +3329,7 @@ public final class UIUtil {
                                @Nullable Rectangle dstBounds,
                                @Nullable Rectangle srcBounds,
                                @Nullable ImageObserver observer) {
-    StartupUiUtil.drawImage(g, image, dstBounds, srcBounds, null, observer);
+    StartupUiUtilKt.drawImage(g, image, dstBounds, srcBounds, null, observer);
   }
 
   /**
@@ -3519,15 +3404,26 @@ public final class UIUtil {
     return SystemInfo.isXWindow && !SystemInfo.isWayland && System.getenv("WSLENV") != null;
   }
 
-  public static void applyDeprecatedBackground(@NotNull JComponent component) {
+  public static void applyDeprecatedBackground(@Nullable JComponent component) {
     Color color = getDeprecatedBackground();
-    if (color != null) {
+    if (component != null && color != null) {
       component.setBackground(color);
       component.setOpaque(true);
     }
   }
 
-  private static @Nullable Color getDeprecatedBackground() {
+  @ApiStatus.Internal
+  public static @Nullable Color getDeprecatedBackground() {
     return Registry.getColor("ui.deprecated.components.color", null);
+  }
+
+  public static boolean isMetalRendering() {
+    return SystemInfo.isMac && Boolean.getBoolean("sun.java2d.metal");
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull Insets unscaleIfJBInsets(@NotNull Insets insets) {
+    if (insets instanceof JBInsets) return ((JBInsets)insets).getUnscaled();
+    return insets;
   }
 }

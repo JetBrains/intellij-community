@@ -37,6 +37,10 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
+/**
+ * @deprecated The component works directly on files causing {@link com.intellij.util.SlowOperations} assertion.
+ */
+@Deprecated(forRemoval = true)
 public class AbstractFileTreeTable<T> extends TreeTable {
   private final MyModel<T> myModel;
   private final Project myProject;
@@ -66,7 +70,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     myModel = (MyModel<T>)getTableModel();
     myModel.setTreeTable(this);
 
-    new TreeTableSpeedSearch(this, o -> {
+    TreeTableSpeedSearch.installOn(this, o -> {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)o.getLastPathComponent();
       final Object userObject = node.getUserObject();
       if (userObject == null) {

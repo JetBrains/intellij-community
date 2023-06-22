@@ -2,6 +2,7 @@
 package com.intellij.packaging.impl.artifacts.workspacemodel
 
 import com.intellij.configurationStore.deserializeInto
+import com.intellij.java.workspace.entities.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.util.JDOMUtil
@@ -13,12 +14,16 @@ import com.intellij.packaging.elements.CompositePackagingElement
 import com.intellij.packaging.elements.PackagingElement
 import com.intellij.packaging.impl.artifacts.InvalidArtifactType
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.artifactsMap
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.backend.workspace.virtualFile
+import com.intellij.platform.workspace.jps.JpsImportedEntitySource
+import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnBuilder
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.EventDispatcher
 import com.intellij.workspaceModel.ide.*
-import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.jps.util.JpsPathUtil
 
@@ -209,6 +214,14 @@ open class ArtifactBridge(
     }
     val oldRootElement = entity.rootElement!!
     if (oldRootElement != rootEntity) {
+      // As we replace old root element with the new one, we should kick builder from old root element
+      if (originalArtifact != null) {
+        diff.elements.getDataByEntity(oldRootElement)?.let { oldRootBridge ->
+          oldRootBridge.forThisAndFullTree {
+            it.updateStorage(originalArtifact.entityStorage)
+          }
+        }
+      }
       diff.modifyEntity(entity) {
         this.rootElement = rootEntity
       }
@@ -235,7 +248,10 @@ open class ArtifactBridge(
       val existingProperty = entity.customProperties.find { it.providerType == provider.id }
 
       if (existingProperty == null) {
-        diff.addArtifactPropertiesEntity(entity, provider.id, tag, entity.entitySource)
+        diff addEntity ArtifactPropertiesEntity(provider.id, entity.entitySource) {
+          artifact = entity
+          propertiesXmlTag = tag
+        }
       }
       else {
         diff.modifyEntity(existingProperty) {

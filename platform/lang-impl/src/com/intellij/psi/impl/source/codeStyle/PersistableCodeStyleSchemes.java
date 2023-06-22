@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle;
 
-import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.options.SchemeManagerFactory;
@@ -37,9 +37,8 @@ public final class PersistableCodeStyleSchemes extends CodeStyleSchemesImpl impl
     super(schemeManagerFactory);
   }
 
-  @NotNull
   @Override
-  public Element getState() {
+  public @NotNull Element getState() {
     CodeStyleScheme currentScheme = getCurrentScheme();
     CURRENT_SCHEME_NAME = currentScheme == null ? null : currentScheme.getName();
     return XmlSerializer.serialize(this, new SerializationFilter() {

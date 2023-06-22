@@ -495,6 +495,21 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
                 runTest("../testData/intentions/convertToForEachFunctionCall/endOfLineComment3.kt");
             }
 
+            @TestMetadata("hasBreak.kt")
+            public void testHasBreak() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/hasBreak.kt");
+            }
+
+            @TestMetadata("hasBreakInNestedLoop.kt")
+            public void testHasBreakInNestedLoop() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/hasBreakInNestedLoop.kt");
+            }
+
+            @TestMetadata("hasBreakWithLabel.kt")
+            public void testHasBreakWithLabel() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/hasBreakWithLabel.kt");
+            }
+
             @TestMetadata("iterativeElementTypeSpecified.kt")
             public void testIterativeElementTypeSpecified() throws Exception {
                 runTest("../testData/intentions/convertToForEachFunctionCall/iterativeElementTypeSpecified.kt");
@@ -515,14 +530,92 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
                 runTest("../testData/intentions/convertToForEachFunctionCall/notIterableClass.kt");
             }
 
+            @TestMetadata("sequence.kt")
+            public void testSequence() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/sequence.kt");
+            }
+
             @TestMetadata("simple.kt")
             public void testSimple() throws Exception {
                 runTest("../testData/intentions/convertToForEachFunctionCall/simple.kt");
             }
 
+            @TestMetadata("string.kt")
+            public void testString() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/string.kt");
+            }
+
+            @TestMetadata("this.kt")
+            public void testThis() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/this.kt");
+            }
+
+            @TestMetadata("thisWithLabel.kt")
+            public void testThisWithLabel() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/thisWithLabel.kt");
+            }
+
             @TestMetadata("typeAnnotatedWithNonBlockBody.kt")
             public void testTypeAnnotatedWithNonBlockBody() throws Exception {
                 runTest("../testData/intentions/convertToForEachFunctionCall/typeAnnotatedWithNonBlockBody.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/intentions/convertToForEachFunctionCall/withIndex")
+        public static class WithIndex extends AbstractSharedK2IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("array.kt")
+            public void testArray() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/withIndex/array.kt");
+            }
+
+            @TestMetadata("hasNoBraces.kt")
+            public void testHasNoBraces() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/withIndex/hasNoBraces.kt");
+            }
+
+            @TestMetadata("implicitReceiver.kt")
+            public void testImplicitReceiver() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/withIndex/implicitReceiver.kt");
+            }
+
+            @TestMetadata("intArray.kt")
+            public void testIntArray() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/withIndex/intArray.kt");
+            }
+
+            @TestMetadata("labeledReturn.kt")
+            public void testLabeledReturn() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/withIndex/labeledReturn.kt");
+            }
+
+            @TestMetadata("list.kt")
+            public void testList() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/withIndex/list.kt");
+            }
+
+            @TestMetadata("range.kt")
+            public void testRange() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/withIndex/range.kt");
+            }
+
+            @TestMetadata("sequence.kt")
+            public void testSequence() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/withIndex/sequence.kt");
+            }
+
+            @TestMetadata("string.kt")
+            public void testString() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/withIndex/string.kt");
+            }
+
+            @TestMetadata("uIntArray.kt")
+            public void testUIntArray() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/withIndex/uIntArray.kt");
             }
         }
     }
@@ -652,6 +745,11 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
         @TestMetadata("functionCallCaretOnCall.kt")
         public void testFunctionCallCaretOnCall() throws Exception {
             runTest("../testData/intentions/operatorToFunction/functionCallCaretOnCall.kt");
+        }
+
+        @TestMetadata("functionCallCaretOnUnresolvedCall.kt")
+        public void testFunctionCallCaretOnUnresolvedCall() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/functionCallCaretOnUnresolvedCall.kt");
         }
 
         @TestMetadata("functionCallMultipleArgument.kt")

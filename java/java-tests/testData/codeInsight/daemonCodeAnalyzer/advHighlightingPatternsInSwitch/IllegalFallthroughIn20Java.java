@@ -4,8 +4,8 @@ public class Main {
 
   void test0(Object obj) {
     switch (obj) {
-      case <error descr="Illegal fall-through from a pattern">String s</error>:
-      case <error descr="Illegal fall-through to a pattern">Integer i</error>:
+      case <error descr="Multiple switch labels are permitted for a switch labeled statement group only if none of them declare any pattern variables">String s</error>:
+      case <error descr="Multiple switch labels are permitted for a switch labeled statement group only if none of them declare any pattern variables">Integer i</error>:
         System.out.println(i + 1);
       default:
     }
@@ -26,7 +26,7 @@ public class Main {
 
   void test2(Object obj) {
     switch (obj) {
-      case <error descr="Illegal fall-through from a pattern">String s</error>:
+      case <error descr="Multiple switch labels are permitted for a switch labeled statement group only if none of them declare any pattern variables">String s</error>:
       case R():
       case S():
         System.out.println(42);
@@ -37,7 +37,7 @@ public class Main {
 
   void test3(Object obj) {
     switch (obj) {
-      case <error descr="Illegal fall-through from a pattern">String s</error>:
+      case <error descr="Multiple switch labels are permitted for a switch labeled statement group only if none of them declare any pattern variables">String s</error>:
       default:
         System.out.println(42);
     }
@@ -46,7 +46,7 @@ public class Main {
   void test4(Object obj) {
     switch (obj) {
       case null:
-      case <error descr="Illegal fall-through to a pattern">String s</error>:
+      case <error descr="Multiple switch labels are permitted for a switch labeled statement group only if none of them declare any pattern variables">String s</error>:
         System.out.println(s);
       default:
     }
@@ -118,7 +118,7 @@ public class Main {
   void test11(Integer integer) {
     switch (integer) {
       case 1, 2:
-      case null, <error descr="Invalid case label combination">Integer i when i == 42</error>:
+      case <error descr="Invalid case label combination: 'null' can only be used as a single case label or paired only with 'default'">null</error>, Integer i when i == 42:
         System.out.println("blah blah blah");
         break;
       default: System.out.println("null");
@@ -127,7 +127,7 @@ public class Main {
 
   void test12(Integer integer) {
     switch (integer) {
-      case 1, 2, <error descr="Invalid case label combination">Integer i1 when i1 > 5</error>:
+      case 1, 2, <error descr="Invalid case label combination: A case label must consist of either a list of case constants or a single case pattern">Integer i1 when i1 > 5</error>:
       case null:
         System.out.println("blah blah blah");
         break;
@@ -137,89 +137,89 @@ public class Main {
 
   void test13(Object obj) {
     switch (obj) {
-      case String s, <error descr="Illegal fall-through from a pattern">null</error> -> {}
+      case String s, <error descr="Invalid case label combination: 'null' can only be used as a single case label or paired only with 'default'">null</error> -> {}
       default -> {}
     }
   }
 
   void test14(Object obj) {
     switch (obj) {
-      case null, <error descr="Invalid case label combination">String s when s.isEmpty()</error>, Integer i when i == 42 -> {}
+      case <error descr="Invalid case label combination: 'null' can only be used as a single case label or paired only with 'default'">null</error>, String s when s.isEmpty(), Integer i when i == 42 -> {}
       default -> {}
     }
   }
 
   void test15(Object obj) {
     switch (obj) {
-      case String s when s.isEmpty(), <error descr="Illegal fall-through from a pattern">null</error>, Integer i -> {}
+      case String s when s.isEmpty(), <error descr="Invalid case label combination: 'null' can only be used as a single case label or paired only with 'default'">null</error>, Integer i -> {}
       default -> {}
     }
   }
 
   void test16(Object obj) {
     switch (obj) {
-      case String s, <error descr="Illegal fall-through from a pattern">Integer i</error>, null -> {}
+      case String s, Integer i, <error descr="Invalid case label combination: 'null' can only be used as a single case label or paired only with 'default'">null</error> -> {}
       default -> {}
     }
   }
 
   void test17(String s) {
     switch (s) {
-      case null, <error descr="Invalid case label combination">"hello"</error>, "world" -> {}
+      case <error descr="Invalid case label combination: 'null' can only be used as a single case label or paired only with 'default'">null</error>, "hello", "world" -> {}
       default -> {}
     }
   }
 
   void test18(String s) {
     switch (s) {
-      case "hello", "world", <error descr="Invalid case label combination">null</error>, String str when str.isEmpty() -> {}
+      case "hello", "world", <error descr="Invalid case label combination: 'null' can only be used as a single case label or paired only with 'default'">null</error>, String str when str.isEmpty() -> {}
       default -> {}
     }
   }
 
   void test19(String s) {
     switch (s) {
-      case "hello", "world", <error descr="Invalid case label combination">null</error>, String str -> {}
+      case "hello", "world", <error descr="Invalid case label combination: 'null' can only be used as a single case label or paired only with 'default'">null</error>, String str -> {}
     }
   }
 
   void test20(Object obj) {
     switch (obj) {
-      case null, <error descr="Invalid case label combination">S()</error>, R() -> {}
+      case <error descr="Invalid case label combination: 'null' can only be used as a single case label or paired only with 'default'">null</error>, S(), R() -> {}
       default -> {}
     }
   }
 
   void test21(Object obj) {
     switch (obj) {
-      case S(), <error descr="Illegal fall-through from a pattern">null</error>, R() -> {}
+      case S(), <error descr="Invalid case label combination: 'null' can only be used as a single case label or paired only with 'default'">null</error>, R() -> {}
       default -> {}
     }
   }
 
   void test22(Object obj) {
     switch (obj) {
-      case String s when s.isEmpty(), <error descr="Illegal fall-through from a pattern">null</error>, Integer i -> {}
+      case String s when s.isEmpty(), <error descr="Invalid case label combination: 'null' can only be used as a single case label or paired only with 'default'">null</error>, Integer i -> {}
       default -> {}
     }
   }
 
   void test23(Object obj) {
     switch (obj) {
-      case String s, <error descr="Illegal fall-through from a pattern">Integer i</error>, null -> {}
+      case String s, Integer i, <error descr="Invalid case label combination: 'null' can only be used as a single case label or paired only with 'default'">null</error> -> {}
       default -> {}
     }
   }
 
   void test24(String s) {
     switch (s) {
-      case "hello", "world", <error descr="Invalid case label combination">null</error>, String str -> {}
+      case "hello", "world", <error descr="Invalid case label combination: 'null' can only be used as a single case label or paired only with 'default'">null</error>, String str -> {}
     }
   }
 
   void test25(String s) {
     switch (s) {
-      case "hello", "world", <error descr="Invalid case label combination">String str</error>, null -> {}
+      case "hello", "world", String str, <error descr="Invalid case label combination: 'null' can only be used as a single case label or paired only with 'default'">null</error> -> {}
     }
   }
 
@@ -241,6 +241,49 @@ public class Main {
         System.out.println(<error descr="Cannot resolve symbol 's'">s</error>);
       default:
         throw new IllegalStateException("Unexpected value: " + obj);
+    }
+  }
+
+  void test28(Object obj) {
+    switch (obj) {
+      case Integer i, <error descr="Invalid case label combination: A case label must not consist of more than one case pattern">String str</error> -> {}
+      default -> {}
+    }
+  }
+
+  void test28(String s) {
+    switch (s) {
+      case String str, <error descr="Invalid case label combination: A case label must consist of either a list of case constants or a single case pattern">"hello"</error>, "world" -> {}
+    }
+  }
+
+  void test29(Object obj) {
+    switch (obj) {
+      case null, default -> {}
+    }
+  }
+
+  void test30(Object obj) {
+    switch (obj) {
+      case <error descr="Invalid case label order: 'null' must be first and 'default' must be second">default</error>, null -> {}
+    }
+  }
+
+  void test31(Object obj) {
+    switch (obj) {
+      case String s, <error descr="Default label not allowed here: 'default' can only be used as a single case label or paired only with 'null'">default</error> -> {}
+    }
+  }
+
+  void test32(String s) {
+    switch (s) {
+      case "hello", "world", <error descr="Default label not allowed here: 'default' can only be used as a single case label or paired only with 'null'">default</error> -> {}
+    }
+  }
+
+  void test33(String s) {
+    switch (s) {
+      case <error descr="The label for the default case must only use the 'default' keyword, without 'case'">default</error> -> {}
     }
   }
 }

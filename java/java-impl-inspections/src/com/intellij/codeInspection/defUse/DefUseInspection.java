@@ -15,15 +15,15 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
-import com.intellij.psi.controlFlow.AnalysisCanceledException;
-import com.intellij.psi.controlFlow.ControlFlow;
-import com.intellij.psi.controlFlow.ControlFlowUtil;
-import com.intellij.psi.controlFlow.DefUseUtil;
+import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -32,8 +32,23 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
   public boolean REPORT_PREFIX_EXPRESSIONS;
   public boolean REPORT_POSTFIX_EXPRESSIONS = true;
   public boolean REPORT_REDUNDANT_INITIALIZER = true;
+  public boolean REPORT_PATTERN_VARIABLE = true;
+  public boolean REPORT_FOR_EACH_PARAMETER = true;
 
   public static final String SHORT_NAME = "UnusedAssignment";
+
+  @Override
+  public void writeSettings(@NotNull Element node) {
+    super.writeSettings(node);
+    for (Element child : new ArrayList<>(node.getChildren())) {
+      String name = child.getAttributeValue("name");
+      String value = child.getAttributeValue("value");
+      if (Set.of("REPORT_PATTERN_VARIABLE", "REPORT_FOR_EACH_PARAMETER").contains(name) &&
+          "true".equals(value)) {
+        node.removeContent(child);
+      }
+    }
+  }
 
   @Override
   @NotNull
@@ -87,17 +102,22 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
           if (parent instanceof PsiAssignmentExpression &&
               ((PsiAssignmentExpression)parent).getOperationTokenType() == JavaTokenType.EQ &&
               EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(
-            ((PsiAssignmentExpression)parent).getLExpression(), ((PsiAssignmentExpression)context).getLExpression())) {
+                ((PsiAssignmentExpression)parent).getLExpression(), ((PsiAssignmentExpression)context).getLExpression())) {
             // x = x = 5; reported by "Variable is assigned to itself"
             continue;
           }
           reportAssignmentProblem(psiVariable, (PsiAssignmentExpression)context, holder);
         }
-        else {
-          if (context instanceof PsiPrefixExpression && REPORT_PREFIX_EXPRESSIONS ||
-              context instanceof PsiPostfixExpression && REPORT_POSTFIX_EXPRESSIONS) {
-            holder.registerProblem(context, JavaBundle.message("inspection.unused.assignment.problem.descriptor4"));
-          }
+        else if (context instanceof PsiPrefixExpression && REPORT_PREFIX_EXPRESSIONS ||
+                 context instanceof PsiPostfixExpression && REPORT_POSTFIX_EXPRESSIONS) {
+          holder.registerProblem(context, JavaBundle.message("inspection.unused.assignment.problem.descriptor4"));
+        }
+        else if (REPORT_PATTERN_VARIABLE && psiVariable instanceof PsiPatternVariable) {
+          holder.registerProblem(psiVariable.getNameIdentifier(), JavaBundle.message("inspection.unused.assignment.problem.descriptor5"));
+        }
+        else if (REPORT_FOR_EACH_PARAMETER && context instanceof PsiForeachStatement foreachStatement &&
+                  foreachStatement.getIterationParameter() == psiVariable && psiVariable.getNameIdentifier() != null) {
+          holder.registerProblem(psiVariable.getNameIdentifier(), JavaBundle.message("inspection.unused.assignment.problem.descriptor6"));
         }
       }
     }
@@ -181,10 +201,9 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
           if (isDefinitely) {
             try {
               ControlFlow flow = HighlightControlFlowUtil.getControlFlowNoConstantEvaluate(classInitializer.getBody());
-              if (ControlFlowUtil.getReadBeforeWrite(flow)
-                                 .stream()
-                                 .anyMatch(read -> (isStatic || ExpressionUtil.isEffectivelyUnqualified(read)) &&
-                                                   read.isReferenceTo(field))) {
+              if (ContainerUtil.exists(ControlFlowUtil.getReadBeforeWrite(flow),
+                                       read -> (isStatic || ExpressionUtil.isEffectivelyUnqualified(read)) &&
+                                               read.isReferenceTo(field))) {
                 isDefinitely = false;
               }
             }
@@ -233,8 +252,11 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
       }
       try {
         ControlFlow flow = HighlightControlFlowUtil.getControlFlowNoConstantEvaluate(body);
-        if (ControlFlowUtil.getReadBeforeWrite(flow).stream()
-                           .anyMatch(read -> ExpressionUtil.isEffectivelyUnqualified(read) && read.isReferenceTo(field))) {
+        if (ContainerUtil.exists(ControlFlowUtil.getReadBeforeWrite(flow),
+                                 read -> ExpressionUtil.isEffectivelyUnqualified(read) && read.isReferenceTo(field))) {
+          return false;
+        }
+        if (canBeUsedInCalledMethods(field, collectMethodsBeforeAssignment(field, flow))) {
           return false;
         }
       }
@@ -243,6 +265,71 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
       }
     }
     return true;
+  }
+
+  private static boolean canBeUsedInCalledMethods(PsiField field, List<PsiMethodCallExpression> expressions) {
+    PsiClass containingClass = field.getContainingClass();
+    PsiManager manager = field.getManager();
+    for (PsiMethodCallExpression expression : expressions) {
+      if (expression.getMethodExpression().resolve() instanceof PsiMethod method
+          && !method.isConstructor()
+          && !method.hasModifierProperty(PsiModifier.STATIC)
+          && manager.areElementsEquivalent(method.getContainingClass(), containingClass)) {
+        return true;
+      }
+      if (PsiTreeUtil.getChildrenOfType(expression.getArgumentList(), PsiThisExpression.class) != null) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @NotNull
+  private static List<PsiMethodCallExpression> collectMethodsBeforeAssignment(PsiField field, ControlFlow flow) {
+    List<PsiMethodCallExpression> results = new ArrayList<>();
+    PsiManager manager = field.getManager();
+    List<ControlFlowUtil.ControlFlowEdge> edges = ControlFlowUtil.getEdges(flow, 0);
+    Int2ObjectMap<List<ControlFlowUtil.ControlFlowEdge>> edgesFromStart = new Int2ObjectOpenHashMap<>();
+    List<Instruction> instructions = flow.getInstructions();
+    for (ControlFlowUtil.ControlFlowEdge edge : edges) {
+      List<ControlFlowUtil.ControlFlowEdge> existedEdge = edgesFromStart.get(edge.myFrom);
+      if (existedEdge != null) {
+        existedEdge.add(edge);
+      }
+      else {
+        List<ControlFlowUtil.ControlFlowEdge> newEdges = new ArrayList<>();
+        newEdges.add(edge);
+        edgesFromStart.put(edge.myFrom, newEdges);
+      }
+    }
+    BitSet untilAssignment = new BitSet();
+    ArrayDeque<Integer> unprocessedInstructions = new ArrayDeque<>();
+    unprocessedInstructions.add(0);
+    while (!unprocessedInstructions.isEmpty()) {
+      int currentPoint = unprocessedInstructions.poll();
+      if (instructions.size() <= currentPoint) {
+        return results;
+      }
+      if (untilAssignment.get(currentPoint)) {
+        continue;
+      }
+      Instruction instruction = instructions.get(currentPoint);
+      if (instruction instanceof WriteVariableInstruction writeVariableInstruction &&
+          manager.areElementsEquivalent(writeVariableInstruction.variable, field)) {
+        continue;
+      }
+      untilAssignment.set(currentPoint);
+      List<ControlFlowUtil.ControlFlowEdge> nextPoints = edgesFromStart.get(currentPoint);
+      if (nextPoints != null) {
+        unprocessedInstructions.addAll(ContainerUtil.map(nextPoints, t -> t.myTo));
+      }
+    }
+    for (int index : untilAssignment.stream().toArray()) {
+      if (flow.getElement(index) instanceof PsiMethodCallExpression methodCallExpression) {
+        results.add(methodCallExpression);
+      }
+    }
+    return results;
   }
 
   @NotNull
@@ -275,7 +362,9 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
     return OptPane.pane(
       OptPane.checkbox("REPORT_REDUNDANT_INITIALIZER", JavaBundle.message("inspection.unused.assignment.option2")),
       OptPane.checkbox("REPORT_PREFIX_EXPRESSIONS", JavaBundle.message("inspection.unused.assignment.option")),
-      OptPane.checkbox("REPORT_POSTFIX_EXPRESSIONS", JavaBundle.message("inspection.unused.assignment.option1"))
+      OptPane.checkbox("REPORT_POSTFIX_EXPRESSIONS", JavaBundle.message("inspection.unused.assignment.option1")),
+      OptPane.checkbox("REPORT_PATTERN_VARIABLE", JavaBundle.message("inspection.unused.assignment.option3")),
+      OptPane.checkbox("REPORT_FOR_EACH_PARAMETER", JavaBundle.message("inspection.unused.assignment.option4"))
     );
   }
 

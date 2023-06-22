@@ -112,7 +112,7 @@ internal class RunToolbarShowHidePopupAction : AnAction(ActionsBundle.message("a
     }
 
     override fun updateIconImmediately(isOpened: Boolean) {
-      myIcon = if (isOpened) AllIcons.Toolbar.Collapse
+      icon = if (isOpened) AllIcons.Toolbar.Collapse
       else AllIcons.Toolbar.Expand
     }
 

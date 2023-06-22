@@ -12,14 +12,13 @@ import com.intellij.model.search.LeafOccurrence
 import com.intellij.model.search.LeafOccurrenceMapper
 import com.intellij.model.search.SearchContext
 import com.intellij.model.search.SearchService
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.walkUp
-import com.intellij.util.AbstractQuery
-import com.intellij.util.Processor
 import com.intellij.util.Query
+import org.intellij.plugins.markdown.model.psi.headers.MarkdownDirectUsageQuery
+import org.intellij.plugins.markdown.model.psi.headers.html.findInjectedHtmlFile
 
 internal class MarkdownSymbolUsageSearcher: UsageSearcher {
   override fun collectSearchRequests(parameters: UsageSearchParameters): Collection<Query<out Usage>> {
@@ -27,14 +26,26 @@ internal class MarkdownSymbolUsageSearcher: UsageSearcher {
     if (target !is MarkdownSymbolWithUsages) {
       return emptyList()
     }
-    val project = parameters.project
-    val searchText = target.searchText.takeIf { it.isNotEmpty() } ?: return emptyList()
-    val usages = buildSearchRequest(project, target, searchText, parameters.searchScope)
-    val selfUsage = buildDirectTargetQuery(MarkdownPsiUsage.create(target.file, target.range, declaration = true))
-    return listOf(usages, selfUsage)
+    return buildSearchRequests(parameters.project, parameters.searchScope, target)
   }
 
   companion object {
+    private fun buildSearchRequests(project: Project, searchScope: SearchScope, target: MarkdownSymbolWithUsages): Collection<Query<out Usage>> {
+      val searchText = target.searchText.takeIf { it.isNotEmpty() } ?: return emptyList()
+      val usages = buildSearchRequest(project, target, searchText, searchScope)
+      val selfUsage = MarkdownDirectUsageQuery(createSelfUsage(target))
+      return listOf(usages, selfUsage)
+    }
+
+    private fun createSelfUsage(target: MarkdownSymbolWithUsages): PsiUsage {
+      val file = target.file
+      val actualFile = when (target) {
+        is MarkdownSymbolInsideInjection -> findInjectedHtmlFile(file) ?: file
+        else -> file
+      }
+      return MarkdownPsiUsage.create(actualFile, target.range, declaration = true)
+    }
+
     fun buildSearchRequest(project: Project, target: MarkdownSymbol, searchText: String, searchScope: SearchScope): Query<out PsiUsage> {
       val symbolPointer = Pointer.hardPointer(target)
       return SearchService.getInstance()
@@ -44,21 +55,6 @@ internal class MarkdownSymbolUsageSearcher: UsageSearcher {
         .inScope(searchScope)
         .buildQuery(LeafOccurrenceMapper.withPointer(symbolPointer, Companion::findReferencesToSymbol))
         .mapping { MarkdownPsiUsage.create(it) }
-    }
-
-    /**
-     * Creates a query directly resolving to [usage].
-     */
-    fun buildDirectTargetQuery(usage: PsiUsage): Query<PsiUsage> {
-      return MarkdownDirectUsageQuery(usage)
-    }
-
-    private class MarkdownDirectUsageQuery(private val usage: PsiUsage): AbstractQuery<PsiUsage>() {
-      override fun processResults(consumer: Processor<in PsiUsage>): Boolean {
-        return runReadAction {
-          consumer.process(usage)
-        }
-      }
     }
 
     private fun findReferencesToSymbol(symbol: MarkdownSymbol, leafOccurrence: LeafOccurrence): Collection<MarkdownPsiSymbolReference> {

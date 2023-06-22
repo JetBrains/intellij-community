@@ -35,22 +35,19 @@ import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class XmlSplitTagAction implements IntentionAction {
-
+final class XmlSplitTagAction implements IntentionAction {
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return XmlBundle.message("xml.intention.split.tag.text");
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return XmlBundle.message("xml.intention.split.tag.family");
   }
 
   @Override
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
+  public boolean isAvailable(final @NotNull Project project, final Editor editor, final PsiFile file) {
     if (file instanceof XmlFile) {
       if (editor != null) {
         final int offset = editor.getCaretModel().getOffset();
@@ -80,7 +77,7 @@ public class XmlSplitTagAction implements IntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     if (editor != null) {
       final int offset = editor.getCaretModel().getOffset();
       final PsiElement psiElement = file.findElementAt(offset);

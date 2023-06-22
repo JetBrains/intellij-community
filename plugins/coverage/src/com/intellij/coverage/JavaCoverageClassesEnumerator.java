@@ -74,7 +74,7 @@ public abstract class JavaCoverageClassesEnumerator {
   }
 
   //get read lock myself when needed
-  public void visitRootPackage(final PsiPackage psiPackage) {
+  void visitRootPackage(final PsiPackage psiPackage) {
     final ProjectData data = mySuite.getCoverageData();
     if (data == null) return;
 
@@ -87,10 +87,10 @@ public abstract class JavaCoverageClassesEnumerator {
     final String qualifiedName = psiPackage.getQualifiedName();
     final String rootPackageVMName = qualifiedName.replace('.', '/');
 
+    final Set<VirtualFile> seenRoots = new HashSet<>();
     for (final Module module : modules) {
       if (!scope.isSearchInModuleContent(module)) continue;
       ProgressIndicatorProvider.checkCanceled();
-      final Set<VirtualFile> seenRoots = new HashSet<>();
       for (boolean isTestSource : myShouldVisitTestSource) {
         visitSource(psiPackage, module, scope, rootPackageVMName, isTestSource, seenRoots);
       }
@@ -126,7 +126,7 @@ public abstract class JavaCoverageClassesEnumerator {
       for (File child : children) {
         if (PackageAnnotator.isClassFile(child)) {
           final String childName = PackageAnnotator.getClassName(child);
-          final String classFqVMName = packageVMName.length() > 0 ? packageVMName + "/" + childName : childName;
+          final String classFqVMName = !packageVMName.isEmpty() ? packageVMName + "/" + childName : childName;
           final String toplevelClassSrcFQName = PackageAnnotator.getSourceToplevelFQName(classFqVMName);
           topLevelClasses.computeIfAbsent(toplevelClassSrcFQName, k -> new ArrayList<>()).add(child);
         }
@@ -157,7 +157,7 @@ public abstract class JavaCoverageClassesEnumerator {
   @NotNull
   protected static String getChildVMName(@NotNull String packageVMName, @NotNull File child) {
     final String childName = child.getName();
-    return packageVMName.length() > 0 ? packageVMName + "/" + childName : childName;
+    return !packageVMName.isEmpty() ? packageVMName + "/" + childName : childName;
   }
 
 

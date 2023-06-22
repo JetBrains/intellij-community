@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.cdsAgent;
 
 import org.jetbrains.annotations.NotNull;
@@ -402,19 +402,11 @@ public final class LogLoadedApplicationClassesAgent {
 
       info.assertClassVersion = assertClassVersion(info);
       switch (info.assertClassVersion) {
-        case ERROR:
-          isNotValidReasons.add("class version assert failed");
-          break;
-        case NOT_FOUND:
-          isNotValidReasons.add(".class is not found in the resources");
-          break;
-        case TOO_OLD:
-          isNotValidReasons.add("class version is too old: " + info.myTooOldClassVersion);
-          break;
-        case OK:
-          break;
-        default:
-          throw new RuntimeException("Unknown case " + info.myTooOldClassVersion + " for " + info.name);
+        case ERROR -> isNotValidReasons.add("class version assert failed");
+        case NOT_FOUND -> isNotValidReasons.add(".class is not found in the resources");
+        case TOO_OLD -> isNotValidReasons.add("class version is too old: " + info.myTooOldClassVersion);
+        case OK -> { }
+        default -> throw new RuntimeException("Unknown case " + info.myTooOldClassVersion + " for " + info.name);
       }
 
       if (Boolean.TRUE.equals(info.hasSameNamedClasses)) {

@@ -5,19 +5,23 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.platform.workspace.jps.OrphanageWorkerEntitySource
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.workspaceModel.ide.EntitiesOrphanage
-import com.intellij.workspaceModel.ide.OrphanageWorkerEntitySource
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.ide.workspaceModel
-import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageImpl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import io.opentelemetry.api.metrics.Meter
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.measureTimeMillis
 
 class EntitiesOrphanageImpl(private val project: Project) : EntitiesOrphanage {
-  override val entityStorage: VersionedEntityStorageImpl = VersionedEntityStorageImpl(EntityStorageSnapshot.empty())
+  private val entityStorage: VersionedEntityStorageImpl = VersionedEntityStorageImpl(EntityStorageSnapshot.empty())
+  override val currentSnapshot: EntityStorageSnapshot
+    get() = entityStorage.current
 
   @RequiresWriteLock
   override fun update(updater: (MutableEntityStorage) -> Unit) {
@@ -35,7 +39,7 @@ class EntitiesOrphanageImpl(private val project: Project) : EntitiesOrphanage {
     val newStorage: EntityStorageSnapshot = builder.toSnapshot()
     entityStorage.replace(newStorage, emptyMap(), {}, {})
 
-    log.info("Update orphanage. ${changes[ModuleEntity::class.java]?.size} modules added")
+    log.info("Update orphanage. ${changes[ModuleEntity::class.java]?.size ?: 0} modules added")
   }
 
   private fun checkIfParentsAlreadyExist(changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
@@ -84,7 +88,7 @@ class OrphanListener(private val project: Project) : WorkspaceModelChangeListene
         .filterIsInstance<EntityChange.Added<ModuleEntity>>()
         .map { it.entity }
 
-      val orphanage = EntitiesOrphanage.getInstance(project).entityStorage.pointer.storage
+      val orphanage = EntitiesOrphanage.getInstance(project).currentSnapshot
       val orphanModules = changedModules.mapNotNull {
         orphanage.resolve(it.symbolicId)?.let { om -> om to it }
       }
@@ -99,11 +103,25 @@ class OrphanListener(private val project: Project) : WorkspaceModelChangeListene
         }
       }
     }
+    updateOrphanTimeMs.addAndGet(updateTime)
     if (updateTime > 1_000) log.warn("Orphanage update took $updateTime ms")
   }
 
   companion object {
     private val log = logger<OrphanListener>()
+
+    private val updateOrphanTimeMs: AtomicLong = AtomicLong()
+
+    private fun setupOpenTelemetryReporting(meter: Meter) {
+      val updateOrphanTimeGauge = meter.gaugeBuilder("workspaceModel.orphan.listener.update.ms")
+        .ofLongs().buildObserver()
+
+      meter.batchCallback({ updateOrphanTimeGauge.record(updateOrphanTimeMs.get()) }, updateOrphanTimeGauge)
+    }
+
+    init {
+      setupOpenTelemetryReporting(jpsMetrics.meter)
+    }
   }
 }
 

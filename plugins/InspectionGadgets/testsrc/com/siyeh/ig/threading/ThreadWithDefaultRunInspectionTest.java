@@ -30,5 +30,7 @@ public class ThreadWithDefaultRunInspectionTest extends LightJavaCodeInsightFixt
   public void testMethodRef() {
     doTest();
   }
-
+  public void testInheritors() {
+    doTest();
+  }
 }

@@ -37,6 +37,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,7 +99,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
   public JComponent createComponentImpl() {
     myPanel = new ClasspathPanelImpl(getState());
     final JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
+    panel.setBorder(JBUI.Borders.empty(0, UIUtil.DEFAULT_HGAP));
     panel.add(myPanel, BorderLayout.CENTER);
 
     final ModuleJdkConfigurable jdkConfigurable =

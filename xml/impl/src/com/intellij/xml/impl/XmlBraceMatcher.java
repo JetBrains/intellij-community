@@ -58,7 +58,7 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
   public int getBraceTokenGroupId(@NotNull IElementType tokenType) {
     final Language l = tokenType.getLanguage();
     PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(l);
-    
+
     if (matcher != null) {
       BracePair[] pairs = matcher.getPairs();
       for (BracePair pair : pairs) {
@@ -115,7 +115,7 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
       if (isFileTypeWithSingleHtmlTags(fileType)) {
         final String tagName = getTagName(fileText, iterator);
 
-        if (tagName != null && HtmlUtil.isSingleHtmlTag(tagName)) {
+        if (tagName != null && HtmlUtil.isSingleHtmlTag(tagName, false)) {
           return !result;
         }
       }

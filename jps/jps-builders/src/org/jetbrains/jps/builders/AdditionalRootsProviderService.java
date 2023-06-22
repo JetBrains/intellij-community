@@ -35,11 +35,11 @@ public abstract class AdditionalRootsProviderService<R extends BuildRootDescript
   /**
    * @param targetTypes types of target to which additional roots should be added
    */
-  protected AdditionalRootsProviderService(Collection<? extends BuildTargetType<? extends BuildTarget<R>>> targetTypes) {
+  protected AdditionalRootsProviderService(@NotNull Collection<? extends BuildTargetType<? extends BuildTarget<R>>> targetTypes) {
     myTargetTypes = targetTypes;
   }
 
-  public Collection<? extends BuildTargetType<? extends BuildTarget<R>>> getTargetTypes() {
+  public @NotNull Collection<? extends BuildTargetType<? extends BuildTarget<R>>> getTargetTypes() {
     return myTargetTypes;
   }
 
@@ -48,7 +48,7 @@ public abstract class AdditionalRootsProviderService<R extends BuildRootDescript
    * by the {@code target} itself.
    */
   @NotNull
-  public List<R> getAdditionalRoots(@NotNull BuildTarget<R> target, BuildDataPaths dataPaths) {
+  public List<R> getAdditionalRoots(@NotNull BuildTarget<R> target, @NotNull BuildDataPaths dataPaths) {
     return Collections.emptyList();
   }
 }

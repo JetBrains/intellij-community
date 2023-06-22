@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.newProject.welcome
 
 import com.intellij.execution.RunManager
@@ -194,7 +194,7 @@ private object PyWelcome {
       StartupManager.getInstance(project).runAfterOpened(
         DumbAwareRunnable {
           AppUIExecutor
-            .onUiThread(ModalityState.NON_MODAL)
+            .onUiThread(ModalityState.nonModal())
             .expireWith(PythonPluginDisposable.getInstance(project))
             .submit {
               val fileToChoose = (file ?: firstUserFile(project, baseDir, module)) ?: return@submit

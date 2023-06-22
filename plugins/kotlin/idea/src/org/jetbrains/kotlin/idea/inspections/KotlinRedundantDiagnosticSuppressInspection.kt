@@ -20,12 +20,16 @@ import org.jetbrains.kotlin.resolve.konan.diagnostics.ErrorsNative
 import java.lang.reflect.Modifier
 
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.inspections.suppress.KotlinInspectionSuppressor
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 class KotlinRedundantDiagnosticSuppressInspection : AbstractKotlinInspection() {
     override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
         if (file !is KtFile) return null
-        val suppressor = LanguageInspectionSuppressors.INSTANCE.forLanguage(file.getLanguage())
-        if (suppressor !is KotlinInspectionSuppressor) return null
+        val suppressor = LanguageInspectionSuppressors.INSTANCE
+            .allForLanguage(file.getLanguage())
+            .firstIsInstanceOrNull<KotlinInspectionSuppressor>()
+            ?: return null
 
         val allSuppressedPlaces = file.findAllSuppressedPlaces(suppressor)
         if (allSuppressedPlaces.isEmpty) return null

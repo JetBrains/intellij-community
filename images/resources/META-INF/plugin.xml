@@ -155,6 +155,8 @@
       <reference id="Images.Editor.FitZoomToWindow"/>
       <reference id="ShowColorPicker"/>
       <reference id="Images.ChangeBackground"/>
+      <separator/>
+      <reference id="TextEditorWithPreview.SplitGroup"/>
     </group>
     <group id="Images.EditorPopupMenu">
       <reference id="CutCopyPasteGroup"/>

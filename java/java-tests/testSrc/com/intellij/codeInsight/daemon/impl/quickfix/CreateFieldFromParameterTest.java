@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
@@ -7,7 +7,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_8;
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_16;
 
 public class CreateFieldFromParameterTest extends LightIntentionActionTestCase {
   @Override
@@ -20,7 +20,7 @@ public class CreateFieldFromParameterTest extends LightIntentionActionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
+    return JAVA_16;
   }
 
   @Override

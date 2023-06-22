@@ -1,12 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
-import com.google.common.collect.Lists;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tracing.Tracer;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
@@ -52,7 +52,6 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -114,7 +113,8 @@ public final class IncProjectBuilder {
   private final ConcurrentMap<Builder, AtomicLong> myElapsedTimeNanosByBuilder = new ConcurrentHashMap<>();
   private final ConcurrentMap<Builder, AtomicInteger> myNumberOfSourcesProcessedByBuilder = new ConcurrentHashMap<>();
 
-  public IncProjectBuilder(ProjectDescriptor pd, BuilderRegistry builderRegistry, Map<String, String> builderParams, CanceledStatus cs, final boolean isTestMode) {
+  public IncProjectBuilder(@NotNull ProjectDescriptor pd, @NotNull BuilderRegistry builderRegistry,
+                           @NotNull Map<String, String> builderParams, @NotNull CanceledStatus cs, final boolean isTestMode) {
     myProjectDescriptor = pd;
     myBuilderRegistry = builderRegistry;
     myBuilderParams = builderParams;
@@ -127,7 +127,7 @@ public final class IncProjectBuilder {
     myMessageHandlers.add(handler);
   }
 
-  public void checkUpToDate(CompileScope scope) {
+  public void checkUpToDate(@NotNull CompileScope scope) {
     CompileContextImpl context = null;
     try {
       context = createContext(scope);
@@ -205,7 +205,7 @@ public final class IncProjectBuilder {
     catch (StopBuildException e) {
       reportRebuiltModules(context);
       reportUnprocessedChanges(context);
-      // If build was canceled for some reasons e.g compilation error we should report built modules
+      // If build was canceled for some reasons e.g., compilation error we should report built modules
       sourcesState.reportSourcesState();
       // some builder decided to stop the build
       // report optional progress message if any
@@ -249,7 +249,7 @@ public final class IncProjectBuilder {
       // wait for async tasks
       final CanceledStatus status = context == null ? CanceledStatus.NULL : context.getCancelStatus();
       synchronized (myAsyncTasks) {
-        for (Future task : myAsyncTasks) {
+        for (Future<?> task : myAsyncTasks) {
           if (status.isCanceled()) {
             break;
           }
@@ -282,7 +282,7 @@ public final class IncProjectBuilder {
       }
     }
     // compute estimated times for dirty targets
-    final long estimatedWorkTime = calculateEstimatedBuildTime(myProjectDescriptor, new Predicate<BuildTarget<?>>() {
+    final long estimatedWorkTime = calculateEstimatedBuildTime(myProjectDescriptor, new Predicate<>() {
       private final Set<BuildTargetType<?>> allTargetsAffected = new HashSet<>(JavaModuleBuildTargetType.ALL_TYPES);
       @Override
       public boolean test(BuildTarget<?> target) {
@@ -305,7 +305,7 @@ public final class IncProjectBuilder {
     }
   }
 
-  public static long calculateEstimatedBuildTime(ProjectDescriptor projectDescriptor, Predicate<BuildTarget<?>> isAffected) {
+  public static long calculateEstimatedBuildTime(@NotNull ProjectDescriptor projectDescriptor, @NotNull Predicate<BuildTarget<?>> isAffected) {
     final BuildTargetsState targetsState = projectDescriptor.getTargetsState();
     // compute estimated times for dirty targets
     long estimatedBuildTime = 0L;
@@ -336,7 +336,7 @@ public final class IncProjectBuilder {
     throw new RebuildRequestedException(cause);
   }
 
-  private static void waitForTask(@NotNull CanceledStatus status, Future task) {
+  private static void waitForTask(@NotNull CanceledStatus status, Future<?> task) {
     try {
       while (true) {
         try {
@@ -442,7 +442,7 @@ public final class IncProjectBuilder {
       }
     });
     Tracer.Span allTargetBuilderBuildStartedSpan = Tracer.start("All TargetBuilder.buildStarted");
-    for (TargetBuilder builder : myBuilderRegistry.getTargetBuilders()) {
+    for (TargetBuilder<?, ?> builder : myBuilderRegistry.getTargetBuilders()) {
       builder.buildStarted(context);
     }
     allTargetBuilderBuildStartedSpan.complete();
@@ -489,7 +489,7 @@ public final class IncProjectBuilder {
           myProjectDescriptor.getTargetsState().setLastSuccessfulRebuildDuration(buildProgress.getAbsoluteBuildTime());
         }
       }
-      for (TargetBuilder builder : myBuilderRegistry.getTargetBuilders()) {
+      for (TargetBuilder<?, ?> builder : myBuilderRegistry.getTargetBuilders()) {
         builder.buildFinished(context);
       }
       for (ModuleLevelBuilder builder : myBuilderRegistry.getModuleLevelBuilders()) {
@@ -542,7 +542,7 @@ public final class IncProjectBuilder {
     return null;
   }
 
-  private CompileContextImpl createContext(CompileScope scope) {
+  private CompileContextImpl createContext(@NotNull CompileScope scope) {
     return new CompileContextImpl(scope, myProjectDescriptor, myMessageDispatcher, myBuilderParams, myCancelStatus);
   }
 
@@ -773,8 +773,9 @@ public final class IncProjectBuilder {
         // excluding from checks roots with generated sources; because it is safe to delete generated stuff
         if (!descriptor.isGenerated()) {
           File rootFile = descriptor.getRootFile();
-          //some roots aren't marked by as generated but in fact they are produced by some builder and it's safe to remove them.
-          //However if a root isn't excluded it means that its content will be shown in 'Project View' and an user can create new files under it so it would be dangerous to clean such roots
+          //some roots aren't marked by as generated but in fact they are produced by some builder, and it's safe to remove them.
+          //However, if a root isn't excluded it means that its content will be shown in 'Project View' and a user can create new files under it,
+          //so it would be dangerous to clean such roots
           if (moduleIndex.isInContent(rootFile)) {
             allSourceRoots.add(rootFile);
           }
@@ -1028,7 +1029,8 @@ public final class IncProjectBuilder {
       Tracer.Span prioritisationSpan = Tracer.start("IncProjectBuilder.prioritisation");
       // bitset stores indexes of transitively dependant tasks
       HashMap<BuildChunkTask, BitSet> chunkToTransitive = new HashMap<>();
-      for (BuildChunkTask task : Lists.reverse(myTasks)) {
+      for (int i = myTasks.size() - 1; i >= 0; i--) {
+        BuildChunkTask task = myTasks.get(i);
         List<BuildChunkTask> dependantTasks = task.myTasksDependsOnThis;
         Set<BuildChunkTask> directDependants = new HashSet<>(dependantTasks);
         BitSet transitiveDependants = new BitSet();
@@ -1073,9 +1075,9 @@ public final class IncProjectBuilder {
       }
     }
 
-    private void queueTasks(List<? extends BuildChunkTask> tasks) {
+    private void queueTasks(List<BuildChunkTask> tasks) {
       if (tasks.isEmpty()) return;
-      ArrayList<? extends BuildChunkTask> sorted = new ArrayList<>(tasks);
+      ArrayList<BuildChunkTask> sorted = new ArrayList<>(tasks);
       sorted.sort(Comparator.comparingLong(BuildChunkTask::getScore).reversed());
 
       if (LOG.isDebugEnabled()) {
@@ -1202,7 +1204,7 @@ public final class IncProjectBuilder {
 
   private static CompileContext wrapWithModuleInfoAppender(CompileContext context, Collection<ModuleBuildTarget> moduleTargets) {
     final Class<MessageHandler> messageHandlerInterface = MessageHandler.class;
-    return (CompileContext)Proxy.newProxyInstance(context.getClass().getClassLoader(), new Class[] {CompileContext.class}, new InvocationHandler() {
+    return ReflectionUtil.proxy(context.getClass().getClassLoader(), CompileContext.class, new InvocationHandler() {
       @Override
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         if (args != null && args.length > 0 && messageHandlerInterface.equals(method.getDeclaringClass())) {
@@ -1239,10 +1241,10 @@ public final class IncProjectBuilder {
 
     final List<SourceToOutputMapping> mappings = new ArrayList<>();
     for (T target : targets) {
-      pd.fsState.processFilesToRecompile(context, target, new FileProcessor<R, T>() {
+      pd.fsState.processFilesToRecompile(context, target, new FileProcessor<>() {
         private SourceToOutputMapping srcToOut;
         @Override
-        public boolean apply(T target, File file, R root) throws IOException {
+        public boolean apply(@NotNull T target, @NotNull File file, @NotNull R root) throws IOException {
           final String src = FileUtil.toSystemIndependentName(file.getPath());
           if (affectedSources.add(src)) {
             if (srcToOut == null) { // lazy init
@@ -1255,7 +1257,8 @@ public final class IncProjectBuilder {
               // Change of only one input of *.kotlin_module files didn't trigger recompilation of all inputs in old behaviour.
               // Now it does. It isn't yet obvious whether it is right or wrong behaviour. Let's leave old behaviour for a
               // while for safety and keeping kotlin incremental JPS tests green
-              List<String> filteredOuts = ContainerUtil.filter(outs, out -> !"kotlin_module".equals(StringUtil.substringAfterLast(out, ".")));
+              List<String> filteredOuts =
+                ContainerUtil.filter(outs, out -> !"kotlin_module".equals(StringUtil.substringAfterLast(out, ".")));
               affectedOutputs.addAll(filteredOuts);
             }
           }
@@ -1510,7 +1513,7 @@ public final class IncProjectBuilder {
         myProjectDescriptor.fsState.beforeNextRoundStart(context, chunk);
 
         DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder =
-          new DirtyFilesHolderBase<JavaSourceRootDescriptor, ModuleBuildTarget>(context) {
+          new DirtyFilesHolderBase<>(context) {
             @Override
             public void processDirtyFiles(@NotNull FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget> processor)
               throws IOException {
@@ -1659,7 +1662,7 @@ public final class IncProjectBuilder {
     final Set<Object> deletedKeysSet = ContainerUtil.newConcurrentSet();
     final Class<UserDataHolder> dataHolderInterface = UserDataHolder.class;
     final Class<MessageHandler> messageHandlerInterface = MessageHandler.class;
-    return (CompileContext)Proxy.newProxyInstance(delegate.getClass().getClassLoader(), new Class[]{CompileContext.class}, new InvocationHandler() {
+    return ReflectionUtil.proxy(delegate.getClass().getClassLoader(), CompileContext.class, new InvocationHandler() {
       @Override
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         if (args != null) {

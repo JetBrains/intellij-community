@@ -17,10 +17,10 @@ package com.jetbrains.python.vp;
 
 
 import com.google.common.base.Preconditions;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Proxy;
 
 /**
  * Entry point to package. Use {@link #linkViewWithPresenterAndLaunch(Class, Class, Creator)}
@@ -60,10 +60,9 @@ public final class ViewPresenterUtils {
   }
 
 
-  @SuppressWarnings("unchecked") //Proxy always returns correct class
   private static <C> C createProxy(Class<C> clazz, InvocationHandler handler) {
     assert clazz != null;
     assert handler != null;
-    return (C)Proxy.newProxyInstance(ViewPresenterUtils.class.getClassLoader(), new Class[]{clazz}, handler);
+    return ReflectionUtil.proxy(ViewPresenterUtils.class.getClassLoader(), clazz, handler);
   }
 }

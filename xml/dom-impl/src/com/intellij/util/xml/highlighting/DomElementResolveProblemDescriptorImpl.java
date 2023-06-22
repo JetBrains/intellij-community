@@ -33,7 +33,7 @@ class DomElementResolveProblemDescriptorImpl extends DomElementProblemDescriptor
 
   DomElementResolveProblemDescriptorImpl(@NotNull final GenericDomValue domElement,
                                          @NotNull final PsiReference reference,
-                                         LocalQuickFix... quickFixes) {
+                                         @NotNull LocalQuickFix @NotNull ... quickFixes) {
      super(domElement, reference instanceof FileReference ? ProblemsHolder.unresolvedReferenceMessage(reference) : XmlHighlightVisitor.getErrorDescription(reference), HighlightSeverity.ERROR, quickFixes);
      myReference = reference;
   }

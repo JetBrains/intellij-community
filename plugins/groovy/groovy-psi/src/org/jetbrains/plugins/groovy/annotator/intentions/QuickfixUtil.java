@@ -167,7 +167,7 @@ public final class QuickfixUtil {
     return ContainerUtil.map(fixes, it -> new LocalQuickFixAsIntentionAdapter(it, descriptor));
   }
 
-  public static LocalQuickFix @NotNull [] intentionsToFixes(@NotNull PsiElement highlightElement, @NotNull List<? extends IntentionAction> actions) {
+  public static @NotNull LocalQuickFix @NotNull [] intentionsToFixes(@NotNull PsiElement highlightElement, @NotNull List<? extends IntentionAction> actions) {
     return wrapToQuickFixes(actions, highlightElement.getContainingFile()).toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 }

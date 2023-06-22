@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net.ssl
 
 import com.intellij.credentialStore.CredentialAttributes
@@ -10,6 +10,7 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
@@ -79,7 +80,7 @@ class CertificateManager : PersistentStateComponent<CertificateManager.Config?> 
    *
    * @return instance of SSLContext with described behavior or default SSL context in case of error
    */
-  val sslContext by lazy(::calcSslContext)
+  val sslContext: SSLContext by lazy { calcSslContext() } // hot path, do not use method reference
 
   /**
    * Component initialization constructor
@@ -298,7 +299,7 @@ class CertificateManager : PersistentStateComponent<CertificateManager.Config?> 
   val customTrustManager: MutableTrustManager
     get() = trustManager.customManager
 
-  override fun getState() = config
+  override fun getState(): Config = config
 
   override fun loadState(state: Config) {
     config = state

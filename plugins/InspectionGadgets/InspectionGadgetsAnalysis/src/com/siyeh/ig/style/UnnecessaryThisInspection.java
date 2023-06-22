@@ -17,9 +17,10 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -27,16 +28,13 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class UnnecessaryThisInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
@@ -56,11 +54,11 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new UnnecessaryThisFix();
   }
 
-  private static class UnnecessaryThisFix extends InspectionGadgetsFix {
+  private static class UnnecessaryThisFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -69,8 +67,7 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement thisToken = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement thisToken, @NotNull ModPsiUpdater updater) {
       final PsiElement thisParenthesized = findBiggestParenthesizedExpr(thisToken);
       new CommentTracker().deleteAndRestoreComments(thisParenthesized);
     }

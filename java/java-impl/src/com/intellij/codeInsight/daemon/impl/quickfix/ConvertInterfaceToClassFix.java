@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.search.SearchScope;
@@ -98,7 +99,7 @@ public class ConvertInterfaceToClassFix extends LocalQuickFixAndIntentionActionO
   public static void convert(@NotNull PsiClass anInterface) {
     final SearchScope searchScope = anInterface.getUseScope();
     final Collection<PsiClass> inheritors = ClassInheritorsSearch.search(anInterface, searchScope, false).findAll();
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    final MultiMap<PsiElement, @NlsContexts.DialogMessage String> conflicts = new MultiMap<>();
     inheritors.forEach(aClass -> {
       final PsiReferenceList extendsList = aClass.getExtendsList();
       if (extendsList == null) {
@@ -110,7 +111,8 @@ public class ConvertInterfaceToClassFix extends LocalQuickFixAndIntentionActionO
         if (target instanceof PsiClass && !CommonClassNames.JAVA_LANG_OBJECT.equals(((PsiClass)target).getQualifiedName())) {
           conflicts.putValue(aClass, IntentionPowerPackBundle.message(
             "0.already.extends.1.and.will.not.compile.after.converting.2.to.a.class",
-            RefactoringUIUtil.getDescription(aClass, true), RefactoringUIUtil.getDescription(target, true),
+            RefactoringUIUtil.getDescription(aClass, true),
+            RefactoringUIUtil.getDescription(target, true),
             RefactoringUIUtil.getDescription(anInterface, false)));
         }
       }
@@ -118,11 +120,10 @@ public class ConvertInterfaceToClassFix extends LocalQuickFixAndIntentionActionO
 
     final PsiFunctionalExpression functionalExpression = FunctionalExpressionSearch.search(anInterface, searchScope).findFirst();
     if (functionalExpression != null) {
-      final String conflictMessage = ClassPresentationUtil.getFunctionalExpressionPresentation(functionalExpression, true) +
-                                     " will not compile after converting " +
-                                     RefactoringUIUtil.getDescription(anInterface, false) +
-                                     " to a class";
-      conflicts.putValue(functionalExpression, conflictMessage);
+      conflicts.putValue(functionalExpression, IntentionPowerPackBundle.message(
+        "0.will.not.compile.after.converting.1.to.a.class",
+        ClassPresentationUtil.getFunctionalExpressionPresentation(functionalExpression, true),
+        RefactoringUIUtil.getDescription(anInterface, false)));
     }
     final boolean conflictsDialogOK;
     if (conflicts.isEmpty()) {

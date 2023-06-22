@@ -19,6 +19,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -46,11 +47,6 @@ public class DarculaButtonUI extends BasicButtonUI {
   protected static JBValue HELP_BUTTON_DIAMETER = new JBValue.Float(22);
   protected static JBValue MINIMUM_BUTTON_WIDTH = new JBValue.Float(72);
   protected static JBValue HORIZONTAL_PADDING = new JBValue.Float(14);
-
-  private static final Color GOTIT_BUTTON_COLOR_START =
-    JBColor.namedColor("GotItTooltip.Button.startBackground", JBUI.CurrentTheme.Button.buttonColorStart());
-  private static final Color GOTIT_BUTTON_COLOR_END =
-    JBColor.namedColor("GotItTooltip.Button.endBackground", JBUI.CurrentTheme.Button.buttonColorEnd());
 
   public static final Key<Boolean> DEFAULT_STYLE_KEY = Key.create("JButton.styleDefault");
 
@@ -89,6 +85,19 @@ public class DarculaButtonUI extends BasicButtonUI {
     return c instanceof AbstractButton && ((JComponent)c).getClientProperty("gotItButton") == Boolean.TRUE;
   }
 
+  public static boolean isContrastGotIt(Component c) {
+    return c instanceof AbstractButton button && button.getClientProperty("gotItButton.contrast") == Boolean.TRUE;
+  }
+
+  public static @Nullable Insets getCustomButtonInsets(Component c) {
+    if (!(c instanceof AbstractButton b)) return null;
+
+    Object maybeInsets = b.getClientProperty("customButtonInsets");
+    if (!(maybeInsets instanceof Insets)) return null;
+
+    return ((Insets)maybeInsets);
+  }
+
   @Override
   public void installDefaults(AbstractButton b) {
     super.installDefaults(b);
@@ -118,7 +127,7 @@ public class DarculaButtonUI extends BasicButtonUI {
       return SegmentedActionToolbarComponent.Companion.paintButtonDecorations(g, c, getBackground(c, r));
     }
 
-    JBInsets.removeFrom(r, isSmallVariant(c) ? c.getInsets() : JBUI.insets(1));
+    JBInsets.removeFrom(r, isSmallVariant(c) || isGotItButton(c) ? c.getInsets() : JBUI.insets(1));
 
     if (UIUtil.isHelpButton(c)) {
       g.setPaint(UIUtil.getGradientPaint(0, 0, getButtonColorStart(), 0, r.height, getButtonColorEnd()));
@@ -171,14 +180,14 @@ public class DarculaButtonUI extends BasicButtonUI {
     }
   }
 
-  private Paint getBackground(JComponent c, Rectangle r) {
+  protected Paint getBackground(JComponent c, Rectangle r) {
     Color backgroundColor = (Color)c.getClientProperty("JButton.backgroundColor");
 
     return backgroundColor != null ? backgroundColor :
            isDefaultButton(c) ? UIUtil.getGradientPaint(0, 0, getDefaultButtonColorStart(), 0, r.height, getDefaultButtonColorEnd()) :
            isSmallVariant(c) ? JBColor.namedColor("ComboBoxButton.background",
                                                   JBColor.namedColor("Button.darcula.smallComboButtonBackground", UIUtil.getPanelBackground())) :
-           isGotItButton(c) ? UIUtil.getGradientPaint(0, 0, GOTIT_BUTTON_COLOR_START, 0, r.height, GOTIT_BUTTON_COLOR_END) :
+           isGotItButton(c) ? UIUtil.getGradientPaint(0, 0, getGotItButtonColorStart(c), 0, r.height, getGotItButtonColorEnd(c)) :
            UIUtil.getGradientPaint(0, 0, getButtonColorStart(), 0, r.height, getButtonColorEnd());
   }
 
@@ -328,6 +337,20 @@ public class DarculaButtonUI extends BasicButtonUI {
 
   protected Color getDefaultButtonColorEnd() {
     return JBUI.CurrentTheme.Button.defaultButtonColorEnd();
+  }
+
+  private static Color getGotItButtonColorStart(Component c) {
+    if (isContrastGotIt(c)) {
+      return JBUI.CurrentTheme.GotItTooltip.buttonBackgroundContrast();
+    }
+    return JBColor.namedColor("GotItTooltip.Button.startBackground", JBUI.CurrentTheme.Button.buttonColorStart());
+  }
+
+  private static Color getGotItButtonColorEnd(Component c) {
+    if (isContrastGotIt(c)) {
+      return JBUI.CurrentTheme.GotItTooltip.buttonBackgroundContrast();
+    }
+    return JBColor.namedColor("GotItTooltip.Button.endBackground", JBUI.CurrentTheme.Button.buttonColorEnd());
   }
 
   protected String layout(AbstractButton b, @Nls String text, Icon icon, FontMetrics fm, int width, int height) {

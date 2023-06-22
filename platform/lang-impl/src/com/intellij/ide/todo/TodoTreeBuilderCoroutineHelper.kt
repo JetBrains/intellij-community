@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.todo
 
+import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.asContextElement
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.progress.ProgressManager
@@ -32,7 +34,7 @@ private class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeBu
   }
 
   fun scheduleCacheAndTreeUpdate(vararg constraints: ReadConstraint): CompletableFuture<*> {
-    return scope.launch(Dispatchers.EDT) {
+    return scope.launch(Dispatchers.EDT + ClientId.current.asContextElement()) {
       treeBuilder.onUpdateStarted()
       constrainedReadAction(*constraints) {
         blockingContextToIndicator {
@@ -44,7 +46,7 @@ private class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeBu
   }
 
   fun scheduleCacheValidationAndTreeUpdate() {
-    scope.launch(Dispatchers.EDT) {
+    scope.launch(Dispatchers.EDT + ClientId.current.asContextElement()) {
       val pathsToSelect = TreeUtil.collectSelectedUserObjects(treeBuilder.tree).stream()
       treeBuilder.tree.clearSelection()
 
@@ -60,7 +62,7 @@ private class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeBu
   }
 
   fun scheduleUpdateTree(): CompletableFuture<*> {
-    return scope.launch(Dispatchers.Default) {
+    return scope.launch(Dispatchers.Default + ClientId.current.asContextElement()) {
       readActionBlocking {
         treeBuilder.updateVisibleTree()
       }
@@ -68,7 +70,7 @@ private class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeBu
   }
 
   fun scheduleMarkFilesAsDirtyAndUpdateTree(files: List<VirtualFile>) {
-    scope.launch(Dispatchers.Default) {
+    scope.launch(Dispatchers.Default + ClientId.current.asContextElement()) {
       files.asSequence()
         .filter { it.isValid }
         .forEach { treeBuilder.markFileAsDirty(it) }

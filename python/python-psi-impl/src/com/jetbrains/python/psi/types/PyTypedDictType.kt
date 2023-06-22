@@ -9,6 +9,7 @@ import com.jetbrains.python.codeInsight.typing.TDFields
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyPsiUtils
+import com.jetbrains.python.pyi.PyiUtil
 import java.util.*
 
 class PyTypedDictType @JvmOverloads constructor(private val name: String,
@@ -20,11 +21,11 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
                                                 private val declaration: PyQualifiedNameOwner? = null) : PyClassTypeImpl(dictClass,
                                                                                                                          definitionLevel != DefinitionLevel.INSTANCE), PyCollectionType {
   override fun getElementTypes(): List<PyType?> {
-    return listOf(if (!inferred || fields.isNotEmpty()) PyBuiltinCache.getInstance(dictClass).strType else null, getValuesType())
+    return listOf(if (fields.isNotEmpty()) PyLiteralStringType.create(dictClass, false) else null, getValuesType())
   }
 
   override fun getIteratedItemType(): PyType? {
-    return PyBuiltinCache.getInstance(dictClass).strType
+    return PyLiteralStringType.create(dictClass, false)
   }
 
   private fun getValuesType(): PyType? {
@@ -131,7 +132,7 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
 
   override fun getDeclarationElement(): PyQualifiedNameOwner = declaration ?: super<PyClassTypeImpl>.getDeclarationElement()
 
-  class FieldTypeAndTotality @JvmOverloads constructor(val value: PyExpression?, val type: PyType?, val isRequired: Boolean = true)
+  data class FieldTypeAndTotality @JvmOverloads constructor(val value: PyExpression?, val type: PyType?, val isRequired: Boolean = true)
 
   companion object {
 
@@ -279,8 +280,8 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
      * @see <a href=https://www.python.org/dev/peps/pep-0589/#type-consistency>PEP-589</a>
      */
     private fun checkStructuralCompatibility(expected: PyType?,
-                                     actual: PyTypedDictType,
-                                     context: TypeEvalContext): TypeCheckingResult? {
+                                             actual: PyTypedDictType,
+                                             context: TypeEvalContext): TypeCheckingResult? {
       if (expected is PyCollectionType && PyTypingTypeProvider.MAPPING == expected.classQName) {
         val builtinCache = PyBuiltinCache.getInstance(actual.dictClass)
         val elementTypes = expected.elementTypes

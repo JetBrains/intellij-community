@@ -4,10 +4,10 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.facet
 import com.intellij.facet.Facet
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.facetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.mutableFacetMapping
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleSettingsBase
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleSettingsBase
 import org.jetbrains.annotations.ApiStatus
 
 /**

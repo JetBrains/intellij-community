@@ -5,30 +5,35 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import org.jetbrains.intellij.build.NoMoreRetriesException
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 internal val MEDIA_TYPE_BINARY = "application/octet-stream".toMediaType()
 
-internal fun OkHttpClient.head(url: String, authHeader: String): Response {
+internal fun OkHttpClient.head(url: String, authHeader: String): Int {
   return newCall(Request.Builder().url(url).head()
                    .header("Authorization", authHeader)
-                   .build()).execute()
+                   .build()).execute().use { response ->
+    if (response.code != 200 && response.code != 404) {
+      throw IOException("Unexpected code $response")
+    }
+    response.code
+  }
 }
 
-internal fun OkHttpClient.get(url: String, authHeader: String): Response {
+internal fun <T> OkHttpClient.get(url: String, authHeader: String, task: (Response) -> T): T {
   return newCall(Request.Builder().url(url)
                    .header("Authorization", authHeader)
-                   .build()).execute()
+                   .build()).execute().useSuccessful(task)
 }
 
 internal inline fun <T> Response.useSuccessful(task: (Response) -> T): T {
   return use { response ->
-    if (response.isSuccessful) {
-      task(response)
-    }
-    else {
-      throw IOException("Unexpected code $response")
+    when {
+      response.isSuccessful -> task(response)
+      response.code == 404 -> throw NoMoreRetriesException("Unexpected code $response")
+      else -> throw IOException("Unexpected code $response")
     }
   }
 }

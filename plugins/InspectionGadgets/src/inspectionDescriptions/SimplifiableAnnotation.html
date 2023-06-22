@@ -1,9 +1,15 @@
 <html>
 <body>
-Reports annotations that can be simplified to their 'single element'
-or 'marker' shorthand form.
-<p>Annotations that contain whitespace between the @-sign and the name
-  of the annotation are also reported.</p>
+Reports annotations that can be simplified to their single-element or marker shorthand form.
+<p>
+Problems reported:
+<ul>
+  <li>Redundant <code>value=</code> in annotation name-value pairs
+  <li>Redundant braces around array values that contain only a single value
+  <li>Redundant whitespace between the @-sign and the name of annotations
+  <li>Redundant whitespace between annotation names and parameter lists
+  <li>Redundant parentheses in annotations without any parameters
+</ul>
 <p><b>Example:</b></p>
 <pre><code>
   @interface Foo { String[] value(); }

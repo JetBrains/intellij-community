@@ -47,15 +47,15 @@ class ExtendableHTMLViewFactory internal constructor(
 
   companion object {
     @JvmField
-    val DEFAULT_EXTENSIONS = listOf(Extensions.ICONS, Extensions.BASE64_IMAGES, Extensions.HIDPI_IMAGES)
+    val DEFAULT_EXTENSIONS: List<Extension> = listOf(Extensions.ICONS, Extensions.BASE64_IMAGES, Extensions.HIDPI_IMAGES)
 
     @JvmField
-    val DEFAULT = ExtendableHTMLViewFactory(DEFAULT_EXTENSIONS)
+    val DEFAULT: ExtendableHTMLViewFactory = ExtendableHTMLViewFactory(DEFAULT_EXTENSIONS)
 
     private val DEFAULT_EXTENSIONS_WORD_WRAP = DEFAULT_EXTENSIONS + Extensions.WORD_WRAP
 
     @JvmField
-    val DEFAULT_WORD_WRAP = ExtendableHTMLViewFactory(DEFAULT_EXTENSIONS_WORD_WRAP)
+    val DEFAULT_WORD_WRAP: ExtendableHTMLViewFactory = ExtendableHTMLViewFactory(DEFAULT_EXTENSIONS_WORD_WRAP)
   }
 
   @FunctionalInterface
@@ -131,8 +131,10 @@ class ExtendableHTMLViewFactory internal constructor(
 
       private fun getIcon(src: String): Icon? {
         val existingIcon = existingIconsProvider(src)
-        if (existingIcon != null) return existingIcon
-        return IconLoader.findIcon(src, ExtendableHTMLViewFactory::class.java, true, false)
+        if (existingIcon != null) {
+          return existingIcon
+        }
+        return IconLoader.findIcon(path = src, aClass = ExtendableHTMLViewFactory::class.java, deferUrlResolve = true, strict = false)
       }
 
       /**

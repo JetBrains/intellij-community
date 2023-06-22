@@ -11,11 +11,11 @@ class Test {
     private val e = E()
 
     class E {
-        var ee = true
+        var ee: Boolean = true
     }
 
     class F {
-        var f = true
+        var f: Boolean = true
     }
 
     private val g: Int

@@ -14,8 +14,7 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
 
-public class MavenServerForIndexer extends MavenRemoteObject implements MavenServer {
-
+public class MavenServerForIndexer extends MavenWatchdogAware implements MavenServer {
   private volatile MavenIdeaIndexerImpl myIndexerRef;
   private volatile PlexusContainer myPlexusContainer;
 

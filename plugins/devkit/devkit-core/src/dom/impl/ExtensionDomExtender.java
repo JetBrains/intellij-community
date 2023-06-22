@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.google.common.base.CaseFormat;
@@ -105,10 +105,16 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
 
       @Override
       public void visitTagOrProperty(@NotNull PsiField field, @NotNull String tagName, RequiredFlag required) {
+        boolean isBoolean = PsiTypes.booleanType().equals(field.getType());
+
         final DomExtension extension =
-          registrar.registerFixedNumberChildExtension(new XmlName(tagName), SimpleTagValue.class)
+          registrar.registerFixedNumberChildExtension(new XmlName(tagName), isBoolean ? SimpleBooleanTagValue.class : SimpleTagValue.class)
             .setDeclaringElement(field);
         markAsRequired(extension, required);
+
+        if (isBoolean) {
+          return;
+        }
 
         final With withElement = findWithElement(elements, field);
         markAsClass(extension, Extension.isClassField(field.getName()), withElement);
@@ -263,6 +269,9 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
   public interface SimpleTagValue extends GenericDomValue<String> {
   }
 
+  public interface SimpleBooleanTagValue extends GenericDomValue<Boolean> {
+  }
+
   @SuppressWarnings("ClassExplicitlyAnnotation")
   private static class MyNoSpellchecking implements NoSpellchecking {
 
@@ -364,14 +373,14 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     private final String myEnumFqn;
 
     private static final Set<String> LEGACY_ENUM_NOTATION_CLASSES =
-      ContainerUtil.immutableSet(
+      Set.of(
         "com.intellij.compiler.CompileTaskBean.CompileTaskExecutionPhase",
         "com.intellij.plugins.jboss.arquillian.configuration.container.ArquillianContainerKind",
         "com.intellij.notification.impl.NotificationGroupEP.DisplayType"
       );
 
     private static final Set<String> LOWER_UNDERSCORE_ENUM_NOTATION_CLASSES =
-      ContainerUtil.immutableSet(
+      Set.of(
         "com.intellij.ui.viewModel.extraction.ToolWindowExtractorMode"
       );
 
@@ -434,11 +443,11 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     }
 
     private boolean doNotTransformName() {
-      return LEGACY_ENUM_NOTATION_CLASSES.contains(myEnumFqn);
+      return myEnumFqn != null && LEGACY_ENUM_NOTATION_CLASSES.contains(myEnumFqn);
     }
 
     private boolean enumLowerUnderscore() {
-      return LOWER_UNDERSCORE_ENUM_NOTATION_CLASSES.contains(myEnumFqn);
+      return myEnumFqn != null && LOWER_UNDERSCORE_ENUM_NOTATION_CLASSES.contains(myEnumFqn);
     }
   }
 }

@@ -106,8 +106,7 @@ internal fun showStagingArea(project: Project, consumer: (GitStagePanel) -> Unit
     val toolWindow = ChangesViewContentManager.getToolWindowFor(project, STAGING_AREA_TAB_NAME) ?: return@invokeLater
     toolWindow.activate({
                           val contentManager = ChangesViewContentManager.getInstance(project) as ChangesViewContentManager
-                          val content = contentManager.findContents { it.tabName == STAGING_AREA_TAB_NAME }.singleOrNull()
-                                        ?: return@activate
+                          val content = contentManager.findContent(STAGING_AREA_TAB_NAME) ?: return@activate
 
                           contentManager.setSelectedContent(content, true)
                           (content.component as? GitStagePanel)?.let(consumer)

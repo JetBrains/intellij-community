@@ -46,7 +46,7 @@ public class OptionalGetWithoutIsPresentInspection extends AbstractBaseJavaLocal
         if (isOptionalProblem(qualifier, anchor) && !isPresentCallWithSameQualifierExists(qualifier)) {
           holder.registerProblem(nameElement,
                                  JavaBundle.message("inspection.optional.get.without.is.present.message", optionalClass.getName()),
-                                 tryCreateFix(call));
+                                 LocalQuickFix.notNullElements(tryCreateFix(call)));
         }
       }
 

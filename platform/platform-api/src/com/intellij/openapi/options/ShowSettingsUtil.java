@@ -38,6 +38,12 @@ public abstract class ShowSettingsUtil {
                                           @NotNull Predicate<? super Configurable> predicate,
                                           @Nullable Consumer<? super Configurable> additionalConfiguration);
 
+  /**
+   * Show a dialog with a defined configurable.
+   * <p>
+   * editConfigurable method is a good choice to create and show a quick on-call created configurable.
+   * If you'd like to show a configurable that is a part of the settings dialog, prefer using showSettingsDialog method
+   */
   public abstract boolean editConfigurable(Project project, @NotNull Configurable configurable);
 
   public abstract boolean editConfigurable(@Nullable Project project, @NotNull Configurable configurable, @Nullable Runnable advancedInitialization);

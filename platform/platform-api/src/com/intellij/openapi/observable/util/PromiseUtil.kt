@@ -6,17 +6,13 @@ import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.CancellablePromise
 import org.jetbrains.concurrency.Promise
 
-fun <T> getPromise(parentDisposable: Disposable?, subscribe: (Disposable?, (T) -> Unit) -> Unit): Promise<T> {
-  val promise = createPromise<T>(parentDisposable)
+fun <T> getPromise(parentDisposable: Disposable, subscribe: (Disposable, (T) -> Unit) -> Unit): Promise<T> {
+  val promise = AsyncPromise<T>()
+    .cancelWhenDisposed(parentDisposable)
   subscribe(parentDisposable) {
     promise.setResult(it)
   }
   return promise
-}
-
-fun <T> createPromise(parentDisposable: Disposable?): AsyncPromise<T> {
-  return AsyncPromise<T>()
-    .cancelWhenDisposed(parentDisposable)
 }
 
 fun <P : CancellablePromise<*>> P.cancelWhenDisposed(parentDisposable: Disposable?): P {
@@ -25,3 +21,4 @@ fun <P : CancellablePromise<*>> P.cancelWhenDisposed(parentDisposable: Disposabl
   }
   return this
 }
+

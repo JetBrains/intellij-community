@@ -48,6 +48,15 @@ public class WindowTabsLayout extends SingleRowLayout {
   }
 
   @Override
+  public int getDropIndexFor(Point point) {
+    Component component = myTabs.getComponentAt(point);
+    if (component instanceof TabLabel label && lastSingRowLayout != null) {
+      return lastSingRowLayout.myVisibleInfos.indexOf(label.getInfo());
+    }
+    return -1;
+  }
+
+  @Override
   public int getDropSideFor(@NotNull Point point) {
     return -1;
   }

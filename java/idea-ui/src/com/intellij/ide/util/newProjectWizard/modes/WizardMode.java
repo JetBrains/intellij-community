@@ -20,7 +20,6 @@ import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import org.jetbrains.annotations.NotNull;
@@ -28,8 +27,13 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+/**
+ * @see <a href="https://youtrack.jetbrains.com/issue/IDEA-302097"/>IDEA-302097</a>
+ * @deprecated No usages, only implementations
+ */
+@Deprecated
+@SuppressWarnings("unused")
 public abstract class WizardMode implements Disposable {
-  public static final ExtensionPointName<WizardMode> MODES = ExtensionPointName.create("com.intellij.wizardMode");
 
   private StepSequence myStepSequence;
 

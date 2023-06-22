@@ -3,9 +3,9 @@
 package org.jetbrains.kotlin.idea.refactoring.cutPaste
 
 import com.intellij.codeHighlighting.*
+import com.intellij.codeInsight.daemon.impl.BackgroundUpdateHighlightersUtil
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
-import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -37,18 +37,14 @@ class MoveDeclarationsPassFactory : TextEditorHighlightingPassFactory {
         private val editor: Editor
     ) : TextEditorHighlightingPass(project, editor.document, true) {
 
-        @Volatile
-        private var myInfo: HighlightInfo? = null
-
         override fun doCollectInformation(progress: ProgressIndicator) {
-            myInfo = buildHighlightingInfo()
+            val info = buildHighlightingInfo()
+            if (info != null) {
+                BackgroundUpdateHighlightersUtil.setHighlightersToEditor(project, file, myDocument, 0, file.textLength, listOf(info), id)
+            }
         }
 
         override fun doApplyInformationToEditor() {
-            val info = myInfo
-            if (info != null) {
-                UpdateHighlightersUtil.setHighlightersToEditor(project, myDocument, 0, file.textLength, listOf(info), colorsScheme, id)
-            }
         }
 
         private fun buildHighlightingInfo(): HighlightInfo? {

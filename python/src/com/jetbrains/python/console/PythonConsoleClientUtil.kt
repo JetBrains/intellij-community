@@ -1,14 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("PythonConsoleClientUtil")
 
 package com.jetbrains.python.console
 
 import com.intellij.util.ConcurrencyUtil
+import com.intellij.util.ReflectionUtil
 import com.jetbrains.python.console.protocol.PythonConsoleBackendService
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
-import java.lang.reflect.Proxy
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
@@ -24,8 +24,7 @@ fun synchronizedPythonConsoleClient(loader: ClassLoader,
   // that requires every read to be made from the same thread.
   val executorService = ConcurrencyUtil.newSingleThreadExecutor(PYTHON_CONSOLE_COMMAND_THREAD_FACTORY_NAME)
 
-  val proxy = Proxy.newProxyInstance(loader, arrayOf<Class<*>>(
-    PythonConsoleBackendService.Iface::class.java),
+  val proxy = ReflectionUtil.proxy(loader, PythonConsoleBackendService.Iface::class.java,
                                      InvocationHandler { _, method, args ->
                                        // we evaluate the original method in the other thread in order to control it
                                        val future = executorService.submit(Callable {
@@ -51,7 +50,7 @@ fun synchronizedPythonConsoleClient(loader: ClassLoader,
                                            throw e.cause ?: e
                                          }
                                        }
-                                     }) as PythonConsoleBackendService.Iface
+                                     })
   // make the `proxy` disposable
   return object : PythonConsoleBackendServiceDisposable, PythonConsoleBackendService.Iface by proxy {
     override fun dispose() {

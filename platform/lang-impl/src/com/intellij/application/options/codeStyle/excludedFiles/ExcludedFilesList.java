@@ -18,7 +18,6 @@ import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,7 +59,9 @@ public class ExcludedFilesList extends JBList<FileSetDescriptor> {
   private void onSelectionChange() {
     int i = getSelectedIndex();
     AnActionButton removeButton = ToolbarDecorator.findRemoveButton(myFileListDecorator.getActionsPanel());
-    ObjectUtils.consumeIfNotNull(removeButton,  button ->  button.setEnabled(i >= 0));
+    if (removeButton != null) {
+      removeButton.setEnabled(i >= 0);
+    }
   }
 
   public void reset(@NotNull CodeStyleSettings settings) {

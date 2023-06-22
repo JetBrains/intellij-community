@@ -83,9 +83,9 @@ public class TemplateToken extends ZenCodingToken {
     return PsiTreeUtil.findChildOfType(myFile, XmlTag.class);
   }
   
-  public void setTemplateText(@NotNull String templateText, @NotNull CustomTemplateCallback callback) {
-    PsiFile file = PsiFileFactory.getInstance(callback.getProject())
-      .createFileFromText("dummy.html", callback.getFile().getLanguage(), templateText, true, true);
+  public void setTemplateText(@NotNull String templateText, @NotNull PsiFile context) {
+    PsiFile file = PsiFileFactory.getInstance(context.getProject())
+      .createFileFromText("dummy.html", context.getLanguage(), templateText, false, true);
     VirtualFile vFile = file.getVirtualFile();
     if (vFile != null) {
       UndoUtil.disableUndoFor(vFile);
@@ -100,7 +100,7 @@ public class TemplateToken extends ZenCodingToken {
 
   public void setTemplate(@NotNull TemplateImpl template, @NotNull CustomTemplateCallback callback) {
     myTemplate = template;
-    setTemplateText(createTemplateText(template, callback, getAttributes()), callback);
+    setTemplateText(createTemplateText(template, callback, getAttributes()), callback.getFile());
   }
 
   private static boolean containsAttrsVar(@NotNull TemplateImpl template) {

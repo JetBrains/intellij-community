@@ -179,7 +179,7 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
     }
 
     @Override
-    public boolean canEat(Update update) {
+    public boolean canEat(@NotNull Update update) {
       return true;
     }
 

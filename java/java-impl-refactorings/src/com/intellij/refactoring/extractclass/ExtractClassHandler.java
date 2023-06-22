@@ -1,28 +1,13 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractclass;
 
 import com.intellij.idea.ActionsBundle;
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
@@ -30,13 +15,16 @@ import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.actions.RefactoringActionContextUtil;
 import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 public class ExtractClassHandler implements ElementsHandler, ContextAwareActionHandler {
-  protected static String getHelpID() {
-    return HelpID.ExtractClass;
-  }
 
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
@@ -45,37 +33,26 @@ public class ExtractClassHandler implements ElementsHandler, ContextAwareActionH
 
   @Override
   public boolean isEnabledOnElements(PsiElement[] elements) {
-    return elements.length == 1 && PsiTreeUtil.getParentOfType(elements[0], PsiClass.class, false) != null;
+    return ContainerUtil.exists(elements, element -> element instanceof PsiMember);
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    final ScrollingModel scrollingModel = editor.getScrollingModel();
-    scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE);
-    final CaretModel caretModel = editor.getCaretModel();
-    final int position = caretModel.getOffset();
-    final PsiElement element = file.findElementAt(position);
+    editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    List<PsiMember> elements = CommonRefactoringUtil.findElementsFromCaretsAndSelections(editor, file, null, e -> e instanceof PsiMember);
 
-    final PsiMember selectedMember = PsiTreeUtil.getParentOfType(element, PsiMember.class, true);
-    if (selectedMember == null) {
-      //todo
-      return;
-    }
-
-    PsiClass containingClass = selectedMember.getContainingClass();
-
-    if (containingClass == null && selectedMember instanceof PsiClass) {
-      containingClass = (PsiClass)selectedMember;
-    }
+    PsiElement parent = PsiTreeUtil.findCommonParent(elements);
+    PsiClass containingClass = parent instanceof PsiClass parentClass
+                               ? parentClass
+                               : PsiTreeUtil.getParentOfType(parent, PsiClass.class, false);
 
     final String cannotRefactorMessage = getCannotRefactorMessage(containingClass);
     if (cannotRefactorMessage != null)  {
       CommonRefactoringUtil.showErrorHint(project, editor,
                                           RefactorJBundle.message("cannot.perform.the.refactoring") + cannotRefactorMessage,
-                                          ActionsBundle.message("action.ExtractClass.description"), getHelpID());
-      return;
+                                          getRefactoringName(), HelpID.ExtractClass);
     }
-    new ExtractClassDialog(containingClass, selectedMember).show();
+    new ExtractClassDialog(containingClass, new HashSet<>(elements)).show();
   }
 
   private static @Nls String getCannotRefactorMessage(PsiClass containingClass) {
@@ -109,19 +86,22 @@ public class ExtractClassHandler implements ElementsHandler, ContextAwareActionH
 
   @Override
   public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
-    if (elements.length != 1) {
+    PsiElement parent = PsiTreeUtil.findCommonParent(elements);
+    final PsiClass containingClass = parent instanceof PsiClass aClass
+                                     ? aClass
+                                     : PsiTreeUtil.getParentOfType(parent, PsiClass.class, false);
+    final String cannotRefactorMessage = getCannotRefactorMessage(containingClass);
+    if (cannotRefactorMessage != null)  {
+      CommonRefactoringUtil.showErrorHint(project, null,
+                                          RefactorJBundle.message("cannot.perform.the.refactoring") + cannotRefactorMessage,
+                                          getRefactoringName(), HelpID.ExtractClass);
       return;
     }
-    final PsiClass containingClass = PsiTreeUtil.getParentOfType(elements[0], PsiClass.class, false);
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, containingClass)) return;
 
-    final PsiMember selectedMember = PsiTreeUtil.getParentOfType(elements[0], PsiMember.class, false);
-    if (containingClass == null) {
-      return;
-    }
-    if (classIsTrivial(containingClass)) {
-      return;
-    }
-    new ExtractClassDialog(containingClass, selectedMember).show();
+    final Set<PsiElement> selectedMembers = new HashSet<>();
+    Collections.addAll(selectedMembers, elements);
+    new ExtractClassDialog(containingClass, selectedMembers).show();
   }
 
   private static boolean classIsTrivial(PsiClass containingClass) {
@@ -133,5 +113,9 @@ public class ExtractClassHandler implements ElementsHandler, ContextAwareActionH
       return true;
     }
     return false;
+  }
+
+  public static @NlsContexts.DialogTitle String getRefactoringName() {
+    return ActionsBundle.message("action.ExtractClass.description");
   }
 }

@@ -3,10 +3,15 @@ package org.jetbrains.plugins.github.api.data
 
 import com.intellij.collaboration.api.dto.GraphQLNodesDTO
 
-open class GHCommitWithCheckStatuses(id: String, oid: String, abbreviatedOid: String,
-                                     val status: Status?,
-                                     val checkSuites: GraphQLNodesDTO<GHCommitCheckSuiteStatus>)
-  : GHCommitHash(id, oid, abbreviatedOid) {
+open class GHCommitWithCheckStatuses(
+  id: String,
+  oid: String,
+  abbreviatedOid: String,
+  val status: Status?,
+  checkSuites: GraphQLNodesDTO<GHCommitCheckSuiteStatus>
+) : GHCommitHash(id, oid, abbreviatedOid) {
 
-  class Status(val contexts: List<GHCommitStatusContextStatus>)
+  val checkSuites: List<GHCommitCheckSuiteStatus> = checkSuites.nodes
+
+  class Status(val contexts: List<GHCommitStatusContext>)
 }

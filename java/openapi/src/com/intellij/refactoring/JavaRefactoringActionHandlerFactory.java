@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -109,14 +109,6 @@ public abstract class JavaRefactoringActionHandlerFactory {
    * accepts one {@code PsiClass}.
    */
   public abstract RefactoringActionHandler createExtractSuperclassHandler();
-
-  /**
-   * Creates handler for Generify (aka Type Cook) refactoring.<p>
-   *
-   * {@link RefactoringActionHandler#invoke(com.intellij.openapi.project.Project, com.intellij.psi.PsiElement[], com.intellij.openapi.actionSystem.DataContext)}
-   * accepts any number of arbitrary {@code PsiElement}s. All code inside these elements will be generified.
-   */
-  public abstract RefactoringActionHandler createTypeCookHandler();
 
   /**
    * Creates handler for Inline refactoring.<p>

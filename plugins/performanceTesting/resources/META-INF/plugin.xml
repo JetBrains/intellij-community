@@ -24,6 +24,7 @@
     </group>
     <group id="DiagnosticGroup">
       <separator/>
+      <action id="CaptureMemorySnapShot" class="com.jetbrains.performancePlugin.actions.CaptureMemorySnapshotAction" icon="AllIcons.Actions.ProfileMemory"/>
       <action class="com.jetbrains.performancePlugin.actions.ExecuteScriptAction" id="performancePlugin.ExecuteScriptAction"/>
       <separator/>
       <add-to-group group-id="HelpDiagnosticTools" anchor="last"/>
@@ -64,6 +65,10 @@
 
     <notificationGroup id="PerformancePlugin" displayType="BALLOON" bundle="messages.PerformanceTestingBundle" key="notification.group.performance.plugin"/>
     <registryKey key="performance.plugin.playback.runner.useDirectActionCall" description="Setup PlaybackRunner to use direct action calls over key strokes for actions in Playback framework" defaultValue="false" restartRequired="false"/>
+
+    <projectService overrides="true"
+                    serviceInterface="com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService"
+                    serviceImplementation="com.jetbrains.performancePlugin.ProjectInitializationDiagnosticServiceImpl"/>
   </extensions>
 
   <applicationListeners>

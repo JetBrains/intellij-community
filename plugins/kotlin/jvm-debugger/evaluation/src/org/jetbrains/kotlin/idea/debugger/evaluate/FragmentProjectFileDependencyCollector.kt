@@ -3,13 +3,15 @@ package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
+import org.jetbrains.kotlin.descriptors.MemberDescriptor
 import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.util.analyzeInlinedFunctions
+import org.jetbrains.kotlin.idea.util.expectedDeclarationIfAny
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
-import org.jetbrains.kotlin.resolve.scopes.receivers.ThisClassReceiver
+import org.jetbrains.kotlin.resolve.scopes.receivers.*
 
 /**
  * This traversal collects the files containing the sources of
@@ -36,7 +38,7 @@ fun gatherProjectFilesDependedOnByFragment(fragment: KtCodeFragment, bindingCont
 private fun analyzeCalls(
     fragment: KtCodeFragment,
     bindingContext: BindingContext,
-    localFunctions: MutableSet<KtFile>
+    files: MutableSet<KtFile>
 ) {
     val project = fragment.project
 
@@ -49,17 +51,63 @@ private fun analyzeCalls(
 
             val descriptor = resolvedCall.resultingDescriptor
 
+            fun processClassReceiver(receiver: ReceiverValue?) {
+                if (receiver is ContextClassReceiver || receiver is ImplicitClassReceiver && receiver.classDescriptor.visibility == DescriptorVisibilities.LOCAL) {
+                    val declarationDescriptor = (receiver as? ImplicitReceiver)?.declarationDescriptor ?: return
+                    val declaration = DescriptorToSourceUtilsIde.getAnyDeclaration(
+                        project, declarationDescriptor
+                    ) ?: return
+                    files.add(declaration.containingFile as KtFile)
+                }
+            }
+
+            // If the implicit receiver of a call is a context class receiver,
+            // we have to add the containing file of the class that accepts this
+            // receiver as a dependency, because context class receivers are put
+            // on a stack with the 'getfield' instruction, and the fragment compiler
+            // will need the generated synthetic fields to generate the bytecode correctly.
+            // Consider the example:
+            // class Ctx { fun foo() = 1 }
+            //
+            // context(Ctx)
+            // class A {
+            //     fun bar() = foo()
+            // }
+            //
+            // The simplified bytecode of the 'bar' function will consist of
+            // these opcodes as of Kotlin 1.8:
+            //   0: aload_0
+            //   1: getfield      #22  // Field contextReceiverField0:LCtx;
+            //   4: invokevirtual #31  // Method Ctx.foo:()I
+            //   7: pop
+            //   8: return
+
+            with(resolvedCall) {
+                processClassReceiver(dispatchReceiver)
+                contextReceivers.forEach(::processClassReceiver)
+            }
+
+            if (descriptor is ReceiverParameterDescriptor) {
+                processClassReceiver(descriptor.value)
+            }
+
+            if ((descriptor as? MemberDescriptor)?.isActual == true) {
+                val actualDeclaration = DescriptorToSourceUtilsIde.getAnyDeclaration(project, descriptor)
+                val expectedDeclaration = (actualDeclaration as? KtDeclaration)?.expectedDeclarationIfAny()
+                listOfNotNull(actualDeclaration, expectedDeclaration).forEach { files.add(it.containingFile as KtFile) }
+            }
+
             if (descriptor.visibility == DescriptorVisibilities.LOCAL) {
                 val declaration = DescriptorToSourceUtilsIde.getAnyDeclaration(project, descriptor) ?: return
-                localFunctions.add(declaration.containingFile as KtFile)
+                files.add(declaration.containingFile as KtFile)
             } else if (descriptor.dispatchReceiverParameter?.visibility == DescriptorVisibilities.LOCAL) {
                 val thisReceiver = descriptor.dispatchReceiverParameter?.value as? ThisClassReceiver ?: return
                 val declaration = DescriptorToSourceUtils.getSourceFromDescriptor(thisReceiver.classDescriptor) ?: return
-                localFunctions.add(declaration.containingFile as? KtFile ?: return)
+                files.add(declaration.containingFile as? KtFile ?: return)
             } else if ((descriptor as? ClassConstructorDescriptor)?.constructedClass?.visibility == DescriptorVisibilities.LOCAL) {
                 val declaration = DescriptorToSourceUtils.getSourceFromDescriptor((descriptor).constructedClass) ?: return
-                localFunctions.add(declaration.containingFile as? KtFile ?: return)
-            } // TODO: Extension & Context receivers?
+                files.add(declaration.containingFile as? KtFile ?: return)
+            } // TODO: Extension receivers?
         }
     })
 }

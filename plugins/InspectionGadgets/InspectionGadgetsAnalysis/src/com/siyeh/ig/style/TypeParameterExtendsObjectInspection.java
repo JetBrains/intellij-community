@@ -15,23 +15,21 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class TypeParameterExtendsObjectInspection extends BaseInspection {
 
@@ -69,11 +67,11 @@ public class TypeParameterExtendsObjectInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new ExtendsObjectFix();
   }
 
-  private static class ExtendsObjectFix extends InspectionGadgetsFix {
+  private static class ExtendsObjectFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -83,8 +81,7 @@ public class TypeParameterExtendsObjectInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement identifier = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement identifier, @NotNull ModPsiUpdater updater) {
       final PsiElement parent = identifier.getParent();
       if (parent instanceof PsiTypeParameter typeParameter) {
         final PsiReferenceList extendsList =
@@ -93,7 +90,7 @@ public class TypeParameterExtendsObjectInspection extends BaseInspection {
           extendsList.getReferenceElements();
         for (PsiJavaCodeReferenceElement referenceElement :
           referenceElements) {
-          deleteElement(referenceElement);
+          referenceElement.delete();
         }
       }
       else {

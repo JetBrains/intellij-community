@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.commit
 
+import com.intellij.dvcs.push.PrePushHandler
 import com.intellij.mock.MockVirtualFile
 import com.intellij.openapi.vfs.VirtualFile
 import org.junit.Test
@@ -65,8 +66,9 @@ class KotlinPluginPrePushHandlerTest {
 
     @Test
     fun testThatChecksForFileSet() {
+      val handler = getHandler()
       val filesSet = files.map { fileAt(it.first, it.second) }
-      assert(KotlinPluginPrePushHandler.containKotlinPluginSources(filesSet)) {
+      assert(handler != null && handler.containSources(filesSet)) {
         "The following set of files doesn't trigger the check: $filesSet"
       }
     }
@@ -110,8 +112,9 @@ class KotlinPluginPrePushHandlerTest {
 
     @Test
     fun testThatIgnoresFileSet() {
+      val handler = getHandler()
       val filesSet = files.map { fileAt(it.first, it.second) }
-      assert(!KotlinPluginPrePushHandler.containKotlinPluginSources(filesSet)) {
+      assert(handler != null && !handler.containSources(filesSet)) {
         "The following set of files triggered the check: $filesSet"
       }
     }
@@ -192,7 +195,8 @@ class KotlinPluginPrePushHandlerTest {
 
     @Test
     fun testThatCommitMessageIsValid() {
-      assert(KotlinPluginPrePushHandler.commitMessageIsCorrect(commitMessage)) {
+      val handler = getHandler()
+      assert(handler != null && handler.commitMessageIsCorrect(commitMessage)) {
         "The following commit message was considered invalid: $commitMessage"
       }
     }
@@ -258,13 +262,15 @@ class KotlinPluginPrePushHandlerTest {
 
     @Test
     fun testThatCommitMessageIsValid() {
-      assert(!KotlinPluginPrePushHandler.commitMessageIsCorrect(commitMessage)) {
+      val handler = getHandler()
+      assert(handler != null && !handler.commitMessageIsCorrect(commitMessage)) {
         "The following commit message was considered as valid: $commitMessage"
       }
     }
   }
 }
 
+private fun getHandler(): KotlinPluginPrePushHandler? = PrePushHandler.EP_NAME.findExtension(KotlinPluginPrePushHandler::class.java)
 
 private val tempDir: String = System.getProperty("java.io.tmpdir")
 private const val ULTIMATE_KOTLIN_PLUGIN = "plugins/kotlin/package/"

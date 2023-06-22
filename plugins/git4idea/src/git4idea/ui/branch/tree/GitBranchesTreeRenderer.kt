@@ -224,7 +224,7 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
 
   private val mainPanel = MyMainPanel()
 
-  override fun getTreeCellRendererComponent(tree: JTree?,
+  override fun getTreeCellRendererComponent(tree: JTree,
                                             value: Any?,
                                             selected: Boolean,
                                             expanded: Boolean,
@@ -257,7 +257,7 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
     }
 
     val (inOutIcon, inOutTooltip) = getIncomingOutgoingIconWithTooltip(userObject)
-    tree?.toolTipText = inOutTooltip
+    tree.toolTipText = inOutTooltip
 
     incomingOutgoingLabel.apply {
       icon = inOutIcon
@@ -286,12 +286,12 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
       }
     }
 
-    if (tree != null && value != null) {
+    if (value != null && userObject !is PopupFactoryImpl.ActionItem) {
       SpeedSearchUtil.applySpeedSearchHighlightingFiltered(tree, value, mainTextComponent, true, selected)
     }
 
     if (updateScaleHelper.saveScaleAndUpdateUIIfChanged(mainPanel)) {
-      tree?.rowHeight = GitBranchesTreePopup.treeRowHeight
+      tree.rowHeight = GitBranchesTreePopup.treeRowHeight
     }
 
     return mainPanel
@@ -304,6 +304,13 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
     internal fun getText(treeNode: Any?, model: GitBranchesTreeModel, repositories: List<GitRepository>): @NlsSafe String? {
       val value = treeNode ?: return null
       return when (value) {
+        GitBranchesTreeModel.RecentNode -> {
+          when (model) {
+            is GitBranchesTreeSelectedRepoModel -> GitBundle.message("group.Git.Recent.Branch.in.repo.title",
+                                                                     DvcsUtil.getShortRepositoryName(model.selectedRepository))
+            else -> GitBundle.message("group.Git.Recent.Branch.title")
+          }
+        }
         GitBranchType.LOCAL -> {
           when {
             model is GitBranchesTreeSelectedRepoModel -> GitBundle.message("branches.local.branches.in.repo",
@@ -324,8 +331,10 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
         is GitRepository -> DvcsUtil.getShortRepositoryName(value)
         is GitBranchesTreeModel.BranchTypeUnderRepository -> {
           when (value.type) {
+            GitBranchesTreeModel.RecentNode -> GitBundle.message("group.Git.Recent.Branch.title")
             GitBranchType.LOCAL -> GitBundle.message("group.Git.Local.Branch.title")
             GitBranchType.REMOTE -> GitBundle.message("group.Git.Remote.Branch.title")
+            else -> null
           }
         }
         is BranchUnderRepository -> getText(value.branch, model, repositories)

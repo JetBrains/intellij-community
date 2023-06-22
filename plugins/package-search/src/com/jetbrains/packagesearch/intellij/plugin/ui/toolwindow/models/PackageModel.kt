@@ -20,6 +20,7 @@ import com.intellij.openapi.module.Module
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageSearchModule
 import com.jetbrains.packagesearch.intellij.plugin.normalizeWhitespace
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
+import org.jetbrains.idea.packagesearch.SortMetric
 import org.jetbrains.packagesearch.api.v2.ApiStandardPackage
 
 internal sealed class PackageModel : Comparable<PackageModel> {
@@ -156,6 +157,17 @@ internal sealed class PackageModel : Comparable<PackageModel> {
         override fun toString(): String = "SearchResult(declaredVersions=$declaredVersions, searchableInfo='$searchableInfo')"
     }
 
+    fun getSortMetricValue(sortMetric: SortMetric): Number {
+        val value = when (sortMetric) {
+            SortMetric.DEPENDENCY_RATING -> remoteInfo?.metrics?.dependencyRating
+            SortMetric.STACKOVERFLOW_HEALTH -> remoteInfo?.metrics?.stackoverflowHealth
+            SortMetric.GITHUB_STARS -> remoteInfo?.metrics?.stars
+            SortMetric.OSS_HEALTH -> remoteInfo?.metrics?.ossHealth
+            else -> 0.0
+        }
+
+        return value ?: 0.0
+    }
 }
 
 internal data class InstalledDependenciesUsages(

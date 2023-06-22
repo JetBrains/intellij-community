@@ -39,6 +39,11 @@ class CoverageClassFilterEditor extends ClassFilterEditor {
         protected @Nullable PsiPackage getPsiPackage(String newQualifiedName) {
           return JavaPsiFacade.getInstance(myProject).findPackage(newQualifiedName);
         }
+
+        @Override
+        protected boolean canExpandInSpeedSearch() {
+          return true;
+        }
       };
     if (chooser.showAndGet()) {
       List<PsiPackage> packages = chooser.getSelectedPackages();

@@ -67,6 +67,12 @@ public class JBTextArea extends JTextArea implements ComponentWithEmptyText {
   }
 
   @Override
+  public void updateUI() {
+    super.updateUI();
+    if (getParent() != null) myEmptyText.resetFont();
+  }
+
+  @Override
   protected Graphics getComponentGraphics(Graphics graphics) {
     return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
   }

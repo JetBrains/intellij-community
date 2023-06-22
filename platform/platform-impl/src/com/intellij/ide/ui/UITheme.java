@@ -1,17 +1,22 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
 import com.fasterxml.jackson.jr.ob.JSON;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
+import com.intellij.ide.ui.laf.UIThemeBasedLookAndFeelInfo;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.ImageDataByPathLoader;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.ColorHexUtil;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.Gray;
+import com.intellij.ui.icons.ImageDataByPathLoader;
+import com.intellij.ui.icons.ImageDataByPathLoaderKt;
+import com.intellij.ui.svg.SvgAttributePatcher;
+import com.intellij.ui.svg.SvgKt;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.InsecureHashBuilder;
 import com.intellij.util.SVGLoader;
-import com.intellij.util.io.DigestUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -25,9 +30,6 @@ import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.util.*;
 import java.util.function.Function;
 
@@ -44,6 +46,7 @@ public final class UITheme {
   private String author;
   private String id;
   private String editorScheme;
+  private @Nullable String parentTheme;
   private String[] additionalEditorSchemes;
   private Map<String, Object> ui;
   private @Nullable Map<String, Object> icons;
@@ -89,7 +92,7 @@ public final class UITheme {
                                               @NotNull Function<? super String, String> iconsMapper) throws IOException {
     UITheme theme = JSON_READER.beanFrom(UITheme.class, stream);
     theme.id = themeId;
-    return loadFromJson(theme, provider, iconsMapper);
+    return postProcessTheme(theme, findParentTheme(theme), provider, iconsMapper);
   }
 
   public static @NotNull UITheme loadFromJson(byte[] data,
@@ -98,7 +101,7 @@ public final class UITheme {
                                               @NotNull Function<? super String, String> iconsMapper) throws IOException {
     UITheme theme = JSON_READER.beanFrom(UITheme.class, data);
     theme.id = themeId;
-    return loadFromJson(theme, provider, iconsMapper);
+    return postProcessTheme(theme, findParentTheme(theme), provider, iconsMapper);
   }
 
   public static @NotNull UITheme loadFromJson(@Nullable UITheme parentTheme,
@@ -108,10 +111,87 @@ public final class UITheme {
                                               @NotNull Function<? super String, String> iconsMapper) throws IOException {
     UITheme theme = JSON_READER.beanFrom(UITheme.class, data);
     theme.id = themeId;
+    return postProcessTheme(theme, parentTheme, provider, iconsMapper);
+  }
+
+  private static @NotNull UITheme postProcessTheme(@NotNull UITheme theme,
+                                                   @Nullable UITheme parentTheme,
+                                                   @Nullable ClassLoader provider,
+                                                   @NotNull Function<? super String, String> iconsMapper) throws IllegalStateException {
+    normalizeKeyPaths(theme);
     if (parentTheme != null) {
       importFromParentTheme(theme, parentTheme);
     }
+    putDefaultsIfAbsent(theme);
     return loadFromJson(theme, provider, iconsMapper);
+  }
+
+  private static @Nullable UITheme findParentTheme(@NotNull UITheme theme) {
+    String parentTheme = theme.parentTheme;
+    if (parentTheme != null) {
+      for (UIManager.LookAndFeelInfo laf : LafManager.getInstance().getInstalledLookAndFeels()) {
+        if (laf instanceof UIThemeBasedLookAndFeelInfo) {
+          UITheme uiTheme = ((UIThemeBasedLookAndFeelInfo)laf).getTheme();
+          if (uiTheme.getName().equals(parentTheme)) {
+            return uiTheme;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Flatten
+   * <pre>{@code "Editor": { "SearchField" : { "borderInsets" : "7,10,7,8" } }}</pre>
+   * to
+   * <pre>{@code "Editor.SearchField.borderInsets" : "7,10,7,8"}</pre>
+   * in internal representation.
+   * <p>
+   * We also resolve per-OS keys here:
+   * <pre> {@code
+   *  "Menu.borderColor": {
+   *      "os.default": "Grey12",
+   *      "os.windows": "Blue12"
+   *  }
+   * }</pre>
+   * <p>
+   * This is helpful when we need to check if some key was already set in {@link #putDefaultsIfAbsent},
+   * and to make overriding parentTheme keys independent of used form.
+   * <p>
+   * NB: we intentionally do not expand "*" patterns here.
+   */
+  private static void normalizeKeyPaths(@NotNull UITheme theme) {
+    if (theme.ui == null) return;
+
+    Map<String, Object> result = new LinkedHashMap<>();
+    for (Map.Entry<String, Object> entry : theme.ui.entrySet()) {
+      normalizeKeyValue(entry.getKey(), entry.getValue(), result);
+    }
+    theme.ui = result;
+  }
+
+  private static void normalizeKeyValue(@NotNull String keyPrefix,
+                                        @NotNull Object value,
+                                        @NotNull Map<String, Object> result) {
+    if (value instanceof Map) {
+      @SuppressWarnings("unchecked") Map<String, Object> valueMap = (Map<String, Object>)value;
+      if (isOSCustomization(valueMap)) {
+        Object osValue = getOSCustomization(valueMap);
+        if (osValue != null) {
+          normalizeKeyValue(keyPrefix, osValue, result);
+        }
+      }
+      else {
+        for (Map.Entry<String, Object> entry : valueMap.entrySet()) {
+          String uiKey = createUIKey(keyPrefix, entry.getKey());
+          normalizeKeyValue(uiKey, entry.getValue(), result);
+        }
+      }
+    }
+    else {
+      result.put(keyPrefix, value);
+    }
   }
 
   private static void importFromParentTheme(@NotNull UITheme theme, @NotNull UITheme parentTheme) {
@@ -127,14 +207,38 @@ public final class UITheme {
                                                                         @Nullable Map<String, Object> parentThemeMap) {
     if (parentThemeMap == null) return themeMap;
     Map<String, Object> result = new LinkedHashMap<>(parentThemeMap);
-    if (themeMap != null) result.putAll(themeMap);
+    if (themeMap != null) {
+      for (Map.Entry<String, Object> entry : themeMap.entrySet()) {
+        String key = entry.getKey();
+        Object value = entry.getValue();
+        result.remove(key);
+        result.put(key, value);
+      }
+    }
     return result;
+  }
+
+  /**
+   * Ensure that the old themes are not missing some vital keys.
+   * <p>
+   * We are patching them here instead of using {@link com.intellij.ui.JBColor#namedColor} fallback
+   * to make sure {@link UIManager#getColor} works properly.
+   */
+  private static void putDefaultsIfAbsent(@NotNull UITheme theme) {
+    if (theme.ui == null) theme.ui = new LinkedHashMap<>();
+
+    if (ExperimentalUI.isNewUI()) {
+      theme.ui.putIfAbsent("EditorTabs.underlineArc", "4");
+
+      // require theme to specify ToolWindow stripe button colors explicitly, without "*"
+      theme.ui.putIfAbsent("ToolWindow.Button.selectedBackground", "#3573F0");
+      theme.ui.putIfAbsent("ToolWindow.Button.selectedForeground", "#FFFFFF");
+    }
   }
 
   private static @NotNull UITheme loadFromJson(@NotNull UITheme theme,
                                                @Nullable ClassLoader provider,
-                                               @NotNull Function<? super String, String> iconsMapper)
-    throws IllegalStateException {
+                                               @NotNull Function<? super String, String> iconsMapper) throws IllegalStateException {
     if (provider != null) {
       theme.providerClassLoader = provider;
     }
@@ -142,30 +246,24 @@ public final class UITheme {
     initializeNamedColors(theme);
     PaletteScopeManager paletteScopeManager = new PaletteScopeManager();
 
-    if (theme.iconColorsOnSelection != null && !theme.iconColorsOnSelection.isEmpty()) {
-      Map<String, String> colors = new HashMap<>(theme.iconColorsOnSelection.size());
-      for (Map.Entry<String, Object> entry : theme.iconColorsOnSelection.entrySet()) {
-        colors.put(entry.getKey(), entry.getValue().toString());
+    Map<String, Object> colorsOnSelection = theme.iconColorsOnSelection;
+    if (colorsOnSelection != null && !colorsOnSelection.isEmpty()) {
+      Map<String, String> colors = new HashMap<>(colorsOnSelection.size());
+      Set<String> alphaColors = new HashSet<>(colorsOnSelection.size());
+      for (Map.Entry<String, Object> entry : colorsOnSelection.entrySet()) {
+        String value = entry.getValue().toString();
+        colors.put(entry.getKey(), value);
+        alphaColors.add(value);
       }
 
-      Map<String, Integer> alpha = new HashMap<>(colors.size());
-      colors.forEach((key, value) -> alpha.put(value, 255));
       theme.selectionColorPatcher = new SVGLoader.SvgElementColorPatcherProvider() {
         @Override
-        public SVGLoader.@Nullable SvgElementColorPatcher forPath(@Nullable String path) {
-          MessageDigest hasher = DigestUtil.sha512();
+        public @Nullable SvgAttributePatcher attributeForPath(@Nullable String path) {
           PaletteScope scope = paletteScopeManager.getScopeByPath(path);
-          if (scope != null) hasher.update(scope.digest());
-          for (Map.Entry<String, String> entry : colors.entrySet()) {
-            hasher.update(entry.getKey().getBytes(StandardCharsets.UTF_8));
-            hasher.update(entry.getValue().getBytes(StandardCharsets.UTF_8));
-          }
-          for (Map.Entry<String, Integer> entry : alpha.entrySet()) {
-            hasher.update(entry.getKey().getBytes(StandardCharsets.UTF_8));
-            hasher.update(ByteBuffer.allocate(4).putInt(entry.getValue()).array());
-          }
-
-          return SVGLoader.newPatcher(hasher.digest(), colors, alpha);
+          InsecureHashBuilder hash = new InsecureHashBuilder()
+            .stringMap(colors)
+            .update(scope == null ? ArrayUtilRt.EMPTY_LONG_ARRAY : scope.digest());
+          return SvgKt.newSvgPatcher(hash.build(), colors, color -> alphaColors.contains(color) ? 255 : null);
         }
       };
     }
@@ -239,9 +337,9 @@ public final class UITheme {
 
         theme.colorPatcher = new SVGLoader.SvgElementColorPatcherProvider() {
           @Override
-          public @Nullable SVGLoader.SvgElementColorPatcher forPath(@Nullable String path) {
+          public @Nullable SvgAttributePatcher attributeForPath(@Nullable String path) {
             PaletteScope scope = paletteScopeManager.getScopeByPath(path);
-            return scope == null ? null : SVGLoader.newPatcher(scope.digest(), scope.newPalette, scope.alphas);
+            return scope == null ? null : SvgKt.newSvgPatcher(scope.digest(), scope.newPalette, scope.alphas::get);
           }
         };
       }
@@ -363,8 +461,7 @@ public final class UITheme {
     return editorScheme;
   }
 
-  @Nullable
-  public String[] getAdditionalEditorSchemes() {
+  public String @Nullable [] getAdditionalEditorSchemes() {
     return additionalEditorSchemes;
   }
 
@@ -435,44 +532,31 @@ public final class UITheme {
   }
 
   private static void apply(@NotNull UITheme theme, String key, Object value, UIDefaults defaults) {
-    if (value instanceof Map) {
-      @SuppressWarnings("unchecked") Map<String, Object> map = (Map<String, Object>)value;
-      if (isOSCustomization(map)) {
-        applyOSCustomizations(theme, map, key, defaults);
+    String valueStr = value.toString();
+    Color color = null;
+    if (theme.colors != null) {
+      Object obj = theme.colors.get(valueStr);
+      if (obj != null) {
+        color = parseColor(obj.toString());
+        if (color != null && !key.startsWith("*")) {
+          defaults.put(key, color);
+          return;
+        }
       }
-      else {
-        for (Map.Entry<String, Object> o : map.entrySet()) {
-          apply(theme, createUIKey(key, o.getKey()), o.getValue(), defaults);
+    }
+    value = color == null ? parseValue(key, valueStr) : color;
+    if (key.startsWith("*.")) {
+      String tail = key.substring(1);
+      addPattern(key, value, defaults);
+
+      for (Object k : defaults.keySet().toArray()) {
+        if (k instanceof String && ((String)k).endsWith(tail)) {
+          defaults.put(k, value);
         }
       }
     }
     else {
-      String valueStr = value.toString();
-      Color color = null;
-      if (theme.colors != null) {
-        Object obj = theme.colors.get(valueStr);
-        if (obj != null) {
-          color = parseColor(obj.toString());
-          if (color != null && !key.startsWith("*")) {
-            defaults.put(key, color);
-            return;
-          }
-        }
-      }
-      value = color == null ? parseValue(key, valueStr) : color;
-      if (key.startsWith("*.")) {
-        String tail = key.substring(1);
-        addPattern(key, value, defaults);
-
-        for (Object k : defaults.keySet().toArray()) {
-          if (k instanceof String && ((String)k).endsWith(tail)) {
-            defaults.put(k, value);
-          }
-        }
-      }
-      else {
-        defaults.put(key, value);
-      }
+      defaults.put(key, value);
     }
   }
 
@@ -485,26 +569,23 @@ public final class UITheme {
     }
   }
 
-  private static void applyOSCustomizations(@NotNull UITheme theme,
-                                            Map<String, Object> map,
-                                            String key,
-                                            UIDefaults defaults) {
+  private static @Nullable Object getOSCustomization(@NotNull Map<String, Object> map) {
     String osKey = SystemInfoRt.isWindows ? OS_WINDOWS_KEY :
                    SystemInfoRt.isMac ? OS_MACOS_KEY :
                    SystemInfoRt.isLinux ? OS_LINUX_KEY : null;
     if (osKey != null && map.containsKey(osKey)) {
-      apply(theme, key, map.get(osKey), defaults);
+      return map.get(osKey);
     }
-    else if (map.containsKey(OS_DEFAULT_KEY)) {
-      apply(theme, key, map.get(OS_DEFAULT_KEY), defaults);
+    else {
+      return map.get(OS_DEFAULT_KEY);
     }
   }
 
   private static boolean isOSCustomization(Map<String, Object> map) {
-    return map.containsKey(OS_MACOS_KEY)
-           || map.containsKey(OS_WINDOWS_KEY)
-           || map.containsKey(OS_LINUX_KEY)
-           || map.containsKey(OS_DEFAULT_KEY);
+    return map.containsKey(OS_MACOS_KEY) ||
+           map.containsKey(OS_WINDOWS_KEY) ||
+           map.containsKey(OS_LINUX_KEY) ||
+           map.containsKey(OS_DEFAULT_KEY);
   }
 
   @SuppressWarnings("unchecked")
@@ -536,7 +617,7 @@ public final class UITheme {
       }
 
       if (value.endsWith(".png") || value.endsWith(".svg")) {
-        Icon icon = ImageDataByPathLoader.findIcon(value, classLoader, null);
+        Icon icon = ImageDataByPathLoader.Companion.findIconByPath(value, classLoader, null, null);
         if (icon != null) {
           return icon;
         }
@@ -583,7 +664,7 @@ public final class UITheme {
         return parseGrayFilter(value);
       }
       else if (value.startsWith("AllIcons.")) {
-        return IconLoader.getReflectiveIcon(value, UITheme.class.getClassLoader());
+        return ImageDataByPathLoaderKt.getReflectiveIcon(value, UITheme.class.getClassLoader());
       }
       else if (!value.startsWith("#") && getIntegerOrFloat(value, null) != null) {
         return getIntegerOrFloat(value, key);
@@ -698,36 +779,18 @@ public final class UITheme {
     final Map<String, String> newPalette = new HashMap<>();
     final Map<String, Integer> alphas = new HashMap<>();
 
-    private byte[] hash;
+    private long[] hash;
 
-    byte @NotNull [] digest() {
+    long @NotNull [] digest() {
       if (hash != null) {
         return hash;
       }
 
-      MessageDigest hasher = DigestUtil.sha512();
-      // order is significant
-      if (!newPalette.isEmpty()) {
-        for (Map.Entry<String, String> e : new TreeMap<>(newPalette).entrySet()) {
-          hasher.update(e.getKey().getBytes(StandardCharsets.UTF_8));
-          hasher.update(e.getValue().getBytes(StandardCharsets.UTF_8));
-        }
-      }
-      if (!alphas.isEmpty()) {
-        // order is significant
-        for (Map.Entry<String, Integer> e : new TreeMap<>(alphas).entrySet()) {
-          hasher.update(e.getKey().getBytes(StandardCharsets.UTF_8));
-          Integer value = e.getValue();
-          if (value != null) {
-            int i = value.intValue();
-            hasher.update((byte)i);
-            hasher.update((byte)(i >>> 8));
-            hasher.update((byte)(i >>> 16));
-            hasher.update((byte)(i >>> 24));
-          }
-        }
-      }
-      hash = hasher.digest();
+      // order is significant - use TreeMap
+      hash = new InsecureHashBuilder()
+        .stringMap(newPalette)
+        .stringIntMap(alphas)
+        .build();
       return hash;
     }
   }
@@ -786,6 +849,11 @@ public final class UITheme {
   @SuppressWarnings("unused")
   private void setIcons(@Nullable Map<String, Object> icons) {
     this.icons = icons;
+  }
+
+  @SuppressWarnings("unused")
+  private void setParentTheme(@Nullable String parentTheme) {
+    this.parentTheme = parentTheme;
   }
 
   @SuppressWarnings("unused")

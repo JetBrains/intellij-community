@@ -4,6 +4,7 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl;
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl;
 import com.intellij.util.indexing.diagnostic.ScanningStatistics;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +22,9 @@ class ProjectChangedFilesScanner {
     myProject = project;
   }
 
-  public Collection<VirtualFile> scan(ProjectIndexingHistoryImpl projectIndexingHistory, String fileSetName) {
+  public Collection<VirtualFile> scan(ProjectIndexingHistoryImpl projectIndexingHistory,
+                                      @NotNull ProjectDumbIndexingHistoryImpl projectDumbIndexingHistory,
+                                      String fileSetName) {
     long refreshedFilesCalcDuration = System.nanoTime();
     Collection<VirtualFile> files = Collections.emptyList();
     try {
@@ -38,6 +41,9 @@ class ProjectChangedFilesScanner {
       scanningStatistics.setNoRootsForRefresh();
       projectIndexingHistory.addScanningStatistics(scanningStatistics);
       projectIndexingHistory.setScanFilesDuration(Duration.ofNanos(refreshedFilesCalcDuration));
+
+      projectDumbIndexingHistory.setRefreshedScanningStatistics(scanningStatistics);
+      projectDumbIndexingHistory.setRefreshedScanFilesDuration(Duration.ofNanos(refreshedFilesCalcDuration));
 
       LOG.info("Scanning refreshed files of " + myProject.getName() + " : " + files.size() + " to update, " +
                "calculated in " + TimeUnit.NANOSECONDS.toMillis(refreshedFilesCalcDuration) + "ms");

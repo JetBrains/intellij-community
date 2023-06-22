@@ -75,9 +75,17 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
       if (!withSelection) {
         myStart = myPos = myEnd;
       }
-      return;
     }
-    throw notImplemented();
+    else {
+      var oldPos = myPos;
+      var currentPosition = getLogicalPosition();
+      moveToLogicalPosition(new LogicalPosition(currentPosition.line + lineShift, currentPosition.column + columnShift));
+      if (withSelection) {
+        var newPos = myPos;
+        myStart = Math.min(oldPos, newPos);
+        myEnd = Math.max(oldPos, newPos);
+      }
+    }
   }
 
   @Override

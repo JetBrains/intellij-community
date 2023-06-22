@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInsight.hint.HintManager
@@ -670,20 +670,13 @@ private class DummyUsageTarget(@Nls val text: String) : UsageTarget {
     }
   }
 
-  override fun canNavigate(): Boolean = false
-
   override fun getName(): String = text
 
   override fun findUsages() {
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
   }
 
-  override fun canNavigateToSource() = false
-
   override fun isReadOnly(): Boolean = false
-
-  override fun navigate(requestFocus: Boolean) {
-  }
 
   override fun isValid(): Boolean = true
 }

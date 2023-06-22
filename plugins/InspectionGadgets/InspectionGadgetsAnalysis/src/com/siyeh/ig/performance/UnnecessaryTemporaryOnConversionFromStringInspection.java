@@ -17,8 +17,10 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -26,7 +28,6 @@ import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.JavaPsiBoxingUtils;
@@ -74,14 +75,14 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection extends BaseIn
 
   @Override
   @Nullable
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     final String replacementExpression = calculateReplacementExpression((PsiMethodCallExpression)infos[0], new CommentTracker(), false);
     if (replacementExpression == null) return null;
     final String name = CommonQuickFixBundle.message("fix.replace.with.x", replacementExpression);
     return new UnnecessaryTemporaryObjectFix(name);
   }
 
-  private static final class UnnecessaryTemporaryObjectFix extends InspectionGadgetsFix {
+  private static final class UnnecessaryTemporaryObjectFix extends PsiUpdateModCommandQuickFix {
 
     private final @IntentionName String m_name;
 
@@ -103,8 +104,7 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection extends BaseIn
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       final PsiElement grandParent = element.getParent().getParent();
       if (!(grandParent instanceof PsiMethodCallExpression expression)) {
         return;

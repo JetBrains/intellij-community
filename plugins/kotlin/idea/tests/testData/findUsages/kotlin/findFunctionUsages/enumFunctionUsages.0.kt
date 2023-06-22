@@ -1,5 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtNamedFunction
 // OPTIONS: usages
+// PSI_ELEMENT_AS_TITLE: "fun foo(Int): Int"
 enum class E {
     O,
     A {
@@ -24,4 +25,8 @@ enum class E {
     open fun <caret>foo(n: Int): Int = n
 }
 
-// FIR_IGNORE
+fun test(e: E) {
+    e.foo(4)
+    E.A.foo(4)
+    E.O.foo(3)
+}

@@ -2,7 +2,7 @@
 
 package com.jetbrains.performancePlugin.utils;
 
-import com.intellij.diagnostic.telemetry.IJTracer;
+import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import io.opentelemetry.api.trace.Span;

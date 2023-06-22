@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl.javaCompiler.javac;
 
 import com.intellij.application.options.CodeStyle;
@@ -198,54 +184,44 @@ public class JavacOutputParser extends OutputParser {
     }
     final String category = line.substring(0, dividerIndex);
     final String resourceBundleValue = line.substring(dividerIndex + 1);
-    if (JavacResourcesReader.MSG_PARSING_COMPLETED.equals(category) ||
-        JavacResourcesReader.MSG_PARSING_STARTED.equals(category) ||
-        JavacResourcesReader.MSG_WROTE.equals(category)
-      ) {
-      myParserActions.add(new FilePathActionJavac(createMatcher(resourceBundleValue)));
-    }
-    else if (JavacResourcesReader.MSG_CHECKING.equals(category)) {
-      myParserActions.add(new JavacParserAction(createMatcher(resourceBundleValue)) {
+    switch (category) {
+      case JavacResourcesReader.MSG_PARSING_COMPLETED, JavacResourcesReader.MSG_PARSING_STARTED, JavacResourcesReader.MSG_WROTE ->
+        myParserActions.add(new FilePathActionJavac(createMatcher(resourceBundleValue)));
+      case JavacResourcesReader.MSG_CHECKING -> myParserActions.add(new JavacParserAction(createMatcher(resourceBundleValue)) {
         @Override
         protected void doExecute(final String line, String parsedData, final Callback callback) {
           callback.setProgressText(JavaCompilerBundle.message("progress.compiling.class", parsedData));
         }
       });
-    }
-    else if (JavacResourcesReader.MSG_LOADING.equals(category)) {
-      myParserActions.add(new JavacParserAction(createMatcher(resourceBundleValue)) {
+      case JavacResourcesReader.MSG_LOADING -> myParserActions.add(new JavacParserAction(createMatcher(resourceBundleValue)) {
         @Override
         protected void doExecute(final String line, @Nullable String parsedData, final Callback callback) {
           callback.setProgressText(JavaCompilerBundle.message("progress.loading.classes"));
         }
       });
-    }
-    else if (JavacResourcesReader.MSG_NOTE.equals(category)) {
-      myParserActions.add(new JavacParserAction(createMatcher(resourceBundleValue)) {
+      case JavacResourcesReader.MSG_NOTE -> myParserActions.add(new JavacParserAction(createMatcher(resourceBundleValue)) {
         @Override
         protected void doExecute(final String line, @Nullable final String filePath, final Callback callback) {
           final boolean fileExists = filePath != null &&
                                      ReadAction
                                        .compute(() -> LocalFileSystem.getInstance().findFileByPath(filePath) != null);
           if (fileExists) {
-            addMessage(callback, CompilerMessageCategory.WARNING, line, VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, filePath), -1, -1);
+            addMessage(callback, CompilerMessageCategory.WARNING, line, VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, filePath),
+                       -1, -1);
           }
           else {
             addMessage(callback, CompilerMessageCategory.INFORMATION, line);
           }
         }
       });
-    }
-    else if (JavacResourcesReader.MSG_WARNING.equals(category)) {
-      WARNING_PREFIX = resourceBundleValue;
-    }
-    else if (JavacResourcesReader.MSG_STATISTICS.equals(category) || JavacResourcesReader.MSG_IGNORED.equals(category)) {
-      myParserActions.add(new JavacParserAction(createMatcher(resourceBundleValue)) {
-        @Override
-        protected void doExecute(final String line, @Nullable String parsedData, final Callback callback) {
-          // empty
-        }
-      });
+      case JavacResourcesReader.MSG_WARNING -> WARNING_PREFIX = resourceBundleValue;
+      case JavacResourcesReader.MSG_STATISTICS, JavacResourcesReader.MSG_IGNORED ->
+        myParserActions.add(new JavacParserAction(createMatcher(resourceBundleValue)) {
+          @Override
+          protected void doExecute(final String line, @Nullable String parsedData, final Callback callback) {
+            // empty
+          }
+        });
     }
   }
 

@@ -35,6 +35,10 @@ public class ChangeList {
     myStorage.close();
   }
 
+  public synchronized void force() {
+    myStorage.force();
+  }
+
   public synchronized long nextId() {
     return myStorage.nextId();
   }

@@ -10,6 +10,7 @@ import com.intellij.build.issue.quickfix.OpenFileQuickFix
 import com.intellij.build.output.BuildOutputInstantReader
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import org.jetbrains.idea.maven.externalSystemIntegration.output.LogMessageType
@@ -20,6 +21,7 @@ import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.M
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.server.MavenConfigParseException
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.util.concurrent.CompletableFuture
@@ -106,6 +108,12 @@ object MavenConfigBuildIssue {
   const val CONFIG_PARSE_ERROR: String = "Unable to parse maven.config:"
   const val CONFIG_VALUE_ERROR: String = "For input string:"
 
+  fun getIssue(ex: MavenConfigParseException): BuildIssue? {
+    val configFile = LocalFileSystem.getInstance().findFileByPath(ex.directory)?.findFileByRelativePath(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH)
+    return configFile?.let { getConfigFile(it, ex.localizedMessage ?: ex.message ?: ex.stackTraceToString(), CONFIG_PARSE_ERROR) }
+
+  }
+
   fun getIssue(title: String, errorMessage: String, project: Project): BuildIssue? {
     val mavenProject = MavenProjectsManager.getInstance(project).rootProjects.firstOrNull()
     if (mavenProject == null) {
@@ -115,6 +123,12 @@ object MavenConfigBuildIssue {
     val configFile = MavenUtil.getConfigFile(mavenProject, MavenConstants.MAVEN_CONFIG_RELATIVE_PATH)
     if (configFile == null) return null
 
+    return getConfigFile(configFile, errorMessage, title)
+  }
+
+  private fun getConfigFile(configFile: VirtualFile,
+                            errorMessage: String,
+                            title: String): BuildIssue {
     val mavenConfigOpenQuickFix = MavenConfigOpenQuickFix(configFile, errorMessage)
     val quickFixes = listOf<BuildIssueQuickFix>(mavenConfigOpenQuickFix)
     val issueDescription = StringBuilder(errorMessage)

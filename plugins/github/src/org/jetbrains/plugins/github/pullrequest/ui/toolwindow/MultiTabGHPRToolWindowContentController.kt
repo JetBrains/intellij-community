@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.util.childScope
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -124,6 +125,7 @@ internal class MultiTabGHPRToolWindowContentController(parentDisposable: Disposa
 
     val selector = GHRepositoryAndAccountSelectorComponentFactory(project, selectorVm, accountManager).create(cs.childScope())
     val component = JPanel(BorderLayout()).apply {
+      background = UIUtil.getListBackground()
       add(selector, BorderLayout.NORTH)
     }
     val content = contentManager.factory.createContent(component, GithubBundle.message("toolwindow.stripe.Pull_Requests"), false).apply {

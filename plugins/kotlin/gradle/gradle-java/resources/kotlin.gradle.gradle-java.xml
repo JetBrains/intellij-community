@@ -4,6 +4,7 @@
     <module name="kotlin.gradle.gradle-tooling"/>
     <module name="kotlin.gradle.gradle"/>
     <module name="kotlin.gradle.code-insight-common"/>
+    <module name="kotlin.project-wizard.idea"/>
   </dependencies>
 
   <extensionPoints>
@@ -33,7 +34,7 @@
     <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleProjectResolverExtension" order="first"/>
     <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleCoroutineDebugProjectResolver" order="last"/>
     <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.testing.KotlinTestTasksResolver"/>
-    <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver"/>
+    <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMppGradleProjectResolver"/>
     <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.kpm.KotlinKPMGradleProjectResolver"/>
 
     <orderEnumerationHandlerFactory implementation="org.jetbrains.kotlin.idea.gradleJava.execution.KotlinGradleOrderEnumerationHandler$Factory" order="first"/>
@@ -67,6 +68,7 @@
 
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleJava.run.KotlinJvmTestClassGradleConfigurationProducer"/>
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleJava.run.KotlinMultiplatformJvmTestClassGradleConfigurationProducer"/>
+    <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleJava.run.KotlinMultiplatformJvmRunConfigurationProducer" order="first"/>
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleJava.run.KotlinJvmTestMethodGradleConfigurationProducer"/>
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleJava.run.KotlinMultiplatformJvmTestMethodGradleConfigurationProducer"/>
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleJava.testing.js.KotlinMultiplatformJsTestClassGradleConfigurationProducer"/>

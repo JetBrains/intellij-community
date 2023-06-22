@@ -13,7 +13,7 @@ import com.intellij.ui.UIBundle
 
 internal class StatusBarWidgetsActionGroup : DefaultActionGroup() {
   companion object {
-    const val GROUP_ID = "ViewStatusBarWidgetsGroup"
+    const val GROUP_ID: String = "ViewStatusBarWidgetsGroup"
   }
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {

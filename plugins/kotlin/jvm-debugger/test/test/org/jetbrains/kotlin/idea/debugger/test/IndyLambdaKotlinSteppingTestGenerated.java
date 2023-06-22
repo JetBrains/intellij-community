@@ -1100,9 +1100,39 @@ public abstract class IndyLambdaKotlinSteppingTestGenerated extends AbstractIndy
             runTest("testData/stepping/custom/breakpointInInlineLambda.kt");
         }
 
+        @TestMetadata("breakpointInLambdaWithManyLambdas.kt")
+        public void testBreakpointInLambdaWithManyLambdas() throws Exception {
+            runTest("testData/stepping/custom/breakpointInLambdaWithManyLambdas.kt");
+        }
+
+        @TestMetadata("breakpointInLambdaWithNestedLambda.kt")
+        public void testBreakpointInLambdaWithNestedLambda() throws Exception {
+            runTest("testData/stepping/custom/breakpointInLambdaWithNestedLambda.kt");
+        }
+
+        @TestMetadata("breakpointInOneLineLambda.kt")
+        public void testBreakpointInOneLineLambda() throws Exception {
+            runTest("testData/stepping/custom/breakpointInOneLineLambda.kt");
+        }
+
+        @TestMetadata("breakpointOnLambdaEnd.kt")
+        public void testBreakpointOnLambdaEnd() throws Exception {
+            runTest("testData/stepping/custom/breakpointOnLambdaEnd.kt");
+        }
+
         @TestMetadata("breakpointOnWhen.kt")
         public void testBreakpointOnWhen() throws Exception {
             runTest("testData/stepping/custom/breakpointOnWhen.kt");
+        }
+
+        @TestMetadata("breakpointsInNestedLambdas.kt")
+        public void testBreakpointsInNestedLambdas() throws Exception {
+            runTest("testData/stepping/custom/breakpointsInNestedLambdas.kt");
+        }
+
+        @TestMetadata("breakpointsInOneLineLambdas.kt")
+        public void testBreakpointsInOneLineLambdas() throws Exception {
+            runTest("testData/stepping/custom/breakpointsInOneLineLambdas.kt");
         }
 
         @TestMetadata("constantConditions.kt")
@@ -1133,6 +1163,11 @@ public abstract class IndyLambdaKotlinSteppingTestGenerated extends AbstractIndy
         @TestMetadata("filterChainedFunctionCallsWithLambdas.kt")
         public void testFilterChainedFunctionCallsWithLambdas() throws Exception {
             runTest("testData/stepping/custom/filterChainedFunctionCallsWithLambdas.kt");
+        }
+
+        @TestMetadata("filterConstructors.kt")
+        public void testFilterConstructors() throws Exception {
+            runTest("testData/stepping/custom/filterConstructors.kt");
         }
 
         @TestMetadata("filterFunctionCallsFromClass.kt")
@@ -1260,6 +1295,11 @@ public abstract class IndyLambdaKotlinSteppingTestGenerated extends AbstractIndy
             runTest("testData/stepping/custom/ktij15642.kt");
         }
 
+        @TestMetadata("lambdaBreakpointInAnonymousFunction.kt")
+        public void testLambdaBreakpointInAnonymousFunction() throws Exception {
+            runTest("testData/stepping/custom/lambdaBreakpointInAnonymousFunction.kt");
+        }
+
         @TestMetadata("lambdaBreakpoints.kt")
         public void testLambdaBreakpoints() throws Exception {
             runTest("testData/stepping/custom/lambdaBreakpoints.kt");
@@ -1273,6 +1313,11 @@ public abstract class IndyLambdaKotlinSteppingTestGenerated extends AbstractIndy
         @TestMetadata("lambdaWithNoExecutableCodeOnLine.kt")
         public void testLambdaWithNoExecutableCodeOnLine() throws Exception {
             runTest("testData/stepping/custom/lambdaWithNoExecutableCodeOnLine.kt");
+        }
+
+        @TestMetadata("lineBreakpointWithAnonymousFunction.kt")
+        public void testLineBreakpointWithAnonymousFunction() throws Exception {
+            runTest("testData/stepping/custom/lineBreakpointWithAnonymousFunction.kt");
         }
 
         @TestMetadata("manyFilesWithInlineCalls1.kt")
@@ -1350,9 +1395,24 @@ public abstract class IndyLambdaKotlinSteppingTestGenerated extends AbstractIndy
             runTest("testData/stepping/custom/smartStepIntoFunWithDefaultArgs.kt");
         }
 
+        @TestMetadata("smartStepIntoFunWithInlineParameter.kt")
+        public void testSmartStepIntoFunWithInlineParameter() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoFunWithInlineParameter.kt");
+        }
+
         @TestMetadata("smartStepIntoInlineFun.kt")
         public void testSmartStepIntoInlineFun() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoInlineFun.kt");
+        }
+
+        @TestMetadata("smartStepIntoInlineLambdasInFunctionsWithSameName.kt")
+        public void testSmartStepIntoInlineLambdasInFunctionsWithSameName() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoInlineLambdasInFunctionsWithSameName.kt");
+        }
+
+        @TestMetadata("smartStepIntoInlineLambdasOnSameLine.kt")
+        public void testSmartStepIntoInlineLambdasOnSameLine() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoInlineLambdasOnSameLine.kt");
         }
 
         @TestMetadata("smartStepIntoInlinedFunLiteral.kt")
@@ -1390,6 +1450,11 @@ public abstract class IndyLambdaKotlinSteppingTestGenerated extends AbstractIndy
             runTest("testData/stepping/custom/smartStepIntoJavaSyntheticPropetyGetter.kt");
         }
 
+        @TestMetadata("smartStepIntoLabeledLambda.kt")
+        public void testSmartStepIntoLabeledLambda() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoLabeledLambda.kt");
+        }
+
         @TestMetadata("smartStepIntoLambdaWithparametersDestructuring.kt")
         public void testSmartStepIntoLambdaWithparametersDestructuring() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoLambdaWithparametersDestructuring.kt");
@@ -1410,9 +1475,19 @@ public abstract class IndyLambdaKotlinSteppingTestGenerated extends AbstractIndy
             runTest("testData/stepping/custom/smartStepIntoMethodReference.kt");
         }
 
+        @TestMetadata("smartStepIntoMultiplyInlinedLambdas.kt")
+        public void testSmartStepIntoMultiplyInlinedLambdas() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoMultiplyInlinedLambdas.kt");
+        }
+
         @TestMetadata("smartStepIntoNullSafeFunctionCalls.kt")
         public void testSmartStepIntoNullSafeFunctionCalls() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoNullSafeFunctionCalls.kt");
+        }
+
+        @TestMetadata("smartStepIntoOnLambdaBreakpoint.kt")
+        public void testSmartStepIntoOnLambdaBreakpoint() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoOnLambdaBreakpoint.kt");
         }
 
         @TestMetadata("smartStepIntoPropertyGetterReference.kt")
@@ -1465,6 +1540,11 @@ public abstract class IndyLambdaKotlinSteppingTestGenerated extends AbstractIndy
             runTest("testData/stepping/custom/smartStepIntoToLambdaParameterAfterSam.kt");
         }
 
+        @TestMetadata("smartStepIntoWithDelegateWithSameName.kt")
+        public void testSmartStepIntoWithDelegateWithSameName() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoWithDelegateWithSameName.kt");
+        }
+
         @TestMetadata("smartStepIntoWithDelegates.kt")
         public void testSmartStepIntoWithDelegates() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoWithDelegates.kt");
@@ -1493,6 +1573,16 @@ public abstract class IndyLambdaKotlinSteppingTestGenerated extends AbstractIndy
         @TestMetadata("stepOutInlineFunctionStdlib.kt")
         public void testStepOutInlineFunctionStdlib() throws Exception {
             runTest("testData/stepping/custom/stepOutInlineFunctionStdlib.kt");
+        }
+
+        @TestMetadata("stepOutOfInlineLambdas.kt")
+        public void testStepOutOfInlineLambdas() throws Exception {
+            runTest("testData/stepping/custom/stepOutOfInlineLambdas.kt");
+        }
+
+        @TestMetadata("stepOutOfNestedInlineLambdas.kt")
+        public void testStepOutOfNestedInlineLambdas() throws Exception {
+            runTest("testData/stepping/custom/stepOutOfNestedInlineLambdas.kt");
         }
 
         @TestMetadata("stepOverInvokeMethodInLambda.kt")

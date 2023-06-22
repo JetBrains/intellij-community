@@ -91,12 +91,14 @@ final class ServiceModel implements Disposable, InvokerSupplier {
     return myRootsInitialized ? myRoots : Collections.emptyList();
   }
 
-  CancellablePromise<?> initRoots() {
-    return getInvoker().invoke(() -> {
+  CancellablePromise<Boolean> initRoots() {
+    return getInvoker().compute(() -> {
       if (!myRootsInitialized) {
         myRoots.addAll(doGetRoots());
         myRootsInitialized = true;
+        return true;
       }
+      return false;
     });
   }
 
@@ -186,15 +188,19 @@ final class ServiceModel implements Disposable, InvokerSupplier {
         case GROUP_CHANGED -> groupChanged(e);
         default -> reset(e.contributorClass);
       }
-      for (ServiceModelEventListener listener : myListeners) {
-        listener.eventProcessed(e);
-      }
+      notifyListeners(e);
     };
-    if (e.type != ServiceEventListener.EventType.SYNC_RESET) {
+    if (e.type != ServiceEventListener.EventType.UNLOAD_SYNC_RESET) {
       return getInvoker().invoke(handler);
     }
     handler.run();
     return Promises.resolvedCancellablePromise(null);
+  }
+
+  void notifyListeners(ServiceEvent e) {
+    for (ServiceModelEventListener listener : myListeners) {
+      listener.eventProcessed(e);
+    }
   }
 
   private void reset(Class<?> contributorClass) {

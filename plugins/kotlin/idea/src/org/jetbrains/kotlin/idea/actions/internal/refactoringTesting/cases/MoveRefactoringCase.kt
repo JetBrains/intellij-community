@@ -8,8 +8,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.actions.internal.refactoringTesting.RandomMoveRefactoringResult
 import org.jetbrains.kotlin.idea.actions.internal.refactoringTesting.RefactoringCase
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
+import org.jetbrains.kotlin.idea.refactoring.move.MoveConflictsFoundException
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsHandler
-import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.RefactoringConflictsFoundException
 import org.jetbrains.kotlin.psi.KtClass
 
 internal class MoveRefactoringCase : RefactoringCase {
@@ -43,7 +43,7 @@ internal class MoveRefactoringCase : RefactoringCase {
             return when (e) {
                 is NotImplementedError,
                 is FailedToRunCaseException,
-                is RefactoringConflictsFoundException,
+                is MoveConflictsFoundException,
                 is ConfigurationException -> RandomMoveRefactoringResult.Failed
 
                 else -> RandomMoveRefactoringResult.ExceptionCaused(

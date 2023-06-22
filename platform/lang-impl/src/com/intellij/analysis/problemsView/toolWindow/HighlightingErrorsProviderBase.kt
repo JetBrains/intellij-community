@@ -7,6 +7,6 @@ import com.intellij.problems.ProblemListener
 interface HighlightingErrorsProviderBase: ProblemsProvider, ProblemListener {
   companion object {
     @JvmStatic
-    fun getInstance(project: Project) = project.getService(HighlightingErrorsProviderBase::class.java)!!
+    fun getInstance(project: Project): HighlightingErrorsProviderBase = project.getService(HighlightingErrorsProviderBase::class.java)!!
   }
 }

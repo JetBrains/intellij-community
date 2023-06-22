@@ -110,7 +110,7 @@ class MavenDontCheckDependencyInManagementSectionTest extends MavenDomTestCase {
   </build>
 """)
 
-    checkHighlighting(myProjectPom, true, false, true)
+    checkHighlighting()
   }
 
 }

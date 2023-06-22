@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
@@ -9,9 +9,12 @@ import com.intellij.psi.impl.java.stubs.PsiMethodStub;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.lang.ref.SoftReference;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 public class PsiAnnotationMethodImpl extends PsiMethodImpl implements PsiAnnotationMethod {
   private SoftReference<PsiAnnotationMemberValue> myCachedDefaultValue;
@@ -26,6 +29,7 @@ public class PsiAnnotationMethodImpl extends PsiMethodImpl implements PsiAnnotat
 
   @Override
   protected void dropCached() {
+    super.dropCached();
     myCachedDefaultValue = null;
   }
 
@@ -36,7 +40,7 @@ public class PsiAnnotationMethodImpl extends PsiMethodImpl implements PsiAnnotat
       String text = stub.getDefaultValueText();
       if (StringUtil.isEmpty(text)) return null;
 
-      PsiAnnotationMemberValue value = SoftReference.dereference(myCachedDefaultValue);
+      PsiAnnotationMemberValue value = dereference(myCachedDefaultValue);
       if (value != null) {
         return value;
       }

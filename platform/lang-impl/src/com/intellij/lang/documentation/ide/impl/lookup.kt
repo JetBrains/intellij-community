@@ -8,8 +8,8 @@ import com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.documentation.impl.DocumentationRequest
-import com.intellij.platform.documentation.impl.documentationRequest
+import com.intellij.platform.backend.documentation.impl.DocumentationRequest
+import com.intellij.platform.backend.documentation.impl.documentationRequest
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.ui.EDT
@@ -27,6 +27,9 @@ internal fun lookupPopupContext(editor: Editor?): PopupContext? {
 }
 
 internal class LookupPopupContext(val lookup: LookupEx) : SecondaryPopupContext() {
+
+  // otherwise, selecting lookup items by mouse would close the popup
+  override val closeOnClickOutside: Boolean get() = false
 
   override fun setUpPopup(popup: AbstractPopup, popupUI: DocumentationPopupUI) {
     if ((lookup as LookupImpl).isLookupDisposed) {

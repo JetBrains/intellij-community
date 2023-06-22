@@ -7,24 +7,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.jps.api.JpsDynamicBundle;
 
-import java.util.function.Supplier;
-
-public final class GradleJpsBundle extends JpsDynamicBundle {
-
+public final class GradleJpsBundle {
   private static final @NonNls String BUNDLE = "messages.GradleJpsBundle";
-  private static final GradleJpsBundle INSTANCE = new GradleJpsBundle();
+  private static final JpsDynamicBundle INSTANCE = new JpsDynamicBundle(GradleJpsBundle.class, BUNDLE);
 
   private GradleJpsBundle() {
-    super(BUNDLE);
   }
 
   public static @Nls @NotNull String message(@PropertyKey(resourceBundle = BUNDLE) @NotNull String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
-  }
-
-  public
-  static @NotNull Supplier<@Nls @NotNull String> messagePointer(@PropertyKey(resourceBundle = BUNDLE) @NotNull String key,
-                                                                Object @NotNull ... params) {
-    return INSTANCE.getLazyMessage(key, params);
   }
 }

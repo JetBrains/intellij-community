@@ -10,11 +10,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
-import org.apache.commons.collections.ExtendedProperties;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
-import org.apache.velocity.runtime.log.JdkLogChute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -96,24 +94,19 @@ public final class VelocityHelper
         {
             try
             {
-                VelocityEngine engine = new VelocityEngine();
-                ExtendedProperties extendedProperties = new ExtendedProperties();
+              VelocityEngine engine = new VelocityEngine();
 
-                extendedProperties.addProperty(RuntimeConstants.RESOURCE_LOADER, "file");
-                extendedProperties.addProperty(RuntimeConstants.PARSER_POOL_SIZE, "1");
+              engine.setProperty(RuntimeConstants.RESOURCE_LOADER, "file");
+              engine.setProperty(RuntimeConstants.PARSER_POOL_SIZE, "1");
 
-                extendedProperties.addProperty("file.resource.loader.class", "org.apache.velocity.runtime.resource.loader.FileResourceLoader");
-                extendedProperties.addProperty("file.resource.loader.path", PathManager.getPluginsPath() + "/Copyright/resources");
+              engine.setProperty("file.resource.loader.class", "org.apache.velocity.runtime.resource.loader.FileResourceLoader");
+              engine.setProperty("file.resource.loader.path", PathManager.getPluginsPath() + "/Copyright/resources");
 
-                extendedProperties.addProperty(RuntimeConstants.RUNTIME_LOG_LOGSYSTEM_CLASS,
-                    JdkLogChute.class.getName());
-                extendedProperties
-                    .addProperty(JdkLogChute.RUNTIME_LOG_JDK_LOGGER, CopyrightManager.class.getName());
+              engine.setProperty(RuntimeConstants.RUNTIME_LOG_NAME, CopyrightManager.class.getName());
 
-                engine.setExtendedProperties(extendedProperties);
-                engine.init();
+              engine.init();
 
-                instance = engine;
+              instance = engine;
             }
             catch (Exception ignored)
             {

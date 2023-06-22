@@ -440,13 +440,13 @@ public class Seq<T> {
         return new Seq<V>(x);
     }
 
-    int filed;
+    int field;
 }
 ''',
       expected: '''\
 public class Seq<T> {
 
-    int filed;
+    int field;
 
     public Seq(T x) {
     }

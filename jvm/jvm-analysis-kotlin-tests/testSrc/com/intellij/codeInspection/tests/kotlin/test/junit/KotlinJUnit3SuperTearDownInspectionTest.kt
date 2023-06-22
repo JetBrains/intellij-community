@@ -1,11 +1,11 @@
 package com.intellij.codeInspection.tests.kotlin.test.junit
 
-import com.intellij.codeInspection.tests.ULanguage
+import com.intellij.codeInspection.tests.JvmLanguage
 import com.intellij.codeInspection.tests.test.junit.JUnit3SuperTearDownInspectionTestBase
 
 class KotlinJUnit3SuperTearDownInspectionTest : JUnit3SuperTearDownInspectionTestBase() {
   fun `test teardown in finally no highlighting`() {
-    myFixture.testHighlighting(ULanguage.KOTLIN, """
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class NoProblem : junit.framework.TestCase() {
         override fun tearDown() {
           super.tearDown();
@@ -35,7 +35,7 @@ class KotlinJUnit3SuperTearDownInspectionTest : JUnit3SuperTearDownInspectionTes
   }
 
   fun `test teardown in finally highlighting`() {
-    myFixture.testHighlighting(ULanguage.KOTLIN, """
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class SuperTearDownInFinally : junit.framework.TestCase() {
         override fun tearDown() {
           super.<warning descr="'tearDown()' is not called from 'finally' block">tearDown</warning>()

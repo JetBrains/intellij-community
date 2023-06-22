@@ -3,9 +3,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
-import com.intellij.util.containers.ContainerUtil;
-
-import java.util.List;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * A service that provides recognized annotations for static analysis.
@@ -13,7 +11,7 @@ import java.util.List;
  */
 @Service(Service.Level.APP)
 public final class StaticAnalysisAnnotationManager {
-  private static final List<String> KNOWN_UNSTABLE_API_ANNOTATIONS = ContainerUtil.immutableList(
+  private static final String[] KNOWN_UNSTABLE_API_ANNOTATIONS = {
     "org.jetbrains.annotations.ApiStatus.ScheduledForRemoval",
     "org.jetbrains.annotations.ApiStatus.Experimental",
     "org.jetbrains.annotations.ApiStatus.Internal",
@@ -24,17 +22,17 @@ public final class StaticAnalysisAnnotationManager {
     "rx.annotations.Beta",
     "org.apache.http.annotation.Beta",
     "org.gradle.api.Incubating"
-  );
+  };
 
   public static StaticAnalysisAnnotationManager getInstance() {
     return ApplicationManager.getApplication().getService(StaticAnalysisAnnotationManager.class);
   }
 
   /**
-   * @return list of annotations applicable to JVM methods, fields and classes that mark element as unstable, experimental,
+   * @return array of annotations applicable to JVM methods, fields and classes that mark element as unstable, experimental,
    * or not intended for external use.
    */
-  public List<String> getKnownUnstableApiAnnotations() {
+  public @NotNull String @NotNull [] getKnownUnstableApiAnnotations() {
     return KNOWN_UNSTABLE_API_ANNOTATIONS;
   }
 }

@@ -9,9 +9,9 @@ import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
-import org.jetbrains.kotlin.idea.intentions.ConvertToIndexedFunctionCallIntention.Companion.nonIndexedFunctions
 import org.jetbrains.kotlin.idea.intentions.appendCallOrQualifiedExpression
 import org.jetbrains.kotlin.idea.intentions.collectLabeledReturnExpressions
+import org.jetbrains.kotlin.idea.intentions.nonIndexedFunctions
 import org.jetbrains.kotlin.idea.intentions.setLabel
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
@@ -36,7 +36,7 @@ class ConvertToNonIndexedFunctionCallFix(
 
         labeledReturnExpressions.forEach { it.element?.setLabel(nonIndexedFunctionName) }
         parameterList.removeParameter(0)
-        val psiFactory = KtPsiFactory(functionLiteral)
+        val psiFactory = KtPsiFactory(project)
         val callOrQualified = call.getQualifiedExpressionForSelector() ?: call
         callOrQualified.replace(
             psiFactory.buildExpression {

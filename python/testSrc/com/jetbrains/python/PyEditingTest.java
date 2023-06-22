@@ -1052,6 +1052,157 @@ public class PyEditingTest extends PyTestCase {
                 "    <caret>");
   }
 
+  public void testParenthesiseBinaryExpression() {
+    testWithParenthesiseOnEnter(
+      """
+        x = a + b + <caret>c + d
+        """,
+      """
+        x = (a + b +\s
+             c + d)
+        """);
+  }
+
+  public void testParenthesiseImportStatement() {
+    testWithParenthesiseOnEnter(
+      """
+        from collections import Hashable, Iterable, <caret>KeysView, Mapping, MutableMapping
+        """,
+      """
+        from collections import (Hashable, Iterable,\s
+                                 KeysView, Mapping, MutableMapping)
+        """);
+  }
+
+  public void testParenthesiseCallChain() {
+    testWithParenthesiseOnEnter(
+      """
+        result = str.capitalize()<caret>.foo().bar().baz()
+        """,
+      """
+        result = (str.capitalize()
+                  .foo().bar().baz())
+        """);
+  }
+
+  public void testParenthesiseConditionalExpression() {
+    testWithParenthesiseOnEnter(
+      """
+        x = 3 if a == 10 or<caret> b == 13 or c < 4 else 3
+        """,
+      """
+        x = 3 if (a == 10 or
+                  b == 13 or c < 4) else 3
+        """);
+  }
+
+  public void testParenthesiseTupleExpression() {
+    testWithParenthesiseOnEnter(
+      """
+        for x in 'a',<caret> 'b', 'c':
+            pass
+        """,
+      """
+        for x in ('a',
+                  'b', 'c'):
+            pass
+        """);
+  }
+
+  public void testParenthesiseString() {
+    testWithParenthesiseOnEnter(
+      """
+        s = "str<caret>ing"
+        """,
+      """
+        s = ("str"
+             "ing")
+        """);
+  }
+
+  public void testStringNotParenthesisedRepeatedly() {
+    testWithParenthesiseOnEnter(
+      """
+        s = ("str<caret>ing")
+        """,
+      """
+        s = ("str"
+             "ing")
+        """);
+  }
+
+  public void testParenthesiseUnicodeString() {
+    testWithParenthesiseOnEnter(
+      """
+        s = u"uni<caret>code"
+        """,
+      """
+        s = (u"uni"
+             u"code")
+        """);
+  }
+
+  public void testParenthesiseEscapedQuote() {
+    testWithParenthesiseOnEnter(
+      """
+        a = 'some \\<caret>' string'
+        """,
+      """
+        a = ('some \\''
+             ' string')
+        """);
+  }
+
+  public void testParenthesiseSequencePattern() {
+    testWithParenthesiseOnEnter(
+      """
+        match (1, 2):
+            case int(),<caret> int():
+                pass
+        """,
+      """
+        match (1, 2):
+            case (int(),
+                  int()):
+                pass
+        """);
+  }
+
+  public void testParenthesiseAttributeAccessInCallChain() {
+    testWithParenthesiseOnEnter(
+      """
+        C().m().m().m()<caret>.attr
+        """,
+      """
+        (C().m().m().m()
+         .attr)
+        """);
+  }
+
+  public void testParenthesiseWithStatement() {
+    testWithParenthesiseOnEnter(
+      """
+        with open('foo.txt') as foo, <caret>open('bar.txt') as bar:
+            pass
+        """,
+      """
+        with (open('foo.txt') as foo,\s
+              open('bar.txt') as bar):
+            pass
+        """);
+  }
+
+  private void testWithParenthesiseOnEnter(String before, String after) {
+    boolean initialValue = PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER;
+    try {
+      PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER = true;
+      doTestEnter(before, after);
+    }
+    finally {
+      PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER = initialValue;
+    }
+  }
+
   @NotNull
   private PyCodeStyleSettings getPythonCodeStyleSettings() {
     return getCodeStyleSettings().getCustomSettings(PyCodeStyleSettings.class);

@@ -70,12 +70,12 @@
     </action>
 
     <action id="JavaSoftExit" class="com.intellij.execution.impl.DefaultJavaProgramRunner$SoftExitAction">
-      <add-to-group group-id="RunTab.TopToolbar.More"/>
+      <add-to-group group-id="RunTab.TopToolbar" anchor="after" relative-to-action="Stop"/>
       <add-to-group group-id="RunTab.TopToolbar.Old" anchor="after" relative-to-action="Stop"/>
     </action>
 
     <action id="JavaControlBreak" class="com.intellij.execution.impl.DefaultJavaProgramRunner$ControlBreakAction">
-      <add-to-group group-id="RunTab.TopToolbar.More"/>
+      <add-to-group group-id="RunTab.TopToolbar" anchor="after" relative-to-action="Stop"/>
       <add-to-group group-id="RunTab.TopToolbar.Old" anchor="after" relative-to-action="Stop"/>
     </action>
 
@@ -126,15 +126,6 @@
       <separator/>
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
-
-    <action internal="true" id="TestParseEventsSchemeAction"
-            class="com.intellij.internal.statistic.devkit.actions.TestParseEventsSchemeAction">
-    </action>
-
-    <action internal="true" id="CollectFUStatisticsAction"
-            class="com.intellij.internal.statistic.devkit.actions.CollectFUStatisticsAction">
-      <add-to-group group-id="FeatureUsage.Internal" anchor="last"/>
-    </action>
 
     <!-- Toolbar -->
 
@@ -373,8 +364,6 @@
       <action id="EncapsulateFields" class="com.intellij.refactoring.actions.EncapsulateFieldsAction"/>
       <reference ref="MigrationMenu"/>
       <separator/>
-      <action id="Generify" class="com.intellij.refactoring.actions.TypeCookAction"/>
-      <separator/>
 
       <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="MemberPushDown"/>
     </group>
@@ -484,13 +473,13 @@
       <action id="Debugger.InterruptThread" class="com.intellij.debugger.actions.InterruptThreadAction"/>
 
       <action id="Debugger.ForceEarlyReturn" class="com.intellij.debugger.actions.ForceEarlyReturnAction">
-        <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="after" relative-to-action="ResetFrame"/>
-        <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="ResetFrame"/>
+        <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="after" relative-to-action="Debugger.PopFrame"/>
+        <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="Debugger.PopFrame"/>
         <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
       </action>
 
       <action id="Debugger.ThrowException" class="com.intellij.debugger.actions.ThrowExceptionAction">
-        <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="after" relative-to-action="ResetFrame"/>
+        <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="after" relative-to-action="Debugger.PopFrame"/>
         <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="Debugger.ForceEarlyReturn"/>
         <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
       </action>
@@ -608,7 +597,7 @@
       <reference ref="Debugger.ResumeThread"/>
       <reference ref="Debugger.FreezeThread"/>
       <reference ref="Debugger.InterruptThread"/>
-      <reference ref="ResetFrame"/>
+      <reference ref="Debugger.PopFrame"/>
       <separator/>
       <reference ref="ExportThreads"/>
       <reference ref="Debugger.AddSteppingFilter"/>

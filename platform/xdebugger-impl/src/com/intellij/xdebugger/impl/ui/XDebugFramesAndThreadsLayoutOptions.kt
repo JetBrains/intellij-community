@@ -26,7 +26,7 @@ abstract class FramesAndThreadsLayoutOptionBase(options: XDebugTabLayoutSettings
 class DefaultLayoutOption(private val options: XDebugTabLayoutSettings.XDebugFramesAndThreadsLayoutOptions) : FramesAndThreadsLayoutOptionBase(options) {
   override fun getDisplayName(): String = XDebuggerBundle.message("debug.threads.and.frames.default.layout.option")
 
-  override fun createView(): XFramesView = XFramesView(options.session.project)
+  override fun createView(): XFramesView = XFramesView(options.session)
 
   override fun getOptionKey(): String = ThreadsViewConstants.DEFAULT_THREADS_VIEW_KEY
 }

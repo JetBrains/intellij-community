@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.formatting;
 
+import com.intellij.formatting.service.FormattingService;
+import com.intellij.formatting.service.FormattingServiceUtil;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
@@ -109,9 +111,11 @@ public final class FormatterTestUtils {
     ACTIONS.put(Action.REFORMAT_WITH_CONTEXT, new TestFormatAction() {
       @Override
       public void run(PsiFile psiFile, int startOffset, int endOffset) {
-        List<TextRange> ranges = List.of(new TextRange(startOffset, endOffset));
-        Project project = psiFile.getProject();
-        CodeStyleManager.getInstance(project).reformatTextWithContext(psiFile, ranges);
+        FormattingService formattingService = FormattingServiceUtil.findService(psiFile, false, false);
+        FormatTextRanges formatRanges = new FormatTextRanges();
+        formatRanges.add(new TextRange(startOffset, endOffset), true);
+        formatRanges.setExtendToContext(true);
+        formattingService.formatRanges(psiFile, formatRanges, true, true);
       }
     });
 
@@ -120,7 +124,7 @@ public final class FormatterTestUtils {
       public void run(PsiFile psiFile, int startOffset, int endOffset) {
         List<TextRange> ranges = List.of(new TextRange(startOffset, endOffset));
         Project project = psiFile.getProject();
-        CodeStyleManager.getInstance(project).reformatTextWithContext(psiFile, new ChangedRangesInfo(ranges, ranges));
+        CodeStyleManager.getInstance(project).reformatChanges(psiFile, new ChangedRangesInfo(ranges, ranges));
       }
     });
   }

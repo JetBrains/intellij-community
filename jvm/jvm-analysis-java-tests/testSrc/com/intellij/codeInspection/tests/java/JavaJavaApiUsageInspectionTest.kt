@@ -1,25 +1,13 @@
 package com.intellij.codeInspection.tests.java
 
 import com.intellij.codeInspection.tests.JavaApiUsageInspectionTestBase
-import com.intellij.codeInspection.tests.ULanguage
+import com.intellij.codeInspection.tests.JvmLanguage
 import com.intellij.pom.java.LanguageLevel
 
-/**
- * This is a base test case for test cases that highlight all the use of API
- * that were introduced in later language levels comparing to the current language level
- *
- * In order to add a new test case:
- * <ol>
- * <li>Go to "community/jvm/jvm-analysis-java-tests/testData/codeInspection/apiUsage"</li>
- * <li>Add a new file(s) to "./src" that contains new API. It's better to define the new API as native methods.</li>
- * <li>Set <code>JAVA_HOME</code> to jdk 1.8. In this case it's possible to redefine JDK's own classes like <code>String</code> or <code>Class</code></li>
- * <li>Invoke "./compile.sh". The new class(es) will appear in "./classes"</li>
- * </ol>
- */
 class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
   fun `test constructor`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_4)
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       class Constructor {
         void foo() {
           throw new <error descr="Usage of API documented as @since 1.5+">IllegalArgumentException</error>("", new RuntimeException());
@@ -37,7 +25,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
         public void moveTo(int x, int y) { }
       }
     """.trimIndent())
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       import java.awt.geom.GeneralPath;
       
       class Ignored {
@@ -51,7 +39,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
 
   fun `test qualified reference`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_6)
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       import java.nio.charset.StandardCharsets;
       import java.nio.charset.Charset;
       
@@ -65,7 +53,8 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
 
   fun `test annotation`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_6)
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import java.lang.SafeVarargs;
       class Annotation {
         @<error descr="Usage of API documented as @since 1.7+">SafeVarargs</error>
         public final void a(java.util.List<String>... ls) {}
@@ -75,7 +64,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
 
   fun `test override annotation`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_6)
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       import java.util.Map;
 
       abstract class OverrideAnnotation implements Map<String, String> {
@@ -89,7 +78,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
 
   fun `test minimum since highlighting`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_7)
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       import java.util.stream.IntStream;
 
       class MinimumSince {
@@ -100,9 +89,23 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
     """.trimIndent())
   }
 
-  fun `test minimum since no higlighting`() {
+  fun `test no highlighting in javadoc`() {
+    myFixture.setLanguageLevel(LanguageLevel.JDK_1_7)
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      class Javadoc {
+        /**
+         * {@link java.util.function.Predicate}
+         */
+        void test() {
+          return;
+        }
+      }
+    """.trimIndent())
+  }
+
+  fun `test minimum since no highlighting`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_8)
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       import java.util.stream.IntStream;
 
       class MinimumSince {
@@ -115,7 +118,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
 
   fun `test default methods`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_6)
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       import java.util.Iterator;
       
       class <error descr="Default method 'remove' is not overridden. It would cause compilation problems with JDK 6">DefaultMethods</error> implements Iterator<String> {
@@ -168,7 +171,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
       
       public class AbstractListModel<K> {}
     """.trimIndent())
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       class RawInheritFromNewlyGenerified {
         private AbstractCCM<String> myModel;
       }      
@@ -189,7 +192,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
       
       public class AbstractListModel<K> implements ListModel<E> { }
     """.trimIndent())
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       import javax.swing.AbstractListModel;
       
       abstract class AbstractCCM<T> extends <error descr="Usage of generified after 1.6 API which would cause compilation problems with JDK 6">AbstractListModel<T></error> { }

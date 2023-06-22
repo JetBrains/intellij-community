@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java18StreamApi;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -30,25 +30,10 @@ public class StaticPseudoFunctionalStyleMethodInspection extends AbstractBaseJav
 
   @Override
   public void readSettings(@NotNull Element node) throws InvalidDataException {
-    myOptions.readExternal(node);
   }
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    myOptions.writeExternal(node);
-  }
-
-  @Nullable
-  @Override
-  public JComponent createOptionsPanel() {
-    final var panel = new InspectionOptionsPanel();
-    panel.addGrowing(UI.PanelFactory
-                       .panel(myOptions.createPanel())
-                       .withLabel(JavaBundle.message("inspection.static.pseudo.functional.style.table.label"))
-                       .moveLabelOnTop()
-                       .resizeY(true)
-                       .createPanel());
-    return panel;
   }
 
   @NotNull
@@ -83,7 +68,7 @@ public class StaticPseudoFunctionalStyleMethodInspection extends AbstractBaseJav
         }
         StaticPseudoFunctionalStyleMethodOptions.PipelineElement suitableHandler = null;
         for (StaticPseudoFunctionalStyleMethodOptions.PipelineElement h : handlerInfos) {
-          if (h.getHandlerClass().equals(classQualifiedName)) {
+          if (h.handlerClass().equals(classQualifiedName)) {
             suitableHandler = h;
             break;
           }
@@ -91,7 +76,7 @@ public class StaticPseudoFunctionalStyleMethodInspection extends AbstractBaseJav
         if (suitableHandler == null) {
           return;
         }
-        final PseudoLambdaReplaceTemplate.ValidationInfo validationInfo = suitableHandler.getTemplate().validate(methodCallExpression);
+        final PseudoLambdaReplaceTemplate.ValidationInfo validationInfo = suitableHandler.template().validate(methodCallExpression);
         if (validationInfo != null) {
           holder.registerProblem(methodCallExpression.getMethodExpression(),
                                  JavaBundle.message("inspection.message.pseudo.functional.style.code"),
@@ -118,11 +103,8 @@ public class StaticPseudoFunctionalStyleMethodInspection extends AbstractBaseJav
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement psiElement = descriptor.getPsiElement();
-      if (psiElement instanceof PsiReferenceExpression) {
-        PsiElement parent = psiElement.getParent();
-        if (parent instanceof PsiMethodCallExpression) {
-          myHandler.getTemplate().convertToStream((PsiMethodCallExpression)parent, null, false);
-        }
+      if (psiElement instanceof PsiReferenceExpression && psiElement.getParent() instanceof PsiMethodCallExpression call) {
+        myHandler.template().convertToStream(call, null, false);
       }
     }
   }

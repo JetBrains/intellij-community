@@ -81,7 +81,7 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
       Binding binding = getItemBinding(itemType);
       Class<?>[] elementTypes = getElementTypes();
       if (elementTypes.length == 0) {
-        itemBindings = binding == null ? Collections.emptyList() : Collections.singletonList(binding);
+        itemBindings = ContainerUtil.createMaybeSingletonList(binding);
       }
       else {
         itemBindings = new SmartList<>();

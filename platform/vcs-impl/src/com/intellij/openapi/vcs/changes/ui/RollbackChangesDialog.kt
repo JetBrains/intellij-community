@@ -6,7 +6,6 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsBundle
@@ -15,11 +14,13 @@ import com.intellij.openapi.vcs.changes.ui.LocalChangesBrowser.*
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.RollbackUtil
 import org.jetbrains.annotations.Nls
 import javax.swing.JCheckBox
 import javax.swing.JComponent
+import javax.swing.JTree
 
 class RollbackChangesDialog private constructor(private val project: Project,
                                                 private val browser: LocalChangesBrowser)
@@ -34,8 +35,9 @@ class RollbackChangesDialog private constructor(private val project: Project,
   init {
     Disposer.register(disposable, browser)
     browser.setInclusionChangedListener { inclusionListener() }
+    browser.viewer.addPropertyChangeListener(JTree.TREE_MODEL_PROPERTY) { inclusionListener() }
 
-    val operationNameWithMnemonic = operationNameByChanges(project, browser.allChanges)
+    val operationNameWithMnemonic = RollbackUtil.getRollbackOperationName(project)
     setOKButtonText(operationNameWithMnemonic)
     setCancelButtonText(CommonBundle.getCloseButtonText())
 
@@ -63,6 +65,9 @@ class RollbackChangesDialog private constructor(private val project: Project,
                         { newValue -> PropertiesComponent.getInstance().setValue(DELETE_LOCALLY_ADDED_FILES_KEY, newValue) })
           .component
       }
+    }.also {
+      // Temporary workaround for IDEA-302779
+      it.minimumSize = JBUI.size(200, 150)
     }
   }
 
@@ -105,8 +110,14 @@ class RollbackChangesDialog private constructor(private val project: Project,
       else {
         AllChanges(project)
       }
-      browser.setIncludedChanges(changes)
-      browser.viewer.resetTreeState() // set initial selection by included changes
+      browser.viewer.invokeAfterRefresh {
+        // Set included changes when model is built.
+        // This is important if 'changes' is non-ChangeListChange but tree has ChangeListChange
+        browser.setIncludedChangesBy(changes)
+
+        // set initial selection by included changes
+        browser.viewer.resetTreeState()
+      }
       showRollbackDialog(project, browser)
     }
 
@@ -134,13 +145,6 @@ class RollbackChangesDialog private constructor(private val project: Project,
     }
 
     private fun showRollbackDialog(project: Project, browser: LocalChangesBrowser) {
-      if (browser.allChanges.isEmpty()) {
-        val operationName = UIUtil.removeMnemonic(RollbackUtil.getRollbackOperationName(project))
-        Messages.showWarningDialog(project,
-                                   VcsBundle.message("commit.dialog.no.changes.detected.text"),
-                                   VcsBundle.message("changes.action.rollback.nothing", operationName))
-        return
-      }
       RollbackChangesDialog(project, browser).show()
     }
 

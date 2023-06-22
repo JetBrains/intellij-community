@@ -24,7 +24,6 @@ import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -102,11 +101,10 @@ public class XMLColorsPage implements ColorSettingsPage {
 
   @Override
   public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
-    return new ContainerUtil.ImmutableMapBuilder<String, TextAttributesKey>()
-      .put("custom_tag_name", XmlHighlighterColors.XML_CUSTOM_TAG_NAME)
-      .put("np", XmlHighlighterColors.XML_NS_PREFIX)
-      .put("bg", XmlHighlighterColors.XML_TAG)
-      .put("matched", XmlHighlighterColors.MATCHED_TAG_NAME)
-      .build();
+    return Map.of(
+      "custom_tag_name", XmlHighlighterColors.XML_CUSTOM_TAG_NAME,
+      "np", XmlHighlighterColors.XML_NS_PREFIX,
+      "bg", XmlHighlighterColors.XML_TAG,
+      "matched", XmlHighlighterColors.MATCHED_TAG_NAME);
   }
 }

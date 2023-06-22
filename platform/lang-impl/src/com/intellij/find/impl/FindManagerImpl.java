@@ -42,14 +42,12 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.StringPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.reference.SoftReference;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.usages.ChunkExtractor;
@@ -63,6 +61,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.lang.ref.SoftReference;
 import java.util.List;
 import java.util.*;
 import java.util.function.Predicate;
@@ -162,10 +161,7 @@ public final class FindManagerImpl extends FindManager {
   void changeGlobalSettings(FindModel findModel) {
     String stringToFind = findModel.getStringToFind();
     FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(myProject);
-
-    if (!StringUtil.isEmpty(stringToFind)) {
-      findInProjectSettings.addStringToFind(stringToFind);
-    }
+    findInProjectSettings.addStringToFind(stringToFind);
     if (!findModel.isMultipleFiles()) {
       setFindWasPerformed();
     }

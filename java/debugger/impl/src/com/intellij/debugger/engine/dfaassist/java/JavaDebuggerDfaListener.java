@@ -13,7 +13,7 @@ import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.debugger.engine.dfaassist.DebuggerDfaListener;
-import com.intellij.debugger.engine.dfaassist.DfaHint;
+import com.intellij.xdebugger.impl.dfaassist.DfaHint;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;

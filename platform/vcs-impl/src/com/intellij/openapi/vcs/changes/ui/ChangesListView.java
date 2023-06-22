@@ -40,7 +40,7 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.*;
 import static com.intellij.vcs.commit.ChangesViewCommitPanelKt.subtreeRootObject;
 
 // TODO: Check if we could extend DnDAwareTree here instead of directly implementing DnDAware
-public abstract class ChangesListView extends HoverChangesTree implements DataProvider, DnDAware {
+public abstract class ChangesListView extends ChangesTree implements DataProvider, DnDAware {
   private static final Logger LOG = Logger.getInstance(ChangesListView.class);
 
   @NonNls public static final String HELP_ID = "ideaInterface.changes";
@@ -57,6 +57,8 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
   @NonNls public static final DataKey<List<LocallyDeletedChange>> LOCALLY_DELETED_CHANGES
     = DataKey.create("ChangeListView.LocallyDeletedChanges");
 
+  private boolean myBusy = false;
+
   public ChangesListView(@NotNull Project project, boolean showCheckboxes) {
     super(project, showCheckboxes, true);
     // setDragEnabled throws an exception in headless mode which leads to a memory leak
@@ -71,18 +73,23 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
   }
 
   @Override
+  public void setPaintBusy(boolean paintBusy) {
+    myBusy = paintBusy;
+    super.setPaintBusy(paintBusy);
+  }
+
+  @Override
+  protected boolean isEmptyTextVisible() {
+    return super.isEmptyTextVisible() && !myBusy;
+  }
+
+  @Override
   protected boolean isInclusionVisible(@NotNull ChangesBrowserNode<?> node) {
     Object subtreeRootObject = subtreeRootObject(node);
 
     if (subtreeRootObject instanceof LocalChangeList) return !((LocalChangeList)subtreeRootObject).getChanges().isEmpty();
     if (subtreeRootObject == UNVERSIONED_FILES_TAG) return true;
     return false;
-  }
-
-  @Nullable
-  @Override
-  public HoverIcon getHoverIcon(@NotNull ChangesBrowserNode<?> node) {
-    return null;
   }
 
   @Override

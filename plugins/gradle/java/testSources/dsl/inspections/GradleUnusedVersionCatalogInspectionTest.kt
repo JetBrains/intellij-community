@@ -4,17 +4,15 @@ package org.jetbrains.plugins.gradle.dsl.inspections
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.codeInspection.toml.UnusedVersionCatalogEntryInspection
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
-import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleUnusedVersionCatalogInspectionTest : GradleCodeInsightTestCase() {
 
   private fun runTest(gradleVersion: GradleVersion, buildGradleText: String, versionCatalogText: String) {
-    test(gradleVersion, BASE_VERSION_CATALOG_FIXTURE) {
+    testEmptyProject(gradleVersion) {
       codeInsightFixture.enableInspections(UnusedVersionCatalogEntryInspection::class.java)
-      findOrCreateFile("build.gradle", buildGradleText)
+      writeTextAndCommit("build.gradle", buildGradleText)
       testHighlighting("gradle/libs.versions.toml", versionCatalogText)
     }
   }
@@ -86,11 +84,3 @@ class GradleUnusedVersionCatalogInspectionTest : GradleCodeInsightTestCase() {
     """.trimIndent())
   }
 }
-
-private val BASE_VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder
-  .create("GradleVersionCatalogs-inspection") {
-    withSettingsFile {
-      setProjectName("GradleVersionCatalogs-inspection")
-      enableFeaturePreview("VERSION_CATALOGS")
-    }
-  }

@@ -5,6 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationWithSeparator;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.paths.PsiDynaReference;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -77,7 +78,12 @@ public class XmlAttributeValueImpl extends XmlElementImpl
 
   @Override
   public PsiReference @NotNull [] getReferences(PsiReferenceService.@NotNull Hints hints) {
-    return ReferenceProvidersRegistry.getReferencesFromProviders(this, hints);
+    PsiReference[] psiReferences = ReferenceProvidersRegistry.getReferencesFromProviders(this, hints);
+    Integer offset = hints.offsetInElement;
+    if (offset != null) {
+      return PsiDynaReference.filterByOffset(psiReferences, offset);
+    }
+    return psiReferences;
   }
 
   @Override

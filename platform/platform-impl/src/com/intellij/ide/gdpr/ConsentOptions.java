@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.gdpr;
 
 import com.fasterxml.jackson.jr.ob.JSON;
@@ -152,6 +152,10 @@ public final class ConsentOptions {
 
   public @Nullable Consent getDefaultUsageStatsConsent() {
     return getDefaultConsent(STATISTICS_OPTION_ID);
+  }
+
+  boolean isUsageStatsConsent(@NotNull Consent consent) {
+    return STATISTICS_OPTION_ID.equals(consent.getId());
   }
 
   public static @NotNull Predicate<Consent> condUsageStatsConsent() {

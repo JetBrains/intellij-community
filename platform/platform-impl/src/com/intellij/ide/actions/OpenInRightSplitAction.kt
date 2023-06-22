@@ -75,7 +75,7 @@ class OpenInRightSplitAction : AnAction(), DumbAware {
 
       val editorWindow = fileEditorManager.splitters.openInRightSplit(file, requestFocus)
       if (editorWindow == null) {
-        element?.navigate(requestFocus)
+        element?.navigate(requestFocus) ?: fileEditorManager.openFile(file, requestFocus)
         return null
       }
 

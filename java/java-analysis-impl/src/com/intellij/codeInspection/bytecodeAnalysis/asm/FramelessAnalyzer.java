@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.tree.*;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
@@ -14,7 +13,7 @@ import java.util.*;
  * So, the main point here is handling of subroutines (jsr) and try-catch-finally blocks.
  */
 public class FramelessAnalyzer extends SubroutineFinder {
-  private static final Set<String> NPE_HANDLERS = ContainerUtil.set(
+  private static final Set<String> NPE_HANDLERS = Set.of(
     "java/lang/Throwable", "java/lang/Exception", "java/lang/RuntimeException", "java/lang/NullPointerException");
 
   protected boolean[] wasQueued;
@@ -170,7 +169,7 @@ public class FramelessAnalyzer extends SubroutineFinder {
         List<TryCatchBlockNode> insnHandlers = handlers[insn];
         if (insnHandlers != null) {
           for (TryCatchBlockNode tcb : insnHandlers) {
-            myEdgeCreator.newControlFlowExceptionEdge(insn, insns.indexOf(tcb.handler), NPE_HANDLERS.contains(tcb.type));
+            myEdgeCreator.newControlFlowExceptionEdge(insn, insns.indexOf(tcb.handler), tcb.type != null && NPE_HANDLERS.contains(tcb.type));
             merge(insns.indexOf(tcb.handler), subroutine);
           }
         }

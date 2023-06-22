@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.diagnostic.PluginException;
@@ -20,16 +20,14 @@ public class PsiReferenceServiceImpl extends PsiReferenceService {
 
   private static final Logger LOG = Logger.getInstance(PsiReferenceService.class);
 
-  @NotNull
   @Override
-  public List<PsiReference> getReferences(@NotNull PsiElement element, @NotNull Hints hints) {
+  public @NotNull List<PsiReference> getReferences(@NotNull PsiElement element, @NotNull Hints hints) {
     List<PsiReference> references = doGetReferences(element, hints);
     assertReferencesHaveSameElement(element, references);
     return references;
   }
 
-  @NotNull
-  private static List<PsiReference> doGetReferences(@NotNull PsiElement element, @NotNull Hints hints) {
+  private static @NotNull List<PsiReference> doGetReferences(@NotNull PsiElement element, @NotNull Hints hints) {
     if (element instanceof ContributedReferenceHost) {
       return Arrays.asList(ReferenceProvidersRegistry.getReferencesFromProviders(element, hints));
     }

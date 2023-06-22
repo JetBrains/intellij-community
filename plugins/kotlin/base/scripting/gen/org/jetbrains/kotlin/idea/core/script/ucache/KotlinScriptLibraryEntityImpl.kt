@@ -1,33 +1,25 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.ucache
 
-import com.intellij.workspaceModel.storage.EntityInformation
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.SymbolicEntityId
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityWithSymbolicId
-import com.intellij.workspaceModel.storage.impl.ConnectionId
-import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.SoftLinkable
-import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
-import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
-import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceSet
-import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
-import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
-import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import java.io.Serializable
-import kotlin.jvm.JvmName
-import kotlin.jvm.JvmOverloads
-import kotlin.jvm.JvmStatic
-import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.Type
+import com.intellij.platform.workspace.storage.EntityInformation
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.SymbolicEntityId
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.impl.ConnectionId
+import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.SoftLinkable
+import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
+import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceSet
+import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
+import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
@@ -47,9 +39,7 @@ open class KotlinScriptLibraryEntityImpl(val dataSource: KotlinScriptLibraryEnti
     override val roots: List<KotlinScriptLibraryRoot>
         get() = dataSource.roots
 
-    override var indexSourceRoots: Boolean = false
-        get() = dataSource.indexSourceRoots
-
+    override val indexSourceRoots: Boolean get() = dataSource.indexSourceRoots
     override val usedInScripts: Set<KotlinScriptId>
         get() = dataSource.usedInScripts
 
@@ -60,8 +50,8 @@ open class KotlinScriptLibraryEntityImpl(val dataSource: KotlinScriptLibraryEnti
         return connections
     }
 
-    class Builder(result: KotlinScriptLibraryEntityData?) :
-        ModifiableWorkspaceEntityBase<KotlinScriptLibraryEntity, KotlinScriptLibraryEntityData>(result), KotlinScriptLibraryEntity.Builder {
+    class Builder(result: KotlinScriptLibraryEntityData?) : ModifiableWorkspaceEntityBase<KotlinScriptLibraryEntity, KotlinScriptLibraryEntityData>(
+        result), KotlinScriptLibraryEntity.Builder {
         constructor() : this(KotlinScriptLibraryEntityData())
 
         override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -69,7 +59,8 @@ open class KotlinScriptLibraryEntityImpl(val dataSource: KotlinScriptLibraryEnti
                 if (existsInBuilder(builder)) {
                     this.diff = builder
                     return
-                } else {
+                }
+                else {
                     error("Entity KotlinScriptLibraryEntity is already created in a different builder")
                 }
             }
@@ -157,7 +148,8 @@ open class KotlinScriptLibraryEntityImpl(val dataSource: KotlinScriptLibraryEnti
                 if (collection_roots !is MutableWorkspaceList) return collection_roots
                 if (diff == null || modifiable.get()) {
                     collection_roots.setModificationUpdateAction(rootsUpdater)
-                } else {
+                }
+                else {
                     collection_roots.cleanModificationUpdateAction()
                 }
                 return collection_roots
@@ -186,7 +178,8 @@ open class KotlinScriptLibraryEntityImpl(val dataSource: KotlinScriptLibraryEnti
                 if (collection_usedInScripts !is MutableWorkspaceSet) return collection_usedInScripts
                 if (diff == null || modifiable.get()) {
                     collection_usedInScripts.setModificationUpdateAction(usedInScriptsUpdater)
-                } else {
+                }
+                else {
                     collection_usedInScripts.cleanModificationUpdateAction()
                 }
                 return collection_usedInScripts
@@ -209,6 +202,7 @@ class KotlinScriptLibraryEntityData : WorkspaceEntityData.WithCalculableSymbolic
 
     fun isNameInitialized(): Boolean = ::name.isInitialized
     fun isRootsInitialized(): Boolean = ::roots.isInitialized
+
     fun isUsedInScriptsInitialized(): Boolean = ::usedInScripts.isInitialized
 
     override fun getLinks(): Set<SymbolicEntityId<*>> {
@@ -251,12 +245,14 @@ class KotlinScriptLibraryEntityData : WorkspaceEntityData.WithCalculableSymbolic
             val it_data = if (it == oldLink) {
                 changed = true
                 newLink as KotlinScriptId
-            } else {
+            }
+            else {
                 null
             }
             if (it_data != null) {
                 it_data
-            } else {
+            }
+            else {
                 it
             }
         }

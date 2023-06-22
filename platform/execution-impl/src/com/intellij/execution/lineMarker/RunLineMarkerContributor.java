@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.lineMarker;
 
 import com.intellij.execution.ExecutionBundle;
@@ -16,13 +16,22 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.function.Function;
 
+/**
+ * Allows adding an editor gutter icon associated with a PSI element that can be run
+ * (e.g., a test, a main method, an application, etc.).
+ */
 public abstract class RunLineMarkerContributor {
   public static final Function<PsiElement, String> RUN_TEST_TOOLTIP_PROVIDER = it -> ExecutionBundle.message("run.text");
 
   static final LanguageExtension<RunLineMarkerContributor> EXTENSION = new LanguageExtension<>("com.intellij.runLineMarkerContributor");
 
+  /**
+   * Creates test run line marker info with a given icon and available executor actions.
+   */
   @NotNull
   public static Info withExecutorActions(@NotNull Icon icon) {
     return new Info(icon, ExecutorAction.getActions(1), RUN_TEST_TOOLTIP_PROVIDER);
@@ -41,12 +50,10 @@ public abstract class RunLineMarkerContributor {
     }
 
     public Info(Icon icon, @Nullable com.intellij.util.Function<? super PsiElement, String> tooltipProvider, AnAction @NotNull ... actions) {
-      this.icon = icon;
-      this.actions = actions;
-      this.tooltipProvider = tooltipProvider == null ? null : it -> tooltipProvider.fun(it);
+      this(icon, actions, tooltipProvider == null ? null : it -> tooltipProvider.fun(it));
     }
 
-    public Info(@NotNull final AnAction action) {
+    public Info(@NotNull AnAction action) {
       this(action.getTemplatePresentation().getIcon(), new AnAction[]{action}, element -> getText(action, element));
     }
 
@@ -56,18 +63,39 @@ public abstract class RunLineMarkerContributor {
     public boolean shouldReplace(@NotNull Info other) {
       return false;
     }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(icon) + Arrays.hashCode(actions) + Objects.hashCode(tooltipProvider);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof Info info &&
+             Objects.equals(icon, info.icon)
+             && Arrays.equals(actions, info.actions)
+             && Objects.equals(tooltipProvider, info.tooltipProvider);
+    }
   }
 
+  /**
+   * Returns information about gutter icon, its tooltip, and available run actions for a given PSI element.
+   */
   @Nullable
   public abstract Info getInfo(@NotNull PsiElement element);
 
+  /**
+   * Returns information about gutter icon, its tooltip, and available run actions for a given PSI element.
+   * Implement if creating the information is slow.
+   * @see com.intellij.codeInsight.daemon.LineMarkerProvider#collectSlowLineMarkers
+   */
   public Info getSlowInfo(@NotNull PsiElement element) {
     return null;
   }
 
   /**
    * @param file any file with a language this contributor is registered for
-   * @return whether there's no possibility that a {@link com.intellij.execution.actions.RunConfigurationProducer}'would
+   * @return whether there's no possibility that a {@link com.intellij.execution.actions.RunConfigurationProducer} would
    * return a configuration not returned by this contributor in this file. Used to speed up "Run..." context action update.
    */
   public boolean producesAllPossibleConfigurations(@NotNull PsiFile file) {

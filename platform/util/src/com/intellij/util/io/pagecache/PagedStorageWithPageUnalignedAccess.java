@@ -190,7 +190,7 @@ public class PagedStorageWithPageUnalignedAccess implements PagedStorage {
   }
 
   @Override
-  public void close() throws IOException, InterruptedException {
+  public void close() throws IOException {
     alignedAccessStorage.close();
   }
 }

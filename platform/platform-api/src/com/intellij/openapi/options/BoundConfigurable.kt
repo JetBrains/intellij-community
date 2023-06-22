@@ -42,7 +42,7 @@ abstract class DslConfigurableBase : UnnamedConfigurable {
 
   final override fun createComponent(): JComponent = panel.value
 
-  override fun isModified() = panel.value.isModified()
+  override fun isModified(): Boolean = panel.value.isModified()
 
   override fun reset() {
     panel.value.reset()

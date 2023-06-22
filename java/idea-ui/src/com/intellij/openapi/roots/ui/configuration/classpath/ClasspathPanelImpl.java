@@ -133,7 +133,7 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
     myEntryTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
-    new SpeedSearchBase<>(myEntryTable) {
+    SpeedSearchBase<JBTable> search = new SpeedSearchBase<>(myEntryTable, null) {
       @Override
       public int getSelectedIndex() {
         return myEntryTable.getSelectedRow();
@@ -167,6 +167,7 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
         }
       }
     };
+    search.setupListeners();
     setFixedColumnWidth(ClasspathTableModel.EXPORT_COLUMN, ClasspathTableModel.getExportColumnName());
     setFixedColumnWidth(ClasspathTableModel.SCOPE_COLUMN, DependencyScope.COMPILE.toString() + "     ");  // leave space for combobox border
     myEntryTable.getTableHeader().getColumnModel().getColumn(ClasspathTableModel.ITEM_COLUMN).setPreferredWidth(10000); // consume all available space

@@ -5,7 +5,6 @@ import com.intellij.ide.util.EditorHelper;
 import com.intellij.model.ModelBranch;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,6 +36,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.openapi.util.NlsContexts.Command;
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
+
 /**
  * created at Sep 11, 2001
  * @author Jeka
@@ -49,7 +51,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   private final MoveCallback myMoveCallback;
   private final boolean myOpenInEditor;
   private String myNewVisibility; // "null" means "as is"
-  private @NlsContexts.Label String myCommandName = MoveMembersImpl.getRefactoringName();
+  private @Command String myCommandName = MoveMembersImpl.getRefactoringName();
   private MoveMembersOptions myOptions;
 
   public MoveMembersProcessor(Project project, MoveMembersOptions options) {
@@ -69,7 +71,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
   @Override
   @NotNull
-  @NlsContexts.Label
+  @Command
   protected String getCommandName() {
     return myCommandName;
   }
@@ -368,7 +370,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
                                                @NotNull PsiClass targetClass,
                                                Map<PsiMember, PsiModifierList> modifierListCopies,
                                                MoveMembersOptions options,
-                                               MultiMap<PsiElement, String> conflicts) {
+                                               MultiMap<PsiElement, @DialogMessage String> conflicts) {
     for (UsageInfo usage : usages) {
       if (!(usage instanceof MoveMembersUsageInfo usageInfo)) continue;
       final PsiMember member = usageInfo.member;
@@ -383,7 +385,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
                                                 String newVisibility,
                                                 PsiClass targetClass,
                                                 Map<PsiMember, PsiModifierList> modifierListCopies,
-                                                MultiMap<PsiElement, String> conflicts) {
+                                                MultiMap<PsiElement, @DialogMessage String> conflicts) {
     for (final PsiMember member : membersToMove) {
       final MoveMemberHandler handler = MoveMemberHandler.EP_NAME.forLanguage(member.getLanguage());
       if (handler != null) {

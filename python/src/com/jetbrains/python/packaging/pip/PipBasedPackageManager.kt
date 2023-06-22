@@ -9,27 +9,31 @@ import com.jetbrains.python.packaging.management.runPackagingTool
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
 import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 abstract class PipBasedPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
   override suspend fun installPackage(specification: PythonPackageSpecification): Result<List<PythonPackage>> {
-    return withContext(Dispatchers.IO) {
-      runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.new.project.install.failed.title", specification.name), specification.name) {
-        runPackagingTool("install", specification.buildInstallationString(), PyBundle.message("python.packaging.install.progress", specification.name))
-        reloadPackages()
-      }
+    return runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.new.project.install.failed.title", specification.name), specification.name) {
+      runPackagingTool("install", specification.buildInstallationString(), PyBundle.message("python.packaging.install.progress", specification.name))
+      refreshPaths()
+      reloadPackages()
+    }
+  }
+
+  override suspend fun updatePackage(specification: PythonPackageSpecification): Result<List<PythonPackage>> {
+    return runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.packaging.notification.update.failed", specification.name), specification.name) {
+      runPackagingTool("install", listOf("--upgrade") + specification.buildInstallationString(), PyBundle.message("python.packaging.update.progress", specification.name))
+      refreshPaths()
+      reloadPackages()
     }
   }
 
   override suspend fun uninstallPackage(pkg: PythonPackage): Result<List<PythonPackage>> {
-    return withContext(Dispatchers.IO) {
-      runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.packaging.operation.failed.title")) {
-        runPackagingTool("uninstall", listOf(pkg.name), PyBundle.message("python.packaging.uninstall.progress", pkg.name))
-        reloadPackages()
-      }
+    return runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.packaging.operation.failed.title")) {
+      runPackagingTool("uninstall", listOf(pkg.name), PyBundle.message("python.packaging.uninstall.progress", pkg.name))
+      refreshPaths()
+      reloadPackages()
     }
   }
 }

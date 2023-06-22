@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.authentication
 
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -121,7 +122,7 @@ object GHAccountsUtil {
     login(
       model,
       GHLoginRequest(
-        text = GithubBundle.message("account.token.missing.for", account),
+        text = CollaborationToolsBundle.message("account.token.missing.for", account),
         server = account.server, login = account.name
       ),
       project, parentComponent,

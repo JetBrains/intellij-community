@@ -2,7 +2,7 @@
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitorBasedInspection;
+import com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -28,9 +28,10 @@ public class FixAllAnnotatorQuickfixTest extends LightQuickFixTestCase {
     Annotator annotator = new MyAnnotator();
     Language javaLanguage = JavaFileType.INSTANCE.getLanguage();
     LanguageAnnotators.INSTANCE.addExplicitExtension(javaLanguage, annotator);
-    enableInspectionTool(new DefaultHighlightVisitorBasedInspection.AnnotatorBasedInspection());
+    enableInspectionTool(new HighlightVisitorBasedInspection().setRunAnnotators(true));
     try {
-      doAllTests();
+      //todo: use LightQuickFixParameterizedTestCase to get separate tests for all data files in testData directory.
+      doAllTests(createWrapper());
     }
     finally {
       LanguageAnnotators.INSTANCE.removeExplicitExtension(javaLanguage, annotator);

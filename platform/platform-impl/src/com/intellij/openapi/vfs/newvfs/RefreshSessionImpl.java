@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.codeInsight.daemon.impl.FileStatusMap;
@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -63,12 +64,14 @@ final class RefreshSessionImpl extends RefreshSession {
 
   RefreshSessionImpl(boolean async, List<? extends VFileEvent> events) {
     this(async, false, null, getSafeModalityState());
-    myEvents.addAll(events);
+    var filtered = events.stream().filter(Objects::nonNull).toList();
+    if (filtered.size() < events.size()) LOG.error("The list of events must not contain null elements");
+    myEvents.addAll(filtered);
   }
 
   private static ModalityState getSafeModalityState() {
     ModalityState state = ModalityState.defaultModalityState();
-    return state != ModalityState.any() ? state : ModalityState.NON_MODAL;
+    return state != ModalityState.any() ? state : ModalityState.nonModal();
   }
 
   @Override
@@ -247,6 +250,10 @@ final class RefreshSessionImpl extends RefreshSession {
 
   void waitFor() {
     mySemaphore.waitFor();
+  }
+
+  Semaphore getSemaphore() {
+    return mySemaphore;
   }
 
   @NotNull ModalityState getModality() {

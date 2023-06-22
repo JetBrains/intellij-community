@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.help.impl;
 
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
@@ -6,14 +6,13 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.JavaXmlDocumentKt;
 import org.jetbrains.annotations.NotNull;
 import org.w3c.dom.CDATASection;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
@@ -31,9 +30,8 @@ final class InspectionDump implements ApplicationStarter {
 
   @Override
   public void main(@NotNull List<String> args) {
-    DocumentBuilderFactory factory = DocumentBuilderFactory.newDefaultInstance();
     try {
-      DocumentBuilder builder = factory.newDocumentBuilder();
+      DocumentBuilder builder = JavaXmlDocumentKt.createDocumentBuilder();
       Document document = builder.newDocument();
       Element inspections = document.createElement("Inspections");
       document.appendChild(inspections);
@@ -62,7 +60,7 @@ final class InspectionDump implements ApplicationStarter {
 
       System.exit(0);
     }
-    catch (ParserConfigurationException | TransformerException e) {
+    catch (TransformerException e) {
       // noinspection CallToPrintStackTrace
       e.printStackTrace();
       System.exit(1);

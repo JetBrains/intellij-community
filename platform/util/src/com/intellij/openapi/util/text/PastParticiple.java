@@ -12,7 +12,7 @@ import static com.intellij.openapi.util.text.StringUtil.isVowel;
 /**
  * @author Bas Leijdekkers
  */
-public class PastParticiple {
+public final class PastParticiple {
 
   private static final int IRREGULAR_SIZE = 175;
   private static final Map<String, String> IRREGULAR_VERBS = CollectionFactory.createCaseInsensitiveStringMap(IRREGULAR_SIZE);
@@ -48,8 +48,7 @@ public class PastParticiple {
     return null;
   }
 
-  @Nullable
-  private static String generateHeuristicDoubledFinalConsonantPastParticiple(String verb) {
+  private static @Nullable String generateHeuristicDoubledFinalConsonantPastParticiple(String verb) {
     int length = verb.length();
     if (length < 3) return null;
     char c1 = toLowerCase(verb.charAt(length - 1));
