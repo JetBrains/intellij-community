@@ -30,17 +30,18 @@ data class PyCondaEnv(val envIdentity: PyCondaEnvIdentity,
     /**
      * @return unparsed output of conda info --envs --json
      */
-    private suspend fun getEnvsInfo(command: TargetCommandExecutor, fullCondaPathOnTarget: FullPathOnTarget): String {
-      return command.execute(listOf(fullCondaPathOnTarget, "info", "--envs", "--json")).thenApply { it.stdout }.await()
+    private suspend fun getEnvsInfo(command: TargetCommandExecutor, fullCondaPathOnTarget: FullPathOnTarget): Result<String> {
+      return runCatching { command.execute(listOf(fullCondaPathOnTarget, "info", "--envs", "--json")).thenApply { it.stdout }.await() }
     }
 
     /**
      * @return list of conda's envs_dirs directories
      */
     @ApiStatus.Internal
-    suspend fun getEnvsDirs(command: TargetCommandExecutor, fullCondaPathOnTarget: FullPathOnTarget): Result<Collection<String>> = withContext(Dispatchers.IO) {
-      val json = getEnvsInfo(command, fullCondaPathOnTarget)
-      return@withContext kotlin.runCatching { // External command may return junk
+    suspend fun getEnvsDirs(command: TargetCommandExecutor,
+                            fullCondaPathOnTarget: FullPathOnTarget): Result<Collection<String>> = withContext(Dispatchers.IO) {
+      val json = getEnvsInfo(command, fullCondaPathOnTarget).getOrElse { return@withContext Result.failure(it) }
+      return@withContext runCatching { // External command may return junk
         val info = Gson().fromJson(json, CondaInfoJson::class.java)
         info.envs_dirs
       }
@@ -52,14 +53,18 @@ data class PyCondaEnv(val envIdentity: PyCondaEnvIdentity,
     @ApiStatus.Internal
     suspend fun getEnvs(command: TargetCommandExecutor,
                         fullCondaPathOnTarget: FullPathOnTarget): Result<List<PyCondaEnv>> = withContext(Dispatchers.IO) {
-      val json = getEnvsInfo(command, fullCondaPathOnTarget)
+      val json = getEnvsInfo(command, fullCondaPathOnTarget).getOrElse { return@withContext Result.failure(it) }
       return@withContext kotlin.runCatching { // External command may return junk
         val info = Gson().fromJson(json, CondaInfoJson::class.java)
         val fileSeparator = command.targetPlatform.await().platform.fileSeparator
         info.envs.distinctBy { it.trim().lowercase(Locale.getDefault()) }.map { envPath ->
           // Env name is the basename for envs inside of default location
           // envPath should be direct child of envs_dirs to be a NamedEnv
-          val envName = if (info.envs_dirs.any { if (command.local) Path.of(it) == Path.of(envPath).parent else envPath.startsWith(it) }) envPath.split(fileSeparator).last() else null
+          val envName = if (info.envs_dirs.any {
+              if (command.local) Path.of(it) == Path.of(envPath).parent
+              else envPath.startsWith(it)
+            }) envPath.split(fileSeparator).last()
+          else null
           val base = envPath.equals(info.conda_prefix, ignoreCase = true)
           PyCondaEnv(envName?.let { PyCondaEnvIdentity.NamedEnv(it) } ?: PyCondaEnvIdentity.UnnamedEnv(envPath, base),
                      fullCondaPathOnTarget)
