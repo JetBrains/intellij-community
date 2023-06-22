@@ -29,13 +29,13 @@ import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import org.jetbrains.kotlin.analysis.project.structure.*
+import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.providers.KotlinGlobalModificationService
 import org.jetbrains.kotlin.analysis.providers.analysisMessageBus
 import org.jetbrains.kotlin.analysis.providers.topics.KotlinTopics
 import org.jetbrains.kotlin.idea.base.projectStructure.getBinaryAndSourceModuleInfos
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
+import org.jetbrains.kotlin.idea.base.projectStructure.productionOrTestSourceModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
 import org.jetbrains.kotlin.idea.util.AbstractSingleFileModuleAfterFileEventListener
 import org.jetbrains.kotlin.idea.util.AbstractSingleFileModuleBeforeFileEventListener
@@ -44,7 +44,9 @@ open class KotlinModuleStateModificationService(val project: Project) : Disposab
     protected open fun mayBuiltinsHaveChanged(events: List<VFileEvent>): Boolean { return false }
 
     private fun invalidateSourceModule(module: Module, isRemoval: Boolean = false) {
-        invalidateByModuleInfos(module.sourceModuleInfos, isRemoval)
+        // A test source `KtModule` will be invalidated together with its production source `KtModule` because it is a direct dependent from
+        // friend dependencies. See `IdeKotlinModuleDependentsProvider`.
+        module.productionOrTestSourceModuleInfo?.let { project.publishModuleStateModification(it.toKtModule(), isRemoval) }
     }
 
     private fun invalidateLibraryModule(library: Library, isRemoval: Boolean = false) {

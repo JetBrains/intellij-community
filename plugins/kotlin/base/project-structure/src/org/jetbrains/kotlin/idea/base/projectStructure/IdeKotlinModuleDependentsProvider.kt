@@ -2,19 +2,20 @@
 package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.openapi.project.Project
-import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.storage.SymbolicEntityId
+import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import org.jetbrains.kotlin.analysis.project.structure.KtBuiltinsModule
-import org.jetbrains.kotlin.analysis.project.structure.KtLibraryModule
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.KtScriptDependencyModule
 import org.jetbrains.kotlin.analysis.project.structure.KtScriptModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSdkModule
 import org.jetbrains.kotlin.analysis.project.structure.impl.KotlinModuleDependentsProviderBase
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleProductionSourceInfo
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
+import org.jetbrains.kotlin.utils.addIfNotNull
 
 /**
  * [IdeKotlinModuleDependentsProvider] provides [KtModule] dependents by querying the workspace model.
@@ -38,16 +39,33 @@ internal class IdeKotlinModuleDependentsProvider(private val project: Project) :
             else -> throw KotlinExceptionWithAttachments("Unexpected ${KtModule::class.simpleName}").withAttachment("module.txt", module)
         }
 
+        val directDependents = mutableSetOf<KtModule>()
+        directDependents.addFriendDependents(module)
+        directDependents.addWorkspaceModelDependents(symbolicId)
+
+        return directDependents
+    }
+
+    private fun MutableSet<KtModule>.addFriendDependents(module: KtModule) {
+        // The only friend dependency that currently exists in the IDE is the dependency of an IDEA module's test sources on its production
+        // sources. Hence, a test source `KtModule` is a direct dependent of its production source `KtModule`.
+        if (module is KtSourceModuleByModuleInfo && module.ideaModuleInfo is ModuleProductionSourceInfo) {
+            addIfNotNull(module.ideaModule.testSourceInfo?.toKtModule())
+        }
+    }
+
+    private fun MutableSet<KtModule>.addWorkspaceModelDependents(symbolicId: SymbolicEntityId<WorkspaceEntityWithSymbolicId>) {
         val snapshot = WorkspaceModel.getInstance(project).currentSnapshot
-        return snapshot
+        snapshot
             .referrers(symbolicId, ModuleEntity::class.java)
-            .flatMapTo(mutableSetOf()) { moduleEntity ->
+            .forEach { moduleEntity ->
                 // The set of dependents should not include `module` itself.
-                if (moduleEntity.symbolicId == symbolicId) return@flatMapTo emptyList()
+                if (moduleEntity.symbolicId == symbolicId) return@forEach
 
                 // We can skip the module entity if `findModule` returns `null` because the module won't have been added to the project
-                // model yet and thus cannot be a proper `KtModule`.
-                moduleEntity.findModule(snapshot)?.sourceModuleInfos?.map { it.toKtModule() } ?: emptyList()
+                // model yet and thus cannot be a proper `KtModule`. If there is a production source `KtModule`, we only need to add that
+                // because the test source `KtModule` will be a direct friend dependent of the production source `KtModule`.
+                addIfNotNull(moduleEntity.findModule(snapshot)?.productionOrTestSourceModuleInfo?.toKtModule())
             }
     }
 }

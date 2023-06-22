@@ -92,6 +92,9 @@ fun Module.asSourceInfo(sourceRootType: KotlinSourceRootType?): ModuleSourceInfo
 val Module.sourceModuleInfos: List<ModuleSourceInfo>
     get() = listOfNotNull(testSourceInfo, productionSourceInfo)
 
+val Module.productionOrTestSourceModuleInfo: ModuleSourceInfo?
+    get() = productionSourceInfo ?: testSourceInfo
+
 private fun Module.hasRootsOfType(rootTypes: Set<JpsModuleSourceRootType<*>>): Boolean {
     return rootManager.contentEntries.any { it.getSourceFolders(rootTypes).isNotEmpty() }
 }
