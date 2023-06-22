@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef.Source
+import com.intellij.openapi.vfs.newvfs.persistent.log.util.ULongPacker
 import com.intellij.util.io.DataOutputStream
 import java.io.DataInputStream
 

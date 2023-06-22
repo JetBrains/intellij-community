@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.log
 import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef.Source
 import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef.Source.Companion.isInline
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State
+import com.intellij.openapi.vfs.newvfs.persistent.log.util.ULongPacker
 import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.toPersistentSet
 import java.io.ByteArrayOutputStream
