@@ -45,7 +45,7 @@ internal class FirIdeOutOfBlockModificationService(val project: Project) : Dispo
         ApplicationManager.getApplication().assertWriteAccessAllowed()
 
         module.sourceModuleInfos.forEach {
-            project.analysisMessageBus.syncPublisher(KotlinTopics.MODULE_OUT_OF_BLOCK_MODIFICATION).afterModification(it.toKtModule())
+            project.analysisMessageBus.syncPublisher(KotlinTopics.MODULE_OUT_OF_BLOCK_MODIFICATION).onModification(it.toKtModule())
         }
     }
 
@@ -67,7 +67,7 @@ internal class FirIdeOutOfBlockModificationService(val project: Project) : Dispo
         projectOutOfBlockModificationTracker.incModificationCount()
 
         // We should not invalidate binary module content here, because global PSI tree changes have no effect on binary modules.
-        project.analysisMessageBus.syncPublisher(KotlinTopics.GLOBAL_SOURCE_OUT_OF_BLOCK_MODIFICATION).afterModification()
+        project.analysisMessageBus.syncPublisher(KotlinTopics.GLOBAL_SOURCE_OUT_OF_BLOCK_MODIFICATION).onModification()
     }
 
     companion object {
@@ -90,6 +90,6 @@ private class SingleFileModuleFileListener(private val project: Project) : Abstr
     override fun shouldProcessEvent(event: VFileEvent): Boolean = event is VFileContentChangeEvent
 
     override fun processEvent(event: VFileEvent, module: KtModule) {
-        project.analysisMessageBus.syncPublisher(KotlinTopics.MODULE_OUT_OF_BLOCK_MODIFICATION).afterModification(module)
+        project.analysisMessageBus.syncPublisher(KotlinTopics.MODULE_OUT_OF_BLOCK_MODIFICATION).onModification(module)
     }
 }

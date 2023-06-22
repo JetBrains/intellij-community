@@ -203,5 +203,5 @@ private fun <C : WorkspaceEntity, E> EntityChange.Replaced<C>.getReplacedEntity(
 }
 
 private fun Project.publishModuleStateModification(module: KtModule, isRemoval: Boolean) {
-    analysisMessageBus.syncPublisher(KotlinTopics.MODULE_STATE_MODIFICATION).afterModification(module, isRemoval)
+    analysisMessageBus.syncPublisher(KotlinTopics.MODULE_STATE_MODIFICATION).onModification(module, isRemoval)
 }
