@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.log10
 import kotlin.math.pow
 
-private class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.DaemonListener {
+open class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.DaemonListener {
   @Volatile
   private var daemonStartTime: Long = -1L
   @Volatile
@@ -34,7 +34,7 @@ private class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyz
   private var documentModificationStamp: Long = 0
   private var documentStartedHash: Int = 0 // Document the `daemonStarting` event was received for. Store the hash instead of Document instance to avoid leaks
   @Volatile
-  private var canceled: Boolean = false
+  protected var canceled: Boolean = false
 
   override fun daemonStarting(fileEditors: Collection<FileEditor>) {
     canceled = false
