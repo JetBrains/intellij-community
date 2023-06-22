@@ -17,3 +17,5 @@ private var bar: suspend () -> Unit = {
 
 // EXPRESSION: coroutineContext
 // RESULT: instance of kotlin.coroutines.EmptyCoroutineContext(id=ID): Lkotlin/coroutines/EmptyCoroutineContext;
+
+// IGNORE_K2

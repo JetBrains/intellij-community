@@ -26,3 +26,5 @@ fun block(foo: () -> Unit) {
 
 // EXPRESSION: fun foo() { Nothing() }
 // RESULT: 'Nothing' can't be instantiated
+
+// IGNORE_K2

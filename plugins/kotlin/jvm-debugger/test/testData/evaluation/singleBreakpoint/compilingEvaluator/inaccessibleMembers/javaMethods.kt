@@ -43,3 +43,5 @@ fun <T> block(block: () -> T): T {
 
 // EXPRESSION: block { m.i3('q', "z", false) }
 // RESULT: 4: I
+
+// IGNORE_K2

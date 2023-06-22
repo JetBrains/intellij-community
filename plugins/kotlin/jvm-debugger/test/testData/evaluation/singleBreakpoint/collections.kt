@@ -23,3 +23,5 @@ fun main(args: Array<String>) {
 
 // EXPRESSION: arrayListOf(1, 2, 3).drop(1)
 // RESULT: instance of java.util.ArrayList(id=ID): Ljava/util/ArrayList;
+
+// IGNORE_K2
