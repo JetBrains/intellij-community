@@ -386,13 +386,15 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
 
   private final class IndexingRequest {
     private static final int BATCH_SIZE = 20_000;
-    private static final int FLUSHED_COMMITS_NUMBER = 15000;
     private static final int LOGGED_ERRORS_COUNT = 5;
     private static final int STOPPING_ERROR_COUNT = 30;
+
     private final @NotNull VirtualFile myRoot;
     private final @NotNull IntSet myCommits;
     private final @NotNull VcsLogIndexer.PathsEncoder myPathsEncoder;
     private final boolean myFull;
+
+    private final int myFlushedCommitsNumber = SqliteVcsLogStorageBackendKt.isSqliteBackend(myBackend) ? 5000 : 15000;
 
     private final @NotNull AtomicInteger myNewIndexedCommits = new AtomicInteger();
     private final @NotNull AtomicInteger myOldCommits = new AtomicInteger();
@@ -569,7 +571,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
         myIndexers.get(myRoot).readFullDetails(myRoot, hashes, myPathsEncoder, detail -> {
           indicator.checkCanceled();
           storeDetail(detail, mutator);
-          if (myNewIndexedCommits.incrementAndGet() % FLUSHED_COMMITS_NUMBER == 0) {
+          if (myNewIndexedCommits.incrementAndGet() % myFlushedCommitsNumber == 0) {
             mutator.flush();
           }
 
@@ -583,7 +585,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
         indicator.checkCanceled();
         storeDetail(details, mutator);
 
-        if (myNewIndexedCommits.incrementAndGet() % FLUSHED_COMMITS_NUMBER == 0) {
+        if (myNewIndexedCommits.incrementAndGet() % myFlushedCommitsNumber == 0) {
           mutator.flush();
         }
 
