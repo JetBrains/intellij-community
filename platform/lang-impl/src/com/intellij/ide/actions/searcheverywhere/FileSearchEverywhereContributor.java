@@ -184,7 +184,7 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor i
   @NotNull
   @Override
   public List<AnAction> createRightActions(@NotNull String pattern, @NotNull Runnable onChanged) {
-    if (!Registry.is("search.everywhere.recents")) return super.createRightActions(pattern, onChanged);
+    if (!Registry.is("search.everywhere.recents.clear.action")) return super.createRightActions(pattern, onChanged);
     if (StringUtil.isNotEmpty(pattern)) return super.createRightActions(pattern, onChanged);
 
     return Collections.singletonList(new AnAction(() -> LangBundle.message("action.clear.recent.actions.text"),

@@ -85,7 +85,7 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
   @NotNull
   @Override
   public List<AnAction> createRightActions(@NotNull String pattern, @NotNull Runnable onChanged) {
-    if (!Registry.is("search.everywhere.recents") || StringUtil.isNotEmpty(pattern)) return ContainerUtil.emptyList();
+    if (!Registry.is("search.everywhere.recents.clear.action") || StringUtil.isNotEmpty(pattern)) return ContainerUtil.emptyList();
 
     return Collections.singletonList(new AnAction(() -> LangBundle.message("action.clear.recent.actions.text"),
                                                   () -> LangBundle.message("action.clear.recent.actions.description"),
