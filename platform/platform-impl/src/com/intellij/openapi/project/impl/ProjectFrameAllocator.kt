@@ -441,20 +441,17 @@ private fun CoroutineScope.initFrame(deferredProjectFrameHelper: Deferred<Projec
   launch {
     val frameHelper = deferredProjectFrameHelper.await()
     val toolbarActionGroups = deferredToolbarActionGroups.await()
-    launch(Dispatchers.EDT) {
-      val rootPane = frameHelper.rootPane
-      subtask("toolbar init") {
-        rootPane.initToolbar(toolbarActionGroups)
-      }
-      subtask("north components updating") {
-        rootPane.updateNorthComponents()
-      }
+    launch(CoroutineName("toolbar init") + Dispatchers.EDT) {
+      frameHelper.rootPane.initToolbar(toolbarActionGroups)
     }
+  }
 
-    launch {
-      frameHelper.installDefaultProjectStatusBarWidgets(project)
-      frameHelper.updateTitle(FrameTitleBuilder.getInstance().getProjectTitle(project), project)
-    }
+  // out of project loading scope
+  @Suppress("DEPRECATION")
+  project.coroutineScope.launch {
+    val frameHelper = deferredProjectFrameHelper.await()
+    frameHelper.installDefaultProjectStatusBarWidgets(project)
+    frameHelper.updateTitle(FrameTitleBuilder.getInstance().getProjectTitle(project), project)
   }
 }
 
