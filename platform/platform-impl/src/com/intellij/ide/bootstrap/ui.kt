@@ -30,6 +30,7 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.updateAppWindowIcon
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.VisibleForTesting
@@ -92,8 +93,8 @@ internal fun initUi(isHeadless: Boolean) {
   }
 }
 
-internal fun CoroutineScope.schedulePreloadingLafClasses(): Job {
-  return launch(CoroutineName("LaF class preloading") + Dispatchers.IO) {
+internal fun CoroutineScope.schedulePreloadingLafClasses() {
+  launch(CoroutineName("LaF class preloading") + Dispatchers.IO) {
     val classLoader = AppStarter::class.java.classLoader
     // preload class not in EDT
     Class.forName(DarculaLaf::class.java.name, true, classLoader)
@@ -103,6 +104,7 @@ internal fun CoroutineScope.schedulePreloadingLafClasses(): Job {
     Class.forName(SynchronizedClearableLazy::class.java.name, true, classLoader)
     Class.forName(ScaleContext::class.java.name, true, classLoader)
     Class.forName(GlobalStyleSheetHolder::class.java.name, true, classLoader)
+    Class.forName(UIUtil::class.java.name, true, classLoader)
   }
 }
 
