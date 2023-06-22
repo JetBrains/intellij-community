@@ -62,7 +62,7 @@ internal class InternalReadAction<T>(
       }
       when (val readResult = tryReadAction()) {
         is ReadResult.Successful -> return readResult.value
-        is ReadResult.UnsatisfiedConstraint -> readResult.waitForConstraint.join()
+        is ReadResult.UnsatisfiedConstraint -> readResult.constraint.awaitConstraint()
         is ReadResult.WritePending -> Unit // retry
       }
     }
@@ -78,11 +78,10 @@ internal class InternalReadAction<T>(
   }
 
   private suspend fun tryReadBlocking(): ReadResult<T> {
-    val loopJob = currentCoroutineContext().job
     return blockingContext {
       var result: ReadResult<T>? = null
       application.tryRunReadAction {
-        result = insideReadAction(loopJob)
+        result = insideReadAction()
       }
       result ?: ReadResult.WritePending
     }
@@ -90,29 +89,28 @@ internal class InternalReadAction<T>(
 
   private suspend fun tryReadCancellable(): ReadResult<T> = try {
     val ctx = currentCoroutineContext()
-    val loopJob = ctx.job
     cancellableReadActionInternal(ctx) {
-      insideReadAction(loopJob)
+      insideReadAction()
     }
   }
   catch (readCe: ReadCancellationException) {
     ReadResult.WritePending
   }
 
-  private fun insideReadAction(loopJob: Job): ReadResult<T> {
+  private fun insideReadAction(): ReadResult<T> {
     val unsatisfiedConstraint = findUnsatisfiedConstraint()
     return if (unsatisfiedConstraint == null) {
       ReadResult.Successful(action())
     }
     else {
-      ReadResult.UnsatisfiedConstraint(waitForConstraint(loopJob, unsatisfiedConstraint))
+      ReadResult.UnsatisfiedConstraint(unsatisfiedConstraint)
     }
   }
 }
 
 private sealed class ReadResult<out T> {
   class Successful<T>(val value: T) : ReadResult<T>()
-  class UnsatisfiedConstraint(val waitForConstraint: Job) : ReadResult<Nothing>()
+  class UnsatisfiedConstraint(val constraint: ReadConstraint) : ReadResult<Nothing>()
   object WritePending : ReadResult<Nothing>()
 }
 
@@ -127,15 +125,6 @@ private suspend fun yieldToPendingWriteActions() {
     // to run a read action concurrently in background
     // => yield until the current WA finishes in any modality.
     ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any())
-  }
-}
-
-private fun waitForConstraint(loopJob: Job, constraint: ReadConstraint): Job {
-  return CoroutineScope(loopJob).launch(Dispatchers.Unconfined + CoroutineName("waiting for constraint '$constraint'")) {
-    check(ApplicationManager.getApplication().isReadAccessAllowed) // schedule while holding read lock
-    yieldUntilRun(constraint::schedule)
-    check(constraint.isSatisfied())
-    // Job is finished, readLoop may continue the next attempt
   }
 }
 
