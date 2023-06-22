@@ -145,6 +145,37 @@ class DefaultTreeLayoutCacheTest {
     )
   }
 
+  @Test
+  fun `re-expand visible root with previously expanded children`() {
+    testStructure(
+      initOps = {
+        model.setRoot(root)
+        root.insert(a1, 0)
+        a1.insert(b11, 0)
+        root.insert(a2, 1)
+        a2.insert(b21, 0)
+        sut.isRootVisible = true
+      },
+      modOps = {
+        sut.setExpandedState(path("r"), true)
+        sut.setExpandedState(path("r/a1"), true)
+        sut.setExpandedState(path("r/a2"), true)
+        sut.setExpandedState(path("r"), false)
+        sut.setExpandedState(path("r"), true)
+      },
+      assertions = {
+        assertStructure("""
+          |r
+          | a1
+          |  b11
+          | a2
+          |  b21
+          """.trimMargin()
+        )
+      },
+    )
+  }
+
   private fun testStructure(
     initOps: () -> Unit = { },
     modOps: () -> Unit = { },
