@@ -6,7 +6,10 @@ package com.intellij.openapi.project.impl
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.configurationStore.saveSettings
 import com.intellij.conversion.CannotConvertException
-import com.intellij.diagnostic.*
+import com.intellij.diagnostic.ActivityCategory
+import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.dumpCoroutines
+import com.intellij.diagnostic.subtask
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectMetaInfo
@@ -15,7 +18,6 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.util.runOnceForProject
 import com.intellij.idea.getAndUnsetSplashProjectFrame
 import com.intellij.idea.hideSplashBeforeShow
-import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -176,7 +178,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
 
       val startOfWaitingForReadyFrame = AtomicLong(-1)
 
-      launch(CoroutineName("fileEditorProvider preloading") + Dispatchers.IO) {
+      outOfLoadingScope.launch(CoroutineName("fileEditorProvider preloading") + Dispatchers.IO) {
         FileEditorProvider.EP_FILE_EDITOR_PROVIDER.extensionList
       }
 
@@ -193,7 +195,10 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
       }
 
       launch {
-        initFrame(rawProjectDeferred, reopeningEditorJob, deferredProjectFrameHelper)
+        initFrame(rawProjectDeferred = rawProjectDeferred,
+                  reopeningEditorJob = reopeningEditorJob,
+                  deferredProjectFrameHelper = deferredProjectFrameHelper,
+                  outOfLoadingScope = outOfLoadingScope)
       }
 
       task(saveTemplateDeferred, projectInitObserver)
@@ -330,21 +335,31 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
 
 private suspend fun initFrame(rawProjectDeferred: CompletableDeferred<Project>,
                               reopeningEditorJob: Job,
-                              deferredProjectFrameHelper: Deferred<ProjectFrameHelper>) {
-  @Suppress("DEPRECATION")
-  val deferredToolbarActionGroups = ApplicationManager.getApplication()
-    .coroutineScope.async(CoroutineName("toolbar action groups computing")) {
-    runActivity(coroutineContext[CoroutineName]!!.name) {
-      MainToolbar.computeActionGroups()
-    }
+                              deferredProjectFrameHelper: Deferred<ProjectFrameHelper>,
+                              outOfLoadingScope: CoroutineScope) {
+  val deferredToolbarActionGroups = outOfLoadingScope.async(CoroutineName("toolbar action groups computing")) {
+    MainToolbar.computeActionGroups()
   }
 
   val project = rawProjectDeferred.await()
   subtask("initFrame") {
-    initFrame(deferredProjectFrameHelper = deferredProjectFrameHelper,
-              project = project,
-              reopeningEditorJob = reopeningEditorJob,
-              deferredToolbarActionGroups = deferredToolbarActionGroups)
+    initializeToolWindows(deferredProjectFrameHelper = deferredProjectFrameHelper,
+                          project = project,
+                          reopeningEditorJob = reopeningEditorJob)
+
+    outOfLoadingScope.launch {
+      val frameHelper = deferredProjectFrameHelper.await()
+
+      launch {
+        val toolbarActionGroups = deferredToolbarActionGroups.await()
+        launch(CoroutineName("toolbar init") + Dispatchers.EDT) {
+          frameHelper.rootPane.initToolbar(toolbarActionGroups)
+        }
+      }
+
+      frameHelper.installDefaultProjectStatusBarWidgets(project)
+      frameHelper.updateTitle(FrameTitleBuilder.getInstance().getProjectTitle(project), project)
+    }
   }
 }
 
@@ -424,10 +439,9 @@ private fun focusSelectedEditor(editorComponent: EditorsSplitters) {
   }
 }
 
-private fun CoroutineScope.initFrame(deferredProjectFrameHelper: Deferred<ProjectFrameHelper>,
-                                     project: Project,
-                                     reopeningEditorJob: Job,
-                                     deferredToolbarActionGroups: Deferred<List<Pair<ActionGroup, String>>>) {
+private fun CoroutineScope.initializeToolWindows(deferredProjectFrameHelper: Deferred<ProjectFrameHelper>,
+                                                 project: Project,
+                                                 reopeningEditorJob: Job) {
   launch(CoroutineName("tool window pane creation")) {
     val toolWindowManager = project.serviceAsync<ToolWindowManager>() as? ToolWindowManagerImpl ?: return@launch
 
@@ -436,22 +450,6 @@ private fun CoroutineScope.initFrame(deferredProjectFrameHelper: Deferred<Projec
     }
     val frameHelper = deferredProjectFrameHelper.await()
     toolWindowManager.init(frameHelper = frameHelper, reopeningEditorJob = reopeningEditorJob, taskListDeferred = taskListDeferred)
-  }
-
-  launch {
-    val frameHelper = deferredProjectFrameHelper.await()
-    val toolbarActionGroups = deferredToolbarActionGroups.await()
-    launch(CoroutineName("toolbar init") + Dispatchers.EDT) {
-      frameHelper.rootPane.initToolbar(toolbarActionGroups)
-    }
-  }
-
-  // out of project loading scope
-  @Suppress("DEPRECATION")
-  project.coroutineScope.launch {
-    val frameHelper = deferredProjectFrameHelper.await()
-    frameHelper.installDefaultProjectStatusBarWidgets(project)
-    frameHelper.updateTitle(FrameTitleBuilder.getInstance().getProjectTitle(project), project)
   }
 }
 
