@@ -1052,6 +1052,11 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("AbstractClassParenthesis.kt")
+        public void testAbstractClassParenthesis() throws Exception {
+            runTest("../testData/handlers/basic/AbstractClassParenthesis.kt");
+        }
+
         @TestMetadata("AddLabelToReturn.kt")
         public void testAddLabelToReturn() throws Exception {
             runTest("../testData/handlers/basic/AddLabelToReturn.kt");

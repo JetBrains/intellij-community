@@ -193,7 +193,8 @@ object KotlinClassifierInsertHandler : BaseDeclarationInsertHandler() {
 
     private fun kotlinParenthesis(lookupObject: DescriptorBasedDeclarationLookupObject): ParenthesisConfig? {
         val descriptor: DeclarationDescriptor? = lookupObject.descriptor
-        val classDescriptor = (descriptor?.unwrapIfTypeAlias() as? ClassDescriptor)?.takeIf { it.kind == ClassKind.CLASS } ?: return null
+        val classDescriptor = (descriptor?.unwrapIfTypeAlias() as? ClassDescriptor)
+            ?.takeIf { it.kind == ClassKind.CLASS && it.modality != Modality.ABSTRACT } ?: return null
         val constructors = classDescriptor.constructors
         val publicVisibleConstructors = constructors.filter { it.visibility == DescriptorVisibilities.PUBLIC }
         if (publicVisibleConstructors.isEmpty() && constructors.isNotEmpty()) return null

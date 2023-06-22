@@ -1052,6 +1052,11 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
             KotlinTestUtils.runTest(this::doPerfTest, this, testDataFilePath);
         }
 
+        @TestMetadata("AbstractClassParenthesis.kt")
+        public void testAbstractClassParenthesis() throws Exception {
+            runTest("../completion/testData/handlers/basic/AbstractClassParenthesis.kt");
+        }
+
         @TestMetadata("AddLabelToReturn.kt")
         public void testAddLabelToReturn() throws Exception {
             runTest("../completion/testData/handlers/basic/AddLabelToReturn.kt");
