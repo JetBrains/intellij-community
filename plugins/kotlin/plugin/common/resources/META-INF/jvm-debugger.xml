@@ -49,6 +49,7 @@
 
 
     <debugger.sourcePositionHighlighter implementation="org.jetbrains.kotlin.idea.debugger.core.KotlinSourcePositionHighlighter"/>
+    <debugger.sourcePositionProvider implementation="org.jetbrains.kotlin.idea.debugger.core.KotlinSourcePositionProvider"/>
 
     <debugger.extraSteppingFilter implementation="org.jetbrains.kotlin.idea.debugger.core.filter.KotlinExtraSteppingFilter"/>
     <debugger.syntheticProvider implementation="org.jetbrains.kotlin.idea.debugger.core.filter.KotlinSyntheticTypeComponentProvider"/>
