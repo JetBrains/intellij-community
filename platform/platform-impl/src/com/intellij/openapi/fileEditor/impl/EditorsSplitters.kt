@@ -54,7 +54,6 @@ import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBRectangle
-import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.jdom.Element
@@ -508,7 +507,7 @@ open class EditorsSplitters internal constructor(
     return frame
   }
 
-  val isInsideChange: Boolean
+  internal val isInsideChange: Boolean
     get() = insideChange > 0
 
   internal fun updateFileBackgroundColorAsync(file: VirtualFile) {
