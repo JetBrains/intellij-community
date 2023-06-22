@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.psi.*
 import com.intellij.psi.statistics.StatisticsInfo
+import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -32,12 +33,13 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
 import org.jetbrains.kotlin.idea.actions.KotlinAddImportActionInfo
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
-import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
+import org.jetbrains.kotlin.idea.codeInsight.K2StatisticsInfoProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixActionBase
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFqNameIfPackageOrNonLocal
@@ -58,7 +60,7 @@ class ImportQuickFix(
     @IntentionName private val text: String,
     private val importCandidates: List<ImportCandidate>
 ) : QuickFixActionBase<KtElement>(element), HintAction {
-    data class ImportCandidate(val fqName: FqName, val renderedDeclaration: String)
+    data class ImportCandidate(val fqName: FqName, val renderedDeclaration: String, val statisticsInfo: StatisticsInfo)
 
     init {
         require(importCandidates.isNotEmpty())
@@ -149,7 +151,7 @@ class ImportQuickFix(
             KotlinAddImportActionInfo.executeListener?.onExecute(listOf(importCandidates.map { it.renderedDeclaration }))
             when (importCandidates.size) {
                 1 -> {
-                    addImport(importCandidates.single().fqName)
+                    addImport(importCandidates.single())
                     return true
                 }
 
@@ -159,7 +161,7 @@ class ImportQuickFix(
 
                 else -> {
                     if (ApplicationManager.getApplication().isUnitTestMode) {
-                        addImport(importCandidates.first().fqName)
+                        addImport(importCandidates.first())
                         return true
                     }
                     createImportSelectorPopup().showInBestPositionFor(editor)
@@ -173,13 +175,15 @@ class ImportQuickFix(
             return JBPopupFactory.getInstance()
                 .createPopupChooserBuilder(importCandidates)
                 .setTitle(KotlinBundle.message("action.add.import.chooser.title"))
-                .setItemChosenCallback { selectedValue: ImportCandidate -> addImport(selectedValue.fqName) }
+                .setItemChosenCallback { selectedValue: ImportCandidate -> addImport(selectedValue) }
                 .createPopup()
         }
 
-        private fun addImport(nameToImport: FqName) {
+        private fun addImport(importCandidate: ImportCandidate) {
+            StatisticsManager.getInstance().incUseCount(importCandidate.statisticsInfo)
+
             project.executeWriteCommand(QuickFixBundle.message("add.import")) {
-                file.addImport(nameToImport)
+                file.addImport(importCandidate.fqName)
             }
         }
     }
@@ -265,7 +269,7 @@ class ImportQuickFix(
             )
 
             val sortedImportCandidates = sortedImportCandidateSymbolsWithPriorities
-                .map { (symbol, _) -> ImportCandidate(symbol.getFqName(), renderSymbol(symbol)) }
+                .map { (symbol, priority) -> ImportCandidate(symbol.getFqName(), renderSymbol(symbol), priority.statisticsInfo) }
 
             return ImportQuickFix(element, text, sortedImportCandidates)
         }
@@ -310,7 +314,7 @@ class ImportQuickFix(
         ): ImportPrioritizer.Priority =
             prioritizer.Priority(
                 declaration = symbol.psi,
-                statisticsInfo = StatisticsInfo.EMPTY,
+                statisticsInfo = K2StatisticsInfoProvider.forDeclarationSymbol(symbol),
                 isDeprecated = symbol.deprecationStatus != null,
                 fqName = symbol.getFqName(),
                 expressionWeight = expressionImportWeigher.weigh(symbol),

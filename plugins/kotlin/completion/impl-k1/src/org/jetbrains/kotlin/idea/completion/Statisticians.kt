@@ -43,6 +43,9 @@ class KotlinProximityStatistician : ProximityStatistician() {
     }
 }
 
+/**
+ * Implementation in K2: [org.jetbrains.kotlin.idea.codeInsight.K2StatisticsInfoProvider]
+ */
 object KotlinStatisticsInfo {
     private val SIGNATURE_RENDERER = DescriptorRenderer.withOptions {
         withDefinedIn = false

@@ -187,4 +187,9 @@ public class K1AddImportActionTestGenerated extends AbstractK1AddImportActionTes
     public void testVarargs3() throws Exception {
         runTest("testData/idea/actions/kotlinAddImportAction/Varargs3.kt");
     }
+
+    @TestMetadata("WithStatisticsInfo.kt")
+    public void testWithStatisticsInfo() throws Exception {
+        runTest("testData/idea/actions/kotlinAddImportAction/WithStatisticsInfo.kt");
+    }
 }

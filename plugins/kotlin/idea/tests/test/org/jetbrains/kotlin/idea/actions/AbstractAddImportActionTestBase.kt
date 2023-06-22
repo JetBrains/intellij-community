@@ -2,6 +2,9 @@
 package org.jetbrains.kotlin.idea.actions
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.psi.statistics.StatisticsInfo
+import com.intellij.psi.statistics.StatisticsManager
+import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import java.io.File
@@ -34,13 +37,16 @@ abstract class AbstractAddImportActionTestBase : KotlinLightCodeInsightFixtureTe
         }
         KotlinAddImportActionInfo.setExecuteListener(testRootDisposable, executeListener)
 
+        (StatisticsManager.getInstance() as StatisticsManagerImpl).enableStatistics(myFixture.testRootDisposable)
+        increaseUseCountOf(InTextDirectivesUtils.findListWithPrefixes(fixture.file.text, INCREASE_USE_COUNT_DIRECTIVE))
+
         val importFix = myFixture.availableIntentions.singleOrNull { it.familyName == "Import" } ?: error("No import fix available")
         importFix.invoke(project, editor, file)
 
         assertNotNull(actualVariants)
 
-        val expectedVariantNames = InTextDirectivesUtils.findListWithPrefixes(fixture.file.text, "EXPECT_VARIANT_IN_ORDER")
-        val expectedAbsentVariantNames = InTextDirectivesUtils.findListWithPrefixes(fixture.file.text, "EXPECT_VARIANT_NOT_PRESENT")
+        val expectedVariantNames = InTextDirectivesUtils.findListWithPrefixes(fixture.file.text, EXPECT_VARIANT_IN_ORDER_DIRECTIVE)
+        val expectedAbsentVariantNames = InTextDirectivesUtils.findListWithPrefixes(fixture.file.text, EXPECT_VARIANT_NOT_PRESENT_DIRECTIVE)
 
         if (expectedVariantNames.isNotEmpty() || expectedAbsentVariantNames.isNotEmpty()) {
             val actualVariantNames = actualVariants!!.flatten()
@@ -48,7 +54,7 @@ abstract class AbstractAddImportActionTestBase : KotlinLightCodeInsightFixtureTe
             for (i in expectedVariantNames.indices) {
                 assertTrue(
                     "mismatch at #$i: '${actualVariantNames[i]}' should start with '${expectedVariantNames[i]}'\nactual:\n${
-                        actualVariantNames.joinToString("\n") { "// EXPECT_VARIANT_IN_ORDER \"$it\"" }
+                        actualVariantNames.joinToString("\n") { "// ${EXPECT_VARIANT_IN_ORDER_DIRECTIVE} \"$it\"" }
                     }",
                     actualVariantNames[i].contains(expectedVariantNames[i])
                 )
@@ -61,5 +67,17 @@ abstract class AbstractAddImportActionTestBase : KotlinLightCodeInsightFixtureTe
         }
 
         myFixture.checkResultByFile("${fileName()}.after")
+    }
+
+    private fun increaseUseCountOf(statisticsInfoValues: List<String>) {
+        statisticsInfoValues.forEach { value ->
+            StatisticsManager.getInstance().incUseCount(StatisticsInfo("", value))
+        }
+    }
+
+    companion object {
+        private const val EXPECT_VARIANT_IN_ORDER_DIRECTIVE: String = "EXPECT_VARIANT_IN_ORDER"
+        private const val EXPECT_VARIANT_NOT_PRESENT_DIRECTIVE: String = "EXPECT_VARIANT_NOT_PRESENT"
+        private const val INCREASE_USE_COUNT_DIRECTIVE: String = "INCREASE_USE_COUNT"
     }
 }
