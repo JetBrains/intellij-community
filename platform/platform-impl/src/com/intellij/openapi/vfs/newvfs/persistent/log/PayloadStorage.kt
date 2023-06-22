@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State
 import java.io.OutputStream
 
 interface PayloadStorage: PayloadStorageIO {
@@ -12,5 +13,7 @@ interface PayloadStorage: PayloadStorageIO {
 
 interface PayloadStorageIO {
   fun writePayload(sizeBytes: Long, body: OutputStream.() -> Unit): PayloadRef
-  fun readPayload(payloadRef: PayloadRef): ByteArray? // TODO DefinedState
+  fun readPayload(payloadRef: PayloadRef): State.DefinedState<ByteArray>
 }
+
+typealias PayloadReader = (PayloadRef) -> State.DefinedState<ByteArray>

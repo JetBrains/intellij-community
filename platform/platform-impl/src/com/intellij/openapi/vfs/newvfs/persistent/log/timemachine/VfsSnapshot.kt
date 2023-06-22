@@ -87,7 +87,7 @@ interface VfsSnapshot {
           }
         }
 
-      inline fun <R> observe(onNotAvailable: (cause: NotEnoughInformationCause) -> R, onReady: (value: T) -> R): R =
+      inline fun <R> observe(onNotAvailable: (cause: NotAvailableException) -> R, onReady: (value: T) -> R): R =
         observeState().mapCases(onNotAvailable, onReady)
 
       fun get(): T = observe(onNotAvailable = { throw AssertionError("property expected to be Ready", it.cause) }) { it }

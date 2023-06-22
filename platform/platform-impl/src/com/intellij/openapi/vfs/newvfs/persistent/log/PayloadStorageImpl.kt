@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef.Source
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.ByteCountingOutputStream
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.ChunkMMappedFileIO
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.StorageIO
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.AdvancingPositionTracker
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.SkipListAdvancingPositionTracker
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.trackAdvance
@@ -15,7 +16,7 @@ import com.intellij.util.io.DataOutputStream
 import com.intellij.util.io.ResilientFileChannel
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
-import java.io.EOFException
+import java.io.IOException
 import java.io.OutputStream
 import java.nio.channels.FileChannel
 import java.nio.file.Path
@@ -64,27 +65,26 @@ class PayloadStorageImpl(
     }
   }
 
-  override fun readPayload(payloadRef: PayloadRef): ByteArray? {
-    if (payloadRef.source == Source.Inline0) return ByteArray(0)
-    // TODO: revisit unexpected value cases
-    if (payloadRef.offset < 0 || payloadRef.offset >= position.getReadyPosition()) return null
+  override fun readPayload(payloadRef: PayloadRef): State.DefinedState<ByteArray> {
+    if (payloadRef.source == Source.Inline0) return ByteArray(0).let(State::Ready) // TODO extract
+    if (payloadRef.offset >= position.getReadyPosition()) return State.NotAvailable("failed to read $payloadRef: data was not written yet")
     val buf = ByteArray(10) // 1 + (64 - 6) / 7 < 10
     storageIO.read(payloadRef.offset, buf)
     val inp = ByteArrayInputStream(buf)
     val sizeBytes = try {
       DataInputOutputUtil.readLONG(DataInputStream(inp))
     }
-    catch (e: EOFException) {
-      return null
+    catch (e: IOException) {
+      return State.NotAvailable("failed to read $payloadRef: size marker is malformed", e)
     }
-    // dirty hack: inp.available() = count - pos, so pos = count - inp.available() = buf.size - inp.available()
+    // hack: inp.available() = count - pos, so pos = count - inp.available() = buf.size - inp.available()
     val dataOffset = buf.size - inp.available()
     if (sizeBytes < 0) {
-      return null
+      return State.NotAvailable("failed to read $payloadRef: size marker is negative ($sizeBytes)")
     }
     val data = ByteArray(sizeBytes.toInt())
     storageIO.read(payloadRef.offset + dataOffset, data)
-    return data
+    return data.let(State::Ready)
   }
 
   override fun size(): Long = lastSafeSize ?: 0L

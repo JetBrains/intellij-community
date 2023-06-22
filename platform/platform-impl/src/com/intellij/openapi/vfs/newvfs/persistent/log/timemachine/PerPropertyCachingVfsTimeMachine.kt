@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSAttributeAccessor
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.constCopier
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage
-import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef
+import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadReader
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogContext
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.Companion.bind
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.Companion.fmap
@@ -28,7 +28,7 @@ class PerPropertyCachingVfsTimeMachine(
   private val vfsLogContext: VfsLogContext,
   private val id2filename: (Int) -> String?,
   private val attributeEnumerator: SimpleStringPersistentEnumerator,
-  private val payloadReader: (PayloadRef) -> DefinedState<ByteArray>
+  private val payloadReader: PayloadReader
 ) : VfsTimeMachine {
   private val cache = sortedMapOf<Long, SoftReference<VfsSnapshot>>()
   private val zeroLayer = NotAvailableVfsSnapshot(
@@ -62,7 +62,7 @@ class CacheAwarePerPropertyVfsSnapshot(
   private val logContext: VfsLogContext,
   private val id2filename: (Int) -> String?,
   private val attributeEnumerator: SimpleStringPersistentEnumerator,
-  private val payloadReader: (PayloadRef) -> DefinedState<ByteArray>,
+  private val payloadReader: PayloadReader,
   private val getPrecedingCachedSnapshot: (point: OperationLogStorage.Iterator) -> VfsSnapshot?,
 ) : VfsSnapshot {
   override val point: () -> OperationLogStorage.Iterator = point.constCopier()

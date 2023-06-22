@@ -3,12 +3,16 @@ package com.intellij.openapi.vfs.newvfs.persistent.vfslog
 
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsOracle
-import com.intellij.openapi.vfs.newvfs.persistent.log.*
+import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.VFileEventBasedIterator.ReadResult
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.forEachContainedOperation
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.OperationReadResult
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperationTag
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.*
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.Companion.fmap
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.Companion.mapCases
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.SimpleStringPersistentEnumerator
@@ -32,7 +36,7 @@ private data class Stats(
   var operationsStorageSize: Long = 0,
   var payloadStorageSize: Long = 0,
   val operationsCount: AtomicInteger = AtomicInteger(0),
-  val nullPayloads: AtomicInteger = AtomicInteger(0),
+  val notAvailablePayloads: AtomicInteger = AtomicInteger(0),
   val nullEnumeratedString: AtomicInteger = AtomicInteger(0),
   val exceptionResultCount: AtomicInteger = AtomicInteger(0),
   val payloadSizeHist: IntHistogram = IntHistogram(listOf(0, 1, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 1024 * 16, 1024 * 128, 1024 * 1024)),
@@ -80,20 +84,14 @@ private fun calcStats(log: VfsLog): Stats {
                   //  attrCount[attributeId] = attrCount.getOrDefault(attributeId, 0) + 1
                   //}
                   val data = payloadStorage.readPayload(op.attrDataPayloadRef)
-                  if (data == null) {
-                    stats.nullPayloads.incrementAndGet()
-                  }
-                  else {
-                    stats.payloadSizeHist.add(data.size)
+                  data.mapCases({ stats.notAvailablePayloads.incrementAndGet() }) {
+                    stats.payloadSizeHist.add(it.size)
                   }
                 }
                 is VfsOperation.ContentsOperation.WriteBytes -> {
                   val data = payloadStorage.readPayload(op.dataPayloadRef)
-                  if (data == null) {
-                    stats.nullPayloads.incrementAndGet()
-                  }
-                  else {
-                    stats.payloadSizeHist.add(data.size)
+                  data.mapCases({ stats.notAvailablePayloads.incrementAndGet() }) {
+                    stats.payloadSizeHist.add(it.size)
                   }
                 }
                 else -> {
@@ -177,12 +175,7 @@ private fun vfsRecoveryDraft(log: VfsLog,
   var vfileEvents = 0
   var vfileEventContentOps = 0
 
-  val payloadReadAt = log.context.payloadStorage::readPayload
-  val payloadReader: (PayloadRef) -> State.DefinedState<ByteArray> = {
-    val data = payloadReadAt(it)
-    if (data == null) State.NotAvailable(NotEnoughInformationCause("data is not available anymore"))
-    else State.Ready(data)
-  }
+  val payloadReader = log.context.payloadStorage::readPayload
   val perPropVTM = PerPropertyCachingVfsTimeMachine(
     log.context,
     id2filename = fsRecordsOracle::getNameByNameId,

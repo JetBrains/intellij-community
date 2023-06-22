@@ -4,11 +4,8 @@ package com.intellij.openapi.vfs.newvfs.persistent.log.timemachine
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream
 import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSAttributeAccessor
-import com.intellij.openapi.vfs.newvfs.persistent.log.EnumeratedFileAttribute
+import com.intellij.openapi.vfs.newvfs.persistent.log.*
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.constCopier
-import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage
-import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef
-import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogContext
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.ExtendedVfsSnapshot.ExtendedVirtualFileSnapshot
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.FillInVfsSnapshot.SnapshotFiller
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.FillInVfsSnapshot.SnapshotFiller.Companion.fillUntilDefined
@@ -37,7 +34,7 @@ class SinglePassVfsTimeMachine(
   private val logContext: VfsLogContext,
   private val id2filename: (Int) -> String?,
   private val attributeEnumerator: SimpleStringPersistentEnumerator,
-  private val payloadReader: (PayloadRef) -> DefinedState<ByteArray>,
+  private val payloadReader: PayloadReader,
   private val fillerSupplier: () -> SnapshotFillerPresets.Filler = { SnapshotFillerPresets.everything }
 ) : VfsTimeMachine {
   override fun getSnapshot(point: OperationLogStorage.Iterator): ExtendedVfsSnapshot {
@@ -69,7 +66,7 @@ class FillInVfsSnapshot(point: OperationLogStorage.Iterator,
                         private val logContext: VfsLogContext,
                         private val id2filename: (Int) -> String?,
                         private val attributeEnumerator: SimpleStringPersistentEnumerator,
-                        private val payloadReader: (PayloadRef) -> DefinedState<ByteArray>
+                        private val payloadReader: PayloadReader
 ) : ExtendedVfsSnapshot {
   fun interface SnapshotFiller {
     /** Must not observe properties to avoid deadlock possibility -- only fillIn can be used */
@@ -139,11 +136,11 @@ class FillInVfsSnapshot(point: OperationLogStorage.Iterator,
     override val recordAllocationExists = FillInProperty<Boolean> { false.let(State::Ready) }
 
     override val contentRestorationSequence: Property<ContentRestorationSequence> = contentRecordId.bind {
-      if (it == 0) return@bind State.NotAvailable(NotEnoughInformationCause("VFS didn't cache file's content"))
+      if (it == 0) return@bind State.notEnoughInformation("VFS didn't cache file's content")
       val restorationSeq = getContentRestorationSequenceBuilderFor(it)
       filler?.fillUntil { restorationSeq.isFormed }
       restorationSeq.buildIfInitialIsPresent()?.let(State::Ready) // TODO clear builder to not waste memory
-        ?: State.NotAvailable(NotEnoughInformationCause("Initial content wasn't found for contentRecordId $it"))
+        ?: State.notEnoughInformation("Initial content wasn't found for contentRecordId $it")
     }
 
     override fun getContent(): DefinedState<ByteArray> =

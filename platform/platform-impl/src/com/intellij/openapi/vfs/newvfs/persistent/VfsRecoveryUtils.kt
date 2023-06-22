@@ -23,9 +23,10 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.*
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.SnapshotFillerPresets.constrain
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.SnapshotFillerPresets.sum
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.SnapshotFillerPresets.toFiller
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.*
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.Companion.get
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.Companion.mapCases
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.NotAvailable
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.Ready
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Companion.isDeleted
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.*
@@ -155,13 +156,13 @@ object VfsRecoveryUtils {
     FileUtil.ensureExists(newStorageDir.toFile())
     newStorageDir.forEachDirectoryEntry { throw IllegalArgumentException("directory for recovered vfs is not empty") }
 
-    fun recoveryFail(msg: String? = null, cause: Throwable? = null): Nothing = throw VfsRecoveryException(msg, cause)
+    fun recoveryFail(msg: String, cause: Throwable? = null): Nothing = throw VfsRecoveryException(msg, cause)
 
     class RecoveryContext(
       val point: () -> OperationLogStorage.Iterator,
       val vfsTimeMachine: SinglePassVfsTimeMachine,
       var setFiller: (SnapshotFillerPresets.Filler) -> Unit,
-      val payloadReader: (PayloadRef) -> DefinedState<ByteArray>,
+      val payloadReader: PayloadReader,
       val fileStates: FileStateController = FileStateController(),
     )
 
@@ -175,11 +176,7 @@ object VfsRecoveryUtils {
       val namesEnum = PersistentStringEnumerator(newStoragePaths.storagePath(namesEnumFile), true)
       val attributeEnumerator = SimpleStringPersistentEnumerator(newStoragePaths.storagePath(attrEnumFile))
 
-      val payloadReader: (PayloadRef) -> DefinedState<ByteArray> = {
-        val data = logContext.payloadStorage.readPayload(it)
-        if (data == null) NotAvailable(NotEnoughInformationCause("data is not available anymore"))
-        else Ready(data)
-      }
+      val payloadReader: PayloadReader = logContext.payloadStorage::readPayload
       val safeNameDeenum: (Int) -> String? = {
         try {
           namesEnum.valueOf(it)

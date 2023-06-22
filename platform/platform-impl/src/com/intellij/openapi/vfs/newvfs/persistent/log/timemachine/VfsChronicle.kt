@@ -80,7 +80,7 @@ object VfsChronicle {
     val modifications: List<ContentOperation.Modify>
 
     companion object {
-      fun ContentRestorationSequence.restoreContent(payloadReader: (PayloadRef) -> State.DefinedState<ByteArray>): State.DefinedState<ByteArray> =
+      fun ContentRestorationSequence.restoreContent(payloadReader: PayloadReader): State.DefinedState<ByteArray> =
         modifications.fold(initial.readContent(payloadReader)) { data, modOp ->
           data.bind { modOp.modifyContent(it, payloadReader) }
         }
@@ -118,7 +118,7 @@ object VfsChronicle {
   fun lookupContentRestorationStack(iterator: OperationLogStorage.Iterator,
                                     contentRecordId: Int,
                                     stopIf: (OperationLogStorage.Iterator) -> Boolean = { false }): State.DefinedState<ContentRestorationSequence> {
-    if (contentRecordId == 0) return State.NotAvailable(NotEnoughInformationCause("VFS didn't cache file's content"))
+    if (contentRecordId == 0) return State.notEnoughInformation("VFS didn't cache file's content")
     val seqBuilder = ContentRestorationSequenceBuilder()
     while (iterator.hasPrevious() && !stopIf(iterator)) {
       val lookup = lookupContentOperation(iterator, contentRecordId, TraverseDirection.REWIND, stopIf)

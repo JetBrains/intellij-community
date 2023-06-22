@@ -12,8 +12,10 @@ sealed interface State {
    * considered not normal.
    */
   class NotAvailable(
-    val cause: NotEnoughInformationCause = UnspecifiedNotAvailableException
+    val cause: NotAvailableException = UnspecifiedNotAvailableException
   ) : DefinedState<Nothing> {
+    constructor(message: String, cause: Throwable? = null) : this(NotAvailableException(message, cause))
+
     override fun toString(): String = "N/A ($cause)"
   }
 
@@ -22,9 +24,10 @@ sealed interface State {
   }
 
   companion object {
+    fun notEnoughInformation(message: String, cause: Throwable? = null): NotAvailable = NotAvailable(NotEnoughInformationCause(message, cause))
     fun <T> DefinedState<T>.get(): T = mapCases({ throw AssertionError("value expected to be available", it) }) { it }
 
-    inline fun <T, R> DefinedState<T>.mapCases(onNotAvailable: (cause: NotEnoughInformationCause) -> R,
+    inline fun <T, R> DefinedState<T>.mapCases(onNotAvailable: (cause: NotAvailableException) -> R,
                                                onReady: (value: T) -> R): R = when (this) {
       is Ready<T> -> onReady(value)
       is NotAvailable -> onNotAvailable(cause)

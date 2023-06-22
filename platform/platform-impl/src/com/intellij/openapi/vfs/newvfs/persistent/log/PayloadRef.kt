@@ -97,4 +97,6 @@ value class PayloadRef(val compressedInfo: ULong) {
       return data
     }
   }
+
+  override fun toString(): String = "PayloadRef(source=$source, offset=$offset)"
 }

@@ -138,12 +138,12 @@ object VfsModificationContract {
   /** reference counting is not supported, because it is not used anymore */
   sealed interface ContentOperation {
     fun interface Set : ContentOperation {
-      fun readContent(payloadReader: (PayloadRef) -> State.DefinedState<ByteArray>): State.DefinedState<ByteArray>
+      fun readContent(payloadReader: PayloadReader): State.DefinedState<ByteArray>
     }
 
     fun interface Modify : ContentOperation {
       fun modifyContent(previousContent: ByteArray,
-                        payloadReader: (PayloadRef) -> State.DefinedState<ByteArray>): State.DefinedState<ByteArray>
+                        payloadReader: PayloadReader): State.DefinedState<ByteArray>
     }
   }
 
