@@ -12,6 +12,7 @@
       "groupByTestProduction.svg": "actions/groupByTestProduction.svg",
       "inSelection.svg": "actions/inSelection.svg",
       "install.svg": "actions/install.svg",
+      "lightning.svg": "actions/lightning.svg",
       "moveToBottomLeft.svg": "actions/moveToBottomLeft.svg",
       "moveToBottomRight.svg": "actions/moveToBottomRight.svg",
       "moveToButton.svg": "actions/move-to-button.svg",

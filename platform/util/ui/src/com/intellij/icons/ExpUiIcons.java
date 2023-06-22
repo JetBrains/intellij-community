@@ -28,6 +28,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon GroupByTestProduction = load("expui/actions/groupByTestProduction.svg", 673012876, 2);
     /** 16x16 */ public static final @NotNull Icon InSelection = load("expui/actions/inSelection.svg", -672670687, 2);
     /** 16x16 */ public static final @NotNull Icon Install = load("expui/actions/install.svg", 1754913287, 2);
+    /** 16x16 */ public static final @NotNull Icon Lightning = load("expui/actions/lightning.svg", -270648659, 2);
     /** 16x16 */ public static final @NotNull Icon MoveToBottomLeft = load("expui/actions/moveToBottomLeft.svg", -1880102300, 2);
     /** 16x16 */ public static final @NotNull Icon MoveToBottomRight = load("expui/actions/moveToBottomRight.svg", 742208591, 2);
     /** 16x16 */ public static final @NotNull Icon MoveToButton = load("expui/actions/moveToButton.svg", -483907299, 2);
