@@ -6,14 +6,13 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.actionSystem.*
 
 internal class ActionGroupStub(override val id: String,
-                      @JvmField val actionClass: String,
-                      override val plugin: IdeaPluginDescriptor) : DefaultActionGroup(), ActionStubBase {
+                               @JvmField val actionClass: String,
+                               override val plugin: IdeaPluginDescriptor,
+                               override val iconPath: String?) : DefaultActionGroup(), ActionStubBase {
   val classLoader: ClassLoader
     get() = plugin.classLoader
 
   var popupDefinedInXml: Boolean = false
-
-  override var iconPath: String? = null
 
   fun initGroup(target: ActionGroup, actionManager: ActionManager) {
     ActionStub.copyTemplatePresentation(templatePresentation, target.templatePresentation)

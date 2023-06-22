@@ -84,6 +84,8 @@ import javax.swing.*
 import javax.swing.Timer
 import kotlin.coroutines.CoroutineContext
 
+private val DEFAULT_ACTION_GROUP_CLASS_NAME = DefaultActionGroup::class.java.name
+
 open class ActionManagerImpl protected constructor() : ActionManagerEx(), Disposable {
   private val lock = Any()
   @Volatile
@@ -476,7 +478,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
     }
   }
 
-  private fun processGroupElement(className: String,
+  private fun processGroupElement(className: String?,
                                   id: String?,
                                   element: XmlElement,
                                   module: IdeaPluginDescriptorImpl,
@@ -488,10 +490,18 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
         return null
       }
 
+      // icon
+      val iconPath = element.attributes.get(ICON_ATTR_NAME)
+
       val group: ActionGroup
       var customClass = false
-      if (className == DefaultActionGroup::class.java.name) {
-        group = DefaultActionGroup()
+      if (className == null || className == DEFAULT_ACTION_GROUP_CLASS_NAME) {
+        if (id == null || iconPath == null) {
+          group = DefaultActionGroup()
+        }
+        else {
+          group = ActionGroupStub(id = id, actionClass = DEFAULT_ACTION_GROUP_CLASS_NAME, plugin = module, iconPath = iconPath)
+        }
       }
       else if (className == DefaultCompactActionGroup::class.java.name) {
         group = DefaultCompactActionGroup()
@@ -499,13 +509,13 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
       else if (id == null) {
         val obj = ApplicationManager.getApplication().instantiateClass<Any>(className, module)
         if (obj !is ActionGroup) {
-          reportActionError(module, "class with name \"" + className + "\" should be instance of " + ActionGroup::class.java.name)
+          reportActionError(module, "class with name \"$className\" should be instance of ${ActionGroup::class.java.name}")
           return null
         }
 
         if (element.children.size != element.count(ADD_TO_GROUP_ELEMENT_NAME)) {
           if (obj !is DefaultActionGroup) {
-            reportActionError(module, "class with name \"$className\" should be instance of ${DefaultActionGroup::class.java.name}" +
+            reportActionError(module, "class with name \"$className\" should be instance of $DEFAULT_ACTION_GROUP_CLASS_NAME" +
                                       " because there are children specified")
             return null
           }
@@ -514,7 +524,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
         group = obj
       }
       else {
-        group = ActionGroupStub(id, className, module)
+        group = ActionGroupStub(id = id, actionClass = className, plugin = module, iconPath = iconPath)
         customClass = true
       }
 
@@ -566,12 +576,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
         }
       }
 
-      // icon
-      val iconPath = element.attributes.get(ICON_ATTR_NAME)
-      if (group is ActionGroupStub) {
-        group.iconPath = iconPath
-      }
-      else if (iconPath != null) {
+      if (iconPath != null && group !is ActionGroupStub) {
         presentation.icon = loadIcon(module = module, iconPath = iconPath, requestor = className)
       }
 
@@ -597,7 +602,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
         when (child.name) {
           ACTION_ELEMENT_NAME -> {
             val childClassName = child.attributes.get(CLASS_ATTR_NAME)
-            if (childClassName == null || className.isEmpty()) {
+            if (childClassName.isNullOrEmpty()) {
               reportActionError(module = module, message = "action element should have specified \"class\" attribute")
             }
             else {
@@ -627,7 +632,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
                 DefaultCompactActionGroup::class.java.name
               }
               else {
-                DefaultActionGroup::class.java.name
+                DEFAULT_ACTION_GROUP_CLASS_NAME
               }
             }
             val childId = child.attributes.get(ID_ATTR_NAME)
@@ -671,6 +676,9 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
         }
       }
       return group
+    }
+    catch (e: CancellationException) {
+      throw e
     }
     catch (e: Exception) {
       reportActionError(module = module, message = "cannot create class \"$className\"", cause = e)
@@ -1456,11 +1464,16 @@ private fun updateIconFromStub(stub: ActionStubBase, anAction: AnAction, compone
 
 private fun convertGroupStub(stub: ActionGroupStub, actionManager: ActionManager): ActionGroup? {
   val componentManager = ApplicationManager.getApplication()
-  val group = instantiate(stubClassName = stub.actionClass,
-                          pluginDescriptor = stub.plugin,
-                          expectedClass = ActionGroup::class.java,
-                          componentManager = componentManager)
-              ?: return null
+  val group = if (stub.actionClass === DEFAULT_ACTION_GROUP_CLASS_NAME) {
+    DefaultActionGroup()
+  }
+  else {
+    instantiate(stubClassName = stub.actionClass,
+                pluginDescriptor = stub.plugin,
+                expectedClass = ActionGroup::class.java,
+                componentManager = componentManager)
+    ?: return null
+  }
   stub.initGroup(group, actionManager)
   updateIconFromStub(stub = stub, anAction = group, componentManager = componentManager)
   return group
