@@ -117,6 +117,34 @@ class DefaultTreeLayoutCacheTest {
   }
 
   @Test
+  fun `expand visible root`() {
+    testStructure(
+      initOps = {
+        setModelStructure("""
+          |r
+          | a1
+          |  b11
+          | a2
+          |  b21
+          """.trimMargin()
+        )
+        sut.isRootVisible = true
+      },
+      modOps = {
+        sut.setExpandedState(path("r"), true)
+      },
+      assertions = {
+        assertStructure("""
+          |r
+          | a1
+          | a2
+          """.trimMargin()
+        )
+     },
+    )
+  }
+
+  @Test
   fun `expand visible root and its children`() {
     testStructure(
       initOps = {
@@ -182,6 +210,32 @@ class DefaultTreeLayoutCacheTest {
     )
   }
 
+  @Test
+  fun `insert the only node and expand`() {
+    testStructure(
+      initOps = {
+        setModelStructure("""
+          |r
+          | a1
+          """.trimMargin()
+        )
+        sut.isRootVisible = true
+      },
+      modOps = {
+        node("r/a1").insert("b11", 0)
+        sut.setExpandedState(path("r/a1"), true)
+      },
+      assertions = {
+        assertStructure("""
+          |r
+          | a1
+          |  b11
+          """.trimMargin()
+        )
+      },
+    )
+  }
+
   private fun testStructure(
     initOps: () -> Unit = { },
     modOps: () -> Unit = { },
@@ -224,9 +278,31 @@ class DefaultTreeLayoutCacheTest {
     }
   }
 
-  private fun path(s: String): TreePath = TreePathUtil.convertCollectionToTreePath(
-    s.split('/').map { Node(it) }
-  )
+  private fun node(path: String) = path(path).lastPathComponent as Node
+
+  private fun path(s: String): TreePath {
+    val names = s.split('/')
+    var path: TreePath? = null
+    for (name in names) {
+      if (path == null) {
+        assertThat((model.root as Node).userObject).isEqualTo(name)
+        path = TreePath(model.root)
+      }
+      else {
+        val parent = path.lastPathComponent
+        val child = (0 until model.getChildCount(parent))
+          .map { model.getChild(parent, it) }
+          .firstOrNull { (it as Node).userObject == name }
+        requireNotNull(child) { "Node $name not found in path $s" }
+        path = path.pathByAddingChild(child)
+      }
+    }
+    return path!!
+  }
+
+  private fun Node.insert(name: String, index: Int) {
+    model.insertNodeInto(Node(name), this, index)
+  }
 
   private fun assertStructure(structureString: String) {
     val actualStructure = (0 until sut.rowCount)
