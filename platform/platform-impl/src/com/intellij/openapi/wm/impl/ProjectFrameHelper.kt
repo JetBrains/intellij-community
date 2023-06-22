@@ -297,20 +297,24 @@ open class ProjectFrameHelper internal constructor(
 
   override fun getProject(): Project? = project
 
-  suspend fun setProject(project: Project) {
+  // any activities that will not access a workspace model
+  suspend fun setRawProject(project: Project) {
     if (this.project === project) {
       return
     }
 
     this.project = project
-    rootPane.setProject(project)
-    frameDecorator?.setProject()
-    activationTimestamp?.let {
-      RecentProjectsManager.getInstance().setActivationTimestamp(project, it)
-    }
 
     withContext(Dispatchers.EDT) {
       applyInitBounds()
+    }
+    frameDecorator?.setProject()
+  }
+
+  suspend fun setProject(project: Project) {
+    rootPane.setProject(project)
+    activationTimestamp?.let {
+      RecentProjectsManager.getInstance().setActivationTimestamp(project, it)
     }
   }
 

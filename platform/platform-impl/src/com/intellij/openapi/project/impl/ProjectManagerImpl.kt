@@ -29,7 +29,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.LaterInvocator
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -38,8 +37,6 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ModalTaskOwner
@@ -625,7 +622,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     var result: Project? = null
     var projectOpenActivity: Activity? = null
     try {
-      frameAllocator.run { saveTemplateJob, rawProjectDeferred ->
+      frameAllocator.run { saveTemplateJob, projectInitObserver ->
         activity.end()
         val initFrameEarly = !options.isNewProject && options.beforeOpen == null && options.project == null
         val project = when {
@@ -635,7 +632,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
                                                     saveTemplateJob = saveTemplateJob)
           else -> prepareProject(options = options,
                                  projectStoreBaseDir = projectStoreBaseDir,
-                                 rawProjectDeferred = rawProjectDeferred.takeIf { initFrameEarly })
+                                 projectInitObserver = projectInitObserver.takeIf { initFrameEarly })
         }
         result = project
         // must be under try-catch to dispose project on beforeOpen or preparedToOpen callback failures
@@ -663,8 +660,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
         // The project is loaded and is initialized, project services and components can be accessed.
         // But start-up and post start-up activities are not yet executed.
-        if (!initFrameEarly) {
-          rawProjectDeferred?.complete(project)
+        if (!initFrameEarly && projectInitObserver != null) {
+          projectInitObserver.beforeInitRawProject(project)
+          projectInitObserver.rawProjectDeferred.complete(project)
         }
 
         projectOpenActivity = if (StartUpMeasurer.isEnabled()) StartUpMeasurer.startActivity("project opening") else null
@@ -859,7 +857,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
   private suspend fun prepareProject(options: OpenProjectTask,
                                      projectStoreBaseDir: Path,
-                                     rawProjectDeferred: CompletableDeferred<Project>?): Project {
+                                     projectInitObserver: ProjectInitObserver?): Project {
     var conversionResult: ConversionResult? = null
     if (options.runConversionBeforeOpen) {
       val conversionService = ConversionService.getInstance()
@@ -881,7 +879,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
                 isRefreshVfsNeeded = options.isRefreshVfsNeeded,
                 preloadServices = options.preloadServices,
                 template = null,
-                rawProjectDeferred = rawProjectDeferred,
+                projectInitObserver = projectInitObserver,
                 isTrustCheckNeeded = true)
 
     if (conversionResult != null && !conversionResult.conversionNotNeeded()) {
@@ -1188,7 +1186,7 @@ private suspend fun initProject(file: Path,
                                 preloadServices: Boolean,
                                 template: Project?,
                                 isTrustCheckNeeded: Boolean,
-                                rawProjectDeferred: CompletableDeferred<Project>? = null) {
+                                projectInitObserver: ProjectInitObserver? = null) {
   LOG.assertTrue(!project.isDefault)
 
   try {
@@ -1213,20 +1211,12 @@ private suspend fun initProject(file: Path,
     coroutineScope {
       val isTrusted = async { !isTrustCheckNeeded || checkOldTrustedStateAndMigrate(project, file) }
 
-      val beforeComponentCreation: Job? = if (rawProjectDeferred == null) {
-        null
-      }
-      else {
-        launch {
-          (project.serviceAsync<FileEditorManager>() as? FileEditorManagerImpl)?.initJob?.join()
-        }
-      }
-
+      val beforeComponentCreation = projectInitObserver?.beforeInitRawProject(project)
       projectInitListeners {
         it.execute(project)
       }
 
-      rawProjectDeferred?.complete(project)
+      projectInitObserver?.rawProjectDeferred?.complete(project)
 
       if (preloadServices) {
         preloadServices(project)
