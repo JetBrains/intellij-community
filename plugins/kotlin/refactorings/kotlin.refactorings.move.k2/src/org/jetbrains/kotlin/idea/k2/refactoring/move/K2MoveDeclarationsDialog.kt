@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.move
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -22,8 +23,13 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberSelectionPanel
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveDeclarationDelegate
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveSource
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveTarget
+import org.jetbrains.kotlin.idea.refactoring.move.MoveDeclarationsDescriptor
 import org.jetbrains.kotlin.idea.refactoring.ui.KotlinDestinationFolderComboBox
 import org.jetbrains.kotlin.idea.refactoring.ui.KotlinFileChooserDialog
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -138,8 +144,31 @@ class K2MoveDeclarationsDialog(
         RecentsManager.getInstance(myProject).registerRecentEntry(RECENT_PACKAGE_KEY, destinationChooser.targetPackage)
     }
 
+    private val elementsToMove: List<KtNamedDeclaration> get() {
+        val elementsToMove= selectionPanel.table.selectedMemberInfos?.map(KotlinMemberInfo::getMember) ?: return emptyList()
+        if (elementsToMove.isEmpty()) {
+            throw ConfigurationException(KotlinBundle.message("text.no.elements.to.move.are.selected"))
+        }
+        return elementsToMove
+    }
+
     override fun doAction() {
         saveSettings()
+        val moveDescriptor = MoveDeclarationsDescriptor(
+            project,
+            KotlinMoveSource(elementsToMove),
+            KotlinMoveTarget.DeferredFile(FqName(packageChooser.text), toDirectory?.virtualFile),
+            KotlinMoveDeclarationDelegate.TopLevel,
+            searchReferencesCb.isSelected,
+            searchTextOccurrencesCb.isSelected,
+            deleteEmptySourceFilesCb.isSelected,
+            moveCallback = null,
+            openInEditor = true,
+            analyzeConflicts = true,
+            searchReferences = true
+        )
+        val refactoringProcessor = K2MoveRefactoringProcessor(moveDescriptor)
+        invokeRefactoring(refactoringProcessor)
     }
 
     companion object {
