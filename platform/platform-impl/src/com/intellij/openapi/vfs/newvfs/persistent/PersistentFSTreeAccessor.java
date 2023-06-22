@@ -100,11 +100,11 @@ class PersistentFSTreeAccessor {
     }
 
     final PersistentFSRecordsStorage records = connection.getRecords();
-    int maxAllocatedID = records.maxAllocatedID();
     try (DataInputStream input = myAttributeAccessor.readAttribute(parentId, CHILDREN_ATTR)) {
       final int count = (input == null) ? 0 : DataInputOutputUtil.readINT(input);
       final List<ChildInfo> children = (count == 0) ? Collections.emptyList() : new ArrayList<>(count);
       int prevId = parentId;
+      int maxAllocatedID = records.maxAllocatedID();
       for (int i = 0; i < count; i++) {
         final int childId = DataInputOutputUtil.readINT(input) + prevId;
         checkChildIdValid(parentId, childId, i, maxAllocatedID);
@@ -383,10 +383,10 @@ class PersistentFSTreeAccessor {
     return connection.getPersistentFSPaths().getRootsStorage(loader.getName());
   }
 
-  private static void checkChildIdValid(final int parentId,
-                                        final int childId,
-                                        final int childNo,
-                                        final int maxAllocatedID) throws CorruptedException {
+  protected static void checkChildIdValid(final int parentId,
+                                          final int childId,
+                                          final int childNo,
+                                          final int maxAllocatedID) throws CorruptedException {
     if (childId < FSRecords.NULL_FILE_ID || maxAllocatedID < childId) {
       //RC: generally we throw IndexOutOfBoundsException for id out of bounds -- because this is just invalid
       // argument, i.e. 'error on caller side'. But if VFS guts are the source of invalid id -- e.g. CHILDREN
