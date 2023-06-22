@@ -6,6 +6,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.tree.CachingTreePath
 import com.intellij.util.SlowOperations
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Rectangle
 import java.util.*
 import javax.swing.event.TreeModelEvent
@@ -15,7 +16,13 @@ import javax.swing.tree.TreePath
 import kotlin.collections.ArrayDeque
 import kotlin.math.max
 
-internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) -> Unit) : AbstractLayoutCache() {
+@VisibleForTesting
+class DefaultTreeLayoutCache(
+  private val defaultRowHeight: Int,
+  private val autoExpandHandler: (TreePath) -> Unit,
+) : AbstractLayoutCache() {
+
+  constructor(autoExpandHandler: (TreePath) -> Unit) : this(JBUI.CurrentTheme.Tree.rowHeight(), autoExpandHandler)
 
   private var root: Node? = null
   private val rows = NodeList(onUpdate = {
@@ -23,7 +30,6 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
   })
   private val nodeByPath = hashMapOf<TreePath, Node>()
   private val boundsBuffer = Rectangle()
-  private val defaultRowHeight = JBUI.CurrentTheme.Tree.rowHeight()
   private var variableHeight: VariableHeightSupport? = VariableHeightSupport()
 
   override fun setModel(newModel: TreeModel?) {
@@ -546,20 +552,31 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
     }
 
     private fun doCollapse() {
-      if (!isVisible) {
+      val firstChildRow = this.children?.firstOrNull()?.row
+      if (firstChildRow == null || firstChildRow == -1) {
         return
       }
-      val visibleChildrenCount = visibleSubtreeNodeCount() - 1 // minus this node, it remains visible
-      val firstChildRow = row + 1
+      var visibleChildrenCount = visibleSubtreeNodeCount()
+      if (isVisible) { // Can be false when collapsing the invisible root (yep, it's possible!).
+        --visibleChildrenCount // this node remains visible
+      }
       rows.update {
         rows.clearRange(firstChildRow, firstChildRow + visibleChildrenCount)
       }
     }
 
-    fun visibleSubtreeNodeCount(): Int = when {
-      !isVisible -> 0
-      !isChildrenVisible -> 1
-      else -> 1 + (children?.sumOf { it.visibleSubtreeNodeCount() } ?: 0)
+    fun visibleSubtreeNodeCount(): Int {
+      var count = 0
+      if (isVisible) {
+        ++count
+      }
+      val children = this.children
+      if (children != null && isChildrenVisible) {
+        for (child in children) {
+          count += child.visibleSubtreeNodeCount()
+        }
+      }
+      return count
     }
 
     /**
