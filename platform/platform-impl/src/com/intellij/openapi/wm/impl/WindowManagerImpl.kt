@@ -288,6 +288,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
 
   internal suspend fun lightFrameAssign(project: Project, frameHelper: ProjectFrameHelper) {
     projectToFrame.put(project, ProjectItem(frameHelper, null))
+    frameHelper.setRawProject(project)
     frameHelper.setProject(project)
     frameHelper.installDefaultProjectStatusBarWidgets(project)
     frameHelper.updateTitle(project)

@@ -476,7 +476,7 @@ open class EditorsSplitters internal constructor(
     }
 
     val project = manager.project
-    val frame = getFrame(project) ?: return
+    val frame = getFrame() ?: return
     val file = currentFile
     if (file == null) {
       withContext(Dispatchers.EDT) {
@@ -500,11 +500,9 @@ open class EditorsSplitters internal constructor(
     }
   }
 
-  protected open fun getFrame(project: Project): IdeFrameEx? {
-    val frame = WindowManagerEx.getInstanceEx().getFrameHelper(project)
-    val app = ApplicationManager.getApplication()
-    LOG.assertTrue((app.isUnitTestMode || app.isHeadlessEnvironment) || frame != null)
-    return frame
+  private fun getFrame(): IdeFrameEx? {
+    val frame = (ComponentUtil.findUltimateParent(this) as? Window) ?: return null
+    return if (frame is IdeFrameEx) frame else ProjectFrameHelper.getFrameHelper(frame as Window?)
   }
 
   internal val isInsideChange: Boolean

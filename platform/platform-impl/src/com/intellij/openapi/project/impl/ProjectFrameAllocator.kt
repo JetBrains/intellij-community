@@ -60,7 +60,13 @@ import kotlin.math.min
 import kotlin.time.Duration.Companion.seconds
 
 private typealias FrameAllocatorTask = suspend CoroutineScope.(saveTemplateJob: Job?,
-                                                               rawProjectDeferred: CompletableDeferred<Project>?) -> Unit
+                                                               projectInitObserver: ProjectInitObserver?) -> Unit
+
+internal sealed interface ProjectInitObserver {
+  fun beforeInitRawProject(project: Project): Job
+
+  val rawProjectDeferred: CompletableDeferred<Project>
+}
 
 internal open class ProjectFrameAllocator(private val options: OpenProjectTask) {
   open suspend fun run(task: FrameAllocatorTask) {
@@ -88,6 +94,48 @@ private fun CoroutineScope.saveTemplateAsync(options: OpenProjectTask): Job? {
   }
 }
 
+private class FrameAllocatorProjectInitObserver(
+  private val coroutineScope: CoroutineScope,
+  private val deferredProjectFrameHelper: CompletableDeferred<ProjectFrameHelper>,
+) : ProjectInitObserver {
+  override fun beforeInitRawProject(project: Project): Job {
+    val task = coroutineScope.launch {
+      (project.serviceAsync<FileEditorManager>() as? FileEditorManagerImpl)?.initJob?.join()
+    }
+
+    coroutineScope.launch {
+      val frameHelper = deferredProjectFrameHelper.await()
+
+      launch {
+        val windowManager = ApplicationManager.getApplication().serviceAsync<WindowManager>() as WindowManagerImpl
+        withContext(Dispatchers.EDT) {
+          windowManager.assignFrame(frameHelper, project)
+          frameHelper.setRawProject(project)
+        }
+      }
+
+      launch {
+        task.join()
+        val fileEditorManager = project.serviceAsync<FileEditorManager>() as FileEditorManagerImpl
+        withContext(Dispatchers.EDT) {
+          frameHelper.rootPane.getToolWindowPane().setDocumentComponent(fileEditorManager.mainSplitters)
+        }
+      }
+
+      launch {
+        rawProjectDeferred.join()
+        subtask("project frame assigning") {
+          frameHelper.setProject(project)
+        }
+      }
+    }
+
+    return task
+  }
+
+  override val rawProjectDeferred = CompletableDeferred<Project>()
+}
+
 internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
                                        private val projectStoreBaseDir: Path) : ProjectFrameAllocator(options) {
   private val deferredProjectFrameHelper = CompletableDeferred<ProjectFrameHelper>()
@@ -113,8 +161,10 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
                             deferredProjectFrameHelper: CompletableDeferred<ProjectFrameHelper>) {
     coroutineScope {
       val loadingScope = this
-      val rawProjectDeferred = CompletableDeferred<Project>()
+      val projectInitObserver = FrameAllocatorProjectInitObserver(coroutineScope = this,
+                                                                  deferredProjectFrameHelper = deferredProjectFrameHelper)
 
+      val rawProjectDeferred = projectInitObserver.rawProjectDeferred
       val isLoadingEditorsUnderLoadingProgress = async(CoroutineName("project frame creating")) {
         createFrameManager(loadingScope = loadingScope,
                            rawProjectDeferred = rawProjectDeferred,
@@ -124,22 +174,6 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
       val saveTemplateDeferred = saveTemplateAsync(options)
 
       val startOfWaitingForReadyFrame = AtomicLong(-1)
-
-      launch {
-        val windowManager = ApplicationManager.getApplication().serviceAsync<WindowManager>() as WindowManagerImpl
-        val frameHelper = deferredProjectFrameHelper.await()
-        val project = rawProjectDeferred.await()
-        subtask("project frame assigning") {
-          windowManager.assignFrame(frameHelper, project)
-          frameHelper.setProject(project)
-        }
-
-        val fileEditorManager = (project.serviceAsync<FileEditorManager>() as? FileEditorManagerImpl) ?: return@launch
-        fileEditorManager.initJob.join()
-        withContext(Dispatchers.EDT) {
-          frameHelper.rootPane.getToolWindowPane().setDocumentComponent(fileEditorManager.mainSplitters)
-        }
-      }
 
       launch(CoroutineName("fileEditorProvider preloading") + Dispatchers.IO) {
         FileEditorProvider.EP_FILE_EDITOR_PROVIDER.extensionList
@@ -161,7 +195,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
         initFrame(rawProjectDeferred, reopeningEditorJob, deferredProjectFrameHelper)
       }
 
-      task(saveTemplateDeferred, rawProjectDeferred)
+      task(saveTemplateDeferred, projectInitObserver)
       startOfWaitingForReadyFrame.set(System.nanoTime())
 
       if (isLoadingEditorsUnderLoadingProgress.await()) {
