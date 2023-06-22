@@ -14,7 +14,9 @@ import org.jetbrains.kotlin.idea.core.ArgumentPositionData
 import org.jetbrains.kotlin.idea.core.ExpectedInfo
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.CallType
+import org.jetbrains.kotlin.load.java.JvmAnnotationNames
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtValueArgument
@@ -24,12 +26,14 @@ import org.jetbrains.kotlin.resolve.calls.components.isVararg
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getParameterForArgument
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.util.isJavaDescriptor
 
 object NamedArgumentCompletion {
     fun isOnlyNamedArgumentExpected(nameExpression: KtSimpleNameExpression, resolutionFacade: ResolutionFacade): Boolean {
         val thisArgument = nameExpression.parent as? KtValueArgument ?: return false
 
         if (thisArgument.isNamed()) return false
+
         val resolvedCall = thisArgument.getStrictParentOfType<KtCallElement>()?.resolveToCall(resolutionFacade) ?: return false
 
         return !thisArgument.canBeUsedWithoutNameInCall(resolvedCall)
@@ -65,6 +69,13 @@ object NamedArgumentCompletion {
  */
 fun KtValueArgument.canBeUsedWithoutNameInCall(resolvedCall: ResolvedCall<out CallableDescriptor>): Boolean {
     if (resolvedCall.resultingDescriptor.valueParameters.isEmpty()) return true
+
+    if (resolvedCall.call.callElement is KtAnnotationEntry && resolvedCall.resultingDescriptor.isJavaDescriptor) {
+        // if the argument in Java annotation entry is not mapped to default ("value") method of annotation, it can only be passed
+        // with the use of named argument syntax
+        val parameter = resolvedCall.getParameterForArgument(this)
+        if (parameter?.name != JvmAnnotationNames.DEFAULT_ANNOTATION_MEMBER_NAME) return false
+    }
 
     val argumentsThatCanBeUsedWithoutName = collectAllArgumentsThatCanBeUsedWithoutName(resolvedCall).map { it.argument }
     if (argumentsThatCanBeUsedWithoutName.isEmpty() || argumentsThatCanBeUsedWithoutName.none { it == this }) return false

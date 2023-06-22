@@ -3,8 +3,11 @@
 package org.jetbrains.kotlin.idea.completion.contributors
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.util.parents
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.components.KtExtensionApplicabilityResult
 import org.jetbrains.kotlin.analysis.api.components.KtScopeContext
 import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
@@ -22,6 +25,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.fir.codeInsight.HLIndexHelper
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
 import org.jetbrains.kotlin.idea.completion.checkers.ApplicableExtension
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.checkers.ExtensionApplicabilityChecker
@@ -32,9 +36,12 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.ShadowedCallabl
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
+import org.jetbrains.kotlin.idea.completion.lookups.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.nextSiblingOfSameType
+import org.jetbrains.kotlin.resolve.ArrayFqNames
 
 internal open class FirCallableCompletionContributor(
     basicContext: FirBasicCompletionContext,
@@ -120,8 +127,9 @@ internal open class FirCallableCompletionContributor(
             receiver != null -> collectDotCompletion(scopesContext, receiver, extensionChecker, visibilityChecker)
             else -> completeWithoutReceiver(scopesContext, extensionChecker, visibilityChecker)
         }
+            .filterIfInsideAnnotationEntryArgument(position, weighingContext.expectedType)
             .filterOutShadowedCallables()
-            .filterOutUninitializedCallables(positionContext.position)
+            .filterOutUninitializedCallables(position)
 
         for (callableWithMetadata in callablesWithMetadata) {
             val context = if (callableWithMetadata.withExpectedType) weighingContext else weighingContextWithoutExpectedType
@@ -131,7 +139,8 @@ internal open class FirCallableCompletionContributor(
                 callableWithMetadata.options,
                 callableWithMetadata.symbolOrigin,
                 priority = null,
-                callableWithMetadata.explicitReceiverTypeHint)
+                callableWithMetadata.explicitReceiverTypeHint
+            )
         }
     }
 
@@ -486,6 +495,41 @@ internal open class FirCallableCompletionContributor(
                 if (!excludeFromCompletion) yield(callableWithMetadata)
             }
         }
+
+    context(KtAnalysisSession)
+    private fun Sequence<CallableWithMetadataForCompletion>.filterIfInsideAnnotationEntryArgument(
+        position: PsiElement,
+        expectedType: KtType?,
+    ): Sequence<CallableWithMetadataForCompletion> {
+        if (!position.isInsideAnnotationEntryArgumentList()) return this
+
+        return filter { callableWithMetadata ->
+            val symbol = callableWithMetadata.signature.symbol
+
+            if (symbol.hasConstEvaluationAnnotation()) return@filter true
+
+            when (symbol) {
+                is KtJavaFieldSymbol -> symbol.isStatic && symbol.isVal && symbol.hasPrimitiveOrStringReturnType()
+                is KtKotlinPropertySymbol -> symbol.isConst
+                is KtEnumEntrySymbol -> true
+                is KtFunctionSymbol -> {
+                    val isArrayOfCall = symbol.callableIdIfNonLocal?.asSingleFqName() in ArrayFqNames.ARRAY_CALL_FQ_NAMES
+
+                    isArrayOfCall && expectedType?.let { symbol.returnType.isPossiblySubTypeOf(it) } != false
+                }
+
+                else -> false
+            }
+        }
+    }
+
+    context(KtAnalysisSession)
+    private fun KtJavaFieldSymbol.hasPrimitiveOrStringReturnType(): Boolean =
+        (psi as? PsiField)?.type is PsiPrimitiveType || returnType.isString
+
+    context(KtAnalysisSession)
+    private fun KtCallableSymbol.hasConstEvaluationAnnotation(): Boolean =
+        annotations.any { it.classId == StandardClassIds.Annotations.IntrinsicConstEvaluation }
 }
 
 internal class FirCallableReferenceCompletionContributor(

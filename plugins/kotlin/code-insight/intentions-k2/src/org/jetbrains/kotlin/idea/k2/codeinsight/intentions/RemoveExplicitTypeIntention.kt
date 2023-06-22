@@ -137,7 +137,7 @@ internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableIntention<K
     }
 
     private fun KtAnalysisSession.returnTypeOfCallDependsOnTypeParameters(callExpression: KtCallExpression): Boolean {
-        val call = callExpression.resolveCall().singleFunctionCallOrNull() ?: return true
+        val call = callExpression.resolveCall()?.singleFunctionCallOrNull() ?: return true
         val callSymbol = call.partiallyAppliedSymbol.symbol
         val typeParameters = callSymbol.typeParameters
         val returnType = callSymbol.returnType

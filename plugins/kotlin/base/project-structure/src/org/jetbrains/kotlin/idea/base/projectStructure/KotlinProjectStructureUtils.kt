@@ -94,6 +94,10 @@ private fun Module.hasRootsOfType(rootTypes: Set<JpsModuleSourceRootType<*>>): B
     return rootManager.contentEntries.any { it.getSourceFolders(rootTypes).isNotEmpty() }
 }
 
+/**
+ * [forcedModuleInfo] provides a [ModuleInfo] instance for a dummy file. It must not be changed after the first assignment because
+ * [ModuleInfoProvider] might cache the module info.
+ */
 @Suppress("UnusedReceiverParameter")
 var PsiFile.forcedModuleInfo: ModuleInfo? by UserDataProperty(Key.create("FORCED_MODULE_INFO"))
     @ApiStatus.Internal get

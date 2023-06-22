@@ -90,7 +90,7 @@ object ExpectedExpressionMatcherProvider {
         val containerNode = target.parent as? KtContainerNode ?: return null
         val arrayAccessExpression = (containerNode.parent as? KtArrayAccessExpression) ?: return null
 
-        for (call in arrayAccessExpression.resolveCall().calls) {
+        for (call in arrayAccessExpression.resolveCall()?.calls.orEmpty()) {
             if (call is KtFunctionCall<*>) {
                 for ((argumentExpression, sig) in call.argumentMapping) {
                     if (argumentExpression == target) {
@@ -112,7 +112,7 @@ object ExpectedExpressionMatcherProvider {
     }
 
     private fun KtAnalysisSession.getForArgument(callElement: KtCallElement, argument: ValueArgument): ExpectedExpressionMatcher? {
-        for (call in callElement.resolveCall().calls) {
+        for (call in callElement.resolveCall()?.calls.orEmpty()) {
             if (call is KtFunctionCall<*>) {
                 for ((argumentExpression, sig) in call.argumentMapping) {
                     if (argumentExpression == argument) {

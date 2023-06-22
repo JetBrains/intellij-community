@@ -115,7 +115,7 @@ private fun lambdaOrdinalByArgument(elementAt: KtFunction): Int {
 private fun functionNameByArgument(elementAt: KtFunction): String? =
     analyze(elementAt) {
         val parentCall = KtPsiUtil.getParentCallIfPresent(elementAt) as? KtCallExpression ?: return null
-        val call = parentCall.resolveCall().successfulFunctionCallOrNull() ?: return null
+        val call = parentCall.resolveCall()?.successfulFunctionCallOrNull() ?: return null
         val function = call.partiallyAppliedSymbol.symbol as? KtFunctionSymbol ?: return null
         return function.name.asString()
     }

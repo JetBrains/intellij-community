@@ -206,6 +206,11 @@ public abstract class IdeLightClassesByPsiTestGenerated extends AbstractIdeLight
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/defaultMethodInKotlinWithSettingAllCompatibility.kt"));
         }
 
+        @TestMetadata("defaultParameterValue.kt")
+        public void testDefaultParameterValue() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/defaultParameterValue.kt"));
+        }
+
         @TestMetadata("DelegatedProperty.kt")
         public void testDelegatedProperty() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/DelegatedProperty.kt"));
