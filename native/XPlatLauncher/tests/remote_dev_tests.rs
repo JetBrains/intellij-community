@@ -5,9 +5,7 @@ pub mod utils;
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
-    use std::env;
     use std::path::Path;
-    use xplat_launcher::get_config_home;
     use crate::utils::*;
 
     #[test]
@@ -112,5 +110,17 @@ mod tests {
         let output = run_launcher_ext(&test, &LauncherRunSpec::remote_dev().with_args(remote_dev_command)).stdout;
 
         assert!(!output.contains("Force enable new UI"));
+    }
+
+    #[test]
+    fn remote_dev_jcef_enabled_test() {
+        let test = prepare_test_env(LauncherLocation::RemoteDev);
+        let project_dir = &test.project_dir.to_string_lossy().to_string();
+
+        let env = HashMap::from([("REMOTE_DEV_SERVER_JCEF_ENABLED", "0"), ("REMOTE_DEV_SERVER_TRACE", "1")]);
+        let remote_dev_command = &["run", &project_dir];
+        let output = run_launcher_ext(&test, &LauncherRunSpec::remote_dev().with_args(remote_dev_command).with_env(&env)).stdout;
+
+        assert!(output.contains("JCEF support is disabled. Set REMOTE_DEV_SERVER_JCEF_ENABLED=true to enable"));
     }
 }
