@@ -339,7 +339,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
 
   override fun createContentPane(): Container {
     val contentPane = JPanel(BorderLayout())
-    contentPane.background = IdeBackgroundUtil.getIdeBackgroundColor()
+    contentPane.background = JBColor.PanelBackground
     return contentPane
   }
 
