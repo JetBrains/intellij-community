@@ -25,10 +25,19 @@ public class GitFetch extends DumbAwareAction {
     Project project = e.getProject();
     if (project == null) {
       e.getPresentation().setEnabledAndVisible(false);
+      return;
     }
-    else {
-      e.getPresentation().setEnabled(hasRemotes(project));
+    if (!hasRemotes(project)) {
+      e.getPresentation().setEnabled(false);
+      return;
     }
+    if (fetchSupport(project).isFetchRunning()) {
+      e.getPresentation().setEnabled(false);
+      e.getPresentation().setDescription(GitBundle.message("action.Git.Fetch.description.fetch.in.progress"));
+      return;
+    }
+
+    e.getPresentation().setEnabledAndVisible(true);
   }
 
   @Override

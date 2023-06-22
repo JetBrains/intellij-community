@@ -415,16 +415,8 @@ internal object BranchesDashboardActions {
   class FetchAction(private val ui: BranchesDashboardUi) : GitFetch() {
     override fun update(e: AnActionEvent) {
       super.update(e)
-      with(e.presentation) {
-        text = message("action.Git.Fetch.title")
-        icon = AllIcons.Vcs.Fetch
-        description = ""
-        val project = e.project ?: return@with
-        if (GitFetchSupport.fetchSupport(project).isFetchRunning) {
-          isEnabled = false
-          description = message("action.Git.Fetch.description.fetch.in.progress")
-        }
-      }
+      e.presentation.text = message("action.Git.Fetch.title")
+      e.presentation.icon = AllIcons.Vcs.Fetch
     }
 
     override fun actionPerformed(e: AnActionEvent) {
