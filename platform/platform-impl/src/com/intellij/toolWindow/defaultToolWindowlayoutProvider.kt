@@ -259,7 +259,10 @@ internal class DefaultToolWindowLayoutBuilderImpl : DefaultToolWindowLayoutBuild
             contentUiType = ToolWindowDescriptor.ToolWindowContentUiType.COMBO
           }
           addOrUpdate("Commit") { weight = 0.25f }
-          addOrUpdate("Structure") { weight = 0.25f }
+          addOrUpdate("Structure") {
+            weight = 0.25f
+            isSplit = true
+          }
         }
         ToolWindowDescriptor.ToolWindowAnchor.RIGHT -> {
           addOrUpdate("Notifications") {
