@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.StandardFileSystems
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
@@ -34,10 +35,10 @@ import org.jetbrains.kotlin.analysis.providers.analysisMessageBus
 import org.jetbrains.kotlin.analysis.providers.topics.KotlinTopics
 import org.jetbrains.kotlin.idea.base.projectStructure.getBinaryAndSourceModuleInfos
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
 import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
-import org.jetbrains.kotlin.idea.util.AbstractSingleFileModuleFileListener
+import org.jetbrains.kotlin.idea.util.AbstractSingleFileModuleAfterFileEventListener
+import org.jetbrains.kotlin.idea.util.AbstractSingleFileModuleBeforeFileEventListener
 
 open class KotlinModuleStateModificationService(val project: Project) : Disposable {
     protected open fun mayBuiltinsHaveChanged(events: List<VFileEvent>): Boolean { return false }
@@ -57,13 +58,39 @@ open class KotlinModuleStateModificationService(val project: Project) : Disposab
     }
 
     /**
-     * Publishes module state modification events for script and not-under-content-root [KtModule]s.
+     * Publishes a module state modification event for a script or not-under-content-root [KtModule] whose file has been moved.
+     *
+     * Even though the event is processed *after* the file has been moved, the [KtModule]s before and after the move are equal via their
+     * respective module infos, because:
+     *
+     *  - In the case of `NotUnderContentRootModuleInfo`, the file pointer remains the same after the move.
+     *  - In the case of `ScriptModuleInfo`, the virtual file and script definition remain the same after the move.
+     *
+     * A global out-of-block modification event will be published by `FirIdeOutOfBlockPsiTreeChangePreprocessor` after a Kotlin file is
+     * moved, but we still need this listener to publish a module state modification event specifically.
      */
-    class SingleFileModuleFileListener(private val project: Project) : AbstractSingleFileModuleFileListener(project) {
-        override fun shouldProcessEvent(event: VFileEvent): Boolean = event is VFileDeleteEvent || event is VFileMoveEvent
+    class SingleFileModuleMoveListener(private val project: Project) : AbstractSingleFileModuleAfterFileEventListener(project) {
+        override fun isRelevantEvent(event: VFileEvent, file: VirtualFile): Boolean = event is VFileMoveEvent
 
         override fun processEvent(event: VFileEvent, module: KtModule) {
-            project.publishModuleStateModification(module, isRemoval = event is VFileDeleteEvent)
+            project.publishModuleStateModification(module, isRemoval = false)
+        }
+    }
+
+    /**
+     * Publishes a module state modification event for a script or not-under-content-root [KtModule] whose file has been deleted.
+     *
+     * This listener processes events *before* the file is deleted, because getting a PSI file (and in turn the PSI file's [KtModule]) for a
+     * virtual file which has already been deleted is not feasible.
+     *
+     * A global out-of-block modification event will be published by `FirIdeOutOfBlockPsiTreeChangePreprocessor` after a Kotlin file is
+     * deleted, but we still need this listener to publish a module state modification event specifically.
+     */
+    class SingleFileModuleDeletionListener(private val project: Project) : AbstractSingleFileModuleBeforeFileEventListener(project) {
+        override fun isRelevantEvent(event: VFileEvent, file: VirtualFile): Boolean = event is VFileDeleteEvent
+
+        override fun processEvent(event: VFileEvent, module: KtModule) {
+            project.publishModuleStateModification(module, isRemoval = true)
         }
     }
 

@@ -8,6 +8,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -17,7 +18,7 @@ import org.jetbrains.kotlin.analysis.providers.topics.KotlinModuleOutOfBlockModi
 import org.jetbrains.kotlin.analysis.providers.topics.KotlinTopics
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
 import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
-import org.jetbrains.kotlin.idea.util.AbstractSingleFileModuleFileListener
+import org.jetbrains.kotlin.idea.util.AbstractSingleFileModuleAfterFileEventListener
 
 /**
  * [FirIdeOutOfBlockModificationService] increments modification trackers and publishes subscription events on out-of-block modification
@@ -33,7 +34,7 @@ internal class FirIdeOutOfBlockModificationService(val project: Project) : Dispo
 
     init {
         val busConnection = project.messageBus.connect(this)
-        busConnection.subscribe(VirtualFileManager.VFS_CHANGES, SingleFileModuleFileListener(project))
+        busConnection.subscribe(VirtualFileManager.VFS_CHANGES, SingleFileModuleContentChangeListener(project))
     }
 
     override fun dispose() {}
@@ -77,7 +78,7 @@ internal class FirIdeOutOfBlockModificationService(val project: Project) : Dispo
 }
 
 /**
- * An [AbstractSingleFileModuleFileListener] that publishes out-of-block modification events for the associated [KtModule]s.
+ * A single-file module file event listener that publishes out-of-block modification events for the associated [KtModule]s.
  *
  * Any file modification triggers an out-of-block modification event, not just actual out-of-block modifications, which is allowed per the
  * contract of [KotlinModuleOutOfBlockModificationListener].
@@ -86,8 +87,10 @@ internal class FirIdeOutOfBlockModificationService(val project: Project) : Dispo
  * [FirIdeOutOfBlockModificationService.publishModuleAndProjectOutOfBlockModification] cannot be used to publish out-of-block modification
  * events for such [KtModule]s, hence the existence of this listener.
  */
-private class SingleFileModuleFileListener(private val project: Project) : AbstractSingleFileModuleFileListener(project) {
-    override fun shouldProcessEvent(event: VFileEvent): Boolean = event is VFileContentChangeEvent
+private class SingleFileModuleContentChangeListener(
+    private val project: Project,
+) : AbstractSingleFileModuleAfterFileEventListener(project) {
+    override fun isRelevantEvent(event: VFileEvent, file: VirtualFile): Boolean = event is VFileContentChangeEvent
 
     override fun processEvent(event: VFileEvent, module: KtModule) {
         project.analysisMessageBus.syncPublisher(KotlinTopics.MODULE_OUT_OF_BLOCK_MODIFICATION).onModification(module)
