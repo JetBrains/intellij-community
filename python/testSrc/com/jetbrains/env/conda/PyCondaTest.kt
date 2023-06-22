@@ -127,21 +127,23 @@ internal class PyCondaTest {
   }
 
   @Test
-  fun testCondaListUnnamedEnvs(): Unit = runTest {
+  fun testCondaListUnnamedEnvs(): Unit = runTest(timeout = 90.seconds) {
     val envsDirs = Path.of(PyCondaEnv.getEnvsDirs(condaRule.commandExecutor, condaRule.condaPathOnTarget).getOrThrow().first())
     val childDir = envsDirs.resolve("child")
     val childEnvPrefix = childDir.resolve("childEnv").toString()
     val siblingDir = envsDirs.resolveSibling("${envsDirs.fileName}Sibling")
     val siblingEnvPrefix = siblingDir.resolve("siblingEnv").toString()
 
-    PyCondaEnv.createEnv(condaRule.condaCommand, NewCondaEnvRequest.EmptyUnnamedEnv(LanguageLevel.PYTHON39, childEnvPrefix)).mapFlat { it.getResultStdout() }
-    PyCondaEnv.createEnv(condaRule.condaCommand, NewCondaEnvRequest.EmptyUnnamedEnv(LanguageLevel.PYTHON39, siblingEnvPrefix)).mapFlat { it.getResultStdout() }
+    PyCondaEnv.createEnv(condaRule.condaCommand,
+                         NewCondaEnvRequest.EmptyUnnamedEnv(LanguageLevel.PYTHON39, childEnvPrefix)).mapFlat { it.getResultStdout() }
+    PyCondaEnv.createEnv(condaRule.condaCommand,
+                         NewCondaEnvRequest.EmptyUnnamedEnv(LanguageLevel.PYTHON39, siblingEnvPrefix)).mapFlat { it.getResultStdout() }
 
     // Important to check that envIdentity is UnnamedEnv as this is testing to make sure that
     // getEnvs doesn't mistakenly return a NamedEnv for an environment that isn't a direct child of envsDirs
     val envs = PyCondaEnv.getEnvs(condaRule.commandExecutor, condaRule.condaPathOnTarget).getOrThrow()
-          .map { it.envIdentity }
-          .filterIsInstance<PyCondaEnvIdentity.UnnamedEnv>()
+      .map { it.envIdentity }
+      .filterIsInstance<PyCondaEnvIdentity.UnnamedEnv>()
     Assert.assertTrue("No child $childEnvPrefix in $envs", envs.any { it.envPath == childEnvPrefix })
     Assert.assertTrue("No sibling $siblingEnvPrefix in $envs", envs.any { it.envPath == siblingEnvPrefix })
   }
