@@ -15,7 +15,9 @@ import org.jetbrains.annotations.ApiStatus
  *
  * If filetype is a [SubstitutedFileType] there are two options how to invoke [acceptFileType]: with filetype before substitution as
  * an argument ([SubstitutedFileType.getOriginalFileType]), or filetype after substitution ([SubstitutedFileType.getFileType]).
-  *
+ *
+ * Directories are rejected by this filter
+ *
  * @param fileTypeStrategy
  *   strategy to resolve [SubstitutedFileType]. When in doubt - prefer [FileTypeSubstitutionStrategy.BEFORE_SUBSTITUTION],
  *   because calculating substituted file type is not free.
@@ -38,6 +40,7 @@ abstract class BaseFileTypeInputFilter(private val fileTypeStrategy: FileTypeSub
   }
 
   final override fun acceptInput(file: IndexedFile): Boolean {
+    if (file.file.isDirectory) return false
     return when (acceptsFileTypeFastPath(file.fileType)) {
       ThreeState.YES -> true
       ThreeState.NO -> false
