@@ -36,7 +36,7 @@ import kotlin.io.path.pathString
 val condaSupportedLanguages: List<LanguageLevel>
   get() = LanguageLevel.SUPPORTED_LEVELS
     .asReversed()
-    .filter { it < LanguageLevel.PYTHON311 }
+    .filter { it < LanguageLevel.PYTHON312 }
 
 /**
  * See [com.jetbrains.env.conda.PyCondaSdkTest]
