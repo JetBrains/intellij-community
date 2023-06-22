@@ -28,12 +28,22 @@ open class LoadingDecorator @JvmOverloads constructor(
   parent: Disposable,
   private val startDelayMs: Int,
   useMinimumSize: Boolean = false,
-  icon: AsyncProcessIcon = AsyncProcessIcon.Big("Loading")
+  icon: AnimatedIcon = AsyncProcessIcon.createBig("Loading")
 ) {
   companion object {
     @JvmField
     val OVERLAY_BACKGROUND: Color = JBColor.namedColor("BigSpinner.background", JBColor.PanelBackground)
   }
+
+  constructor(content: JComponent?,
+              parent: Disposable,
+              startDelayMs: Int,
+              useMinimumSize: Boolean = false,
+              icon: AsyncProcessIcon) : this(content = content,
+                                             parent = parent,
+                                             startDelayMs = startDelayMs,
+                                             useMinimumSize = useMinimumSize,
+                                             icon = icon as AnimatedIcon)
 
   var overlayBackground: Color? = null
 
@@ -92,7 +102,7 @@ open class LoadingDecorator @JvmOverloads constructor(
     }
   }
 
-  protected open fun customizeLoadingLayer(parent: JPanel, text: JLabel, icon: AsyncProcessIcon): NonOpaquePanel {
+  protected open fun customizeLoadingLayer(parent: JPanel, text: JLabel, icon: AnimatedIcon): NonOpaquePanel {
     parent.layout = GridBagLayout()
     text.font = StartupUiUtil.labelFont
     text.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
@@ -147,13 +157,13 @@ open class LoadingDecorator @JvmOverloads constructor(
     pane.repaint()
   }
 
-  private inner class LoadingLayer(processIcon: AsyncProcessIcon) : JPanel() {
+  private inner class LoadingLayer(processIcon: AnimatedIcon) : JPanel() {
     val text = JLabel("", SwingConstants.CENTER)
 
     private var snapshot: BufferedImage? = null
     private var snapshotBg: Color? = null
 
-    val progress: AsyncProcessIcon
+    val progress: AnimatedIcon
 
     val isLoading: Boolean
       get() = _visible
