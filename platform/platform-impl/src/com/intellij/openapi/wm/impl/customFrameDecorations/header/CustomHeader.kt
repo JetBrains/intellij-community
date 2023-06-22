@@ -68,7 +68,10 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
 
   private var windowListener: WindowAdapter
   private val componentListener: ComponentListener
-  private val iconProvider = ScaleContextCache(::getFrameIcon)
+
+  private val iconProvider = ScaleContextCache {
+    AppUIUtil.loadSmallApplicationIcon(it)
+  }
 
   protected var myActive = false
 
@@ -76,20 +79,6 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
 
   @ApiStatus.Internal
   val customTitleBar: WindowDecorations.CustomTitleBar?
-
-  private val icon: Icon
-    get() = getFrameIcon()
-
-  private fun getFrameIcon(): Icon {
-    val scaleContext = ScaleContext.create(window)
-    //scaleContext.overrideScale(ScaleType.USR_SCALE.of(UISettings.defFontScale.toDouble()))
-    return iconProvider.getOrProvide(scaleContext)!!
-  }
-
-  protected open fun getFrameIcon(scaleContext: ScaleContext): Icon {
-    val size = (JBUIScale.scale(16f) * UISettings.defFontScale).toInt()
-    return AppUIUtil.loadSmallApplicationIcon(scaleContext, size)
-  }
 
   protected val productIcon: JComponent by lazy {
     createProductIcon()
@@ -261,7 +250,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
 
     val ic = object : JLabel() {
       override fun getIcon(): Icon {
-        return this@CustomHeader.icon
+        return iconProvider.getOrProvide(ScaleContext.create(window))!!
       }
     }
     ic.addMouseListener(object : MouseAdapter() {
