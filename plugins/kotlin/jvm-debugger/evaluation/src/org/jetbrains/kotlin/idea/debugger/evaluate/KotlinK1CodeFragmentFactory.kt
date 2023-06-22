@@ -41,7 +41,7 @@ import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.types.KotlinType
 import java.util.concurrent.atomic.AtomicReference
 
-class KotlinCodeFragmentFactory : CodeFragmentFactory() {
+class KotlinK1CodeFragmentFactory : CodeFragmentFactory() {
     override fun createCodeFragment(item: TextWithImports, context: PsiElement?, project: Project): JavaCodeFragment {
         val contextElement = getContextElement(context)
 
