@@ -11,6 +11,7 @@ import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
+import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.MarkdownIcons
 import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownLanguage
 import org.intellij.plugins.markdown.model.psi.MarkdownSymbolInsideInjection
@@ -55,7 +56,9 @@ data class HtmlAnchorSymbol(
 
   override fun presentation(): TargetPresentation {
     val builder = TargetPresentation.builder("#$text").icon(MarkdownIcons.EditorActions.Link)
-    return builder.withLocationIn(file).containerText("Anchor").presentation()
+    return builder.withLocationIn(file)
+      .containerText(MarkdownBundle.message("markdown.html.anchor.symbol.presentation.container.text"))
+      .presentation()
   }
 
   override val searchText: String
