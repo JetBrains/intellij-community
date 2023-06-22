@@ -276,7 +276,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     // It starts the real testing "after a restart" - i.e. when launched for the second time using the same system directory.
     // In terms of the persistence, "subDir/" is partially loaded and "subSubDir/" is fully loaded.
 
-    String testDirName = UsefulTestCase.TEMP_DIR_MARKER + getTestName(false);
+    String testDirName = TEMP_DIR_MARKER + getTestName(false);
     Path nestedTestDir = tempDirectory.getRootPath().getParent().resolve(testDirName + "/subDir/subSubDir");
     boolean secondRun = Files.exists(nestedTestDir.getParent().getParent());
 
