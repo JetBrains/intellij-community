@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import static com.intellij.codeInspection.ModCommands.error;
 import static com.intellij.codeInspection.ModCommands.nop;
@@ -200,6 +201,7 @@ final class PsiUpdateImpl {
     private final @NotNull FileTracker myTracker;
     private final @NotNull Map<PsiFile, FileTracker> myChangedFiles = new LinkedHashMap<>();
     private final @NotNull Map<VirtualFile, ModPsiUpdaterImpl.ChangedDirectoryInfo> myChangedDirectories = new LinkedHashMap<>();
+    private final @NotNull Set<VirtualFile> myDeletedFiles = new LinkedHashSet<>();
     private @NotNull VirtualFile myNavigationFile;
     private int myCaretOffset;
     private @NotNull TextRange mySelection;
@@ -214,6 +216,17 @@ final class PsiUpdateImpl {
         ChangedVirtualDirectory changedDirectory = new ChangedVirtualDirectory(origDirectory);
         return new ModPsiUpdaterImpl.ChangedDirectoryInfo(changedDirectory, PsiDirectoryFactory.getInstance(directory.getProject())
           .createDirectory(changedDirectory));
+      }
+
+      @NotNull Stream<ModCommand> createFileCommands(@NotNull Project project) {
+        PsiManager manager = PsiManager.getInstance(project);
+        return directory().getAddedChildren().values().stream()
+          .map(vf -> {
+            PsiFile psiFile = manager.findFile(vf);
+            if (psiFile == null) return nop();
+            return new ModCreateFile(new FutureVirtualFile(directory().getOriginalFile(),
+                                                           vf.getName(), vf.getFileType()), psiFile.getText());
+          });
       }
     }
 
@@ -245,8 +258,7 @@ final class PsiUpdateImpl {
         return result;
       }
       PsiFile file = e.getContainingFile();
-      if (file.getViewProvider().getVirtualFile() instanceof LightVirtualFile lvf &&
-          lvf.getParent() instanceof ChangedVirtualDirectory) {
+      if (file.getViewProvider().getVirtualFile() instanceof ChangedVirtualDirectory.AddedVirtualFile) {
         return e;
       }
       PsiFile originalFile = file.getOriginalFile();
@@ -257,6 +269,17 @@ final class PsiUpdateImpl {
         }
       }
       return tracker(file).getCopy(e);
+    }
+
+    @Override
+    public void deleteFile(@NotNull PsiFile file) {
+      PsiFile originalFile = file.getOriginalFile();
+      VirtualFile virtualFile = originalFile.getViewProvider().getVirtualFile();
+      if (virtualFile instanceof ChangedVirtualDirectory.AddedVirtualFile avf) {
+        avf.delete(null);
+      } else {
+        myDeletedFiles.add(virtualFile);
+      }
     }
 
     @Override
@@ -422,14 +445,9 @@ final class PsiUpdateImpl {
       }
       return myChangedFiles.values().stream().map(FileTracker::getUpdateCommand).reduce(nop(), ModCommand::andThen)
         .andThen(myChangedDirectories.values().stream()
-                   .flatMap(info -> info.directory().getAddedChildren().values().stream()
-                     .map(vf -> {
-                       PsiFile psiFile = PsiManager.getInstance(myTracker.myProject).findFile(vf);
-                       if (psiFile == null) return nop();
-                       return new ModCreateFile(new FutureVirtualFile(info.directory().getOriginalFile(),
-                                                                      vf.getName(), vf.getFileType()), psiFile.getText());
-                     }))
+                   .flatMap(info -> info.createFileCommands(myTracker.myProject))
                    .reduce(nop(), ModCommand::andThen))
+        .andThen(myDeletedFiles.stream().<ModCommand>map(df -> new ModDeleteFile(df)).reduce(nop(), ModCommand::andThen))
         .andThen(getNavigateCommand()).andThen(getHighlightCommand()).andThen(myRenameSymbol == null ? nop() : myRenameSymbol);
     }
 

@@ -72,8 +72,13 @@ final class ChangedVirtualDirectory extends LightVirtualFile {
     return myAddedChildren;
   }
 
-  private class AddedVirtualFile extends LightVirtualFile {
+  class AddedVirtualFile extends LightVirtualFile {
     private AddedVirtualFile(@NotNull String name) { super(name); }
+
+    @Override
+    public void delete(Object requestor) {
+      ChangedVirtualDirectory.this.myAddedChildren.remove(getName());
+    }
 
     @Override
     public boolean shouldSkipEventSystem() {

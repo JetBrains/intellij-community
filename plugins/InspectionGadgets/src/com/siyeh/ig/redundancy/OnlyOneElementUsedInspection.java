@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInspection.*;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -89,7 +90,7 @@ public class OnlyOneElementUsedInspection extends AbstractBaseJavaLocalInspectio
     }
   }
 
-  private static class InlineSingleElementAccessFix implements LocalQuickFix {
+  private static class InlineSingleElementAccessFix extends PsiUpdateModCommandQuickFix {
     final String myInitializer;
 
     private InlineSingleElementAccessFix(String initializer) {
@@ -107,8 +108,8 @@ public class OnlyOneElementUsedInspection extends AbstractBaseJavaLocalInspectio
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      new CommentTracker().replaceAndRestoreComments(descriptor.getStartElement(), myInitializer);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      new CommentTracker().replaceAndRestoreComments(element, myInitializer);
     }
   }
 }

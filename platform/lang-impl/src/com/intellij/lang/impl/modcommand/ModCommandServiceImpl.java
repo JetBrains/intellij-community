@@ -132,7 +132,21 @@ public class ModCommandServiceImpl implements ModCommandService {
     if (command instanceof ModCreateFile create) {
       return executeCreate(project, create);
     }
+    if (command instanceof ModDeleteFile deleteFile) {
+      return executeDelete(project, deleteFile);
+    }
     throw new IllegalArgumentException("Unknown command: " + command);
+  }
+
+  private boolean executeDelete(Project project, ModDeleteFile file) {
+    try {
+      WriteAction.run(() -> file.file().delete(this));
+      return true;
+    }
+    catch (IOException e) {
+      executeError(project, new ModDisplayError(e.getMessage()));
+      return false;
+    }
   }
 
   private boolean executeCreate(@NotNull Project project, @NotNull ModCreateFile create) {

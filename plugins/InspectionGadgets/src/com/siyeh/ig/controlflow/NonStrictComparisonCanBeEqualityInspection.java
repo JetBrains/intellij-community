@@ -1,7 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.TrackingRunner;
@@ -10,6 +13,7 @@ import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -70,15 +74,14 @@ public class NonStrictComparisonCanBeEqualityInspection extends AbstractBaseJava
     };
   }
 
-  private static class ReplaceWithEqualityFix implements LocalQuickFix {
+  private static class ReplaceWithEqualityFix extends PsiUpdateModCommandQuickFix {
     @Override
     public @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", "==");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement token = descriptor.getStartElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement token, @NotNull ModPsiUpdater updater) {
       PsiBinaryExpression expression = ObjectUtils.tryCast(token.getParent(), PsiBinaryExpression.class);
       if (expression == null) return;
       String text = expression.getText();

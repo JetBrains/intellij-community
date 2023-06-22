@@ -1814,7 +1814,7 @@ public final class HighlightUtil {
         .descriptionAndTooltip(variable instanceof PsiRecordComponent
           ? JavaErrorBundle.message("record.component.cstyle.declaration")
           : JavaErrorBundle.message("vararg.cstyle.array.declaration"));
-      IntentionAction action = new NormalizeBracketsFix(variable);
+      var action = new NormalizeBracketsFix(variable);
       info.registerFix(action, null, null, null, null);
       return info;
     }

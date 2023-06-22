@@ -1146,7 +1146,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public @NotNull IntentionAction createMoveSwitchBranchUpFix(@NotNull PsiCaseLabelElement moveBeforeLabel,
                                                               @NotNull PsiCaseLabelElement labelElement) {
-    return new MoveSwitchBranchUpFix(moveBeforeLabel, labelElement);
+    return new MoveSwitchBranchUpFix(moveBeforeLabel, labelElement).asIntention();
   }
 
   @Override
