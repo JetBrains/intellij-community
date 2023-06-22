@@ -21,7 +21,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.IdeFrame
@@ -313,22 +312,18 @@ open class IdeMenuBar internal constructor() : JMenuBar(), IdeEventQueue.EventDi
       subtask("ide menu bar actions init") {
         val mainActionGroup = getMainMenuActionGroupAsync()
         withContext(Dispatchers.EDT) {
-          blockingContext {
-            val actions = doUpdateMenuActions(mainActionGroup = mainActionGroup,
-                                              forceRebuild = false,
-                                              manager = actionManager,
-                                              screenMenuPeer = screenMenuPeer)
-            for (action in actions) {
-              if (action is ActionGroup) {
-                PopupMenuPreloader.install(this@IdeMenuBar, ActionPlaces.MAIN_MENU, null) { action }
-              }
+          val actions = doUpdateMenuActions(mainActionGroup = mainActionGroup,
+                                            forceRebuild = false,
+                                            manager = actionManager,
+                                            screenMenuPeer = screenMenuPeer)
+          for (action in actions) {
+            if (action is ActionGroup) {
+              PopupMenuPreloader.install(this@IdeMenuBar, ActionPlaces.MAIN_MENU, null) { action }
             }
           }
         }
 
-        blockingContext {
-          actionManager.addTimerListener(timerListener)
-        }
+        actionManager.addTimerListener(timerListener)
         coroutineScope.coroutineContext.job.invokeOnCompletion {
           actionManager.removeTimerListener(timerListener)
         }

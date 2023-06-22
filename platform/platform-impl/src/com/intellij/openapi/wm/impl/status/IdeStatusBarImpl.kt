@@ -281,9 +281,7 @@ open class IdeStatusBarImpl internal constructor(
   internal suspend fun init(project: Project, extraItems: List<kotlin.Pair<StatusBarWidget, LoadingOrder>> = emptyList()) {
     val service = project.service<StatusBarWidgetsManager>()
     val items = runActivity("status bar pre-init") {
-      blockingContext {
-        service.init()
-      }
+      service.init()
     }
     runActivity("status bar init") {
       doInit(widgets = items + extraItems, parentDisposable = service)
