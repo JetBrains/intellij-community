@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nls
 object GitConflictsUtil {
 
   internal fun getConflictOperationLock(project: Project, conflict: GitConflict): BackgroundableActionLock {
-    return BackgroundableActionLock.getLock(project, conflict.filePath)
+    return BackgroundableActionLock.getLock(project, "GitConflictLock", conflict.filePath)
   }
 
   internal fun acceptConflictSide(project: Project, handler: GitMergeHandler, selectedConflicts: List<GitConflict>, takeTheirs: Boolean) {
@@ -45,7 +45,7 @@ object GitConflictsUtil {
     }.queue()
   }
 
-  private fun hasActiveMergeWindow(conflict: GitConflict) : Boolean {
+  private fun hasActiveMergeWindow(conflict: GitConflict): Boolean {
     val file = LocalFileSystem.getInstance().findFileByPath(conflict.filePath.path) ?: return false
     return MergeConflictResolveUtil.hasActiveMergeWindow(file)
   }
