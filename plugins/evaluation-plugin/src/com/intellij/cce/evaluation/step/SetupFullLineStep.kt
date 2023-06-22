@@ -3,10 +3,12 @@ package com.intellij.cce.evaluation.step
 
 import com.intellij.cce.evaluation.UndoableEvaluationStep
 import com.intellij.cce.workspace.EvaluationWorkspace
+import com.intellij.openapi.util.registry.Registry
 
 class SetupFullLineStep : UndoableEvaluationStep {
   private var initLoggingEnabledValue: Boolean = false
   private var initLogPathValue: String? = null
+  private var initLatency: Int? = null
 
   override val name: String = "Setup FullLine plugin step"
   override val description: String = "Enable FullLine BeamSearch logging"
@@ -15,6 +17,9 @@ class SetupFullLineStep : UndoableEvaluationStep {
     initLoggingEnabledValue = java.lang.Boolean.parseBoolean(System.getProperty(LOGGING_ENABLED_PROPERTY, "false"))
     initLogPathValue = System.getProperty(LOG_PATH_PROPERTY)
     System.setProperty(LOGGING_ENABLED_PROPERTY, "true")
+    val latencyRegistry = Registry.get(LATENCY_REGISTRY)
+    initLatency = latencyRegistry.asInteger()
+    latencyRegistry.setValue(MAX_LATENCY)
     return workspace
   }
 
@@ -32,6 +37,9 @@ class SetupFullLineStep : UndoableEvaluationStep {
         else {
           System.setProperty(LOG_PATH_PROPERTY, logPath)
         }
+        initLatency?.let {
+          Registry.get(LATENCY_REGISTRY).setValue(it)
+        }
         return workspace
       }
     }
@@ -40,5 +48,7 @@ class SetupFullLineStep : UndoableEvaluationStep {
   companion object {
     private const val LOGGING_ENABLED_PROPERTY = "flcc_search_logging_enabled"
     private const val LOG_PATH_PROPERTY = "flcc_search_log_path"
+    private const val LATENCY_REGISTRY = "full.line.server.host.max.latency"
+    private const val MAX_LATENCY = 20000
   }
 }
