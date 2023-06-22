@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -106,15 +107,20 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
   private void resurrectZombies(@NotNull Editor editor, @NotNull VirtualFile file) {
     FileMarkupInfo markupInfo = cachedMarkup.get(file);
     if (markupInfo == null) return;
-    if (editor.getDocument().getText().hashCode() != markupInfo.contentHash()) {
+    Document document = editor.getDocument();
+    if (document.getText().hashCode() != markupInfo.contentHash()) {
       // text changed since the cached markup was saved on-disk
       if (LOG.isDebugEnabled()) {
         LOG.debug("restore canceled hash mismatch " + markupInfo.highlighters().size() + " for " + file);
       }
       return;
     }
-    MarkupModel markupModel = DocumentMarkupModel.forDocument(editor.getDocument(), myProject, true);
+    MarkupModel markupModel = DocumentMarkupModel.forDocument(document, myProject, true);
     for (HighlighterState state : markupInfo.highlighters()) {
+      if (state.end() > document.getTextLength()) {
+        // something's wrong, the document has changed in the other thread?
+        continue;
+      }
       RangeHighlighter highlighter;
       TextAttributesKey attributesKey = state.textAttributesKey();
       if (attributesKey == null) {
