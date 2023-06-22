@@ -58,7 +58,7 @@ data class ShellArgument(
   val templates: List<String> = emptyList(),
   val generators: List<ShellSuggestionsGenerator> = emptyList(),
   val isVariadic: Boolean = false,
-  val optionsCanBreakVariadicArg: Boolean = false,
+  val optionsCanBreakVariadicArg: Boolean = true,
   val isOptional: Boolean = false,
   val isCommand: Boolean = false,
   val default: String? = null,

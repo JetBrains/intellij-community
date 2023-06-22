@@ -35,7 +35,9 @@ internal class SubcommandNode(text: String,
       return suggestions
     }
 
-    if (!spec.parserDirectives.optionsMustPrecedeArguments || children.filterIsInstance<ArgumentNode>().isEmpty()) {
+    val lastArg = (children.lastOrNull() as? ArgumentNode)?.spec
+    if ((!spec.parserDirectives.optionsMustPrecedeArguments || children.filterIsInstance<ArgumentNode>().isEmpty())
+        && (lastArg?.isVariadic != true || lastArg.optionsCanBreakVariadicArg)) {
       val options = getAvailableOptions()
       suggestions.addAll(options)
     }
@@ -75,7 +77,10 @@ internal class OptionNode(text: String,
     val suggestions = mutableListOf<BaseSuggestion>()
     suggestions.addAll(getDirectSuggestionsOfNext())
     val availableArgs = getAvailableArguments(spec.args)
-    if (parent is SubcommandNode && availableArgs.all { it.isOptional }) {
+    val lastArg = (children.lastOrNull() as? ArgumentNode)?.spec
+    // suggest parent options and args if there is no required args or last arg is required, but variadic
+    val args = if (lastArg?.isVariadic == true && lastArg.optionsCanBreakVariadicArg) availableArgs - lastArg else availableArgs
+    if (parent is SubcommandNode && args.all { it.isOptional }) {
       suggestions.addAll(parent.getSuggestionsOfNext())
     }
     return suggestions

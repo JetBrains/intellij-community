@@ -114,11 +114,31 @@ class CommandSpecSuggestionsTest {
         suggestions("opt")
       }
     }
+
+    subcommand("variadic2") {
+      option("-b")
+      option("---") {
+        argument("varOpt") {
+          isVariadic = true
+          optionsCanBreakVariadicArg = false
+          suggestions("var")
+        }
+      }
+      argument("var") {
+        isVariadic = true
+        optionsCanBreakVariadicArg = false
+        suggestions("v")
+      }
+      argument("end") {
+        suggestions("end")
+      }
+    }
   }
 
   @Test
   fun `main command`() {
-    doTest(expected = listOf("sub", "excl", "reqSub", "manyArgs", "optPrecedeArgs", "variadic", "-a", "--asd", "--bcde", "--argum", "abc"))
+    doTest(expected = listOf("sub", "excl", "reqSub", "manyArgs", "optPrecedeArgs", "variadic", "variadic2",
+                             "-a", "--asd", "--bcde", "--argum", "abc"))
   }
 
   @Test
@@ -178,7 +198,7 @@ class CommandSpecSuggestionsTest {
 
   @Test
   fun `suggest variadic argument of option again`() {
-    doTest("variadic", "--var", "var1", "var2", expected = listOf("var1", "var2"))
+    doTest("variadic", "--var", "var1", "var2", expected = listOf("var1", "var2", "-a", "--bcde", "req"))
   }
 
   @Test
@@ -199,6 +219,21 @@ class CommandSpecSuggestionsTest {
   @Test
   fun `do not suggest options after argument if it is restricted`() {
     doTest("optPrecedeArgs", "-c", "arg", expected = listOf())
+  }
+
+  @Test
+  fun `suggest variadic arg of command and options after breaking variadic arg with option`() {
+    doTest("variadic", "req", "v", "-a", expected = listOf("--var", "--bcde", "v", "opt"))
+  }
+
+  @Test
+  fun `do not suggest options after variadic arg of command if it is restricted`() {
+    doTest("variadic2", "v", "v", expected = listOf("v", "end"))
+  }
+
+  @Test
+  fun `do not suggest options after variadic arg of option if it is restricted`() {
+    doTest("variadic2", "---", "var", expected = listOf("var"))
   }
 
   private fun doTest(vararg arguments: String, expected: List<String>) {

@@ -164,7 +164,7 @@ private class OptionContextImpl(private val names: List<String>) : OptionContext
 private class ArgumentContextImpl(private val name: String, private val isOptional: Boolean) : ArgumentContext {
   override var description: String? = null
   override var isVariadic: Boolean = false
-  override var optionsCanBreakVariadicArg: Boolean = false
+  override var optionsCanBreakVariadicArg: Boolean = true
   override var isCommand: Boolean = false
   override var default: String? = null
 
