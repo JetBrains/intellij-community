@@ -144,4 +144,42 @@ public class MavenAutomaticVersioningResolutionTest extends MavenDomTestCase {
     assertResolved(m2, findPsiFile(m1));
     checkHighlighting(m2);
   }
+
+  @Test
+  public void testAutomaticDependencyVersionResolutionForMaven4AndRelativePath() throws IOException {
+
+    assumeVersionAtLeast("4.0.0-alpha-2");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1.1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                        <module>m/m1</module>
+                       </modules>
+                       """);
+
+    VirtualFile m1 = createModulePom("m/m1",
+                                     """
+                                       <parent>
+                                         <groupId>test</groupId>
+                                         <artifactId>project</artifactId>
+                                         <relativePath>../../pom.xml</relativePath>
+                                       </parent>
+                                        <artifactId>m1</artifactId>
+                                       """);
+    importProject();
+    assertEquals("1.1", myProjectsManager.findProject(m1).getMavenId().getVersion());
+
+    createModulePom("m/m1",
+                                     """
+                                       <parent>
+                                         <groupId>test</groupId>
+                                         <artifactId><caret>project</artifactId>
+                                         <relativePath>../../pom.xml</relativePath>
+                                       </parent>
+                                        <artifactId>m1</artifactId>
+                                       """);
+    assertResolved(m1, findPsiFile(myProjectPom));
+  }
 }
