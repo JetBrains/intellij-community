@@ -27,18 +27,6 @@ public interface GlobalIndexFilter {
 
   ExtensionPointName<GlobalIndexFilter> EP_NAME = ExtensionPointName.create("com.intellij.globalIndexFilter");
 
-  /**
-   * Returns true if the given file should be excluded from indexing by any of the registered filters.
-   */
-  static boolean isExcludedFromIndexViaFilters(@NotNull VirtualFile file, @NotNull IndexId<?, ?> indexId, Project project) {
-    for (GlobalIndexFilter filter : EP_NAME.getExtensionList()) {
-      if (filter.isExcludedFromIndex(file, indexId, project)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   static int getFiltersVersion(@NotNull IndexId<?, ?> indexId) {
     int result = 0;
     for (GlobalIndexFilter extension: EP_NAME.getExtensionList()) {
