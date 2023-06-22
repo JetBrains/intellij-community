@@ -16,7 +16,7 @@ import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.project.impl.applyBoundsOrDefault
-import com.intellij.openapi.project.impl.createNewProjectFrame
+import com.intellij.openapi.project.impl.createNewProjectFrameProducer
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.*
@@ -54,7 +54,7 @@ internal class LightEditFrameWrapper(
       return runBlockingModalWithRawProgressReporter(project, "") {
         withContext(Dispatchers.EDT) {
           val wrapper = allocateLightEditFrame(project) { frame ->
-            LightEditFrameWrapper(project = project, frame = frame ?: createNewProjectFrame(frameInfo).create(), closeHandler = closeHandler)
+            LightEditFrameWrapper(project = project, frame = frame ?: createNewProjectFrameProducer(frameInfo).create(), closeHandler = closeHandler)
           } as LightEditFrameWrapper
           (FileEditorManager.getInstance(project) as LightEditFileEditorManagerImpl).internalInit()
           wrapper
