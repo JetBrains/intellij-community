@@ -45,19 +45,20 @@ object JBUIScale {
 
   @Internal
   fun preload(uiDefaults: Supplier<UIDefaults?>) {
-    if (!systemScaleFactor.isInitialized()) {
-      runActivity("system scale factor computation") {
-        computeSystemScaleFactor(uiDefaults).let {
-          systemScaleFactor.value = it
-        }
-      }
+    if (systemScaleFactor.isInitialized()) {
+      thisLogger().error("Must be not computed before that call")
+    }
+
+    runActivity("system scale factor computation") {
+      systemScaleFactor.value = computeSystemScaleFactor(uiDefaults)
     }
 
     runActivity("user scale factor computation") {
+      userScaleFactor.drop()
       userScaleFactor.value
     }
 
-    getSystemFontData(uiDefaults)
+    systemFontData.value = computeSystemFontData(uiDefaults)
   }
 
   private val systemScaleFactor: SynchronizedClearableLazy<Float> = SynchronizedClearableLazy {
@@ -115,7 +116,7 @@ object JBUIScale {
     if (SystemInfoRt.isLinux) {
       val value = Toolkit.getDefaultToolkit().getDesktopProperty("gnome.Xft/DPI")
       if (isScaleVerbose) {
-        log.info(String.format("gnome.Xft/DPI: %s", value))
+        log.info("gnome.Xft/DPI: $value")
       }
       if (value is Int) { // defined by JB JDK when the resource is available in the system
         // If the property is defined, then:
@@ -144,13 +145,13 @@ object JBUIScale {
       if (winFont != null) {
         font = winFont // comes scaled
         if (isScaleVerbose) {
-          log.info(String.format("Windows sys font: %s, %d", winFont.fontName, winFont.size))
+          log.info("Windows sys font: ${winFont.fontName}, ${winFont.size}")
         }
       }
     }
     val result = Pair(font.name, font.size)
     if (isScaleVerbose) {
-      log.info(String.format("systemFontData: %s, %d", result.first, result.second))
+      log.info("systemFontData: ${result.first}, ${result.second}")
     }
     return result
   }
