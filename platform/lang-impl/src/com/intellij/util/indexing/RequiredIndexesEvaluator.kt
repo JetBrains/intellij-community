@@ -106,6 +106,9 @@ internal class RequiredIndexesEvaluator(private val registeredIndexes: Registere
       AcceptAllRegularFilesIndexingHint -> {
         return booleanToIndexedFilePredicate(!isDirectory)
       }
+      AcceptAllFilesAndDirectoriesIndexingHint -> {
+        return truePredicate
+      }
       else -> {
         return object : IndexedFilePredicate {
           override fun test(indexedFile: IndexedFile): Boolean = FileBasedIndexEx.acceptsInput(inputFilter, indexedFile)

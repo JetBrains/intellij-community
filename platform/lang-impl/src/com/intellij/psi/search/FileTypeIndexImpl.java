@@ -4,6 +4,7 @@ package com.intellij.psi.search;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.hints.AcceptAllRegularFilesIndexingHint;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +37,7 @@ public final class FileTypeIndexImpl
 
   @Override
   public @NotNull FileBasedIndex.InputFilter getInputFilter() {
-    return file -> !file.isDirectory();
+    return AcceptAllRegularFilesIndexingHint.INSTANCE;
   }
 
   @Override
