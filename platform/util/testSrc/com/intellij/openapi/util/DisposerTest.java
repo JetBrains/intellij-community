@@ -7,10 +7,9 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
-import org.jetbrains.annotations.NonNls;
+import org.assertj.core.api.Assertions;
 import org.junit.*;
 import org.junit.rules.TestName;
 
@@ -27,6 +26,7 @@ import java.util.stream.IntStream;
 
 import static org.junit.Assert.*;
 
+@SuppressWarnings({"StatementWithEmptyBody", "deprecation", "SSBasedInspection"})
 public class DisposerTest  {
   private MyLoggingDisposable myRoot;
   private MyLoggingDisposable myFolder1;
@@ -34,7 +34,7 @@ public class DisposerTest  {
   private MyLoggingDisposable myLeaf1;
   private MyLoggingDisposable myLeaf2;
   private final List<MyLoggingDisposable> myDisposedObjects = Collections.synchronizedList(new ArrayList<>());
-  @NonNls private final List<String> myDisposeActions = Collections.synchronizedList(new ArrayList<>());
+  private final List<String> myDisposeActions = Collections.synchronizedList(new ArrayList<>());
 
   @Rule
   public TestName name = new TestName();
@@ -102,7 +102,6 @@ public class DisposerTest  {
   @Test
   public void testDisposalOrderNestedDispose() {
     Disposer.register(myRoot, myFolder2);
-    //noinspection SSBasedInspection
     Disposer.register(myRoot, () -> Disposer.dispose(myFolder2));
 
     Disposer.dispose(myRoot);
@@ -117,7 +116,6 @@ public class DisposerTest  {
     Disposer.register(selfDisposable, myFolder1);
     Disposer.register(myFolder1, myFolder2);
 
-    //noinspection SSBasedInspection
     selfDisposable.dispose();
 
     assertDisposed(selfDisposable);
@@ -128,7 +126,6 @@ public class DisposerTest  {
   @Test
   public void testDirectCallOfUnregisteredSelfDisposable() {
     SelDisposable selfDisposable = new SelDisposable("root");
-    //noinspection SSBasedInspection
     selfDisposable.dispose();
     assertDisposed(selfDisposable);
   }
@@ -252,10 +249,8 @@ public class DisposerTest  {
     Disposer.register(sub, myLeaf1);
     Disposer.dispose(root);
 
-    @NonNls String[] expected =
-      {"beforeDispose: root", "beforeDispose: subFolder", "dispose: leaf1", "dispose: subFolder", "dispose: folder1", "dispose: root"};
-
-    UsefulTestCase.assertOrderedEquals(myDisposeActions, expected);
+    Assertions.assertThat(myDisposeActions)
+      .containsExactly("beforeDispose: root", "beforeDispose: subFolder", "dispose: leaf1", "dispose: subFolder", "dispose: folder1", "dispose: root");
   }
 
   private void assertDisposed(MyLoggingDisposable disposable) {
@@ -268,7 +263,7 @@ public class DisposerTest  {
     private boolean myDisposed;
     protected String myName;
 
-    private MyLoggingDisposable(@NonNls String aName) {
+    private MyLoggingDisposable(String aName) {
       myName = aName;
     }
 
@@ -285,12 +280,12 @@ public class DisposerTest  {
 
     @Override
     public String toString() {
-      return myName +"; myDisposed="+myDisposed;
+      return myName + "; myDisposed=" + myDisposed;
     }
   }
 
   private final class MyParentDisposable extends MyLoggingDisposable implements Disposable.Parent {
-    private MyParentDisposable(@NonNls final String aName) {
+    private MyParentDisposable(final String aName) {
       super(aName);
     }
 
@@ -302,7 +297,7 @@ public class DisposerTest  {
 
   private final class SelDisposable extends MyLoggingDisposable {
     int disposeCount;
-    private SelDisposable(@NonNls String aName) {
+    private SelDisposable(String aName) {
       super(aName);
     }
 
@@ -324,8 +319,9 @@ public class DisposerTest  {
     Disposer.register(child, grand);
 
     try {
-      UsefulTestCase.assertThrows(IncorrectOperationException.class, "'grand' was already added as a child of 'parent'",
-                                  () -> Disposer.register(grand, parent));
+      Assertions.assertThatThrownBy(() -> Disposer.register(grand, parent))
+        .isInstanceOf(IncorrectOperationException.class)
+        .hasMessageContaining("'grand' was already added as a child of 'parent'");
     }
     finally {
       Disposer.dispose(grand);
@@ -392,7 +388,7 @@ public class DisposerTest  {
     Disposer.dispose(disposable);
 
     Disposable newDisposable = Disposer.newDisposable();
-    UsefulTestCase.assertThrows(IncorrectOperationException.class, () -> Disposer.register(disposable, newDisposable));
+    Assertions.assertThatThrownBy(() -> Disposer.register(disposable, newDisposable)).isInstanceOf(IncorrectOperationException.class);
   }
 
   @Test
@@ -426,7 +422,9 @@ public class DisposerTest  {
     }; });
     Disposer.register(parent, last);
 
-    UsefulTestCase.assertThrows(AssertionError.class, "Expected", () -> Disposer.dispose(parent));
+    Assertions.assertThatThrownBy(() -> Disposer.dispose(parent))
+      .isInstanceOf(AssertionError.class)
+      .hasMessageContaining("Expected");
 
     assertTrue(Disposer.isDisposed(parent));
     assertTrue(Disposer.isDisposed(first));
@@ -442,7 +440,9 @@ public class DisposerTest  {
 
     Disposer.register(parent, () -> Disposer.register(parent, last));
 
-    UsefulTestCase.assertThrows(IncorrectOperationException.class, "Sorry but parent", () -> Disposer.dispose(parent));
+    Assertions.assertThatThrownBy(() -> Disposer.dispose(parent))
+      .hasCauseInstanceOf(IncorrectOperationException.class)
+      .hasMessageContaining("Sorry but parent");
 
     assertTrue(Disposer.isDisposed(parent));
   }
@@ -460,7 +460,7 @@ public class DisposerTest  {
     for (int i = 0; i < 1000; i++) {
       myDisposeActions.clear();
       myDisposedObjects.clear();
-      MyLoggingDisposable parent = new MyLoggingDisposable("parent"+i);
+      MyLoggingDisposable parent = new MyLoggingDisposable("parent" + i);
       MyLoggingDisposable child = new MyLoggingDisposable("child" + i);
       Future<Boolean> future = executor.submit(() -> Disposer.tryRegister(parent, child));
 
@@ -478,7 +478,6 @@ public class DisposerTest  {
   @Test
   public void testDisposerMustUseIdentitySemanticsForChildren() {
     List<Disposable> run = new ArrayList<>();
-    //noinspection EqualsWhichDoesntCheckParameterClass
     Disposable disposable0 = new Disposable() {
       @Override
       public void dispose() {
@@ -491,11 +490,11 @@ public class DisposerTest  {
       }
 
       @Override
+      @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
       public boolean equals(Object obj) {
         return true;
       }
     };
-    //noinspection EqualsWhichDoesntCheckParameterClass
     Disposable disposable1 = new Disposable() {
       @Override
       public void dispose() {
@@ -508,6 +507,7 @@ public class DisposerTest  {
       }
 
       @Override
+      @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
       public boolean equals(Object obj) {
         return true;
       }
@@ -527,11 +527,9 @@ public class DisposerTest  {
   @Test
   public void testDisposerMustHaveIdentitySemanticsForParent() {
     List<Disposable> run = new ArrayList<>();
-    //noinspection EqualsWhichDoesntCheckParameterClass
     Disposable disposable0 = new Disposable() {
       @Override
-      public void dispose() {
-      }
+      public void dispose() { }
 
       @Override
       public int hashCode() {
@@ -539,15 +537,14 @@ public class DisposerTest  {
       }
 
       @Override
+      @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
       public boolean equals(Object obj) {
         return true;
       }
     };
-    //noinspection EqualsWhichDoesntCheckParameterClass
     Disposable disposable1 = new Disposable() {
       @Override
-      public void dispose() {
-      }
+      public void dispose() { }
 
       @Override
       public int hashCode() {
@@ -555,6 +552,7 @@ public class DisposerTest  {
       }
 
       @Override
+      @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
       public boolean equals(Object obj) {
         return true;
       }
@@ -576,16 +574,16 @@ public class DisposerTest  {
     Disposer.register(disposable0, child0);
     Disposer.register(disposable1, child1);
     Disposer.dispose(disposable0);
-    assertSame(child0, UsefulTestCase.assertOneElement(run));
+    Assertions.assertThat(run).hasSize(1).element(0).isSameAs(child0);
     run.clear();
     Disposer.dispose(disposable1);
-    assertSame(child1, UsefulTestCase.assertOneElement(run));
+    Assertions.assertThat(run).hasSize(1).element(0).isSameAs(child1);
   }
 
   @Test
   public void testMustNotAllowToRegisterToItself() {
     Disposable d = Disposer.newDisposable();
-    UsefulTestCase.assertThrows(IllegalArgumentException.class, () -> Disposer.register(d, d));
+    Assertions.assertThatThrownBy(() -> Disposer.register(d, d)).isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
@@ -631,14 +629,14 @@ public class DisposerTest  {
   public void testTryRegisterMustCheckInvariantsToo() {
     Disposable parent = new MyLoggingDisposable("parent");
     Disposable child = new MyLoggingDisposable("child");
-    UsefulTestCase.assertThrows(IllegalArgumentException.class, () -> Disposer.tryRegister(parent, parent));
+    Assertions.assertThatThrownBy(() -> Disposer.tryRegister(parent, parent)).isInstanceOf(IllegalArgumentException.class);
     assertTrue(Disposer.tryRegister(parent, child));
-    UsefulTestCase.assertThrows(IncorrectOperationException.class, () -> Disposer.tryRegister(child, parent));
+    Assertions.assertThatThrownBy(() -> Disposer.tryRegister(child, parent)).isInstanceOf(IncorrectOperationException.class);
     Disposer.dispose(parent);
     assertFalse(Disposer.tryRegister(parent, child));
     Disposer.dispose(child);
   }
-  
+
   @Test
   public void testRegisterManyChildren() {
     Disposable parent = new MyLoggingDisposable("parent");

@@ -43,13 +43,13 @@ final class ObjectTree {
                                               getDisposalTrace(parent));
       }
 
-      myDisposedObjects.remove(child); // if we dispose thing and then register it back it means it's not disposed anymore
+      myDisposedObjects.remove(child);
       if (child instanceof Disposer.CheckedDisposableImpl) {
+        // if we dispose a child and then register it back, it means it's not disposed anymore
         ((Disposer.CheckedDisposableImpl)child).isDisposed = false;
       }
 
       ObjectNode parentNode = getParentNode(parent).findOrCreateChildNode(parent);
-
       ObjectNode childNode = getParentNode(child).moveChildNodeToOtherParent(child, parentNode);
       myObject2ParentNode.put(child, parentNode);
 
@@ -77,6 +77,7 @@ final class ObjectTree {
       return ObjectUtils.nullizeIfDefaultValue(myDisposedObjects.get(object), UNKNOWN_TRACE);
     }
   }
+
   boolean isDisposed(@NotNull Disposable object) {
     if (object instanceof CheckedDisposable) {
       return ((CheckedDisposable)object).isDisposed();
