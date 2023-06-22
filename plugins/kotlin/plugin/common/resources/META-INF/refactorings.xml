@@ -55,5 +55,6 @@
     <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.KotlinVariableInplaceRenameHandler"/>
     <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.handlers.RenameKotlinImplicitLambdaParameter"/>
     <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.handlers.RenameSyntheticDeclarationByReferenceHandler"/>
+    <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.handlers.RenameBackingFieldReferenceHandler"/>
   </extensions>
 </idea-plugin>
