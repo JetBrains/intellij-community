@@ -39,24 +39,33 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
+import org.jetbrains.kotlin.types.isFlexible
 import org.jetbrains.kotlin.types.isNullable
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 
 internal class RemoveExplicitPropertyTypeProcessing : InspectionLikeProcessingForElement<KtProperty>(KtProperty::class.java) {
     override fun isApplicableTo(element: KtProperty, settings: ConverterSettings?): Boolean {
+        if (element.isMember && !element.isPrivate()) return false
+
         val typeReference = element.typeReference
         if (typeReference == null || typeReference.annotationEntries.isNotEmpty()) return false
-        val needFieldTypes = settings?.specifyFieldTypeByDefault == true
-        val needLocalVariablesTypes = settings?.specifyLocalVariableTypeByDefault == true
 
+        val needLocalVariablesTypes = settings?.specifyLocalVariableTypeByDefault == true
         if (needLocalVariablesTypes && element.isLocal) return false
-        if (needFieldTypes && element.isMember) return false
+
         val initializer = element.initializer ?: return false
-        val withoutExpectedType =
+        val initializerType =
             initializer.analyzeInContext(initializer.getResolutionScope()).getType(initializer) ?: return false
-        val typeBeDescriptor = element.resolveToDescriptorIfAny().safeAs<CallableDescriptor>()?.returnType ?: return false
-        return KotlinTypeChecker.DEFAULT.equalTypes(withoutExpectedType, typeBeDescriptor)
+
+        // https://kotlinlang.org/docs/coding-conventions.html#platform-types
+        // Any property initialized with an expression of a platform type must declare its Kotlin type explicitly
+        if (element.isMember && initializerType.isFlexible()) {
+            return false
+        }
+
+        val propertyType = element.resolveToDescriptorIfAny().safeAs<CallableDescriptor>()?.returnType ?: return false
+        return KotlinTypeChecker.DEFAULT.equalTypes(initializerType, propertyType)
     }
 
     override fun apply(element: KtProperty) {

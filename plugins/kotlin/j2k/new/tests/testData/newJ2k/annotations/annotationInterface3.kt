@@ -5,13 +5,13 @@ internal annotation class Anon(val value: String) {
     }
 
     companion object {
-        val field = E.A
+        val field: E = E.A
     }
 }
 
 @Anon("a")
 internal interface I {
     companion object {
-        val e = Anon.field
+        val e: Anon.E = Anon.field
     }
 }

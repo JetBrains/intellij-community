@@ -9,5 +9,5 @@ object Utils {
     }
 
     @JvmField
-    var staticField = 1
+    var staticField: Int = 1
 }

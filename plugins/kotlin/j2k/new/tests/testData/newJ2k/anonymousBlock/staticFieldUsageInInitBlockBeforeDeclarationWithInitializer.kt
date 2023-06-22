@@ -1,5 +1,5 @@
 internal object C {
-    var abc = 0
+    var abc: Int = 0
 
     init {
         abc = 2

@@ -3,7 +3,7 @@
 package test
 
 class Test(str: String) {
-    var myStr = "String2"
+    var myStr: String = "String2"
 
     init {
         myStr = str

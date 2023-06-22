@@ -5182,11 +5182,6 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/settings/publicByDefault.java");
         }
 
-        @TestMetadata("specifyFieldTypeByDefault.java")
-        public void testSpecifyFieldTypeByDefault() throws Exception {
-            runTest("testData/newJ2k/settings/specifyFieldTypeByDefault.java");
-        }
-
         @TestMetadata("specifyLocalVariableTypeByDefault.java")
         public void testSpecifyLocalVariableTypeByDefault() throws Exception {
             runTest("testData/newJ2k/settings/specifyLocalVariableTypeByDefault.java");

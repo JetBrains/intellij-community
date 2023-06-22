@@ -1,8 +1,8 @@
 class Init {
-    var field1 = "str"
+    var field1: String = "str"
     var field2: String? = null
-    var field3 = 1
-    var field4 = 0
+    var field3: Int = 1
+    var field4: Int = 0
 
     init {
         val prop1: String

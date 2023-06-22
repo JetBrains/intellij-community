@@ -5,7 +5,7 @@ class Test {
 
     private var nullableInitializerField = nullableString(3)
     private val nullableInitializerFieldFinal = nullableString(3)
-    var nullableInitializerPublicField = nullableString(3)
+    var nullableInitializerPublicField: String? = nullableString(3)
     fun testProperty() {
         nullableInitializerField = "aaa"
         nullableInitializerField!![0]
