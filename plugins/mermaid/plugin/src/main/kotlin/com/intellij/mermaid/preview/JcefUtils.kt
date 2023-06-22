@@ -13,7 +13,6 @@ import org.cef.handler.CefLoadHandlerAdapter
 import org.intellij.lang.annotations.Language
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
 
 internal fun JBCefBrowser.executeJavaScript(@Language("JavaScript") code: String) {
   cefBrowser.executeJavaScript(code, null, 0)
@@ -31,7 +30,8 @@ internal class LoadErrorException(
 ): IllegalStateException("Failed to load $url:\n$code: $text")
 
 internal suspend fun JBCefBrowser.waitForLoad(content: JBCefBrowser.() -> Unit) {
-  return suspendCancellableCoroutine { continuation ->
+  var handlerReference: CefLoadHandler? = null
+  suspendCancellableCoroutine { continuation ->
     val handler = object: CefLoadHandlerAdapter() {
       @Volatile
       private var handlerWasCalled = false
@@ -58,12 +58,14 @@ internal suspend fun JBCefBrowser.waitForLoad(content: JBCefBrowser.() -> Unit) 
         continuation.resumeWithException(LoadErrorException(errorCode, errorText, failedUrl))
       }
     }
+    handlerReference = handler
     continuation.invokeOnCancellation {
       jbCefClient.removeLoadHandler(handler, cefBrowser)
     }
     jbCefClient.addLoadHandler(handler, cefBrowser)
     content.invoke(this)
   }
+  handlerReference?.let { jbCefClient.removeLoadHandler(it, cefBrowser) }
 }
 
 internal suspend fun JBCefBrowser.waitForPageLoad(url: String) {
