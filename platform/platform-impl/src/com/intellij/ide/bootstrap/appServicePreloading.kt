@@ -94,6 +94,11 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
 
     // ActionManager uses KeymapManager
     subtask("KeymapManager preloading") { app.serviceAsync<KeymapManager>() }
+
+    // https://youtrack.jetbrains.com/issue/IDEA-321138/Large-font-size-in-2023.2
+    // ActionManager resolves icons
+    initLafJob.join()
+
     subtask("ActionManager preloading") { app.serviceAsync<ActionManager>() }
 
     // serviceAsync is not supported for light services
