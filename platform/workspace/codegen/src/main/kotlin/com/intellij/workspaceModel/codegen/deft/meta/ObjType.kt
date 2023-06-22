@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.deft.meta
 
-import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.workspaceModel.codegen.deft.annotations.Cached
 import com.intellij.workspaceModel.codegen.deft.annotations.Parent
 
@@ -22,7 +21,7 @@ interface ObjType<T> : Obj {
  * Objects can have [own][OwnProperty] and [extension][ExtProperty] fields.
  */
 interface ObjClass<T : Obj> : ObjType<T> {
-  val typeParameters: List<@Child TypeParameter>
+  val typeParameters: List<TypeParameter>
 
   val superTypes: List<ObjType<*>>
 
@@ -54,7 +53,7 @@ interface ObjClass<T : Obj> : ObjType<T> {
     `open`(instantiatable = true, extendable = true)
   }
 
-  val fields: List<@Child OwnProperty<T, *>>
+  val fields: List<OwnProperty<T, *>>
 
   val parentField: OwnProperty<T, *>?
 

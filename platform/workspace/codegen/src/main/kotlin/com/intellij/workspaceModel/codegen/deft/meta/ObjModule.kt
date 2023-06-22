@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.deft.meta
 
-import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.workspaceModel.codegen.deft.annotations.Name
 
 interface ObjModule : Obj {
@@ -13,9 +12,9 @@ interface ObjModule : Obj {
 
   val dependencies: List<ObjModule>
 
-  val types: List<@Child ObjClass<*>>
+  val types: List<ObjClass<*>>
 
-  val extensions: List<@Child ExtProperty<*, *>>
+  val extensions: List<ExtProperty<*, *>>
 
   /**
    * Example: `com.intellij.platform.workspace.storage.obj.intellijWs`
