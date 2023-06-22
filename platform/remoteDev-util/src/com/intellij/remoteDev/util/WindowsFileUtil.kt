@@ -8,9 +8,9 @@ import com.intellij.util.execution.ParametersListUtil
 import com.sun.jna.Memory
 import com.sun.jna.platform.win32.*
 import com.sun.jna.ptr.IntByReference
+import com.sun.jna.ptr.PointerByReference
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
-import java.lang.IllegalStateException
 import java.nio.file.Path
 import java.time.Duration
 
@@ -26,46 +26,94 @@ object WindowsFileUtil {
     waitForProcess: Duration? = null
   ) : WinNT.HANDLE {
 
-    val si = WinBase.STARTUPINFO()
+    val si = WinBase.STARTUPINFO().apply {
+      dwFlags = WinBase.STARTF_USESHOWWINDOW
+      wShowWindow = WinDef.WORD(WinUser.SW_NORMAL.toLong())
+    }
     val pi = WinBase.PROCESS_INFORMATION()
 
     val commandLine = ParametersListUtil.join(listOf(executable.toString()) + parameters)
 
-    // A=1\0B=1\0\0
-    val environmentValue = environment
-      .map { "${it.key}=${it.value}" }.sorted()
-      .joinToString(separator = "${Char.MIN_VALUE}", postfix = "${Char.MIN_VALUE}${Char.MIN_VALUE}")
+    val environmentBlock = run {
+      if (environment.isEmpty()) return@run null
 
-    val createProcessDebugParams = "CreateProcess(" +
-                                   "lpApplicationName=null, " +
+      // not passing nullptr in lpEnvironment will wipe the environment of the created process (no inheritance)
+      val fullEnvironment = System.getenv().toMutableMap().toSortedMap()
+      fullEnvironment.putAll(environment)
+
+      // A=1\0B=1\0\0
+      val environmentBlockBuilder = StringBuilder()
+      fullEnvironment
+        .forEach { (key, value) -> environmentBlockBuilder.append("$key=$value${Char.MIN_VALUE}") }
+      val environmentBlockStr = environmentBlockBuilder.append(Char.MIN_VALUE).toString()
+
+      val environmentBytes = environmentBlockStr.toByteArray(Charsets.UTF_16LE)
+      val environmentBlock = Memory(environmentBytes.size.toLong())
+      environmentBlock.write(0, environmentBytes, 0, environmentBytes.size)
+
+      environmentBlock
+    }
+
+    val envString = environmentBlock?.let { "System.getenv()+{${environment.map { "${it.key}=${it.value}" }.joinToString()}}, "}
+
+    val createProcessDebugParams = "CreateProcessW(" +
+                                   "lpApplicationName=$executable, " +
                                    "lpCommandLine='$commandLine', " +
                                    "lpProcessAttributes=null, " +
                                    "lpThreadAttributes=null, " +
                                    "bInheritHandles=true, " +
                                    "dwCreationFlags=0, " +
-                                   "lpEnvironment=$environmentValue, " +
+                                   "lpEnvironment=$envString" +
                                    "lpCurrentDirectory='$workingDirectory', " +
                                    "lpStartupInfo=si, " +
                                    "lpProcessInformation=pi)"
 
     LOG.info("Calling $createProcessDebugParams")
 
-    val environmentBytes = environmentValue.toByteArray(Charsets.UTF_16LE)
-    val environmentBlock = Memory(environmentBytes.size.toLong())
-    environmentBlock.write(0, environmentBytes, 0, environmentBytes.size)
+    @Suppress("LocalVariableName")
+    val CREATE_UNICODE_PROCESS_ENVIRONMENT = WinDef.DWORD(0x00000400)
 
-    if (!Kernel32.INSTANCE.CreateProcess(
+    if (!Kernel32.INSTANCE.CreateProcessW(
         /* lpApplicationName    = */ null,
-        /* lpCommandLine        = */ commandLine,
+        /* lpCommandLine        = */ (commandLine + "\u0000").toCharArray(),
         /* lpProcessAttributes  = */ null,
         /* lpThreadAttributes   = */ null,
         /* bInheritHandles      = */ true,
-        /* dwCreationFlags      = */ WinDef.DWORD(0),
+        /* dwCreationFlags      = */ CREATE_UNICODE_PROCESS_ENVIRONMENT,
         /* lpEnvironment        = */ environmentBlock,
-        /* lpCurrentDirectory   = */ workingDirectory.toString(),
+        /* lpCurrentDirectory   = */ workingDirectory.toString() + "\u0000",
         /* lpStartupInfo        = */ si,
         /* lpProcessInformation = */ pi)) {
-      throw IOException("$createProcessDebugParams returned error: " + Kernel32.INSTANCE.GetLastError())
+
+      val lastError = Kernel32.INSTANCE.GetLastError()
+
+      val lpBuffer = PointerByReference()
+      val result = Kernel32.INSTANCE.FormatMessage(
+        Kernel32.FORMAT_MESSAGE_ALLOCATE_BUFFER or Kernel32.FORMAT_MESSAGE_FROM_SYSTEM or Kernel32.FORMAT_MESSAGE_IGNORE_INSERTS,
+        null,
+        lastError,
+        Kernel32.LANG_USER_DEFAULT,
+        lpBuffer,
+        0,
+        null
+      )
+
+      val buffer = lpBuffer.value
+      val errorTextBuffer = buffer.getCharArray(0, result)
+      Kernel32.INSTANCE.LocalFree(buffer)
+
+      val message = String(errorTextBuffer)
+      throw IOException("$createProcessDebugParams returned error $lastError: $message")
+    }
+
+
+    /*
+     * known reasons for a null hProcess:
+     *   1) CreateProcess didn't result in creation of a new process
+     *   2) lpСommandline first / lpWorkingDir arg is a symlink and was not resolved
+     */
+    require(pi.hProcess != null) {
+      "hProcess should not be null in our case"
     }
 
     if (waitForProcess != null) {
