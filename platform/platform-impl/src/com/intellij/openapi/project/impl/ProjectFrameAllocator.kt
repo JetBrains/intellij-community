@@ -439,19 +439,22 @@ private fun CoroutineScope.initFrame(deferredProjectFrameHelper: Deferred<Projec
   }
 
   launch {
-    val rootPane = deferredProjectFrameHelper.await().rootPane
-    val toolbarActionGroups = deferredToolbarActionGroups.await()
-    launch(CoroutineName("toolbar init") + Dispatchers.EDT) {
-      rootPane.initToolbar(toolbarActionGroups)
-    }
-    launch(CoroutineName("north components updating") + Dispatchers.EDT) {
-      rootPane.updateNorthComponents()
-    }
-  }
-  launch {
     val frameHelper = deferredProjectFrameHelper.await()
-    frameHelper.installDefaultProjectStatusBarWidgets(project)
-    frameHelper.updateTitle(FrameTitleBuilder.getInstance().getProjectTitle(project), project)
+    val toolbarActionGroups = deferredToolbarActionGroups.await()
+    launch(Dispatchers.EDT) {
+      val rootPane = frameHelper.rootPane
+      subtask("toolbar init") {
+        rootPane.initToolbar(toolbarActionGroups)
+      }
+      subtask("north components updating") {
+        rootPane.updateNorthComponents()
+      }
+    }
+
+    launch {
+      frameHelper.installDefaultProjectStatusBarWidgets(project)
+      frameHelper.updateTitle(FrameTitleBuilder.getInstance().getProjectTitle(project), project)
+    }
   }
 }
 
