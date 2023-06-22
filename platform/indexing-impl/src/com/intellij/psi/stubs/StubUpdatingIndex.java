@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesRetriever;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
@@ -117,7 +118,7 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
 
       BinaryFileStubBuilder builder = getBinaryStubBuilder(file.getFileType());
       return builder != null && builder.acceptsFile(file.getFile());
-  }
+    }
 
     private static @Nullable BinaryFileStubBuilder getBinaryStubBuilder(@NotNull FileType fileType) {
       return BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
@@ -126,12 +127,16 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
     @NotNull
     @Override
     public ThreeState acceptFileType(@NotNull FileType fileType) {
-      if (getParserDefinition(fileType, fileType.toString()) == null && getBinaryStubBuilder(fileType) == null) {
-        return ThreeState.NO;
+      if (getParserDefinition(fileType, fileType.toString()) == null) {
+        BinaryFileStubBuilder builder = getBinaryStubBuilder(fileType);
+        if (builder == null) return ThreeState.NO;
+
+        VirtualFileFilter builderFileFilter = builder.getFileFilter();
+        if (builderFileFilter == VirtualFileFilter.ALL) return ThreeState.YES;
+        if (builderFileFilter == VirtualFileFilter.NONE) return ThreeState.NO;
       }
-      else {
-        return ThreeState.UNSURE;
-      }
+
+      return ThreeState.UNSURE;
     }
   };
 

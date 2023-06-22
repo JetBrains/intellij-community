@@ -3,6 +3,7 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.compiled.ClassFileDecompilers;
 import com.intellij.psi.stubs.BinaryFileStubBuilder;
 import com.intellij.psi.stubs.Stub;
@@ -19,6 +20,11 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder.CompositeBina
   private static final Logger LOG = Logger.getInstance(ClassFileStubBuilder.class);
 
   public static final int STUB_VERSION = 27;
+
+  @Override
+  public @NotNull VirtualFileFilter getFileFilter() {
+    return VirtualFileFilter.ALL; // any file of file type that this builder is registered for
+  }
 
   @Override
   public boolean acceptsFile(@NotNull VirtualFile file) {
