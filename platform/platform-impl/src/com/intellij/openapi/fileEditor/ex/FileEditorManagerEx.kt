@@ -189,9 +189,6 @@ abstract class FileEditorManagerEx : FileEditorManager() {
 
   abstract fun getPrevWindow(window: EditorWindow): EditorWindow?
 
-  open val isInsideChange: Boolean
-    get() = false
-
   override fun getData(dataId: String, editor: Editor, caret: Caret): Any? {
     for (dataProvider in dataProviders) {
       val o = dataProvider.getData(dataId, editor, caret) ?: continue

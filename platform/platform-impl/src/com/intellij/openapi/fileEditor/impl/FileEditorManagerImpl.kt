@@ -1753,9 +1753,6 @@ open class FileEditorManagerImpl(
     }
   }
 
-  override val isInsideChange: Boolean
-    get() = splitters.isInsideChange
-
   private inner class MyEditorPropertyChangeListener : PropertyChangeListener {
     @RequiresEdt
     override fun propertyChange(e: PropertyChangeEvent) {
