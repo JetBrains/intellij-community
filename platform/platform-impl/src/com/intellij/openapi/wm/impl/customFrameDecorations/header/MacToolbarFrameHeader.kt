@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.ide.ProjectWindowCustomizerService
@@ -18,10 +18,7 @@ import com.intellij.ui.mac.MacFullScreenControlsManager
 import com.intellij.ui.mac.MacMainFrameDecorator
 import com.intellij.util.ui.JBUI
 import com.jetbrains.JBR
-import java.awt.CardLayout
-import java.awt.Component
-import java.awt.Graphics
-import java.awt.Rectangle
+import java.awt.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.beans.PropertyChangeListener
@@ -50,6 +47,7 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
     layout = AdjustableSizeCardLayout()
     root.addPropertyChangeListener(MacMainFrameDecorator.FULL_SCREEN, PropertyChangeListener { updateBorders() })
     add(ideMenu)
+    ideMenu.initScreeMenuPeer(frame)
 
     addHeaderTitle()
     toolbar = createToolBar()
@@ -65,7 +63,7 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
       }
     })
 
-    customizer.addListener(this, true) {
+    customizer.addListener(disposable = this, fireFirstTime = true) {
       isOpaque = !it
       revalidate()
     }
@@ -148,12 +146,14 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
 
     JBR.getWindowDecorations()?.let {
       val bar = it.createCustomTitleBar()
-      bar.height= DEFAULT_HEADER_HEIGHT.toFloat()
+      bar.height = DEFAULT_HEADER_HEIGHT.toFloat()
       it.setCustomTitleBar(frame, bar)
     }
   }
 
-  override fun updateMenuActions(forceRebuild: Boolean): Unit = ideMenu.updateMenuActions(forceRebuild)
+  override fun updateMenuActions(forceRebuild: Boolean) {
+    ideMenu.updateMenuActions(forceRebuild)
+  }
 
   override fun getComponent(): JComponent = this
 
@@ -164,7 +164,9 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
     return RelativeRectangle(comp, rect)
   }
 
-  override fun getHeaderBackground(active: Boolean) = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(active)
+  override fun getHeaderBackground(active: Boolean): Color {
+    return JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(active)
+  }
 
   override fun updateCustomTitleBar() {
     super.updateCustomTitleBar()
