@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.commit
 
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 
 class KotlinPluginPrePushHandler : IssueIDPrePushHandler() {
@@ -16,8 +15,13 @@ class KotlinPluginPrePushHandler : IssueIDPrePushHandler() {
 }
 
 class IntelliJPrePushHandler : IssueIDPrePushHandler() {
+  private val ignorePattern = Regex("(tests|cleanup):.*")
   override val paths = listOf("community", "platform")
-  override val commitMessageRegex = Regex(".*\\w{2,}-\\d+.*", RegexOption.DOT_MATCHES_ALL)
+  override val commitMessageRegex = Regex(".*[A-Z]+-\\d+.*", RegexOption.DOT_MATCHES_ALL)
   override fun isAvailable() = Registry.`is`("intellij.commit.message.validation.enabled", true)
   override fun getPresentableName() = DevKitGitBundle.message("push.commit.handler.idea.name")
+
+  override fun commitMessageIsCorrect(message: String): Boolean {
+    return super.commitMessageIsCorrect(message) || message.matches(ignorePattern)
+  }
 }

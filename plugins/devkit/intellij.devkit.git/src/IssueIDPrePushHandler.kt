@@ -34,7 +34,7 @@ abstract class IssueIDPrePushHandler : PrePushHandler {
         && pathsToIgnore.none { siPath.contains(it) }
       }
 
-  internal fun commitMessageIsCorrect(message: String): Boolean = message.matches(commitMessageRegex)
+  open fun commitMessageIsCorrect(message: String): Boolean = message.matches(commitMessageRegex)
 
   companion object {
     private val fileExtensionsNotToTrack = setOf("iml", "md")
