@@ -17,14 +17,22 @@ internal class CommandTreeBuilder(private val command: String,
       val name = arguments[curIndex]
       val suggestions = root.getSuggestionsOfNext()
       val suggestion = suggestions.find { it.names.contains(name) }
-      val node = suggestion?.let { createChildNode(name, it, root) } ?: UnknownNode(name, root)
-      root.children.add(node)
-      curIndex++
-      if (node is SubcommandNode) {
-        buildSubcommandTree(node)
+      if (suggestion == null
+          && !root.spec.parserDirectives.flagsArePosixNoncompliant
+          && name.startsWith("-") && !name.startsWith("--") && name.length > 2) {
+        addChainedOptions(root, suggestions, name)
+        curIndex++
       }
-      else if (node is OptionNode) {
-        buildOptionTree(node)
+      else {
+        val node = suggestion?.let { createChildNode(name, it, root) } ?: UnknownNode(name, root)
+        root.children.add(node)
+        curIndex++
+        if (node is SubcommandNode) {
+          buildSubcommandTree(node)
+        }
+        else if (node is OptionNode) {
+          buildOptionTree(node)
+        }
       }
     }
   }
@@ -48,6 +56,19 @@ internal class CommandTreeBuilder(private val command: String,
         curIndex++
       }
       else return
+    }
+  }
+
+  /** [options] is a posix chained options string, for example -abcde */
+  private fun addChainedOptions(root: SubcommandNode, suggestions: List<BaseSuggestion>, options: String) {
+    val flags = options.removePrefix("-").toCharArray().map { "-$it" }
+    for (flag in flags) {
+      val option = suggestions.find { it.names.contains(flag) }
+      val node = if (option != null) {
+        createChildNode(flag, option, root)
+      }
+      else UnknownNode(flag, root)
+      root.children.add(node)
     }
   }
 

@@ -59,6 +59,12 @@ class CommandTreeBuilderTest {
         suggestions("arg1", "arg2")
       }
     }
+
+    subcommand("nonPosix") {
+      parserDirectives = ShellCommandParserDirectives(flagsArePosixNoncompliant = true)
+      option("-a")
+      option("-b")
+    }
   }
 
   @Test
@@ -146,6 +152,24 @@ class CommandTreeBuilderTest {
     }
   }
 
+  @Test
+  fun `chained options parsed as separate options`() {
+    doTest("sub", "-aob") {
+      assertSubcommandOf("sub", commandName)
+      assertOptionOf("-a", "sub")
+      assertOptionOf("-o", "sub")
+      assertOptionOf("-b", "sub")
+    }
+  }
+
+  @Test
+  fun `chained options are not parsed as separate options if command is posix non compliant`() {
+    doTest("nonPosix", "-ab") {
+      assertSubcommandOf("nonPosix", commandName)
+      assertUnknown("-ab", "nonPosix")
+    }
+  }
+
   private fun doTest(vararg arguments: String, assertions: CommandTreeAssertions.() -> Unit) {
     val root = CommandTreeBuilder(commandName, spec, arguments.asList()).build()
     assertions(CommandTreeAssertions(root))
@@ -180,6 +204,13 @@ class CommandTreeBuilderTest {
       assertTrue("Expected that child is argument", childNode is ArgumentNode)
       assertTrue("Expected that parent of '$arg' is an option '$subcommand', but was: ${childNode.parent}",
                  (childNode.parent as? SubcommandNode)?.text == subcommand)
+    }
+
+    fun assertUnknown(child: String, parent: String) {
+      val childNode = allChildren.find { it.text == child } ?: error("Not found node with name: $child")
+      assertTrue("Expected that child is unknown", childNode is UnknownNode)
+      assertTrue("Expected that parent of '$child' is '$parent', but was: ${childNode.parent}",
+                 childNode.parent?.text == parent)
     }
   }
 }
