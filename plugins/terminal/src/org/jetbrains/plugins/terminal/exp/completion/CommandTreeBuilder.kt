@@ -23,6 +23,9 @@ internal class CommandTreeBuilder(private val command: String,
         addChainedOptions(root, suggestions, name)
         curIndex++
       }
+      else if (suggestion == null && tryAddOptionWithSeparator(root, suggestions, name)) {
+        curIndex++
+      }
       else {
         val node = suggestion?.let { createChildNode(name, it, root) } ?: UnknownNode(name, root)
         root.children.add(node)
@@ -70,6 +73,28 @@ internal class CommandTreeBuilder(private val command: String,
       else UnknownNode(flag, root)
       root.children.add(node)
     }
+  }
+
+  private fun tryAddOptionWithSeparator(root: SubcommandNode, suggestions: List<BaseSuggestion>, name: String): Boolean {
+    return suggestions.mapNotNull { s ->
+      val option = s as? ShellOption ?: return@mapNotNull null
+      val separator = option.separator ?: return@mapNotNull null
+      val optName = option.names.find { name.startsWith(it + separator) } ?: return@mapNotNull null
+      val argValue = name.removePrefix(optName + separator)
+      Triple(option, optName, argValue)
+    }.firstOrNull()?.let { (option, optName, argValue) ->
+      val optionNode = OptionNode(optName, option, root)
+      root.children.add(optionNode)
+      if (argValue.isNotEmpty() && option.args.isNotEmpty()) {
+        val argNode = ArgumentNode(argValue, option.args.first(), optionNode)
+        optionNode.children.add(argNode)
+      }
+      else if (argValue.isNotEmpty()) {
+        // strange case: argument is provided, but isn't mentioned in the option spec
+        optionNode.children.add(UnknownNode(argValue, optionNode))
+      }
+      true
+    } ?: false
   }
 
   private fun createChildNode(name: String, suggestion: BaseSuggestion, parent: CommandPartNode<*>?): CommandPartNode<*> {

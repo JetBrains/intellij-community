@@ -65,6 +65,13 @@ class CommandTreeBuilderTest {
       option("-a")
       option("-b")
     }
+
+    subcommand("sep") {
+      option("--withSeparator") {
+        separator = "="
+        argument("arg")
+      }
+    }
   }
 
   @Test
@@ -167,6 +174,15 @@ class CommandTreeBuilderTest {
     doTest("nonPosix", "-ab") {
       assertSubcommandOf("nonPosix", commandName)
       assertUnknown("-ab", "nonPosix")
+    }
+  }
+
+  @Test
+  fun `option and argument with separator`() {
+    doTest("sep", "--withSeparator=someArg") {
+      assertSubcommandOf("sep", commandName)
+      assertOptionOf("--withSeparator", "sep")
+      assertArgumentOfOption("someArg", "--withSeparator")
     }
   }
 
