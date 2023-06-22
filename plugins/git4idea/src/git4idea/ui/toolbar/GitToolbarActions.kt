@@ -13,19 +13,23 @@ import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchUtil
 import git4idea.i18n.GitBundle
 
-class GitToolbarPushAction: VcsPushAction(), TooltipDescriptionProvider {
+class GitToolbarPushAction : VcsPushAction(), TooltipDescriptionProvider {
   init {
     ActionManager.getInstance().getAction("Vcs.Push")?.let(::copyFrom)
   }
 
   override fun update(e: AnActionEvent) {
+    if (!GitToolbarActions.isEnabledAndVisible()) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+
     super.update(e)
 
     updatePresentation(e)
   }
 
   private fun updatePresentation(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = GitToolbarActions.isEnabledAndVisible()
     val project = e.project ?: return
     val repository = GitBranchUtil.guessWidgetRepository(project, e.dataContext) ?: return
     val currentBranch = repository.currentBranch ?: return
@@ -51,13 +55,17 @@ class GitToolbarUpdateProjectAction : CommonUpdateProjectAction(), TooltipDescri
   }
 
   override fun update(e: AnActionEvent) {
+    if (!GitToolbarActions.isEnabledAndVisible()) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+
     super.update(e)
 
     updatePresentation(e)
   }
 
   private fun updatePresentation(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = GitToolbarActions.isEnabledAndVisible()
     val project = e.project ?: return
     val repository = GitBranchUtil.guessWidgetRepository(project, e.dataContext) ?: return
     val currentBranch = repository.currentBranch ?: return
