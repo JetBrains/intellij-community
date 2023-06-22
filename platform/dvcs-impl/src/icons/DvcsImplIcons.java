@@ -14,6 +14,7 @@ public final class DvcsImplIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, DvcsImplIcons.class.getClassLoader(), cacheKey, flags);
   }
+  /** 16x16 */ public static final @NotNull Icon BranchLabel = load("icons/branchLabel.svg", -122614251, 2);
   /** 16x16 */ public static final @NotNull Icon CherryPick = load("icons/cherryPick.svg", 2051149661, 2);
   /** 16x16 */ public static final @NotNull Icon CurrentBranchFavoriteLabel = load("icons/currentBranchFavoriteLabel.svg", 697400451, 0);
   /** 16x16 */ public static final @NotNull Icon CurrentBranchLabel = load("icons/currentBranchLabel.svg", -1738635140, 0);

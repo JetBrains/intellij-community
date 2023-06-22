@@ -720,15 +720,15 @@
       ]
     },
     "vcs": {
-      "branch.svg": "vcs/branch.svg",
+      "branchLabel.svg": "icons/branchLabel.svg",
       "changelist.svg": "vcs/changelist.svg",
       "changes.svg": "actions/listChanges.svg",
       "changesPush@12x12.svg": "icons/outgoing.svg",
       "changesUpdate@12x12.svg": "icons/incoming.svg",
       "cherryPick.svg": "icons/cherryPick.svg",
       "commit.svg": "actions/commit.svg",
-      "currentBranch.svg": "icons/currentBranchLabel.svg",
-      "currentBranchFavorite.svg": "icons/currentBranchFavoriteLabel.svg",
+      "currentBranchLabel.svg": "icons/currentBranchLabel.svg",
+      "currentBranchFavoriteLabel.svg": "icons/currentBranchFavoriteLabel.svg",
       "diff.svg": "actions/diff.svg",
       "fetch.svg": "vcs/fetch.svg",
       "intelliSort.svg": "icons/IntelliSort.svg",

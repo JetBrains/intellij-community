@@ -673,15 +673,15 @@ public final class ExpUiIcons {
   }
 
   public static final class Vcs {
-    /** 16x16 */ public static final @NotNull Icon Branch = load("expui/vcs/branch.svg", 1861170662, 2);
+    /** 16x16 */ public static final @NotNull Icon BranchLabel = load("expui/vcs/branchLabel.svg", -571251222, 2);
     /** 16x16 */ public static final @NotNull Icon Changelist = load("expui/vcs/changelist.svg", 2087070453, 2);
     /** 16x16 */ public static final @NotNull Icon Changes = load("expui/vcs/changes.svg", -429240073, 2);
     /** 12x12 */ public static final @NotNull Icon ChangesPush_12x12 = load("expui/vcs/changesPush@12x12.svg", 1270079040, 2);
     /** 12x12 */ public static final @NotNull Icon ChangesUpdate_12x12 = load("expui/vcs/changesUpdate@12x12.svg", -413997184, 2);
     /** 16x16 */ public static final @NotNull Icon CherryPick = load("expui/vcs/cherryPick.svg", -447751845, 2);
     /** 16x16 */ public static final @NotNull Icon Commit = load("expui/vcs/commit.svg", -1684975732, 2);
-    /** 16x16 */ public static final @NotNull Icon CurrentBranch = load("expui/vcs/currentBranch.svg", 1875815075, 2);
-    /** 16x16 */ public static final @NotNull Icon CurrentBranchFavorite = load("expui/vcs/currentBranchFavorite.svg", -217857881, 2);
+    /** 16x16 */ public static final @NotNull Icon CurrentBranchFavoriteLabel = load("expui/vcs/currentBranchFavoriteLabel.svg", -221270353, 2);
+    /** 16x16 */ public static final @NotNull Icon CurrentBranchLabel = load("expui/vcs/currentBranchLabel.svg", 1417716901, 2);
     /** 16x16 */ public static final @NotNull Icon Diff = load("expui/vcs/diff.svg", 1250676145, 2);
     /** 16x16 */ public static final @NotNull Icon Fetch = load("expui/vcs/fetch.svg", 2009646, 2);
     /** 20x20 */ public static final @NotNull Icon Fetch_20x20 = load("expui/vcs/fetch@20x20.svg", -542798047, 2);
