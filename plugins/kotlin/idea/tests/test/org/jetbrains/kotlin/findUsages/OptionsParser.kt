@@ -88,6 +88,7 @@ internal enum class OptionsParser {
                         "overrides" -> searchOverrides = true
                         "skipRead" -> isReadAccess = false
                         "skipWrite" -> isWriteAccess = false
+                        "overridingMethods" -> isSearchInOverridingMethods = true
                         "expected" -> searchExpected = true
                         else -> throw IllegalStateException("Invalid option: $s")
                     }

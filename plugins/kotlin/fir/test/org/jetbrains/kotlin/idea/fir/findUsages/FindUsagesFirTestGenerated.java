@@ -969,9 +969,29 @@ public abstract class FindUsagesFirTestGenerated extends AbstractFindUsagesFirTe
                 runTest("../idea/tests/testData/findUsages/kotlin/findParameterUsages/kotlinHighlightParameterUsages.0.kt");
             }
 
+            @TestMetadata("kotlinMemberFunctionParameterUsages.0.kt")
+            public void testKotlinMemberFunctionParameterUsages() throws Exception {
+                runTest("../idea/tests/testData/findUsages/kotlin/findParameterUsages/kotlinMemberFunctionParameterUsages.0.kt");
+            }
+
+            @TestMetadata("kotlinMemberFunctionParameterUsagesWithSearchInOverridings.0.kt")
+            public void testKotlinMemberFunctionParameterUsagesWithSearchInOverridings() throws Exception {
+                runTest("../idea/tests/testData/findUsages/kotlin/findParameterUsages/kotlinMemberFunctionParameterUsagesWithSearchInOverridings.0.kt");
+            }
+
             @TestMetadata("parameterNameInTextFile.0.kt")
             public void testParameterNameInTextFile() throws Exception {
                 runTest("../idea/tests/testData/findUsages/kotlin/findParameterUsages/parameterNameInTextFile.0.kt");
+            }
+
+            @TestMetadata("parameterUsageInAnonymousInheritor.0.kt")
+            public void testParameterUsageInAnonymousInheritor() throws Exception {
+                runTest("../idea/tests/testData/findUsages/kotlin/findParameterUsages/parameterUsageInAnonymousInheritor.0.kt");
+            }
+
+            @TestMetadata("parameterUsageInAnonymousInheritorWithSearchInOverridings.0.kt")
+            public void testParameterUsageInAnonymousInheritorWithSearchInOverridings() throws Exception {
+                runTest("../idea/tests/testData/findUsages/kotlin/findParameterUsages/parameterUsageInAnonymousInheritorWithSearchInOverridings.0.kt");
             }
         }
 
