@@ -25,8 +25,8 @@ import com.intellij.testFramework.VfsTestUtil
 import org.gradle.util.GradleVersion
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.kotlin.idea.base.test.AndroidStudioTestUtils
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBinary
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBinary
 import org.jetbrains.kotlin.idea.test.GradleProcessOutputInterceptor
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
@@ -342,7 +342,7 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
 
         const val LATEST_STABLE_GRADLE_PLUGIN_VERSION = "1.3.70"
 
-        val SUPPORTED_GRADLE_VERSIONS = arrayOf("5.6.4", "6.0.1", "6.7", "7.6")
+        val SUPPORTED_GRADLE_VERSIONS = arrayOf("5.6.4", "6.0.1", "6.7.1", "7.6")
 
         @JvmStatic
         @Suppress("ACCIDENTAL_OVERRIDE")

@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.config.LanguageFeature
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.buildArgumentString
 import org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.replaceLanguageFeature
 import org.jetbrains.kotlin.idea.base.externalSystem.KotlinGradleFacade
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.tools.projectWizard.Versions
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
@@ -67,6 +69,25 @@ class GroovyBuildScriptManipulator(
         return (containsDirective(pluginsBlockText, kotlinPluginExpression)) &&
                 fileText.contains("org.jetbrains.kotlin") &&
                 fileText.contains("kotlin-stdlib")
+    }
+
+    override fun PsiElement.getAllVariableStatements(variableName: String): List<PsiElement> {
+        val assignments = PsiTreeUtil.findChildrenOfType(this, GrAssignmentExpression::class.java)
+            .filter { it.lValue.text.contains(variableName) }
+
+        val setExpressions = PsiTreeUtil.findChildrenOfType(this, GrMethodCallExpression::class.java)
+            .filter {
+                (it.invokedExpression.text.contains("$variableName.set") || it.invokedExpression.text == "set${variableName.capitalize()}")
+                    && it.expressionArguments.size == 1 }
+
+        return (assignments + setExpressions).sortedBy { it.startOffset }
+    }
+
+    override fun PsiElement.findParentBlock(name: String): PsiElement? {
+        val parent = PsiTreeUtil.findFirstParent(this) { elem ->
+            elem is GrMethodCallExpression && elem.invokedExpression.text.contains(name)
+        } as? GrMethodCallExpression ?: return null
+        return parent.closureArguments.getOrNull(0) ?: parent.invokedExpression
     }
 
     override fun configureBuildScripts(
@@ -137,12 +158,8 @@ class GroovyBuildScriptManipulator(
             )
         }
 
-        jvmTarget?.let {
-            configureJvmTarget(
-                it,
-                version
-            )?.let { topSettingsFile -> changedFiles.add(topSettingsFile) }
-        }
+        scriptFile.configureToolchainOrKotlinOptions(jvmTarget, version, gradleVersion)
+            ?.let { settingsFile -> changedFiles.add(settingsFile) }
 
         if (originalText != scriptFile.text) {
             changedFiles.add(scriptFile)
@@ -212,10 +229,10 @@ class GroovyBuildScriptManipulator(
     }
 
     override fun changeLanguageVersion(version: String, forTests: Boolean): PsiElement? =
-        changeKotlinTaskParameter(scriptFile, "languageVersion", version, forTests)
+        changeKotlinTaskParameter("languageVersion", version, forTests)
 
     override fun changeApiVersion(version: String, forTests: Boolean): PsiElement? =
-        changeKotlinTaskParameter(scriptFile, "apiVersion", version, forTests)
+        changeKotlinTaskParameter("apiVersion", version, forTests)
 
     override fun addKotlinLibraryToModuleBuildScript(
         targetModule: Module?,
@@ -310,29 +327,14 @@ class GroovyBuildScriptManipulator(
             )
     }
 
-    override fun configureJvmTarget(jvmTarget: String, version: IdeKotlinVersion): ChangedSettingsFile {
-        var changedSettingsFile: ChangedSettingsFile = null
-        addJdkSpec(jvmTarget, version, gradleVersion) { useToolchain, useToolchainHelper, targetVersionNumber ->
-            when {
-                useToolchainHelper -> {
-                    scriptFile.getKotlinBlock()
-                        .addFirstExpressionInBlockIfNeeded("jvmToolchain($targetVersionNumber)")
-                    changedSettingsFile = addFoojayPlugin()
-                }
+    override fun addKotlinToolchain(targetVersionNumber: String) {
+        scriptFile.getKotlinBlock()
+            .addFirstExpressionInBlockIfNeeded("jvmToolchain($targetVersionNumber)")
+    }
 
-                useToolchain -> {
-                    scriptFile.getKotlinBlock().getBlockOrCreate("jvmToolchain")
-                        .addFirstExpressionInBlockIfNeeded("languageVersion = JavaLanguageVersion.of($targetVersionNumber)")
-                    changedSettingsFile = addFoojayPlugin()
-                }
-
-                else -> {
-                    changeKotlinTaskParameter(scriptFile, "jvmTarget", jvmTarget, forTests = false)
-                    changeKotlinTaskParameter(scriptFile, "jvmTarget", jvmTarget, forTests = true)
-                }
-            }
-        }
-        return changedSettingsFile
+    override fun addKotlinExtendedDslToolchain(targetVersionNumber: String) {
+        scriptFile.getKotlinBlock().getBlockOrCreate("jvmToolchain")
+            .addFirstExpressionInBlockIfNeeded("languageVersion = JavaLanguageVersion.of($targetVersionNumber)")
     }
 
     private fun GrClosableBlock.addParameterAssignment(
@@ -416,14 +418,13 @@ class GroovyBuildScriptManipulator(
         return kotlinBlock.parent
     }
 
-    private fun changeKotlinTaskParameter(
-        gradleFile: GroovyFile,
+    override fun changeKotlinTaskParameter(
         parameterName: String,
         parameterValue: String,
         forTests: Boolean
     ): PsiElement? {
         return addOrReplaceKotlinTaskParameter(
-            gradleFile, parameterName, "\"$parameterValue\"", forTests
+            scriptFile, parameterName, "\"$parameterValue\"", forTests
         ) { insideKotlinOptions ->
             if (insideKotlinOptions) {
                 replaceWithStatementFromText("kotlinOptions.$parameterName = \"$parameterValue\"")
