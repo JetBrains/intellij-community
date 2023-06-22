@@ -126,8 +126,16 @@ class FillInVfsSnapshot(point: OperationLogStorage.Iterator,
         .also { formingAttributesDataMap.clear() }
     }
 
-    internal var attributesFinished = false // DELETE ATTRS operation met
+    // TODO: probably this should be changed to smth like Map<Int, Pair<EnumeratedFileAttribute, PayloadRef>>, but attributeDataMap will
+    //  stay the same
+    /* there is a potential pitfall here: EnumeratedFileAttribute's equality check only honors ids, so if
+      one would like to override an entry, they need to change not only the value, but also the key:
+      e.g. if there was `formingAttributesDataMap[oldAttr] = oldRef`, then plain `formingAttributesDataMap[newAttr] = newRef`
+      (given `newAttr == oldAttr`, but they may have different versions) will not change the key object and
+      the map would look like `formingAttributesDataMap[oldAttr] = newRef`. This is not a problem now because
+      data is put using only `putIfAbsent` method. */
     internal val formingAttributesDataMap = mutableMapOf<EnumeratedFileAttribute, PayloadRef>()
+    internal var attributesFinished = false // DELETE ATTRS operation met
 
     override val recordAllocationExists = FillInProperty<Boolean> { false.let(State::Ready) }
 
