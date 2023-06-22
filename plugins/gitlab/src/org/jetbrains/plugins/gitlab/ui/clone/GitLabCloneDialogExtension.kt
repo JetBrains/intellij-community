@@ -3,15 +3,12 @@ package org.jetbrains.plugins.gitlab.ui.clone
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionStatusLine
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.plus
 import org.jetbrains.plugins.gitlab.GitlabIcons
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
@@ -35,9 +32,7 @@ class GitLabCloneDialogExtension : VcsCloneDialogExtension {
   }
 
   override fun createMainComponent(project: Project, modalityState: ModalityState): VcsCloneDialogExtensionComponent {
-    val cs = MainScope() + modalityState.asContextElement()
-    val cloneVm = GitLabCloneViewModelImpl(project, cs, accountManager)
-    return GitLabCloneComponent(project, cs, cloneVm)
+    return GitLabCloneComponent(project, modalityState, accountManager)
   }
 
   private val GitLabAccount.nameWithServer: String

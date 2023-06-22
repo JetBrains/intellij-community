@@ -1,12 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.ui.clone
 
+import com.intellij.collaboration.async.disposingMainScope
 import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.util.bindContentIn
 import com.intellij.dvcs.repo.ClonePathProvider
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.dvcs.ui.FilePathDocumentChildPathHandle
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
@@ -16,20 +19,22 @@ import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.util.childScope
 import git4idea.GitUtil
 import git4idea.remote.GitRememberedInputs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import javax.swing.JComponent
 
 internal class GitLabCloneComponent(
   private val project: Project,
-  parentCs: CoroutineScope,
-  private val cloneVm: GitLabCloneViewModel
+  modalityState: ModalityState,
+  accountManager: GitLabAccountManager
 ) : VcsCloneDialogExtensionComponent() {
-  private val cs: CoroutineScope = parentCs.childScope()
+  private val cs: CoroutineScope = disposingMainScope() + modalityState.asContextElement()
+  private val cloneVm = GitLabCloneViewModelImpl(project, cs, accountManager)
 
   private val searchField: SearchTextField = SearchTextField(false)
   private val directoryField: TextFieldWithBrowseButton = createDirectoryField()
