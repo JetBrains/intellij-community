@@ -1484,6 +1484,10 @@
                  defaultValue="false"
                  description="Enables recent items on search everywhere tabs"/>
 
+    <registryKey key="search.everywhere.recents.limit"
+                 defaultValue="25"
+                 description="Limit of recent items for search everywhere tabs"/>
+
     <registryKey key="highlighting.passes.cache"
                  defaultValue="false"
                  description="Enables highlighting passes cache"/>

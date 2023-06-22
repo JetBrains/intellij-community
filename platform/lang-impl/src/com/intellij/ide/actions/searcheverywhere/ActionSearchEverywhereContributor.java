@@ -241,7 +241,10 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
     String id = ActionManager.getInstance().getId(action);
     if (id == null) return;
 
-    ActionHistoryManager.getInstance().getState().getIds().add(id);
+    Set<String> ids = ActionHistoryManager.getInstance().getState().getIds();
+    if (ids.size() < Registry.intValue("search.everywhere.recents.limit")) {
+      ids.add(id);
+    }
   }
 
   @Nullable
