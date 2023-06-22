@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui
 
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.NewUi
 import com.intellij.ui.paint.withTxAndClipAligned
 import com.intellij.util.ui.AvatarUtils.generateColoredAvatar
 import com.intellij.util.ui.ImageUtil.applyQualityRenderingHints
@@ -98,7 +98,7 @@ object AvatarUtils {
   }
 
   private fun getFont(size: Int): Font {
-    return if (Registry.`is`("ide.experimental.ui")) {
+    return if (NewUi.isEnabled()) {
       val fontSize = 13 * size / 20
       getNewUiFont(fontSize)
     }

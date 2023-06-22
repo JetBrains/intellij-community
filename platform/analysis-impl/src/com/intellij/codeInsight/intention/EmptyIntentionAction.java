@@ -7,9 +7,9 @@ import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ExperimentalUiSettings;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.NewUi;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,7 +53,7 @@ public final class EmptyIntentionAction extends AbstractEmptyIntentionAction imp
 
   @Override
   public Icon getIcon(@IconFlags int flags) {
-    return isNewUi() ? EmptyIcon.ICON_0 : AllIcons.Actions.RealIntentionBulb;
+    return NewUi.isEnabled() ? EmptyIcon.ICON_0 : AllIcons.Actions.RealIntentionBulb;
   }
 
   @Override
@@ -61,9 +61,5 @@ public final class EmptyIntentionAction extends AbstractEmptyIntentionAction imp
                                                        @NotNull Editor editor,
                                                        @NotNull PsiFile file) {
     return new IntentionPreviewInfo.Html(AnalysisBundle.message("empty.inspection.action.description", myName));
-  }
-
-  private static boolean isNewUi() {
-    return ExperimentalUiSettings.getInstance().isEnabled();
   }
 }
