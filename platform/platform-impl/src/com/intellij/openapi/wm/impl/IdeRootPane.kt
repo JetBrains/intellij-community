@@ -46,7 +46,6 @@ import com.intellij.toolWindow.ToolWindowPaneOldButtonManager
 import com.intellij.ui.*
 import com.intellij.ui.components.JBBox
 import com.intellij.ui.components.JBLayeredPane
-import com.intellij.ui.components.JBPanel
 import com.intellij.ui.mac.MacWinTabsHandler
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
@@ -339,7 +338,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
   }
 
   override fun createContentPane(): Container {
-    val contentPane = JBPanel<JBPanel<*>>(BorderLayout())
+    val contentPane = JPanel(BorderLayout())
     contentPane.background = IdeBackgroundUtil.getIdeBackgroundColor()
     return contentPane
   }
