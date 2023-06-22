@@ -20,16 +20,24 @@ import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.authentication.GitLabSecurityUtil
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
+import org.jetbrains.plugins.gitlab.authentication.ui.GitLabTokenLoginPanelModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JButton
 import javax.swing.JComponent
 
 internal object GitLabCloneLoginComponentFactory {
-  fun create(cs: CoroutineScope, cloneVm: GitLabCloneViewModel): JComponent {
-    val loginModel = cloneVm.loginModel
+  fun create(cs: CoroutineScope, cloneVm: GitLabCloneViewModel, accountManager: GitLabAccountManager): JComponent {
+    val (loginModel, errorFlow) = createLoginModel(cs, accountManager)
     val titlePanel = JBUI.Panels.simplePanel().apply {
       @Suppress("DialogTitleCapitalization")
       val title = JBLabel(GitLabBundle.message("clone.dialog.login.title"), UIUtil.ComponentStyle.LARGE).apply {
@@ -38,9 +46,7 @@ internal object GitLabCloneLoginComponentFactory {
       addToLeft(title)
     }
     val loginButton = JButton(CollaborationToolsBundle.message("clone.dialog.button.login.mnemonic")).apply {
-      bindDisabledIn(cs, loginModel.loginState.map { loginState ->
-        loginState is LoginModel.LoginState.Connecting
-      })
+      bindDisabledIn(cs, loginModel.loginState.map { it is LoginModel.LoginState.Connecting })
     }
     val backLink = LinkLabel<Unit>(IdeBundle.message("button.back"), null) { _, _ -> cloneVm.switchToRepositoryList() }.apply {
       bindVisibilityIn(cs, cloneVm.accountsRefreshRequest.map { it.isNotEmpty() })
@@ -61,13 +67,13 @@ internal object GitLabCloneLoginComponentFactory {
 
     loginButton.addActionListener {
       cs.launch {
-        validateAndApplyAction(loginInputPanel, cloneVm)
+        validateAndApplyAction(loginInputPanel, loginModel::login)
       }
     }
 
     val errorPresenter = GitLabLoginErrorStatusPresenter()
-    val errorPanel = ErrorStatusPanelFactory.create(cs, cloneVm.errorLogin, errorPresenter, Alignment.LEFT).apply {
-      bindVisibilityIn(cs, cloneVm.errorLogin.map { it != null })
+    val errorPanel = ErrorStatusPanelFactory.create(cs, errorFlow, errorPresenter, Alignment.LEFT).apply {
+      bindVisibilityIn(cs, errorFlow.map { it != null })
     }
 
     return VerticalListPanel().apply {
@@ -78,16 +84,45 @@ internal object GitLabCloneLoginComponentFactory {
     }
   }
 
-  private suspend fun validateAndApplyAction(panel: DialogPanel, cloneVm: GitLabCloneViewModel) {
+  private suspend fun validateAndApplyAction(panel: DialogPanel, action: suspend () -> Unit) {
     panel.apply()
     val errors = panel.validateAll()
     if (errors.isEmpty()) {
-      cloneVm.login()
+      action()
       panel.reset()
     }
     else {
       val componentWithError = errors.first().component ?: return
       CollaborationToolsUIUtil.focusPanel(componentWithError)
     }
+  }
+
+  private fun createLoginModel(
+    cs: CoroutineScope,
+    accountManager: GitLabAccountManager
+  ): Pair<GitLabTokenLoginPanelModel, SharedFlow<Throwable?>> {
+    val loginModel = GitLabTokenLoginPanelModel(requiredUsername = null, uniqueAccountPredicate = accountManager::isAccountUnique).apply {
+      serverUri = GitLabServerPath.DEFAULT_SERVER.uri
+    }
+    val errorFlow = MutableSharedFlow<Throwable?>(replay = 1)
+    cs.launch(start = CoroutineStart.UNDISPATCHED) {
+      loginModel.loginState.collectLatest { loginState ->
+        when (loginState) {
+          is LoginModel.LoginState.Connected -> {
+            val account = GitLabAccount(name = loginState.username, server = loginModel.getServerPath())
+            accountManager.updateAccount(account, loginModel.token)
+          }
+          LoginModel.LoginState.Connecting -> {
+            errorFlow.emit(null)
+          }
+          LoginModel.LoginState.Disconnected -> {}
+          is LoginModel.LoginState.Failed -> {
+            errorFlow.emit(loginState.error)
+          }
+        }
+      }
+    }
+
+    return loginModel to errorFlow
   }
 }

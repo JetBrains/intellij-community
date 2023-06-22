@@ -43,7 +43,6 @@ internal class GitLabCloneComponent(
     ClonePathProvider.defaultParentDirectoryPath(project, GitRememberedInputs.getInstance())
   )
 
-  private val loginPanel: JComponent = GitLabCloneLoginComponentFactory.create(cs, cloneVm)
   private val repositoriesPanel: DialogPanel = GitLabCloneRepositoriesComponentFactory.create(
     project, cs, cloneVm, searchField, directoryField
   ).apply {
@@ -52,7 +51,7 @@ internal class GitLabCloneComponent(
   private val wrapper: Wrapper = Wrapper().apply {
     bindContentIn(cs, cloneVm.uiState) { componentState ->
       when (componentState) {
-        GitLabCloneViewModel.UIState.LOGIN -> loginPanel
+        GitLabCloneViewModel.UIState.LOGIN  -> GitLabCloneLoginComponentFactory.create(this, cloneVm, accountManager)
         GitLabCloneViewModel.UIState.REPOSITORY_LIST -> repositoriesPanel
       }
     }

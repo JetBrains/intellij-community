@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.ui.clone
 
-import com.intellij.collaboration.auth.ui.login.LoginModel
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
 import com.intellij.openapi.components.service
@@ -18,12 +17,10 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.GitLabApiImpl
-import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
-import org.jetbrains.plugins.gitlab.authentication.ui.GitLabTokenLoginPanelModel
 import org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneViewModel.UIState
 import com.intellij.collaboration.util.SingleCoroutineLauncher
 import java.nio.file.Paths
@@ -34,10 +31,8 @@ internal interface GitLabCloneViewModel {
   val uiState: Flow<UIState>
   val accountsRefreshRequest: Flow<Set<GitLabAccount>>
   val isLoading: Flow<Boolean>
-  val errorLogin: Flow<Throwable?>
   val selectedItem: Flow<GitLabCloneListItem?>
 
-  val loginModel: GitLabTokenLoginPanelModel
   val accountDetailsProvider: GitLabAccountsDetailsProvider
 
   fun runTask(block: suspend () -> Unit)
@@ -51,8 +46,6 @@ internal interface GitLabCloneViewModel {
   fun doClone(checkoutListener: CheckoutProvider.Listener, directoryPath: String)
 
   suspend fun collectAccountRepositories(account: GitLabAccount): List<GitLabCloneListItem>
-
-  suspend fun login()
 
   enum class UIState {
     LOGIN,
@@ -78,18 +71,8 @@ internal class GitLabCloneViewModelImpl(
   override val accountsRefreshRequest: MutableSharedFlow<Set<GitLabAccount>> = MutableSharedFlow()
   override val isLoading: Flow<Boolean> = taskLauncher.busy
 
-  private val _errorLogin: MutableStateFlow<Throwable?> = MutableStateFlow(null)
-  override val errorLogin: Flow<Throwable?> = _errorLogin.asSharedFlow()
-
   private val _selectedItem: MutableStateFlow<GitLabCloneListItem?> = MutableStateFlow(null)
   override val selectedItem: Flow<GitLabCloneListItem?> = _selectedItem.asSharedFlow()
-
-  override val loginModel: GitLabTokenLoginPanelModel = GitLabTokenLoginPanelModel(
-    requiredUsername = null,
-    uniqueAccountPredicate = accountManager::isAccountUnique
-  ).apply {
-    serverUri = GitLabServerPath.DEFAULT_SERVER.uri
-  }
 
   override val accountDetailsProvider = GitLabAccountsDetailsProvider(cs) { account ->
     val token = accountManager.findCredentials(account) ?: return@GitLabAccountsDetailsProvider null
@@ -107,24 +90,6 @@ internal class GitLabCloneViewModelImpl(
         accounts.forEach { account ->
           accountManager.getCredentialsFlow(account).collectLatest {
             accountsRefreshRequest.emit(accounts)
-          }
-        }
-      }
-    }
-
-    cs.launch(start = CoroutineStart.UNDISPATCHED) {
-      loginModel.loginState.collectLatest { loginState ->
-        when (loginState) {
-          is LoginModel.LoginState.Connected -> {
-            val account = GitLabAccount(name = loginState.username, server = loginModel.getServerPath())
-            accountManager.updateAccount(account, loginModel.token)
-          }
-          LoginModel.LoginState.Connecting -> {
-            _errorLogin.value = null
-          }
-          LoginModel.LoginState.Disconnected -> {}
-          is LoginModel.LoginState.Failed -> {
-            _errorLogin.value = loginState.error
           }
         }
       }
@@ -186,10 +151,6 @@ internal class GitLabCloneViewModelImpl(
     }
 
     return accountRepositories.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.presentation() })
-  }
-
-  override suspend fun login() {
-    loginModel.login()
   }
 
   private fun notifyCreateDirectoryFailed(message: String) {
