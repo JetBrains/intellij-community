@@ -15,11 +15,6 @@ private const val indent = 5
 
 class DefaultTreeLayoutCacheTest {
 
-  private lateinit var root: Node
-  private lateinit var a1: Node
-  private lateinit var a2: Node
-  private lateinit var b11: Node
-  private lateinit var b21: Node
   private lateinit var model: DefaultTreeModel
   private lateinit var selectionModel: TreeSelectionModel
   private lateinit var sut: DefaultTreeLayoutCache
@@ -27,11 +22,6 @@ class DefaultTreeLayoutCacheTest {
   @BeforeEach
   fun setUp() {
     selectionModel = mock(TreeSelectionModel::class.java)
-    root = Node("r")
-    a1 = Node("a1")
-    a2 = Node("a2")
-    b11 = Node("b11")
-    b21 = Node("b21")
     model = DefaultTreeModel(null)
     sut = DefaultTreeLayoutCache(defaultRowHeight) { }
     sut.nodeDimensions = NodeDimensionsImpl(emptyMap())
@@ -50,7 +40,7 @@ class DefaultTreeLayoutCacheTest {
   fun `initial state - just root`() {
     testStructure(
       initOps = {
-        model.setRoot(root)
+        setModelStructure("r")
         sut.isRootVisible = true
       },
       assertions = { assertStructure("r") },
@@ -61,14 +51,18 @@ class DefaultTreeLayoutCacheTest {
   fun `initial state - root expanded by default`() {
     testStructure(
       initOps = {
-        model.setRoot(root)
-        root.insert(a1, 0)
+        setModelStructure("""
+          |r
+          | a1
+        """.trimMargin())
         sut.isRootVisible = true
       },
-      assertions = { assertStructure("""
+      assertions = {
+        assertStructure("""
         |r
         | a1
-      """.trimMargin()) },
+      """.trimMargin())
+      },
     )
   }
 
@@ -76,8 +70,10 @@ class DefaultTreeLayoutCacheTest {
   fun `initial state - invisible root always expanded`() {
     testStructure(
       initOps = {
-        model.setRoot(root)
-        root.insert(a1, 0)
+        setModelStructure("""
+          |r
+          | a1
+        """.trimMargin())
         sut.isRootVisible = false
       },
       assertions = { assertStructure("""
@@ -90,8 +86,10 @@ class DefaultTreeLayoutCacheTest {
   fun `collapse visible root`() {
     testStructure(
       initOps = {
-        model.setRoot(root)
-        root.insert(a1, 0)
+        setModelStructure("""
+          |r
+          | a1
+        """.trimMargin())
         sut.isRootVisible = true
       },
       modOps = {
@@ -105,8 +103,10 @@ class DefaultTreeLayoutCacheTest {
   fun `collapse invisible root`() {
     testStructure(
       initOps = {
-        model.setRoot(root)
-        root.insert(a1, 0)
+        setModelStructure("""
+          |r
+          | a1
+        """.trimMargin())
         sut.isRootVisible = false
       },
       modOps = {
@@ -120,11 +120,14 @@ class DefaultTreeLayoutCacheTest {
   fun `expand visible root and its children`() {
     testStructure(
       initOps = {
-        model.setRoot(root)
-        root.insert(a1, 0)
-        a1.insert(b11, 0)
-        root.insert(a2, 1)
-        a2.insert(b21, 0)
+        setModelStructure("""
+          |r
+          | a1
+          |  b11
+          | a2
+          |  b21
+          """.trimMargin()
+        )
         sut.isRootVisible = true
       },
       modOps = {
@@ -149,11 +152,14 @@ class DefaultTreeLayoutCacheTest {
   fun `re-expand visible root with previously expanded children`() {
     testStructure(
       initOps = {
-        model.setRoot(root)
-        root.insert(a1, 0)
-        a1.insert(b11, 0)
-        root.insert(a2, 1)
-        a2.insert(b21, 0)
+        setModelStructure("""
+          |r
+          | a1
+          |  b11
+          | a2
+          |  b21
+          """.trimMargin()
+        )
         sut.isRootVisible = true
       },
       modOps = {
@@ -185,6 +191,37 @@ class DefaultTreeLayoutCacheTest {
     sut.model = model
     modOps()
     assertions()
+  }
+
+  private fun setModelStructure(s: String) {
+    val rows = s.split("\n")
+    val stack = ArrayDeque<Node>()
+    var level = -1
+    for (row in rows) {
+      val rowLevel = row.indexOfFirst { !it.isWhitespace() }
+      val node = Node(row.substring(rowLevel until row.length))
+      if (rowLevel > level) {
+        assertThat(rowLevel).isEqualTo(level + 1) // can't have a child deeper than one level below
+        val parent = stack.lastOrNull()
+        parent?.insert(node, parent.childCount)
+        stack.addLast(node)
+        level = rowLevel
+      }
+      else {
+        while (level >= rowLevel) {
+          stack.removeLast()
+          --level
+        }
+        val parent = stack.last()
+        parent.insert(node, parent.childCount)
+        stack.addLast(node)
+        ++level
+      }
+    }
+    val root = stack.firstOrNull()
+    if (root != null) {
+      model.setRoot(root)
+    }
   }
 
   private fun path(s: String): TreePath = TreePathUtil.convertCollectionToTreePath(
