@@ -21,6 +21,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorProvider
@@ -96,7 +97,7 @@ private fun CoroutineScope.saveTemplateAsync(options: OpenProjectTask): Job? {
 
 private class FrameAllocatorProjectInitObserver(
   private val coroutineScope: CoroutineScope,
-  private val deferredProjectFrameHelper: CompletableDeferred<ProjectFrameHelper>,
+  private val deferredProjectFrameHelper: Deferred<ProjectFrameHelper>,
 ) : ProjectInitObserver {
   override fun beforeInitRawProject(project: Project): Job {
     val task = coroutineScope.launch {
@@ -207,22 +208,20 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
   private suspend fun createFrameManager(loadingScope: CoroutineScope,
                                          rawProjectDeferred: CompletableDeferred<Project>,
                                          deferredProjectFrameHelper: CompletableDeferred<ProjectFrameHelper>): FrameLoadingState {
-    var frame = options.frame
-    if (frame == null) {
-      val windowManager = ApplicationManager.getApplication().serviceAsync<WindowManager>() as WindowManagerImpl
-      frame = windowManager.removeAndGetRootFrame()
-    }
+    val frame = options.frame
+                ?: (ApplicationManager.getApplication().serviceIfCreated<WindowManager>() as? WindowManagerImpl)?.removeAndGetRootFrame()
 
     val finishScopeProvider = {
       // if not completed, it means some error is occurred - no need to play finish animation
       @Suppress("OPT_IN_USAGE", "DEPRECATION")
       if (rawProjectDeferred.isCompleted) rawProjectDeferred.getCompleted().coroutineScope else null
     }
+
     if (frame != null) {
       val loadingState = MutableLoadingState(loadingScope = loadingScope,
                                              finishScopeProvider = finishScopeProvider,
                                              selfie = readProjectSelfie(projectWorkspaceId = options.projectWorkspaceId,
-                                                                        device = frame.graphicsConfiguration.device)
+                                                                        device = { frame.graphicsConfiguration.device })
       )
       val frameHelper = withContext(Dispatchers.EDT) {
         ProjectFrameHelper(frame = frame, loadingState = loadingState)
@@ -235,11 +234,9 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
 
         // in a separate EDT task, as EDT is used for write actions and frame initialization, should not slow down project opening
         withContext(Dispatchers.EDT) {
-          blockingContext {
-            frameHelper.init()
-          }
+          frameHelper.init()
+          frameHelper.setInitBounds(getFrameInfo()?.bounds)
         }
-        frameHelper.setInitBounds(getFrameInfo()?.bounds)
       }
       return loadingState
     }
@@ -257,28 +254,20 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
     }
 
     val frameInfo = getFrameInfo()
-    val frameProducer = createNewProjectFrame(frameInfo = frameInfo)
+    val frameProducer = createNewProjectFrameProducer(frameInfo = frameInfo)
     val loadingState = MutableLoadingState(loadingScope = loadingScope,
                                            finishScopeProvider = finishScopeProvider,
                                            selfie = readProjectSelfie(projectWorkspaceId = options.projectWorkspaceId,
-                                                                      device = frameProducer.deviceOrDefault)
+                                                                      device = { frameProducer.deviceOrDefault })
     )
-    val frameHelper = withContext(Dispatchers.EDT) {
-      blockingContext {
-        val frameHelper = ProjectFrameHelper(frameProducer.create(), loadingState = loadingState)
-        // must be after preInit (frame decorator is required to set a full-screen mode)
-        frameHelper.frame.isVisible = true
-        updateFullScreenState(frameHelper, frameInfo)
-        frameHelper
-      }
-    }
+    withContext(Dispatchers.EDT) {
+      val frameHelper = ProjectFrameHelper(frameProducer.create(), loadingState = loadingState)
+      // must be after preInit (frame decorator is required to set a full-screen mode)
+      frameHelper.frame.isVisible = true
+      updateFullScreenState(frameHelper, frameInfo)
 
-    completeFrameAndCloseOnCancel(frameHelper, deferredProjectFrameHelper) {
-      // in a separate EDT task, as EDT is used for write actions and frame initialization, should not slow down project opening
-      withContext(Dispatchers.EDT) {
-        blockingContext {
-          frameHelper.init()
-        }
+      completeFrameAndCloseOnCancel(frameHelper, deferredProjectFrameHelper) {
+        frameHelper.init()
       }
     }
     return loadingState
@@ -494,7 +483,7 @@ private fun setDefaultSize(frame: JFrame) {
 }
 
 @ApiStatus.Internal
-internal fun createNewProjectFrame(frameInfo: FrameInfo?): ProjectFrameProducer {
+internal fun createNewProjectFrameProducer(frameInfo: FrameInfo?): ProjectFrameProducer {
   val deviceBounds = frameInfo?.bounds
   if (deviceBounds == null) {
     return object : ProjectFrameProducer {
@@ -536,20 +525,22 @@ internal fun createNewProjectFrame(frameInfo: FrameInfo?): ProjectFrameProducer 
   }
 }
 
-private suspend fun readProjectSelfie(projectWorkspaceId: String?, device: GraphicsDevice): Image? {
-  if (projectWorkspaceId != null && ProjectSelfieUtil.isEnabled) {
-    try {
-      return withContext(Dispatchers.IO) {
-        ProjectSelfieUtil.readProjectSelfie(projectWorkspaceId, device)
-      }
-    }
-    catch (e: Throwable) {
-      if (e.cause !is EOFException) {
-        logger<ProjectFrameAllocator>().warn(e)
-      }
+private suspend fun readProjectSelfie(projectWorkspaceId: String?, device: () -> GraphicsDevice): Image? {
+  if (projectWorkspaceId == null || !ProjectSelfieUtil.isEnabled) {
+    return null
+  }
+
+  try {
+    return withContext(Dispatchers.IO) {
+      ProjectSelfieUtil.readProjectSelfie(projectWorkspaceId, device())
     }
   }
-  return null
+  catch (e: Throwable) {
+    if (e.cause !is EOFException) {
+      logger<ProjectFrameAllocator>().warn(e)
+    }
+    return null
+  }
 }
 
 internal val OpenProjectTask.frameInfo: FrameInfo?

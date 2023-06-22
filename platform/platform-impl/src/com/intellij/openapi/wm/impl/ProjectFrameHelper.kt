@@ -32,6 +32,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.IdeFrameImpl.FrameHelper
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.ui.*
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.SuperUserStatus.isSuperUser
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor
@@ -298,7 +299,7 @@ open class ProjectFrameHelper internal constructor(
   override fun getProject(): Project? = project
 
   // any activities that will not access a workspace model
-  suspend fun setRawProject(project: Project) {
+  internal suspend fun setRawProject(project: Project) {
     if (this.project === project) {
       return
     }
@@ -311,14 +312,15 @@ open class ProjectFrameHelper internal constructor(
     frameDecorator?.setProject()
   }
 
-  suspend fun setProject(project: Project) {
+  internal suspend fun setProject(project: Project) {
     rootPane.setProject(project)
     activationTimestamp?.let {
       RecentProjectsManager.getInstance().setActivationTimestamp(project, it)
     }
   }
 
-  fun setInitBounds(bounds: Rectangle?) {
+  @RequiresEdt
+  internal fun setInitBounds(bounds: Rectangle?) {
     if (bounds != null && frame.isInFullScreen) {
       frame.rootPane.putClientProperty(INIT_BOUNDS_KEY, bounds)
     }

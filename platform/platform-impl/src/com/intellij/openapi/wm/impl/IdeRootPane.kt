@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -121,12 +122,9 @@ open class IdeRootPane internal constructor(frame: JFrame,
 
   init {
     if (SystemInfoRt.isWindows && (StartupUiUtil.isUnderDarcula || UIUtil.isUnderIntelliJLaF())) {
-      try {
+      runCatching {
         windowDecorationStyle = FRAME
-      }
-      catch (e: Exception) {
-        logger<IdeRootPane>().error(e)
-      }
+      }.getOrLogException(logger<IdeRootPane>())
     }
 
     val contentPane = contentPane
