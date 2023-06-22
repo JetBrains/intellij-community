@@ -570,7 +570,8 @@ var isOnDemandPluginEnabled: Boolean
     var result = isOnDemandEnabled
     if (result == null) {
       synchronized(IdeaPluginDescriptorImpl::class.java) {
-        if (isOnDemandEnabled == null) {
+        result = isOnDemandEnabled
+        if (result == null) {
           result = !AppMode.isHeadless() && EarlyAccessRegistryManager.getBoolean(ON_DEMAND_ENABLED_KEY)
           isOnDemandEnabled = result
         }
