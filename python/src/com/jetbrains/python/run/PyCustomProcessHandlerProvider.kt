@@ -2,8 +2,10 @@
 package com.jetbrains.python.run
 
 import com.intellij.execution.process.ProcessHandler
+import com.intellij.execution.target.TargetEnvironment
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.jetbrains.python.remote.PyRemotePathMapper
+import com.jetbrains.python.run.target.targetEnvironment
 import org.jetbrains.annotations.ApiStatus
 import java.nio.charset.Charset
 
@@ -38,12 +40,16 @@ interface PyCustomProcessHandlerProvider {
     @JvmStatic
     @JvmOverloads
     fun createProcessHandler(process: Process,
+                             targetEnvironment: TargetEnvironment,
                              commandLine: String,
                              charset: Charset,
                              pathMapper: PyRemotePathMapper,
                              isMostlySilentProcess: Boolean = false,
-                             runWithPty: Boolean = false): ProcessHandler =
-      EP_NAME.computeSafeIfAny { it.tryCreateProcessHandler(process, commandLine, charset, pathMapper, runWithPty) }
-      ?: ProcessHandlerWithPyPositionConverter(process, commandLine, charset, pathMapper, isMostlySilentProcess)
+                             runWithPty: Boolean = false): ProcessHandler {
+      val processHandler = EP_NAME.computeSafeIfAny { it.tryCreateProcessHandler(process, commandLine, charset, pathMapper, runWithPty) }
+                           ?: ProcessHandlerWithPyPositionConverter(process, commandLine, charset, pathMapper, isMostlySilentProcess)
+      processHandler.targetEnvironment = targetEnvironment
+      return processHandler
+    }
   }
 }
