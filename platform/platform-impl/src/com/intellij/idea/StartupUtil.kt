@@ -30,6 +30,7 @@ import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.ui.*
 import com.intellij.ui.mac.MacOSApplicationProvider
+import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.svg.createSvgCacheManager
 import com.intellij.ui.svg.svgCache
 import com.intellij.util.*
@@ -156,6 +157,12 @@ fun CoroutineScope.startApplication(args: List<String>,
       subtask("Write Intent Lock UI class transformer loading") {
         WriteIntentLockInstrumenter.instrument()
       }
+    }
+
+    if (!isHeadless && SystemInfoRt.isMac) {
+      // preload native lib
+      Menu.isJbScreenMenuEnabled()
+      JBR.getWindowDecorations()
     }
   }
 

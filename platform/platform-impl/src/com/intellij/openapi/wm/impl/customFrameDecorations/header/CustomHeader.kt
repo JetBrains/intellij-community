@@ -213,8 +213,12 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
 
   private fun setCustomTitleBar(titleBar: WindowDecorations.CustomTitleBar?) {
     JBR.getWindowDecorations()?.let {
-      if (window is Dialog) it.setCustomTitleBar(window, titleBar)
-      else if (window is Frame) it.setCustomTitleBar(window, titleBar)
+      if (window is Dialog) {
+        it.setCustomTitleBar(window, titleBar)
+      }
+      else if (window is Frame) {
+        it.setCustomTitleBar(window, titleBar)
+      }
     }
   }
 
