@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("PropertyOperationUtil")
 
 package com.intellij.openapi.observable.util
@@ -18,6 +18,24 @@ import java.io.File
  */
 operator fun ObservableProperty<Boolean>.not(): ObservableProperty<Boolean> =
   transform { !it }
+
+/**
+ * Creates observable mutable property that represents logic negation (!) operation for passed property.
+ */
+operator fun ObservableMutableProperty<Boolean>.not(): ObservableMutableProperty<Boolean> =
+  object : ObservableMutableProperty<Boolean> {
+    override fun get(): Boolean = !this@not.get()
+
+    override fun set(value: Boolean) {
+      this@not.set(!value)
+    }
+
+    override fun afterChange(parentDisposable: Disposable?, listener: (Boolean) -> Unit) {
+      this@not.afterChange(parentDisposable) {
+        listener(!it)
+      }
+    }
+  }
 
 /**
  * Creates observable property that represents logic and (&&) operation between values of two passed properties.

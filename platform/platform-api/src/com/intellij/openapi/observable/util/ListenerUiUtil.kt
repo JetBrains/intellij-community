@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ListenerUiUtil")
 @file:Suppress("unused")
 
@@ -231,7 +231,7 @@ fun JTextComponent.whenTextChangedFromUi(parentDisposable: Disposable? = null, l
 }
 
 @Experimental
-fun JCheckBox.whenStateChangedFromUi(parentDisposable: Disposable? = null, listener: (Boolean) -> Unit) {
+fun JToggleButton.whenStateChangedFromUi(parentDisposable: Disposable? = null, listener: (Boolean) -> Unit) {
   whenMouseReleased(parentDisposable) {
     invokeLater(ModalityState.stateForComponent(this)) {
       listener(isSelected)
