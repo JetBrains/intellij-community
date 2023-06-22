@@ -25,7 +25,6 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeGlassPaneUtil
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComponentUtil
-import com.intellij.ui.JBColor
 import com.intellij.util.ui.*
 import kotlinx.coroutines.*
 import java.awt.*
@@ -554,7 +553,7 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatch
 
   override fun paintComponent(g: Graphics) {
     loadingIndicator?.let {
-      it.paintPane(g)
+      it.paintPane(g, this)
       return
     }
 
@@ -574,20 +573,15 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatch
 
 private const val LOADING_ALPHA = 0.5f
 
-private class IdePaneLoadingLayer(
-  private val pane: JComponent,
-  private val loadingState: FrameLoadingState,
-  private val onFinish: () -> Unit,
-) {
+private class IdePaneLoadingLayer(pane: JComponent, private val loadingState: FrameLoadingState, private val onFinish: () -> Unit) {
   private var currentAlpha = LOADING_ALPHA
 
   @JvmField
-  val icon: JComponent
+  val icon: AnimatedIcon = AsyncProcessIcon.createBig("Loading")
 
   private var selfie: Image? = loadingState.selfie
 
   init {
-    icon = AsyncProcessIcon.createBig("Loading")
     icon.isOpaque = false
     pane.add(icon)
 
@@ -601,7 +595,7 @@ private class IdePaneLoadingLayer(
         ApplicationManager.getApplication().coroutineScope.launch(Dispatchers.EDT) {
           try {
             selfie = null
-            removeIcon()
+            removeIcon(pane)
           }
           finally {
             onFinish()
@@ -611,12 +605,14 @@ private class IdePaneLoadingLayer(
       else {
         finishCoroutineScope.launch(Dispatchers.EDT) {
           try {
-            // a gutter icon leads to editor shift, so, we cannot paint selfie with opacity
-            selfie = null
-            removeIcon()
-            fadeOut(initialAlpha = LOADING_ALPHA) { alpha ->
-              currentAlpha = alpha
-              icon.paintImmediately(icon.bounds)
+            removeIcon(pane)
+            if (selfie != null) {
+              // a gutter icon leads to editor shift, so, we cannot paint selfie with opacity
+              selfie = null
+              removeIcon(pane)
+              fadeOut(initialAlpha = LOADING_ALPHA) { alpha ->
+                currentAlpha = alpha
+              }
             }
           }
           finally {
@@ -627,25 +623,22 @@ private class IdePaneLoadingLayer(
     }
   }
 
-  private fun removeIcon() {
+  private fun removeIcon(pane: JComponent) {
     pane.remove(icon)
+    Disposer.dispose(icon)
   }
 
-  fun paintPane(g: Graphics) {
+  fun paintPane(g: Graphics, pane: JComponent) {
+    val selfie = selfie ?: return
+
     if (currentAlpha == 0f) {
       return
     }
 
-    val selfie = selfie
-    if (selfie == null) {
-      (g as Graphics2D).composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, currentAlpha)
-      g.setColor(JBColor.PanelBackground)
-      g.fillRect(0, 0, pane.width, pane.height)
-    }
-    else if (currentAlpha == LOADING_ALPHA) {
+    if (currentAlpha == LOADING_ALPHA) {
       // we draw the image as semi-transparent, but we cannot show what is actually happening,
       // so, we hide it using a non-transparent background
-      g.color = JBColor.PanelBackground
+      //g.color = JBColor.PanelBackground
       g.fillRect(0, 0, pane.width, pane.height)
 
       (g as Graphics2D).composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, currentAlpha)
