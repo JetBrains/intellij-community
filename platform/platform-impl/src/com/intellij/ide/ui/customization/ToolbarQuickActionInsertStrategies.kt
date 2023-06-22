@@ -96,7 +96,7 @@ private fun findChild(group: Group, searchStr: String, inclusive: Boolean): Pair
       val path = if (inclusive) listOf(group.name, child) else listOf(group.name)
       return Pair(path, index)
     }
-    else if (child is Group && child.name == searchStr) {
+    else if (child is Group && (child.name == searchStr || child.id == searchStr)) {
       val path = if (inclusive) listOf(group.name, child.name) else listOf(group.name)
       return Pair(path, index)
     }
