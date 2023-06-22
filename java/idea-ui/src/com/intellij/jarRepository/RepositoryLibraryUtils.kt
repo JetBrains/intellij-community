@@ -49,6 +49,7 @@ import org.jetbrains.jps.util.JpsChecksumUtil
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.IOException
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -236,24 +237,26 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
     snapshot: EntityStorage,
     notificationContentProvider: (String, Int) -> @NotificationContent String,
   ) {
-    val libNames = libraries.map {
+    val (list, leftNotDisplayedSize) = librariesToHumanReadableNames(libraries, snapshot)
+    val showStructureSettingsAction = ShowStructureSettingsAction().apply {
+      templatePresentation.text = JavaUiBundle.message("repository.library.utils.notification.action.open.project.structure")
+    }
+    showNotification(notificationContentProvider(list, leftNotDisplayedSize), NotificationType.ERROR,
+                     action = showStructureSettingsAction)
+  }
+
+  private fun librariesToHumanReadableNames(libraries: List<LibraryEntity>, snapshot: EntityStorage): Pair<String, Int> {
+    val names = libraries.map {
       // for module libraries append module name in braces to simplify search
       val moduleId = (it.tableId as? LibraryTableId.ModuleLibraryTableId)?.moduleId
       val module = if (moduleId != null) snapshot.resolve(moduleId) else null
       if (module == null) it.name else "${it.name} (${module.name})"
     }
 
-    val displayed = ContainerUtil.getFirstItems(libNames, 10)
-
-    val showStructureSettingsAction = ShowStructureSettingsAction().apply {
-      templatePresentation.text = JavaUiBundle.message("repository.library.utils.notification.action.open.project.structure")
-    }
-
+    val displayed = ContainerUtil.getFirstItems(names, 10)
     val humanReadableFailedList = displayed.joinToString { "<br/> - $it" }
-    showNotification(notificationContentProvider(humanReadableFailedList, libNames.size - displayed.size), NotificationType.ERROR,
-                     action = showStructureSettingsAction)
+    return humanReadableFailedList to names.size - displayed.size
   }
-
 
   private fun updateEntityIfPropertiesChanged(builder: MutableEntityStorage,
                                               newProperties: RepositoryLibraryProperties,
@@ -336,8 +339,7 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
 
       if (entitiesAndProperties.isEmpty()) {
         logger.info("Building libraries properties complete: nothing to update")
-        showNotification(JavaUiBundle.message("repository.library.utils.notification.content.library.properties.built", 0),
-                         NotificationType.INFORMATION, disableInfoNotifications)
+        showUpdateCompleteNotification(disableInfoNotifications, 0, snapshot, emptyList(), emptyList())
         return@coroutineScope
       }
 
@@ -350,8 +352,12 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
         }
         .map { (entity, _) -> entity }
 
-      if (!tryResolveLibraries(preResolveEntities, snapshot, afterPropertiesUpdate = false)) {
+      val unresolvedBeforeUpdate = resolve(preResolveEntities.map { it.library })
+      if (unresolvedBeforeUpdate.isNotEmpty()) {
         logger.info("Building libraries properties progressed: resolving before update failed, cancelling operation")
+        showFailedToResolveNotification(unresolvedBeforeUpdate, snapshot) { shown, notShownSize ->
+          JavaUiBundle.message("repository.library.utils.notification.content.libraries.resolve.fail.before.update", shown, notShownSize)
+        }
         return@coroutineScope
       }
 
@@ -362,21 +368,26 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
       val progressTotal = entitiesAndProperties.size
       updateProgressDetailsFraction(progressCounter, progressTotal)
 
+      val failedToGuessRemoteRepository = AtomicBoolean(false)
       val updatedEntitiesAndProperties = entitiesAndProperties.map { (entity, properties) ->
         async(Dispatchers.IO) {
           val checksumsUpdated = buildMissingChecksums && buildSha256Checksum(entity, properties)
+
           val bindRepoUpdated = bindRepositories && tryGuessAndBindRemoteRepository(repositories, properties)
+          if (bindRepositories && properties.jarRepositoryId == null) failedToGuessRemoteRepository.set(true)
+
           updateProgressDetailsFraction(progressCounter, progressTotal)
           if (!checksumsUpdated && !bindRepoUpdated) null else entity to properties
         }
       }.awaitAll().filterNotNull()
       val updatedCount = updatedEntitiesAndProperties.size
 
+      val failedToGuessRemoteRepositoryLibraries =
+        if (failedToGuessRemoteRepository.get()) entitiesAndProperties.filter { it.second.jarRepositoryId == null }.map { it.first.library }
+        else emptyList()
+
       if (updatedEntitiesAndProperties.isEmpty()) {
-        logger.info("Building libraries properties complete: no updates")
-        showNotification(
-          JavaUiBundle.message("repository.library.utils.notification.content.library.properties.built", updatedCount),
-          NotificationType.INFORMATION, disableInfoNotifications)
+        showUpdateCompleteNotification(disableInfoNotifications, 0, snapshot, failedToGuessRemoteRepositoryLibraries, emptyList())
         return@coroutineScope
       }
 
@@ -389,10 +400,11 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
       commitBuilderIfModified(workspaceModel, builder)
 
       if (!bindRepositories) {
-        logger.info("Building libraries properties complete: $updatedCount libraries updated successfully")
-        showNotification(
-          JavaUiBundle.message("repository.library.utils.notification.content.library.properties.built", updatedCount),
-          NotificationType.INFORMATION, disableInfoNotifications)
+        showUpdateCompleteNotification(disableInfoNotifications,
+                                       updatedEntitiesAndProperties.size,
+                                       snapshot,
+                                       failedToGuessRemoteRepositoryLibraries,
+                                       emptyList())
         return@coroutineScope
       }
 
@@ -403,37 +415,56 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
         // Fetch updated properties entity from the workspace model
         snapshotAfterUpdate.resolve(entity.library.symbolicId)?.libraryProperties
       }.asSequence()
-      if (tryResolveLibraries(entitiesAfterUpdate, snapshotAfterUpdate, afterPropertiesUpdate = true)) {
-        logger.info("Building libraries properties complete: $updatedCount libraries updated successfully")
-        showNotification(
-          JavaUiBundle.message("repository.library.utils.notification.content.library.properties.built", updatedCount),
-          NotificationType.INFORMATION, disableInfoNotifications
-        )
+
+      val unresolvedAfterUpdate = resolve(entitiesAfterUpdate.map { it.library })
+      showUpdateCompleteNotification(disableInfoNotifications,
+                                     updatedEntitiesAndProperties.size,
+                                     snapshotAfterUpdate,
+                                     failedToGuessRemoteRepositoryLibraries,
+                                     unresolvedAfterUpdate)
+    }
+
+    private fun showUpdateCompleteNotification(disableInfoNotification: Boolean,
+                                               totalUpdatedLibs: Int,
+                                               snapshot: EntityStorage,
+                                               libsFailedToGuessRemoteRepository: List<LibraryEntity>,
+                                               libsFailedToResolveAfterUpdate: List<LibraryEntity>) {
+      val notificationType =
+        if (libsFailedToGuessRemoteRepository.isNotEmpty() || libsFailedToResolveAfterUpdate.isNotEmpty()) NotificationType.ERROR
+        else NotificationType.INFORMATION
+
+      @Suppress("HardCodedStringLiteral") // concatenation of localized strings
+      val message = buildString {
+        // do not show say "No updates" if we have error description.
+        if (totalUpdatedLibs == 0 && notificationType == NotificationType.ERROR) {
+          append(JavaUiBundle.message("repository.library.utils.notification.content.library.properties.built", totalUpdatedLibs))
+        }
+
+        if (libsFailedToGuessRemoteRepository.isNotEmpty()) {
+          val (shown, notShownSize) = librariesToHumanReadableNames(libsFailedToGuessRemoteRepository, snapshot)
+          append("<br/>")
+          append(JavaUiBundle.message("repository.library.utils.notification.content.library.bind.repo.guess.failed", shown,
+                                      notShownSize))
+        }
+
+        if (libsFailedToResolveAfterUpdate.isNotEmpty()) {
+          val (shown, notShownSize) = librariesToHumanReadableNames(libsFailedToResolveAfterUpdate, snapshot)
+          append("<br/>")
+          append(JavaUiBundle.message("repository.library.utils.notification.content.libraries.resolve.fail", shown,
+                                      notShownSize))
+        }
       }
-      else {
-        logger.info("Building libraries properties progressed: verifying resolution after update complete, resolution failed")
-      }
+
+      val action =
+        if (notificationType == NotificationType.INFORMATION) null
+        else ShowStructureSettingsAction().apply { templatePresentation.text = JavaUiBundle.message("repository.library.utils.notification.action.open.project.structure") }
+      showNotification(message, notificationType, disableInfoNotification, action)
     }
 
     private fun LibraryEntity.getHashableRoots() =
       roots.asSequence().filter { it.type == LibraryRootTypeId.COMPILED }.map { JpsPathUtil.urlToFile(it.url.url) }
 
     private fun LibraryEntity.isCompiledArtifactsResolved() = getHashableRoots().all { it.exists() }
-
-    private suspend fun tryResolveLibraries(entities: Sequence<LibraryPropertiesEntity>,
-                                            snapshot: EntityStorage,
-                                            afterPropertiesUpdate: Boolean): Boolean {
-      val failedList = resolve(entities.map { it.library })
-      if (failedList.isNotEmpty()) showFailedToResolveNotification(failedList, snapshot) { libsList, leftNotDisplayedSize ->
-        if (afterPropertiesUpdate) JavaUiBundle.message(
-          "repository.library.utils.notification.content.libraries.resolve.fail.after.update", libsList, leftNotDisplayedSize
-        )
-        else JavaUiBundle.message(
-          "repository.library.utils.notification.content.libraries.resolve.fail.before.update", libsList, leftNotDisplayedSize
-        )
-      }
-      return failedList.isEmpty()
-    }
 
     private fun buildSha256Checksum(entity: LibraryPropertiesEntity, properties: RepositoryLibraryProperties): Boolean {
       if (properties.isEnableSha256Checksum ||
@@ -494,7 +525,7 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
 
       if (entitiesAndProperties.isEmpty()) {
         logger.info("Clear libraries properties progressed: nothing to update")
-        showNotification(JavaUiBundle.message("repository.library.utils.notification.content.library.properties.built", 0),
+        showNotification(JavaUiBundle.message("repository.library.utils.notification.content.library.properties.cleared", 0),
                          NotificationType.INFORMATION, disableInfoNotifications)
         return@coroutineScope
       }
