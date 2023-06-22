@@ -380,7 +380,8 @@ enum class MdnJavaScriptRuntime(displayName: String? = null, mdnId: String? = nu
   Opera,
   Safari,
   SafariIOS(displayName = "Safari iOS", mdnId = "safari_ios"),
-  Nodejs(displayName = "Node.js", firstVersion = "0.10.0");
+  Nodejs(displayName = "Node.js", firstVersion = "0.10.0"),
+  ;
 
   val mdnId: String = mdnId ?: toLowerCase(name)
   val displayName: String = displayName ?: name
