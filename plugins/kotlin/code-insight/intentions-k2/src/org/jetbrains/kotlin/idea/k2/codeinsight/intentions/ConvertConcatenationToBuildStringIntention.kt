@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
-import org.jetbrains.kotlin.idea.base.psi.isAnnotationArgument
+import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
@@ -21,7 +21,7 @@ internal class ConvertConcatenationToBuildStringIntention : AbstractKotlinApplic
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtBinaryExpression> = ApplicabilityRanges.SELF
 
     override fun isApplicableByPsi(element: KtBinaryExpression): Boolean =
-        element.operationToken == KtTokens.PLUS && !element.isAnnotationArgument()
+        element.operationToken == KtTokens.PLUS && !element.isInsideAnnotationEntryArgumentList()
 
     context(KtAnalysisSession)
     override fun isApplicableByAnalyze(element: KtBinaryExpression): Boolean {

@@ -7,9 +7,12 @@ package org.jetbrains.kotlin.idea.base.analysis.api.utils
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
+import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
+import org.jetbrains.kotlin.load.java.JvmAnnotationNames
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
@@ -118,5 +121,23 @@ object CallParameterInfoProvider {
     ): Map<KtVariableLikeSignature<KtValueParameterSymbol>, Int> {
         val valueParameters = signature.valueParameters.let { if (isArraySetCall) it.dropLast(1) else it }
         return valueParameters.mapIndexed { index, parameter -> parameter to index }.toMap()
+    }
+
+    /**
+     * Returns true for an argument in Java annotation entry if the argument is not mapped to default ("value") method of annotation.
+     * For passing such arguments named argument syntax needs to be used.
+     */
+    context(KtAnalysisSession)
+    fun isJavaArgumentWithNonDefaultName(
+        signature: KtFunctionLikeSignature<*>,
+        argumentMapping: Map<KtExpression, KtVariableLikeSignature<KtValueParameterSymbol>>,
+        currentArgument: KtValueArgument,
+    ): Boolean {
+        if (!currentArgument.isInsideAnnotationEntryArgumentList()) return false
+
+        if (signature.symbol.origin != KtSymbolOrigin.JAVA) return false
+
+        val parameter = argumentMapping[currentArgument.getArgumentExpression()] ?: return false
+        return parameter.name != JvmAnnotationNames.DEFAULT_ANNOTATION_MEMBER_NAME
     }
 }

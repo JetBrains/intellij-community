@@ -251,7 +251,7 @@ object WrapWithSafeLetCallFixFactories {
                 // In the following logic, if call is missing, unresolved, or contains error, we just stop here so the wrapped call would be
                 // inserted here.
                 val functionCall = parent.getParentOfType<KtCallExpression>(strict = true) ?: return true
-                val resolvedCall = functionCall.resolveCall().singleFunctionCallOrNull() ?: return true
+                val resolvedCall = functionCall.resolveCall()?.singleFunctionCallOrNull() ?: return true
                 return doesFunctionAcceptNull(resolvedCall, parent.argumentIndex) ?: true
             }
             parent is KtBinaryExpression -> {

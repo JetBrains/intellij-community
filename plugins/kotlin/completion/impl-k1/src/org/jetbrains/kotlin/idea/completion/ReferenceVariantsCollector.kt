@@ -36,6 +36,7 @@ class ReferenceVariantsCollector(
     private val referenceVariantsHelper: ReferenceVariantsHelper,
     private val indicesHelper: KotlinIndicesHelper,
     private val prefixMatcher: PrefixMatcher,
+    private val applicabilityFilter: (DeclarationDescriptor) -> Boolean,
     private val nameExpression: KtSimpleNameExpression,
     private val callTypeAndReceiver: CallTypeAndReceiver<*, *>,
     private val resolutionFacade: ResolutionFacade,
@@ -222,6 +223,8 @@ class ReferenceVariantsCollector(
             basicVariants = basicVariants.distinct()
         }
 
+        basicVariants = basicVariants.filter { applicabilityFilter(it) }
+
         return ReferenceVariants(filterConfiguration.filterVariants(basicVariants).toHashSet(), emptyList())
     }
 
@@ -240,7 +243,7 @@ class ReferenceVariantsCollector(
                     callTypeAndReceiver, nameExpression, bindingContext, receiverTypeFromDiagnostic = null, nameFilter
                 )
 
-            val (extensionsVariants, notImportedExtensions) = extensions.partition {
+            val (extensionsVariants, notImportedExtensions) = extensions.filter { applicabilityFilter(it) }.partition {
                 importableFqNameClassifier.isImportableDescriptorImported(
                     it
                 )

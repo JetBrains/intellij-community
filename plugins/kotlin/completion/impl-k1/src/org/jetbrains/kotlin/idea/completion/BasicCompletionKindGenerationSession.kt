@@ -118,6 +118,7 @@ class BasicCompletionKindGenerationSession(
                 expression = it,
                 resolutionFacade = resolutionFacade,
                 bindingContext = bindingContext,
+                applicabilityFilter = applicabilityFilter,
                 moduleDescriptor = moduleDescriptor,
                 visibilityFilter = isVisibleFilter,
                 indicesHelper = indicesHelper(false),
@@ -589,6 +590,7 @@ class BasicCompletionKindGenerationSession(
                         referenceVariantsHelper = rvHelper,
                         indicesHelper = indicesHelper(true),
                         prefixMatcher = prefixMatcher,
+                        applicabilityFilter = applicabilityFilter,
                         nameExpression = nameExpression,
                         callTypeAndReceiver = callTypeAndReceiver,
                         resolutionFacade = resolutionFacade,
@@ -733,6 +735,7 @@ class BasicCompletionKindGenerationSession(
 
             KeywordValues.process(
                 keywordValueConsumer,
+                position,
                 callTypeAndReceiver,
                 bindingContext,
                 resolutionFacade,

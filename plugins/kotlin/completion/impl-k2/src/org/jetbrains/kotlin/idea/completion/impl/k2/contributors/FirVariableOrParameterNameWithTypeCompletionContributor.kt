@@ -60,7 +60,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
 
         val visibilityChecker = CompletionVisibilityChecker.create(basicContext, positionContext)
         val lookupNamesAdded = mutableSetOf<String>()
-        val scopeContext = originalKtFile.getScopeContextForPosition(variableOrParameter)
+        val scopeContext = originalKtFile.getScopeContextForPosition(variableOrParameter.getOriginalDeclaration() ?: variableOrParameter)
 
         completeFromParametersInFile(variableOrParameter, visibilityChecker, lookupNamesAdded, scopeContext)
         completeClassesFromScopeContext(variableOrParameter, visibilityChecker, lookupNamesAdded, scopeContext, weighingContext)
@@ -76,17 +76,18 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
         val typeParametersScope = scopeContext.getCompositeScope { it is KtScopeKind.TypeParameterScope }
         val availableTypeParameters = getAvailableTypeParameters(typeParametersScope).toSet()
 
-        val parametersInFile = variableOrParameter.containingFile.collectDescendantsOfType<KtParameter>(
+        val variableOrParameterInOriginal = variableOrParameter.getOriginalDeclaration() ?: variableOrParameter
+        val parametersInFile = originalKtFile.collectDescendantsOfType<KtParameter>(
             // for performance reasons don't go inside expressions except declarations (parameters of local functions,
             // which are declared in body block expressions, will be skipped)
             canGoInside = { it !is KtExpression || it is KtDeclaration }
-        ) { parameter -> parameter.name != null && variableOrParameter != parameter && prefixMatcher.isStartMatch(parameter.name) }
+        ) { parameter -> parameter.name != null && variableOrParameterInOriginal != parameter && prefixMatcher.isStartMatch(parameter.name) }
 
         val lookupElementsWithNames: List<Pair<LookupElement, String>> = parametersInFile.mapNotNull { parameter ->
             ProgressManager.checkCanceled()
 
             val name = parameter.name
-            if (name == null || variableOrParameter == parameter || !prefixMatcher.isStartMatch(name)) return@mapNotNull null
+            if (name == null || variableOrParameterInOriginal == parameter || !prefixMatcher.isStartMatch(name)) return@mapNotNull null
 
             val type = parameter.getReturnKtType()
             if (typeIsVisible(type, visibilityChecker, availableTypeParameters)) {

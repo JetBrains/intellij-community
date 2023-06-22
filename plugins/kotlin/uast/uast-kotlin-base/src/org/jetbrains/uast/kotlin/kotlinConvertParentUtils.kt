@@ -227,7 +227,11 @@ internal fun convertParentImpl(
         }.expressions.single()
     }
 
-    if (result is KotlinULambdaExpression.Body && element is UExpression && result.implicitReturn?.returnExpression == element) {
+    if (result is KotlinULambdaExpression.Body
+        && element is UExpression
+        && element.sourcePsi != null
+        && result.implicitReturn?.returnExpression?.sourcePsi == element.sourcePsi
+    ) {
         return result.implicitReturn!!
     }
 

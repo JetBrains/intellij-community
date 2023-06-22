@@ -1325,7 +1325,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
     testGroup("uast/uast-kotlin/tests", testDataPath = "../../uast-kotlin-fir/tests/testData") {
         testClass<AbstractFE1UastDeclarationTest> {
-            model("declaration")
+            model("declaration", pattern = KT_OR_KTS)
         }
 
         testClass<AbstractFE1UastTypesTest> {

@@ -9,8 +9,8 @@ import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.builtins.ReflectionTypes
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
-import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.idea.FrontendInternals
+import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.completion.smart.ExpectedInfoMatch
 import org.jetbrains.kotlin.idea.completion.smart.SmartCompletionItemPriority
@@ -53,6 +53,7 @@ object KeywordValues {
 
     fun process(
         consumer: Consumer,
+        position: PsiElement,
         callTypeAndReceiver: CallTypeAndReceiver<*, *>,
         bindingContext: BindingContext,
         resolutionFacade: ResolutionFacade,
@@ -102,8 +103,10 @@ object KeywordValues {
                         || (context as KtExpression).getNextSiblingIgnoringWhitespaceAndComments() is KtOperationReferenceExpression)))
             }
 
-            consumer.consume("null", nullMatcher, positionIsSuitableForNull, SmartCompletionItemPriority.NULL) {
-                LookupElementBuilder.create(KeywordLookupObject(), "null").bold()
+            if (!position.isInsideAnnotationEntryArgumentList()) {
+                consumer.consume("null", nullMatcher, positionIsSuitableForNull, SmartCompletionItemPriority.NULL) {
+                    LookupElementBuilder.create(KeywordLookupObject(), "null").bold()
+                }
             }
         }
 
