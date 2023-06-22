@@ -25,19 +25,6 @@ public final class PsiClassUtil {
       }
     }
     if (aClass.hasModifierProperty(PsiModifier.PRIVATE)) return false;
-    if (mustBePublic) {
-      PsiMethod[] constructors = aClass.getConstructors();
-      if (constructors.length > 0) {
-        boolean anyPublicConstructor = false;
-        for (PsiMethod constructor : constructors) {
-          if (constructor.getModifierList().hasModifierProperty(PsiModifier.PUBLIC)) {
-            anyPublicConstructor = true;
-            break;
-          }
-        }
-        if (!anyPublicConstructor) return false;
-      }
-    }
     if (mustNotBeAbstract && aClass.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
     return aClass.getContainingClass() == null || aClass.hasModifierProperty(PsiModifier.STATIC);
   }
