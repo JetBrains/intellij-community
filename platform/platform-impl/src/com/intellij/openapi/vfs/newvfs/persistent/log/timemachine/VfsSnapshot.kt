@@ -6,11 +6,10 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordAccessor
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.bind
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.fmap
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.mapCases
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.DefinedState
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.Companion.bind
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.Companion.fmap
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.Companion.mapCases
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.DefinedState
 
 interface VfsSnapshot {
   val point: () -> OperationLogStorage.Iterator
@@ -109,52 +108,6 @@ interface VfsSnapshot {
                                                   private val transformValue: (T) -> DefinedState<R>) : Property<R>() {
           override fun compute(): DefinedState<R> {
             return original.observeState().bind(transformValue)
-          }
-        }
-      }
-
-      sealed interface State {
-        object UnknownYet : State
-
-        sealed interface DefinedState<out T> : State
-
-        /**
-         * Use [NotEnoughInformationCause] to designate a situation when there is not enough data to succeed the recovery
-         * (though the process went normal). Throw [VfsRecoveryException] if an exception occurs during the recovery process and it is
-         * considered not normal.
-         */
-        class NotAvailable(
-          val cause: NotEnoughInformationCause = UnspecifiedNotAvailableException
-        ) : DefinedState<Nothing> {
-          override fun toString(): String = "N/A ($cause)"
-        }
-
-        class Ready<T>(val value: T) : DefinedState<T> {
-          override fun toString(): String = value.toString()
-        }
-
-        companion object {
-          fun <T> DefinedState<T>.get(): T = mapCases({ throw AssertionError("value expected to be available", it) }) { it }
-
-          inline fun <T, R> DefinedState<T>.mapCases(onNotAvailable: (cause: NotEnoughInformationCause) -> R, onReady: (value: T) -> R): R = when (this) {
-            is Ready<T> -> onReady(value)
-            is NotAvailable -> onNotAvailable(cause)
-          }
-
-          inline fun <T, R> DefinedState<T>.fmap(f: (T) -> R): DefinedState<R> = when (this) {
-            is NotAvailable -> this
-            is Ready<T> -> Ready(f(value))
-          }
-
-          inline fun <T, R> DefinedState<T>.bind(f: (T) -> DefinedState<R>): DefinedState<R> = when (this) {
-            is NotAvailable -> this
-            is Ready<T> -> f(value)
-          }
-
-          inline fun <T> DefinedState<T>?.orIfNotAvailable(other: () -> DefinedState<T>): DefinedState<T> = when (this) {
-            is Ready -> this
-            is NotAvailable -> other()
-            null -> other()
           }
         }
       }

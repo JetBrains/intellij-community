@@ -23,10 +23,10 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.*
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.SnapshotFillerPresets.constrain
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.SnapshotFillerPresets.sum
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.SnapshotFillerPresets.toFiller
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.*
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.Companion.get
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.Companion.mapCases
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Companion.isDeleted
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.*
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.get
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.mapCases
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.*
 import org.jetbrains.annotations.ApiStatus

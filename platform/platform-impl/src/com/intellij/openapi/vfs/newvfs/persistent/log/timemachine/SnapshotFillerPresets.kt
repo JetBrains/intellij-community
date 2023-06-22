@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.FillInVfsSnaps
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.FillInVfsSnapshot.FillInVirtualFileSnapshot.FillInProperty
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsModificationContract.PropertyOverwriteRule
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsModificationContract.isRelevantAndModifies
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
 import kotlinx.collections.immutable.toImmutableMap
 
 object SnapshotFillerPresets {
