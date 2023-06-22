@@ -1,7 +1,4 @@
 -Render.kt
- -  Enum1
-  FIRST
-  SECOND
  A1
  -A2
   a: Int
@@ -28,6 +25,9 @@
   object
  Comparable<T>.a: String
  Comparable<T>.extension2(): Unit
+ -Enum1
+  FIRST
+  SECOND
  Interface
  Interface1
  String.extension1(): Unit

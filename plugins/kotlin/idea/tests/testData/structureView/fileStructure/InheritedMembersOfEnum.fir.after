@@ -1,13 +1,13 @@
 -InheritedMembersOfEnum.kt
- -enum class Test
+ -Test
+  clone(): Any location=→Enum
+  compareTo(E): Int location=→Enum
+  equals(Any?): Boolean location=→Enum
+  finalize(): Unit location=→Enum
   FIRST
-  fun clone(): Any location=→Enum
-  fun compareTo(other: E): Int location=→Enum
-  fun equals(other: Any?): Boolean location=→Enum
-  fun finalize() location=→Enum
-  fun getDeclaringClass(): Class<Test?> location=→Enum
-  fun hashCode(): Int location=→Enum
-  fun toString(): String location=→Enum
+  getDeclaringClass(): Class<Test?> location=→Enum
+  hashCode(): Int location=→Enum
+  name: String location=→Enum
+  ordinal: Int location=→Enum
   SECOND
-  val name: String location=→Enum
-  val ordinal: Int location=→Enum
+  toString(): String location=→Enum
