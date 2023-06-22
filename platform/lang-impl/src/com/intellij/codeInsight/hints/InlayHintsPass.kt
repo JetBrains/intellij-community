@@ -5,6 +5,7 @@ import com.intellij.codeHighlighting.EditorBoundHighlightingPass
 import com.intellij.codeInsight.daemon.impl.Divider
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.concurrency.JobLauncher
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Editor
@@ -47,32 +48,41 @@ class InlayHintsPass(
       }
     }
     val allDivided = mutableListOf<Divider.DividedElements>()
-
     progress.checkCanceled()
+
     Divider.divideInsideAndOutsideAllRoots(myFile, myFile.textRange,
                                            priorityRange,
                                            { true },
                                            CommonProcessors.CollectProcessor(allDivided))
-    val elementsInside = allDivided.flatMap(Divider.DividedElements::inside).toSet()
-    val elementsOutside = allDivided.flatMap(Divider.DividedElements::outside).toSet()
+    val elementsInside = allDivided.flatMap(Divider.DividedElements::inside)
+    val elementsOutside = allDivided.flatMap(Divider.DividedElements::outside)
+    val skippedCollectors = ConcurrentCollectionFactory.createConcurrentSet<Int>()
 
     if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
-        enabledCollectors,
+        (elementsInside + elementsOutside),
         progress,
         true,
         false,
-        Processor { collector ->
-          for (element in elementsInside + elementsOutside) {
-            if (!collector.collectHints(element, editor)) break
+        Processor { element ->
+          for (collectorInd in enabledCollectors.indices.minus(skippedCollectors)) {
+            val collector = enabledCollectors[collectorInd]
+            if (!collector.collectHints(element, editor)) {
+              skippedCollectors.add(collectorInd)
+              continue
+            }
+            progress.checkCanceled()
           }
-
-          val hints = collector.sink.complete()
-          buffers.add(hints)
           true
         }
       )) {
       throw ProcessCanceledException()
     }
+
+    for (collector in enabledCollectors) {
+      val hints = collector.sink.complete()
+      buffers.add(hints)
+    }
+
     val iterator = buffers.iterator()
     if (!iterator.hasNext()) return
     val allHintsAccumulator = iterator.next()
