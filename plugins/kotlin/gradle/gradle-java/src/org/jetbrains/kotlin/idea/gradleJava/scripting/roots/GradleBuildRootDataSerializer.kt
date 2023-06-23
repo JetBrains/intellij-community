@@ -30,6 +30,7 @@ internal object GradleBuildRootDataSerializer {
     }
 
     fun write(buildRoot: VirtualFile, data: GradleBuildRootData?) {
+        currentBuildRoot.set(buildRoot) // putGlobalData calls  Externalizer.read
         buildRootDataGist.putGlobalData(buildRoot, data, NO_TRACK_GIST_STAMP)
     }
 
