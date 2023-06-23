@@ -7,7 +7,7 @@ UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = ja
 UComment -> UQualifiedReferenceExpression -> Decompiled_Class: IllegalStateException
 UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.lang: lang
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
-UComment -> USimpleNameReferenceExpression (identifier = ClassCastException) -> Decompiled_Class: ClassCastException
+UComment -> USimpleNameReferenceExpression (identifier = ClassCastException) -> TYPEALIAS: ClassCastException
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
