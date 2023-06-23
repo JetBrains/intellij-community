@@ -187,7 +187,8 @@ class CommandTreeBuilderTest {
   }
 
   private fun doTest(vararg arguments: String, assertions: CommandTreeAssertions.() -> Unit) {
-    val root = CommandTreeBuilder(commandName, spec, arguments.asList()).build()
+    val suggestionsProvider = CommandTreeSuggestionsProvider()
+    val root = CommandTreeBuilder.build(suggestionsProvider, commandName, spec, arguments.asList())
     assertions(CommandTreeAssertions(root))
   }
 

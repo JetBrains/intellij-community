@@ -1,21 +1,28 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp.completion
 
-internal class CommandTreeBuilder(private val command: String,
-                                  private val commandSpec: ShellSubcommand,
-                                  private val arguments: List<String>) {
-  private var curIndex = 0
-
-  fun build(): SubcommandNode {
-    val root = SubcommandNode(command, commandSpec, null)
-    buildSubcommandTree(root)
-    return root
+internal class CommandTreeBuilder private constructor(
+  private val suggestionsProvider: CommandTreeSuggestionsProvider,
+  private val arguments: List<String>
+) {
+  companion object {
+    fun build(suggestionsProvider: CommandTreeSuggestionsProvider,
+              command: String,
+              commandSpec: ShellSubcommand,
+              arguments: List<String>): SubcommandNode {
+      val builder = CommandTreeBuilder(suggestionsProvider, arguments)
+      val root = SubcommandNode(command, commandSpec, null)
+      builder.buildSubcommandTree(root)
+      return root
+    }
   }
+
+  private var curIndex = 0
 
   private fun buildSubcommandTree(root: SubcommandNode) {
     while (curIndex < arguments.size) {
       val name = arguments[curIndex]
-      val suggestions = root.getSuggestionsOfNext()
+      val suggestions = suggestionsProvider.getSuggestionsOfNext(root)
       val suggestion = suggestions.find { it.names.contains(name) }
       if (suggestion == null
           && !root.getMergedParserDirectives().flagsArePosixNoncompliant
@@ -43,11 +50,11 @@ internal class CommandTreeBuilder(private val command: String,
   private fun buildOptionTree(root: OptionNode) {
     while (curIndex < arguments.size) {
       val name = arguments[curIndex]
-      val suggestions = root.getDirectSuggestionsOfNext()
+      val suggestions = suggestionsProvider.getDirectSuggestionsOfNext(root)
       val suggestion = suggestions.find { it.names.contains(name) }
       val node = if (suggestion == null) {
         // option requires an argument, then probably provided name is this argument
-        root.getAvailableArguments(root.spec.args).find { !it.isOptional }?.let {
+        suggestionsProvider.getAvailableArguments(root).find { !it.isOptional }?.let {
           ArgumentNode(name, it, root)
         }
       }

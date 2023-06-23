@@ -8,7 +8,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.sh.psi.ShSimpleCommand
 import com.intellij.util.ProcessingContext
 import com.intellij.util.containers.TreeTraversal
-import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.exp.completion.*
 
 class CommandSpecCompletionProvider : CompletionProvider<CompletionParameters>() {
@@ -52,18 +51,18 @@ class CommandSpecCompletionProvider : CompletionProvider<CompletionParameters>()
     return computeCompletionElements(commandSpec, command, arguments)
   }
 
-  @VisibleForTesting
-  fun computeCompletionElements(spec: ShellSubcommand, command: String, arguments: List<String>): List<LookupElement> {
+  private fun computeCompletionElements(spec: ShellSubcommand, command: String, arguments: List<String>): List<LookupElement> {
     val completeArguments = arguments.subList(0, arguments.size - 1)
-    val rootNode: SubcommandNode = CommandTreeBuilder(command, spec, completeArguments).build()
-    val suggestions = computeSuggestions(rootNode)
+    val suggestionsProvider = CommandTreeSuggestionsProvider()
+    val rootNode: SubcommandNode = CommandTreeBuilder.build(suggestionsProvider, command, spec, completeArguments)
+    val suggestions = computeSuggestions(suggestionsProvider, rootNode)
     return suggestions.flatMap { it.toLookupElements() }
   }
 
-  private fun computeSuggestions(root: SubcommandNode): List<BaseSuggestion> {
+  private fun computeSuggestions(suggestionsProvider: CommandTreeSuggestionsProvider, root: SubcommandNode): List<BaseSuggestion> {
     val allChildren = TreeTraversal.PRE_ORDER_DFS.traversal(root as CommandPartNode<*>) { node -> node.children }
     val lastNode = allChildren.last() ?: root
-    return lastNode.getSuggestionsOfNext()
+    return suggestionsProvider.getSuggestionsOfNext(lastNode)
   }
 
   private fun BaseSuggestion.toLookupElements(): List<LookupElement> {
