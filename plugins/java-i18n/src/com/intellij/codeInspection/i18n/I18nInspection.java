@@ -280,7 +280,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
   }
 
   @NotNull
-  private static HtmlChunk exampleDescription(String exampleText) {
+  private static HtmlChunk exampleDescription(@NlsSafe String exampleText) {
     return HtmlChunk.fragment(
       HtmlChunk.text(JavaI18nBundle.message("tooltip.example")),
       HtmlChunk.br(),
