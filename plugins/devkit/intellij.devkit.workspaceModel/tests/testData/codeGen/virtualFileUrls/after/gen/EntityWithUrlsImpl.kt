@@ -16,8 +16,8 @@ import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceL
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
-@GeneratedCodeApiVersion(1)
-@GeneratedCodeImplVersion(1)
+@GeneratedCodeApiVersion(2)
+@GeneratedCodeImplVersion(2)
 open class EntityWithUrlsImpl(val dataSource: EntityWithUrlsData) : EntityWithUrls, WorkspaceEntityBase() {
 
   companion object {

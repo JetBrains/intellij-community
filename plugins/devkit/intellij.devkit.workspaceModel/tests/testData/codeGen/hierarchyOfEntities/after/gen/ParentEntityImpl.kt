@@ -7,16 +7,16 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.annotations.Abstract
+import com.intellij.platform.workspace.storage.annotations.Open
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.annotations.Abstract
-import com.intellij.platform.workspace.storage.annotations.Open
 
-@GeneratedCodeApiVersion(1)
-@GeneratedCodeImplVersion(1)
+@GeneratedCodeApiVersion(2)
+@GeneratedCodeImplVersion(2)
 open class ParentEntityImpl(val dataSource: ParentEntityData) : ParentEntity, WorkspaceEntityBase() {
 
   companion object {

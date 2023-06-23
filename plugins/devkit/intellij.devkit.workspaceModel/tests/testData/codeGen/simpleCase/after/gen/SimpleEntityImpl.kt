@@ -13,8 +13,8 @@ import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 
-@GeneratedCodeApiVersion(1)
-@GeneratedCodeImplVersion(1)
+@GeneratedCodeApiVersion(2)
+@GeneratedCodeImplVersion(2)
 open class SimpleEntityImpl(val dataSource: SimpleEntityData) : SimpleEntity, WorkspaceEntityBase() {
 
   companion object {

@@ -1,6 +1,6 @@
 package com.intellij.workspaceModel.test.api
 
-import com.intellij.workspaceModel.deft.api.annotations.Default
+import com.intellij.platform.workspace.storage.annotations.Default
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 
 interface DefaultFieldEntity : WorkspaceEntity {
