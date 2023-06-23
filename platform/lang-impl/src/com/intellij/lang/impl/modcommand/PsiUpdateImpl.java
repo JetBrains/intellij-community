@@ -19,6 +19,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
+import com.intellij.psi.impl.file.PsiFileImplUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightVirtualFile;
@@ -71,10 +72,12 @@ final class PsiUpdateImpl {
     private final @NotNull PsiFile myOrigFile;
     private final @NotNull PsiFile myCopyFile;
     private final @NotNull PsiDocumentManager myManager;
+    private boolean myDeleted;
 
     FileTracker(@NotNull PsiFile origFile) {
       myProject = origFile.getProject();
       myCopyFile = copyFile(myProject, origFile);
+      PsiFileImplUtil.setNonPhysicalFileDeleteHandler(myCopyFile, f -> myDeleted = true);
       myDocument = myCopyFile.getViewProvider().getDocument();
       InjectedLanguageManager injectionManager = InjectedLanguageManager.getInstance(myProject);
       boolean injected = injectionManager.isInjectedFragment(origFile);
@@ -108,10 +111,13 @@ final class PsiUpdateImpl {
     }
 
     ModCommand getUpdateCommand() {
-      myManager.commitDocument(myDocument);
-      unblock();
       VirtualFile origVirtualFile = myOrigFile.getOriginalFile().getVirtualFile();
       if (origVirtualFile == null) return new ModNothing();
+      if (myDeleted) {
+        return new ModDeleteFile(origVirtualFile);
+      }
+      myManager.commitDocument(myDocument);
+      unblock();
       String newText = myTargetFile.getText();
       return myOrigText.equals(newText) ? new ModNothing() :
              new ModUpdateFileText(origVirtualFile, myOrigText, newText, myFragments);
@@ -201,7 +207,6 @@ final class PsiUpdateImpl {
     private final @NotNull FileTracker myTracker;
     private final @NotNull Map<PsiFile, FileTracker> myChangedFiles = new LinkedHashMap<>();
     private final @NotNull Map<VirtualFile, ModPsiUpdaterImpl.ChangedDirectoryInfo> myChangedDirectories = new LinkedHashMap<>();
-    private final @NotNull Set<VirtualFile> myDeletedFiles = new LinkedHashSet<>();
     private @NotNull VirtualFile myNavigationFile;
     private int myCaretOffset;
     private @NotNull TextRange mySelection;
@@ -220,10 +225,14 @@ final class PsiUpdateImpl {
 
       @NotNull Stream<ModCommand> createFileCommands(@NotNull Project project) {
         PsiManager manager = PsiManager.getInstance(project);
+        PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
         return directory().getAddedChildren().values().stream()
           .map(vf -> {
             PsiFile psiFile = manager.findFile(vf);
             if (psiFile == null) return nop();
+            Document document = psiFile.getViewProvider().getDocument();
+            documentManager.commitDocument(document);
+            documentManager.doPostponedOperationsAndUnblockDocument(document);
             return new ModCreateFile(new FutureVirtualFile(directory().getOriginalFile(),
                                                            vf.getName(), vf.getFileType()), psiFile.getText());
           });
@@ -269,17 +278,6 @@ final class PsiUpdateImpl {
         }
       }
       return tracker(file).getCopy(e);
-    }
-
-    @Override
-    public void deleteFile(@NotNull PsiFile file) {
-      PsiFile originalFile = file.getOriginalFile();
-      VirtualFile virtualFile = originalFile.getViewProvider().getVirtualFile();
-      if (virtualFile instanceof ChangedVirtualDirectory.AddedVirtualFile avf) {
-        avf.delete(null);
-      } else {
-        myDeletedFiles.add(virtualFile);
-      }
     }
 
     @Override
@@ -447,7 +445,6 @@ final class PsiUpdateImpl {
         .andThen(myChangedDirectories.values().stream()
                    .flatMap(info -> info.createFileCommands(myTracker.myProject))
                    .reduce(nop(), ModCommand::andThen))
-        .andThen(myDeletedFiles.stream().<ModCommand>map(df -> new ModDeleteFile(df)).reduce(nop(), ModCommand::andThen))
         .andThen(getNavigateCommand()).andThen(getHighlightCommand()).andThen(myRenameSymbol == null ? nop() : myRenameSymbol);
     }
 

@@ -157,7 +157,9 @@ public class ModCommandServiceImpl implements ModCommandService {
         VirtualFile newFile = parent.createChildData(this, file.getName());
         PsiFile psiFile = PsiManager.getInstance(project).findFile(newFile);
         if (psiFile == null) return false;
-        psiFile.getViewProvider().getDocument().setText(create.text());
+        Document document = psiFile.getViewProvider().getDocument();
+        document.setText(create.text());
+        PsiDocumentManager.getInstance(project).commitDocument(document);
         return true;
       });
     }

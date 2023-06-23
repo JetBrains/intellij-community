@@ -7,7 +7,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -33,13 +32,6 @@ public interface ModPsiUpdater {
   @Contract(value = "null -> null; !null -> !null")
   <E extends PsiElement> E getWritable(E e);
 
-  /**
-   * Records a command to delete the particular file. Note that calling {@link PsiFile#delete()} may not
-   * work, even if the file was obtained from {@link #getWritable(PsiElement)}.
-   * @param file file to delete (can be physical or returned earlier by {@link #getWritable(PsiElement)}
-   */
-  void deleteFile(@NotNull PsiFile file);
-  
   /**
    * Selects given element
    * 

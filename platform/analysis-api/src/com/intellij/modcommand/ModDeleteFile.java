@@ -4,8 +4,14 @@ package com.intellij.modcommand;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+
 /**
  * @param file file to delete
  */
 public record ModDeleteFile(@NotNull VirtualFile file) implements ModCommand {
+  @Override
+  public @NotNull Set<@NotNull VirtualFile> modifiedFiles() {
+    return Set.of(file);
+  }
 }

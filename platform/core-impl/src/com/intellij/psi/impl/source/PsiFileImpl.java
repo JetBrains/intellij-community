@@ -451,6 +451,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   @Override
   public void checkDelete() throws IncorrectOperationException {
     if (!getViewProvider().isEventSystemEnabled()) {
+      if (PsiFileImplUtil.canDeleteNonPhysicalFile(this)) return;
       throw new IncorrectOperationException();
     }
     CheckUtil.checkWritable(this);

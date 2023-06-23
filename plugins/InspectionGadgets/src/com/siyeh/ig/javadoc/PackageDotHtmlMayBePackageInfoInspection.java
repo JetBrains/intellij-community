@@ -33,6 +33,7 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
     return new PackageDotHtmlMayBePackageInfoFix(aPackage);
   }
 
+  @SuppressWarnings("DialogTitleCapitalization")
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
@@ -58,7 +59,7 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (element instanceof XmlFile xmlFile) {
-        updater.deleteFile(xmlFile);
+        xmlFile.delete();
       }
     }
   }
@@ -104,7 +105,7 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
         packageInfoFile.add(comment);
       }
       CodeStyleManager.getInstance(project).reformat(packageInfoFile);
-      updater.deleteFile(xmlFile);
+      xmlFile.delete();
       updater.moveTo(packageInfoFile);
     }
 
