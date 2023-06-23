@@ -159,9 +159,9 @@ public class GradleModelFetchAction {
     }
   }
 
-  private void addProjectModels(@NotNull BuildController controller, @NotNull final BasicGradleProject gradleProject) {
+  private void addProjectModels(@NotNull BuildController controller, @NotNull BasicGradleProject gradleProject) {
     for (ProjectImportModelProvider extension : myModelProviders) {
-      final Set<String> obtainedModels = new HashSet<>();
+      Set<String> obtainedModels = new HashSet<>();
       long startTime = System.currentTimeMillis();
       extension.populateProjectModels(controller, gradleProject, new ProjectImportModelProvider.ProjectModelConsumer() {
         @Override
@@ -180,7 +180,7 @@ public class GradleModelFetchAction {
 
   private void addBuildModels(@NotNull BuildController controller, @NotNull GradleBuild gradleBuild) {
     for (ProjectImportModelProvider extension : myModelProviders) {
-      final Set<String> obtainedModels = new HashSet<>();
+      Set<String> obtainedModels = new HashSet<>();
       long startTime = System.currentTimeMillis();
       extension.populateBuildModels(controller, gradleBuild, new ProjectImportModelProvider.BuildModelConsumer() {
         @Override
@@ -204,14 +204,14 @@ public class GradleModelFetchAction {
     }
   }
 
-  private void addProjectModel(final @NotNull ProjectModel projectModel, final @NotNull Object object, final @NotNull Class<?> clazz) {
+  private void addProjectModel(@NotNull ProjectModel projectModel, @NotNull Object object, @NotNull Class<?> clazz) {
     myModelConverterExecutor.execute(() -> {
       Object converted = myModelConverter.convert(object);
       myAllModels.addModel(converted, clazz, projectModel);
     });
   }
 
-  private void addBuildModel(final @NotNull BuildModel buildModel, final @NotNull Object object, final @NotNull Class<?> clazz) {
+  private void addBuildModel(@NotNull BuildModel buildModel, @NotNull Object object, @NotNull Class<?> clazz) {
     myModelConverterExecutor.execute(() -> {
       Object converted = myModelConverter.convert(object);
       myAllModels.addModel(converted, clazz, buildModel);
