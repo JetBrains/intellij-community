@@ -57,12 +57,12 @@ object WindowsFileUtil {
     val envString = environmentBlock?.let { "System.getenv()+{${environment.map { "${it.key}=${it.value}" }.joinToString()}}, "}
 
     val createProcessDebugParams = "CreateProcessW(" +
-                                   "lpApplicationName=$executable, " +
+                                   "lpApplicationName=null, " +
                                    "lpCommandLine='$commandLine', " +
                                    "lpProcessAttributes=null, " +
                                    "lpThreadAttributes=null, " +
-                                   "bInheritHandles=true, " +
-                                   "dwCreationFlags=0, " +
+                                   "bInheritHandles=false, " +
+                                   "dwCreationFlags=CREATE_UNICODE_PROCESS_ENVIRONMENT, " +
                                    "lpEnvironment=$envString" +
                                    "lpCurrentDirectory='$workingDirectory', " +
                                    "lpStartupInfo=si, " +
@@ -78,7 +78,7 @@ object WindowsFileUtil {
         /* lpCommandLine        = */ (commandLine + "\u0000").toCharArray(),
         /* lpProcessAttributes  = */ null,
         /* lpThreadAttributes   = */ null,
-        /* bInheritHandles      = */ true,
+        /* bInheritHandles      = */ false,
         /* dwCreationFlags      = */ CREATE_UNICODE_PROCESS_ENVIRONMENT,
         /* lpEnvironment        = */ environmentBlock,
         /* lpCurrentDirectory   = */ workingDirectory.toString() + "\u0000",
