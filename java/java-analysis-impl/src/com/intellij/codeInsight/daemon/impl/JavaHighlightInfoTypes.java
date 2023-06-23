@@ -52,9 +52,9 @@ public final class JavaHighlightInfoTypes {
   public final static HighlightInfoType IMPLICIT_ANONYMOUS_CLASS_PARAMETER
     = new HighlightInfoType.HighlightInfoTypeImpl(HighlightInfoType.SYMBOL_TYPE_SEVERITY,
                                                   JavaHighlightingColors.IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES);
-  
+
+  @NotNull
   private static HighlightInfoType createSymbolTypeInfo(@NotNull TextAttributesKey attributesKey) {
     return new HighlightInfoType.HighlightInfoTypeImpl(HighlightInfoType.SYMBOL_TYPE_SEVERITY, attributesKey, false);
   }
-  
 }
