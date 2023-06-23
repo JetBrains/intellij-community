@@ -7,13 +7,14 @@ import org.jetbrains.annotations.TestOnly
 
 object CodeGeneratorVersions {
   /** these constants are accessed from WorkspaceImplObsoleteInspection */
-  private const val API_VERSION_INTERNAL = 1
-  private const val IMPL_VERSION_INTERNAL = 1
-  
+  private const val API_VERSION_INTERNAL = 2
+  private const val IMPL_MAJOR_VERSION_INTERNAL = 2
+  private const val IMPL_MINOR_VERSION_INTERNAL = 0
+
   @set:TestOnly
   var API_VERSION = API_VERSION_INTERNAL
   @set:TestOnly
-  var IMPL_VERSION = IMPL_VERSION_INTERNAL
+  var IMPL_VERSION = IMPL_MAJOR_VERSION_INTERNAL
 
   var checkApiInInterface = true
   var checkApiInImpl = true
