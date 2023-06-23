@@ -391,16 +391,6 @@ internal class MoveGetterAndSetterAnnotationsToPropertyProcessing : InspectionLi
     }
 }
 
-internal class RedundantExplicitTypeInspectionBasedProcessing : InspectionLikeProcessingForElement<KtProperty>(KtProperty::class.java) {
-    override fun isApplicableTo(element: KtProperty, settings: ConverterSettings?): Boolean =
-        RedundantExplicitTypeInspection.hasRedundantType(element)
-
-    override fun apply(element: KtProperty) {
-        element.typeReference = null
-        RemoveExplicitTypeIntention.Holder.removeExplicitType(element)
-    }
-}
-
 internal class CanBeValInspectionBasedProcessing : InspectionLikeProcessingForElement<KtDeclaration>(KtDeclaration::class.java) {
     override fun isApplicableTo(element: KtDeclaration, settings: ConverterSettings?): Boolean =
         CanBeValInspection.canBeVal(element, ignoreNotUsedVals = false)
