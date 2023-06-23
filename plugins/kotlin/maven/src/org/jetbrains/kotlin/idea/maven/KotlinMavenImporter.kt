@@ -104,7 +104,9 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
     ) {
 
         if (changes.hasPluginsChanges()) {
-            contributeSourceDirectories(mavenProject, module, rootModel)
+            if (module.name == mavenProjectToModuleName[mavenProject]) {
+                contributeSourceDirectories(mavenProject, module, rootModel)
+            }
         }
 
         val mavenPlugin = mavenProject.findKotlinMavenPlugin() ?: return
