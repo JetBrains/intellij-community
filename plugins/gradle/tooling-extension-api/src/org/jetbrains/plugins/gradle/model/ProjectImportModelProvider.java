@@ -24,14 +24,17 @@ import java.io.Serializable;
  * {@link #populateProjectModels(BuildController, Model, ProjectModelConsumer)}.
  */
 public interface ProjectImportModelProvider extends Serializable {
+
   interface ProjectModelConsumer {
-    void consume(@NotNull Object object, @NotNull Class clazz);
+
+    void consume(@NotNull Object object, @NotNull Class<?> clazz);
   }
 
   interface BuildModelConsumer {
-    void consume(@NotNull BuildModel buildModel, @NotNull Object object, @NotNull Class clazz);
 
-    void consumeProjectModel(@NotNull ProjectModel projectModel, @NotNull Object object, @NotNull Class clazz);
+    void consume(@NotNull BuildModel buildModel, @NotNull Object object, @NotNull Class<?> clazz);
+
+    void consumeProjectModel(@NotNull ProjectModel projectModel, @NotNull Object object, @NotNull Class<?> clazz);
   }
 
   void populateBuildModels(@NotNull BuildController controller,
