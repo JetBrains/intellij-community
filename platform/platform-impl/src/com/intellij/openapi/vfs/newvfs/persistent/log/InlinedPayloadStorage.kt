@@ -10,18 +10,15 @@ import kotlinx.collections.immutable.toPersistentSet
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 
-object InlinedPayloadStorage : PayloadStorage { // TODO utilize
+object InlinedPayloadStorage : PayloadStorageIO {
   override val sourcesDeclaration: PersistentSet<Source> = Source.values().filter { it.isInline }.toPersistentSet()
-
-  override fun size(): Long = 0
-  override fun flush() {}
-  override fun dispose() {}
 
   fun isSuitableForInlining(sizeBytes: Long) = sizeBytes <= 7
 
   override fun writePayload(sizeBytes: Long, body: OutputStream.() -> Unit): PayloadRef {
-    require(isSuitableForInlining(sizeBytes)) { "payload of size $sizeBytes cannot be inline (max size 7)" }
+    require(isSuitableForInlining(sizeBytes)) { "payload of size $sizeBytes cannot be inlined (max size 7)" }
     val out = ByteArrayOutputStream(sizeBytes.toInt())
+    out.body()
     require(out.size() == sizeBytes.toInt()) {
       "unexpected amount of data has been written: written ${out.size()} vs expected ${sizeBytes}"
     }

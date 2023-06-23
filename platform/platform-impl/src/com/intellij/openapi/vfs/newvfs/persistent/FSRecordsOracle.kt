@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsOracle.LogDistanceEva
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.constCopier
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.TraverseDirection
-import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogContext
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogQueryContext
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.Companion.mapCases
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsChronicle
@@ -22,14 +22,17 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsStateOracle
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
+/**
+ * May be used only in ReadAction and there must be no pending writes in VfsLog.
+ */
 @ApiStatus.Internal
 @ApiStatus.Experimental
 class FSRecordsOracle(
   cacheDir: Path,
   errorHandler: ErrorHandler,
-  private val vfsLogContext: VfsLogContext,
+  private val queryContext: VfsLogQueryContext,
   private val distanceEvaluator: LogDistanceEvaluator = LogDistanceEvaluator { iterator ->
-    vfsLogContext.operationLogStorage.end().getPosition() - iterator.getPosition() < 8_000_000 // 8mb, TODO can be smarter, like 20% or smth
+    queryContext.end().getPosition() - iterator.getPosition() < 8_000_000 // 8mb, TODO can be smarter, like 20% or smth
   }
 ) : VfsStateOracle {
   private val fsRecords: FSRecordsImpl = FSRecordsImpl.connect(cacheDir, emptyList(), errorHandler)
@@ -119,14 +122,14 @@ class FSRecordsOracle(
 
       override fun readAttribute(fileAttribute: FileAttribute): State.DefinedState<AttributeInputStream?> {
         if (!distanceEvaluator.isWorthLookingUpFrom(point())) return State.NotAvailable()
-        val attrId = vfsLogContext.enumerateAttribute(fileAttribute)
+        val attrId = queryContext.enumerateAttribute(fileAttribute)
         val attrData = VfsChronicle.lookupAttributeData(point(), fileId, attrId, direction = TraverseDirection.PLAY)
         if (attrData.found) return State.NotAvailable() // some operation took place in between (point(), end())
         return fsRecords.readAttributeWithLock(fileId, fileAttribute).let(State::Ready)
       }
 
       override fun getChildrenIds(): State.DefinedState<RecoveredChildrenIds> {
-        if (point() == vfsLogContext.operationLogStorage.end()) {
+        if (point() == queryContext.end()) {
           val childrenIds = fsRecords.listIds(fileId).toList()
           return object : RecoveredChildrenIds, List<Int> by childrenIds {
             override val isComplete: Boolean = true

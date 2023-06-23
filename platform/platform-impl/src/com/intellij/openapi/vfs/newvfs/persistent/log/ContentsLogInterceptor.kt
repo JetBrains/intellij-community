@@ -7,7 +7,7 @@ import com.intellij.util.io.storage.IAppenderStream
 import com.intellij.util.io.storage.IStorageDataOutput
 
 class ContentsLogInterceptor(
-  private val context: VfsLogContext
+  private val context: VfsLogOperationWriteContext
 ) : ContentsInterceptor {
 
   override fun onWriteBytes(underlying: (record: Int, bytes: ByteArraySequence, fixedSize: Boolean) -> Unit): (Int, ByteArraySequence, Boolean) -> Unit =
@@ -15,7 +15,7 @@ class ContentsLogInterceptor(
       { underlying(record, bytes, fixedSize) } catchResult { result ->
         val data = bytes.toBytes()
         context.enqueueOperationWrite(VfsOperationTag.CONTENT_WRITE_BYTES) {
-          val payloadRef = payloadStorage.writePayload(data.size.toLong()) {
+          val payloadRef = payloadWriter(data.size.toLong()) {
             write(data, 0, data.size)
           }
           VfsOperation.ContentsOperation.WriteBytes(record, fixedSize, payloadRef, result)
@@ -34,7 +34,7 @@ class ContentsLogInterceptor(
 
         private fun interceptClose(data: ByteArray, result: OperationResult<Unit>) {
           context.enqueueOperationWrite(VfsOperationTag.CONTENT_WRITE_STREAM) {
-            val payloadRef = payloadStorage.writePayload(data.size.toLong()) {
+            val payloadRef = payloadWriter(data.size.toLong()) {
               write(data, 0, data.size)
             }
             VfsOperation.ContentsOperation.WriteStream(record, payloadRef, result)
@@ -54,7 +54,7 @@ class ContentsLogInterceptor(
 
         private fun interceptClose(data: ByteArray, result: OperationResult<Unit>) {
           context.enqueueOperationWrite(VfsOperationTag.CONTENT_WRITE_STREAM_2) {
-            val payloadRef = payloadStorage.writePayload(data.size.toLong()) {
+            val payloadRef = payloadWriter(data.size.toLong()) {
               write(data, 0, data.size)
             }
             VfsOperation.ContentsOperation.WriteStream2(record, fixedSize, payloadRef, result)
@@ -74,7 +74,7 @@ class ContentsLogInterceptor(
 
         private fun interceptClose(data: ByteArray, result: OperationResult<Unit>) {
           context.enqueueOperationWrite(VfsOperationTag.CONTENT_APPEND_STREAM) {
-            val payloadRef = payloadStorage.writePayload(data.size.toLong()) {
+            val payloadRef = payloadWriter(data.size.toLong()) {
               write(data, 0, data.size)
             }
             VfsOperation.ContentsOperation.AppendStream(record, payloadRef, result)
@@ -88,7 +88,7 @@ class ContentsLogInterceptor(
       { underlying(record, offset, bytes) } catchResult { result ->
         val data = bytes.toBytes()
         context.enqueueOperationWrite(VfsOperationTag.CONTENT_REPLACE_BYTES) {
-          val payloadRef = payloadStorage.writePayload(data.size.toLong()) {
+          val payloadRef = payloadWriter(data.size.toLong()) {
             write(data, 0, data.size)
           }
           VfsOperation.ContentsOperation.ReplaceBytes(record, offset, payloadRef, result)

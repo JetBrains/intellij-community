@@ -14,10 +14,9 @@ import com.intellij.openapi.util.io.toNioPath
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.VfsRecoveryUtils
-import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.constCopier
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog
-import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogContext
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogQueryContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
@@ -48,48 +47,58 @@ class RecoverVfsFromLogAction : RecoveryAction {
     val log = PersistentFS.getInstance().vfsLog
     val app = ApplicationManagerEx.getApplicationEx()
 
-    val recoveryPoints = VfsRecoveryUtils.goodRecoveryPointsBefore(log.context.operationLogStorage.end().constCopier())
-    if (recoveryPoints.none()) {
-      NotificationGroupManager.getInstance().getNotificationGroup("Cache Recovery")
-        .createNotification(
-          IdeBundle.message("notification.cache.recover.from.log.not.available"),
-          IdeBundle.message("notification.cache.recover.from.log.no.recovery.points"),
-          NotificationType.WARNING
-        )
-        .notify(recoveryScope.project)
-      LOG.warn("no recovery points available")
-      return emptyList()
-    }
+    val queryContext = log.query()
 
-    val recoveryPoint: VfsRecoveryUtils.RecoveryPoint = invokeAndWaitIfNeeded {
-      val dialog = RecoverVfsFromOperationsLogDialog(recoveryScope.project, app.isRestartCapable, recoveryPoints)
-      dialog.show()
-      if (!dialog.isOK) return@invokeAndWaitIfNeeded null
-
-      return@invokeAndWaitIfNeeded dialog.selectedRecoveryPoint
-    } ?: return emptyList()
-
-    service<RecoverVfsFromLogService>().coroutineScope.launch {
-      withModalProgress(
-        ModalTaskOwner.project(recoveryScope.project),
-        IdeBundle.message("progress.cache.recover.from.logs.title"),
-        TaskCancellation.nonCancellable()
-      ) {
-        LOG.info("recovering a VFS instance as of ${recoveryPoint}...")
-        prepareRecoveredCaches(log.context, recoveryPoint.point, progressReporter!!.rawReporter())
+    try {
+      val recoveryPoints = VfsRecoveryUtils.goodRecoveryPointsBefore(queryContext::end)
+      if (recoveryPoints.none()) {
+        NotificationGroupManager.getInstance().getNotificationGroup("Cache Recovery")
+          .createNotification(
+            IdeBundle.message("notification.cache.recover.from.log.not.available"),
+            IdeBundle.message("notification.cache.recover.from.log.no.recovery.points"),
+            NotificationType.WARNING
+          )
+          .notify(recoveryScope.project)
+        LOG.warn("no recovery points available")
+        return emptyList()
       }
-      LOG.info("creating a storages replacement marker...")
-      VfsRecoveryUtils.createStoragesReplacementMarker(cachesDir, recoveredCachesDir)
-      LOG.info("restarting...")
-      app.restart(true)
+
+      val recoveryPoint: VfsRecoveryUtils.RecoveryPoint = invokeAndWaitIfNeeded {
+        val dialog = RecoverVfsFromOperationsLogDialog(recoveryScope.project, app.isRestartCapable, recoveryPoints)
+        dialog.show()
+        if (!dialog.isOK) return@invokeAndWaitIfNeeded null
+
+        return@invokeAndWaitIfNeeded dialog.selectedRecoveryPoint
+      } ?: return emptyList()
+
+      service<RecoverVfsFromLogService>().coroutineScope.launch {
+        withModalProgress(
+          ModalTaskOwner.project(recoveryScope.project),
+          IdeBundle.message("progress.cache.recover.from.logs.title"),
+          TaskCancellation.nonCancellable()
+        ) {
+          LOG.info("recovering a VFS instance as of ${recoveryPoint}...")
+          prepareRecoveredCaches(queryContext, recoveryPoint.point, progressReporter!!.rawReporter())
+        }
+        LOG.info("creating a storages replacement marker...")
+        VfsRecoveryUtils.createStoragesReplacementMarker(cachesDir, recoveredCachesDir)
+        LOG.info("restarting...")
+        app.restart(true)
+      }.invokeOnCompletion {
+        queryContext.close()
+      }
+    } catch (e: Throwable) {
+      queryContext.close()
+      throw e
     }
+
     return emptyList()
   }
 
   @OptIn(ExperimentalPathApi::class)
-  fun prepareRecoveredCaches(logContext: VfsLogContext, point: OperationLogStorage.Iterator, progressReporter: RawProgressReporter) {
+  fun prepareRecoveredCaches(queryContext: VfsLogQueryContext, point: OperationLogStorage.Iterator, progressReporter: RawProgressReporter) {
     recoveredCachesDir.deleteRecursively()
-    val result = VfsRecoveryUtils.recoverFromPoint(point, logContext, cachesDir, recoveredCachesDir, progressReporter = progressReporter)
+    val result = VfsRecoveryUtils.recoverFromPoint(point, queryContext, cachesDir, recoveredCachesDir, progressReporter = progressReporter)
     LOG.info(result.toString())
   }
 

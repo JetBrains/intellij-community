@@ -6,8 +6,6 @@ import kotlinx.collections.immutable.PersistentSet
 import java.io.OutputStream
 
 interface PayloadStorage: PayloadStorageIO {
-  val sourcesDeclaration: PersistentSet<PayloadRef.Source>
-
   fun size(): Long
 
   fun flush()
@@ -15,8 +13,10 @@ interface PayloadStorage: PayloadStorageIO {
 }
 
 interface PayloadStorageIO {
+  val sourcesDeclaration: PersistentSet<PayloadRef.Source>
   fun writePayload(sizeBytes: Long, body: OutputStream.() -> Unit): PayloadRef
   fun readPayload(payloadRef: PayloadRef): State.DefinedState<ByteArray>
 }
 
 typealias PayloadReader = (PayloadRef) -> State.DefinedState<ByteArray>
+typealias PayloadWriter = (sizeBytes: Long, body: OutputStream.() -> Unit) -> PayloadRef

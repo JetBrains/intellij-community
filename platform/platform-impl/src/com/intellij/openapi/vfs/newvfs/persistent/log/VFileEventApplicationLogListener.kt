@@ -5,7 +5,7 @@ import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.events.*
 
 class VFileEventApplicationLogListener(
-  private val context: VfsLogContext
+  private val context: VfsLogOperationWriteContext
 ) : VFileEventApplicationListener {
   override fun beforeApply(event: VFileEvent) {
     val timestamp = System.currentTimeMillis()
@@ -49,7 +49,7 @@ class VFileEventApplicationLogListener(
         val isDirectory = event.isDirectory
         val childName = event.childName.toByteArray()
         context.enqueueOperationWrite(VfsOperationTag.VFILE_EVENT_CREATE) {
-          val childNameRef = payloadStorage.writePayload(childName.size.toLong()) {
+          val childNameRef = payloadWriter(childName.size.toLong()) {
             write(childName)
           }
           VfsOperation.VFileEventOperation.EventStart.Create(timestamp, parentId, childNameRef, isDirectory)

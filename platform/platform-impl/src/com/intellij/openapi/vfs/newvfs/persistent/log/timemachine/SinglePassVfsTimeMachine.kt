@@ -31,14 +31,14 @@ import java.util.concurrent.ConcurrentMap
  * the state of the VFS
  */
 class SinglePassVfsTimeMachine(
-  private val logContext: VfsLogContext,
+  private val queryContext: VfsLogQueryContext,
   private val id2filename: (Int) -> String?,
   private val attributeEnumerator: SimpleStringPersistentEnumerator,
   private val payloadReader: PayloadReader,
   private val fillerSupplier: () -> SnapshotFillerPresets.Filler = { SnapshotFillerPresets.everything }
 ) : VfsTimeMachine {
   override fun getSnapshot(point: OperationLogStorage.Iterator): ExtendedVfsSnapshot {
-    val snapshot = FillInVfsSnapshot(point, logContext, id2filename, attributeEnumerator, payloadReader)
+    val snapshot = FillInVfsSnapshot(point, queryContext, id2filename, attributeEnumerator, payloadReader)
     snapshot.filler = SnapshotFillerImpl(snapshot, fillerSupplier())
     return snapshot
   }
@@ -63,7 +63,7 @@ class SinglePassVfsTimeMachine(
 }
 
 class FillInVfsSnapshot(point: OperationLogStorage.Iterator,
-                        private val logContext: VfsLogContext,
+                        private val queryContext: VfsLogQueryContext,
                         private val id2filename: (Int) -> String?,
                         private val attributeEnumerator: SimpleStringPersistentEnumerator,
                         private val payloadReader: PayloadReader
@@ -147,7 +147,7 @@ class FillInVfsSnapshot(point: OperationLogStorage.Iterator,
       contentRestorationSequence.observeState().bind { it.restoreContent(payloadReader) }
 
     override fun readAttribute(fileAttribute: FileAttribute): DefinedState<AttributeInputStream?> {
-      val attrId = logContext.enumerateAttribute(fileAttribute)
+      val attrId = queryContext.enumerateAttribute(fileAttribute)
       val attrDataRef = attributeDataMap.getOrNull()?.get(attrId) ?: return State.NotAvailable()
       return payloadReader(attrDataRef).fmap {
         PersistentFSAttributeAccessor.validateAttributeVersion(

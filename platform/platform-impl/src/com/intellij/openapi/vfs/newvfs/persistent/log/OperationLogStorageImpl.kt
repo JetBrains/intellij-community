@@ -30,7 +30,7 @@ class OperationLogStorageImpl(
 ) : OperationLogStorage {
   private val storageIO: StorageIO
   private var persistentSize by PersistentVar.long(storagePath / "size")
-  private val position: AdvancingPositionTracker
+  private val positionTracker: AdvancingPositionTracker
   private val writeQueue = Channel<() -> Unit>(
     capacity = SystemProperties.getIntProperty("idea.vfs.log-vfs-operations.buffer-capacity", 10_000),
     BufferOverflow.SUSPEND
@@ -45,7 +45,7 @@ class OperationLogStorageImpl(
     val fileChannel = ResilientFileChannel(storagePath / "descriptors", READ, WRITE, CREATE)
     storageIO = ChunkMMappedFileIO(fileChannel, FileChannel.MapMode.READ_WRITE)
 
-    position = SkipListAdvancingPositionTracker(persistentSize ?: 0L)
+    positionTracker = SkipListAdvancingPositionTracker(persistentSize ?: 0L)
 
     repeat(writerJobsCount) { scope.launch { writeWorker() } }
   }
@@ -70,9 +70,9 @@ class OperationLogStorageImpl(
     }
   }
 
-  override fun enqueueOperationWrite(scope: CoroutineScope, tag: VfsOperationTag, compute: () -> VfsOperation<*>) {
+  override fun enqueueOperationWrite(tag: VfsOperationTag, compute: () -> VfsOperation<*>) {
     val descrSize = bytesForOperationDescriptor(tag)
-    val descrPos = position.beginAdvance(descrSize.toLong())
+    val descrPos = positionTracker.beginAdvance(descrSize.toLong())
     val job = { writeJobImpl(compute, tag, descrPos, descrSize) }
     val submitted = writeQueue.trySend(job)
     if (submitted.isSuccess) return
@@ -104,7 +104,7 @@ class OperationLogStorageImpl(
       throw e
     }
     finally {
-      position.finishAdvance(descrPos)
+      positionTracker.finishAdvance(descrPos)
     }
   }
 
@@ -230,15 +230,26 @@ class OperationLogStorageImpl(
     }
   }
 
-  override fun size(): Long = position.getReadyPosition()
-  override fun emergingSize(): Long = position.getCurrentAdvancePosition()
+  override fun size(): Long = positionTracker.getReadyPosition()
+  override fun emergingSize(): Long = positionTracker.getCurrentAdvancePosition()
   override fun persistentSize(): Long = persistentSize ?: 0L
 
-  override fun begin(): OperationLogStorage.Iterator = IteratorImpl(0L)
-  override fun end(): OperationLogStorage.Iterator = IteratorImpl(size())
+  override fun begin(): OperationLogStorage.Iterator = UnconstrainedIterator(0L)
+  override fun end(): OperationLogStorage.Iterator = UnconstrainedIterator(size())
+
+  /**
+   * @return begin and end iterators that are constrained to currently available range, i.e. copies of these
+   *  iterators won't traverse past the bounds of that range. Note that [end] may change even if [VfsLogQueryContext] is held.
+   */
+  fun currentlyAvailableRangeIterators(): Pair<OperationLogStorage.Iterator, OperationLogStorage.Iterator> {
+    val allowedRangeEnd = size()
+    val allowedRangeBegin = 0L
+    return ConstrainedIterator(allowedRangeBegin, allowedRangeBegin, allowedRangeEnd) to
+      ConstrainedIterator(allowedRangeEnd, allowedRangeBegin, allowedRangeEnd)
+  }
 
   override fun flush() {
-    val safePos = position.getReadyPosition()
+    val safePos = positionTracker.getReadyPosition()
     if (safePos != persistentSize) {
       storageIO.force()
       persistentSize = safePos
@@ -252,59 +263,78 @@ class OperationLogStorageImpl(
     storageIO.close()
   }
 
-  inner class IteratorImpl(
-    private var position: Long,
-    private var invalidationFlag: Boolean = false
+  abstract inner class IteratorBase(
+    protected var pos: Long,
+    protected var invalidationFlag: Boolean = false,
   ) : OperationLogStorage.Iterator {
     // [tag, previous operation, tag]  [tag, next operation, tag]
     //                      position --^
+    override fun getPosition(): Long = pos
 
-    override fun getPosition(): Long = position
+    override fun next(): OperationReadResult = readAt(pos).alsoAdvance()
+    override fun nextFiltered(mask: VfsOperationTagsMask): OperationReadResult = readAtFiltered(pos, mask).alsoAdvance()
 
-    override fun hasNext(): Boolean {
-      return position < size() && !invalidationFlag
-    }
-
-    override fun hasPrevious(): Boolean {
-      return position > 0 && !invalidationFlag
-    }
-
-    override fun next(): OperationReadResult = readAt(position).alsoAdvance()
-    override fun nextFiltered(mask: VfsOperationTagsMask): OperationReadResult = readAtFiltered(position, mask).alsoAdvance()
-
-    override fun previous(): OperationReadResult = readPreceding(position).alsoRetreat()
-    override fun previousFiltered(mask: VfsOperationTagsMask): OperationReadResult = readPrecedingFiltered(position, mask).alsoRetreat()
-
-    override fun copy(): IteratorImpl = IteratorImpl(position, invalidationFlag)
+    override fun previous(): OperationReadResult = readPreceding(pos).alsoRetreat()
+    override fun previousFiltered(mask: VfsOperationTagsMask): OperationReadResult = readPrecedingFiltered(pos, mask).alsoRetreat()
 
     private fun OperationReadResult.alsoAdvance() = this.also {
       when (this) {
-        is OperationReadResult.Complete -> position += bytesForOperationDescriptor(operation.tag)
-        is OperationReadResult.Incomplete -> position += bytesForOperationDescriptor(tag)
+        is OperationReadResult.Complete -> pos += bytesForOperationDescriptor(operation.tag)
+        is OperationReadResult.Incomplete -> pos += bytesForOperationDescriptor(tag)
         is OperationReadResult.Invalid -> invalidationFlag = true
       }
     }
 
     private fun OperationReadResult.alsoRetreat() = this.also {
       when (this) {
-        is OperationReadResult.Complete -> position -= bytesForOperationDescriptor(operation.tag)
-        is OperationReadResult.Incomplete -> position -= bytesForOperationDescriptor(tag)
+        is OperationReadResult.Complete -> pos -= bytesForOperationDescriptor(operation.tag)
+        is OperationReadResult.Incomplete -> pos -= bytesForOperationDescriptor(tag)
         is OperationReadResult.Invalid -> invalidationFlag = true
       }
     }
 
     override fun equals(other: Any?): Boolean {
-      if (other !is IteratorImpl) return false
-      return position == other.position
+      if (other !is IteratorBase) return false
+      return pos == other.pos
     }
 
     override fun hashCode(): Int {
-      return position.hashCode()
+      return pos.hashCode()
     }
 
     override fun toString(): String {
-      return "Iterator(position=$position)"
+      return "Iterator(position=$pos)"
     }
+  }
+
+  private inner class UnconstrainedIterator(position: Long, invalidationFlag: Boolean = false)
+    : IteratorBase(position, invalidationFlag) {
+    override fun hasNext(): Boolean {
+      return pos < size() && !invalidationFlag
+    }
+
+    override fun hasPrevious(): Boolean {
+      return pos > 0L && !invalidationFlag
+    }
+
+    override fun copy(): UnconstrainedIterator = UnconstrainedIterator(pos, invalidationFlag)
+  }
+
+  private inner class ConstrainedIterator(
+    position: Long,
+    val allowedRangeBegin: Long, // inclusive
+    val allowedRangeEnd: Long, // inclusive
+    invalidationFlag: Boolean = false
+  ) : IteratorBase(position, invalidationFlag) {
+    override fun hasNext(): Boolean {
+      return pos < allowedRangeEnd && !invalidationFlag
+    }
+
+    override fun hasPrevious(): Boolean {
+      return pos > allowedRangeBegin && !invalidationFlag
+    }
+
+    override fun copy(): ConstrainedIterator = ConstrainedIterator(pos, allowedRangeBegin, allowedRangeEnd, invalidationFlag)
   }
 
   companion object {

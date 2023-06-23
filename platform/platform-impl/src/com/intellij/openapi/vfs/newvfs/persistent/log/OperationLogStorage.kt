@@ -1,8 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
-import kotlinx.coroutines.CoroutineScope
-
 interface OperationLogStorage {
   /**
    * How many bytes takes the [VfsOperation]'s descriptor in a persistent storage.
@@ -14,7 +12,7 @@ interface OperationLogStorage {
    * @param compute is called at most once inside the launched coroutine
    * contract: tag == compute().tag
    */
-  fun enqueueOperationWrite(scope: CoroutineScope, tag: VfsOperationTag, compute: () -> VfsOperation<*>)
+  fun enqueueOperationWrite(tag: VfsOperationTag, compute: () -> VfsOperation<*>)
 
   /**
    * Performs an actual operation write, not supposed to be called directly.

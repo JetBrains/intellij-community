@@ -29,6 +29,8 @@ import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.*;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogEx;
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogImpl;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.*;
 import com.intellij.util.containers.*;
@@ -84,7 +86,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private BulkFileListener myPublisher;
   private volatile VfsData myVfsData;
   private final Application app;
-  private VfsLog myVfsLog;
+  private VfsLogEx myVfsLog;
 
   public PersistentFSImpl(@NotNull Application app) {
     this.app = app;
@@ -141,13 +143,13 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       // forcefully erase VfsLog storages if the feature is disabled so that when it will be
       // enabled again we won't consider old data as a source for recovery
       try {
-        VfsLog.Companion.clearStorage(vfsLogPath);
+        VfsLogImpl.Companion.clearStorage(vfsLogPath);
       }
       catch (Throwable e) {
         LOG.error("failed to clear the storage of VfsLog", e);
       }
     }
-    myVfsLog = new VfsLog(vfsLogPath, readOnly);
+    myVfsLog = new VfsLogImpl(vfsLogPath, readOnly);
   }
 
   @ApiStatus.Internal
@@ -864,7 +866,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           requestor, file, file.getModificationStamp(), modStamp, file.getTimeStamp(), -1, oldLength, count, false);
         List<VFileEvent> events = List.of(event);
         fireBeforeEvents(getPublisher(), events);
-        getVfsLog().getVFileEventApplicationListener().beforeApply(event);
+        myVfsLog.getVFileEventApplicationListener().beforeApply(event);
         IOException exception = null;
 
         NewVirtualFileSystem fs = getFileSystem(file);
@@ -892,7 +894,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
             long newTimestamp = attributes != null ? attributes.lastModified : DEFAULT_TIMESTAMP;
             long newLength = attributes != null ? attributes.length : DEFAULT_LENGTH;
             executeTouch(file, false, event.getModificationStamp(), newLength, newTimestamp);
-            getVfsLog().getVFileEventApplicationListener().afterApply(event, exception);
+            myVfsLog.getVFileEventApplicationListener().afterApply(event, exception);
             fireAfterEvents(getPublisher(), events);
           }
         }

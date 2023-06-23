@@ -148,7 +148,7 @@ object VfsRecoveryUtils {
    * Enumerators must be ok as they are copied into the new VFS caches directory.
    */
   fun recoverFromPoint(point: OperationLogStorage.Iterator,
-                       logContext: VfsLogContext,
+                       queryContext: VfsLogQueryContext,
                        oldStorageDir: Path,
                        newStorageDir: Path,
                        progressReporter: RawProgressReporter? = null) = wrapRecovery {
@@ -176,7 +176,7 @@ object VfsRecoveryUtils {
       val namesEnum = PersistentStringEnumerator(newStoragePaths.storagePath(namesEnumFile), true)
       val attributeEnumerator = SimpleStringPersistentEnumerator(newStoragePaths.storagePath(attrEnumFile))
 
-      val payloadReader: PayloadReader = logContext.payloadStorage::readPayload
+      val payloadReader: PayloadReader = queryContext.payloadReader
       val safeNameDeenum: (Int) -> String? = {
         try {
           namesEnum.valueOf(it)
@@ -188,11 +188,11 @@ object VfsRecoveryUtils {
       val fillerHolder = object {
         var filler: SnapshotFillerPresets.Filler? = null // single thread hence not volatile
       }
-      val vtm = SinglePassVfsTimeMachine(logContext, safeNameDeenum, attributeEnumerator, payloadReader) { fillerHolder.filler!! }
+      val vtm = SinglePassVfsTimeMachine(queryContext, safeNameDeenum, attributeEnumerator, payloadReader) { fillerHolder.filler!! }
       RecoveryContext(point.constCopier(), vtm, { fillerHolder.filler = it }, payloadReader)
     })
     val superRootId = PersistentFSTreeAccessor.SUPER_ROOT_ID
-    val childrenAttributeEnumerated = logContext.enumerateAttribute(PersistentFSTreeAccessor.CHILDREN_ATTR)
+    val childrenAttributeEnumerated = queryContext.enumerateAttribute(PersistentFSTreeAccessor.CHILDREN_ATTR)
 
     val newFsRecords = FSRecordsImpl.connect(
       newStorageDir,
@@ -342,7 +342,7 @@ object VfsRecoveryUtils {
             // recover available attrs except children
             for ((enumeratedAttrId, dataRef) in file.attributeDataMap.get()) {
               if (enumeratedAttrId == childrenAttributeEnumerated) continue
-              val attr = logContext.deenumerateAttribute(enumeratedAttrId) ?: throw IllegalStateException(
+              val attr = queryContext.deenumerateAttribute(enumeratedAttrId) ?: throw IllegalStateException(
                 "cannot deenumerate attribute using vfslog enumerator (enumeratedAttribute=$enumeratedAttrId)")
               val attrData = ctx.payloadReader(dataRef)
               if (attrData !is Ready) continue // skip if NotAvailable

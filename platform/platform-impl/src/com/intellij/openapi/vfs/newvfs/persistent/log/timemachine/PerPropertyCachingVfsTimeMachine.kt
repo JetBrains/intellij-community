@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSAttributeAccessor
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.constCopier
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage
 import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadReader
-import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogContext
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogQueryContext
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.Companion.bind
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.Companion.fmap
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.DefinedState
@@ -25,14 +25,13 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
 class PerPropertyCachingVfsTimeMachine(
-  private val vfsLogContext: VfsLogContext,
+  private val queryContext: VfsLogQueryContext,
   private val id2filename: (Int) -> String?,
   private val attributeEnumerator: SimpleStringPersistentEnumerator,
   private val payloadReader: PayloadReader
 ) : VfsTimeMachine {
   private val cache = sortedMapOf<Long, SoftReference<VfsSnapshot>>()
-  private val zeroLayer = NotAvailableVfsSnapshot(
-    vfsLogContext.operationLogStorage.begin()) // hard-reference so it won't be GCed from cache
+  private val zeroLayer = NotAvailableVfsSnapshot(queryContext.begin()) // hard-reference so it won't be GCed from cache
 
   init {
     cache[zeroLayer.point().getPosition()] = SoftReference(zeroLayer)
@@ -41,7 +40,7 @@ class PerPropertyCachingVfsTimeMachine(
   override fun getSnapshot(point: OperationLogStorage.Iterator): VfsSnapshot = synchronized(this) {
     cache[point.getPosition()]?.get()?.let { return it }
     val snapshot = CacheAwarePerPropertyVfsSnapshot(point,
-                                                    vfsLogContext,
+                                                    queryContext,
                                                     id2filename,
                                                     attributeEnumerator,
                                                     payloadReader,
@@ -59,7 +58,7 @@ class PerPropertyCachingVfsTimeMachine(
 
 class CacheAwarePerPropertyVfsSnapshot(
   point: OperationLogStorage.Iterator,
-  private val logContext: VfsLogContext,
+  private val queryContext: VfsLogQueryContext,
   private val id2filename: (Int) -> String?,
   private val attributeEnumerator: SimpleStringPersistentEnumerator,
   private val payloadReader: PayloadReader,
@@ -122,7 +121,7 @@ class CacheAwarePerPropertyVfsSnapshot(
       }
 
     override fun readAttribute(fileAttribute: FileAttribute): DefinedState<AttributeInputStream?> {
-      val attrId = logContext.enumerateAttribute(fileAttribute)
+      val attrId = queryContext.enumerateAttribute(fileAttribute)
       val attrData = VfsChronicle.lookupAttributeData(point(), fileId, attrId)
       if (!attrData.found) return State.NotAvailable()
       val payloadRef = attrData.value

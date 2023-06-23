@@ -4,7 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.log
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.RecordsInterceptor
 
 class RecordsLogInterceptor(
-  private val context: VfsLogContext
+  private val context: VfsLogOperationWriteContext
 ) : RecordsInterceptor {
   override fun onAllocateRecord(underlying: () -> Int): () -> Int =
     {

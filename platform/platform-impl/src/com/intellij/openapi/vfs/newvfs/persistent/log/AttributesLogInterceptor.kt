@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSConnection
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.AttributesInterceptor
 
 class AttributesLogInterceptor(
-  private val context: VfsLogContext
+  private val context: VfsLogOperationWriteContext
 ) : AttributesInterceptor {
   override fun onWriteAttribute(underlying: (connection: PersistentFSConnection, fileId: Int, attribute: FileAttribute) -> AttributeOutputStream): (connection: PersistentFSConnection, fileId: Int, attribute: FileAttribute) -> AttributeOutputStream =
     { connection, fileId, attribute ->
@@ -24,7 +24,7 @@ class AttributesLogInterceptor(
           context.enqueueOperationWrite(VfsOperationTag.ATTR_WRITE_ATTR) {
             val attrIdEnumerated = enumerateAttribute(attribute)
             val payloadRef =
-              payloadStorage.writePayload(data.size.toLong()) {
+              payloadWriter(data.size.toLong()) {
                 write(data, 0, data.size)
               }
             VfsOperation.AttributesOperation.WriteAttribute(fileId, attrIdEnumerated, payloadRef, result)
