@@ -8,20 +8,34 @@ import org.junit.Test
 
 class CustomIconLoadingTest {
   @Test
-  fun loadIconByFileName() {
-    val path = PlatformTestUtil.getPlatformTestDataPath() + "ui/gold_OffsetIcon@1x.png"
-    doTest(path)
+  fun `load icon by default file name`() {
+    doTest(PlatformTestUtil.getPlatformTestDataPath() + "ui/db_set_breakpoint.png")
+  }
+
+  @Test
+  fun `load icon by _dark file name`() {
+    doTest(PlatformTestUtil.getPlatformTestDataPath() + "ui/db_set_breakpoint_dark.png")
+  }
+
+  @Test
+  fun `load icon by @2x file name`() {
+    doTest(PlatformTestUtil.getPlatformTestDataPath() + "ui/db_set_breakpoint@2x.png")
+  }
+
+  @Test
+  fun `load icon by @2x_dark file name`() {
+    doTest(PlatformTestUtil.getPlatformTestDataPath() + "ui/db_set_breakpoint@2x_dark.png")
   }
 
   @Test
   fun loadIconByFileUrl() {
-    val url = "file:" + PlatformTestUtil.getPlatformTestDataPath() + "ui/gold_OffsetIcon@1x.png"
+    val url = "file:" + PlatformTestUtil.getPlatformTestDataPath() + "ui/db_set_breakpoint.png"
     doTest(url)
   }
 
   @Test
   fun loadIconFromJar() {
-    val url = "jar:file:" + PlatformTestUtil.getPlatformTestDataPath() + "ui/iconsJar.jar!/icons/gold_OffsetIcon@1x.png"
+    val url = "jar:file:" + PlatformTestUtil.getPlatformTestDataPath() + "ui/iconsJar.jar!/icons/db_set_breakpoint.png"
     doTest(url)
   }
 
