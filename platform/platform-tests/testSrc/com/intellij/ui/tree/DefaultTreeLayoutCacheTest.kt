@@ -1,11 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree
 
-import com.intellij.openapi.observable.util.addTreeModelListener
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.ui.tree.ui.DefaultTreeLayoutCache
-import com.intellij.util.ui.tree.TreeModelListenerList
-import org.easymock.EasyMock.mock
+import org.easymock.EasyMock.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.awt.Rectangle
@@ -25,11 +23,10 @@ class DefaultTreeLayoutCacheTest {
 
   @BeforeEach
   fun setUp() {
-    selectionModel = mock(TreeSelectionModel::class.java)
+    selectionModel = strictMock(TreeSelectionModel::class.java)
     model = DefaultTreeModel(null)
     sut = DefaultTreeLayoutCache(defaultRowHeight) { }
     sut.nodeDimensions = NodeDimensionsImpl(emptyMap())
-    sut.selectionModel = selectionModel
   }
 
   @Test
@@ -48,6 +45,17 @@ class DefaultTreeLayoutCacheTest {
         sut.isRootVisible = true
       },
       assertions = { assertStructure("r") },
+    )
+  }
+
+  @Test
+  fun `initial state - just invisible root`() {
+    testStructure(
+      initOps = {
+        setModelStructure("r")
+        sut.isRootVisible = false
+      },
+      assertions = { assertStructure("") },
     )
   }
 
@@ -83,6 +91,49 @@ class DefaultTreeLayoutCacheTest {
       assertions = { assertStructure("""
         | a1
       """.trimMargin()) },
+    )
+  }
+
+  @Test
+  fun `make root visible`() {
+    testStructure(
+      initOps = {
+        setModelStructure("""
+          |r
+          | a1
+        """.trimMargin())
+        selectionModel.resetRowSelection()
+      },
+      modOps = {
+        sut.isRootVisible = true
+      },
+      assertions = {
+        assertStructure("""
+          |r
+          | a1""".trimMargin()
+        )
+      },
+    )
+  }
+
+  @Test
+  fun `make root invisible`() {
+    testStructure(
+      initOps = {
+        setModelStructure("""
+          |r
+          | a1
+        """.trimMargin())
+        sut.isRootVisible = true
+        selectionModel.removeSelectionPath(path("r"))
+        selectionModel.resetRowSelection()
+      },
+      modOps = {
+        sut.isRootVisible = false
+      },
+      assertions = {
+        assertStructure(" a1")
+      },
     )
   }
 
@@ -251,6 +302,8 @@ class DefaultTreeLayoutCacheTest {
           """.trimMargin()
         )
         sut.isRootVisible = true
+        selectionModel.resetRowSelection()
+        selectionModel.resetRowSelection()
       },
       modOps = {
         sut.setExpandedState("r/a1", true)
@@ -284,6 +337,7 @@ class DefaultTreeLayoutCacheTest {
           """.trimMargin()
         )
         sut.isRootVisible = true
+        selectionModel.resetRowSelection()
       },
       modOps = {
         sut.setExpandedState("r/a1", true)
@@ -312,7 +366,10 @@ class DefaultTreeLayoutCacheTest {
     modOps: () -> Unit = { },
     assertions: () -> Unit = { },
   ) {
+    selectionModel.rowMapper = sut // for verifying
     initOps()
+    replay(selectionModel) // start verification
+    sut.selectionModel = selectionModel
     sut.model = model
     // This is usually handled by the tree UI, but we're unit testing here:
     model.addTreeModelListener(object : TreeModelListener {
@@ -334,6 +391,7 @@ class DefaultTreeLayoutCacheTest {
     })
     modOps()
     assertions()
+    verify(selectionModel) // complete verification
   }
 
   private fun setModelStructure(s: String) {
