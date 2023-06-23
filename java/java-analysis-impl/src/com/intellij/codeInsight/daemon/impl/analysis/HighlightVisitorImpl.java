@@ -183,7 +183,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   private void registerReferencesFromInjectedFragments(@NotNull PsiElement element) {
     InjectedLanguageManager manager = InjectedLanguageManager.getInstance(myFile.getProject());
-    manager.enumerateEx(element, myFile, false, (injectedPsi, places) -> injectedPsi.accept(REGISTER_REFERENCES_VISITOR));
+    manager.enumerateEx(element, myFile, false, (injectedPsi, places) -> {
+      if (InjectedLanguageJavaReferenceSupplier.doRegisterReferences(injectedPsi.getLanguage().getID())) {
+        injectedPsi.accept(REGISTER_REFERENCES_VISITOR);
+      }
+    });
   }
 
   @Override
