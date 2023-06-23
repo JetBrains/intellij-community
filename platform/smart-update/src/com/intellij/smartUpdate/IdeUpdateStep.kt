@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
 import com.intellij.openapi.updateSettings.impl.restartOrNotify
 import org.jetbrains.annotations.Nls
 import org.jetbrains.ide.ToolboxSettingsActionRegistry
@@ -28,8 +27,6 @@ class IdeUpdateStep: SmartUpdateStep {
     }
     else onSuccess()
   }
-
-  override fun isAvailable(project: Project) = ExternalUpdateManager.ACTUAL != null
 
   override fun isEnabled(project: Project) = getUpdateAction() != null
 
