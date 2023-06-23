@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="pty4j" type="repository">
-    <properties maven-id="org.jetbrains.pty4j:pty4j:0.12.11">
+    <properties maven-id="org.jetbrains.pty4j:pty4j:0.12.13">
       <exclude>
         <dependency maven-id="org.jetbrains:annotations" />
         <dependency maven-id="org.slf4j:slf4j-api" />
@@ -9,12 +9,12 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.12.11/pty4j-0.12.11.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.12.13/pty4j-0.12.13.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/purejavacomm/0.0.11.1/purejavacomm-0.0.11.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.12.11/pty4j-0.12.11-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.12.13/pty4j-0.12.13-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/purejavacomm/0.0.11.1/purejavacomm-0.0.11.1-sources.jar!/" />
     </SOURCES>
   </library>
