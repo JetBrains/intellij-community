@@ -14,6 +14,8 @@ import com.intellij.openapi.util.io.toNioPath
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.VfsRecoveryUtils
+import com.intellij.openapi.vfs.newvfs.persistent.VfsRecoveryUtils.thinOut
+import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.constCopier
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogQueryContext
@@ -50,8 +52,11 @@ class RecoverVfsFromLogAction : RecoveryAction {
     val queryContext = log.query()
 
     try {
-      val recoveryPoints = VfsRecoveryUtils.goodRecoveryPointsBefore(queryContext::end)
-      if (recoveryPoints.none()) {
+      val mostRecentPoint = VfsRecoveryUtils.findClosestPrecedingPointWithNoIncompleteOperationsBeforeIt(queryContext::end)
+      val recoveryPoints = mostRecentPoint?.let {
+        VfsRecoveryUtils.generateRecoveryPointsPriorTo(it.constCopier()).thinOut()
+      }
+      if (recoveryPoints == null || recoveryPoints.none()) {
         NotificationGroupManager.getInstance().getNotificationGroup("Cache Recovery")
           .createNotification(
             IdeBundle.message("notification.cache.recover.from.log.not.available"),

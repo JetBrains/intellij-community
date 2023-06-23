@@ -544,11 +544,13 @@ object VfsRecoveryUtils {
   data class RecoveryPoint(val timestamp: Long, val point: OperationLogStorage.Iterator)
 
   /**
-   * @return iterator <= point, such that there are at least [completeOperationsAtLeast] preceding operations without
+   * @return iterator <= [point], such that there are at least [completeOperationsAtLeast] preceding operations without
    * exceptions and incomplete descriptors
    */
-  fun findGoodOperationsSeriesEndPointClosestTo(point: () -> OperationLogStorage.Iterator,
-                                                completeOperationsAtLeast: Int = 50_000): OperationLogStorage.Iterator? {
+  fun findClosestPrecedingPointWithNoIncompleteOperationsBeforeIt(
+    point: () -> OperationLogStorage.Iterator,
+    completeOperationsAtLeast: Int = 50_000
+  ): OperationLogStorage.Iterator? {
     var candidate = point()
     out@ while (candidate.hasPrevious()) {
       val checkIter = candidate.copy()
@@ -573,32 +575,25 @@ object VfsRecoveryUtils {
     return null
   }
 
-  fun recoveryPointsBefore(point: () -> OperationLogStorage.Iterator): Sequence<RecoveryPoint> {
-    return sequence {
-      val iter = point()
-      // position iter after a vfile event end operation
-      VfsChronicle.traverseOperationsLog(iter, TraverseDirection.REWIND, VfsOperationTagsMask.ALL) {
-        if (it is VfsOperation.VFileEventOperation.EventStart) {
-          yield(RecoveryPoint(it.eventTimestamp, iter.copy()))
-        }
+  fun generateRecoveryPointsPriorTo(point: () -> OperationLogStorage.Iterator): Sequence<RecoveryPoint> = sequence {
+    val iter = point()
+    // position iter after a vfile event end operation
+    VfsChronicle.traverseOperationsLog(iter, TraverseDirection.REWIND, VfsOperationTagsMask.ALL) {
+      if (it is VfsOperation.VFileEventOperation.EventStart) {
+        yield(RecoveryPoint(it.eventTimestamp, iter.copy()))
       }
     }
   }
 
-  fun goodRecoveryPointsBefore(
-    point: () -> OperationLogStorage.Iterator,
-    completeOperationsAtLeast: Int = 50_000,
+  fun Sequence<RecoveryPoint>.thinOut(
     skipPeriodMsInit: Long = 30_000,
     periodMultiplier: Double = 1.618 // 30 sec * 1.618 ^ 20 ~= 5 days
   ): Sequence<RecoveryPoint> {
     val fiveYearsInMs = 5L * 365 * 24 * 60 * 60 * 1000
-    val startPoint = findGoodOperationsSeriesEndPointClosestTo(point, completeOperationsAtLeast)
-                     ?: return emptySequence()
     return sequence {
-      val allRecoveryPoints = recoveryPointsBefore(startPoint.constCopier())
       var skipPeriod: Long = skipPeriodMsInit
       var targetTimestamp: Long? = null
-      for (rp in allRecoveryPoints) {
+      for (rp in this@thinOut) {
         if (targetTimestamp == null) {
           yield(rp)
           targetTimestamp = rp.timestamp
