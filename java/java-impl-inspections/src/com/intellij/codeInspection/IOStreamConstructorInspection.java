@@ -74,7 +74,7 @@ public class IOStreamConstructorInspection extends AbstractBaseJavaLocalInspecti
     if (argumentList == null) return null;
     PsiExpression[] arguments = argumentList.getExpressions();
     if (arguments.length != 1) return null;
-    return ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(arguments[0]), PsiExpression.class);
+    return PsiUtil.skipParenthesizedExprDown(arguments[0]);
   }
 
   private enum StreamType {

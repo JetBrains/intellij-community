@@ -556,9 +556,9 @@ class CollectMigration extends BaseStreamApiMigration {
 
     @Nullable
     public static GroupingTerminal tryExtractJava8Style(@NotNull TerminalBlock tb, @Nullable PsiMethodCallExpression call) {
-      if(call == null) return null;
+      if (call == null) return null;
       PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
-      return tryExtractJava8Style(tb, tryCast(qualifier, PsiMethodCallExpression.class), tryCast(call, PsiMethodCallExpression.class));
+      return tryExtractJava8Style(tb, tryCast(qualifier, PsiMethodCallExpression.class), call);
     }
 
     /*

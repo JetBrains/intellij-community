@@ -288,13 +288,13 @@ public class ShowAffectedTestsAction extends AnAction {
   @Nullable
   private static PsiMethod findMethodAtCaret(@NotNull AnActionEvent e) {
     UMethod uMethod = UastUtils.findContaining(findElementAtCaret(e), UMethod.class);
-    return uMethod == null ? null : ObjectUtils.tryCast(uMethod.getJavaPsi(), PsiMethod.class);
+    return uMethod == null ? null : uMethod.getJavaPsi();
   }
 
   @Nullable
   private static PsiClass findClassAtCaret(@NotNull AnActionEvent e) {
     UClass uClass = UastUtils.findContaining(findElementAtCaret(e), UClass.class);
-    return uClass == null ? null : ObjectUtils.tryCast(uClass.getJavaPsi(), PsiClass.class);
+    return uClass == null ? null : uClass.getJavaPsi();
   }
 
   @Nullable

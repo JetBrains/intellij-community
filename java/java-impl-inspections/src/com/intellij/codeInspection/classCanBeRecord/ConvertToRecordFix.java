@@ -241,9 +241,8 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
 
     private static boolean throwsOnlyUncheckedExceptions(@NotNull PsiMethod psiMethod) {
       for (PsiClassType throwsType : psiMethod.getThrowsList().getReferencedTypes()) {
-        PsiClassType throwsClassType = ObjectUtils.tryCast(throwsType, PsiClassType.class);
-        if (throwsClassType == null) continue;
-        if (!ExceptionUtil.isUncheckedException(throwsClassType)) {
+        if (throwsType == null) continue;
+        if (!ExceptionUtil.isUncheckedException(throwsType)) {
           return false;
         }
       }
@@ -336,7 +335,7 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
       Map<String, PsiType> ctorParamsWithType = Arrays.stream(ctorParams)
         .collect(Collectors.toMap(param -> param.getName(), param -> param.getType(), (first, second) -> first));
       for (PsiField instanceField : instanceFields) {
-        PsiType ctorParamType = ObjectUtils.tryCast(ctorParamsWithType.get(instanceField.getName()), PsiType.class);
+        PsiType ctorParamType = ctorParamsWithType.get(instanceField.getName());
         if (ctorParamType instanceof PsiEllipsisType) {
           ctorParamType = ((PsiEllipsisType)ctorParamType).toArrayType();
         }

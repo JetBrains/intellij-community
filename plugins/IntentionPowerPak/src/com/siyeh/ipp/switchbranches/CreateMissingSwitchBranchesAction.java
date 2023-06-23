@@ -105,7 +105,7 @@ public class CreateMissingSwitchBranchesAction extends PsiElementBaseIntentionAc
       if (values != null) return values;
     }
     else if (expression instanceof PsiMethodCallExpression) {
-      PsiModifierListOwner target = ObjectUtils.tryCast(((PsiMethodCallExpression)expression).resolveMethod(), PsiModifierListOwner.class);
+      PsiModifierListOwner target = ((PsiMethodCallExpression)expression).resolveMethod();
       List<Value> values = getValues(target, type, expression);
       if (values != null) return values;
     }
