@@ -18,8 +18,8 @@ class K2MetricsFUSCollector : ApplicationUsagesCollector() {
     }
 
     companion object {
-        private val group = EventLogGroup("kotlin.k.two.metrics", 1)
-        private val isK2EnabledField = EventFields.Boolean("isK2Enabled")
+        private val group = EventLogGroup("kotlin.k.two.metrics", 2)
+        private val isK2EnabledField = EventFields.Boolean("is_k2_enabled")
         private val isK2EnabledEvent = Companion.group.registerEvent("enabled", isK2EnabledField)
     }
 
