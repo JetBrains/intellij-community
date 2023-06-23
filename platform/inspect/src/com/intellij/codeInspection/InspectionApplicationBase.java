@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -122,6 +123,11 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     try {
       header();
       execute();
+    }
+    catch (ProcessCanceledException e) {
+      reportError(e);
+      gracefulExit();
+      return;
     }
     catch (Throwable e) {
       LOG.error(e);
