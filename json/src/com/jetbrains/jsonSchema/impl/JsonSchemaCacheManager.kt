@@ -14,15 +14,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.containers.CollectionFactory
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.ScheduledExecutorService
 
 @Service(Service.Level.PROJECT)
 class JsonSchemaCacheManager : Disposable {
 
-  private val cache: ConcurrentMap<String, CachedValue<JsonSchemaObjectFuture>> = ConcurrentHashMap()
+  private val cache: ConcurrentMap<VirtualFile, CachedValue<JsonSchemaObjectFuture>> = CollectionFactory.createConcurrentWeakMap()
 
   /**
    *  Computes [JsonSchemaObject] preventing multiple concurrent computations of the same schema.
@@ -49,7 +49,7 @@ class JsonSchemaCacheManager : Disposable {
   private fun getUpToDateFuture(schemaVirtualFile: VirtualFile,
                                 schemaPsiFile: PsiFile,
                                 newFuture: JsonSchemaObjectFuture): JsonSchemaObjectFuture {
-    val cachedValue: CachedValue<JsonSchemaObjectFuture> = cache.compute(schemaVirtualFile.url) { _, prevValue ->
+    val cachedValue: CachedValue<JsonSchemaObjectFuture> = cache.compute(schemaVirtualFile) { _, prevValue ->
       val virtualFileModStamp: Long = schemaVirtualFile.modificationStamp
       val psiFileModStamp: Long = schemaPsiFile.modificationStamp
       if (prevValue != null && prevValue.virtualFileModStamp == virtualFileModStamp && prevValue.psiFileModStamp == psiFileModStamp) {
