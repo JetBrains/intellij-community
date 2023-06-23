@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.scale.JBUIScale
@@ -39,6 +40,9 @@ import kotlin.math.roundToInt
 
 object StartupUiUtil {
   @JvmField
+  val PLUGGABLE_LAF_KEY: Key<String> = Key.create("Pluggable.laf.name")
+
+  @JvmField
   val LAF_WITH_THEME_KEY: Key<Boolean> = Key.create("Laf.with.ui.theme")
 
   @Internal
@@ -56,6 +60,41 @@ object StartupUiUtil {
   @JvmStatic
   val isUnderDarcula: Boolean
     get() = UIManager.getLookAndFeel().name.contains("Darcula")
+
+  @JvmStatic
+  fun isUnderIntelliJLaF(): Boolean {
+    return UIManager.getLookAndFeel().name.contains("IntelliJ") || isUnderDefaultMacTheme() || UIUtil.isUnderWin10LookAndFeel()
+  }
+
+  @JvmStatic
+  fun isUnderDefaultMacTheme(): Boolean {
+    if (!SystemInfoRt.isMac) {
+      return false
+    }
+
+    val lookAndFeel = UIManager.getLookAndFeel()
+    if (lookAndFeel is UserDataHolder) {
+      return lookAndFeel.getUserData(LAF_WITH_THEME_KEY) != true && lookAndFeel.getUserData(PLUGGABLE_LAF_KEY) == "macOS Light"
+    }
+    else {
+      return false
+    }
+  }
+
+  @JvmStatic
+  fun isUnderWin10LookAndFeel(): Boolean {
+    if (!SystemInfoRt.isWindows) {
+      return false
+    }
+
+    val lookAndFeel = UIManager.getLookAndFeel()
+    if (lookAndFeel is UserDataHolder) {
+      return lookAndFeel.getUserData(LAF_WITH_THEME_KEY) != true && lookAndFeel.getUserData(PLUGGABLE_LAF_KEY) == "Windows 10 Light"
+    }
+    else {
+      return false
+    }
+  }
 
   @JvmStatic
   fun getLcdContrastValue(): Int {
