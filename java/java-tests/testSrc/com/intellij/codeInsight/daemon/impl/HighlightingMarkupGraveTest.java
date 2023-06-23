@@ -53,6 +53,7 @@ public class HighlightingMarkupGraveTest extends DaemonAnalyzerTestCase {
     }
   }
   public void testStoredHighlightersAreAppliedImmediatelyOnFileReload() {
+    if (!HighlightingMarkupGrave.isEnabled()) return;
     MyStoppableAnnotator annotator = new MyStoppableAnnotator();
     DaemonRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new MyStoppableAnnotator[]{annotator}, () -> {
       @Language("JAVA")

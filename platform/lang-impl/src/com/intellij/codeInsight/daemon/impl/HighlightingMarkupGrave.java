@@ -23,6 +23,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -56,6 +57,7 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
     project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+        if (!isEnabled()) return;
         for (FileEditor fileEditor : FileEditorManager.getInstance(project).getEditors(file)) {
           if (fileEditor instanceof TextEditor textEditor) {
             resurrectZombies(textEditor.getEditor(), file);
@@ -284,6 +286,7 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
 
   @Override
   public void loadState(@NotNull Element state) {
+    if (!isEnabled()) return;
     cachedMarkup =
     state.getChildren("markupCoffin")
       .stream()
@@ -296,8 +299,8 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
   }
 
   @Override
-  @NotNull
   public Element getState() {
+    if (!isEnabled()) return null;
     Map<VirtualFile, FileMarkupInfo> markup =
     Arrays.stream(FileEditorManager.getInstance(myProject).getAllEditors())
       .filter(fe -> fe instanceof TextEditor)
@@ -318,6 +321,10 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
       LOG.debug("saved markup for " + StringUtil.join(markup.keySet(), v -> v.getName(), ","));
     }
     return element;
+  }
+
+  static boolean isEnabled() {
+    return Registry.is("cache.higlighting.markup.on.disk");
   }
 
   private static boolean isHighlightingCompleted(@NotNull FileEditor fileEditor, @NotNull Project project) {
