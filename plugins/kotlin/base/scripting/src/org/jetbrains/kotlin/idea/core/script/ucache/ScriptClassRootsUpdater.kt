@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.workspace.WorkspaceModel
@@ -30,6 +31,7 @@ import org.jetbrains.kotlin.idea.base.util.CheckCanceledLock
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.scriptingWarnLog
 import org.jetbrains.kotlin.idea.util.FirPluginOracleService
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtFile
@@ -38,6 +40,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.ifFalse
 import org.jetbrains.kotlin.utils.addToStdlib.ifTrue
 import java.nio.file.Paths
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
@@ -54,6 +57,9 @@ import java.util.concurrent.atomic.AtomicReference
  * This will start indexing.
  * Also analysis cache will be cleared and changed opened script files will be reanalyzed.
  */
+
+private const val INIT_TIMEOUT_REGISTRY_KEY = "kotlin.scripting.wait-init.timeout.sec"
+
 abstract class ScriptClassRootsUpdater(
     val project: Project,
     val manager: CompositeScriptConfigurationManager,
@@ -96,12 +102,14 @@ abstract class ScriptClassRootsUpdater(
     }
 
     val classpathRoots: ScriptClassRootsCache
-        get() = cache.get()
-
-    fun getNotEmptyClassPathRoots(): ScriptClassRootsCache {
-        cacheNotEmptyLatch.await()
-        return cache.get()
-    }
+        get() {
+            val timeoutSec = Registry.intValue(INIT_TIMEOUT_REGISTRY_KEY, 5).toLong()
+            if (!cacheNotEmptyLatch.await(timeoutSec, TimeUnit.SECONDS)) {
+                scriptingWarnLog("Script configurations init timeout elapsed. " +
+                                         "Try increasing the value of registry key '${INIT_TIMEOUT_REGISTRY_KEY}'")
+            }
+            return cache.get()
+        }
 
     /**
      * @param synchronous Used from legacy FS cache only, don't use
