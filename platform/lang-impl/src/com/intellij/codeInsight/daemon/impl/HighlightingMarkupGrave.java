@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -20,7 +21,6 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.registry.Registry;
@@ -54,6 +54,9 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
   private ConcurrentMap<VirtualFile, FileMarkupInfo> cachedMarkup = new ConcurrentHashMap<>();
   HighlightingMarkupGrave(@NotNull Project project) {
     myProject = project;
+    // check that important TextAttributesKeys are initialized
+    assert DefaultLanguageHighlighterColors.INSTANCE_FIELD.getFallbackAttributeKey() != null : DefaultLanguageHighlighterColors.INSTANCE_FIELD;
+
     project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
@@ -82,7 +85,7 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
   }
 
   private void putDownActiveZombiesInFile(@NotNull FileEditor fileEditor) {
-    if (!cachedMarkup.containsKey(fileEditor.getFile())) {
+    if (cachedMarkup.remove(fileEditor.getFile()) == null) {
       return;
     }
     List<RangeHighlighter> toRemove = new ArrayList<>();
@@ -95,7 +98,6 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
           }
         }
       }
-      cachedMarkup.remove(fileEditor.getFile());
     }
     if (LOG.isDebugEnabled()) {
       LOG.debug("removing " + toRemove.size() + " markups for " + fileEditor + "; dumb=" + DumbService.getInstance(myProject).isDumb());
@@ -105,7 +107,6 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
       highlighter.dispose();
     }
   }
-
 
   private void resurrectZombies(@NotNull Editor editor, @NotNull VirtualFile file) {
     FileMarkupInfo markupInfo = cachedMarkup.get(file);
@@ -125,12 +126,14 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
         continue;
       }
       RangeHighlighter highlighter;
-      TextAttributesKey attributesKey = state.textAttributesKey();
-      if (attributesKey == null) {
+      // re-read TextAttributesKey because it might be read too soon, with its myFallbackKey uninitialized.
+      // (still store TextAttributesKey by instance, instead of String, to intern its external name)
+      TextAttributesKey key = state.textAttributesKey() == null ? null : TextAttributesKey.find(state.textAttributesKey().getExternalName());
+      if (key == null) {
         highlighter = markupModel.addRangeHighlighter(state.start(), state.end(), state.layer(), state.textAttributes(), state.target());
       }
       else {
-        highlighter = markupModel.addRangeHighlighter(attributesKey, state.start(), state.end(), state.layer(), state.target());
+        highlighter = markupModel.addRangeHighlighter(key, state.start(), state.end(), state.layer(), state.target());
       }
       if (state.gutterIcon() != null) {
         highlighter.setGutterIconRenderer(new GutterIconRenderer() {
@@ -189,17 +192,22 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
                                   @Nullable TextAttributesKey textAttributesKey,
                                   @Nullable TextAttributes textAttributes,
                                   @Nullable Icon gutterIcon) {
+    private HighlighterState(@NotNull RangeHighlighter highlighter, @Nullable EditorColorsScheme scheme) {
+      this(highlighter.getStartOffset(), highlighter.getEndOffset(),
+           highlighter.getLayer(),
+           highlighter.getTargetArea(),
+           highlighter.getTextAttributesKey(),
+           highlighter.getTextAttributes(scheme),
+           highlighter.getGutterIconRenderer() == null ? null : highlighter.getGutterIconRenderer().getIcon()
+      );
+    }
+
     @NotNull
     private static HighlighterState exhume(@NotNull Element state) {
-      TextAttributesKey key;
-      if (JDOMExternalizerUtil.readField(state, "myExternalName") == null) {
-        key = null;
-      }
-      else {
-        key = new TextAttributesKey(state);
-      }
-      TextAttributes attributes = new TextAttributes(state);
-      if (attributes.isEmpty()) attributes = null;
+      String keyExternalName = state.getAttributeValue("key");
+      TextAttributesKey key = keyExternalName == null ? null : TextAttributesKey.find(keyExternalName);
+      TextAttributes attributes = key == null ? new TextAttributes(state) : null;
+      if (attributes != null && attributes.isEmpty()) attributes = null;
       int start = Integer.parseInt(state.getAttributeValue("start", ""));
       int end = Integer.parseInt(state.getAttributeValue("end", ""));
       int layer = Integer.parseInt(state.getAttributeValue("layer", ""));
@@ -228,7 +236,7 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
       HighlighterTargetArea target = target();
       Element element = new Element("highlighter");
       if (key != null) {
-        key.writeExternal(element);
+        element.setAttribute("key", key.getExternalName());
       }
       else if (attributes != null) {
         attributes.writeExternal(element);
@@ -261,26 +269,16 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
       return Arrays.stream(markupModel.getAllHighlighters())
         .filter(h -> {
           LineMarkerInfo<?> lm;
-          return h.getErrorStripeTooltip() instanceof HighlightInfo info && info.getSeverity().compareTo(HighlightSeverity.INFORMATION) > 0
-                 || (lm = LineMarkersUtil.getLineMarkerInfo(h)) != null && lm.createGutterRenderer() != null;
+          return h.getErrorStripeTooltip() instanceof HighlightInfo info &&
+                 (info.getSeverity().compareTo(HighlightSeverity.INFORMATION) > 0   // either warning/error or symbol type (e.g. field text attribute)
+                  || info.getSeverity() == HighlightInfoType.SYMBOL_TYPE_SEVERITY
+                 )
+                 || (lm = LineMarkersUtil.getLineMarkerInfo(h)) != null && lm.createGutterRenderer() != null; // or a line marker with a gutter icon
           }
         )
-        .map(h -> toState(h, colorsScheme))
+        .map(h -> new HighlighterState(h, colorsScheme))
         .sorted(comparator)
         .toList();
-    }
-
-    @NotNull
-    private static HighlighterState toState(@NotNull RangeHighlighter highlighter, @Nullable EditorColorsScheme scheme) {
-      TextAttributesKey key = highlighter.getTextAttributesKey();
-      TextAttributes attributes = highlighter.getTextAttributes(scheme);
-      int start = highlighter.getStartOffset();
-      int end = highlighter.getEndOffset();
-      int layer = highlighter.getLayer();
-      HighlighterTargetArea target = highlighter.getTargetArea();
-      GutterIconRenderer gutterIconRenderer = highlighter.getGutterIconRenderer();
-      Icon icon = gutterIconRenderer == null ? null : gutterIconRenderer.getIcon();
-      return new HighlighterState(start, end, layer, target, key, attributes, icon);
     }
   }
 
@@ -325,6 +323,16 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
 
   static boolean isEnabled() {
     return Registry.is("cache.higlighting.markup.on.disk");
+  }
+  static void runInEnabled(@NotNull Runnable runnable) {
+    boolean wasEnabled = isEnabled();
+    Registry.get("cache.higlighting.markup.on.disk").setValue(true);
+    try {
+      runnable.run();
+    }
+    finally {
+      Registry.get("cache.higlighting.markup.on.disk").setValue(wasEnabled);
+    }
   }
 
   private static boolean isHighlightingCompleted(@NotNull FileEditor fileEditor, @NotNull Project project) {
