@@ -2,10 +2,12 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.core.CoreBundle;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
@@ -17,7 +19,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.intercept.*;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FlushingDaemon;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
@@ -43,10 +44,14 @@ import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static com.intellij.notification.NotificationType.ERROR;
+import static com.intellij.notification.NotificationType.INFORMATION;
 import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Indexes;
+import static com.intellij.util.SystemProperties.getBooleanProperty;
+import static com.intellij.util.SystemProperties.getIntProperty;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -58,12 +63,19 @@ public final class PersistentFSConnection {
   static final int RESERVED_ATTR_ID = 0;
   static final AttrPageAwareCapacityAllocationPolicy REASONABLY_SMALL = new AttrPageAwareCapacityAllocationPolicy();
 
-  private static final boolean USE_GENTLE_FLUSHER = SystemProperties.getBooleanProperty("vfs.flushing.use-gentle-flusher", true);
+  private static final boolean USE_GENTLE_FLUSHER = getBooleanProperty("vfs.flushing.use-gentle-flusher", true);
+
+  /**
+   * After how many errors ('corruptions') insist on restarting IDE? I.e. we schedule
+   * VFS rebuild and _suggest_ restart IDE on the first error detected -- but it is
+   * just a suggestion. After that many errors, we show a modal dialog and insist on
+   * restart now, since that many errors severely affect IDE operation.
+   */
+  private static final int INSIST_TO_RESTART_AFTER_ERRORS_COUNT = getIntProperty("vfs.insist-to-restart-after-n-errors", 1000);
 
 
   private final IntList myFreeRecords;
-  //@NotNull
-  //private final VfsDependentEnum myAttributesList;
+
   @NotNull
   private final PersistentFSPaths myPersistentFSPaths;
 
@@ -88,7 +100,7 @@ public final class PersistentFSConnection {
   private final Closeable flushingTask;
 
   /** accessed under {@link #r}/{@link #w} */
-  private final AtomicBoolean myCorrupted = new AtomicBoolean();
+  private final AtomicInteger corruptionsDetected = new AtomicInteger();
 
   PersistentFSConnection(@NotNull PersistentFSPaths paths,
                          @NotNull PersistentFSRecordsStorage records,
@@ -294,9 +306,9 @@ public final class PersistentFSConnection {
     // no synchronization, it's ok to have race here
     if (myDirty) {
       myDirty = false;
-      myRecords.setConnectionStatus(myCorrupted.get()
-                                    ? PersistentFSHeaders.CORRUPTED_MAGIC
-                                    : PersistentFSHeaders.SAFELY_CLOSED_MAGIC);
+      myRecords.setConnectionStatus(corruptionsDetected.get() > 0 ?
+                                    PersistentFSHeaders.CORRUPTED_MAGIC :
+                                    PersistentFSHeaders.SAFELY_CLOSED_MAGIC);
     }
   }
 
@@ -314,12 +326,18 @@ public final class PersistentFSConnection {
 
   void markAsCorruptedAndScheduleRebuild(@NotNull Throwable cause) throws RuntimeException, Error {
     try {
-      if (myCorrupted.compareAndSet(false, true)) {
+      int corruptions = corruptionsDetected.incrementAndGet();
+      if (corruptions == 1) {
         scheduleVFSRebuild(cause.getMessage(), cause);
         if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-          showCorruptionNotification();
+          showCorruptionNotification(/*insist: */ false);
         }
         doForce();//forces connectionStatus=CORRUPTED to be written on disk
+      }
+      else if (corruptions == INSIST_TO_RESTART_AFTER_ERRORS_COUNT) {
+        if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+          showCorruptionNotification(/*insist: */ true);
+        }
       }
     }
     catch (IOException ioException) {
@@ -377,13 +395,28 @@ public final class PersistentFSConnection {
     assert id > 0 : id;
   }
 
-  private static void showCorruptionNotification() {
-    NotificationGroupManager.getInstance().getNotificationGroup("IDE Caches")
-      .createNotification(CoreBundle.message("vfs.corruption.notification.title"),
-                          CoreBundle.message("vfs.corruption.notification.text"),
-                          NotificationType.INFORMATION)
-      .addAction(ActionManager.getInstance().getAction("RestartIde"))
-      .notify(null);
+  private static void showCorruptionNotification(boolean insisting) {
+    AnAction restartIdeAction = ActionManager.getInstance().getAction("RestartIde");
+    NotificationGroup notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("IDE Caches");
+    if (insisting) {
+      notificationGroup.createNotification(
+          CoreBundle.message("vfs.corruption.notification.title"),
+          CoreBundle.message("vfs.corruption.notification.text"),
+          INFORMATION
+        )
+        .setImportant(true)
+        .addAction(restartIdeAction)
+        .notify(null);
+    }
+    else {
+      notificationGroup.createNotification(
+          CoreBundle.message("vfs.corruption.notification.insist.title"),
+          CoreBundle.message("vfs.corruption.notification.insist.text"),
+          ERROR
+        )
+        .addAction(restartIdeAction)
+        .notify(null);
+    }
   }
 
   /**

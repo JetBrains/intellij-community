@@ -391,19 +391,20 @@ final class PersistentFSConnector {
     }
     else {
       LOG.info("VFS uses regular attributes storage");
+      boolean bulkAttrReadSupport = false;
       return new AttributesStorageOld(
-        /*bulk attribute support: */false,
-                                    FSRecordsImpl.INLINE_ATTRIBUTES,
-                                    new Storage(attributesFile, PersistentFSConnection.REASONABLY_SMALL) {
-                                      @Override
-                                      protected AbstractRecordsTable createRecordsTable(@NotNull StorageLockContext context,
-                                                                                        @NotNull Path recordsFile)
-                                        throws IOException {
-                                        return FSRecordsImpl.INLINE_ATTRIBUTES && FSRecordsImpl.USE_SMALL_ATTR_TABLE
-                                               ? new CompactRecordsTable(recordsFile, context, false)
-                                               : super.createRecordsTable(context, recordsFile);
-                                      }
-                                    });
+        bulkAttrReadSupport,
+        FSRecordsImpl.INLINE_ATTRIBUTES,
+        new Storage(attributesFile, PersistentFSConnection.REASONABLY_SMALL) {
+          @Override
+          protected AbstractRecordsTable createRecordsTable(@NotNull StorageLockContext context,
+                                                            @NotNull Path recordsFile)
+            throws IOException {
+            return FSRecordsImpl.INLINE_ATTRIBUTES && FSRecordsImpl.USE_SMALL_ATTR_TABLE
+                   ? new CompactRecordsTable(recordsFile, context, false)
+                   : super.createRecordsTable(context, recordsFile);
+          }
+        });
     }
   }
 
