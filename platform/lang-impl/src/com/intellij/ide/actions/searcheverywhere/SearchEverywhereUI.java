@@ -336,7 +336,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         continue;
       }
 
-      return ((SearchFieldActionsContributor)contributor).createRightActions(getSearchPattern(), () -> {
+      return ((SearchFieldActionsContributor)contributor).createRightActions(() -> {
         scheduleRebuildList(SearchRestartReason.TEXT_SEARCH_OPTION_CHANGED);
       });
     }

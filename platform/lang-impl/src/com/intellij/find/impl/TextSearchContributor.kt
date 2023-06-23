@@ -132,7 +132,7 @@ class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhere
   override fun getActions(onChanged: Runnable): List<AnAction> =
     listOf(ScopeAction { onChanged.run() }, JComboboxAction(project) { onChanged.run() }.also { onDispose = it.saveMask })
 
-  override fun createRightActions(pattern: String, onChanged: Runnable): List<TextSearchRightActionAction> {
+  override fun createRightActions(onChanged: Runnable): List<TextSearchRightActionAction> {
     lateinit var regexp: AtomicBooleanProperty
     val word = AtomicBooleanProperty(model.isWholeWordsOnly).apply {
       afterChange {

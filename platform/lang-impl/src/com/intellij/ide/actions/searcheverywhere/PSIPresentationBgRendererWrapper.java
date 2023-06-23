@@ -213,8 +213,8 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
 
   @NotNull
   @Override
-  public List<AnAction> createRightActions(@NotNull String pattern, @NotNull Runnable onChanged) {
-    return myDelegate.createRightActions(pattern, onChanged);
+  public List<AnAction> createRightActions(@NotNull Runnable onChanged) {
+    return myDelegate.createRightActions(onChanged);
   }
 
   @Override

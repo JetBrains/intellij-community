@@ -280,7 +280,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
 
   @NotNull
   @Override
-  public List<AnAction> createRightActions(@NotNull String pattern, @NotNull Runnable onChanged) {
+  public List<AnAction> createRightActions(@NotNull Runnable onChanged) {
     return ContainerUtil.emptyList();
   }
 
