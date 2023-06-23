@@ -98,6 +98,9 @@ class DefaultTreeLayoutCache(
     }
     checkInvariants(debugLocation)
     val newVisibleChildren = node.visibleChildCount
+    if (newVisibleChildren != oldVisibleChildren) {
+      selectionModel?.resetRowSelection()
+    }
     if (wasVisible && oldVisibleChildren == 0 && newVisibleChildren == 1) {
       autoExpandHandler(node.getChildAt(0).path)
     }
