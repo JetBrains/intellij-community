@@ -115,7 +115,6 @@ class IntentionPreviewComputable(private val project: Project,
       psiFileCopy = IntentionPreviewUtils.obtainCopyForPreview(fileToCopy)
       editorCopy = IntentionPreviewEditor(psiFileCopy, originalEditor.settings)
     }
-    originalEditor.document.setReadOnly(true)
     ProgressManager.checkCanceled()
     // force settings initialization, as it may spawn EDT action which is not allowed inside generatePreview()
     val settings = CodeStyle.getSettings(editorCopy)
