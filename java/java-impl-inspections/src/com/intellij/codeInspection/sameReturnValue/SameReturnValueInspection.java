@@ -33,7 +33,7 @@ public class SameReturnValueInspection extends GlobalJavaBatchInspectionTool {
 
       String returnValue = refMethod.getReturnValueIfSame();
       if (returnValue != null) {
-        final UMethod method = (UMethod)refMethod.getUastElement();
+        final UMethod method = refMethod.getUastElement();
         final PsiType returnType = method.getReturnType();
         if (returnType == null || returnType.equalsToText(CommonClassNames.JAVA_LANG_VOID)) {
           return null;

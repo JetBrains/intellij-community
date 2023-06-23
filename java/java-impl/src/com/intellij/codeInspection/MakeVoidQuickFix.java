@@ -45,8 +45,8 @@ public class MakeVoidQuickFix implements LocalQuickFix {
     PsiMethod psiMethod = null;
     if (myProcessor != null) {
       RefElement refElement = (RefElement)myProcessor.getElement(descriptor);
-      if (refElement instanceof RefMethod && refElement.isValid()) {
-        psiMethod = (PsiMethod)((RefMethod)refElement).getUastElement().getJavaPsi();
+      if (refElement instanceof RefMethod refMethod && refElement.isValid()) {
+        psiMethod = refMethod.getUastElement().getJavaPsi();
       }
     }
     else {

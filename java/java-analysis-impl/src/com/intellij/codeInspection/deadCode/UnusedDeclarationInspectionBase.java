@@ -448,7 +448,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
                   queryQualifiedNameUsages(ownerClass);
                 }
               }
-              UMethod uMethod = (UMethod)refMethod.getUastElement();
+              UMethod uMethod = refMethod.getUastElement();
               if (uMethod != null && (isSerializablePatternMethod(uMethod, refMethod.getOwnerClass()) ||
                                       // todo this method potentially leads to INRE. Perhaps, it should be reconsidered/deleted (IJ-CR-5556)
                                       belongsToRepeatableAnnotationContainer(uMethod, refMethod.getOwnerClass()))) {

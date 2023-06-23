@@ -184,9 +184,9 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
 
       @Override
       public void visitMethod(@NotNull RefMethod method) {
-        UDeclaration uDecl = method.getUastElement();
-        if (!(uDecl instanceof UMethod)) return;
-        PsiMethod psiMethod = ((UMethod)uDecl).getJavaPsi();
+        UMethod uMethod = method.getUastElement();
+        if (uMethod == null) return;
+        PsiMethod psiMethod = uMethod.getJavaPsi();
         PsiType returnType = psiMethod.getReturnType();
 
         if (method.isStatic()) {
@@ -258,8 +258,8 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
     if (refEntity instanceof RefJavaElement && ((RefJavaElement)refEntity).isSyntheticJSP()) {
       return XmlStringUtil.escapeString(refEntity.getName());
     }
-    else if (refEntity instanceof RefMethod) {
-      UMethod uMethod = (UMethod)((RefMethod)refEntity).getUastElement();
+    else if (refEntity instanceof RefMethod refMethod) {
+      UMethod uMethod = refMethod.getUastElement();
       if (uMethod != null) {
         return uMethod.getName();
       }
@@ -286,7 +286,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
       buf.append(HTMLComposerImpl.NBSP);
     }
     else if (refElement instanceof RefMethod method) {
-      UMethod psiMethod = (UMethod)method.getUastElement();
+      UMethod psiMethod = method.getUastElement();
       PsiType returnType = psiMethod.getReturnType();
 
       if (returnType != null) {
@@ -316,7 +316,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
       buf.append(XmlStringUtil.escapeString(refElement.getName()));
     }
     else if (refElement instanceof RefMethod) {
-      UMethod psiMethod = (UMethod)((RefMethod)refElement).getUastElement();
+      UMethod psiMethod = ((RefMethod)refElement).getUastElement();
       buf.append(psiMethod.getName());
     }
     else if (refElement instanceof RefFunctionalExpression) {
@@ -334,8 +334,8 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
 
     buf.append(HTMLComposerImpl.A_CLOSING);
 
-    if (refElement instanceof RefMethod) {
-      PsiMethod psiMethod = (PsiMethod)((RefMethod)refElement).getUastElement().getJavaPsi();
+    if (refElement instanceof RefMethod refMethod) {
+      PsiMethod psiMethod = refMethod.getUastElement().getJavaPsi();
       if (psiMethod != null) {
         appendMethodParameters(buf, psiMethod, false);
       }
