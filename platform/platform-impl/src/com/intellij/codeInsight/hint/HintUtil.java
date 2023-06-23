@@ -141,10 +141,14 @@ public final class HintUtil {
 
   public static @NotNull SimpleColoredComponent createInformationComponent() {
     SimpleColoredComponent component = new SimpleColoredComponent();
+    component.setTransparentIconBackground(true);
+    return installInformationProperties(component);
+  }
+
+  public static <T extends Component> @NotNull T installInformationProperties(T component) {
     component.setBackground(getInformationColor());
     component.setForeground(JBColor.foreground());
     component.setFont(getBoldFont());
-    component.setTransparentIconBackground(true);
     return component;
   }
 
