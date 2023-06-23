@@ -91,4 +91,13 @@ class SingleIndexValueApplier<FileIndexMetaData> {
       index.setIndexedStateForFileOnFileIndexMetaData(inputId, fileData);
     }
   }
+
+  @Override
+  public String toString() {
+    return "SingleIndexValueApplier{" +
+           "indexId=" + indexId +
+           ", inputId=" + inputId +
+           ", fileInfo='" + fileInfo + '\'' +
+           '}';
+  }
 }

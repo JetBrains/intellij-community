@@ -390,6 +390,7 @@ public class UnindexedFilesScanner implements FilesScanningTask {
     // And some scanning statistics may be tried to be added to the [projectIndexingHistory],
     // leading to ConcurrentModificationException in the statistics' processor.
     Ref<Boolean> allTasksFinished = Ref.create(false);
+    final IndexingReasonExplanationLogger sharedExplanationLogger = new IndexingReasonExplanationLogger();
     List<Runnable> tasks = ContainerUtil.map(providers, provider -> {
       SubTaskProgressIndicator subTaskIndicator = concurrentTasksProgressManager.createSubTaskIndicator(1);
       ScanningStatistics scanningStatistics = new ScanningStatistics(provider.getDebugName());
@@ -408,7 +409,8 @@ public class UnindexedFilesScanner implements FilesScanningTask {
         try (PerProviderSink perProviderSink = project.getService(PerProjectIndexingQueue.class)
           .getSink(provider, projectScanningHistory.getScanningSessionId())) {
           Function<@Nullable VirtualFile, ContentIterator> singleProviderIteratorFactory = root -> {
-            UnindexedFilesFinder finder = new UnindexedFilesFinder(project, myIndex, getForceReindexingTrigger(), root);
+            UnindexedFilesFinder finder = new UnindexedFilesFinder(project, sharedExplanationLogger, myIndex, getForceReindexingTrigger(),
+                                                                   root);
             return new SingleProviderIterator(project, subTaskIndicator, provider, fileScannerVisitors,
                                               finder, scanningStatistics, perProviderSink);
           };

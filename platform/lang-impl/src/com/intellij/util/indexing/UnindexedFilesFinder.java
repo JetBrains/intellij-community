@@ -8,8 +8,8 @@ import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -40,6 +40,7 @@ final class UnindexedFilesFinder {
   private final @Nullable BooleanFunction<? super IndexedFile> myForceReindexingTrigger;
   private final @NotNull ProjectIndexableFilesFilterHolder myIndexableFilesFilterHolder;
   private final boolean myShouldProcessUpToDateFiles;
+  private final IndexingReasonExplanationLogger explanationLogger;
 
   private static class UnindexedFileStatusBuilder {
     boolean shouldIndex = false;
@@ -47,25 +48,44 @@ final class UnindexedFilesFinder {
     long timeProcessingUpToDateFiles = 0;
     long timeUpdatingContentLessIndexes = 0;
     long timeIndexingWithoutContentViaInfrastructureExtension = 0;
-    private final List<Computable<Boolean>> appliersAndRemovers;
+    @NotNull private List<SingleIndexValueApplier<?>> appliers = Collections.emptyList();
+    @NotNull private List<SingleIndexValueRemover> removers = Collections.emptyList();
     final boolean applyIndexValuesSeparately;
     boolean indexInfrastructureExtensionInvalidated = false;
     boolean mayMarkFileIndexed = true;
+    @Nullable ArrayList<Pair<FileIndexingState, ID<?, ?>>> unindexedStates;
 
     UnindexedFileStatusBuilder(boolean applyIndexValuesSeparately) {
       this.applyIndexValuesSeparately = applyIndexValuesSeparately;
-      appliersAndRemovers = applyIndexValuesSeparately ? new SmartList<>() : Collections.emptyList();
     }
 
-    boolean addOrRunApplierOrRemover(@Nullable Computable<Boolean> applierOrRemover) {
-      if (applierOrRemover == null) return true;
+    boolean addOrRunRemover(@Nullable SingleIndexValueRemover remover) {
+      if (remover == null) return true;
 
       if (applyIndexValuesSeparately) {
-        return appliersAndRemovers.add(applierOrRemover);
+        if (removers.isEmpty()) removers = new SmartList<>();
+        return removers.add(remover);
       }
       else {
-        return applierOrRemover.compute();
+        return remover.remove();
       }
+    }
+
+    boolean addOrRunApplier(@Nullable SingleIndexValueApplier applier) {
+      if (applier == null) return true;
+
+      if (applyIndexValuesSeparately) {
+        if (appliers.isEmpty()) appliers = new SmartList<>();
+        return appliers.add(applier);
+      }
+      else {
+        return applier.apply();
+      }
+    }
+
+    void addUnindexedState(FileIndexingState state, ID<?, ?> id) {
+      if (unindexedStates == null) unindexedStates = new ArrayList<>();
+      unindexedStates.add(new Pair<>(state, id));
     }
 
     @Contract(" -> new")
@@ -76,12 +96,60 @@ final class UnindexedFilesFinder {
                                      timeUpdatingContentLessIndexes,
                                      timeIndexingWithoutContentViaInfrastructureExtension);
     }
+
+    void explain(IndexedFileImpl indexedFile, IndexingReasonExplanationLogger logger) {
+      if (shouldIndex) {
+        logger.logFileIndexingReason(indexedFile, this::getIndexingReasonLogString);
+      }
+      else if (!appliers.isEmpty() && !removers.isEmpty()) {
+        logger.logScannerAppliersAndRemoversForFile(indexedFile, this::getAppliersAndRemoversLogString);
+      }
+      else if (!appliers.isEmpty()) {
+        logger.logScannerAppliersOnlyForFile(indexedFile, this::getAppliersAndRemoversLogString);
+      }
+      else if (!removers.isEmpty()) {
+        logger.logScannerRemoversOnlyForFile(indexedFile, this::getAppliersAndRemoversLogString);
+      }
+    }
+
+    boolean hasAppliersOrRemovers() {
+      return !appliers.isEmpty() || !removers.isEmpty();
+    }
+
+    @NotNull
+    private String getAppliersAndRemoversLogString(IndexedFile indexedFile) {
+      return "Scanner has updated file " + indexedFile.getFileName() +
+             " with appliers: " + appliers +
+             " and removers: " + removers + "; ";
+    }
+
+    private String getIndexingReasonLogString(IndexedFile indexedFile) {
+      StringBuilder sb = new StringBuilder("Scheduling indexing of ");
+      sb.append(indexedFile.getFileName());
+      sb.append(" by request of indexes: [");
+      if (unindexedStates != null) {
+        for (Pair<FileIndexingState, ID<?, ?>> state : unindexedStates) {
+          sb.append(state.second).append("->").append(state.first).append(",");
+        }
+      }
+      sb.append("]. ");
+      if (indexInfrastructureExtensionInvalidated) {
+        sb.append("because extension invalidated; ");
+      }
+
+      if (hasAppliersOrRemovers()) {
+        sb.append(getAppliersAndRemoversLogString(indexedFile));
+      }
+      return sb.toString();
+    }
   }
 
   UnindexedFilesFinder(@NotNull Project project,
+                       IndexingReasonExplanationLogger explanationLogger,
                        @NotNull FileBasedIndexImpl fileBasedIndex,
                        @Nullable BooleanFunction<? super IndexedFile> forceReindexingTrigger,
                        @Nullable VirtualFile root) {
+    this.explanationLogger = explanationLogger;
     myProject = project;
     myFileBasedIndex = fileBasedIndex;
     myFileTypeIndex = fileBasedIndex.getIndex(FileTypeIndex.NAME);
@@ -192,7 +260,7 @@ final class UnindexedFilesFinder {
           removeIndexedValue(indexedFile, inputId, indexId, fileStatusBuilder);
         }
 
-        if (fileStatusBuilder.appliersAndRemovers.isEmpty()) {
+        if (!fileStatusBuilder.hasAppliersOrRemovers()) {
           finishGettingStatus(file, indexedFile, inputId, fileStatusBuilder);
           finalization.set(EmptyRunnable.getInstance());
         }
@@ -200,9 +268,8 @@ final class UnindexedFilesFinder {
           finalization.set(() -> {
             long applyingStart = System.nanoTime();
             try {
-              for (Computable<Boolean> applierOrRemover : fileStatusBuilder.appliersAndRemovers) {
-                applierOrRemover.compute();
-              }
+              fileStatusBuilder.removers.forEach(SingleIndexValueRemover::remove);
+              fileStatusBuilder.appliers.forEach(SingleIndexValueApplier::apply);
             }
             finally {
               fileStatusBuilder.timeUpdatingContentLessIndexes += (System.nanoTime() - applyingStart);
@@ -213,6 +280,8 @@ final class UnindexedFilesFinder {
       });
 
       finalization.get().run();
+
+      fileStatusBuilder.explain(indexedFile, explanationLogger);
       return fileStatusBuilder.build();
     });
   }
@@ -237,8 +306,10 @@ final class UnindexedFilesFinder {
           FileBasedIndexImpl.LOG.info(
             "Scheduling indexing of " + indexedFile.getFileName() + " by request of index; " + indexId +
             (fileStatusBuilder.indexInfrastructureExtensionInvalidated ? " because extension invalidated;" : "") +
-            ("indexing state = " + myFileBasedIndex.getIndexingState(indexedFile, indexId)));
+            ("indexing state = " + fileIndexingState));
         }
+
+        fileStatusBuilder.addUnindexedState(fileIndexingState, indexId);
 
         if (!tryIndexWithoutContent(indexedFile, inputId, indexId, fileStatusBuilder)) {
           // NOTE! Do not break the loop here. We must process ALL IDs and pass them to the FileIndexingStatusProcessor
@@ -294,7 +365,7 @@ final class UnindexedFilesFinder {
       myFileBasedIndex.createSingleIndexRemover(indexId, indexedFile.getFile(), new IndexedFileWrapper(indexedFile), inputId,
                                                 fileStatusBuilder.applyIndexValuesSeparately);
     if (remover != null) {
-      boolean removed = fileStatusBuilder.addOrRunApplierOrRemover(remover::remove);
+      boolean removed = fileStatusBuilder.addOrRunRemover(remover);
       if (!removed) {
         LOG.error("Failed to remove value from index " + indexId + " for file " + indexedFile.getFile() + ", " +
                   "applyIndexValuesSeparately=" + fileStatusBuilder.applyIndexValuesSeparately);
@@ -332,7 +403,7 @@ final class UnindexedFilesFinder {
         myFileBasedIndex.createSingleIndexValueApplier(indexId, indexedFile.getFile(), inputId, new IndexedFileWrapper(indexedFile),
                                                        fileStatusBuilder.applyIndexValuesSeparately);
       if (applier != null) {
-        boolean updated = fileStatusBuilder.addOrRunApplierOrRemover(applier::apply);
+        boolean updated = fileStatusBuilder.addOrRunApplier(applier);
         if (!updated) {
           LOG.error("Failed to apply contentless indexer " + indexId + " to file " + indexedFile.getFile() + ", " +
                     "applyIndexValuesSeparately=" + fileStatusBuilder.applyIndexValuesSeparately);

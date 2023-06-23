@@ -94,4 +94,14 @@ class SingleIndexValueRemover {
       }
     }
   }
+
+  @Override
+  public String toString() {
+    return "SingleIndexValueRemover{" +
+           "indexId=" + indexId +
+           ", inputId=" + inputId +
+           ", fileInfo='" + fileInfo + '\'' +
+           ", isWritingValuesSeparately=" + isWritingValuesSeparately +
+           '}';
+  }
 }
