@@ -54,7 +54,7 @@ private enum class HidpiMode {
   per_monitor_dpi, system_dpi
 }
 
-private val GROUP = EventLogGroup("ui.info.features", 13)
+private val GROUP = EventLogGroup("ui.info.features", 14)
 private val orientationField = Enum("value", VisibilityType::class.java)
 private val NAV_BAR = GROUP.registerEvent("Nav.Bar", Enum("value", NavBarType::class.java))
 private val NAV_BAR_MEMBERS = GROUP.registerEvent("Nav.Bar.members", orientationField)
