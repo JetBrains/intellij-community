@@ -642,7 +642,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
           // avoid loading MetalLookAndFeel class here - check for UIThemeBasedLookAndFeelInfo first
           if (lookAndFeelInfo is UIThemeBasedLookAndFeelInfo) {
             if (laf is UserDataHolder) {
-              (laf as UserDataHolder).putUserData(UIUtil.LAF_WITH_THEME_KEY, true)
+              (laf as UserDataHolder).putUserData(StartupUiUtil.LAF_WITH_THEME_KEY, true)
             }
             //if (lafNameOrder.containsKey(lookAndFeelInfo.getName()) && lookAndFeelInfo.getName().endsWith("Light")) {
             //  updateIconsUnderSelection(false);
@@ -865,7 +865,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     // super-huge DPI causes issues like IDEA-170295 if `laf.scaleFactor` property is missing
     uiDefaults.put("laf.scaleFactor", scale(1f))
     uiDefaults.put(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false))
-    uiDefaults.put(RenderingHints.KEY_TEXT_LCD_CONTRAST, UIUtil.getLcdContrastValue())
+    uiDefaults.put(RenderingHints.KEY_TEXT_LCD_CONTRAST, StartupUiUtil.getLcdContrastValue())
     uiDefaults.put(RenderingHints.KEY_FRACTIONALMETRICS, AppUIUtil.adjustFractionalMetrics(getPreferredFractionalMetricsValue()))
     if (isFirstSetup) {
       ApplicationManager.getApplication().invokeLater { notifyLookAndFeelChanged() }

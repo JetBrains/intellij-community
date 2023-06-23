@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.update;
 
 import com.intellij.concurrency.ContextAwareRunnable;
@@ -7,6 +7,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -84,7 +85,7 @@ public class UiNotifyConnector implements Disposable, HierarchyListener {
 
   public void setupListeners() {
     Component component = Objects.requireNonNull(myComponent.get());
-    if (UIUtil.isShowing(component, false)) {
+    if (ComponentUtil.isShowing(component, false)) {
       showNotify();
     }
     else {
