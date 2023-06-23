@@ -125,9 +125,10 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
    * todo please remove it when users are not migrate any more from 2023.1
    */
   private fun migratePreviousCustomizations(schema: CustomActionsSchema) {
+    val mainToolbarName = schema.getDisplayName(MAIN_TOOLBAR_ID) ?: return
+    val mainToolbarPath = listOf("root", mainToolbarName)
     val backup = CustomActionsSchema(null)
     backup.copyFrom(schema)
-    val mainToolbarPath = listOf("root", schema.getDisplayName(MAIN_TOOLBAR_ID)!!)
     val url = ActionUrl().apply { groupPath = ArrayList(mainToolbarPath) }
     if (!schema.getChildActions(url).isEmpty()) return
 
