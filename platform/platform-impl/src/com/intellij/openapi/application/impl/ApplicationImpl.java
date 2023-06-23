@@ -1184,7 +1184,6 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   }
 
   private void startWrite(@NotNull Class<?> clazz) {
-    assertWriteIntentLockAcquired();
     assertNotInsideListener();
     myWriteActionPending = true;
     try {
