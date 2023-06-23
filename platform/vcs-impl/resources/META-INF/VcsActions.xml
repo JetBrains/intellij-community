@@ -19,6 +19,7 @@
     <action id="IntegrateFiles" class="com.intellij.openapi.vcs.update.CommonIntegrateFileOrDirectoryAction"/>
     <action id="Annotate" class="com.intellij.openapi.vcs.actions.AnnotateToggleAction">
       <synonym key="action.Annotate.synonym1"/>
+      <synonym key="action.Annotate.with.Blame.text"/>
       <add-to-group group-id="Diff.EditorPopupMenu"/>
       <add-to-group group-id="Diff.EditorGutterPopupMenu" anchor="first"/>
     </action>
