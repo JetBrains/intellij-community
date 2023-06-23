@@ -5,32 +5,25 @@ import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.impl.writer.fields.javaMutableType
-import com.intellij.workspaceModel.codegen.impl.writer.isRefType
-import com.intellij.workspaceModel.codegen.impl.writer.LinesBuilder
-import com.intellij.workspaceModel.codegen.impl.writer.fqn
-import com.intellij.workspaceModel.codegen.impl.writer.lines
-import com.intellij.workspaceModel.codegen.impl.writer.toQualifiedName
-import com.intellij.workspaceModel.codegen.impl.writer.allFields
-import com.intellij.platform.workspace.storage.SymbolicEntityId
-import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
+import com.intellij.workspaceModel.codegen.impl.writer.*
 
 internal fun ObjClass<*>.softLinksCode(context: LinesBuilder, hasSoftLinks: Boolean) {
-  context.conditionalLine({ hasSoftLinks }, "override fun getLinks(): Set<${SymbolicEntityId::class.fqn}<*>>") {
-    line("val result = HashSet<${SymbolicEntityId::class.fqn}<*>>()")
+  context.conditionalLine({ hasSoftLinks }, "override fun getLinks(): Set<${SymbolicEntityId}<*>>") {
+    line("val result = HashSet<${SymbolicEntityId}<*>>()")
     operate(this) { line("result.add($it)") }
     line("return result")
   }
 
   context.conditionalLine(
     { hasSoftLinks },
-    "override fun index(index: ${WorkspaceMutableIndex::class.fqn}<${SymbolicEntityId::class.fqn}<*>>)"
+    "override fun index(index: ${WorkspaceMutableIndex}<${SymbolicEntityId}<*>>)"
   ) {
     operate(this) { line("index.index(this, $it)") }
   }
 
   context.conditionalLine(
     { hasSoftLinks },
-    "override fun updateLinksIndex(prev: Set<${SymbolicEntityId::class.fqn}<*>>, index: ${WorkspaceMutableIndex::class.fqn}<${SymbolicEntityId::class.fqn}<*>>)"
+    "override fun updateLinksIndex(prev: Set<${SymbolicEntityId}<*>>, index: ${WorkspaceMutableIndex}<${SymbolicEntityId}<*>>)"
   ) {
     line("// TODO verify logic")
     line("val mutablePreviousSet = HashSet(prev)")
@@ -47,7 +40,7 @@ internal fun ObjClass<*>.softLinksCode(context: LinesBuilder, hasSoftLinks: Bool
 
   context.conditionalLine(
     { hasSoftLinks },
-    "override fun updateLink(oldLink: ${SymbolicEntityId::class.fqn}<*>, newLink: ${SymbolicEntityId::class.fqn}<*>): Boolean"
+    "override fun updateLink(oldLink: ${SymbolicEntityId}<*>, newLink: ${SymbolicEntityId}<*>): Boolean"
   ) {
     line("var changed = false")
     operateUpdateLink(this)

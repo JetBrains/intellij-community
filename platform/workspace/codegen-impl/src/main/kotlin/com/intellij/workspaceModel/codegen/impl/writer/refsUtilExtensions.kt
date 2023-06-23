@@ -4,7 +4,6 @@ import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.OwnProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.impl.writer.fields.javaType
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 val ObjClass<*>.refsFields: List<OwnProperty<*, *>>
   get() = fields.filter { !it.isOverride && it.valueType.isRefType() }
@@ -30,7 +29,7 @@ fun ValueType<*>.isRefType(): Boolean = when (this) {
 }
 
 fun ValueType<*>.isVfuType(): Boolean = when (this) {
-  is ValueType.Blob -> javaClassName == VirtualFileUrl::class.java.name
+  is ValueType.Blob -> javaClassName == VirtualFileUrl.decoded
   is ValueType.Optional<*> -> type.isVfuType()
   is ValueType.Collection<*, *> -> elementType.isVfuType()
   else -> false

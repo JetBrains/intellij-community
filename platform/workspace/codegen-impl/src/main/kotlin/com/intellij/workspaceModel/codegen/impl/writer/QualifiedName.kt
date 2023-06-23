@@ -1,23 +1,11 @@
 package com.intellij.workspaceModel.codegen.impl.writer
 
-import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.impl.ConnectionId
-import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import kotlin.reflect.*
 import kotlin.reflect.jvm.javaMethod
 
 private const val fqnEscape = "#uC03o#"
 
 fun fqn(function: KProperty1<KClass<*>, Collection<Any>>): QualifiedName = function.fqn
-fun fqn1(function: KFunction3<EntityStorage, ConnectionId, WorkspaceEntity, WorkspaceEntity?>): QualifiedName = function.fqn
-fun fqn2(function: KFunction3<EntityStorage, ConnectionId, WorkspaceEntity, Sequence<Any>>): QualifiedName = function.fqn
-fun fqn3(function: KFunction4<EntityStorage, ConnectionId, WorkspaceEntity, WorkspaceEntity?, Unit>): QualifiedName = function.fqn
-fun fqn4(function: KFunction4<EntityStorage, ConnectionId, WorkspaceEntity, List<WorkspaceEntity>, Unit>): QualifiedName = function.fqn
-fun fqn5(function: KFunction4<EntityStorage, ConnectionId, WorkspaceEntity, Sequence<WorkspaceEntity>, Unit>): QualifiedName = function.fqn
-fun fqn6(function: KFunction2<ModifiableWorkspaceEntityBase<*, *>, MutableEntityStorage, Unit>): QualifiedName = function.fqn
-fun fqn7(function: KFunction1<Collection<*>, Collection<*>>): QualifiedName = function.fqn
 
 private val KProperty<*>.fqn: QualifiedName
   get() {
@@ -36,6 +24,9 @@ value class QualifiedName(val encodedString: String) {
   override fun toString(): String {
     return encodedString
   }
+
+  val simpleName: String
+    get() = encodedString.removePrefix(fqnEscape).substringAfter("#")
 
   val decoded: String
     get() = encodedString.removePrefix(fqnEscape).substringBefore("#").replace("@@", ".")

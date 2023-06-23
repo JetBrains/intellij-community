@@ -12,25 +12,19 @@ import com.intellij.workspaceModel.codegen.engine.SKIPPED_TYPES
 import com.intellij.workspaceModel.codegen.impl.writer.fields.javaMutableType
 import com.intellij.workspaceModel.codegen.impl.writer.fields.javaType
 import com.intellij.workspaceModel.codegen.impl.writer.fields.wsCode
-import com.intellij.workspaceModel.codegen.impl.writer.*
-import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
-import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.workspaceModel.codegen.impl.CodeGeneratorVersionCalculator
 import com.intellij.workspaceModel.codegen.impl.engine.ProblemReporter
 
 fun ObjClass<*>.generateBuilderCode(reporter: ProblemReporter): String = lines {
   checkSuperTypes(this@generateBuilderCode, reporter)
   checkSymbolicId(this@generateBuilderCode, reporter)
-  line("@${GeneratedCodeApiVersion::class.fqn}(${CodeGeneratorVersionCalculator.apiVersion})")
+  line("@${GeneratedCodeApiVersion}(${CodeGeneratorVersionCalculator.apiVersion})")
   val (typeParameter, typeDeclaration) = 
     if (openness.extendable) "T" to "<T: $javaFullName>" else javaFullName to ""
   val superBuilders = superTypes.filterIsInstance<ObjClass<*>>().filter { !it.isStandardInterface }.joinToString { 
     ", ${it.name}.Builder<$typeParameter>"
   }
-  val header = "interface Builder$typeDeclaration: $javaFullName$superBuilders, ${WorkspaceEntity.Builder::class.fqn}<$typeParameter>"
+  val header = "interface Builder$typeDeclaration: $javaFullName$superBuilders, ${WorkspaceEntity.Builder}<$typeParameter>"
 
   section(header) {
     list(allFields.noSymbolicId()) {
@@ -125,16 +119,12 @@ private fun checkType(type: ValueType<*>): String? = when (type) {
 private val keepUnknownFields: Boolean
   get() = java.lang.Boolean.getBoolean("workspace.model.generator.keep.unknown.fields")
 
-private val knownInterfaces = setOf(
-  VirtualFileUrl::class.qualifiedName!!,
-  EntitySource::class.qualifiedName!!,
-  SymbolicEntityId::class.qualifiedName!!,
-)
+private val knownInterfaces = setOf(VirtualFileUrl.decoded, EntitySource.decoded, SymbolicEntityId.decoded)
 
 fun ObjClass<*>.generateCompanionObject(): String = lines {
   val builderGeneric = if (openness.extendable) "<$javaFullName>" else ""
   val companionObjectHeader = buildString {
-    append("companion object: ${EntityType::class.fqn}<$javaFullName, Builder$builderGeneric>(")
+    append("companion object: ${EntityType}<$javaFullName, Builder$builderGeneric>(")
     val base = superTypes.filterIsInstance<ObjClass<*>>().firstOrNull()
     if (base != null && base.name !in SKIPPED_TYPES)
       append(base.javaFullName)
@@ -151,9 +141,9 @@ fun ObjClass<*>.generateCompanionObject(): String = lines {
         line("val builder = builder()")
         list(mandatoryFields) {
           if (this.valueType is ValueType.Set<*> && !this.valueType.isRefType()) {
-            "builder.$name = $name.${fqn7(Collection<*>::toMutableWorkspaceSet)}()"
+            "builder.$name = $name.${StorageCollection.toMutableWorkspaceSet}()"
           } else if (this.valueType is ValueType.List<*> && !this.valueType.isRefType()) {
-            "builder.$name = $name.${fqn7(Collection<*>::toMutableWorkspaceList)}()"
+            "builder.$name = $name.${StorageCollection.toMutableWorkspaceList}()"
           } else {
             "builder.$name = $name"
           }
@@ -191,7 +181,7 @@ fun ObjClass<*>.generateExtensionCode(): String? {
 
   return lines {
     if (!openness.extendable) {
-      line("fun ${MutableEntityStorage::class.fqn}.modifyEntity(entity: $name, modification: $name.Builder.() -> Unit) = modifyEntity($name.Builder::class.java, entity, modification)")
+      line("fun ${MutableEntityStorage}.modifyEntity(entity: $name, modification: $name.Builder.() -> Unit) = modifyEntity($name.Builder::class.java, entity, modification)")
     }
     fields.sortedWith(compareBy({ it.receiver.name }, { it.name })).forEach { line(it.wsCode) }
   }

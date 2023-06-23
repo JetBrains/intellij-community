@@ -1,7 +1,5 @@
 package com.intellij.workspaceModel.codegen.impl.writer.fields
 
-import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.impl.*
 import com.intellij.workspaceModel.codegen.impl.writer.isRefType
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
@@ -16,7 +14,7 @@ fun ObjProperty<*, *>.refNames(): RefMethods {
   return when (valueType) {
     is ValueType.ObjRef -> constructCode(valueType)
     is ValueType.Optional -> constructCode((this.valueType as ValueType.Optional<*>).type)
-    is ValueType.List<*> -> fqn2(EntityStorage::extractOneToManyChildren) getterWithSetter fqn4(EntityStorage::updateOneToManyChildrenOfParent)
+    is ValueType.List<*> -> EntityStorage.extractOneToManyChildren getterWithSetter EntityStorage.updateOneToManyChildrenOfParent
     else -> error("Call this on ref field")
   }
 }
@@ -26,10 +24,10 @@ private fun ObjProperty<*, *>.constructCode(type: ValueType<*>): RefMethods {
 
   return if (type.child) {
     if (type.target.openness.extendable) {
-      fqn1(EntityStorage::extractOneToAbstractOneChild) getterWithSetter fqn3(EntityStorage::updateOneToAbstractOneChildOfParent)
+      EntityStorage.extractOneToAbstractOneChild getterWithSetter EntityStorage.updateOneToAbstractOneChildOfParent
     }
     else {
-      fqn1(EntityStorage::extractOneToOneChild) getterWithSetter fqn3(EntityStorage::updateOneToOneChildOfParent)
+      EntityStorage.extractOneToOneChild getterWithSetter EntityStorage.updateOneToOneChildOfParent
     }
   }
   else {
@@ -40,18 +38,18 @@ private fun ObjProperty<*, *>.constructCode(type: ValueType<*>): RefMethods {
     when (valueType) {
       is ValueType.List<*> -> {
         if (receiver.openness.extendable) {
-          fqn1(EntityStorage::extractOneToAbstractManyParent) getterWithSetter fqn3(EntityStorage::updateOneToAbstractManyParentOfChild)
+          EntityStorage.extractOneToAbstractManyParent getterWithSetter EntityStorage.updateOneToAbstractManyParentOfChild
         }
         else {
-          fqn1(EntityStorage::extractOneToManyParent) getterWithSetter fqn3(EntityStorage::updateOneToManyParentOfChild)
+          EntityStorage.extractOneToManyParent getterWithSetter EntityStorage.updateOneToManyParentOfChild
         }
       }
       is ValueType.ObjRef<*> -> {
         if (receiver.openness.extendable) {
-          fqn1(EntityStorage::extractOneToAbstractOneParent) getterWithSetter fqn3(EntityStorage::updateOneToAbstractOneParentOfChild)
+          EntityStorage.extractOneToAbstractOneParent getterWithSetter EntityStorage.updateOneToAbstractOneParentOfChild
         }
         else {
-          fqn1(EntityStorage::extractOneToOneParent) getterWithSetter fqn3(EntityStorage::updateOneToOneParentOfChild)
+          EntityStorage.extractOneToOneParent getterWithSetter EntityStorage.updateOneToOneParentOfChild
         }
       }
       else -> error("Unsupported reference type")

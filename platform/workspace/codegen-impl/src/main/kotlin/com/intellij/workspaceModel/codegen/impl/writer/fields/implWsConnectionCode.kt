@@ -1,7 +1,5 @@
 package com.intellij.workspaceModel.codegen.impl.writer.fields
 
-import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.impl.*
 import com.intellij.workspaceModel.codegen.impl.writer.getRefType
 import com.intellij.workspaceModel.codegen.impl.writer.refsFields
 import com.intellij.workspaceModel.codegen.impl.writer.*
@@ -20,7 +18,7 @@ val ObjProperty<*, *>.refsConnectionIdCode: String
     val ref = valueType.getRefType()
     val isListType = valueType is ValueType.List<*> || ((valueType as? ValueType.Optional<*>)?.type is ValueType.List<*>)
 
-    append("internal val $refsConnectionId: ${ConnectionId::class.fqn} = ConnectionId.create(")
+    append("internal val $refsConnectionId: ${ConnectionId} = ConnectionId.create(")
     if (ref.child) {
       append("${receiver.name}::class.java, ${ref.javaType}::class.java,")
     }
@@ -78,9 +76,9 @@ fun ObjProperty<*, *>.refsConnectionMethodCode(genericType: String = ""): String
   val connectionName = name.uppercase() + "_CONNECTION_ID"
   val getterName = if (ref.child) {
     if (ref.target.openness.extendable)
-      "${fqn1(EntityStorage::extractOneToAbstractOneChild)}$genericType"
+      "${EntityStorage.extractOneToAbstractOneChild}$genericType"
     else
-      "${fqn1(EntityStorage::extractOneToOneChild)}$genericType"
+      "${EntityStorage.extractOneToOneChild}$genericType"
   }
   else {
     var valueType = referencedField.valueType
@@ -89,13 +87,13 @@ fun ObjProperty<*, *>.refsConnectionMethodCode(genericType: String = ""): String
     }
     when (valueType) {
       is ValueType.List<*> -> if (receiver.openness.extendable)
-        "${fqn1(EntityStorage::extractOneToAbstractManyParent)}$genericType"
+        "${EntityStorage.extractOneToAbstractManyParent}$genericType"
       else
-        "${fqn1(EntityStorage::extractOneToManyParent)}$genericType"
+        "${EntityStorage.extractOneToManyParent}$genericType"
       is ValueType.ObjRef<*> -> if (receiver.openness.extendable)
-        "${fqn1(EntityStorage::extractOneToAbstractOneParent)}$genericType"
+        "${EntityStorage.extractOneToAbstractOneParent}$genericType"
       else
-        "${fqn1(EntityStorage::extractOneToOneParent)}$genericType"
+        "${EntityStorage.extractOneToOneParent}$genericType"
       else -> error("Unsupported reference type")
     }
   }

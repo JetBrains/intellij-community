@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.impl.writer.classes
 
-import com.intellij.workspaceModel.codegen.*
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
@@ -10,13 +9,8 @@ import com.intellij.workspaceModel.codegen.impl.writer.fields.implWsDataFieldIni
 import com.intellij.workspaceModel.codegen.impl.writer.fields.javaType
 import com.intellij.workspaceModel.codegen.impl.writer.*
 import com.intellij.workspaceModel.codegen.impl.writer.allFields
-import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.impl.SoftLinkable
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
-import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
-import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.codegen.impl.writer.EntityStorage
+import com.intellij.workspaceModel.codegen.impl.writer.WorkspaceEntity
 
 /**
  * - Soft links
@@ -33,13 +27,13 @@ val ObjClass<*>.isEntityWithSymbolicId: Boolean
 
 fun ObjClass<*>.implWsDataClassCode(): String {
   val entityDataBaseClass = if (isEntityWithSymbolicId) {
-    "${WorkspaceEntityData::class.fqn}.WithCalculableSymbolicId<$javaFullName>()"
+    "${WorkspaceEntityData}.WithCalculableSymbolicId<$javaFullName>()"
   }
   else {
-    "${WorkspaceEntityData::class.fqn}<$javaFullName>()"
+    "${WorkspaceEntityData}<$javaFullName>()"
   }
   val hasSoftLinks = hasSoftLinks()
-  val softLinkable = if (hasSoftLinks) SoftLinkable::class.fqn else null
+  val softLinkable = if (hasSoftLinks) SoftLinkable else null
   return lines {
     section("class $javaDataName : ${sups(entityDataBaseClass, softLinkable?.encodedString)}") label@{
       listNl(allFields.noRefs().noEntitySource().noSymbolicId()) { implWsDataFieldCode }
@@ -49,7 +43,7 @@ fun ObjClass<*>.implWsDataClassCode(): String {
       this@implWsDataClassCode.softLinksCode(this, hasSoftLinks)
 
       sectionNl(
-        "override fun wrapAsModifiable(diff: ${MutableEntityStorage::class.fqn}): ${WorkspaceEntity.Builder::class.fqn}<$javaFullName>") {
+        "override fun wrapAsModifiable(diff: ${MutableEntityStorage}): ${WorkspaceEntity.Builder}<$javaFullName>") {
         line("val modifiable = $javaImplBuilderName(null)")
         line("modifiable.diff = diff")
         line("modifiable.snapshot = diff")
@@ -58,7 +52,7 @@ fun ObjClass<*>.implWsDataClassCode(): String {
       }
 
       // --- createEntity
-      sectionNl("override fun createEntity(snapshot: ${EntityStorage::class.fqn}): $javaFullName") {
+      sectionNl("override fun createEntity(snapshot: $EntityStorage): $javaFullName") {
         section("return getCached(snapshot)") {
           line("val entity = $javaImplName(this)")
           line("entity.snapshot = snapshot")
@@ -75,9 +69,9 @@ fun ObjClass<*>.implWsDataClassCode(): String {
           line("$fieldName as $javaDataName")
           collectionFields.forEach { field ->
             if (field.valueType is ValueType.Set<*>) {
-              line("$fieldName.${field.name} = $fieldName.${field.name}.${fqn7(Collection<*>::toMutableWorkspaceSet)}()")
+              line("$fieldName.${field.name} = $fieldName.${field.name}.${StorageCollection.toMutableWorkspaceSet}()")
             } else {
-              line("$fieldName.${field.name} = $fieldName.${field.name}.${fqn7(Collection<*>::toMutableWorkspaceList)}()")
+              line("$fieldName.${field.name} = $fieldName.${field.name}.${StorageCollection.toMutableWorkspaceList}()")
             }
           }
           line("return $fieldName")
@@ -90,14 +84,14 @@ fun ObjClass<*>.implWsDataClassCode(): String {
         val methodBody = (valueKind as ObjProperty.ValueKind.Computable).expression
         if (methodBody.contains("return")) {
           if (methodBody.startsWith("{")) {
-            line("override fun symbolicId(): ${SymbolicEntityId::class.fqn}<*> $methodBody \n")
+            line("override fun symbolicId(): ${SymbolicEntityId}<*> $methodBody \n")
           } else {
-            sectionNl("override fun symbolicId(): ${SymbolicEntityId::class.fqn}<*>") {
+            sectionNl("override fun symbolicId(): ${SymbolicEntityId}<*>") {
                 line(methodBody)
             }
           }
         } else {
-          sectionNl("override fun symbolicId(): ${SymbolicEntityId::class.fqn}<*>") {
+          sectionNl("override fun symbolicId(): ${SymbolicEntityId}<*>") {
             if (methodBody.startsWith("=")) {
               line("return ${methodBody.substring(2)}")
             }
@@ -109,19 +103,19 @@ fun ObjClass<*>.implWsDataClassCode(): String {
       }
 
       // --- getEntityInterface method
-      sectionNl("override fun getEntityInterface(): Class<out ${WorkspaceEntity::class.fqn}>") {
+      sectionNl("override fun getEntityInterface(): Class<out ${WorkspaceEntity}>") {
         line("return $name::class.java")
       }
 
-      sectionNl("override fun serialize(ser: ${EntityInformation.Serializer::class.fqn})") {
+      sectionNl("override fun serialize(ser: ${EntityInformation.Serializer})") {
         //InterfaceTraverser(simpleTypes).traverse(this@implWsDataClassCode, SerializatorVisitor(this@sectionNl))
       }
 
-      sectionNl("override fun deserialize(de: ${EntityInformation.Deserializer::class.fqn})") {
+      sectionNl("override fun deserialize(de: ${EntityInformation.Deserializer})") {
         //InterfaceTraverser(simpleTypes).traverse(this@implWsDataClassCode, DeserializationVisitor(this@sectionNl))
       }
 
-      sectionNl("override fun createDetachedEntity(parents: List<${WorkspaceEntity::class.fqn}>): ${WorkspaceEntity::class.fqn}") {
+      sectionNl("override fun createDetachedEntity(parents: List<${WorkspaceEntity}>): $WorkspaceEntity") {
         val noRefs = allFields.noRefs().noSymbolicId()
         val mandatoryFields = allFields.mandatoryFields()
         val constructor = mandatoryFields.joinToString(", ") { it.name }.let { if (it.isNotBlank()) "($it)" else "" }
@@ -242,7 +236,7 @@ private fun ObjClass<*>.cacheCollector(linesBuilder: LinesBuilder) {
   val res = allFields.map {
     it.valueType.getClasses(it.name, clazzes, accessors, objects)
   }.all{ it }
-  linesBuilder.section("override fun collectClassUsagesData(collector: ${UsedClassesCollector::class.fqn})") {
+  linesBuilder.section("override fun collectClassUsagesData(collector: ${UsedClassesCollector})") {
     clazzes.forEach {
       line("collector.add(${it.toQualifiedName()}::class.java)")
     }
@@ -277,11 +271,11 @@ private fun ValueType<*>.getClasses(fieldName: String, clazzes: HashSet<String>,
     }
     is ValueType.Blob -> {
       val className = this.javaClassName
-      if (className !in setOf(VirtualFileUrl::class.java.name, EntitySource::class.java.name, SymbolicEntityId::class.java.name)) {
+      if (className !in setOf(VirtualFileUrl.decoded, EntitySource.decoded, SymbolicEntityId.decoded)) {
         accessors.add("this.$fieldName?.let { collector.addDataToInspect(it) }")
         return res
       }
-      if (className == VirtualFileUrl::class.java.name) {
+      if (className == VirtualFileUrl.decoded) {
         accessors.add("this.$fieldName?.let { collector.add(it::class.java) }")
         return false
       }

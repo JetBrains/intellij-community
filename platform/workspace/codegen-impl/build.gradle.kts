@@ -14,12 +14,6 @@ version = "$codegenApiVersion.$codegenImplMajorVersion.$codegenImplMinorVersion"
 repositories {
   mavenCentral()
   maven {
-    url = uri("https://www.jetbrains.com/intellij-repository/releases")
-  }
-  maven {
-    url = uri("https://www.jetbrains.com/intellij-repository/nightly")
-  }
-  maven {
     url = uri("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
   }
 }
@@ -54,7 +48,5 @@ publishing {
 
 dependencies {
   implementation("org.jetbrains.kotlin:kotlin-reflect")
-  implementation("com.jetbrains.intellij.platform:workspace-model-codegen:0.0.2")
-  implementation("com.jetbrains.intellij.platform:workspace-storage:LATEST-TRUNK-SNAPSHOT")
-  implementation("com.jetbrains.intellij.platform:workspace-jps:LATEST-TRUNK-SNAPSHOT")
+  implementation("com.jetbrains.intellij.platform:workspace-model-codegen:0.0.3")
 }

@@ -2,17 +2,8 @@ package com.intellij.workspaceModel.codegen.impl.writer.fields
 
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
-import com.intellij.workspaceModel.codegen.impl.writer.getRefType
-import com.intellij.workspaceModel.codegen.impl.writer.isRefType
-import com.intellij.workspaceModel.codegen.impl.writer.refsFields
-import com.intellij.workspaceModel.codegen.impl.writer.fqn1
-import com.intellij.workspaceModel.codegen.impl.writer.fqn2
-import com.intellij.workspaceModel.codegen.impl.writer.toQualifiedName
-import com.intellij.workspaceModel.codegen.impl.writer.hasSetter
-import com.intellij.workspaceModel.codegen.impl.writer.isOverride
-import com.intellij.workspaceModel.codegen.impl.writer.javaName
-import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.impl.*
+import com.intellij.workspaceModel.codegen.impl.writer.*
+import com.intellij.workspaceModel.codegen.impl.writer.EntityStorage
 
 val ObjProperty<*, *>.implWsEntityFieldCode: String
   get() = buildString {
@@ -53,14 +44,14 @@ internal fun ObjProperty<*, *>.implWsBlockCode(fieldType: ValueType<*>, name: St
         if ((fieldType.elementType as ValueType.ObjRef<*>).target.openness.extendable) {
           """
                 override val $name: ${fieldType.javaType}$optionalSuffix
-                    get() = snapshot.${fqn2(EntityStorage::extractOneToAbstractManyChildren)}<${fieldType.elementType.javaType}>($connectionName, this)$notNullAssertion.toList()
+                    get() = snapshot.${EntityStorage.extractOneToAbstractManyChildren}<${fieldType.elementType.javaType}>($connectionName, this)$notNullAssertion.toList()
                
                 """.trimIndent()
         }
         else {
           """
                 override val $name: ${fieldType.javaType}$optionalSuffix
-                    get() = snapshot.${fqn2(EntityStorage::extractOneToManyChildren)}<${fieldType.elementType.javaType}>($connectionName, this)$notNullAssertion.toList()
+                    get() = snapshot.${EntityStorage.extractOneToManyChildren}<${fieldType.elementType.javaType}>($connectionName, this)$notNullAssertion.toList()
                
                 """.trimIndent()
         }
@@ -113,13 +104,13 @@ internal val ObjProperty<*, *>.implWsBlockingCodeOverride: String
     }
     val getterName = when (valueType) {
       is ValueType.List<*> -> if (receiver.openness.extendable)
-        fqn1(EntityStorage::extractOneToAbstractManyParent)
+        EntityStorage.extractOneToAbstractManyParent
       else
-        fqn1(EntityStorage::extractOneToManyParent)
+        EntityStorage.extractOneToManyParent
       is ValueType.ObjRef<*> -> if (receiver.openness.extendable)
-        fqn1(EntityStorage::extractOneToAbstractOneParent)
+        EntityStorage.extractOneToAbstractOneParent
       else
-        fqn1(EntityStorage::extractOneToOneParent)
+        EntityStorage.extractOneToOneParent
       else -> error("Unsupported reference type")
     }
     return """
