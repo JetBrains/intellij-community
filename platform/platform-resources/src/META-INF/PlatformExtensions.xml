@@ -1484,10 +1484,6 @@
                  defaultValue="false"
                  description="Enables recent items on search everywhere tabs"/>
 
-    <registryKey key="search.everywhere.recents.clear.action"
-                 defaultValue="false"
-                 description="Shows clear action for recent items on search everywhere tabs"/>
-
     <registryKey key="search.everywhere.recents.limit"
                  defaultValue="25"
                  description="Limit of recent items for search everywhere tabs"/>

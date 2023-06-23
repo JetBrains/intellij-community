@@ -48,8 +48,7 @@ import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText;
 
 public class ActionSearchEverywhereContributor implements WeightedSearchEverywhereContributor<GotoActionModel.MatchedValue>,
-                                                          LightEditCompatible, SearchFieldActionsContributor,
-                                                          SearchEverywhereExtendedInfoProvider {
+                                                          LightEditCompatible, SearchEverywhereExtendedInfoProvider {
 
   private static final Logger LOG = Logger.getInstance(ActionSearchEverywhereContributor.class);
 
@@ -80,22 +79,6 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
     ShortcutSet altEnterShortcutSet = getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS);
     @NlsSafe String altEnter = getFirstKeyboardShortcutText(altEnterShortcutSet);
     return IdeBundle.message("press.0.to.assign.a.shortcut", altEnter);
-  }
-
-  @NotNull
-  @Override
-  public List<AnAction> createRightActions(@NotNull Runnable onChanged) {
-    if (!Registry.is("search.everywhere.recents.clear.action")) return ContainerUtil.emptyList();
-
-    return Collections.singletonList(new AnAction(() -> LangBundle.message("action.clear.recent.actions.text"),
-                                                  () -> LangBundle.message("action.clear.recent.actions.description"),
-                                                  ExpUiIcons.Actions.ClearCash) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        ActionHistoryManager.getInstance().getState().getIds().clear();
-        onChanged.run();
-      }
-    });
   }
 
   @Nls

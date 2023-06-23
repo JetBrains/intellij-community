@@ -2,10 +2,8 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
-import com.intellij.icons.ExpUiIcons;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.ide.actions.GotoClassPresentationUpdater;
-import com.intellij.ide.actions.searcheverywhere.footer.ClassHistoryManager;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -14,7 +12,6 @@ import com.intellij.ide.util.gotoByName.GotoClassModel2;
 import com.intellij.ide.util.gotoByName.GotoClassSymbolConfiguration;
 import com.intellij.ide.util.gotoByName.LanguageRef;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
-import com.intellij.lang.LangBundle;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.lang.PsiStructureViewFactory;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -22,16 +19,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiQualifiedNamedElement;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -39,7 +32,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -49,7 +41,7 @@ import static com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoImplK
 /**
  * @author Konstantin Bulenkov
  */
-public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor implements SearchFieldActionsContributor {
+public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor {
   private static final Pattern ourPatternToDetectMembers = Pattern.compile("(.+)(#)(.*)");
 
   private final PersistentSearchEverywhereContributorFilter<LanguageRef> filter;
@@ -58,44 +50,6 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
     super(event);
 
     filter = createLanguageFilter(event.getRequiredData(CommonDataKeys.PROJECT));
-  }
-
-  @NotNull
-  @Override
-  public List<AnAction> createRightActions(@NotNull Runnable onChanged) {
-    if (!Registry.is("search.everywhere.recents.clear.action")) return super.createRightActions(onChanged);
-
-    return Collections.singletonList(new AnAction(() -> LangBundle.message("action.clear.recent.actions.text"),
-                                                  () -> LangBundle.message("action.clear.recent.actions.description"),
-                                                  ExpUiIcons.Actions.ClearCash) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        ClassHistoryManager.State state = ClassHistoryManager.getInstance(myProject).getState();
-        state.getQname2Modules().clear();
-        state.getQname2Name().clear();
-        onChanged.run();
-      }
-    });
-  }
-
-  @Override
-  public boolean processSelectedItem(@NotNull Object selected, int modifiers, @NotNull String searchText) {
-    if (Registry.is("search.everywhere.recents")) {
-      saveRecentClassName(myProject, selected);
-    }
-    return super.processSelectedItem(selected, modifiers, searchText);
-  }
-
-  private static void saveRecentClassName(@NotNull Project project, @NotNull Object selected) {
-    if (!(selected instanceof PsiQualifiedNamedElement)) return;
-
-    Module module = ModuleUtilCore.findModuleForPsiElement((PsiElement)selected);
-    String qualifiedName = ((PsiQualifiedNamedElement)selected).getQualifiedName();
-    if (module == null || qualifiedName == null) return;
-
-    ClassHistoryManager.State state = ClassHistoryManager.getInstance(project).getState();
-    state.putOrAddQname2Modules(qualifiedName, module.getName());
-    state.getQname2Name().put(qualifiedName, ((PsiQualifiedNamedElement)selected).getName());
   }
 
   @Override
