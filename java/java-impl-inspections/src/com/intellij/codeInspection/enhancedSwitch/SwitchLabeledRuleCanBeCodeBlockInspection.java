@@ -3,9 +3,9 @@ package com.intellij.codeInspection.enhancedSwitch;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -62,7 +62,7 @@ public class SwitchLabeledRuleCanBeCodeBlockInspection extends LocalInspectionTo
     };
   }
 
-  private static class WrapWithCodeBlockFix implements LocalQuickFix {
+  private static class WrapWithCodeBlockFix extends PsiUpdateModCommandQuickFix {
     private final @Nls String myMessage;
 
     WrapWithCodeBlockFix(boolean isResultExpression) {
@@ -78,8 +78,7 @@ public class SwitchLabeledRuleCanBeCodeBlockInspection extends LocalInspectionTo
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getStartElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (element instanceof PsiKeyword) {
         element = element.getParent();
       }
@@ -87,8 +86,8 @@ public class SwitchLabeledRuleCanBeCodeBlockInspection extends LocalInspectionTo
         PsiSwitchBlock switchBlock = rule.getEnclosingSwitchBlock();
         PsiStatement body = rule.getBody();
 
-        if (switchBlock instanceof PsiSwitchExpression && body instanceof PsiExpressionStatement) {
-          wrapExpression((PsiExpressionStatement)body);
+        if (switchBlock instanceof PsiSwitchExpression && body instanceof PsiExpressionStatement statement) {
+          wrapExpression(statement);
         }
         else if (body != null) {
           wrapStatement(body);

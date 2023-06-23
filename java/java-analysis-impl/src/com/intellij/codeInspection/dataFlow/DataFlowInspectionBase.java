@@ -279,7 +279,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       }
       reporter.registerProblem(expression,
                                JavaAnalysisBundle.message("dataflow.message.redundant.instanceof"),
-                               new RedundantInstanceofFix(expression));
+                               new RedundantInstanceofFix(expression).asQuickFix());
     });
   }
 

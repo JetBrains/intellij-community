@@ -2,21 +2,17 @@
 package com.intellij.codeInspection.i18n;
 
 import com.ibm.icu.text.MessagePattern;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.restriction.AnnotationContext;
 import com.intellij.codeInspection.restriction.StringFlowUtil;
-import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.i18n.JavaI18nBundle;
-import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtilBase;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import one.util.streamex.IntStreamEx;
@@ -160,7 +156,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
     return null;
   }
 
-  private static class TitleCapitalizationFix implements LocalQuickFix {
+  private static class TitleCapitalizationFix extends PsiUpdateModCommandQuickFix {
     private final Value myTitleValue;
     private final Nls.Capitalization myCapitalization;
 
@@ -176,10 +172,23 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
     }
 
     @Override
-    public final void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement problemElement = descriptor.getPsiElement();
-      if (problemElement == null) return;
-      doFix(project, problemElement);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement problemElement, @NotNull ModPsiUpdater updater) {
+      PsiLiteralExpression literal = updater.getWritable(getTargetLiteral(problemElement));
+      if (literal != null) {
+        Value value = Value.of(literal);
+        if (value == null) return;
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+        final PsiExpression newExpression =
+          factory.createExpressionFromText('"' + StringUtil.escapeStringCharacters(value.fixCapitalization(myCapitalization)) + '"',
+                                           problemElement);
+        literal.replace(newExpression);
+      }
+      if (problemElement instanceof PsiMethodCallExpression call) {
+        final Property property = updater.getWritable(getPropertyArgument(call));
+        Value value = Value.of(property, call.getArgumentList().getExpressionCount() > 1);
+        if (value == null) return;
+        property.setValue(value.fixCapitalization(myCapitalization));
+      }
     }
 
     private static @Nullable PsiLiteralExpression getTargetLiteral(@NotNull PsiElement element) {
@@ -201,57 +210,6 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
         }
       }
       return null;
-    }
-
-    protected void doFix(@NotNull Project project, @NotNull PsiElement element) throws IncorrectOperationException {
-      PsiLiteralExpression literal = getTargetLiteral(element);
-      if (literal != null) {
-        Value value = Value.of(literal);
-        if (value == null) return;
-        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-        final PsiExpression newExpression =
-          factory.createExpressionFromText('"' + StringUtil.escapeStringCharacters(value.fixCapitalization(myCapitalization)) + '"',
-                                           element);
-        literal.replace(newExpression);
-      }
-      if (element instanceof PsiMethodCallExpression call) {
-        final Property property = getPropertyArgument(call);
-        Value value = Value.of(property, call.getArgumentList().getExpressionCount() > 1);
-        if (value == null) return;
-        property.setValue(value.fixCapitalization(myCapitalization));
-      }
-    }
-
-    @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-      PsiElement element = previewDescriptor.getStartElement();
-      PsiLiteralExpression literal = getTargetLiteral(element);
-      if (literal != null) {
-        PsiFile file = literal.getContainingFile();
-        if (file == element.getContainingFile()) {
-          doFix(project, element);
-          return IntentionPreviewInfo.DIFF;
-        }
-        PsiElement parent = literal.getParent();
-        Value value = Value.of(literal);
-        if (value == null) return IntentionPreviewInfo.EMPTY;
-        Object mark = PsiTreeUtil.mark(literal);
-        PsiElement copyParent = parent.copy();
-        PsiLiteralExpression copyLiteral = (PsiLiteralExpression)Objects.requireNonNull(PsiTreeUtil.releaseMark(copyParent, mark));
-        String newLiteral = '"' + StringUtil.escapeStringCharacters(value.fixCapitalization(myCapitalization)) + '"';
-        copyLiteral.replace(JavaPsiFacade.getElementFactory(project).createExpressionFromText(newLiteral, null));
-        return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, file.getName(), parent.getText(), copyParent.getText());
-      }
-      if (element instanceof PsiMethodCallExpression call) {
-        final Property property = getPropertyArgument(call);
-        Value value = Value.of(property, call.getArgumentList().getExpressionCount() > 1);
-        if (value == null) return IntentionPreviewInfo.EMPTY;
-        Property copy = (Property)property.copy();
-        copy.setValue(value.fixCapitalization(myCapitalization));
-        return new IntentionPreviewInfo.CustomDiff(PropertiesFileType.INSTANCE, property.getContainingFile().getName(), property.getText(),
-                                                   copy.getText());
-      }
-      return IntentionPreviewInfo.EMPTY;
     }
 
     @Nullable

@@ -8,8 +8,10 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.SetInspectionOptionFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
@@ -282,7 +284,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                  new JavaClassValidator().withTitle(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stop.class.selection.table"))));
   }
 
-  private static class TypeMayBeWeakenedFix extends InspectionGadgetsFix {
+  private static class TypeMayBeWeakenedFix extends PsiUpdateModCommandQuickFix {
     private final String fqClassName;
 
     TypeMayBeWeakenedFix(@NotNull String fqClassName) {
@@ -302,8 +304,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       final PsiElement parent = element.getParent();
       final PsiTypeElement typeElement;
       if (parent instanceof PsiVariable variable) {
@@ -360,7 +361,6 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
       }
       final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
       javaCodeStyleManager.shortenClassReferences(replacement);
-
     }
   }
 

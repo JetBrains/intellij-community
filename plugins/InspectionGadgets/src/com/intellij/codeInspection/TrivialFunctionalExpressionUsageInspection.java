@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -365,7 +366,7 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
     }
   }
 
-  private static abstract class ReplaceFix implements LocalQuickFix {
+  private static abstract class ReplaceFix extends PsiUpdateModCommandQuickFix {
     @Nls
     @NotNull
     @Override
@@ -374,8 +375,8 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      apply(descriptor.getPsiElement());
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      apply(element);
     }
 
     void apply(@NotNull PsiElement psiElement) {

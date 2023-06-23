@@ -3,6 +3,7 @@ package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.util.ChronoUtil;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
@@ -175,7 +176,7 @@ public class RedundantExplicitChronoFieldInspection extends AbstractBaseJavaLoca
     };
   }
 
-  private static class InlineChronoEnumCallFix implements LocalQuickFix {
+  private static class InlineChronoEnumCallFix extends PsiUpdateModCommandQuickFix {
     private @NotNull final String myNewMethodName;
     private final int myDeletedArgumentIndex;
 
@@ -197,8 +198,8 @@ public class RedundantExplicitChronoFieldInspection extends AbstractBaseJavaLoca
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
       if (call == null) return;
       PsiExpression qualifierExpression = call.getMethodExpression().getQualifierExpression();
       if (qualifierExpression == null) {

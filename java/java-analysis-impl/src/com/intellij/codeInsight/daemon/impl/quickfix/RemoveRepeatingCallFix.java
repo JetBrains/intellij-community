@@ -1,21 +1,17 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class RemoveRepeatingCallFix extends LocalQuickFixAndIntentionActionOnPsiElement implements IntentionActionWithFixAllOption {
+public class RemoveRepeatingCallFix extends PsiUpdateModCommandAction<PsiMethodCallExpression> {
   private final String myMethodName;
 
   private RemoveRepeatingCallFix(PsiMethodCallExpression call, String methodName) {
@@ -24,12 +20,7 @@ public class RemoveRepeatingCallFix extends LocalQuickFixAndIntentionActionOnPsi
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
-    PsiMethodCallExpression call = (PsiMethodCallExpression)startElement;
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiMethodCallExpression call, @NotNull ModPsiUpdater updater) {
     PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
     if (qualifier == null) {
       return;
@@ -38,8 +29,8 @@ public class RemoveRepeatingCallFix extends LocalQuickFixAndIntentionActionOnPsi
   }
 
   @Override
-  public @NotNull String getText() {
-    return JavaAnalysisBundle.message("intention.name.remove.repeating.call", myMethodName);
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiMethodCallExpression element) {
+    return Presentation.of(JavaAnalysisBundle.message("intention.name.remove.repeating.call", myMethodName)).withFixAllOption(this);
   }
 
   @Override

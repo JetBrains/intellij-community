@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
@@ -77,7 +78,7 @@ public class RedundantCompareToJavaTimeInspection extends AbstractBaseJavaLocalI
     };
   }
 
-  private static class InlineCompareToTimeCallFix implements LocalQuickFix {
+  private static class InlineCompareToTimeCallFix extends PsiUpdateModCommandQuickFix {
     private @NotNull final RelationType myRelationType;
     private @NotNull final String myArgumentType;
 
@@ -110,8 +111,8 @@ public class RedundantCompareToJavaTimeInspection extends AbstractBaseJavaLocalI
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
       if (call == null) return;
       PsiExpression first = call.getMethodExpression().getQualifierExpression();
       if (first == null) {

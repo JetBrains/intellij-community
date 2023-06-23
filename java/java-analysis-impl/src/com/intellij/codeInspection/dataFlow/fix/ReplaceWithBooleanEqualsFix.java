@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.fix;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
@@ -16,7 +16,7 @@ import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceWithBooleanEqualsFix implements LocalQuickFix {
+public class ReplaceWithBooleanEqualsFix extends PsiUpdateModCommandQuickFix {
   private final String myOldExprText;
   private final boolean myFalseIsAcceptable;
 
@@ -37,8 +37,8 @@ public class ReplaceWithBooleanEqualsFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement qualifier = ObjectUtils.tryCast(descriptor.getPsiElement(), PsiExpression.class);
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    PsiElement qualifier = ObjectUtils.tryCast(element, PsiExpression.class);
     if (qualifier == null) return;
     if (myFalseIsAcceptable) {
       qualifier = qualifier.getParent();

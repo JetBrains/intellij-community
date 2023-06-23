@@ -3,9 +3,9 @@ package com.intellij.codeInspection.enhancedSwitch;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -65,7 +65,7 @@ public class RedundantLabeledSwitchRuleCodeBlockInspection extends LocalInspecti
     return null;
   }
 
-  private static class UnwrapCodeBlockFix implements LocalQuickFix {
+  private static class UnwrapCodeBlockFix extends PsiUpdateModCommandQuickFix {
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
@@ -74,8 +74,8 @@ public class RedundantLabeledSwitchRuleCodeBlockInspection extends LocalInspecti
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiBlockStatement body = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiBlockStatement.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiBlockStatement body = PsiTreeUtil.getParentOfType(element, PsiBlockStatement.class);
       if (body != null && body.getParent() instanceof PsiSwitchLabeledRuleStatement) {
         PsiStatement bodyStatement = getSingleStatement(body.getCodeBlock());
         if (bodyStatement instanceof PsiYieldStatement) {

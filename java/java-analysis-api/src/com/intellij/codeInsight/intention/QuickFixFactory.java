@@ -215,7 +215,7 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createChangeParameterClassFix(@NotNull PsiClass aClass, @NotNull PsiClassType type);
 
   @NotNull
-  public abstract IntentionAction createReplaceInaccessibleFieldWithGetterSetterFix(@NotNull PsiElement element,
+  public abstract IntentionAction createReplaceInaccessibleFieldWithGetterSetterFix(@NotNull PsiReferenceExpression element,
                                                                                     @NotNull PsiMethod getter,
                                                                                     boolean isSetter);
 

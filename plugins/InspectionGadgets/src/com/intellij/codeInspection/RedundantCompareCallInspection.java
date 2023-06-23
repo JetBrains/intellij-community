@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -50,7 +51,7 @@ public class RedundantCompareCallInspection extends AbstractBaseJavaLocalInspect
     };
   }
 
-  private static class InlineCompareCallFix implements LocalQuickFix {
+  private static class InlineCompareCallFix extends PsiUpdateModCommandQuickFix {
     private @NotNull final RelationType myRelationType;
 
     InlineCompareCallFix(@NotNull RelationType relationType) {
@@ -65,8 +66,8 @@ public class RedundantCompareCallInspection extends AbstractBaseJavaLocalInspect
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodCallExpression call = ObjectUtils.tryCast(descriptor.getStartElement(), PsiMethodCallExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiMethodCallExpression call = ObjectUtils.tryCast(element, PsiMethodCallExpression.class);
       if (call == null) return;
       PsiExpression[] args = call.getArgumentList().getExpressions();
       if(args.length != 2) return;

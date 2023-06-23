@@ -324,7 +324,7 @@ public final class HighlightFixUtil {
           if (setter != null && PsiUtil.isAccessible(setter, ref, accessObjectClass)) {
             PsiElement element = PsiTreeUtil.skipParentsOfType(ref, PsiParenthesizedExpression.class);
             if (element instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)element).getOperationTokenType() == JavaTokenType.EQ) {
-              IntentionAction action = QUICK_FIX_FACTORY.createReplaceInaccessibleFieldWithGetterSetterFix(place, setter, true);
+              IntentionAction action = QUICK_FIX_FACTORY.createReplaceInaccessibleFieldWithGetterSetterFix(ref, setter, true);
               builder.registerFix(action, null, null, parentFixRange, null);
             }
           }
@@ -333,7 +333,7 @@ public final class HighlightFixUtil {
           PsiMethod getterPrototype = PropertyUtilBase.generateGetterPrototype(psiField);
           PsiMethod getter = containingClass.findMethodBySignature(getterPrototype, true);
           if (getter != null && PsiUtil.isAccessible(getter, ref, accessObjectClass)) {
-            IntentionAction action = QUICK_FIX_FACTORY.createReplaceInaccessibleFieldWithGetterSetterFix(place, getter, false);
+            IntentionAction action = QUICK_FIX_FACTORY.createReplaceInaccessibleFieldWithGetterSetterFix(ref, getter, false);
             builder.registerFix(action, null, null, parentFixRange, null);
           }
         }
@@ -499,7 +499,7 @@ public final class HighlightFixUtil {
       if (methodCandidate.isAccessible() && PsiUtil.isApplicable(method, methodCandidate.getSubstitutor(), exprList)) {
         PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(methodCall.getMethodExpression(), method);
         if (qualifier == null) continue;
-        IntentionAction fix = new QualifyMethodCallFix(methodCall, qualifier.getText());
+        var fix = new QualifyMethodCallFix(methodCall, qualifier.getText());
         TextRange fixRange = HighlightMethodUtil.getFixRange(methodCall);
         if (highlightInfo != null) {
           highlightInfo.registerFix(fix, null, null, fixRange, null);

@@ -902,7 +902,7 @@ public final class HighlightMethodUtil {
     WrapObjectWithOptionalOfNullableFix.REGISTAR.registerCastActions(candidates, methodCall, builder, fixRange);
     WrapExpressionFix.registerWrapAction(candidates, list.getExpressions(), builder, fixRange);
     PermuteArgumentsFix.registerFix(builder, methodCall, candidates, fixRange);
-    IntentionAction action = RemoveRepeatingCallFix.createFix(methodCall);
+    var action = RemoveRepeatingCallFix.createFix(methodCall);
     if (action != null) {
       builder.registerFix(action, null, null, fixRange, null);
     }

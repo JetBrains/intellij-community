@@ -63,6 +63,7 @@ public interface ModCommandAction extends CommonIntentionAction {
   /**
    * @return this action adapted to {@link IntentionAction} interface
    */
+  @Override
   @Contract(pure = true)
   default @NotNull IntentionAction asIntention() {
     return ModCommandService.getInstance().wrap(this);

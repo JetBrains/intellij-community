@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
@@ -615,8 +616,7 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
     }
   }
 
-  private static class RedundantCollectionOperationFix implements LocalQuickFix {
-    @SafeFieldForPreview
+  private static class RedundantCollectionOperationFix extends PsiUpdateModCommandQuickFix {
     private final RedundantCollectionOperationHandler myHandler;
 
     RedundantCollectionOperationFix(RedundantCollectionOperationHandler handler) {
@@ -636,8 +636,8 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
       if (call == null) return;
       myHandler.performFix(project, call);
     }

@@ -1,13 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInspection.*;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.TextRange;
@@ -18,7 +16,6 @@ import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
@@ -199,7 +196,7 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
     }
   }
 
-  public static class SimplifyForEachFix implements LocalQuickFix {
+  public static class SimplifyForEachFix extends PsiUpdateModCommandQuickFix {
     @NotNull private final @Nls String myCustomName;
 
     protected SimplifyForEachFix(@NotNull @Nls String customName) {
@@ -220,8 +217,8 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiExpressionStatement statement = tryCast(descriptor.getPsiElement(), PsiExpressionStatement.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiExpressionStatement statement = tryCast(element, PsiExpressionStatement.class);
       if (statement == null) return;
       PsiMethodCallExpression call = tryCast(statement.getExpression(), PsiMethodCallExpression.class);
       if (call == null) return;
@@ -233,23 +230,28 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
     }
   }
 
-  public static class ForEachNonFinalFix extends PsiElementBaseIntentionAction implements HighPriorityAction {
+  public static class ForEachNonFinalFix extends PsiUpdateModCommandAction<PsiElement> {
     private final @Nullable PsiElement myContext;
+    private final @Nls String myMessage;
 
     public ForEachNonFinalFix(@Nullable PsiElement context) {
+      super(PsiElement.class);
       SimplifyForEachContext simplifyContext = findMigration(context);
       if (simplifyContext == null) {
         myContext = null;
+        myMessage = null;
       }
       else {
         myContext = context;
-        setText(JavaBundle.message("quickfix.text.avoid.mutation.using.stream.api.0.operation", simplifyContext.myMigration.getReplacement()));
+        myMessage =
+          JavaBundle.message("quickfix.text.avoid.mutation.using.stream.api.0.operation", simplifyContext.myMigration.getReplacement());
       }
     }
 
     @Override
-    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-      return new ForEachNonFinalFix(PsiTreeUtil.findSameElementInCopy(myContext, target));
+    protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+      return myContext == null || !myContext.isValid() ? null :
+             Presentation.of(myMessage).withPriority(PriorityAction.Priority.HIGH);
     }
 
     private static SimplifyForEachContext findMigration(@Nullable PsiElement context) {
@@ -267,21 +269,16 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
     }
 
     @Override
-    public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+    protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiMethodCallExpression call =
         PsiTreeUtil.getParentOfType(PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class), PsiMethodCallExpression.class);
       SimplifyForEachContext simplifyForEachContext = SimplifyForEachContext.from(call);
       if (simplifyForEachContext != null) {
         PsiElement result = simplifyForEachContext.migrate();
         if (result != null) {
-          MigrateToStreamFix.simplify(project, result);
+          MigrateToStreamFix.simplify(context.project(), result);
         }
       }
-    }
-
-    @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-      return myContext != null && myContext.isValid();
     }
 
     @Nls

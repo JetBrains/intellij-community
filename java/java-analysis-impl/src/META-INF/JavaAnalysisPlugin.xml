@@ -22,7 +22,7 @@
     <extensionPoint qualifiedName="com.intellij.visibility" interface="com.intellij.codeInspection.visibility.VisibilityExtension" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.java.error.fix" beanClass="com.intellij.codeInsight.daemon.impl.analysis.ErrorFixExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.codeInsight.intention.IntentionAction"/>
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.intention.CommonIntentionAction"/>
     </extensionPoint>
 
     <extensionPoint qualifiedName="com.intellij.lang.jvm.actions.jvmElementActionsFactory" interface="com.intellij.lang.jvm.actions.JvmElementActionsFactory" dynamic="true"/>

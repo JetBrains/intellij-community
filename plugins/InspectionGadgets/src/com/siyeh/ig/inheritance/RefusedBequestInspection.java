@@ -3,8 +3,10 @@ package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.options.JavaClassValidator;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
@@ -15,7 +17,6 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jdom.Element;
@@ -23,6 +24,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
@@ -50,7 +53,7 @@ public class RefusedBequestInspection extends BaseInspection {
 
   @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new RefusedBequestFix();
   }
 
@@ -85,7 +88,7 @@ public class RefusedBequestInspection extends BaseInspection {
     return new RefusedBequestVisitor();
   }
 
-  private static class RefusedBequestFix extends InspectionGadgetsFix {
+  private static class RefusedBequestFix extends PsiUpdateModCommandQuickFix {
 
     @Nls
     @NotNull
@@ -95,8 +98,7 @@ public class RefusedBequestInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement methodName = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement methodName, @NotNull ModPsiUpdater updater) {
       final PsiMethod method = (PsiMethod)methodName.getParent();
       assert method != null;
       final PsiCodeBlock body = method.getBody();
@@ -141,12 +143,15 @@ public class RefusedBequestInspection extends BaseInspection {
       final PsiElement element = body.addAfter(newStatement, brace);
       final PsiElement element1 = styleManager.reformat(element);
       final PsiElement element2 = JavaCodeStyleManager.getInstance(project).shortenClassReferences(element1);
-      if (isOnTheFly() && element2.isPhysical()) {
-        HighlightUtils.highlightElement(element2);
-        if (element2 instanceof PsiDeclarationStatement declarationStatement) {
-          final PsiLocalVariable variable = (PsiLocalVariable)declarationStatement.getDeclaredElements()[0];
-          HighlightUtils.showRenameTemplate(body, variable);
-        }
+      updater.highlight(element2);
+      if (element2 instanceof PsiDeclarationStatement declarationStatement) {
+        final PsiLocalVariable variable = (PsiLocalVariable)declarationStatement.getDeclaredElements()[0];
+        List<String> nameSuggestions = new VariableNameGenerator(variable, VariableKind.LOCAL_VARIABLE)
+          .byExpression(variable.getInitializer())
+          .byType(variable.getType())
+          .byName("original", "superResult")
+          .generateAll(true);
+        updater.rename(variable, nameSuggestions);
       }
     }
   }

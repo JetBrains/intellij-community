@@ -372,7 +372,11 @@ final class PsiUpdateImpl {
       if (myRenameSymbol != null) {
         throw new IllegalStateException("One element is already registered for rename");
       }
-      myRenameSymbol = new ModRenameSymbol(myNavigationFile, element.getTextRange(), suggestedNames);
+      TextRange range = getRange(element);
+      if (range == null) {
+        throw new IllegalArgumentException("Element disappeared after postponed operations: " + element);
+      }
+      myRenameSymbol = new ModRenameSymbol(myNavigationFile, range, suggestedNames);
     }
 
     @Override

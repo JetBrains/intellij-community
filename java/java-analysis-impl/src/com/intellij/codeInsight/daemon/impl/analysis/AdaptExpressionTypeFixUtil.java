@@ -81,10 +81,10 @@ final class AdaptExpressionTypeFixUtil {
     if (parameterType instanceof PsiClassType &&
         ((PsiClassType)parameterType).rawType().equalsToText(CommonClassNames.JAVA_LANG_CLASS) &&
         typeParameter == getSoleTypeParameter(parameterType)) {
-      if (expectedTypeValue instanceof PsiClassType && JavaGenericsUtil.isReifiableType(expectedTypeValue)) {
+      if (expectedTypeValue instanceof PsiClassType classType && JavaGenericsUtil.isReifiableType(expectedTypeValue)) {
         ReplaceExpressionAction fix = new ReplaceExpressionAction(
-          arg, ((PsiClassType)expectedTypeValue).rawType().getCanonicalText() + ".class",
-          ((PsiClassType)expectedTypeValue).rawType().getPresentableText() + ".class");
+          arg, classType.rawType().getCanonicalText() + ".class",
+          classType.rawType().getPresentableText() + ".class");
         info.registerFix(fix, null, null, null, null);
       }
     }

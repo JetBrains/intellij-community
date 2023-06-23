@@ -111,4 +111,9 @@ public interface IntentionAction extends FileModifier, CommonIntentionAction {
     copy.invoke(project, editor, file);
     return IntentionPreviewInfo.DIFF;
   }
+
+  @Override
+  default @NotNull IntentionAction asIntention() {
+    return this;
+  }
 }

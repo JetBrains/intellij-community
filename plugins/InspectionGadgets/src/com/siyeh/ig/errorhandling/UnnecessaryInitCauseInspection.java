@@ -1,8 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -12,10 +14,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -29,7 +29,7 @@ public class UnnecessaryInitCauseInspection extends BaseInspection implements Cl
 
   @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new UnnecessaryInitCauseFix();
   }
 
@@ -59,7 +59,7 @@ public class UnnecessaryInitCauseInspection extends BaseInspection implements Cl
     return null;
   }
 
-  private static class UnnecessaryInitCauseFix extends InspectionGadgetsFix {
+  private static class UnnecessaryInitCauseFix extends PsiUpdateModCommandQuickFix {
 
     @Nls
     @NotNull
@@ -69,8 +69,8 @@ public class UnnecessaryInitCauseInspection extends BaseInspection implements Cl
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement().getParent().getParent();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
+      final PsiElement element = startElement.getParent().getParent();
       if (!(element instanceof PsiMethodCallExpression methodCallExpression)) {
         return;
       }
@@ -93,9 +93,7 @@ public class UnnecessaryInitCauseInspection extends BaseInspection implements Cl
         return;
       }
       final PsiElement newElement = argumentList1.add(argument);
-      if (isOnTheFly()) {
-        HighlightUtils.highlightElement(newElement);
-      }
+      updater.highlight(newElement);
       final PsiElement parent = methodCallExpression.getParent();
       if (parent instanceof PsiExpressionStatement) {
         parent.delete();

@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class ReplaceComputeWithComputeIfPresentFix implements LocalQuickFix, HighPriorityAction {
+public class ReplaceComputeWithComputeIfPresentFix extends PsiUpdateModCommandQuickFix implements HighPriorityAction {
   private static final CallMatcher MAP_COMPUTE = CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_MAP, "compute").
     parameterTypes("K", CommonClassNames.JAVA_UTIL_FUNCTION_BI_FUNCTION);
 
@@ -24,8 +25,8 @@ public class ReplaceComputeWithComputeIfPresentFix implements LocalQuickFix, Hig
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiLambdaExpression lambda = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiLambdaExpression.class);
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    PsiLambdaExpression lambda = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
     if (lambda == null) return;
     PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(lambda, PsiMethodCallExpression.class);
     if (call == null || !"compute".equals(call.getMethodExpression().getReferenceName())) return;

@@ -4,6 +4,7 @@ package com.intellij.codeInspection.miscGenerics;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.compiler.JavacQuirksInspectionVisitor;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -161,7 +162,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
     }
   }
 
-  private static class MyQuickFixAction implements LocalQuickFix {
+  private static class MyQuickFixAction extends PsiUpdateModCommandQuickFix {
     @Override
     @NotNull
     public String getFamilyName() {
@@ -169,8 +170,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (!(element instanceof PsiReferenceParameterList typeArgumentList)) return;
       try {
         PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);

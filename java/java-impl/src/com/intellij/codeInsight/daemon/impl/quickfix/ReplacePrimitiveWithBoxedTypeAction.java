@@ -1,31 +1,16 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.PsiUpdateModCommandAction;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ReplacePrimitiveWithBoxedTypeAction extends LocalQuickFixAndIntentionActionOnPsiElement {
+public class ReplacePrimitiveWithBoxedTypeAction extends PsiUpdateModCommandAction<PsiTypeElement> {
   private final String myPrimitiveName;
   private final String myBoxedTypeName;
   private static final Logger LOG = Logger.getInstance(ReplacePrimitiveWithBoxedTypeAction.class);
@@ -38,52 +23,35 @@ public class ReplacePrimitiveWithBoxedTypeAction extends LocalQuickFixAndIntenti
 
   @NotNull
   @Override
-  public String getText() {
-    return CommonQuickFixBundle.message("fix.replace.x.with.y", myPrimitiveName, myBoxedTypeName);
-  }
-
-  @NotNull
-  @Override
   public String getFamilyName() {
     return QuickFixBundle.message("convert.primitive.to.boxed.type");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
-                             @NotNull PsiElement startElement,
-                             @NotNull PsiElement endElement) {
-    if (startElement instanceof PsiTypeElement) {
-      PsiType type = ((PsiTypeElement)startElement).getType();
-      if (type instanceof PsiWildcardType) {
-        type = ((PsiWildcardType)type).getBound();
-      }
-      if (type instanceof PsiPrimitiveType) {
-        return ((PsiPrimitiveType)type).getBoxedType(startElement) != null;
-      }
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiTypeElement typeElement) {
+    PsiType type = typeElement.getType();
+    if (type instanceof PsiWildcardType wildcardType) {
+      type = wildcardType.getBound();
     }
-    return false;
+    if (!(type instanceof PsiPrimitiveType primitiveType) || primitiveType.getBoxedType(typeElement) == null) return null;
+    return Presentation.of(CommonQuickFixBundle.message("fix.replace.x.with.y", myPrimitiveName, myBoxedTypeName));
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
-    final PsiType type = ((PsiTypeElement)startElement).getType();
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiTypeElement typeElement, @NotNull ModPsiUpdater updater) {
+    final PsiType type = typeElement.getType();
     PsiType boxedType;
-    if (type instanceof PsiPrimitiveType) {
-      boxedType = ((PsiPrimitiveType)type).getBoxedType(startElement);
+    if (type instanceof PsiPrimitiveType primitiveType) {
+      boxedType = primitiveType.getBoxedType(typeElement);
     } else {
       LOG.assertTrue(type instanceof PsiWildcardType);
       final PsiWildcardType wildcardType = (PsiWildcardType)type;
-      final PsiClassType boxedBound = ((PsiPrimitiveType)wildcardType.getBound()).getBoxedType(startElement);
+      final PsiClassType boxedBound = ((PsiPrimitiveType)wildcardType.getBound()).getBoxedType(typeElement);
       LOG.assertTrue(boxedBound != null);
-      boxedType = wildcardType.isExtends() ? PsiWildcardType.createExtends(startElement.getManager(), boxedBound) 
-                                           : PsiWildcardType.createSuper(startElement.getManager(), boxedBound);
+      boxedType = wildcardType.isExtends() ? PsiWildcardType.createExtends(typeElement.getManager(), boxedBound) 
+                                           : PsiWildcardType.createSuper(typeElement.getManager(), boxedBound);
     }
     LOG.assertTrue(boxedType != null);
-    startElement.replace(JavaPsiFacade.getElementFactory(project).createTypeElement(boxedType));
+    typeElement.replace(JavaPsiFacade.getElementFactory(context.project()).createTypeElement(boxedType));
   }
 }

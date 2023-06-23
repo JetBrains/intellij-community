@@ -584,7 +584,7 @@ public final class HighlightUtil {
       String message = JavaErrorBundle.message("return.outside.switch.expr");
       HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message);
       if (statement.getReturnValue() != null) {
-        IntentionAction action = new ReplaceWithYieldFix(statement);
+        var action = new ReplaceWithYieldFix(statement);
         info.registerFix(action, null, null, null, null);
       }
       return info;
@@ -1857,7 +1857,7 @@ public final class HighlightUtil {
       HighlightInfo.Builder info =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description);
       if (!VariableAccessUtils.variableIsUsed(variable, variable.getDeclarationScope())) {
-        IntentionAction action = new RedundantInstanceofFix(expression);
+        var action = new RedundantInstanceofFix(expression);
         info.registerFix(action, null, null, null, null);
       }
       return info;
@@ -3278,8 +3278,8 @@ public final class HighlightUtil {
 
       HighlightInfo.Builder info =
         HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refName).descriptionAndTooltip(description);
-      if (isCallToStaticMember(outerParent)) {
-        IntentionAction action = new RemoveNewKeywordFix(outerParent);
+      if (outerParent instanceof PsiNewExpression newExpression && isCallToStaticMember(newExpression)) {
+        var action = new RemoveNewKeywordFix(newExpression);
         info.registerFix(action, null, null, null, null);
       }
       UnresolvedReferenceQuickFixUpdater.getInstance(containingFile.getProject()).registerQuickFixesLater(ref, info);
