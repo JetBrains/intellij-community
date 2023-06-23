@@ -11,7 +11,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.parentOfType
 import com.intellij.ui.IconManager
 import com.intellij.ui.RowIcon
 import com.intellij.util.PlatformIcons
@@ -174,7 +173,7 @@ abstract class KotlinIconProvider : IconProvider(), DumbAware {
                 (shortName?.asString() == JvmFileClassUtil.JVM_NAME_SHORT).ifTrue {
                     val grandParent = parent.parent
                     if (grandParent is KtPropertyAccessor) {
-                        grandParent.parentOfType<KtProperty>()?.getBaseIcon()
+                        grandParent.property.getBaseIcon()
                     } else {
                         grandParent.getBaseIcon()
                     }
@@ -184,8 +183,10 @@ abstract class KotlinIconProvider : IconProvider(), DumbAware {
                 val origin = (this as? KtLightClass)?.kotlinOrigin
                 //TODO (light classes for decompiled files): correct presentation
                 if (origin != null) origin.getBaseIcon() else CLASS
-            }
-            else -> unwrapped?.takeIf { it != this }?.getBaseIcon()
+            } ?: getBaseIconUnwrapped()
+            else -> getBaseIconUnwrapped()
         }
+
+        private fun PsiElement.getBaseIconUnwrapped(): Icon? = unwrapped?.takeIf { it != this }?.getBaseIcon()
     }
 }
