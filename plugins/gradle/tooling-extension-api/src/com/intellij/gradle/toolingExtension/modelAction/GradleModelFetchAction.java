@@ -2,7 +2,6 @@
 package com.intellij.gradle.toolingExtension.modelAction;
 
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
-import org.gradle.tooling.BuildAction;
 import org.gradle.tooling.BuildController;
 import org.gradle.tooling.internal.gradle.DefaultBuildIdentifier;
 import org.gradle.tooling.model.BuildModel;
@@ -38,7 +37,6 @@ public class GradleModelFetchAction {
 
   private final boolean myIsPreviewMode;
   private final boolean myIsProjectsLoadedAction;
-  private final boolean myParallelModelsFetch;
 
   public GradleModelFetchAction(
     @NotNull ProjectImportAction.AllModels allModels,
@@ -46,8 +44,7 @@ public class GradleModelFetchAction {
     @NotNull ModelConverter modelConverter,
     @NotNull ExecutorService modelConverterExecutor,
     boolean isPreviewMode,
-    boolean isProjectsLoadedAction,
-    boolean parallelModelsFetch
+    boolean isProjectsLoadedAction
   ) {
     myAllModels = allModels;
 
@@ -57,7 +54,6 @@ public class GradleModelFetchAction {
 
     myIsPreviewMode = isPreviewMode;
     myIsProjectsLoadedAction = isProjectsLoadedAction;
-    myParallelModelsFetch = parallelModelsFetch;
   }
 
   public void execute(@NotNull DefaultBuildController controller) {
@@ -152,24 +148,8 @@ public class GradleModelFetchAction {
   }
 
   private void addProjectModels(@NotNull BuildController controller, @NotNull GradleBuild build) {
-    if (myParallelModelsFetch) {
-      // Prepare nested build actions.
-      List<BuildAction<?>> buildActions = new ArrayList<>();
-      for (BasicGradleProject gradleProject : build.getProjects()) {
-        buildActions.add(new BuildAction<Object>() {
-          @Override
-          public Object execute(BuildController controller) {
-            addProjectModels(controller, gradleProject);
-            return null;
-          }
-        });
-      }
-      controller.run(buildActions);
-    }
-    else {
-      for (BasicGradleProject gradleProject : build.getProjects()) {
-        addProjectModels(controller, gradleProject);
-      }
+    for (BasicGradleProject gradleProject : build.getProjects()) {
+      addProjectModels(controller, gradleProject);
     }
   }
 

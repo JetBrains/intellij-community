@@ -42,7 +42,6 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
 
   private final boolean myIsPreviewMode;
   private boolean myUseProjectsLoadedPhase;
-  private boolean myParallelModelsFetch;
 
   private transient @Nullable AllModels myAllModels = null;
   private transient @Nullable GradleBuild myGradleBuild = null;
@@ -87,11 +86,6 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
 
   public void prepareForNonPhasedExecuter() {
     myUseProjectsLoadedPhase = false;
-  }
-
-  @ApiStatus.Internal
-  public void setParallelModelsFetch(boolean parallelModelsFetch) {
-    myParallelModelsFetch = parallelModelsFetch;
   }
 
   @NotNull
@@ -152,8 +146,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
       myModelConverter,
       converterExecutor,
       myIsPreviewMode,
-      isProjectsLoadedAction,
-      myParallelModelsFetch
+      isProjectsLoadedAction
     );
     modelFetchAction.execute(new DefaultBuildController(controller, myGradleBuild));
 
