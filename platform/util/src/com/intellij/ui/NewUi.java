@@ -28,10 +28,6 @@ public final class NewUi {
     isEnabled = enabled;
   }
 
-  public static boolean isNewUiForOneRemDevSessionOverridden() {
-    return overrideNewUiForOneRemDevSession != null;
-  }
-
   public static void overrideNewUiForOneRemDevSession(boolean newUi) {
     checkInitialized();
     overrideNewUiForOneRemDevSession = newUi;

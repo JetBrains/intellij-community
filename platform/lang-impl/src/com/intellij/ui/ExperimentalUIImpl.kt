@@ -4,6 +4,7 @@
 package com.intellij.ui
 
 import com.intellij.feedback.new_ui.state.NewUIInfoService
+import com.intellij.icons.AllIcons
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.IconMapLoader
@@ -15,9 +16,11 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.PlatformUtils
+import com.intellij.util.application
 
 /**
  * @author Konstantin Bulenkov
@@ -38,8 +41,8 @@ private class ExperimentalUIImpl : ExperimentalUI() {
    * For CWM session, we take the newUI preference from a local thin client registry,
    * and when a user changes the value, we write it to the local registry.
    *
-   * Both for RD and CWM sessions, a restart dialog is handled in [ThinClientSyncedSettingsExtListener],
-   * so we don't need to show it here.
+   * Both for RD and CWM sessions an actual change of newUI preference is done by
+   * [ExperimentalUIJetBrainsClientDelegate].
    *
    * For local IDE, we show a restart dialog on user action.
    * On app closing, we save new value stored in the [shouldApplyOnClose]
@@ -49,12 +52,12 @@ private class ExperimentalUIImpl : ExperimentalUI() {
       logger.warn("Setting the same value $newUI")
       return
     }
-    onValueChanged(newUI)
 
-    if (PlatformUtils.isJetBrainsClient() && !NewUi.isNewUiForOneRemDevSessionOverridden()) {
-      saveNewValue(newUI)
+    if (PlatformUtils.isJetBrainsClient()) {
+      changeUiWithDelegate(newUI)
     }
     else if (suggestRestart && !PlatformUtils.isJetBrainsClient()) {
+      onValueChanged(newUI)
       shouldApplyOnClose = newUI
       showRestartDialog()
     }
@@ -111,13 +114,29 @@ private class ExperimentalUIImpl : ExperimentalUI() {
   }
 
   private fun setNewUiUsed() {
-    logger.info("Saving newUi used")
     val propertyComponent = PropertiesComponent.getInstance()
     if (propertyComponent.getBoolean(NEW_UI_USED_PROPERTY)) {
       propertyComponent.unsetValue(NEW_UI_FIRST_SWITCH)
     }
     else {
       propertyComponent.setValue(NEW_UI_FIRST_SWITCH, true)
+    }
+  }
+
+  private fun changeUiWithDelegate(isEnabled: Boolean) {
+    val shouldRestart = MessageDialogBuilder.yesNo(
+      title = IdeBundle.message("dialog.newui.title.user.interface"),
+      message = IdeBundle.message("dialog.newui.message.need.restart.client.and.backend.to.apply.settings"),
+      icon = AllIcons.General.QuestionDialog,
+    ).yesText(IdeBundle.message("dialog.newui.message.new.ui.restart"))
+      .noText(IdeBundle.message("dialog.newui.message.new.ui.revert"))
+      .guessWindowAndAsk()
+    if (shouldRestart) {
+      val delegate = application.service<ExperimentalUIJetBrainsClientDelegate>()
+      delegate.changeUi(isEnabled, updateLocally = {
+        onValueChanged(isEnabled)
+        saveNewValue(isEnabled)
+      })
     }
   }
 
@@ -173,4 +192,8 @@ private class ExperimentalUiAppLifecycleListener : AppLifecycleListener {
     (ExperimentalUI.getInstance() as? ExperimentalUIImpl)
       ?.appClosing()
   }
+}
+
+interface ExperimentalUIJetBrainsClientDelegate {
+  fun changeUi(isEnabled: Boolean, updateLocally: (Boolean) -> Unit)
 }
