@@ -26,14 +26,57 @@ import java.util.*
 
 private val LOG = logger<SdkmanrcWatcher>()
 
-private class JdkTarget(val target: String,
-                        val version: String,
-                        val flavour: String? = null,
-                        val vendor: String? = null)
+data class SdkmanCandidate(val target: String,
+                           val version: String,
+                           val flavour: String? = null,
+                           val vendor: String? = null) {
+  companion object {
+    private val regex: Regex = Regex("(\\d+(?:\\.\\d+)*)(?:\\.([^-]+))?-?(.*)?")
+
+    fun parse(text: String): SdkmanCandidate? {
+      val matchResult = regex.find(text) ?: return null
+      return SdkmanCandidate(
+        text,
+        matchResult.groups[1]?.value ?: return null,
+        matchResult.groups[2]?.value,
+        matchResult.groups[3]?.value
+      )
+    }
+  }
+
+  fun matchVersionString(versionString: @NlsSafe String): Boolean {
+    LOG.info("Matching '$versionString'")
+    if ("version $version" !in versionString && "version \"$version" !in versionString) return false
+
+    val variant = when {
+      vendor == "adpt" && flavour == "hs" -> JdkVersionDetector.Variant.AdoptOpenJdk_HS
+      vendor == "adpt" && flavour == "j9" -> JdkVersionDetector.Variant.AdoptOpenJdk_J9
+      vendor == "amzn" -> JdkVersionDetector.Variant.Corretto
+      vendor == "grl" -> JdkVersionDetector.Variant.GraalVM
+      vendor == "jbr" -> JdkVersionDetector.Variant.JBR
+      vendor == "librca" -> JdkVersionDetector.Variant.Liberica
+      vendor == "oracle" -> JdkVersionDetector.Variant.Oracle
+      vendor == "open" -> JdkVersionDetector.Variant.Oracle
+      vendor == "sapmchn" -> JdkVersionDetector.Variant.SapMachine
+      vendor == "sem" -> JdkVersionDetector.Variant.Semeru
+      vendor == "tem" -> JdkVersionDetector.Variant.Temurin
+      vendor == "zulu" -> JdkVersionDetector.Variant.Zulu
+      else -> JdkVersionDetector.Variant.Unknown
+    }
+
+    // Check vendor
+    val variantName = variant.displayName
+    return variantName != null && versionString.contains(variantName)
+  }
+
+}
 
 @Service(Service.Level.PROJECT)
 class SdkmanrcWatcherService: Disposable {
+  private lateinit var file: File
+
   fun registerListener(project: Project) {
+    file = File(project.basePath, ".sdkmanrc")
     val connection = project.messageBus.connect(this)
 
     connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
@@ -48,25 +91,15 @@ class SdkmanrcWatcherService: Disposable {
   }
 
   fun parseSdkmanrc(project: Project) {
-    // Parse .sdkmanrc
-    val file = File(project.basePath, ".sdkmanrc")
     if (!file.exists()) return
 
+    // Parse .sdkmanrc
     val properties = Properties().apply {
       load(file.reader())
     }
 
     val java = properties.getProperty("java") ?: return
-    val regex = Regex("(\\d+(?:\\.\\d+)*)(?:\\.([^-]+))?-?(.*)?")
-
-    val matchResult = regex.find(java) ?: return
-
-    val target = JdkTarget(
-      java,
-      matchResult.groups[1]?.value ?: return,
-      matchResult.groups[2]?.value,
-      matchResult.groups[3]?.value
-    )
+    val target = SdkmanCandidate.parse(java) ?: return
 
     val testedPaths = mutableListOf<String>()
 
@@ -100,7 +133,7 @@ class SdkmanrcWatcherService: Disposable {
     }
   }
 
-  private fun configure(path: String, target: JdkTarget, project: Project) {
+  private fun configure(path: String, target: SdkmanCandidate, project: Project) {
     LOG.info("${target.target} - Candidate found: ${SdkVersionUtil.getJdkVersionInfo(path)?.displayVersionString()}")
 
     val jdk = SdkConfigurationUtil.createAndAddSDK(path, JavaSdk.getInstance())
@@ -111,7 +144,7 @@ class SdkmanrcWatcherService: Disposable {
     }
   }
 
-  private fun configure(jdk: Sdk, target: JdkTarget, project: Project) {
+  private fun configure(jdk: Sdk, target: SdkmanCandidate, project: Project) {
     val rootManager = ProjectRootManager.getInstance(project)
     rootManager.projectSdk = jdk
 
@@ -127,41 +160,18 @@ class SdkmanrcWatcherService: Disposable {
       .notify(project)
   }
 
-  private fun JdkTarget.match(sdk: Sdk?): Boolean {
+  private fun SdkmanCandidate.match(sdk: Sdk?): Boolean {
     if (sdk == null) return false
     val versionString = sdk.versionString ?: return false
     return matchVersionString(versionString)
   }
 
-  private fun JdkTarget.match(path: String): Boolean {
+  private fun SdkmanCandidate.match(path: String): Boolean {
     val info = SdkVersionUtil.getJdkVersionInfo(path) ?: return false
     return matchVersionString(info.displayVersionString())
   }
 
-  private fun JdkTarget.matchVersionString(versionString: @NlsSafe String): Boolean {
-    LOG.info("Matching '$versionString'")
-    if ("version $version" !in versionString && "version \"$version" !in versionString) return false
 
-    val variant = when {
-      vendor == "adpt" && flavour == "hs" -> JdkVersionDetector.Variant.AdoptOpenJdk_HS
-      vendor == "adpt" && flavour == "j9" -> JdkVersionDetector.Variant.AdoptOpenJdk_J9
-      vendor == "amzn" -> JdkVersionDetector.Variant.Corretto
-      vendor == "grl" -> JdkVersionDetector.Variant.GraalVM
-      vendor == "jbr" -> JdkVersionDetector.Variant.JBR
-      vendor == "librca" -> JdkVersionDetector.Variant.Liberica
-      vendor == "oracle" -> JdkVersionDetector.Variant.Oracle
-      vendor == "open" -> JdkVersionDetector.Variant.Oracle
-      vendor == "sapmchn" -> JdkVersionDetector.Variant.SapMachine
-      vendor == "sem" -> JdkVersionDetector.Variant.Semeru
-      vendor == "tem" -> JdkVersionDetector.Variant.Temurin
-      vendor == "zulu" -> JdkVersionDetector.Variant.Zulu
-      else -> JdkVersionDetector.Variant.Unknown
-    }
-
-    // Check vendor
-    val variantName = variant.displayName
-    return variantName != null && versionString.contains(variantName)
-  }
 
   override fun dispose() {}
 }
