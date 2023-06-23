@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.RunAll;
-import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.util.io.PathKt;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +18,6 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenServerManager;
-import org.jetbrains.idea.maven.wizards.MavenProjectBuilder;
 import org.jetbrains.idea.maven.wizards.MavenProjectImportProvider;
 
 import java.nio.file.Path;
@@ -58,8 +56,6 @@ public class MavenMultiProjectImportTest extends ProjectWizardTestCase<AbstractP
       """);
 
     MavenProjectImportProvider provider = new MavenProjectImportProvider();
-    MavenProjectBuilder builder = (MavenProjectBuilder)provider.getBuilder();
-    builder.setFileToImport(pom2);
     Module module = importProjectFrom(pom2.getPath(), null, provider);
     Project project2 = module.getProject();
     importMaven(project2, pom2);

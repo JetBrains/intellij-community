@@ -1550,9 +1550,9 @@ public class MavenUtil {
 
   public static void setupProjectSdk(@NotNull Project project) {
     if (ProjectRootManager.getInstance(project).getProjectSdk() == null) {
+      Sdk projectSdk = suggestProjectSdk(project);
+      if (projectSdk == null) return;
       ApplicationManager.getApplication().runWriteAction(() -> {
-        Sdk projectSdk = suggestProjectSdk(project);
-        if (projectSdk == null) return;
         JavaSdkUtil.applyJdkToProject(project, projectSdk);
       });
     }

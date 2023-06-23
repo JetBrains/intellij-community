@@ -10,8 +10,8 @@ class MavenAsyncUtil {
   companion object {
     suspend fun setupProjectSdk(project: Project) {
       if (ProjectRootManager.getInstance(project).projectSdk == null) {
+        val projectSdk = MavenUtil.suggestProjectSdk(project) ?: return
         writeAction {
-          val projectSdk = MavenUtil.suggestProjectSdk(project) ?: return@writeAction
           JavaSdkUtil.applyJdkToProject(project, projectSdk)
         }
       }
