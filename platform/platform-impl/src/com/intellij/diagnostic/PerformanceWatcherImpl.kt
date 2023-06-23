@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 
 package com.intellij.diagnostic
 
@@ -32,6 +32,10 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import sun.awt.ModalityEvent
+import sun.awt.ModalityListener
+import sun.awt.SunToolkit
+import java.awt.Toolkit
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
@@ -68,7 +72,6 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
 
   @Volatile
   private var lastSampling = System.nanoTime()
-  private var activeEvents = 0
   private var currentEdtEventChecker: FreezeCheckerTask? = null
   private val jitWatcher = JitWatcher()
   private val unresponsiveIntervalLazy by lazy {
@@ -107,6 +110,14 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
         }
       }
     }
+    (Toolkit.getDefaultToolkit() as? SunToolkit)?.addModalityListener(object : ModalityListener {
+      override fun modalityPushed(ev: ModalityEvent) {
+      }
+
+      override fun modalityPopped(ev: ModalityEvent) {
+        stopCurrentTaskAndReEmit(FreezeCheckerTask(System.nanoTime()))
+      }
+    })
   }
 
   private suspend fun asyncInit() {
@@ -209,27 +220,18 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
 
   @ApiStatus.Internal
   override fun edtEventStarted() {
-    if (!isActive) {
-      return
-    }
-
-    val start = System.nanoTime()
-    activeEvents++
-    currentEdtEventChecker?.stop()
-    val task = FreezeCheckerTask(start)
-    currentEdtEventChecker = task
-    check(taskFlow.tryEmit(task))
+    if (!isActive) return
+    stopCurrentTaskAndReEmit(FreezeCheckerTask(System.nanoTime()))
   }
 
   @ApiStatus.Internal
   override fun edtEventFinished() {
-    if (!isActive) {
-      return
-    }
+    if (!isActive) return
+    stopCurrentTaskAndReEmit(null)
+  }
 
-    activeEvents--
+  private fun stopCurrentTaskAndReEmit(task: FreezeCheckerTask?) {
     currentEdtEventChecker?.stop()
-    val task = if (activeEvents > 0) FreezeCheckerTask(System.nanoTime()) else null
     currentEdtEventChecker = task
     check(taskFlow.tryEmit(task))
   }
@@ -333,8 +335,6 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
     private fun startFreezeReporting(): MySamplingTask {
       val freezeFolder = "${THREAD_DUMPS_PREFIX}freeze-${formatTime(ZonedDateTime.now())}-${buildName()}"
 
-      //TODO always true for some reason
-      //myFreezeDuringStartup = !LoadingState.INDEXING_FINISHED.isOccurred();
       val reportDir = logDir.resolve(freezeFolder)
       Files.createDirectories(reportDir)
 
