@@ -9,9 +9,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Version
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
-import org.jetbrains.plugins.gradle.jvmcompat.IdeVersionedDataParser
-import org.jetbrains.plugins.gradle.jvmcompat.IdeVersionedDataState
-import org.jetbrains.plugins.gradle.jvmcompat.IdeVersionedDataStorage
+import org.jetbrains.plugins.gradle.jvmcompat.*
 import org.jetbrains.plugins.gradle.util.Ranges
 
 class KotlinGradleVersionMapping() : BaseState() {
@@ -42,19 +40,19 @@ class KotlinGradleCompatibilityState() : IdeVersionedDataState() {
 
 internal object KotlinGradleCompatibilityParser : IdeVersionedDataParser<KotlinGradleCompatibilityState>() {
     override fun parseJson(data: JsonObject): KotlinGradleCompatibilityState? {
-        val kotlinVersionsArr = data["kotlinVersions"]?.takeIf { it.isJsonArray }?.asJsonArray ?: return null
+        val kotlinVersionsArr = data["kotlinVersions"]?.asSafeJsonArray ?: return null
         val kotlinVersions = kotlinVersionsArr.mapNotNull { entry ->
-            val str = entry.takeIf { it.isJsonPrimitive }?.asString ?: return@mapNotNull null
+            val str = entry.asSafeString ?: return@mapNotNull null
             Version.parseVersion(str)?.toString()
         }
 
-        val compatibilityArr = data["compatibility"]?.takeIf { it.isJsonArray }?.asJsonArray ?: return null
+        val compatibilityArr = data["compatibility"]?.asSafeJsonArray ?: return null
 
         val compatibility = compatibilityArr.mapNotNull { entry ->
-            val obj = entry.takeIf { it.isJsonObject }?.asJsonObject ?: return@mapNotNull null
-            val kotlin = obj["kotlin"]?.takeIf { it.isJsonPrimitive }?.asString ?: return@mapNotNull null
-            val gradle = obj["gradle"]?.takeIf { it.isJsonPrimitive }?.asString ?: return@mapNotNull null
-            val comment = obj["comment"]?.takeIf { it.isJsonPrimitive }?.asString
+            val obj = entry.asSafeJsonObject ?: return@mapNotNull null
+            val kotlin = obj["kotlin"]?.asSafeString ?: return@mapNotNull null
+            val gradle = obj["gradle"]?.asSafeString ?: return@mapNotNull null
+            val comment = obj["comment"]?.asSafeString
             KotlinGradleVersionMapping(kotlin, gradle, comment)
         }
 

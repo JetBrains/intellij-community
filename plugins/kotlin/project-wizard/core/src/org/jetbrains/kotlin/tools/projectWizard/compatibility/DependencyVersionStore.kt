@@ -5,9 +5,7 @@ import com.google.gson.JsonObject
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
-import org.jetbrains.plugins.gradle.jvmcompat.IdeVersionedDataParser
-import org.jetbrains.plugins.gradle.jvmcompat.IdeVersionedDataState
-import org.jetbrains.plugins.gradle.jvmcompat.IdeVersionedDataStorage
+import org.jetbrains.plugins.gradle.jvmcompat.*
 
 class DependencyVersionState() : IdeVersionedDataState() {
     constructor(versions: Map<String, String>) : this() {
@@ -23,11 +21,11 @@ class DependencyVersionState() : IdeVersionedDataState() {
 
 internal object DependencyVersionParser : IdeVersionedDataParser<DependencyVersionState>() {
     override fun parseJson(data: JsonObject): DependencyVersionState? {
-        val obj = data.takeIf { it.isJsonObject }?.asJsonObject ?: return null
+        val obj = data.asSafeJsonObject ?: return null
 
         val versions = obj.asMap().mapNotNull { (key, value) ->
             if (key == "ideVersion") return@mapNotNull null
-            val version = value.takeIf { value.isJsonPrimitive }?.asString ?: return@mapNotNull null
+            val version = value.asSafeString ?: return@mapNotNull null
             key to version
         }.toMap()
 
