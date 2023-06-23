@@ -134,12 +134,16 @@ open class KotlinModuleStateModificationService(val project: Project) : Disposab
 
         override fun beforeChanged(event: VersionedStorageChange) {
             handleLibraryChanges(event)
-            handleModuleChanges(event)
-            handleContentRootInModuleChanges(event)
+
+            // We keep track of the already invalidated modules because we don't need `handleContentRootInModuleChanges` to publish another
+            // module state modification event for the same module.
+            val alreadyInvalidatedModules = handleModuleChanges(event)
+            handleContentRootInModuleChanges(event, alreadyInvalidatedModules)
         }
 
-        private fun handleContentRootInModuleChanges(event: VersionedStorageChange) {
+        private fun handleContentRootInModuleChanges(event: VersionedStorageChange, alreadyInvalidatedModules: Set<Module>) {
             for (changedModule in event.getChangedModules()) {
+                if (changedModule in alreadyInvalidatedModules) continue
                 moduleStateModificationService.invalidateSourceModule(changedModule)
             }
         }
@@ -191,20 +195,28 @@ open class KotlinModuleStateModificationService(val project: Project) : Disposab
             }
         }
 
-        private fun handleModuleChanges(event: VersionedStorageChange) {
-            val moduleEntities = event.getChanges(ModuleEntity::class.java).ifEmpty { return }
-            for (change in moduleEntities) {
-                when (change) {
-                    is EntityChange.Added -> {}
-                    is EntityChange.Removed -> {
-                        change.oldEntity.findModule(event.storageBefore)?.let { module ->
-                            moduleStateModificationService.invalidateSourceModule(module, isRemoval = true)
-                        }
-                    }
+        /**
+         * Invalidates removed and replaced [Module]s and returns the set of these invalidated modules.
+         */
+        private fun handleModuleChanges(event: VersionedStorageChange): Set<Module> {
+            val moduleEntities = event.getChanges(ModuleEntity::class.java).ifEmpty { return emptySet() }
 
-                    is EntityChange.Replaced -> {
-                        val changedModule = change.getReplacedEntity(event, ModuleEntity::findModule) ?: continue
-                        moduleStateModificationService.invalidateSourceModule(changedModule)
+            return buildSet {
+                for (change in moduleEntities) {
+                    when (change) {
+                        is EntityChange.Added -> {}
+                        is EntityChange.Removed -> {
+                            change.oldEntity.findModule(event.storageBefore)?.let { module ->
+                                moduleStateModificationService.invalidateSourceModule(module, isRemoval = true)
+                                add(module)
+                            }
+                        }
+
+                        is EntityChange.Replaced -> {
+                            val changedModule = change.getReplacedEntity(event, ModuleEntity::findModule) ?: continue
+                            moduleStateModificationService.invalidateSourceModule(changedModule)
+                            add(changedModule)
+                        }
                     }
                 }
             }
