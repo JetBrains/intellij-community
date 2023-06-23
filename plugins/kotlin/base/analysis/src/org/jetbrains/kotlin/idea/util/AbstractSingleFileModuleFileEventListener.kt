@@ -34,6 +34,13 @@ sealed class AbstractSingleFileModuleFileEventListener(private val project: Proj
             if (!isRelevantEvent(event, file)) continue
             if (!file.mayBeFromSingleFileModule(project)) continue
 
+            // A `BulkFileListener` may receive events from other projects, which need to be ignored. This check is placed after
+            // `mayBeFromSingleFileModule` because (1) `mayBeFromSingleFileModule` establishes that `file` is a Kotlin file, and we do not
+            // need to check `isInContent` for non-Kotlin files, as we don't want to process them, and (2) for the common case where the
+            // user has opened only one project and most Kotlin files are inside a source set, checking `!isInSourceContent` first excludes
+            // most files in a single check, as opposed to checking `isInContent` first and then `!isInSourceContent`.
+            if (!ProjectFileIndex.getInstance(project).isInContent(file)) continue
+
             val module = file.getSingleFileModule() ?: continue
             processEvent(event, module)
         }
