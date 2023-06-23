@@ -84,13 +84,7 @@ class IntentionPreviewComputable(private val project: Project,
     if (project.isDisposed) return null
     val origPair = ShowIntentionActionsHandler.chooseFileForAction(originalFile, originalEditor, action) ?: return null
     ProgressManager.checkCanceled()
-    val writable = originalEditor.document.isWritable
-    try {
-      return invokePreview(origPair.first, origPair.second)
-    }
-    finally {
-      originalEditor.document.setReadOnly(!writable)
-    }
+    return invokePreview(origPair.first, origPair.second)
   }
 
   private fun invokePreview(origFile: PsiFile, origEditor: Editor): IntentionPreviewInfo? {
