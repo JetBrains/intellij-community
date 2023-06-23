@@ -41,7 +41,7 @@ class CodegenJarLoader(val project: Project) {
                                                                         true, emptyList())
     val roots =
       JarRepositoryManager.loadDependenciesAsync(project, codegenLibraryDescription, setOf(ArtifactKind.ARTIFACT),
-                                                 listOf(INTELLIJ_DEPENDENCIES_DESCRIPTION, INTELLIJ_RELEASES_DESCRIPTION, INTELLIJ_NIGHTLY_DESCRIPTION),
+                                                 listOf(INTELLIJ_DEPENDENCIES_DESCRIPTION),
                                                  null).await()
 
     val pathsToJars = roots.mapNotNull { PathUtil.getLocalPath(it.file)?.toNioPath() }
@@ -60,13 +60,27 @@ class CodegenJarLoader(val project: Project) {
                                      "Cannot find class CodeGeneratorVersions in source code. Probably issue with kotlin compilation caches.")
                                  )
     thisLogger().debug("Reading generator version from: ${generatorVersionsClass.containingFile.containingDirectory}")
-    val versionField = generatorVersionsClass.findFieldByName("API_VERSION_INTERNAL", false)
+    val apiVersionField = generatorVersionsClass.findFieldByName("API_VERSION_INTERNAL", false)
                        ?: return Result.failure(
                          RuntimeException("Cannot find required field API_VERSION_INTERNAL in CodeGeneratorVersions class"))
-    val apiVersion = (versionField.initializer as? PsiLiteralExpression)?.value as? Int ?: return Result.failure(
-      RuntimeException("Cannot detect code generator version by field"))
-    thisLogger().debug("Calculated target API version: $apiVersion")
-    return Result.success("$VERSION$apiVersion")
+    val apiVersion = (apiVersionField.initializer as? PsiLiteralExpression)?.value as? Int ?: return Result.failure(
+      RuntimeException("Cannot detect code generator API version by field"))
+
+    val implMajorVersionField = generatorVersionsClass.findFieldByName("IMPL_MAJOR_VERSION_INTERNAL", false)
+                       ?: return Result.failure(
+                         RuntimeException("Cannot find required field IMPL_MAJOR_VERSION_INTERNAL in CodeGeneratorVersions class"))
+    val implMajorVersion = (implMajorVersionField.initializer as? PsiLiteralExpression)?.value as? Int ?: return Result.failure(
+      RuntimeException("Cannot detect code generator Impl Major version by field"))
+
+    val implMinorVersionField = generatorVersionsClass.findFieldByName("IMPL_MINOR_VERSION_INTERNAL", false)
+                                ?: return Result.failure(
+                                  RuntimeException("Cannot find required field IMPL_MINOR_VERSION_INTERNAL in CodeGeneratorVersions class"))
+    val implMinorVersion = (implMinorVersionField.initializer as? PsiLiteralExpression)?.value as? Int ?: return Result.failure(
+      RuntimeException("Cannot detect code generator Impl Minor version by field"))
+
+    val artifactVersion = "$apiVersion.$implMajorVersion.$implMinorVersion"
+    thisLogger().debug("Calculated target API version: $artifactVersion")
+    return Result.success(artifactVersion)
   }
 
   companion object {
@@ -74,21 +88,10 @@ class CodegenJarLoader(val project: Project) {
 
     private const val GROUP_ID = "com.jetbrains.intellij.platform"
     private const val ARTIFACT_ID = "workspace-model-codegen-impl"
-    private const val VERSION = "0.0."
     private val INTELLIJ_DEPENDENCIES_DESCRIPTION = RemoteRepositoryDescription(
       "intellij-dependencies",
       "Intellij Dependencies",
       "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies",
-    )
-    private val INTELLIJ_RELEASES_DESCRIPTION = RemoteRepositoryDescription(
-      "intellij-releases",
-      "Intellij Releases",
-      "https://www.jetbrains.com/intellij-repository/releases",
-    )
-    private val INTELLIJ_NIGHTLY_DESCRIPTION = RemoteRepositoryDescription(
-      "intellij-nightly",
-      "Intellij Nightly",
-      "https://www.jetbrains.com/intellij-repository/nightly",
     )
   }
 }
