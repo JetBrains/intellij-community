@@ -531,8 +531,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     if (ownerRefClass == null) return false;
     if (!PsiUtil.isLanguageLevel8OrHigher(uMethod.getJavaPsi())) return false;
     if (!"value".equals(uMethod.getName())) return false;
-    UClass ownerUClass = ownerRefClass.getUastElement();
-    if (ownerUClass == null || !ownerUClass.isAnnotationType()) return false;
+    if (!ownerRefClass.isAnnotationType()) return false;
     PsiType returnType = uMethod.getReturnType();
     if (!(returnType instanceof PsiArrayType)) return false;
     PsiClass returnTypeClass = PsiUtil.resolveClassInType(returnType);
