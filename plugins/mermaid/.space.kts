@@ -18,6 +18,8 @@ fun Container.publishingEnvironment(channel: String = PublishChannels.STABLE) {
   }
 }
 
+val defaultJdkImage = "amazoncorretto:17"
+
 job("Mermaid / Build for 231.8770+") {
   startOn {
     gitPush {
@@ -27,7 +29,7 @@ job("Mermaid / Build for 231.8770+") {
       cron("0 6 * * *")
     }
   }
-  container("openjdk:17") {
+  container(defaultJdkImage) {
     productionBuild()
     shellScript {
       content = "./gradlew build"
@@ -36,7 +38,7 @@ job("Mermaid / Build for 231.8770+") {
 }
 
 job("Mermaid / Plugin Verifier") {
-  container("openjdk:17") {
+  container(defaultJdkImage) {
     productionBuild()
     shellScript {
       content = "./gradlew runPluginVerifier"
@@ -56,7 +58,7 @@ job("Mermaid / Release / Stable") {
       enabled = false
     }
   }
-  container("openjdk:17") {
+  container(defaultJdkImage) {
     productionBuild()
     publishingEnvironment(channel = PublishChannels.STABLE)
     shellScript {
@@ -71,7 +73,7 @@ job("Mermaid / Release / Nightly") {
       enabled = false
     }
   }
-  container("openjdk:17") {
+  container(defaultJdkImage) {
     productionBuild()
     publishingEnvironment(channel = PublishChannels.NIGHTLY)
     shellScript {
