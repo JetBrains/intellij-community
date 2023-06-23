@@ -37,6 +37,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.OptionAction
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
@@ -257,7 +258,8 @@ open class IdeErrorsDialog internal constructor(private val myMessagePool: Messa
       myAssigneePanel.add(JBLabel(DiagnosticBundle.message("label.assignee")))
       myAssigneePanel.add(myAssigneeCombo)
     }
-    myCredentialLabel = htmlComponent("height sample", null, null, null, false) { e: HyperlinkEvent ->
+    @NlsSafe val heightSample = "height sample"
+    myCredentialLabel = htmlComponent(heightSample, null, null, null, false) { e: HyperlinkEvent ->
       if (e.eventType == HyperlinkEvent.EventType.ACTIVATED) {
         val submitter = selectedCluster().submitter
         if (submitter != null) {
