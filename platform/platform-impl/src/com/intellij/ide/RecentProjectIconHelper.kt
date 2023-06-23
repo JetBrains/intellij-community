@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.ide
@@ -6,7 +6,6 @@ package com.intellij.ide
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.IconDeferrer
 import com.intellij.ui.JBColor
 import com.intellij.ui.icons.loadPng
@@ -31,8 +30,6 @@ import java.nio.file.Path
 import java.util.*
 import javax.swing.Icon
 
-private val LOG = logger<RecentProjectIconHelper>()
-
 private fun unscaledProjectIconSize() = Registry.intValue("ide.project.icon.size", 20)
 
 private fun userScaledProjectIconSize() = JBUIScale.scale(unscaledProjectIconSize())
@@ -54,7 +51,7 @@ private val projectIconCache = ContainerUtil.createSoftValueMap<String, ProjectI
 
 internal class RecentProjectIconHelper {
   companion object {
-    fun getDotIdeaPath(path: String): Path? {
+    internal fun getDotIdeaPath(path: String): Path? {
       try {
         return getDotIdeaPath(Path.of(path))
       }
@@ -63,7 +60,7 @@ internal class RecentProjectIconHelper {
       }
     }
 
-    fun createIcon(file: Path): Icon = ProjectFileIcon(loadIconFile(file), userScaledProjectIconSize())
+    internal fun createIcon(file: Path): Icon = ProjectFileIcon(loadIconFile(file), userScaledProjectIconSize())
 
     fun refreshProjectIcon(path: @SystemIndependent String) {
       projectIconCache.remove(path)
@@ -164,10 +161,10 @@ private fun isCachedIcon(icon: ProjectIcon, isProjectValid: Boolean, timestamp: 
 }
 
 private data class ProjectIcon(
-  val icon: Icon,
-  val isProjectValid: Boolean,
-  val lastUsedProjectIconSize: Int,
-  val timestamp: Long? = null
+  @JvmField val icon: Icon,
+  @JvmField val isProjectValid: Boolean,
+  @JvmField val lastUsedProjectIconSize: Int,
+  @JvmField val timestamp: Long? = null
 )
 
 private class ProjectFileIcon(
@@ -218,12 +215,12 @@ private fun loadIconFile(file: Path): IconData {
     }
   }
   catch (e: Exception) {
-    LOG.debug(e)
+    logger<RecentProjectIconHelper>().debug(e)
     return EmptyIconData(userScaledProjectIconSize())
   }
 }
 
-private sealed class IconData(protected val userScaledSize: Int) {
+private sealed class IconData(@JvmField protected val userScaledSize: Int) {
   abstract fun getScaledIcon(sysScale: Float): Icon
 }
 
