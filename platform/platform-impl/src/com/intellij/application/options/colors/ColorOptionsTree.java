@@ -10,6 +10,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.FontUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.StatusText;
 import org.jdesktop.swingx.treetable.DefaultMutableTreeTableNode;
@@ -18,10 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.*;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptorWithPath.NAME_SEPARATOR;
 
@@ -99,6 +97,7 @@ public class ColorOptionsTree extends Tree {
   }
 
   public void selectOptionByType(@NotNull final String attributeType) {
+    if (Objects.equals(ObjectUtils.doIfNotNull(getSelectedDescriptor(), d -> d.getType()), attributeType)) return;
     selectPath(findOption(myTreeModel.getRoot(), new DescriptorMatcher() {
       @Override
       public boolean matches(@NotNull Object data) {

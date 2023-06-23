@@ -146,7 +146,7 @@ public class SimpleEditorPreview implements PreviewPanel {
   @Nullable
   private  HighlightData getDataFromOffset(int offset) {
     for (HighlightData highlightData : myHighlightData) {
-      if (offset >= highlightData.getStartOffset() && offset <= highlightData.getEndOffset()) {
+      if (offset >= highlightData.getStartOffset() && offset < highlightData.getEndOffset()) {
         return highlightData;
       }
     }
@@ -250,7 +250,7 @@ public class SimpleEditorPreview implements PreviewPanel {
     if (needScroll && minOffset != Integer.MAX_VALUE) {
       LogicalPosition pos = myEditor.offsetToLogicalPosition(minOffset);
       myEditor.getCaretModel().moveToOffset(minOffset);
-      myEditor.getScrollingModel().scrollTo(pos, ScrollType.MAKE_VISIBLE);
+      myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     }
   }
 
