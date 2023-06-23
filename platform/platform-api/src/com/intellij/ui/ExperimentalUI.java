@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconPathPatcher;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager;
 import com.intellij.openapi.util.registry.Registry;
@@ -25,6 +26,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -109,6 +113,31 @@ public abstract class ExperimentalUI {
     return isNewUI() && Registry.is("ide.experimental.ui.editor.tabs.scrollbar");
   }
 
+  public static final class NotPatchedIconRegistry {
+    private static final HashSet<Pair<String, ClassLoader>> paths = new HashSet<>();
+    public static class IconModel {
+      public Icon icon;
+      public String originalPath;
+      public IconModel(Icon icon, String originalPath) {
+        this.icon = icon;
+        this.originalPath = originalPath;
+      }
+    }
+
+    public static @NotNull List<IconModel> getData() {
+      List<IconModel> result = new ArrayList<>(paths.size());
+
+      for (Pair<String, ClassLoader> p : paths) {
+        result.add(new IconModel(IconLoader.getIcon(p.first, p.second != null ? p.second : NotPatchedIconRegistry.class.getClassLoader()), p.first));
+      }
+      return result;
+    }
+
+    public static void registerNotPatchedIcon(String path, ClassLoader classLoader) {
+      paths.add(new Pair<>(path, classLoader));
+    }
+  }
+
   @SuppressWarnings("unused")
   public static class NewUiRegistryListener implements RegistryValueListener {
     protected boolean isApplicable() {
@@ -158,11 +187,19 @@ public abstract class ExperimentalUI {
 
   private @NotNull IconPathPatcher createPathPatcher() {
     Map<ClassLoader, Map<String, String>> paths = getIconMappings();
+    boolean dumpNotPatchedIcons = Registry.is("ide.experimental.ui.dump.not.patched.icons");
     return new IconPathPatcher() {
       @Override
       public @Nullable String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
         Map<String, String> mappings = paths.get(classLoader);
-        return mappings != null ? mappings.get(Strings.trimStart(path, "/")) : null;
+        if (mappings == null) {
+          return null;
+        }
+        String patchedPath = mappings.get(Strings.trimStart(path, "/"));
+        if (patchedPath == null && dumpNotPatchedIcons) {
+          NotPatchedIconRegistry.registerNotPatchedIcon(path, classLoader);
+        }
+        return patchedPath;
       }
 
       @Override
