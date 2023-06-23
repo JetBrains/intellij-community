@@ -166,7 +166,7 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
 
                         assert(parameterIndex < parametersCount)
                         return super.getPrimaryElements() + OverridingMethodsSearch.search(method, true)
-                            .filter { method.parameterList.parametersCount == parametersCount }
+                            .filter { it.parameterList.parametersCount == parametersCount }
                             .mapNotNull { it.parameterList.parameters[parameterIndex].unwrapped }
                             .toTypedArray()
                     }
