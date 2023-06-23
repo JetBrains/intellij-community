@@ -3,14 +3,15 @@
 package com.intellij.ui;
 
 import com.intellij.util.ui.UIUtil;
+import com.jetbrains.JBR;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
-import com.jetbrains.JBR;
 
 import javax.swing.*;
 import javax.swing.event.MouseInputListener;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 import static java.awt.Cursor.*;
 
@@ -83,7 +84,7 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
     if (view instanceof Frame) {
       int state = ((Frame)view).getExtendedState();
       if (isStateSet(Frame.ICONIFIED, state)) return true;
-      if (isStateSet(Frame.MAXIMIZED_BOTH, state)) return true;
+      if (isStateSet(Frame.MAXIMIZED_BOTH, state) && !jbrMoveSupported(view)) return true;
     }
     return false;
   }
@@ -122,9 +123,7 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
     if (myLocation != null && myViewBounds != null) {
       Component content = getContent(event);
       Component view = getView(content);
-      if (mouseMove && myCursorType == DEFAULT_CURSOR
-          && (view instanceof Frame || view instanceof Dialog) // The JBR team states that isWindowMoveSupported works only for Frame/Dialog
-          && JBR.isWindowMoveSupported()) {
+      if (mouseMove && myCursorType == DEFAULT_CURSOR && jbrMoveSupported(view)) {
         // Enter in move mode only after mouse move, so double click is supported
         JBR.getWindowMove().startMovingTogetherWithMouse((Window)view, mouseButton);
         myLocation = null;
@@ -209,4 +208,10 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
   protected void notifyMoved() {}
 
   protected void notifyResized() {}
+
+  private static boolean jbrMoveSupported(Component component) {
+    // The JBR team states that isWindowMoveSupported works only for Frame/Dialog
+    return (component instanceof Frame || component instanceof Dialog)
+           && JBR.isWindowMoveSupported();
+  }
 }
