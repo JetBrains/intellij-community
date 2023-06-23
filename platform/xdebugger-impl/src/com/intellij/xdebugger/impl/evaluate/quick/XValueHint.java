@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
 import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
@@ -51,6 +52,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.intellij.codeInsight.hint.HintUtil.installInformationProperties;
 
 public class XValueHint extends AbstractValueHint {
   private static final Logger LOG = Logger.getInstance(XValueHint.class);
@@ -251,14 +254,18 @@ public class XValueHint extends AbstractValueHint {
                                            @NotNull SimpleColoredText text,
                                            @NotNull XValuePresentation presentation,
                                            @Nullable XFullValueEvaluator evaluator) {
+    var panel = installInformationProperties(new BorderLayoutPanel());
     SimpleColoredComponent component = HintUtil.createInformationComponent();
     component.setIcon(icon);
     text.appendToComponent(component);
-    appendEvaluatorLink(evaluator, component);
+    panel.add(component);
     if (evaluator != null) {
-      LinkMouseListenerBase.installSingleTagOn(component);
+      var evaluationLinkComponent = new SimpleColoredComponent();
+      appendEvaluatorLink(evaluator, evaluationLinkComponent);
+      LinkMouseListenerBase.installSingleTagOn(evaluationLinkComponent);
+      panel.addToRight(evaluationLinkComponent);
     }
-    return component;
+    return panel;
   }
 
   private void disposeVisibleHint() {
