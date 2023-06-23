@@ -150,6 +150,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("quickfix/typeMismatch/typeMismatchOnReturnedExpression", pattern = pattern)
             model("quickfix/toString", pattern = pattern)
             model("quickfix/specifySuperType", pattern = pattern)
+            model("quickfix/convertToBlockBody", pattern = pattern)
         }
 
         testClass<AbstractHighLevelQuickFixMultiFileTest> {
