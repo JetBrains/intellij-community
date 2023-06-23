@@ -95,7 +95,6 @@ open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.me
       row {
         text(IdeBundle.message("new.ui.description"))
       }.topGap(TopGap.SMALL)
-        .bottomGap(BottomGap.SMALL)
       row {
         browserLink(getExploreNewUiLabel(), getExploreNewUiUrl())
         link(IdeBundle.message("new.ui.submit.feedback")) { onSubmitFeedback() }
