@@ -1,12 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree
 
+import com.intellij.openapi.observable.util.addTreeModelListener
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.ui.tree.ui.DefaultTreeLayoutCache
+import com.intellij.util.ui.tree.TreeModelListenerList
 import org.easymock.EasyMock.mock
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.awt.Rectangle
+import javax.swing.event.TreeModelEvent
+import javax.swing.event.TreeModelListener
 import javax.swing.tree.*
 import javax.swing.tree.AbstractLayoutCache.NodeDimensions
 
@@ -236,6 +240,73 @@ class DefaultTreeLayoutCacheTest {
     )
   }
 
+  @Test
+  fun `replace one node with multiple nodes`() {
+    testStructure(
+      initOps = {
+        setModelStructure("""
+          |r
+          | a1
+          |  b1
+          """.trimMargin()
+        )
+        sut.isRootVisible = true
+      },
+      modOps = {
+        sut.setExpandedState("r/a1", true)
+        node("r/a1").setLeaf(false) // to avoid auto-collapsing
+        node("r/a1/b1").remove()
+        node("r/a1").insert(0 to "b11", 1 to "b12", 2 to "b13")
+      },
+      assertions = {
+        assertStructure("""
+          |r
+          | a1
+          |  b11
+          |  b12
+          |  b13
+          """.trimMargin()
+        )
+      },
+    )
+  }
+
+  @Test
+  fun `sparse multiple insertions`() {
+    testStructure(
+      initOps = {
+        setModelStructure("""
+          |r
+          | a1
+          |  b11
+          |   c111
+          |  b12
+          """.trimMargin()
+        )
+        sut.isRootVisible = true
+      },
+      modOps = {
+        sut.setExpandedState("r/a1", true)
+        sut.setExpandedState("r/a1/b11", true)
+        node("r/a1").setLeaf(false) // to avoid auto-collapsing
+        node("r/a1").insert(0 to "b10", 2 to "b115", 4 to "b13")
+      },
+      assertions = {
+        assertStructure("""
+          |r
+          | a1
+          |  b10
+          |  b11
+          |   c111
+          |  b115
+          |  b12
+          |  b13
+          """.trimMargin()
+        )
+      },
+    )
+  }
+
   private fun testStructure(
     initOps: () -> Unit = { },
     modOps: () -> Unit = { },
@@ -243,6 +314,24 @@ class DefaultTreeLayoutCacheTest {
   ) {
     initOps()
     sut.model = model
+    // This is usually handled by the tree UI, but we're unit testing here:
+    model.addTreeModelListener(object : TreeModelListener {
+      override fun treeNodesChanged(e: TreeModelEvent?) {
+        sut.treeNodesChanged(e)
+      }
+
+      override fun treeNodesInserted(e: TreeModelEvent?) {
+        sut.treeNodesInserted(e)
+      }
+
+      override fun treeNodesRemoved(e: TreeModelEvent?) {
+        sut.treeNodesRemoved(e)
+      }
+
+      override fun treeStructureChanged(e: TreeModelEvent?) {
+        sut.treeStructureChanged(e)
+      }
+    })
     modOps()
     assertions()
   }
@@ -308,6 +397,17 @@ class DefaultTreeLayoutCacheTest {
     model.insertNodeInto(Node(name), this, index)
   }
 
+  private fun Node.insert(vararg nodes: Pair<Int, String>) {
+    for ((i, name) in nodes) {
+      insert(Node(name), i)
+    }
+    model.nodesWereInserted(this, nodes.map { it.first }.toIntArray())
+  }
+
+  private fun Node.remove() {
+    model.removeNodeFromParent(this)
+  }
+
   private fun assertStructure(structureString: String) {
     val actualStructure = (0 until sut.rowCount)
       .map { i -> sut.getPathForRow(i)?.let { path ->
@@ -328,6 +428,14 @@ class DefaultTreeLayoutCacheTest {
   }
 
   private class Node(userObject: String) : DefaultMutableTreeNode(userObject) {
+
+    private var isLeaf: Boolean? = null
+
+    override fun isLeaf(): Boolean = isLeaf ?: super.isLeaf()
+
+    fun setLeaf(isLeaf: Boolean?) {
+      this.isLeaf = isLeaf
+    }
 
     override fun equals(other: Any?): Boolean {
       if (this === other) return true
