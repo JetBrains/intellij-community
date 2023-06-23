@@ -21,9 +21,11 @@ fun createCompletionGolfMetrics(): List<Metric> =
 fun createBenchmarkMetrics(): List<Metric> =
   listOf(
     MatchedRatio(showByDefault = true),
-    PrefixSimilarity(showByDefault = true),
-    EditSimilarity(showByDefault = true),
-    PerfectLine(showByDefault = true)
+    PrefixSimilarity(showByDefault = false),
+    EditSimilarity(showByDefault = false),
+    PerfectLine(showByDefault = true),
+    MatchedLineLength(),
+    FirstPerfectLineSession()
   )
 
 internal abstract class CompletionGolfMetric<T : Number> : Metric {
@@ -110,6 +112,47 @@ internal class CompletionInvocationsCount : CompletionGolfMetric<Int>() {
 
   companion object {
     const val NAME = "Completion Invocations"
+  }
+}
+
+internal class MatchedLineLength : Metric {
+  private val sample = mutableListOf<Double>()
+  override val name: String = "Matched Line Length"
+  override val valueType: MetricValueType = MetricValueType.DOUBLE
+  override val showByDefault: Boolean = false
+
+  override val value: Double
+    get() = sample.average()
+
+  override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
+    val fileSample = Sample()
+    for (session in sessions) {
+      val value = session.lookups.maxOf { lookup -> lookup.selectedWithoutPrefix()?.length ?: 0 }.toDouble()
+      fileSample.add(value)
+      sample.add(value)
+    }
+    return fileSample.mean()
+  }
+}
+
+internal class FirstPerfectLineSession : Metric {
+  private val sample = mutableListOf<Double>()
+  override val name: String = "First Perfect Line Session"
+  override val valueType: MetricValueType = MetricValueType.DOUBLE
+  override val showByDefault: Boolean = false
+
+  override val value: Double
+    get() = sample.average()
+
+  override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Number {
+    val fileSample = Sample()
+    for (session in sessions) {
+      val value = session.lookups.indexOfFirst { lookup -> (lookup.selectedWithoutPrefix()?.length ?: 0) +
+        lookup.offset == session.expectedText.length }.takeIf { it != -1 } ?: session.lookups.size
+      fileSample.add(value)
+      sample.add(value.toDouble())
+    }
+    return fileSample.mean()
   }
 }
 

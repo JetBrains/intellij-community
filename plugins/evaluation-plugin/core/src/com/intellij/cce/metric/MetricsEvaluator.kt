@@ -30,15 +30,6 @@ class MetricsEvaluator private constructor(private val evaluationType: String) {
     registerMetric(SessionsCountMetric())
   }
 
-  fun registerCompletionGolfMetrics() {
-    registerMetrics(createCompletionGolfMetrics())
-    registerMetric(MeanLatencyMetric(true))
-    registerMetric(MaxLatencyMetric())
-    registerMetric(TotalLatencyMetric())
-    registerMetric(SessionsCountMetric())
-    registerMetric(SuggestionsCountMetric())
-  }
-
   private fun registerMetric(metric: Metric) = metrics.add(metric)
 
   private fun registerMetrics(metrics: Collection<Metric>) = this.metrics.addAll(metrics)
