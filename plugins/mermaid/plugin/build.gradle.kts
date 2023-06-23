@@ -20,6 +20,10 @@ repositories {
 dependencies {
   javascriptImplementation(project(":browser:extension", configurations.javascriptBinaries))
   javascriptSourceMaps(project(":browser:extension", configurations.javascriptBinariesSourceMaps))
+  testImplementation("junit:junit:4.13.2")
+  testImplementation(platform("org.junit:junit-bom:5.9.3"))
+  testImplementation("org.junit.jupiter:junit-jupiter")
+  testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 sourceSets {
@@ -114,15 +118,20 @@ tasks {
     jvmArgs = commonJvmArgs
   }
 
+  val modernTests by registering(Test::class) {
+    useJUnitPlatform()
+  }
+
   withType<Test> {
     testLogging {
       this.showStandardStreams = true
     }
-    // workaround for a Gradle issue, which lets "gradle test" actually run something
-    isScanForTestClasses = false
-    // Only run tests from classes that end with "Test"
-    include("**/*Test.class")
     jvmArgs = commonJvmArgs
+  }
+
+  test {
+    finalizedBy(modernTests)
+    useJUnit()
   }
 
   generateLexer {
