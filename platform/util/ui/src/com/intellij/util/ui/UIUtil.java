@@ -3,7 +3,6 @@ package com.intellij.util.ui;
 
 import com.intellij.BundleBase;
 import com.intellij.concurrency.ThreadContext;
-import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
@@ -85,7 +84,6 @@ public final class UIUtil {
   public static final Key<String> PLUGGABLE_LAF_KEY = Key.create("Pluggable.laf.name");
 
   private static final Key<WeakReference<Component>> FOSTER_PARENT = Key.create("Component.fosterParent");
-  private static final Key<Boolean> IS_SHOWING = Key.create("Component.isShowing");
   private static final Key<Boolean> HAS_FOCUS = Key.create("Component.hasFocus");
 
   /**
@@ -1070,7 +1068,7 @@ public final class UIUtil {
 
     LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
     if (lookAndFeel instanceof UserDataHolder dh) {
-      return Boolean.TRUE != dh.getUserData(LAF_WITH_THEME_KEY) &&
+      return Boolean.TRUE != dh.getUserData(StartupUiUtil.LAF_WITH_THEME_KEY) &&
              Objects.equals(dh.getUserData(PLUGGABLE_LAF_KEY), "macOS Light");
     }
     return false;
@@ -1083,7 +1081,7 @@ public final class UIUtil {
 
     LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
     if (lookAndFeel instanceof UserDataHolder dataHolder) {
-      return Boolean.TRUE != dataHolder.getUserData(LAF_WITH_THEME_KEY) &&
+      return Boolean.TRUE != dataHolder.getUserData(StartupUiUtil.LAF_WITH_THEME_KEY) &&
              Objects.equals(dataHolder.getUserData(PLUGGABLE_LAF_KEY), "Windows 10 Light");
     }
     return false;
@@ -2507,13 +2505,7 @@ public final class UIUtil {
   }
 
   public static int getLcdContrastValue() {
-    int lcdContrastValue = LoadingState.APP_STARTED.isOccurred() ? Registry.intValue("lcd.contrast.value", 0) : 0;
-    if (lcdContrastValue == 0) {
-      return StartupUiUtil.doGetLcdContrastValueForSplash(StartupUiUtil.isUnderDarcula());
-    }
-    else {
-      return StartupUiUtil.normalizeLcdContrastValue(lcdContrastValue);
-    }
+    return StartupUiUtil.getLcdContrastValue();
   }
 
   /**
@@ -3199,22 +3191,7 @@ public final class UIUtil {
    */
   @ApiStatus.Experimental
   public static boolean isShowing(@NotNull Component component, boolean checkHeadless) {
-    if (checkHeadless && Boolean.getBoolean("java.awt.headless")) {
-      return true;
-    }
-    if (component.isShowing()) {
-      return true;
-    }
-
-    while (component != null) {
-      JComponent jComponent = component instanceof JComponent ? (JComponent)component : null;
-      if (jComponent != null && Boolean.TRUE.equals(jComponent.getClientProperty(IS_SHOWING))) {
-        return true;
-      }
-      component = component.getParent();
-    }
-
-    return false;
+    return ComponentUtil.isShowing(component, checkHeadless);
   }
 
   /**
@@ -3223,10 +3200,7 @@ public final class UIUtil {
   @ApiStatus.Internal
   @ApiStatus.Experimental
   public static void markAsShowing(@NotNull JComponent component, boolean value) {
-    if (Boolean.getBoolean("java.awt.headless")) {
-      return;
-    }
-    component.putClientProperty(IS_SHOWING, value ? Boolean.TRUE : null);
+    ComponentUtil.markAsShowing(component, value);
   }
 
   public static void runWhenFocused(@NotNull Component component, @NotNull Runnable runnable) {
