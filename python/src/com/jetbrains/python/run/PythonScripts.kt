@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("PythonScripts")
 
 package com.jetbrains.python.run
@@ -57,7 +57,10 @@ fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironmen
                                 ?: throw IllegalArgumentException("Python module name must be set")
   }
   for (parameter in parameters) {
-    commandLineBuilder.addParameter(parameter.apply(targetEnvironment))
+    val resolvedParameter = parameter.apply(targetEnvironment)
+    if (resolvedParameter != PythonExecution.REMOVE_ARGUMENT) {
+      commandLineBuilder.addParameter(resolvedParameter)
+    }
   }
   val userPathList = sdk?.targetAdditionalData?.pathsAddedByUser?.map { it.value }?.map { constant(it) }?.toMutableList() ?: ArrayList()
   initPythonPath(envs, true, userPathList, targetEnvironment.request, false)

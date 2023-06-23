@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run
 
 import com.intellij.execution.target.value.TargetEnvironmentFunction
@@ -15,6 +15,7 @@ import java.nio.charset.Charset
 sealed class PythonExecution {
   var workingDir: TargetEnvironmentFunction<out String?>? = null
 
+  /** Parameters that return [REMOVE_ARGUMENT] are removed from the resulting argument list. */
   val parameters: MutableList<TargetEnvironmentFunction<String>> = mutableListOf()
 
   val envs: MutableMap<String, TargetEnvironmentFunction<String>> = mutableMapOf()
@@ -27,6 +28,7 @@ sealed class PythonExecution {
     addParameter(constant(value))
   }
 
+  /** If the function returns [REMOVE_ARGUMENT], the parameter will be removed from the resulting argument list. */
   fun addParameter(value: TargetEnvironmentFunction<String>) {
     parameters.add(value)
   }
@@ -60,6 +62,12 @@ sealed class PythonExecution {
     fun visit(pythonScriptExecution: PythonScriptExecution)
 
     fun visit(pythonModuleExecution: PythonModuleExecution)
+  }
+
+  companion object {
+    /** See docs for [parameters]. */
+    // python -c 'print(repr(__import__("random").randbytes(16))[2:-1])'
+    const val REMOVE_ARGUMENT = """\xdc'S>\x02\x03%\x14\xee\xc0\xa1`\xcb\r\xf0\x95"""
   }
 }
 
