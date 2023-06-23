@@ -37,6 +37,7 @@ open class PositionPanel(private val dataContext: WidgetPresentationDataContext,
                          scope: CoroutineScope,
                          protected val helper: EditorBasedWidgetHelper = EditorBasedWidgetHelper(dataContext.project)) : TextWidgetPresentation {
   private val updateTextRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    .also { it.tryEmit(Unit) }
   private val charCountRequests = MutableSharedFlow<CodePointCountTask>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   companion object {
