@@ -6,7 +6,7 @@ import org.ec4j.core.parser.ErrorHandler
 import org.ec4j.core.parser.ParseContext
 import org.ec4j.core.parser.ParseException
 
-class EditorConfigErrorHandler : ErrorHandler {
+class EditorConfigLoadErrorHandler : ErrorHandler {
   override fun error(context: ParseContext, errorEvent: ErrorEvent) {
     if (errorEvent.errorType.isSyntaxError && errorEvent.errorType != ErrorEvent.ErrorType.PROPERTY_VALUE_MISSING) {
       throw ParseException(errorEvent)

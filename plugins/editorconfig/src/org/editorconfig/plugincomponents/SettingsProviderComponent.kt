@@ -17,10 +17,9 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.SlowOperations
 import org.ec4j.core.*
 import org.ec4j.core.model.Version
-import org.ec4j.core.parser.EditorConfigModelHandler
 import org.ec4j.core.parser.ParseException
 import org.editorconfig.EditorConfigRegistry
-import org.editorconfig.core.ec4jwrappers.EditorConfigErrorHandler
+import org.editorconfig.core.ec4jwrappers.EditorConfigLoadErrorHandler
 import org.editorconfig.core.ec4jwrappers.EditorConfigPermanentCache
 import org.editorconfig.core.ec4jwrappers.VirtualFileResource
 import java.io.IOException
@@ -43,7 +42,7 @@ class SettingsProviderComponent(private val project: Project) : SimpleModificati
     .configFileName(EditorConfigConstants.EDITORCONFIG)
     .rootDirectories(getRootDirs().map { VirtualFileResource(it) })
     .cache(resourceCache)
-    .loader(EditorConfigLoader.of(Version.CURRENT, PropertyTypeRegistry.default_(), EditorConfigErrorHandler()))
+    .loader(EditorConfigLoader.of(Version.CURRENT, PropertyTypeRegistry.default_(), EditorConfigLoadErrorHandler()))
     // TODO custom handling of unset values?
     .keepUnset(true)
     .build()
