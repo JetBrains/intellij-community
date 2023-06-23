@@ -99,10 +99,7 @@ public final class UIUtil {
   }
 
   public static void decorateWindowHeader(JRootPane pane) {
-    if (pane != null && SystemInfoRt.isMac) {
-      pane.putClientProperty("apple.awt.windowAppearance",
-                             isUnderDarcula() ? "NSAppearanceNameVibrantDark" : "NSAppearanceNameVibrantLight");
-    }
+    ComponentUtil.decorateWindowHeader(pane);
   }
 
   public static int getTransparentTitleBarHeight(JRootPane rootPane) {
@@ -1062,29 +1059,11 @@ public final class UIUtil {
   }
 
   public static boolean isUnderDefaultMacTheme() {
-    if (!SystemInfoRt.isMac) {
-      return false;
-    }
-
-    LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
-    if (lookAndFeel instanceof UserDataHolder dh) {
-      return Boolean.TRUE != dh.getUserData(StartupUiUtil.LAF_WITH_THEME_KEY) &&
-             Objects.equals(dh.getUserData(PLUGGABLE_LAF_KEY), "macOS Light");
-    }
-    return false;
+    return StartupUiUtil.isUnderDefaultMacTheme();
   }
 
   public static boolean isUnderWin10LookAndFeel() {
-    if (!SystemInfoRt.isWindows) {
-      return false;
-    }
-
-    LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
-    if (lookAndFeel instanceof UserDataHolder dataHolder) {
-      return Boolean.TRUE != dataHolder.getUserData(StartupUiUtil.LAF_WITH_THEME_KEY) &&
-             Objects.equals(dataHolder.getUserData(PLUGGABLE_LAF_KEY), "Windows 10 Light");
-    }
-    return false;
+    return StartupUiUtil.isUnderWin10LookAndFeel();
   }
 
   public static boolean isUnderDarcula() {
@@ -1092,7 +1071,7 @@ public final class UIUtil {
   }
 
   public static boolean isUnderIntelliJLaF() {
-    return UIManager.getLookAndFeel().getName().contains("IntelliJ") || isUnderDefaultMacTheme() || isUnderWin10LookAndFeel();
+    return StartupUiUtil.isUnderIntelliJLaF();
   }
 
   @Deprecated(forRemoval = true)

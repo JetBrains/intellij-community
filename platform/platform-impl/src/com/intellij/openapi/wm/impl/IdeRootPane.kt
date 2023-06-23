@@ -202,7 +202,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
       putClientProperty(UIUtil.NO_BORDER_UNDER_WINDOW_TITLE_KEY, true)
     }
 
-    UIUtil.decorateWindowHeader(this)
+    ComponentUtil.decorateWindowHeader(this)
 
     border = UIManager.getBorder("Window.border")
 

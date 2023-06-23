@@ -19,10 +19,7 @@ import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleContextCache
-import com.intellij.util.ui.JBEmptyBorder
-import com.intellij.util.ui.JBFont
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import com.jetbrains.JBR
 import com.jetbrains.WindowDecorations
 import org.jetbrains.annotations.ApiStatus
@@ -431,7 +428,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
 
     override fun getBorderInsets(c: Component): Insets {
       val thickness = calculateWindowBorderThicknessInLogicalPx()
-      val top = if (isTopNeeded() && (colorizationAffectsBorders || UIUtil.isUnderIntelliJLaF())) ceil(thickness).toInt() else 0
+      val top = if (isTopNeeded() && (colorizationAffectsBorders || StartupUiUtil.isUnderIntelliJLaF())) ceil(thickness).toInt() else 0
       val bottom = if (isBottomNeeded()) bottomBorderWidthLogicalPx else 0
       val left = customTitleBar?.leftInset?.toInt() ?: 0
       val right = customTitleBar?.rightInset?.toInt() ?: 0
