@@ -243,9 +243,13 @@ private object StandardNames {
   val MAP_INTERFACE = FqName(Map::class.qualifiedName!!)
 }
 
+private val entitiesSuperclassFqn = FqName(com.intellij.platform.workspace.storage.WorkspaceEntity::class.java.name)
+
 private val ClassDescriptor.isEntityInterface: Boolean
   get() {
-    return isInterface(this) && defaultType.isSubclassOf(FqName(com.intellij.platform.workspace.storage.WorkspaceEntity::class.java.name))
+    // If is `WorkspaceEntity` interface we need to check it
+    if (fqNameSafe == entitiesSuperclassFqn) return true
+    return isInterface(this) && defaultType.isSubclassOf(entitiesSuperclassFqn)
   }
 
 private val ClassDescriptor.isEntityBuilderInterface: Boolean
