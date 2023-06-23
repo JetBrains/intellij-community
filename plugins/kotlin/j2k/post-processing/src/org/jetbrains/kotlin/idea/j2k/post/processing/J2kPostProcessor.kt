@@ -201,7 +201,6 @@ private val inspectionLikePostProcessingGroup =
         RemoveRedundantCastToNullableProcessing(),
         inspectionBasedProcessing(ReplacePutWithAssignmentInspection()),
         ReplaceGetterBodyWithSingleReturnStatementWithExpressionBody(),
-        inspectionBasedProcessing(UnnecessaryVariableInspection(), writeActionNeeded = false),
         RedundantExplicitTypeInspectionBasedProcessing(),
         JavaObjectEqualsToEqOperatorProcessing(),
         RemoveExplicitPropertyTypeProcessing(),
