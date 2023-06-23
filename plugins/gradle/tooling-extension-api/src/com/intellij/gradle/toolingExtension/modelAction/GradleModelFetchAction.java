@@ -62,15 +62,12 @@ public class GradleModelFetchAction {
     //We only need these later, but need to fetch them before fetching other models because of https://github.com/gradle/gradle/issues/20008
     Set<GradleBuild> nestedBuilds = getNestedBuilds(controller, mainGradleBuild);
 
-    addProjectModels(controller, mainGradleBuild);
-    addBuildModels(controller, mainGradleBuild);
-
+    addModels(controller, mainGradleBuild);
     for (GradleBuild includedBuild : nestedBuilds) {
       if (!myIsProjectsLoadedAction) {
         myAllModels.addIncludedBuild(DefaultBuild.convertGradleBuild(includedBuild));
       }
-      addProjectModels(controller, includedBuild);
-      addBuildModels(controller, includedBuild);
+      addModels(controller, includedBuild);
     }
     setupIncludedBuildsHierarchy(myAllModels.getIncludedBuilds(), nestedBuilds);
     if (myIsProjectsLoadedAction) {
@@ -147,111 +144,86 @@ public class GradleModelFetchAction {
     }
   }
 
-  private void addProjectModels(@NotNull BuildController controller, @NotNull GradleBuild build) {
-    for (BasicGradleProject gradleProject : build.getProjects()) {
-      addProjectModels(controller, gradleProject);
-    }
-  }
-
-  /**
-   * Gets project level models for a given {@code project} and returns a collection of actions,
-   * which when executed add these models to {@code allModels}.
-   *
-   * <p>The actions returned by this method are supposed to be executed on a single thread.
-   */
-  private void addProjectModels(@NotNull BuildController controller, @NotNull final BasicGradleProject gradleProject) {
+  private void addModels(@NotNull BuildController controller, @NotNull GradleBuild gradleBuild) {
     try {
-      for (ProjectImportModelProvider extension : myModelProviders) {
-        final Set<String> obtainedModels = new HashSet<>();
-        long startTime = System.currentTimeMillis();
-        extension.populateProjectModels(controller, gradleProject, new ProjectImportModelProvider.ProjectModelConsumer() {
-          @Override
-          public void consume(@NotNull Object object, @NotNull Class clazz) {
-            obtainedModels.add(clazz.getName());
-            addProjectModel(gradleProject, object, clazz);
-          }
-        });
-        myAllModels.logPerformance(
-          "Ran extension " + extension.getClass().getName() +
-          " for project " + gradleProject.getProjectIdentifier().getProjectPath() +
-          " obtained " + obtainedModels.size() + " model(s): " + joinClassNamesToString(obtainedModels),
-          System.currentTimeMillis() - startTime);
+      for (BasicGradleProject gradleProject : gradleBuild.getProjects()) {
+        addProjectModels(controller, gradleProject);
       }
+      addBuildModels(controller, gradleBuild);
     }
     catch (Exception e) {
       // do not fail project import in a preview mode
       if (!myIsPreviewMode) {
         throw new ExternalSystemException(e);
       }
+    }
+  }
+
+  private void addProjectModels(@NotNull BuildController controller, @NotNull final BasicGradleProject gradleProject) {
+    for (ProjectImportModelProvider extension : myModelProviders) {
+      final Set<String> obtainedModels = new HashSet<>();
+      long startTime = System.currentTimeMillis();
+      extension.populateProjectModels(controller, gradleProject, new ProjectImportModelProvider.ProjectModelConsumer() {
+        @Override
+        public void consume(@NotNull Object object, @NotNull Class clazz) {
+          obtainedModels.add(clazz.getName());
+          addProjectModel(gradleProject, object, clazz);
+        }
+      });
+      myAllModels.logPerformance(
+        "Ran extension " + extension.getClass().getName() +
+        " for project " + gradleProject.getProjectIdentifier().getProjectPath() +
+        " obtained " + obtainedModels.size() + " model(s): " + joinClassNamesToString(obtainedModels),
+        System.currentTimeMillis() - startTime);
     }
   }
 
   private void addBuildModels(@NotNull BuildController controller, @NotNull GradleBuild gradleBuild) {
-    try {
-      for (ProjectImportModelProvider extension : myModelProviders) {
-        final Set<String> obtainedModels = new HashSet<>();
-        long startTime = System.currentTimeMillis();
-        extension.populateBuildModels(controller, gradleBuild, new ProjectImportModelProvider.BuildModelConsumer() {
-          @Override
-          public void consumeProjectModel(@NotNull ProjectModel projectModel, @NotNull Object object, @NotNull Class clazz) {
-            obtainedModels.add(clazz.getName());
-            addProjectModel(projectModel, object, clazz);
-          }
+    for (ProjectImportModelProvider extension : myModelProviders) {
+      final Set<String> obtainedModels = new HashSet<>();
+      long startTime = System.currentTimeMillis();
+      extension.populateBuildModels(controller, gradleBuild, new ProjectImportModelProvider.BuildModelConsumer() {
+        @Override
+        public void consumeProjectModel(@NotNull ProjectModel projectModel, @NotNull Object object, @NotNull Class clazz) {
+          obtainedModels.add(clazz.getName());
+          addProjectModel(projectModel, object, clazz);
+        }
 
-          @Override
-          public void consume(@NotNull BuildModel buildModel, @NotNull Object object, @NotNull Class clazz) {
-            obtainedModels.add(clazz.getName());
-            addBuildModel(buildModel, object, clazz);
-          }
-        });
-        myAllModels.logPerformance(
-          "Ran extension " +
-          extension.getClass().getName() +
-          " for build " + gradleBuild.getBuildIdentifier().getRootDir().getPath() +
-          " obtained " + obtainedModels.size() + " model(s): " + joinClassNamesToString(obtainedModels),
-          System.currentTimeMillis() - startTime);
-      }
-    }
-    catch (Exception e) {
-      // do not fail project import in a preview mode
-      if (!myIsPreviewMode) {
-        throw new ExternalSystemException(e);
-      }
+        @Override
+        public void consume(@NotNull BuildModel buildModel, @NotNull Object object, @NotNull Class clazz) {
+          obtainedModels.add(clazz.getName());
+          addBuildModel(buildModel, object, clazz);
+        }
+      });
+      myAllModels.logPerformance(
+        "Ran extension " +
+        extension.getClass().getName() +
+        " for build " + gradleBuild.getBuildIdentifier().getRootDir().getPath() +
+        " obtained " + obtainedModels.size() + " model(s): " + joinClassNamesToString(obtainedModels),
+        System.currentTimeMillis() - startTime);
     }
   }
 
   private void addProjectModel(final @NotNull ProjectModel projectModel, final @NotNull Object object, final @NotNull Class<?> clazz) {
-    Runnable convert = new Runnable() {
-      @Override
-      public void run() {
-        Object converted = myModelConverter.convert(object);
-        myAllModels.addModel(converted, clazz, projectModel);
-      }
-    };
-    myModelConverterExecutor.execute(convert);
+    myModelConverterExecutor.execute(() -> {
+      Object converted = myModelConverter.convert(object);
+      myAllModels.addModel(converted, clazz, projectModel);
+    });
   }
 
   private void addBuildModel(final @NotNull BuildModel buildModel, final @NotNull Object object, final @NotNull Class<?> clazz) {
-    Runnable convert = new Runnable() {
-      @Override
-      public void run() {
-        Object converted = myModelConverter.convert(object);
-        myAllModels.addModel(converted, clazz, buildModel);
-      }
-    };
-    myModelConverterExecutor.execute(convert);
+    myModelConverterExecutor.execute(() -> {
+      Object converted = myModelConverter.convert(object);
+      myAllModels.addModel(converted, clazz, buildModel);
+    });
   }
 
   @NotNull
   private static String joinClassNamesToString(@NotNull Set<String> names) {
-    StringBuilder sb = new StringBuilder();
-    for (Iterator<String> it = names.iterator(); it.hasNext(); ) {
-      sb.append(it.next());
-      if (it.hasNext()) {
-        sb.append(", ");
-      }
+    StringJoiner joiner = new StringJoiner(", ");
+    for (String name : names) {
+      joiner.add(name);
     }
-
-    return sb.toString();
+    return joiner.toString();
   }
 }
