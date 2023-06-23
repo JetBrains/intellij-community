@@ -3,7 +3,7 @@ enum class AccessMode { READ, WRITE, EXECUTE }
 fun foo() {}
 
 fun whenExpr(access: AccessMode, arg: Boolean) {
-    return if (arg) {} else {
+    if (arg) {} else {
         foo()
         when (access) {
             AccessMode.READ -> {}
