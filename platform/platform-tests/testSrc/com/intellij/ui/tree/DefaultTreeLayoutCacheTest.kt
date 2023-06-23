@@ -369,6 +369,37 @@ class DefaultTreeLayoutCacheTest {
     )
   }
 
+  @Test
+  fun `change root`() {
+    testStructure(
+      initOps = {
+        setModelStructure("""
+          |r1
+          | a1
+          |  b11
+          |   c111
+          |  b12
+          """.trimMargin()
+        )
+        sut.isRootVisible = true
+        selectionModel.expect { clearSelection() }
+      },
+      modOps = {
+        setModelStructure("""
+          |r2
+          | a2
+        """.trimMargin())
+      },
+      assertions = {
+        assertStructure("""
+          |r2
+          | a2
+          """.trimMargin()
+        )
+      },
+    )
+  }
+
   private fun testStructure(
     initOps: () -> Unit = { },
     modOps: () -> Unit = { },
