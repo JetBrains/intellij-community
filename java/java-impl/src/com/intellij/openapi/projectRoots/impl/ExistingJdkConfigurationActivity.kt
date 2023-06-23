@@ -38,6 +38,9 @@ class ExistingJdkConfigurationActivity : ProjectActivity {
 
     val rootManager = ProjectRootManager.getInstance(project)
     val addedJdks = registeredJdks.toMutableList()
+
+    val priorityPaths = JavaHomeFinder.getFinder().findInJavaHome()
+
     writeAction {
       // Register collected JDKs
       for (path in jdkPathsToAdd) {
@@ -46,10 +49,9 @@ class ExistingJdkConfigurationActivity : ProjectActivity {
 
       // Set project SDK
       if (rootManager.projectSdk == null) {
-        addedJdks
-          .filterNotNull()
-          .maxByOrNull { JavaSdk.getInstance().getVersion(it)?.ordinal ?: 0 }
-          ?.let { rootManager.projectSdk = it }
+        val jdk = addedJdks.firstOrNull { it.homePath in priorityPaths } ?:
+                  addedJdks.maxByOrNull { JavaSdk.getInstance().getVersion(it)?.ordinal ?: 0 }
+        jdk?.let { rootManager.projectSdk = it }
       }
     }
   }

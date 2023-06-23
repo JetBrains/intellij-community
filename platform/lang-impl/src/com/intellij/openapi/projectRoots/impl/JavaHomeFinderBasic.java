@@ -110,7 +110,7 @@ public class JavaHomeFinderBasic {
     return result;
   }
 
-  private @NotNull Set<String> findInJavaHome() {
+  public @NotNull Set<String> findInJavaHome() {
     String javaHome = mySystemInfo.getEnvironmentVariable("JAVA_HOME");
     return javaHome != null ? scanAll(mySystemInfo.getPath(javaHome), false) : Collections.emptySet();
   }
