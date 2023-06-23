@@ -19,6 +19,7 @@ import com.intellij.ui.dsl.builder.Cell
 import com.intellij.util.IconUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import java.awt.Font
 import javax.swing.JLabel
@@ -86,7 +87,7 @@ open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.me
         .bottomGap(BottomGap.SMALL)
 
       row {
-        icon(IconUtil.scale(AllIcons.Actions.EnableNewUi, newUiCheckBox.component, 24.0f / AllIcons.Actions.EnableNewUi.iconWidth))
+        icon(IconUtil.scale(AllIcons.Actions.EnableNewUi, newUiCheckBox.component, JBUI.scale(24).toFloat() / AllIcons.Actions.EnableNewUi.iconWidth))
           .gap(RightGap.SMALL)
         label(IdeBundle.message("new.ui.title")).applyToComponent {
           font = JBFont.create(Font("Sans", Font.PLAIN, 18))
