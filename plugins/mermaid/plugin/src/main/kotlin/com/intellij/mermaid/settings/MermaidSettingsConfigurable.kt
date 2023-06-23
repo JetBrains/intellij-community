@@ -14,7 +14,7 @@ import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings
 @Suppress("UnstableApiUsage")
 class MermaidSettingsConfigurable : BoundSearchableConfigurable(
   MermaidBundle.message("mermaid.settings.name"),
-  MermaidBundle.message("mermaid.settings.name"),
+  "mermaid.settings",
   _id = ID
 ) {
   private val settings
