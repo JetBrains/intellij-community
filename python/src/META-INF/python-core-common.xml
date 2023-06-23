@@ -533,7 +533,7 @@
                          key="black.configurable.name"
                          nonDefaultProject="true"/>
 
-    <registryKey key="black.formatter.support.enabled" defaultValue="false"
+    <registryKey key="black.formatter.support.enabled" defaultValue="true"
                  description="Enable Black formatter support"/>
 
     <formattingService implementation="com.jetbrains.python.black.BlackFormattingService"/>
