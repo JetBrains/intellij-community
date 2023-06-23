@@ -248,7 +248,7 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
   }
 
   @Nullable
-  public static AnAction getAction(@NotNull GotoActionModel.MatchedValue element) {
+  private static AnAction getAction(@NotNull GotoActionModel.MatchedValue element) {
     Object value = element.value;
     if (value instanceof GotoActionModel.ActionWrapper) {
       value = ((GotoActionModel.ActionWrapper)value).getAction();
