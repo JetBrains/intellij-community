@@ -905,7 +905,7 @@ abstract class ComponentManagerImpl(
     }
   }
 
-  internal fun <T : Any> doInstantiateClass(aClass: Class<T>, pluginId: PluginId): T {
+  private fun <T : Any> doInstantiateClass(aClass: Class<T>, pluginId: PluginId): T {
     try {
       val lookup = MethodHandles.privateLookupIn(aClass, methodLookup)
       if (parent == null) {

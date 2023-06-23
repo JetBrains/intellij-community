@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serviceContainer
 
-import com.intellij.concurrency.resetThreadContext
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -18,10 +17,6 @@ internal class LightServiceComponentAdapter(
                          pluginDescriptor = pluginDescriptor,
                          deferred = deferred,
                          implementationClass = serviceClass) {
-  override fun checkCancelled() {
-    // non-blocking read action cannot handle cancellation
-  }
-
   override val implementationClassName: String
     get() = serviceClass.name
 
@@ -32,7 +27,7 @@ internal class LightServiceComponentAdapter(
   override fun getActivityCategory(componentManager: ComponentManagerImpl) = componentManager.getActivityCategory(isExtension = false)
 
   override fun <T : Any> doCreateInstance(componentManager: ComponentManagerImpl, implementationClass: Class<T>): T {
-    val instance = resetThreadContext().use { componentManager.doInstantiateClass(implementationClass, pluginId) }
+    val instance = componentManager.instantiateClass(implementationClass, pluginId)
     if (instance is Disposable) {
       Disposer.register(componentManager.serviceParentDisposable, instance)
     }

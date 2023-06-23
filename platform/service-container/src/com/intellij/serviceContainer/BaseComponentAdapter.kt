@@ -87,7 +87,7 @@ internal sealed class BaseComponentAdapter(
     }
 
     LoadingState.COMPONENTS_REGISTERED.checkOccurred()
-    checkCancelled()
+    checkCanceledIfNotInClassInit()
     checkContainerIsActive(componentManager)
 
     val activityCategory = if (StartUpMeasurer.isEnabled()) getActivityCategory(componentManager) else null
@@ -132,10 +132,6 @@ internal sealed class BaseComponentAdapter(
       }
     }
     return result
-  }
-
-  protected open fun checkCancelled() {
-    checkCanceledIfNotInClassInit()
   }
 
   @Synchronized
