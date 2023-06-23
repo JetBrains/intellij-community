@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.authentication.ui
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.ide.BrowserUtil.browse
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.DocumentAdapter
@@ -14,6 +15,7 @@ import com.intellij.ui.layout.ComponentPredicate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
+import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil
 import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil.buildNewTokenUrl
@@ -82,13 +84,12 @@ internal class GHTokenCredentialsUi(
       isAccountUnique: UniqueLoginPredicate,
       fixedLogin: String?
     ): String {
-      val (details, scopes) = withContext(Dispatchers.IO) {
+      val details = withContext(Dispatchers.IO) {
         coroutineToIndicator {
-          GHSecurityUtil.loadCurrentUserWithScopes(executor, server)
+          executor.execute(ProgressManager.getInstance().progressIndicator,
+                           GithubApiRequests.CurrentUser.get(server))
         }
       }
-      if (scopes == null || !GHSecurityUtil.isEnoughScopes(scopes))
-        throw GithubAuthenticationException("Insufficient scopes granted to token.")
 
       val login = details.login
       if (fixedLogin != null && fixedLogin != login) throw GithubAuthenticationException("Token should match username \"$fixedLogin\"")
