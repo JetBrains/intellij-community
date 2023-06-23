@@ -325,8 +325,12 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                     return context.newInstance(clazz, ctor, args)
                 }
 
-                override fun loadString(str: String): org.jetbrains.eval4j.Value {
-                    return DebuggerUtilsEx.mirrorOfString(str, context.vm, context.evaluationContext).asValue()
+                override fun jdiMirrorOfString(str: String): StringReference {
+                    return DebuggerUtilsEx.mirrorOfString(str, context.vm, context.evaluationContext)
+                }
+
+                override fun jdiNewArray(arrayType: ArrayType, size: Int): ArrayReference {
+                    return DebuggerUtilsEx.mirrorOfArray(arrayType, size, context.evaluationContext)
                 }
             }
             interpreterLoop(mainMethod, makeInitialFrame(mainMethod, args.map { it.asValue() }), eval)

@@ -87,7 +87,9 @@ open class JDIEval(
             Type.getType("[".repeat(dimensions) + baseType.asType().descriptor).asReferenceType(classLoader)
     }
 
-    override fun loadString(str: String): Value = vm.mirrorOf(str).asValue()
+    open fun jdiMirrorOfString(str: String): StringReference = vm.mirrorOf(str)
+
+    override fun loadString(str: String): Value = jdiMirrorOfString(str).asValue()
 
     override fun newInstance(classType: Type): Value {
         return NewObjectValue(classType)
@@ -117,9 +119,11 @@ open class JDIEval(
     private fun Type.asArrayType(classLoader: ClassLoaderReference? = this@JDIEval.defaultClassLoader): ArrayType =
         asReferenceType(classLoader) as ArrayType
 
+    open fun jdiNewArray(arrayType: ArrayType, size: Int): ArrayReference = arrayType.newInstance(size)
+
     override fun newArray(arrayType: Type, size: Int): Value {
         val jdiArrayType = arrayType.asArrayType()
-        return jdiArrayType.newInstance(size).asValue()
+        return jdiNewArray(jdiArrayType, size).asValue()
     }
 
     private val Type.arrayElementType: Type
