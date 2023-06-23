@@ -623,6 +623,7 @@ public final class PathManager {
           if (paths.configPath != null) System.setProperty(PROPERTY_CONFIG_PATH, paths.configPath);
           if (paths.systemPath != null) System.setProperty(PROPERTY_SYSTEM_PATH, paths.systemPath);
           if (paths.pluginsPath != null) System.setProperty(PROPERTY_PLUGINS_PATH, paths.pluginsPath);
+          if (paths.logDirPath != null) System.setProperty(PROPERTY_LOG_PATH, paths.logDirPath);
 
           // NB: IDE might use instance from a different classloader
           ourConfigPath = null;

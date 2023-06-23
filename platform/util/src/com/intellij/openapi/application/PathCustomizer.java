@@ -13,14 +13,16 @@ public interface PathCustomizer {
   @Nullable CustomPaths customizePaths();
 
   class CustomPaths {
-    public CustomPaths(@Nullable String configPath, @Nullable String systemPath, @Nullable String pluginsPath) {
+    public CustomPaths(@Nullable String configPath, @Nullable String systemPath, @Nullable String pluginsPath, @Nullable String logDirPath) {
       this.configPath = configPath;
       this.systemPath = systemPath;
       this.pluginsPath = pluginsPath;
+      this.logDirPath = logDirPath;
     }
 
     public final @Nullable String configPath;
     public final @Nullable String systemPath;
     public final @Nullable String pluginsPath;
+    public final @Nullable String logDirPath;
   }
 }
