@@ -16,4 +16,6 @@ class F : MyClass() {
         val t2: T = t
         return t2
     }
+
+    fun <T> foo(t: T, t2: T) {}
 }
