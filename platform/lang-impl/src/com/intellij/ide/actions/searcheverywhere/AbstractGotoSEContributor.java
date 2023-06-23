@@ -239,13 +239,6 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
       boolean everywhere = scope.isSearchInLibraries();
       ChooseByNameViewModel viewModel = new MyViewModel(myProject, model);
 
-      if (Registry.is("search.everywhere.recents")) {
-        if (provider.fetchRecents(myProject, progressIndicator, pattern, viewModel,
-                                  item -> processElement(progressIndicator, consumer, model, item.getItem(), item.getWeight()))) {
-          return;
-        }
-      }
-
       if (provider instanceof ChooseByNameInScopeItemProvider) {
         FindSymbolParameters parameters = FindSymbolParameters.wrap(pattern, scope);
         ((ChooseByNameInScopeItemProvider)provider).filterElementsWithWeights(viewModel, parameters, progressIndicator,

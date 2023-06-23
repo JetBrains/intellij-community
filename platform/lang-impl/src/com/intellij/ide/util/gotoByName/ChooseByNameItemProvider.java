@@ -33,10 +33,4 @@ public interface ChooseByNameItemProvider {
 
   boolean filterElements(@NotNull ChooseByNameViewModel base, @NotNull String pattern, boolean everywhere,
                          @NotNull ProgressIndicator cancelled, @NotNull Processor<Object> consumer);
-
-  default boolean fetchRecents(@NotNull Project project, @NotNull ProgressIndicator cancelled,
-                               @NotNull String pattern, @NotNull ChooseByNameViewModel base,
-                               @NotNull Processor<? super FoundItemDescriptor<?>> consumer) {
-    return false;
-  }
 }

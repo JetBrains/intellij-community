@@ -467,33 +467,4 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
   private static @NotNull <T> List<List<T>> group(@NotNull List<T> items, @NotNull Comparator<? super T> comparator) {
     return StreamEx.of(items).groupRuns((n1, n2) -> comparator.compare(n1, n2) == 0).toList();
   }
-
-  @Override
-  public boolean fetchRecents(@NotNull Project project,
-                              @NotNull ProgressIndicator cancelled,
-                              @NotNull String pattern,
-                              @NotNull ChooseByNameViewModel base,
-                              @NotNull Processor<? super FoundItemDescriptor<?>> consumer) {
-    if (StringUtil.isNotEmpty(pattern)) return false;
-
-    for (String path : FileHistoryManager.getInstance(project).getState().getIds()) {
-      VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
-      if (file == null) continue;
-
-      PsiFileSystemItem item;
-      if (file.isDirectory()) {
-        item = PsiManager.getInstance(project).findDirectory(file);
-      }
-      else if (file.exists()) {
-        item = PsiManager.getInstance(project).findFile(file);
-      }
-      else {
-        item = null;
-      }
-
-      if (item == null) continue;
-      consumer.process(new FoundItemDescriptor<>(item, 0));
-    }
-    return true;
-  }
 }
