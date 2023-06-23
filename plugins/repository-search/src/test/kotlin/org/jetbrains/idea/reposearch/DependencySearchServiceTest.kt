@@ -3,14 +3,13 @@ package org.jetbrains.idea.reposearch
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightPlatformTestCase
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.WaitFor
 import junit.framework.TestCase
 import org.jetbrains.concurrency.isPending
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.ConcurrentLinkedDeque
 
 class DependencySearchServiceTest : LightPlatformTestCase() {
 
@@ -68,15 +67,19 @@ class DependencySearchServiceTest : LightPlatformTestCase() {
       listOf(
         testProviderLocal1, testProviderLocal2, testProviderRemote3, testProviderRemote4)
     }), testRootDisposable, false)
-    val searchParameters = SearchParameters(true, false)
+    val searchParameters = SearchParameters(false, false)
 
-    val result = CopyOnWriteArrayList<RepositoryArtifactData>()
+    val result = ConcurrentLinkedDeque<RepositoryArtifactData>()
     val promise = dependencySearchService.suggestPrefix("group", "artifact", searchParameters) {
       result.add(it)
     }
-    PlatformTestUtil.waitForPromise(promise)
-    val artifactResults = result.filterIsInstance(MavenRepositoryArtifactInfo::class.java)
+    object : WaitFor(2_000) {
+      override fun condition(): Boolean {
+        return result.last() === PoisonedRepositoryArtifactData.INSTANCE
+      }
+    }
     TestCase.assertTrue(result.last() === PoisonedRepositoryArtifactData.INSTANCE)
+    val artifactResults = result.filterIsInstance(MavenRepositoryArtifactInfo::class.java)
     UsefulTestCase.assertSameElements(artifactResults.flatMap { it.items.asList() }.map { it.version },
                                       "0", "1", "2", "3", "4")
   }
