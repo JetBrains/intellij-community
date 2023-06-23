@@ -3,6 +3,7 @@ package com.intellij.mermaid.preview
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.jcef.JBCefBrowser
 import com.intellij.ui.jcef.JBCefBrowserBase
 import com.intellij.ui.jcef.JBCefClient
@@ -10,16 +11,13 @@ import com.intellij.ui.jcef.JBCefJSQuery
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener
 
-internal class MermaidDiagramPreviewComponent(
-  private val project: Project
-): BorderLayoutPanel(), Disposable {
-  private val browser = createBrowser()
+class MermaidDiagramPreviewComponent(private val project: Project): BorderLayoutPanel(), Disposable {
+  internal val browser = createBrowser()
   private val openLinkQuery = JBCefJSQuery.create(browser as JBCefBrowserBase)
 
   init {
     Disposer.register(this, openLinkQuery)
     Disposer.register(this, browser)
-    browser.jbCefClient.setProperty(JBCefClient.Properties.JS_QUERY_POOL_SIZE, 20)
     addToCenter(browser.component)
     openLinkQuery.addVoidHandler { link ->
       link?.let(::openLink)
@@ -50,7 +48,15 @@ internal class MermaidDiagramPreviewComponent(
   override fun dispose() = Unit
 
   private fun createBrowser(): JBCefBrowser {
-    return JBCefBrowser.createBuilder().setOffScreenRendering(true).build()
+    val client = JBCefApp.getInstance().createClient().apply {
+      setProperty(JBCefClient.Properties.JS_QUERY_POOL_SIZE, 20)
+    }
+    val builder = JBCefBrowser.createBuilder().apply {
+      setOffScreenRendering(true)
+      setCreateImmediately(true)
+      setClient(client)
+    }
+    return builder.build()
   }
 
   private suspend fun injectLinkOpener() {
