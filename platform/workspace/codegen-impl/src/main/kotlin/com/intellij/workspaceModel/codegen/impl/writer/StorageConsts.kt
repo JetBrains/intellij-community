@@ -1,11 +1,22 @@
 package com.intellij.workspaceModel.codegen.impl.writer
 
-internal val GeneratedCodeApiVersion = fqn("com.intellij.platform.workspace.storage", "GeneratedCodeApiVersion")
-internal val GeneratedCodeImplVersion = fqn("com.intellij.platform.workspace.storage", "GeneratedCodeImplVersion")
+private const val workspaceBasePackageName = "com.intellij.platform.workspace"
+
+private const val workspaceStoragePackageName = "$workspaceBasePackageName.storage"
+private const val workspaceEntitiesPackageName = "$workspaceBasePackageName.jps.entities"
+private const val workspaceStorageUrlPackageName = "$workspaceBasePackageName.storage.url"
+private const val workspaceStorageImplPackageName = "$workspaceBasePackageName.storage.impl"
+private const val workspaceStorageIndicesPackageName = "$workspaceBasePackageName.storage.impl.indices"
+private const val workspaceStorageAnnotationsPackageName = "$workspaceBasePackageName.storage.annotations"
+private const val workspaceStorageContainersPackageName = "$workspaceBasePackageName.storage.impl.containers"
+
+
+
+internal val GeneratedCodeApiVersion = fqn(workspaceStoragePackageName, "GeneratedCodeApiVersion")
+internal val GeneratedCodeImplVersion = fqn(workspaceStoragePackageName, "GeneratedCodeImplVersion")
 
 internal object EntityStorage {
-  private val className  = this::class.simpleName!!
-  private val packageName = "com.intellij.platform.workspace.storage"
+  private val packageName = workspaceStorageImplPackageName
 
   val extractOneToManyChildren = fqn(packageName, "extractOneToManyChildren")
   val extractOneToManyParent = fqn(packageName, "extractOneToManyParent")
@@ -25,22 +36,22 @@ internal object EntityStorage {
   val updateOneToAbstractOneParentOfChild = fqn(packageName, "updateOneToAbstractOneParentOfChild")
   val updateOneToOneParentOfChild = fqn(packageName, "updateOneToOneParentOfChild")
   override fun toString(): String {
-    return fqn(packageName, className).toString()
+    return fqn(workspaceStoragePackageName, this::class.simpleName!!).toString()
   }
 }
-internal val MutableEntityStorage = fqn("com.intellij.platform.workspace.storage", "MutableEntityStorage")
+internal val MutableEntityStorage = fqn(workspaceStoragePackageName, "MutableEntityStorage")
 
 
-internal val EntityType = fqn("com.intellij.platform.workspace.storage", "EntityType")
-internal val ConnectionId = fqn("com.intellij.platform.workspace.storage.impl", "ConnectionId")
-internal val EntityLink = fqn("com.intellij.platform.workspace.storage.impl", "EntityLink")
-internal val WorkspaceEntityBase = fqn("com.intellij.platform.workspace.storage.impl", "WorkspaceEntityBase")
-internal val SoftLinkable = fqn("com.intellij.platform.workspace.storage.impl", "SoftLinkable")
+internal val EntityType = fqn(workspaceStoragePackageName, "EntityType")
+internal val ConnectionId = fqn(workspaceStorageImplPackageName, "ConnectionId")
+internal val EntityLink = fqn(workspaceStorageImplPackageName, "EntityLink")
+internal val WorkspaceEntityBase = fqn(workspaceStorageImplPackageName, "WorkspaceEntityBase")
+internal val SoftLinkable = fqn(workspaceStorageImplPackageName, "SoftLinkable")
 
-internal val VirtualFileUrl = fqn("com.intellij.platform.workspace.storage.url", "VirtualFileUrl.decoded")
+internal val VirtualFileUrl = fqn(workspaceStorageUrlPackageName, "VirtualFileUrl")
 internal object WorkspaceEntity {
   private val className  = this::class.simpleName!!
-  private val packageName = "com.intellij.platform.workspace.storage"
+  private val packageName = workspaceStoragePackageName
   private val fqn = fqn(packageName, className)
 
   val simpleName = fqn.simpleName
@@ -50,20 +61,20 @@ internal object WorkspaceEntity {
   }
 }
 
-internal val WorkspaceEntityData = fqn("com.intellij.platform.workspace.storage.impl", "WorkspaceEntityData")
-internal val UsedClassesCollector = fqn("com.intellij.platform.workspace.storage.impl", "UsedClassesCollector")
+internal val WorkspaceEntityData = fqn(workspaceStorageImplPackageName, "WorkspaceEntityData")
+internal val UsedClassesCollector = fqn(workspaceStorageImplPackageName, "UsedClassesCollector")
 
 
-internal val EntitySource = fqn("com.intellij.platform.workspace.storage", "EntitySource")
-internal val SymbolicEntityId = fqn("com.intellij.platform.workspace.storage", "SymbolicEntityId")
-internal val WorkspaceEntityWithSymbolicId = fqn("com.intellij.platform.workspace.storage", "WorkspaceEntityWithSymbolicId")
-internal val ModifiableWorkspaceEntityBase = fqn("com.intellij.platform.workspace.storage.impl", "ModifiableWorkspaceEntityBase")
+internal val EntitySource = fqn(workspaceStoragePackageName, "EntitySource")
+internal val SymbolicEntityId = fqn(workspaceStoragePackageName, "SymbolicEntityId")
+internal val WorkspaceEntityWithSymbolicId = fqn(workspaceStoragePackageName, "WorkspaceEntityWithSymbolicId")
+internal val ModifiableWorkspaceEntityBase = fqn(workspaceStorageImplPackageName, "ModifiableWorkspaceEntityBase")
 
-internal val WorkspaceMutableIndex = fqn("com.intellij.platform.workspace.storage.impl.indices", "WorkspaceMutableIndex")
+internal val WorkspaceMutableIndex = fqn(workspaceStorageIndicesPackageName, "WorkspaceMutableIndex")
 
 internal object EntityInformation {
   private val className  = this::class.simpleName!!
-  private val packageName = "com.intellij.platform.workspace.storage"
+  private val packageName = workspaceStoragePackageName
 
   val Serializer = fqn(packageName, "$className.Serializer")
   val Deserializer = fqn(packageName, "$className.Deserializer")
@@ -73,18 +84,20 @@ internal object EntityInformation {
 }
 
 // Entity
-internal val LibraryEntity = fqn("com.intellij.platform.workspace.jps.entities", "LibraryEntity")
-internal val LibraryRoot = fqn("com.intellij.platform.workspace.jps.entities", "LibraryRoot")
+internal val LibraryEntity = fqn(workspaceEntitiesPackageName, "LibraryEntity")
+internal val LibraryRoot = fqn(workspaceEntitiesPackageName, "LibraryRoot")
+
 
 // Annotations
-internal val Child = fqn("com.intellij.platform.workspace.storage.annotations", "Child")
+internal val Child = fqn(workspaceStorageAnnotationsPackageName, "Child")
+
 
 // Collections
-internal val MutableWorkspaceSet = fqn("com.intellij.platform.workspace.storage.impl.containers", "MutableWorkspaceSet")
-internal val MutableWorkspaceList = fqn("com.intellij.platform.workspace.storage.impl.containers", "MutableWorkspaceList")
+internal val MutableWorkspaceSet = fqn(workspaceStorageContainersPackageName, "MutableWorkspaceSet")
+internal val MutableWorkspaceList = fqn(workspaceStorageContainersPackageName, "MutableWorkspaceList")
 
 internal object StorageCollection {
-  private val packageName = "com.intellij.platform.workspace.storage.impl.containers"
+  private val packageName = workspaceStorageContainersPackageName
 
   val toMutableWorkspaceSet = fqn(packageName, "toMutableWorkspaceSet")
   val toMutableWorkspaceList = fqn(packageName, "toMutableWorkspaceList")

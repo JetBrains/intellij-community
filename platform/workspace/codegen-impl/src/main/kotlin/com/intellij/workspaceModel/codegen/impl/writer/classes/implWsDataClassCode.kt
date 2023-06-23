@@ -21,8 +21,8 @@ val ObjClass<*>.javaDataName
   get() = "${name.replace(".", "")}Data"
 
 val ObjClass<*>.isEntityWithSymbolicId: Boolean
-  get() = superTypes.any { 
-    it is ObjClass<*> && (it.javaFullName.decoded == WorkspaceEntityWithSymbolicId::class.java.name || it.isEntityWithSymbolicId)
+  get() = superTypes.any {
+    it is ObjClass<*> && (it.javaFullName.decoded == WorkspaceEntityWithSymbolicId.decoded || it.isEntityWithSymbolicId)
   }
 
 fun ObjClass<*>.implWsDataClassCode(): String {

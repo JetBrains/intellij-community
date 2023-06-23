@@ -69,7 +69,7 @@ internal fun ValueType<*>.hasSoftLinks(): Boolean = when (this) {
 }
 
 val ValueType.JvmClass<*>.isSymbolicId: Boolean
-  get() = SymbolicEntityId::class.java.name in javaSuperClasses
+  get() = SymbolicEntityId.decoded in javaSuperClasses
 
 private fun ObjClass<*>.operate(
   context: LinesBuilder,

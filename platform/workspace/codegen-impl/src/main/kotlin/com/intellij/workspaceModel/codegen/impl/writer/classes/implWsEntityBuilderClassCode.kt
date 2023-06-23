@@ -102,7 +102,7 @@ ${
 
       if (name == LibraryEntity.simpleName) {
         section("private fun indexLibraryRoots(libraryRoots: List<LibraryRoot>)") {
-          line("val jarDirectories = mutableSetOf<VirtualFileUrl.decoded>()")
+          line("val jarDirectories = mutableSetOf<VirtualFileUrl>()")
           line("val libraryRootList = libraryRoots.map {")
           line("  if (it.inclusionOptions != LibraryRoot.InclusionOptions.ROOT_ITSELF) {")
           line("    jarDirectories.add(it.url)")

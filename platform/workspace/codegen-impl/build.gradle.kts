@@ -4,9 +4,11 @@ plugins {
   id("org.jetbrains.kotlin.jvm") version "1.8.0"
 }
 
-val codegenImplMinorVersion =  project.findProperty("codegenImplMinorVersion")?.toString()
-val codegenImplMajorVersion =  project.findProperty("codegenImplMajorVersion")?.toString()
-val codegenApiVersion =  project.findProperty("codegenApiVersion")?.toString()
+fun properties(key: String) = project.findProperty(key).toString()
+
+val codegenImplMinorVersion = properties("codegenImplMinorVersion")
+val codegenImplMajorVersion = properties("codegenImplMajorVersion")
+val codegenApiVersion = properties("codegenApiVersion")
 
 group = "com.jetbrains.intellij.platform"
 version = "$codegenApiVersion.$codegenImplMajorVersion.$codegenImplMinorVersion"
@@ -24,8 +26,8 @@ kotlin {
 
 tasks.withType(Jar::class) {
   manifest {
-    attributes["Specification-Version"] = "$codegenApiVersion"
-    attributes["Implementation-Version"] = "$codegenImplMajorVersion"
+    attributes["Specification-Version"] = codegenApiVersion
+    attributes["Implementation-Version"] = codegenImplMajorVersion
   }
 }
 
