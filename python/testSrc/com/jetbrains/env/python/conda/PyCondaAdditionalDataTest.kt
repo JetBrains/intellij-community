@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.env.conda
+package com.jetbrains.env.python.conda
 
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.testFramework.ProjectRule

@@ -1,11 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.env.conda
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.env.python.conda
 
 import com.intellij.execution.processTools.getResultStdout
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.diagnostic.logger
-import com.jetbrains.env.conda.LocalCondaRule.Companion.CONDA_PATH
+import com.jetbrains.env.python.conda.LocalCondaRule.Companion.CONDA_PATH
 import com.jetbrains.python.sdk.add.target.conda.TargetCommandExecutor
 import com.jetbrains.python.sdk.add.target.conda.TargetEnvironmentRequestCommandExecutor
 import com.jetbrains.python.sdk.add.target.conda.suggestCondaPath
