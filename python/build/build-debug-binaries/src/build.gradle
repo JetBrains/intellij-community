@@ -1,8 +1,5 @@
 import org.apache.tools.ant.taskdefs.condition.Os
 
-import java.nio.file.Paths
-import java.util.regex.Pattern
-
 plugins {
   id "com.jetbrains.python.envs" version "0.0.31"
 }
