@@ -7,21 +7,13 @@ import com.intellij.refactoring.move.MoveMultipleElementsViewDescriptor
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.refactoring.move.*
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
-class K2MoveRefactoringProcessor(
-    private val descriptor: MoveDeclarationsDescriptor,
-    private val mover: KotlinMover = KotlinMover.Default,
-    private val throwOnConflicts: Boolean = false
-) : BaseRefactoringProcessor(descriptor.project) {
+class K2MoveRefactoringProcessor(private val descriptor: K2MoveDescriptor) : BaseRefactoringProcessor(descriptor.project) {
     override fun getCommandName(): String = KotlinBundle.message("command.move.declarations")
 
     override fun createUsageViewDescriptor(usages: Array<out UsageInfo>): UsageViewDescriptor {
-        val targetContainerFqName = descriptor.moveTarget.targetContainerFqName?.let {
-            if (it.isRoot) IdeDeprecatedMessagesBundle.message("default.package.presentable.name") else it.asString()
-        } ?: IdeDeprecatedMessagesBundle.message("default.package.presentable.name")
-        return MoveMultipleElementsViewDescriptor(descriptor.moveSource.elementsToMove.toTypedArray(), targetContainerFqName)
+        val targetContainerFqName = descriptor.target.pkg.qualifiedName.let { if (it == "") IdeDeprecatedMessagesBundle.message("default.package.presentable.name") else it }
+        return MoveMultipleElementsViewDescriptor(descriptor.source.elementsToMove.toTypedArray(), targetContainerFqName)
     }
 
     override fun findUsages(): Array<UsageInfo> {
@@ -29,24 +21,17 @@ class K2MoveRefactoringProcessor(
     }
 
     override fun performRefactoring(usages: Array<out UsageInfo>) {
-        fun moveDeclaration(
-            declaration: KtNamedDeclaration,
-            moveTarget: KotlinMoveTarget,
-            mover: KotlinMover,
-            delegate: KotlinMoveDeclarationDelegate
-        ): KtNamedDeclaration {
-            val targetContainer = moveTarget.getOrCreateTargetPsi(declaration)
-            delegate.preprocessDeclaration(moveTarget, declaration)
-            return mover(declaration, targetContainer)
+        if (descriptor.target !is K2MoveTarget.File) return // TODO support other targets
+
+        val sourceFiles = descriptor.source.elementsToMove.map { it.containingKtFile }.distinct()
+
+        val targetFile = descriptor.target.file
+        for (declaration in descriptor.source.elementsToMove) {
+            targetFile.add(declaration)
+            declaration.delete()
         }
 
-        val sourceFiles = descriptor.moveSource.elementsToMove.map { it.containingKtFile }.distinct()
-
-        for (declaration in descriptor.moveSource.elementsToMove) {
-            moveDeclaration(declaration, descriptor.moveTarget, mover, descriptor.delegate)
-        }
-
-        if (descriptor.deleteSourceFiles) {
+        if (descriptor.deleteEmptySourceFiles) {
             for (sourceFile in sourceFiles) {
                 if (sourceFile.declarations.isEmpty()) sourceFile.delete()
             }

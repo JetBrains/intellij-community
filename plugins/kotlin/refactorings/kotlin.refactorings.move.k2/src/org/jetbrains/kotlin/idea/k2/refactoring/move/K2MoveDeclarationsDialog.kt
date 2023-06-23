@@ -20,13 +20,9 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberSelectionPanel
-import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveDeclarationDelegate
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveSource
-import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveTarget
-import org.jetbrains.kotlin.idea.refactoring.move.MoveDeclarationsDescriptor
 import org.jetbrains.kotlin.idea.refactoring.ui.KotlinDestinationFolderComboBox
 import org.jetbrains.kotlin.idea.refactoring.ui.KotlinFileChooserDialog
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -151,18 +147,13 @@ class K2MoveDeclarationsDialog(
 
     override fun doAction() {
         saveSettings()
-        val moveDescriptor = MoveDeclarationsDescriptor(
-            project,
+        val moveDescriptor = K2MoveDescriptor(
             KotlinMoveSource(elementsToMove),
-            KotlinMoveTarget.DeferredFile(FqName(packageChooser.text), target.directory?.virtualFile),
-            KotlinMoveDeclarationDelegate.TopLevel,
+            target, // TODO we should build a new target from components
             searchReferencesCb.isSelected,
-            searchTextOccurrencesCb.isSelected,
             deleteEmptySourceFilesCb.isSelected,
-            moveCallback = null,
-            openInEditor = true,
-            analyzeConflicts = true,
-            searchReferences = true
+            searchTextOccurrencesCb.isSelected,
+            searchCommentsAndStringsCb.isSelected,
         )
         val refactoringProcessor = K2MoveRefactoringProcessor(moveDescriptor)
         invokeRefactoring(refactoringProcessor)
