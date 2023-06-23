@@ -32,7 +32,7 @@ public final class RenderingHelper {
   private final Rectangle myViewBounds;
   private final int myHintIndex;
   private int myRightMargin;
-  private boolean myShrinkingDisabled = true;
+  private boolean myShrinkingDisabled = false;
   private boolean myShrinkingSelectionDisabled = true;
 
   @ApiStatus.Internal
