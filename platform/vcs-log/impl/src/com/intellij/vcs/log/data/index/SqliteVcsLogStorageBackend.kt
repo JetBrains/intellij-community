@@ -361,8 +361,8 @@ internal class SqliteVcsLogStorageBackend(project: Project,
 
   override fun markCorrupted() {
     val oldConnectionManager = connectionManager
-    Disposer.dispose(oldConnectionManager)
     connectionManager = connectionManager.recreate().also { Disposer.register(disposable, it) }
+    Disposer.dispose(oldConnectionManager)
   }
 
   override fun getAuthorForCommit(commitId: Int): VcsUser? {
