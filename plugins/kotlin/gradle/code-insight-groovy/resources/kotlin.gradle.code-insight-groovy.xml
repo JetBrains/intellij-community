@@ -39,6 +39,7 @@
             groupPath="Kotlin,Migration"
             groupBundle="messages.KotlinBundle" groupKey="group.names.gradle"
             enabledByDefault="false"
+            cleanupTool="true"
             language="Groovy"
             hasStaticDescription="true"
             level="ERROR" key="inspection.gradle.kotlinx.coroutines.deprecation.display.name" bundle="messages.KotlinBundle"/>

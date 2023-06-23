@@ -85,6 +85,7 @@
                      groupBundle="messages.KotlinBundle" groupKey="group.names.maven"
                      enabledByDefault="false"
                      language="XML"
+                     cleanupTool="true"
                      hasStaticDescription="true"
                      level="ERROR" key="inspection.maven.coroutines.deprecation.display.name" bundle="messages.KotlinBundle"/>
 

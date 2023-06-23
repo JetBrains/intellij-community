@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.psi.KtPrimaryConstructor
 import org.jetbrains.kotlin.psi.primaryConstructorVisitor
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
-class RedundantConstructorKeywordInspection : AbstractKotlinInspection() {
+class RedundantConstructorKeywordInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return primaryConstructorVisitor { constructor ->
             val constructorKeyword = constructor.getConstructorKeyword()
