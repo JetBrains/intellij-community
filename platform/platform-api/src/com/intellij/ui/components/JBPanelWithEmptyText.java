@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
+import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.StatusText;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +36,7 @@ public class JBPanelWithEmptyText extends JBPanel<JBPanelWithEmptyText> implemen
   }
 
   private void registerEmptyTextComponents() {
-    putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, emptyText.getWrappedFragmentsIterable());
+    putClientProperty(ComponentUtil.NOT_IN_HIERARCHY_COMPONENTS, emptyText.getWrappedFragmentsIterable());
   }
 
   @Override

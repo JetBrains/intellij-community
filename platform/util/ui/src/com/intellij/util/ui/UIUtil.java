@@ -2163,7 +2163,7 @@ public final class UIUtil {
     return UI_TRAVERSER.withRoot(component).expandAndFilter(o -> !(o instanceof CellRendererPane));
   }
 
-  public static final Key<Iterable<? extends Component>> NOT_IN_HIERARCHY_COMPONENTS = Key.create("NOT_IN_HIERARCHY_COMPONENTS");
+  public static final Key<Iterable<? extends Component>> NOT_IN_HIERARCHY_COMPONENTS = ComponentUtil.NOT_IN_HIERARCHY_COMPONENTS;
 
   private static final JBTreeTraverser<Component> UI_TRAVERSER = JBTreeTraverser.from((Function<Component, JBIterable<Component>>)c -> {
     JBIterable<Component> result;

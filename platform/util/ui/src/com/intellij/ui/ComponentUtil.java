@@ -16,6 +16,7 @@ import java.util.function.Predicate;
 public final class ComponentUtil {
   private static final @NonNls String FOCUS_PROXY_KEY = "isFocusProxy";
   private static final Key<Boolean> IS_SHOWING = Key.create("Component.isShowing");
+  public static final Key<Iterable<? extends Component>> NOT_IN_HIERARCHY_COMPONENTS = Key.create("NOT_IN_HIERARCHY_COMPONENTS");
 
   /**
    * @deprecated use {@link ClientProperty#get(Component, Key)} instead
