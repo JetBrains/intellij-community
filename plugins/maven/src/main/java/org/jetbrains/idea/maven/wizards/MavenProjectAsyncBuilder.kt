@@ -57,7 +57,7 @@ internal class MavenProjectAsyncBuilder {
     val importingSettings = directProjectsSettings.getImportingSettings().clone()
 
     if (isVeryNewProject) {
-      ExternalProjectsManagerImpl.setupCreatedProject(project)
+      blockingContext { ExternalProjectsManagerImpl.setupCreatedProject(project) }
       MavenProjectsManager.setupCreatedMavenProject(importingSettings)
     }
     if (ApplicationManager.getApplication().isDispatchThread) {
@@ -131,7 +131,7 @@ internal class MavenProjectAsyncBuilder {
     if (isVeryNewProject && Registry.`is`("maven.create.dummy.module.on.first.import")) {
       // do not update all modules because it can take a lot of time (freeze at project opening)
       val previewModule = createPreviewModule(project, projects)
-      manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(projects), selectedProfiles, previewModule)
+      blockingContext { manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(projects), selectedProfiles, previewModule) }
       return if (null == previewModule) emptyList() else listOf(previewModule)
     }
 
