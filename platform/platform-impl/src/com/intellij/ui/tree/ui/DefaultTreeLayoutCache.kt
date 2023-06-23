@@ -98,7 +98,10 @@ class DefaultTreeLayoutCache(
     }
     checkInvariants(debugLocation)
     val newVisibleChildren = node.visibleChildCount
-    if (newVisibleChildren != oldVisibleChildren) {
+    if ( // Mimic VariableHeightLayoutCache behavior: only reset selection for a collapsed node if it was visible.
+      (wasVisible && newVisibleChildren < oldVisibleChildren) ||
+      newVisibleChildren > oldVisibleChildren
+    ) {
       selectionModel?.resetRowSelection()
     }
     if (wasVisible && oldVisibleChildren == 0 && newVisibleChildren == 1) {
@@ -295,6 +298,9 @@ class DefaultTreeLayoutCache(
         rows.add(0, newRootNode)
       }
       newRootNode.ensureChildrenVisible()
+      if (!newRootNode.isLeaf) {
+        selectionModel?.resetRowSelection()
+      }
     }
     checkInvariants(location)
   }
