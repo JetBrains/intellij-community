@@ -93,7 +93,7 @@ class DefaultTreeLayoutCacheTest {
         sut.isRootVisible = true
       },
       modOps = {
-        sut.setExpandedState(path("r"), false)
+        sut.setExpandedState("r", false)
       },
       assertions = { assertStructure("r".trimMargin()) },
     )
@@ -110,7 +110,7 @@ class DefaultTreeLayoutCacheTest {
         sut.isRootVisible = false
       },
       modOps = {
-        sut.setExpandedState(path("r"), false)
+        sut.setExpandedState("r", false)
       },
       assertions = { assertStructure("".trimMargin()) },
     )
@@ -131,7 +131,7 @@ class DefaultTreeLayoutCacheTest {
         sut.isRootVisible = true
       },
       modOps = {
-        sut.setExpandedState(path("r"), true)
+        sut.setExpandedState("r", true)
       },
       assertions = {
         assertStructure("""
@@ -159,9 +159,9 @@ class DefaultTreeLayoutCacheTest {
         sut.isRootVisible = true
       },
       modOps = {
-        sut.setExpandedState(path("r"), true)
-        sut.setExpandedState(path("r/a1"), true)
-        sut.setExpandedState(path("r/a2"), true)
+        sut.setExpandedState("r", true)
+        sut.setExpandedState("r/a1", true)
+        sut.setExpandedState("r/a2", true)
       },
       assertions = {
         assertStructure("""
@@ -191,11 +191,11 @@ class DefaultTreeLayoutCacheTest {
         sut.isRootVisible = true
       },
       modOps = {
-        sut.setExpandedState(path("r"), true)
-        sut.setExpandedState(path("r/a1"), true)
-        sut.setExpandedState(path("r/a2"), true)
-        sut.setExpandedState(path("r"), false)
-        sut.setExpandedState(path("r"), true)
+        sut.setExpandedState("r", true)
+        sut.setExpandedState("r/a1", true)
+        sut.setExpandedState("r/a2", true)
+        sut.setExpandedState("r", false)
+        sut.setExpandedState("r", true)
       },
       assertions = {
         assertStructure("""
@@ -223,7 +223,7 @@ class DefaultTreeLayoutCacheTest {
       },
       modOps = {
         node("r/a1").insert("b11", 0)
-        sut.setExpandedState(path("r/a1"), true)
+        sut.setExpandedState("r/a1", true)
       },
       assertions = {
         assertStructure("""
@@ -276,6 +276,10 @@ class DefaultTreeLayoutCacheTest {
     if (root != null) {
       model.setRoot(root)
     }
+  }
+
+  private fun AbstractLayoutCache.setExpandedState(path: String, isExpanded: Boolean) {
+    setExpandedState(path(path), isExpanded)
   }
 
   private fun node(path: String) = path(path).lastPathComponent as Node
