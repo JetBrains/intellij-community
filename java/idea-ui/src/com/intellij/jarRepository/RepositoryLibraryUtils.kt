@@ -435,10 +435,7 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
 
       @Suppress("HardCodedStringLiteral") // concatenation of localized strings
       val message = buildString {
-        // do not show say "No updates" if we have error description.
-        if (totalUpdatedLibs == 0 && notificationType == NotificationType.ERROR) {
-          append(JavaUiBundle.message("repository.library.utils.notification.content.library.properties.built", totalUpdatedLibs))
-        }
+        append(JavaUiBundle.message("repository.library.utils.notification.content.library.properties.built", totalUpdatedLibs))
 
         if (libsFailedToGuessRemoteRepository.isNotEmpty()) {
           val (shown, notShownSize) = librariesToHumanReadableNames(libsFailedToGuessRemoteRepository, snapshot)
