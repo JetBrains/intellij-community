@@ -8,9 +8,9 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 
 public final class ProjectViewPerformanceCollector extends CounterUsagesCollector {
 
-  private static final EventLogGroup GROUP = new EventLogGroup("project.view.performance", 1);
+  private static final EventLogGroup GROUP = new EventLogGroup("project.view.performance", 2);
 
-  private static final EventId1<Long> EXPAND_DIR_DURATION = GROUP.registerEvent("dir.expand", EventFields.Long("duration_ms"));
+  private static final EventId1<Long> EXPAND_DIR_DURATION = GROUP.registerEvent("dir.expanded", EventFields.DurationMs);
 
   @Override
   public EventLogGroup getGroup() {
