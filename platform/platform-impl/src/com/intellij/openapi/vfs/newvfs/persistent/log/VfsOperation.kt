@@ -684,7 +684,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           DataInputStream(this).run {
             val tag = readByte()
             val result = readResult<Unit>(enumerator)
-            return EventEnd(VfsOperationTag.values()[tag.toInt()].also {
+            return EventEnd(VfsOperationTag.VALUES[tag.toInt()].also {
               if (!it.isVFileEventOperation) {
                 throw IllegalStateException("unexpected EventEnd tag: $it")
               }

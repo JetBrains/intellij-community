@@ -172,10 +172,10 @@ class OperationLogStorageImpl(
     if (buf[0] < 0.toByte()) {
       return recoverOperationTag(position, buf)
     }
-    if (buf[0] == 0.toByte() || buf[0] >= VfsOperationTag.values().size) {
+    if (buf[0] == 0.toByte() || buf[0] >= VfsOperationTag.VALUES.size) {
       return OperationReadResult.Invalid(IllegalStateException("read tag value is ${buf[0]}"))
     }
-    val tag = VfsOperationTag.values()[buf[0].toInt()]
+    val tag = VfsOperationTag.VALUES[buf[0].toInt()]
     return cont(position, tag)
   }
 
@@ -183,10 +183,10 @@ class OperationLogStorageImpl(
                                  cont: (actualDescriptorPosition: Long, tag: VfsOperationTag) -> OperationReadResult): OperationReadResult {
     val buf = ByteArray(VfsOperationTag.SIZE_BYTES)
     storageIO.read(position - 1, buf)
-    if (buf[0] !in 1 until VfsOperationTag.values().size) {
+    if (buf[0] !in 1 until VfsOperationTag.VALUES.size) {
       return OperationReadResult.Invalid(IllegalStateException("read last tag value is ${buf[0]}"))
     }
-    val tag = VfsOperationTag.values()[buf[0].toInt()]
+    val tag = VfsOperationTag.VALUES[buf[0].toInt()]
     val descrSize = bytesForOperationDescriptor(tag)
     return cont(position - descrSize, tag)
   }
@@ -209,10 +209,10 @@ class OperationLogStorageImpl(
 
   private fun recoverOperationTag(position: Long, buf: ByteArray): OperationReadResult {
     val probableTagByte = -buf[0]
-    if (probableTagByte >= VfsOperationTag.values().size) {
+    if (probableTagByte >= VfsOperationTag.VALUES.size) {
       return OperationReadResult.Invalid(IllegalStateException("read tag value is ${buf}"))
     }
-    val probableTag = VfsOperationTag.values()[probableTagByte]
+    val probableTag = VfsOperationTag.VALUES[probableTagByte]
     val descriptorSize = bytesForOperationDescriptor(probableTag)
     storageIO.read(position + descriptorSize - VfsOperationTag.SIZE_BYTES, buf)
     if (probableTagByte != buf[0].toInt()) {

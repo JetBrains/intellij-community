@@ -47,6 +47,8 @@ enum class VfsOperationTag(val operationSerializer: Serializer<*>) {
 
   companion object {
     const val SIZE_BYTES: Int = Byte.SIZE_BYTES
+
+    internal val VALUES: Array<VfsOperationTag> = VfsOperationTag.values() // memoize to generate less garbage
   }
 }
 
@@ -71,24 +73,24 @@ value class VfsOperationTagsMask(val mask: Long) {
 
   fun contains(tag: VfsOperationTag): Boolean = (mask and (1L shl tag.ordinal)) != 0L
 
-  fun toList(): List<VfsOperationTag> = VfsOperationTag.values().filter { contains(it) }
+  fun toList(): List<VfsOperationTag> = VfsOperationTag.VALUES.filter { contains(it) }
 
   companion object {
     /**
      * @see [IteratorUtils.nextIncomplete]
      */
     val EMPTY: VfsOperationTagsMask = VfsOperationTagsMask(0L)
-    val ALL: VfsOperationTagsMask = VfsOperationTagsMask(*VfsOperationTag.values())
+    val ALL: VfsOperationTagsMask = VfsOperationTagsMask(*VfsOperationTag.VALUES)
     val RecordsMask: VfsOperationTagsMask =
-      VfsOperationTagsMask(*VfsOperationTag.values().filter { it.isRecordOperation }.toTypedArray())
+      VfsOperationTagsMask(*VfsOperationTag.VALUES.filter { it.isRecordOperation }.toTypedArray())
     val AttributesMask: VfsOperationTagsMask =
-      VfsOperationTagsMask(*VfsOperationTag.values().filter { it.isAttributeOperation }.toTypedArray())
+      VfsOperationTagsMask(*VfsOperationTag.VALUES.filter { it.isAttributeOperation }.toTypedArray())
     val ContentsMask: VfsOperationTagsMask =
-      VfsOperationTagsMask(*VfsOperationTag.values().filter { it.isContentOperation }.toTypedArray())
+      VfsOperationTagsMask(*VfsOperationTag.VALUES.filter { it.isContentOperation }.toTypedArray())
     val VFileEventsMask: VfsOperationTagsMask =
-      VfsOperationTagsMask(*VfsOperationTag.values().filter { it.isVFileEventOperation }.toTypedArray())
+      VfsOperationTagsMask(*VfsOperationTag.VALUES.filter { it.isVFileEventOperation }.toTypedArray())
     val VFileEventsStartMask: VfsOperationTagsMask =
-      VfsOperationTagsMask(*VfsOperationTag.values().filter { it.isVFileEventStartOperation }.toTypedArray())
+      VfsOperationTagsMask(*VfsOperationTag.VALUES.filter { it.isVFileEventStartOperation }.toTypedArray())
     val VFileEventEndMask: VfsOperationTagsMask = VfsOperationTagsMask(VfsOperationTag.VFILE_EVENT_END)
 
     fun List<VfsOperationTagsMask>.intersection(): VfsOperationTagsMask =
