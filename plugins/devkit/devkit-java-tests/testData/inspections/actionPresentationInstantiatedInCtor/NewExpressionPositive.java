@@ -1,7 +1,7 @@
 import com.intellij.openapi.actionSystem.AnAction;
 
 class A extends B {
-  <warning descr="Action presentation initialized in the constructor">A</warning>() {
+  <warning descr="Action presentation instantiated in the constructor">A</warning>() {
     new B(42);
   }
 }

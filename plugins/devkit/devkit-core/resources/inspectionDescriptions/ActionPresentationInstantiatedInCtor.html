@@ -1,14 +1,17 @@
 <html>
 <body>
 <p>
-  Reports any actions that are registered in the <code>plugin.xml</code> file and initialize their
-  presentation (text, description, or icon) in their constructors.
+  Reports any actions that are registered in the <code>plugin.xml</code> file and instantiate
+  the <code>com.intellij.openapi.actionSystem.Presentation</code> object in their constructors.
 </p>
 <p>
-  Loading presentation in constructor results in allocating resources, which may not be necessary. Instead,
-  it's more efficient to utilize no-argument constructors of <code>AnAction</code> and other base classes
-  and follow the convention for setting the text, description, and icon in <code>plugin.xml</code>. The IDE
-  will load text, description, and icon only when the action is actually displayed in the UI.
+  Any of the constructors of <code>AnAction</code> with parameters instantiate the <code>Presentation</code>
+  object. However, instantiating the <code>Presentation</code> object in constructor results in allocating
+  resources, which may not be necessary. Instead of creating an instance of <code>Presentation</code> that
+  stores text, description, or icon, it is more efficient to utilize no-argument constructors of
+  <code>AnAction</code> and other base classes and follow the convention for setting the text, description,
+  and icon in <code>plugin.xml</code>. The IDE will load text, description, and icon only when the action
+  is actually displayed in the UI.
 </p>
 <p>
   The convention for setting the text, description, and icon is as follows:

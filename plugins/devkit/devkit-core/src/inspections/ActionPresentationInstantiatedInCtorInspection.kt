@@ -13,7 +13,7 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.util.isConstructorCall
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
-internal class ActionPresentationInitializedInCtorInspection : DevKitUastInspectionBase(UClass::class.java) {
+internal class ActionPresentationInstantiatedInCtorInspection : DevKitUastInspectionBase(UClass::class.java) {
 
   override fun buildInternalVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     return UastHintedVisitorAdapter.create(holder.file.language, object : AbstractUastNonRecursiveVisitor() {
@@ -23,7 +23,7 @@ internal class ActionPresentationInitializedInCtorInspection : DevKitUastInspect
         if (constructors.isEmpty()) {
           val ctorInitializingTemplatePresentation = getCtorInitializingTemplatePresentation(node, null)
           if (ctorInitializingTemplatePresentation != null) {
-            val message = DevKitBundle.message("inspection.an.action.initializes.template.presentation.in.ctor.message")
+            val message = DevKitBundle.message("inspection.action.presentation.instantiated.in.ctor.message")
             holder.registerUProblem(node, message)
           }
         }
@@ -31,7 +31,7 @@ internal class ActionPresentationInitializedInCtorInspection : DevKitUastInspect
           for (constructor in constructors) {
             val ctorInitializingTemplatePresentation = getCtorInitializingTemplatePresentation(node, constructor)
             if (ctorInitializingTemplatePresentation != null) {
-              val message = DevKitBundle.message("inspection.an.action.initializes.template.presentation.in.ctor.message")
+              val message = DevKitBundle.message("inspection.action.presentation.instantiated.in.ctor.message")
               holder.registerUProblem(constructor, message)
             }
           }

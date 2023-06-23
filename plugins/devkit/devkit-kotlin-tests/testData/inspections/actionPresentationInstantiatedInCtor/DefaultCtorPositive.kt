@@ -1,6 +1,6 @@
 import com.intellij.openapi.actionSystem.AnAction;
 
-class <warning descr="Action presentation initialized in the constructor">A</warning> : B(42)
+class <warning descr="Action presentation instantiated in the constructor">A</warning> : B(42)
 
 abstract class B : AnAction {
   constructor() : super()

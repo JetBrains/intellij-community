@@ -1,6 +1,6 @@
 import com.intellij.openapi.actionSystem.AnAction;
 
-class <warning descr="Action presentation initialized in the constructor">A</warning> extends B {}
+class <warning descr="Action presentation instantiated in the constructor">A</warning> extends B {}
 
 abstract class B extends AnAction {
   B() {
