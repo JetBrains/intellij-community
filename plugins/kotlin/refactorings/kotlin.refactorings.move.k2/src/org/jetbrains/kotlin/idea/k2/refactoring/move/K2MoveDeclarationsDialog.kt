@@ -6,10 +6,7 @@ import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.psi.JavaDirectoryService
-import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiPackage
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.move.MoveHandler
@@ -38,8 +35,7 @@ import javax.swing.JComponent
 
 class K2MoveDeclarationsDialog(
     project: Project,
-    private val toDirectory: PsiDirectory?,
-    private val toPackage: PsiPackage?,
+    private val target: K2MoveTarget,
     private val memberInfos: List<KotlinMemberInfo>
 ) : RefactoringDialog(project, true) {
     private lateinit var packageChooser: PackageNameReferenceEditorCombo
@@ -75,7 +71,7 @@ class K2MoveDeclarationsDialog(
                     RECENT_PACKAGE_KEY,
                     RefactoringBundle.message("choose.destination.package")
                 )).align(AlignX.FILL).component
-                packageChooser.prependItem(toPackage?.qualifiedName)
+                packageChooser.prependItem(target.pkg.qualifiedName)
             }.layout(RowLayout.PARENT_GRID)
             row {
                 label(KotlinBundle.message("label.text.destination")).align(AlignX.LEFT)
@@ -88,6 +84,7 @@ class K2MoveDeclarationsDialog(
             row {
                 label(KotlinBundle.message("label.text.file")).align(AlignX.LEFT)
                 fileChooser = cell(TextFieldWithBrowseButton()).align(AlignX.FILL).component
+                fileChooser.text = if (target is K2MoveTarget.File) target.file.virtualFilePath else ""
                 fileChooser.addActionListener {
                     val dialog = KotlinFileChooserDialog(
                         KotlinBundle.message("text.choose.containing.file"),
@@ -135,7 +132,7 @@ class K2MoveDeclarationsDialog(
     }
 
     fun setData() {
-        destinationChooser.setData(myProject, toDirectory, { s -> setErrorText(s) }, packageChooser.childComponent)
+        destinationChooser.setData(myProject, target.directory, { s -> setErrorText(s) }, packageChooser.childComponent)
     }
 
     private fun saveSettings() {
@@ -157,7 +154,7 @@ class K2MoveDeclarationsDialog(
         val moveDescriptor = MoveDeclarationsDescriptor(
             project,
             KotlinMoveSource(elementsToMove),
-            KotlinMoveTarget.DeferredFile(FqName(packageChooser.text), toDirectory?.virtualFile),
+            KotlinMoveTarget.DeferredFile(FqName(packageChooser.text), target.directory?.virtualFile),
             KotlinMoveDeclarationDelegate.TopLevel,
             searchReferencesCb.isSelected,
             searchTextOccurrencesCb.isSelected,
@@ -178,7 +175,7 @@ class K2MoveDeclarationsDialog(
         fun createAndShow(
             project: Project,
             elementsToMove: Set<KtNamedDeclaration>,
-            targetContainer: PsiElement?
+            targetContainer: PsiElement
         ) {
             fun getSourceFiles(elementsToMove: Collection<KtNamedDeclaration>): List<KtFile> = elementsToMove
                 .map(KtPureElement::getContainingKtFile)
@@ -198,22 +195,19 @@ class K2MoveDeclarationsDialog(
             }
 
             class K2MoveDeclarationsDialogInfo(
-                val toDirectory: PsiDirectory?,
-                val toPackage: PsiPackage?,
+                val moveTarget: K2MoveTarget,
                 val memberInfos: List<KotlinMemberInfo>
             )
 
             val dialogInfo = ActionUtil.underModalProgress(project, RefactoringBundle.message("move.title")) {
-                val toDirectory =
-                    if (targetContainer is PsiDirectory) targetContainer else targetContainer?.containingFile?.containingDirectory
-                val toPackage = toDirectory?.let { JavaDirectoryService.getInstance().getPackage(it) }
+                val moveTarget = K2MoveTarget(targetContainer)!!
                 val sourceFiles = getSourceFiles(elementsToMove)
                 val allDeclarations = getAllDeclarations(sourceFiles)
                 val memberInfos = memberInfos(elementsToMove, allDeclarations)
-                return@underModalProgress K2MoveDeclarationsDialogInfo(toDirectory, toPackage, memberInfos)
+                return@underModalProgress K2MoveDeclarationsDialogInfo(moveTarget, memberInfos)
             }
 
-            K2MoveDeclarationsDialog(project, dialogInfo.toDirectory, dialogInfo.toPackage, dialogInfo.memberInfos).apply {
+            K2MoveDeclarationsDialog(project, dialogInfo.moveTarget, dialogInfo.memberInfos).apply {
                 setData()
             }.show()
         }

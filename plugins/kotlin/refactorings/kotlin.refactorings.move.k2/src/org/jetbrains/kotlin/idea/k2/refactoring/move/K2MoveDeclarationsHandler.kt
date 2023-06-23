@@ -19,6 +19,11 @@ class K2MoveDeclarationsHandler : MoveHandlerDelegate() {
     }
 
     override fun doMove(project: Project, elements: Array<out PsiElement>, targetContainer: PsiElement?, callback: MoveCallback?) {
+        if (targetContainer == null) return
+
+        // When moving elements to a class we expect the user to want to move them to the containing file instead
+        val correctedTarget = if (targetContainer is KtNamedDeclaration) targetContainer.containingKtFile else targetContainer
+
         val elementsToSearch = elements.flatMapTo(LinkedHashSet()) {
             when (it) {
                 is KtNamedDeclaration -> listOf(it)
@@ -26,6 +31,6 @@ class K2MoveDeclarationsHandler : MoveHandlerDelegate() {
                 else -> emptyList()
             }
         }
-        K2MoveDeclarationsDialog.createAndShow(project, elementsToSearch, targetContainer)
+        K2MoveDeclarationsDialog.createAndShow(project, elementsToSearch, correctedTarget)
     }
 }
