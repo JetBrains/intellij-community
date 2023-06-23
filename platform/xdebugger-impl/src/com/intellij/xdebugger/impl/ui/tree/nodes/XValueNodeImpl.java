@@ -17,6 +17,8 @@ import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.XSourceKind;
 import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.inline.XDebuggerInlayUtil;
@@ -101,8 +103,18 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   private void updateInlineDebuggerData() {
     try {
       XDebugSession session = XDebugView.getSession(getTree());
-      final XSourcePosition debuggerPosition = session == null ? null : session.getCurrentPosition();
-      if (debuggerPosition == null) {
+      final XSourcePosition mainPosition;
+      final XSourcePosition altPosition;
+      if (session instanceof XDebugSessionImpl) {
+        XStackFrame currentFrame = session.getCurrentStackFrame();
+        mainPosition = ((XDebugSessionImpl)session).getFrameSourcePosition(currentFrame, XSourceKind.MAIN);
+        altPosition = ((XDebugSessionImpl)session).getFrameSourcePosition(currentFrame, XSourceKind.ALTERNATIVE);
+      }
+      else {
+        mainPosition = session == null ? null : session.getCurrentPosition();
+        altPosition = null;
+      }
+      if (mainPosition == null && altPosition == null) {
         return;
       }
 
@@ -112,7 +124,9 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
           if (isObsolete() || position == null) return;
           VirtualFile file = position.getFile();
           // filter out values from other files
-          if (!Comparing.equal(debuggerPosition.getFile(), file)) {
+          VirtualFile mainFile = mainPosition != null ? mainPosition.getFile() : null;
+          VirtualFile altFile = altPosition != null ? altPosition.getFile() : null;
+          if (!Comparing.equal(mainFile, file) && !Comparing.equal(altFile, file)) {
             return;
           }
           final Document document = FileDocumentManager.getInstance().getDocument(file);
