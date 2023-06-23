@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.colors;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.StartupUiUtil;
@@ -89,7 +90,7 @@ public final class EditorColorsUtil {
   }
 
   public static @Nullable Color getColor(@Nullable Component component, @NotNull ColorKey key) {
-    Function<ColorKey, Color> function = UIUtil.getClientProperty(component, ColorKey.FUNCTION_KEY);
+    Function<ColorKey, Color> function = ClientProperty.get(component, ColorKey.FUNCTION_KEY);
     Color color = function == null ? null : function.apply(key);
     return color != null ? color : key.getDefaultColor();
   }
