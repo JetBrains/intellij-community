@@ -1,24 +1,23 @@
 package com.intellij.workspaceModel.test.api
 
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import java.util.Date
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
 
 interface UnknownPropertyTypeEntity : WorkspaceEntity {
   val date: Date
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : UnknownPropertyTypeEntity, WorkspaceEntity.Builder<UnknownPropertyTypeEntity> {
     override var entitySource: EntitySource
     override var date: Date
   }
 
-  companion object : Type<UnknownPropertyTypeEntity, Builder>() {
+  companion object : EntityType<UnknownPropertyTypeEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

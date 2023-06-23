@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.PathUtil
@@ -81,13 +82,20 @@ abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() 
     }
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = WorkspaceEntitiesProjectDescriptor(shouldAddWorkspaceStorageLibrary)
+  override fun getProjectDescriptor(): LightProjectDescriptor = WorkspaceEntitiesProjectDescriptor(shouldAddWorkspaceStorageLibrary,
+                                                                                                   shouldAddWorkspaceJpsEntityLibrary)
 
   /**
    * Returns `true` if compiled content of intellij.platform.workspaceModel.storage should be added as a library. 
    */
   protected open val shouldAddWorkspaceStorageLibrary: Boolean
     get() = true
+
+  /**
+   * Returns `true` if compiled content of intellij.platform.workspace.jps should be added as a library.
+   */
+  protected open val shouldAddWorkspaceJpsEntityLibrary: Boolean
+    get() = false
 
   protected fun generateAndCompare(dirWithExpectedApiFiles: Path, dirWithExpectedImplFiles: Path, keepUnknownFields: Boolean = false,
                                    pathToPackage: String = ".") {
@@ -131,7 +139,8 @@ abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() 
     return srcRoot to genRoot
   }
 
-  class WorkspaceEntitiesProjectDescriptor(private val addWorkspaceStorageLibrary: Boolean) : KotlinLightProjectDescriptor() {
+  class WorkspaceEntitiesProjectDescriptor(private val addWorkspaceStorageLibrary: Boolean,
+                                           private val addWorkspaceJpsEntityLibrary: Boolean) : KotlinLightProjectDescriptor() {
     override fun configureModule(module: Module, model: ModifiableRootModel) {
       val contentEntry = model.contentEntries.first()
       val genFolder = VfsUtil.createDirectoryIfMissing(contentEntry.file, "gen")
@@ -141,15 +150,29 @@ abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() 
       if (addWorkspaceStorageLibrary) {
         addWorkspaceStorageLibrary(model)
       }
+      if (addWorkspaceJpsEntityLibrary) {
+        addWorkspaceJpsEntitiesLibrary(model)
+      }
     }
 
     override fun equals(other: Any?): Boolean {
-      return other is WorkspaceEntitiesProjectDescriptor && addWorkspaceStorageLibrary == other.addWorkspaceStorageLibrary
+      if (this === other) return true
+      if (javaClass != other?.javaClass) return false
+
+      other as WorkspaceEntitiesProjectDescriptor
+
+      if (addWorkspaceStorageLibrary != other.addWorkspaceStorageLibrary) return false
+      if (addWorkspaceJpsEntityLibrary != other.addWorkspaceJpsEntityLibrary) return false
+
+      return true
     }
 
     override fun hashCode(): Int {
-      return addWorkspaceStorageLibrary.hashCode()
+      var result = addWorkspaceStorageLibrary.hashCode()
+      result = 31 * result + addWorkspaceJpsEntityLibrary.hashCode()
+      return result
     }
+
   }
 
   companion object {
@@ -161,9 +184,17 @@ abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() 
     }
 
     internal fun addWorkspaceStorageLibrary(model: ModifiableRootModel) {
-      val library = model.moduleLibraryTable.modifiableModel.createLibrary("workspace-storage")
+      addLibraryBaseOnClass(model, "workspace-storage", WorkspaceEntity::class.java)
+    }
+
+    internal fun addWorkspaceJpsEntitiesLibrary(model: ModifiableRootModel) {
+      addLibraryBaseOnClass(model, "workspace-jps-entities", ContentRootEntity::class.java)
+    }
+
+    private fun addLibraryBaseOnClass(model: ModifiableRootModel, libraryName: String, baseClass: Class<*>) {
+      val library = model.moduleLibraryTable.modifiableModel.createLibrary(libraryName)
       val modifiableModel = library.modifiableModel
-      val workspaceStorageClassesPath = VfsUtil.pathToUrl(PathUtil.getJarPathForClass(WorkspaceEntity::class.java))
+      val workspaceStorageClassesPath = VfsUtil.pathToUrl(PathUtil.getJarPathForClass(baseClass))
       val workspaceStorageClassesRoot = VirtualFileManager.getInstance().refreshAndFindFileByUrl(workspaceStorageClassesPath)
       assertNotNull("Cannot find $workspaceStorageClassesPath", workspaceStorageClassesRoot)
       VfsUtil.markDirtyAndRefresh(false, true, true, workspaceStorageClassesRoot)
