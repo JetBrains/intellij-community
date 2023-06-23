@@ -36,7 +36,15 @@ abstract class AbstractOpenProjectProvider {
     return if (file.isDirectory) file else file.parent
   }
 
-  abstract fun linkToExistingProject(projectFile: VirtualFile, project: Project)
+  open fun linkToExistingProject(projectFile: VirtualFile, project: Project) {}
+
+  open suspend fun linkToExistingProjectAsync(projectFile: VirtualFile, project: Project) {
+    withContext(Dispatchers.EDT) {
+      blockingContext {
+        linkToExistingProject(projectFile, project)
+      }
+    }
+  }
 
   open suspend fun openProject(projectFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
     LOG.debug("Open ${systemId.readableName} project from $projectFile")
@@ -48,7 +56,6 @@ abstract class AbstractOpenProjectProvider {
     val nioPath = projectDirectory.toNioPath()
     val isValidIdeaProject = ProjectUtil.isValidProjectPath(nioPath)
 
-    val provider = this
     val options = OpenProjectTask {
       isNewProject = !isValidIdeaProject
       this.forceOpenInNewFrame = forceOpenInNewFrame
@@ -61,16 +68,7 @@ abstract class AbstractOpenProjectProvider {
         else {
           project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true)
           project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, true)
-          withContext(Dispatchers.EDT) {
-            if (provider is AbstractOpenProjectAsyncProvider) {
-              provider.linkToExistingProjectAsync(projectFile, project)
-            }
-            else {
-              blockingContext {
-                linkToExistingProject(projectFile, project)
-              }
-            }
-          }
+          linkToExistingProjectAsync(projectFile, project)
           ProjectUtil.updateLastProjectLocation(nioPath)
         }
         true
@@ -81,6 +79,10 @@ abstract class AbstractOpenProjectProvider {
 
   fun linkToExistingProject(projectFilePath: String, project: Project) {
     linkToExistingProject(getProjectFile(projectFilePath), project)
+  }
+
+  suspend fun linkToExistingProjectAsync(projectFilePath: String, project: Project) {
+    linkToExistingProjectAsync(getProjectFile(projectFilePath), project)
   }
 
   protected fun getProjectFile(projectFilePath: String): VirtualFile {

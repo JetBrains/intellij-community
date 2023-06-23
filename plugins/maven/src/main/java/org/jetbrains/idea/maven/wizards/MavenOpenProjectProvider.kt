@@ -1,8 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.wizards
 
-import com.intellij.openapi.externalSystem.importing.AbstractOpenProjectAsyncProvider
+import com.intellij.openapi.externalSystem.importing.AbstractOpenProjectProvider
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil.confirmLinkingUntrustedProject
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
@@ -11,7 +12,7 @@ import com.intellij.projectImport.ProjectImportBuilder
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenUtil
 
-class MavenOpenProjectProvider : AbstractOpenProjectAsyncProvider() {
+class MavenOpenProjectProvider : AbstractOpenProjectProvider() {
   override val systemId: ProjectSystemId = MavenUtil.SYSTEM_ID
 
   val builder: MavenProjectBuilder
@@ -47,7 +48,7 @@ class MavenOpenProjectProvider : AbstractOpenProjectAsyncProvider() {
     val projectRoot = if (projectFile.isDirectory) projectFile else projectFile.parent
 
     val projectFileToImport = builder.projectFileToImport ?: projectFile
-    if (confirmLinkingUntrustedProject(project, systemId, projectRoot.toNioPath())) {
+    if (ExternalSystemTrustedProjectDialog.confirmLinkingUntrustedProjectAsync(project, systemId, projectRoot.toNioPath())) {
       val asyncBuilder = MavenProjectAsyncBuilder()
       try {
         asyncBuilder.commit(project, projectFileToImport, null)
