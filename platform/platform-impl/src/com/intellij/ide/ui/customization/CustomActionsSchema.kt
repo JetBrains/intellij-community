@@ -36,7 +36,7 @@ import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.io.IOException
+import java.io.FileNotFoundException
 import java.net.URL
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -145,9 +145,9 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
      * @param path absolute path to the icon file, url of the icon file or url of the icon file inside jar.
      */
     @ApiStatus.Internal
-    @Throws(IOException::class)
+    @Throws(Throwable::class)
     @JvmStatic
-    fun loadCustomIcon(path: String): Icon? {
+    fun loadCustomIcon(path: String): Icon {
       val independentPath = FileUtil.toSystemIndependentName(path)
       val urlString = if (independentPath.startsWith("file:") || independentPath.startsWith("jar:")) {
         independentPath
@@ -156,11 +156,11 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
         "file:$independentPath"
       }
       val url = URL(null, urlString)
-      val icon = IconLoader.findIcon(url) ?: return null
+      val icon = IconLoader.findIcon(url) ?: throw FileNotFoundException("Failed to find icon by URL: $url")
       val w = icon.iconWidth
       val h = icon.iconHeight
       if (w <= 1 || h <= 1) {
-        return null  // there is no icon by the provided path
+        throw FileNotFoundException("Failed to find icon by URL: $url")
       }
       if (w > EmptyIcon.ICON_18.iconWidth || h > EmptyIcon.ICON_18.iconHeight) {
         val s = EmptyIcon.ICON_18.iconWidth / w.coerceAtLeast(h).toFloat()

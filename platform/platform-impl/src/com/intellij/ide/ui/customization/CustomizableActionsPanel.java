@@ -406,15 +406,13 @@ public class CustomizableActionsPanel {
       try {
         icon = CustomActionsSchema.loadCustomIcon(path);
       }
-      catch (IOException e) {
+      catch (Throwable t) {
         Logger.getInstance(CustomizableActionsPanel.class)
-          .warn(String.format("Failed to load icon with path '%s' and set it to action '%s'", path, actionId));
+          .warn(String.format("Failed to load icon with path '%s' and set it to action '%s'", path, actionId), t);
         return false;
       }
-      if (icon != null) {
-        node.setUserObject(Pair.create(value, icon));
-        schema.addIconCustomization(actionId, path);
-      }
+      node.setUserObject(Pair.create(value, icon));
+      schema.addIconCustomization(actionId, path);
     }
     return true;
   }
