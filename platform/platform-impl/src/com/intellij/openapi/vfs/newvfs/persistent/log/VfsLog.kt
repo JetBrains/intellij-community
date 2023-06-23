@@ -43,5 +43,6 @@ interface VfsLogEx: VfsLog {
   fun acquireCompactionContext(): VfsLogCompactionContext
   fun tryAcquireCompactionContext(): VfsLogCompactionContext?
 
+  fun flush()
   fun dispose()
 }

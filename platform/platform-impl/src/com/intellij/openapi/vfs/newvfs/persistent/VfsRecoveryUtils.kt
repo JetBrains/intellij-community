@@ -453,6 +453,7 @@ object VfsRecoveryUtils {
     }
 
     patchVfsCreationTimestamp(oldStorageDir, newStorageDir)
+
     copyVfsLog(oldStorageDir, newStorageDir, ctx.point())
   }
 
@@ -468,6 +469,8 @@ object VfsRecoveryUtils {
     if (oldStorageDir == newStorageDir) {
       throw IllegalArgumentException("oldStorageDir == newStorageDir")
     }
+    (PersistentFS.getInstance().vfsLog as? VfsLogEx)?.flush()
+    // if there are pending writes it is okay, because we overwrite the size property anyway
     val oldPaths = PersistentFSPaths(oldStorageDir)
     val newPaths = PersistentFSPaths(newStorageDir)
     oldPaths.vfsLogStorage.copyRecursively(newPaths.vfsLogStorage)

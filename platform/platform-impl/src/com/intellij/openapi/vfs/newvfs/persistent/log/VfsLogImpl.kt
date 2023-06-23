@@ -125,6 +125,10 @@ class VfsLogImpl(
     LOG.debug("VfsLog disposed")
   }
 
+  override fun flush() {
+    context.flush()
+  }
+
   override val connectionInterceptors: List<ConnectionInterceptor> = if (readOnly) {
     emptyList()
   }
