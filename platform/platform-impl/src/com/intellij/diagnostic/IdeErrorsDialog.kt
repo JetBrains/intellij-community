@@ -231,7 +231,7 @@ open class IdeErrorsDialog internal constructor(private val myMessagePool: Messa
     myAttachmentArea = JTextArea()
     val attachmentFont = EditorColorsManager.getInstance()?.globalScheme?.getFont(EditorFontType.PLAIN)
     if (attachmentFont != null) {
-      myAttachmentArea.font = JBFont.create(attachmentFont)
+      myAttachmentArea.font = JBFont.create(attachmentFont.deriveFont(JBFont.labelFontSize().toFloat()), false)
     }
     myAttachmentArea.margin = JBUI.insets(2)
     myAttachmentArea.document.addDocumentListener(object : DocumentAdapter() {
