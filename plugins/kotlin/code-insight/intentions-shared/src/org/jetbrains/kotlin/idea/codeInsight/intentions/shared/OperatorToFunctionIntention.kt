@@ -68,7 +68,7 @@ class OperatorToFunctionIntention : AbstractKotlinApplicableIntention<KtExpressi
 
     context(KtAnalysisSession)
     private fun isImplicitInvokeFunctionCall(element: KtCallExpression): Boolean {
-        val functionCall = (element as KtElement).resolveCall()?.singleFunctionCallOrNull()
+        val functionCall = element.resolveCall()?.singleFunctionCallOrNull()
         return functionCall is KtSimpleFunctionCall && functionCall.isImplicitInvoke
     }
 
