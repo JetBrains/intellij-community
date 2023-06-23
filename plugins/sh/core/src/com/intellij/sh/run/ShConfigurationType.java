@@ -4,10 +4,10 @@ package com.intellij.sh.run;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.SimpleConfigurationType;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.sh.ShBundle;
-import com.intellij.sh.ShIcons;
 import com.intellij.sh.ShLanguage;
 import com.intellij.util.EnvironmentUtil;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +17,7 @@ public final class ShConfigurationType extends SimpleConfigurationType {
   ShConfigurationType() {
     super("ShConfigurationType", ShLanguage.INSTANCE.getID(),
           ShBundle.message("sh.run.configuration.description.0.configuration", ShLanguage.INSTANCE.getID()),
-          NotNullLazyValue.lazy(() -> ShIcons.ShFile));
+          NotNullLazyValue.lazy(() -> AllIcons.Nodes.Console));
   }
 
   @Override
