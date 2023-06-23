@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -8,14 +8,12 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.regexp.RegExpBundle;
 import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import static org.intellij.lang.regexp.psi.RegExpSimpleClass.Kind.*;
-import static org.intellij.lang.regexp.psi.RegExpSimpleClass.Kind.NON_WORD;
 
 public class RegExpRedundantClassElementInspection extends LocalInspectionTool {
   @Override
@@ -23,17 +21,15 @@ public class RegExpRedundantClassElementInspection extends LocalInspectionTool {
     return new RegExpElementVisitor() {
       @Override
       public void visitRegExpClass(RegExpClass regExpClass) {
-        RegExpClass regExp = ObjectUtils.tryCast(regExpClass, RegExpClass.class);
-        if (regExp == null) return;
-        RegExpClassElement[] classElements = regExp.getElements();
+        RegExpClassElement[] classElements = regExpClass.getElements();
         boolean containsNonWordCharacterClass =
           ContainerUtil.exists(classElements, RegExpRedundantClassElementInspection::isAnyNonWordCharacter);
-        boolean containsWordCharacterClass =
-          ContainerUtil.exists(classElements, RegExpRedundantClassElementInspection::isAnyWordCharacter);
+        boolean containsWordCharacterClass = ContainerUtil.exists(classElements, RegExpRedundantClassElementInspection::isAnyWordCharacter);
         for (RegExpClassElement element : classElements) {
           if (containsWordCharacterClass && isAnyDigit(element) || containsNonWordCharacterClass && isAnyNonDigit(element)) {
             String elementText = element.getText();
-            holder.registerProblem(element, RegExpBundle.message("inspection.warning.redundant.class.element", elementText), new RemoveRedundantClassElement(elementText));
+            holder.registerProblem(element, RegExpBundle.message("inspection.warning.redundant.class.element", elementText),
+                                   new RemoveRedundantClassElement(elementText));
           }
         }
       }
