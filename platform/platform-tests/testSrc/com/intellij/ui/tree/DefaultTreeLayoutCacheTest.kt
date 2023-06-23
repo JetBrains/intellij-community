@@ -102,7 +102,7 @@ class DefaultTreeLayoutCacheTest {
           |r
           | a1
         """.trimMargin())
-        selectionModel.resetRowSelection()
+        selectionModel.expect { resetRowSelection() }
       },
       modOps = {
         sut.isRootVisible = true
@@ -125,8 +125,10 @@ class DefaultTreeLayoutCacheTest {
           | a1
         """.trimMargin())
         sut.isRootVisible = true
-        selectionModel.removeSelectionPath(path("r"))
-        selectionModel.resetRowSelection()
+        selectionModel.expect {
+          removeSelectionPath(path("r"))
+          resetRowSelection()
+        }
       },
       modOps = {
         sut.isRootVisible = false
@@ -146,6 +148,7 @@ class DefaultTreeLayoutCacheTest {
           | a1
         """.trimMargin())
         sut.isRootVisible = true
+        selectionModel.expect { resetRowSelection() }
       },
       modOps = {
         sut.setExpandedState("r", false)
@@ -163,6 +166,7 @@ class DefaultTreeLayoutCacheTest {
           | a1
         """.trimMargin())
         sut.isRootVisible = false
+        selectionModel.expect { resetRowSelection() }
       },
       modOps = {
         sut.setExpandedState("r", false)
@@ -212,6 +216,7 @@ class DefaultTreeLayoutCacheTest {
           """.trimMargin()
         )
         sut.isRootVisible = true
+        selectionModel.expect { repeat(2) { resetRowSelection() } }
       },
       modOps = {
         sut.setExpandedState("r", true)
@@ -244,6 +249,9 @@ class DefaultTreeLayoutCacheTest {
           """.trimMargin()
         )
         sut.isRootVisible = true
+        selectionModel.expect {
+          repeat(4) { resetRowSelection() } // 4 times because the root is initially expanded, so the 1st expand is a no-op
+        }
       },
       modOps = {
         sut.setExpandedState("r", true)
@@ -275,6 +283,7 @@ class DefaultTreeLayoutCacheTest {
           """.trimMargin()
         )
         sut.isRootVisible = true
+        selectionModel.expect { resetRowSelection() }
       },
       modOps = {
         node("r/a1").insert("b11", 0)
@@ -302,8 +311,7 @@ class DefaultTreeLayoutCacheTest {
           """.trimMargin()
         )
         sut.isRootVisible = true
-        selectionModel.resetRowSelection()
-        selectionModel.resetRowSelection()
+        selectionModel.expect { repeat(3) { resetRowSelection() } }
       },
       modOps = {
         sut.setExpandedState("r/a1", true)
@@ -337,7 +345,7 @@ class DefaultTreeLayoutCacheTest {
           """.trimMargin()
         )
         sut.isRootVisible = true
-        selectionModel.resetRowSelection()
+        selectionModel.expect { repeat(3) { resetRowSelection() } }
       },
       modOps = {
         sut.setExpandedState("r/a1", true)
@@ -366,7 +374,9 @@ class DefaultTreeLayoutCacheTest {
     modOps: () -> Unit = { },
     assertions: () -> Unit = { },
   ) {
-    selectionModel.rowMapper = sut // for verifying
+    selectionModel.expect {
+      rowMapper = sut
+    }
     initOps()
     replay(selectionModel) // start verification
     sut.selectionModel = selectionModel
@@ -423,6 +433,18 @@ class DefaultTreeLayoutCacheTest {
     if (root != null) {
       model.setRoot(root)
     }
+  }
+
+  /**
+   * Just executes the supplied code block.
+   *
+   * Exists purely for readability reasons, as those method calls on the mock
+   * can be rather confusing to the reader, especially to a one unfamiliar with EasyMock.
+   *
+   * @param function the code block to execute
+   */
+  private inline fun TreeSelectionModel.expect(function: TreeSelectionModel.() -> Unit) {
+    function()
   }
 
   private fun AbstractLayoutCache.setExpandedState(path: String, isExpanded: Boolean) {
