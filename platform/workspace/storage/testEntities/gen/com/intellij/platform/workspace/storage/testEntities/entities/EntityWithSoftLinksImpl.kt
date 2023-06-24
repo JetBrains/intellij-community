@@ -1,14 +1,18 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities
 
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Open
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
@@ -21,9 +25,12 @@ import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspac
 import com.intellij.platform.workspace.storage.impl.extractOneToManyChildren
 import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.platform.workspace.storage.impl.updateOneToManyChildrenOfParent
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 
-@GeneratedCodeApiVersion(1)
-@GeneratedCodeImplVersion(1)
+@GeneratedCodeApiVersion(2)
+@GeneratedCodeImplVersion(2)
 open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : EntityWithSoftLinks, WorkspaceEntityBase() {
 
   companion object {
@@ -1221,19 +1228,19 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
   }
 
   override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.add(SealedContainer.BigContainer::class.java)
-    collector.add(DeepSealedOne.DeepSealedTwo.DeepSealedThree::class.java)
-    collector.add(Container::class.java)
-    collector.add(DeepSealedOne.DeepSealedTwo.DeepSealedThree.DeepSealedFour::class.java)
-    collector.add(SealedContainer.EmptyContainer::class.java)
-    collector.add(SealedContainer.SmallContainer::class.java)
-    collector.add(DeepSealedOne.DeepSealedTwo::class.java)
     collector.add(OneSymbolicId::class.java)
-    collector.add(DeepContainer::class.java)
-    collector.add(DeepSealedOne::class.java)
+    collector.add(SealedContainer.SmallContainer::class.java)
+    collector.add(DeepSealedOne.DeepSealedTwo.DeepSealedThree.DeepSealedFour::class.java)
+    collector.add(SealedContainer.BigContainer::class.java)
+    collector.add(SealedContainer.EmptyContainer::class.java)
     collector.add(TooDeepContainer::class.java)
-    collector.add(SealedContainer.ContainerContainer::class.java)
     collector.add(SealedContainer::class.java)
+    collector.add(DeepSealedOne::class.java)
+    collector.add(Container::class.java)
+    collector.add(DeepSealedOne.DeepSealedTwo.DeepSealedThree::class.java)
+    collector.add(DeepContainer::class.java)
+    collector.add(DeepSealedOne.DeepSealedTwo::class.java)
+    collector.add(SealedContainer.ContainerContainer::class.java)
     this.inContainerList?.let { collector.add(it::class.java) }
     this.sealedContainer?.let { collector.add(it::class.java) }
     this.justListProperty?.let { collector.add(it::class.java) }

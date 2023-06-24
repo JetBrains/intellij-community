@@ -15,7 +15,7 @@ interface ModuleSettingsBase : WorkspaceEntityWithSymbolicId {
   val moduleId: ModuleId
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder<T : ModuleSettingsBase> : ModuleSettingsBase, WorkspaceEntity.Builder<T> {
     override var entitySource: EntitySource
     override var name: String

@@ -22,7 +22,7 @@ interface VFUEntity : WorkspaceEntity {
   val fileProperty: VirtualFileUrl
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : VFUEntity, WorkspaceEntity.Builder<VFUEntity> {
     override var entitySource: EntitySource
     override var data: String
@@ -60,7 +60,7 @@ interface VFUWithTwoPropertiesEntity : WorkspaceEntity {
   val secondFileProperty: VirtualFileUrl
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : VFUWithTwoPropertiesEntity, WorkspaceEntity.Builder<VFUWithTwoPropertiesEntity> {
     override var entitySource: EntitySource
     override var data: String
@@ -101,7 +101,7 @@ interface NullableVFUEntity : WorkspaceEntity {
   val fileProperty: VirtualFileUrl?
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : NullableVFUEntity, WorkspaceEntity.Builder<NullableVFUEntity> {
     override var entitySource: EntitySource
     override var data: String
@@ -134,7 +134,7 @@ interface ListVFUEntity : WorkspaceEntity {
   val fileProperty: List<VirtualFileUrl>
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : ListVFUEntity, WorkspaceEntity.Builder<ListVFUEntity> {
     override var entitySource: EntitySource
     override var data: String
@@ -171,7 +171,7 @@ interface SetVFUEntity : WorkspaceEntity {
   val fileProperty: Set<VirtualFileUrl>
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : SetVFUEntity, WorkspaceEntity.Builder<SetVFUEntity> {
     override var entitySource: EntitySource
     override var data: String

@@ -20,7 +20,7 @@ interface AssertConsistencyEntity : WorkspaceEntity {
   val passCheck: Boolean
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : AssertConsistencyEntity, WorkspaceEntity.Builder<AssertConsistencyEntity> {
     override var entitySource: EntitySource
     override var passCheck: Boolean

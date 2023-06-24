@@ -1,13 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.entities
 
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
@@ -23,76 +27,67 @@ import com.intellij.platform.workspace.storage.impl.updateOneToManyChildrenOfPar
 import com.intellij.platform.workspace.storage.impl.updateOneToManyParentOfChild
 import com.intellij.platform.workspace.storage.impl.updateOneToOneChildOfParent
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import org.jetbrains.annotations.NonNls
 
-@GeneratedCodeApiVersion(1)
-@GeneratedCodeImplVersion(1)
-open class ContentRootEntityImpl(val dataSource: com.intellij.platform.workspace.jps.entities.ContentRootEntityData) : com.intellij.platform.workspace.jps.entities.ContentRootEntity, WorkspaceEntityBase() {
+@GeneratedCodeApiVersion(2)
+@GeneratedCodeImplVersion(2)
+open class ContentRootEntityImpl(val dataSource: ContentRootEntityData) : ContentRootEntity, WorkspaceEntityBase() {
 
   companion object {
-    internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(
-      com.intellij.platform.workspace.jps.entities.ModuleEntity::class.java, com.intellij.platform.workspace.jps.entities.ContentRootEntity::class.java,
-      ConnectionId.ConnectionType.ONE_TO_MANY, false)
-    internal val EXCLUDEDURLS_CONNECTION_ID: ConnectionId = ConnectionId.create(
-      com.intellij.platform.workspace.jps.entities.ContentRootEntity::class.java, com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity::class.java,
-      ConnectionId.ConnectionType.ONE_TO_MANY, true)
-    internal val SOURCEROOTS_CONNECTION_ID: ConnectionId = ConnectionId.create(
-      com.intellij.platform.workspace.jps.entities.ContentRootEntity::class.java, com.intellij.platform.workspace.jps.entities.SourceRootEntity::class.java,
-      ConnectionId.ConnectionType.ONE_TO_MANY, false)
-    internal val SOURCEROOTORDER_CONNECTION_ID: ConnectionId = ConnectionId.create(
-      com.intellij.platform.workspace.jps.entities.ContentRootEntity::class.java,
-      com.intellij.platform.workspace.jps.entities.SourceRootOrderEntity::class.java,
-      ConnectionId.ConnectionType.ONE_TO_ONE, false)
-    internal val EXCLUDEURLORDER_CONNECTION_ID: ConnectionId = ConnectionId.create(
-      com.intellij.platform.workspace.jps.entities.ContentRootEntity::class.java,
-      com.intellij.platform.workspace.jps.entities.ExcludeUrlOrderEntity::class.java,
-      ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ContentRootEntity::class.java,
+                                                                          ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val EXCLUDEDURLS_CONNECTION_ID: ConnectionId = ConnectionId.create(ContentRootEntity::class.java, ExcludeUrlEntity::class.java,
+                                                                                ConnectionId.ConnectionType.ONE_TO_MANY, true)
+    internal val SOURCEROOTS_CONNECTION_ID: ConnectionId = ConnectionId.create(ContentRootEntity::class.java, SourceRootEntity::class.java,
+                                                                               ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val SOURCEROOTORDER_CONNECTION_ID: ConnectionId = ConnectionId.create(ContentRootEntity::class.java,
+                                                                                   SourceRootOrderEntity::class.java,
+                                                                                   ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val EXCLUDEURLORDER_CONNECTION_ID: ConnectionId = ConnectionId.create(ContentRootEntity::class.java,
+                                                                                   ExcludeUrlOrderEntity::class.java,
+                                                                                   ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
     val connections = listOf<ConnectionId>(
-      com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.MODULE_CONNECTION_ID,
-      com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.EXCLUDEDURLS_CONNECTION_ID,
-      com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.SOURCEROOTS_CONNECTION_ID,
-      com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.SOURCEROOTORDER_CONNECTION_ID,
-      com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.EXCLUDEURLORDER_CONNECTION_ID,
+      MODULE_CONNECTION_ID,
+      EXCLUDEDURLS_CONNECTION_ID,
+      SOURCEROOTS_CONNECTION_ID,
+      SOURCEROOTORDER_CONNECTION_ID,
+      EXCLUDEURLORDER_CONNECTION_ID,
     )
 
   }
 
-  override val module: com.intellij.platform.workspace.jps.entities.ModuleEntity
-    get() = snapshot.extractOneToManyParent(
-      com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.MODULE_CONNECTION_ID, this)!!
+  override val module: ModuleEntity
+    get() = snapshot.extractOneToManyParent(MODULE_CONNECTION_ID, this)!!
 
   override val url: VirtualFileUrl
     get() = dataSource.url
 
-  override val excludedUrls: List<com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity>
-    get() = snapshot.extractOneToManyChildren<com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity>(
-      com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.EXCLUDEDURLS_CONNECTION_ID, this)!!.toList()
+  override val excludedUrls: List<ExcludeUrlEntity>
+    get() = snapshot.extractOneToManyChildren<ExcludeUrlEntity>(EXCLUDEDURLS_CONNECTION_ID, this)!!.toList()
 
   override val excludedPatterns: List<String>
     get() = dataSource.excludedPatterns
 
-  override val sourceRoots: List<com.intellij.platform.workspace.jps.entities.SourceRootEntity>
-    get() = snapshot.extractOneToManyChildren<com.intellij.platform.workspace.jps.entities.SourceRootEntity>(
-      com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.SOURCEROOTS_CONNECTION_ID, this)!!.toList()
+  override val sourceRoots: List<SourceRootEntity>
+    get() = snapshot.extractOneToManyChildren<SourceRootEntity>(SOURCEROOTS_CONNECTION_ID, this)!!.toList()
 
-  override val sourceRootOrder: com.intellij.platform.workspace.jps.entities.SourceRootOrderEntity?
-    get() = snapshot.extractOneToOneChild(
-      com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.SOURCEROOTORDER_CONNECTION_ID, this)
+  override val sourceRootOrder: SourceRootOrderEntity?
+    get() = snapshot.extractOneToOneChild(SOURCEROOTORDER_CONNECTION_ID, this)
 
-  override val excludeUrlOrder: com.intellij.platform.workspace.jps.entities.ExcludeUrlOrderEntity?
-    get() = snapshot.extractOneToOneChild(
-      com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.EXCLUDEURLORDER_CONNECTION_ID, this)
+  override val excludeUrlOrder: ExcludeUrlOrderEntity?
+    get() = snapshot.extractOneToOneChild(EXCLUDEURLORDER_CONNECTION_ID, this)
 
   override val entitySource: EntitySource
     get() = dataSource.entitySource
 
   override fun connectionIdList(): List<ConnectionId> {
-    return com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.connections
+    return connections
   }
 
-  class Builder(result: com.intellij.platform.workspace.jps.entities.ContentRootEntityData?) : ModifiableWorkspaceEntityBase<com.intellij.platform.workspace.jps.entities.ContentRootEntity, com.intellij.platform.workspace.jps.entities.ContentRootEntityData>(
-    result), com.intellij.platform.workspace.jps.entities.ContentRootEntity.Builder {
-    constructor() : this(com.intellij.platform.workspace.jps.entities.ContentRootEntityData())
+  class Builder(result: ContentRootEntityData?) : ModifiableWorkspaceEntityBase<ContentRootEntity, ContentRootEntityData>(
+    result), ContentRootEntity.Builder {
+    constructor() : this(ContentRootEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -125,14 +120,12 @@ open class ContentRootEntityImpl(val dataSource: com.intellij.platform.workspace
         error("Field WorkspaceEntity#entitySource should be initialized")
       }
       if (_diff != null) {
-        if (_diff.extractOneToManyParent<WorkspaceEntityBase>(
-            com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.MODULE_CONNECTION_ID, this) == null) {
+        if (_diff.extractOneToManyParent<WorkspaceEntityBase>(MODULE_CONNECTION_ID, this) == null) {
           error("Field ContentRootEntity#module should be initialized")
         }
       }
       else {
-        if (this.entityLinks[EntityLink(false,
-                                        com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.MODULE_CONNECTION_ID)] == null) {
+        if (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] == null) {
           error("Field ContentRootEntity#module should be initialized")
         }
       }
@@ -141,14 +134,12 @@ open class ContentRootEntityImpl(val dataSource: com.intellij.platform.workspace
       }
       // Check initialization for list with ref type
       if (_diff != null) {
-        if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(
-            com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.EXCLUDEDURLS_CONNECTION_ID, this) == null) {
+        if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(EXCLUDEDURLS_CONNECTION_ID, this) == null) {
           error("Field ContentRootEntity#excludedUrls should be initialized")
         }
       }
       else {
-        if (this.entityLinks[EntityLink(true,
-                                        com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.EXCLUDEDURLS_CONNECTION_ID)] == null) {
+        if (this.entityLinks[EntityLink(true, EXCLUDEDURLS_CONNECTION_ID)] == null) {
           error("Field ContentRootEntity#excludedUrls should be initialized")
         }
       }
@@ -157,21 +148,19 @@ open class ContentRootEntityImpl(val dataSource: com.intellij.platform.workspace
       }
       // Check initialization for list with ref type
       if (_diff != null) {
-        if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(
-            com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.SOURCEROOTS_CONNECTION_ID, this) == null) {
+        if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(SOURCEROOTS_CONNECTION_ID, this) == null) {
           error("Field ContentRootEntity#sourceRoots should be initialized")
         }
       }
       else {
-        if (this.entityLinks[EntityLink(true,
-                                        com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.SOURCEROOTS_CONNECTION_ID)] == null) {
+        if (this.entityLinks[EntityLink(true, SOURCEROOTS_CONNECTION_ID)] == null) {
           error("Field ContentRootEntity#sourceRoots should be initialized")
         }
       }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.connections
+      return connections
     }
 
     override fun afterModification() {
@@ -183,7 +172,7 @@ open class ContentRootEntityImpl(val dataSource: com.intellij.platform.workspace
 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
-      dataSource as com.intellij.platform.workspace.jps.entities.ContentRootEntity
+      dataSource as ContentRootEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.url != dataSource.url) this.url = dataSource.url
       if (this.excludedPatterns != dataSource.excludedPatterns) this.excludedPatterns = dataSource.excludedPatterns.toMutableList()
@@ -200,17 +189,15 @@ open class ContentRootEntityImpl(val dataSource: com.intellij.platform.workspace
 
       }
 
-    override var module: com.intellij.platform.workspace.jps.entities.ModuleEntity
+    override var module: ModuleEntity
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToManyParent(
-            com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.MODULE_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                                                                                       com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.MODULE_CONNECTION_ID)]!! as com.intellij.platform.workspace.jps.entities.ModuleEntity
+          _diff.extractOneToManyParent(MODULE_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
+                                                                                                  MODULE_CONNECTION_ID)]!! as ModuleEntity
         }
         else {
-          this.entityLinks[EntityLink(false,
-                                      com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.MODULE_CONNECTION_ID)]!! as com.intellij.platform.workspace.jps.entities.ModuleEntity
+          this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntity
         }
       }
       set(value) {
@@ -219,30 +206,24 @@ open class ContentRootEntityImpl(val dataSource: com.intellij.platform.workspace
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
           // Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            val data = (value.entityLinks[EntityLink(true,
-                                                     com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.MODULE_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-            value.entityLinks[EntityLink(true,
-                                         com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.MODULE_CONNECTION_ID)] = data
+            val data = (value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+            value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = data
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.updateOneToManyParentOfChild(
-            com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.MODULE_CONNECTION_ID, this, value)
+          _diff.updateOneToManyParentOfChild(MODULE_CONNECTION_ID, this, value)
         }
         else {
           // Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            val data = (value.entityLinks[EntityLink(true,
-                                                     com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.MODULE_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-            value.entityLinks[EntityLink(true,
-                                         com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.MODULE_CONNECTION_ID)] = data
+            val data = (value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+            value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = data
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
 
-          this.entityLinks[EntityLink(false,
-                                      com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.MODULE_CONNECTION_ID)] = value
+          this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] = value
         }
         changedProperty.add("module")
       }
@@ -258,20 +239,18 @@ open class ContentRootEntityImpl(val dataSource: com.intellij.platform.workspace
       }
 
     // List of non-abstract referenced types
-    var _excludedUrls: List<com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity>? = emptyList()
-    override var excludedUrls: List<com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity>
+    var _excludedUrls: List<ExcludeUrlEntity>? = emptyList()
+    override var excludedUrls: List<ExcludeUrlEntity>
       get() {
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToManyChildren<com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity>(
-            com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.EXCLUDEDURLS_CONNECTION_ID, this)!!.toList() + (this.entityLinks[EntityLink(true,
-                                                                                                                                                                                        com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.EXCLUDEDURLS_CONNECTION_ID)] as? List<com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity>
-                                                                                                                                                            ?: emptyList())
+          _diff.extractOneToManyChildren<ExcludeUrlEntity>(EXCLUDEDURLS_CONNECTION_ID, this)!!.toList() + (this.entityLinks[EntityLink(true,
+                                                                                                                                       EXCLUDEDURLS_CONNECTION_ID)] as? List<ExcludeUrlEntity>
+                                                                                                           ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true,
-                                      com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.EXCLUDEDURLS_CONNECTION_ID)] as? List<com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity> ?: emptyList()
+          this.entityLinks[EntityLink(true, EXCLUDEDURLS_CONNECTION_ID)] as? List<ExcludeUrlEntity> ?: emptyList()
         }
       }
       set(value) {
@@ -283,28 +262,24 @@ open class ContentRootEntityImpl(val dataSource: com.intellij.platform.workspace
             if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
               // Backref setup before adding to store
               if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-                item_value.entityLinks[EntityLink(false,
-                                                  com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.EXCLUDEDURLS_CONNECTION_ID)] = this
+                item_value.entityLinks[EntityLink(false, EXCLUDEDURLS_CONNECTION_ID)] = this
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
 
               _diff.addEntity(item_value)
             }
           }
-          _diff.updateOneToManyChildrenOfParent(
-            com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.EXCLUDEDURLS_CONNECTION_ID, this, value)
+          _diff.updateOneToManyChildrenOfParent(EXCLUDEDURLS_CONNECTION_ID, this, value)
         }
         else {
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-              item_value.entityLinks[EntityLink(false,
-                                                com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.EXCLUDEDURLS_CONNECTION_ID)] = this
+              item_value.entityLinks[EntityLink(false, EXCLUDEDURLS_CONNECTION_ID)] = this
             }
             // else you're attaching a new entity to an existing entity that is not modifiable
           }
 
-          this.entityLinks[EntityLink(true,
-                                      com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.EXCLUDEDURLS_CONNECTION_ID)] = value
+          this.entityLinks[EntityLink(true, EXCLUDEDURLS_CONNECTION_ID)] = value
         }
         changedProperty.add("excludedUrls")
       }
@@ -332,20 +307,18 @@ open class ContentRootEntityImpl(val dataSource: com.intellij.platform.workspace
       }
 
     // List of non-abstract referenced types
-    var _sourceRoots: List<com.intellij.platform.workspace.jps.entities.SourceRootEntity>? = emptyList()
-    override var sourceRoots: List<com.intellij.platform.workspace.jps.entities.SourceRootEntity>
+    var _sourceRoots: List<SourceRootEntity>? = emptyList()
+    override var sourceRoots: List<SourceRootEntity>
       get() {
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToManyChildren<com.intellij.platform.workspace.jps.entities.SourceRootEntity>(
-            com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.SOURCEROOTS_CONNECTION_ID, this)!!.toList() + (this.entityLinks[EntityLink(true,
-                                                                                                                                                                                       com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.SOURCEROOTS_CONNECTION_ID)] as? List<com.intellij.platform.workspace.jps.entities.SourceRootEntity>
-                                                                                                                                                           ?: emptyList())
+          _diff.extractOneToManyChildren<SourceRootEntity>(SOURCEROOTS_CONNECTION_ID, this)!!.toList() + (this.entityLinks[EntityLink(true,
+                                                                                                                                      SOURCEROOTS_CONNECTION_ID)] as? List<SourceRootEntity>
+                                                                                                          ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true,
-                                      com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.SOURCEROOTS_CONNECTION_ID)] as? List<com.intellij.platform.workspace.jps.entities.SourceRootEntity> ?: emptyList()
+          this.entityLinks[EntityLink(true, SOURCEROOTS_CONNECTION_ID)] as? List<SourceRootEntity> ?: emptyList()
         }
       }
       set(value) {
@@ -357,43 +330,37 @@ open class ContentRootEntityImpl(val dataSource: com.intellij.platform.workspace
             if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
               // Backref setup before adding to store
               if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-                item_value.entityLinks[EntityLink(false,
-                                                  com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.SOURCEROOTS_CONNECTION_ID)] = this
+                item_value.entityLinks[EntityLink(false, SOURCEROOTS_CONNECTION_ID)] = this
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
 
               _diff.addEntity(item_value)
             }
           }
-          _diff.updateOneToManyChildrenOfParent(
-            com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.SOURCEROOTS_CONNECTION_ID, this, value)
+          _diff.updateOneToManyChildrenOfParent(SOURCEROOTS_CONNECTION_ID, this, value)
         }
         else {
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-              item_value.entityLinks[EntityLink(false,
-                                                com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.SOURCEROOTS_CONNECTION_ID)] = this
+              item_value.entityLinks[EntityLink(false, SOURCEROOTS_CONNECTION_ID)] = this
             }
             // else you're attaching a new entity to an existing entity that is not modifiable
           }
 
-          this.entityLinks[EntityLink(true,
-                                      com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.SOURCEROOTS_CONNECTION_ID)] = value
+          this.entityLinks[EntityLink(true, SOURCEROOTS_CONNECTION_ID)] = value
         }
         changedProperty.add("sourceRoots")
       }
 
-    override var sourceRootOrder: com.intellij.platform.workspace.jps.entities.SourceRootOrderEntity?
+    override var sourceRootOrder: SourceRootOrderEntity?
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToOneChild(
-            com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.SOURCEROOTORDER_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
-                                                                                                                                                                                com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.SOURCEROOTORDER_CONNECTION_ID)] as? com.intellij.platform.workspace.jps.entities.SourceRootOrderEntity
+          _diff.extractOneToOneChild(SOURCEROOTORDER_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
+                                                                                                         SOURCEROOTORDER_CONNECTION_ID)] as? SourceRootOrderEntity
         }
         else {
-          this.entityLinks[EntityLink(true,
-                                      com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.SOURCEROOTORDER_CONNECTION_ID)] as? com.intellij.platform.workspace.jps.entities.SourceRootOrderEntity
+          this.entityLinks[EntityLink(true, SOURCEROOTORDER_CONNECTION_ID)] as? SourceRootOrderEntity
         }
       }
       set(value) {
@@ -401,40 +368,34 @@ open class ContentRootEntityImpl(val dataSource: com.intellij.platform.workspace
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false,
-                                         com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.SOURCEROOTORDER_CONNECTION_ID)] = this
+            value.entityLinks[EntityLink(false, SOURCEROOTORDER_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.updateOneToOneChildOfParent(
-            com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.SOURCEROOTORDER_CONNECTION_ID, this, value)
+          _diff.updateOneToOneChildOfParent(SOURCEROOTORDER_CONNECTION_ID, this, value)
         }
         else {
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false,
-                                         com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.SOURCEROOTORDER_CONNECTION_ID)] = this
+            value.entityLinks[EntityLink(false, SOURCEROOTORDER_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
 
-          this.entityLinks[EntityLink(true,
-                                      com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.SOURCEROOTORDER_CONNECTION_ID)] = value
+          this.entityLinks[EntityLink(true, SOURCEROOTORDER_CONNECTION_ID)] = value
         }
         changedProperty.add("sourceRootOrder")
       }
 
-    override var excludeUrlOrder: com.intellij.platform.workspace.jps.entities.ExcludeUrlOrderEntity?
+    override var excludeUrlOrder: ExcludeUrlOrderEntity?
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToOneChild(
-            com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.EXCLUDEURLORDER_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
-                                                                                                                                                                                com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.EXCLUDEURLORDER_CONNECTION_ID)] as? com.intellij.platform.workspace.jps.entities.ExcludeUrlOrderEntity
+          _diff.extractOneToOneChild(EXCLUDEURLORDER_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
+                                                                                                         EXCLUDEURLORDER_CONNECTION_ID)] as? ExcludeUrlOrderEntity
         }
         else {
-          this.entityLinks[EntityLink(true,
-                                      com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.EXCLUDEURLORDER_CONNECTION_ID)] as? com.intellij.platform.workspace.jps.entities.ExcludeUrlOrderEntity
+          this.entityLinks[EntityLink(true, EXCLUDEURLORDER_CONNECTION_ID)] as? ExcludeUrlOrderEntity
         }
       }
       set(value) {
@@ -442,66 +403,62 @@ open class ContentRootEntityImpl(val dataSource: com.intellij.platform.workspace
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false,
-                                         com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.EXCLUDEURLORDER_CONNECTION_ID)] = this
+            value.entityLinks[EntityLink(false, EXCLUDEURLORDER_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.updateOneToOneChildOfParent(
-            com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.EXCLUDEURLORDER_CONNECTION_ID, this, value)
+          _diff.updateOneToOneChildOfParent(EXCLUDEURLORDER_CONNECTION_ID, this, value)
         }
         else {
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false,
-                                         com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.EXCLUDEURLORDER_CONNECTION_ID)] = this
+            value.entityLinks[EntityLink(false, EXCLUDEURLORDER_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
 
-          this.entityLinks[EntityLink(true,
-                                      com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Companion.EXCLUDEURLORDER_CONNECTION_ID)] = value
+          this.entityLinks[EntityLink(true, EXCLUDEURLORDER_CONNECTION_ID)] = value
         }
         changedProperty.add("excludeUrlOrder")
       }
 
-    override fun getEntityClass(): Class<com.intellij.platform.workspace.jps.entities.ContentRootEntity> = com.intellij.platform.workspace.jps.entities.ContentRootEntity::class.java
+    override fun getEntityClass(): Class<ContentRootEntity> = ContentRootEntity::class.java
   }
 }
 
-class ContentRootEntityData : WorkspaceEntityData<com.intellij.platform.workspace.jps.entities.ContentRootEntity>() {
+class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() {
   lateinit var url: VirtualFileUrl
   lateinit var excludedPatterns: MutableList<String>
 
   fun isUrlInitialized(): Boolean = ::url.isInitialized
   fun isExcludedPatternsInitialized(): Boolean = ::excludedPatterns.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<com.intellij.platform.workspace.jps.entities.ContentRootEntity> {
-    val modifiable = com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl.Builder(null)
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ContentRootEntity> {
+    val modifiable = ContentRootEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): com.intellij.platform.workspace.jps.entities.ContentRootEntity {
+  override fun createEntity(snapshot: EntityStorage): ContentRootEntity {
     return getCached(snapshot) {
-      val entity = com.intellij.platform.workspace.jps.entities.ContentRootEntityImpl(this)
+      val entity = ContentRootEntityImpl(this)
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity
     }
   }
 
-  override fun clone(): com.intellij.platform.workspace.jps.entities.ContentRootEntityData {
+  override fun clone(): ContentRootEntityData {
     val clonedEntity = super.clone()
-    clonedEntity as com.intellij.platform.workspace.jps.entities.ContentRootEntityData
+    clonedEntity as ContentRootEntityData
     clonedEntity.excludedPatterns = clonedEntity.excludedPatterns.toMutableWorkspaceList()
     return clonedEntity
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return com.intellij.platform.workspace.jps.entities.ContentRootEntity::class.java
+    return ContentRootEntity::class.java
   }
 
   override fun serialize(ser: EntityInformation.Serializer) {
@@ -511,14 +468,14 @@ class ContentRootEntityData : WorkspaceEntityData<com.intellij.platform.workspac
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
-    return com.intellij.platform.workspace.jps.entities.ContentRootEntity(url, excludedPatterns, entitySource) {
-      parents.filterIsInstance<com.intellij.platform.workspace.jps.entities.ModuleEntity>().singleOrNull()?.let { this.module = it }
+    return ContentRootEntity(url, excludedPatterns, entitySource) {
+      parents.filterIsInstance<ModuleEntity>().singleOrNull()?.let { this.module = it }
     }
   }
 
   override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
     val res = mutableListOf<Class<out WorkspaceEntity>>()
-    res.add(com.intellij.platform.workspace.jps.entities.ModuleEntity::class.java)
+    res.add(ModuleEntity::class.java)
     return res
   }
 
@@ -526,7 +483,7 @@ class ContentRootEntityData : WorkspaceEntityData<com.intellij.platform.workspac
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as com.intellij.platform.workspace.jps.entities.ContentRootEntityData
+    other as ContentRootEntityData
 
     if (this.entitySource != other.entitySource) return false
     if (this.url != other.url) return false
@@ -538,7 +495,7 @@ class ContentRootEntityData : WorkspaceEntityData<com.intellij.platform.workspac
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as com.intellij.platform.workspace.jps.entities.ContentRootEntityData
+    other as ContentRootEntityData
 
     if (this.url != other.url) return false
     if (this.excludedPatterns != other.excludedPatterns) return false
@@ -563,7 +520,7 @@ class ContentRootEntityData : WorkspaceEntityData<com.intellij.platform.workspac
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as com.intellij.platform.workspace.jps.entities.ContentRootEntityData
+    other as ContentRootEntityData
 
     if (this.url != other.url) return false
     return true

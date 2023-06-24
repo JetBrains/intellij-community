@@ -17,7 +17,7 @@ interface MavenProjectsTreeSettingsEntity: WorkspaceEntity {
   val importedFilePaths: List<String>
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : MavenProjectsTreeSettingsEntity, WorkspaceEntity.Builder<MavenProjectsTreeSettingsEntity> {
     override var entitySource: EntitySource
     override var importedFilePaths: MutableList<String>

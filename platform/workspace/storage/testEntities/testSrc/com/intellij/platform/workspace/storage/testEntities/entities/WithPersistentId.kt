@@ -60,7 +60,7 @@ interface OneEntityWithSymbolicId : WorkspaceEntityWithSymbolicId {
     }
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : OneEntityWithSymbolicId, WorkspaceEntity.Builder<OneEntityWithSymbolicId> {
     override var entitySource: EntitySource
     override var myName: String
@@ -109,7 +109,7 @@ interface EntityWithSoftLinks : WorkspaceEntity {
   val children: List<@Child SoftLinkReferencedChild>
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : EntityWithSoftLinks, WorkspaceEntity.Builder<EntityWithSoftLinks> {
     override var entitySource: EntitySource
     override var link: OneSymbolicId
@@ -173,7 +173,7 @@ interface SoftLinkReferencedChild : WorkspaceEntity {
   val parentEntity: EntityWithSoftLinks
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : SoftLinkReferencedChild, WorkspaceEntity.Builder<SoftLinkReferencedChild> {
     override var entitySource: EntitySource
     override var parentEntity: EntityWithSoftLinks

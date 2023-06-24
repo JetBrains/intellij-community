@@ -3,6 +3,11 @@ package com.intellij.java.workspace.entities
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 
@@ -13,7 +18,7 @@ interface JavaSourceRootPropertiesEntity : WorkspaceEntity {
   val packagePrefix: @NlsSafe String
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : JavaSourceRootPropertiesEntity, WorkspaceEntity.Builder<JavaSourceRootPropertiesEntity> {
     override var entitySource: EntitySource
     override var sourceRoot: SourceRootEntity
@@ -41,17 +46,17 @@ interface JavaSourceRootPropertiesEntity : WorkspaceEntity {
 
 }
 
-val SourceRootEntity.javaSourceRoots: List<@Child JavaSourceRootPropertiesEntity>
-  by WorkspaceEntity.extension()
-
 //region generated code
-var SourceRootEntity.Builder.javaSourceRoots: List<@Child JavaSourceRootPropertiesEntity>
-  by WorkspaceEntity.extension()
-
 fun MutableEntityStorage.modifyEntity(entity: JavaSourceRootPropertiesEntity,
                                       modification: JavaSourceRootPropertiesEntity.Builder.() -> Unit) = modifyEntity(
   JavaSourceRootPropertiesEntity.Builder::class.java, entity, modification)
+
+var SourceRootEntity.Builder.javaSourceRoots: @Child List<JavaSourceRootPropertiesEntity>
+  by WorkspaceEntity.extension()
 //endregion
+
+val SourceRootEntity.javaSourceRoots: List<@Child JavaSourceRootPropertiesEntity>
+  by WorkspaceEntity.extension()
 
 interface JavaResourceRootPropertiesEntity: WorkspaceEntity {
   val sourceRoot: SourceRootEntity
@@ -60,7 +65,7 @@ interface JavaResourceRootPropertiesEntity: WorkspaceEntity {
   val relativeOutputPath: @NlsSafe String
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : JavaResourceRootPropertiesEntity, WorkspaceEntity.Builder<JavaResourceRootPropertiesEntity> {
     override var entitySource: EntitySource
     override var sourceRoot: SourceRootEntity
@@ -88,17 +93,17 @@ interface JavaResourceRootPropertiesEntity: WorkspaceEntity {
 
 }
 
-val SourceRootEntity.javaResourceRoots: List<@Child JavaResourceRootPropertiesEntity>
-  by WorkspaceEntity.extension()
-
 //region generated code
-var SourceRootEntity.Builder.javaResourceRoots: List<@Child JavaResourceRootPropertiesEntity>
-  by WorkspaceEntity.extension()
-
 fun MutableEntityStorage.modifyEntity(entity: JavaResourceRootPropertiesEntity,
                                       modification: JavaResourceRootPropertiesEntity.Builder.() -> Unit) = modifyEntity(
   JavaResourceRootPropertiesEntity.Builder::class.java, entity, modification)
+
+var SourceRootEntity.Builder.javaResourceRoots: @Child List<JavaResourceRootPropertiesEntity>
+  by WorkspaceEntity.extension()
 //endregion
+
+val SourceRootEntity.javaResourceRoots: List<@Child JavaResourceRootPropertiesEntity>
+  by WorkspaceEntity.extension()
 
 fun SourceRootEntity.asJavaSourceRoot(): JavaSourceRootPropertiesEntity? = javaSourceRoots.firstOrNull()
 fun SourceRootEntity.asJavaResourceRoot(): JavaResourceRootPropertiesEntity? = javaResourceRoots.firstOrNull()

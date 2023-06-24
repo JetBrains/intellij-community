@@ -15,7 +15,7 @@ interface OptionalOneToOneParentEntity : WorkspaceEntity {
   val child: @Child OptionalOneToOneChildEntity?
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : OptionalOneToOneParentEntity, WorkspaceEntity.Builder<OptionalOneToOneParentEntity> {
     override var entitySource: EntitySource
     override var child: OptionalOneToOneChildEntity?
@@ -46,7 +46,7 @@ interface OptionalOneToOneChildEntity : WorkspaceEntity {
   val parent: OptionalOneToOneParentEntity?
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : OptionalOneToOneChildEntity, WorkspaceEntity.Builder<OptionalOneToOneChildEntity> {
     override var entitySource: EntitySource
     override var data: String

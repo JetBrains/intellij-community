@@ -21,7 +21,7 @@ interface SampleEntity2 : WorkspaceEntity {
   val optionalData: String?
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : SampleEntity2, WorkspaceEntity.Builder<SampleEntity2> {
     override var entitySource: EntitySource
     override var data: String
@@ -58,7 +58,7 @@ interface VFUEntity2 : WorkspaceEntity {
   val notNullRoots: List<VirtualFileUrl>
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : VFUEntity2, WorkspaceEntity.Builder<VFUEntity2> {
     override var entitySource: EntitySource
     override var data: String

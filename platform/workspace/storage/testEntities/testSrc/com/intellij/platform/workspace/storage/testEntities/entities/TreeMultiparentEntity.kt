@@ -22,7 +22,7 @@ interface TreeMultiparentRootEntity : WorkspaceEntityWithSymbolicId {
     get() = TreeMultiparentSymbolicId(data)
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : TreeMultiparentRootEntity, WorkspaceEntity.Builder<TreeMultiparentRootEntity> {
     override var entitySource: EntitySource
     override var data: String
@@ -58,7 +58,7 @@ interface TreeMultiparentLeafEntity : WorkspaceEntity {
   val children: List<@Child TreeMultiparentLeafEntity>
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : TreeMultiparentLeafEntity, WorkspaceEntity.Builder<TreeMultiparentLeafEntity> {
     override var entitySource: EntitySource
     override var data: String

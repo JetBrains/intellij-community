@@ -18,7 +18,7 @@ interface ParentMultipleEntity : WorkspaceEntity {
   val children: List<@Child ChildMultipleEntity>
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : ParentMultipleEntity, WorkspaceEntity.Builder<ParentMultipleEntity> {
     override var entitySource: EntitySource
     override var parentData: String
@@ -52,7 +52,7 @@ interface ChildMultipleEntity : WorkspaceEntity {
   val parentEntity: ParentMultipleEntity
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : ChildMultipleEntity, WorkspaceEntity.Builder<ChildMultipleEntity> {
     override var entitySource: EntitySource
     override var childData: String

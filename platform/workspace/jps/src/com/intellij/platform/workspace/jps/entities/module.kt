@@ -3,6 +3,11 @@ package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import org.jetbrains.annotations.NonNls
@@ -28,7 +33,7 @@ interface ModuleEntity : WorkspaceEntityWithSymbolicId {
     get() = ModuleId(name)
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : ModuleEntity, WorkspaceEntity.Builder<ModuleEntity> {
     override var entitySource: EntitySource
     override var name: String
@@ -79,7 +84,7 @@ interface ModuleCustomImlDataEntity : WorkspaceEntity {
   val customModuleOptions: Map<@NonNls String, @NonNls String>
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : ModuleCustomImlDataEntity, WorkspaceEntity.Builder<ModuleCustomImlDataEntity> {
     override var entitySource: EntitySource
     override var module: ModuleEntity
@@ -117,7 +122,7 @@ interface ModuleGroupPathEntity : WorkspaceEntity {
   val path: List<@NonNls String>
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : ModuleGroupPathEntity, WorkspaceEntity.Builder<ModuleGroupPathEntity> {
     override var entitySource: EntitySource
     override var module: ModuleEntity
@@ -158,7 +163,7 @@ interface ExternalSystemModuleOptionsEntity : WorkspaceEntity {
   val externalSystemModuleType: String?
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : ExternalSystemModuleOptionsEntity, WorkspaceEntity.Builder<ExternalSystemModuleOptionsEntity> {
     override var entitySource: EntitySource
     override var module: ModuleEntity
@@ -197,7 +202,7 @@ interface TestModulePropertiesEntity : WorkspaceEntity {
   val productionModuleId: ModuleId
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : TestModulePropertiesEntity, WorkspaceEntity.Builder<TestModulePropertiesEntity> {
     override var entitySource: EntitySource
     override var module: ModuleEntity

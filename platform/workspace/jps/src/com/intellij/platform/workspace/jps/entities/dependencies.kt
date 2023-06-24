@@ -27,7 +27,7 @@ interface LibraryEntity : WorkspaceEntityWithSymbolicId {
         get() = LibraryId(name, tableId)
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : LibraryEntity, WorkspaceEntity.Builder<LibraryEntity> {
     override var entitySource: EntitySource
     override var name: String
@@ -74,7 +74,7 @@ interface LibraryPropertiesEntity : WorkspaceEntity {
     val propertiesXmlTag: @NonNls String?
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : LibraryPropertiesEntity, WorkspaceEntity.Builder<LibraryPropertiesEntity> {
     override var entitySource: EntitySource
     override var library: LibraryEntity
@@ -105,8 +105,8 @@ fun MutableEntityStorage.modifyEntity(entity: LibraryPropertiesEntity,
 //endregion
 
 /**
- * Will represent an SDK in the project configuration. 
- * Currently, these entities aren't synchronized with the project model, so until IDEA-306969 is implemented, it makes no sense to use them.  
+ * Will represent an SDK in the project configuration.
+ * Currently, these entities aren't synchronized with the project model, so until IDEA-306969 is implemented, it makes no sense to use them.
  */
 interface SdkEntity : WorkspaceEntity {
     val library: LibraryEntity
@@ -114,7 +114,7 @@ interface SdkEntity : WorkspaceEntity {
     val homeUrl: VirtualFileUrl
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : SdkEntity, WorkspaceEntity.Builder<SdkEntity> {
     override var entitySource: EntitySource
     override var library: LibraryEntity
