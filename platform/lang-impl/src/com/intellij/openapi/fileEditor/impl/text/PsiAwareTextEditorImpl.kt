@@ -22,7 +22,6 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.highlighter.EditorHighlighter
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader.Companion.isEditorLoaded
 import com.intellij.openapi.project.Project
@@ -32,7 +31,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
-import kotlinx.coroutines.Deferred
 import java.util.concurrent.CancellationException
 
 private val LOG = logger<PsiAwareTextEditorImpl>()
@@ -55,8 +53,7 @@ open class PsiAwareTextEditorImpl : TextEditorImpl {
                        asyncLoader: AsyncEditorLoader,
                        editor: EditorImpl) : super(project = project, file = file, editor = editor, asyncLoader = asyncLoader)
 
-  override suspend fun loadEditorInBackground(highlighterDeferred: Deferred<EditorHighlighter>): Runnable {
-    val highlighter = highlighterDeferred.await()
+  override suspend fun loadEditorInBackground(): Runnable {
     val editor = editor
     val document = editor.document
 
@@ -94,8 +91,6 @@ open class PsiAwareTextEditorImpl : TextEditorImpl {
     }
 
     return Runnable {
-      setupEditor(editor, highlighter)
-
       state.foldingState?.setToEditor(editor)
       state.focusZones?.let { focusZones ->
         FocusModePassFactory.setToEditor(focusZones, editor)
