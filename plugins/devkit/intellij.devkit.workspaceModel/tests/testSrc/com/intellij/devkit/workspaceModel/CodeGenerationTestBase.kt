@@ -22,6 +22,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContentOf
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.util.descriptors.ConfigFileItem
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -95,7 +96,7 @@ abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() 
    * Returns `true` if compiled content of intellij.platform.workspace.jps should be added as a library.
    */
   protected open val shouldAddWorkspaceJpsEntityLibrary: Boolean
-    get() = false
+    get() = true
 
   protected fun generateAndCompare(dirWithExpectedApiFiles: Path, dirWithExpectedImplFiles: Path, keepUnknownFields: Boolean = false,
                                    pathToPackage: String = ".") {
@@ -177,18 +178,35 @@ abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() 
 
   companion object {
     internal fun removeWorkspaceStorageLibrary(model: ModifiableRootModel) {
-      val moduleLibraryTable = model.moduleLibraryTable
-      val modifiableModel = model.moduleLibraryTable.modifiableModel
-      modifiableModel.removeLibrary(moduleLibraryTable.libraries.first())
-      modifiableModel.commit()
+      removeLibraryByName(model, "workspace-storage")
+    }
+
+    internal fun removeWorkspaceJpsEntitiesLibrary(model: ModifiableRootModel) {
+      removeLibraryByName(model, "workspace-jps-entities")
+    }
+
+    internal fun removeIntellijJavaLibrary(model: ModifiableRootModel) {
+      removeLibraryByName(model, "intellij-java")
     }
 
     internal fun addWorkspaceStorageLibrary(model: ModifiableRootModel) {
       addLibraryBaseOnClass(model, "workspace-storage", WorkspaceEntity::class.java)
     }
 
+    internal fun addIntellijJavaLibrary(model: ModifiableRootModel) {
+      addLibraryBaseOnClass(model, "intellij-java", ConfigFileItem::class.java)
+    }
+
     internal fun addWorkspaceJpsEntitiesLibrary(model: ModifiableRootModel) {
       addLibraryBaseOnClass(model, "workspace-jps-entities", ContentRootEntity::class.java)
+    }
+
+    private fun removeLibraryByName(model: ModifiableRootModel, libraryName: String) {
+      val moduleLibraryTable = model.moduleLibraryTable
+      val modifiableModel = model.moduleLibraryTable.modifiableModel
+      val library = moduleLibraryTable.libraries.find { it.name == libraryName } ?: error("Library $libraryName has to be available")
+      modifiableModel.removeLibrary(library)
+      modifiableModel.commit()
     }
 
     private fun addLibraryBaseOnClass(model: ModifiableRootModel, libraryName: String, baseClass: Class<*>) {
