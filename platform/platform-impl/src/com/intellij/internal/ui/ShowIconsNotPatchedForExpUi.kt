@@ -4,15 +4,17 @@ package com.intellij.internal.ui
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.dialog
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.SystemProperties
 import javax.swing.JList
 
 class ShowIconsNotPatchedForExpUi : DumbAwareAction("Show Icons Non Patched For ExpUI") {
+  val isEnabled = SystemProperties.getBooleanProperty("ide.experimental.ui.dump.not.patched.icons", false)
+
   override fun actionPerformed(e: AnActionEvent) {
     val data = ExperimentalUI.NotPatchedIconRegistry.getData().sortedBy { it.originalPath }.toTypedArray()
     val panel = panel {
@@ -33,6 +35,6 @@ class ShowIconsNotPatchedForExpUi : DumbAwareAction("Show Icons Non Patched For 
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = Registry.`is`("ide.experimental.ui.dump.not.patched.icons")
+    e.presentation.isEnabledAndVisible = isEnabled
   }
 }

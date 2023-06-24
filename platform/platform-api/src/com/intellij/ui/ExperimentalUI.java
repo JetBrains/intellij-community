@@ -18,6 +18,7 @@ import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -187,7 +188,7 @@ public abstract class ExperimentalUI {
 
   private @NotNull IconPathPatcher createPathPatcher() {
     Map<ClassLoader, Map<String, String>> paths = getIconMappings();
-    boolean dumpNotPatchedIcons = Registry.is("ide.experimental.ui.dump.not.patched.icons");
+    boolean dumpNotPatchedIcons = SystemProperties.getBooleanProperty("ide.experimental.ui.dump.not.patched.icons", false);
     return new IconPathPatcher() {
       @Override
       public @Nullable String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
