@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.util.ShutDownTracker;
@@ -36,28 +36,8 @@ public class JulLogger extends Logger {
   }
 
   @Override
-  public boolean isDebugEnabled() {
-    return myLogger.isLoggable(java.util.logging.Level.FINE);
-  }
-
-  @Override
   public boolean isTraceEnabled() {
     return myLogger.isLoggable(java.util.logging.Level.FINER);
-  }
-
-  @Override
-  public void debug(String message) {
-    myLogger.log(java.util.logging.Level.FINE, message);
-  }
-
-  @Override
-  public void debug(@Nullable Throwable t) {
-    myLogger.log(java.util.logging.Level.FINE, "", t);
-  }
-
-  @Override
-  public void debug(String message, @Nullable Throwable t) {
-    myLogger.log(java.util.logging.Level.FINE, message, t);
   }
 
   @Override
@@ -71,8 +51,13 @@ public class JulLogger extends Logger {
   }
 
   @Override
-  public void info(String message) {
-    myLogger.log(java.util.logging.Level.INFO, message);
+  public boolean isDebugEnabled() {
+    return myLogger.isLoggable(java.util.logging.Level.FINE);
+  }
+
+  @Override
+  public void debug(String message, @Nullable Throwable t) {
+    myLogger.log(java.util.logging.Level.FINE, message, t);
   }
 
   @Override

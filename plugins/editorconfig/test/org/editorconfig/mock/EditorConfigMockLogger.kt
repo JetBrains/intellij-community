@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.mock
 
 import com.intellij.openapi.diagnostic.Logger
@@ -11,11 +11,8 @@ class EditorConfigMockLogger : Logger() {
   private var lastMessage: String? = null
 
   private var debugCalls = 0
-
   private var infoCalls = 0
-
   private var warnCalls = 0
-
   private var errorCalls = 0
 
   fun assertCallNumbers(debugCalls: Int = 0, infoCalls: Int = 0, warnCalls: Int = 0, errorCalls: Int = 0) {
@@ -31,22 +28,8 @@ class EditorConfigMockLogger : Logger() {
 
   override fun isDebugEnabled(): Boolean = true
 
-  override fun debug(message: String?) {
-    debugCalls += 1
-    lastMessage = message
-  }
-
-  override fun debug(t: Throwable?) {
-    debugCalls += 1
-  }
-
   override fun debug(message: String?, t: Throwable?) {
     debugCalls += 1
-    lastMessage = message
-  }
-
-  override fun info(message: String?) {
-    infoCalls += 1
     lastMessage = message
   }
 
@@ -65,5 +48,6 @@ class EditorConfigMockLogger : Logger() {
     lastMessage = message
   }
 
+  @Deprecated("Deprecated in Java")
   override fun setLevel(level: Level) {}
 }

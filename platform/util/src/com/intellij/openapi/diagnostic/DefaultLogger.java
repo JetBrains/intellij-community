@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.Disposable;
@@ -23,16 +23,7 @@ public class DefaultLogger extends Logger {
   }
 
   @Override
-  public void debug(String message) { }
-
-  @Override
-  public void debug(Throwable t) { }
-
-  @Override
   public void debug(String message, Throwable t) { }
-
-  @Override
-  public void info(String message) { }
 
   @Override
   public void info(String message, Throwable t) { }

@@ -419,24 +419,9 @@ public final class TestLoggerFactory implements Logger.Factory {
     }
 
     @Override
-    public void info(String message) {
-      info(message, null);
-    }
-
-    @Override
     public void info(String message, @Nullable Throwable t) {
       super.info(message, t);
       myFactory.buffer(LogLevel.INFO, myLogger.getName(), message, t);
-    }
-
-    @Override
-    public void debug(String message) {
-      debug(message, (Throwable)null);
-    }
-
-    @Override
-    public void debug(@Nullable Throwable t) {
-      debug(null, t);
     }
 
     @Override

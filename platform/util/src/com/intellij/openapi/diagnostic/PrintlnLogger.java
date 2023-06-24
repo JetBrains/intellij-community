@@ -1,20 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic;
 
-import org.jetbrains.annotations.NonNls;
-
-/**
- * @deprecated For local usage only, don't commit
- */
+/** @deprecated For local usage only, don't commit */
 @Deprecated
-@SuppressWarnings("UseOfSystemOutOrSystemErr")
+@SuppressWarnings({"UseOfSystemOutOrSystemErr", "unused"})
 public class PrintlnLogger extends DefaultLogger {
-  public PrintlnLogger(String category) {
-    super(category);
-  } 
-  
   public PrintlnLogger() {
     this("");
+  }
+
+  public PrintlnLogger(String category) {
+    super(category);
   }
 
   @Override
@@ -23,28 +19,11 @@ public class PrintlnLogger extends DefaultLogger {
   }
 
   @Override
-  public void debug(String message) {
-    System.out.println(message);
-  }
-
-  @Override
-  public void debug(Throwable t) {
-    if (t != null) {
-      t.printStackTrace(System.out);
-    }
-  }
-
-  @Override
-  public void debug(@NonNls String message, Throwable t) {
+  public void debug(String message, Throwable t) {
     System.out.println(message);
     if (t != null) {
       t.printStackTrace(System.out);
     }
-  }
-
-  @Override
-  public void info(String message) {
-    System.out.println(message);
   }
 
   @Override
