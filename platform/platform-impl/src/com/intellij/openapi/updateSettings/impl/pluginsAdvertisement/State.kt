@@ -26,6 +26,8 @@ import com.intellij.openapi.util.text.Strings
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.containers.mapSmartSet
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.TimeUnit
@@ -126,7 +128,7 @@ class PluginAdvertiserExtensionsStateService : SerializablePersistentStateCompon
 
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
-  fun updateCache(extensionOrFileName: String): Boolean {
+  suspend fun updateCache(extensionOrFileName: String): Boolean {
     if (cache.getIfPresent(extensionOrFileName) != null) {
       return false
     }
@@ -137,8 +139,11 @@ class PluginAdvertiserExtensionsStateService : SerializablePersistentStateCompon
       return false
     }
 
-    val compatiblePlugins = requestCompatiblePlugins(extensionOrFileName, knownExtensions.get(extensionOrFileName))
-    updateCache(extensionOrFileName, compatiblePlugins)
+    withContext(Dispatchers.IO) {
+      val compatiblePlugins = requestCompatiblePlugins(extensionOrFileName, knownExtensions.get(extensionOrFileName))
+      updateCache(extensionOrFileName, compatiblePlugins)
+    }
+
     return true
   }
 
