@@ -395,8 +395,9 @@ public final class TestLoggerFactory implements Logger.Factory {
         super.info(message, t);
       }
 
-      if (actions.contains(LoggedErrorProcessor.Action.STDERR)) {
-        DefaultLogger.dumpExceptionsToStderr(message, t);
+      if (actions.contains(LoggedErrorProcessor.Action.STDERR) && DefaultLogger.shouldDumpExceptionToStderr()) {
+        System.err.println("ERROR: " + message);
+        if (t != null) t.printStackTrace(System.err);
       }
 
       if (actions.contains(LoggedErrorProcessor.Action.RETHROW)) {
