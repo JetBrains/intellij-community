@@ -16,6 +16,7 @@ import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.registry.Registry
 import java.nio.file.Path
 
 private val LOG = logger<WindowsDefenderCheckerActivity>()
@@ -28,6 +29,8 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
   }
 
   override suspend fun execute(project: Project) {
+    if (!Registry.`is`("ide.check.windows.defender.rules")) return
+
     val checker = WindowsDefenderChecker.getInstance()
     if (checker.isStatusCheckIgnored(project)) {
       LOG.info("status check is disabled")
