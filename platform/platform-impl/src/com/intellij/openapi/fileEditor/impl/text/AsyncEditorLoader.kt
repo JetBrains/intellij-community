@@ -4,6 +4,7 @@ package com.intellij.openapi.fileEditor.impl.text
 import com.intellij.concurrency.captureThreadContext
 import com.intellij.concurrency.resetThreadContext
 import com.intellij.openapi.application.*
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -97,31 +98,23 @@ class AsyncEditorLoader internal constructor(private val project: Project,
                                                                        addUi = editorComponent::addLoadingDecoratorUi)
 
       coroutineScope.launch(modality) {
-        val continuation = try {
-          continuationDeferred.await()
-        }
-        catch (t: Throwable) {
-          Runnable {
-            logger<AsyncEditorLoader>().error(t)
-            throw t
-          }
-        }
+        val continuation = continuationDeferred.await()
         editorComponent.loadingDecorator.stopLoading(scope = this, indicatorJob = indicatorJob)
         withContext(Dispatchers.EDT) {
-          try {
-            editor.putUserData(ASYNC_LOADER, null)
-            continuation.run()
-          }
-          finally {
-            loaded(editor = editor, editorComponent = editorComponent)
-          }
+          loaded(continuation = continuation, editor = editor, editorComponent = editorComponent)
         }
         EditorNotifications.getInstance(project).updateNotifications(textEditor.file)
       }
     }
   }
 
-  private fun loaded(editor: Editor, editorComponent: TextEditorComponent) {
+  private fun loaded(continuation: Runnable, editor: Editor, editorComponent: TextEditorComponent) {
+    editor.putUserData(ASYNC_LOADER, null)
+
+    runCatching {
+      continuation.run()
+    }.getOrLogException(logger<AsyncEditorLoader>())
+
     editor.scrollingModel.disableAnimation()
     try {
       resetThreadContext().use {
