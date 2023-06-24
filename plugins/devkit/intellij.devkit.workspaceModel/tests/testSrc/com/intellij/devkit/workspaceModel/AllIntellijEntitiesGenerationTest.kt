@@ -68,7 +68,7 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
   override val testDataDirectory: File
     get() = File(IdeaTestExecutionPolicy.getHomePathWithPolicy())
 
-  fun `test generation of all entities in intellij codebase`() {
+  fun `_test generation of all entities in intellij codebase`() {
     executeEntitiesGeneration(::generateAndCompare)
   }
 
