@@ -48,7 +48,7 @@ interface KotlinScriptLibraryEntity : WorkspaceEntityWithSymbolicId {
         get() = KotlinScriptLibraryId(name)
 
     //region generated code
-    @GeneratedCodeApiVersion(1)
+    @GeneratedCodeApiVersion(2)
     interface Builder : KotlinScriptLibraryEntity, WorkspaceEntity.Builder<KotlinScriptLibraryEntity> {
         override var entitySource: EntitySource
         override var name: String

@@ -18,7 +18,7 @@ interface SelfLinkedEntity : WorkspaceEntity {
   val parentEntity: SelfLinkedEntity?
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : SelfLinkedEntity, WorkspaceEntity.Builder<SelfLinkedEntity> {
     override var entitySource: EntitySource
     override var parentEntity: SelfLinkedEntity?

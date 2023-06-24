@@ -22,7 +22,7 @@ interface FirstEntityWithPId : WorkspaceEntityWithSymbolicId {
     }
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : FirstEntityWithPId, WorkspaceEntity.Builder<FirstEntityWithPId> {
     override var entitySource: EntitySource
     override var data: String
@@ -57,7 +57,7 @@ interface SecondEntityWithPId : WorkspaceEntityWithSymbolicId {
     get() = SecondPId(data)
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : SecondEntityWithPId, WorkspaceEntity.Builder<SecondEntityWithPId> {
     override var entitySource: EntitySource
     override var data: String

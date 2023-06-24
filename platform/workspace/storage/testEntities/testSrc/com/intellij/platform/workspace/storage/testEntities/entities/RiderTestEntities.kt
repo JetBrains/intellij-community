@@ -20,7 +20,7 @@ interface ProjectModelTestEntity : WorkspaceEntity {
   val contentRoot: ContentRootTestEntity?
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : ProjectModelTestEntity, WorkspaceEntity.Builder<ProjectModelTestEntity> {
     override var entitySource: EntitySource
     override var info: String
@@ -53,9 +53,6 @@ interface ProjectModelTestEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifyEntity(entity: ProjectModelTestEntity,
                                       modification: ProjectModelTestEntity.Builder.() -> Unit) = modifyEntity(
   ProjectModelTestEntity.Builder::class.java, entity, modification)
-
-var ContentRootTestEntity.Builder.projectModelTestEntity: ProjectModelTestEntity?
-  by WorkspaceEntity.extension()
 //endregion
 
 private val ContentRootTestEntity.projectModelTestEntity: ProjectModelTestEntity? by WorkspaceEntity.extension()

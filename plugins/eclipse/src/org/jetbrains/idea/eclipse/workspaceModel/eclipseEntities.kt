@@ -37,7 +37,7 @@ interface EclipseProjectPropertiesEntity : WorkspaceEntity {
   val srcPlace: Map<String, Int>
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : EclipseProjectPropertiesEntity, WorkspaceEntity.Builder<EclipseProjectPropertiesEntity> {
     override var entitySource: EntitySource
     override var module: ModuleEntity

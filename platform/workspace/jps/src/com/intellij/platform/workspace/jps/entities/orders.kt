@@ -20,7 +20,7 @@ interface FacetsOrderEntity : WorkspaceEntity {
   val moduleEntity: ModuleEntity
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : FacetsOrderEntity, WorkspaceEntity.Builder<FacetsOrderEntity> {
     override var entitySource: EntitySource
     override var orderOfFacets: MutableList<String>
@@ -57,7 +57,7 @@ interface ExcludeUrlOrderEntity : WorkspaceEntity {
   val contentRoot: ContentRootEntity
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : ExcludeUrlOrderEntity, WorkspaceEntity.Builder<ExcludeUrlOrderEntity> {
     override var entitySource: EntitySource
     override var order: MutableList<VirtualFileUrl>

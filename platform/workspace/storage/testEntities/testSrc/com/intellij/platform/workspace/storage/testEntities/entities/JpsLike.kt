@@ -22,7 +22,7 @@ interface ModuleTestEntity : WorkspaceEntityWithSymbolicId {
     get() = ModuleTestEntitySymbolicId(name)
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : ModuleTestEntity, WorkspaceEntity.Builder<ModuleTestEntity> {
     override var entitySource: EntitySource
     override var name: String
@@ -56,7 +56,7 @@ interface ContentRootTestEntity : WorkspaceEntity {
   val sourceRoots: List<@Child SourceRootTestEntity>
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : ContentRootTestEntity, WorkspaceEntity.Builder<ContentRootTestEntity> {
     override var entitySource: EntitySource
     override var module: ModuleTestEntity
@@ -81,6 +81,9 @@ interface ContentRootTestEntity : WorkspaceEntity {
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: ContentRootTestEntity, modification: ContentRootTestEntity.Builder.() -> Unit) = modifyEntity(
   ContentRootTestEntity.Builder::class.java, entity, modification)
+
+var ContentRootTestEntity.Builder.projectModelTestEntity: ProjectModelTestEntity?
+  by WorkspaceEntity.extension()
 //endregion
 
 interface SourceRootTestOrderEntity : WorkspaceEntity {
@@ -88,7 +91,7 @@ interface SourceRootTestOrderEntity : WorkspaceEntity {
   val contentRoot: ContentRootTestEntity
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : SourceRootTestOrderEntity, WorkspaceEntity.Builder<SourceRootTestOrderEntity> {
     override var entitySource: EntitySource
     override var data: String
@@ -121,7 +124,7 @@ interface SourceRootTestEntity : WorkspaceEntity {
   val contentRoot: ContentRootTestEntity
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : SourceRootTestEntity, WorkspaceEntity.Builder<SourceRootTestEntity> {
     override var entitySource: EntitySource
     override var data: String
@@ -167,7 +170,7 @@ interface FacetTestEntity : WorkspaceEntityWithSymbolicId {
     get() = FacetTestEntitySymbolicId(data)
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : FacetTestEntity, WorkspaceEntity.Builder<FacetTestEntity> {
     override var entitySource: EntitySource
     override var data: String

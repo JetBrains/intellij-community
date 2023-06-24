@@ -28,7 +28,7 @@ interface SampleEntity : WorkspaceEntity {
   val randomUUID: UUID?
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : SampleEntity, WorkspaceEntity.Builder<SampleEntity> {
     override var entitySource: EntitySource
     override var booleanProperty: Boolean
@@ -77,7 +77,7 @@ interface ChildSampleEntity : WorkspaceEntity {
   val parentEntity: SampleEntity?
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : ChildSampleEntity, WorkspaceEntity.Builder<ChildSampleEntity> {
     override var entitySource: EntitySource
     override var data: String
@@ -125,7 +125,7 @@ interface SecondSampleEntity : WorkspaceEntity {
   val intProperty: Int
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : SecondSampleEntity, WorkspaceEntity.Builder<SecondSampleEntity> {
     override var entitySource: EntitySource
     override var intProperty: Int
@@ -157,7 +157,7 @@ interface SourceEntity : WorkspaceEntity {
   val children: List<@Child ChildSourceEntity>
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : SourceEntity, WorkspaceEntity.Builder<SourceEntity> {
     override var entitySource: EntitySource
     override var data: String
@@ -190,7 +190,7 @@ interface ChildSourceEntity : WorkspaceEntity {
   val parentEntity: SourceEntity
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : ChildSourceEntity, WorkspaceEntity.Builder<ChildSourceEntity> {
     override var entitySource: EntitySource
     override var data: String
@@ -226,7 +226,7 @@ interface SymbolicIdEntity : WorkspaceEntityWithSymbolicId {
     }
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : SymbolicIdEntity, WorkspaceEntity.Builder<SymbolicIdEntity> {
     override var entitySource: EntitySource
     override var data: String

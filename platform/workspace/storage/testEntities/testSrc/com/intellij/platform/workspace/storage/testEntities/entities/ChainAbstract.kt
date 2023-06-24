@@ -18,7 +18,7 @@ interface ParentChainEntity : WorkspaceEntity {
   val root: @Child CompositeAbstractEntity?
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : ParentChainEntity, WorkspaceEntity.Builder<ParentChainEntity> {
     override var entitySource: EntitySource
     override var root: CompositeAbstractEntity?
@@ -50,7 +50,7 @@ interface SimpleAbstractEntity : WorkspaceEntity {
   val parentInList: CompositeAbstractEntity?
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder<T : SimpleAbstractEntity> : SimpleAbstractEntity, WorkspaceEntity.Builder<T> {
     override var entitySource: EntitySource
     override var parentInList: CompositeAbstractEntity?
@@ -78,7 +78,7 @@ interface CompositeAbstractEntity : SimpleAbstractEntity {
   val parentEntity: ParentChainEntity?
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder<T : CompositeAbstractEntity> : CompositeAbstractEntity, SimpleAbstractEntity.Builder<T>, WorkspaceEntity.Builder<T> {
     override var entitySource: EntitySource
     override var parentInList: CompositeAbstractEntity?
@@ -103,7 +103,7 @@ interface CompositeAbstractEntity : SimpleAbstractEntity {
 
 interface CompositeChildAbstractEntity : CompositeAbstractEntity {
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : CompositeChildAbstractEntity, CompositeAbstractEntity.Builder<CompositeChildAbstractEntity>, WorkspaceEntity.Builder<CompositeChildAbstractEntity> {
     override var entitySource: EntitySource
     override var parentInList: CompositeAbstractEntity?
@@ -134,7 +134,7 @@ fun MutableEntityStorage.modifyEntity(entity: CompositeChildAbstractEntity,
 
 interface SimpleChildAbstractEntity : SimpleAbstractEntity {
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : SimpleChildAbstractEntity, SimpleAbstractEntity.Builder<SimpleChildAbstractEntity>, WorkspaceEntity.Builder<SimpleChildAbstractEntity> {
     override var entitySource: EntitySource
     override var parentInList: CompositeAbstractEntity?

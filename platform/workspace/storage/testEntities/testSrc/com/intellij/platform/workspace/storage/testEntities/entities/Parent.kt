@@ -24,7 +24,7 @@ interface XParentEntity : WorkspaceEntity {
   val childChild: List<@Child XChildChildEntity>
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : XParentEntity, WorkspaceEntity.Builder<XParentEntity> {
     override var entitySource: EntitySource
     override var parentProperty: String
@@ -65,7 +65,7 @@ interface XChildEntity : WorkspaceEntity {
   val childChild: List<@Child XChildChildEntity>
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : XChildEntity, WorkspaceEntity.Builder<XChildEntity> {
     override var entitySource: EntitySource
     override var childProperty: String
@@ -100,7 +100,7 @@ interface XChildWithOptionalParentEntity : WorkspaceEntity {
   val optionalParent: XParentEntity?
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : XChildWithOptionalParentEntity, WorkspaceEntity.Builder<XChildWithOptionalParentEntity> {
     override var entitySource: EntitySource
     override var childProperty: String
@@ -136,7 +136,7 @@ interface XChildChildEntity : WorkspaceEntity {
   val parent2: XChildEntity
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : XChildChildEntity, WorkspaceEntity.Builder<XChildChildEntity> {
     override var entitySource: EntitySource
     override var parent1: XParentEntity

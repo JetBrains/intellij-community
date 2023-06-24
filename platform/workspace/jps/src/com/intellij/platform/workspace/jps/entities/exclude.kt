@@ -12,7 +12,7 @@ interface ExcludeUrlEntity : WorkspaceEntity {
   val url: VirtualFileUrl
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : ExcludeUrlEntity, WorkspaceEntity.Builder<ExcludeUrlEntity> {
     override var entitySource: EntitySource
     override var url: VirtualFileUrl

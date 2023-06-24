@@ -26,7 +26,7 @@ interface KotlinScriptEntity: WorkspaceEntityWithSymbolicId {
         get() = KotlinScriptId(path)
 
     //region generated code
-    @GeneratedCodeApiVersion(1)
+    @GeneratedCodeApiVersion(2)
     interface Builder : KotlinScriptEntity, WorkspaceEntity.Builder<KotlinScriptEntity> {
         override var entitySource: EntitySource
         override var path: String

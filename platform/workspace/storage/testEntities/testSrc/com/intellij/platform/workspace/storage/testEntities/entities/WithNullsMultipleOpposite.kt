@@ -14,7 +14,7 @@ interface ParentWithNullsOppositeMultiple : WorkspaceEntity {
   val parentData: String
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : ParentWithNullsOppositeMultiple, WorkspaceEntity.Builder<ParentWithNullsOppositeMultiple> {
     override var entitySource: EntitySource
     override var parentData: String
@@ -54,7 +54,7 @@ interface ChildWithNullsOppositeMultiple : WorkspaceEntity {
   val parentEntity: ParentWithNullsOppositeMultiple?
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : ChildWithNullsOppositeMultiple, WorkspaceEntity.Builder<ChildWithNullsOppositeMultiple> {
     override var entitySource: EntitySource
     override var childData: String

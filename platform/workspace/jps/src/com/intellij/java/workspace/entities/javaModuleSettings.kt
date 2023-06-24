@@ -2,6 +2,11 @@
 package com.intellij.java.workspace.entities
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -17,7 +22,7 @@ interface JavaModuleSettingsEntity: WorkspaceEntity {
   val languageLevelId: @NonNls String?
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : JavaModuleSettingsEntity, WorkspaceEntity.Builder<JavaModuleSettingsEntity> {
     override var entitySource: EntitySource
     override var module: ModuleEntity
@@ -48,14 +53,14 @@ interface JavaModuleSettingsEntity: WorkspaceEntity {
 
 }
 
-val ModuleEntity.javaSettings: @Child JavaModuleSettingsEntity?
-  by WorkspaceEntity.extension()
-
 //region generated code
-var ModuleEntity.Builder.javaSettings: @Child JavaModuleSettingsEntity?
-  by WorkspaceEntity.extension()
-
 fun MutableEntityStorage.modifyEntity(entity: JavaModuleSettingsEntity,
                                       modification: JavaModuleSettingsEntity.Builder.() -> Unit) = modifyEntity(
   JavaModuleSettingsEntity.Builder::class.java, entity, modification)
+
+var ModuleEntity.Builder.javaSettings: @Child JavaModuleSettingsEntity?
+  by WorkspaceEntity.extension()
 //endregion
+
+val ModuleEntity.javaSettings: @Child JavaModuleSettingsEntity?
+  by WorkspaceEntity.extension()

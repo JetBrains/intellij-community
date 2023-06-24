@@ -49,7 +49,7 @@ interface NamedEntity : WorkspaceEntityWithSymbolicId {
     get() = NameId(myName)
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : NamedEntity, WorkspaceEntity.Builder<NamedEntity> {
     override var entitySource: EntitySource
     override var myName: String
@@ -105,7 +105,7 @@ interface NamedChildEntity : WorkspaceEntity {
   val parentEntity: NamedEntity
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : NamedChildEntity, WorkspaceEntity.Builder<NamedChildEntity> {
     override var entitySource: EntitySource
     override var childProperty: String
@@ -152,7 +152,7 @@ interface WithSoftLinkEntity : WorkspaceEntity {
   val link: NameId
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : WithSoftLinkEntity, WorkspaceEntity.Builder<WithSoftLinkEntity> {
     override var entitySource: EntitySource
     override var link: NameId
@@ -189,7 +189,7 @@ interface ComposedLinkEntity : WorkspaceEntity {
   val link: ComposedId
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : ComposedLinkEntity, WorkspaceEntity.Builder<ComposedLinkEntity> {
     override var entitySource: EntitySource
     override var link: ComposedId
@@ -231,7 +231,7 @@ interface WithListSoftLinksEntity : WorkspaceEntityWithSymbolicId {
   override val symbolicId: AnotherNameId get() = AnotherNameId(myName)
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : WithListSoftLinksEntity, WorkspaceEntity.Builder<WithListSoftLinksEntity> {
     override var entitySource: EntitySource
     override var myName: String
@@ -284,7 +284,7 @@ interface ComposedIdSoftRefEntity : WorkspaceEntityWithSymbolicId {
   override val symbolicId: ComposedId get() = ComposedId(myName, link)
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
+  @GeneratedCodeApiVersion(2)
   interface Builder : ComposedIdSoftRefEntity, WorkspaceEntity.Builder<ComposedIdSoftRefEntity> {
     override var entitySource: EntitySource
     override var myName: String
