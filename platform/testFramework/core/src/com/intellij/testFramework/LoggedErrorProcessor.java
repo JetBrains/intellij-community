@@ -18,7 +18,7 @@ public class LoggedErrorProcessor {
   }
 
   /**
-   * Sets the processor to {@code newInstance}, executes {@code runnable} with it, and restores the old processor afterwards.
+   * Sets the processor to {@code newInstance}, executes {@code runnable} with it, and restores the old processor afterward.
    */
   public static <T extends Throwable> void executeWith(@NotNull LoggedErrorProcessor newInstance, @NotNull ThrowableRunnable<T> runnable) throws T {
     LoggedErrorProcessor oldInstance = getInstance();

@@ -508,7 +508,7 @@ public abstract class Logger {
     }
   }
 
-  protected static Throwable ensureNotControlFlow(@Nullable Throwable t) {
+  protected static @Nullable Throwable ensureNotControlFlow(@Nullable Throwable t) {
     return t instanceof ControlFlowException ?
            new Throwable("Control-flow exceptions (e.g. this " + t.getClass() + ") should never be logged. " +
                          "Instead, these should have been rethrown if caught.", t) :
