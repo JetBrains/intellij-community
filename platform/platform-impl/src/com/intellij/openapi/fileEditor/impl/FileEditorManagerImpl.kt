@@ -2107,7 +2107,7 @@ open class FileEditorManagerImpl(
 
       val publisher = project.messageBus.syncAndPreloadPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
       // must be executed with a current modality — that's why coroutineScope.launch should be not used
-      withContext(Dispatchers.EDT + CoroutineName("fileOpened handler execution")) {
+      subtask("fileOpened event executing", Dispatchers.EDT) {
         if (isFileOpen(file)) {
           runCatching {
             publisher.fileOpened(this@FileEditorManagerImpl, file)
