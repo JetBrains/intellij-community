@@ -4,7 +4,6 @@ package com.intellij.openapi.fileEditor.impl.text
 import com.intellij.concurrency.captureThreadContext
 import com.intellij.concurrency.resetThreadContext
 import com.intellij.openapi.application.*
-import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -109,14 +108,12 @@ class AsyncEditorLoader internal constructor(private val project: Project,
         }
         editorComponent.loadingDecorator.stopLoading(scope = this, indicatorJob = indicatorJob)
         withContext(Dispatchers.EDT) {
-          AutoCloseable(editorComponent::loadingFinished).use {
-            try {
-              editor.putUserData(ASYNC_LOADER, null)
-              continuation.run()
-            }
-            finally {
-              runDelayedActions(editor)
-            }
+          try {
+            editor.putUserData(ASYNC_LOADER, null)
+            continuation.run()
+          }
+          finally {
+            loaded(editor = editor, editorComponent = editorComponent)
           }
         }
         EditorNotifications.getInstance(project).updateNotifications(textEditor.file)
@@ -124,19 +121,17 @@ class AsyncEditorLoader internal constructor(private val project: Project,
     }
   }
 
-  private fun runDelayedActions(editor: Editor) {
+  private fun loaded(editor: Editor, editorComponent: TextEditorComponent) {
     editor.scrollingModel.disableAnimation()
     try {
       resetThreadContext().use {
         while (true) {
-          val delayedAction = delayedActions.pollFirst() ?: break
-          runCatching {
-            delayedAction.run()
-          }.getOrLogException(logger<AsyncEditorLoader>())
+          (delayedActions.pollFirst() ?: break).run()
         }
       }
     }
     finally {
+      editorComponent.loadingFinished()
       editor.scrollingModel.enableAnimation()
     }
   }
