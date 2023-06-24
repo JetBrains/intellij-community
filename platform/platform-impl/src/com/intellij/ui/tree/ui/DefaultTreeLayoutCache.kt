@@ -475,7 +475,18 @@ class DefaultTreeLayoutCache(
       }
       val buffer = placeIn ?: Rectangle()
       if (width == 0) {
-        val nd = getNodeDimensions(userObject, row, path.pathCount - 1, isExpanded, buffer)
+        val nd = try {
+          getNodeDimensions(userObject, row, path.pathCount - 1, isExpanded, buffer)
+        }
+        catch (e: Exception) {
+          LOG.warn(e)
+          buffer.apply {
+            x = 0
+            y = 0
+            width = 1 // To avoid re-invoking it over and over again.
+            height = defaultRowHeight
+          }
+        }
         x = nd.x
         width = nd.width
         val newHeightDelta = nd.height - defaultRowHeight
