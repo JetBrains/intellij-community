@@ -10,7 +10,6 @@ import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.ClientFileEditorManager.Companion.assignClientId
 import com.intellij.openapi.fileEditor.ex.StructureViewFileEditorProvider
 import com.intellij.openapi.fileEditor.impl.DefaultPlatformFileEditorProvider
-import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader.Companion.performWhenLoaded
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl.Companion.createTextEditor
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
 import com.intellij.openapi.project.DumbAware
@@ -189,9 +188,8 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
       editor.caretModel.setCaretsAndSelections(states, false)
     }
     val relativeCaretPosition = state.relativeCaretPosition
-    performWhenLoaded(editor) {
-      // not safe to optimize doWhenFirstShown and execute runnable right away if `isShowing() == true`, let's check only here for now
-      if (ApplicationManager.getApplication().isUnitTestMode || editor.contentComponent.isShowing) {
+    if (AsyncEditorLoader.isEditorLoaded(editor) || ApplicationManager.getApplication().isUnitTestMode) {
+      if (ApplicationManager.getApplication().isUnitTestMode) {
         scrollToCaret(editor = editor, exactState = exactState, relativeCaretPosition = relativeCaretPosition)
       }
       else {
@@ -264,7 +262,7 @@ private fun getLine(position: LogicalPosition?): Int = position?.line ?: 0
 
 private fun getColumn(position: LogicalPosition?): Int = position?.column ?: 0
 
-private fun scrollToCaret(editor: Editor, exactState: Boolean, relativeCaretPosition: Int) {
+internal fun scrollToCaret(editor: Editor, exactState: Boolean, relativeCaretPosition: Int) {
   editor.scrollingModel.disableAnimation()
   if (relativeCaretPosition != Int.MAX_VALUE) {
     EditorUtil.setRelativeCaretPosition(editor, relativeCaretPosition)
