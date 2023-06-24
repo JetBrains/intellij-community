@@ -84,7 +84,7 @@ class EntityStorageSerializerImpl(
   private val versionsContributor: () -> Map<String, String> = { emptyMap() },
 ) : EntityStorageSerializer {
   companion object {
-    const val SERIALIZER_VERSION = "v49"
+    const val SERIALIZER_VERSION = "v50"
   }
 
   private val interner = HashSetInterner<SerializableEntityId>()

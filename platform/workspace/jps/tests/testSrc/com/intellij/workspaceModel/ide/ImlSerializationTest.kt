@@ -47,7 +47,7 @@ class ImlSerializationTest {
     checkSerializationSize(bytes, expectedSize, 2_000)
 
     @Suppress("KotlinConstantConditions")
-    assertTrue("v49" == EntityStorageSerializerImpl.SERIALIZER_VERSION,
+    assertTrue("v50" == EntityStorageSerializerImpl.SERIALIZER_VERSION,
                "This assertion is a reminder. Have you updated the serializer? Update the serializer version!")
   }
 
