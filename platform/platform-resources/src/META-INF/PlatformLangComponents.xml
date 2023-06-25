@@ -231,9 +231,7 @@
               topic="com.intellij.notification.Notifications"/>
     <listener class="com.intellij.execution.lineMarker.RunnableStatusListener"
               topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
-    <listener class="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageService$MyBeforeFileEditorManagerListener"
-              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"/>
-    <listener class="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageService$MyFileEditorManagerListener"
+    <listener class="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageServiceFileEditorManagerListener"
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
 
     <!-- another one for project level -->

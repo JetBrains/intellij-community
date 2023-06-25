@@ -8,9 +8,7 @@ import com.intellij.ProjectTopics
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.isLocal
-import com.intellij.diagnostic.PluginException
-import com.intellij.diagnostic.runActivity
-import com.intellij.diagnostic.subtask
+import com.intellij.diagnostic.*
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.actions.SplitAction
@@ -19,6 +17,7 @@ import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.injected.editor.VirtualFileWindow
+import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector
 import com.intellij.lang.LangBundle
 import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.Disposable
@@ -109,6 +108,7 @@ import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.atomic.LongAdder
 import javax.swing.JComponent
@@ -987,26 +987,13 @@ open class FileEditorManagerImpl(
       return runBulkTabChange(window.owner) {
         (TransactionGuard.getInstance() as TransactionGuardImpl).assertWriteActionAllowed()
         LOG.assertTrue(file.isValid, "Invalid file: $file")
-        val result = doOpenInEdtImpl(
+        doOpenInEdtImpl(
           existingComposite = existingComposite,
           window = window,
           file = file,
           entry = entry,
           options = effectiveOptions,
           newProviders = newProviders)
-        if (existingComposite == null && result is EditorComposite) {
-          val messageBus = project.messageBus
-          val editorsWithProviders = result.allEditorsWithProviders
-          messageBus.syncPublisher(FileOpenedSyncListener.TOPIC).fileOpenedSync(this, file, editorsWithProviders)
-          @Suppress("DEPRECATION")
-          messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER).fileOpenedSync(this, file, editorsWithProviders)
-          coroutineScope.launch(Dispatchers.EDT) {
-            if (isFileOpen(file)) {
-              project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER).fileOpened(this@FileEditorManagerImpl, file)
-            }
-          }
-        }
-        result
       }
     }
 
@@ -1074,6 +1061,8 @@ open class FileEditorManagerImpl(
     options: FileEditorOpenOptions,
     newProviders: List<kotlin.Pair<FileEditorProvider, AsyncFileEditorProvider.Builder?>>?,
   ): FileEditorComposite {
+    val startTime = System.nanoTime()
+
     var composite = existingComposite
     val newEditor = composite == null
     if (newEditor) {
@@ -1138,6 +1127,19 @@ open class FileEditorManagerImpl(
       else {
         composite.preferredFocusedComponent?.requestFocusInWindow()
         IdeFocusManager.getGlobalInstance().toFront(splitters)
+      }
+    }
+
+    if (existingComposite == null) {
+      val messageBus = project.messageBus
+      messageBus.syncPublisher(FileOpenedSyncListener.TOPIC).fileOpenedSync(this, file, editorsWithProviders)
+      @Suppress("DEPRECATION")
+      messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER).fileOpenedSync(this, file, editorsWithProviders)
+      triggerOpen(project = project, file = file, start = startTime, composite = composite)
+      coroutineScope.launch(Dispatchers.EDT) {
+        if (isFileOpen(file)) {
+          project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER).fileOpened(this@FileEditorManagerImpl, file)
+        }
       }
     }
     return composite
@@ -2040,6 +2042,7 @@ open class FileEditorManagerImpl(
     options: FileEditorOpenOptions,
     providerWithBuilderList: List<kotlin.Pair<FileEditorProvider, AsyncFileEditorProvider.Builder?>>,
   ): FileEditorComposite {
+    val startTime = System.nanoTime()
     val isNewEditor = existingComposite == null
     val (result, fireFileOpened) = coroutineScope {
       val deferredPublishers: Deferred<kotlin.Pair<FileOpenedSyncListener, FileEditorManagerListener>>? = if (isNewEditor) {
@@ -2100,6 +2103,8 @@ open class FileEditorManagerImpl(
     }
 
     if (fireFileOpened) {
+      triggerOpen(project = project, file = file, start = startTime, composite = result)
+
       val publisher = project.messageBus.syncAndPreloadPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
       // must be executed with a current modality — that's why coroutineScope.launch should be not used
       subtask("fileOpened event executing", Dispatchers.EDT) {
@@ -2201,6 +2206,28 @@ open class FileEditorManagerImpl(
 
         UIUtil.dispatchAllInvocationEvents()
         yield()
+      }
+    }
+  }
+
+  private fun triggerOpen(project: Project, file: VirtualFile, start: Long, composite: FileEditorComposite) {
+    StartUpMeasurer.addCompletedActivity(start, "editor time-to-show", ActivityCategory.DEFAULT, null)
+
+    val timeToShow = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
+    val fileEditor = composite.allEditors.firstOrNull()
+    val editor = if (fileEditor is TextEditor) fileEditor.getEditor() else null
+    if (editor == null) {
+      coroutineScope.launch {
+        FileTypeUsageCounterCollector.logOpened(project, file, fileEditor, timeToShow, -1, composite)
+      }
+    }
+    else {
+      AsyncEditorLoader.performWhenLoaded(editor) {
+        val durationMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
+        StartUpMeasurer.addCompletedActivity(start, "editor time-to-edit", ActivityCategory.DEFAULT, null)
+        coroutineScope.launch {
+          FileTypeUsageCounterCollector.logOpened(project, file, fileEditor, timeToShow, durationMs, composite)
+        }
       }
     }
   }
