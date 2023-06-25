@@ -106,7 +106,7 @@ public class HighlightVisitorBasedInspection extends GlobalSimpleInspectionTool 
   }
 
   @NotNull
-  private static List<HighlightInfo> runAnnotatorsInGeneralHighlighting(@NotNull PsiFile file,
+  public static List<HighlightInfo> runAnnotatorsInGeneralHighlighting(@NotNull PsiFile file,
                                                                         boolean highlightErrorElements,
                                                                         boolean runAnnotators,
                                                                         boolean runVisitors) {
