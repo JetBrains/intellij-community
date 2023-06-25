@@ -4,7 +4,6 @@ package com.intellij.openapi.fileEditor.impl.text
 import com.intellij.concurrency.captureThreadContext
 import com.intellij.diagnostic.subtask
 import com.intellij.openapi.application.*
-import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
@@ -192,21 +191,34 @@ class AsyncEditorLoader internal constructor(private val project: Project,
 private class DelayedScrollState(@JvmField val relativeCaretPosition: Int, @JvmField val exactState: Boolean)
 
 private fun restoreCaretPosition(editor: EditorEx, delayedScrollState: DelayedScrollState, coroutineScope: CoroutineScope) {
+  fun scrollWhenReady() {
+    fun isReady(): Boolean {
+      val extentSize = editor.scrollPane.viewport.extentSize
+      return extentSize.width != 0 && extentSize.height != 0
+    }
+
+    fun doScroll() {
+      scrollToCaret(editor = editor,
+                    exactState = delayedScrollState.exactState,
+                    relativeCaretPosition = delayedScrollState.relativeCaretPosition)
+    }
+
+    if (isReady()) {
+      doScroll()
+    }
+    else {
+      coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        while (!isReady()) {
+          yield()
+        }
+        doScroll()
+      }
+    }
+  }
+
   val component = editor.contentComponent
-
-  fun isReady(): Boolean {
-    val extentSize = editor.scrollPane.viewport.extentSize
-    return extentSize.width != 0 && extentSize.height != 0
-  }
-
-  fun doScroll() {
-    scrollToCaret(editor = editor,
-                  exactState = delayedScrollState.exactState,
-                  relativeCaretPosition = delayedScrollState.relativeCaretPosition)
-  }
-
-  if (component.isShowing && isReady()) {
-    doScroll()
+  if (component.isShowing) {
+    scrollWhenReady()
   }
   else {
     var listenerHandle: DisposableHandle? = null
@@ -219,17 +231,7 @@ private fun restoreCaretPosition(editor: EditorEx, delayedScrollState: DelayedSc
         component.removeHierarchyListener(this)
         listenerHandle?.dispose()
 
-        if (isReady()) {
-          doScroll()
-        }
-        else {
-          coroutineScope.launch(Dispatchers.EDT) {
-            while (!isReady()) {
-              yield()
-            }
-            doScroll()
-          }
-        }
+        scrollWhenReady()
       }
     }
     listenerHandle = coroutineScope.coroutineContext.job.invokeOnCompletion {
