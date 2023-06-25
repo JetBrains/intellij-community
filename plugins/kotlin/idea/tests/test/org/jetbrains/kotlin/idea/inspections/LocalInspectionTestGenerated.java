@@ -16248,6 +16248,21 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unnecessaryVariable/hasAnnotation.kt");
         }
 
+        @TestMetadata("hasComment.kt")
+        public void testHasComment() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryVariable/hasComment.kt");
+        }
+
+        @TestMetadata("hasComment2.kt")
+        public void testHasComment2() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryVariable/hasComment2.kt");
+        }
+
+        @TestMetadata("hasComment3.kt")
+        public void testHasComment3() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryVariable/hasComment3.kt");
+        }
+
         @TestMetadata("ifElse.kt")
         public void testIfElse() throws Exception {
             runTest("testData/inspectionsLocal/unnecessaryVariable/ifElse.kt");
