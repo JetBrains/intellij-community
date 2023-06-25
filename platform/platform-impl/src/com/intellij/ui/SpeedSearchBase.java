@@ -123,7 +123,9 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     myComponent.addFocusListener(new FocusAdapter() {
       @Override
       public void focusLost(FocusEvent e) {
-        manageSearchPopup(null);
+        if (!keepEvenWhenFocusLost()) {
+          manageSearchPopup(null);
+        }
       }
 
       @Override
@@ -180,6 +182,10 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   }
 
   protected boolean isStickySearch() {
+    return false;
+  }
+
+  protected boolean keepEvenWhenFocusLost() {
     return false;
   }
 
