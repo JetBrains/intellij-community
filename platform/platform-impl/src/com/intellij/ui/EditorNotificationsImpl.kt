@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.ui
@@ -47,10 +47,6 @@ class EditorNotificationsImpl(private val project: Project,
   init {
     val connection = project.messageBus.connect()
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
-      override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
-        updateNotifications(file)
-      }
-
       override fun selectionChanged(event: FileEditorManagerEvent) {
         val file = event.newFile ?: return
         val editor = event.newEditor ?: return
