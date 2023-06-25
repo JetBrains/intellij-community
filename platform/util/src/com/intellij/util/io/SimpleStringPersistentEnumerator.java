@@ -28,7 +28,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * <li>Always has synchronized state between disk and memory state</li>
  * <li>Could have >1 id for same value
  * (i.e. it violates general {@link DataEnumerator} contract -- this is to keep backward-compatible behavior)</li>
- * <li>Uses CopyOnWrite for updating state, so {@link #valueOf(int)}/@{@link #enumerate(String)} are wait-free
+ * <li>Uses CopyOnWrite for updating state, so {@link #valueOf(int)}/{@link #enumerate(String)} are wait-free
  * for already existing value/id</li>
  * </ul>
  */

@@ -71,7 +71,7 @@ public final class PopupImplUtil {
     return null;
   }
 
-  /** @deprecated Use @{@link PopupUtil#setPopupToggleComponent}, but in the most cases it is not needed any more */
+  /** @deprecated Use {@link PopupUtil#setPopupToggleComponent}, but in the most cases it is not needed any more */
   @Deprecated(forRemoval = true)
   public static void setPopupToggleButton(@NotNull JBPopup jbPopup, @Nullable Component toggleButton) {
     PopupUtil.setPopupToggleComponent(jbPopup, toggleButton);
