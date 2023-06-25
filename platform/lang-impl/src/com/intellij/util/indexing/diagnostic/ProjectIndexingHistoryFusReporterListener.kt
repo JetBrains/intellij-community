@@ -64,8 +64,7 @@ internal class ProjectIndexingHistoryFusReporterListener : ProjectIndexingActivi
       times.contentLoadingVisibleDuration.toMillis(),
       times.separateValueApplicationVisibleTime.toMillis(),
       history.providerStatistics.sumOf { statistics -> statistics.totalNumberOfIndexedFiles },
-      history.providerStatistics.sumOf { statistics -> statistics.totalNumberOfFilesFullyIndexedByExtensions } +
-      (history.refreshedScanningStatistics?.numberOfFilesFullyIndexedByInfrastructureExtensions ?: 0),
+      history.providerStatistics.sumOf { statistics -> statistics.totalNumberOfFilesFullyIndexedByExtensions },
       times.wasInterrupted
     )
   }

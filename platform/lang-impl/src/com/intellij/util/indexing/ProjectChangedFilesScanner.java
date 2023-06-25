@@ -4,6 +4,7 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.indexing.diagnostic.ChangedFilesDuringIndexingStatistics;
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl;
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl;
 import com.intellij.util.indexing.diagnostic.ScanningStatistics;
@@ -42,10 +43,10 @@ class ProjectChangedFilesScanner {
       projectIndexingHistory.addScanningStatistics(scanningStatistics);
       projectIndexingHistory.setScanFilesDuration(Duration.ofNanos(refreshedFilesCalcDuration));
 
-      projectDumbIndexingHistory.setRefreshedScanningStatistics(scanningStatistics);
-      projectDumbIndexingHistory.setRefreshedScanFilesDuration(Duration.ofNanos(refreshedFilesCalcDuration));
+      projectDumbIndexingHistory.setChangedFilesDuringIndexingStatistics(
+        new ChangedFilesDuringIndexingStatistics(files.size(), refreshedFilesCalcDuration));
 
-      LOG.info("Scanning refreshed files of " + myProject.getName() + " : " + files.size() + " to update, " +
+      LOG.info("Retrieving changed during indexing files of " + myProject.getName() + " : " + files.size() + " to update, " +
                "calculated in " + TimeUnit.NANOSECONDS.toMillis(refreshedFilesCalcDuration) + "ms");
     }
   }

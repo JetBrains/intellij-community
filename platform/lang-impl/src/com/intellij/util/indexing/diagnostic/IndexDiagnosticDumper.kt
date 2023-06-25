@@ -129,7 +129,7 @@ class IndexDiagnosticDumper : Disposable {
                                           ApplicationManagerEx.isInIntegrationTest())
 
     @JvmStatic
-    val shouldPrintScanningRefreshedFilesInformationDuringIndexingActionInAggregateHtml: Boolean = false
+    val shouldPrintInformationAboutChangedDuringIndexingActionFilesInAggregateHtml: Boolean = false
 
     @JvmStatic
     private val shouldDumpOldDiagnostics: Boolean

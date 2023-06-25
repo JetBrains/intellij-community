@@ -4,6 +4,7 @@ package com.intellij.util.indexing.diagnostic
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
+import com.intellij.util.indexing.diagnostic.dto.JsonChangedFilesDuringIndexingStatistics
 import com.intellij.util.indexing.diagnostic.dto.JsonFileProviderIndexStatistics
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
 import com.intellij.util.indexing.diagnostic.dto.toJsonStatistics
@@ -581,7 +582,7 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project) : Proje
 
   private val timesImpl = DumbIndexingTimesImpl(updatingStart = ZonedDateTime.now(ZoneOffset.UTC), totalUpdatingTime = System.nanoTime())
 
-  override var refreshedScanningStatistics: JsonScanningStatistics = JsonScanningStatistics()
+  override var changedDuringIndexingFilesStat: JsonChangedFilesDuringIndexingStatistics = JsonChangedFilesDuringIndexingStatistics()
 
   override val providerStatistics: ArrayList<JsonFileProviderIndexStatistics> = arrayListOf()
 
@@ -593,8 +594,9 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project) : Proje
 
   private var events = mutableListOf<SuspensionEvent>()
 
-  fun setRefreshedScanningStatistics(statistics: ScanningStatistics) {
-    refreshedScanningStatistics = statistics.toJsonStatistics()
+  fun setChangedFilesDuringIndexingStatistics(statistics: ChangedFilesDuringIndexingStatistics) {
+    changedDuringIndexingFilesStat = statistics.toJsonStatistics()
+    timesImpl.retrievingChangedDuringIndexingFilesDuration = Duration.ofNanos(statistics.retrievingTime)
   }
 
   fun addProviderStatistics(statistics: IndexingFileSetStatistics) {
@@ -685,10 +687,6 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project) : Proje
     timesImpl.totalUpdatingTime = System.nanoTime() - timesImpl.totalUpdatingTime
   }
 
-  fun setRefreshedScanFilesDuration(duration: Duration) {
-    timesImpl.refreshedScanFilesDuration = duration
-  }
-
   private fun writeStagesToDurations() {
     var suspendStart: Instant? = timesImpl.updatingStart.toInstant()
     var suspendedDuration = Duration.ZERO
@@ -738,7 +736,7 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project) : Proje
     override var totalUpdatingTime: TimeNano,
     override var updatingEnd: ZonedDateTime = updatingStart,
     override var contentLoadingVisibleDuration: Duration = Duration.ZERO,
-    override var refreshedScanFilesDuration: Duration = Duration.ZERO,
+    override var retrievingChangedDuringIndexingFilesDuration: Duration = Duration.ZERO,
     override var pausedDuration: Duration = Duration.ZERO,
     override var appliedAllValuesSeparately: Boolean = true,
     override var separateValueApplicationVisibleTime: TimeNano = 0,

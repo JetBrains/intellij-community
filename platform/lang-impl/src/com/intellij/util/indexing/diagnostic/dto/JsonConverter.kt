@@ -33,6 +33,10 @@ fun ScanningStatistics.toJsonStatistics(): JsonScanningStatistics {
   )
 }
 
+fun ChangedFilesDuringIndexingStatistics.toJsonStatistics(): JsonChangedFilesDuringIndexingStatistics {
+  return JsonChangedFilesDuringIndexingStatistics(numberOfFiles, JsonDuration(retrievingTime))
+}
+
 fun ScanningStatistics.ScannedFile.toJson(): JsonScanningStatistics.JsonScannedFile =
   JsonScanningStatistics.JsonScannedFile(
     path = portableFilePath,
@@ -122,7 +126,7 @@ fun DumbIndexingTimes.toJson(): JsonProjectDumbIndexingHistoryTimes =
     scanningIds = scanningIds.toSortedSet(),
     totalWallTimeWithPauses = JsonDuration(totalUpdatingTime),
     contentLoadingVisibleTime = JsonDuration(contentLoadingVisibleDuration.toNanos()),
-    refreshedFilesScanTime = JsonDuration(refreshedScanFilesDuration.toNanos()),
+    retrievingChangedDuringIndexingFilesTime = JsonDuration(retrievingChangedDuringIndexingFilesDuration.toNanos()),
     isAppliedAllValuesSeparately = appliedAllValuesSeparately,
     separateApplyingIndexesVisibleTime = JsonDuration(separateValueApplicationVisibleTime),
     updatingStart = JsonDateTime(updatingStart),
@@ -189,7 +193,7 @@ private fun ProjectDumbIndexingHistoryImpl.changeToJson(): JsonProjectDumbIndexi
     totalStatsPerFileType = statsPerFileType.sortedByDescending { it.partOfTotalProcessingTime.doublePercentages },
     totalStatsPerBaseLanguage = statsPerParentLanguage.sortedByDescending { it.partOfTotalProcessingTime.doublePercentages },
     totalStatsPerIndexer = aggregateStatsPerIndexer().sortedByDescending { it.partOfTotalIndexingTime.doublePercentages },
-    scanningStatisticsOfRefreshedFiles = refreshedScanningStatistics,
+    statisticsOfChangedDuringIndexingFiles = changedDuringIndexingFilesStat,
     fileProviderStatistics = providerStatistics.sortedByDescending { it.totalIndexingVisibleTime.nano },
     visibleTimeToAllThreadTimeRatio = visibleTimeToAllThreadsTimeRatio
   )
@@ -212,9 +216,7 @@ private fun ProjectScanningHistoryImpl.getFileCount() = JsonProjectScanningFileC
 )
 
 private fun ProjectDumbIndexingHistoryImpl.getFileCount() = JsonProjectDumbIndexingFileCount(
-  numberOfRefreshedScannedFiles = refreshedScanningStatistics.numberOfScannedFiles,
-  numberOfRefreshedFilesIndexedByInfrastructureExtensionsDuringScan = refreshedScanningStatistics.numberOfFilesFullyIndexedByInfrastructureExtensions,
-  numberOfRefreshedFilesScheduledForIndexingAfterScan = refreshedScanningStatistics.numberOfFilesForIndexing,
+  numberOfChangedDuringIndexingFiles = changedDuringIndexingFilesStat.numberOfFiles,
   numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage = providerStatistics.sumOf { it.totalNumberOfFilesFullyIndexedByExtensions },
   numberOfFilesIndexedWithLoadingContent = providerStatistics.sumOf { it.totalNumberOfIndexedFiles }
 )

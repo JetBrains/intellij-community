@@ -39,3 +39,10 @@ data class JsonScanningStatistics(
     val wasFullyIndexedByInfrastructureExtension: Boolean
   )
 }
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class JsonChangedFilesDuringIndexingStatistics(
+  val numberOfFiles: Int = 0,
+  val retrievingTime: JsonDuration = JsonDuration(0),
+)
