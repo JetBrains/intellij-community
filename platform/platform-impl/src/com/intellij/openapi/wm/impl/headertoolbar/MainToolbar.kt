@@ -16,7 +16,6 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
@@ -47,7 +46,6 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 private const val MAIN_TOOLBAR_ID = IdeActions.GROUP_MAIN_TOOLBAR_NEW_UI
-private val LOG = logger<MainToolbar>()
 
 internal class MainToolbar: JPanel(HorizontalLayout(10)) {
   private val disposable = Disposer.newDisposable()
