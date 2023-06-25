@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
@@ -18,8 +18,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorComposite;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -32,15 +33,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.serviceContainer.BaseKeyedLazyInstance;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.KeyedLazyInstance;
-import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
 
+@ApiStatus.Internal
 public final class FileTypeUsageCounterCollector extends CounterUsagesCollector {
   private static final Logger LOG = Logger.getInstance(FileTypeUsageCounterCollector.class);
 
@@ -92,22 +94,6 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
     log(CREATE_BY_NEW_FILE, project, file, false);
   }
 
-  public static void triggerOpen(@NotNull Project project, @NotNull FileEditorManager source,
-                                 @NotNull VirtualFile file, @Nullable Long openStartedNs) {
-    long timeToShow = openStartedNs != null ? TimeoutUtil.getDurationMillis(openStartedNs) : -1;
-    FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(file);
-    Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
-    if (editor == null) {
-      logOpened(project, file, fileEditor, timeToShow, -1);
-    }
-    else {
-      source.runWhenLoaded(editor, () -> {
-        long durationMs = openStartedNs != null ? TimeoutUtil.getDurationMillis(openStartedNs) : -1;
-        logOpened(project, file, fileEditor, timeToShow, durationMs);
-      });
-    }
-  }
-
   private static void logEdited(@NotNull Project project,
                                 @NotNull VirtualFile file) {
     EDIT.log(project, pairs -> {
@@ -116,18 +102,17 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
     });
   }
 
-  private static void logOpened(@NotNull Project project,
+  public static void logOpened(@NotNull Project project,
                                 @NotNull VirtualFile file,
                                 @Nullable FileEditor fileEditor,
-                                long timeToShow, long durationMs) {
-    FileEditorComposite composite = FileEditorManagerEx.getInstanceEx(project).getComposite(file);
+                                long timeToShow,
+                                long durationMs,
+                                @NotNull FileEditorComposite composite) {
     OPEN.log(project, pairs -> {
       pairs.addAll(buildCommonEventPairs(project, file, true));
       if (fileEditor != null) {
         pairs.add(FILE_EDITOR.with(fileEditor.getClass()));
-        if (composite != null) {
-          pairs.add(IS_PREVIEW_TAB.with(composite.isPreview()));
-        }
+        pairs.add(IS_PREVIEW_TAB.with(composite.isPreview()));
       }
       pairs.add(EventFields.TimeToShowMs.with(timeToShow));
       if (durationMs != -1) {
