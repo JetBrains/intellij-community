@@ -16,7 +16,6 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.Sim
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.headertoolbar.isToolbarInHeader
 import com.intellij.ui.WindowMoveListener
-import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsX
@@ -31,7 +30,10 @@ import java.awt.*
 import java.awt.GridBagConstraints.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JFrame
+import javax.swing.JLabel
+import javax.swing.JPanel
 
 private enum class ShowMode {
   MENU, TOOLBAR
@@ -86,9 +88,8 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
   private val mode: ShowMode
     get() = if (isToolbarInHeader()) ShowMode.TOOLBAR else ShowMode.MENU
 
-  private val isCompact: Boolean get() = (root as? IdeRootPane)?.isCompactHeader == true
-
-  private fun toolbarCardName(isCompact: Boolean = this.isCompact): String = if (isCompact) "PATH" else "TOOLBAR"
+  private val isCompact: Boolean
+    get() = (root as? IdeRootPane)?.isCompactHeader { MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()) } == true
 
   init {
     mainMenuButton.expandableMenu = expandableMenu
@@ -117,7 +118,7 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
 
   override fun initToolbar(toolbarActionGroups: List<Pair<ActionGroup, String>>) {
     doUpdateToolbar(toolbarActionGroups)
-    updateSize()
+    updateSize { toolbarActionGroups }
   }
 
   override fun updateToolbar() {
@@ -129,7 +130,7 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
     }
 
     updateToolbarAppearanceFromMode()
-    updateSize()
+    updateSize { MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()) }
   }
 
   override fun paint(g: Graphics?) {
@@ -228,12 +229,6 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
     super.updateActive()
 
     expandableMenu.updateColor()
-  }
-
-  private fun getElementRect(comp: Component, rectProcessor: ((Rectangle) -> Unit)? = null): RelativeRectangle {
-    val rect = Rectangle(comp.size)
-    rectProcessor?.invoke(rect)
-    return RelativeRectangle(comp, rect)
   }
 
   private fun createHeaderContent(): JPanel {

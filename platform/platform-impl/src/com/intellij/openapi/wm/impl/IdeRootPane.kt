@@ -79,17 +79,20 @@ open class IdeRootPane internal constructor(frame: JFrame,
   private var toolWindowPane: ToolWindowPane? = null
   private val glassPaneInitialized: Boolean
   private var fullScreen = false
-  internal val isCompactHeader: Boolean
-    get() = ToggleDistractionFreeModeAction.shouldMinimizeCustomHeader()
-            || isLightEdit
-            || SystemInfo.isMac && mainToolbarHasNoActions()
-            || !SystemInfo.isMac && !UISettings.shadowInstance.separateMainMenu && mainToolbarHasNoActions()
+
+  internal fun isCompactHeader(mainToolbarActionSupplier: () -> List<Pair<ActionGroup, String>>): Boolean {
+    fun mainToolbarHasNoActions(): Boolean {
+      return mainToolbarActionSupplier().all { it.first.getChildren(null).isEmpty() }
+    }
+
+    return ToggleDistractionFreeModeAction.shouldMinimizeCustomHeader() ||
+           isLightEdit ||
+           (SystemInfoRt.isMac && mainToolbarHasNoActions()) ||
+           (!SystemInfoRt.isMac && !UISettings.shadowInstance.separateMainMenu && mainToolbarHasNoActions())
+  }
 
   protected open val isLightEdit: Boolean
     get() = false
-
-  private fun mainToolbarHasNoActions() =
-    MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()).all { it.first.getChildren(null).isEmpty() }
 
   private sealed interface Helper {
     val toolbarHolder: ToolbarHolder?
@@ -118,13 +121,13 @@ open class IdeRootPane internal constructor(frame: JFrame,
 
   private val helper: Helper
 
-  private val isToolbarVisible: Boolean
-    get() {
-      val uiSettings = UISettings.shadowInstance
-      val isNewToolbar = ExperimentalUI.isNewUI()
-      return !uiSettings.presentationMode &&
-             ((isNewToolbar && !isToolbarInHeader() && !isCompactHeader) || (!isNewToolbar && uiSettings.showMainToolbar))
-    }
+  private fun isToolbarVisible(mainToolbarActionSupplier: () -> List<Pair<ActionGroup, String>>): Boolean {
+    val uiSettings = UISettings.shadowInstance
+    val isNewToolbar = ExperimentalUI.isNewUI()
+    return !uiSettings.presentationMode &&
+           ((isNewToolbar && !isToolbarInHeader() && !isCompactHeader(mainToolbarActionSupplier)) ||
+            (!isNewToolbar && uiSettings.showMainToolbar))
+  }
 
   init {
     if (SystemInfoRt.isWindows && (StartupUiUtil.isUnderDarcula || UIUtil.isUnderIntelliJLaF())) {
@@ -212,7 +215,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
     if (helper.toolbarHolder == null) {
       toolbar = createToolbar()
       northPanel.add(toolbar, 0)
-      toolbar!!.isVisible = isToolbarVisible
+      toolbar!!.isVisible = isToolbarVisible(mainToolbarActionSupplier = { MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()) })
     }
 
     if (SystemInfoRt.isMac && JdkEx.isTabbingModeAvailable()) {
@@ -300,13 +303,15 @@ open class IdeRootPane internal constructor(frame: JFrame,
   private fun updateScreenState(isInFullScreen: () -> Boolean) {
     fullScreen = isInFullScreen()
     if (helper is DecoratedHelper) {
-      val isCustomFrameHeaderVisible = !fullScreen || SystemInfoRt.isMac && !isCompactHeader
+      val isCustomFrameHeaderVisible = !fullScreen || (SystemInfoRt.isMac && !isCompactHeader {
+        MainToolbar.computeActionGroups(CustomActionsSchema.getInstance())
+      })
       helper.customFrameTitlePane.getComponent().isVisible = isCustomFrameHeaderVisible
     }
     else if (SystemInfoRt.isXWindow) {
       if (toolbar != null) {
         val isNewToolbar = ExperimentalUI.isNewUI()
-         toolbar!!.isVisible = !fullScreen && ((!isCompactHeader && isNewToolbar && !isToolbarInHeader()) ||
+         toolbar!!.isVisible = !fullScreen && ((!isCompactHeader { MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()) } && isNewToolbar && !isToolbarInHeader()) ||
                                                (!isNewToolbar && UISettings.getInstance().showMainToolbar))
       }
     }
@@ -383,7 +388,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
     }
     toolbar = createToolbar()
     northPanel.add(toolbar, 0)
-    toolbar!!.isVisible = isToolbarVisible
+    toolbar!!.isVisible = isToolbarVisible { MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()) }
     contentPane!!.revalidate()
   }
 
@@ -441,7 +446,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
       northPanel.add(toolbar, 0)
     }
 
-    toolbar!!.isVisible = isToolbarVisible
+    toolbar!!.isVisible = isToolbarVisible { MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()) }
   }
 
   private fun updateStatusBarVisibility() {
@@ -456,7 +461,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
                   || (!IdeFrameDecorator.isCustomDecorationActive()
                       && !(SystemInfoRt.isLinux && GlobalMenuLinux.isPresented())
                       && UISettings.shadowInstance.showMainMenu
-                      && (!isMenuButtonInToolbar || isCompactHeader && ExperimentalUI.isNewUI())
+                      && (!isMenuButtonInToolbar || isCompactHeader { MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()) } && ExperimentalUI.isNewUI())
                       && !hideNativeLinuxTitle)
 
     if (menuBar != null && visible != menuBar.isVisible) {

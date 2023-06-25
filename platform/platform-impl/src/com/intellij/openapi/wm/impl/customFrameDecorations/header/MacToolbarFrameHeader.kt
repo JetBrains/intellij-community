@@ -13,44 +13,34 @@ import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.ToolbarHolder
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.SimpleCustomDecorationPath
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
-import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.mac.MacFullScreenControlsManager
 import com.intellij.ui.mac.MacMainFrameDecorator
 import com.intellij.util.ui.JBUI
 import com.jetbrains.JBR
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Color
+import java.awt.Graphics
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 import javax.swing.JFrame
-import javax.swing.JRootPane
-
 
 private const val GAP_FOR_BUTTONS = 80
 private const val DEFAULT_HEADER_HEIGHT = 40
 
-internal class MacToolbarFrameHeader(private val frame: JFrame,
-                                     private val root: JRootPane) : CustomHeader(frame), MainFrameCustomHeader, ToolbarHolder, UISettingsListener {
-  private val ideMenu: IdeMenuBar = IdeMenuBar()
-  private var toolbar: MainToolbar? = null
-  private val headerTitle = SimpleCustomDecorationPath(frame)
-  private val isCompact: Boolean get() = (root as? IdeRootPane)?.isCompactHeader == true
-
-  private val TOOLBAR_CARD = "TOOLBAR_CARD"
-  private val PATH_CARD = "PATH_CARD"
-
-  private val customizer get() = ProjectWindowCustomizerService.getInstance()
+internal class MacToolbarFrameHeader(private val frame: JFrame, private val root: IdeRootPane)
+  : CustomHeader(frame), MainFrameCustomHeader, ToolbarHolder, UISettingsListener {
+  private val ideMenu = IdeMenuBar()
+  private var toolbar: MainToolbar
 
   init {
     layout = AdjustableSizeCardLayout()
     root.addPropertyChangeListener(MacMainFrameDecorator.FULL_SCREEN, PropertyChangeListener { updateBorders() })
-    add(ideMenu)
+
     ideMenu.initScreeMenuPeer(frame)
 
-    addHeaderTitle()
     toolbar = createToolBar()
-    updateVisibleCard()
 
     MacFullScreenControlsManager.configureEnable(this) {
       updateBorders()
@@ -62,7 +52,7 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
       }
     })
 
-    customizer.addListener(disposable = this, fireFirstTime = true) {
+    ProjectWindowCustomizerService.getInstance().addListener(disposable = this, fireFirstTime = true) {
       isOpaque = !it
       revalidate()
     }
@@ -78,19 +68,13 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
         super.componentResized(e)
       }
     })
-    add(toolbar, TOOLBAR_CARD)
+    add(toolbar, BorderLayout.CENTER)
     return toolbar
   }
 
   override fun paint(g: Graphics?) {
     ProjectWindowCustomizerService.getInstance().paint(frame, this, g)
     super.paint(g)
-  }
-
-  private fun addHeaderTitle() {
-    headerTitle.isOpaque = false
-    add(headerTitle, PATH_CARD)
-    updateBorders()
   }
 
   override fun updateUI() {
@@ -103,13 +87,14 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
   }
 
   override fun initToolbar(toolbarActionGroups: List<Pair<ActionGroup, String>>) {
-    toolbar?.init(toolbarActionGroups, customTitleBar)
-    updateVisibleCard()
-    updateSize()
+    toolbar.init(toolbarActionGroups, customTitleBar)
+    val mainToolbarActionSupplier = { toolbarActionGroups }
+    updateVisibleCard(mainToolbarActionSupplier)
+    updateSize(mainToolbarActionSupplier)
   }
 
   override fun updateToolbar() {
-    var toolbar = toolbar ?: return
+    var toolbar = toolbar
     remove(toolbar)
     toolbar = createToolBar()
     this.toolbar = toolbar
@@ -120,12 +105,25 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
     updateCustomTitleBar()
   }
 
-  private fun updateVisibleCard() {
-    val cardToShow = if (isCompact) PATH_CARD else TOOLBAR_CARD
-    (getLayout() as? CardLayout)?.show(this, cardToShow)
+  private fun updateVisibleCard(mainToolbarActionSupplier: () -> List<Pair<ActionGroup, String>>) {
+    if (root.isCompactHeader(mainToolbarActionSupplier)) {
+      if (componentCount != 0) {
+        remove(toolbar)
+      }
 
-    revalidate()
-    repaint()
+      val headerTitle = SimpleCustomDecorationPath(frame)
+      headerTitle.isOpaque = false
+      add(headerTitle, BorderLayout.CENTER)
+      updateBorders()
+      revalidate()
+      repaint()
+    }
+    else if (componentCount != 0 && getComponent(0) != toolbar) {
+      remove(0)
+      add(toolbar)
+      revalidate()
+      repaint()
+    }
   }
 
   override fun windowStateChanged() {
@@ -152,11 +150,6 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
 
   override fun dispose() {}
 
-  private fun getElementRect(comp: Component): RelativeRectangle {
-    val rect = Rectangle(comp.size)
-    return RelativeRectangle(comp, rect)
-  }
-
   override fun getHeaderBackground(active: Boolean): Color {
     return JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(active)
   }
@@ -170,21 +163,21 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
     val isFullscreen = root.getClientProperty(MacMainFrameDecorator.FULL_SCREEN) != null
     if (isFullscreen && !MacFullScreenControlsManager.enabled()) {
       border = JBUI.Borders.empty()
-      headerTitle.updateBorders(0)
+      ((if (componentCount == 0) null else getComponent(0)) as? SimpleCustomDecorationPath)?.updateBorders(0)
     }
     else {
       border = JBUI.Borders.emptyLeft(GAP_FOR_BUTTONS)
-      headerTitle.updateBorders(GAP_FOR_BUTTONS)
+      ((if (componentCount == 0) null else getComponent(0)) as? SimpleCustomDecorationPath)?.updateBorders(GAP_FOR_BUTTONS)
     }
-    toolbar?.let { it.border = JBUI.Borders.empty() }
+    toolbar.border = JBUI.Borders.empty()
   }
 
   override fun updateActive() {
     super.updateActive()
-    toolbar?.background = getHeaderBackground(myActive)
+    toolbar.background = getHeaderBackground(myActive)
   }
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
-    updateVisibleCard()
+    updateVisibleCard { MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()) }
   }
 }
