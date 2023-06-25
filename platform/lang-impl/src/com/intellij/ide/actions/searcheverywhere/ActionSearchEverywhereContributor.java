@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
-import com.intellij.icons.ExpUiIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoActionAction;
 import com.intellij.ide.actions.SetShortcutAction;
@@ -12,7 +11,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.util.gotoByName.GotoActionItemProvider;
 import com.intellij.ide.util.gotoByName.GotoActionModel;
-import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,7 +28,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,10 +36,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.lang.ref.WeakReference;
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Predicate;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText;
@@ -110,8 +106,19 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
 
     if (StringUtil.isEmptyOrSpaces(pattern)) {
       if (Registry.is("search.everywhere.recents")) {
-        Set<String> ids = ActionHistoryManager.getInstance().getState().getIds();
-        myProvider.processActions(pattern, element -> consumer.process(new FoundItemDescriptor<>(element, element.getMatchingDegree())), ids);
+        Set<String> actionIDs = ActionHistoryManager.getInstance().getState().getIds();
+        Predicate<GotoActionModel.MatchedValue> actionDegreePredicate =
+          element -> {
+            AnAction action = getAction(element);
+            int degree = 0;
+            if (action != null) {
+              String id = ActionManager.getInstance().getId(action);
+              degree = Registry.intValue("search.everywhere.recents.limit") - actionIDs.stream().toList().indexOf(id);
+            }
+            return consumer.process(new FoundItemDescriptor<>(element, degree));
+          };
+
+        myProvider.processActions(pattern, actionDegreePredicate, new HashSet<>(actionIDs));
       }
       return;
     }

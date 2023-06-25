@@ -7,13 +7,13 @@ import com.intellij.util.xmlb.annotations.XCollection
 sealed class SEHistoryManager : PersistentStateComponent<SEHistoryManager.State> {
   class State {
     @XCollection(style = XCollection.Style.v2)
-    var ids: MutableSet<String>
-    
+    var ids: RecentSet<String>
+
     constructor() {
-      ids = mutableSetOf()
+      ids = RecentSet()
     }
 
-    internal constructor(ids: MutableSet<String>) {
+    internal constructor(ids: RecentSet<String>) {
       this.ids = ids
     }
   }
@@ -21,6 +21,14 @@ sealed class SEHistoryManager : PersistentStateComponent<SEHistoryManager.State>
   private var _state = State()
   override fun getState() = _state
   override fun loadState(state: State) { _state = state }
+}
+
+open class RecentSet<T> : LinkedHashSet<T>() {
+  override fun add(e: T): Boolean {
+    val wasThere = remove(e)
+    super.add(e)
+    return !wasThere
+  }
 }
 
 @Service(Service.Level.APP)
