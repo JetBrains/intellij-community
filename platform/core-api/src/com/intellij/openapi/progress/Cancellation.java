@@ -72,7 +72,7 @@ public final class Cancellation {
     }
   }
 
-  public static @NotNull AccessToken withCancelableSection() {
+  public static @NotNull AccessToken withNonCancelableSection() {
     if (isInNonCancelableSection()) {
       return AccessToken.EMPTY_ACCESS_TOKEN;
     }

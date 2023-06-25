@@ -143,7 +143,7 @@ internal sealed class BaseComponentAdapter(
       PluginException("Cyclic service initialization: ${toString()}", pluginId)
     }
 
-    return Cancellation.withCancelableSection().use {
+    return Cancellation.withNonCancelableSection().use {
       doCreateInstance(keyClass = keyClass, componentManager = componentManager, activityCategory = activityCategory)
     }
   }
