@@ -113,6 +113,12 @@ internal sealed class BaseComponentAdapter(
         }
       }
     }
+    else if (Cancellation.isInNonCancelableSection()) {
+      @Suppress("RAW_RUN_BLOCKING")
+      runBlocking {
+        deferred.join()
+      }
+    }
     else {
       runBlockingMaybeCancellable {
         deferred.join()
