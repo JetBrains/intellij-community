@@ -5,7 +5,7 @@ package com.intellij.openapi.wm.impl.status
 
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.codeWithMe.ClientId
-import com.intellij.diagnostic.runActivity
+import com.intellij.diagnostic.subtask
 import com.intellij.ide.HelpTooltipManager
 import com.intellij.ide.IdeEventQueue
 import com.intellij.internal.statistic.service.fus.collectors.StatusBarPopupShown
@@ -280,37 +280,36 @@ open class IdeStatusBarImpl internal constructor(
 
   internal suspend fun init(project: Project, extraItems: List<kotlin.Pair<StatusBarWidget, LoadingOrder>> = emptyList()) {
     val service = project.service<StatusBarWidgetsManager>()
-    val items = runActivity("status bar pre-init") {
+    val items = subtask("status bar pre-init") {
       service.init()
     }
-    runActivity("status bar init") {
+    subtask("status bar init") {
       doInit(widgets = items + extraItems, parentDisposable = service)
     }
   }
 
   private suspend fun doInit(widgets: List<kotlin.Pair<StatusBarWidget, LoadingOrder>>, parentDisposable: Disposable) {
-    val items: List<WidgetBean> = runActivity("status bar widget creating") {
+    val anyModality = ModalityState.any().asContextElement()
+    val items: List<WidgetBean> = subtask("status bar widget creating") {
       widgets.map { (widget, anchor) ->
-        val component = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          blockingContext {
-            val component = wrap(widget)
-            if (component is StatusBarWidgetWrapper) {
-              component.beforeUpdate()
-            }
-            component
+        val component = withContext(Dispatchers.EDT + anyModality) {
+          val component = wrap(widget)
+          if (component is StatusBarWidgetWrapper) {
+            component.beforeUpdate()
           }
+          component
         }
         val item = WidgetBean(widget = widget, position = Position.RIGHT, component = component, order = anchor)
         blockingContext {
-          widget.install(this)
+          widget.install(this@IdeStatusBarImpl)
         }
         Disposer.register(parentDisposable, widget)
         item
       }
     }
 
-    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      runActivity("status bar widget adding") {
+    withContext(Dispatchers.EDT + anyModality) {
+      subtask("status bar widget adding") {
         for (item in items) {
           widgetMap.put(item.widget.ID(), item)
         }
@@ -325,7 +324,7 @@ open class IdeStatusBarImpl internal constructor(
     }
 
     if (listeners.hasListeners()) {
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      withContext(Dispatchers.EDT + anyModality) {
         for (item in items) {
           fireWidgetAdded(widget = item.widget, anchor = item.anchor)
         }
