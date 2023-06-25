@@ -69,7 +69,7 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
         int count = myComboBox.getItemCount();
         Set<GithubTagInfo> oldTags = new HashSet<>();
         for (int i = 1; i < count; i++) {
-          GithubTagInfo item = ObjectUtils.tryCast(myComboBox.getItemAt(i), GithubTagInfo.class);
+          GithubTagInfo item = myComboBox.getItemAt(i);
           if (item != null) {
             oldTags.add(item);
           }
