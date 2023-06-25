@@ -44,6 +44,14 @@ import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 
 class InspectionRunner {
+
+  private static final PsiElementVisitor TOMB_STONE_VISITOR = new PsiElementVisitor() {
+    @Override
+    public String toString() {
+      return "TOMB_STONE_VISITOR";
+    }
+  };
+
   private final PsiFile myPsiFile;
   private final TextRange myRestrictRange;
   private final TextRange myPriorityRange;
@@ -81,11 +89,13 @@ class InspectionRunner {
       this.tool = tool;
       this.holder = holder;
       this.visitor = visitor;
+      this.acceptingPsiTypes = InspectionVisitorsOptimizer.getAcceptingPsiTypes(visitor);
     }
 
     final @NotNull LocalInspectionToolWrapper tool;
     final @NotNull InspectionProblemHolder holder;
     final @NotNull PsiElementVisitor visitor;
+    final @NotNull List<Class<?>> acceptingPsiTypes;
     volatile PsiElement myFavoriteElement; // the element during visiting which, some diagnostics were generated in the previous run
   }
 
@@ -178,7 +188,7 @@ class InspectionRunner {
   private @NotNull InspectionContext createTombStone() {
     LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(new LocalInspectionEP());
     InspectionProblemHolder holder = new InspectionProblemHolder(myPsiFile, tool, false, myInspectionProfileWrapper, empty);
-    return new InspectionContext(tool, holder, new PsiElementVisitor() {});
+    return new InspectionContext(tool, holder, TOMB_STONE_VISITOR);
   }
 
   private static @NotNull <T> Map<PsiFile, T> createInjectedFileMap() {
@@ -308,6 +318,8 @@ class InspectionRunner {
     ApplicationEx application = ApplicationManagerEx.getApplicationEx();
     boolean shouldFailFastAcquiringReadAction = application.isInImpatientReader();
 
+    Map<Class<?>, Collection<Class<?>>> targetPsiClasses = InspectionVisitorsOptimizer.getTargetPsiClasses(elements);
+
     boolean processed =
       ((JobLauncherImpl)JobLauncher.getInstance()).processQueue(contexts, new LinkedBlockingQueue<>(), new SensitiveProgressWrapper(myProgress), TOMB_STONE, context ->
         AstLoadingFilter.disallowTreeLoading(() -> AstLoadingFilter.<Boolean, RuntimeException>forceAllowTreeLoading(myPsiFile, () -> {
@@ -328,17 +340,40 @@ class InspectionRunner {
                 }
               }
 
-              //noinspection ForLoopReplaceableByForEach
-              for (int i = 0; i < elements.size(); i++) {
-                PsiElement element = elements.get(i);
-                ProgressManager.checkCanceled();
-                if (element == favoriteElement) continue; // already visited
-                element.accept(context.visitor);
-                if (resultCount != -1 && holder.getResultCount() != resultCount) {
-                  context.myFavoriteElement = element;
-                  resultCount = -1; // mark as "new favorite element is stored"
+              if (context.acceptingPsiTypes == InspectionVisitorsOptimizer.ALL_ELEMENTS_VISIT_LIST) {
+                for (int i = 0; i < elements.size(); i++) {
+                  PsiElement element = elements.get(i);
+
+                  if (element == favoriteElement) continue; // already visited
+
+                  ProgressManager.checkCanceled();
+                  element.accept(context.visitor);
+                  if (resultCount != -1 && holder.getResultCount() != resultCount) {
+                    context.myFavoriteElement = element;
+                    resultCount = -1; // mark as "new favorite element is stored"
+                  }
                 }
               }
+              else {
+                Set<Class<?>> accepts = InspectionVisitorsOptimizer.getVisitorAcceptClasses(targetPsiClasses, context.acceptingPsiTypes);
+                if (accepts != null && !accepts.isEmpty()) {
+                  for (int i = 0; i < elements.size(); i++) {
+                    PsiElement element = elements.get(i);
+
+                    if (element == favoriteElement) continue; // already visited
+
+                    if (accepts.contains(element.getClass())) {
+                      ProgressManager.checkCanceled();
+                      element.accept(context.visitor);
+                      if (resultCount != -1 && holder.getResultCount() != resultCount) {
+                        context.myFavoriteElement = element;
+                        resultCount = -1; // mark as "new favorite element is stored"
+                      }
+                    }
+                  }
+                }
+              }
+
               afterProcessCallback.accept(context);
             };
             if (!application.tryRunReadAction(action)) {

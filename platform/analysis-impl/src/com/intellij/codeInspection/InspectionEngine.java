@@ -40,19 +40,24 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import static java.util.Collections.singletonList;
+
 public final class InspectionEngine {
   private static final Logger LOG = Logger.getInstance(InspectionEngine.class);
   private static boolean createVisitorAndAcceptElements(@NotNull LocalInspectionTool tool,
-                                                     @NotNull ProblemsHolder holder,
-                                                     boolean isOnTheFly,
-                                                     @NotNull LocalInspectionToolSession session,
-                                                     @NotNull List<? extends PsiElement> elements) {
+                                                        @NotNull ProblemsHolder holder,
+                                                        boolean isOnTheFly,
+                                                        @NotNull LocalInspectionToolSession session,
+                                                        @NotNull List<? extends PsiElement> elements,
+                                                        Map<Class<?>, Collection<Class<?>>> targetPsiClasses) {
     PsiElementVisitor visitor = createVisitor(tool, holder, isOnTheFly, session);
     // if inspection returned empty visitor then it should be skipped
     if (visitor == PsiElementVisitor.EMPTY_VISITOR) return false;
 
+    List<Class<?>> acceptingPsiTypes = InspectionVisitorsOptimizer.getAcceptingPsiTypes(visitor);
+
     tool.inspectionStarted(session, isOnTheFly);
-    acceptElements(elements, visitor);
+    acceptElements(elements, visitor, targetPsiClasses, acceptingPsiTypes);
     tool.inspectionFinished(session, holder);
     return true;
   }
@@ -73,12 +78,31 @@ public final class InspectionEngine {
     return visitor;
   }
 
-  private static void acceptElements(@NotNull List<? extends PsiElement> elements, @NotNull PsiElementVisitor elementVisitor) {
-    //noinspection ForLoopReplaceableByForEach
-    for (int i = 0, elementsSize = elements.size(); i < elementsSize; i++) {
-      PsiElement element = elements.get(i);
-      element.accept(elementVisitor);
-      ProgressManager.checkCanceled();
+  private static void acceptElements(@NotNull List<? extends PsiElement> elements,
+                                     @NotNull PsiElementVisitor elementVisitor,
+                                     Map<Class<?>, Collection<Class<?>>> targetPsiClasses,
+                                     List<Class<?>> acceptingPsiTypes) {
+    if (acceptingPsiTypes == InspectionVisitorsOptimizer.ALL_ELEMENTS_VISIT_LIST) {
+      for (int i = 0, elementsSize = elements.size(); i < elementsSize; i++) {
+        PsiElement element = elements.get(i);
+        element.accept(elementVisitor);
+        ProgressManager.checkCanceled();
+      }
+    }
+    else {
+      Set<Class<?>> accepts = InspectionVisitorsOptimizer.getVisitorAcceptClasses(targetPsiClasses, acceptingPsiTypes);
+      if (accepts == null || accepts.isEmpty()) {
+        return; // nothing to visit in this run
+      }
+
+      for (int i = 0, elementsSize = elements.size(); i < elementsSize; i++) {
+        PsiElement element = elements.get(i);
+
+        if (accepts.contains(element.getClass())) {
+          element.accept(elementVisitor);
+          ProgressManager.checkCanceled();
+        }
+      }
     }
   }
 
@@ -265,6 +289,9 @@ public final class InspectionEngine {
     Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> resultDescriptors = new ConcurrentHashMap<>();
     withSession(psiFile, restrictRange, restrictRange, HighlightSeverity.INFORMATION, isOnTheFly, session -> {
       List<LocalInspectionToolWrapper> applicableTools = filterToolsApplicableByLanguage(toolWrappers, elementDialectIds);
+
+      Map<Class<?>, Collection<Class<?>>> targetPsiClasses = InspectionVisitorsOptimizer.getTargetPsiClasses(elements);
+
       Processor<LocalInspectionToolWrapper> processor = toolWrapper -> {
         ProblemsHolder holder = new ProblemsHolder(InspectionManager.getInstance(psiFile.getProject()), psiFile, isOnTheFly){
           @Override
@@ -287,7 +314,7 @@ public final class InspectionEngine {
         LocalInspectionTool tool = toolWrapper.getTool();
 
         long inspectionStartTime = System.nanoTime();
-        boolean inspectionWasRun = createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements);
+        boolean inspectionWasRun = createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements, targetPsiClasses);
         long inspectionDuration = TimeoutUtil.getDurationMillis(inspectionStartTime);
 
         reportToQodana(psiFile, isOnTheFly, toolWrapper, inspectionWasRun, inspectionDuration, holder.getResultCount());
