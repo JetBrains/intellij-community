@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis;
 
 import com.intellij.analysis.dialog.ModelScopeItem;
@@ -58,7 +58,7 @@ public class VcsScopeItem implements ModelScopeItem {
     else {
       LocalChangeList list = myChangeListManager.findChangeList(changeList.getName());
       if (list != null) {
-        files = ChangesUtil.iterateAfterRevisionsFiles(list.getChanges()).toList();
+        files = ChangesUtil.iterateAfterRevisionFiles(list.getChanges()).toList();
       }
       else {
         files = Collections.emptyList();
