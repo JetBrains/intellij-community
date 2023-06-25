@@ -1395,7 +1395,7 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
                 th("Total processing time (% of total processing time)")
                 th("Content loading time (% of total content loading time)")
                 th("Total files size")
-                th("Total processing speed")
+                th("Total processing speed (relative to CPU time)")
                 th("The biggest contributors")
               }
             }
@@ -1444,7 +1444,7 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
                 th("Part of total indexing time")
                 th("Total number of files indexed by $INDEX_INFRA_EXTENSIONS")
                 th("Total files size")
-                th("Indexing speed")
+                th("Indexing speed (relative to CPU time)")
                 th("Snapshot input mapping statistics")
               }
             }
