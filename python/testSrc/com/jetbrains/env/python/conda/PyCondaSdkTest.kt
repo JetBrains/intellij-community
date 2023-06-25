@@ -22,7 +22,6 @@ import com.jetbrains.python.sdk.add.target.conda.createCondaSdkFromExistingEnv
 import com.jetbrains.python.sdk.flavors.conda.*
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.sdk.getPythonBinaryPath
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.hamcrest.MatcherAssert
 import org.hamcrest.Matchers
@@ -35,7 +34,7 @@ import org.junit.runners.Parameterized
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Ensures conda SDK could be created
@@ -117,7 +116,7 @@ internal class PyCondaSdkTest {
   }
 
   @Test
-  fun testExecuteCommandOnSdk(): Unit = runTest {
+  fun testExecuteCommandOnSdk(): Unit = runTest(timeout = 20.seconds) {
     val condaEnv = PyCondaEnv.getEnvs(condaRule.commandExecutor, condaRule.condaPathOnTarget).getOrThrow().first()
     val sdk = condaRule.condaCommand.createCondaSdkFromExistingEnv(condaEnv.envIdentity, emptyList(), projectRule.project)
     val request = LocalTargetEnvironmentRequest()
@@ -149,7 +148,7 @@ internal class PyCondaSdkTest {
   }
 
   @Test
-  fun createSdkByFile() = runTest {
+  fun createSdkByFile() = runTest(timeout = 20.seconds) {
     val newCondaInfo = NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile(yamlRule.yamlFilePath)
     val sdk = condaRule.condaCommand.createCondaSdkAlongWithNewEnv(newCondaInfo, coroutineContext, emptyList(),
                                                                    projectRule.project).getOrThrow()
