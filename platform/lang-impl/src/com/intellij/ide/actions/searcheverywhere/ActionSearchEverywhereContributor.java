@@ -109,12 +109,14 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
         Set<String> actionIDs = ActionHistoryManager.getInstance().getState().getIds();
         Predicate<GotoActionModel.MatchedValue> actionDegreePredicate =
           element -> {
+            if (!myDisabledActions && !((GotoActionModel.ActionWrapper)element.value).isAvailable()) return true;
+
             AnAction action = getAction(element);
-            int degree = 0;
-            if (action != null) {
-              String id = ActionManager.getInstance().getId(action);
-              degree = Registry.intValue("search.everywhere.recents.limit") - actionIDs.stream().toList().indexOf(id);
-            }
+            if (action == null) return true;
+
+            String id = ActionManager.getInstance().getId(action);
+            int degree = Registry.intValue("search.everywhere.recents.limit") - actionIDs.stream().toList().indexOf(id);
+
             return consumer.process(new FoundItemDescriptor<>(element, degree));
           };
 
