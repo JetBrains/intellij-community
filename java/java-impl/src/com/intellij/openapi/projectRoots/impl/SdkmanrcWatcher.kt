@@ -5,6 +5,7 @@ import com.intellij.java.JavaBundle
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -20,6 +21,9 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.jps.model.java.JdkVersionDetector
 import java.io.File
 import java.util.*
@@ -72,7 +76,7 @@ data class SdkmanCandidate(val target: String,
 }
 
 @Service(Service.Level.PROJECT)
-class SdkmanrcWatcherService: Disposable {
+class SdkmanrcWatcherService(private val scope: CoroutineScope): Disposable {
   private lateinit var file: File
 
   fun registerListener(project: Project) {
@@ -83,14 +87,21 @@ class SdkmanrcWatcherService: Disposable {
       override fun after(events: MutableList<out VFileEvent>) {
         for (event in events) {
           if (event is VFileContentChangeEvent && event.path.endsWith(".sdkmanrc")) {
-            parseSdkmanrc(project)
+            checkSdkmanrc(project)
           }
         }
       }
     })
   }
 
-  fun parseSdkmanrc(project: Project) {
+  fun checkSdkmanrc(project: Project) {
+    scope.launch {
+      parseSdkmanrcAndUpdateProjectJDK(project)
+    }
+  }
+
+  @RequiresBackgroundThread
+  private suspend fun parseSdkmanrcAndUpdateProjectJDK(project: Project) {
     if (!file.exists()) return
 
     // Parse .sdkmanrc
@@ -133,7 +144,7 @@ class SdkmanrcWatcherService: Disposable {
     }
   }
 
-  private fun configure(path: String, target: SdkmanCandidate, project: Project) {
+  private suspend fun configure(path: String, target: SdkmanCandidate, project: Project) {
     LOG.info("${target.target} - Candidate found: ${SdkVersionUtil.getJdkVersionInfo(path)?.displayVersionString()}")
 
     val jdk = SdkConfigurationUtil.createAndAddSDK(path, JavaSdk.getInstance())
@@ -144,9 +155,12 @@ class SdkmanrcWatcherService: Disposable {
     }
   }
 
-  private fun configure(jdk: Sdk, target: SdkmanCandidate, project: Project) {
+  private suspend fun configure(jdk: Sdk, target: SdkmanCandidate, project: Project) {
     val rootManager = ProjectRootManager.getInstance(project)
-    rootManager.projectSdk = jdk
+
+    writeAction {
+      rootManager.projectSdk = jdk
+    }
 
     LOG.info("${target.target} - Configured ${jdk.name}")
 
@@ -170,14 +184,14 @@ class SdkmanrcWatcherService: Disposable {
     val info = SdkVersionUtil.getJdkVersionInfo(path) ?: return false
     return matchVersionString(info.displayVersionString())
   }
-
-
-
+  
   override fun dispose() {}
 }
 
 class SdkmanrcWatcher : ProjectActivity {
   override suspend fun execute(project: Project) {
-    project.service<SdkmanrcWatcherService>().registerListener(project)
+    project.service<SdkmanrcWatcherService>().apply {
+      registerListener(project)
+    }
   }
 }
