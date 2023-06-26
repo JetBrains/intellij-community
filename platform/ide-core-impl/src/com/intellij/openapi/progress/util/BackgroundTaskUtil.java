@@ -294,19 +294,15 @@ public final class BackgroundTaskUtil {
     };
 
     CompletableFuture<T> future = CompletableFuture.supplyAsync(() -> {
-      try {
-        return ProgressManager.getInstance().runProcess(() -> {
-          if (!registerIfParentNotDisposed(parent, disposable)) {
-            throw new ProcessCanceledException();
-          }
+      return ProgressManager.getInstance().runProcess(() -> {
+        if (!registerIfParentNotDisposed(parent, disposable)) {
+          throw new ProcessCanceledException();
+        }
 
-          return task.compute();
-        }, indicator);
-      }
-      finally {
-        Disposer.dispose(disposable);
-      }
+        return task.compute();
+      }, indicator);
     }, executor);
+    future.whenComplete((o, e) -> Disposer.dispose(disposable));
     futureRef.set(future);
 
     return new BackgroundTask<>(parent, indicator, future);
