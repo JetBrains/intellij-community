@@ -43,7 +43,7 @@ internal class DefaultVcsLogFile(private val pathId: VcsLogVirtualFileSystem.Vcs
       val tabsManager = projectLog.tabManager ?: return@runWhenVcsAndLogIsReady
 
       try {
-        val factory = tabsManager.getPersistentVcsLogUiFactory(logManager, tabId, VcsLogTabLocation.EDITOR, filters)
+        val factory = tabsManager.getPersistentVcsLogUiFactory(tabId, VcsLogTabLocation.EDITOR, filters)
         val ui = logManager.createLogUi(factory, VcsLogTabLocation.EDITOR)
         tabName = VcsLogTabsManager.generateDisplayName(ui)
         ui.filterUi.addFilterListener {
