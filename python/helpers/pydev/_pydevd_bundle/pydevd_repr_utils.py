@@ -165,6 +165,11 @@ if IS_PY3K:
             result = _get_external_collection_repr(x)
             if result is not None:
                 return result
+
+            # if `__str__` method is overridden then return str(x)
+            if x.__str__ != object.__str__:
+                return str(x)
+
             return super().repr_instance(x, level)
 
 
