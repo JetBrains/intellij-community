@@ -11,10 +11,7 @@ import com.intellij.openapi.wm.StartPagePromoter.Companion.PRIORITY_LEVEL_HIGH
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.Icon
-import javax.swing.JLabel
-import javax.swing.JPanel
-import javax.swing.SwingConstants
+import javax.swing.*
 
 @ApiStatus.Internal
 class NewUiPromoter : BannerStartPagePromoter() {
@@ -42,10 +39,16 @@ class NewUiPromoter : BannerStartPagePromoter() {
     ExperimentalUI.setNewUI(true)
   }
 
+  override fun getPromotion(isEmptyState: Boolean): JComponent {
+    ExperimentalUiCollector.inviteBannerShown.log()
+    return super.getPromotion(isEmptyState)
+  }
+
   override val description: String
     get() = IdeBundle.message("welcome.expUi.promo.description", WelcomeScreenComponentFactory.getAppName())
 
   override val closeAction: ((JPanel) -> Unit) = { panel ->
+    ExperimentalUiCollector.inviteBannerClosed.log()
     PropertiesComponent.getInstance().setValue(ExperimentalUI.NEW_UI_PROMO_BANNER_DISABLED_PROPERTY, true)
     panel.isVisible = false
   }

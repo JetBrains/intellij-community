@@ -7,6 +7,7 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.experimental.ExperimentalUiCollector
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.Configurable
@@ -57,7 +58,12 @@ open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.me
         newUiCheckBox = checkBox(IdeBundle.message("checkbox.enable.new.ui"))
           .bindSelected(
             { ExperimentalUI.isNewUI() },
-            { ExperimentalUI.setNewUI(it) })
+            {
+              if (it != ExperimentalUI.isNewUI()) {
+                ExperimentalUiCollector.logSwitchUi(ExperimentalUiCollector.SwitchSource.PREFERENCES, it)
+                ExperimentalUI.setNewUI(it)
+              }
+            })
           .enabled(PlatformUtils.isAqua().not()) // the new UI is always enabled for Aqua and cannot be disabled
       }.comment(IdeBundle.message("ide.restart.required.comment"))
 
