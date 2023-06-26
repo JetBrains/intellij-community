@@ -815,23 +815,23 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
       return null;
     }
     
-    private int numMisses() {
+    private int numMisses(int end) {
       int numMisses = 0;
-      if (myErrors != null) {
+      if (myErrors != null && end > 0) {
         for (ErrorWithIndex error : myErrors) {
-          if (error.error instanceof MissError) {
+          if (error.index < end && error.error instanceof MissError) {
             numMisses++;
           }
         }
       }
-      return numMisses + (myBase == null ? 0 : myBase.numMisses());
+      return numMisses + (myBase == null ? 0 : myBase.numMisses(myDeriveIndex));
     }
 
     public int length(char[] pattern) {
       if (myPattern != null) {
         return myPattern.length;
       }
-      return pattern.length + numMisses();
+      return pattern.length + numMisses(Integer.MAX_VALUE);
     }
   }
 
