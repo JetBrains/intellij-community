@@ -110,6 +110,7 @@ class CreateMissedActualsFix(
             when {
               name == "main" && it.isAndroidModule() && !it.isTestModule -> "androidMain"
               name == "unitTest" && it.isAndroidModule() && it.isTestModule -> "androidUnitTest"
+              name == "androidTest" && it.isAndroidModule() && it.isTestModule -> "androidInstrumentedTest"
               else -> name
             }
         }
