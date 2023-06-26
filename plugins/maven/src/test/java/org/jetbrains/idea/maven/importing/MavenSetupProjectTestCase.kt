@@ -80,7 +80,8 @@ abstract class MavenSetupProjectTestCase : MavenMultiVersionImportingTestCase() 
       action = AddFileAsMavenProjectAction(),
       project = project,
       systemId = SYSTEM_ID,
-      selectedFile = projectFile
+      selectedFile = projectFile,
+      blocking = true
     )
     return project
   }

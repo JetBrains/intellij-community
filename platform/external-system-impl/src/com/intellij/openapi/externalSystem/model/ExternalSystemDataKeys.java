@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.externalSystem.view.ProjectNode;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.List;
@@ -25,6 +26,8 @@ public final class ExternalSystemDataKeys {
 
   @NotNull public static final Key<Boolean> NEWLY_IMPORTED_PROJECT = new Key<>("external.system.newly.imported");
   @NotNull public static final Key<Boolean> NEWLY_CREATED_PROJECT = new Key<>("external.system.newly.created");
+
+  @NotNull @TestOnly public static final DataKey<Boolean> BLOCKING_ACTIVITY = DataKey.create("BLOCKING_ACTIVITY");
 
   private ExternalSystemDataKeys() {
   }
