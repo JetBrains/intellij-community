@@ -1504,6 +1504,11 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="k" regexp="\w+" negateName="true" within="" contains="" />
       </searchConfiguration>
+      <replaceConfiguration name="Redundant 'ObjectUtils.tryCast()' call" description="The expression that is casted already has the requested type" text="ObjectUtils.tryCast($x$, $y$.class)" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$x$">
+        <constraint name="__context__" script="&quot;import com.intellij.psi.util.InheritanceUtil&#10;&#10;def type1 = x.getType()&#10;def type2 = y.getType()&#10;if (type1 == type2) return true&#10;type1 != null &amp;&amp; type2 != null &amp;&amp; InheritanceUtil.isInheritor(type1, type2.getCanonicalText())&quot;" within="" contains="" />
+        <constraint name="x" within="" contains="" />
+        <constraint name="y" within="" contains="" />
+      </replaceConfiguration>
       <searchConfiguration name="remove test-only branch and use UIUtil.dispatchAllInvocationEvents() in tests" uuid="07f04ba3-90ed-3e4d-9f88-e45dfaa05771" text="if ($APP$.isUnitTestMode()) {&#10;  $DO$;&#10;} else {&#10;  $APP2$.$INV$($ARGS$);&#10;}" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="APP" within="" contains="" />
