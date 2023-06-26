@@ -422,13 +422,7 @@ object IconLoader {
 
   @JvmStatic
   fun createLazy(producer: Supplier<out Icon>): Icon {
-    return object : LazyIcon() {
-      override fun replaceBy(replacer: IconReplacer): Icon {
-        return createLazy { replacer.replaceIcon(producer.get()) }
-      }
-
-      override fun compute(): Icon = producer.get()
-    }
+    return LazyIcon(producer)
   }
 
   @Deprecated("Do not use")
@@ -541,7 +535,7 @@ fun findIconUsingDeprecatedImplementation(originalPath: String,
   return icon
 }
 
-internal abstract class LazyIcon : ScaleContextSupport(), CopyableIcon, RetrievableIcon {
+internal class LazyIcon(private val producer: Supplier<out Icon>) : CopyableIcon, RetrievableIcon {
   private var wasComputed = false
 
   @Volatile
@@ -552,11 +546,11 @@ internal abstract class LazyIcon : ScaleContextSupport(), CopyableIcon, Retrieva
   override fun isComplex(): Boolean = true
 
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
-    if (updateScaleContext(ScaleContext.create(g as Graphics2D))) {
-      icon = null
-    }
-
     getOrComputeIcon().paintIcon(c, g, x, y)
+  }
+
+  override fun replaceBy(replacer: IconReplacer): Icon {
+    return LazyIcon { replacer.replaceIcon(producer.get()) }
   }
 
   override fun getIconWidth(): Int = getOrComputeIcon().iconWidth
@@ -574,7 +568,7 @@ internal abstract class LazyIcon : ScaleContextSupport(), CopyableIcon, Retrieva
     transformModCount = newTransformModCount
     wasComputed = true
     icon = try {
-      compute()
+      producer.get()
     }
     catch (e: ProcessCanceledException) {
       throw e
@@ -586,8 +580,6 @@ internal abstract class LazyIcon : ScaleContextSupport(), CopyableIcon, Retrieva
     this.icon = icon
     return icon!!
   }
-
-  protected abstract fun compute(): Icon
 
   override fun retrieveIcon(): Icon = getOrComputeIcon()
 
