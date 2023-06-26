@@ -11,6 +11,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
+import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.roots.kind.LibraryOrigin
@@ -47,16 +48,22 @@ private constructor(private val libraryName: @NlsSafe String?,
     fileFilter: VirtualFileFilter
   ): Boolean {
     val roots = runReadAction {
-      (classRoots.asSequence() + sourceRoots.asSequence()).filter { it.isValid }.toSet()
+      getRoots().filter { it.isValid }.toSet()
     }
     return IndexableFilesIterationMethods.iterateRoots(project, roots, fileIterator, fileFilter)
   }
 
   override fun getRootUrls(project: Project): Set<String> {
-    return (classRoots + sourceRoots).map { it.url }.toSet()
+    return getRoots().map { it.url }.toSet()
+  }
+
+  private fun getRoots(): Sequence<VirtualFile> {
+    return if (iterateOverSourceRoots) (classRoots.asSequence() + sourceRoots.asSequence()) else classRoots.asSequence()
   }
 
   companion object {
+    private val iterateOverSourceRoots = SystemProperties.getBooleanProperty("LibraryIndexableFilesIterator.iterate.over.sources", true)
+
     fun collectFiles(library: Library, rootType: OrderRootType, rootsToFilter: List<VirtualFile>? = null): List<VirtualFile> {
       val libraryRoots = library.rootProvider.getFiles(rootType)
       val rootsToIterate: List<VirtualFile> = rootsToFilter?.filter { root ->
