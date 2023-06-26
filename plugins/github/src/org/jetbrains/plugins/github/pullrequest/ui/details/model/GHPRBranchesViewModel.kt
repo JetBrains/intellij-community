@@ -26,6 +26,7 @@ import git4idea.ui.branch.GitBranchPopupActions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.util.GithubGitHelper
 import org.jetbrains.plugins.github.util.GithubNotificationIdsHolder
@@ -102,6 +103,7 @@ internal class GHPRBranchesViewModel(
           val branch = "${headRemote.name}/${headBranch}"
           invokeLater {
             GitBranchPopupActions.RemoteBranchActions.CheckoutRemoteBranchAction.checkoutRemoteBranch(project, listOf(repository), branch)
+            GHPRStatisticsCollector.logDetailsBranchCheckedOut()
           }
         }
       }
@@ -160,6 +162,7 @@ internal class GHPRBranchesViewModel(
       val source = _sourceBranch.value
       val target = _targetBranch.value
       _showBranchesRequests.emit(CodeReviewBranches(source, target))
+      GHPRStatisticsCollector.logDetailsBranchesOpened()
     }
   }
 }

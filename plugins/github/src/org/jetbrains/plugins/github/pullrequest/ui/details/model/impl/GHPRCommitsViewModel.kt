@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.GHSimpleLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.getResultFlow
@@ -38,5 +39,16 @@ internal class GHPRCommitsViewModel(
       diffBridge.activeTree = GHPRDiffController.ActiveTree.FILES
     }
     super.selectCommit(index)
+    GHPRStatisticsCollector.logDetailsCommitChosen()
+  }
+
+  override fun selectNextCommit() {
+    super.selectNextCommit()
+    GHPRStatisticsCollector.logDetailsNextCommitChosen()
+  }
+
+  override fun selectPreviousCommit() {
+    super.selectPreviousCommit()
+    GHPRStatisticsCollector.logDetailsPrevCommitChosen()
   }
 }

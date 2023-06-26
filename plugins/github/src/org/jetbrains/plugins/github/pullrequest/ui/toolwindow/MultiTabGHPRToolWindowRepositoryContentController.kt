@@ -18,6 +18,7 @@ import git4idea.remote.hosting.knownRepositories
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys.PULL_REQUESTS_LIST_CONTROLLER
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
@@ -55,6 +56,7 @@ internal class MultiTabGHPRToolWindowRepositoryContentController(
       it.type == TabType.New
     } ?: createAndAddNewPRContent()
     contentManager.setSelectedContent(content, requestFocus)
+    GHPRStatisticsCollector.logNewPRViewOpened()
   }
 
   private fun createAndAddNewPRContent(): Content {
@@ -88,6 +90,7 @@ internal class MultiTabGHPRToolWindowRepositoryContentController(
       it.type == TabType.List
     } ?: createAndAddListContent()
     contentManager.setSelectedContent(content, requestFocus)
+    GHPRStatisticsCollector.logListOpened()
   }
 
   private fun createAndAddListContent(): Content {
@@ -140,6 +143,7 @@ internal class MultiTabGHPRToolWindowRepositoryContentController(
       (it.type as? TabType.PR)?.id == id
     } ?: createAndAddPRContent(id)
     contentManager.setSelectedContent(content, requestFocus)
+    GHPRStatisticsCollector.logDetailsOpened()
 
     return UIUtil.findComponentOfType(content.component, ChangesTree::class.java)?.let {
       ClientProperty.get(it, GHPRCommitBrowserComponentController.KEY)

@@ -1,15 +1,21 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.filters
 
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListQuickFilter
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelViewModelBase
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.future.await
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRListQuickFilter.*
 
+@OptIn(FlowPreview::class)
 internal class GHPRSearchPanelViewModel(
   scope: CoroutineScope,
   private val repositoryDataService: GHPRRepositoryDataService,
@@ -50,6 +56,15 @@ internal class GHPRSearchPanelViewModel(
 
   val reviewFilterState = searchState.partialState(GHPRListSearchValue::reviewState) {
     copy(reviewState = it)
+  }
+
+  init {
+    scope.launchNow {
+      // with debounce to avoid collecting intermediate state
+      searchState.drop(1).debounce(5000).collect {
+        GHPRStatisticsCollector.logListFiltersApplied(it)
+      }
+    }
   }
 
   suspend fun getAuthors(): List<GHUser> = repositoryDataService.collaborators.await()
