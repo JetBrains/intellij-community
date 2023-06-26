@@ -45,7 +45,7 @@ public class RemappingCoverageAnnotator extends SimpleCoverageAnnotator {
       String pathToRemap = findPathToRemap(data.getClasses().keySet(), contentRoot);
       if (pathToRemap != null) {
         // just replace paths for every file
-        data = remapData(data, pathToRemap, contentRoot.getPath());
+        data = remapData(data, pathToRemap, contentRoot);
         suite.setCoverageData(data);
         for (CoverageSuite suiteSuite : suite.getSuites()) {
           suiteSuite.setCoverageData(data);
@@ -83,10 +83,21 @@ public class RemappingCoverageAnnotator extends SimpleCoverageAnnotator {
     return pathToRemap;
   }
 
-  private static @NotNull ProjectData remapData(@NotNull ProjectData oldData, @NotNull String oldPath, @NotNull String newPath) {
+  private static @NotNull ProjectData remapData(@NotNull ProjectData oldData, @NotNull String oldPath, @NotNull VirtualFile contentRoot) {
     final ProjectData newData = new ProjectData();
     oldData.getClasses().forEach((name, oldClass) -> {
-      final ClassData newClass = newData.getOrCreateClassData(name.replace(oldPath, newPath));
+      String relPath = StringUtil.substringAfter(name, oldPath);
+      String newPath = name;
+      if (relPath != null) {
+        VirtualFile targetFile = contentRoot.findFileByRelativePath(relPath);
+        if (targetFile != null) {
+          newPath = targetFile.getCanonicalPath();
+        }
+        else {
+          newPath = contentRoot.getPath() + relPath;
+        }
+      }
+      final ClassData newClass = newData.getOrCreateClassData(newPath);
       newClass.setLines((LineData[])oldClass.getLines());
     });
     return newData;
