@@ -43,7 +43,7 @@ class VcsLogTabsManager internal constructor(private val project: Project,
 
     ToolWindowManager.getInstance(project).invokeLater {
       if (LOG.assertTrue(!logManager.isDisposed, "Attempting to open tabs on disposed VcsLogManager")) {
-        reopenLogTabs(logManager, savedTabs)
+        reopenLogTabs(savedTabs)
       }
     }
   }
@@ -53,13 +53,13 @@ class VcsLogTabsManager internal constructor(private val project: Project,
   }
 
   @RequiresEdt
-  private fun reopenLogTabs(manager: VcsLogManager, tabs: Map<String, VcsLogTabLocation>) {
+  private fun reopenLogTabs(tabs: Map<String, VcsLogTabLocation>) {
     tabs.forEach { (id: String, location: VcsLogTabLocation) ->
       if (location === VcsLogTabLocation.EDITOR) {
         openEditorLogTab(id, false, null)
       }
       else if (location === VcsLogTabLocation.TOOL_WINDOW) {
-        openToolWindowLogTab(manager, id, false, null)
+        openToolWindowLogTab(id, false, null)
       }
       else {
         LOG.warn("Unsupported log tab location $location")
@@ -75,7 +75,7 @@ class VcsLogTabsManager internal constructor(private val project: Project,
       return findVcsLogUi(editors, MainVcsLogUi::class.java)!!
     }
     else if (location === VcsLogTabLocation.TOOL_WINDOW) {
-      return openToolWindowLogTab(logManager, tabId, true, filters)
+      return openToolWindowLogTab(tabId, true, filters)
     }
     throw UnsupportedOperationException("Only log in editor or tool window is supported")
   }
@@ -85,23 +85,19 @@ class VcsLogTabsManager internal constructor(private val project: Project,
     return FileEditorManager.getInstance(project).openFile(file, focus, true)
   }
 
-  private fun openToolWindowLogTab(manager: VcsLogManager, tabId: String, focus: Boolean,
-                                   filters: VcsLogFilterCollection?): MainVcsLogUi {
-    val factory = getPersistentVcsLogUiFactory(manager, tabId,
-                                               VcsLogTabLocation.TOOL_WINDOW,
-                                               filters)
-    val ui = openLogTab(project, manager, TAB_GROUP_ID, { u: MainVcsLogUi -> generateShortDisplayName(u) }, factory, focus)
+  private fun openToolWindowLogTab(tabId: String, focus: Boolean, filters: VcsLogFilterCollection?): MainVcsLogUi {
+    val factory = getPersistentVcsLogUiFactory(tabId, VcsLogTabLocation.TOOL_WINDOW, filters)
+    val ui = openLogTab(project, logManager, TAB_GROUP_ID, { u: MainVcsLogUi -> generateShortDisplayName(u) }, factory, focus)
     ui.filterUi.addFilterListener { updateLogUiName(project, ui) }
     return ui
   }
 
   @RequiresEdt
   @ApiStatus.Internal
-  fun getPersistentVcsLogUiFactory(manager: VcsLogManager,
-                                   tabId: String,
+  fun getPersistentVcsLogUiFactory(tabId: String,
                                    location: VcsLogTabLocation,
                                    filters: VcsLogFilterCollection?): VcsLogUiFactory<MainVcsLogUi> {
-    return PersistentVcsLogUiFactory(manager.getMainLogUiFactory(tabId, filters), location)
+    return PersistentVcsLogUiFactory(logManager.getMainLogUiFactory(tabId, filters), location)
   }
 
   private inner class PersistentVcsLogUiFactory constructor(private val factory: VcsLogUiFactory<out MainVcsLogUi>,
