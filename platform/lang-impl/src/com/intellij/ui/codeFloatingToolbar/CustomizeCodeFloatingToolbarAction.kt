@@ -6,8 +6,9 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.util.NlsActions.ActionText
 
-class CustomizeCodeFloatingToolbarAction(private val targetGroupActionId: String): AnAction(ActionsBundle.actionText("Floating.CodeToolbar.Customize")) {
+class CustomizeCodeFloatingToolbarAction(private val targetGroupActionId: String): AnAction(getActionText()) {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val groupName = ActionManager.getInstance().getAction(targetGroupActionId).templateText
@@ -15,3 +16,5 @@ class CustomizeCodeFloatingToolbarAction(private val targetGroupActionId: String
     dialogWrapper.show()
   }
 }
+
+private fun getActionText(): @ActionText String = ActionsBundle.message("action.Floating.CodeToolbar.Customize.text")
