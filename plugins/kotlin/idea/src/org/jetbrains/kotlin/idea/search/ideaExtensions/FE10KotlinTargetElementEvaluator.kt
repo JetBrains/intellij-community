@@ -6,6 +6,7 @@ package org.jetbrains.kotlin.idea.search.ideaExtensions
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithSource
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
@@ -20,7 +21,7 @@ class FE10KotlinTargetElementEvaluator : KotlinTargetElementEvaluator() {
     companion object {
         fun findLambdaOpenLBraceForGeneratedIt(ref: PsiReference): PsiElement? {
             val element: PsiElement = ref.element
-            if (element.text != "it") return null
+            if (element.text != StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier) return null
 
             if (element !is KtNameReferenceExpression || !element.isReferenceToImplicitLambdaParameter()) return null
 

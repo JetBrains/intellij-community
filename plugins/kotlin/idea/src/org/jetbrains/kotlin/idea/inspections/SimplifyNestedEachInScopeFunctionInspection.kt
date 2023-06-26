@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -133,10 +134,10 @@ class SimplifyNestedEachInScopeFunctionInspection : AbstractKotlinInspection() {
                     if (innerExpression !is KtDotQualifiedExpression) return
                     val receiverExpression = innerExpression.receiverExpression
                     if (receiverExpression !is KtReferenceExpression) return
-                    val parameterName = lambdaExpression.valueParameters.singleOrNull()?.name ?: "it"
+                    val parameterName = lambdaExpression.valueParameters.singleOrNull()?.name ?: StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier
                     if (!receiverExpression.textMatches(parameterName)) return
 
-                    if (forEachLambda != null && (forEachLambda.valueParameters.singleOrNull()?.name ?: "it") == parameterName) {
+                    if (forEachLambda != null && (forEachLambda.valueParameters.singleOrNull()?.name ?: StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier) == parameterName) {
                         null // Parameter from outer lambda is shadowed
                     } else {
                         val lambdaDescriptor = lambdaExpression.descriptor(context) ?: return

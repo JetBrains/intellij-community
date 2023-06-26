@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
@@ -120,7 +121,7 @@ class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention
         } else {
             psiFactory.createExpressionByPattern(
                 "for($0 in $1){ $2 }",
-                parameters.singleOrNull() ?: "it",
+                parameters.singleOrNull() ?: StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier,
                 loopRange,
                 body.allChildren
             )

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.codeInliner
 
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.computeTypeInContext
@@ -94,8 +95,8 @@ internal fun MutableCodeToInline.introduceValue(
             statementsBefore.add(0, value)
         }
     } else {
-        val useIt = !isNameUsed("it")
-        val name = if (useIt) Name.identifier("it") else suggestName { !isNameUsed(it) }
+        val useIt = !isNameUsed(StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier)
+        val name = if (useIt) StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME else suggestName { !isNameUsed(it) }
         replaceUsages(name)
 
         mainExpression = psiFactory.buildExpression {
