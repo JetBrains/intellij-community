@@ -1,9 +1,8 @@
 package com.jetbrains.performancePlugin.commands
 
-import com.intellij.codeHighlighting.Pass
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.daemon.impl.DaemonFusReporter
-import com.intellij.codeInsight.daemon.impl.FileStatusMap
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
@@ -12,7 +11,6 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.AbstractCommand
 import com.intellij.openapi.util.Ref
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.ConcurrencyUtil
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper
 import org.jetbrains.concurrency.Promise
@@ -43,16 +41,11 @@ class WaitForFinishedCodeAnalysis(text: String, line: Int) : AbstractCommand(tex
     val wasEntireFileHighlighted = Ref<Boolean>(false)
     connection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, object : DaemonFusReporter(project) {
       override fun daemonFinished(fileEditors: Collection<FileEditor>) {
-        val editor = fileEditors.filterIsInstance<TextEditor>().firstOrNull()?.editor
-        val document = editor?.document
-
-        if (document == null) return
-        val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document)
-        if (psiFile == null) return
-        val dirtyRange = FileStatusMap.getDirtyTextRange(document, psiFile, Pass.UPDATE_ALL)
+        val editor = fileEditors.filterIsInstance<TextEditor>().firstOrNull() ?: return
+        val entireFileHighlighted = DaemonCodeAnalyzerImpl.isHighlightingCompleted(editor, project)
 
         if (!canceled) {
-          wasEntireFileHighlighted.set(dirtyRange == null)
+          wasEntireFileHighlighted.set(entireFileHighlighted)
         }
         if (wasEntireFileHighlighted.get()) {
           dateTimeWhenCodeAnalysisFinished.set(LocalDateTime.now())
