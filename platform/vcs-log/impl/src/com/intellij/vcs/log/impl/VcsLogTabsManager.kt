@@ -20,11 +20,9 @@ import com.intellij.vcs.log.impl.VcsLogContentUtil.openLogTab
 import com.intellij.vcs.log.impl.VcsLogContentUtil.updateLogUiName
 import com.intellij.vcs.log.impl.VcsLogEditorUtil.findVcsLogUi
 import com.intellij.vcs.log.impl.VcsLogManager.VcsLogUiFactory
-import com.intellij.vcs.log.impl.VcsProjectLog.ProjectLogListener
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.editor.VcsLogVirtualFileSystem
 import com.intellij.vcs.log.visible.filters.getPresentation
-import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.*
