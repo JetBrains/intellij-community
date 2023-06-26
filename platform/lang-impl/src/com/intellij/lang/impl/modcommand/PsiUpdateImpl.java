@@ -387,6 +387,11 @@ final class PsiUpdateImpl {
       myMessage = errorMessage;
     }
 
+    @Override
+    public int getCaretOffset() {
+      return myCaretOffset;
+    }
+
     private TextRange mapRange(@NotNull TextRange range) {
       PsiLanguageInjectionHost host = myTracker.myHostCopy;
       if (host != null) {

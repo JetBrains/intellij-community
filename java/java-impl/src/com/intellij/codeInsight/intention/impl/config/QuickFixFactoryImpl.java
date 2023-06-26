@@ -464,13 +464,13 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createAddMethodBodyFix(@NotNull PsiMethod method) {
-    return new AddMethodBodyFix(method);
+    return new AddMethodBodyFix(method).asIntention();
   }
 
   @NotNull
   @Override
   public IntentionAction createAddMethodBodyFix(@NotNull PsiMethod method, @NotNull @Nls String text) {
-    return new AddMethodBodyFix(method, text);
+    return new AddMethodBodyFix(method, text).asIntention();
   }
 
   @NotNull

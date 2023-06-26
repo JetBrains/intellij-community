@@ -106,4 +106,6 @@ public interface ModPsiUpdater {
    * @param errorMessage the error message to display
    */
   void cancel(@NotNull @NlsContexts.Tooltip String errorMessage);
+
+  int getCaretOffset();
 }
