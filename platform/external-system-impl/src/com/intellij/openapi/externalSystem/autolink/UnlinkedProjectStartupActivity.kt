@@ -2,7 +2,6 @@
 package com.intellij.openapi.externalSystem.autolink
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
@@ -73,14 +72,7 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
     if (!isNewExternalProject) {
       if (isExpectedAutoLink && unlinkedProjects.size == 1 && linkedProjects.isEmpty()) {
         val extension = unlinkedProjects.single()
-        if (extension is ExternalSystemUnlinkedProjectAsyncAware) {
-          extension.linkAndLoadProjectAsync(project, externalProjectPath)
-        }
-        else {
-          withContext(Dispatchers.EDT) {
-            extension.linkAndLoadProject(project, externalProjectPath)
-          }
-        }
+        extension.linkAndLoadProjectAsync(project, externalProjectPath)
         if (LOG.isDebugEnabled) {
           val projectId = extension.createProjectId(externalProjectPath)
           LOG.debug(projectId.debugName + ": project is auto-linked")

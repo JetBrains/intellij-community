@@ -15,7 +15,6 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAsyncAware
 import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -101,7 +100,7 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
         FileDocumentManager.getInstance().saveAllDocuments()
         MavenUtil.setupProjectSdk(project)
       }
-      (mavenProjectAware as ExternalSystemUnlinkedProjectAsyncAware).linkAndLoadProjectAsync(project, basePath)
+      mavenProjectAware.linkAndLoadProjectAsync(project, basePath)
     }
     MavenLog.LOG.warn("linked finished for ${project.name}")
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)
