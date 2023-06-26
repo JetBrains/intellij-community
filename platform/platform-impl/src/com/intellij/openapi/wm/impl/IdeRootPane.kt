@@ -207,7 +207,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
 
     ComponentUtil.decorateWindowHeader(this)
 
-    border = UIManager.getBorder("Window.border")
+    installBorder()
 
     helper.init(frame, rootPane, parentDisposable)
     updateMainMenuVisibility()
@@ -277,6 +277,15 @@ open class IdeRootPane internal constructor(frame: JFrame,
     }
   }
 
+  override fun updateUI() {
+    super.updateUI()
+
+    @Suppress("SENSELESS_COMPARISON") // frame = null when called from init of super
+    if (frame != null && windowDecorationStyle == NONE) {
+      installBorder()
+    }
+  }
+
   /**
    * @return not-null action group or null to use [IdeActions.GROUP_MAIN_MENU] action group
    */
@@ -323,8 +332,14 @@ open class IdeRootPane internal constructor(frame: JFrame,
 
   open fun getToolWindowPane(): ToolWindowPane = toolWindowPane!!
 
-  private fun updateScreenState(isInFullScreen: () -> Boolean) {
-    fullScreen = isInFullScreen()
+  private fun installBorder() {
+    val useUndecoratedBorder = frame?.let { X11UiUtil.useUndecoratedBorder(it) }
+    border = JBUI.CurrentTheme.Window.getBorder(!fullScreen && useUndecoratedBorder == true)
+  }
+
+  private fun updateScreenState(fullScreen: Boolean) {
+    this.fullScreen = fullScreen
+    installBorder()
     if (helper is DecoratedHelper) {
       val isCustomFrameHeaderVisible = !fullScreen || SystemInfoRt.isMac && !isCompactHeader
       helper.customFrameTitlePane.getComponent().isVisible = isCustomFrameHeaderVisible
@@ -381,8 +396,8 @@ open class IdeRootPane internal constructor(frame: JFrame,
   @RequiresEdt
   internal fun preInit(isInFullScreen: () -> Boolean) {
     if (isDecoratedMenu || isFloatingMenuBarSupported) {
-      addPropertyChangeListener(IdeFrameDecorator.FULL_SCREEN) { updateScreenState(isInFullScreen) }
-      updateScreenState(isInFullScreen)
+      addPropertyChangeListener(IdeFrameDecorator.FULL_SCREEN) { updateScreenState(isInFullScreen.invoke()) }
+      updateScreenState(isInFullScreen.invoke())
     }
   }
 
@@ -579,7 +594,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
     frame.background = JBColor.PanelBackground
     (frame.balloonLayout as? BalloonLayoutImpl)?.queueRelayout()
 
-    updateScreenState { fullScreen }
+    updateScreenState(fullScreen)
   }
 
   private val frame: IdeFrameImpl?
