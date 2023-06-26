@@ -111,18 +111,27 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
     protected open fun getK2IgnoreDirective(): String = IgnoreTests.DIRECTIVES.IGNORE_K2
 
     var originalUseIrBackendForEvaluation = true
+    private var originalDisableFallbackToOldEvaluator = false
 
     private fun registerEvaluatorBackend() {
         val useIrBackendForEvaluation = Registry.get("debugger.kotlin.evaluator.use.new.jvm.ir.backend")
         originalUseIrBackendForEvaluation = useIrBackendForEvaluation.asBoolean()
-        useIrBackendForEvaluation.setValue(
-            fragmentCompilerBackend() == FragmentCompilerBackend.JVM_IR
-        )
+
+        val isJvmIrBackend = fragmentCompilerBackend() == FragmentCompilerBackend.JVM_IR
+        useIrBackendForEvaluation.setValue(isJvmIrBackend)
+
+        if (isJvmIrBackend) {
+            val disableFallbackToOldEvaluator = Registry.get("debugger.kotlin.evaluator.disable.fallback.to.old.backend")
+            originalDisableFallbackToOldEvaluator = disableFallbackToOldEvaluator.asBoolean()
+            disableFallbackToOldEvaluator.setValue(true)
+        }
     }
 
     private fun restoreEvaluatorBackend() {
         Registry.get("debugger.kotlin.evaluator.use.new.jvm.ir.backend")
             .setValue(originalUseIrBackendForEvaluation)
+        Registry.get("debugger.kotlin.evaluator.disable.fallback.to.old.backend")
+            .setValue(originalDisableFallbackToOldEvaluator)
     }
 
     protected open val isK2Plugin: Boolean get() = false
