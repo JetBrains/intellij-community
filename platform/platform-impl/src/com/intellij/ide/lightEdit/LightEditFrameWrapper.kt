@@ -195,7 +195,7 @@ internal class LightEditFrameWrapper(
     super.dispose()
   }
 
-  private inner class LightEditRootPane(frame: JFrame,
+  private inner class LightEditRootPane(frame: IdeFrameImpl,
                                         parentDisposable: Disposable) : IdeRootPane(frame = frame,
                                                                                     parentDisposable = parentDisposable,
                                                                                     loadingState = null), LightEditCompatible {

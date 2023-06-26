@@ -21,11 +21,13 @@ import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsX
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
+import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.CustomFrameDecorations
+import kotlinx.coroutines.cancel
 import java.awt.*
 import java.awt.GridBagConstraints.*
 import java.awt.event.ComponentAdapter
@@ -40,7 +42,9 @@ private enum class ShowMode {
 }
 
 internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) : FrameHeader(frame), UISettingsListener, ToolbarHolder, MainFrameCustomHeader {
-  private val myMenuBar = IdeMenuBar.createMenuBar()
+  private val coroutineScope = root.coroutineScope.childScope()
+
+  private val myMenuBar = IdeMenuBar.createMenuBar(coroutineScope.childScope(), frame)
   private val ideMenuHelper = IdeMenuHelper(myMenuBar, this)
   private val menuBarHeaderTitle = SimpleCustomDecorationPath(frame, true).apply {
     isOpaque = false
@@ -50,14 +54,21 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
   private var toolbar : MainToolbar? = null
   private val myToolbarPlaceholder = createToolbarPlaceholder()
   private val myHeaderContent = createHeaderContent()
-  private val expandableMenu = ExpandableMenu(myHeaderContent, this)
+  private val expandableMenu = ExpandableMenu(headerContent = myHeaderContent, coroutineScope = coroutineScope.childScope(), frame)
   private val toolbarHeaderTitle = SimpleCustomDecorationPath(frame).apply {
     isOpaque = false
   }
-  private val customizer get() = ProjectWindowCustomizerService.getInstance()
+  private val customizer: ProjectWindowCustomizerService
+    get() = ProjectWindowCustomizerService.getInstance()
 
   init {
     updateMenuBar()
+  }
+
+  override fun dispose() {
+    super.dispose()
+
+    coroutineScope.cancel()
   }
 
   private fun createToolbarPlaceholder(): JPanel {
@@ -142,7 +153,7 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
   private fun doUpdateToolbar(toolbarActionGroups: List<Pair<ActionGroup, String>>) {
     removeToolbar()
 
-    val toolbar = MainToolbar()
+    val toolbar = MainToolbar(root.coroutineScope.childScope(), frame)
     toolbar.layoutCallBack = { updateCustomTitleBar() }
     toolbar.init(toolbarActionGroups, customTitleBar)
     toolbar.isOpaque = false

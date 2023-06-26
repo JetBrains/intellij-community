@@ -45,6 +45,7 @@ import com.intellij.ui.mac.touchbar.Touchbar
 import com.intellij.ui.mac.touchbar.TouchbarActionCustomizations
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.IconUtil
+import com.intellij.util.childScope
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
@@ -113,7 +114,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
     }
     else {
       if (USE_TABBED_WELCOME_SCREEN && SystemInfoRt.isMac) {
-        rootPane.jMenuBar = WelcomeFrameMenuBar()
+        rootPane.jMenuBar = WelcomeFrameMenuBar(this)
       }
       content.setContent(screen.welcomePanel)
     }
@@ -179,7 +180,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
     }
     else {
       if (USE_TABBED_WELCOME_SCREEN && SystemInfoRt.isMac) {
-        rootPane.jMenuBar = WelcomeFrameMenuBar()
+        rootPane.jMenuBar = WelcomeFrameMenuBar(this)
       }
       content.setContent(screen.welcomePanel)
     }
@@ -469,8 +470,9 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
   }
 }
 
-private class WelcomeFrameMenuBar : IdeMenuBar() {
-  override suspend fun getMainMenuActionGroupAsync(): ActionGroup {
+@Suppress("DEPRECATION")
+private class WelcomeFrameMenuBar(frame: JFrame) : IdeMenuBar(ApplicationManager.getApplication().coroutineScope.childScope(), frame) {
+  override suspend fun getMainMenuActionGroupAsync(rootPane: JRootPane?): ActionGroup {
     val manager = service<ActionManager>()
     return DefaultActionGroup(manager.getAction(IdeActions.GROUP_FILE), manager.getAction(IdeActions.GROUP_HELP_MENU))
   }

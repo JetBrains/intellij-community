@@ -120,10 +120,12 @@ public final class ActionMenu extends JBMenu {
 
     init();
 
-    // Also triggering initialization of private field "popupMenu" from JMenu with our own JBPopupMenu
-    BegMenuItemUI.registerMultiChoiceSupport(getPopupMenu(), popupMenu -> {
-      Utils.updateMenuItems(popupMenu, getDataContext(), myPlace, myPresentationFactory);
-    });
+    if (myScreenMenuPeer == null) {
+      // also triggering initialization of private field "popupMenu" from JMenu with our own JBPopupMenu
+      BegMenuItemUI.registerMultiChoiceSupport(getPopupMenu(), popupMenu -> {
+        Utils.updateMenuItems(popupMenu, getDataContext(), myPlace, myPresentationFactory);
+      });
+    }
   }
 
   public @NotNull AnAction getAnAction() { return myGroup.getAction(); }

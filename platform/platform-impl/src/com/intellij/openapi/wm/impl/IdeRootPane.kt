@@ -47,6 +47,7 @@ import com.intellij.ui.*
 import com.intellij.ui.components.JBBox
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.mac.MacWinTabsHandler
+import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
@@ -65,10 +66,10 @@ private const val EXTENSION_KEY = "extensionKey"
 
 @Suppress("LeakingThis")
 @ApiStatus.Internal
-open class IdeRootPane internal constructor(frame: JFrame,
+open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
                                             parentDisposable: Disposable,
                                             loadingState: FrameLoadingState?) : JRootPane(), UISettingsListener {
-  private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+  internal val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
   private var toolbar: JComponent? = null
 
@@ -143,7 +144,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
 
     val isDecoratedMenu = isDecoratedMenu
     if (!isDecoratedMenu && !isFloatingMenuBarSupported) {
-      jMenuBar = IdeMenuBar.createMenuBar()
+      jMenuBar = IdeMenuBar.createMenuBar(coroutineScope.childScope(), frame)
       helper = UndecoratedHelper
     }
     else {
@@ -162,7 +163,8 @@ open class IdeRootPane internal constructor(frame: JFrame,
         }
         else {
           selectedEditorFilePath = CustomDecorationPath(frame)
-          MenuFrameHeader(frame = frame, headerTitle = selectedEditorFilePath, ideMenu = IdeMenuBar.createMenuBar())
+          MenuFrameHeader(frame = frame, headerTitle = selectedEditorFilePath,
+                          ideMenu = IdeMenuBar.createMenuBar(coroutineScope.childScope(), frame))
         }
         helper = DecoratedHelper(
           customFrameTitlePane = customFrameTitlePane,
@@ -185,7 +187,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
       }
 
       if (isFloatingMenuBarSupported) {
-        menuBar = IdeMenuBar.createMenuBar()
+        menuBar = IdeMenuBar.createMenuBar(coroutineScope.childScope(), frame)
         menuBar.isOpaque = true
         layeredPane.add(menuBar, (JLayeredPane.DEFAULT_LAYER - 1) as Any)
       }
@@ -202,9 +204,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
       }
     }
 
-    if (frame is IdeFrameImpl) {
-      putClientProperty(UIUtil.NO_BORDER_UNDER_WINDOW_TITLE_KEY, true)
-    }
+    putClientProperty(UIUtil.NO_BORDER_UNDER_WINDOW_TITLE_KEY, true)
 
     ComponentUtil.decorateWindowHeader(this)
 
@@ -214,7 +214,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
     updateMainMenuVisibility()
 
     if (helper.toolbarHolder == null) {
-      toolbar = createToolbar()
+      toolbar = createToolbar(coroutineScope.childScope(), frame)
       northPanel.add(toolbar, 0)
       toolbar!!.isVisible = isToolbarVisible(mainToolbarActionSupplier = { MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()) })
     }
@@ -399,7 +399,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
       disposeIfNeeded(it)
       northPanel.remove(it)
     }
-    toolbar = createToolbar()
+    toolbar = createToolbar(coroutineScope.childScope(), frame)
     northPanel.add(toolbar, 0)
     toolbar!!.isVisible = isToolbarVisible { MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()) }
     contentPane!!.revalidate()
@@ -455,7 +455,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
 
   private fun updateToolbarVisibility() {
     if (toolbar == null) {
-      toolbar = createToolbar()
+      toolbar = createToolbar(coroutineScope.childScope(), frame)
       northPanel.add(toolbar, 0)
     }
 
@@ -562,15 +562,12 @@ open class IdeRootPane internal constructor(frame: JFrame,
     UIUtil.decorateWindowHeader(this)
     updateToolbarVisibility()
     updateStatusBarVisibility()
-    val frame = frame ?: return
+    val frame = frame
     frame.background = JBColor.PanelBackground
     (frame.balloonLayout as? BalloonLayoutImpl)?.queueRelayout()
 
     updateScreenState { fullScreen }
   }
-
-  private val frame: IdeFrameImpl?
-    get() = ComponentUtil.getParentOfType(IdeFrameImpl::class.java, this)
 
   private inner class MyRootLayout : RootLayout() {
     // do not cache it - MyRootLayout is created before IdeRootPane constructor
@@ -666,14 +663,16 @@ private val isDecoratedMenu: Boolean
     return osSupported && (isToolbarInHeader() || IdeFrameDecorator.isCustomDecorationActive())
   }
 
-private fun createToolbar(): JComponent {
+private fun createToolbar(coroutineScope: CoroutineScope, frame: JFrame): JComponent {
   if (ExperimentalUI.isNewUI()) {
-    val toolbar = MainToolbar()
+    val toolbar = MainToolbar(coroutineScope, frame)
     toolbar.init(MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()))
     toolbar.border = JBUI.Borders.empty(0, 5)
     return toolbar
   }
   else {
+    // don't bother a client to know that old ui doesn't use coroutine scope
+    coroutineScope.cancel()
     val group = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_TOOLBAR) as ActionGroup
     val toolBar = ActionManagerEx.getInstanceEx().createActionToolbar(ActionPlaces.MAIN_TOOLBAR, group, true)
     toolBar.targetComponent = null

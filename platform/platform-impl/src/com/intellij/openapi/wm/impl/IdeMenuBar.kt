@@ -4,61 +4,48 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.DynamicBundle
-import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.runActivity
 import com.intellij.diagnostic.subtask
-import com.intellij.ide.DataManager
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.actionSystem.impl.ActionMenu
-import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory
 import com.intellij.openapi.actionSystem.impl.PopupMenuPreloader
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFloatingMenuBarSupported
-import com.intellij.openapi.wm.impl.ProjectFrameHelper.Companion.getFrameHelper
-import com.intellij.openapi.wm.impl.status.ClockPanel
-import com.intellij.ui.ColorUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.mac.foundation.NSDefaults
 import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.mac.screenmenu.MenuBar
 import com.intellij.ui.plaf.beg.IdeaMenuUI
-import com.intellij.util.IJSwingUtilities
-import com.intellij.util.childScope
-import com.intellij.util.ui.*
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import java.awt.*
-import java.awt.event.ActionEvent
-import java.awt.event.ActionListener
-import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.geom.AffineTransform
-import java.awt.geom.GeneralPath
-import java.awt.geom.RoundRectangle2D
 import javax.swing.*
 import javax.swing.border.Border
-import kotlin.math.cos
-import kotlin.math.sqrt
 import kotlin.time.Duration.Companion.milliseconds
 
 @Suppress("LeakingThis")
-open class IdeMenuBar internal constructor() : JMenuBar(), UISettingsListener {
-  enum class State {
+open class IdeMenuBar internal constructor(@JvmField protected val coroutineScope: CoroutineScope, frame: JFrame) : JMenuBar(), UISettingsListener {
+  internal enum class State {
     EXPANDED,
     COLLAPSING,
     COLLAPSED,
@@ -69,40 +56,43 @@ open class IdeMenuBar internal constructor() : JMenuBar(), UISettingsListener {
       get() = this == COLLAPSING || this == EXPANDING
   }
 
-  private var visibleActions = ArrayList<AnAction>()
-  private val presentationFactory = MenuItemPresentationFactory()
+  private val menuBarHelper: IdeMenuBarHelper
   private val timerListener = MyTimerListener()
 
-  @Suppress("DEPRECATION")
-  protected val coroutineScope: CoroutineScope = ApplicationManager.getApplication().coroutineScope.childScope()
-
-  private var clockPanel: ClockPanel? = null
-  private var button: MyExitFullScreenButton? = null
-  private var animator: MyAnimator? = null
-  private var activationWatcher: Timer? = null
-  private val updateRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val updateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private var state = State.EXPANDED
-  private var progress = 0.0
-  private var activated = false
-  private var screenMenuPeer: MenuBar? = null
+  @JvmField
+  internal var activated = false
+  private val screenMenuPeer: MenuBar?
 
   init {
-    if (isFloatingMenuBarSupported) {
-      animator = MyAnimator()
-      activationWatcher = TimerUtil.createNamedTimer("IdeMenuBar", 100, MyActionListener())
-      clockPanel = ClockPanel()
-      button = MyExitFullScreenButton()
-      add(clockPanel)
-      add(button)
-      addPropertyChangeListener(IdeFrameDecorator.FULL_SCREEN) { updateState() }
-      addMouseListener(MyMouseListener())
+    val flavor = if (isFloatingMenuBarSupported) {
+      FloatingMenuBarFlavor(this)
     }
     else {
-      animator = null
-      activationWatcher = null
-      clockPanel = null
-      button = null
+      object : IdeMenuFlavor {
+        override fun updateAppMenu() {
+          doUpdateAppMenu()
+        }
+      }
     }
+
+    screenMenuPeer = runActivity("ide menu bar init") { createScreeMenuPeer(frame) }
+    if (screenMenuPeer == null) {
+      menuBarHelper = IdeMenuBarHelper(flavor = flavor, isDarkMenu = ::isDarkMenu)
+    }
+    else {
+      menuBarHelper = PeerBasedIdeMenuBarHelper(screenMenuPeer = screenMenuPeer, flavor = flavor, isDarkMenu = ::isDarkMenu)
+    }
+
+    val rootPane = try {
+      frame.rootPane
+    }
+    catch (e: Throwable) {
+      null
+    }
+    scheduleUpdateActions(rootPane = rootPane)
+
     if (IdeFrameDecorator.isCustomDecorationActive()) {
       isOpaque = false
     }
@@ -112,7 +102,7 @@ open class IdeMenuBar internal constructor() : JMenuBar(), UISettingsListener {
         .debounce(50.milliseconds)
         .collectLatest {
           withContext(Dispatchers.EDT) {
-            presentationFactory.reset()
+            menuBarHelper.presentationFactory.reset()
             updateMenuActionsAsync(forceRebuild = true)
           }
         }
@@ -120,8 +110,8 @@ open class IdeMenuBar internal constructor() : JMenuBar(), UISettingsListener {
   }
 
   companion object {
-    fun createMenuBar(): IdeMenuBar {
-      return if (SystemInfoRt.isLinux) LinuxIdeMenuBar() else IdeMenuBar()
+    internal fun createMenuBar(coroutineScope: CoroutineScope, frame: JFrame): IdeMenuBar {
+      return if (SystemInfoRt.isLinux) LinuxIdeMenuBar(coroutineScope, frame) else IdeMenuBar(coroutineScope, frame)
     }
 
     fun installAppMenuIfNeeded(frame: JFrame) {
@@ -142,13 +132,17 @@ open class IdeMenuBar internal constructor() : JMenuBar(), UISettingsListener {
   }
 
   // JMenuBar calls getBorder on init before our own init (super is called before our constructor).
-  fun getState(): State {
+  internal fun getState(): State {
     return state
   }
 
-  fun setState(state: State) {
+  internal fun doSetState(state: State) {
     this.state = state
-    val activationWatcher = activationWatcher ?: return
+  }
+
+  internal fun setState(state: State) {
+    this.state = state
+    val activationWatcher = menuBarHelper.flavor.activationWatcher ?: return
     if (state == State.EXPANDING && !activationWatcher.isRunning) {
       activationWatcher.start()
     }
@@ -199,27 +193,14 @@ open class IdeMenuBar internal constructor() : JMenuBar(), UISettingsListener {
   override fun doLayout() {
     super.doLayout()
 
-    val clockPanel = clockPanel ?: return
-    val button = button ?: return
-    if (state == State.EXPANDED) {
-      clockPanel.isVisible = false
-      button.isVisible = false
-    }
-    else {
-      clockPanel.isVisible = true
-      button.isVisible = true
-      var preferredSize = button.preferredSize
-      button.setBounds(bounds.width - preferredSize.width, 0, preferredSize.width, preferredSize.height)
-      preferredSize = clockPanel.preferredSize
-      clockPanel.setBounds(bounds.width - preferredSize.width - button.width, 0, preferredSize.width, preferredSize.height)
-    }
+    menuBarHelper.flavor.layoutClockPanelAndButton(state)
   }
 
   override fun menuSelectionChanged(isIncluded: Boolean) {
     if (!isIncluded && state == State.TEMPORARY_EXPANDED) {
       activated = false
       state = State.COLLAPSING
-      restartAnimator()
+      menuBarHelper.flavor.restartAnimator()
       return
     }
 
@@ -239,33 +220,16 @@ open class IdeMenuBar internal constructor() : JMenuBar(), UISettingsListener {
     super.menuSelectionChanged(isIncluded)
   }
 
-  private val isActivated: Boolean
+  internal val isActivated: Boolean
     get() {
       val index = selectionModel.selectedIndex
       return index != -1 && getMenu(index).isPopupMenuVisible
     }
 
-  private fun updateState() {
-    val animator = animator ?: return
-    val window = (SwingUtilities.getWindowAncestor(this) as? IdeFrame) ?: return
-    val fullScreen = window.isInFullScreen
-    if (fullScreen) {
-      state = State.COLLAPSING
-      restartAnimator()
-    }
-    else {
-      animator.suspend()
-      state = State.EXPANDED
-      clockPanel?.let { clockPanel ->
-        clockPanel.isVisible = false
-        button?.isVisible = false
-      }
-    }
-  }
-
   override fun getPreferredSize(): Dimension {
     val dimension = super.getPreferredSize()
     if (state.isInProgress) {
+      val progress = menuBarHelper.flavor.getProgress()
       dimension.height = COLLAPSED_HEIGHT +
                          ((if (state == State.COLLAPSING) 1 - progress else progress) * (dimension.height - COLLAPSED_HEIGHT)).toInt()
     }
@@ -275,36 +239,8 @@ open class IdeMenuBar internal constructor() : JMenuBar(), UISettingsListener {
     return dimension
   }
 
-  private fun restartAnimator() {
-    val animator = animator ?: return
-    animator.reset()
-    animator.resume()
-  }
-
-  internal fun initScreeMenuPeer(window: Window?) {
-    if (screenMenuPeer != null) {
-      return
-    }
-
-    val activity = StartUpMeasurer.startActivity("ide menu bar init")
-    val screenMenuPeer: MenuBar?
-    if (Menu.isJbScreenMenuEnabled()) {
-      screenMenuPeer = MenuBar("MainMenu")
-      this.screenMenuPeer = screenMenuPeer
-      screenMenuPeer.setFrame(window ?: SwingUtilities.getWindowAncestor(this))
-    }
-    else {
-      screenMenuPeer = null
-    }
-
-    scheduleUpdateActions(screenMenuPeer = screenMenuPeer)
-    activity.end()
-  }
-
   override fun addNotify() {
     super.addNotify()
-
-    initScreeMenuPeer(null)
 
     IdeEventQueue.getInstance().addDispatcher(dispatcher = { event ->
       if (event is MouseEvent && state != State.EXPANDED /*&& !myState.isInProgress()*/) {
@@ -314,7 +250,7 @@ open class IdeMenuBar internal constructor() : JMenuBar(), UISettingsListener {
     }, scope = coroutineScope)
   }
 
-  private fun scheduleUpdateActions(screenMenuPeer: MenuBar?) {
+  private fun scheduleUpdateActions(rootPane: JRootPane?) {
     coroutineScope.launch {
       val app = ApplicationManager.getApplication()
       launch {
@@ -324,12 +260,12 @@ open class IdeMenuBar internal constructor() : JMenuBar(), UISettingsListener {
       val actionManager = app.serviceAsync<ActionManager>()
 
       subtask("ide menu bar actions init") {
-        val mainActionGroup = getMainMenuActionGroupAsync()
+        val mainActionGroup = getMainMenuActionGroupAsync(rootPane)
         withContext(Dispatchers.EDT) {
-          val actions = doUpdateMenuActions(mainActionGroup = mainActionGroup,
-                                            forceRebuild = false,
-                                            manager = actionManager,
-                                            screenMenuPeer = screenMenuPeer)
+          val actions = menuBarHelper.doUpdateMenuActions(mainActionGroup = mainActionGroup,
+                                                          forceRebuild = false,
+                                                          manager = actionManager,
+                                                          menuBar = this@IdeMenuBar)
           for (action in actions) {
             if (action is ActionGroup) {
               PopupMenuPreloader.install(this@IdeMenuBar, ActionPlaces.MAIN_MENU, null) { action }
@@ -349,11 +285,9 @@ open class IdeMenuBar internal constructor() : JMenuBar(), UISettingsListener {
     screenMenuPeer?.let {
       @Suppress("SSBasedInspection")
       it.dispose()
-      screenMenuPeer = null
     }
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
-      animator?.suspend()
-      coroutineScope.cancel()
+      menuBarHelper.flavor.suspendAnimator()
     }
     super.removeNotify()
   }
@@ -369,11 +303,11 @@ open class IdeMenuBar internal constructor() : JMenuBar(), UISettingsListener {
     }
     if (mouseInside && state == State.COLLAPSED) {
       state = State.EXPANDING
-      restartAnimator()
+      menuBarHelper.flavor.restartAnimator()
     }
     else if (!mouseInside && state != State.COLLAPSING && state != State.COLLAPSED) {
       state = State.COLLAPSING
-      restartAnimator()
+      menuBarHelper.flavor.restartAnimator()
     }
   }
 
@@ -395,17 +329,17 @@ open class IdeMenuBar internal constructor() : JMenuBar(), UISettingsListener {
 
   @JvmOverloads
   fun updateMenuActions(forceRebuild: Boolean = false) {
-    doUpdateMenuActions(mainActionGroup = getMainMenuActionGroup(),
-                        forceRebuild = forceRebuild,
-                        manager = ActionManager.getInstance(),
-                        screenMenuPeer = screenMenuPeer)
+    menuBarHelper.doUpdateMenuActions(mainActionGroup = getMainMenuActionGroup(),
+                                      forceRebuild = forceRebuild,
+                                      manager = ActionManager.getInstance(),
+                                      menuBar = this)
   }
 
   suspend fun updateMenuActionsAsync(forceRebuild: Boolean = false) {
-    doUpdateMenuActions(mainActionGroup = getMainMenuActionGroupAsync(),
-                        forceRebuild = forceRebuild,
-                        manager = ApplicationManager.getApplication().serviceAsync<ActionManager>(),
-                        screenMenuPeer = screenMenuPeer)
+    menuBarHelper.doUpdateMenuActions(mainActionGroup = getMainMenuActionGroupAsync(rootPane),
+                                      forceRebuild = forceRebuild,
+                                      manager = ApplicationManager.getApplication().serviceAsync<ActionManager>(),
+                                      menuBar = this)
   }
 
   internal fun scheduleUpdateMenuActionsWithForceRebuild() {
@@ -414,66 +348,7 @@ open class IdeMenuBar internal constructor() : JMenuBar(), UISettingsListener {
     }
   }
 
-  private fun doUpdateMenuActions(mainActionGroup: ActionGroup?,
-                                  forceRebuild: Boolean,
-                                  manager: ActionManager,
-                                  screenMenuPeer: MenuBar?): List<AnAction> {
-    val enableMnemonics = !UISettings.getInstance().disableMnemonics
-    val newVisibleActions = ArrayList<AnAction>()
-    val targetComponent = IJSwingUtilities.getFocusedComponentInWindowOrSelf(this)
-    val dataContext = DataManager.getInstance().getDataContext(targetComponent)
-    if (mainActionGroup != null) {
-      expandActionGroup(mainActionGroup = mainActionGroup,
-                        context = dataContext,
-                        newVisibleActions = newVisibleActions,
-                        actionManager = manager)
-    }
-    if (!forceRebuild && !presentationFactory.isNeedRebuild && newVisibleActions == visibleActions) {
-      for (child in components) {
-        if (child is ActionMenu) {
-          child.updateFromPresentation(enableMnemonics)
-        }
-      }
-      return newVisibleActions
-    }
-
-    // should rebuild UI
-    val changeBarVisibility = newVisibleActions.isEmpty() || visibleActions.isEmpty()
-    visibleActions = newVisibleActions
-    removeAll()
-    screenMenuPeer?.beginFill()
-    val isDarkMenu = isDarkMenu
-    for (action in newVisibleActions) {
-      val actionMenu = ActionMenu(null, ActionPlaces.MAIN_MENU, (action as ActionGroup), presentationFactory, enableMnemonics, isDarkMenu,
-                                  true)
-      if (IdeFrameDecorator.isCustomDecorationActive()) {
-        actionMenu.isOpaque = false
-        actionMenu.isFocusable = false
-      }
-      if (screenMenuPeer != null) {
-        screenMenuPeer.add(actionMenu.screenMenuPeer)
-      }
-      else {
-        add(actionMenu)
-      }
-    }
-    presentationFactory.resetNeedRebuild()
-    screenMenuPeer?.endFill()
-    updateAppMenu()
-    updateGlobalMenuRoots()
-    if (clockPanel != null) {
-      add(clockPanel)
-      add(button)
-    }
-    validate()
-    if (changeBarVisibility) {
-      invalidate()
-      (SwingUtilities.getAncestorOfClass(JFrame::class.java, this) as JFrame?)?.validate()
-    }
-    return newVisibleActions
-  }
-
-  protected open val isDarkMenu: Boolean
+  internal open val isDarkMenu: Boolean
     get() = SystemInfo.isMacSystemMenu && NSDefaults.isDarkMenuBar()
 
   override fun paintComponent(g: Graphics) {
@@ -486,14 +361,11 @@ open class IdeMenuBar internal constructor() : JMenuBar(), UISettingsListener {
   private fun paintBackground(g: Graphics) {
     if (IdeFrameDecorator.isCustomDecorationActive()) {
       val window = SwingUtilities.getWindowAncestor(this)
-      if (window is IdeFrame) {
-        val fullScreen = (window as IdeFrame).isInFullScreen
-        if (!fullScreen) {
-          return
-        }
+      if (window is IdeFrame && !(window as IdeFrame).isInFullScreen) {
+        return
       }
     }
-    if (StartupUiUtil.isUnderDarcula || UIUtil.isUnderIntelliJLaF()) {
+    if (StartupUiUtil.isUnderDarcula || StartupUiUtil.isUnderIntelliJLaF()) {
       g.color = IdeaMenuUI.getMenuBackgroundColor()
       g.fillRect(0, 0, width, height)
     }
@@ -514,25 +386,7 @@ open class IdeMenuBar internal constructor() : JMenuBar(), UISettingsListener {
     }
   }
 
-  private fun expandActionGroup(mainActionGroup: ActionGroup, context: DataContext, newVisibleActions: MutableList<in AnAction>, actionManager: ActionManager) {
-    // the only code that does not reuse ActionUpdater (do not repeat that anywhere else)
-    val children = mainActionGroup.getChildren(null)
-    for (action in children) {
-      if (action !is ActionGroup) {
-        continue
-      }
-
-      val presentation = presentationFactory.getPresentation(action)
-      val e = AnActionEvent(null, context, ActionPlaces.MAIN_MENU, presentation, actionManager, 0)
-      ActionUtil.performDumbAwareUpdate(action, e, false)
-      if (presentation.isVisible) {
-        newVisibleActions.add(action)
-      }
-    }
-  }
-
-  open suspend fun getMainMenuActionGroupAsync(): ActionGroup? {
-    val rootPane = rootPane
+  open suspend fun getMainMenuActionGroupAsync(rootPane: JRootPane?): ActionGroup? {
     val group = if (rootPane is IdeRootPane) rootPane.mainMenuActionGroup else null
     return group ?:
     ApplicationManager.getApplication().serviceAsync<CustomActionsSchema>().getCorrectedAction(IdeActions.GROUP_MAIN_MENU) as ActionGroup?
@@ -545,11 +399,11 @@ open class IdeMenuBar internal constructor() : JMenuBar(), UISettingsListener {
   }
 
   override fun getMenuCount(): Int {
-    val menuCount = super.getMenuCount()
-    return if (clockPanel == null) menuCount else menuCount - 2
+    @Suppress("IfThenToElvis", "SENSELESS_COMPARISON")
+    return if (menuBarHelper == null) 0 else menuBarHelper.flavor.correctMenuCount(super.getMenuCount())
   }
 
-  protected open fun updateGlobalMenuRoots() {}
+  internal open fun updateGlobalMenuRoots() {}
 
   private inner class MyTimerListener : TimerListener {
     override fun getModalityState(): ModalityState = ModalityState.stateForComponent(this@IdeMenuBar)
@@ -582,84 +436,18 @@ open class IdeMenuBar internal constructor() : JMenuBar(), UISettingsListener {
     }
   }
 
-  private inner class MyAnimator : Animator("MenuBarAnimator", 16, 300, false) {
-    override fun paintNow(frame: Int, totalFrames: Int, cycle: Int) {
-      progress = (1 - cos(Math.PI * (frame.toFloat() / totalFrames))) / 2
-      revalidate()
-      repaint()
-    }
-
-    override fun paintCycleEnd() {
-      progress = 1.0
-      when (state) {
-        State.COLLAPSING -> state = State.COLLAPSED
-        State.EXPANDING -> state = State.TEMPORARY_EXPANDED
-        else -> {}
-      }
-      if (!isShowing) {
-        return
-      }
-
-      revalidate()
-      if (state == State.COLLAPSED) {
-        // we should repaint the parent, to clear 1px on top when a menu is collapsed
-        parent.repaint()
-      }
-      else {
-        repaint()
-      }
-    }
-  }
-
-  private inner class MyActionListener : ActionListener {
-    override fun actionPerformed(e: ActionEvent) {
-      if (state == State.EXPANDED || state == State.EXPANDING) {
-        return
-      }
-
-      val activated: Boolean = isActivated
-      if (this@IdeMenuBar.activated && !activated && state == State.TEMPORARY_EXPANDED) {
-        this@IdeMenuBar.activated = false
-        state = State.COLLAPSING
-        restartAnimator()
-      }
-      if (activated) {
-        this@IdeMenuBar.activated = true
-      }
-    }
-  }
-
   protected open fun doInstallAppMenuIfNeeded(frame: JFrame) {}
 
   open fun onToggleFullScreen(isFullScreen: Boolean) {}
 }
 
-private val LOG = logger<IdeMenuBar>()
+private val LOG: Logger
+  get() = logger<IdeMenuBar>()
+
 private const val COLLAPSED_HEIGHT = 2
 
-private class MyMouseListener : MouseAdapter() {
-  override fun mousePressed(e: MouseEvent) {
-    val c = e.component
-    if (c !is IdeMenuBar) {
-      return
-    }
-
-    val size = c.getSize()
-    val insets = c.insets
-    val p = e.point
-    if (p.y < insets.top || p.y >= size.height - insets.bottom) {
-      val item = c.findComponentAt(p.x, size.height / 2)
-      if (item is JMenuItem) {
-        // re-target border clicks as a menu item ones
-        item.dispatchEvent(MouseEventAdapter.convert(e, item, 1, 1))
-        e.consume()
-      }
-    }
-  }
-}
-
 // NOTE: for OSX only
-private fun updateAppMenu() {
+internal fun doUpdateAppMenu() {
   if (!Menu.isJbScreenMenuEnabled()) {
     return
   }
@@ -682,83 +470,13 @@ private fun updateAppMenu() {
   //}
 }
 
-private class MyExitFullScreenButton : JButton() {
-  init {
-    isFocusable = false
-    addActionListener {
-      getFrameHelper(SwingUtilities.getWindowAncestor(this))?.toggleFullScreen(false)
-    }
-    addMouseListener(object : MouseAdapter() {
-      override fun mouseEntered(e: MouseEvent) {
-        model.isRollover = true
-      }
-
-      override fun mouseExited(e: MouseEvent) {
-        model.isRollover = false
-      }
-    })
+private fun createScreeMenuPeer(frame: JFrame): MenuBar? {
+  if (Menu.isJbScreenMenuEnabled()) {
+    val screenMenuPeer = MenuBar("MainMenu")
+    screenMenuPeer.setFrame(frame)
+    return screenMenuPeer
   }
-
-  override fun getPreferredSize(): Dimension {
-    val height: Int
-    val parent = parent
-    height = if (isVisible && parent != null) {
-      parent.size.height - parent.insets.top - parent.insets.bottom
-    }
-    else {
-      super.getPreferredSize().height
-    }
-    return Dimension(height, height)
-  }
-
-  override fun getMaximumSize(): Dimension = preferredSize
-
-  override fun paint(g: Graphics) {
-    val g2d = g.create() as Graphics2D
-    try {
-      g2d.color = UIManager.getColor("Label.background")
-      g2d.fillRect(0, 0, width + 1, height + 1)
-      g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON)
-      g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-      g2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY)
-      val s = height.toDouble() / 13
-      g2d.translate(s, s)
-      val plate: Shape = RoundRectangle2D.Double(0.0, 0.0, s * 11, s * 11, s, s)
-      val color = UIManager.getColor("Label.foreground")
-      val hover = model.isRollover || model.isPressed
-      g2d.color = ColorUtil.withAlpha(color, if (hover) .25 else .18)
-      g2d.fill(plate)
-      g2d.color = ColorUtil.withAlpha(color, if (hover) .4 else .33)
-      g2d.draw(plate)
-      g2d.color = ColorUtil.withAlpha(color, if (hover) .7 else .66)
-      var path = GeneralPath()
-      path.moveTo(s * 2, s * 6)
-      path.lineTo(s * 5, s * 6)
-      path.lineTo(s * 5, s * 9)
-      path.lineTo(s * 4, s * 8)
-      path.lineTo(s * 2, s * 10)
-      path.quadTo(s * 2 - s / sqrt(2.0), s * 9 + s / sqrt(2.0), s, s * 9)
-      path.lineTo(s * 3, s * 7)
-      path.lineTo(s * 2, s * 6)
-      path.closePath()
-      g2d.fill(path)
-      g2d.draw(path)
-      path = GeneralPath()
-      path.moveTo(s * 6, s * 2)
-      path.lineTo(s * 6, s * 5)
-      path.lineTo(s * 9, s * 5)
-      path.lineTo(s * 8, s * 4)
-      path.lineTo(s * 10, s * 2)
-      path.quadTo(s * 9 + s / sqrt(2.0), s * 2 - s / sqrt(2.0), s * 9, s)
-      path.lineTo(s * 7, s * 3)
-      path.lineTo(s * 6, s * 2)
-      path.closePath()
-      g2d.fill(path)
-      g2d.draw(path)
-    }
-    finally {
-      g2d.dispose()
-    }
+  else {
+    return null
   }
 }
-

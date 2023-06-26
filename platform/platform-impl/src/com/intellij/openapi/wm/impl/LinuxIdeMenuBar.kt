@@ -3,12 +3,13 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.util.Disposer
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import javax.swing.JFrame
 
-internal class LinuxIdeMenuBar : IdeMenuBar() {
+internal class LinuxIdeMenuBar(coroutineScope: CoroutineScope, frame: JFrame) : IdeMenuBar(coroutineScope, frame) {
   companion object {
     fun doBindAppMenuOfParent(frame: JFrame, parentFrame: JFrame) {
       if (GlobalMenuLinux.isPresented()) {

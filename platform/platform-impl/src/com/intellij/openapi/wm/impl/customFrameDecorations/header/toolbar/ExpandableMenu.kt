@@ -4,10 +4,8 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
 import com.intellij.ide.ProjectWindowCustomizerService
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.IdeMenuBar
@@ -16,6 +14,8 @@ import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.IJSwingUtilities
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.job
 import java.awt.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
@@ -26,9 +26,8 @@ import javax.swing.event.ChangeListener
 
 private const val ALPHA = (255 * 0.6).toInt()
 
-internal class ExpandableMenu(private val headerContent: JComponent, disposable: Disposable) {
-
-  val ideMenu: IdeMenuBar = IdeMenuBar.createMenuBar()
+internal class ExpandableMenu(private val headerContent: JComponent, coroutineScope: CoroutineScope, frame: JFrame) {
+  val ideMenu: IdeMenuBar = IdeMenuBar.createMenuBar(coroutineScope, frame)
   private val ideMenuHelper = IdeMenuHelper(ideMenu, null)
   private var expandedMenuBar: JPanel? = null
   private var headerColorfulPanel: HeaderColorfulPanel? = null
@@ -53,7 +52,9 @@ internal class ExpandableMenu(private val headerContent: JComponent, disposable:
 
   init {
     MenuSelectionManager.defaultManager().addChangeListener(menuSelectionListener)
-    disposable.whenDisposed { MenuSelectionManager.defaultManager().removeChangeListener(menuSelectionListener) }
+    coroutineScope.coroutineContext.job.invokeOnCompletion {
+      MenuSelectionManager.defaultManager().removeChangeListener(menuSelectionListener)
+    }
 
     ideMenuHelper.installListeners()
 

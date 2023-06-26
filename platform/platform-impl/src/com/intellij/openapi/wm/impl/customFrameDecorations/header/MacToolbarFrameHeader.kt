@@ -15,6 +15,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.Sim
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.ui.mac.MacFullScreenControlsManager
 import com.intellij.ui.mac.MacMainFrameDecorator
+import com.intellij.util.childScope
 import com.intellij.util.ui.JBUI
 import com.jetbrains.JBR
 import java.awt.BorderLayout
@@ -31,14 +32,14 @@ private const val DEFAULT_HEADER_HEIGHT = 40
 
 internal class MacToolbarFrameHeader(private val frame: JFrame, private val root: IdeRootPane)
   : CustomHeader(frame), MainFrameCustomHeader, ToolbarHolder, UISettingsListener {
-  private val ideMenu = IdeMenuBar()
+  private val ideMenu = IdeMenuBar(root.coroutineScope.childScope(), frame)
   private var toolbar: MainToolbar
 
   init {
     layout = AdjustableSizeCardLayout()
     root.addPropertyChangeListener(MacMainFrameDecorator.FULL_SCREEN, PropertyChangeListener { updateBorders() })
 
-    ideMenu.initScreeMenuPeer(frame)
+    //add(ideMenu)
 
     toolbar = createToolBar()
 
@@ -59,7 +60,7 @@ internal class MacToolbarFrameHeader(private val frame: JFrame, private val root
   }
 
   private fun createToolBar(): MainToolbar {
-    val toolbar = MainToolbar()
+    val toolbar = MainToolbar(root.coroutineScope.childScope(), frame)
     toolbar.layoutCallBack = { updateCustomTitleBar() }
     toolbar.isOpaque = false
     toolbar.addComponentListener(object: ComponentAdapter() {

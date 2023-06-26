@@ -28,9 +28,9 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDia
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader
 import com.intellij.ui.*
 import com.intellij.ui.mac.touchbar.TouchbarSupport
+import com.intellij.util.childScope
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.UIUtil
-import com.jetbrains.JBR
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import org.jetbrains.annotations.NonNls
@@ -291,7 +291,8 @@ open class FrameWrapper @JvmOverloads constructor(private var project: Project?,
       FrameState.setFrameStateListener(this)
       glassPane = IdeGlassPaneImpl(rootPane = getRootPane(), installPainters = true)
       if (SystemInfoRt.isMac && !(SystemInfo.isMacSystemMenu && java.lang.Boolean.getBoolean("mac.system.menu.singleton"))) {
-        jMenuBar = IdeMenuBar.createMenuBar()
+        @Suppress("DEPRECATION")
+        jMenuBar = IdeMenuBar.createMenuBar(coroutineScope = ApplicationManager.getApplication().coroutineScope.childScope(), this)
 
       }
       MouseGestureManager.getInstance().add(this)
