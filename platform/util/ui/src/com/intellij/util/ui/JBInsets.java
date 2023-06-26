@@ -4,6 +4,7 @@ package com.intellij.util.ui;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.plaf.UIResource;
 import java.awt.*;
@@ -55,7 +56,14 @@ public class JBInsets extends Insets {
     return new JBInsets(topBottom, leftRight, topBottom, leftRight);
   }
 
+  public static @Nullable JBInsets createOrNull(@Nullable Insets insets) {
+    return insets == null ? null : create(insets);
+  }
+
   public static @NotNull JBInsets create(@NotNull Insets insets) {
+    if (insets instanceof JBInsetsUIResource) {
+      return new JBInsetsUIResource((JBInsets)insets);
+    }
     if (insets instanceof JBInsets) {
       JBInsets copy = new JBInsets(0, 0, 0, 0);
       copyInsets(copy, insets);

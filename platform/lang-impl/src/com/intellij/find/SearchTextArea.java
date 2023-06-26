@@ -203,7 +203,7 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
     iconsPanelWrapper.add(p, BorderLayout.WEST);
     iconsPanelWrapper.add(myExtraActionsPanel, BorderLayout.CENTER);
 
-    Border border = getBorder() == null ? JBUI.Borders.empty(UIUtil.unscaleIfJBInsets(JBUI.CurrentTheme.Editor.SearchField.borderInsets())) : getBorder();
+    Border border = getBorder() == null ? JBUI.Borders.empty(JBUI.CurrentTheme.Editor.SearchField.borderInsets().getUnscaled()) : getBorder();
     removeAll();
     setLayout(new BorderLayout(JBUIScale.scale(3), 0));
     setBorder(border);

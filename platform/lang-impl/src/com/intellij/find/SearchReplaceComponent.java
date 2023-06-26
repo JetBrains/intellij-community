@@ -322,14 +322,14 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     super.updateUI();
     // ALL these null checks are necessary because updateUI() is called from a superclass constructor
     if (mySearchToolbarWrapper != null) {
-      mySearchToolbarWrapper.setBorder(JBUI.Borders.empty(UIUtil.unscaleIfJBInsets(JBUI.CurrentTheme.Editor.SearchToolbar.borderInsets())));
+      mySearchToolbarWrapper.setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.Editor.SearchToolbar.borderInsets().getUnscaled()));
     }
     if (myReplaceToolbarWrapper != null) {
-      myReplaceToolbarWrapper.setBorder(JBUI.Borders.empty(UIUtil.unscaleIfJBInsets(JBUI.CurrentTheme.Editor.ReplaceToolbar.borderInsets())));
+      myReplaceToolbarWrapper.setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.Editor.ReplaceToolbar.borderInsets().getUnscaled()));
     }
     if (myModePanel != null) {
       myModePanel.setBorder(JBUI.Borders.compound(JBUI.Borders.customLine(JBUI.CurrentTheme.Editor.BORDER_COLOR, 0, 0, 0, 1),
-                                                  JBUI.Borders.empty(UIUtil.unscaleIfJBInsets(JBUI.CurrentTheme.Editor.SearchReplaceModePanel.borderInsets()))));
+                                                  JBUI.Borders.empty(JBUI.CurrentTheme.Editor.SearchReplaceModePanel.borderInsets().getUnscaled())));
     }
   }
 
