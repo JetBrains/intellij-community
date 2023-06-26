@@ -12,7 +12,8 @@ class ExperimentalUiCollector : CounterUsagesCollector() {
     DISABLE_NEW_UI_ACTION,
     SETTINGS,
     WELCOME_PROMO,
-    WHATS_NEW_PAGE
+    WHATS_NEW_PAGE,
+    PREFERENCES
   }
 
   enum class MeetNewUiAction {
@@ -24,7 +25,7 @@ class ExperimentalUiCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup("experimental.ui.interactions", 4)
+    private val GROUP = EventLogGroup("experimental.ui.interactions", 5)
 
     private val switchSourceField = EventFields.Enum<SwitchSource>("switch_source")
     private val expUiField = EventFields.Boolean("exp_ui")
@@ -34,6 +35,12 @@ class ExperimentalUiCollector : CounterUsagesCollector() {
     fun logSwitchUi(switchSource: SwitchSource, value: Boolean): Unit = switchUi.log(
       switchSourceField with switchSource,
       expUiField with value)
+
+    @JvmStatic
+    val inviteBannerShown = GROUP.registerEvent("invite.banner.shown")
+
+    @JvmStatic
+    val inviteBannerClosed = GROUP.registerEvent("invite.banner.closed")
 
     private val meetNewUiActionField = EventFields.Enum<MeetNewUiAction>("action")
     private val meetNewUiAction = GROUP.registerVarargEvent("meet.new.ui.action", meetNewUiActionField)
