@@ -40,7 +40,7 @@ open class KotlinFunctionBreakpointType protected constructor(@NotNull id: Strin
         return platform.isCommon() || platform.isJvm()
     }
 
-    protected open fun isFunctionBreakpointApplicable(file: VirtualFile, line: Int, project: Project): Boolean =
+    open fun isFunctionBreakpointApplicable(file: VirtualFile, line: Int, project: Project): Boolean =
         isBreakpointApplicable(file, line, project) { element ->
             when (element) {
                 is KtConstructor<*> ->
