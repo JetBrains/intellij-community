@@ -455,7 +455,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   @Override
   public void invokeAndWait(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
     if (isDispatchThread()) {
-      runnable.run();
+      runIntendedWriteActionOnCurrentThread(runnable);
       return;
     }
     if (EDT.isCurrentThreadEdt()) {
