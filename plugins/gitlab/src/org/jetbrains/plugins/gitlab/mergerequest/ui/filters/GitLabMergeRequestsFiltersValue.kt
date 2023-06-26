@@ -5,6 +5,7 @@ import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValu
 import com.intellij.openapi.util.NlsSafe
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import java.net.URLEncoder
 
 @Serializable
 data class GitLabMergeRequestsFiltersValue(
@@ -22,8 +23,8 @@ data class GitLabMergeRequestsFiltersValue(
 
   fun toSearchQuery(): String = filters.asSequence()
     .filterNotNull()
-    .map { "${it.queryField()}=${it.queryValue()}" }
-    .let { if (searchQuery != null) it + "search=$searchQuery" else it }
+    .map { "${it.queryField()}=${URLEncoder.encode(it.queryValue(), Charsets.UTF_8)}" }
+    .let { if (searchQuery != null) it + "search=${URLEncoder.encode(searchQuery, Charsets.UTF_8)}" else it }
     .joinToString(separator = "&")
 
   private fun calcFilterCount(): Int {
