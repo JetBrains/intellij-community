@@ -36,7 +36,12 @@ data class BlackFormatterConfiguration(var enabledOnReformat: Boolean,
   }
 
   fun getSdk(project: Project): Sdk? = sdkUUID?.let { uuidString ->
-    val uuid = UUID.fromString(uuidString)
+    val uuid = runCatching {
+      UUID.fromString(uuidString)
+    }.getOrElse {
+      return@let null
+    }
+
     project.modules
       .mapNotNull { it.pythonSdk }
       .firstOrNull { sdk -> (sdk.sdkAdditionalData as PythonSdkAdditionalData).uuid == uuid }

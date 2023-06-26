@@ -283,7 +283,7 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
     enabledOnReformat = enableOnReformatCheckBox.isSelected
     enabledOnSave = enableOnSaveCheckBox.isSelected
     cmdArguments = cliArgumentsTextField.text
-    sdkUUID = (sdkSelectionComboBox.item?.sdkAdditionalData as? PythonSdkAdditionalData)?.uuid.toString()
+    sdkUUID = (sdkSelectionComboBox.item?.sdkAdditionalData as? PythonSdkAdditionalData)?.uuid?.toString()
 
     pathToExecutable = if (blackExecutableValidationInfo() == null) {
       blackExecutablePathField.text.nullize() ?: BlackFormatterUtil.detectBlackExecutable()?.absolutePath
