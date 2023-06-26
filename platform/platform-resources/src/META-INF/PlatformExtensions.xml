@@ -1266,8 +1266,6 @@
 
     <applicationInitializedListener implementation="com.intellij.openapi.application.impl.JitSuppressor"/>
 
-    <applicationInitializedListener implementation="com.intellij.openapi.editor.actions.ResetFontSizeAppInitListener"/>
-
     <applicationService serviceImplementation="com.intellij.internal.DebugAttachDetector" headlessImplementation="" preload="true"/>
 
     <projectService serviceInterface="com.intellij.ui.EditorNotifications" serviceImplementation="com.intellij.ui.EditorNotificationsImpl"
@@ -1576,6 +1574,8 @@
               topic="com.intellij.ide.ui.UISettingsListener"/>
     <listener class="com.intellij.ide.ProjectWindowCustomizerListener"
               topic="com.intellij.ide.ui.UISettingsListener"/>
+
+    <listener class="com.intellij.openapi.editor.actions.ResetFontSizeAppInitListener" topic="com.intellij.ide.AppLifecycleListener"/>
   </applicationListeners>
 
   <projectListeners>
