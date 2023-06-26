@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.details
 
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.action.CodeReviewCheckoutRemoteBranchAction
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
@@ -24,8 +25,8 @@ import com.intellij.util.ui.JLabelUtil
 import com.intellij.util.ui.UIUtil
 import icons.CollaborationToolsIcons
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 import java.awt.BorderLayout
 import java.awt.Cursor
 import javax.swing.JComponent
@@ -38,12 +39,9 @@ object CodeReviewDetailsBranchComponentFactory {
              dataContext: DataContext): JComponent {
     val sourceBranch = JBLabel(CollaborationToolsIcons.Review.Branch).apply {
       border = JBUI.Borders.empty(1, 2, 1, 4)
-      addHoverAndPressStateListener(comp = this, pressedStateCallback = { branchLabel, isPressed ->
+      addHoverAndPressStateListener(comp = this, pressedStateCallback = { _, isPressed ->
         if (!isPressed) return@addHoverAndPressStateListener
-        scope.launch {
-          branchLabel as JComponent
-          runActionIfSelected(checkoutAction, dataContext, branchesVm.sourceBranch.value, branchesVm.targetBranch.value, branchLabel)
-        }
+        branchesVm.showBranches()
       })
       JLabelUtil.setTrimOverflow(this, true)
       foreground = CurrentBranchComponent.TEXT_COLOR
@@ -51,6 +49,12 @@ object CodeReviewDetailsBranchComponentFactory {
       bindIconIn(scope, branchesVm.isCheckedOut.map { isCheckedOut ->
         if (isCheckedOut) CollaborationToolsIcons.Review.BranchCurrent else CollaborationToolsIcons.Review.Branch
       })
+
+      scope.launchNow {
+        branchesVm.showBranchesRequests.collectLatest { (source, target) ->
+          runActionIfSelected(checkoutAction, dataContext, source, target, this@apply)
+        }
+      }
     }
 
     val roundedSourceBranch = RoundedPanel(BorderLayout()).apply {

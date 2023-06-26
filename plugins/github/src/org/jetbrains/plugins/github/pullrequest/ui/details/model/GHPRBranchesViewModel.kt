@@ -1,9 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details.model
 
+import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranches
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -11,6 +15,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.util.childScope
 import git4idea.commands.Git
 import git4idea.fetch.GitFetchSupport
 import git4idea.i18n.GitBundle
@@ -18,6 +23,7 @@ import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.ui.branch.GitBranchPopupActions
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
@@ -26,20 +32,22 @@ import org.jetbrains.plugins.github.util.GithubNotificationIdsHolder
 import org.jetbrains.plugins.github.util.GithubSettings
 
 internal class GHPRBranchesViewModel(
+  parentCs: CoroutineScope,
   private val project: Project,
   private val branchesModel: GHPRBranchesModel,
   private val detailsDataProvider: GHPRDetailsDataProvider
 ) : CodeReviewBranchesViewModel {
+  private val cs = parentCs.childScope()
+
   private val git: Git = Git.getInstance()
   private val vcsNotifier: VcsNotifier = project.service<VcsNotifier>()
 
   private val _targetBranch: MutableStateFlow<String> = MutableStateFlow(branchesModel.baseBranch)
-  override val targetBranch: StateFlow<String> = _targetBranch.asStateFlow()
 
   private val _sourceBranch: MutableStateFlow<String> = MutableStateFlow(branchesModel.headBranch)
   override val sourceBranch: StateFlow<String> = _sourceBranch.asStateFlow()
 
-  override val isCheckedOut: Flow<Boolean> = callbackFlow {
+  override val isCheckedOut: SharedFlow<Boolean> = callbackFlow {
     val cs = this
     send(isBranchCheckedOut(branchesModel.localRepository, sourceBranch.value))
 
@@ -52,7 +60,10 @@ internal class GHPRBranchesViewModel(
     _sourceBranch.collect { sourceBranch ->
       send(isBranchCheckedOut(branchesModel.localRepository, sourceBranch))
     }
-  }
+  }.modelFlow(cs, thisLogger())
+
+  private val _showBranchesRequests = MutableSharedFlow<CodeReviewBranches>()
+  override val showBranchesRequests: SharedFlow<CodeReviewBranches> = _showBranchesRequests
 
   init {
     branchesModel.addAndInvokeChangeListener {
@@ -143,4 +154,12 @@ internal class GHPRBranchesViewModel(
       update()
       remotes.find { it.name == remoteName }
     }
+
+  override fun showBranches() {
+    cs.launchNow {
+      val source = _sourceBranch.value
+      val target = _targetBranch.value
+      _showBranchesRequests.emit(CodeReviewBranches(source, target))
+    }
+  }
 }

@@ -1,10 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
+import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranches
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
@@ -39,7 +43,6 @@ internal class GitLabMergeRequestBranchesViewModel(
   private val targetProject: StateFlow<GitLabProjectDTO> = mergeRequest.targetProject
   private val sourceProject: StateFlow<GitLabProjectDTO?> = mergeRequest.sourceProject
 
-  override val targetBranch: StateFlow<String> = mergeRequest.targetBranch
   override val sourceBranch: StateFlow<String> =
     combine(targetProject, sourceProject, mergeRequest.sourceBranch) { targetProject, sourceProject, sourceBranch ->
       if (sourceProject == null) return@combine ""
@@ -49,7 +52,7 @@ internal class GitLabMergeRequestBranchesViewModel(
       return@combine "$sourceProjectOwner:$sourceBranch"
     }.stateIn(cs, SharingStarted.Lazily, mergeRequest.sourceBranch.value)
 
-  override val isCheckedOut: Flow<Boolean> = callbackFlow {
+  override val isCheckedOut: SharedFlow<Boolean> = callbackFlow {
     val cs = this
     send(isBranchCheckedOut(repository, sourceBranch.value))
 
@@ -62,7 +65,10 @@ internal class GitLabMergeRequestBranchesViewModel(
     sourceBranch.collect { sourceBranch ->
       send(isBranchCheckedOut(repository, sourceBranch))
     }
-  }
+  }.modelFlow(cs, thisLogger())
+
+  private val _showBranchesRequests = MutableSharedFlow<CodeReviewBranches>()
+  override val showBranchesRequests: SharedFlow<CodeReviewBranches> = _showBranchesRequests
 
   override fun fetchAndCheckoutRemoteBranch() {
     object : Task.Backgroundable(
@@ -136,6 +142,14 @@ internal class GitLabMergeRequestBranchesViewModel(
       update()
       remotes.find { it.name == remoteName }
     }
+
+  override fun showBranches() {
+    cs.launchNow {
+      val source = sourceBranch.value
+      val target = mergeRequest.targetBranch.value
+      _showBranchesRequests.emit(CodeReviewBranches(source, target))
+    }
+  }
 
   companion object {
     private const val MERGE_REQUEST_CANNOT_SET_TRACKING_BRANCH = "gitlab.merge.request.cannot.set.tracking.branch"
