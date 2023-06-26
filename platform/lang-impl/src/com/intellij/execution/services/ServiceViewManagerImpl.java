@@ -31,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -1020,7 +1021,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     if (descriptor instanceof ServiceViewToolWindowDescriptor) {
       return (ServiceViewToolWindowDescriptor)descriptor;
     }
-    String toolWindowId = descriptor.getId();
+    @NlsSafe String toolWindowId = descriptor.getId();
     return new ServiceViewToolWindowDescriptor() {
       @Override
       public @NotNull String getToolWindowId() {
