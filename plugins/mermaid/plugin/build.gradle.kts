@@ -1,4 +1,5 @@
 import com.intellij.mermaid.build.*
+import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.intellij.tasks.RunIdeTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -149,9 +150,21 @@ tasks {
 
   withType<Test> {
     testLogging {
-      this.showStandardStreams = true
+      jvmArgs = commonJvmArgs
+      showStandardStreams = true
+      events(
+        TestLogEvent.PASSED,
+        TestLogEvent.FAILED,
+        TestLogEvent.SKIPPED,
+        TestLogEvent.STANDARD_ERROR,
+        TestLogEvent.STANDARD_OUT
+      )
     }
-    jvmArgs = commonJvmArgs
+    afterSuite { descriptor, result ->
+      if (descriptor.parent == null) {
+        logger.lifecycle(result.createResultMessage())
+      }
+    }
   }
 
   test {

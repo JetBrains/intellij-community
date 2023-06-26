@@ -5,7 +5,10 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.dsl.DependencyHandler
-import org.gradle.util.internal.VersionNumber
+import org.gradle.api.tasks.testing.AbstractTestTask
+import org.gradle.api.tasks.testing.TestDescriptor
+import org.gradle.api.tasks.testing.TestListener
+import org.gradle.api.tasks.testing.TestResult
 
 fun DependencyHandler.project(path: String, configuration: Configuration): Dependency {
   return project(mapOf(
@@ -38,3 +41,22 @@ val Project.publishChannel: PublishChannel
 
 val Project.marketplaceToken: String
   get() = System.getenv("MARKETPLACE_TOKEN") ?: "NONE"
+
+fun AbstractTestTask.afterSuite(block: (TestDescriptor, TestResult) -> Unit) {
+  addTestListener(object: TestListener {
+    override fun beforeSuite(suite: TestDescriptor) = Unit
+    override fun beforeTest(testDescriptor: TestDescriptor) = Unit
+    override fun afterTest(testDescriptor: TestDescriptor, result: TestResult) = Unit
+
+    override fun afterSuite(suite: TestDescriptor, result: TestResult) {
+      block(suite, result)
+    }
+  })
+}
+
+fun TestResult.createResultMessage(): String {
+  return buildString {
+    append("Test result: $resultType ")
+    append("($testCount tests, $successfulTestCount succeeded, $failedTestCount failed, $skippedTestCount skipped)")
+  }
+}
