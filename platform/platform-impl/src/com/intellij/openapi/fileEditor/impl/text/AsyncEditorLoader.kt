@@ -6,6 +6,7 @@ import com.intellij.diagnostic.subtask
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -209,9 +210,16 @@ private fun restoreCaretPosition(editor: EditorEx, delayedScrollState: DelayedSc
     else {
       coroutineScope.launch(ModalityState.any().asContextElement()) {
         var done = false
+        var attemptCount = 0
         while (!done) {
+          attemptCount++
           done = withContext(Dispatchers.EDT) {
             if (isReady()) {
+              doScroll()
+              true
+            }
+            else if (attemptCount > 3) {
+              thisLogger().warn("Cannot wait for a ready scroll pane, scroll now")
               doScroll()
               true
             }
