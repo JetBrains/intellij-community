@@ -40,7 +40,7 @@ class SmartUpdate(val project: Project, private val coroutineScope: CoroutineSco
   }
 
   var restartRequested = false
-  var updateScheduled: Deferred<*>? = null
+  private var updateScheduled: Deferred<*>? = null
   private val options = Options()
 
   init {

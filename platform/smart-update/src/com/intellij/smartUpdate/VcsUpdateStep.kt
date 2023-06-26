@@ -18,8 +18,10 @@ class VcsUpdateStep: SmartUpdateStep {
   override val stepName = SmartUpdateBundle.message("checkbox.update.project")
 
   override fun performUpdateStep(project: Project, e: AnActionEvent?, onSuccess: () -> Unit) {
+    val start = System.currentTimeMillis()
     val action = object: CommonUpdateProjectAction() {
       override fun onSuccess() {
+        SmartUpdateUsagesCollector.logUpdate(System.currentTimeMillis() - start)
         onSuccess.invoke()
       }
 

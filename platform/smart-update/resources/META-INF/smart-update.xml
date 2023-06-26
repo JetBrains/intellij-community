@@ -9,6 +9,7 @@
     <smartUpdateStep id="vcs.update" implementation="com.intellij.smartUpdate.VcsUpdateStep"/>
     <smartUpdateStep id="build.project" implementation="com.intellij.smartUpdate.BuildProjectStep"/>
     <backgroundPostStartupActivity implementation="com.intellij.smartUpdate.IdeRestartedActivity"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.smartUpdate.SmartUpdateUsagesCollector"/>
   </extensions>
 
   <actions resource-bundle="messages.SmartUpdateBundle">

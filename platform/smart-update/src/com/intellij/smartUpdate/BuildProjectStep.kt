@@ -11,6 +11,12 @@ class BuildProjectStep: SmartUpdateStep {
   override val stepName = SmartUpdateBundle.message("checkbox.build.project")
 
   override fun performUpdateStep(project: Project, e: AnActionEvent?, onSuccess: () -> Unit) {
-    ProjectTaskManager.getInstance(project).buildAllModules().onSuccess { onSuccess.invoke() }
+    val start = System.currentTimeMillis()
+    ProjectTaskManager.getInstance(project).buildAllModules().onSuccess {
+      SmartUpdateUsagesCollector.logBuild(System.currentTimeMillis() - start, true)
+      onSuccess.invoke()
+    }.onError {
+      SmartUpdateUsagesCollector.logBuild(System.currentTimeMillis() - start, false)
+    }
   }
 }
