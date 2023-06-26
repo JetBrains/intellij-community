@@ -15,8 +15,8 @@ interface CoursesStorage {
 }
 
 open class CourseInfo {
-  var tasksTotal: Int = -1
-  var tasksSolved: Int = -1
+  var tasksTotal: Int = 0
+  var tasksSolved: Int = 0
   var description: String = ""
   var name: String = ""
   // remove when implemented properly in JBA and IFT plugins
