@@ -291,7 +291,10 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     var effectiveOptions = options
     if (options.implOptions == null) {
       getProjectMetaInfo(projectFile)?.let { info ->
-        effectiveOptions = effectiveOptions.copy(implOptions = OpenProjectImplOptions(recentProjectMetaInfo = info, frameInfo = info.frame))
+        effectiveOptions = effectiveOptions.copy(
+          projectWorkspaceId = info.projectWorkspaceId,
+          implOptions = OpenProjectImplOptions(recentProjectMetaInfo = info, frameInfo = info.frame)
+        )
       }
     }
 
