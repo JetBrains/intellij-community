@@ -587,4 +587,26 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   protected void enableGradleDebugWithSuspend() {
     GradleSystemSettings.getInstance().setGradleVmOptions("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005");
   }
+
+  protected void overrideGradleUserHome(@NotNull String relativeUserHomePath) throws IOException {
+    String gradleUserHome = "%s/%s".formatted(myTestDir.getPath(), relativeUserHomePath);
+    String gradleCachedFolderName = "gradle-%s-bin".formatted(gradleVersion);
+    File cachedGradleDistribution = findGradleDistributionInCache(gradleCachedFolderName);
+    if (cachedGradleDistribution != null) {
+      File targetGradleDistribution = Path.of(gradleUserHome + "/wrapper/dists/" + gradleCachedFolderName)
+        .toFile();
+      FileUtil.copyDir(cachedGradleDistribution, targetGradleDistribution);
+    }
+    GradleSettings.getInstance(myProject).setServiceDirectoryPath(gradleUserHome);
+  }
+
+  @Nullable
+  private static File findGradleDistributionInCache(String gradleCachedFolderName) {
+    Path pathToGradleWrapper = StartParameter.DEFAULT_GRADLE_USER_HOME.toPath().resolve("wrapper/dists/" + gradleCachedFolderName);
+    File gradleWrapperFile = pathToGradleWrapper.toFile();
+    if (gradleWrapperFile.exists()) {
+      return gradleWrapperFile;
+    }
+    return null;
+  }
 }
