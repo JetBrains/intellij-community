@@ -1,7 +1,13 @@
 import com.intellij.mermaid.build.*
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.changelog.markdownToHTML
+import org.jetbrains.intellij.IntelliJPluginConstants
+import org.jetbrains.intellij.dependency.IdeaDependency
+import org.jetbrains.intellij.dependency.IdeaDependencyManager
+import org.jetbrains.intellij.logCategory
 import org.jetbrains.intellij.tasks.RunIdeTask
+import org.jetbrains.intellij.utils.ArchiveUtils
+import org.jetbrains.intellij.utils.DependenciesDownloader
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -226,7 +232,15 @@ tasks {
   }
 
   runPluginVerifier {
-    ideVersions.set(properties("pluginVerifierVersions").split(",").map(String::trim))
+    val versions = findProperty("pluginVerifierVersions")?.toString()
+    val requestedVersions = versions?.split(",")?.map(String::trim) ?: emptyList()
+    logger.lifecycle("Requested versions for plugin verification: $requestedVersions")
+    // Don't set ideVersions, so we can resolve all dependencies at once by ourselves
+    // ideVersions.set(requestedVersions)
+    localPaths.set(provider { resolveIdeaDependencies(requestedVersions) })
+    // To make sure that the property will be evaluated only once
+    localPaths.finalizeValueOnRead()
+    offline.set(true)
   }
 
   signPlugin {
@@ -248,4 +262,45 @@ tasks {
     }
     this.channels.set(channels.map { it.actualName })
   }
+}
+
+// Not possible to move to the buildSrc, because ij-gradle-plugin uses
+// extremely low kotlin language level which prevents setting a dependency on it
+fun resolveIdeaDependencies(versions: Collection<String>): List<File> {
+  logger.lifecycle("Resolving nightly idea dependencies for versions $versions")
+  val dependencyManager = createDependencyManager()
+  val dependencies = versions.map { dependencyManager.resolveRemote(project, it) }
+  return dependencies.map { it.classes }
+}
+
+fun Project.createDependencyManager(): IdeaDependencyManager {
+  val archiveUtils = objects.newInstance<ArchiveUtils>()
+  val dependencyDownloader = objects.newInstance<DependenciesDownloader>(
+    configurations,
+    dependencies,
+    repositories,
+    false
+  )
+  return objects.newInstance<IdeaDependencyManager>(
+    IntelliJPluginConstants.DEFAULT_INTELLIJ_REPOSITORY,
+    "",
+    archiveUtils,
+    dependencyDownloader,
+    logCategory()
+  )
+}
+
+@Suppress("NAME_SHADOWING")
+fun IdeaDependencyManager.resolveRemote(
+  project: Project,
+  version: String
+): IdeaDependency {
+  val (type, version) = version.trim().split('-', limit = 2)
+  return resolveRemote(
+    project,
+    version,
+    type,
+    sources = false,
+    extraDependencies = emptyList()
+  )
 }
