@@ -1205,6 +1205,9 @@ public final class FSRecordsImpl {
     return description;
   }
 
+  public int corruptionsDetected(){
+    return connection.corruptionsDetected();
+  }
   //========== accessors for diagnostics & sanity checks: ========================
 
 

@@ -250,6 +250,10 @@ public final class PersistentFSConnection {
            myContentHashesEnumerator != null && myContentHashesEnumerator.isDirty();
   }
 
+  int corruptionsDetected() {
+    return corruptionsDetected.get();
+  }
+
   void closeFiles() throws IOException {
     if (flushingTask != null) {
       flushingTask.close();
