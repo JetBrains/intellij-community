@@ -453,10 +453,6 @@ public final class PersistentFSConnection {
 
     @Override
     protected boolean betterPostponeFlushNow() {
-      if (HeavyProcessLatch.INSTANCE.isRunning()) {
-        return true;
-      }
-
       //RC: Basically, we're trying to flush 'if idle': i.e. we don't want to issue a flush if
       //    somebody actively writes to VFS because flush will slow them down, if not stall
       //    them -- and (regular) flush is less important than e.g. a current UI task. So we

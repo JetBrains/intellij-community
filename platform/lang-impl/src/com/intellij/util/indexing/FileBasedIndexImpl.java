@@ -966,9 +966,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                                      @Nullable Project project,
                                      @Nullable GlobalSearchScope filter,
                                      @Nullable VirtualFile restrictedFile) {
-    if (myUpToDateIndicesForUnsavedOrTransactedDocuments.contains(indexId)) {
-      return; // no need to index unsaved docs        // todo: check scope ?
-    }
+    //if (myUpToDateIndicesForUnsavedOrTransactedDocuments.contains(indexId)) {
+    //  return; // no need to index unsaved docs        // todo: check scope ?
+    //}
 
     Document[] unsavedDocuments = myFileDocumentManager.getUnsavedDocuments();
     Set<Document> transactedDocuments = getTransactedDocuments();
@@ -995,7 +995,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           documentsToProcessForProject.size() == documents.size() &&
           !hasActiveTransactions()
       ) {
-        myUpToDateIndicesForUnsavedOrTransactedDocuments.add(indexId);
+        //myUpToDateIndicesForUnsavedOrTransactedDocuments.add(indexId);
       }
     }
   }
@@ -2318,10 +2318,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     @Override
     protected boolean betterPostponeFlushNow() {
-      if (HeavyProcessLatch.INSTANCE.isRunning()) {
-        return true;
-      }
-
       //RC: Basically, we're trying to flush 'if idle': i.e. we don't want to
       //    issue a flush if somebody actively writes to indexes because flush
       //    will slow them down, if not stall them -- and (regular) flush is
