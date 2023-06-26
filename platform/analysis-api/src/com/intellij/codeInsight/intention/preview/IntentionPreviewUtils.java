@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.preview;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -10,6 +11,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -176,6 +178,10 @@ public final class IntentionPreviewUtils {
       }
       else if (command instanceof ModChooseTarget<?> target) {
         return getChoosePreview(file, target);
+      }
+      else if (command instanceof ModDisplayError error) {
+        return new IntentionPreviewInfo.Html(new HtmlBuilder().append(
+          AnalysisBundle.message("preview.cannot.perform.action")).br().append(error.errorMessage()).toFragment());
       }
     }
     return customDiffList.isEmpty() ? navigateInfo :
