@@ -21,7 +21,7 @@ import java.util.function.BiConsumer;
  * @see ModCommands#psiUpdate(PsiElement, BiConsumer) 
  */
 @ApiStatus.Experimental
-public interface ModPsiUpdater {
+public interface ModPsiUpdater extends ModPsiNavigator {
   /**
    * @param e element to update
    * @return a copy of this element inside a writable non-physical file, whose changes are tracked and will be added to the final command.
@@ -31,20 +31,6 @@ public interface ModPsiUpdater {
    */
   @Contract(value = "null -> null; !null -> !null")
   <E extends PsiElement> E getWritable(E e);
-
-  /**
-   * Selects given element
-   * 
-   * @param element element to select
-   */
-  void select(@NotNull PsiElement element);
-
-  /**
-   * Selects given range
-   * 
-   * @param range range to select
-   */
-  void select(@NotNull TextRange range);
   
   /**
    * Highlight given element as a search result
@@ -72,26 +58,6 @@ public interface ModPsiUpdater {
   void highlight(@NotNull TextRange range, @NotNull TextAttributesKey attributesKey);
 
   /**
-   * Navigates to a given offset
-   *
-   * @param offset offset to move to
-   */
-  void moveTo(int offset);
-
-  /**
-   * Navigates to a given element
-   * 
-   * @param element element to navigate to
-   */
-  void moveTo(@NotNull PsiElement element);
-
-  /**
-   * Moves caret to a previous occurrence of character ch. Do nothing if no such occurrence is found 
-   * @param ch character to find
-   */
-  void moveToPrevious(char ch);
-
-  /**
    * Suggest to rename a given element
    * 
    * @param element element to rename
@@ -106,6 +72,4 @@ public interface ModPsiUpdater {
    * @param errorMessage the error message to display
    */
   void cancel(@NotNull @NlsContexts.Tooltip String errorMessage);
-
-  int getCaretOffset();
 }
