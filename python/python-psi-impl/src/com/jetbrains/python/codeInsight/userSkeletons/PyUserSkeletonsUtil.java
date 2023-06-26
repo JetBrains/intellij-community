@@ -82,7 +82,7 @@ public final class PyUserSkeletonsUtil {
   private static List<String> getPossibleUserSkeletonsPaths() {
     final List<String> result = new ArrayList<>();
     result.add(PathManager.getConfigPath() + File.separator + USER_SKELETONS_DIR);
-    result.add(PythonHelpersLocator.getHelperPath(USER_SKELETONS_DIR));
+    result.add(PythonHelpersLocator.getPythonSkeletonsRoot());
     return result;
   }
 
