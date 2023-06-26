@@ -398,7 +398,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <advancedSetting
             id="kotlin.mpp.experimental"
-            default="true"
+            default="false"
             groupKey="group.advanced.settings.kotlin"
             bundle="messages.KotlinBundle"/>
   </extensions>
