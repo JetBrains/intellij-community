@@ -210,6 +210,10 @@ internal object MermaidSpacingBuilder {
       .between(MermaidElements.MINDMAP_NODE_ID, MermaidElements.MINDMAP_NODE_DESCR).spaceIf(false)
       .around(MermaidTokens.Mindmap.NODE_DESCR_END).spaceIf(false)
       .betweenInside(MermaidTokens.ID, MermaidTokens.ID, MermaidElements.MINDMAP_NODE_ID).spaces(1)
+      // Quadrant
+      .after(MermaidTokens.Quadrant.X_AXIS).spaces(1)
+      .after(MermaidTokens.Quadrant.Y_AXIS).spaces(1)
+      .between(MermaidTokens.Quadrant.QUADRANT_TEXT, MermaidTokens.Quadrant.QUADRANT_TEXT).spaces(1)
       // indent
       .between(MermaidElements.SEQUENCE_BODY, MermaidTokens.END).spaces(indentOptions.INDENT_SIZE)
       .between(MermaidElements.SUBGRAPH_BLOCK, MermaidTokens.END).spaces(indentOptions.INDENT_SIZE)

@@ -28,7 +28,7 @@ class MermaidDiagramCompletionProvider : CompletionProvider<CompletionParameters
       "C4Dynamic",
       "C4Deployment",
       "mindmap",
-      "quadrant"
+      "quadrantChart"
     )
 
   override fun addCompletions(
@@ -311,3 +311,7 @@ class C4CompletionProvider : MermaidLiveTemplateCompletionProvider() {
     })
   }
 }
+
+
+class QuadrantCompletionProvider :
+  MermaidSimpleCompletionProvider(listOf("x-axis", "y-axis", "quadrant-1", "quadrant-2", "quadrant-3", "quadrant-4"))

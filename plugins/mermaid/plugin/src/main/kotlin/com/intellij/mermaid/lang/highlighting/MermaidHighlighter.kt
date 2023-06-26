@@ -305,7 +305,14 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
     }
 
     private fun addQuadrantHighlights(holder: MutableMap<IElementType, TextAttributesKey>) {
-      holder[MermaidTokens.Quadrant.QUADRANT] = MermaidTextAttributes.diagram_name
+      holder[MermaidTokens.Quadrant.QUADRANT_CHART] = MermaidTextAttributes.diagram_name
+      fillMap(
+        holder,
+        MermaidTextAttributes.keyword,
+        MermaidTokens.Quadrant.X_AXIS,
+        MermaidTokens.Quadrant.Y_AXIS,
+        MermaidTokens.Quadrant.QUADRANT
+      )
     }
 
     private fun addBaseHighlights(holder: MutableMap<IElementType, TextAttributesKey>) {
@@ -332,6 +339,7 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
         MermaidTextAttributes.string,
         MermaidTokens.DOUBLE_QUOTE,
         MermaidTokens.STRING_VALUE,
+        MermaidTokens.MD_STRING_VALUE,
         MermaidTokens.ALIAS,
         MermaidTokens.LABEL,
         MermaidTokens.TASK_NAME,
@@ -373,7 +381,8 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
         MermaidTokens.DIR,
         MermaidTokens.ANNOTATION_START,
         MermaidTokens.ANNOTATION_VALUE,
-        MermaidTokens.ANNOTATION_END
+        MermaidTokens.ANNOTATION_END,
+        MermaidTokens.NUM
       )
       fillMap(
         holder,

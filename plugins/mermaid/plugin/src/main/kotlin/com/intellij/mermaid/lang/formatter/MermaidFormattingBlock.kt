@@ -40,10 +40,8 @@ internal open class MermaidFormattingBlock(
   override fun buildChildren(): List<Block> {
     val children = node.children()
 
-    if ((children.filter { it.elementType == MermaidElements.MINDMAP_HEADER }
-        .any() || node.elementType == MermaidElements.MINDMAP_BODY) ||
-      (children.filter { it.elementType == MermaidElements.QUADRANT_HEADER }
-        .any() || node.elementType == MermaidElements.QUADRANT_BODY)
+    if (children.filter { it.elementType == MermaidElements.MINDMAP_HEADER }
+        .any() || node.elementType == MermaidElements.MINDMAP_BODY
     ) {
       return children.map { MermaidFormattingBlock(it, settings, spacing) }.toList()
     }

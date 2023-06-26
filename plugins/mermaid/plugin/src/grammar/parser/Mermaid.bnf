@@ -756,12 +756,26 @@ private timelineSectionLine ::= timelineSectionInnerStatement [EOL] | EOL
 timelineSectionInnerStatement ::= timelineDataStatement
 
 
-quadrantHeader ::= QUADRANT
+quadrantHeader ::= QUADRANT_CHART
 
 quadrantBody ::= quadrantLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
 private quadrantLines ::= quadrantLine [quadrantLines]
 private quadrantLine ::= quadrantStatement [EOL] | EOL
-quadrantStatement ::= titleStatement | QUADRANT_DUMMY+
+quadrantStatement ::= titleStatement
+  | directive
+  | accStatement
+  | pointStatement
+  | axisDetailsStatement
+  | quadrantDetailsStatement
+
+pointStatement ::= quadrantComplexText COLON point
+point ::= OPEN_SQUARE NUM COMMA NUM CLOSE_SQUARE
+
+axisDetailsStatement ::= (X_AXIS | Y_AXIS) (quadrantComplexText) [ARROW quadrantComplexText?]
+
+quadrantDetailsStatement ::= QUADRANT quadrantComplexText
+
+quadrantComplexText ::= string | mdText | QUADRANT_TEXT+
 
 
 directive ::= OPEN_DIRECTIVE directiveContent? CLOSE_DIRECTIVE

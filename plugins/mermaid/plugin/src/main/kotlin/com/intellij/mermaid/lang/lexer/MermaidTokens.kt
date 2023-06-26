@@ -871,9 +871,18 @@ object MermaidTokens {
 
   object Quadrant {
     @JvmField
+    val QUADRANT_CHART = MermaidToken("Quadrant.QUADRANT_CHART")
+
+    @JvmField
+    val X_AXIS = MermaidToken("Quadrant.X_AXIS")
+
+    @JvmField
+    val Y_AXIS = MermaidToken("Quadrant.Y_AXIS")
+
+    @JvmField
     val QUADRANT = MermaidToken("Quadrant.QUADRANT")
 
     @JvmField
-    val QUADRANT_DUMMY = MermaidToken("Quadrant.QUADRANT_DUMMY")
+    val QUADRANT_TEXT = MermaidToken("Quadrant.QUADRANT_TEXT")
   }
 }

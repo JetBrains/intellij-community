@@ -76,7 +76,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
 %states timeline
 
-%states quadrant
+%states quadrant, quadrant_point
 
 %%
 
@@ -106,7 +106,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "C4Deployment" { yybegin (c4); return C4.C4_DEPLOYMENT; }
   "mindmap" { yybegin(mindmap); return Mindmap.MINDMAP; }
   "timeline" { yybegin(timeline); return Timeline.TIMELINE; }
-  "quadrantChart" { yybegin(quadrant); return Quadrant.QUADRANT; }
+  "quadrantChart" { yybegin(quadrant); return Quadrant.QUADRANT_CHART; }
 
   --- { yybegin(frontmatter); return Frontmatter.FRONTMATTER_START; }
 
@@ -135,16 +135,16 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [^\s]+ { return Frontmatter.FRONTMATTER_VALUE; }
 }
 
-<pie, journey, flowchart, flowchart_body, sequence, class_diagram, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph, c4, mindmap, directive, timeline> {
+<pie, journey, flowchart, flowchart_body, sequence, class_diagram, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph, c4, mindmap, directive, timeline, quadrant> {
   "%%{" { yypushstate(directive); return OPEN_DIRECTIVE; }
   [^\S\r\n]+ { return WHITE_SPACE; }
   %%([^{][^\n\r]*)? { return LINE_COMMENT; }
 }
-<pie, journey, flowchart, flowchart_body, sequence, class_diagram, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph, c4, timeline> {
+<pie, journey, flowchart, flowchart_body, sequence, class_diagram, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph, c4, timeline, quadrant> {
   "accTitle" { yypushstate(acc_title); return ACC_TITLE; }
   "accDescr" { yypushstate(acc_descr); return ACC_DESCR; }
 }
-<pie, journey, flowchart_body, sequence, state_diagram, state_statement, class_diagram, struct, entity_relationship, entity_attributes, gantt, requirement_diagram, requirement, req_element, gitgraph, c4, mindmap, timeline> {
+<pie, journey, flowchart_body, sequence, state_diagram, state_statement, class_diagram, struct, entity_relationship, entity_attributes, gantt, requirement_diagram, requirement, req_element, gitgraph, c4, mindmap, timeline, quadrant> {
   [\n\r] { return EOL; }
   ";" { return SEMICOLON; }
 }
@@ -911,7 +911,31 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 //---quadrant---------------------------------------------------------------------
 <quadrant> {
   "title" { yypushstate(title); return TITLE; }
-  [^\s]+ { return Quadrant.QUADRANT_DUMMY; }
+
+  "x-axis" { return Quadrant.X_AXIS; }
+  "y-axis" { return Quadrant.Y_AXIS; }
+
+  \-\-+\> { return ARROW; }
+
+  "quadrant-1" |
+  "quadrant-2" |
+  "quadrant-3" |
+  "quadrant-4" { return Quadrant.QUADRANT; }
+
+  \" { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
+  [\"]/` { yypushstate(md_string); return DOUBLE_QUOTE; }
+
+  [!#$%&'*+,-.`?\\_/=\w]+ { return Quadrant.QUADRANT_TEXT; }
+
+  ":" { return COLON; }
+  "[" { yybegin(quadrant_point); return OPEN_SQUARE; }
+}
+<quadrant_point> {
+  1 |
+  0(\.\d+)? { return NUM; }
+
+  "," { return COMMA; }
+  "]" { yybegin(quadrant); return CLOSE_SQUARE; }
 }
 
 //--------------------------------------------------------------------------------

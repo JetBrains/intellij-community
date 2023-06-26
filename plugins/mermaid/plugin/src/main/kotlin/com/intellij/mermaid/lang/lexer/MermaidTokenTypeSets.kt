@@ -34,7 +34,8 @@ object MermaidTokenTypeSets {
     MermaidElements.C_4_STATEMENT,
     MermaidElements.MINDMAP_STATEMENT,
     MermaidElements.TIMELINE_STATEMENT,
-    MermaidElements.TIMELINE_SECTION_INNER_STATEMENT
+    MermaidElements.TIMELINE_SECTION_INNER_STATEMENT,
+    MermaidElements.QUADRANT_STATEMENT
   )
 
   val DIAGRAM_BODIES_AND_BLOCKS = TokenSet.create(
@@ -62,6 +63,7 @@ object MermaidTokenTypeSets {
     MermaidElements.BOUNDARY_BLOCK,
     MermaidElements.TIMELINE_BODY,
     MermaidElements.TIMELINE_SECTION_BLOCK,
+    MermaidElements.QUADRANT_BODY
   )
 
   val EXPAND_INDENT_AFTER = TokenSet.create(
@@ -96,5 +98,6 @@ object MermaidTokenTypeSets {
     MermaidTokens.C4.C4_DYNAMIC,
     MermaidTokens.C4.C4_DEPLOYMENT,
     MermaidTokens.Timeline.TIMELINE,
+    MermaidTokens.Quadrant.QUADRANT_CHART
   )
 }

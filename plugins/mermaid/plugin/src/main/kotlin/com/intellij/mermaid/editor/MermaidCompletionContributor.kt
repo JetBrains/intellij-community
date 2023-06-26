@@ -346,6 +346,22 @@ class MermaidCompletionContributor : CompletionContributor() {
       BranchCompletionProvider("section")
     )
     //endregion
+
+    //region Quadrant
+    extend(
+      CompletionType.BASIC,
+      or(
+        psiElement().insideDiagramAndNotAtStatement(psiElement(MermaidElements.QUADRANT_HEADER)),
+        psiElement().afterLeaf(psiElement(MermaidTokens.Quadrant.QUADRANT_CHART))
+      ),
+      TitleCompletionProvider()
+    )
+    extend(
+      CompletionType.BASIC,
+      psiElement().atTopLevelOfDiagram(psiElement(MermaidElements.QUADRANT_HEADER)),
+      QuadrantCompletionProvider()
+    )
+    //endregion
   }
 
   private fun PsiElementPattern.Capture<PsiElement>.insideBlock(pattern: ElementPattern<in PsiElement>): PsiElementPattern.Capture<PsiElement> {
