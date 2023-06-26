@@ -18,8 +18,8 @@ pluginManagement {
   }
   plugins {
     val kotlinVersion = "1.7.20"
-    kotlin("jvm") version kotlinVersion
-    kotlin("js") version kotlinVersion
+    kotlin("jvm") version kotlinVersion apply false
+    kotlin("js") version kotlinVersion apply false
     id("com.github.ben-manes.versions") version "0.41.0"
   }
 }
