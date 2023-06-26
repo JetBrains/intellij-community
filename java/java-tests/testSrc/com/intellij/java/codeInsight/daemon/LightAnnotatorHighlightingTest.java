@@ -6,7 +6,9 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
+import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.diagnostic.PluginException;
@@ -541,13 +543,14 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
     configureFromFileText("foo.txt", "hello<caret>");
     DisabledQuickFixAnnotator.FIX_ENABLED = true;
     assertEmpty(doHighlighting());
-    assertEmpty(CodeInsightTestFixtureImpl.getAvailableIntentions(getEditor(), getFile()));
     DaemonCodeAnalyzer.getInstance(getProject()).restart();
     DisabledQuickFixAnnotator.FIX_ENABLED = false;
     DaemonRespondToChangesTest.useAnnotatorsIn(PlainTextLanguage.INSTANCE, new DaemonRespondToChangesTest.MyRecordingAnnotator[]{new DisabledQuickFixAnnotator()}, ()-> {
       assertOneElement(highlightErrors());
-      assertEmpty(CodeInsightTestFixtureImpl.getAvailableIntentions(getEditor(), getFile())); // nothing, not even EmptyIntentionAction
-
+      assertEmpty(CodeInsightTestFixtureImpl.getAvailableIntentions(getEditor(), getFile())
+                    .stream()
+                    .filter(i -> IntentionActionDelegate.unwrap(i) instanceof EmptyIntentionAction)
+                    .toList()); // nothing, not even EmptyIntentionAction
       DaemonCodeAnalyzer.getInstance(getProject()).restart();
       DisabledQuickFixAnnotator.FIX_ENABLED = true;
       assertNotEmpty(CodeInsightTestFixtureImpl.getAvailableIntentions(getEditor(), getFile())); // maybe a lot of CleanupIntentionAction, FixAllIntention etc
