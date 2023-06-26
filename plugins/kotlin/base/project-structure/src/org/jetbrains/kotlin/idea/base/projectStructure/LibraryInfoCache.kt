@@ -12,15 +12,13 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
-import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.PathUtil
 import com.intellij.util.messages.Topic
-import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
-import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.platforms.detectLibraryKind
@@ -31,11 +29,7 @@ import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntity
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.idePlatformKind
-import org.jetbrains.kotlin.platform.impl.CommonIdePlatformKind
-import org.jetbrains.kotlin.platform.impl.JsIdePlatformKind
-import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
-import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
-import org.jetbrains.kotlin.platform.impl.WasmIdePlatformKind
+import org.jetbrains.kotlin.platform.impl.*
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addIfNotNull
@@ -60,9 +54,15 @@ class LibraryInfoCache(project: Project) : Disposable {
           initialize()
         }
 
-        override fun subscribe() {
-            project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, ModelChangeListener(project))
-        }
+        // Due to ordering issues with other workspace model listeners that access `LibraryInfoCache`, workspace model changes for
+        // `LibraryInfoCache` are listened to via `FirOrderedWorkspaceModelChangeListener` and `FE10IdeOrderedWorkspaceModelChangeListener`.
+        // Note that, even if the order was insignificant, `LibraryInfoCache`'s workspace model listener would still need to be registered
+        // eagerly. The reason is that some other workspace model listener might access `LibraryInfoCache` and cause first-time
+        // initialization (including a call to `subscribe`). Subscribing to workspace model events while a workspace model event is being
+        // processed means that that event won't be propagated to the new subscription. Hence, for exactly that event, `LibraryInfoCache`
+        // would not be cleared, as its workspace model listener wouldn't be called. This can lead to cache inconsistency if a cache entry
+        // containing a changing library was added during that event by some other workspace listener.
+        override fun subscribe() { }
 
         override fun doInvalidate(cache: MutableMap<LibraryEx, List<LibraryInfo>>) {
             super.doInvalidate(cache)
@@ -314,42 +314,40 @@ class LibraryInfoCache(project: Project) : Disposable {
                 JvmPlatforms.defaultJvmPlatform
             }
 
-        inner class ModelChangeListener(project: Project) : WorkspaceModelChangeListener {
-            override fun beforeChanged(event: VersionedStorageChange) {
-                val storageBefore = event.storageBefore
-                val libraryChanges = event.getChanges(LibraryEntity::class.java)
-                val moduleChanges = event.getChanges(ModuleEntity::class.java)
+        fun beforeWorkspaceModelChanged(event: VersionedStorageChange) {
+            val storageBefore = event.storageBefore
+            val libraryChanges = event.getChanges(LibraryEntity::class.java)
+            val moduleChanges = event.getChanges(ModuleEntity::class.java)
 
-                if (libraryChanges.none() && moduleChanges.none()) return
+            if (libraryChanges.none() && moduleChanges.none()) return
 
-                val outdatedLibraries: MutableList<Library> = libraryChanges
-                  .mapNotNull { it.oldEntity?.findLibraryBridge(storageBefore) }
-                  .toMutableList()
+            val outdatedLibraries: MutableList<Library> = libraryChanges
+              .mapNotNull { it.oldEntity?.findLibraryBridge(storageBefore) }
+              .toMutableList()
 
-                val oldLibDependencies = moduleChanges.mapNotNull {
-                    it.oldEntity?.dependencies?.filterIsInstance<ModuleDependencyItem.Exportable.LibraryDependency>()
-                }.flatten().associateBy { it.library }
+            val oldLibDependencies = moduleChanges.mapNotNull {
+                it.oldEntity?.dependencies?.filterIsInstance<ModuleDependencyItem.Exportable.LibraryDependency>()
+            }.flatten().associateBy { it.library }
 
-                val newLibDependencies = moduleChanges.mapNotNull {
-                    it.newEntity?.dependencies?.filterIsInstance<ModuleDependencyItem.Exportable.LibraryDependency>()
-                }.flatten().associateBy { it.library }
+            val newLibDependencies = moduleChanges.mapNotNull {
+                it.newEntity?.dependencies?.filterIsInstance<ModuleDependencyItem.Exportable.LibraryDependency>()
+            }.flatten().associateBy { it.library }
 
-                for (entry in oldLibDependencies.entries) {
-                    val value = entry.value
-                    if (value != newLibDependencies[entry.key]) {
-                        val libraryBridge = value.library.findLibraryBridge(storageBefore, project)
-                        outdatedLibraries.addIfNotNull(libraryBridge)
-                    }
+            for (entry in oldLibDependencies.entries) {
+                val value = entry.value
+                if (value != newLibDependencies[entry.key]) {
+                    val libraryBridge = value.library.findLibraryBridge(storageBefore, project)
+                    outdatedLibraries.addIfNotNull(libraryBridge)
                 }
+            }
 
-                if (outdatedLibraries.isNotEmpty()) {
-                    val droppedLibraryInfos =
-                      invalidateKeysAndGetOutdatedValues(outdatedLibraries.map { it as LibraryEx }).flattenTo(hashSetOf())
+            if (outdatedLibraries.isNotEmpty()) {
+                val droppedLibraryInfos =
+                  invalidateKeysAndGetOutdatedValues(outdatedLibraries.map { it as LibraryEx }).flattenTo(hashSetOf())
 
-                    if (droppedLibraryInfos.isNotEmpty()) {
-                        removedLibraryInfoTracker.incModificationCount()
-                        project.messageBus.syncPublisher(LibraryInfoListener.TOPIC).libraryInfosRemoved(droppedLibraryInfos)
-                    }
+                if (droppedLibraryInfos.isNotEmpty()) {
+                    removedLibraryInfoTracker.incModificationCount()
+                    project.messageBus.syncPublisher(LibraryInfoListener.TOPIC).libraryInfosRemoved(droppedLibraryInfos)
                 }
             }
         }
@@ -361,6 +359,11 @@ class LibraryInfoCache(project: Project) : Disposable {
     }
 
     fun deduplicatedLibrary(key: Library): Library = get(key).first().library
+
+    @ApiStatus.Internal
+    fun beforeWorkspaceModelChanged(event: VersionedStorageChange) {
+        libraryInfoCache.beforeWorkspaceModelChanged(event)
+    }
 
     override fun dispose() = Unit
 

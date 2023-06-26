@@ -208,6 +208,8 @@
   <content>
     <module name="kotlin.base.analysis-api-providers"/>
     <module name="kotlin.base.fir.analysis-api-providers"/>
+    <module name="kotlin.base.fir.project-structure"/>
+
     <module name="kotlin.copyright"/>
     <module name="kotlin.coverage"/>
     <module name="kotlin.i18n"/>

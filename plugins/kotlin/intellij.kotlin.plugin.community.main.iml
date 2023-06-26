@@ -39,8 +39,10 @@
     <orderEntry type="module" module-name="kotlin.base.fe10.highlighting" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fe10.code-insight" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fe10.obsolete-compat" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.fe10.project-structure" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fir.analysis-api-providers" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fir.code-insight" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.fir.project-structure" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.api" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.impl-base" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.descriptions" exported="" />

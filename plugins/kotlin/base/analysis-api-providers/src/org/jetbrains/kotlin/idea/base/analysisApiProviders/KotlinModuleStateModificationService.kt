@@ -21,14 +21,14 @@ import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
-import com.intellij.util.io.URLUtil
-import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.util.io.URLUtil
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.providers.KotlinGlobalModificationService
 import org.jetbrains.kotlin.analysis.providers.analysisMessageBus
@@ -129,94 +129,91 @@ open class KotlinModuleStateModificationService(val project: Project) : Disposab
         }
     }
 
-    class ModelChangeListener(private val project: Project) : WorkspaceModelChangeListener {
-        private val moduleStateModificationService: KotlinModuleStateModificationService get() = getInstance(project)
+    @ApiStatus.Internal
+    fun beforeWorkspaceModelChanged(event: VersionedStorageChange) {
+        handleLibraryChanges(event)
 
-        override fun beforeChanged(event: VersionedStorageChange) {
-            handleLibraryChanges(event)
+        // We keep track of the already invalidated modules because we don't need `handleContentRootInModuleChanges` to publish another
+        // module state modification event for the same module.
+        val alreadyInvalidatedModules = handleModuleChanges(event)
+        handleContentRootInModuleChanges(event, alreadyInvalidatedModules)
+    }
 
-            // We keep track of the already invalidated modules because we don't need `handleContentRootInModuleChanges` to publish another
-            // module state modification event for the same module.
-            val alreadyInvalidatedModules = handleModuleChanges(event)
-            handleContentRootInModuleChanges(event, alreadyInvalidatedModules)
+    private fun handleContentRootInModuleChanges(event: VersionedStorageChange, alreadyInvalidatedModules: Set<Module>) {
+        for (changedModule in event.getChangedModules()) {
+            if (changedModule in alreadyInvalidatedModules) continue
+            invalidateSourceModule(changedModule)
+        }
+    }
+
+    private fun VersionedStorageChange.getChangedModules(): Set<Module> = buildSet {
+        getChanges(ContentRootEntity::class.java).mapNotNullTo(this) {
+            getChangedModule(it.oldEntity, it.newEntity)
         }
 
-        private fun handleContentRootInModuleChanges(event: VersionedStorageChange, alreadyInvalidatedModules: Set<Module>) {
-            for (changedModule in event.getChangedModules()) {
-                if (changedModule in alreadyInvalidatedModules) continue
-                moduleStateModificationService.invalidateSourceModule(changedModule)
-            }
+        getChanges(SourceRootEntity::class.java).mapNotNullTo(this) {
+            getChangedModule(it.oldEntity?.contentRoot, it.newEntity?.contentRoot)
         }
 
-        private fun VersionedStorageChange.getChangedModules(): Set<Module> = buildSet {
-            getChanges(ContentRootEntity::class.java).mapNotNullTo(this) {
-                getChangedModule(it.oldEntity, it.newEntity)
-            }
+        getChanges(JavaSourceRootPropertiesEntity::class.java).mapNotNullTo(this) {
+            getChangedModule(it.oldEntity?.sourceRoot?.contentRoot, it.newEntity?.sourceRoot?.contentRoot)
+        }
+    }
 
-            getChanges(SourceRootEntity::class.java).mapNotNullTo(this) {
-                getChangedModule(it.oldEntity?.contentRoot, it.newEntity?.contentRoot)
-            }
-
-            getChanges(JavaSourceRootPropertiesEntity::class.java).mapNotNullTo(this) {
-                getChangedModule(it.oldEntity?.sourceRoot?.contentRoot, it.newEntity?.sourceRoot?.contentRoot)
+    private fun VersionedStorageChange.getChangedModule(
+        contentRootBefore: ContentRootEntity?,
+        contentRootAfter: ContentRootEntity?
+    ): Module? {
+        val oldModule = contentRootBefore?.module?.findModule(storageBefore)
+        val newModule = contentRootAfter?.module?.findModule(storageAfter)
+        if (newModule != null && oldModule != null) {
+            check(oldModule == newModule) {
+                "$oldModule should be equal to $newModule for ${EntityChange.Replaced::class.java}"
             }
         }
+        return oldModule ?: newModule
+    }
 
-        private fun VersionedStorageChange.getChangedModule(
-            contentRootBefore: ContentRootEntity?,
-            contentRootAfter: ContentRootEntity?
-        ): Module? {
-            val oldModule = contentRootBefore?.module?.findModule(storageBefore)
-            val newModule = contentRootAfter?.module?.findModule(storageAfter)
-            if (newModule != null && oldModule != null) {
-                check(oldModule == newModule) {
-                    "$oldModule should be equal to $newModule for ${EntityChange.Replaced::class.java}"
+    private fun handleLibraryChanges(event: VersionedStorageChange) {
+        val libraryEntities = event.getChanges(LibraryEntity::class.java).ifEmpty { return }
+        for (change in libraryEntities) {
+            when (change) {
+                is EntityChange.Added -> {}
+                is EntityChange.Removed -> {
+                    change.oldEntity
+                      .findLibraryBridge(event.storageBefore)
+                      ?.let { invalidateLibraryModule(it, isRemoval = true) }
+                }
+
+                is EntityChange.Replaced -> {
+                    val changedLibrary = change.getReplacedEntity(event, LibraryEntity::findLibraryBridge) ?: continue
+                    invalidateLibraryModule(changedLibrary)
                 }
             }
-            return oldModule ?: newModule
         }
+    }
 
-        private fun handleLibraryChanges(event: VersionedStorageChange) {
-            val libraryEntities = event.getChanges(LibraryEntity::class.java).ifEmpty { return }
-            for (change in libraryEntities) {
+    /**
+     * Invalidates removed and replaced [Module]s and returns the set of these invalidated modules.
+     */
+    private fun handleModuleChanges(event: VersionedStorageChange): Set<Module> {
+        val moduleEntities = event.getChanges(ModuleEntity::class.java).ifEmpty { return emptySet() }
+
+        return buildSet {
+            for (change in moduleEntities) {
                 when (change) {
                     is EntityChange.Added -> {}
                     is EntityChange.Removed -> {
-                        change.oldEntity
-                          .findLibraryBridge(event.storageBefore)
-                          ?.let { moduleStateModificationService.invalidateLibraryModule(it, isRemoval = true) }
+                        change.oldEntity.findModule(event.storageBefore)?.let { module ->
+                            invalidateSourceModule(module, isRemoval = true)
+                            add(module)
+                        }
                     }
 
                     is EntityChange.Replaced -> {
-                        val changedLibrary = change.getReplacedEntity(event, LibraryEntity::findLibraryBridge) ?: continue
-                        moduleStateModificationService.invalidateLibraryModule(changedLibrary)
-                    }
-                }
-            }
-        }
-
-        /**
-         * Invalidates removed and replaced [Module]s and returns the set of these invalidated modules.
-         */
-        private fun handleModuleChanges(event: VersionedStorageChange): Set<Module> {
-            val moduleEntities = event.getChanges(ModuleEntity::class.java).ifEmpty { return emptySet() }
-
-            return buildSet {
-                for (change in moduleEntities) {
-                    when (change) {
-                        is EntityChange.Added -> {}
-                        is EntityChange.Removed -> {
-                            change.oldEntity.findModule(event.storageBefore)?.let { module ->
-                                moduleStateModificationService.invalidateSourceModule(module, isRemoval = true)
-                                add(module)
-                            }
-                        }
-
-                        is EntityChange.Replaced -> {
-                            val changedModule = change.getReplacedEntity(event, ModuleEntity::findModule) ?: continue
-                            moduleStateModificationService.invalidateSourceModule(changedModule)
-                            add(changedModule)
-                        }
+                        val changedModule = change.getReplacedEntity(event, ModuleEntity::findModule) ?: continue
+                        invalidateSourceModule(changedModule)
+                        add(changedModule)
                     }
                 }
             }
