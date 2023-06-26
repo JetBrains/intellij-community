@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.details
 
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.VerticalListPanel
@@ -18,8 +19,10 @@ import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBList
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JLabelUtil
+import com.intellij.vcsUtil.showAbove
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -90,14 +93,6 @@ object CodeReviewDetailsStatusComponentFactory {
 
   fun createCiComponent(scope: CoroutineScope, statusVm: CodeReviewStatusViewModel): JComponent {
     val ciJobs = statusVm.ciJobs
-    val listModel = CollectionListModel<CodeReviewCIJob>(emptyList())
-    val jobsList = createJobsList(listModel)
-    scope.launch {
-      ciJobs.collect { jobs ->
-        listModel.removeAll()
-        jobs.forEach { job -> listModel.add(job) }
-      }
-    }
 
     val title = JLabel().apply {
       bindIconIn(scope, ciJobs.map { jobs -> ciJobIcon(jobs) })
@@ -105,20 +100,28 @@ object CodeReviewDetailsStatusComponentFactory {
     }
 
     val detailsLink = ActionLink(CollaborationToolsBundle.message("review.details.status.ci.link.details")) {
-      val parentComponent = it.source as JComponent
-      val scrollPane = ScrollPaneFactory.createScrollPane(jobsList, true).apply {
-        horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
-        verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
-        isOpaque = false
-        viewport.isOpaque = false
-      }
-      JBPopupFactory.getInstance()
-        .createComponentPopupBuilder(scrollPane, null)
-        .setResizable(true)
-        .createPopup()
-        .showUnderneathOf(parentComponent)
+      statusVm.showJobsDetails()
+
     }.apply {
       bindVisibilityIn(scope, ciJobs.map { jobs -> !jobs.all { it.status == CodeReviewCIJobState.SUCCESS } })
+    }
+
+    scope.launchNow {
+      statusVm.showJobsDetailsRequests.collectLatest { jobs ->
+        val listModel = CollectionListModel(jobs)
+        val jobsList = createJobsList(listModel)
+        val scrollPane = ScrollPaneFactory.createScrollPane(jobsList, true).apply {
+          horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+          verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
+          isOpaque = false
+          viewport.isOpaque = false
+        }
+        JBPopupFactory.getInstance()
+          .createComponentPopupBuilder(scrollPane, null)
+          .setResizable(true)
+          .createPopup()
+          .showAbove(detailsLink)
+      }
     }
 
     return HorizontalListPanel(CI_COMPONENTS_GAP).apply {
