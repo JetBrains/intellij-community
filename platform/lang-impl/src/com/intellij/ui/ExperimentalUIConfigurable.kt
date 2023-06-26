@@ -58,7 +58,6 @@ open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.me
           .bindSelected(
             { ExperimentalUI.isNewUI() },
             { ExperimentalUI.setNewUI(it) })
-          .comment(IdeBundle.message("checkbox.enable.new.ui.description"))
           .enabled(PlatformUtils.isAqua().not()) // the new UI is always enabled for Aqua and cannot be disabled
       }.comment(IdeBundle.message("ide.restart.required.comment"))
 
