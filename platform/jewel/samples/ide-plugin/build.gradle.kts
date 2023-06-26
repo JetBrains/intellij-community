@@ -1,11 +1,9 @@
 import org.gradle.kotlin.dsl.projects
 
 plugins {
-    id("org.jetbrains.jewel.kotlin")
+    jewel
     alias(libs.plugins.composeDesktop)
     alias(libs.plugins.ideaGradlePlugin)
-    id("org.jetbrains.jewel.detekt")
-    id("org.jetbrains.jewel.ktlint")
 }
 
 intellij {

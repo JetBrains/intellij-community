@@ -1,10 +1,10 @@
+@file:Suppress("UnstableApiUsage")
+
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 rootProject.name = "jewel"
 
 pluginManagement {
-    includeBuild("build-logic")
-
     repositories {
         gradlePluginPortal()
         maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev/")

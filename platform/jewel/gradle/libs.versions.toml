@@ -7,7 +7,7 @@ ideaGradlePlugin = "1.13.0"
 javaSarif = "2.0"
 jna = "5.10.0"
 kotlin = "1.8.0"
-dokka = "1.8.10"
+dokka = "1.8.20"
 kotlinterGradlePlugin = "3.12.0"
 kotlinxSerialization = "1.4.1"
 
@@ -25,6 +25,7 @@ ij-platform-core-ui = { module = "com.jetbrains.intellij.platform:core-ui", vers
 detekt-gradlePlugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }
 kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlinter-gradlePlugin = { module = "org.jmailen.gradle:kotlinter-gradle", version.ref = "kotlinterGradlePlugin" }
+dokka-gradlePlugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka" }
 
 [bundles]
 idea = ["ij-platform-ide-core", "ij-platform-ide-impl", "ij-platform-core-ui"]
