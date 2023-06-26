@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
+import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 
 interface GHPRStatusViewModel : CodeReviewStatusViewModel {
@@ -58,6 +59,7 @@ class GHPRStatusViewModelImpl(parentCs: CoroutineScope, stateModel: GHPRStateMod
     cs.launchNow {
       val jobs = ciJobs.first()
       _showJobsDetailsRequests.emit(jobs)
+      GHPRStatisticsCollector.logDetailsChecksOpened()
     }
   }
 }

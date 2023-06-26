@@ -19,6 +19,7 @@ import org.jetbrains.plugins.github.api.GHRepositoryConnection
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.ui.selector.GHRepositoryAndAccountSelectorComponentFactory
@@ -68,6 +69,7 @@ internal class MultiTabGHPRToolWindowContentController(parentDisposable: Disposa
               _contentController = CompletableFuture()
             }
             showSelectorsTab(requestFocus)
+            GHPRStatisticsCollector.logSelectorsOpened()
           }
           else {
             val controller = showRepositoryContent(conn, requestFocus)

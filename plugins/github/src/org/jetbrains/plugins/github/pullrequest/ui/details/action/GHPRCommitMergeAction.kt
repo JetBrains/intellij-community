@@ -5,9 +5,12 @@ import com.intellij.collaboration.async.combineAndCollect
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.github.pullrequest.GHPRAction
+import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
+import javax.swing.JButton
 
 internal class GHPRCommitMergeAction(scope: CoroutineScope, private val reviewFlowVm: GHPRReviewFlowViewModel)
   : AbstractAction(CollaborationToolsBundle.message("review.details.action.merge")) {
@@ -20,5 +23,8 @@ internal class GHPRCommitMergeAction(scope: CoroutineScope, private val reviewFl
     }
   }
 
-  override fun actionPerformed(e: ActionEvent?) = reviewFlowVm.mergeReview()
+  override fun actionPerformed(e: ActionEvent?) {
+    GHPRStatisticsCollector.logDetailsActionInvoked(GHPRAction.MERGE, e?.source is JButton)
+    reviewFlowVm.mergeReview()
+  }
 }

@@ -38,6 +38,7 @@ import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRCombinedDiffPreviewBase.Companion.createAndSetupDiffPreview
+import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -271,6 +272,12 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     getCustomData: ChangesTree.(String) -> Any? = { null }
   ): AsyncChangesTree {
     val tree = CodeReviewChangesTreeFactory(project, model).create(emptyTextText)
+
+    tree.addSelectionListener {
+      if (tree.isFocusOwner) {
+        GHPRStatisticsCollector.logChangeSelected()
+      }
+    }
 
     val diffPreviewController = createAndSetupDiffPreview(tree, diffRequestProducer.changeProducerFactory, dataProvider,
                                                           dataContext.filesManager)

@@ -4,9 +4,12 @@ package org.jetbrains.plugins.github.pullrequest.ui.details.action
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.GHPRAction
+import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
+import javax.swing.JButton
 
 internal class GHPRReopenAction(scope: CoroutineScope, private val reviewFlowVm: GHPRReviewFlowViewModel)
   : AbstractAction(GithubBundle.message("pull.request.reopen.action")) {
@@ -19,5 +22,8 @@ internal class GHPRReopenAction(scope: CoroutineScope, private val reviewFlowVm:
     }
   }
 
-  override fun actionPerformed(e: ActionEvent?) = reviewFlowVm.reopenReview()
+  override fun actionPerformed(e: ActionEvent?) {
+    GHPRStatisticsCollector.logDetailsActionInvoked(GHPRAction.REOPEN, e?.source is JButton)
+    reviewFlowVm.reopenReview()
+  }
 }
