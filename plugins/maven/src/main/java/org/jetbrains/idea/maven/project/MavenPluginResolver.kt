@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -37,7 +38,11 @@ class MavenPluginResolver(private val myTree: MavenProjectsTree) {
     val filesToRefresh: MutableSet<Path> = HashSet()
     try {
       val mavenPluginIdsToResolve = collectMavenPluginIdsToResolve(mavenProjects)
+      val mavenPluginIds = mavenPluginIdsToResolve.map { it.first }
+      MavenLog.LOG.warn("maven plugin resolution started: $mavenPluginIds")
       val resolutionResults = embedder.resolvePlugins(mavenPluginIdsToResolve, process, console)
+      val unresolvedPlugins = resolutionResults.filter { !it.isResolved }.map { it.mavenPluginId }
+      MavenLog.LOG.warn("maven plugin resolution finished, unresolved: $unresolvedPlugins")
       val artifacts = resolutionResults.flatMap { it.artifacts }
       for (artifact in artifacts) {
         val pluginJar = artifact.file.toPath()
