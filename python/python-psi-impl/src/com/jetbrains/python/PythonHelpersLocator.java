@@ -27,6 +27,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.util.LazyInitializer;
 import com.intellij.util.PathUtil;
+import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,11 +69,7 @@ public final class PythonHelpersLocator {
    */
   @Deprecated
   public static @NotNull File getHelpersRoot() {
-    String property = System.getProperty(PROPERTY_HELPERS_LOCATION);
-    if (property != null) {
-      return new File(property);
-    }
-    return assertHelpersLayout(getCopiedHelpersPath(ModuleHelpers.COMMUNITY));
+    return assertHelpersLayout(getHelpersRoot(ModuleHelpers.COMMUNITY, true));
   }
 
   /**
@@ -80,9 +77,9 @@ public final class PythonHelpersLocator {
    * The helper scripts may not be stored there at the time of calling this function.
    */
   public static @NotNull File predictHelpersPath() {
-    String property = System.getProperty(PROPERTY_HELPERS_LOCATION);
-    if (property != null) {
-      return new File(property);
+    File systemPropertyRoot = getCommunityHelpersRootFromSystemProperty(ModuleHelpers.COMMUNITY);
+    if (systemPropertyRoot != null) {
+      return systemPropertyRoot;
     }
     return predictHelpersPath(ModuleHelpers.COMMUNITY);
   }
@@ -93,11 +90,15 @@ public final class PythonHelpersLocator {
    */
   public static @NotNull File getCopiedHelpersPath() {
     logErrorOnEdt();
-    String property = System.getProperty(PROPERTY_HELPERS_LOCATION);
-    if (property != null) {
-      return new File(property);
-    }
-    return assertHelpersLayout(getCopiedHelpersPath(ModuleHelpers.COMMUNITY));
+    return assertHelpersLayout(getHelpersRoot(ModuleHelpers.COMMUNITY, true));
+  }
+
+  public static @NotNull String getTypeshedRoot() {
+    return new File(getHelpersRoot(ModuleHelpers.COMMUNITY, false), "typeshed").getAbsolutePath();
+  }
+
+  public static @NotNull String getPythonSkeletonsRoot() {
+    return new File(getHelpersRoot(ModuleHelpers.COMMUNITY, false), PyUserSkeletonsUtil.USER_SKELETONS_DIR).getAbsolutePath();
   }
 
   /**
@@ -107,7 +108,7 @@ public final class PythonHelpersLocator {
    */
   @Deprecated
   public static @NotNull Path getHelpersProRoot() {
-    return assertHelpersProLayout(getCopiedHelpersPath(ModuleHelpers.PRO)).toPath().normalize();
+    return assertHelpersProLayout(getHelpersRoot(ModuleHelpers.PRO, true)).toPath().normalize();
   }
 
   /**
@@ -122,7 +123,7 @@ public final class PythonHelpersLocator {
    */
   public static @NotNull Path getCopiedHelpersProPath() {
     logErrorOnEdt();
-    return assertHelpersProLayout(getCopiedHelpersPath(ModuleHelpers.PRO)).toPath().normalize();
+    return assertHelpersProLayout(getHelpersRoot(ModuleHelpers.PRO, true)).toPath().normalize();
   }
 
   @NotNull
@@ -130,20 +131,51 @@ public final class PythonHelpersLocator {
     return new File(maybeCopiedHelpersRoot.get(), moduleHelpers.getSubDirectory());
   }
 
-  private static @NotNull File getCopiedHelpersPath(@NotNull ModuleHelpers moduleHelpers) {
+  private static @NotNull File getHelpersRoot(@NotNull ModuleHelpers moduleHelpers, boolean considerCopied) {
+    File systemPropertyRoot = getCommunityHelpersRootFromSystemProperty(moduleHelpers);
+    if (systemPropertyRoot != null) {
+      return systemPropertyRoot;
+    }
+    File repositorySourcesRoot = getHelpersRootInSources(moduleHelpers);
+    if (repositorySourcesRoot != null) {
+      return repositorySourcesRoot;
+    }
+    if (considerCopied) {
+      File copiedRoot = ProgressIndicatorUtils.awaitWithCheckCanceled(moduleHelpers.copiedHelpersRoot.get());
+      if (copiedRoot != null) {
+        return copiedRoot;
+      }
+    }
+    File pluginRoot = getHelpersRootInPluginDistribution(moduleHelpers);
+    if (pluginRoot != null) {
+      return pluginRoot;
+    }
+    throw new IllegalStateException("No Python helpers root found for " + moduleHelpers);
+  }
+
+  private static @Nullable File getCommunityHelpersRootFromSystemProperty(@NotNull ModuleHelpers moduleHelpers) {
+    if (moduleHelpers != ModuleHelpers.COMMUNITY) return null;
+    String property = System.getProperty(PROPERTY_HELPERS_LOCATION);
+    return property != null ? new File(property) : null;
+  }
+
+  private static @Nullable File getHelpersRootInSources(@NotNull ModuleHelpers moduleHelpers) {
     if (PluginManagerCore.isRunningFromSources()) {
       return new File(PathManager.getCommunityHomePath(), moduleHelpers.myCommunityRepoRelativePath);
     }
-    else {
-      @Nullable File helpersRootDir = ProgressIndicatorUtils.awaitWithCheckCanceled(moduleHelpers.copiedHelpersRoot.get());
-      if (helpersRootDir != null) {
-        return helpersRootDir;
-      }
-      else {
-        @NonNls String jarPath = PathUtil.getJarPathForClass(PythonHelpersLocator.class);
-        return new File(new File(jarPath).getParentFile(), moduleHelpers.myModuleName);
-      }
+    return null;
+  }
+
+  private static @Nullable File getHelpersRootInPluginDistribution(@NotNull ModuleHelpers moduleHelpers) {
+    String jarPath = PathUtil.getJarPathForClass(PythonHelpersLocator.class);
+    if (jarPath.endsWith(".jar")) {
+      File jarFile = new File(jarPath);
+      LOG.assertTrue(jarFile.exists(), "jar file cannot be null");
+      // python/lib/python.jar -> python/
+      File pluginRoot = jarFile.getParentFile().getParentFile();
+      return new File(pluginRoot, moduleHelpers.myPluginRelativePath);
     }
+    return null;
   }
 
   private static void logErrorOnEdt() {
@@ -156,16 +188,6 @@ public final class PythonHelpersLocator {
     catch (AssertionError err) {
       Logger.getInstance(PythonHelpersLocator.class).error(err);
     }
-  }
-
-  private static @Nullable File getPluginBaseDir(@NonNls String jarPath) {
-    if (jarPath.endsWith(".jar")) {
-      final File jarFile = new File(jarPath);
-
-      LOG.assertTrue(jarFile.exists(), "jar file cannot be null");
-      return jarFile.getParentFile().getParentFile();
-    }
-    return null;
   }
 
   private static @NotNull File assertHelpersLayout(@NotNull File root) {
@@ -221,6 +243,7 @@ public final class PythonHelpersLocator {
     PRO("intellij.python.helpers.pro", "helpers-pro", "../python/helpers-pro");
 
     final String myModuleName;
+    final String myPluginRelativePath;
     final String myCommunityRepoRelativePath;
 
     /**
@@ -233,22 +256,22 @@ public final class PythonHelpersLocator {
 
     ModuleHelpers(@NotNull String moduleName, @NotNull String pluginRelativePath, @NotNull String communityRelativePath) {
       myModuleName = moduleName;
+      myPluginRelativePath = pluginRelativePath;
       myCommunityRepoRelativePath = communityRelativePath;
 
       copiedHelpersRoot = new LazyInitializer.LazyValue<>(() -> {
-        String jarPath = PathUtil.getJarPathForClass(PythonHelpersLocator.class);
-        final File pluginBaseDir = getPluginBaseDir(jarPath);
-        if (pluginBaseDir == null) {
+        final File pluginHelpersRoot = getHelpersRootInPluginDistribution(this);
+        if (pluginHelpersRoot == null) {
           return CompletableFuture.completedFuture(null);
         }
         return CompletableFuture.supplyAsync(() -> {
           try {
-            final File helpersRootDir = predictHelpersPath(this);
-            if (!helpersRootDir.isDirectory()) {
-              NioFiles.createDirectories(helpersRootDir.toPath().getParent());
-              FileUtil.copyDir(new File(pluginBaseDir, pluginRelativePath), helpersRootDir, true);
+            File copiedHelpersRoot = predictHelpersPath(this);
+            if (!copiedHelpersRoot.isDirectory()) {
+              NioFiles.createDirectories(copiedHelpersRoot.toPath().getParent());
+              FileUtil.copyDir(pluginHelpersRoot, copiedHelpersRoot, true);
             }
-            return helpersRootDir;
+            return copiedHelpersRoot;
           }
           catch (IOException e) {
             throw new UncheckedIOException("Failed to create temporary directory for helpers", e);

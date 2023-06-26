@@ -150,7 +150,7 @@ object PyTypeShed {
     get() {
       val paths = listOf("${PathManager.getConfigPath()}/typeshed",
                          "${PathManager.getConfigPath()}/../typeshed",
-                         PythonHelpersLocator.getHelperPath("typeshed"))
+                         PythonHelpersLocator.getTypeshedRoot())
       return paths.asSequence()
           .filter { File(it).exists() }
           .firstOrNull()
