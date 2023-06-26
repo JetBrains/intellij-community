@@ -8,12 +8,14 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
-class K2MoveRefactoringProcessor(private val descriptor: K2MoveDescriptor) : BaseRefactoringProcessor(descriptor.project) {
+class K2MoveMembersRefactoringProcessor(
+    val descriptor: K2MoveDescriptor.Members
+) : BaseRefactoringProcessor(descriptor.target.pkg.project) {
     override fun getCommandName(): String = KotlinBundle.message("command.move.declarations")
 
     override fun createUsageViewDescriptor(usages: Array<out UsageInfo>): UsageViewDescriptor {
         val targetContainerFqName = descriptor.target.pkg.qualifiedName.let { if (it == "") IdeDeprecatedMessagesBundle.message("default.package.presentable.name") else it }
-        return MoveMultipleElementsViewDescriptor(descriptor.source.elementsToMove.toTypedArray(), targetContainerFqName)
+        return MoveMultipleElementsViewDescriptor(descriptor.source.elements.toTypedArray(), targetContainerFqName)
     }
 
     override fun findUsages(): Array<UsageInfo> {
@@ -21,16 +23,13 @@ class K2MoveRefactoringProcessor(private val descriptor: K2MoveDescriptor) : Bas
     }
 
     override fun performRefactoring(usages: Array<out UsageInfo>) {
-        if (descriptor.target !is K2MoveTarget.File) return // TODO support other targets
-
-        val sourceFiles = descriptor.source.elementsToMove.map { it.containingKtFile }.distinct()
-
         val targetFile = descriptor.target.file
-        for (declaration in descriptor.source.elementsToMove) {
+        for (declaration in descriptor.source.elements) {
             targetFile.add(declaration)
             declaration.delete()
         }
 
+        val sourceFiles = descriptor.source.elements.map { it.containingKtFile }.distinct()
         if (descriptor.deleteEmptySourceFiles) {
             for (sourceFile in sourceFiles) {
                 if (sourceFile.declarations.isEmpty()) sourceFile.delete()
