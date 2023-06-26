@@ -231,7 +231,7 @@ fun JTextComponent.whenTextChangedFromUi(parentDisposable: Disposable? = null, l
 }
 
 @Experimental
-fun JToggleButton.whenStateChangedFromUi(parentDisposable: Disposable? = null, listener: (Boolean) -> Unit) {
+fun JCheckBox.whenStateChangedFromUi(parentDisposable: Disposable? = null, listener: (Boolean) -> Unit) {
   whenMouseReleased(parentDisposable) {
     invokeLater(ModalityState.stateForComponent(this)) {
       listener(isSelected)
