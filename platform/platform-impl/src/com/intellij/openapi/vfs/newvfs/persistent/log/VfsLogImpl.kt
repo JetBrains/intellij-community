@@ -153,20 +153,28 @@ class VfsLogImpl(
       override val stringEnumerator: DataEnumerator<String> get() = context.stringEnumerator
 
       override fun enqueueOperationWrite(tag: VfsOperationTag, compute: VfsLogOperationWriteContext.() -> VfsOperation<*>) {
-        context.operationLogStorage.enqueueOperationWrite(tag) { compute() }
+        context.operationLogStorage.enqueueOperationWrite(tag, object : CloseableComputable<VfsOperation<*>> {
+          override fun compute(): VfsOperation<*> = compute()
+          override fun close() {}
+        })
       }
 
       override fun enqueueOperationWithPayloadWrite(tag: VfsOperationTag,
                                                     payloadSize: Long,
                                                     writePayload: OutputStream.() -> Unit,
                                                     compute: VfsLogOperationWriteContext.(payloadRef: PayloadRef) -> VfsOperation<*>) {
-        val payloadWriteContext = context.payloadAppender(payloadSize)
-        context.operationLogStorage.enqueueOperationWrite(tag) {
-          val ref = payloadWriteContext.writePayload(writePayload)
-          compute(ref)
-        }
-      }
+        val payloadWriter = context.payloadAppender(payloadSize)
+        context.operationLogStorage.enqueueOperationWrite(tag, object : CloseableComputable<VfsOperation<*>> {
+          override fun compute(): VfsOperation<*> {
+            val ref = payloadWriter.fillData(writePayload)
+            return compute(ref)
+          }
 
+          override fun close() {
+            payloadWriter.close()
+          }
+        })
+      }
     }.also {
       if (readOnly) {
         LOG.warn("access to getOperationWriteContext() with readOnly=true VfsLog", Exception())

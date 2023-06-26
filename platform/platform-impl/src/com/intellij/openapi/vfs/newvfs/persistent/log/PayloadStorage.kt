@@ -19,9 +19,9 @@ interface PayloadStorageIO {
   fun readPayload(payloadRef: PayloadRef): State.DefinedState<ByteArray>
 
   interface PayloadAppendContext: AutoCloseable {
-    fun writePayload(data: ByteArray): PayloadRef = writePayload(data, 0, data.size)
-    fun writePayload(data: ByteArray, offset: Int, length: Int): PayloadRef
-    fun writePayload(body: OutputStream.() -> Unit): PayloadRef
+    fun fillData(data: ByteArray): PayloadRef = fillData(data, 0, data.size)
+    fun fillData(data: ByteArray, offset: Int, length: Int): PayloadRef
+    fun fillData(body: OutputStream.() -> Unit): PayloadRef
   }
 }
 

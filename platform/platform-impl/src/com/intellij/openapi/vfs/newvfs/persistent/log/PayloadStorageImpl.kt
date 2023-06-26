@@ -28,7 +28,7 @@ class PayloadStorageImpl(
     val appendContext = appendLogStorage.appendEntry(fullSize)
 
     return object : PayloadStorageIO.PayloadAppendContext {
-      override fun writePayload(data: ByteArray, offset: Int, length: Int): PayloadRef {
+      override fun fillData(data: ByteArray, offset: Int, length: Int): PayloadRef {
         appendContext.fillEntry {
           write(serializedSize)
           write(data, offset, length)
@@ -36,7 +36,7 @@ class PayloadStorageImpl(
         return PayloadRef(appendContext.position, Source.PayloadStorage)
       }
 
-      override fun writePayload(body: OutputStream.() -> Unit): PayloadRef {
+      override fun fillData(body: OutputStream.() -> Unit): PayloadRef {
         appendContext.fillEntry {
           write(serializedSize)
           body()

@@ -19,13 +19,13 @@ object InlinedPayloadStorage : PayloadStorageIO {
   override fun appendPayload(sizeBytes: Long): PayloadAppendContext {
     require(isSuitableForInlining(sizeBytes)) { "payload of size $sizeBytes cannot be inlined (max size 7)" }
     return object : PayloadAppendContext {
-      override fun writePayload(data: ByteArray, offset: Int, length: Int): PayloadRef {
+      override fun fillData(data: ByteArray, offset: Int, length: Int): PayloadRef {
         require(length.toLong() == sizeBytes) { "expected entry of size $sizeBytes, got $length"}
         return inlineData(data .copyOfRange(offset, offset + length))
       }
 
-      override fun writePayload(body: OutputStream.() -> Unit): PayloadRef {
-        return writePayload(UnsyncByteArrayOutputStream().run {
+      override fun fillData(body: OutputStream.() -> Unit): PayloadRef {
+        return fillData(UnsyncByteArrayOutputStream().run {
           body()
           toByteArray()
         })

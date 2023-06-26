@@ -12,7 +12,7 @@ interface OperationLogStorage {
    * @param compute is called at most once inside the launched coroutine
    * contract: tag == compute().tag
    */
-  fun enqueueOperationWrite(tag: VfsOperationTag, compute: () -> VfsOperation<*>)
+  fun enqueueOperationWrite(tag: VfsOperationTag, compute: CloseableComputable<VfsOperation<*>>)
 
   fun readAt(position: Long): OperationReadResult
 

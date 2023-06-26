@@ -55,7 +55,7 @@ class OperationLogStorageImpl(
     }
   }
 
-  override fun enqueueOperationWrite(tag: VfsOperationTag, compute: () -> VfsOperation<*>) {
+  override fun enqueueOperationWrite(tag: VfsOperationTag, compute: CloseableComputable<VfsOperation<*>>) {
     val descriptorSize = bytesForOperationDescriptor(tag)
     val entry = appendLogStorage.appendEntry(descriptorSize.toLong())
     val job = { writeJobImpl(compute, tag, entry, descriptorSize) }
@@ -65,33 +65,35 @@ class OperationLogStorageImpl(
   }
 
   private fun writeJobImpl(
-    compute: () -> VfsOperation<*>,
+    compute: CloseableComputable<VfsOperation<*>>,
     tag: VfsOperationTag,
     entryWriter: AppendContext,
     descriptorSize: Int
   ) {
     entryWriter.use {
-      try {
-        if (isClosed) throw CancellationException("OperationLogStorage is disposed")
-        val operation = compute()
-        if (tag != operation.tag) {
-          throw IllegalStateException("expected $tag, got ${operation.tag}")
+      compute.use { _ ->
+        try {
+          if (isClosed) throw CancellationException("OperationLogStorage is disposed")
+          val operation = compute()
+          if (tag != operation.tag) {
+            throw IllegalStateException("expected $tag, got ${operation.tag}")
+          }
+          it.fillEntry {
+            write(operation.tag.ordinal)
+            operation.serializer.serializeOperation(operation, stringEnumerator, this)
+            write(operation.tag.ordinal)
+          }
         }
-        it.fillEntry {
-          write(operation.tag.ordinal)
-          operation.serializer.serializeOperation(operation, stringEnumerator, this)
-          write(operation.tag.ordinal)
+        catch (e: Throwable) {
+          try { // try to write error bounding tags
+            entryWriter.write(0, byteArrayOf((-tag.ordinal).toByte()))
+            entryWriter.write(descriptorSize.toLong() - VfsOperationTag.SIZE_BYTES, byteArrayOf(tag.ordinal.toByte()))
+          }
+          catch (e2: Throwable) {
+            e.addSuppressed(IOException("failed to set error operation bounds", e2))
+          }
+          throw e
         }
-      }
-      catch (e: Throwable) {
-        try { // try to write error bounding tags
-          entryWriter.write(0, byteArrayOf((-tag.ordinal).toByte()))
-          entryWriter.write(descriptorSize.toLong() - VfsOperationTag.SIZE_BYTES, byteArrayOf(tag.ordinal.toByte()))
-        }
-        catch (e2: Throwable) {
-          e.addSuppressed(IOException("failed to set error operation bounds", e2))
-        }
-        throw e
       }
     }
   }
