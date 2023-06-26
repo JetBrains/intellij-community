@@ -4,53 +4,55 @@ package com.intellij.openapi.vfs.newvfs.persistent.log.util
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * A map-like data structure with thread-safe [get], [getOrCreate] ([get] time complexity is `O(index / chunkSize)`).
+ * A map-like data structure with thread-safe [get], [getOrCreate] ([get] time complexity is `O(index / blockSize)`).
  * Optimized for working with small indices. Implementation is similar to https://en.wikipedia.org/wiki/Unrolled_linked_list.
  * @param create guaranteed to be called at most once for each index
  */
 @Suppress("UNCHECKED_CAST")
-class SmallIndexMap<T: Any>(private val create: (Int) -> T, val chunkSize: Int = 64) {
+class SmallIndexMap<T: Any>(private val blockSize: Int = 64, private val create: (Int) -> T) {
   @Volatile
-  private var head: Node<Array<Any?>> = NodeImpl(arrayOfNulls(chunkSize)) // only modified on close
+  private var head: Node<Array<Any?>> = NodeImpl(arrayOfNulls(blockSize)) // only modified on close
 
-  private fun chunkId(index: Int) = index / chunkSize
-  private fun elemId(index: Int) = index % chunkSize
+  private fun blockId(index: Int) = index / blockSize
+  private fun elemId(index: Int) = index % blockSize
 
   fun get(index: Int): T? {
-    val chunk = getChunk(chunkId(index))
+    val block = getBlock(blockId(index))
     val elemId = elemId(index)
-    return chunk[elemId] as T?
+    return block[elemId] as T?
   }
 
   fun getOrCreate(index: Int): T {
-    val chunk = getChunk(chunkId(index))
+    val block = getBlock(blockId(index))
     val elemId = elemId(index)
-    chunk[elemId]?.let { return it as T }
+    block[elemId]?.let { return it as T }
     synchronized(this) {
-      chunk[elemId]?.let { return it as T }
+      block[elemId]?.let { return it as T }
       val v = create(index)
-      chunk[elemId] = v
+      block[elemId] = v
       return v
     }
   }
 
-  fun forEachExisting(body: (T) -> Unit) {
+  fun forEachExisting(body: (Int, T) -> Unit) {
     synchronized(this) {
       var ptr: Node<Array<Any?>>? = head
+      var index = 0
       while (ptr != null) {
         val arr = ptr.value
-        for (i in 0 until chunkSize) {
-          arr[i]?.let { body(it as T) }
+        for (i in 0 until blockSize) {
+          index++
+          arr[i]?.let { body(index, it as T) }
         }
         ptr = ptr.nextOrNull()
       }
     }
   }
 
-  private fun getChunk(chunkId: Int): Array<Any?> {
+  private fun getBlock(blockId: Int): Array<Any?> {
     var ptr = head
-    repeat(chunkId) {
-      ptr = ptr.next { arrayOfNulls(chunkSize) }
+    repeat(blockId) {
+      ptr = ptr.next { arrayOfNulls(blockSize) }
     }
     return ptr.value
   }

@@ -1,71 +1,53 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef.Source
-import com.intellij.openapi.vfs.newvfs.persistent.log.io.ChunkMMappedFileIO
-import com.intellij.openapi.vfs.newvfs.persistent.log.io.StorageIO
+import com.intellij.openapi.vfs.newvfs.persistent.log.io.AppendLogStorage
+import com.intellij.openapi.vfs.newvfs.persistent.log.io.AppendLogStorage.Companion.Mode
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State
-import com.intellij.openapi.vfs.newvfs.persistent.log.util.AdvancingPositionTracker
-import com.intellij.openapi.vfs.newvfs.persistent.log.util.LockFreeAdvancingPositionTracker
-import com.intellij.openapi.vfs.newvfs.persistent.log.util.trackAdvance
 import com.intellij.util.io.DataInputOutputUtil
 import com.intellij.util.io.DataOutputStream
-import com.intellij.util.io.ResilientFileChannel
 import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentSetOf
-import java.io.ByteArrayInputStream
-import java.io.DataInputStream
-import java.io.IOException
-import java.io.OutputStream
-import java.nio.channels.FileChannel
+import java.io.*
 import java.nio.file.Path
-import java.nio.file.StandardOpenOption.*
-import kotlin.io.path.div
 
 class PayloadStorageImpl(
   storagePath: Path,
 ) : PayloadStorage {
   override val sourcesDeclaration: PersistentSet<Source> = persistentSetOf(Source.PayloadStorage)
 
-  private val storageIO: StorageIO
-  private var lastSafeSize by PersistentVar.long(storagePath / "size")
-  private val positionTracker: AdvancingPositionTracker
+  private val appendLogStorage: AppendLogStorage
 
   init {
     FileUtil.ensureExists(storagePath.toFile())
 
-    val fileChannel = ResilientFileChannel(storagePath / "payload", READ, WRITE, CREATE)
-    storageIO = ChunkMMappedFileIO(fileChannel, FileChannel.MapMode.READ_WRITE)
-
-    positionTracker = LockFreeAdvancingPositionTracker(lastSafeSize ?: 0L)
+    appendLogStorage = AppendLogStorage(storagePath, Mode.ReadWrite, CHUNK_SIZE)
   }
 
   override fun writePayload(sizeBytes: Long, body: OutputStream.() -> Unit): PayloadRef {
     require(sizeBytes >= 0)
-    val buf = BufferExposingByteArrayOutputStream(10) // 1 + (64 - 6) / 7 < 10
-    val out = DataOutputStream(buf)
-    DataInputOutputUtil.writeLONG(out, sizeBytes)
+    val serializedSize = ByteArrayOutputStream(10) // 1 + (64 - 6) / 7 < 10
+    DataInputOutputUtil.writeLONG(DataOutputStream(serializedSize), sizeBytes)
 
-    val fullSize = out.writtenBytesCount.toLong() + sizeBytes
-    return positionTracker.trackAdvance(fullSize) { payloadPos ->
-      storageIO.write(payloadPos, buf.internalBuffer, 0, out.writtenBytesCount)
-      storageIO.offsetOutputStream(payloadPos + out.writtenBytesCount).run {
+    val fullSize = serializedSize.size().toLong() + sizeBytes
+    return appendLogStorage.appendEntry(fullSize).use {
+      it.fillEntry {
+        write(serializedSize.toByteArray())
         body()
-        validateWrittenBytesCount(sizeBytes)
       }
-      PayloadRef(payloadPos, Source.PayloadStorage)
+      PayloadRef(it.position, Source.PayloadStorage)
     }
   }
 
   override fun readPayload(payloadRef: PayloadRef): State.DefinedState<ByteArray> {
     if (payloadRef.source != Source.PayloadStorage) throw IllegalArgumentException("PayloadStorageImpl cannot read $payloadRef")
-    if (payloadRef.offset >= positionTracker.getReadyPosition()) {
+    if (payloadRef.offset >= appendLogStorage.size()) {
       return State.NotAvailable("failed to read $payloadRef: data was not written yet")
     }
     val buf = ByteArray(10) // 1 + (64 - 6) / 7 < 10
-    storageIO.read(payloadRef.offset, buf)
+    appendLogStorage.read(payloadRef.offset, buf)
     val inp = ByteArrayInputStream(buf)
     val sizeBytes = try {
       DataInputOutputUtil.readLONG(DataInputStream(inp))
@@ -79,20 +61,23 @@ class PayloadStorageImpl(
       return State.NotAvailable("failed to read $payloadRef: size marker is negative ($sizeBytes)")
     }
     val data = ByteArray(sizeBytes.toInt())
-    storageIO.read(payloadRef.offset + dataOffset, data)
+    appendLogStorage.read(payloadRef.offset + dataOffset, data)
     return data.let(State::Ready)
   }
 
-  override fun size(): Long = lastSafeSize ?: 0L //  TODO should be position.getReadyPosition()
+  override fun size(): Long = appendLogStorage.size()
 
   override fun flush() {
-    val safeSize = positionTracker.getReadyPosition()
-    storageIO.force()
-    lastSafeSize = safeSize
+    appendLogStorage.flush()
   }
 
   override fun dispose() {
     flush()
-    storageIO.close()
+    appendLogStorage.close()
+  }
+
+  companion object {
+    private const val MiB = 1024 * 1024
+    private const val CHUNK_SIZE = 32 * MiB
   }
 }

@@ -14,12 +14,6 @@ interface OperationLogStorage {
    */
   fun enqueueOperationWrite(tag: VfsOperationTag, compute: () -> VfsOperation<*>)
 
-  /**
-   * Performs an actual operation write, not supposed to be called directly.
-   * @see enqueueOperationWrite
-   */
-  fun writeOperation(position: Long, op: VfsOperation<*>)
-
   fun readAt(position: Long): OperationReadResult
 
   /**
@@ -46,16 +40,17 @@ interface OperationLogStorage {
   fun readAll(action: (OperationReadResult) -> Boolean)
 
   /**
-   * Size of storage in bytes. The range [0, size) of storage is guaranteed to contain only operations
+   * Size of storage in bytes. The range [startOffset, size) of storage is guaranteed to contain only operations
    * for which their write procedures have been finished already.
    * The following holds: [persistentSize] <= [size] <= [emergingSize]
    * @see [persistentSize]
    * @see [emergingSize]
+   * @see [startOffset]
    */
   fun size(): Long
 
   /**
-   * Similar to [size], but the range [0, emergingSize) may contain operations for which their write
+   * Similar to [size], but the range [startOffset, emergingSize) may contain operations for which their write
    * procedures are not finished yet (but space is already allocated).
    */
   fun emergingSize(): Long
@@ -65,6 +60,13 @@ interface OperationLogStorage {
    * invocation [size] was at least current [persistentSize].
    */
   fun persistentSize(): Long
+
+  /**
+   * Position of the first available byte. There is a guarantee that [startOffset] points to a location where an operation starts
+   * (given [startOffset] < [size]).
+   */
+  fun startOffset(): Long
+
 
   /**
    * An [Iterator] that is initially positioned at the beginning of the storage.

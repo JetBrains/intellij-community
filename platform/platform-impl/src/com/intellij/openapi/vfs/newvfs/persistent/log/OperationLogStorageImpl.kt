@@ -4,23 +4,18 @@ package com.intellij.openapi.vfs.newvfs.persistent.log
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.OperationReadResult
-import com.intellij.openapi.vfs.newvfs.persistent.log.io.ChunkMMappedFileIO
-import com.intellij.openapi.vfs.newvfs.persistent.log.io.StorageIO
-import com.intellij.openapi.vfs.newvfs.persistent.log.util.AdvancingPositionTracker
-import com.intellij.openapi.vfs.newvfs.persistent.log.util.LockFreeAdvancingPositionTracker
+import com.intellij.openapi.vfs.newvfs.persistent.log.io.AppendLogStorage
+import com.intellij.openapi.vfs.newvfs.persistent.log.io.AppendLogStorage.AppendContext
+import com.intellij.openapi.vfs.newvfs.persistent.log.io.AppendLogStorage.Companion.Mode
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.DataEnumerator
-import com.intellij.util.io.ResilientFileChannel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import java.io.IOException
-import java.nio.channels.FileChannel
 import java.nio.file.Path
-import java.nio.file.StandardOpenOption.*
-import kotlin.io.path.div
 
 class OperationLogStorageImpl(
   storagePath: Path,
@@ -28,9 +23,7 @@ class OperationLogStorageImpl(
   private val scope: CoroutineScope,
   writerJobsCount: Int
 ) : OperationLogStorage {
-  private val storageIO: StorageIO
-  private var persistentSize by PersistentVar.long(storagePath / "size")
-  private val positionTracker: AdvancingPositionTracker
+  private val appendLogStorage: AppendLogStorage
   private val writeQueue = Channel<() -> Unit>(
     capacity = SystemProperties.getIntProperty("idea.vfs.log-vfs-operations.buffer-capacity", 10_000),
     BufferOverflow.SUSPEND
@@ -42,10 +35,7 @@ class OperationLogStorageImpl(
   init {
     FileUtil.ensureExists(storagePath.toFile())
 
-    val fileChannel = ResilientFileChannel(storagePath / "descriptors", READ, WRITE, CREATE)
-    storageIO = ChunkMMappedFileIO(fileChannel, FileChannel.MapMode.READ_WRITE)
-
-    positionTracker = LockFreeAdvancingPositionTracker(persistentSize ?: 0L)
+    appendLogStorage = AppendLogStorage(storagePath, Mode.ReadWrite, CHUNK_SIZE)
 
     repeat(writerJobsCount) { scope.launch { writeWorker() } }
   }
@@ -72,8 +62,8 @@ class OperationLogStorageImpl(
 
   override fun enqueueOperationWrite(tag: VfsOperationTag, compute: () -> VfsOperation<*>) {
     val descriptorSize = bytesForOperationDescriptor(tag)
-    val advanceToken = positionTracker.beginAdvance(descriptorSize.toLong())
-    val job = { writeJobImpl(compute, tag, advanceToken, descriptorSize) }
+    val entry = appendLogStorage.appendEntry(descriptorSize.toLong())
+    val job = { writeJobImpl(compute, tag, entry, descriptorSize) }
     val submitted = writeQueue.trySend(job)
     if (submitted.isSuccess) return
     performWriteJob(job)
@@ -82,39 +72,32 @@ class OperationLogStorageImpl(
   private fun writeJobImpl(
     compute: () -> VfsOperation<*>,
     tag: VfsOperationTag,
-    descriptorAdvanceToken: AdvancingPositionTracker.AdvanceToken,
+    entryWriter: AppendContext,
     descriptorSize: Int
   ) {
-    try {
-      if (isClosed) throw CancellationException("OperationLogStorage is disposed")
-      val operation = compute()
-      if (tag != operation.tag) {
-        throw IllegalStateException("expected $tag, got ${operation.tag}")
+    entryWriter.use {
+      try {
+        if (isClosed) throw CancellationException("OperationLogStorage is disposed")
+        val operation = compute()
+        if (tag != operation.tag) {
+          throw IllegalStateException("expected $tag, got ${operation.tag}")
+        }
+        it.fillEntry {
+          write(operation.tag.ordinal)
+          operation.serializer.serializeOperation(operation, stringEnumerator, this)
+          write(operation.tag.ordinal)
+        }
       }
-      writeOperation(descriptorAdvanceToken.position, operation)
-    }
-    catch (e: Throwable) {
-      try { // try to write error bounding tags
-        storageIO.write(descriptorAdvanceToken.position, byteArrayOf((-tag.ordinal).toByte()))
-        storageIO.write(descriptorAdvanceToken.position + descriptorSize - VfsOperationTag.SIZE_BYTES, byteArrayOf(tag.ordinal.toByte()))
+      catch (e: Throwable) {
+        try { // try to write error bounding tags
+          entryWriter.write(0, byteArrayOf((-tag.ordinal).toByte()))
+          entryWriter.write(descriptorSize.toLong() - VfsOperationTag.SIZE_BYTES, byteArrayOf(tag.ordinal.toByte()))
+        }
+        catch (e2: Throwable) {
+          e.addSuppressed(IOException("failed to set error operation bounds", e2))
+        }
+        throw e
       }
-      catch (e2: Throwable) {
-        e.addSuppressed(IOException("failed to set error operation bounds", e2))
-      }
-      throw e
-    }
-    finally {
-      positionTracker.finishAdvance(descriptorAdvanceToken)
-    }
-  }
-
-  override fun writeOperation(position: Long, op: VfsOperation<*>) {
-    val descriptorSize = bytesForOperationDescriptor(op.tag)
-    storageIO.offsetOutputStream(position).use {
-      it.write(op.tag.ordinal)
-      op.serializer.serializeOperation(op, stringEnumerator, it)
-      it.write(op.tag.ordinal)
-      it.validateWrittenBytesCount(descriptorSize.toLong())
     }
   }
 
@@ -138,7 +121,7 @@ class OperationLogStorageImpl(
       // validate right tag
       val descrSize = bytesForOperationDescriptor(tag)
       val buf = ByteArray(VfsOperationTag.SIZE_BYTES)
-      storageIO.read(position + descrSize - VfsOperationTag.SIZE_BYTES, buf)
+      appendLogStorage.read(position + descrSize - VfsOperationTag.SIZE_BYTES, buf)
       if (tag.ordinal.toByte() != buf[0]) {
         return OperationReadResult.Invalid(IllegalStateException("bounding tags do not match: ${tag.ordinal} ${buf[0]}"))
       }
@@ -154,7 +137,7 @@ class OperationLogStorageImpl(
       if (toReadMask.contains(tag)) return readWholeDescriptor(actualPos, tag)
       // validate left tag
       val buf = ByteArray(VfsOperationTag.SIZE_BYTES)
-      storageIO.read(position - bytesForOperationDescriptor(tag), buf)
+      appendLogStorage.read(position - bytesForOperationDescriptor(tag), buf)
       if (tag.ordinal.toByte() != buf[0]) {
         return OperationReadResult.Invalid(IllegalStateException("bounding tags do not match: ${buf[0]} ${tag.ordinal}"))
       }
@@ -168,7 +151,7 @@ class OperationLogStorageImpl(
   private inline fun readFirstTag(position: Long,
                                   cont: (position: Long, tag: VfsOperationTag) -> OperationReadResult): OperationReadResult {
     val buf = ByteArray(VfsOperationTag.SIZE_BYTES)
-    storageIO.read(position, buf)
+    appendLogStorage.read(position, buf)
     if (buf[0] < 0.toByte()) {
       return recoverOperationTag(position, buf)
     }
@@ -182,7 +165,7 @@ class OperationLogStorageImpl(
   private inline fun readLastTag(position: Long,
                                  cont: (actualDescriptorPosition: Long, tag: VfsOperationTag) -> OperationReadResult): OperationReadResult {
     val buf = ByteArray(VfsOperationTag.SIZE_BYTES)
-    storageIO.read(position - 1, buf)
+    appendLogStorage.read(position - 1, buf)
     if (buf[0] !in 1 until VfsOperationTag.VALUES.size) {
       return OperationReadResult.Invalid(IllegalStateException("read last tag value is ${buf[0]}"))
     }
@@ -194,7 +177,7 @@ class OperationLogStorageImpl(
   private fun readWholeDescriptor(position: Long, tag: VfsOperationTag): OperationReadResult {
     val descrSize = bytesForOperationDescriptor(tag)
     val descrData = ByteArray(descrSize)
-    storageIO.read(position, descrData)
+    appendLogStorage.read(position, descrData)
     if (descrData.last() != descrData.first()) {
       return OperationReadResult.Invalid(IllegalStateException("bounding tags do not match: ${descrData.first()} ${descrData.last()}"))
     }
@@ -214,7 +197,7 @@ class OperationLogStorageImpl(
     }
     val probableTag = VfsOperationTag.VALUES[probableTagByte]
     val descriptorSize = bytesForOperationDescriptor(probableTag)
-    storageIO.read(position + descriptorSize - VfsOperationTag.SIZE_BYTES, buf)
+    appendLogStorage.read(position + descriptorSize - VfsOperationTag.SIZE_BYTES, buf)
     if (probableTagByte != buf[0].toInt()) {
       return OperationReadResult.Invalid(
         IllegalStateException("failed to recover incomplete operation, bounding bytes: ${-probableTagByte} ${buf[0]}")
@@ -230,11 +213,12 @@ class OperationLogStorageImpl(
     }
   }
 
-  override fun size(): Long = positionTracker.getReadyPosition()
-  override fun emergingSize(): Long = positionTracker.getCurrentAdvancePosition()
-  override fun persistentSize(): Long = persistentSize ?: 0L
+  override fun size(): Long = appendLogStorage.size()
+  override fun emergingSize(): Long = appendLogStorage.emergingSize()
+  override fun persistentSize(): Long = appendLogStorage.persistentSize()
+  override fun startOffset(): Long = appendLogStorage.startOffset()
 
-  override fun begin(): OperationLogStorage.Iterator = UnconstrainedIterator(0L)
+  override fun begin(): OperationLogStorage.Iterator = UnconstrainedIterator(startOffset())
   override fun end(): OperationLogStorage.Iterator = UnconstrainedIterator(size())
 
   /**
@@ -243,24 +227,20 @@ class OperationLogStorageImpl(
    */
   fun currentlyAvailableRangeIterators(): Pair<OperationLogStorage.Iterator, OperationLogStorage.Iterator> {
     val allowedRangeEnd = size()
-    val allowedRangeBegin = 0L
+    val allowedRangeBegin = startOffset()
     return ConstrainedIterator(allowedRangeBegin, allowedRangeBegin, allowedRangeEnd) to
       ConstrainedIterator(allowedRangeEnd, allowedRangeBegin, allowedRangeEnd)
   }
 
   override fun flush() {
-    val safePos = positionTracker.getReadyPosition()
-    if (safePos != persistentSize) {
-      storageIO.force()
-      persistentSize = safePos
-    }
+    appendLogStorage.flush()
   }
 
   override fun dispose() {
     isClosed = true
     writeQueue.close()
     flush()
-    storageIO.close()
+    appendLogStorage.close()
   }
 
   abstract inner class IteratorBase(
@@ -314,7 +294,7 @@ class OperationLogStorageImpl(
     }
 
     override fun hasPrevious(): Boolean {
-      return pos > 0L && !invalidationFlag
+      return pos > startOffset() && !invalidationFlag
     }
 
     override fun copy(): UnconstrainedIterator = UnconstrainedIterator(pos, invalidationFlag)
@@ -338,6 +318,9 @@ class OperationLogStorageImpl(
   }
 
   companion object {
+    private const val MiB = 1024 * 1024
+    private const val CHUNK_SIZE = 64 * MiB
+
     private val LOG = Logger.getInstance(OperationLogStorageImpl::class.java)
   }
 }
