@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.PathUtil
+import com.intellij.util.io.jarFile
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
@@ -116,6 +117,14 @@ object ConfigLibraryUtil {
     ): Library = runWriteAction {
         LibraryTablesRegistrar.getInstance().getLibraryTable(project).createLibrary(name).apply {
             modifiableModel.init()
+        }
+    }
+
+    fun addProjectLibraryWithClassesRoot(project: Project, name: String): Library = runWriteAction {
+        addProjectLibrary(project, name) {
+            // Add a unique root to avoid deduplication of library infos in tests (see `LibraryInfoCache`).
+            addEmptyClassesRoot()
+            commit()
         }
     }
 
@@ -235,4 +244,9 @@ object ConfigLibraryUtil {
 
 fun Library.ModifiableModel.addRoot(file: File, kind: OrderRootType) {
     addRoot(VfsUtil.getUrlForLibraryRoot(file), kind)
+}
+
+fun Library.ModifiableModel.addEmptyClassesRoot() {
+    val jarFile = jarFile { }.generateInTempDir()
+    addRoot(jarFile.toFile(), OrderRootType.CLASSES)
 }

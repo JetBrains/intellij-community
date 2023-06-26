@@ -6,11 +6,11 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.PsiTestUtil
-import java.nio.file.Paths
 import org.jetbrains.kotlin.idea.fir.analysis.providers.testProjectStructure.TestProjectStructureReader
 import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.test.util.addDependency
+import java.nio.file.Paths
 
 typealias ProjectLibrariesByNames = Map<String, Library>
 typealias ModulesByNames = Map<String, Module>
@@ -26,7 +26,7 @@ abstract class AbstractProjectStructureTest<S : TestProjectStructure> : Abstract
         )
 
         val projectLibrariesByNames = testStructure.libraries.associate { libraryData ->
-            libraryData.name to createEmptyProjectLibrary(libraryData.name)
+            libraryData.name to createProjectLibrary(libraryData.name)
         }
 
         val modulesByNames = testStructure.modules.associate { moduleData ->
@@ -50,7 +50,7 @@ abstract class AbstractProjectStructureTest<S : TestProjectStructure> : Abstract
         return Triple(testStructure, projectLibrariesByNames, modulesByNames)
     }
 
-    private fun createEmptyProjectLibrary(name: String): Library = ConfigLibraryUtil.addProjectLibrary(project, name) { }
+    private fun createProjectLibrary(name: String): Library = ConfigLibraryUtil.addProjectLibraryWithClassesRoot(project, name)
 
     private fun createEmptyModule(name: String): Module {
         val tmpDir = createTempDirectory().toPath()
