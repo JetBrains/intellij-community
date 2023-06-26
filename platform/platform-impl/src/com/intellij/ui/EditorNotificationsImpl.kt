@@ -54,6 +54,8 @@ class EditorNotificationsImpl(private val project: Project,
 
   private val fileToUpdateNotificationJob = CollectionFactory.createConcurrentWeakMap<VirtualFile, Job>()
 
+  private val updateAllRequestFlowJob: Job
+
   init {
     val connection = project.messageBus.connect()
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
@@ -92,7 +94,7 @@ class EditorNotificationsImpl(private val project: Project,
         }
       }, false, null)
 
-    coroutineScope.launch {
+    updateAllRequestFlowJob = coroutineScope.launch {
       updateAllRequests
         .debounce(100.milliseconds)
         .collectLatest {
@@ -104,6 +106,7 @@ class EditorNotificationsImpl(private val project: Project,
   }
 
   override fun dispose() {
+    // todo fix HttpRequestBaseFixtureTestCase and then remove `dispose`.
     coroutineScope.cancel()
     // help GC
     fileToUpdateNotificationJob.clear()
@@ -126,7 +129,7 @@ class EditorNotificationsImpl(private val project: Project,
           yield()
         }
 
-        val jobs = parentJob.children.toList()
+        val jobs = parentJob.children.filter { it != updateAllRequestFlowJob }.toList()
         if (jobs.isEmpty()) {
           break
         }
