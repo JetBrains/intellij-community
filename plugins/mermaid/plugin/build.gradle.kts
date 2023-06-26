@@ -26,9 +26,26 @@ dependencies {
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
+val generatedGrammarSourcesPath
+  get() = buildDir.resolve("grammar").resolve("generated")
+
 sourceSets {
   getByName("main").apply {
-    java.srcDirs("src/main", "src/grammar", "src/generated")
+    java.srcDirs(
+      "src/main",
+      generatedGrammarSourcesPath
+    )
+  }
+  val grammar by registering {
+    java {
+      srcDirs("src/grammar")
+    }
+  }
+}
+
+idea {
+  module {
+    generatedSourceDirs = generatedSourceDirs + generatedGrammarSourcesPath
   }
 }
 
@@ -136,7 +153,7 @@ tasks {
 
   generateLexer {
     source.set("src/grammar/lexer/MermaidLexer.flex")
-    targetDir.set("src/generated/com/intellij/mermaid/lang/lexer/")
+    targetDir.set(generatedGrammarSourcesPath.resolve("com/intellij/mermaid/lang/lexer/").toString())
     targetClass.set("_MermaidLexer")
     // skeleton.set("/some/specific/skeleton")
     purgeOldFiles.set(true)
@@ -144,7 +161,7 @@ tasks {
 
   generateParser {
     source.set("src/grammar/parser/Mermaid.bnf")
-    targetRoot.set("src/generated/")
+    targetRoot.set(generatedGrammarSourcesPath.toString())
     pathToParser.set("com/intellij/mermaid/lang/parser/_MermaidParser.java")
     pathToPsiRoot.set("com/intellij/mermaid/lang/psi/")
     purgeOldFiles.set(true)
