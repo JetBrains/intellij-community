@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -483,8 +484,17 @@ public abstract class UsefulTestCase extends TestCase {
   protected void runBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     ThrowableRunnable<Throwable> wrappedRunnable = wrapTestRunnable(testRunnable);
     if (runInDispatchThread()) {
+      ThrowableRunnable<Throwable> wilRunnable = () -> {
+        Application app = ApplicationManager.getApplication();
+        if (app != null) {
+          app.runWriteIntentReadAction(() -> { wrappedRunnable.run(); return null; });
+        }
+        else {
+          wrappedRunnable.run();
+        }
+      };
       UITestUtil.replaceIdeEventQueueSafely();
-      EdtTestUtil.runInEdtAndWait(() -> defaultRunBare(wrappedRunnable));
+      EdtTestUtil.runInEdtAndWait(() -> defaultRunBare(wilRunnable));
     }
     else {
       defaultRunBare(wrappedRunnable);

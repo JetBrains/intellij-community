@@ -29,7 +29,6 @@ public final class EdtTestUtil {
   public static <T extends Throwable> void runInEdtAndWait(@NotNull ThrowableRunnable<T> runnable) throws T {
     Application app = ApplicationManager.getApplication();
     if (app == null ? EDT.isCurrentThreadEdt() : app.isDispatchThread()) {
-      // reduce stack trace
       runnable.run();
       return;
     }

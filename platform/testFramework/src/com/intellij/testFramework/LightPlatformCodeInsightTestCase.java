@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -73,17 +74,20 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     if (isRunInCommand()) {
       Ref<Throwable> e = new Ref<>();
-      CommandProcessor.getInstance().executeCommand(getProject(), () -> {
-        try {
-          super.runTestRunnable(testRunnable);
+      // Command processor requires write intent lock
+      WriteIntentReadAction.run((ThrowableRunnable<Throwable>)() -> {
+        CommandProcessor.getInstance().executeCommand(getProject(), () -> {
+          try {
+            super.runTestRunnable(testRunnable);
+          }
+          catch (Throwable throwable) {
+            e.set(throwable);
+          }
+        }, null, null);
+        if (!e.isNull()) {
+          throw e.get();
         }
-        catch (Throwable throwable) {
-          e.set(throwable);
-        }
-      }, null, null);
-      if (!e.isNull()) {
-        throw e.get();
-      }
+      });
     }
     else {
       super.runTestRunnable(testRunnable);
