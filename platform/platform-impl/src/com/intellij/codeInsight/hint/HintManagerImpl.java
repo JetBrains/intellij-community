@@ -122,6 +122,21 @@ public class HintManagerImpl extends HintManager {
   }
 
   /**
+   * Displays a hint in the editor gutter, at the specified line number and with some horizontal offset
+   * Allows to avoid calculation of a hint position manually
+   */
+  public void showGutterHint(final LightweightHint hint,
+                             final Editor editor,
+                             final int lineNumber,
+                             final int horizontalOffset,
+                             @HideFlags final int flags,
+                             final int timeout, final boolean reviveOnEditorChange,
+                             @NotNull final HintHint hintInfo) {
+    getClientManager(editor).showGutterHint(hint, editor, hintInfo, lineNumber, horizontalOffset,
+                                            flags, timeout, reviveOnEditorChange, null);
+  }
+
+  /**
    * In this method the point to show hint depends on current caret position.
    * So, first of all, editor will be scrolled to make the caret position visible.
    */

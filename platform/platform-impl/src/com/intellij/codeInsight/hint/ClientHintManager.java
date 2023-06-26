@@ -39,6 +39,16 @@ public interface ClientHintManager {
 
   boolean hasShownHintsThatWillHideByOtherHint(boolean willShowTooltip);
 
+  void showGutterHint(@NotNull final LightweightHint hint,
+                      @NotNull final Editor editor,
+                      @NotNull HintHint hintInfo,
+                      final int lineNumber,
+                      final int horizontalOffset,
+                      @HintManager.HideFlags final int flags,
+                      final int timeout,
+                      final boolean reviveOnEditorChange,
+                      @Nullable Runnable onHintHidden);
+
   void showEditorHint(@NotNull LightweightHint hint,
                       @NotNull Editor editor,
                       @NotNull HintHint hintInfo,
