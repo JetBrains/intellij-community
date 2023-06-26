@@ -128,6 +128,12 @@ object ConfigLibraryUtil {
         }
     }
 
+    fun removeProjectLibrary(project: Project, library: Library) {
+        runWriteAction {
+            LibraryTablesRegistrar.getInstance().getLibraryTable(project).removeLibrary(library)
+        }
+    }
+
     fun addLibrary(module: Module, name: String, kind: PersistentLibraryKind<*>? = null, init: Library.ModifiableModel.() -> Unit) {
         runWriteAction {
             ModuleRootManager.getInstance(module).modifiableModel.apply {

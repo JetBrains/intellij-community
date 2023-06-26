@@ -2,8 +2,11 @@
 package org.jetbrains.kotlin.idea.fir.analysis.providers.modificationEvents
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.PsiTestUtil
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
@@ -11,12 +14,15 @@ import org.jetbrains.kotlin.analysis.providers.analysisMessageBus
 import org.jetbrains.kotlin.analysis.providers.topics.KotlinModuleStateModificationListener
 import org.jetbrains.kotlin.analysis.providers.topics.KotlinTopics
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
 import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import org.jetbrains.kotlin.idea.test.addEmptyClassesRoot
 import org.junit.Assert
 import java.io.File
+import org.jetbrains.kotlin.test.util.addDependency
 
 class KotlinModuleStateModificationTest : AbstractMultiModuleTest() {
     override fun isFirPlugin(): Boolean = true
@@ -175,9 +181,71 @@ class KotlinModuleStateModificationTest : AbstractMultiModuleTest() {
         disposeTrackers(trackerA, trackerB, trackerC)
     }
 
+    fun `test library module state modification after root replacement`() {
+        val libraryA = createProjectLibrary("a")
+        val libraryB = createProjectLibrary("b")
+        val moduleC = createModuleInTmpDir("c")
+        val moduleD = createModuleInTmpDir("d")
+
+        moduleC.addDependency(libraryA)
+        moduleC.addDependency(libraryB)
+
+        val trackerA = createTracker(libraryA)
+        val trackerB = createTracker(libraryB)
+        val trackerC = createTracker(moduleC)
+        val trackerD = createTracker(moduleD)
+
+        libraryA.swapRoot()
+
+        trackerA.assertModifiedOnce("project library A with replaced root")
+        trackerB.assertNotModified("unchanged library B")
+        trackerC.assertNotModified("unchanged module C")
+        trackerD.assertNotModified("unchanged module D")
+
+        disposeTrackers(trackerA, trackerB, trackerC, trackerD)
+    }
+
+    private fun Library.swapRoot() = runWriteAction {
+        val existingRootUrl = rootProvider.getUrls(OrderRootType.CLASSES)[0]!!
+        modifiableModel.apply {
+            removeRoot(existingRootUrl, OrderRootType.CLASSES)
+            addEmptyClassesRoot()
+            commit()
+        }
+    }
+
+    fun `test library module state modification after removal`() {
+        val libraryA = createProjectLibrary("a")
+        val libraryB = createProjectLibrary("b")
+        val moduleC = createModuleInTmpDir("c")
+        val moduleD = createModuleInTmpDir("d")
+
+        moduleC.addDependency(libraryA)
+        moduleC.addDependency(libraryB)
+
+        val trackerA = createTracker(libraryA)
+        val trackerB = createTracker(libraryB)
+        val trackerC = createTracker(moduleC)
+        val trackerD = createTracker(moduleD)
+
+        ConfigLibraryUtil.removeProjectLibrary(myProject, libraryA)
+
+        trackerA.assertModifiedOnce("removed project library A", shouldBeRemoval = true)
+        trackerB.assertNotModified("unchanged library B")
+        trackerC.assertNotModified("unchanged module C")
+        trackerD.assertNotModified("unchanged module D")
+
+        disposeTrackers(trackerA, trackerB, trackerC, trackerD)
+    }
+
+    private fun createProjectLibrary(name: String): Library = ConfigLibraryUtil.addProjectLibraryWithClassesRoot(myProject, name)
+
     private fun createTracker(module: KtModule): ModuleStateModificationTracker = ModuleStateModificationTracker(module)
 
     private fun createTracker(module: Module): ModuleStateModificationTracker = createTracker(module.productionSourceInfo!!.toKtModule())
+
+    private fun createTracker(library: Library): ModuleStateModificationTracker =
+        createTracker(LibraryInfoCache.getInstance(myProject)[library].single().toKtModule())
 
     private fun disposeTrackers(vararg trackers: ModuleStateModificationTracker) {
         trackers.forEach { Disposer.dispose(it) }
