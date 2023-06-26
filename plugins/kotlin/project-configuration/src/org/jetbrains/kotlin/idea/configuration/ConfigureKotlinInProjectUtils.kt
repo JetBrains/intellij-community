@@ -25,6 +25,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
@@ -261,6 +262,17 @@ private fun KotlinProjectConfigurator.canConfigure(moduleSourceRootGroup: Module
     getStatus(moduleSourceRootGroup) == ConfigureKotlinStatus.CAN_BE_CONFIGURED &&
             (allConfigurators().toList() - this).none { it.getStatus(moduleSourceRootGroup) == ConfigureKotlinStatus.CONFIGURED }
 
+fun getConfiguredModules(project: Project, configurator: KotlinProjectConfigurator): Map<String, Module> {
+    val projectModules = project.modules.asList()
+    val result = mutableMapOf<String, Module>()
+    for (moduleGroup in ModuleSourceRootMap(project).groupByBaseModules(projectModules)) {
+        if (configurator.getStatus(moduleGroup) == ConfigureKotlinStatus.CONFIGURED) {
+            result[moduleGroup.baseModule.name] = moduleGroup.sourceRootModules.first() // They all either have or don't have Kotlin
+        }
+    }
+    return result
+}
+
 /**
  * Returns a list of modules which contain sources in Kotlin and for which it's possible to run the given configurator.
  * Note that this method is expensive and should not be called more often than strictly necessary.
@@ -329,6 +341,12 @@ fun Module.hasKotlinPluginEnabled(): Boolean {
         val moduleSettings = settings?.getSettings(this) ?: return false
         return moduleSettings.compilerSettings != null
     }
+}
+
+fun getKotlinCompilerArguments(module: Module): CommonCompilerArguments? {
+    val settings = KotlinFacetSettingsProvider.getInstance(module.project)
+    val moduleSettings = settings?.getSettings(module)
+    return moduleSettings?.compilerArguments
 }
 
 fun hasAnyKotlinRuntimeInScope(module: Module): Boolean {
@@ -401,11 +419,40 @@ fun hasKotlinPlatformRuntimeInScope(
     module: Module,
     fqName: FqName,
     libraryKind: PersistentLibraryKind<*>
-    ): Boolean {
+): Boolean {
     return module.project.runReadActionInSmartMode {
         val scope = module.getModuleWithDependenciesAndLibrariesScope(true)
         hasSomethingInPackage(KlibMetaFileIndex.NAME, fqName, LibraryKindSearchScope(module, scope, libraryKind))
     }
+}
+
+private val KOTLIN_STDLIB_VERSION_REGEX = Regex("kotlin-stdlib-([A-Za-z]+-)?(\\d\\.\\d(\\.\\d{1,2}(-(M1|M2|Beta|RC(2)?))?)?)")
+private const val ARTIFACT_NAME = "kotlin-stdlib"
+private const val GROUP_WITH_KOTLIN_VERSION = 2
+
+typealias ModulesNamesAndFirstSourceRootModules = Map<String, Module>
+typealias KotlinVersionsAndModules = Map<String, ModulesNamesAndFirstSourceRootModules>
+
+fun getKotlinVersionsAndModules(
+    project: Project,
+    configurator: KotlinProjectConfigurator
+): KotlinVersionsAndModules {
+    val configuredModules = getConfiguredModules(project, configurator)
+    val kotlinVersionsAndModules: MutableMap<String, MutableMap<String, Module>> = mutableMapOf()
+    for (moduleEntity in configuredModules) {
+        val module = moduleEntity.value
+        getKotlinCompilerArguments(module)?.pluginClasspaths?.let { pluginsClasspaths ->
+            pluginsClasspaths.firstOrNull { it.contains(ARTIFACT_NAME) }?.let {
+                val version = KOTLIN_STDLIB_VERSION_REGEX.find(it)?.groups?.get(GROUP_WITH_KOTLIN_VERSION)?.value
+                version?.let {
+                    val modulesForThisVersion = kotlinVersionsAndModules.getOrDefault(version, mutableMapOf())
+                    modulesForThisVersion[moduleEntity.key] = module
+                    kotlinVersionsAndModules[version] = modulesForThisVersion
+                }
+            }
+        }
+    }
+    return kotlinVersionsAndModules
 }
 
 private val KOTLIN_JS_FQ_NAME = FqName("kotlin.js")

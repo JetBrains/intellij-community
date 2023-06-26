@@ -55,7 +55,7 @@ class KotlinSettingsScriptBuilder(scriptFile: KtFile): SettingsScriptBuilder<KtF
 }
 
 // Circumvent write actions and modify the file directly
-// TODO: Get rid of this hack when IDEA API allows manipulation of settings script similarly to the main script itself
+// TODO: Get rid of this hack – IDEA API already allows manipulation of settings script similarly to the main script itself
 internal fun updateSettingsScript(module: Module, updater: (SettingsScriptBuilder<out PsiFile>) -> Unit) {
     fun createScriptBuilder(module: Module): SettingsScriptBuilder<*>? {
         val settingsGradleFile = findSettingsGradleFile(module)?.toPsiFile(module.project) ?: return null

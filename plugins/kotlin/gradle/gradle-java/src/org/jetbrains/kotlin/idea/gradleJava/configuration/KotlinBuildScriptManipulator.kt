@@ -62,8 +62,30 @@ class KotlinBuildScriptManipulator(
         return originalText != scriptFile.text
     }
 
-    override fun isKotlinConfiguredInBuildScript(): Boolean {
-        return scriptFile.getKotlinVersion() != null
+    override fun configureSettingsFile(pluginName: String, version: IdeKotlinVersion): Boolean {
+        val originalText = scriptFile.text
+        scriptFile.getPluginManagementBlock()?.findOrCreateBlock("plugins")?.let {
+            it.findPluginInPluginsGroup(pluginName)
+                ?: it.addExpressionIfMissing(
+                    "$pluginName version \"${version.artifactVersion}\""
+                ) as? KtCallExpression
+        }
+        return originalText != scriptFile.text
+    }
+
+    override fun getKotlinVersionFromBuildScript(): IdeKotlinVersion? {
+        return scriptFile.getKotlinVersion()
+    }
+
+    override fun findAndRemoveKotlinVersionFromBuildScript(): Boolean {
+        val pluginsBlock = scriptFile.findScriptInitializer("plugins")?.getBlock()
+        return pluginsBlock?.let {
+            if (!it.findAndRemoveVersionExpressionInPluginsGroup("kotlin(\"jvm\")")) { //.findPluginInPluginsGroup("kotlin")
+                it.findAndRemoveVersionExpressionInPluginsGroup("id(\"org.jetbrains.kotlin.jvm\")")
+            } else {
+                true
+            }
+        } ?: false
     }
 
     override fun PsiElement.findParentBlock(name: String): PsiElement? {
@@ -380,6 +402,23 @@ class KotlinBuildScriptManipulator(
         }
     }
 
+    private fun KtBlockExpression.findAndRemoveVersionExpressionInPluginsGroup(pluginName: String): Boolean {
+        PsiTreeUtil.getChildrenOfAnyType(
+            this,
+            KtCallExpression::class.java,
+            KtBinaryExpression::class.java,
+            KtDotQualifiedExpression::class.java
+        ).forEach {
+            if (it is KtBinaryExpression) {
+                if (it.text.contains(pluginName) && it.text.contains("version")) {
+                    it.replace(scriptFile.psiFactory.createExpression(pluginName))
+                    return true
+                }
+            }
+        }
+        return false
+    }
+
     private fun KtFile.findScriptInitializer(startsWith: String): KtScriptInitializer? =
         PsiTreeUtil.findChildrenOfType(this, KtScriptInitializer::class.java).find { it.text.startsWith(startsWith) }
 
@@ -435,7 +474,21 @@ class KotlinBuildScriptManipulator(
 
     private fun KtFile.getDependenciesBlock(): KtBlockExpression? = findOrCreateScriptInitializer("dependencies")
 
-    private fun KtFile.getPluginsBlock(): KtBlockExpression? = findOrCreateScriptInitializer("plugins", true)
+    private fun KtFile.getPluginsBlock(): KtBlockExpression? {
+        val pluginsInitializer = findScriptInitializer("plugins")?.getBlock()
+        if (pluginsInitializer != null) {
+            return pluginsInitializer
+        } else {
+            val pluginManagementScriptInitializer = findScriptInitializer("pluginManagement")
+            return if (pluginManagementScriptInitializer != null) {
+                val pluginsScriptInitializer = psiFactory.createScriptInitializer("plugins {\n}")
+                val addedElement =
+                    script?.blockExpression?.addAfter(pluginsScriptInitializer, pluginManagementScriptInitializer) as? KtScriptInitializer
+                addedElement?.addNewLinesIfNeeded()
+                addedElement?.getBlock()
+            } else findOrCreateScriptInitializer("plugins", true)
+        }
+    }
 
     private fun KtFile.createPluginInPluginsGroupIfMissing(
         pluginName: String,

@@ -9,12 +9,12 @@ import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.config.LanguageFeature
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.buildArgumentString
 import org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.replaceLanguageFeature
 import org.jetbrains.kotlin.idea.base.externalSystem.KotlinGradleFacade
-import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.util.reformat
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.*
@@ -189,8 +189,33 @@ class GroovyBuildScriptManipulator(
         return oldText != scriptFile.text
     }
 
-    override fun isKotlinConfiguredInBuildScript(): Boolean {
-        return DifferentKotlinGradleVersionInspection.getKotlinPluginVersion(scriptFile) != null
+    override fun getKotlinVersionFromBuildScript(): IdeKotlinVersion? {
+        return DifferentKotlinGradleVersionInspection.getKotlinPluginVersion(scriptFile)
+    }
+
+    override fun findAndRemoveKotlinVersionFromBuildScript(): Boolean {
+        val pluginsBlock = scriptFile.getBlockByName("plugins")
+        return pluginsBlock?.findAndRemoveVersionExpressionInPluginsGroup("id 'org.jetbrains.kotlin.jvm'") ?: false
+    }
+
+    private fun GrClosableBlock.findAndRemoveVersionExpressionInPluginsGroup(pluginName: String): Boolean {
+        getChildrenOfType<GrStatement>().forEach {
+            if (it.text.contains(pluginName) && it.text.contains("version")) {
+                val psiFactory = GroovyPsiElementFactory.getInstance(project)
+                val newStatement = psiFactory.createStatementFromText(pluginName)
+                it.replace(newStatement)
+                return true
+            }
+        }
+        return false
+    }
+
+    override fun configureSettingsFile(kotlinPluginName: String, version: IdeKotlinVersion): Boolean {
+        val originalText = scriptFile.text
+        scriptFile.getBlockOrPrepend("pluginManagement").getBlockOrCreate("plugins").addLastExpressionInBlockIfNeeded(
+            "$kotlinPluginName version '${version.artifactVersion}'"
+        )
+        return originalText != scriptFile.text
     }
 
     override fun changeLanguageFeatureConfiguration(
@@ -540,7 +565,8 @@ class GroovyBuildScriptManipulator(
         }
 
         fun GrStatementOwner.getPluginsBlock() = getBlockOrCreate("plugins") { newBlock ->
-            addAfter(newBlock, getBlockByName("buildscript"))
+            val beforeBlock = getBlockByName("buildscript") ?: getBlockByName("pluginManagement")
+            addAfter(newBlock, beforeBlock?.parent)
             true
         }
 

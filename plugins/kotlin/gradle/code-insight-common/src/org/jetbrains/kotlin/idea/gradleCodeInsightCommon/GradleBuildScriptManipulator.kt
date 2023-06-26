@@ -51,7 +51,11 @@ interface GradleBuildScriptManipulator<out Psi : PsiFile> {
 
     fun configureProjectBuildScript(kotlinPluginName: String, version: IdeKotlinVersion): Boolean
 
-    fun isKotlinConfiguredInBuildScript(): Boolean
+    fun configureSettingsFile(kotlinPluginName: String, version: IdeKotlinVersion): Boolean
+
+    fun getKotlinVersionFromBuildScript(): IdeKotlinVersion?
+
+    fun findAndRemoveKotlinVersionFromBuildScript(): Boolean
 
     fun changeLanguageFeatureConfiguration(feature: LanguageFeature, state: LanguageFeature.State, forTests: Boolean): PsiElement?
 
