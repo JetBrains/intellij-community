@@ -21,4 +21,13 @@ class DropdownActionGroup: DefaultActionGroup(), CustomComponentAction {
       }
     }
   }
+
+  override fun update(e: AnActionEvent) {
+    val activeActions = ActionGroupUtil.getActiveActions(this, e)
+    e.presentation.isEnabled = activeActions.isNotEmpty
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
 }
