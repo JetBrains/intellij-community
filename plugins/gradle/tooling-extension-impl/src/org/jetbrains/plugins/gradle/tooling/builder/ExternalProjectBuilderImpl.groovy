@@ -238,8 +238,9 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     def ideaResourceDirs = null
     def ideaTestSourceDirs = null
     def ideaTestResourceDirs = null
-    def downloadJavadoc = false
-    def downloadSources = Boolean.parseBoolean(System.getProperty("idea.disable.gradle.download.sources", "true"))
+    def downloadSourcesFlag = System.getProperty("idea.disable.gradle.download.sources")
+    def downloadSources = downloadSourcesFlag == null ? true : Boolean.valueOf(downloadSourcesFlag)
+    def downloadJavadoc = downloadSourcesFlag == null ? false : downloadSources
 
     def testSourceSets = []
 
@@ -270,8 +271,25 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
         ideaTestSourceDirs = new LinkedHashSet<>(ideaPluginModule.testSourceDirs)
         ideaTestResourceDirs = ideaPluginModule.hasProperty("testResourceDirs") ? new LinkedHashSet<>(ideaPluginModule.testResourceDirs) : []
       }
-      downloadJavadoc = ideaPluginModule.downloadJavadoc
-      downloadSources = ideaPluginModule.downloadSources
+      if (downloadSourcesFlag != null) {
+        ideaPluginModule.downloadSources = downloadSources
+        ideaPluginModule.downloadJavadoc = downloadJavadoc
+      }
+      else {
+        downloadJavadoc = ideaPluginModule.downloadJavadoc
+        downloadSources = ideaPluginModule.downloadSources
+      }
+    }
+    if (ideaPluginModule == null && downloadSourcesFlag != null) {
+      project.plugins.whenPluginAdded { plugin ->
+        if (plugin instanceof IdeaPlugin) {
+          def module = plugin?.model?.module
+          if (module != null) {
+            module.downloadJavadoc = downloadJavadoc
+            module.downloadSources = downloadSources
+          }
+        }
+      }
     }
 
     def projectSourceCompatibility = getSourceCompatibility(project)
