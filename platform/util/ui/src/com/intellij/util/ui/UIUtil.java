@@ -20,7 +20,6 @@ import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.*;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -3285,18 +3284,9 @@ public final class UIUtil {
     StartupUiUtilKt.drawImage(g, image, dstBounds, srcBounds, null, observer);
   }
 
-  /**
-   * Waits for the EDT to dispatch all its invocation events.
-   * Must be called outside EDT.
-   * Use {@link com.intellij.testFramework.PlatformTestUtil#dispatchAllInvocationEventsInIdeEventQueue()} if you want to pump from inside EDT
-   **/
   @TestOnly
   public static void pump() {
-    assert !SwingUtilities.isEventDispatchThread();
-    Semaphore lock = new Semaphore(1);
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(() -> lock.up());
-    lock.waitFor();
+    StartupUiUtil.INSTANCE.pump();
   }
 
   public static boolean isJreHiDPI() {

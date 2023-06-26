@@ -16,7 +16,9 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
 import com.intellij.ui.scale.isHiDPIEnabledAndApplicable
 import com.intellij.util.JBHiDPIScaledImage
+import com.intellij.util.concurrency.Semaphore
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 import java.awt.*
 import java.awt.event.AWTEventListener
 import java.awt.event.InputEvent
@@ -26,10 +28,7 @@ import java.awt.image.BufferedImage
 import java.awt.image.BufferedImageOp
 import java.awt.image.ImageObserver
 import java.util.*
-import javax.swing.InputMap
-import javax.swing.KeyStroke
-import javax.swing.UIDefaults
-import javax.swing.UIManager
+import javax.swing.*
 import javax.swing.plaf.FontUIResource
 import javax.swing.text.DefaultEditorKit
 import javax.swing.text.StyleContext
@@ -286,6 +285,19 @@ object StartupUiUtil {
   fun addAwtListener(listener: AWTEventListener, mask: Long, parent: Disposable) {
     Toolkit.getDefaultToolkit().addAWTEventListener(listener, mask)
     Disposer.register(parent) { Toolkit.getDefaultToolkit().removeAWTEventListener(listener) }
+  }
+
+  /**
+   * Waits for the EDT to dispatch all its invocation events.
+   * Must be called outside EDT.
+   * Use [com.intellij.testFramework.PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue] if you want to pump from inside EDT
+   */
+  @TestOnly
+  fun pump() {
+    assert(!SwingUtilities.isEventDispatchThread())
+    val lock = Semaphore(1)
+    SwingUtilities.invokeLater { lock.up() }
+    lock.waitFor()
   }
 }
 

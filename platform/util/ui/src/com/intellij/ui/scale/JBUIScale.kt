@@ -3,6 +3,7 @@
 
 package com.intellij.ui.scale
 
+import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.runActivity
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.SystemInfo
@@ -12,6 +13,7 @@ import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.JBScalableIcon
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import java.awt.*
 import java.awt.geom.AffineTransform
 import java.awt.geom.Point2D
@@ -175,9 +177,15 @@ object JBUIScale {
     }
   }
 
-  private fun computeSystemScaleFactor(uiDefaults: Supplier<UIDefaults?>?): Float {
+  @VisibleForTesting
+  fun computeSystemScaleFactor(uiDefaults: Supplier<UIDefaults?>?): Float {
     if (!java.lang.Boolean.parseBoolean(System.getProperty("hidpi", "true"))) {
       return 1f
+    }
+
+    // we have init tests in a non-headless mode, but we cannot use here ApplicationManager
+    if (uiDefaults == null && !LoadingState.APP_STARTED.isOccurred && !GraphicsEnvironment.isHeadless()) {
+      thisLogger().error("Must be precomputed")
     }
 
     if (JreHiDpiUtil.isJreHiDPIEnabled()) {
