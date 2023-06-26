@@ -20,24 +20,6 @@ operator fun ObservableProperty<Boolean>.not(): ObservableProperty<Boolean> =
   transform { !it }
 
 /**
- * Creates observable mutable property that represents logic negation (!) operation for passed property.
- */
-operator fun ObservableMutableProperty<Boolean>.not(): ObservableMutableProperty<Boolean> =
-  object : ObservableMutableProperty<Boolean> {
-    override fun get(): Boolean = !this@not.get()
-
-    override fun set(value: Boolean) {
-      this@not.set(!value)
-    }
-
-    override fun afterChange(parentDisposable: Disposable?, listener: (Boolean) -> Unit) {
-      this@not.afterChange(parentDisposable) {
-        listener(!it)
-      }
-    }
-  }
-
-/**
  * Creates observable property that represents logic and (&&) operation between values of two passed properties.
  */
 infix fun ObservableProperty<Boolean>.and(property: ObservableProperty<Boolean>): ObservableProperty<Boolean> =

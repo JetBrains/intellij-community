@@ -12,6 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import javax.swing.AbstractButton
+import javax.swing.JCheckBox
 import javax.swing.JToggleButton
 import kotlin.reflect.KMutableProperty0
 import com.intellij.openapi.observable.util.whenStateChangedFromUi as whenStateChangedFromUiImpl
@@ -52,6 +53,6 @@ val Cell<AbstractButton>.selected: ComponentPredicate
   get() = component.selected
 
 @ApiStatus.Experimental
-fun <T : JToggleButton> Cell<T>.whenStateChangedFromUi(parentDisposable: Disposable? = null, listener: (Boolean) -> Unit): Cell<T> {
+fun <T : JCheckBox> Cell<T>.whenStateChangedFromUi(parentDisposable: Disposable? = null, listener: (Boolean) -> Unit): Cell<T> {
   return applyToComponent { whenStateChangedFromUiImpl(parentDisposable, listener) }
 }
