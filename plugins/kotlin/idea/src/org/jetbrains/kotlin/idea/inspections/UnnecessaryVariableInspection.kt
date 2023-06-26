@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.inspections
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
@@ -35,17 +36,18 @@ import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class UnnecessaryVariableInspection : AbstractApplicabilityBasedInspection<KtProperty>(KtProperty::class.java) {
+    override fun isApplicable(element: KtProperty): Boolean =
+        statusFor(element) != null
 
-    override fun isApplicable(element: KtProperty) = statusFor(element) != null
-
-    override fun inspectionHighlightRangeInElement(element: KtProperty) = element.nameIdentifierTextRangeInThis()
+    override fun inspectionHighlightRangeInElement(element: KtProperty): TextRange? =
+        element.nameIdentifierTextRangeInThis()
 
     override fun inspectionHighlightType(element: KtProperty): ProblemHighlightType {
         val hasMultiLineBlock = element.initializer?.hasMultiLineBlock() == true
         return if (hasMultiLineBlock) ProblemHighlightType.INFORMATION else ProblemHighlightType.GENERIC_ERROR_OR_WARNING
     }
 
-    override fun inspectionText(element: KtProperty) = when (statusFor(element)) {
+    override fun inspectionText(element: KtProperty): String = when (statusFor(element)) {
         Status.RETURN_ONLY -> KotlinBundle.message("variable.used.only.in.following.return.and.should.be.inlined")
         Status.EXACT_COPY -> KotlinBundle.message(
             "variable.is.same.as.0.and.should.be.inlined",
@@ -54,9 +56,10 @@ class UnnecessaryVariableInspection : AbstractApplicabilityBasedInspection<KtPro
         else -> ""
     }
 
-    override val defaultFixText get() = KotlinBundle.message("inline.variable")
+    override val defaultFixText: String
+        get() = KotlinBundle.message("inline.variable")
 
-    override val startFixInWriteAction = false
+    override val startFixInWriteAction: Boolean = false
 
     override fun applyTo(element: KtProperty, project: Project, editor: Editor?) {
         KotlinInlinePropertyHandler(withPrompt = false).inlineElement(project, editor, element)
@@ -65,7 +68,8 @@ class UnnecessaryVariableInspection : AbstractApplicabilityBasedInspection<KtPro
     private fun LeafPsiElement.startsMultilineBlock(): Boolean =
         node.elementType == KtTokens.LBRACE && parent.safeAs<KtExpression>()?.isMultiLine() == true
 
-    private fun KtExpression.hasMultiLineBlock(): Boolean = anyDescendantOfType<LeafPsiElement> { it.startsMultilineBlock() }
+    private fun KtExpression.hasMultiLineBlock(): Boolean =
+        anyDescendantOfType<LeafPsiElement> { it.startsMultilineBlock() }
 
     companion object {
         private enum class Status {
@@ -81,36 +85,28 @@ class UnnecessaryVariableInspection : AbstractApplicabilityBasedInspection<KtPro
             if (property.hasComment()) return null
 
             fun isExactCopy(): Boolean {
-                if (!property.isVar && initializer is KtNameReferenceExpression && property.typeReference == null) {
-                    val initializerDescriptor = initializer.resolveToCall(BodyResolveMode.FULL)?.resultingDescriptor as? VariableDescriptor
-                        ?: return false
-                    if (initializerDescriptor.isVar) return false
-                    if (initializerDescriptor.containingDeclaration !is FunctionDescriptor) return false
-                    if (initializerDescriptor.safeAs<LocalVariableDescriptor>()?.isDelegated == true) return false
+                if (property.isVar || initializer !is KtNameReferenceExpression || property.typeReference != null) return false
 
-                    val copyName = initializerDescriptor.name.asString()
-                    if (ReferencesSearch.search(property, LocalSearchScope(enclosingElement)).findFirst() == null) return false
+                val initializerDescriptor = initializer.resolveToCall(BodyResolveMode.FULL)?.resultingDescriptor as? VariableDescriptor
+                    ?: return false
+                if (initializerDescriptor.isVar) return false
+                if (initializerDescriptor.containingDeclaration !is FunctionDescriptor) return false
+                if (initializerDescriptor.safeAs<LocalVariableDescriptor>()?.isDelegated == true) return false
 
-                    val containingDeclaration = property.getStrictParentOfType<KtDeclaration>()
-                    if (containingDeclaration != null) {
-                        val validator = Fe10KotlinNewDeclarationNameValidator(
-                          container = containingDeclaration,
-                          anchor = property,
-                          target = KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
-                          excludedDeclarations = listOfNotNull(
-                                DescriptorToSourceUtils.descriptorToDeclaration(initializerDescriptor) as? KtDeclaration
-                            )
-                        )
-                        if (!validator(copyName)) return false
-                        if (containingDeclaration is KtClassOrObject) {
-                            val enclosingBlock = enclosingElement as? KtBlockExpression
-                            val initializerDeclaration = DescriptorToSourceUtils.descriptorToDeclaration(initializerDescriptor)
-                            if (enclosingBlock?.statements?.none { it == initializerDeclaration } == true) return false
-                        }
-                    }
-                    return true
-                }
-                return false
+                val copyName = initializerDescriptor.name.asString()
+                if (ReferencesSearch.search(property, LocalSearchScope(enclosingElement)).findFirst() == null) return false
+
+                val containingDeclaration = property.getStrictParentOfType<KtDeclaration>() ?: return true
+
+                val validator = Fe10KotlinNewDeclarationNameValidator(
+                    container = containingDeclaration,
+                    anchor = property,
+                    target = KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
+                    excludedDeclarations = listOfNotNull(
+                        DescriptorToSourceUtils.descriptorToDeclaration(initializerDescriptor) as? KtDeclaration
+                    )
+                )
+                return validator(copyName)
             }
 
             fun isReturnOnly(): Boolean {
