@@ -325,7 +325,8 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public boolean isWriteIntentLockAcquired() {
-    return myLock.isWriteThread() && myLock.isWriteIntentLocked();
+    // Write lock is good too
+    return myLock.isWriteThread() && (myLock.isWriteIntentLocked() || myLock.isWriteAcquired());
   }
 
   @Deprecated
