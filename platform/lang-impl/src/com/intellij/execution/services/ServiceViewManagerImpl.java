@@ -1065,6 +1065,11 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
         myModel.notifyListeners(e);
       }
     });
+
+    if (toExclude.isEmpty() && !toInclude.isEmpty()) {
+      toolWindowIds.add(ToolWindowId.SERVICES);
+    }
+    activateToolWindows(toolWindowIds);
   }
 
   private Set<String> excludeServices(@NotNull List<ServiceViewContributor<?>> toExclude,
@@ -1120,6 +1125,20 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
       registerActivateByContributorActions(myProject, toInclude);
     }
     return toolWindowIds;
+  }
+
+  private void activateToolWindows(Set<String> toolWindowIds) {
+    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+    toolWindowManager.invokeLater(() -> {
+      for (String toolWindowId : toolWindowIds) {
+        if (myActiveToolWindowIds.contains(toolWindowId)) {
+          ToolWindow toolWindow = toolWindowManager.getToolWindow(toolWindowId);
+          if (toolWindow != null) {
+            toolWindow.activate(null);
+          }
+        }
+      }
+    });
   }
 
   void includeToolWindow(@NotNull String toolWindowId) {
