@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.WritingAccessProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -426,6 +427,10 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
                         "<br/>${KotlinIdeaGradleBundle.message("text.see.manual.installation.instructions")}</html>",
                 KotlinIdeaGradleBundle.message("title.configure.kotlin.gradle.plugin")
             )
+        }
+
+        fun isAutoConfigurationEnabled(): Boolean {
+            return Registry.`is`("kotlin.configuration.gradle.autoConfig.enabled", false)
         }
     }
 }

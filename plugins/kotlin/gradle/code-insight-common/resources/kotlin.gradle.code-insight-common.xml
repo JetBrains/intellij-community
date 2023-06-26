@@ -16,6 +16,12 @@
   <extensions defaultExtensionNs="com.intellij">
     <backgroundPostStartupActivity implementation="org.jetbrains.kotlin.idea.gradleCodeInsightCommon.native.KotlinNativeABICompatibilityChecker"/>
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleCodeInsightCommon.native.KotlinNativeRunConfigurationProducer"/>
+
+    <registryKey
+            key="kotlin.configuration.gradle.autoConfig.enabled"
+            description="Whether auto-configuration is enabled for gradle projects when adding a Kotlin file"
+            defaultValue="false"
+            restartRequired="false"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
