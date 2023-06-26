@@ -9,7 +9,7 @@ import com.intellij.execution.target.readableFs.PathInfo
 import com.intellij.execution.target.readableFs.TargetConfigurationReadableFs
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslDistributionManager
-import com.intellij.execution.wsl.listWindowsRoots
+import com.intellij.execution.wsl.listWindowsLocalDriveRoots
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.diagnostic.thisLogger
@@ -46,7 +46,7 @@ class WslTargetEnvironmentConfiguration() : TargetEnvironmentConfiguration(WslTa
 
 
   override fun getTargetPathIfLocalPathIsOnTarget(probablyPathOnTarget: Path): FullPathOnTarget? {
-    if (probablyPathOnTarget.root in listWindowsRoots()) return null
+    if (probablyPathOnTarget.root in listWindowsLocalDriveRoots()) return null
     if (!probablyPathOnTarget.pathString.startsWith("\\\\wsl")) return null
     return distribution!!.getWslPath(probablyPathOnTarget.pathString)
   }

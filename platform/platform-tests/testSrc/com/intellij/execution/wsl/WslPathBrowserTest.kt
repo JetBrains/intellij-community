@@ -8,7 +8,6 @@ import org.junit.Assert
 import org.junit.ClassRule
 import org.junit.Test
 import org.junit.rules.RuleChain
-import java.nio.file.FileSystems
 
 /**
  * Test various logic for [com.intellij.execution.wsl.ui.WslPathBrowser]
@@ -49,7 +48,7 @@ class WslPathBrowserTest {
 
   @Test
   fun fileDescriptorWithWindows() {
-    val rootDrives = FileSystems.getDefault().rootDirectories
+    val rootDrives = listWindowsLocalDriveRoots()
     wslRule.wsl.executeOnWsl(20_000, "ls").exitCode // To reanimate wsl in case of failure
     val roots = createFileChooserDescriptor(wslRule.wsl, true).roots.map { it.toNioPath() }
     Assert.assertEquals("Wrong number of roots: ${roots}, while root drives are: ${rootDrives}", rootDrives.count() + 1, roots.size)
