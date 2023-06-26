@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.Operat
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.TraverseDirection
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.AttributesOperation.Companion.fileId
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.RecordsOperation.Companion.fileId
+import com.intellij.openapi.vfs.newvfs.persistent.log.io.PersistentVar
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.*
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.SnapshotFillerPresets.constrain
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.SnapshotFillerPresets.sum

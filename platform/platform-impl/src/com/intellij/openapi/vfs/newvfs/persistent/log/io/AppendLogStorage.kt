@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs.newvfs.persistent.log.io
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.newvfs.persistent.log.PersistentVar
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.AdvancingPositionTracker
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.AdvancingPositionTracker.AdvanceToken
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.LockFreeAdvancingPositionTracker

@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent.log
+package com.intellij.openapi.vfs.newvfs.persistent.log.io
 
 import com.intellij.util.io.DataOutputStream
 import com.intellij.util.io.FileChannelInterruptsRetryer
@@ -29,6 +29,7 @@ abstract class PersistentVar<T>(
     }
   }
 
+  // TODO: there should be a close method
   private val fileChannelRetryer = FileChannelInterruptsRetryer(path, EnumSet.of(READ, WRITE, CREATE))
   @Volatile
   protected var cachedValue: T? =

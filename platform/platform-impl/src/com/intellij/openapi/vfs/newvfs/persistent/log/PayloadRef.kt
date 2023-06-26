@@ -7,8 +7,8 @@ import com.intellij.util.io.DataOutputStream
 import java.io.DataInputStream
 
 /**
- * Comprises information about where the data is stored. Use [offset] for the actual offset in the data store. [source] is conceptually
- * inspired by Unicode Planes and is used to support data source demultiplexing (see [Source] docs for details).
+ * Comprises information about where the data is stored. Use [offset] for the actual offset in the data store.
+ * [source] is used to support data source demultiplexing (see [Source] for details).
  */
 @JvmInline
 value class PayloadRef(val compressedInfo: ULong) {

@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.log
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor
 import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef.Source.Companion.isInline
+import com.intellij.openapi.vfs.newvfs.persistent.log.io.PersistentVar
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.DataEnumerator
 import com.intellij.util.io.SimpleStringPersistentEnumerator
