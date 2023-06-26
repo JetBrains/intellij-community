@@ -2,11 +2,10 @@ package com.intellij.mermaid.lang.psi.symbol.identifier
 
 import com.intellij.mermaid.lang.psi.MermaidNamedPsiElement
 import com.intellij.model.Pointer
-import com.intellij.navigation.NavigationRequest
-import com.intellij.navigation.NavigationService
-import com.intellij.navigation.NavigationTarget
-import com.intellij.openapi.components.service
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.backend.navigation.NavigationRequest
+import com.intellij.platform.backend.navigation.NavigationTarget
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiFileRange
@@ -23,6 +22,10 @@ class IdentifierSymbol(
     return IdentifierSymbolPointer(base, text)
   }
 
+  override fun computePresentation(): TargetPresentation {
+    return super.presentation()
+  }
+
   private class IdentifierSymbolPointer(
     private val base: SmartPsiFileRange,
     private val text: String
@@ -36,8 +39,7 @@ class IdentifierSymbol(
 
   override fun navigationRequest(): NavigationRequest? {
     val virtualFile = file.virtualFile?.takeIf { it.isValid } ?: return null
-    val navigationService = service<NavigationService>()
-    return navigationService.sourceNavigationRequest(virtualFile, range.startOffset)
+    return NavigationRequest.sourceNavigationRequest(file.project, virtualFile, range.startOffset)
   }
 
   companion object {

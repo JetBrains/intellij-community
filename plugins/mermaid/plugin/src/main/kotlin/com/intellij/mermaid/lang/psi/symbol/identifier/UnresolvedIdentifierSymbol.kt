@@ -5,6 +5,7 @@ import com.intellij.mermaid.lang.psi.*
 import com.intellij.model.Pointer
 import com.intellij.navigation.SymbolNavigationService
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiFileRange
@@ -28,7 +29,9 @@ open class UnresolvedIdentifierSymbol(
     get() = text
 
   // No return type is specified, so that we can compile against both pre-231.8770 and 231.8770
-  override fun presentation() = SymbolNavigationService.getInstance().presentationBuilder(text).presentation()
+  override fun presentation(): TargetPresentation {
+    return SymbolNavigationService.getInstance().presentationBuilder(text).presentation()
+  }
 
   override fun createPointer(): Pointer<out UnresolvedIdentifierSymbol> {
     val project = file.project
