@@ -1093,7 +1093,8 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   @Nullable
   public IntentionAction createUnwrapArrayInitializerMemberValueAction(@NotNull PsiArrayInitializerMemberValue arrayValue) {
-    return UnwrapArrayInitializerMemberValueAction.createFix(arrayValue);
+    UnwrapArrayInitializerMemberValueAction fix = UnwrapArrayInitializerMemberValueAction.createFix(arrayValue);
+    return fix == null ? null : fix.asIntention();
   }
 
   @Override

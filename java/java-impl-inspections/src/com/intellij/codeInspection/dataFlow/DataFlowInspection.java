@@ -44,8 +44,8 @@ public class DataFlowInspection extends DataFlowInspectionBase {
   private static final Logger LOG = Logger.getInstance(DataFlowInspection.class);
 
   @Override
-  protected LocalQuickFix createMutabilityViolationFix(PsiElement violation, boolean onTheFly) {
-    return WrapWithMutableCollectionFix.createFix(violation, onTheFly);
+  protected LocalQuickFix createMutabilityViolationFix(PsiElement violation) {
+    return WrapWithMutableCollectionFix.createFix(violation);
   }
 
   @Nullable

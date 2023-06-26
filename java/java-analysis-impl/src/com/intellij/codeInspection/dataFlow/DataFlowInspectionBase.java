@@ -461,11 +461,11 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
 
   private void reportMutabilityViolations(ProblemsHolder holder, Set<PsiElement> violations, @InspectionMessage String message) {
     for (PsiElement violation : violations) {
-      holder.registerProblem(violation, message, LocalQuickFix.notNullElements(createMutabilityViolationFix(violation, holder.isOnTheFly())));
+      holder.registerProblem(violation, message, LocalQuickFix.notNullElements(createMutabilityViolationFix(violation)));
     }
   }
 
-  protected LocalQuickFix createMutabilityViolationFix(PsiElement violation, boolean onTheFly) {
+  protected LocalQuickFix createMutabilityViolationFix(PsiElement violation) {
     return null;
   }
 

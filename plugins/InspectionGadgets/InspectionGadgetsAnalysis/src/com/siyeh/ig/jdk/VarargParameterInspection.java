@@ -16,10 +16,10 @@
 package com.siyeh.ig.jdk;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -30,7 +30,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,17 +54,11 @@ public class VarargParameterInspection extends BaseInspection {
 
   @Override
   @Nullable
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new VarargParameterFix();
   }
 
-  private static class VarargParameterFix extends InspectionGadgetsFix {
-
-    @Override
-    public boolean startInWriteAction() {
-      return false;
-    }
-
+  private static class VarargParameterFix extends PsiUpdateModCommandQuickFix {
     @Override
     @NotNull
     public String getFamilyName() {
@@ -73,14 +66,7 @@ public class VarargParameterInspection extends BaseInspection {
     }
 
     @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-      doFix(project, previewDescriptor);
-      return IntentionPreviewInfo.DIFF;
-    }
-
-    @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       final PsiMethod method = (PsiMethod)element.getParent();
       final PsiParameterList parameterList = method.getParameterList();
       final PsiParameter[] parameters = parameterList.getParameters();
@@ -95,23 +81,13 @@ public class VarargParameterInspection extends BaseInspection {
       if (typeElement == null) {
         return;
       }
-      final List<PsiElement> refElements = getReferences(method);
-      if (!method.isPhysical()) {
-        performModification(method, parameters, lastParameter, typeElement, refElements);
-      }
-      else {
-        if (!FileModificationService.getInstance().preparePsiElementsForWrite(ContainerUtil.append(refElements, method))) {
-          return;
-        }
-        WriteAction.run(() -> {
-          performModification(method, parameters, lastParameter, typeElement, refElements);
-        });
-      }
+      final List<PsiElement> refElements = ContainerUtil.map(getReferences(method), e -> updater.getWritable(e));
+      performModification(method, parameters, lastParameter, typeElement, refElements);
     }
 
     @NotNull
     private static List<PsiElement> getReferences(@NotNull PsiMethod method) {
-      if (!method.isPhysical()) {
+      if (IntentionPreviewUtils.isIntentionPreviewActive()) {
         return SyntaxTraverser.psiTraverser(method.getContainingFile())
           .filter(ref -> ref instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)ref).isReferenceTo(method) ||
                          ref instanceof PsiEnumConstant && method.isEquivalentTo(((PsiEnumConstant)ref).resolveMethod()))

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiDocumentManager;
@@ -568,6 +569,7 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
       """);
     myFixture.enableInspections(new UnnecessaryFullyQualifiedNameInspection());
     myFixture.launchAction(myFixture.findSingleIntention("Remove unnecessary qualification"));
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     myFixture.checkResult("""
 
                             class Test {
@@ -675,6 +677,7 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
   private void reimportClass() {
     myFixture.enableInspections(new UnnecessaryFullyQualifiedNameInspection());
     myFixture.launchAction(myFixture.findSingleIntention("Replace qualified name with import"));
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
   }
 
   public void test_disprefer_deprecated_classes() {

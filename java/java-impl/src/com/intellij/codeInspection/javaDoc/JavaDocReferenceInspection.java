@@ -182,7 +182,7 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
                 int startOffsetInDocComment = refHolder.getTextOffset() - docComment.getTextOffset();
                 int endOffsetInDocComment =
                   refHolder.getTextOffset() + refText.length() + adjacent.getTextLength() - docComment.getTextOffset();
-                fix = new UrlToHtmlFix(docComment, startOffsetInDocComment, endOffsetInDocComment);
+                fix = new UrlToHtmlFix(docComment, startOffsetInDocComment, endOffsetInDocComment).asQuickFix();
               }
             }
           }

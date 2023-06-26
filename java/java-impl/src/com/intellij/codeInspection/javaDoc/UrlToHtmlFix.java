@@ -1,18 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.javaDoc;
 
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-class UrlToHtmlFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+class UrlToHtmlFix extends PsiUpdateModCommandAction<PsiDocComment> {
   private final int myStartOffsetInDocComment;
 
   private final int myEndOffsetInDocComment;
@@ -30,22 +28,13 @@ class UrlToHtmlFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   }
 
   @Override
-  public @NotNull String getText() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("quickfix.text.replace.url.with.html");
   }
 
   @Override
-  public @NotNull String getFamilyName() {
-    return getText();
-  }
-
-  @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
-    String commentText = startElement.getText();
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiDocComment element, @NotNull ModPsiUpdater updater) {
+    String commentText = element.getText();
     String prefix = commentText.substring(0, myStartOffsetInDocComment);
     String urlAndMaybeText = commentText.substring(myStartOffsetInDocComment, myEndOffsetInDocComment);
     String suffix = commentText.substring(myEndOffsetInDocComment);
@@ -60,12 +49,8 @@ class UrlToHtmlFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     }
     String wrappedLink = "<a href=\"" + urlAndMaybeText + "\">" + text + "</a>";
     CommentTracker ct = new CommentTracker();
-    PsiElement replacement = ct.replace(startElement, prefix + wrappedLink + suffix);
-    if (editor != null) {
-      int start = replacement.getTextRange().getStartOffset() + prefix.length() + urlAndMaybeText.length() + 11;
-      int end = start + text.length();
-      editor.getCaretModel().moveToOffset(start);
-      editor.getSelectionModel().setSelection(start, end);
-    }
+    PsiElement replacement = ct.replace(element, prefix + wrappedLink + suffix);
+    int start = replacement.getTextRange().getStartOffset() + prefix.length() + urlAndMaybeText.length() + 11;
+    updater.select(TextRange.from(start, text.length()));
   }
 }

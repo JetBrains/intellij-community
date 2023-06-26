@@ -4,6 +4,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
@@ -340,7 +341,7 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
     }
   }
 
-  private static class ReplaceWithPrimitiveCompareFix implements LocalQuickFix {
+  private static class ReplaceWithPrimitiveCompareFix extends PsiUpdateModCommandQuickFix {
     private final String myReplacementText;
 
     ReplaceWithPrimitiveCompareFix(String replacementText) {
@@ -362,8 +363,7 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getStartElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiElement toReplace;
       List<PsiElement> toDelete = new ArrayList<>();
       CompareInfo info;

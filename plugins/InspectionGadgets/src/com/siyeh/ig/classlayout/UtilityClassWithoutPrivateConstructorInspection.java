@@ -18,10 +18,10 @@ package com.siyeh.ig.classlayout;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -33,7 +33,6 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.AddToIgnoreIfAnnotatedByListQuickFix;
 import com.siyeh.ig.psiutils.UtilityClassUtil;
 import com.siyeh.ig.ui.ExternalizableStringSet;
@@ -41,7 +40,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -98,15 +96,7 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
 
   private static boolean hasImplicitConstructorUsage(PsiClass aClass) {
     final Query<PsiReference> query = ReferencesSearch.search(aClass, aClass.getUseScope());
-    for (PsiReference reference : query) {
-      if (reference == null) continue;
-      final PsiElement element = reference.getElement();
-      final PsiElement context = element.getParent();
-      if (context instanceof PsiNewExpression) {
-        return true;
-      }
-    }
-    return false;
+    return query.anyMatch(ref -> ref != null && ref.getElement().getParent() instanceof PsiNewExpression);
   }
 
   @Nullable
@@ -121,7 +111,7 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
     return null;
   }
 
-  protected static class CreateEmptyPrivateConstructor extends InspectionGadgetsFix {
+  protected static class CreateEmptyPrivateConstructor extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -130,17 +120,14 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement classNameIdentifier = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement classNameIdentifier, @NotNull ModPsiUpdater updater) {
       final PsiElement parent = classNameIdentifier.getParent();
       if (!(parent instanceof PsiClass aClass)) {
         return;
       }
-      if (isOnTheFly() && hasImplicitConstructorUsage(aClass)) {
-        SwingUtilities.invokeLater(() -> Messages.showInfoMessage(
-          aClass.getProject(),
-          InspectionGadgetsBundle.message("utility.class.without.private.constructor.cant.generate.constructor.message"),
-          InspectionGadgetsBundle.message("utility.class.without.private.constructor.cant.generate.constructor.title")));
+      if (hasImplicitConstructorUsage(aClass)) {
+        updater.cancel(InspectionGadgetsBundle.message("utility.class.without.private.constructor.cant.generate.constructor.message"));
+        return;
       }
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
       final PsiElementFactory factory = psiFacade.getElementFactory();
@@ -153,7 +140,7 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
     }
   }
 
-  private static class MakeConstructorPrivateFix extends InspectionGadgetsFix {
+  private static class MakeConstructorPrivateFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -162,8 +149,7 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement classNameIdentifier = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement classNameIdentifier, @NotNull ModPsiUpdater updater) {
       final PsiElement parent = classNameIdentifier.getParent();
       if (!(parent instanceof PsiClass aClass)) {
         return;
@@ -213,7 +199,7 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
       registerClassError(aClass, aClass, isOnTheFly());
     }
 
-    private boolean hasOnlyMain(PsiClass aClass) {
+    private static boolean hasOnlyMain(PsiClass aClass) {
       final PsiMethod[] methods = aClass.getMethods();
       if (methods.length == 0) {
         return false;
