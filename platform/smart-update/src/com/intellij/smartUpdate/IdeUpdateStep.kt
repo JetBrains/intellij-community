@@ -28,8 +28,6 @@ class IdeUpdateStep: SmartUpdateStep {
     else onSuccess()
   }
 
-  override fun isEnabled(project: Project) = getUpdateAction() != null
-
   override fun getDetailsComponent(project: Project): JComponent {
     return JLabel(getDescription())
   }

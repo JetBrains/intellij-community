@@ -6,7 +6,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import java.time.LocalTime
 import javax.swing.JSpinner
 import javax.swing.SpinnerNumberModel
@@ -24,12 +27,12 @@ class SmartUpdateDialog(private val project: Project) : DialogWrapper(project) {
     val options = smartUpdate.state
     return panel {
       for (step in smartUpdate.availableSteps()) {
-        val enabled = step.isEnabled(project)
+        lateinit var checkbox: Cell<JBCheckBox>
         row {
-          checkBox(step.stepName).enabled(enabled).bindSelected(options.property(step.id))
+          checkbox = checkBox(step.stepName).bindSelected(options.property(step.id))
         }
         step.getDetailsComponent(project)?.let {
-          indent { row { cell(it).align(Align.FILL).enabled(enabled) } }
+          indent { row { cell(it) } }.visibleIf(checkbox.selected)
         }
       }
       separator()

@@ -14,6 +14,5 @@ interface SmartUpdateStep {
   val stepName: @Nls String
   fun performUpdateStep(project: Project, e: AnActionEvent? = null, onSuccess: () -> Unit)
   fun isAvailable(project: Project): Boolean = true
-  fun isEnabled(project: Project): Boolean = true
   fun getDetailsComponent(project: Project): JComponent? = null
 }
