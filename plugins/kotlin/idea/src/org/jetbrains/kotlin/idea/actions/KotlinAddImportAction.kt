@@ -4,22 +4,14 @@ package org.jetbrains.kotlin.idea.actions
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass
-import com.intellij.codeInsight.daemon.impl.actions.AddImportAction
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.QuestionAction
-import com.intellij.ide.util.DefaultPsiElementCellRenderer
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.ui.popup.PopupStep
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep
-import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.statistics.StatisticsManager
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.PackageViewDescriptor
@@ -32,7 +24,9 @@ import org.jetbrains.kotlin.idea.completion.KotlinStatisticsInfo
 import org.jetbrains.kotlin.idea.completion.isDeprecatedAtCallSite
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.imports.importableFqName
+import org.jetbrains.kotlin.idea.quickfix.AutoImportVariant
 import org.jetbrains.kotlin.idea.quickfix.ImportComparablePriority
+import org.jetbrains.kotlin.idea.quickfix.ImportFixHelper
 import org.jetbrains.kotlin.idea.quickfix.ImportPrioritizer
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference.ShorteningMode
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -52,10 +46,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
-import java.awt.BorderLayout
 import javax.swing.Icon
-import javax.swing.JPanel
-import javax.swing.ListCellRenderer
 
 internal fun createSingleImportAction(
     project: Project,
@@ -146,9 +137,9 @@ class KotlinAddImportAction internal constructor(
     private val element: KtElement,
     private val variants: Sequence<VariantWithPriority>
 ) : QuestionAction {
-    private var singleImportVariant: AutoImportVariant? = null
+    private var singleImportVariant: DescriptorBasedAutoImportVariant? = null
 
-    private fun variantsList(): List<AutoImportVariant> {
+    private fun variantsList(): List<DescriptorBasedAutoImportVariant> {
         if (singleImportVariant != null && !isUnitTestMode()) return listOf(singleImportVariant!!)
 
         val variantsList = {
@@ -199,64 +190,14 @@ class KotlinAddImportAction internal constructor(
             return true
         }
 
-        JBPopupFactory.getInstance().createListPopup(project, getVariantSelectionPopup(variantsList)) {
-            val psiRenderer = DefaultPsiElementCellRenderer()
-
-            ListCellRenderer<AutoImportVariant> { list, value, index, isSelected, cellHasFocus ->
-                JPanel(BorderLayout()).apply {
-                    add(
-                        psiRenderer.getListCellRendererComponent(
-                            list,
-                            value.declarationToImport,
-                            index,
-                            isSelected,
-                            cellHasFocus
-                        )
-                    )
-                }
-            }
-        }.showInBestPositionFor(editor)
+        ImportFixHelper.createListPopupWithImportVariants(project, variantsList, ::addImport).showInBestPositionFor(editor)
 
         return true
     }
 
-    private fun getVariantSelectionPopup(variants: List<AutoImportVariant>): BaseListPopupStep<AutoImportVariant> {
-        return object : BaseListPopupStep<AutoImportVariant>(KotlinBundle.message("action.add.import.chooser.title"), variants) {
-            override fun isAutoSelectionEnabled() = false
-
-            override fun isSpeedSearchEnabled() = true
-
-            override fun onChosen(selectedValue: AutoImportVariant?, finalChoice: Boolean): PopupStep<String>? {
-                if (selectedValue == null || project.isDisposed) return null
-
-                if (finalChoice) {
-                    addImport(selectedValue)
-                    return null
-                }
-
-                val toExclude = AddImportAction.getAllExcludableStrings(selectedValue.excludeFqNameCheck.asString())
-
-                return object : BaseListPopupStep<String>(null, toExclude) {
-                    override fun getTextFor(value: String): String {
-                        return KotlinBundle.message("fix.import.exclude", value)
-                    }
-
-                    override fun onChosen(selectedValue: String, finalChoice: Boolean): PopupStep<Any>? {
-                        if (finalChoice && !project.isDisposed) {
-                            AddImportAction.excludeFromImport(project, selectedValue)
-                        }
-                        return null
-                    }
-                }
-            }
-
-            override fun hasSubstep(selectedValue: AutoImportVariant?) = true
-            override fun getTextFor(value: AutoImportVariant) = value.hint
-            override fun getIconFor(value: AutoImportVariant) = value.icon
-        }
-    }
-
     private fun addImport(variant: AutoImportVariant) {
+        require(variant is DescriptorBasedAutoImportVariant)
+
         val psiDocumentManager = PsiDocumentManager.getInstance(project)
         psiDocumentManager.commitAllDocuments()
 
@@ -318,7 +259,7 @@ class KotlinAddImportAction internal constructor(
     }
 }
 
-internal data class VariantWithPriority(val variant: AutoImportVariant, val priority: ImportComparablePriority)
+internal data class VariantWithPriority(val variant: DescriptorBasedAutoImportVariant, val priority: ImportComparablePriority)
 
 internal fun createPrioritizerForFile(file: KtFile, compareNames: Boolean = true): ImportPrioritizer {
     val isImportedByDefault = { fqName: FqName ->
@@ -350,40 +291,39 @@ internal fun createDescriptorGroupPriority(
 ): ImportPrioritizer.GroupPriority =
     prioritizer.GroupPriority(descriptors.map { createDescriptorPriority(prioritizer, expressionWeigher, it) })
 
-internal abstract class AutoImportVariant(
+internal abstract class DescriptorBasedAutoImportVariant(
     val descriptorsToImport: Collection<DeclarationDescriptor>,
-    val excludeFqNameCheck: FqName,
+    override val fqName: FqName,
     project: Project,
-) {
-    abstract val hint: String
-    val declarationToImport: PsiElement? = DescriptorToSourceUtilsIde.getAnyDeclaration(project, descriptorsToImport.first())
-    val icon: Icon? = KotlinDescriptorIconProvider.getIcon(descriptorsToImport.first(), declarationToImport, 0)
+): AutoImportVariant {
+    override val declarationToImport: PsiElement? = DescriptorToSourceUtilsIde.getAnyDeclaration(project, descriptorsToImport.first())
+    override val icon: Icon? = KotlinDescriptorIconProvider.getIcon(descriptorsToImport.first(), declarationToImport, 0)
 }
 
 private class GroupedImportVariant(
     val autoImportDescription: String,
     descriptors: Collection<DeclarationDescriptor>,
     project: Project
-) : AutoImportVariant(
+) : DescriptorBasedAutoImportVariant(
     descriptorsToImport = descriptors,
-    excludeFqNameCheck = descriptors.first().importableFqName!!.parent(),
+    fqName = descriptors.first().importableFqName!!.parent(),
     project = project,
 ) {
-    override val hint: String get() = KotlinBundle.message("0.from.1", autoImportDescription, excludeFqNameCheck)
+    override val hint: String get() = KotlinBundle.message("0.from.1", autoImportDescription, fqName)
 }
 
 private class SingleImportVariant(
-    excludeFqNameCheck: FqName,
+    fqName: FqName,
     descriptors: Collection<DeclarationDescriptor>,
     project: Project
-) : AutoImportVariant(
+) : DescriptorBasedAutoImportVariant(
     descriptorsToImport = listOf(
         descriptors.singleOrNull()
             ?: descriptors.minByOrNull { if (it is ClassDescriptor) 0 else 1 }
             ?: error("we create the class with not-empty descriptors always")
     ),
-    excludeFqNameCheck = excludeFqNameCheck,
+    fqName = fqName,
     project = project,
 ) {
-    override val hint: String get() = excludeFqNameCheck.asString()
+    override val hint: String get() = fqName.asString()
 }

@@ -1,12 +1,23 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.quickfix
 
+import com.intellij.codeInsight.daemon.impl.actions.AddImportAction
 import com.intellij.codeInspection.util.IntentionName
+import com.intellij.ide.util.DefaultPsiElementCellRenderer
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.ListPopup
+import com.intellij.openapi.ui.popup.PopupStep
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.parentOrNull
+import java.awt.BorderLayout
 import java.util.*
+import javax.swing.JPanel
+import javax.swing.ListCellRenderer
 
 object ImportFixHelper {
     enum class ImportKind(private val key: String, val groupedByPackage: Boolean = false) {
@@ -100,4 +111,69 @@ object ImportFixHelper {
             else -> 0
         }
     }
+
+    fun createListPopupWithImportVariants(
+        project: Project,
+        variants: List<AutoImportVariant>,
+        addImport: (AutoImportVariant) -> Unit,
+    ): ListPopup =
+        JBPopupFactory.getInstance().createListPopup(project, getVariantSelectionPopup(project, variants, addImport)) {
+            val psiRenderer = DefaultPsiElementCellRenderer()
+
+            ListCellRenderer<AutoImportVariant> { list, value, index, isSelected, cellHasFocus ->
+                JPanel(BorderLayout()).apply {
+                    add(
+                        psiRenderer.getListCellRendererComponent(
+                            list,
+                            value.declarationToImport,
+                            index,
+                            isSelected,
+                            cellHasFocus
+                        )
+                    )
+                }
+            }
+        }
+
+    private fun getVariantSelectionPopup(
+        project: Project,
+        variants: List<AutoImportVariant>,
+        addImport: (AutoImportVariant) -> Unit,
+    ): BaseListPopupStep<AutoImportVariant> {
+        return object : BaseListPopupStep<AutoImportVariant>(KotlinBundle.message("action.add.import.chooser.title"), variants) {
+            override fun isAutoSelectionEnabled(): Boolean = false
+
+            override fun isSpeedSearchEnabled(): Boolean = true
+
+            override fun onChosen(selectedValue: AutoImportVariant?, finalChoice: Boolean): PopupStep<String>? {
+                if (selectedValue == null || project.isDisposed) return null
+
+                if (finalChoice) {
+                    addImport(selectedValue)
+                    return null
+                }
+
+                val toExclude = AddImportAction.getAllExcludableStrings(selectedValue.fqName.asString())
+
+                return object : BaseListPopupStep<String>(null, toExclude) {
+                    override fun getTextFor(value: String): String {
+                        return KotlinBundle.message("fix.import.exclude", value)
+                    }
+
+                    override fun onChosen(selectedValue: String, finalChoice: Boolean): PopupStep<Any>? {
+                        if (finalChoice && !project.isDisposed) {
+                            AddImportAction.excludeFromImport(project, selectedValue)
+                        }
+                        return null
+                    }
+                }
+            }
+
+            override fun hasSubstep(selectedValue: AutoImportVariant?) = true
+            override fun getTextFor(value: AutoImportVariant) = value.hint
+            override fun getIconFor(value: AutoImportVariant) = value.icon
+        }
+    }
 }
+
+
