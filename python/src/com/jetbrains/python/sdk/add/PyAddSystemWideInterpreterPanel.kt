@@ -125,7 +125,7 @@ open class PyAddSystemWideInterpreterPanel(private val _project: Project?,
     }
     else {
       val interpreterPath = sdkComboBox.selectedSdk?.homePath!!
-      return createSdkForTarget(project, targetEnvironmentConfiguration, interpreterPath, existingSdks)
+      return createSdkForTarget(project, targetEnvironmentConfiguration, interpreterPath, existingSdks, targetPanelExtension)
     }
   }
 

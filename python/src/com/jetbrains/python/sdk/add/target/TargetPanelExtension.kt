@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk.add.target
 
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.ui.dsl.builder.Panel
+import com.jetbrains.python.target.PyTargetAwareAdditionalData
 
 /**
  * Allows extending the target configuration with additional options.
@@ -13,4 +14,6 @@ interface TargetPanelExtension {
   fun extendDialogPanelWithOptionalFields(panel: Panel, targetEnvConf: TargetEnvironmentConfiguration)
 
   fun apply(configuration: TargetEnvironmentConfiguration)
+
+  fun apply(pyTargetAwareAdditionalData: PyTargetAwareAdditionalData)
 }

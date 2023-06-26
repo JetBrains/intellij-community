@@ -238,7 +238,7 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
       else {
         // TODO [targets] Utilize smth like `createSdkFromExistingServerConfiguration` method in `SshSdkCreationUtil.kt`
         val homePath = ProgressManager.getInstance().run(task)
-        createSdkForTarget(project, it, homePath, existingSdks)
+        createSdkForTarget(project, it, homePath, existingSdks, targetPanelExtension)
       }
     }
     if (!shared) {
@@ -267,7 +267,7 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
     else {
       // TODO get rid of `!!`
       val homePath = selectedSdk.homePath!!
-      return createSdkForTarget(project, targetEnvironmentConfiguration, homePath, existingSdks)
+      return createSdkForTarget(project, targetEnvironmentConfiguration, homePath, existingSdks, targetPanelExtension)
     }
   }
 

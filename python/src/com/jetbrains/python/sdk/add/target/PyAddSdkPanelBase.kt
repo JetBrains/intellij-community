@@ -56,11 +56,13 @@ abstract class PyAddSdkPanelBase(protected val project: Project?,
                                     environmentConfiguration: TargetEnvironmentConfiguration,
                                     interpreterPath: String,
                                     existingSdks: Collection<Sdk>,
+                                    targetPanelExtension: TargetPanelExtension?,
                                     sdkName: String? = null): Sdk {
       // TODO [targets] Should flavor be more flexible?
       val data = PyTargetAwareAdditionalData(PyFlavorAndData(PyFlavorData.Empty, virtualEnvSdkFlavor)).also {
         it.interpreterPath = interpreterPath
         it.targetEnvironmentConfiguration = environmentConfiguration
+        targetPanelExtension?.apply(it)
       }
 
       val sdkVersion: String? = data.getInterpreterVersion(project, interpreterPath)
