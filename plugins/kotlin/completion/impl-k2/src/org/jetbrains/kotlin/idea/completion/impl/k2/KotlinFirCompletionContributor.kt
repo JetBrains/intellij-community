@@ -12,8 +12,8 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
+import org.jetbrains.kotlin.idea.completion.context.*
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.FirCallableReferencePositionContext
 import org.jetbrains.kotlin.idea.completion.context.FirPositionCompletionContextDetector
 import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
 import org.jetbrains.kotlin.idea.completion.contributors.FirCompletionContributorFactory
@@ -141,8 +141,8 @@ internal data class FirCompletionSessionParameters(
     private val languageVersionSettings = basicContext.project.languageVersionSettings
     val excludeEnumEntries: Boolean = !languageVersionSettings.supportsFeature(LanguageFeature.EnumEntries)
 
-    val allowSyntheticJavaProperties: Boolean = positionContext !is FirCallableReferencePositionContext ||
-            languageVersionSettings.supportsFeature(LanguageFeature.ReferencesToSyntheticJavaProperties)
+    val allowSyntheticJavaProperties: Boolean = positionContext !is FirKDocNameReferencePositionContext &&
+            (positionContext !is FirCallableReferencePositionContext || languageVersionSettings.supportsFeature(LanguageFeature.ReferencesToSyntheticJavaProperties))
 
     val allowJavaGettersAndSetters: Boolean = !allowSyntheticJavaProperties || basicContext.parameters.invocationCount > 1
     val allowExpectedDeclarations: Boolean = basicContext.originalKtFile.moduleInfo.platform.isMultiPlatform()

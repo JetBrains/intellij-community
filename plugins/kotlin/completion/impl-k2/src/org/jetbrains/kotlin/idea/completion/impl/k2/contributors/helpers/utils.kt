@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.analysis.api.scopes.KtScope
 import org.jetbrains.kotlin.analysis.api.scopes.KtScopeNameFilter
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
@@ -103,19 +102,12 @@ internal fun KtAnalysisSession.collectNonExtensionsForType(
     symbolFilter: (KtCallableSymbol) -> Boolean = { true }
 ): Sequence<KtCallableSignatureWithContainingScopeKind> {
     val typeScope = type.getTypeScope() ?: return emptySequence()
-    val syntheticJavaPropertiesTypeScope = type.takeIf { sessionParameters.allowSyntheticJavaProperties }?.getSyntheticJavaPropertiesScope()
 
-    val getAndSetAwareNameFilter = scopeNameFilter.getAndSetAware()
-
-    val syntheticProperties = syntheticJavaPropertiesTypeScope?.getCallableSignatures(getAndSetAwareNameFilter)
-        ?.filterNonExtensions(visibilityChecker, symbolFilter)
-        ?.filterIsInstance<KtCallableSignature<KtSyntheticJavaPropertySymbol>>()
-        .orEmpty()
-
-    val callables = typeScope.getCallableSignatures(getAndSetAwareNameFilter).applyIf(!sessionParameters.allowJavaGettersAndSetters) {
-        val javaGetterAndSetterSymbols = syntheticProperties.flatMapTo(mutableSetOf()) { it.symbol.getterAndSetter }
-        filter { it.symbol !in javaGetterAndSetterSymbols }
-    }
+    val callables = typeScope.getCallableSignatures(scopeNameFilter.getAndSetAware())
+        .applyIf(!sessionParameters.allowSyntheticJavaProperties) { filter { it.symbol !is KtSyntheticJavaPropertySymbol } }
+        .applyIf(!sessionParameters.allowJavaGettersAndSetters) {
+            filterOutJavaGettersAndSetters(type, visibilityChecker, scopeNameFilter, symbolFilter)
+        }
 
     val innerClasses = typeScope.getClassifierSymbols(scopeNameFilter).filterIsInstance<KtNamedClassOrObjectSymbol>().filter { it.isInner }
     val innerClassesConstructors = innerClasses.flatMap { it.getDeclaredMemberScope().getConstructors() }.map { it.asSignature() }
@@ -124,19 +116,30 @@ internal fun KtAnalysisSession.collectNonExtensionsForType(
 
     val scopeIndex = indexInTower ?: CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX
 
-    return sequence {
-        yieldAll(nonExtensionsFromType.map {
-            KtCallableSignatureWithContainingScopeKind(it, KtScopeKind.SimpleTypeScope(scopeIndex))
-        })
-        yieldAll(syntheticProperties.map {
-            KtCallableSignatureWithContainingScopeKind(it, KtScopeKind.SyntheticJavaPropertiesScope(scopeIndex))
-        })
-    }.applyIf(sessionParameters.excludeEnumEntries) { filterNot { isEnumEntriesProperty(it.signature.symbol) } }
+    return nonExtensionsFromType
+        .map { KtCallableSignatureWithContainingScopeKind(it, KtScopeKind.TypeScope(scopeIndex)) }
+        .applyIf(sessionParameters.excludeEnumEntries) { filterNot { isEnumEntriesProperty(it.signature.symbol) } }
 }
 
 context(KtAnalysisSession)
 private val KtSyntheticJavaPropertySymbol.getterAndSetter: List<KtCallableSymbol>
     get() = listOfNotNull(javaGetterSymbol, javaSetterSymbol)
+
+context(KtAnalysisSession)
+private fun Sequence<KtCallableSignature<*>>.filterOutJavaGettersAndSetters(
+    type: KtType,
+    visibilityChecker: CompletionVisibilityChecker,
+    scopeNameFilter: (Name) -> Boolean,
+    symbolFilter: (KtCallableSymbol) -> Boolean
+): Sequence<KtCallableSignature<*>> {
+    val syntheticJavaPropertiesTypeScope = type.getSyntheticJavaPropertiesScope() ?: return this
+    val syntheticProperties = syntheticJavaPropertiesTypeScope.getCallableSignatures(scopeNameFilter.getAndSetAware())
+        .filterNonExtensions(visibilityChecker, symbolFilter)
+        .filterIsInstance<KtCallableSignature<KtSyntheticJavaPropertySymbol>>()
+    val javaGetterAndSetterSymbols = syntheticProperties.flatMapTo(mutableSetOf()) { it.symbol.getterAndSetter }
+
+    return filter { it.symbol !in javaGetterAndSetterSymbols }
+}
 
 /**
  * Returns non-extensions from [KtScope]. Resulting callables do not include synthetic Java properties and constructors of inner classes.

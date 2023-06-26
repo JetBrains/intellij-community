@@ -742,7 +742,7 @@ internal class FirKDocCallableCompletionContributor(
                     val type = parentSymbol.buildSelfClassType()
 
                     type.getTypeScope()?.getDeclarationScope()?.let { typeScope ->
-                        val typeScopeKind = KtScopeKind.SimpleTypeScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
+                        val typeScopeKind = KtScopeKind.TypeScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
                         add(KtScopeWithKind(typeScope, typeScopeKind, token))
                     }
 
@@ -755,9 +755,9 @@ internal class FirKDocCallableCompletionContributor(
         }
 
         for (scopeWithKind in scopesWithKinds) {
-            scopeWithKind.scope.getCallableSymbols(scopeNameFilter).forEach { symbol ->
-                yield(createCallableWithMetadata(symbol.asSignature(), scopeWithKind.kind, noImportRequired = true))
-            }
+            scopeWithKind.scope.getCallableSymbols(scopeNameFilter)
+                .filter { it !is KtSyntheticJavaPropertySymbol }
+                .forEach { symbol -> yield(createCallableWithMetadata(symbol.asSignature(), scopeWithKind.kind, noImportRequired = true)) }
         }
     }
 }
