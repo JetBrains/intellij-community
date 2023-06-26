@@ -56,7 +56,7 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
     // FileTypeManager requires appStarter execution
     launch {
       appRegistered.join()
-      postAppRegistered(app, asyncScope, managingFsJob)
+      postAppRegistered(app, asyncScope, managingFsJob, initLafJob)
     }
 
     asyncScope.launch {
@@ -104,13 +104,16 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
   }
 }
 
-private fun CoroutineScope.postAppRegistered(app: ApplicationImpl, asyncScope: CoroutineScope, managingFsJob: Job) {
+private fun CoroutineScope.postAppRegistered(app: ApplicationImpl, asyncScope: CoroutineScope, managingFsJob: Job, initLafJob: Job) {
   launch {
     managingFsJob.join()
 
     // ProjectJdkTable wants FileTypeManager and VirtualFilePointerManager
     coroutineScope {
-      launch { app.serviceAsync<FileTypeManager>() }
+      launch {
+        initLafJob.join()
+        app.serviceAsync<FileTypeManager>()
+      }
       // wants ManagingFS
       launch { app.serviceAsync<VirtualFilePointerManager>() }
     }
