@@ -103,15 +103,12 @@ public final class CreateFromUsageUtils {
 
   public static void setupMethodBody(@NotNull PsiMethod method) throws IncorrectOperationException {
     PsiClass aClass = method.getContainingClass();
-    setupMethodBody(method, aClass);
-  }
-
-  public static void setupMethodBody(final PsiMethod method, final PsiClass aClass) throws IncorrectOperationException {
     FileTemplate template = FileTemplateManager.getInstance(method.getProject()).getCodeTemplate(JavaTemplateUtil.TEMPLATE_FROM_USAGE_METHOD_BODY);
-    setupMethodBody(method, aClass, template);
+    setupMethodBody(method, aClass, template, null);
   }
 
-  public static void setupMethodBody(final PsiMethod method, final PsiClass aClass, @NotNull ModPsiUpdater updater) throws IncorrectOperationException {
+  public static void setupMethodBody(final PsiMethod method, @NotNull ModPsiUpdater updater) throws IncorrectOperationException {
+    PsiClass aClass = method.getContainingClass();
     FileTemplate template = FileTemplateManager.getInstance(method.getProject()).getCodeTemplate(JavaTemplateUtil.TEMPLATE_FROM_USAGE_METHOD_BODY);
     setupMethodBody(method, aClass, template, updater);
   }

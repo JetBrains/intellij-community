@@ -50,7 +50,7 @@ public final class AddMethodBodyFix extends PsiUpdateModCommandAction<PsiMethod>
         !method.hasModifierProperty(PsiModifier.PRIVATE)) {
       PsiUtil.setModifierProperty(method, PsiModifier.DEFAULT, true);
     }
-    CreateFromUsageUtils.setupMethodBody(method, aClass, updater);
+    CreateFromUsageUtils.setupMethodBody(method, updater);
     if (method.getContainingFile().getOriginalFile() == context.file()) {
       PsiCodeBlock body = method.getBody();
       if (body != null) {
