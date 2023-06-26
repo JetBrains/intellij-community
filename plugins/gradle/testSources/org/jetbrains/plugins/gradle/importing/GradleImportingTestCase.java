@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.testFramework.io.ExternalResourcesChecker;
@@ -370,7 +371,14 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   protected void importProject(@NonNls @Language("Groovy") String config, Boolean skipIndexing) throws IOException {
     config = injectRepo(config);
     if (isGradleNewerOrSameAs("7.0")) {
-      GradleSystemSettings.getInstance().setGradleVmOptions("-Dorg.gradle.warning.mode=fail");
+      String failOnWarning = "-Dorg.gradle.warning.mode=fail";
+      String originalVmOptions = GradleSystemSettings.getInstance().getGradleVmOptions();
+      if (StringUtil.isEmpty(originalVmOptions)) {
+        GradleSystemSettings.getInstance().setGradleVmOptions(failOnWarning);
+      }
+      else {
+        GradleSystemSettings.getInstance().setGradleVmOptions("%s %s".formatted(originalVmOptions, failOnWarning));
+      }
     }
     super.importProject(config, skipIndexing);
     handleDeprecationError(deprecationError.get());
