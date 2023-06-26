@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
+import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
@@ -36,7 +37,7 @@ object VcsLogContentUtil {
   }
 
   internal fun selectLogUi(project: Project, logUi: VcsLogUi, requestFocus: Boolean = true): Boolean {
-    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID) ?: return false
+    val toolWindow = getToolWindow(project) ?: return false
     val manager = toolWindow.contentManager
     val component = ContentUtilEx.findContentComponent(manager) { c -> getLogUi(c)?.id == logUi.id } ?: return false
 
@@ -58,7 +59,7 @@ object VcsLogContentUtil {
                                   factory: VcsLogUiFactory<out U>,
                                   focus: Boolean): U {
     val logUi = logManager.createLogUi(factory, VcsLogTabLocation.TOOL_WINDOW)
-    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
+    val toolWindow = getToolWindow(project)
                      ?: throw IllegalStateException("Could not find tool window for id ${ChangesViewContentManager.TOOLWINDOW_ID}")
     ContentUtilEx.addTabbedContent(toolWindow.contentManager, tabGroupId,
                                    TabDescriptor(VcsLogPanel(logManager, logUi), Supplier { tabDisplayName.apply(logUi) }, logUi), focus)
@@ -76,7 +77,7 @@ object VcsLogContentUtil {
 
   @JvmStatic
   fun runInMainLog(project: Project, consumer: Consumer<in MainVcsLogUi>) {
-    val window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
+    val window = getToolWindow(project)
     if (window == null || !selectMainLog(window.contentManager)) {
       showLogIsNotAvailableMessage(project)
       return
@@ -109,15 +110,19 @@ object VcsLogContentUtil {
   }
 
   fun selectMainLog(project: Project): Boolean {
-    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID) ?: return false
+    val toolWindow = getToolWindow(project) ?: return false
     return selectMainLog(toolWindow.contentManager)
   }
 
   @JvmStatic
   fun updateLogUiName(project: Project, ui: VcsLogUi) {
-    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID) ?: return
+    val toolWindow = getToolWindow(project) ?: return
     val manager = toolWindow.contentManager
     val component = ContentUtilEx.findContentComponent(manager) { c: JComponent -> ui === getLogUi(c) } ?: return
     ContentUtilEx.updateTabbedContentDisplayName(manager, component)
+  }
+
+  internal fun getToolWindow(project: Project): ToolWindow? {
+    return ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
   }
 }
