@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.IOUtil;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,7 @@ import java.io.IOException;
  * used by {@link PersistentFSAttributeAccessor}
  */
 //TODO RC: rename to VFSAttributesStorage
+@ApiStatus.Internal
 public interface AbstractAttributesStorage extends Forceable, Closeable {
 
   /**

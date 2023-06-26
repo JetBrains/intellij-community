@@ -21,7 +21,7 @@ import static com.intellij.internal.statistic.eventLog.events.EventFields.*;
 public final class VfsUsageCollector extends CounterUsagesCollector {
   private static final int DURATION_THRESHOLD_MS = 100;
 
-  private static final EventLogGroup GROUP_VFS = new EventLogGroup("vfs", 9);
+  private static final EventLogGroup GROUP_VFS = new EventLogGroup("vfs", 10);
 
 
   /* ================== EVENT_INITIAL_REFRESH: ====================================================== */
@@ -176,6 +176,23 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
     FIELD_HEALTH_CHECK_ATTRIBUTES_ERRORS
   );
 
+  /* ================== EVENT_VFS_ACCUMULATED_ERRORS: ====================================================== */
+
+  /**
+   * Not any errors, but errors that are likely internal VFS errors, i.e. corruptions or
+   * code bugs. E.g. error due to illegal argument passed from outside is not counted.
+   */
+  private static final IntEventField FIELD_ACCUMULATED_VFS_ERRORS = Int("accumulated_errors");
+  private static final LongEventField FIELD_TIME_SINCE_STARTUP = Long("time_since_startup_ms");
+
+  private static final VarargEventId EVENT_VFS_INTERNAL_ERRORS = GROUP_VFS.registerVarargEvent(
+    "internal_errors",
+    FIELD_HEALTH_CHECK_VFS_CREATION_TIMESTAMP_MS,
+
+    FIELD_TIME_SINCE_STARTUP,
+    FIELD_ACCUMULATED_VFS_ERRORS
+  );
+
   /* ==================================================================================================== */
 
 
@@ -301,6 +318,16 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
 
       FIELD_HEALTH_CHECK_CONTENTS_CHECKED.with(contentRecordsChecked),
       FIELD_HEALTH_CHECK_CONTENTS_ERRORS.with(contentGeneralErrors)
+    );
+  }
+
+  public static void logVfsInternalErrors(long vfsCreationTimestamp,
+                                          long sinceStartupMs,
+                                          int errorsAccumulatedSinceStartup) {
+    EVENT_VFS_INTERNAL_ERRORS.log(
+      FIELD_HEALTH_CHECK_VFS_CREATION_TIMESTAMP_MS.with(vfsCreationTimestamp),
+      FIELD_TIME_SINCE_STARTUP.with(sinceStartupMs),
+      FIELD_ACCUMULATED_VFS_ERRORS.with(errorsAccumulatedSinceStartup)
     );
   }
 }
