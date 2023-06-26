@@ -207,11 +207,19 @@ private fun restoreCaretPosition(editor: EditorEx, delayedScrollState: DelayedSc
       doScroll()
     }
     else {
-      coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        while (!isReady()) {
-          yield()
+      coroutineScope.launch(ModalityState.any().asContextElement()) {
+        var done = false
+        while (!done) {
+          done = withContext(Dispatchers.EDT) {
+            if (isReady()) {
+              doScroll()
+              true
+            }
+            else {
+              false
+            }
+          }
         }
-        doScroll()
       }
     }
   }
