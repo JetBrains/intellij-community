@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.popup.Balloon.Position
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.ui.GotItComponentBuilder
 import com.intellij.ui.GotItTextBuilder
 import com.intellij.ui.GotItTooltip
 import com.intellij.ui.components.JBCheckBox
@@ -20,7 +21,6 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.not
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBUI
 import java.awt.*
 import java.awt.geom.RoundRectangle2D
@@ -61,7 +61,7 @@ class ShowGotItDemoAction : DumbAwareAction() {
     private var showIconOrStep: Boolean = true
     private var showIcon: Boolean = true
     private var showStepNumber: Boolean = false
-    private var stepNumber: Int = 1
+    private var stepText: String = "01"
 
     private var showHeader: Boolean = true
     private var headerText: String = "Some GotIt tooltip header"
@@ -130,8 +130,8 @@ class ShowGotItDemoAction : DumbAwareAction() {
         row {
           val button = radioButton("Step number:")
             .bindSelected(::showStepNumber)
-          intTextField(IntRange(1, 99))
-            .bindIntText(::stepNumber)
+          textField()
+            .bindText(::stepText)
             .enabledIf(button.selected)
         }
         row {
@@ -201,21 +201,22 @@ class ShowGotItDemoAction : DumbAwareAction() {
         else text
       }
 
-      val randomId = Random(System.currentTimeMillis()).nextBytes(32).toString(StandardCharsets.UTF_8)
-      val gotIt = GotItTooltip(randomId, textSupplier, Disposer.newDisposable())
-      if (showImage) gotIt.withImage(image)
-      if (showIconOrStep && showIcon) gotIt.withIcon(icon)
-      if (showIconOrStep && showStepNumber) gotIt.withStepNumber(stepNumber)
-      if (showHeader) gotIt.withHeader(headerText)
+      val gotItBuilder = GotItComponentBuilder(textSupplier)
+      if (showImage) gotItBuilder.withImage(image)
+      if (showIconOrStep && showIcon) gotItBuilder.withIcon(icon)
+      if (showIconOrStep && showStepNumber) gotItBuilder.withStepNumber(stepText)
+      if (showHeader) gotItBuilder.withHeader(headerText)
       if (showLink && actionLink) {
-        gotIt.withLink(actionLinkText) { ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW)?.show() }
+        gotItBuilder.withLink(actionLinkText) { ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW)?.show() }
       }
       if (showLink && browserLink) {
-        gotIt.withBrowserLink(browserLinkText, URL("https://www.jetbrains.com/help/idea/getting-started.html"))
+        gotItBuilder.withBrowserLink(browserLinkText, URL("https://www.jetbrains.com/help/idea/getting-started.html"))
       }
-      if (!showButton) gotIt.withTimeout(DateFormatUtil.HOUR.toInt())
-      @Suppress("DEPRECATION")
-      gotIt.withContrastColors(useContrastColors)
+      gotItBuilder.showButton(showButton)
+      gotItBuilder.withContrastColors(useContrastColors)
+
+      val randomId = Random(System.currentTimeMillis()).nextBytes(32).toString(StandardCharsets.UTF_8)
+      val gotIt = GotItTooltip(randomId, gotItBuilder, Disposer.newDisposable())
       gotIt.withPosition(position)
       return gotIt
     }

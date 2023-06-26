@@ -56,7 +56,8 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
   @Nls
   private var header: String = ""
   private var icon: Icon? = null
-  private var stepNumber: Int? = null
+  @NlsSafe
+  private var stepText: String? = null
 
   private var shortcut: Shortcut? = null
 
@@ -106,7 +107,7 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
    * Is not compatible with step number.
    */
   fun withIcon(icon: Icon): GotItComponentBuilder {
-    if (stepNumber != null) {
+    if (stepText != null) {
       throw IllegalStateException("Icon and step number can not be showed both at once. Choose one of them.")
     }
     this.icon = icon
@@ -127,7 +128,19 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
     if (step !in 1 until 100) {
       throw IllegalArgumentException("The step should be in the range [1, 99]. Provided step number: $step")
     }
-    this.stepNumber = step
+    this.stepText = step.toString().padStart(2, '0')
+    return this
+  }
+
+  /**
+   * Add optional step number on the left of the header or description.
+   * Is not compatible with icon.
+   */
+  fun withStepNumber(text: @NlsSafe String): GotItComponentBuilder {
+    if (icon != null) {
+      throw IllegalStateException("Icon and step number can not be showed both at once. Choose one of them.")
+    }
+    this.stepText = text
     return this
   }
 
@@ -288,8 +301,8 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
   private fun createContent(buttonConsumer: (JButton) -> Unit, descriptionConsumer: (JEditorPane) -> Unit): JComponent {
     val panel = JPanel(GridBagLayout())
     val gc = GridBag()
-    val left = if (icon != null || stepNumber != null) JBUI.CurrentTheme.GotItTooltip.ICON_INSET.get() else 0
-    val column = if (icon != null || stepNumber != null) 1 else 0
+    val left = if (icon != null || stepText != null) JBUI.CurrentTheme.GotItTooltip.ICON_INSET.get() else 0
+    val column = if (icon != null || stepText != null) 1 else 0
 
     image?.let {
       val adjusted = adjustIcon(it, useContrastColors)
@@ -307,8 +320,9 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
       panel.add(iconOrStepLabel!!, gc.nextLine().next().anchor(GridBagConstraints.BASELINE))
     }
 
-    stepNumber?.let { step ->
-      iconOrStepLabel = JLabel(step.toString().padStart(2, '0')).apply {
+    stepText?.let { step ->
+      @Suppress("HardCodedStringLiteral")
+      iconOrStepLabel = JLabel(step).apply {
         foreground = JBUI.CurrentTheme.GotItTooltip.stepForeground(useContrastColors)
         font = EditorColorsManager.getInstance().globalScheme.getFont(EditorFontType.PLAIN).deriveFont(JBFont.label().size.toFloat())
       }
@@ -316,7 +330,7 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
     }
 
     if (header.isNotEmpty()) {
-      if (icon == null && stepNumber == null) gc.nextLine()
+      if (icon == null && stepText == null) gc.nextLine()
 
       val finalText = HtmlChunk.raw(header)
         .bold()
@@ -335,7 +349,7 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
                   .wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(JBUI.CurrentTheme.GotItTooltip.shortcutForeground(useContrastColors)))))
     }
 
-    if (icon == null && stepNumber == null || header.isNotEmpty()) gc.nextLine()
+    if (icon == null && stepText == null || header.isNotEmpty()) gc.nextLine()
     val textWidth = image?.let { img ->
       img.iconWidth - (iconOrStepLabel?.let { it.preferredSize.width + left } ?: 0)
     } ?: maxWidth
