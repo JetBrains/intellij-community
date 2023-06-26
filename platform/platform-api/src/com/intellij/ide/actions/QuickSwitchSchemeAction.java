@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
@@ -20,9 +20,6 @@ public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAw
   private final static Condition<? super AnAction> DEFAULT_PRESELECT_ACTION = a -> {
     return a.getTemplatePresentation().getIcon() != AllIcons.Actions.Forward;
   };
-
-  @Deprecated(forRemoval = true)
-  protected static final Icon ourCurrentAction = AllIcons.Actions.Forward;
 
   protected static final Icon ourNotCurrentAction = IconLoader.createLazy(() -> {
     return EmptyIcon.create(AllIcons.Actions.Forward.getIconWidth(), AllIcons.Actions.Forward.getIconHeight());
