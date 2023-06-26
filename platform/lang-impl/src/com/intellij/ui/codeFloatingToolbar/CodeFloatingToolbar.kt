@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.FloatingToolbar
 import com.intellij.openapi.actionSystem.impl.MoreActionGroup
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -69,8 +70,8 @@ class CodeFloatingToolbar(
                   || Registry.get("floating.codeToolbar.showBelow").asBoolean() && isSelectionEndVisible(editor)
     val offsetForHint = when {
       isOneLineSelection -> selectionStart
-      isBelow -> getTextStart(editor, replacedLineStartOffset(editor, selectionEnd))
-      else -> getTextStart(editor, selectionStart)
+      isBelow -> getOffsetForLine(editor, getLineByVisualStart(editor, selectionEnd, true))
+      else -> getOffsetForLine(editor, getLineByVisualStart(editor, selectionEnd, false))
     }
     val visualPosition = editor.offsetToVisualPosition(offsetForHint)
     val hintPoint = HintManagerImpl.getHintPosition(hint, editor, visualPosition, HintManager.DEFAULT)
@@ -82,17 +83,6 @@ class CodeFloatingToolbar(
     }
     hintPoint.translate(0, dy)
     return hintPoint
-  }
-
-  private fun replacedLineStartOffset(editor: Editor, offset: Int): Int {
-    val document = editor.document
-    val lineNumber = document.getLineNumber(offset)
-    val lineStart = document.getLineStartOffset(lineNumber)
-    if (lineStart == offset) {
-      val previousLine = maxOf(0, lineNumber - 1)
-      return maxOf(0, document.getLineEndOffset(previousLine))
-    }
-    return offset
   }
 
   private fun isSelectionEndVisible(editor: Editor): Boolean {
@@ -107,15 +97,22 @@ class CodeFloatingToolbar(
     return startLine == endLine
   }
 
-  private fun getTextStart(editor: Editor, offset: Int): Int {
+  private fun getOffsetForLine(editor: Editor, line: Int): Int {
     val document = editor.document
-    val line = document.getLineNumber(offset)
     val lineStart = document.getLineStartOffset(line)
     val lineEnd = document.getLineEndOffset(line)
     val lineText = document.getText(TextRange.create(lineStart, lineEnd))
     val textIndex = lineText.indexOfFirst { char -> !char.isWhitespace() }
-    if (textIndex < 0) return offset
+    if (textIndex < 0) return lineStart
     return lineStart + textIndex
+  }
+
+  private fun getLineByVisualStart(editor: Editor, offset: Int, skipLineStartOffset: Boolean): Int {
+    val visualPosition = editor.offsetToVisualPosition(offset)
+    val skipCurrentLine = skipLineStartOffset && visualPosition.column == 0
+    val line = if (skipCurrentLine) maxOf(visualPosition.line - 1, 0) else visualPosition.line
+    val lineStartPosition = VisualPosition(line, 0)
+    return editor.visualToLogicalPosition(lineStartPosition).line
   }
 
   override fun createActionGroup(): ActionGroup? {
