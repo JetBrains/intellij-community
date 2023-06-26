@@ -75,7 +75,7 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
       public void daemonFinished(@NotNull Collection<? extends @NotNull FileEditor> fileEditors) {
         if (!DumbService.getInstance(myProject).isDumb()) {
           for (FileEditor fileEditor : fileEditors) {
-            if (isHighlightingCompleted(fileEditor, project)) {
+            if (DaemonCodeAnalyzerEx.isHighlightingCompleted(fileEditor, project)) {
               putDownActiveZombiesInFile(fileEditor);
             }
           }
@@ -333,11 +333,6 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
     finally {
       Registry.get("cache.higlighting.markup.on.disk").setValue(wasEnabled);
     }
-  }
-
-  private static boolean isHighlightingCompleted(@NotNull FileEditor fileEditor, @NotNull Project project) {
-    return fileEditor instanceof TextEditor textEditor
-           && DaemonCodeAnalyzerEx.getInstanceEx(project).getFileStatusMap().allDirtyScopesAreNull(textEditor.getEditor().getDocument());
   }
 
   static boolean isZombieMarkup(@NotNull RangeMarker highlighter) {

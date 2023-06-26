@@ -61,7 +61,8 @@ open class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.
   }
 
   override fun daemonFinished(fileEditors: Collection<FileEditor>) {
-    val editor = fileEditors.filterIsInstance<TextEditor>().firstOrNull()?.editor
+    val fileEditor = fileEditors.filterIsInstance<TextEditor>().firstOrNull()
+    val editor = fileEditor?.editor
     val document = editor?.document
     if (document != null && documentStartedHash != document.hashCode()) {
       // unmatched starting/finished events? bail out just in case
@@ -83,7 +84,7 @@ open class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.
     val lines = document?.lineCount?.roundToOneSignificantDigit() ?: -1
     val elapsedTime = System.currentTimeMillis() - daemonStartTime
     val fileType = document?.let { FileDocumentManager.getInstance().getFile(it)?.fileType }
-    val wasEntireFileHighlighted = TextRange.from(0, document?.textLength ?: 0) == dirtyRange
+    val wasEntireFileHighlighted = document != null && DaemonCodeAnalyzerImpl.isHighlightingCompleted(fileEditor, project);
 
     if (wasEntireFileHighlighted && !initialEntireFileHighlightingReported) {
       initialEntireFileHighlightingReported = true
