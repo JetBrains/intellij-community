@@ -104,8 +104,8 @@ class VcsLogTabsManager internal constructor(private val project: Project,
     return PersistentVcsLogUiFactory(manager.getMainLogUiFactory(tabId, filters), location)
   }
 
-  private inner class PersistentVcsLogUiFactory constructor(private val factory: VcsLogUiFactory<out MainVcsLogUi>,
-                                                            private val logTabLocation: VcsLogTabLocation) : VcsLogUiFactory<MainVcsLogUi> {
+  private inner class PersistentVcsLogUiFactory(private val factory: VcsLogUiFactory<out MainVcsLogUi>,
+                                                private val logTabLocation: VcsLogTabLocation) : VcsLogUiFactory<MainVcsLogUi> {
     override fun createLogUi(project: Project, logData: VcsLogData): MainVcsLogUi {
       val ui = factory.createLogUi(project, logData)
       uiProperties.addTab(ui.id, logTabLocation)
