@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.io.ChunkMMappedFileIO
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.StorageIO
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.AdvancingPositionTracker
-import com.intellij.openapi.vfs.newvfs.persistent.log.util.SkipListAdvancingPositionTracker
+import com.intellij.openapi.vfs.newvfs.persistent.log.util.LockFreeAdvancingPositionTracker
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.trackAdvance
 import com.intellij.util.io.DataInputOutputUtil
 import com.intellij.util.io.DataOutputStream
@@ -31,7 +31,7 @@ class PayloadStorageImpl(
 
   private val storageIO: StorageIO
   private var lastSafeSize by PersistentVar.long(storagePath / "size")
-  private val position: AdvancingPositionTracker
+  private val positionTracker: AdvancingPositionTracker
 
   init {
     FileUtil.ensureExists(storagePath.toFile())
@@ -39,7 +39,7 @@ class PayloadStorageImpl(
     val fileChannel = ResilientFileChannel(storagePath / "payload", READ, WRITE, CREATE)
     storageIO = ChunkMMappedFileIO(fileChannel, FileChannel.MapMode.READ_WRITE)
 
-    position = SkipListAdvancingPositionTracker(lastSafeSize ?: 0L)
+    positionTracker = LockFreeAdvancingPositionTracker(lastSafeSize ?: 0L)
   }
 
   override fun writePayload(sizeBytes: Long, body: OutputStream.() -> Unit): PayloadRef {
@@ -49,7 +49,7 @@ class PayloadStorageImpl(
     DataInputOutputUtil.writeLONG(out, sizeBytes)
 
     val fullSize = out.writtenBytesCount.toLong() + sizeBytes
-    return position.trackAdvance(fullSize) { payloadPos ->
+    return positionTracker.trackAdvance(fullSize) { payloadPos ->
       storageIO.write(payloadPos, buf.internalBuffer, 0, out.writtenBytesCount)
       storageIO.offsetOutputStream(payloadPos + out.writtenBytesCount).run {
         body()
@@ -61,7 +61,7 @@ class PayloadStorageImpl(
 
   override fun readPayload(payloadRef: PayloadRef): State.DefinedState<ByteArray> {
     if (payloadRef.source != Source.PayloadStorage) throw IllegalArgumentException("PayloadStorageImpl cannot read $payloadRef")
-    if (payloadRef.offset >= position.getReadyPosition()) {
+    if (payloadRef.offset >= positionTracker.getReadyPosition()) {
       return State.NotAvailable("failed to read $payloadRef: data was not written yet")
     }
     val buf = ByteArray(10) // 1 + (64 - 6) / 7 < 10
@@ -86,7 +86,7 @@ class PayloadStorageImpl(
   override fun size(): Long = lastSafeSize ?: 0L //  TODO should be position.getReadyPosition()
 
   override fun flush() {
-    val safeSize = position.getReadyPosition()
+    val safeSize = positionTracker.getReadyPosition()
     storageIO.force()
     lastSafeSize = safeSize
   }

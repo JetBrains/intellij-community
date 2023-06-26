@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.Operat
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.ChunkMMappedFileIO
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.StorageIO
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.AdvancingPositionTracker
-import com.intellij.openapi.vfs.newvfs.persistent.log.util.SkipListAdvancingPositionTracker
+import com.intellij.openapi.vfs.newvfs.persistent.log.util.LockFreeAdvancingPositionTracker
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.DataEnumerator
 import com.intellij.util.io.ResilientFileChannel
@@ -45,7 +45,7 @@ class OperationLogStorageImpl(
     val fileChannel = ResilientFileChannel(storagePath / "descriptors", READ, WRITE, CREATE)
     storageIO = ChunkMMappedFileIO(fileChannel, FileChannel.MapMode.READ_WRITE)
 
-    positionTracker = SkipListAdvancingPositionTracker(persistentSize ?: 0L)
+    positionTracker = LockFreeAdvancingPositionTracker(persistentSize ?: 0L)
 
     repeat(writerJobsCount) { scope.launch { writeWorker() } }
   }
@@ -71,9 +71,9 @@ class OperationLogStorageImpl(
   }
 
   override fun enqueueOperationWrite(tag: VfsOperationTag, compute: () -> VfsOperation<*>) {
-    val descrSize = bytesForOperationDescriptor(tag)
-    val descrPos = positionTracker.beginAdvance(descrSize.toLong())
-    val job = { writeJobImpl(compute, tag, descrPos, descrSize) }
+    val descriptorSize = bytesForOperationDescriptor(tag)
+    val advanceToken = positionTracker.beginAdvance(descriptorSize.toLong())
+    val job = { writeJobImpl(compute, tag, advanceToken, descriptorSize) }
     val submitted = writeQueue.trySend(job)
     if (submitted.isSuccess) return
     performWriteJob(job)
@@ -82,8 +82,8 @@ class OperationLogStorageImpl(
   private fun writeJobImpl(
     compute: () -> VfsOperation<*>,
     tag: VfsOperationTag,
-    descrPos: Long,
-    descrSize: Int
+    descriptorAdvanceToken: AdvancingPositionTracker.AdvanceToken,
+    descriptorSize: Int
   ) {
     try {
       if (isClosed) throw CancellationException("OperationLogStorage is disposed")
@@ -91,12 +91,12 @@ class OperationLogStorageImpl(
       if (tag != operation.tag) {
         throw IllegalStateException("expected $tag, got ${operation.tag}")
       }
-      writeOperation(descrPos, operation)
+      writeOperation(descriptorAdvanceToken.position, operation)
     }
     catch (e: Throwable) {
       try { // try to write error bounding tags
-        storageIO.write(descrPos, byteArrayOf((-tag.ordinal).toByte()))
-        storageIO.write(descrPos + descrSize - VfsOperationTag.SIZE_BYTES, byteArrayOf(tag.ordinal.toByte()))
+        storageIO.write(descriptorAdvanceToken.position, byteArrayOf((-tag.ordinal).toByte()))
+        storageIO.write(descriptorAdvanceToken.position + descriptorSize - VfsOperationTag.SIZE_BYTES, byteArrayOf(tag.ordinal.toByte()))
       }
       catch (e2: Throwable) {
         e.addSuppressed(IOException("failed to set error operation bounds", e2))
@@ -104,7 +104,7 @@ class OperationLogStorageImpl(
       throw e
     }
     finally {
-      positionTracker.finishAdvance(descrPos)
+      positionTracker.finishAdvance(descriptorAdvanceToken)
     }
   }
 
