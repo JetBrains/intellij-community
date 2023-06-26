@@ -14,6 +14,7 @@ import org.jetbrains.ide.BuiltInServerManager
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
+@PreviewTest
 @WithJcef
 @TestApplication
 class PreviewSanityTest {

@@ -136,7 +136,15 @@ tasks {
   }
 
   val modernTests by registering(Test::class) {
-    useJUnitPlatform()
+    useJUnitPlatform {
+      excludeTags("PreviewTest")
+    }
+  }
+
+  val previewTests by registering(Test::class) {
+    useJUnitPlatform {
+      includeTags("PreviewTest")
+    }
   }
 
   withType<Test> {
