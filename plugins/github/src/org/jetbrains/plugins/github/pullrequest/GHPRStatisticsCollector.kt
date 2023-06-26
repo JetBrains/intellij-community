@@ -20,6 +20,7 @@ import org.jetbrains.plugins.github.api.data.GHEnterpriseServerMeta
 import org.jetbrains.plugins.github.api.data.GithubPullRequestMergeMethod
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.util.GHEnterpriseServerMetadataLoader
+import java.util.*
 
 internal object GHPRStatisticsCollector {
   private val COUNTERS_GROUP = EventLogGroup("vcs.github.pullrequest.counters", 2)
@@ -31,7 +32,7 @@ internal object GHPRStatisticsCollector {
   private val TIMELINE_OPENED_EVENT = COUNTERS_GROUP.registerEvent("timeline.opened", EventFields.Int("count"))
   private val DIFF_OPENED_EVENT = COUNTERS_GROUP.registerEvent("diff.opened", EventFields.Int("count"))
   private val MERGED_EVENT = COUNTERS_GROUP.registerEvent("merged", EventFields.Enum<GithubPullRequestMergeMethod>("method") {
-    it.name.toUpperCase()
+    it.name.uppercase(Locale.getDefault())
   })
   private val anonymizedId = object : PrimitiveEventField<String>() {
 
