@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -31,7 +32,7 @@ class KotlinBeforeResolveHighlightingPass(file: KtFile, document: Document) : Ab
         })
     }
 
-    class Factory : TextEditorHighlightingPassFactory {
+    class Factory : TextEditorHighlightingPassFactory, DumbAware {
         override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? {
             if (file !is KtFile) return null
             return KotlinBeforeResolveHighlightingPass(file, editor.document)
