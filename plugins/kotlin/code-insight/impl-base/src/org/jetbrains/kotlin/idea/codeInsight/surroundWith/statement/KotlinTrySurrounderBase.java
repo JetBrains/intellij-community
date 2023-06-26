@@ -10,8 +10,9 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.MoveDeclarationsOutHelperKt;
-import org.jetbrains.kotlin.idea.core.surroundWith.KotlinSurrounderUtils;
 import org.jetbrains.kotlin.psi.*;
+
+import static org.jetbrains.kotlin.idea.codeInsight.surroundWith.SurroundWithUtilKt.addStatementsInBlock;
 
 public abstract class KotlinTrySurrounderBase extends KotlinStatementsSurrounder {
 
@@ -28,7 +29,6 @@ public abstract class KotlinTrySurrounderBase extends KotlinStatementsSurrounder
         statements = MoveDeclarationsOutHelperKt.move(container, statements, true);
 
         if (statements.length == 0) {
-            KotlinSurrounderUtils.showErrorHint(project, editor, KotlinSurrounderUtils.SURROUND_WITH_ERROR());
             return null;
         }
 
@@ -39,7 +39,7 @@ public abstract class KotlinTrySurrounderBase extends KotlinStatementsSurrounder
 
         KtBlockExpression tryBlock = tryExpression.getTryBlock();
         // Add statements in try block of created try - catch - finally
-        KotlinSurrounderUtils.addStatementsInBlock(tryBlock, statements);
+        addStatementsInBlock(tryBlock, statements);
 
         // Delete statements from original code
         container.deleteChildRange(statements[0], statements[statements.length - 1]);

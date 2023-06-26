@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.surroundWith.expression;
 
 import com.intellij.lang.surroundWith.Surrounder;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.idea.core.surroundWith.KotlinExpressionSurroundDescriptorBase;
+import org.jetbrains.kotlin.idea.codeInsight.surroundWith.KotlinExpressionSurroundDescriptorBase;
 
 public class KotlinExpressionSurroundDescriptor extends KotlinExpressionSurroundDescriptorBase {
     private static final Surrounder[] SURROUNDERS = {
@@ -21,8 +21,7 @@ public class KotlinExpressionSurroundDescriptor extends KotlinExpressionSurround
     };
 
     @Override
-    @NotNull
-    public Surrounder[] getSurrounders() {
+    public Surrounder @NotNull[] getSurrounders() {
         return SURROUNDERS;
     }
 }

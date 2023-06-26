@@ -2,16 +2,15 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement;
 
-import com.intellij.java.JavaBundle;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.psi.KtTryExpression;
 
-public class KotlinTryCatchSurrounder extends KotlinTrySurrounderBase {
+public class KotlinTryCatchFinallySurrounder extends KotlinTrySurrounderBase {
 
     @Override
     protected String getCodeTemplate() {
-        return "try { \n} catch(e: Exception) {\nTODO(\"Not yet implemented\")\n}";
+        return "try { \n} catch(e: Exception) {\nTODO(\"Not yet implemented\")\n} finally {\n}";
     }
 
     @NotNull
@@ -20,9 +19,9 @@ public class KotlinTryCatchSurrounder extends KotlinTrySurrounderBase {
         return getCatchTypeParameterTextRange(expression);
     }
 
-    @SuppressWarnings("DialogTitleCapitalization")
     @Override
     public String getTemplateDescription() {
-        return JavaBundle.message("surround.with.try.catch.template");
+        //noinspection HardCodedStringLiteral,DialogTitleCapitalization
+        return "try / catch / finally";
     }
 }

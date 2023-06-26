@@ -20,5 +20,6 @@
     <orderEntry type="module" module-name="kotlin.idea" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.java.psi" />
+    <orderEntry type="module" module-name="kotlin.code-insight.impl-base" />
   </component>
 </module>

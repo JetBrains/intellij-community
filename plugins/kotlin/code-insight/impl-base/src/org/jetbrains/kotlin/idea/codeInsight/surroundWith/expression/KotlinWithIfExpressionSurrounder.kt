@@ -7,24 +7,31 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.core.surroundWith.KotlinExpressionSurrounder
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.idea.codeInsight.surroundWith.KotlinExpressionSurrounder
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.types.typeUtil.isBoolean
 import org.jetbrains.kotlin.utils.sure
 
 class KotlinWithIfExpressionSurrounder(val withElse: Boolean) : KotlinExpressionSurrounder() {
-    override fun isApplicable(expression: KtExpression) =
-        super.isApplicable(expression) && (expression.analyze(BodyResolveMode.PARTIAL).getType(expression)?.isBoolean() ?: false)
+    @OptIn(KtAllowAnalysisOnEdt::class)
+    override fun isApplicable(expression: KtExpression): Boolean {
+        allowAnalysisOnEdt {
+            return super.isApplicable(expression) &&
+                    analyze(expression) {
+                        expression.getKtType()?.isBoolean ?: false
+                    }
+        }
+    }
 
     override fun surroundExpression(project: Project, editor: Editor, expression: KtExpression): TextRange {
         val factory = KtPsiFactory(project)
         val replaceResult = expression.replace(
-            factory.createIf(
-                expression,
-                factory.createBlock("blockStubContentToBeRemovedLater"),
-                if (withElse) factory.createEmptyBody() else null
+          factory.createIf(
+            expression,
+            factory.createBlock("blockStubContentToBeRemovedLater"),
+            if (withElse) factory.createEmptyBody() else null
             )
         ) as KtExpression
 

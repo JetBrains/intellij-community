@@ -9,8 +9,9 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.MoveDeclarationsOutHelperKt;
-import org.jetbrains.kotlin.idea.core.surroundWith.KotlinSurrounderUtils;
 import org.jetbrains.kotlin.psi.*;
+
+import static org.jetbrains.kotlin.idea.codeInsight.surroundWith.SurroundWithUtilKt.addStatementsInBlock;
 
 public class KotlinFunctionLiteralSurrounder extends KotlinStatementsSurrounder {
     @Nullable
@@ -19,7 +20,6 @@ public class KotlinFunctionLiteralSurrounder extends KotlinStatementsSurrounder 
         statements = MoveDeclarationsOutHelperKt.move(container, statements, true);
 
         if (statements.length == 0) {
-            KotlinSurrounderUtils.showErrorHint(project, editor, KotlinSurrounderUtils.SURROUND_WITH_ERROR());
             return null;
         }
 
@@ -33,7 +33,7 @@ public class KotlinFunctionLiteralSurrounder extends KotlinStatementsSurrounder 
         KtBlockExpression blockExpression = bodyExpression.getBodyExpression();
         assert blockExpression != null : "JetBlockExpression should exists for " + callExpression.getText();
         //Add statements in function literal block
-        KotlinSurrounderUtils.addStatementsInBlock(blockExpression, statements);
+        addStatementsInBlock(blockExpression, statements);
 
         //Delete statements from original code
         container.deleteChildRange(statements[0], statements[statements.length - 1]);

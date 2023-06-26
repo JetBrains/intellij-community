@@ -11,8 +11,12 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.MoveDeclarationsOutHelperKt;
-import org.jetbrains.kotlin.idea.core.surroundWith.KotlinSurrounderUtils;
-import org.jetbrains.kotlin.psi.*;
+import org.jetbrains.kotlin.psi.KtBlockExpression;
+import org.jetbrains.kotlin.psi.KtExpression;
+import org.jetbrains.kotlin.psi.KtIfExpression;
+import org.jetbrains.kotlin.psi.KtPsiFactory;
+
+import static org.jetbrains.kotlin.idea.codeInsight.surroundWith.SurroundWithUtilKt.addStatementsInBlock;
 
 public abstract class KotlinIfSurrounderBase extends KotlinStatementsSurrounder {
 
@@ -27,7 +31,6 @@ public abstract class KotlinIfSurrounderBase extends KotlinStatementsSurrounder 
         statements = MoveDeclarationsOutHelperKt.move(container, statements, isGenerateDefaultInitializers());
 
         if (statements.length == 0) {
-            KotlinSurrounderUtils.showErrorHint(project, editor, KotlinSurrounderUtils.SURROUND_WITH_ERROR());
             return null;
         }
 
@@ -39,7 +42,7 @@ public abstract class KotlinIfSurrounderBase extends KotlinStatementsSurrounder 
         KtBlockExpression thenBranch = (KtBlockExpression) ifExpression.getThen();
         assert thenBranch != null : "Then branch should exist for created if expression: " + ifExpression.getText();
         // Add statements in then branch of created if
-        KotlinSurrounderUtils.addStatementsInBlock(thenBranch, statements);
+        addStatementsInBlock(thenBranch, statements);
 
         // Delete statements from original code
         container.deleteChildRange(statements[0], statements[statements.length - 1]);

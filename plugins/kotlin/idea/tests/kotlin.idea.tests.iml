@@ -131,5 +131,6 @@
     <orderEntry type="library" scope="TEST" name="hamcrest" level="project" />
     <orderEntry type="module" module-name="kotlin.code-insight.line-markers-shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.code-insight.impl-base" scope="TEST" />
   </component>
 </module>

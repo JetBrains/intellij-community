@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.util.ElementKind;
+
 import static org.jetbrains.kotlin.idea.util.FindElementUtils.findElements;
 
 public class KotlinStatementSurroundDescriptor implements SurroundDescriptor {
@@ -22,13 +23,12 @@ public class KotlinStatementSurroundDescriptor implements SurroundDescriptor {
     };
 
     @Override
-    @NotNull
-    public PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
+    public PsiElement @NotNull[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
         return findElements(file, startOffset, endOffset, ElementKind.EXPRESSION);
     }
 
     @Override
-    @NotNull public Surrounder[] getSurrounders() {
+    public Surrounder @NotNull[] getSurrounders() {
         return SURROUNDERS;
     }
 
