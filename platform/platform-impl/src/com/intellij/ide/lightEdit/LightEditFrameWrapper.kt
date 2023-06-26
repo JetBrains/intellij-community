@@ -168,6 +168,7 @@ internal class LightEditFrameWrapper(
 
     statusBar.init(
       project,
+      frame,
       extraItems = listOf(
         LightEditAutosaveWidget(editorManager) to LoadingOrder.before(IdeMessagePanel.FATAL_ERROR),
         LightEditEncodingWidgetWrapper(project, coroutineScope) to LoadingOrder.after(StatusBar.StandardWidgets.POSITION_PANEL),

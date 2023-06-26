@@ -342,7 +342,7 @@ open class ProjectFrameHelper internal constructor(
   }
 
   open suspend fun installDefaultProjectStatusBarWidgets(project: Project) {
-    rootPane.statusBar!!.init(project)
+    rootPane.statusBar!!.init(project, frame)
   }
 
   fun appClosing() {
