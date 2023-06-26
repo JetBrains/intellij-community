@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.log
 import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.util.io.DataEnumerator
 import org.jetbrains.annotations.ApiStatus
+import java.io.OutputStream
 
 interface VfsLogBaseContext {
   val stringEnumerator: DataEnumerator<String>
@@ -21,8 +22,21 @@ interface VfsLogBaseContext {
 
 // note: does not need to hold any locks
 interface VfsLogOperationWriteContext : VfsLogBaseContext {
-  val payloadWriter: PayloadWriter
   fun enqueueOperationWrite(tag: VfsOperationTag, compute: VfsLogOperationWriteContext.() -> VfsOperation<*>)
+
+  fun enqueueOperationWithPayloadWrite(
+    tag: VfsOperationTag,
+    payloadSize: Long,
+    writePayload: OutputStream.() -> Unit,
+    compute: VfsLogOperationWriteContext.(payloadRef: PayloadRef) -> VfsOperation<*>
+  )
+
+  fun enqueueOperationWithPayloadWrite(
+    tag: VfsOperationTag,
+    payloadData: ByteArray,
+    compute: VfsLogOperationWriteContext.(payloadRef: PayloadRef) -> VfsOperation<*>
+  ): Unit =
+    enqueueOperationWithPayloadWrite(tag, payloadData.size.toLong(), { write(payloadData) }, compute)
 }
 
 /**

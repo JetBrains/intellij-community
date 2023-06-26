@@ -3,11 +3,12 @@ package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef.Source
 import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef.Source.Companion.isInline
+import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadStorageIO.PayloadAppendContext
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.ULongPacker
+import com.intellij.util.io.UnsyncByteArrayOutputStream
 import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.toPersistentSet
-import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 
 object InlinedPayloadStorage : PayloadStorageIO {
@@ -15,14 +16,23 @@ object InlinedPayloadStorage : PayloadStorageIO {
 
   fun isSuitableForInlining(sizeBytes: Long) = sizeBytes <= 7
 
-  override fun writePayload(sizeBytes: Long, body: OutputStream.() -> Unit): PayloadRef {
+  override fun appendPayload(sizeBytes: Long): PayloadAppendContext {
     require(isSuitableForInlining(sizeBytes)) { "payload of size $sizeBytes cannot be inlined (max size 7)" }
-    val out = ByteArrayOutputStream(sizeBytes.toInt())
-    out.body()
-    require(out.size() == sizeBytes.toInt()) {
-      "unexpected amount of data has been written: written ${out.size()} vs expected ${sizeBytes}"
+    return object : PayloadAppendContext {
+      override fun writePayload(data: ByteArray, offset: Int, length: Int): PayloadRef {
+        require(length.toLong() == sizeBytes) { "expected entry of size $sizeBytes, got $length"}
+        return inlineData(data .copyOfRange(offset, offset + length))
+      }
+
+      override fun writePayload(body: OutputStream.() -> Unit): PayloadRef {
+        return writePayload(UnsyncByteArrayOutputStream().run {
+          body()
+          toByteArray()
+        })
+      }
+
+      override fun close() {}
     }
-    return inlineData(out.toByteArray())
   }
 
   override fun readPayload(payloadRef: PayloadRef): State.DefinedState<ByteArray> {

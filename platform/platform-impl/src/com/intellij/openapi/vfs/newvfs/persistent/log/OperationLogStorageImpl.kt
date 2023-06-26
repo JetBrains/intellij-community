@@ -2,7 +2,6 @@
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.OperationReadResult
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.AppendLogStorage
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.AppendLogStorage.AppendContext
@@ -23,7 +22,7 @@ class OperationLogStorageImpl(
   private val scope: CoroutineScope,
   writerJobsCount: Int
 ) : OperationLogStorage {
-  private val appendLogStorage: AppendLogStorage
+  private val appendLogStorage: AppendLogStorage = AppendLogStorage(storagePath, Mode.ReadWrite, CHUNK_SIZE)
   private val writeQueue = Channel<() -> Unit>(
     capacity = SystemProperties.getIntProperty("idea.vfs.log-vfs-operations.buffer-capacity", 10_000),
     BufferOverflow.SUSPEND
@@ -33,10 +32,6 @@ class OperationLogStorageImpl(
   private var isClosed = false
 
   init {
-    FileUtil.ensureExists(storagePath.toFile())
-
-    appendLogStorage = AppendLogStorage(storagePath, Mode.ReadWrite, CHUNK_SIZE)
-
     repeat(writerJobsCount) { scope.launch { writeWorker() } }
   }
 

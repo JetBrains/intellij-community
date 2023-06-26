@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef.Source
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.AppendLogStorage
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.AppendLogStorage.Companion.Mode
@@ -17,27 +16,37 @@ class PayloadStorageImpl(
   storagePath: Path,
 ) : PayloadStorage {
   override val sourcesDeclaration: PersistentSet<Source> = persistentSetOf(Source.PayloadStorage)
+  private val appendLogStorage: AppendLogStorage = AppendLogStorage(storagePath, Mode.ReadWrite, CHUNK_SIZE)
 
-  private val appendLogStorage: AppendLogStorage
-
-  init {
-    FileUtil.ensureExists(storagePath.toFile())
-
-    appendLogStorage = AppendLogStorage(storagePath, Mode.ReadWrite, CHUNK_SIZE)
-  }
-
-  override fun writePayload(sizeBytes: Long, body: OutputStream.() -> Unit): PayloadRef {
+  override fun appendPayload(sizeBytes: Long): PayloadStorageIO.PayloadAppendContext {
     require(sizeBytes >= 0)
-    val serializedSize = ByteArrayOutputStream(10) // 1 + (64 - 6) / 7 < 10
-    DataInputOutputUtil.writeLONG(DataOutputStream(serializedSize), sizeBytes)
+    val serializedSizeBuf = ByteArrayOutputStream(10) // 1 + (64 - 6) / 7 < 10
+    DataInputOutputUtil.writeLONG(DataOutputStream(serializedSizeBuf), sizeBytes)
 
-    val fullSize = serializedSize.size().toLong() + sizeBytes
-    return appendLogStorage.appendEntry(fullSize).use {
-      it.fillEntry {
-        write(serializedSize.toByteArray())
-        body()
+    val serializedSize = serializedSizeBuf.toByteArray()
+    val fullSize = serializedSize.size.toLong() + sizeBytes
+    val appendContext = appendLogStorage.appendEntry(fullSize)
+
+    return object : PayloadStorageIO.PayloadAppendContext {
+      override fun writePayload(data: ByteArray, offset: Int, length: Int): PayloadRef {
+        appendContext.fillEntry {
+          write(serializedSize)
+          write(data, offset, length)
+        }
+        return PayloadRef(appendContext.position, Source.PayloadStorage)
       }
-      PayloadRef(it.position, Source.PayloadStorage)
+
+      override fun writePayload(body: OutputStream.() -> Unit): PayloadRef {
+        appendContext.fillEntry {
+          write(serializedSize)
+          body()
+        }
+        return PayloadRef(appendContext.position, Source.PayloadStorage)
+      }
+
+      override fun close() {
+        appendContext.close()
+      }
     }
   }
 

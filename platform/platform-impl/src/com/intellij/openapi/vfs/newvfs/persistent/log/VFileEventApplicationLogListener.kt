@@ -48,10 +48,7 @@ class VFileEventApplicationLogListener(
         val parentId = (event.parent as VirtualFileWithId).id
         val isDirectory = event.isDirectory
         val childName = event.childName.toByteArray()
-        context.enqueueOperationWrite(VfsOperationTag.VFILE_EVENT_CREATE) {
-          val childNameRef = payloadWriter(childName.size.toLong()) {
-            write(childName)
-          }
+        context.enqueueOperationWithPayloadWrite(VfsOperationTag.VFILE_EVENT_CREATE, childName) { childNameRef->
           VfsOperation.VFileEventOperation.EventStart.Create(timestamp, parentId, childNameRef, isDirectory)
         }
       }

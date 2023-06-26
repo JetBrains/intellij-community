@@ -21,12 +21,8 @@ class AttributesLogInterceptor(
         }
 
         private fun interceptClose(data: ByteArray, result: OperationResult<Unit>) {
-          context.enqueueOperationWrite(VfsOperationTag.ATTR_WRITE_ATTR) {
+          context.enqueueOperationWithPayloadWrite(VfsOperationTag.ATTR_WRITE_ATTR, data) { payloadRef ->
             val attrIdEnumerated = enumerateAttribute(attribute)
-            val payloadRef =
-              payloadWriter(data.size.toLong()) {
-                write(data, 0, data.size)
-              }
             VfsOperation.AttributesOperation.WriteAttribute(fileId, attrIdEnumerated, payloadRef, result)
           }
         }

@@ -36,7 +36,7 @@ class VfsLogImpl(
   }
 
   @ApiStatus.Internal
-  inner class ContextImpl: VfsLogBaseContext {
+  inner class ContextImpl : VfsLogBaseContext {
     @OptIn(ExperimentalCoroutinesApi::class)
     val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(WORKER_THREADS_COUNT))
 
@@ -92,11 +92,11 @@ class VfsLogImpl(
       throw IllegalStateException("no storage is responsible for $payloadRef")
     }
 
-    val payloadWriter: PayloadWriter = writer@{ sizeBytes: Long, body: OutputStream.() -> Unit ->
+    val payloadAppender: PayloadAppender = writer@{ sizeBytes: Long ->
       if (InlinedPayloadStorage.isSuitableForInlining(sizeBytes)) {
-        return@writer InlinedPayloadStorage.writePayload(sizeBytes, body)
+        return@writer InlinedPayloadStorage.appendPayload(sizeBytes)
       }
-      return@writer payloadStorage.writePayload(sizeBytes, body)
+      return@writer payloadStorage.appendPayload(sizeBytes)
     }
 
     suspend fun flusher() {
@@ -148,18 +148,30 @@ class VfsLogImpl(
     VFileEventApplicationLogListener(getOperationWriteContext())
   }
 
-  override fun getOperationWriteContext(): VfsLogOperationWriteContext = object : VfsLogOperationWriteContext {
-    override val stringEnumerator: DataEnumerator<String> get() = context.stringEnumerator
-    override val payloadWriter: PayloadWriter get() = context.payloadWriter
+  override fun getOperationWriteContext(): VfsLogOperationWriteContext =
+    object : VfsLogOperationWriteContext {
+      override val stringEnumerator: DataEnumerator<String> get() = context.stringEnumerator
 
-    override fun enqueueOperationWrite(tag: VfsOperationTag, compute: VfsLogOperationWriteContext.() -> VfsOperation<*>) {
-      context.operationLogStorage.enqueueOperationWrite(tag) { compute() }
+      override fun enqueueOperationWrite(tag: VfsOperationTag, compute: VfsLogOperationWriteContext.() -> VfsOperation<*>) {
+        context.operationLogStorage.enqueueOperationWrite(tag) { compute() }
+      }
+
+      override fun enqueueOperationWithPayloadWrite(tag: VfsOperationTag,
+                                                    payloadSize: Long,
+                                                    writePayload: OutputStream.() -> Unit,
+                                                    compute: VfsLogOperationWriteContext.(payloadRef: PayloadRef) -> VfsOperation<*>) {
+        val payloadWriteContext = context.payloadAppender(payloadSize)
+        context.operationLogStorage.enqueueOperationWrite(tag) {
+          val ref = payloadWriteContext.writePayload(writePayload)
+          compute(ref)
+        }
+      }
+
+    }.also {
+      if (readOnly) {
+        LOG.warn("access to getOperationWriteContext() with readOnly=true VfsLog", Exception())
+      }
     }
-  }.also {
-    if (readOnly) {
-      LOG.warn("access to getOperationWriteContext() with readOnly=true VfsLog", Exception())
-    }
-  }
 
   override fun query(): VfsLogQueryContext {
     context.compactionLock.acquireUninterruptibly()

@@ -29,7 +29,7 @@ class AppendLogStorage(
   protected val storagePath: Path,
   protected val openMode: Mode,
   protected val chunkSize: Int
-): RandomAccessReadBuffer, Flushable, Closeable {
+) : RandomAccessReadBuffer, Flushable, Closeable {
   protected val chunksDir = storagePath / "chunks"
   protected var persistentSize by PersistentVar.long(storagePath / "size")
   protected var persistentStartOffset by PersistentVar.long(storagePath / "startOffset")
@@ -58,8 +58,8 @@ class AppendLogStorage(
    */
   interface AppendContext : AutoCloseable, RandomAccessWriteBuffer {
     val position: Long
-    fun fillEntry(data: ByteArray, offset: Int, length: Int)
     fun fillEntry(body: OutputStream.() -> Unit)
+    fun fillEntry(data: ByteArray, offset: Int, length: Int)
     fun fillEntry(data: ByteArray): Unit = fillEntry(data, 0, data.size)
   }
 
@@ -75,7 +75,7 @@ class AppendLogStorage(
     override val position: Long get() = advanceToken.position
 
     override fun fillEntry(data: ByteArray, offset: Int, length: Int) {
-      require(length.toLong() == expectedSize) { "expected entry size $expectedSize, got $length" }
+      require(length.toLong() == expectedSize) { "expected entry of size $expectedSize, got $length" }
       storageIO.write(advanceToken.position, data, offset, length)
     }
 
@@ -112,14 +112,16 @@ class AppendLogStorage(
     chunksDir.forEachDirectoryEntry("*.dat") { chunkFile ->
       val id = try {
         chunkFile.name.removeSuffix(".dat").toInt(CHUNK_ENCODING_RADIX)
-      } catch (e: Throwable) {
+      }
+      catch (e: Throwable) {
         LOG.warn("alien file in chunks directory: ${chunkFile.toAbsolutePath()}", e)
         null
       }
       if (id != null && id <= lastChunkToClear) {
         try {
           chunkFile.deleteExisting()
-        } catch (e: IOException) {
+        }
+        catch (e: IOException) {
           LOG.error("failed to clear chunk ${chunkFile.toAbsolutePath()}", e)
         }
       }
@@ -148,6 +150,7 @@ class AppendLogStorage(
   companion object {
     private val LOG = Logger.getInstance(AppendLogStorage::class.java)
     private const val CHUNK_ENCODING_RADIX = 16
+
     enum class Mode(val openOptions: Set<StandardOpenOption>, val mapMode: MapMode) {
       Read(EnumSet.of(READ), MapMode.READ_ONLY),
       ReadWrite(EnumSet.of(READ, WRITE, CREATE), MapMode.READ_WRITE)
