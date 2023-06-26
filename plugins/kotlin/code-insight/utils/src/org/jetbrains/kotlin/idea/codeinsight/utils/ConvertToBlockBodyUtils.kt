@@ -37,7 +37,9 @@ object ConvertToBlockBodyUtils {
         val body = declaration.bodyExpression ?: return null
 
         val returnType = declaration.getReturnKtType().approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = true)
-        if (returnType is KtClassErrorType && declaration is KtNamedFunction && !declaration.hasDeclaredReturnType()) return null
+        if (returnType is KtClassErrorType && declaration is KtNamedFunction && !declaration.hasDeclaredReturnType()) {
+            return null
+        }
 
         val bodyType = body.getKtType() ?: return null
 
@@ -55,40 +57,58 @@ object ConvertToBlockBodyUtils {
     fun convert(element: KtDeclarationWithBody, context: ConvertToBlockBodyContext) {
         val body = element.bodyExpression ?: return
 
+        element.setTypeReferenceIfNeeded(context)
+
         val prevComments = body.comments(next = false)
         val nextComments = body.comments(next = true)
-
-        val newBody = when (element) {
-            is KtNamedFunction -> {
-                if (!element.hasDeclaredReturnType() && !context.returnTypeIsUnit) {
-                    element.setType(context.returnTypeString, context.shortenReferences)
-                }
-                generateBody(
-                    body,
-                    prevComments,
-                    nextComments,
-                    context,
-                    returnsValue = !context.returnTypeIsUnit && !context.returnTypeIsNothing
-                )
-            }
-
-            is KtPropertyAccessor -> {
-                val parent = element.parent
-                if (parent is KtProperty && parent.typeReference == null) {
-                    parent.setType(context.returnTypeString, context.shortenReferences)
-                }
-
-                generateBody(body, prevComments, nextComments, context, element.isGetter)
-            }
-
-            else -> throw RuntimeException("Unknown declaration type: $element")
-        }
+        val returnsValue = element.returnsValue(context)
+        val newBody = generateBody(body, prevComments, nextComments, context, returnsValue)
 
         element.equalsToken?.delete()
         prevComments.filterIsInstance<PsiComment>().forEach { it.delete() }
         nextComments.forEach { it.delete() }
         val replaced = body.replace(newBody)
         if (context.reformat) element.containingKtFile.adjustLineIndent(replaced.startOffset, replaced.endOffset)
+    }
+
+    private fun KtDeclarationWithBody.setTypeReferenceIfNeeded(context: ConvertToBlockBodyContext) {
+        fun KtCallableDeclaration.setTypeReference() {
+            val addedTypeReference = setTypeReference(KtPsiFactory(project).createType(context.returnTypeString))
+            if (addedTypeReference != null) {
+                context.shortenReferences(addedTypeReference)
+            }
+        }
+
+        when (this) {
+            is KtNamedFunction -> {
+                if (!hasDeclaredReturnType() && !context.returnTypeIsUnit) {
+                    this.setTypeReference()
+                }
+            }
+
+            is KtPropertyAccessor -> {
+                val parent = parent
+                if (parent is KtProperty && parent.typeReference == null) {
+                    parent.setTypeReference()
+                }
+            }
+        }
+    }
+
+    private fun KtExpression.comments(next: Boolean): List<PsiElement> {
+        fun Sequence<PsiElement>.hasComment(): Boolean = any { it is PsiComment }
+
+        return siblings(forward = next, withItself = false)
+            .takeWhile { it is PsiWhiteSpace || it is PsiComment }
+            .takeIf { it.hasComment() }
+            .orEmpty()
+            .toList()
+    }
+
+    private fun KtDeclarationWithBody.returnsValue(context: ConvertToBlockBodyContext): Boolean = when (this) {
+        is KtNamedFunction -> !context.returnTypeIsUnit && !context.returnTypeIsNothing
+        is KtPropertyAccessor -> isGetter
+        else -> throw RuntimeException("Unknown declaration type: $this")
     }
 
     private fun generateBody(
@@ -100,6 +120,7 @@ object ConvertToBlockBodyUtils {
     ): KtExpression {
         val factory = KtPsiFactory(body.project)
         if (context.bodyTypeIsUnit && body is KtNameReferenceExpression) return factory.createEmptyBody()
+
         val needReturn = returnsValue && (!context.bodyTypeIsUnit && !context.bodyTypeIsNothing)
         val newBody = if (needReturn) {
             val annotatedExpr = body as? KtAnnotatedExpression
@@ -114,27 +135,14 @@ object ConvertToBlockBodyUtils {
         } else {
             factory.createSingleStatementBlock(body)
         }
+
         prevComments
             .dropWhile { it is PsiWhiteSpace }
             .forEach { newBody.addAfter(it, newBody.lBrace) }
         nextComments
             .reversed()
             .forEach { newBody.addAfter(it, newBody.firstStatement) }
+
         return newBody
     }
-
-    private fun KtCallableDeclaration.setType(typeString: String, shortenReferences: (KtTypeReference) -> Unit) {
-        val addedTypeReference = setTypeReference(KtPsiFactory(project).createType(typeString))
-        if (addedTypeReference != null) {
-            shortenReferences(addedTypeReference)
-        }
-    }
-
-    private fun KtExpression.comments(next: Boolean): List<PsiElement> = siblings(forward = next, withItself = false)
-        .takeWhile { it is PsiWhiteSpace || it is PsiComment }
-        .takeIf { it.hasComment() }
-        .orEmpty()
-        .toList()
-
-    private fun Sequence<PsiElement>.hasComment(): Boolean = any { it is PsiComment }
 }
