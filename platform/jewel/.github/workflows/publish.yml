@@ -1,0 +1,23 @@
+name: Publish artifacts in Space
+on:
+  release:
+    types: [ published ]
+  push:
+    branches: [ main ]
+jobs:
+  publish:
+    name: Publish
+    runs-on: linux-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v2
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Setup Gradle
+        run: chmod +x gradlew
+      - name: Run Gradle
+        run: ./gradlew publishAllPublicationsToSpaceRepository
+        env:
+          MAVEN_SPACE_USERNAME: ${{secrets.MAVEN_SPACE_USERNAME}}
+          MAVEN_SPACE_PASSWORD: ${{secrets.MAVEN_SPACE_PASSWORD}}
