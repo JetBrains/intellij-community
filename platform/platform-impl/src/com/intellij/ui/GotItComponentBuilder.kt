@@ -71,7 +71,9 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
   private var buttonAction: () -> Unit = {}
   private var requestFocus: Boolean = false
 
-  private var showCloseShortcut = false
+  @Nls
+  private var secondaryButtonText: String? = null
+  private var secondaryButtonAction: () -> Unit = {}
 
   private var maxWidth = MAX_WIDTH
   private var useContrastColors = false
@@ -156,7 +158,7 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
    * Add an optional link to the tooltip.
    */
   fun withLink(@Nls linkLabel: String, action: () -> Unit): GotItComponentBuilder {
-    link = createLinkLabel(linkLabel, isExternal = false)
+    link = createLinkLabel(linkLabel, JBUI.CurrentTheme.GotItTooltip.linkForeground(), isExternal = false)
     linkAction = action
     return this
   }
@@ -165,17 +167,17 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
    * Add an optional browser link to the tooltip. Link is rendered with arrow icon.
    */
   fun withBrowserLink(@Nls linkLabel: String, url: URL): GotItComponentBuilder {
-    link = createLinkLabel(linkLabel, isExternal = true)
+    link = createLinkLabel(linkLabel, JBUI.CurrentTheme.GotItTooltip.linkForeground(), isExternal = true)
     linkAction = { BrowserUtil.browse(url) }
     return this
   }
 
-  private fun createLinkLabel(@Nls text: String, isExternal: Boolean): LinkLabel<Unit> {
+  private fun createLinkLabel(@Nls text: String, foreground: Color, isExternal: Boolean): LinkLabel<Unit> {
     return object : LinkLabel<Unit>(text, if (isExternal) AllIcons.Ide.External_link_arrow else null) {
-      override fun getNormal(): Color = JBUI.CurrentTheme.GotItTooltip.linkForeground()
-      override fun getHover(): Color = JBUI.CurrentTheme.GotItTooltip.linkForeground()
-      override fun getVisited(): Color = JBUI.CurrentTheme.GotItTooltip.linkForeground()
-      override fun getActive(): Color = JBUI.CurrentTheme.GotItTooltip.linkForeground()
+      override fun getNormal(): Color = foreground
+      override fun getHover(): Color = foreground
+      override fun getVisited(): Color = foreground
+      override fun getActive(): Color = foreground
     }.also {
       if (isExternal) it.horizontalTextPosition = SwingConstants.LEFT
     }
@@ -223,10 +225,12 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
   }
 
   /**
-   * Show close shortcut next to the "Got It" button.
+   * Show additional button on the right side of the "GotIt" button.
+   * Will be shown only if "GotIt" button is shown.
    */
-  fun showCloseShortcut(show: Boolean): GotItComponentBuilder {
-    showCloseShortcut = show
+  fun withSecondaryButton(@Nls label: String, action: () -> Unit): GotItComponentBuilder {
+    this.secondaryButtonText = label
+    this.secondaryButtonAction = action
     return this
   }
 
@@ -249,9 +253,10 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
 
   fun build(parentDisposable: Disposable, additionalSettings: BalloonBuilder.() -> BalloonBuilder = { this }): Balloon {
     var button: JButton? = null
+    var secondaryButton: LinkLabel<Unit>? = null
     lateinit var description: JEditorPane
     val balloon = JBPopupFactory.getInstance()
-      .createBalloonBuilder(createContent({ button = it }, { description = it }))
+      .createBalloonBuilder(createContent({ button = it }, { secondaryButton = it }, { description = it }))
       .setDisposable(parentDisposable)
       .setHideOnAction(false)
       .setHideOnClickOutside(false)
@@ -295,10 +300,19 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
       })
     }
 
+    secondaryButton?.apply {
+      setListener(LinkListener { _, _ ->
+        secondaryButtonAction()
+        balloon.hide(true)
+      }, null)
+    }
+
     return balloon
   }
 
-  private fun createContent(buttonConsumer: (JButton) -> Unit, descriptionConsumer: (JEditorPane) -> Unit): JComponent {
+  private fun createContent(buttonConsumer: (JButton) -> Unit,
+                            secondaryButtonConsumer: (LinkLabel<Unit>) -> Unit,
+                            descriptionConsumer: (JEditorPane) -> Unit): JComponent {
     val panel = JPanel(GridBagLayout())
     val gc = GridBag()
     val left = if (icon != null || stepText != null) JBUI.CurrentTheme.GotItTooltip.ICON_INSET.get() else 0
@@ -382,16 +396,19 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
       }
       buttonConsumer(button)
 
-      val buttonComponent: JComponent = if (showCloseShortcut) {
+      val buttonComponent: JComponent = if (secondaryButtonText != null) {
         val buttonPanel = JPanel().apply { isOpaque = false }
         buttonPanel.layout = BoxLayout(buttonPanel, BoxLayout.X_AXIS)
         buttonPanel.add(button)
-        buttonPanel.add(Box.createHorizontalStrut(JBUIScale.scale(UIUtil.DEFAULT_HGAP)))
+        buttonPanel.add(Box.createHorizontalStrut(JBUIScale.scale(16)))
 
-        val closeShortcut = JLabel(KeymapUtil.getShortcutText(CLOSE_ACTION_NAME)).apply {
-          foreground = JBUI.CurrentTheme.GotItTooltip.shortcutForeground(useContrastColors)
-        }
-        buttonPanel.add(closeShortcut)
+        val secondaryButton = createLinkLabel(secondaryButtonText!!,
+                                              JBUI.CurrentTheme.GotItTooltip.stepForeground(useContrastColors),
+                                              isExternal = false)
+        secondaryButton.setPaintUnderline(false)
+        secondaryButtonConsumer(secondaryButton)
+
+        buttonPanel.add(secondaryButton)
         buttonPanel
       }
       else button
