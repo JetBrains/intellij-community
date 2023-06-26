@@ -292,14 +292,8 @@ abstract class KotlinParameterInfoWithCallHandlerBase<TArgumentList : KtElement,
                 append(CodeInsightBundle.message("parameter.info.no.parameters"))
             } else if (argumentIndex > SINGLE_LINE_PARAMETERS_COUNT) {
                 parameterDelimiterIndexes.forEach { offset ->
-                    val start = offset - 1
-                    val end = offset
-                    replace(start, end, "\n")
-                    if (start < boldStartOffset) boldStartOffset--
-                    if (start < boldEndOffset) boldEndOffset--
+                    replace(offset - 1, offset, "\n")
                 }
-
-
             }
         }
 

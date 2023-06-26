@@ -626,10 +626,9 @@ public final class UIUtil {
 
     for (int i = 0; i < text.length(); i++) {
       char ch = text.charAt(i);
+      currentAtom.append(ch);
 
       boolean lineBreak = ch == '\n';
-      if (!lineBreak) currentAtom.append(ch);
-
       if (lineBreak || ch == separator) {
         currentLine.append(currentAtom);
         currentAtom.setLength(0);

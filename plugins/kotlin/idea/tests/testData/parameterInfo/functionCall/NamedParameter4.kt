@@ -7,7 +7,7 @@ open class A(x: Int) {
 }
 /*
 Text: (<disabled>[b: String = "b"],
-[d: String = "d"]</disabled><highlight></highlight>,
+[d: String = "d"],</disabled><highlight></highlight>
 [a: String = "a"],
 [c: String = "c"]), Disabled: false, Strikeout: false, Green: true
 */
