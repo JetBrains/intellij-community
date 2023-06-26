@@ -243,7 +243,6 @@ class GotItTooltip internal constructor(@NonNls val id: String,
    */
   @Deprecated("Not supported in the updated design")
   fun andShowCloseShortcut(): GotItTooltip {
-    gotItBuilder.showCloseShortcut(true)
     return this
   }
 

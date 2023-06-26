@@ -74,6 +74,9 @@ class ShowGotItDemoAction : DumbAwareAction() {
 
     private var showButton: Boolean = true
 
+    private var showSecondaryButton: Boolean = false
+    private var secondaryButtonText: String = "Skip All"
+
     private var useContrastColors: Boolean = false
 
     private val positionsModel: ComboBoxModel<Position> = DefaultComboBoxModel(Balloon.Position.values())
@@ -164,9 +167,17 @@ class ShowGotItDemoAction : DumbAwareAction() {
         }
       }.enabledIf(linkCheckbox.selected)
 
+      lateinit var buttonCheckbox: Cell<JBCheckBox>
       row {
-        checkBox("GotIt button").bindSelected(::showButton)
+        buttonCheckbox = checkBox("GotIt button").bindSelected(::showButton)
       }
+      row {
+        val checkbox = checkBox("Secondary button:").bindSelected(::showSecondaryButton)
+        textField()
+          .bindText(::secondaryButtonText)
+          .enabledIf(checkbox.selected)
+          .align(AlignX.FILL)
+      }.enabledIf(buttonCheckbox.selected)
       row("Position:") {
         comboBox(positionsModel)
       }
@@ -213,6 +224,10 @@ class ShowGotItDemoAction : DumbAwareAction() {
         gotItBuilder.withBrowserLink(browserLinkText, URL("https://www.jetbrains.com/help/idea/getting-started.html"))
       }
       gotItBuilder.showButton(showButton)
+      if (showButton && showSecondaryButton) {
+        gotItBuilder.withSecondaryButton(secondaryButtonText) {}
+      }
+
       gotItBuilder.withContrastColors(useContrastColors)
 
       val randomId = Random(System.currentTimeMillis()).nextBytes(32).toString(StandardCharsets.UTF_8)
