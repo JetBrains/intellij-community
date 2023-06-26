@@ -4,7 +4,6 @@ package com.intellij.ui.codeFloatingToolbar
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
-import com.intellij.ui.popup.PopupFactoryImpl
 import javax.swing.JComponent
 
 class DropdownActionGroup: DefaultActionGroup(), CustomComponentAction {
@@ -12,12 +11,7 @@ class DropdownActionGroup: DefaultActionGroup(), CustomComponentAction {
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     return object: ActionButtonWithText(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
       override fun actionPerformed(event: AnActionEvent) {
-        val group = this@DropdownActionGroup
-        val popupPlace = ActionPlaces.getPopupPlace(place)
-        val context = event.dataContext
-        val popup = PopupFactoryImpl.getInstance().createActionGroupPopup(null, group, context, null, true, popupPlace)
-        popup.setRequestFocus(false)
-        popup.showUnderneathOf(this)
+        showActionGroupPopup(this@DropdownActionGroup, event)
       }
     }
   }

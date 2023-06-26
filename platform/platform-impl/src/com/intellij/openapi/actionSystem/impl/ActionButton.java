@@ -11,6 +11,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
@@ -20,6 +22,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.popup.WizardPopup;
@@ -247,8 +250,28 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     popup.setShowSubmenuOnHover(true);
     popup.setAlignByParentBounds(false);
     popup.setActiveRoot(getPopupContainer(this) == null);
-    popup.showUnderneathOf(event.getInputEvent().getComponent());
+    Component component = event.getInputEvent().getComponent();
+    adjustOverlappingIfNeed(popup, component);
+    popup.showUnderneathOf(component);
     return popup;
+  }
+
+  private static void adjustOverlappingIfNeed(JBPopup popup, Component component){
+    popup.addListener(new JBPopupListener() {
+      @Override
+      public void beforeShown(@NotNull LightweightWindowEvent event) {
+        Point currentLocation = popup.getLocationOnScreen();
+        Rectangle currentArea = new Rectangle(currentLocation, popup.getSize());
+        Point aboveLocation = new RelativePoint(component, new Point(0, 0)).getScreenPoint();
+        Rectangle componentArea = new Rectangle(aboveLocation, component.getSize());
+        if (currentArea.intersects(componentArea)) {
+          aboveLocation.setLocation(aboveLocation.x, aboveLocation.y - popup.getSize().height);
+          if (aboveLocation.y >= 0) {
+            popup.setLocation(aboveLocation);
+          }
+        }
+      }
+    });
   }
 
   @NotNull
