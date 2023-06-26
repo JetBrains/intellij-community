@@ -1,12 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
+import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJob
 import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJobState
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewStatusViewModel
 import com.intellij.collaboration.util.resolveRelative
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.util.childScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCiJobDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabPipelineDTO
@@ -15,15 +19,28 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import java.net.URI
 
 class GitLabMergeRequestStatusViewModel(
+  parentCs: CoroutineScope,
   mergeRequest: GitLabMergeRequest,
   private val serverPath: GitLabServerPath
 ) : CodeReviewStatusViewModel {
+  private val cs = parentCs.childScope()
+
   private val pipeline: Flow<GitLabPipelineDTO?> = mergeRequest.pipeline
 
-  override val hasConflicts: Flow<Boolean> = mergeRequest.hasConflicts
+  override val hasConflicts: SharedFlow<Boolean> = mergeRequest.hasConflicts.modelFlow(cs, thisLogger())
 
-  override val ciJobs: Flow<List<CodeReviewCIJob>> = pipeline.map {
+  override val ciJobs: SharedFlow<List<CodeReviewCIJob>> = pipeline.map {
     it?.jobs?.map { job -> job.convert() } ?: emptyList()
+  }.modelFlow(cs, thisLogger())
+
+  private val _showJobsDetailsRequests = MutableSharedFlow<List<CodeReviewCIJob>>()
+  override val showJobsDetailsRequests: SharedFlow<List<CodeReviewCIJob>> = _showJobsDetailsRequests
+
+  override fun showJobsDetails() {
+    cs.launchNow {
+      val jobs = ciJobs.first()
+      _showJobsDetailsRequests.emit(jobs)
+    }
   }
 
   private fun GitLabCiJobDTO.convert(): CodeReviewCIJob {
