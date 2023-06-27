@@ -36,6 +36,7 @@ abstract class AbstractOpenProjectProvider {
     return if (file.isDirectory) file else file.parent
   }
 
+  @Deprecated("use async method instead")
   open fun linkToExistingProject(projectFile: VirtualFile, project: Project) {}
 
   open suspend fun linkToExistingProjectAsync(projectFile: VirtualFile, project: Project) {
