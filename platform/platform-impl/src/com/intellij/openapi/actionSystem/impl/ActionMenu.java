@@ -98,6 +98,7 @@ public final class ActionMenu extends JBMenu {
     myMnemonicEnabled = enableMnemonics;
     myUseDarkIcons = useDarkIcons;
     myHeaderMenuItem = headerMenuItem;
+    mySubElementSelector = SubElementSelector.isForceDisabled ? null : new SubElementSelector(this);
 
     if (Menu.isJbScreenMenuEnabled() && ActionPlaces.MAIN_MENU.equals(myPlace)) {
       myScreenMenuPeer = new Menu(myPresentation.getText(enableMnemonics));
@@ -110,10 +111,8 @@ public final class ActionMenu extends JBMenu {
     }
     else {
       myScreenMenuPeer = null;
+      updateUI();
     }
-    mySubElementSelector = SubElementSelector.isForceDisabled ? null : new SubElementSelector(this);
-
-    updateUI();
 
     init();
 
@@ -152,6 +151,11 @@ public final class ActionMenu extends JBMenu {
 
   @Override
   public void updateUI() {
+    // null myPlace means that Swing calls updateUI before our constructor
+    if (myScreenMenuPeer != null || myPlace == null) {
+      return;
+    }
+
     setUI(IdeaMenuUI.createUI(this));
     setFont(FontUtil.getMenuFont());
 
