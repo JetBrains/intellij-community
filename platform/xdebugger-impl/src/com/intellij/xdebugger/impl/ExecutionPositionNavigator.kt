@@ -16,12 +16,10 @@ import com.intellij.util.ui.EDT
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import java.lang.ref.WeakReference
 
 
@@ -73,10 +71,8 @@ internal class ExecutionPositionNavigator(
       var descriptor = openFileDescriptor
       if (descriptor == null || descriptor.rangeMarker?.isValid == false) {
         openFileDescriptor?.dispose()
-        descriptor = withContext(Dispatchers.Default) {
-          readAction {
-            createOpenFileDescriptor()
-          }
+        descriptor = readAction {
+          createOpenFileDescriptor()
         }
         openFileDescriptor = descriptor
       }

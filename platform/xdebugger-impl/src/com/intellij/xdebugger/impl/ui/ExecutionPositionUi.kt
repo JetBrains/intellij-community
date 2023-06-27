@@ -101,10 +101,8 @@ internal class ExecutionPositionUi private constructor(
 
     private suspend fun createRangeHighlighter(project: Project, vm: ExecutionPositionVm): RangeHighlighter? {
       EDT.assertIsEdt()
-      val document = withContext(Dispatchers.Default) {
-        readAction {
-          FileDocumentManager.getInstance().getDocument(vm.file)
-        }
+      val document = readAction {
+        FileDocumentManager.getInstance().getDocument(vm.file)
       } ?: return null
 
       val line = vm.line
