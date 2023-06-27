@@ -69,6 +69,8 @@
     <projectService overrides="true"
                     serviceInterface="com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService"
                     serviceImplementation="com.jetbrains.performancePlugin.ProjectInitializationDiagnosticServiceImpl"/>
+
+    <httpRequestHandler implementation="com.jetbrains.performancePlugin.remotedriver.webservice.UiHierarchyWebService"/>
   </extensions>
 
   <applicationListeners>

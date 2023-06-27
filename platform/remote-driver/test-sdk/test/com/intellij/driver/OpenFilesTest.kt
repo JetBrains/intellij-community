@@ -8,6 +8,17 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
 class OpenFilesTest {
+
+  @Test
+  fun uiTest() {
+    val driver = Driver.create()
+    val robot = driver.service(RobotService::class)
+
+    val component = robot.find("//div[@text='2023.3 EAP']")
+    println(component)
+    component.click()
+  }
+
   @Test
   fun openFiles() {
     val driver = Driver.create()

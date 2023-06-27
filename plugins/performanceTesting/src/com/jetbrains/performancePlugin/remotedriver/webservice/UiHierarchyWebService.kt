@@ -1,0 +1,50 @@
+package com.jetbrains.performancePlugin.remotedriver.webservice
+
+import com.jetbrains.performancePlugin.remotedriver.webservice.routing.CantFindRouteException
+import com.jetbrains.performancePlugin.remotedriver.webservice.routing.StaticFile
+import com.jetbrains.performancePlugin.remotedriver.webservice.routing.route
+import com.jetbrains.performancePlugin.remotedriver.dataextractor.server.TextToKeyCache
+import com.jetbrains.performancePlugin.remotedriver.xpath.XpathDataModelCreator
+import com.jetbrains.performancePlugin.remotedriver.xpath.convertToHtml
+import io.netty.buffer.Unpooled
+import io.netty.channel.ChannelHandlerContext
+import org.jetbrains.ide.RestService
+import io.netty.handler.codec.http.*
+import org.jetbrains.io.response
+
+class UiHierarchyWebService: RestService() {
+  override fun getServiceName(): String {
+    return "remote-driver"
+  }
+
+  override fun isMethodSupported(method: HttpMethod): Boolean {
+    return method in listOf(HttpMethod.GET, HttpMethod.POST)
+  }
+
+  private val routing = route("/${PREFIX}/${getServiceName()}") {
+    get("/") {
+      hierarchy()
+    }
+    static()
+  }
+
+  private fun hierarchy(): String {
+    val doc = XpathDataModelCreator(TextToKeyCache).create(null)
+    return doc.convertToHtml()
+  }
+  override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
+    try {
+      val response = when (val result = routing.handleRequest(urlDecoder, request, context)) {
+        is String -> response("text/html", Unpooled.wrappedBuffer(result.toByteArray()))
+        is StaticFile -> response(result.type, Unpooled.wrappedBuffer(result.byteArray))
+        else -> throw NotImplementedError("${result::class.java} type is not supported")
+      }
+      sendResponse(request, context, response)
+    }
+    catch (e: CantFindRouteException) {
+      e.printStackTrace()
+      sendStatus(HttpResponseStatus.BAD_REQUEST, HttpUtil.isKeepAlive(request), context.channel())
+    }
+    return null
+  }
+}
