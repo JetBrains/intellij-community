@@ -3214,6 +3214,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/rangeToSanityTest.kt");
             }
 
+            @TestMetadata("rangeUntilSanityTest.kt")
+            public void testRangeUntilSanityTest() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/rangeUntilSanityTest.kt");
+            }
+
             @TestMetadata("remSanityTest.kt")
             public void testRemSanityTest() throws Exception {
                 runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/remSanityTest.kt");

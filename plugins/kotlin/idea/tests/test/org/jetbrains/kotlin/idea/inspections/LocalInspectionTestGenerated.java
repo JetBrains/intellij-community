@@ -3700,6 +3700,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/conventionNameCalls/replaceCallWithBinaryOperator/rangeToSanityTest.kt");
             }
 
+            @TestMetadata("rangeUntilSanityTest.kt")
+            public void testRangeUntilSanityTest() throws Exception {
+                runTest("testData/inspectionsLocal/conventionNameCalls/replaceCallWithBinaryOperator/rangeUntilSanityTest.kt");
+            }
+
             @TestMetadata("remSanityTest.kt")
             public void testRemSanityTest() throws Exception {
                 runTest("testData/inspectionsLocal/conventionNameCalls/replaceCallWithBinaryOperator/remSanityTest.kt");
