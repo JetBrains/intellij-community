@@ -196,7 +196,7 @@ class ImportQuickFix(
             val element = diagnostic.psi
 
             val project = element.project
-            val indexProvider = KtSymbolFromIndexProvider(project)
+            val indexProvider = KtSymbolFromIndexProvider.create(project)
 
             val quickFix = when (element) {
                 is KtTypeReference -> createImportTypeFix(indexProvider, element)

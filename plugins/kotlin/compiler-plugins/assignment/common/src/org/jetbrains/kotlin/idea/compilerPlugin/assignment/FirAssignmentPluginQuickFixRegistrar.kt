@@ -36,7 +36,7 @@ private val FACTORY = diagnosticFixFactory(KtFirDiagnostic.UnresolvedReference::
         && element.operationToken == KtTokens.EQ
         && isAssignmentPluginEnabled(project, element)
     ) {
-        val indexProvider = KtSymbolFromIndexProvider(project)
+        val indexProvider = KtSymbolFromIndexProvider.create(project)
         createImportNameFix(indexProvider, element.operationReference, OperatorConventions.ASSIGN_METHOD)
     } else {
         null

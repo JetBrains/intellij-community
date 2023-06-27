@@ -4,9 +4,11 @@ package org.jetbrains.kotlin.idea.base.analysis.api.utils
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMember
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.getSymbolOfTypeSafe
@@ -16,16 +18,16 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
-class KtSymbolFromIndexProvider(private val project: Project) {
+class KtSymbolFromIndexProvider private constructor(private val project: Project, private val scope: GlobalSearchScope) {
     context(KtAnalysisSession)
     fun getKotlinClassesByName(
         name: Name,
         psiFilter: (KtClassOrObject) -> Boolean = { true },
     ): Sequence<KtNamedClassOrObjectSymbol> {
-        val scope = analysisScope
         val isCommon = useSiteModule.platform.isCommon()
         val values = KotlinClassShortNameIndex.getAllElements(
             name.asString(),
@@ -49,7 +51,6 @@ class KtSymbolFromIndexProvider(private val project: Project) {
         nameFilter: (Name) -> Boolean,
         psiFilter: (KtClassOrObject) -> Boolean = { true },
     ): Sequence<KtNamedClassOrObjectSymbol> {
-        val scope = analysisScope
         val isCommon = useSiteModule.platform.isCommon()
         val values = KotlinFullClassNameIndex.getAllElements(
             project,
@@ -72,7 +73,6 @@ class KtSymbolFromIndexProvider(private val project: Project) {
         nameFilter: (Name) -> Boolean,
         psiFilter: (PsiClass) -> Boolean = { true }
     ): Sequence<KtNamedClassOrObjectSymbol> {
-        val scope = analysisScope
         val names = buildSet {
             forEachNonKotlinCache { cache ->
                 cache.processAllClassNames({ nameString ->
@@ -97,7 +97,6 @@ class KtSymbolFromIndexProvider(private val project: Project) {
         name: Name,
         psiFilter: (PsiClass) -> Boolean = { true }
     ): Sequence<KtNamedClassOrObjectSymbol> {
-        val scope = analysisScope
         val nameString = name.asString()
 
         return sequence {
@@ -114,7 +113,6 @@ class KtSymbolFromIndexProvider(private val project: Project) {
         name: Name,
         psiFilter: (KtCallableDeclaration) -> Boolean = { true },
     ): Sequence<KtCallableSymbol> {
-        val scope = analysisScope
         val nameString = name.asString()
 
         val values = SmartList<KtNamedDeclaration>()
@@ -139,7 +137,6 @@ class KtSymbolFromIndexProvider(private val project: Project) {
         name: Name,
         psiFilter: (PsiMember) -> Boolean = { true }
     ): Sequence<KtCallableSymbol> {
-        val scope = analysisScope
         val nameString = name.asString()
 
         return sequence {
@@ -159,6 +156,15 @@ class KtSymbolFromIndexProvider(private val project: Project) {
     }
 
     private fun getShortName(fqName: String) = Name.identifier(fqName.substringAfterLast('.'))
+
+    companion object {
+        context(KtAnalysisSession)
+        fun create(project: Project): KtSymbolFromIndexProvider = KtSymbolFromIndexProvider(project, analysisScope)
+
+        fun createForElement(useSiteKtElement: KtElement): KtSymbolFromIndexProvider = analyze(useSiteKtElement) {
+            KtSymbolFromIndexProvider(useSiteKtElement.project, analysisScope)
+        }
+    }
 }
 
 private val KotlinBuiltins = setOf("kotlin/ArrayIntrinsicsKt", "kotlin/internal/ProgressionUtilKt")
