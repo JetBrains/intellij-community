@@ -872,7 +872,9 @@ public class HighlightInfo implements Segment {
 
     @Override
     public String toString() {
-      return "IntentionActionDescriptor: " + IntentionActionDelegate.unwrap(getAction()).getClass();
+      ModCommandAction modCommandAction = ModCommandAction.unwrap(getAction());
+      CommonIntentionAction action = modCommandAction == null ? IntentionActionDelegate.unwrap(getAction()) : modCommandAction;
+      return "IntentionActionDescriptor: " + action.getClass();
     }
 
     @Nullable
