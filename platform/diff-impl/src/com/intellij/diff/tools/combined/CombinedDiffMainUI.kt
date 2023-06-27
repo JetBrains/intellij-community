@@ -8,7 +8,6 @@ import com.intellij.diff.DiffTool
 import com.intellij.diff.FrameDiffTool.DiffViewer
 import com.intellij.diff.actions.impl.OpenInEditorAction
 import com.intellij.diff.impl.DiffRequestProcessor.getToolOrderFromSettings
-import com.intellij.diff.impl.DiffRequestProcessor.notifyMessage
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings
 import com.intellij.diff.impl.ui.DiffToolChooser
 import com.intellij.diff.impl.ui.DifferencesLabel
@@ -246,10 +245,6 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
     GuiUtils.installVisibilityReferent(topPanel, rightToolbar.component)
 
     return topPanel
-  }
-
-  internal fun notifyMessage(e: AnActionEvent, next: Boolean) {
-    notifyMessage(e, contentPanel, next)
   }
 
   private fun clear() {
