@@ -53,6 +53,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
+import com.jetbrains.JBR
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.FlowCollector
 import org.jetbrains.annotations.ApiStatus
@@ -249,7 +250,14 @@ open class IdeRootPane internal constructor(frame: JFrame,
       get() = SystemInfoRt.isXWindow && ExperimentalUI.isNewUI() && !UISettings.shadowInstance.separateMainMenu && !hideNativeLinuxTitle
 
     internal val hideNativeLinuxTitle: Boolean
-      get() = SystemInfoRt.isXWindow && ExperimentalUI.isNewUI() && Registry.`is`("ide.linux.hide.native.title", false)
+      get() = hideNativeLinuxTitleAvailable
+              && UISettings.shadowInstance.mergeMainMenuWithWindowTitle
+              && jbr5777Workaround() && JBR.isWindowMoveSupported()
+
+    internal val hideNativeLinuxTitleAvailable: Boolean
+      get() = SystemInfoRt.isXWindow
+              && ExperimentalUI.isNewUI()
+              && Registry.`is`("ide.linux.hide.native.title", false)
 
     internal fun customizeRawFrame(frame: IdeFrameImpl) {
       // some rootPane is required
@@ -261,6 +269,11 @@ open class IdeRootPane internal constructor(frame: JFrame,
       if (SystemInfoRt.isMac) {
         MacWinTabsHandler.fastInit(frame)
       }
+    }
+
+    // Workaround for JBR-5777, should be removed after JBR-5777 is fixed
+    fun jbr5777Workaround(): Boolean {
+      return GraphicsEnvironment.getLocalGraphicsEnvironment().javaClass.getName().equals("sun.awt.X11GraphicsEnvironment")
     }
   }
 

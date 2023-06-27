@@ -2,6 +2,7 @@
 
 package com.intellij.ui;
 
+import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.JBR;
 import org.intellij.lang.annotations.JdkConstants;
@@ -212,6 +213,6 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
   private static boolean jbrMoveSupported(Component component) {
     // The JBR team states that isWindowMoveSupported works only for Frame/Dialog
     return (component instanceof Frame || component instanceof Dialog)
-           && JBR.isWindowMoveSupported();
+           && IdeRootPane.Companion.jbr5777Workaround() && JBR.isWindowMoveSupported();
   }
 }
