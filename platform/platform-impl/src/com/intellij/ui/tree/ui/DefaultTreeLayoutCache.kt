@@ -326,18 +326,16 @@ class DefaultTreeLayoutCache(
 
   }
 
-  private fun createNode(path: TreePath): Node {
+  private fun createNode(path: TreePath): Node? {
     val paths = findPathsUpToExistingParent(path)
     loadNodesDownTo(paths)
-    val loadedNode = getNode(path)
-    checkNotNull(loadedNode) { "Loaded $path, but it still doesn't exist (it's a bug)" }
-    return loadedNode
+    return getNode(path)
   }
 
   private fun findPathsUpToExistingParent(path: TreePath): ArrayDeque<TreePath> {
     val paths = ArrayDeque(listOf(path))
     var parentPath: TreePath? = path.parentPath
-    var parent: Node? = null
+    var parent: Node?
     while (parentPath != null) {
       paths.addLast(parentPath)
       parent = getNode(parentPath)
@@ -346,17 +344,19 @@ class DefaultTreeLayoutCache(
       }
       parentPath = parentPath.parentPath
     }
-    requireNotNull(parent) { "Node $path doesn't have the same root as this tree (${root?.path})" }
     return paths
   }
 
   private fun loadNodesDownTo(paths: ArrayDeque<TreePath>) {
     var parentPath: TreePath? = paths.removeLast()
-    var childPath: TreePath? = paths.removeLast()
+    var childPath: TreePath? = paths.removeLastOrNull() // could be null if we're given a root that doesn't belong to our model
     while (childPath != null) {
       val parentNode = getNode(parentPath)
-      requireNotNull(parentNode) { "Asked to load children of a non-existing parent $parentPath" }
-      require(!parentNode.isChildrenLoaded) { "Asked to load children of the path $parentPath when they're already loaded" }
+      if (parentNode == null || parentNode.isChildrenLoaded) {
+        // This can happen only if we're given a non-existing path to begin with.
+        // In this case, just do nothing, and createNode() will eventually return null.
+        break
+      }
       parentNode.loadChildren()
       parentPath = childPath
       childPath = paths.removeLastOrNull()
