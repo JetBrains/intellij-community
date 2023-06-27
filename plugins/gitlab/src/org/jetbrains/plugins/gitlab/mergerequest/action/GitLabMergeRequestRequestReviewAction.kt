@@ -7,9 +7,7 @@ import com.intellij.collaboration.ui.codereview.Avatar
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
 import com.intellij.collaboration.ui.codereview.list.search.SimpleSelectablePopupItemRenderer
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.popup.PopupState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
@@ -36,11 +34,9 @@ internal class GitLabMergeRequestRequestReviewAction(
     val parentComponent = event.source as? JComponent ?: return
     val point = RelativePoint.getSouthWestOf(parentComponent)
     scope.launch {
-      val users = reviewFlowVm.getPotentialReviewers()
-
-      val selectedUser = ChooserPopupUtil.showChooserPopup(
+      val selectedUser = ChooserPopupUtil.showAsyncChooserPopup(
         point,
-        users,
+        reviewFlowVm::getPotentialReviewers,
         filteringMapper = { user -> user.username },
         renderer = SimpleSelectablePopupItemRenderer.create { reviewer ->
           ChooserPopupUtil.SelectablePopupItemPresentation.Simple(
