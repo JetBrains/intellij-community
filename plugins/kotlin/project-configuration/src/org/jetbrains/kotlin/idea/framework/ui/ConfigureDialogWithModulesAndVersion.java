@@ -19,6 +19,7 @@ import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion;
@@ -27,17 +28,16 @@ import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator;
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle;
 import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription;
 import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector;
+import org.jetbrains.kotlin.tools.projectWizard.Versions;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -51,6 +51,9 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper {
 
     private final Map<String, Map<String, Module>> kotlinVersionsAndModules;
 
+    private final Map<String, List<String>> jvmModulesTargetingUnsupportedJvm;
+    private final Map<String, String> modulesAndJvmTargets;
+
     private final ChooseModulePanel chooseModulePanel;
 
     private JPanel contentPane;
@@ -58,6 +61,7 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper {
     private JComboBox<String> kotlinVersionComboBox;
     private JPanel infoPanel;
     private JTextPane listOfKotlinVersionsAndModules;
+    private JTextPane deprecatedJvmTargetsUsedWarning;
 
     private final AsyncProcessIcon processIcon = new AsyncProcessIcon("loader");
 
@@ -98,13 +102,14 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper {
         chooseModulePanel = new ChooseModulePanel(project, configurator, excludeModules);
         chooseModulesPanelPlace.add(chooseModulePanel.getContentPane(), BorderLayout.CENTER);
 
-        kotlinVersionComboBox.addItemListener(new ItemListener() {
-            @Override
-            public void itemStateChanged(ItemEvent e) {
-                showWarningIfThereAreDifferentKotlinVersions();
-            }
-        });
+        Pair<Map<String, List<String>>, Map<String, String>> pair =
+                getModulesTargetingUnsupportedJvmAndTargetsForAllModules(chooseModulePanel.getModules(),
+                                                                         IdeKotlinVersion.get(Versions.INSTANCE.getKOTLIN().toString()));
+        jvmModulesTargetingUnsupportedJvm = pair.getFirst();
+        modulesAndJvmTargets = pair.getSecond();
 
+        kotlinVersionComboBox.addItemListener(e -> showWarningIfThereAreDifferentKotlinVersions());
+        showUnsupportedJvmTargetWarning();
         updateComponents();
     }
 
@@ -127,14 +132,16 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper {
                                      modulesEnumeration.append(
                                              modulesNames.stream().limit(MODULES_TO_DISPLAY_SIZE).sorted()
                                                      .collect(Collectors.joining(DELIMITER)));
-                                     modulesEnumeration.append(KotlinProjectConfigurationBundle.message("configure.kotlin.and.more",
-                                                                                                        modulesNames.size() -
-                                                                                                        MODULES_TO_DISPLAY_SIZE));
+                                     modulesEnumeration.append(
+                                             KotlinProjectConfigurationBundle.message("configure.kotlin.version.and.modules.and.more",
+                                                                                      modulesNames.size() -
+                                                                                      MODULES_TO_DISPLAY_SIZE));
                                  } else {
                                      modulesEnumeration.append(modulesNames.stream().sorted().collect(Collectors.joining(DELIMITER)));
                                  }
-                                 message.append(KotlinProjectConfigurationBundle.message("configure.kotlin.kotlin.version.and.modules", it,
-                                                                                         modulesEnumeration.toString()));
+                                 message.append(KotlinProjectConfigurationBundle
+                                                        .message("configure.kotlin.version.and.modules", it,
+                                                                 modulesEnumeration.toString()));
                              }
                     );
             // It's not hardcoded, we take strings from resources
@@ -143,6 +150,46 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper {
             listOfKotlinVersionsAndModules.setVisible(true);
         } else {
             listOfKotlinVersionsAndModules.setVisible(false);
+        }
+    }
+
+    private void showUnsupportedJvmTargetWarning() {
+        //warningsSplitter.setEnabled(true);
+        //warningsSplitter.setVisible(true);
+        if (!jvmModulesTargetingUnsupportedJvm.isEmpty()) {
+            final StringBuilder message = new StringBuilder();
+            message.append(KotlinProjectConfigurationBundle.message("configurator.kotlin.jvm.targets.unsupported", "1.8"));
+            jvmModulesTargetingUnsupportedJvm
+                    .keySet()
+                    .stream()
+                    .sorted()
+                    .forEach(jvmTargetVersion ->
+                             {
+                                 List<String> modulesWithThisTargetVersion = jvmModulesTargetingUnsupportedJvm.get(jvmTargetVersion);
+                                 StringBuilder modulesEnumeration = new StringBuilder();
+                                 if (modulesWithThisTargetVersion.size() > MODULES_TO_DISPLAY_SIZE) {
+                                     modulesEnumeration.append(
+                                             modulesWithThisTargetVersion.stream().limit(MODULES_TO_DISPLAY_SIZE).sorted()
+                                                     .collect(Collectors.joining(DELIMITER)));
+                                     modulesEnumeration.append(
+                                             KotlinProjectConfigurationBundle.message("configure.kotlin.jvm.target.in.nodules.and.more",
+                                                                                      modulesWithThisTargetVersion.size() -
+                                                                                      MODULES_TO_DISPLAY_SIZE));
+                                 } else {
+                                     modulesEnumeration.append(
+                                             modulesWithThisTargetVersion.stream().sorted().collect(Collectors.joining(DELIMITER)));
+                                 }
+                                 message.append(KotlinProjectConfigurationBundle.message("configurator.kotlin.jvm.target.in.modules",
+                                                                                         jvmTargetVersion, modulesEnumeration.toString()));
+                             }
+                    );
+            message.append(KotlinProjectConfigurationBundle.message("configurator.kotlin.jvm.target.bump.manually"));
+            // It's not hardcoded, we take strings from resources
+            //noinspection HardCodedStringLiteral
+            deprecatedJvmTargetsUsedWarning.setText(message.toString());
+            deprecatedJvmTargetsUsedWarning.setVisible(true);
+        } else {
+            deprecatedJvmTargetsUsedWarning.setVisible(false);
         }
     }
 
@@ -265,5 +312,9 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper {
 
     public Map<String, Map<String, Module>> getVersionsAndModules() {
         return kotlinVersionsAndModules;
+    }
+
+    public Map<String, String> getModulesAndJvmTargets() {
+        return modulesAndJvmTargets;
     }
 }

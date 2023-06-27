@@ -2,10 +2,12 @@
 
 package org.jetbrains.kotlin.idea.configuration
 
+import com.intellij.externalSystem.JavaModuleData
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.Extensions
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
@@ -43,6 +45,7 @@ import org.jetbrains.kotlin.idea.core.syncNonBlockingReadAction
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinNotConfiguredSuppressedModulesState
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
+import org.jetbrains.kotlin.idea.projectConfiguration.getDefaultJvmTarget
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.vfilefinder.IdeVirtualFileFinder
@@ -55,6 +58,7 @@ import org.jetbrains.kotlin.platform.isJs
 import org.jetbrains.kotlin.platform.isWasm
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.isNative
+import org.jetbrains.plugins.gradle.util.GradleUtil
 
 private val LOG = Logger.getInstance("#org.jetbrains.kotlin.idea.configuration.ConfigureKotlinInProjectUtils")
 
@@ -453,6 +457,49 @@ fun getKotlinVersionsAndModules(
         }
     }
     return kotlinVersionsAndModules
+}
+
+typealias ModuleName = String
+typealias TargetJvm = String?
+
+fun getModulesTargetingUnsupportedJvmAndTargetsForAllModules(
+    modulesToConfigure: List<Module>,
+    kotlinVersion: IdeKotlinVersion
+): Pair<Map<String, List<String>>, Map<ModuleName, TargetJvm>> {
+    val modulesAndJvmTargets = mutableMapOf<ModuleName, TargetJvm>()
+    val jvmModulesTargetingUnsupportedJvm = mutableMapOf<String,  MutableList<String>>()
+    for (module in modulesToConfigure) {
+        val jvmTarget = getTargetBytecodeVersionFromModule(module, kotlinVersion)
+        modulesAndJvmTargets[module.name] = jvmTarget
+        jvmTarget?.removePrefix("1.")?.toIntOrNull()?.let {
+            if (it < 8) {
+                val modulesForThisTarget = jvmModulesTargetingUnsupportedJvm.getOrDefault(jvmTarget, mutableListOf())
+                modulesForThisTarget.add(module.name)
+                jvmModulesTargetingUnsupportedJvm[jvmTarget] = modulesForThisTarget
+            }
+        }
+    }
+    return Pair(jvmModulesTargetingUnsupportedJvm, modulesAndJvmTargets)
+}
+
+fun getTargetBytecodeVersionFromModule(
+    module: Module,
+    kotlinVersion: IdeKotlinVersion
+): String? {
+    return GradleUtil.findGradleModuleData(module)?.let { moduleDataNode ->
+        val javaModuleData = ExternalSystemApiUtil.find(moduleDataNode, JavaModuleData.KEY)
+        javaModuleData?.let {
+            javaModuleData.data.targetBytecodeVersion
+        }
+    } ?: getJvmTargetFromSdkOrDefault(module, kotlinVersion)
+}
+
+private fun getJvmTargetFromSdkOrDefault(
+    module: Module,
+    kotlinVersion: IdeKotlinVersion
+): String? {
+    val sdk = module.let { ModuleRootManager.getInstance(it).sdk }
+    return getDefaultJvmTarget(sdk, kotlinVersion)?.description
 }
 
 private val KOTLIN_JS_FQ_NAME = FqName("kotlin.js")

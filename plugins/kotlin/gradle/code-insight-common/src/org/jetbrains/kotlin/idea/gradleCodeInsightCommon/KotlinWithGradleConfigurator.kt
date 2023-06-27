@@ -3,18 +3,13 @@ package org.jetbrains.kotlin.idea.gradleCodeInsightCommon
 
 import com.intellij.codeInsight.CodeInsightUtilCore
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix
-import com.intellij.externalSystem.JavaModuleData
 import com.intellij.ide.actions.OpenFileAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.extensions.Extensions
-import com.intellij.openapi.externalSystem.model.DataNode
-import com.intellij.openapi.externalSystem.model.project.ModuleData
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ExternalLibraryDescriptor
@@ -108,7 +103,8 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             project,
             dialog.modulesToConfigure,
             dialog.versionsAndModules,
-            IdeKotlinVersion.get(dialog.kotlinVersion)
+            IdeKotlinVersion.get(dialog.kotlinVersion),
+            dialog.modulesAndJvmTargets
         )
         collector.showNotification()
     }
@@ -117,11 +113,12 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         project: Project,
         modules: List<Module>,
         kotlinVersionsAndModules: Map<String, Map<String, Module>>,
-        version: IdeKotlinVersion
+        version: IdeKotlinVersion,
+        modulesAndJvmTargets: Map<ModuleName, TargetJvm>
     ): NotificationMessageCollector {
         return project.executeCommand(KotlinIdeaGradleBundle.message("command.name.configure.kotlin")) {
             val collector = NotificationMessageCollector.create(project)
-            val changedFiles = configureWithVersion(project, modules, version, collector, kotlinVersionsAndModules)
+            val changedFiles = configureWithVersion(project, modules, version, collector, kotlinVersionsAndModules, modulesAndJvmTargets)
 
             for (file in changedFiles) {
                 OpenFileAction.openFile(file.virtualFile, project)
@@ -135,7 +132,8 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         modulesToConfigure: List<Module>,
         kotlinVersion: IdeKotlinVersion,
         collector: NotificationMessageCollector,
-        kotlinVersionsAndModules: Map<String, Map<String, Module>>
+        kotlinVersionsAndModules: Map<String, Map<String, Module>>,
+        modulesAndJvmTargets: Map<ModuleName, TargetJvm> = emptyMap()
     ): HashSet<PsiFile> {
         val filesToOpen = HashSet<PsiFile>()
         val topLevelBuildScript = project.getTopLevelBuildScriptPsiFile()
@@ -149,7 +147,8 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             rootModule = topLevelBuildScript.module
             if (rootModule != null) {
                 // rootModule is just <PROJECT_NAME>, but we need <PROJECT_NAME>.main:
-                val firstSourceRootNodule = modulesWithTheSameKotlin?.get(rootModule.name)
+                val rootModuleName = rootModule.name
+                val firstSourceRootNodule = modulesWithTheSameKotlin?.get(rootModuleName)
                 firstSourceRootNodule?.let {
                     // We don't cut a Kotlin version from a top build script
                     modulesToRemoveKotlinVersion.remove(firstSourceRootNodule)
@@ -165,7 +164,11 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
                     }
                 }
 
-                val jvmTarget = getTargetBytecodeVersionFromProject(project, topLevelBuildScript, kotlinVersion)
+                val jvmTarget = if (modulesAndJvmTargets.isNotEmpty()) {
+                    modulesAndJvmTargets[rootModuleName]
+                } else {
+                    getTargetBytecodeVersionFromModule(rootModule, kotlinVersion)
+                }
                 if (canConfigureFile(topLevelBuildScript)) {
                     configureModule(
                         rootModule,
@@ -215,8 +218,11 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
                 if (file == topLevelBuildScript) { // We configured the root module separately above
                     continue
                 }
-                val moduleDataNode = GradleUtil.findGradleModuleData(module)
-                val jvmTarget = getTargetBytecodeVersionFromModule(moduleDataNode, file, kotlinVersion)
+                val jvmTarget = if (modulesAndJvmTargets.isNotEmpty()) {
+                    modulesAndJvmTargets[module.name]
+                } else {
+                    getTargetBytecodeVersionFromModule(module, kotlinVersion)
+                }
                 configureModule(module, file, false, kotlinVersion, jvmTarget, collector, filesToOpen, addVersionToModuleBuildScript)
             } else {
                 showErrorMessage(
@@ -231,40 +237,6 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             }
         }
         return filesToOpen
-    }
-
-    private fun getTargetBytecodeVersionFromProject(
-        project: Project,
-        buildScript: PsiFile,
-        kotlinVersion: IdeKotlinVersion
-    ): String? {
-        val targetBytecodeVersion = project.guessProjectDir()?.let { projectDir ->
-            GradleUtil.findGradleModuleData(project, projectDir.path)?.let { moduleDataNode ->
-                getTargetBytecodeVersionFromModule(moduleDataNode, buildScript, kotlinVersion)
-            }
-        } ?: getJvmTargetFromSdkOrDefault(buildScript, kotlinVersion)
-        return targetBytecodeVersion
-    }
-
-    private fun getTargetBytecodeVersionFromModule(
-        moduleDataNode: DataNode<ModuleData>?,
-        buildScript: PsiFile,
-        kotlinVersion: IdeKotlinVersion
-    ): String? {
-        return moduleDataNode?.let {
-            val javaModuleData = ExternalSystemApiUtil.find(moduleDataNode, JavaModuleData.KEY)
-            javaModuleData?.let {
-                javaModuleData.data.targetBytecodeVersion
-            }
-        } ?: getJvmTargetFromSdkOrDefault(buildScript, kotlinVersion)
-    }
-
-    private fun getJvmTargetFromSdkOrDefault(
-        buildScript: PsiFile,
-        kotlinVersion: IdeKotlinVersion
-    ): String? {
-        val sdk = ModuleUtil.findModuleForPsiElement(buildScript)?.let { ModuleRootManager.getInstance(it).sdk }
-        return getJvmTarget(sdk, kotlinVersion)
     }
 
     private fun removeKotlinVersionFromBuildScript(
@@ -328,12 +300,12 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         jvmTarget: String?,
         addVersion: Boolean = true
     ): ChangedFiles {
-        if (!isTopLevelProjectFile) { // isTopLevelProjectFile = true is needed only for Android
+        return if (!isTopLevelProjectFile) { // isTopLevelProjectFile = true is needed only for Android
             val wasModified = GradleBuildScriptSupport.getManipulator(file).configureProjectBuildScript(kotlinPluginName, version)
             val changedFiles = configureBuildScripts(file, addVersion, version, jvmTarget)
             if (wasModified) changedFiles.add(file)
-            return changedFiles
-        } else return HashSet()
+            changedFiles
+        } else HashSet()
     }
 
     private fun configureBuildScripts(
