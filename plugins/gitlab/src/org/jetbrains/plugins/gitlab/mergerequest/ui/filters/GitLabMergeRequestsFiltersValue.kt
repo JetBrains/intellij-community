@@ -68,7 +68,7 @@ data class GitLabMergeRequestsFiltersValue(
     override fun queryValue(): String = username
 
     @Serializable
-    internal class MergeRequestsAuthorFilterValue(
+    internal data class MergeRequestsAuthorFilterValue(
       override val username: @NlsSafe String,
       override val fullname: @NlsSafe String
     ) : MergeRequestsMemberFilterValue() {
@@ -76,7 +76,7 @@ data class GitLabMergeRequestsFiltersValue(
     }
 
     @Serializable
-    internal class MergeRequestsAssigneeFilterValue(
+    internal data class MergeRequestsAssigneeFilterValue(
       override val username: @NlsSafe String,
       override val fullname: @NlsSafe String
     ) : MergeRequestsMemberFilterValue() {
@@ -84,7 +84,7 @@ data class GitLabMergeRequestsFiltersValue(
     }
 
     @Serializable
-    internal class MergeRequestsReviewerFilterValue(
+    internal data class MergeRequestsReviewerFilterValue(
       override val username: @NlsSafe String,
       override val fullname: @NlsSafe String
     ) : MergeRequestsMemberFilterValue() {
@@ -93,13 +93,12 @@ data class GitLabMergeRequestsFiltersValue(
   }
 
   @Serializable
-  class LabelFilterValue(val title: String) : FilterValue {
+  data class LabelFilterValue(val title: String) : FilterValue {
     override fun queryField(): String = "labels"
     override fun queryValue(): String = title
   }
 
   companion object {
     val EMPTY = GitLabMergeRequestsFiltersValue()
-    val DEFAULT = GitLabMergeRequestsFiltersValue(state = MergeRequestStateFilterValue.OPENED)
   }
 }

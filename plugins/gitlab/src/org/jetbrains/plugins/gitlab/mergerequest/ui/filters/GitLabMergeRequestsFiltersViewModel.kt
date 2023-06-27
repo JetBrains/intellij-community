@@ -46,7 +46,7 @@ internal class GitLabMergeRequestsFiltersViewModelImpl(
       scope,
       historyModel,
       emptySearch = GitLabMergeRequestsFiltersValue.EMPTY,
-      defaultQuickFilter = GitLabMergeRequestsQuickFilter.Open()
+      defaultQuickFilter = defaultQuickFilter(currentUser)
     ) {
   override fun GitLabMergeRequestsFiltersValue.withQuery(query: String?): GitLabMergeRequestsFiltersValue {
     return copy(searchQuery = query)
@@ -93,5 +93,9 @@ internal class GitLabMergeRequestsFiltersViewModelImpl(
 
   override suspend fun getLabels(): List<GitLabLabelDTO> = projectData.getLabels()
 
-  override suspend fun getMergeRequestMembers(): List<GitLabUserDTO> =    projectData.getMembers()
+  override suspend fun getMergeRequestMembers(): List<GitLabUserDTO> = projectData.getMembers()
+
+  companion object {
+    fun defaultQuickFilter(user: GitLabUserDTO): GitLabMergeRequestsQuickFilter = GitLabMergeRequestsQuickFilter.AssignedToMe(user)
+  }
 }
