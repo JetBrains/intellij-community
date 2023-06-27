@@ -34,9 +34,11 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
+import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.FontComboBox
 import com.intellij.ui.SimpleListCellRenderer
@@ -49,6 +51,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
+import com.jetbrains.JBR
 import org.jetbrains.annotations.Nls
 import java.awt.Font
 import java.awt.RenderingHints
@@ -334,16 +337,21 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                   contextHelp(message("checkbox.smooth.scrolling.description"))
                 })
           yield({ checkBox(cdDnDWithAlt) })
-          if (SystemInfo.isWindows && IdeFrameDecorator.isCustomDecorationAvailable()) {
+          if (SystemInfoRt.isWindows && IdeFrameDecorator.isCustomDecorationAvailable()
+              || IdeRootPane.hideNativeLinuxTitleAvailable) {
             yield({
-                    val overridden = UISettings.isMergeMainMenuWithWindowTitleOverridden
-                    checkBox(cdMergeMainMenuWithWindowTitle)
-                      .enabled(!overridden)
+                    val checkBox = checkBox(cdMergeMainMenuWithWindowTitle)
                       .gap(RightGap.SMALL)
-                    if (overridden) {
+                    if (SystemInfoRt.isWindows && UISettings.isMergeMainMenuWithWindowTitleOverridden) {
+                      checkBox.enabled(false)
                       contextHelp(message("option.is.overridden.by.jvm.property", UISettings.MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY))
                     }
-                    comment(message("ide.restart.required.comment"))
+                    if (SystemInfoRt.isXWindow && !(IdeRootPane.jbr5777Workaround() && JBR.isWindowMoveSupported())) {
+                      checkBox.enabled(false)
+                      checkBox.comment(message("checkbox.merge.main.menu.with.window.not.supported.comment"), 30)
+                    } else {
+                      comment(message("ide.restart.required.comment"))
+                    }
                   })
           }
           yield({ checkBox(cdFullPathsInTitleBar) })
