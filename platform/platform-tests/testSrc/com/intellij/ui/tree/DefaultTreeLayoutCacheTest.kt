@@ -21,13 +21,14 @@ class DefaultTreeLayoutCacheTest {
   private lateinit var model: DefaultTreeModel
   private lateinit var selectionModel: TreeSelectionModel
   private lateinit var sut: AbstractLayoutCache
+  private lateinit var heights: MutableMap<String, Int>
 
   @BeforeEach
   fun setUp() {
-    selectionModel = strictMock(TreeSelectionModel::class.java)
     model = DefaultTreeModel(null)
     sut = DefaultTreeLayoutCache(defaultRowHeight) { }
-    sut.nodeDimensions = NodeDimensionsImpl(emptyMap())
+    heights = hashMapOf()
+    sut.nodeDimensions = NodeDimensionsImpl(heights)
   }
 
   @Test
@@ -539,16 +540,132 @@ class DefaultTreeLayoutCacheTest {
     )
   }
 
+  @Test
+  fun `row height - empty tree`() {
+    testSizes(
+      initOps = {
+        sut.isRootVisible = false
+      },
+      modOps = { },
+      assertions = {
+        assertSize(0, 0)
+      },
+    )
+  }
+
+  @Test
+  fun `row height - variable height, all default`() {
+    testSizes(
+      initOps = {
+        setModelStructure("""
+          |r1
+          | a1
+          |  b11
+          |   c111
+          |  b12
+          """.trimMargin()
+        )
+        sut.isRootVisible = true
+      },
+      modOps = {
+        sut.setExpandedState("r1/a1/b11", true)
+      },
+      assertions = {
+        assertSize(3 * indent + "c111".length, defaultRowHeight * 5)
+      },
+    )
+  }
+
+  @Test
+  fun `row height - fixed height`() {
+    testSizes(
+      initOps = {
+        setModelStructure("""
+          |r1
+          | a1
+          |  b11
+          |   c111
+          |  b12
+          """.trimMargin()
+        )
+        sut.isRootVisible = true
+        sut.rowHeight = 10
+      },
+      modOps = {
+        sut.setExpandedState("r1/a1/b11", true)
+      },
+      assertions = {
+        assertSize(3 * indent + "c111".length, 10 * 5)
+      },
+    )
+  }
+
+  @Test
+  fun `row height - variable height, some different`() {
+    testSizes(
+      initOps = {
+        setModelStructure("""
+          |r1
+          | a1
+          |  b11
+          |   c111
+          |  b12
+          """.trimMargin()
+        )
+        sut.isRootVisible = true
+        heights["b11"] = 10
+        heights["b12"] = 15
+      },
+      modOps = {
+        sut.setExpandedState("r1/a1/b11", true)
+      },
+      assertions = {
+        assertHeight(defaultRowHeight * 5) // default height
+        // The first line:
+        assertWidth(0, defaultRowHeight - 1, "r1".length)
+        assertHeight(defaultRowHeight * 5) // still default, as b11 is not visible
+        // Now query three lines:
+        assertWidth(0, defaultRowHeight * 2 + 1, indent * 2 + "b11".length)
+        // Updated height since the b11 row became "visible" after the last query:
+        assertHeight(defaultRowHeight * 5 - (defaultRowHeight - 10))
+        // Now query the last line:
+        assertWidth(defaultRowHeight * 4 - (defaultRowHeight - 10), defaultRowHeight * 5 - (defaultRowHeight - 10), indent * 2 + "b12".length)
+        // Updated height of all rows now:
+        assertHeight(defaultRowHeight * 5 - (defaultRowHeight - 10) - (defaultRowHeight - 15))
+      },
+    )
+  }
+
   private fun testStructure(
     initOps: () -> Unit = { },
     modOps: () -> Unit = { },
     assertions: () -> Unit = { },
   ) {
+    selectionModel = strictMock(TreeSelectionModel::class.java)
     selectionModel.expect {
       rowMapper = sut // called from setSelectionModel()
     }
     initOps()
     replay(selectionModel) // start verification
+    setModels()
+    modOps()
+    assertions()
+    verify(selectionModel) // complete verification
+  }
+
+  private fun testSizes(
+    initOps: () -> Unit = { },
+    modOps: () -> Unit = { },
+    assertions: () -> Unit = { },
+  ) {
+    selectionModel = niceMock(TreeSelectionModel::class.java) // Verification not needed in these tests.
+    initOps()
+    setModels()
+    modOps()
+    assertions()
+  }
+
+  private fun setModels() {
     sut.selectionModel = selectionModel
     sut.model = model
     // This is usually handled by the tree UI, but we're unit testing here:
@@ -569,9 +686,6 @@ class DefaultTreeLayoutCacheTest {
         sut.treeStructureChanged(e)
       }
     })
-    modOps()
-    assertions()
-    verify(selectionModel) // complete verification
   }
 
   private fun setModelStructure(s: String) {
@@ -633,6 +747,23 @@ class DefaultTreeLayoutCacheTest {
 
   private fun assertThatIsExpanded(path: String): AbstractBooleanAssert<*> =
     assertThat(sut.isExpanded(path)).`as`("isExpanded($path)")
+
+  private fun assertSize(width: Int, height: Int) {
+    val actualWidth = sut.getPreferredWidth(null)
+    val actualHeight = sut.preferredHeight
+    assertThat(actualWidth).`as`("width").isEqualTo(width)
+    assertThat(actualHeight).`as`("height").isEqualTo(height)
+  }
+
+  private fun assertHeight(height: Int) {
+    val actualHeight = sut.preferredHeight
+    assertThat(actualHeight).`as`("height").isEqualTo(height)
+  }
+
+  private fun assertWidth(from: Int, to: Int, width: Int) {
+    val actualWidth = sut.getPreferredWidth(Rectangle(0, from, 0, to - from))
+    assertThat(actualWidth).`as`("width for [%d,%d]", from, to).isEqualTo(width)
+  }
 
   private fun AbstractLayoutCache.setExpandedState(path: String, isExpanded: Boolean) {
     setExpandedState(path(path), isExpanded)
