@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import com.intellij.debugger.DebuggerManagerEx
-import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.evaluation.CodeFragmentFactory
 import com.intellij.debugger.engine.evaluation.TextWithImports
 import com.intellij.debugger.engine.events.DebuggerCommandImpl
@@ -13,7 +12,6 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
@@ -22,7 +20,6 @@ import com.intellij.util.IncorrectOperationException
 import com.intellij.util.concurrency.Semaphore
 import com.sun.jdi.AbsentInformationException
 import com.sun.jdi.InvalidStackFrameException
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.projectStructure.hasKotlinJvmRuntime
 import org.jetbrains.kotlin.idea.core.syncNonBlockingReadAction
@@ -91,7 +88,7 @@ class KotlinK1CodeFragmentFactory : CodeFragmentFactory() {
                     return@putCopyableUserData emptyFile
                 }
 
-                val frameInfo = getFrameInfo(contextElement, debuggerContext) ?: run {
+                val frameInfo = getFrameInfo(project, contextElement, debuggerContext) ?: run {
                     val position = "${debuggerContext.sourcePosition?.file?.name}:${debuggerContext.sourcePosition?.line}"
                     LOG.warn("Couldn't get info about 'this' and local variables for $position")
                     return@putCopyableUserData emptyFile
@@ -135,20 +132,11 @@ class KotlinK1CodeFragmentFactory : CodeFragmentFactory() {
 
     private fun supplyDebugInformation(codeFragment: KtCodeFragment, context: PsiElement?) {
         val project = codeFragment.project
-        val debugProcess = getDebugProcess(project, context) ?: return
-
+        val debugProcess = DebugContextProvider.getDebuggerContext(project, context)?.debugProcess ?: return
         DebugLabelPropertyDescriptorProvider(codeFragment, debugProcess).supplyDebugLabels()
     }
 
-    private fun getDebugProcess(project: Project, context: PsiElement?): DebugProcessImpl? {
-        return if (isUnitTestMode()) {
-            context?.getCopyableUserData(DEBUG_CONTEXT_FOR_TESTS)?.debugProcess
-        } else {
-            DebuggerManagerEx.getInstanceEx(project).context.debugProcess
-        }
-    }
-
-    private fun getFrameInfo(contextElement: PsiElement?, debuggerContext: DebuggerContextImpl): FrameInfo? {
+    private fun getFrameInfo(project: Project, contextElement: PsiElement?, debuggerContext: DebuggerContextImpl): FrameInfo? {
         val semaphore = Semaphore()
         semaphore.down()
 
@@ -159,7 +147,7 @@ class KotlinK1CodeFragmentFactory : CodeFragmentFactory() {
                 try {
                     val frameProxy = hopelessAware {
                         if (isUnitTestMode()) {
-                            contextElement?.getCopyableUserData(DEBUG_CONTEXT_FOR_TESTS)?.frameProxy
+                            DebugContextProvider.getDebuggerContext(project, contextElement)?.frameProxy
                         } else {
                             debuggerContext.frameProxy
                         }
@@ -284,9 +272,6 @@ class KotlinK1CodeFragmentFactory : CodeFragmentFactory() {
 
     companion object {
         private val LOG = Logger.getInstance(this::class.java)
-
-        @get:TestOnly
-        val DEBUG_CONTEXT_FOR_TESTS: Key<DebuggerContextImpl> = Key.create("DEBUG_CONTEXT_FOR_TESTS")
 
         const val FAKE_JAVA_CONTEXT_FUNCTION_NAME = "_java_locals_debug_fun_"
     }

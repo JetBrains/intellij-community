@@ -1,5 +1,8 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="org.jetbrains.kotlin.analysis.low.level.api.fir.compiler.ForeignValueProviderService"
+                    serviceImplementation="org.jetbrains.kotlin.idea.debugger.evaluate.IdeForeignValueProviderService"/>
+
     <debugger.codeFragmentFactory implementation="org.jetbrains.kotlin.idea.debugger.evaluate.KotlinK2CodeFragmentFactory"/>
   </extensions>
 </idea-plugin>

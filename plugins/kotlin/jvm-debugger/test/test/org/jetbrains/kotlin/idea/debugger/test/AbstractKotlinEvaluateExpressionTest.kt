@@ -27,7 +27,7 @@ import org.jetbrains.eval4j.ObjectValue
 import org.jetbrains.eval4j.Value
 import org.jetbrains.eval4j.jdi.asValue
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinK1CodeFragmentFactory
+import org.jetbrains.kotlin.idea.debugger.evaluate.DebugContextProvider
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferenceKeys
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
 import org.jetbrains.kotlin.idea.debugger.test.util.FramePrinter
@@ -215,7 +215,7 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
                     "ContextElement = $text"
         }
 
-        contextElement.putCopyableUserData(KotlinK1CodeFragmentFactory.DEBUG_CONTEXT_FOR_TESTS, debuggerContext)
+        DebugContextProvider.supplyTestDebugContext(contextElement, debuggerContext)
 
         suspendContext.runActionInSuspendCommand {
             try {
