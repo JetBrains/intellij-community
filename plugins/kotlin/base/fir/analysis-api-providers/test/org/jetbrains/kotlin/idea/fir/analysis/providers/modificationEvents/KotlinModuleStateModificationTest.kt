@@ -315,9 +315,89 @@ class KotlinModuleStateModificationTest : AbstractMultiModuleTest() {
         disposeTrackers(trackerA, trackerB, trackerC, trackerD)
     }
 
+    fun `test not-under-content-root module state modification after moving the file to another module`() {
+        val fileA = createNotUnderContentRootFile("a")
+        val fileB = createNotUnderContentRootFile("b")
+        val libraryC = createProjectLibrary("c")
+        val moduleD = createModuleInTmpDir("d")
+        val moduleE = createModuleInTmpDir("e")
+
+        val destination = getVirtualFile(createTempDirectory())
+        PsiTestUtil.addContentRoot(moduleE, destination)
+
+        val trackerA = createTracker(fileA)
+        val trackerB = createTracker(fileB)
+        val trackerC = createTracker(libraryC)
+        val trackerD = createTracker(moduleD)
+        val trackerE = createTracker(moduleE)
+
+        move(fileA.virtualFile, destination)
+
+        trackerA.assertModifiedOnce("moved not-under-content-root file A")
+        trackerB.assertNotModified("unchanged not-under-content-root file B")
+        trackerC.assertNotModified("unchanged library C")
+        trackerD.assertNotModified("unchanged module D")
+
+        // The file move will cause a global PSI tree change event, and thereby a global out-of-block modification event, but the module
+        // state of the destination module E is not affected by a file move, so the tracker should not register any module state
+        // modification events.
+        trackerE.assertNotModified("unchanged destination module E")
+
+        disposeTrackers(trackerA, trackerB, trackerC, trackerD, trackerE)
+    }
+
+    fun `test not-under-content-root module state modification after moving the file outside the content root`() {
+        val fileA = createNotUnderContentRootFile("a")
+        val fileB = createNotUnderContentRootFile("b")
+        val libraryC = createProjectLibrary("c")
+        val moduleD = createModuleInTmpDir("d")
+
+        val destination = getVirtualFile(createTempDirectory())
+
+        val trackerA = createTracker(fileA)
+        val trackerB = createTracker(fileB)
+        val trackerC = createTracker(libraryC)
+        val trackerD = createTracker(moduleD)
+
+        move(fileA.virtualFile, destination)
+
+        trackerA.assertModifiedOnce("moved not-under-content-root file A")
+        trackerB.assertNotModified("unchanged not-under-content-root file B")
+        trackerC.assertNotModified("unchanged library C")
+        trackerD.assertNotModified("unchanged module D")
+
+        disposeTrackers(trackerA, trackerB, trackerC, trackerD)
+    }
+
+    fun `test not-under-content-root module state modification after deleting the file`() {
+        val fileA = createNotUnderContentRootFile("a")
+        val fileB = createNotUnderContentRootFile("b")
+        val libraryC = createProjectLibrary("c")
+        val moduleD = createModuleInTmpDir("d")
+
+        val trackerA = createTracker(fileA)
+        val trackerB = createTracker(fileB)
+        val trackerC = createTracker(libraryC)
+        val trackerD = createTracker(moduleD)
+
+        delete(fileA.virtualFile)
+
+        trackerA.assertModifiedOnce("deleted not-under-content-root file A", shouldBeRemoval = true)
+        trackerB.assertNotModified("unchanged not-under-content-root file B")
+        trackerC.assertNotModified("unchanged library C")
+        trackerD.assertNotModified("unchanged module D")
+
+        disposeTrackers(trackerA, trackerB, trackerC, trackerD)
+    }
+
     private fun createProjectLibrary(name: String): Library = ConfigLibraryUtil.addProjectLibraryWithClassesRoot(myProject, name)
 
     private fun createScript(name: String): KtFile = createKtFileUnderNewContentRoot(FileWithText("$name.kts", ""))
+
+    private fun createNotUnderContentRootFile(name: String): KtFile =
+        // While the not-under-content-root module is named as it is, it is still decidedly under the project's content root, just not a
+        // part of any other kind of `KtModule`.
+        createKtFileUnderNewContentRoot(FileWithText("$name.kt", ""))
 
     private fun createTracker(module: KtModule): ModuleStateModificationTracker = ModuleStateModificationTracker(module)
 
