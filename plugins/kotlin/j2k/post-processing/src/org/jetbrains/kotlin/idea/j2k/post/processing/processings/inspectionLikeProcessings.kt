@@ -360,26 +360,6 @@ internal class RemoveRedundantVisibilityModifierProcessing : InspectionLikeProce
     }
 }
 
-internal class MoveGetterAndSetterAnnotationsToPropertyProcessing : InspectionLikeProcessingForElement<KtProperty>(KtProperty::class.java) {
-    override fun isApplicableTo(element: KtProperty, settings: ConverterSettings?): Boolean =
-        element.accessors.isNotEmpty()
-
-    override fun apply(element: KtProperty) {
-        for (accessor in element.accessors.sortedBy { it.isGetter }) {
-            for (entry in accessor.annotationEntries) {
-                element.addAnnotationEntry(entry).also {
-                    it.addUseSiteTarget(
-                        if (accessor.isGetter) AnnotationUseSiteTarget.PROPERTY_GETTER
-                        else AnnotationUseSiteTarget.PROPERTY_SETTER,
-                        element.project
-                    )
-                }
-            }
-            accessor.annotationEntries.forEach { it.delete() }
-        }
-    }
-}
-
 internal class CanBeValInspectionBasedProcessing : InspectionLikeProcessingForElement<KtDeclaration>(KtDeclaration::class.java) {
     override fun isApplicableTo(element: KtDeclaration, settings: ConverterSettings?): Boolean =
         CanBeValInspection.canBeVal(element, ignoreNotUsedVals = false)

@@ -14,12 +14,14 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.*
 import org.jetbrains.kotlin.idea.base.util.or
 import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantGetter
 import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantSetter
 import org.jetbrains.kotlin.idea.core.setVisibility
+import org.jetbrains.kotlin.idea.intentions.addUseSiteTarget
 import org.jetbrains.kotlin.idea.j2k.post.processing.*
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
@@ -715,10 +717,22 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
             if (isOpen) {
                 ktProperty.addModifier(KtTokens.OPEN_KEYWORD)
             }
+
+            moveAccessorAnnotationsToProperty(ktProperty)
+        }
+    }
+
+    private fun moveAccessorAnnotationsToProperty(property: KtProperty) {
+        for (accessor in property.accessors.sortedBy { it.isGetter }) {
+            for (accessorEntry in accessor.annotationEntries) {
+                val propertyEntry = property.addAnnotationEntry(accessorEntry)
+                val target = if (accessor.isGetter) PROPERTY_GETTER else PROPERTY_SETTER
+                propertyEntry.addUseSiteTarget(target, property.project)
+            }
+            accessor.annotationEntries.forEach { it.delete() }
         }
     }
 }
-
 
 private data class PropertyWithAccessors(
     val property: Property,
