@@ -1,0 +1,79 @@
+// IntelliJ API Decompiler stub source generated from a class file
+// Implementation of methods is not available
+
+package kotlin.collections
+
+<info>public</info> val kotlin.collections.<info>Collection</info><*>.<info>indices</info>: kotlin.ranges.<info>IntRange</info> /* compiled code */
+    <info>public</info> <info>final</info> <info>get</info>
+
+<info>public</info> val <<info>T</info>> kotlin.collections.<info>List</info><<info>T</info>>.<info>lastIndex</info>: kotlin.<info>Int</info> /* compiled code */
+    <info>public</info> <info>final</info> <info>get</info>
+
+<info>@kotlin.SinceKotlin</info> <info>@kotlin.internal.InlineOnly</info> <info>public</info> <info>inline</info> fun <<info>T</info>> <info>List</info>(<info>size</info>: kotlin.<info>Int</info>, <info>init</info>: (kotlin.<info>Int</info>) -> <info>T</info>): kotlin.collections.<info>List</info><<info>T</info>> { /* compiled code */ }
+
+<info>@kotlin.SinceKotlin</info> <info>@kotlin.internal.InlineOnly</info> <info>public</info> <info>inline</info> fun <<info>T</info>> <info>MutableList</info>(<info>size</info>: kotlin.<info>Int</info>, <info>init</info>: (kotlin.<info>Int</info>) -> <info>T</info>): kotlin.collections.<info>MutableList</info><<info>T</info>> { /* compiled code */ }
+
+<info>@kotlin.SinceKotlin</info> <info>@kotlin.internal.InlineOnly</info> <info>public</info> <info>inline</info> fun <<info>T</info>> <info>arrayListOf</info>(): kotlin.collections.<info>ArrayList</info><<info>T</info>> { /* compiled code */ }
+
+<info>public</info> fun <<info>T</info>> <info>arrayListOf</info>(<info>vararg</info> <info>elements</info>: <info>T</info>): kotlin.collections.<info>ArrayList</info><<info>T</info>> { /* compiled code */ }
+
+<info>@kotlin.SinceKotlin</info> <info>@kotlin.WasExperimental</info> <info>@kotlin.internal.InlineOnly</info> <info>public</info> <info>inline</info> fun <<info>E</info>> <info>buildList</info>(<info>capacity</info>: kotlin.<info>Int</info>, <info>@kotlin.BuilderInference</info> <info>builderAction</info>: kotlin.collections.<info>MutableList</info><<info>E</info>>.() -> kotlin.<info>Unit</info>): kotlin.collections.<info>List</info><<info>E</info>> { /* compiled code */ }
+
+<info>@kotlin.SinceKotlin</info> <info>@kotlin.WasExperimental</info> <info>@kotlin.internal.InlineOnly</info> <info>public</info> <info>inline</info> fun <<info>E</info>> <info>buildList</info>(<info>@kotlin.BuilderInference</info> <info>builderAction</info>: kotlin.collections.<info>MutableList</info><<info>E</info>>.() -> kotlin.<info>Unit</info>): kotlin.collections.<info>List</info><<info>E</info>> { /* compiled code */ }
+
+<info>@kotlin.PublishedApi</info> <info>@kotlin.SinceKotlin</info> <info>@kotlin.internal.InlineOnly</info> <info>internal</info> <info>expect</info> <info>inline</info> fun <<info>E</info>> <info>buildListInternal</info>(<info>capacity</info>: kotlin.<info>Int</info>, <info>builderAction</info>: kotlin.collections.<info>MutableList</info><<info>E</info>>.() -> kotlin.<info>Unit</info>): kotlin.collections.<info>List</info><<info>E</info>> { /* compiled code */ }
+
+<info>@kotlin.PublishedApi</info> <info>@kotlin.SinceKotlin</info> <info>@kotlin.internal.InlineOnly</info> <info>internal</info> <info>expect</info> <info>inline</info> fun <<info>E</info>> <info>buildListInternal</info>(<info>builderAction</info>: kotlin.collections.<info>MutableList</info><<info>E</info>>.() -> kotlin.<info>Unit</info>): kotlin.collections.<info>List</info><<info>E</info>> { /* compiled code */ }
+
+<info>@kotlin.PublishedApi</info> <info>@kotlin.SinceKotlin</info> <info>internal</info> <info>expect</info> fun <info>checkCountOverflow</info>(<info>count</info>: kotlin.<info>Int</info>): kotlin.<info>Int</info> { /* compiled code */ }
+
+<info>@kotlin.PublishedApi</info> <info>@kotlin.SinceKotlin</info> <info>internal</info> <info>expect</info> fun <info>checkIndexOverflow</info>(<info>index</info>: kotlin.<info>Int</info>): kotlin.<info>Int</info> { /* compiled code */ }
+
+<info>public</info> fun <<info>T</info>> <info>emptyList</info>(): kotlin.collections.<info>List</info><<info>T</info>> { /* compiled code */ }
+
+<info>@kotlin.internal.InlineOnly</info> <info>public</info> <info>inline</info> fun <<info>T</info>> <info>listOf</info>(): kotlin.collections.<info>List</info><<info>T</info>> { /* compiled code */ }
+
+<info>@kotlin.SinceKotlin</info> <info>public</info> <info>expect</info> fun <<info>T</info>> <info>listOf</info>(<info>element</info>: <info>T</info>): kotlin.collections.<info>List</info><<info>T</info>> { /* compiled code */ }
+
+<info>public</info> fun <<info>T</info>> <info>listOf</info>(<info>vararg</info> <info>elements</info>: <info>T</info>): kotlin.collections.<info>List</info><<info>T</info>> { /* compiled code */ }
+
+<info>public</info> fun <<info>T</info> : kotlin.<info>Any</info>> <info>listOfNotNull</info>(<info>element</info>: <info>T</info>?): kotlin.collections.<info>List</info><<info>T</info>> { /* compiled code */ }
+
+<info>public</info> fun <<info>T</info> : kotlin.<info>Any</info>> <info>listOfNotNull</info>(<info>vararg</info> <info>elements</info>: <info>T</info>?): kotlin.collections.<info>List</info><<info>T</info>> { /* compiled code */ }
+
+<info>@kotlin.SinceKotlin</info> <info>@kotlin.internal.InlineOnly</info> <info>public</info> <info>inline</info> fun <<info>T</info>> <info>mutableListOf</info>(): kotlin.collections.<info>MutableList</info><<info>T</info>> { /* compiled code */ }
+
+<info>public</info> fun <<info>T</info>> <info>mutableListOf</info>(<info>vararg</info> <info>elements</info>: <info>T</info>): kotlin.collections.<info>MutableList</info><<info>T</info>> { /* compiled code */ }
+
+<info>private</info> fun <info>rangeCheck</info>(<info>size</info>: kotlin.<info>Int</info>, <info>fromIndex</info>: kotlin.<info>Int</info>, <info>toIndex</info>: kotlin.<info>Int</info>): kotlin.<info>Unit</info> { /* compiled code */ }
+
+<info>@kotlin.PublishedApi</info> <info>@kotlin.SinceKotlin</info> <info>internal</info> fun <info>throwCountOverflow</info>(): kotlin.<info>Unit</info> { /* compiled code */ }
+
+<info>@kotlin.PublishedApi</info> <info>@kotlin.SinceKotlin</info> <info>internal</info> fun <info>throwIndexOverflow</info>(): kotlin.<info>Unit</info> { /* compiled code */ }
+
+<info>internal</info> fun <<info>T</info>> kotlin.<info>Array</info><<info>out</info> <info>T</info>>.<info>asCollection</info>(): kotlin.collections.<info>Collection</info><<info>T</info>> { /* compiled code */ }
+
+<info>public</info> fun <<info>T</info>> kotlin.collections.<info>List</info><<info>T</info>>.<info>binarySearch</info>(<info>element</info>: <info>T</info>, <info>comparator</info>: kotlin.<info>Comparator</info><in <info>T</info>>, <info>fromIndex</info>: kotlin.<info>Int</info> = COMPILED_CODE, <info>toIndex</info>: kotlin.<info>Int</info> = COMPILED_CODE): kotlin.<info>Int</info> { /* compiled code */ }
+
+<info>public</info> fun <<info>T</info>> kotlin.collections.<info>List</info><<info>T</info>>.<info>binarySearch</info>(<info>fromIndex</info>: kotlin.<info>Int</info> = COMPILED_CODE, <info>toIndex</info>: kotlin.<info>Int</info> = COMPILED_CODE, <info>comparison</info>: (<info>T</info>) -> kotlin.<info>Int</info>): kotlin.<info>Int</info> { /* compiled code */ }
+
+<info>public</info> fun <<info>T</info> : kotlin.<info>Comparable</info><<info>T</info>>> kotlin.collections.<info>List</info><<info>T</info>?>.<info>binarySearch</info>(<info>element</info>: <info>T</info>?, <info>fromIndex</info>: kotlin.<info>Int</info> = COMPILED_CODE, <info>toIndex</info>: kotlin.<info>Int</info> = COMPILED_CODE): kotlin.<info>Int</info> { /* compiled code */ }
+
+<info>public</info> <info>inline</info> fun <<info>T</info>, <info>K</info> : kotlin.<info>Comparable</info><<info>K</info>>> kotlin.collections.<info>List</info><<info>T</info>>.<info>binarySearchBy</info>(<info>key</info>: <info>K</info>?, <info>fromIndex</info>: kotlin.<info>Int</info> = COMPILED_CODE, <info>toIndex</info>: kotlin.<info>Int</info> = COMPILED_CODE, <info>crossinline</info> <info>selector</info>: (<info>T</info>) -> <info>K</info>?): kotlin.<info>Int</info> { /* compiled code */ }
+
+<info>@kotlin.internal.InlineOnly</info> <info>public</info> <info>inline</info> fun <<info>@kotlin.internal.OnlyInputTypes</info> <info>T</info>> kotlin.collections.<info>Collection</info><<info>T</info>>.<info>containsAll</info>(<info>elements</info>: kotlin.collections.<info>Collection</info><<info>T</info>>): kotlin.<info>Boolean</info> { /* compiled code */ }
+
+<info>@kotlin.SinceKotlin</info> <info>@kotlin.internal.InlineOnly</info> <info>public</info> <info>inline</info> fun <<info>C</info> : kotlin.collections.<info>Collection</info><*>, <info>R</info>> <info>C</info>.<info>ifEmpty</info>(<info>defaultValue</info>: () -> <info>R</info>): <info>R</info> <info>where</info> <info>C</info> : <info>R</info> { /* compiled code */ }
+
+<info>@kotlin.internal.InlineOnly</info> <info>public</info> <info>inline</info> fun <<info>T</info>> kotlin.collections.<info>Collection</info><<info>T</info>>.<info>isNotEmpty</info>(): kotlin.<info>Boolean</info> { /* compiled code */ }
+
+<info>@kotlin.SinceKotlin</info> <info>@kotlin.internal.InlineOnly</info> <info>public</info> <info>inline</info> fun <<info>T</info>> kotlin.collections.<info>Collection</info><<info>T</info>>?.<info>isNullOrEmpty</info>(): kotlin.<info>Boolean</info> { /* compiled code */ }
+
+<info>internal</info> fun <<info>T</info>> kotlin.collections.<info>List</info><<info>T</info>>.<info>optimizeReadOnlyList</info>(): kotlin.collections.<info>List</info><<info>T</info>> { /* compiled code */ }
+
+<info>@kotlin.internal.InlineOnly</info> <info>public</info> <info>inline</info> fun <<info>T</info>> kotlin.collections.<info>Collection</info><<info>T</info>>?.<info>orEmpty</info>(): kotlin.collections.<info>Collection</info><<info>T</info>> { /* compiled code */ }
+
+<info>@kotlin.internal.InlineOnly</info> <info>public</info> <info>inline</info> fun <<info>T</info>> kotlin.collections.<info>List</info><<info>T</info>>?.<info>orEmpty</info>(): kotlin.collections.<info>List</info><<info>T</info>> { /* compiled code */ }
+
+<info>@kotlin.SinceKotlin</info> <info>public</info> fun <<info>T</info>> kotlin.collections.<info>Iterable</info><<info>T</info>>.<info>shuffled</info>(<info>random</info>: kotlin.random.<info>Random</info>): kotlin.collections.<info>List</info><<info>T</info>> { /* compiled code */ }
+

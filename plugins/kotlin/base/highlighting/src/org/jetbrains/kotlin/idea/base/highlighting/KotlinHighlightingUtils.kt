@@ -46,8 +46,6 @@ fun KtFile.shouldHighlightFile(): Boolean {
         return true
     }
 
-    if (isCompiled) return false
-
     if (OutsidersPsiFileSupport.isOutsiderFile(virtualFile)) {
         val origin = getOutsiderFileOrigin(project, virtualFile) ?: return false
         val psiFileOrigin = PsiManager.getInstance(project).findFile(origin) as? KtFile ?: return false

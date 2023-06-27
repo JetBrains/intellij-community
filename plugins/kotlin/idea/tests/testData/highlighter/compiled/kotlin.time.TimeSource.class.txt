@@ -1,0 +1,48 @@
+// IntelliJ API Decompiler stub source generated from a class file
+// Implementation of methods is not available
+
+package kotlin.time
+
+<info>@kotlin.SinceKotlin</info> <info>@kotlin.WasExperimental</info> <info>public</info> interface <info>TimeSource</info> {
+    <info>public</info> <info>companion</info> object {
+    }
+
+    <info>public</info> <info>abstract</info> fun <info>markNow</info>(): kotlin.time.<info>TimeMark</info>
+
+    <info>public</info> object <info>Monotonic</info> : kotlin.time.<info>TimeSource</info>.<info>WithComparableMarks</info> {
+        <info>public</info> <info>open</info> fun <info>markNow</info>(): kotlin.time.<info>TimeSource</info>.<info>Monotonic</info>.<info>ValueTimeMark</info> { /* compiled code */ }
+
+        <info>public</info> <info>open</info> fun <info>toString</info>(): kotlin.<info>String</info> { /* compiled code */ }
+
+        <info>@kotlin.jvm.JvmInline</info> <info>@kotlin.SinceKotlin</info> <info>@kotlin.WasExperimental</info> <info>public</info> <info>final</info> <info>value</info> class <info>ValueTimeMark</info> <info>internal</info> <info>constructor</info>(<info>reading</info>: kotlin.time.<info>ValueTimeMarkReading</info> /* = kotlin.Long */) : kotlin.time.<info>ComparableTimeMark</info> {
+            <info>internal</info> <info>final</info> val <info>reading</info>: kotlin.time.<info>ValueTimeMarkReading</info> /* = kotlin.Long */ /* compiled code */
+
+            <info>public</info> <info>final</info> <info>operator</info> fun <info>compareTo</info>(<info>other</info>: kotlin.time.<info>TimeSource</info>.<info>Monotonic</info>.<info>ValueTimeMark</info>): kotlin.<info>Int</info> { /* compiled code */ }
+
+            <info>public</info> <info>open</info> fun <info>elapsedNow</info>(): kotlin.time.<info>Duration</info> { /* compiled code */ }
+
+            <info>public</info> <info>open</info> <info>operator</info> fun <info>equals</info>(<info>other</info>: kotlin.<info>Any</info>?): kotlin.<info>Boolean</info> { /* compiled code */ }
+
+            <info>public</info> <info>open</info> fun <info>hasNotPassedNow</info>(): kotlin.<info>Boolean</info> { /* compiled code */ }
+
+            <info>public</info> <info>open</info> fun <info>hasPassedNow</info>(): kotlin.<info>Boolean</info> { /* compiled code */ }
+
+            <info>public</info> <info>open</info> fun <info>hashCode</info>(): kotlin.<info>Int</info> { /* compiled code */ }
+
+            <info>public</info> <info>open</info> <info>operator</info> fun <info>minus</info>(<info>other</info>: kotlin.time.<info>ComparableTimeMark</info>): kotlin.time.<info>Duration</info> { /* compiled code */ }
+
+            <info>public</info> <info>open</info> <info>operator</info> fun <info>minus</info>(<info>duration</info>: kotlin.time.<info>Duration</info>): kotlin.time.<info>TimeSource</info>.<info>Monotonic</info>.<info>ValueTimeMark</info> { /* compiled code */ }
+
+            <info>public</info> <info>final</info> <info>operator</info> fun <info>minus</info>(<info>other</info>: kotlin.time.<info>TimeSource</info>.<info>Monotonic</info>.<info>ValueTimeMark</info>): kotlin.time.<info>Duration</info> { /* compiled code */ }
+
+            <info>public</info> <info>open</info> <info>operator</info> fun <info>plus</info>(<info>duration</info>: kotlin.time.<info>Duration</info>): kotlin.time.<info>TimeSource</info>.<info>Monotonic</info>.<info>ValueTimeMark</info> { /* compiled code */ }
+
+            <info>public</info> <info>open</info> fun <info>toString</info>(): kotlin.<info>String</info> { /* compiled code */ }
+        }
+    }
+
+    <info>@kotlin.SinceKotlin</info> <info>@kotlin.WasExperimental</info> <info>public</info> interface <info>WithComparableMarks</info> : kotlin.time.<info>TimeSource</info> {
+        <info>public</info> <info>abstract</info> fun <info>markNow</info>(): kotlin.time.<info>ComparableTimeMark</info>
+    }
+}
+
