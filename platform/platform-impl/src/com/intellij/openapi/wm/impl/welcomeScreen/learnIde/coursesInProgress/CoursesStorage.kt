@@ -20,7 +20,7 @@ open class CourseInfo {
   var description: String = ""
   var name: String = ""
   // remove when implemented properly in JBA and IFT plugins
-  var icon: Icon? = AllIcons.Welcome.LearnTab.JetBrainsAcademy
+  open var icon: Icon? = AllIcons.Welcome.LearnTab.JetBrainsAcademy
   var location: String = ""
   var id: Int = -1
 }
