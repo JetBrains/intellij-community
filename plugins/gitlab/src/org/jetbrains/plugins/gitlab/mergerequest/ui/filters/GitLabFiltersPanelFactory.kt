@@ -103,7 +103,7 @@ internal class GitLabFiltersPanelFactory(
     valuePresenter = { participant -> participant.fullname },
     chooseValue = { point ->
       val selectedAuthor = showParticipantChooser(point, participantsLoader = {
-        vm.getMergeRequestMembers().map { member -> member.user }
+        vm.getMergeRequestMembers()
       })
       selectedAuthor?.let { user -> participantCreator(user) }
     })

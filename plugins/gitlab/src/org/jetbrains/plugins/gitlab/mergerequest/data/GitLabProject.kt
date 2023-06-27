@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
+import com.intellij.collaboration.api.page.ApiPageUtil
+import com.intellij.collaboration.api.page.foldToList
 import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
@@ -8,10 +10,12 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabMemberDTO
-import org.jetbrains.plugins.gitlab.api.request.getAllProjectMembers
+import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.api.request.getProjectUsers
+import org.jetbrains.plugins.gitlab.api.request.getProjectUsersURI
 import org.jetbrains.plugins.gitlab.api.request.loadAllProjectLabels
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
@@ -21,7 +25,7 @@ interface GitLabProject {
   val mergeRequests: GitLabProjectMergeRequestsStore
 
   suspend fun getLabels(): List<GitLabLabelDTO>
-  suspend fun getMembers(): List<GitLabMemberDTO>
+  suspend fun getMembers(): List<GitLabUserDTO>
 }
 
 class GitLabLazyProject(
@@ -43,10 +47,12 @@ class GitLabLazyProject(
   }
 
   private val allMembers = cs.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
-    api.graphQL.getAllProjectMembers(projectMapping.repository)
+    ApiPageUtil.createPagesFlowByLinkHeader(getProjectUsersURI(projectMapping.repository)) {
+      api.rest.getProjectUsers(projectMapping.repository.serverPath, it)
+    }.map { it.body() }.foldToList(GitLabUserDTO::fromRestDTO)
   }
 
   override suspend fun getLabels(): List<GitLabLabelDTO> = allLabels.await()
 
-  override suspend fun getMembers(): List<GitLabMemberDTO> = allMembers.await()
+  override suspend fun getMembers(): List<GitLabUserDTO> = allMembers.await()
 }

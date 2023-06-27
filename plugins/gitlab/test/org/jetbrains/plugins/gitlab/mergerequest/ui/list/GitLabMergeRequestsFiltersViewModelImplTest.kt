@@ -178,27 +178,6 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
     )
   )
 
-  @Test
-  fun `available participants for merge request filters`() = runTest(UnconfinedTestDispatcher()) {
-    val cs = childScope()
-
-    val guest = GitLabMemberDTO(id = "guest", mock(), accessLevel = GitLabAccessLevel.GUEST)
-    val reporter = GitLabMemberDTO(id = "reporter", mock(), accessLevel = GitLabAccessLevel.REPORTER)
-    val developer = GitLabMemberDTO(id = "developer", mock(), accessLevel = GitLabAccessLevel.DEVELOPER)
-    val maintainer = GitLabMemberDTO(id = "maintainer", mock(), accessLevel = GitLabAccessLevel.MAINTAINER)
-    val owner = GitLabMemberDTO(id = "owner", mock(), accessLevel = GitLabAccessLevel.OWNER)
-    val members = listOf(guest, reporter, developer, maintainer, owner)
-
-    val filterVm = GitLabMergeRequestsFiltersViewModelImpl(scope = cs, historyModel = mock(), currentUser = mockedUser,
-                                                           avatarIconsProvider = mock(),
-                                                           projectData = mock {
-                                                             on(it.getMembers()).thenReturn(members)
-                                                           })
-    assertEquals(filterVm.getMergeRequestMembers(), members - guest)
-
-    cs.cancel()
-  }
-
   private fun checkSelectedFilter(selectedFilter: GitLabMergeRequestsFiltersValue) = runTest(UnconfinedTestDispatcher()) {
     val cs = childScope()
     val filterVm = GitLabMergeRequestsFiltersViewModelImpl(scope = cs, historyModel = mock(), currentUser = mockedUser,
