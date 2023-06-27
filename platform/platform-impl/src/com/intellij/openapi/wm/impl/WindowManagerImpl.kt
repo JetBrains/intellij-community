@@ -302,10 +302,11 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
 
       if (frameReuseEnabled && frameToReuse.get() == null && project !is LightEditCompatible) {
         releasedFrameHelper.storeStateForReuse()
-        frameToReuse.set(releasedFrameHelper.frame)
-        releasedFrameHelper.frame.doSetRootPane(null)
-        releasedFrameHelper.frame.setFrameHelper(null)
-        if (JOptionPane.getRootFrame() === releasedFrameHelper.frame) {
+        val frame = releasedFrameHelper.frame
+        frameToReuse.set(frame)
+        frame.doSetRootPane(null)
+        frame.setFrameHelper(null)
+        if (JOptionPane.getRootFrame() === frame) {
           JOptionPane.setRootFrame(null)
         }
       }
@@ -318,7 +319,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
 
   override fun isFrameReused(helper: ProjectFrameHelper): Boolean = helper.frame === frameToReuse.get()
 
-  fun disposeRootFrame() {
+  internal fun disposeRootFrame() {
     frameToReuse.getAndSet(null)?.doDispose()
   }
 

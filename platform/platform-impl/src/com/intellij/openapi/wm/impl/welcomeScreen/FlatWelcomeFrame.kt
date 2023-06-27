@@ -472,7 +472,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
 
 @Suppress("DEPRECATION")
 private class WelcomeFrameMenuBar(frame: JFrame) : IdeMenuBar(ApplicationManager.getApplication().coroutineScope.childScope(), frame) {
-  override suspend fun getMainMenuActionGroupAsync(rootPane: JRootPane?): ActionGroup {
+  override suspend fun getMainMenuActionGroupAsync(): ActionGroup {
     val manager = service<ActionManager>()
     return DefaultActionGroup(manager.getAction(IdeActions.GROUP_FILE), manager.getAction(IdeActions.GROUP_HELP_MENU))
   }

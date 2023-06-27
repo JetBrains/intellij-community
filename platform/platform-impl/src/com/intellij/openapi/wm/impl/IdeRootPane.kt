@@ -424,13 +424,21 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     if (helper is DecoratedHelper) {
       val customFrameTitlePane = helper.customFrameTitlePane
       // The menu bar is decorated, we update it indirectly.
-      customFrameTitlePane.updateMenuActions(false)
-      customFrameTitlePane.getComponent().repaint()
+      coroutineScope.launch {
+        customFrameTitlePane.updateMenuActions(forceRebuild = false)
+        withContext(Dispatchers.EDT) {
+          customFrameTitlePane.getComponent().repaint()
+        }
+      }
     }
     else if (menuBar != null) {
       // no decorated menu bar, but there is a regular one, update it directly
-      (menuBar as IdeMenuBar).updateMenuActions(false)
-      menuBar.repaint()
+      coroutineScope.launch {
+        (menuBar as ActionAwareIdeMenuBar).updateMenuActions(forceRebuild = false)
+        withContext(Dispatchers.EDT) {
+          menuBar.repaint()
+        }
+      }
     }
   }
 

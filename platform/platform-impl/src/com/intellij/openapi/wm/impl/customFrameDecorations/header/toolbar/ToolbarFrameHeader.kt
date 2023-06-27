@@ -202,7 +202,7 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
     ideMenuHelper.uninstallListeners()
   }
 
-  override fun updateMenuActions(forceRebuild: Boolean) {
+  override suspend fun updateMenuActions(forceRebuild: Boolean) {
     myMenuBar.updateMenuActions(forceRebuild)
     expandableMenu.ideMenu.updateMenuActions(forceRebuild)
   }

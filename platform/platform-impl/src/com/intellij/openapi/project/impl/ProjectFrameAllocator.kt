@@ -225,17 +225,14 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
                                              selfie = readProjectSelfie(projectWorkspaceId = options.projectWorkspaceId,
                                                                         device = { frame.graphicsConfiguration.device })
       )
-      val frameHelper = withContext(Dispatchers.EDT) {
-        ProjectFrameHelper(frame = frame, loadingState = loadingState)
-      }
+      withContext(Dispatchers.EDT) {
+        val frameHelper = ProjectFrameHelper(frame = frame, loadingState = loadingState)
 
-      completeFrameAndCloseOnCancel(frameHelper, deferredProjectFrameHelper) {
-        if (options.forceOpenInNewFrame) {
-          updateFullScreenState(frameHelper, getFrameInfo())
-        }
+        completeFrameAndCloseOnCancel(frameHelper, deferredProjectFrameHelper) {
+          if (options.forceOpenInNewFrame) {
+            updateFullScreenState(frameHelper, getFrameInfo())
+          }
 
-        // in a separate EDT task, as EDT is used for write actions and frame initialization, should not slow down project opening
-        withContext(Dispatchers.EDT) {
           frameHelper.init()
           frameHelper.setInitBounds(getFrameInfo()?.bounds)
         }

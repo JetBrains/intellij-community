@@ -16,6 +16,7 @@ import com.intellij.ui.mac.foundation.MacUtil
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.JBInsets
+import kotlinx.coroutines.isActive
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Graphics
@@ -68,7 +69,13 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
   }
 
   internal fun doSetRootPane(rootPane: JRootPane?) {
+    val oldRootPane = this.rootPane
     super.setRootPane(rootPane)
+
+    if (oldRootPane is IdeRootPane) {
+      check(!oldRootPane.coroutineScope.isActive)
+    }
+
     if (rootPane != null && isVisible && SystemInfoRt.isMac) {
       MacUtil.updateRootPane(this, rootPane)
     }

@@ -1,12 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
+import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.impl.status.ClockPanel
 import com.intellij.ui.ColorUtil
 import com.intellij.util.ui.Animator
 import com.intellij.util.ui.MouseEventAdapter
 import com.intellij.util.ui.TimerUtil
+import com.intellij.util.ui.UIUtil
 import java.awt.*
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
@@ -42,6 +44,44 @@ internal class FloatingMenuBarFlavor(private val menuBar: IdeMenuBar) : IdeMenuF
 
     menuBar.addMouseListener(MyMouseListener())
     menuBar.addPropertyChangeListener(IdeFrameDecorator.FULL_SCREEN) { updateState() }
+
+    IdeEventQueue.getInstance().addDispatcher(dispatcher = { event ->
+      if (state != IdeMenuBarState.EXPANDED && event is MouseEvent) {
+        considerRestartingAnimator(event)
+      }
+      false
+    }, scope = menuBar.coroutineScope)
+  }
+
+  private fun considerRestartingAnimator(mouseEvent: MouseEvent) {
+    var mouseInside = menuBar.activated || UIUtil.isDescendingFrom(findActualComponent(mouseEvent), menuBar)
+    if (mouseEvent.id == MouseEvent.MOUSE_EXITED && mouseEvent.source === SwingUtilities.windowForComponent(menuBar) && !menuBar.activated) {
+      mouseInside = false
+    }
+    if (mouseInside && state == IdeMenuBarState.COLLAPSED) {
+      state = IdeMenuBarState.EXPANDING
+      restartAnimator()
+    }
+    else if (!mouseInside && state != IdeMenuBarState.COLLAPSING && state != IdeMenuBarState.COLLAPSED) {
+      state = IdeMenuBarState.COLLAPSING
+      restartAnimator()
+    }
+  }
+
+  private fun findActualComponent(mouseEvent: MouseEvent): Component? {
+    var component: Component? = mouseEvent.component ?: return null
+    val deepestComponent = if (state != IdeMenuBarState.EXPANDED &&
+                               !state.isInProgress &&
+                               menuBar.contains(SwingUtilities.convertPoint(component, mouseEvent.point, menuBar))) {
+      menuBar
+    }
+    else {
+      SwingUtilities.getDeepestComponentAt(mouseEvent.component, mouseEvent.x, mouseEvent.y)
+    }
+    if (deepestComponent != null) {
+      component = deepestComponent
+    }
+    return component
   }
 
   private inner class MyActionListener : ActionListener {

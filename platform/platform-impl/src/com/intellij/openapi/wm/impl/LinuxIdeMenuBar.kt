@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.util.Disposer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import javax.swing.JFrame
@@ -12,12 +13,13 @@ import javax.swing.JFrame
 internal class LinuxIdeMenuBar(coroutineScope: CoroutineScope, frame: JFrame) : IdeMenuBar(coroutineScope, frame) {
   companion object {
     fun doBindAppMenuOfParent(frame: JFrame, parentFrame: JFrame) {
+      val globalMenu = (parentFrame.jMenuBar as? LinuxIdeMenuBar)?.globalMenu ?: return
+
       if (GlobalMenuLinux.isPresented()) {
         // all children of IdeFrame mustn't show swing-menubar
         frame.jMenuBar?.isVisible = false
       }
 
-      val globalMenu = (parentFrame.jMenuBar as? LinuxIdeMenuBar)?.globalMenu ?: return
       frame.addWindowListener(object : WindowAdapter() {
         override fun windowClosing(e: WindowEvent?) {
           globalMenu.unbindWindow(frame)
@@ -40,7 +42,7 @@ internal class LinuxIdeMenuBar(coroutineScope: CoroutineScope, frame: JFrame) : 
   }
 
   override fun doInstallAppMenuIfNeeded(frame: JFrame) {
-    if (!GlobalMenuLinux.isAvailable() || IdeRootPane.isMenuButtonInToolbar) {
+    if (IdeRootPane.isMenuButtonInToolbar || !GlobalMenuLinux.isAvailable()) {
       return
     }
 
@@ -50,7 +52,9 @@ internal class LinuxIdeMenuBar(coroutineScope: CoroutineScope, frame: JFrame) : 
       coroutineScope.coroutineContext.job.invokeOnCompletion {
         Disposer.dispose(globalMenuLinux)
       }
-      scheduleUpdateMenuActionsWithForceRebuild()
+      coroutineScope.launch {
+        updateMenuActions(forceRebuild = true)
+      }
     }
   }
 
