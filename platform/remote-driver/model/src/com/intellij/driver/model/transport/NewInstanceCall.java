@@ -10,12 +10,13 @@ public final class NewInstanceCall extends RemoteCall {
   private static final long serialVersionUID = 1L;
 
   public NewInstanceCall(int sessionId,
+                         String timedSpan,
                          String pluginId,
                          OnDispatcher dispatcher,
                          LockSemantics lockSemantics,
                          String className,
                          Object[] args) {
-    super(sessionId, pluginId, dispatcher, lockSemantics, className, "new", args);
+    super(sessionId, timedSpan, pluginId, dispatcher, lockSemantics, className, "new", args);
   }
 
   @Override

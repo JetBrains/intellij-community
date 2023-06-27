@@ -12,6 +12,7 @@ public final class RefCall extends RemoteCall {
   private final Ref ref;
 
   public RefCall(int sessionId,
+                 String timedSpan,
                  String pluginId,
                  OnDispatcher dispatcher,
                  LockSemantics lockSemantics,
@@ -19,7 +20,7 @@ public final class RefCall extends RemoteCall {
                  String methodName,
                  Object[] args,
                  Ref ref) {
-    super(sessionId, pluginId, dispatcher, lockSemantics, className, methodName, args);
+    super(sessionId, timedSpan, pluginId, dispatcher, lockSemantics, className, methodName, args);
 
     this.ref = ref;
   }

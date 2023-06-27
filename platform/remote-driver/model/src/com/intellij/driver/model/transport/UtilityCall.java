@@ -10,13 +10,14 @@ public final class UtilityCall extends RemoteCall {
   private static final long serialVersionUID = 1L;
 
   public UtilityCall(int sessionId,
+                     String timedSpan,
                      String pluginId,
                      OnDispatcher dispatcher,
                      LockSemantics lockSemantics,
                      String className,
                      String methodName,
                      Object[] args) {
-    super(sessionId, pluginId, dispatcher, lockSemantics, className, methodName, args);
+    super(sessionId, timedSpan, pluginId, dispatcher, lockSemantics, className, methodName, args);
   }
 
   @Override

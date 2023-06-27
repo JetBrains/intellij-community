@@ -13,6 +13,7 @@ public abstract class RemoteCall implements Serializable {
 
   private final int sessionId;
   private final String pluginId;
+  private final String timedSpan;
 
   private final OnDispatcher dispatcher;
   private final LockSemantics lockSemantics;
@@ -21,6 +22,7 @@ public abstract class RemoteCall implements Serializable {
   private final Object[] args;
 
   public RemoteCall(int sessionId,
+                    String timedSpan,
                     String pluginId,
                     OnDispatcher dispatcher,
                     LockSemantics lockSemantics,
@@ -29,6 +31,7 @@ public abstract class RemoteCall implements Serializable {
                     Object[] args) {
     this.sessionId = sessionId;
     this.pluginId = pluginId;
+    this.timedSpan = timedSpan;
     this.dispatcher = dispatcher;
     this.lockSemantics = lockSemantics;
     this.className = className;
@@ -62,6 +65,10 @@ public abstract class RemoteCall implements Serializable {
 
   public String getPluginId() {
     return pluginId;
+  }
+
+  public String getTimedSpan() {
+    return timedSpan;
   }
 
   @Contract("null -> true")

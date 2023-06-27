@@ -15,6 +15,12 @@ annotation class Remote(
   val plugin: String = ""
 )
 
+@Retention(AnnotationRetention.RUNTIME)
+@Target(AnnotationTarget.FUNCTION)
+annotation class Timed(
+  val value: String
+)
+
 interface ProjectRef
 
 interface Driver : AutoCloseable {

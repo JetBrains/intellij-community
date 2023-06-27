@@ -13,6 +13,7 @@ public final class ServiceCall extends RemoteCall {
   private final Ref projectRef;
 
   public ServiceCall(int sessionId,
+                     String timedSpan,
                      String pluginId,
                      OnDispatcher dispatcher,
                      LockSemantics lockSemantics,
@@ -20,7 +21,7 @@ public final class ServiceCall extends RemoteCall {
                      String methodName,
                      Object[] args,
                      @Nullable Ref projectRef) {
-    super(sessionId, pluginId, dispatcher, lockSemantics, className, methodName, args);
+    super(sessionId, timedSpan, pluginId, dispatcher, lockSemantics, className, methodName, args);
     this.projectRef = projectRef;
   }
 

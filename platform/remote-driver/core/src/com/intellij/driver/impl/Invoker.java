@@ -1,9 +1,7 @@
 package com.intellij.driver.impl;
 
-import com.intellij.driver.model.LockSemantics;
 import com.intellij.driver.model.OnDispatcher;
 import com.intellij.driver.model.ProductVersion;
-import com.intellij.driver.model.transport.Ref;
 import com.intellij.driver.model.transport.*;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -14,16 +12,22 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BuildNumber;
+import com.intellij.platform.diagnostic.telemetry.IJTracer;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.SpanBuilder;
+import io.opentelemetry.context.Context;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 import static com.intellij.driver.model.transport.RemoteCall.isPassByValue;
 
@@ -35,6 +39,14 @@ public class Invoker implements InvokerMBean {
 
   private final Map<Integer, WeakReference<Object>> adhocReferenceMap = new ConcurrentHashMap<>();
   static final AtomicInteger REF_SEQUENCE = new AtomicInteger(1);
+
+  private final IJTracer tracer;
+  private final Supplier<? extends Context> timedContextSupplier;
+
+  public Invoker(@NotNull IJTracer tracer, @NotNull Supplier<? extends Context> timedContextSupplier) {
+    this.timedContextSupplier = timedContextSupplier;
+    this.tracer = tracer;
+  }
 
   @Override
   public ProductVersion getProductVersion() {
@@ -58,7 +70,7 @@ public class Invoker implements InvokerMBean {
       Class<?> targetClass = getTargetClass(call);
       Constructor<?> constructor = getConstructor(call, targetClass);
 
-      result = withSemantics(() -> constructor.newInstance(args), call.getLockSemantics());
+      result = withSemantics(call, () -> constructor.newInstance(args));
     }
     else {
       CallTarget callTarget = getCallTarget(call);
@@ -67,13 +79,13 @@ public class Invoker implements InvokerMBean {
       if (call.getDispatcher() == OnDispatcher.EDT) {
         Object[] res = new Object[1];
         ApplicationManager.getApplication().invokeAndWait(() -> {
-          res[0] = withSemantics(() -> callTarget.targetMethod().invoke(instance, args), call.getLockSemantics());
+          res[0] = withSemantics(call, () -> invokeMethod(callTarget, instance, args));
         });
         result = res[0];
       }
       else {
         // todo handle OnDispatcher: Default or IO
-        result = withSemantics(() -> callTarget.targetMethod().invoke(instance, args), call.getLockSemantics());
+        result = withSemantics(call, () -> invokeMethod(callTarget, instance, args));
       }
     }
 
@@ -133,27 +145,50 @@ public class Invoker implements InvokerMBean {
     }
   }
 
-  private static @Nullable Object withSemantics(@NotNull Callable<?> supplier, @NotNull LockSemantics semantics) {
-    switch (semantics) {
+  private static Object invokeMethod(CallTarget callTarget, Object instance, Object[] args)
+    throws IllegalAccessException, InvocationTargetException {
+
+    return callTarget.targetMethod().invoke(instance, args);
+  }
+
+  private @Nullable Object withSemantics(@NotNull RemoteCall call, @NotNull Callable<?> supplier) {
+    switch (call.getLockSemantics()) {
       case NO_LOCK -> {
-        return call(supplier);
+        return call(call, supplier);
       }
       case READ_ACTION -> {
-        return ReadAction.compute(() -> call(supplier));
+        return ReadAction.compute(() -> call(call, supplier));
       }
       case WRITE_ACTION -> {
-        return WriteAction.compute(() -> call(supplier));
+        return WriteAction.compute(() -> call(call, supplier));
       }
-      default -> throw new UnsupportedOperationException("Unsupported LockSemantics " + semantics);
+      default -> throw new UnsupportedOperationException("Unsupported LockSemantics " + call.getLockSemantics());
     }
   }
 
-  private static @Nullable Object call(@NotNull Callable<?> supplier) {
-    try {
-      return supplier.call();
+  private @Nullable Object call(@NotNull RemoteCall call, @NotNull Callable<?> supplier) {
+    if (call.getTimedSpan() == null || call.getTimedSpan().isEmpty()) {
+      try {
+        return supplier.call();
+      }
+      catch (Exception e) {
+        throw new RuntimeException("Exception during call", e);
+      }
     }
-    catch (Exception e) {
-      throw new RuntimeException("Exception during call", e);
+    else {
+      SpanBuilder spanBuilder = tracer.spanBuilder(call.getTimedSpan())
+        .setParent(timedContextSupplier.get());
+
+      Span span = spanBuilder.startSpan();
+      try {
+        return supplier.call();
+      }
+      catch (Exception e) {
+        throw new RuntimeException("Exception during call", e);
+      }
+      finally {
+        span.end();
+      }
     }
   }
 

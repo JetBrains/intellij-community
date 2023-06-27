@@ -3,10 +3,10 @@ package com.intellij.driver.client.impl
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.ProjectRef
 import com.intellij.driver.client.Remote
+import com.intellij.driver.client.Timed
 import com.intellij.driver.model.LockSemantics
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.model.ProductVersion
-import com.intellij.driver.model.transport.Ref
 import com.intellij.driver.model.transport.*
 import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
@@ -63,6 +63,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
     val (sessionId, dispatcher, semantics) = sessionHolder.get() ?: NO_SESSION
     val call = NewInstanceCall(
       sessionId,
+      null,
       remote.plugin,
       dispatcher,
       semantics,
@@ -143,6 +144,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
           val (sessionId, dispatcher, semantics) = sessionHolder.get() ?: NO_SESSION
           val call = ServiceCall(
             sessionId,
+            findTimedMeta(method)?.value,
             remote.plugin,
             dispatcher,
             semantics,
@@ -171,6 +173,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
           val (sessionId, dispatcher, semantics) = sessionHolder.get() ?: NO_SESSION
           val call = ServiceCall(
             sessionId,
+            findTimedMeta(method)?.value,
             remote.plugin,
             dispatcher,
             semantics,
@@ -199,7 +202,8 @@ internal class DriverImpl(host: JmxHost?) : Driver {
           val (sessionId, dispatcher, semantics) = sessionHolder.get() ?: NO_SESSION
           val call = UtilityCall(
             sessionId,
-            null,
+            findTimedMeta(method)?.value,
+            remote.plugin,
             dispatcher,
             semantics,
             remote.value,
@@ -228,6 +232,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
           val (sessionId, dispatcher, semantics) = sessionHolder.get() ?: NO_SESSION
           val call = RefCall(
             sessionId,
+            findTimedMeta(method)?.value,
             pluginId ?: remote.plugin,
             dispatcher,
             semantics,
@@ -277,6 +282,12 @@ internal class DriverImpl(host: JmxHost?) : Driver {
   override fun <T> withReadAction(dispatcher: OnDispatcher, code: Driver.() -> T): T {
     return withContext(dispatcher, LockSemantics.READ_ACTION, code)
   }
+}
+
+private fun findTimedMeta(method: Method): Timed? {
+  return method.annotations
+    .filterIsInstance<Timed>()
+    .firstOrNull()
 }
 
 private fun findRemoteMeta(clazz: Class<*>): Remote? {
