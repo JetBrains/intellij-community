@@ -360,17 +360,6 @@ internal class RemoveRedundantVisibilityModifierProcessing : InspectionLikeProce
     }
 }
 
-internal class RemoveExplicitOpenInInterfaceProcessing : InspectionLikeProcessingForElement<KtClass>(KtClass::class.java) {
-    override fun isApplicableTo(element: KtClass, settings: ConverterSettings?): Boolean =
-        element.isValid
-                && element.isInterface()
-                && element.hasModifier(KtTokens.OPEN_KEYWORD)
-
-    override fun apply(element: KtClass) {
-        element.removeModifier(KtTokens.OPEN_KEYWORD)
-    }
-}
-
 internal class MoveGetterAndSetterAnnotationsToPropertyProcessing : InspectionLikeProcessingForElement<KtProperty>(KtProperty::class.java) {
     override fun isApplicableTo(element: KtProperty, settings: ConverterSettings?): Boolean =
         element.accessors.isNotEmpty()

@@ -7,6 +7,8 @@ import org.jetbrains.kotlin.nj2k.printing.JKPrinterBase.ParenthesisKind
 import org.jetbrains.kotlin.nj2k.symbols.getDisplayFqName
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.*
+import org.jetbrains.kotlin.nj2k.tree.Modality.*
+import org.jetbrains.kotlin.nj2k.tree.OtherModifier.OVERRIDE
 import org.jetbrains.kotlin.nj2k.tree.Visibility.PUBLIC
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitorWithCommentsPrinting
 import org.jetbrains.kotlin.nj2k.types.JKContextType
@@ -61,20 +63,25 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         private fun renderModifiersList(modifiersListOwner: JKModifiersListOwner) {
+            val isInterface = modifiersListOwner is JKClass && modifiersListOwner.classKind == INTERFACE
             val hasOverrideModifier = modifiersListOwner
                 .safeAs<JKOtherModifiersOwner>()
-                ?.hasOtherModifier(OtherModifier.OVERRIDE) == true
+                ?.hasOtherModifier(OVERRIDE) == true
+
+            fun Modifier.isRedundant(): Boolean = when {
+                this == OPEN && isInterface -> true
+                (this == FINAL || this == PUBLIC) && !hasOverrideModifier -> true
+                else -> false
+            }
+
             modifiersListOwner.forEachModifier { modifierElement ->
-                if (modifierElement.modifier == Modality.FINAL || modifierElement.modifier == PUBLIC) {
-                    if (hasOverrideModifier) {
-                        modifierElement.accept(this)
-                    } else {
-                        printLeftNonCodeElements(modifierElement)
-                        printRightNonCodeElements(modifierElement)
-                    }
+                if (modifierElement.modifier.isRedundant()) {
+                    printLeftNonCodeElements(modifierElement)
+                    printRightNonCodeElements(modifierElement)
                 } else {
                     modifierElement.accept(this)
                 }
+
                 printer.print(" ")
             }
         }
@@ -84,7 +91,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         override fun visitModifierElementRaw(modifierElement: JKModifierElement) {
-            if (modifierElement.modifier != Modality.FINAL) {
+            if (modifierElement.modifier != FINAL) {
                 printer.print(modifierElement.modifier.text)
             }
         }
