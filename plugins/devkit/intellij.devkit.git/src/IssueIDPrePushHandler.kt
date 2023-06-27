@@ -21,6 +21,7 @@ abstract class IssueIDPrePushHandler : PrePushHandler {
   abstract val paths: List<String>
   open val pathsToIgnore = listOf("/test/", "/testData/")
   abstract val commitMessageRegex: Regex
+  open val ignorePattern: Regex = Regex("(?!.*)")
 
   abstract fun isAvailable(): Boolean
 
@@ -34,7 +35,7 @@ abstract class IssueIDPrePushHandler : PrePushHandler {
         && pathsToIgnore.none { siPath.contains(it) }
       }
 
-  open fun commitMessageIsCorrect(message: String): Boolean = message.matches(commitMessageRegex)
+  fun commitMessageIsCorrect(message: String): Boolean = message.matches(commitMessageRegex) || message.matches(ignorePattern)
 
   companion object {
     private val fileExtensionsNotToTrack = setOf("iml", "md")

@@ -15,13 +15,10 @@ class KotlinPluginPrePushHandler : IssueIDPrePushHandler() {
 }
 
 class IntelliJPrePushHandler : IssueIDPrePushHandler() {
-  private val ignorePattern = Regex("(tests|cleanup):.*")
   override val paths = listOf("community", "platform")
   override val commitMessageRegex = Regex(".*[A-Z]+-\\d+.*", RegexOption.DOT_MATCHES_ALL)
+  override val ignorePattern = Regex("(tests|cleanup):.*")
+
   override fun isAvailable() = Registry.`is`("intellij.commit.message.validation.enabled", true)
   override fun getPresentableName() = DevKitGitBundle.message("push.commit.handler.idea.name")
-
-  override fun commitMessageIsCorrect(message: String): Boolean {
-    return super.commitMessageIsCorrect(message) || message.matches(ignorePattern)
-  }
 }
