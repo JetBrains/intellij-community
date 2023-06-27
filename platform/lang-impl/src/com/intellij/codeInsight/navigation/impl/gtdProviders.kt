@@ -74,7 +74,7 @@ private class GTDProviderData(
       0 -> null
       1 -> {
         targetElements.single().gtdTargetNavigatable()?.navigationRequest()?.let { request ->
-          SingleTarget(request, navigationProvider)
+          SingleTarget({ request }, navigationProvider)
         }
       }
       else -> {

@@ -67,7 +67,7 @@ internal object GotoDeclarationOnlyHandler2 : CodeInsightActionHandler {
         actionResult.navigationProvider?.let {
           GTDUCollector.recordNavigated(eventData, it.javaClass)
         }
-        navigateRequest(project, actionResult.request)
+        navigateRequestLazy(project, actionResult.requestor)
       }
       is MultipleTargets -> {
         val popup = createTargetPopup(
