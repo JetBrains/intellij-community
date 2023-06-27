@@ -10,7 +10,6 @@ import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -69,10 +68,6 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
   protected abstract fun createGoToChangeAction(): AnAction?
 
   private inner class ModelListener : CombinedDiffModelListener {
-    override fun onProgressBar(visible: Boolean) {
-      runInEdt { if (visible) mainUi.startProgress() else mainUi.stopProgress() }
-    }
-
     override fun onModelReset() {
       Disposer.dispose(combinedViewer)
       combinedViewer = createCombinedViewer()

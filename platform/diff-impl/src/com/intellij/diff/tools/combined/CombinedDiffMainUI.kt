@@ -47,7 +47,6 @@ import java.awt.Dimension
 import java.lang.Boolean.getBoolean
 import javax.swing.JComponent
 import javax.swing.JPanel
-import javax.swing.JProgressBar
 import javax.swing.SwingUtilities
 import kotlin.math.max
 
@@ -73,7 +72,6 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
   private val rightToolbarWrapper: Wrapper
   private val diffInfoWrapper: Wrapper
   private val toolbarStatusPanel = Wrapper()
-  private val progressBar = MyProgressBar()
 
   private val diffToolChooser: MyDiffToolChooser
 
@@ -156,12 +154,6 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
 
   fun getComponent(): JComponent = mainPanel
 
-  @RequiresEdt
-  fun startProgress() = progressBar.startProgress()
-
-  @RequiresEdt
-  fun stopProgress() = progressBar.stopProgress()
-
   fun isUnified() = diffToolChooser.getActiveTool() is CombinedUnifiedDiffTool
 
   fun isFocusedInWindow(): Boolean {
@@ -237,7 +229,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
   }
 
   private fun buildTopPanel(): BorderLayoutPanel {
-    val rightPanel = JBUI.Panels.simplePanel(rightToolbarWrapper).addToLeft(progressBar)
+    val rightPanel = JBUI.Panels.simplePanel(rightToolbarWrapper)
     val topPanel = JBUI.Panels.simplePanel(diffInfoWrapper).addToLeft(leftToolbarWrapper).addToRight(rightPanel)
     GuiUtils.installVisibilityReferent(topPanel, leftToolbar.component)
     GuiUtils.installVisibilityReferent(topPanel, rightToolbar.component)
@@ -397,26 +389,6 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
     }
 
     override fun getProject() = context.project
-  }
-
-  private class MyProgressBar : JProgressBar() {
-    private var progressCount = 0
-
-    init {
-      isIndeterminate = true
-      isVisible = false
-    }
-
-    fun startProgress() {
-      progressCount++
-      isVisible = true
-    }
-
-    fun stopProgress() {
-      progressCount--
-      assert(progressCount >= 0) { "Progress count $progressCount cannot be negative" }
-      if (progressCount == 0) isVisible = false
-    }
   }
 
   companion object {
