@@ -191,7 +191,7 @@ public abstract class Compressor implements Closeable {
   /**
    * Filtering entries being added to the archive.
    * Please note that the second parameter of a filter ({@code Path}) <b>might be {@code null}</b> when it is applied
-   * to an entry not present on a disk - e.g. via {@link #addFile(String, byte[])}.
+   * to an entry not present on a disk - e.g., via {@link #addFile(String, byte[])}.
    */
   public Compressor filter(@Nullable BiPredicate<? super String, ? super @Nullable Path> filter) {
     myFilter = filter;
@@ -264,8 +264,8 @@ public abstract class Compressor implements Closeable {
   }
 
   public final void addDirectory(@NotNull String prefix, @NotNull Path directory, long timestampInMillis) throws IOException {
-    String entryName = prefix.isEmpty() ? "" : entryName(prefix);
-    addRecursively(entryName, directory, timestampInMillis);
+    prefix = prefix.isEmpty() ? "" : entryName(prefix);
+    addRecursively(prefix, directory, timestampInMillis);
   }
 
   //<editor-fold desc="Internal interface">
