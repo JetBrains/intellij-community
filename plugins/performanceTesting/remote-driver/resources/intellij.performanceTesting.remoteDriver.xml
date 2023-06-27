@@ -1,0 +1,5 @@
+<idea-plugin package="com.jetbrains.performancePlugin.remotedriver">
+  <extensions defaultExtensionNs="com.intellij">
+    <httpRequestHandler implementation="com.jetbrains.performancePlugin.remotedriver.webservice.UiHierarchyWebService"/>
+  </extensions>
+</idea-plugin>

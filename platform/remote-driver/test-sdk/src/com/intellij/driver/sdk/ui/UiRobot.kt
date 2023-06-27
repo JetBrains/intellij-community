@@ -6,8 +6,8 @@ import com.intellij.driver.sdk.ui.remote.RobotService
 import org.intellij.lang.annotations.Language
 import java.time.Duration
 
+fun Driver.ui(): UiRobot = UiRobot(service(RobotService::class))
 
-fun Driver.ui() = UiRobot(service(RobotService::class))
 class UiRobot(private val remoteRobotService: RobotService) {
 
   // Searching

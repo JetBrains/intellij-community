@@ -1,18 +1,21 @@
 package com.jetbrains.performancePlugin.remotedriver.webservice
 
+import com.jetbrains.performancePlugin.remotedriver.dataextractor.TextToKeyCache
 import com.jetbrains.performancePlugin.remotedriver.webservice.routing.CantFindRouteException
+import com.jetbrains.performancePlugin.remotedriver.webservice.routing.Routing
 import com.jetbrains.performancePlugin.remotedriver.webservice.routing.StaticFile
 import com.jetbrains.performancePlugin.remotedriver.webservice.routing.route
-import com.jetbrains.performancePlugin.remotedriver.dataextractor.TextToKeyCache
 import com.jetbrains.performancePlugin.remotedriver.xpath.XpathDataModelCreator
 import com.jetbrains.performancePlugin.remotedriver.xpath.convertToHtml
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
-import org.jetbrains.ide.RestService
 import io.netty.handler.codec.http.*
+import org.jetbrains.ide.RestService
 import org.jetbrains.io.response
 
-class UiHierarchyWebService: RestService() {
+internal class UiHierarchyWebService : RestService() {
+  // todo under Registry flag
+
   override fun getServiceName(): String {
     return "remote-driver"
   }
@@ -21,7 +24,7 @@ class UiHierarchyWebService: RestService() {
     return method in listOf(HttpMethod.GET, HttpMethod.POST)
   }
 
-  private val routing = route("/${PREFIX}/${getServiceName()}") {
+  private val routing: Routing = route("/${PREFIX}/${getServiceName()}") {
     get("/") {
       hierarchy()
     }
@@ -32,6 +35,7 @@ class UiHierarchyWebService: RestService() {
     val doc = XpathDataModelCreator(TextToKeyCache).create(null)
     return doc.convertToHtml()
   }
+
   override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
     try {
       val response = when (val result = routing.handleRequest(urlDecoder, request, context)) {

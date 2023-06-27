@@ -88,6 +88,7 @@ public abstract class RemoteCall implements Serializable {
            || result instanceof Float
            || result instanceof LocalDate
            || result instanceof LocalDateTime
-           || result instanceof Duration;
+           || result instanceof Duration
+           || result instanceof PassByValue;
   }
 }

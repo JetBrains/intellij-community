@@ -2,8 +2,7 @@ package com.intellij.driver.sdk.ui.remote
 
 import com.intellij.driver.client.Remote
 
-
-@Remote("org.assertj.swing.core.Robot", plugin = "com.jetbrains.performancePlugin")
+@Remote("org.assertj.swing.core.Robot", plugin = REMOTE_ROBOT_MODULE_ID)
 interface Robot {
   fun moveMouse(component: Component)
   fun moveMouse(component: Component, point: Point)

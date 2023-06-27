@@ -10,6 +10,10 @@
       and gathering performance statistics.
       ]]></description>
 
+  <content>
+    <module name="intellij.performanceTesting.remoteDriver"/>
+  </content>
+
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
   </dependencies>
@@ -69,8 +73,6 @@
     <projectService overrides="true"
                     serviceInterface="com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService"
                     serviceImplementation="com.jetbrains.performancePlugin.ProjectInitializationDiagnosticServiceImpl"/>
-
-    <httpRequestHandler implementation="com.jetbrains.performancePlugin.remotedriver.webservice.UiHierarchyWebService"/>
   </extensions>
 
   <applicationListeners>

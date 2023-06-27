@@ -4,6 +4,8 @@ import com.intellij.driver.model.OnDispatcher;
 import com.intellij.driver.model.ProductVersion;
 import com.intellij.driver.model.transport.*;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
+import com.intellij.ide.plugins.PluginContentDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -16,6 +18,7 @@ import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanBuilder;
 import io.opentelemetry.context.Context;
+import kotlin.text.StringsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,12 +36,12 @@ import static com.intellij.driver.model.transport.RemoteCall.isPassByValue;
 
 public class Invoker implements InvokerMBean {
   public static final int NO_SESSION_ID = 0;
+  static final AtomicInteger REF_SEQUENCE = new AtomicInteger(1);
 
   private final Map<Integer, Session> sessions = new ConcurrentHashMap<>();
   private final AtomicInteger sessionIdSequence = new AtomicInteger(1);
 
   private final Map<Integer, WeakReference<Object>> adhocReferenceMap = new ConcurrentHashMap<>();
-  static final AtomicInteger REF_SEQUENCE = new AtomicInteger(1);
 
   private final IJTracer tracer;
   private final Supplier<? extends Context> timedContextSupplier;
@@ -74,7 +77,13 @@ public class Invoker implements InvokerMBean {
     }
     else {
       CallTarget callTarget = getCallTarget(call);
-      Object instance = findInstance(call, callTarget.clazz());
+
+      Object instance;
+      try {
+        instance = findInstance(call, callTarget.clazz());
+      } catch (Exception e) {
+        throw new RuntimeException("Unable to get instance for "+ call, e);
+      }
 
       if (call.getDispatcher() == OnDispatcher.EDT) {
         Object[] res = new Object[1];
@@ -236,6 +245,23 @@ public class Invoker implements InvokerMBean {
   private ClassLoader getClassLoader(RemoteCall call) {
     String pluginId = call.getPluginId();
     if (pluginId == null || pluginId.isEmpty()) return getClass().getClassLoader();
+
+    if (pluginId.contains("/")) {
+      String mainId = StringsKt.substringBefore(pluginId, "/", pluginId);
+      String moduleId = StringsKt.substringAfter(pluginId, "/", pluginId);
+
+      IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(PluginId.getId(mainId));
+      if (plugin == null) throw new IllegalStateException("No such plugin " + mainId);
+
+      List<PluginContentDescriptor.ModuleItem> modules = ((IdeaPluginDescriptorImpl)plugin).content.modules;
+      for (PluginContentDescriptor.ModuleItem module : modules) {
+        if (Objects.equals(moduleId, module.name)) {
+          return module.requireDescriptor().getPluginClassLoader();
+        }
+      }
+
+      throw new IllegalStateException("No such plugin module " + pluginId);
+    }
 
     IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(PluginId.getId(pluginId));
     if (plugin == null) throw new IllegalStateException("No such plugin " + pluginId);

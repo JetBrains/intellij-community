@@ -9,10 +9,13 @@ import com.jetbrains.performancePlugin.remotedriver.xpath.XpathSearcher
 import org.assertj.swing.core.Robot
 import java.awt.Component
 
+@Suppress("unused")
 @Service(Service.Level.APP)
 internal class RobotService {
-  val robot = SmoothRobot()
-  private val xpathSearcher = XpathSearcher(TextToKeyCache)
+  @Suppress("MemberVisibilityCanBePrivate")
+  val robot: SmoothRobot = SmoothRobot()
+
+  private val xpathSearcher: XpathSearcher = XpathSearcher(TextToKeyCache)
 
   fun findAll(xpath: String): List<RemoteComponent> {
     return xpathSearcher.findComponents(xpath, null).map {
@@ -20,6 +23,7 @@ internal class RobotService {
     }
   }
 }
+
 internal class RemoteComponent(val robot: Robot,
                                val foundByXpath: String,
                                private val xpathSearcher: XpathSearcher,
@@ -29,6 +33,7 @@ internal class RemoteComponent(val robot: Robot,
       RemoteComponent(robot, foundByXpath + xpath, xpathSearcher, it)
     }
   }
+
   fun findAllText(): List<TextData> {
     return TextParser.parseComponent(component, TextToKeyCache)
   }
