@@ -263,6 +263,11 @@ private suspend fun prepareProcessItemNodes(
 
       coroutineContext.ensureActive()
       currentItem = processItems[parentPid]
+      if (currentItem == null) {
+        logger.warn("Process PID $pid has a non-existent parent PID $parentPid")
+        topLevelNodes.add(treeElement)
+        break
+      }
     }
   }
 
