@@ -37,7 +37,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.getBinaryAndSourceModuleI
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.productionOrTestSourceModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
-import org.jetbrains.kotlin.idea.util.AbstractSingleFileModuleAfterFileEventListener
 import org.jetbrains.kotlin.idea.util.AbstractSingleFileModuleBeforeFileEventListener
 
 open class KotlinModuleStateModificationService(val project: Project) : Disposable {
@@ -60,39 +59,21 @@ open class KotlinModuleStateModificationService(val project: Project) : Disposab
     }
 
     /**
-     * Publishes a module state modification event for a script or not-under-content-root [KtModule] whose file has been moved.
+     * Publishes a module state modification event for a script or not-under-content-root [KtModule] whose file is being moved or deleted.
      *
-     * Even though the event is processed *after* the file has been moved, the [KtModule]s before and after the move are equal via their
-     * respective module infos, because:
+     * This listener processes events *before* the file is moved/deleted due to the following reasons:
      *
-     *  - In the case of `NotUnderContentRootModuleInfo`, the file pointer remains the same after the move.
-     *  - In the case of `ScriptModuleInfo`, the virtual file and script definition remain the same after the move.
+     *  1. Move: The file may be moved outside the project's content root. The listener cannot react to such files.
+     *  2. Deletion: Getting a PSI file (and in turn the PSI file's [KtModule]) for a virtual file which has been deleted is not feasible.
      *
-     * A global out-of-block modification event will be published by `FirIdeOutOfBlockPsiTreeChangePreprocessor` after a Kotlin file is
+     * A global out-of-block modification event will be published by `FirIdeOutOfBlockPsiTreeChangePreprocessor` when a Kotlin file is
      * moved, but we still need this listener to publish a module state modification event specifically.
      */
-    class SingleFileModuleMoveListener(private val project: Project) : AbstractSingleFileModuleAfterFileEventListener(project) {
-        override fun isRelevantEvent(event: VFileEvent, file: VirtualFile): Boolean = event is VFileMoveEvent
+    class SingleFileModuleModificationListener(private val project: Project) : AbstractSingleFileModuleBeforeFileEventListener(project) {
+        override fun isRelevantEvent(event: VFileEvent, file: VirtualFile): Boolean = event is VFileMoveEvent || event is VFileDeleteEvent
 
         override fun processEvent(event: VFileEvent, module: KtModule) {
-            project.publishModuleStateModification(module, isRemoval = false)
-        }
-    }
-
-    /**
-     * Publishes a module state modification event for a script or not-under-content-root [KtModule] whose file has been deleted.
-     *
-     * This listener processes events *before* the file is deleted, because getting a PSI file (and in turn the PSI file's [KtModule]) for a
-     * virtual file which has already been deleted is not feasible.
-     *
-     * A global out-of-block modification event will be published by `FirIdeOutOfBlockPsiTreeChangePreprocessor` after a Kotlin file is
-     * deleted, but we still need this listener to publish a module state modification event specifically.
-     */
-    class SingleFileModuleDeletionListener(private val project: Project) : AbstractSingleFileModuleBeforeFileEventListener(project) {
-        override fun isRelevantEvent(event: VFileEvent, file: VirtualFile): Boolean = event is VFileDeleteEvent
-
-        override fun processEvent(event: VFileEvent, module: KtModule) {
-            project.publishModuleStateModification(module, isRemoval = true)
+            project.publishModuleStateModification(module, isRemoval = event is VFileDeleteEvent)
         }
     }
 

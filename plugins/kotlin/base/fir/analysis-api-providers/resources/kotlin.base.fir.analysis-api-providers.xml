@@ -16,9 +16,7 @@
   </extensions>
 
   <projectListeners>
-    <listener class="org.jetbrains.kotlin.idea.base.analysisApiProviders.KotlinModuleStateModificationService$SingleFileModuleMoveListener"
-              topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
-    <listener class="org.jetbrains.kotlin.idea.base.analysisApiProviders.KotlinModuleStateModificationService$SingleFileModuleDeletionListener"
+    <listener class="org.jetbrains.kotlin.idea.base.analysisApiProviders.KotlinModuleStateModificationService$SingleFileModuleModificationListener"
               topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
     <listener class="org.jetbrains.kotlin.idea.base.analysisApiProviders.KotlinModuleStateModificationService$LibraryUpdatesListener"
               topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
