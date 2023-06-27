@@ -73,6 +73,11 @@ public abstract class LiteralTextEscaper<T extends PsiLanguageInjectionHost> {
 
   @NotNull
   public static <T extends PsiLanguageInjectionHost> LiteralTextEscaper<T> createSimple(@NotNull T element) {
+    return createSimple(element, true);
+  }
+
+  @NotNull
+  public static <T extends PsiLanguageInjectionHost> LiteralTextEscaper<T> createSimple(@NotNull T element, boolean isOneLine) {
     return new LiteralTextEscaper<T>(element) {
       @Override
       public boolean decode(@NotNull TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
@@ -87,7 +92,7 @@ public abstract class LiteralTextEscaper<T extends PsiLanguageInjectionHost> {
 
       @Override
       public boolean isOneLine() {
-        return true;
+        return isOneLine;
       }
     };
   }
