@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader.Companion.isEditorLoaded
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.TextRange
@@ -73,7 +74,9 @@ open class PsiAwareTextEditorImpl : TextEditorImpl {
     readAction {
       if (!project.isDefault && PsiDocumentManager.getInstance(project).isCommitted(document)) {
         state.foldingState = catchingExceptions {
-          CodeFoldingManager.getInstance(project).buildInitialFoldings(document)
+          blockingContextToIndicator {
+            CodeFoldingManager.getInstance(project).buildInitialFoldings(document)
+          }
         }
       }
 
