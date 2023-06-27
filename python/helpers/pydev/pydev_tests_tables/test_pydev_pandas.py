@@ -36,6 +36,13 @@ def setup_dataframe():
                            index=list(range(rows_number)),
                            dtype="int32"),
             "L": pd.Categorical(["test", "train"] * (rows_number // 2)),
+            "dates": pd.date_range("now", periods=rows_number),
+            "datetime64[ns]": pd.Timestamp("20010102"),
+            "datetime64[ns, <tz>]": pd.date_range("20130101", periods=rows_number, tz="CET"),
+            "period": pd.Period('2012-1-1', freq='D'),
+            "category": pd.Series(list("ABCD")).astype("category"),
+            "interval": pd.interval_range(start=pd.Timestamp("2017-01-01"),
+                                          periods=rows_number, freq="W"),
         }
     )
     df_html = repr(df.head().to_html(notebook=True, max_cols=max_cols))
@@ -247,6 +254,8 @@ def test_describe_shape_all_types(setup_dataframe):
         assert describe_df.shape[0] == 13
     # the number of columns should be the same
     assert describe_df.shape[1] == df.shape[1]
+    # check that we excluded only 2 columns from describe
+    assert len(describe_df.columns[describe_df.isna().all()].tolist()) == 2
 
 
 def test_get_describe_save_columns(setup_dataframe):
