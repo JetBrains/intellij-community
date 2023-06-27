@@ -16,6 +16,7 @@ class KotlinPluginPrePushHandler : IssueIDPrePushHandler() {
 
 class IntelliJPrePushHandler : IssueIDPrePushHandler() {
   override val paths = listOf("community", "platform")
+  override val pathsToIgnore = listOf("plugins/kotlin/")
   override val commitMessageRegex = Regex(".*[A-Z]+-\\d+.*", RegexOption.DOT_MATCHES_ALL)
   override val ignorePattern = Regex("(tests|cleanup):.*")
 
