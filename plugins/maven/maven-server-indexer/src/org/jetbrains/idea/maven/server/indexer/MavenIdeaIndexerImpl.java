@@ -169,20 +169,18 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
     if (repositoryDirectory == null || !repositoryDirectory.exists()) {
       throw new IOException("Repository directory " + repositoryDirectory + " does not exist");
     }
-    indicator.setText("Scannning " + repositoryDirectory.getPath());
+    indicator.setText("Scanning " + repositoryDirectory.getPath());
 
     File tmpDir = Files.createTempDirectory(context.getId() + "-tmp").toFile();
 
     IndexingContext tmpContext = null;
 
     try {
-      final FSDirectory directory = FSDirectory.open(tmpDir.toPath());
-
 
       tmpContext = new DefaultIndexingContext(context.getId() + "-tmp",
                                               context.getRepositoryId(),
                                               context.getRepository(),
-                                              directory,
+                                              tmpDir,
                                               context.getRepositoryUrl(),
                                               context.getIndexUpdateUrl(),
                                               context.getIndexCreators(),
@@ -223,7 +221,7 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
         IndexReader r = searcher.getIndexReader();
         int total = r.numDocs();
 
-        List<IndexedMavenId> result = new ArrayList<IndexedMavenId>(Math.min(CHUNK_SIZE, total));
+        List<IndexedMavenId> result = new ArrayList<>(Math.min(CHUNK_SIZE, total));
         for (int i = startFrom; i < total; i++) {
 
           Document doc = r.document(i);
@@ -300,7 +298,7 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
 
       if (docs == null || docs.scoreDocs.length == 0) return Collections.emptySet();
 
-      Set<MavenArtifactInfo> result = new HashSet<MavenArtifactInfo>();
+      Set<MavenArtifactInfo> result = new HashSet<>();
 
       for (int i = 0; i < docs.scoreDocs.length; i++) {
         int docIndex = docs.scoreDocs[i].doc;
@@ -329,15 +327,6 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
       throw wrapToSerializableRuntimeException(e);
     }
   }
-
-  //public static void invalidateSearchersAndReadersCache(NexusIndexer indexer, IndexingContext index, ArtifactContext artifactContext)
-  //  throws IOException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-  //  indexer.addArtifactToIndex(artifactContext, index);
-  //  // this hack is necessary to invalidate searcher's and reader's cache (may not be required then lucene or nexus library change
-  //  Method m = index.getClass().getDeclaredMethod("closeReaders");
-  //  m.setAccessible(true);
-  //  m.invoke(index);
-  //}
 
   private Set<MavenArchetype> getInternalArchetypes()
     throws RemoteException, ComponentLookupException {
