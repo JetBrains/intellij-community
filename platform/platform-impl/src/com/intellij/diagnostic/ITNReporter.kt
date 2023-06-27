@@ -30,6 +30,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.Component
 
+private const val NEW_THREAD_POST_URL = "https://ea-report.jetbrains.com/trackerRpc/idea/createScr"
+
 private const val INTERVAL = 10 * 60 * 1000L  // an interval between exceptions to form a chain, ms
 @Volatile private var previousReport: Pair<Long, Int>? = null  // (timestamp, threadID) of last reported exception
 
@@ -53,6 +55,8 @@ open class ITNReporter : ErrorReportSubmitter() {
     askJBAccountCredentials(parentComponent, null)
   }
 
+  open val newThreadPostUrl: String = NEW_THREAD_POST_URL
+
   override fun submit(events: Array<IdeaLoggingEvent>,
                       additionalInfo: String?,
                       parentComponent: Component,
@@ -68,7 +72,7 @@ open class ITNReporter : ErrorReportSubmitter() {
     }
     val errorBean = ErrorBean(event, additionalInfo, plugin?.pluginId?.idString, plugin?.name, plugin?.version, lastActionId, previousReportId)
     val project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent))
-    return submit(project, errorBean, parentComponent, consumer::consume)
+    return submit(project, errorBean, parentComponent, newThreadPostUrl, consumer::consume)
   }
 
   /**
@@ -77,13 +81,13 @@ open class ITNReporter : ErrorReportSubmitter() {
   open fun showErrorInRelease(event: IdeaLoggingEvent): Boolean = false
 }
 
-private fun submit(project: Project?, errorBean: ErrorBean, parentComponent: Component, callback: (SubmittedReportInfo) -> Unit): Boolean {
+private fun submit(project: Project?, errorBean: ErrorBean, parentComponent: Component, newThreadPostUrl: String, callback: (SubmittedReportInfo) -> Unit): Boolean {
   var credentials = ErrorReportConfigurable.getCredentials()
   if (credentials.hasOnlyUserName()) {
     credentials = askJBAccountCredentials(parentComponent, project)
     if (credentials == null) return false
   }
-  submit(project, credentials, errorBean, parentComponent, callback)
+  submit(project, credentials, errorBean, parentComponent, newThreadPostUrl, callback)
   return true
 }
 
@@ -91,21 +95,22 @@ private fun submit(project: Project?,
                    credentials: Credentials?,
                    errorBean: ErrorBean,
                    parentComponent: Component,
+                   newThreadPostUrl: String,
                    callback: (SubmittedReportInfo) -> Unit) {
   ITNProxy.cs.launch {
     try {
       val threadId = if (project != null) {
         withBackgroundProgress(project, DiagnosticBundle.message("title.submitting.error.report")) {
-          ITNProxy.sendError(credentials?.userName, credentials?.getPasswordAsString(), errorBean)
+          ITNProxy.sendError(credentials?.userName, credentials?.getPasswordAsString(), errorBean, newThreadPostUrl)
         }
       }
       else {
-        ITNProxy.sendError(credentials?.userName, credentials?.getPasswordAsString(), errorBean)
+        ITNProxy.sendError(credentials?.userName, credentials?.getPasswordAsString(), errorBean, newThreadPostUrl)
       }
       onSuccess(project, threadId, errorBean.event.data, callback)
     }
     catch (e: Exception) {
-      onError(project, e, errorBean, parentComponent, callback)
+      onError(project, e, errorBean, parentComponent, newThreadPostUrl, callback)
     }
   }
 }
@@ -136,6 +141,7 @@ private suspend fun onError(project: Project?,
                             e: Exception,
                             errorBean: ErrorBean,
                             parentComponent: Component,
+                            newThreadPostUrl: String,
                             callback: (SubmittedReportInfo) -> Unit) {
   Logger.getInstance(ITNReporter::class.java).info("reporting failed: $e")
   withContext(Dispatchers.EDT) {
@@ -150,7 +156,7 @@ private suspend fun onError(project: Project?,
     else if (e is NoSuchEAPUserException) {
       val credentials = askJBAccountCredentials(parentComponent, project, true)
       if (credentials != null) {
-        submit(project, credentials, errorBean, parentComponent, callback)
+        submit(project, credentials, errorBean, parentComponent, newThreadPostUrl, callback)
       }
       else {
         callback(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
@@ -163,7 +169,7 @@ private suspend fun onError(project: Project?,
       val message = DiagnosticBundle.message("error.report.failed.message", e.message)
       val title = DiagnosticBundle.message("error.report.failed.title")
       val result = MessageDialogBuilder.yesNo(title, message).ask(project)
-      if (!result || !submit(project, errorBean, parentComponent, callback)) {
+      if (!result || !submit(project, errorBean, parentComponent, newThreadPostUrl, callback)) {
         callback(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
       }
     }

@@ -49,7 +49,6 @@ internal object ITNProxy {
   private const val DEFAULT_USER = "idea_anonymous"
   private const val DEFAULT_PASS = "guest"
   private const val DEVELOPERS_LIST_URL = "https://ea-report.jetbrains.com/developer/list"
-  private const val NEW_THREAD_POST_URL = "https://ea-report.jetbrains.com/trackerRpc/idea/createScr"
   private const val OLD_THREAD_VIEW_URL = "https://ea.jetbrains.com/browser/ea_reports/"
   private const val NEW_THREAD_VIEW_URL = "https://jb-web.exa.aws.intellij.net/report/"
 
@@ -107,11 +106,11 @@ internal object ITNProxy {
                                 val lastActionId: String?,
                                 val previousException: Int)
 
-  suspend fun sendError(login: String?, password: String?, error: ErrorBean): Int {
+  suspend fun sendError(login: String?, password: String?, error: ErrorBean, newThreadPostUrl: String): Int {
     val useDefault = login.isNullOrBlank()
     val loginAdjusted = if (useDefault) DEFAULT_USER else login
     val passwordAdjusted = if (useDefault) DEFAULT_PASS else password ?: ""
-    return postNewThread(loginAdjusted, passwordAdjusted, error)
+    return postNewThread(loginAdjusted, passwordAdjusted, error, newThreadPostUrl)
   }
 
   fun getBrowseUrl(threadId: Int): String {
@@ -125,9 +124,9 @@ internal object ITNProxy {
 
   private val ourSslContext: SSLContext by lazy { initContext() }
 
-  private suspend fun postNewThread(login: String?, password: String?, error: ErrorBean): Int {
+  private suspend fun postNewThread(login: String?, password: String?, error: ErrorBean, url: String): Int {
     val context = currentCoroutineContext()
-    val connection = post(URL(NEW_THREAD_POST_URL), createRequest(login, password, error))
+    val connection = post(URL(url), createRequest(login, password, error))
     val responseCode = connection.responseCode
     if (responseCode != HttpURLConnection.HTTP_OK) {
       throw InternalEAPException(DiagnosticBundle.message("error.http.result.code", responseCode))

@@ -1,0 +1,15 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.diagnostic
+
+private const val NEW_THIRD_PARTY_THREAD_POST_URL = "https://exa-marketplace-listener.labs.jb.gg/trackerRpc/idea/createScr"
+
+class JetBrainsMarketplaceErrorReportSubmitter: ITNReporter() {
+  override fun getReportActionText(): String =
+    DiagnosticBundle.message("error.dialog.notice.third-party.plugin.send")
+
+  override fun getPrivacyNoticeText(): String =
+    DiagnosticBundle.message("error.dialog.notice.third-party.plugin.exception")
+
+  override val newThreadPostUrl: String
+    get() = NEW_THIRD_PARTY_THREAD_POST_URL
+}

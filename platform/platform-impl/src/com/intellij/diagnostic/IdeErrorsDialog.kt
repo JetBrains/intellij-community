@@ -1025,6 +1025,11 @@ open class IdeErrorsDialog internal constructor(private val myMessagePool: Messa
           }
         }
       }
+      for (reporter in reporters) {
+        if (reporter is JetBrainsMarketplaceErrorReportSubmitter) {
+          return reporter
+        }
+      }
       return null
     }
 
