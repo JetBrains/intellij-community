@@ -17,6 +17,7 @@ import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl.Companion.getDocumentLanguage
 import com.intellij.openapi.progress.runWithModalProgressBlocking
+import com.intellij.openapi.progress.withRawProgressReporter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.AsyncLoadingDecorator
 import com.intellij.openapi.util.Key
@@ -128,8 +129,10 @@ class AsyncEditorLoader internal constructor(private val project: Project,
 
   private fun startInTests(highlighterDeferred: Deferred<EditorHighlighter>, editor: EditorEx, textEditor: TextEditorImpl) {
     val continuation = runWithModalProgressBlocking(project, "") {
-      configureHighlighter(highlighterDeferred, editor)
-      textEditor.loadEditorInBackground()
+      withRawProgressReporter { // required for switch to
+        configureHighlighter(highlighterDeferred, editor)
+        textEditor.loadEditorInBackground()
+      }
     }
     editor.putUserData(ASYNC_LOADER, null)
     continuation?.run()
