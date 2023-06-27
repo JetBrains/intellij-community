@@ -131,6 +131,10 @@ tasks {
     inputs.files(mermaidExtensionBuildResults.map { it.outputs })
   }
 
+  buildSearchableOptions {
+    enabled = false
+  }
+
   withType<RunIdeTask> {
     jvmArgs = commonJvmArgs + listOf(
       "-Dide.browser.jcef.debug.port=8080",
