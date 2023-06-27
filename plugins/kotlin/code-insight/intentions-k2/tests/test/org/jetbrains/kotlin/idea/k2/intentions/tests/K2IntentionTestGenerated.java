@@ -2579,6 +2579,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/forEachIndexed/range.kt");
             }
 
+            @TestMetadata("returnFromNestedForLoop.kt")
+            public void testReturnFromNestedForLoop() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/forEachIndexed/returnFromNestedForLoop.kt");
+            }
+
             @TestMetadata("sequence.kt")
             public void testSequence() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/forEachIndexed/sequence.kt");
@@ -2640,6 +2645,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             @TestMetadata("parenthesizedExpression.kt")
             public void testParenthesizedExpression() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/parenthesizedExpression.kt");
+            }
+
+            @TestMetadata("returnFromNestedForLoop.kt")
+            public void testReturnFromNestedForLoop() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/returnFromNestedForLoop.kt");
             }
 
             @TestMetadata("simple.kt")

@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
@@ -13,6 +14,8 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.ImplicitReceiverInfo
 import org.jetbrains.kotlin.idea.codeinsight.utils.dereferenceValidPointers
 import org.jetbrains.kotlin.idea.codeinsight.utils.getImplicitReceiverInfo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
+import org.jetbrains.kotlin.idea.core.AbstractKotlinNameSuggester
+import org.jetbrains.kotlin.idea.refactoring.rename.KotlinVariableInplaceRenameHandler
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.name.CallableId
@@ -50,6 +53,8 @@ internal class ConvertForEachToForLoopIntention
         val returnsToReplace: ReturnsToReplace,
         val implicitReceiverInfo: ImplicitReceiverInfo?,
     )
+
+    private object NameSuggester : AbstractKotlinNameSuggester()
 
     override fun getFamilyName(): String = KotlinBundle.message("replace.with.a.for.loop")
     override fun getActionName(element: KtCallExpression, context: Context): String = familyName
@@ -117,8 +122,17 @@ internal class ConvertForEachToForLoopIntention
         val isForEachIndexed =  element.getCallNameExpression()?.getReferencedName() == FOR_EACH_INDEXED_NAME.asString()
         val loop = generateLoop(receiverExpression, lambda, isForEachIndexed, context) ?: return
         val result = targetExpression.replace(loop)
-        val forExpression = result as? KtForExpression ?: result.collectDescendantsOfType<KtForExpression>().first()
-        forExpression.loopParameter?.let { editor?.caretModel?.moveToOffset(it.startOffset) }
+
+        if (editor != null) {
+            if (result is KtLabeledExpression) {
+                editor.caretModel.moveToOffset(result.startOffset)
+                PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
+                KotlinVariableInplaceRenameHandler().doRename(result, editor, null)
+            } else {
+                val forExpression = result as? KtForExpression ?: result.collectDescendantsOfType<KtForExpression>().first()
+                forExpression.loopParameter?.let { editor.caretModel.moveToOffset(it.startOffset) }
+            }
+        }
 
         commentSaver.restore(result)
     }
@@ -129,11 +143,24 @@ internal class ConvertForEachToForLoopIntention
         isForEachIndexed: Boolean,
         context: Context
     ): KtExpression? {
-        val factory = KtPsiFactory(lambda)
+        val factory = KtPsiFactory(lambda.project)
         val body = lambda.bodyExpression ?: return null
 
+        val loopLabelName = NameSuggester.suggestNameByName("loop") { candidate ->
+            !lambda.anyDescendantOfType<KtLabeledExpression> { it.getLabelName() == candidate }
+        }
+        var needLoopLabel = false
+
         val returnsToReplace = context.returnsToReplace.dereferenceValidPointers()
-        returnsToReplace.forEach { it.replace(factory.createExpression("continue")) }
+        returnsToReplace.forEach {
+            val parentLoop = it.getStrictParentOfType<KtLoopExpression>()
+            if (parentLoop?.getStrictParentOfType<KtLambdaExpression>() == lambda) {
+                it.replace(factory.createExpression("continue@$loopLabelName"))
+                needLoopLabel = true
+            } else {
+                it.replace(factory.createExpression("continue"))
+            }
+        }
 
         val loopRange = if (receiver != null) {
             KtPsiUtil.safeDeparenthesize(receiver)
@@ -146,8 +173,8 @@ internal class ConvertForEachToForLoopIntention
                 factory.createThisExpression(label.render())
             }
         }
-
         val parameters = lambda.valueParameters
+        val loopLabel = if (needLoopLabel) "$loopLabelName@ " else ""
         val loop = if (isForEachIndexed) {
             val loopRangeWithIndex = if (loopRange is KtThisExpression && loopRange.labelQualifier == null) {
                 factory.createExpression("withIndex()")
@@ -155,7 +182,7 @@ internal class ConvertForEachToForLoopIntention
                 factory.createExpressionByPattern("$0.withIndex()", loopRange)
             }
             factory.createExpressionByPattern(
-                "for(($0, $1) in $2){ $3 }",
+                "${loopLabel}for(($0, $1) in $2){ $3 }",
                 parameters[0].text,
                 parameters[1].text,
                 loopRangeWithIndex,
@@ -163,7 +190,7 @@ internal class ConvertForEachToForLoopIntention
             )
         } else {
             factory.createExpressionByPattern(
-                "for($0 in $1){ $2 }",
+                "${loopLabel}for($0 in $1){ $2 }",
                 parameters.singleOrNull() ?: "it",
                 loopRange,
                 body.allChildren
