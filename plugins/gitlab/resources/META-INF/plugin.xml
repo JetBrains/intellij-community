@@ -86,8 +86,6 @@
   </extensions>
 
   <actions>
-    <action id="GitLab.Open.Settings.Page" class="org.jetbrains.plugins.gitlab.GitLabOpenSettingsPageAction"/>
-
     <action id="GitLab.Merge.Request.Show.List"
             class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabShowMergeRequestsAction"
             icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo"/>
