@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactory
 import com.intellij.codeInsight.hints.VcsCodeAuthorInlayHintsProvider.Companion.KEY
 import com.intellij.lang.Language
 import com.intellij.openapi.Disposable

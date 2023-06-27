@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.hints
+package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeHighlighting.*
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarImpl
+import com.intellij.codeInsight.hints.*
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readActionBlocking
@@ -17,6 +17,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.ProperTextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -45,8 +46,9 @@ class InlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighl
 
     val language = file.language
     val collectors = getProviders(file, editor).mapNotNull { it.getCollectorWrapperFor(file, editor, language) }
+    val priorityRange: ProperTextRange = HighlightingSessionImpl.getFromCurrentIndicator(file).visibleRange
 
-    return InlayHintsPass(file, collectors, editor)
+    return InlayHintsPass(file, collectors, editor, priorityRange)
   }
 
   companion object {
@@ -129,10 +131,9 @@ private class InlayHintsEditorInitializer : TextEditorInitializer {
       }
     }
 
-    withContext(Dispatchers.EDT) {
-      buffer?.let { buffer ->
-        InlayHintsPass.applyCollected(hints = buffer, element = psiFile!!, editor = editor, isPlaceholder = true)
-      }
-    }
+    @ApiStatus.Internal
+    @RequiresEdt
+    fun applyPlaceholders(file: PsiFile, editor: Editor, hints: HintsBuffer): Unit = InlayHintsPass.applyCollected(hints, file, editor,
+                                                                                                                   true)
   }
 }

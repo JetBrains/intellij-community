@@ -4,7 +4,7 @@ package com.intellij.codeInsight.hints.codeVision
 import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.codeInsight.codeVision.CodeVisionInitializer
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
-import com.intellij.codeInsight.hints.InlayHintsPassFactory
+import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactory
 import com.intellij.codeInsight.hints.InlayHintsSwitch
 import com.intellij.openapi.project.Project
 

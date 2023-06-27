@@ -3,13 +3,13 @@ package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
+import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactory
 import com.intellij.codeInsight.hints.presentation.SpacePresentation
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbServiceImpl
-import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.ExtensionTestUtil

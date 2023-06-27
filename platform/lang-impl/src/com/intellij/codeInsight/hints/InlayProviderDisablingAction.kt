@@ -4,6 +4,7 @@
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.CodeInsightBundle
+import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactory
 import com.intellij.codeInsight.hints.settings.showInlaySettings
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.AnAction

@@ -177,7 +177,7 @@ class InlayPassTest : BasePlatformTestCase() {
   }
 
   private fun createPass(collectors: List<CollectorWithSettings<*>>): InlayHintsPass {
-    return InlayHintsPass(myFixture.file, collectors, myFixture.editor)
+    return InlayHintsPass(myFixture.file, collectors, myFixture.editor, myFixture.editor.calculateVisibleRange())
   }
 
   private fun InlayHintsPass.collectAndApply() {
