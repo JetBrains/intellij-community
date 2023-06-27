@@ -684,11 +684,12 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   private fun fixes(path: String, text: String, fixes: Array<String>) {
     myFixture.configureFromExistingVirtualFile(addFile(path, text))
-    val available = myFixture.availableIntentions
+    val availableIntentions = myFixture.availableIntentions
+    val available = availableIntentions
       .map { (ModCommandService.getInstance().unwrap(it) ?: IntentionActionDelegate.unwrap(it))::class.java }
       .filter { it.name.startsWith("com.intellij.codeInsight.") }
       .map { it.simpleName }
-    assertThat(available).containsExactlyInAnyOrder(*fixes)
+    assertThat(available).describedAs(availableIntentions.toString()).containsExactlyInAnyOrder(*fixes)
   }
   //</editor-fold>
 }
