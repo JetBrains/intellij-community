@@ -17,14 +17,12 @@ package org.intellij.lang.xpath.xslt.associations.impl;
 
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
@@ -34,11 +32,13 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtilCore;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@State(name = "XSLT-Support.FileAssociationsManager", storages = @Storage("other.xml"))
-final class FileAssociationsManagerImpl extends FileAssociationsManager implements Disposable, JDOMExternalizable {
+@State(name = "org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsManagerImpl")
+final class FileAssociationsManagerImpl extends FileAssociationsManager implements Disposable, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(FileAssociationsManagerImpl.class);
 
   private final Project myProject;
@@ -55,8 +55,9 @@ final class FileAssociationsManagerImpl extends FileAssociationsManager implemen
   }
 
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
-    final List<Element> children = element.getChildren("file");
+  public void loadState(@NotNull Element state) {
+    clear();
+    final List<Element> children = state.getChildren("file");
     VirtualFilePointerManager filePointerManager = VirtualFilePointerManager.getInstance();
     for (Element child : children) {
       final String url = child.getAttributeValue("url");
@@ -70,7 +71,15 @@ final class FileAssociationsManagerImpl extends FileAssociationsManager implemen
   }
 
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void noStateLoaded() {
+    clear();
+  }
+
+  @Override
+  public @Nullable Element getState() {
+    if (myAssociations.isEmpty()) return null;
+    
+    Element element = new Element("state");
     for (VirtualFilePointer pointer : myAssociations.keySet()) {
       final Element e = new Element("file");
       e.setAttribute("url", pointer.getUrl());
@@ -78,6 +87,7 @@ final class FileAssociationsManagerImpl extends FileAssociationsManager implemen
       container.writeExternal(e, "association", false);
       element.addContent(e);
     }
+    return element;
   }
 
   public TransactionalManager getTempManager() {
