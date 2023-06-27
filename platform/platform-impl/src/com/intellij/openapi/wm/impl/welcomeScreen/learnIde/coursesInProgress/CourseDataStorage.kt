@@ -5,7 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.util.messages.Topic
 import javax.swing.Icon
 
-interface CoursesStorage {
+interface CourseDataStorage {
 
   fun getCoursePath(courseInfo: CourseInfo): String?
 

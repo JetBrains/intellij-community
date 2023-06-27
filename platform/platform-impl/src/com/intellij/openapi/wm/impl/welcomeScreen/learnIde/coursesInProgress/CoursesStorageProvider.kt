@@ -4,12 +4,12 @@ package com.intellij.openapi.wm.impl.welcomeScreen.learnIde.coursesInProgress
 import com.intellij.openapi.extensions.ExtensionPointName
 
 interface CoursesStorageProvider {
-  fun getCoursesStorage(): CoursesStorage
+  fun getCoursesStorage(): CourseDataStorage
 
   companion object {
     val COURSE_STORAGE_PROVIDER_EP = ExtensionPointName<CoursesStorageProvider>("com.intellij.coursesStorageProvider")
 
-    fun getAllStorages(): List<CoursesStorage> {
+    fun getAllStorages(): List<CourseDataStorage> {
       return COURSE_STORAGE_PROVIDER_EP.extensions.map { it.getCoursesStorage() }
     }
   }
