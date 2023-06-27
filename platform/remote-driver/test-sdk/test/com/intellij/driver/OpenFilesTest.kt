@@ -14,9 +14,16 @@ class OpenFilesTest {
     val driver = Driver.create()
     val robot = driver.service(RobotService::class)
 
-    val component = robot.find("//div[@text='2023.3 EAP']")
-    println(component)
-    component.click()
+    val welcomeFrame = robot.find("//div[@class='FlatWelcomeFrame']")
+
+    val createNewProjectButton = welcomeFrame.find("//div[@visible_text='New Project']")
+
+    robot.findAll("//div[@class='MainButton']").forEach {
+      it.findAllText().forEach {
+        println(it.text)
+        println(it.point)
+      }
+    }
   }
 
   @Test
