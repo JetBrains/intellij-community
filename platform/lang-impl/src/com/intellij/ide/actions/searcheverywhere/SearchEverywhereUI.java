@@ -75,6 +75,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.Topic;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -111,6 +112,8 @@ import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywh
  */
 public final class SearchEverywhereUI extends BigPopupUI implements DataProvider, QuickSearchComponent {
 
+  public static final Topic<SearchListener> SEARCH_EVENTS = Topic.create("Search events", SearchListener.class);
+
   public static final String SEARCH_EVERYWHERE_SEARCH_FILED_KEY = "search-everywhere-textfield"; //only for testing purposes
 
   static final DataKey<SearchEverywhereFoundElementInfo> SELECTED_ITEM_INFO = DataKey.create("selectedItemInfo");
@@ -138,6 +141,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   private JComponent myExtendedInfoPanel;
   @Nullable
   private ExtendedInfoComponent myExtendedInfoComponent;
+  private final SearchListener topicPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(SEARCH_EVENTS);
 
 
   public SearchEverywhereUI(@Nullable Project project, List<SearchEverywhereContributor<?>> contributors) {
@@ -187,6 +191,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       }
     }
 
+    myExternalSearchListeners.add(topicPublisher);
     mySearcher = Experiments.getInstance().isFeatureEnabled("search.everywhere.mixed.results")
                  ? new MixedResultsSearcher(wrapperListener, run -> ApplicationManager.getApplication().invokeLater(run),
                                             equalityProviders)
@@ -386,6 +391,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     stopSearching();
     mySearchProgressIndicator = null;
     myListModel.clear();
+    myExternalSearchListeners.remove(topicPublisher);
 
     if (myMlService != null) {
       myMlService.onDialogClose();
