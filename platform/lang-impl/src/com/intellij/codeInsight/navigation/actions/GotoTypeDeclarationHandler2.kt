@@ -44,7 +44,7 @@ internal object GotoTypeDeclarationHandler2 : CodeInsightActionHandler {
   private fun gotoTypeDeclaration(project: Project, editor: Editor, actionResult: NavigationActionResult) {
     when (actionResult) {
       is SingleTarget -> {
-        navigateRequest(project, actionResult.request)
+        navigateRequestLazy(project, actionResult.requestor)
       }
       is MultipleTargets -> {
         val popup = createTargetPopup(
