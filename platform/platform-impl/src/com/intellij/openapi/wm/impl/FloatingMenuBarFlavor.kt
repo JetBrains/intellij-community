@@ -14,19 +14,27 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.geom.GeneralPath
 import java.awt.geom.RoundRectangle2D
-import javax.swing.JButton
-import javax.swing.JMenuItem
-import javax.swing.SwingUtilities
-import javax.swing.UIManager
+import javax.swing.*
 import kotlin.math.cos
 import kotlin.math.sqrt
 
 internal class FloatingMenuBarFlavor(private val menuBar: IdeMenuBar) : IdeMenuFlavor {
   private val clockPanel = ClockPanel()
   private val button = MyExitFullScreenButton()
-  private val animator = MyAnimator(menuBar)
+  private val animator = MyAnimator(menuBar = menuBar, flavor = this)
 
-  override val activationWatcher = TimerUtil.createNamedTimer("IdeMenuBar", 100, MyActionListener())
+  private val activationWatcher = TimerUtil.createNamedTimer("IdeMenuBar", 100, MyActionListener())
+
+  override var state: IdeMenuBar.State = IdeMenuBar.State.EXPANDED
+    set(value) {
+      field = value
+      if (value == IdeMenuBar.State.EXPANDING && !activationWatcher.isRunning) {
+        activationWatcher.start()
+      }
+      else if (activationWatcher.isRunning && (value == IdeMenuBar.State.EXPANDED || value == IdeMenuBar.State.COLLAPSED)) {
+        activationWatcher.stop()
+      }
+    }
 
   init {
     menuBar.add(clockPanel)
@@ -38,14 +46,14 @@ internal class FloatingMenuBarFlavor(private val menuBar: IdeMenuBar) : IdeMenuF
 
   private inner class MyActionListener : ActionListener {
     override fun actionPerformed(e: ActionEvent) {
-      if (menuBar.getState() == IdeMenuBar.State.EXPANDED || menuBar.getState() == IdeMenuBar.State.EXPANDING) {
+      if (state == IdeMenuBar.State.EXPANDED || state == IdeMenuBar.State.EXPANDING) {
         return
       }
 
       val activated: Boolean = menuBar.isActivated
-      if (menuBar.activated && !activated && menuBar.getState() == IdeMenuBar.State.TEMPORARY_EXPANDED) {
+      if (menuBar.activated && !activated && state == IdeMenuBar.State.TEMPORARY_EXPANDED) {
         menuBar.activated = false
-        menuBar.doSetState(IdeMenuBar.State.COLLAPSING)
+        state = IdeMenuBar.State.COLLAPSING
         restartAnimator()
       }
       if (activated) {
@@ -54,7 +62,8 @@ internal class FloatingMenuBarFlavor(private val menuBar: IdeMenuBar) : IdeMenuF
     }
   }
 
-  private class MyAnimator(private val menuBar: IdeMenuBar) : Animator("MenuBarAnimator", 16, 300, false) {
+  private class MyAnimator(private val menuBar: JComponent,
+                           private val flavor: FloatingMenuBarFlavor) : Animator("MenuBarAnimator", 16, 300, false) {
     @JvmField var progress: Double = 0.0
 
     override fun paintNow(frame: Int, totalFrames: Int, cycle: Int) {
@@ -65,9 +74,9 @@ internal class FloatingMenuBarFlavor(private val menuBar: IdeMenuBar) : IdeMenuF
 
     override fun paintCycleEnd() {
       progress = 1.0
-      when (menuBar.getState()) {
-        IdeMenuBar.State.COLLAPSING -> menuBar.doSetState(IdeMenuBar.State.COLLAPSED)
-        IdeMenuBar.State.EXPANDING -> menuBar.doSetState(IdeMenuBar.State.TEMPORARY_EXPANDED)
+      when (flavor.state) {
+        IdeMenuBar.State.COLLAPSING -> flavor.state = IdeMenuBar.State.COLLAPSED
+        IdeMenuBar.State.EXPANDING -> flavor.state = IdeMenuBar.State.TEMPORARY_EXPANDED
         else -> {}
       }
       if (!menuBar.isShowing) {
@@ -75,7 +84,7 @@ internal class FloatingMenuBarFlavor(private val menuBar: IdeMenuBar) : IdeMenuF
       }
 
       menuBar.revalidate()
-      if (menuBar.getState() == IdeMenuBar.State.COLLAPSED) {
+      if (flavor.state == IdeMenuBar.State.COLLAPSED) {
         // we should repaint the parent, to clear 1px on top when a menu is collapsed
         menuBar.parent.repaint()
       }
@@ -94,12 +103,12 @@ internal class FloatingMenuBarFlavor(private val menuBar: IdeMenuBar) : IdeMenuF
   private fun updateState() {
     val window = (SwingUtilities.getWindowAncestor(menuBar) as? IdeFrame) ?: return
     if (window.isInFullScreen) {
-      menuBar.doSetState(IdeMenuBar.State.COLLAPSING)
+      state = IdeMenuBar.State.COLLAPSING
       restartAnimator()
     }
     else {
       animator.suspend()
-      menuBar.doSetState(IdeMenuBar.State.EXPANDED)
+      state = IdeMenuBar.State.EXPANDED
       clockPanel.isVisible = false
       button.isVisible = false
     }
@@ -120,7 +129,7 @@ internal class FloatingMenuBarFlavor(private val menuBar: IdeMenuBar) : IdeMenuF
     doUpdateAppMenu()
   }
 
-  override fun layoutClockPanelAndButton(state: IdeMenuBar.State) {
+  override fun layoutClockPanelAndButton() {
     if (state == IdeMenuBar.State.EXPANDED) {
       clockPanel.isVisible = false
       button.isVisible = false

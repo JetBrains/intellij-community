@@ -60,7 +60,7 @@ open class IdeMenuBar internal constructor(@JvmField protected val coroutineScop
   private val timerListener = MyTimerListener()
 
   private val updateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-  private var state = State.EXPANDED
+
   @JvmField
   internal var activated = false
   private val screenMenuPeer: MenuBar?
@@ -71,6 +71,8 @@ open class IdeMenuBar internal constructor(@JvmField protected val coroutineScop
     }
     else {
       object : IdeMenuFlavor {
+        override var state: State = State.EXPANDED
+
         override fun updateAppMenu() {
           doUpdateAppMenu()
         }
@@ -117,39 +119,20 @@ open class IdeMenuBar internal constructor(@JvmField protected val coroutineScop
     }
   }
 
-  // JMenuBar calls getBorder on init before our own init (super is called before our constructor).
-  internal fun getState(): State {
-    return state
-  }
-
-  internal fun doSetState(state: State) {
-    this.state = state
-  }
-
-  internal fun setState(state: State) {
-    this.state = state
-    val activationWatcher = menuBarHelper.flavor.activationWatcher ?: return
-    if (state == State.EXPANDING && !activationWatcher.isRunning) {
-      activationWatcher.start()
-    }
-    else if (activationWatcher.isRunning && (state == State.EXPANDED || state == State.COLLAPSED)) {
-      activationWatcher.stop()
-    }
-  }
-
   override fun add(menu: JMenu): JMenu {
     menu.isFocusable = false
     return super.add(menu)
   }
 
   override fun getBorder(): Border? {
-    if (IdeFrameDecorator.isCustomDecorationActive()) {
+    @Suppress("UNNECESSARY_SAFE_CALL")
+    val state = menuBarHelper?.flavor?.state ?: State.EXPANDED
+    // avoid moving lines
+    if (state == State.EXPANDING || state == State.COLLAPSING) {
       return JBUI.Borders.empty()
     }
 
-    val state = state
-    // avoid moving lines
-    if (state == State.EXPANDING || state == State.COLLAPSING) {
+    if (IdeFrameDecorator.isCustomDecorationActive()) {
       return JBUI.Borders.empty()
     }
 
@@ -169,30 +152,28 @@ open class IdeMenuBar internal constructor(@JvmField protected val coroutineScop
 
   override fun paint(g: Graphics) {
     // otherwise, there will be a 1px line on top
-    if (state == State.COLLAPSED) {
-      return
+    if (menuBarHelper.flavor.state != State.COLLAPSED) {
+      super.paint(g)
     }
-
-    super.paint(g)
   }
 
   override fun doLayout() {
     super.doLayout()
 
-    menuBarHelper.flavor.layoutClockPanelAndButton(state)
+    menuBarHelper.flavor.layoutClockPanelAndButton()
   }
 
   override fun menuSelectionChanged(isIncluded: Boolean) {
-    if (!isIncluded && state == State.TEMPORARY_EXPANDED) {
+    if (!isIncluded && menuBarHelper.flavor.state == State.TEMPORARY_EXPANDED) {
       activated = false
-      state = State.COLLAPSING
+      menuBarHelper.flavor.state = State.COLLAPSING
       menuBarHelper.flavor.restartAnimator()
       return
     }
 
-    if (isIncluded && state == State.COLLAPSED) {
+    if (isIncluded && menuBarHelper.flavor.state == State.COLLAPSED) {
       activated = true
-      state = State.TEMPORARY_EXPANDED
+      menuBarHelper.flavor.state = State.TEMPORARY_EXPANDED
       revalidate()
       repaint()
       SwingUtilities.invokeLater {
@@ -214,6 +195,7 @@ open class IdeMenuBar internal constructor(@JvmField protected val coroutineScop
 
   override fun getPreferredSize(): Dimension {
     val dimension = super.getPreferredSize()
+    val state = menuBarHelper.flavor.state
     if (state.isInProgress) {
       val progress = menuBarHelper.flavor.getProgress()
       dimension.height = COLLAPSED_HEIGHT +
@@ -229,7 +211,7 @@ open class IdeMenuBar internal constructor(@JvmField protected val coroutineScop
     super.addNotify()
 
     IdeEventQueue.getInstance().addDispatcher(dispatcher = { event ->
-      if (event is MouseEvent && state != State.EXPANDED /*&& !myState.isInProgress()*/) {
+      if (event is MouseEvent && menuBarHelper.flavor.state != State.EXPANDED /*&& !myState.isInProgress()*/) {
         considerRestartingAnimator(event)
       }
       false
@@ -283,20 +265,20 @@ open class IdeMenuBar internal constructor(@JvmField protected val coroutineScop
     if (mouseEvent.id == MouseEvent.MOUSE_EXITED && mouseEvent.source === SwingUtilities.windowForComponent(this) && !activated) {
       mouseInside = false
     }
-    if (mouseInside && state == State.COLLAPSED) {
-      state = State.EXPANDING
+    if (mouseInside && menuBarHelper.flavor.state == State.COLLAPSED) {
+      menuBarHelper.flavor.state = State.EXPANDING
       menuBarHelper.flavor.restartAnimator()
     }
-    else if (!mouseInside && state != State.COLLAPSING && state != State.COLLAPSED) {
-      state = State.COLLAPSING
+    else if (!mouseInside && menuBarHelper.flavor.state != State.COLLAPSING && menuBarHelper.flavor.state != State.COLLAPSED) {
+      menuBarHelper.flavor.state = State.COLLAPSING
       menuBarHelper.flavor.restartAnimator()
     }
   }
 
   private fun findActualComponent(mouseEvent: MouseEvent): Component? {
     var component: Component? = mouseEvent.component ?: return null
-    val deepestComponent = if (state != State.EXPANDED &&
-                               !state.isInProgress &&
+    val deepestComponent = if (menuBarHelper.flavor.state != State.EXPANDED &&
+                               !menuBarHelper.flavor.state.isInProgress &&
                                contains(SwingUtilities.convertPoint(component, mouseEvent.point, this))) {
       this
     }
@@ -309,7 +291,6 @@ open class IdeMenuBar internal constructor(@JvmField protected val coroutineScop
     return component
   }
 
-  @JvmOverloads
   fun updateMenuActions(forceRebuild: Boolean = false) {
     menuBarHelper.doUpdateMenuActions(mainActionGroup = getMainMenuActionGroup(),
                                       forceRebuild = forceRebuild,
@@ -354,7 +335,7 @@ open class IdeMenuBar internal constructor(@JvmField protected val coroutineScop
   }
 
   override fun paintChildren(g: Graphics) {
-    if (state.isInProgress) {
+    if (menuBarHelper.flavor.state.isInProgress) {
       val g2 = g as Graphics2D
       val oldTransform = g2.transform
       val newTransform = if (oldTransform == null) AffineTransform() else AffineTransform(oldTransform)
@@ -363,7 +344,7 @@ open class IdeMenuBar internal constructor(@JvmField protected val coroutineScop
       super.paintChildren(g2)
       g2.transform = oldTransform
     }
-    else if (state != State.COLLAPSED) {
+    else if (menuBarHelper.flavor.state != State.COLLAPSED) {
       super.paintChildren(g)
     }
   }

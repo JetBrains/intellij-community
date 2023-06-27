@@ -11,11 +11,9 @@ import com.intellij.ui.mac.screenmenu.MenuBar
 import com.intellij.util.IJSwingUtilities
 import javax.swing.JFrame
 import javax.swing.SwingUtilities
-import javax.swing.Timer
 
 internal interface IdeMenuFlavor {
-  val activationWatcher: Timer?
-    get() = null
+  var state: IdeMenuBar.State
 
   fun getProgress(): Double = 0.0
 
@@ -23,7 +21,7 @@ internal interface IdeMenuFlavor {
 
   fun updateAppMenu()
 
-  fun layoutClockPanelAndButton(state: IdeMenuBar.State) {
+  fun layoutClockPanelAndButton() {
   }
 
   fun correctMenuCount(menuCount: Int): Int = menuCount
