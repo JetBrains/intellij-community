@@ -196,6 +196,8 @@ public class GradleExecutionHelper {
       }
       propertiesFixes.put("java.system.class.loader", null);
       propertiesFixes.put("jna.noclasspath", null);
+      propertiesFixes.put("jna.boot.library.path", null);
+      propertiesFixes.put("jna.nosys", null);
       return propertiesFixes;
     }
   }
