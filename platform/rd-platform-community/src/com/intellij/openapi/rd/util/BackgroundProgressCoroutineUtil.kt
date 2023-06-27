@@ -102,9 +102,22 @@ suspend fun <T>  withModalProgressContext(
   lifetime: Lifetime = Lifetime.Eternal,
   action: suspend ProgressCoroutineScope.() -> T
 ): T {
-  val context = CoroutineProgressContext.createModal(lifetime, title, canBeCancelled, isIndeterminate, project)
-  return doRunUnderProgress(context, action)
+  val owner = if (project != null) ModalTaskOwner.project(project) else ModalTaskOwner.guess()
+  val cancellation = if (canBeCancelled) TaskCancellation.cancellable() else TaskCancellation.nonCancellable()
+  return withModalProgress(owner, title, cancellation) {
+    withBackgroundContext(lifetime) {
+      ProgressCoroutineScopeBridge.use(true, action)
+    }
+  }
 }
+
+@Deprecated("Use withModalProgress")
+suspend fun <T>  withModalProgressContext(
+  @Nls(capitalization = Nls.Capitalization.Title) title: String,
+  canBeCancelled: Boolean = true,
+  project: Project? = null,
+  action: suspend ProgressCoroutineScope.() -> T
+): T = withModalProgressContext(title, canBeCancelled, true, project, Lifetime.Eternal, action)
 
 @Deprecated("Use withBackgroundProgress")
 suspend fun <T> withBackgroundProgressContext(
@@ -135,16 +148,15 @@ suspend fun <T> withBackgroundProgressContext(
   return doRunUnderProgress(context, action)
 }
 
+@Deprecated("Use launchWithModalProgress")
 fun Lifetime.launchUnderModalProgress(
   @Nls(capitalization = Nls.Capitalization.Title) title: String,
   canBeCancelled: Boolean = true,
   isIndeterminate: Boolean = true,
   project: Project? = null,
   action: suspend ProgressCoroutineScope.() -> Unit
-): Job {
-  return runModalAsync(title, canBeCancelled, isIndeterminate, project) { dispatcher, indicator ->
-    launch(dispatcher) { ProgressCoroutineScopeLegacy.execute(coroutineContext, this@runModalAsync, indicator(), action) }
-  }
+): Job = launchBackground {
+  withModalProgressContext(title, canBeCancelled, isIndeterminate, project, this@launchUnderModalProgress, action)
 }
 
 @Deprecated("Use launchWithBackgroundProgress")
@@ -155,7 +167,6 @@ fun Lifetime.launchUnderBackgroundProgress(
   project: Project? = null,
   action: suspend ProgressCoroutineScope.() -> Unit
 ): Job {
-
   if (project != null)
     return launchBackground { withBackgroundProgressContext(title, canBeCancelled, project, action) }
 
@@ -164,16 +175,15 @@ fun Lifetime.launchUnderBackgroundProgress(
   }
 }
 
+@Deprecated("Use startWithModalProgressAsync")
 fun <T> Lifetime.startUnderModalProgressAsync(
   @Nls(capitalization = Nls.Capitalization.Title) title: String,
   canBeCancelled: Boolean = true,
   isIndeterminate: Boolean = true,
   project: Project? = null,
   action: suspend ProgressCoroutineScope.() -> T
-): Deferred<T> {
-  return runModalAsync(title, canBeCancelled, isIndeterminate, project) { dispatcher, indicator ->
-    startAsync(dispatcher) { ProgressCoroutineScopeLegacy.execute(coroutineContext, this@runModalAsync, indicator(), action) }
-  }
+): Deferred<T> = startBackgroundAsync {
+  withModalProgressContext(title, canBeCancelled, isIndeterminate, project, this@startUnderModalProgressAsync, action)
 }
 
 @Deprecated("Use startWithBackgroundProgressAsync")
@@ -192,15 +202,6 @@ fun <T> Lifetime.startUnderBackgroundProgressAsync(
     startAsync(dispatcher) { ProgressCoroutineScopeLegacy.execute(coroutineContext, this@runBackgroundAsync, indicator(), action) }
   }
 }
-
-private fun <T: Job> Lifetime.runModalAsync(
-  @Nls(capitalization = Nls.Capitalization.Title) title: String,
-  canBeCancelled: Boolean = true,
-  isIndeterminate: Boolean = true,
-  project: Project? = null,
-  startCoroutine: Lifetime.(CoroutineDispatcher, () -> ProgressIndicator) -> T): T {
-  val context = CoroutineProgressContext.createModal(this, title, canBeCancelled, isIndeterminate, project)
-  return doRunUnderProgressAsync(context, startCoroutine) }
 
 private fun <T: Job> Lifetime.runBackgroundAsync(
   @Nls(capitalization = Nls.Capitalization.Sentence) title: String,
@@ -292,18 +293,6 @@ private class CoroutineProgressContext(
       project: Project? = null,
     ) = create(lifetime, isIndeterminate) { run ->
       object : Task.Backgroundable(project, title, canBeCancelled, ALWAYS_BACKGROUND) {
-        override fun run(indicator: ProgressIndicator) = run(indicator)
-      }
-    }
-
-    fun createModal(
-      lifetime: Lifetime,
-      @Nls(capitalization = Nls.Capitalization.Title) title: String,
-      canBeCancelled: Boolean = true,
-      isIndeterminate: Boolean = true,
-      project: Project? = null,
-    ) = create(lifetime, isIndeterminate) { run ->
-      object : Task.Modal(project, title, canBeCancelled) {
         override fun run(indicator: ProgressIndicator) = run(indicator)
       }
     }
