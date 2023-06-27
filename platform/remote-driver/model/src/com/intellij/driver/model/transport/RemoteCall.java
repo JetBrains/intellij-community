@@ -6,6 +6,9 @@ import org.jetbrains.annotations.Contract;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public abstract class RemoteCall implements Serializable {
   @Serial
@@ -82,6 +85,9 @@ public abstract class RemoteCall implements Serializable {
            || result instanceof Byte
            || result instanceof Short
            || result instanceof Double
-           || result instanceof Float;
+           || result instanceof Float
+           || result instanceof LocalDate
+           || result instanceof LocalDateTime
+           || result instanceof Duration;
   }
 }

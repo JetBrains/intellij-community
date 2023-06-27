@@ -2,8 +2,8 @@
 
 package com.jetbrains.performancePlugin.remotedriver.xpath
 
-import com.jetbrains.performancePlugin.remotedriver.dataextractor.server.TextParser
-import com.jetbrains.performancePlugin.remotedriver.dataextractor.server.TextToKeyCache
+import com.jetbrains.performancePlugin.remotedriver.dataextractor.TextParser
+import com.jetbrains.performancePlugin.remotedriver.dataextractor.TextToKeyCache
 import org.assertj.swing.edt.GuiActionRunner
 import org.assertj.swing.edt.GuiTask
 import org.assertj.swing.hierarchy.ComponentHierarchy

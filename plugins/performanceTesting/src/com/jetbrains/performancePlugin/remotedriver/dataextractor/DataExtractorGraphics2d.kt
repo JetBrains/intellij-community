@@ -1,6 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package com.jetbrains.performancePlugin.remotedriver.dataextractor.server
+package com.jetbrains.performancePlugin.remotedriver.dataextractor
 
 import java.awt.Graphics
 import java.awt.Graphics2D
@@ -24,7 +24,7 @@ internal class DataExtractorGraphics2d(
                 TextData(
                     text,
                     Point(location.x + rx.toInt(), location.y + ry.toInt()),
-                    textToKey.findKey(text)
+                    TextToKeyCache.findKey(text)
                 )
             )
         } else {
@@ -33,7 +33,7 @@ internal class DataExtractorGraphics2d(
                 TextData(
                     text,
                     Point(location.x + x + 3, location.y + y - 3),
-                    textToKey.findKey(text)
+                    TextToKeyCache.findKey(text)
                 )
             )
         }

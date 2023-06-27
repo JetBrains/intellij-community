@@ -2,7 +2,7 @@
 
 package com.jetbrains.performancePlugin.remotedriver.xpath
 
-import com.jetbrains.performancePlugin.remotedriver.dataextractor.server.TextToKeyCache
+import com.jetbrains.performancePlugin.remotedriver.dataextractor.TextToKeyCache
 import org.w3c.dom.NodeList
 import java.awt.Component
 import javax.xml.xpath.XPathConstants

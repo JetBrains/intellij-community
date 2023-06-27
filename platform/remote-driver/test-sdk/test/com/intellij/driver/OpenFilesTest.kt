@@ -4,6 +4,8 @@ import com.intellij.driver.client.Driver
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.*
 import com.intellij.driver.sdk.spring.SpringManager
+import com.intellij.driver.sdk.ui.remote.RobotService
+import com.intellij.driver.sdk.ui.ui
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
@@ -12,18 +14,19 @@ class OpenFilesTest {
   @Test
   fun uiTest() {
     val driver = Driver.create()
-    val robot = driver.service(RobotService::class)
+    val ui = driver.ui()
 
-    val welcomeFrame = robot.find("//div[@class='FlatWelcomeFrame']")
+    val welcomeFrame = ui.find("//div[@class='FlatWelcomeFrame']")
 
     val createNewProjectButton = welcomeFrame.find("//div[@visible_text='New Project']")
 
-    robot.findAll("//div[@class='MainButton']").forEach {
+    ui.findAll("//div[@class='MainButton']").forEach {
       it.findAllText().forEach {
         println(it.text)
         println(it.point)
       }
     }
+    createNewProjectButton.click()
   }
 
   @Test

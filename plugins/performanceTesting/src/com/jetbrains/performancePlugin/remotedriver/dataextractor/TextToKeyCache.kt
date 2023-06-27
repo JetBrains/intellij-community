@@ -1,4 +1,4 @@
-package com.jetbrains.performancePlugin.remotedriver.dataextractor.server
+package com.jetbrains.performancePlugin.remotedriver.dataextractor
 
 import com.jetbrains.performancePlugin.remotedriver.LruCache
 import java.util.*

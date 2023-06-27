@@ -1,6 +1,7 @@
-package com.jetbrains.performancePlugin.remotedriver
+package com.intellij.driver.sdk.ui
 
 import java.time.Duration
+
 
 fun waitFor(
   duration: Duration = Duration.ofSeconds(5),
@@ -16,12 +17,5 @@ fun waitFor(
   }
   if (condition().not()) {
     throw IllegalStateException("Timeout($duration): $errorMessage")
-  }
-}
-
-
-internal class LruCache<K, V>(private val maxEntries: Int = 1000) : LinkedHashMap<K, V>(maxEntries, 0.75f, true) {
-  override fun removeEldestEntry(eldest: MutableMap.MutableEntry<K, V>?): Boolean {
-    return this.size > maxEntries
   }
 }

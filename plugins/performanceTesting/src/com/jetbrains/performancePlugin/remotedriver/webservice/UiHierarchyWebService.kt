@@ -3,7 +3,7 @@ package com.jetbrains.performancePlugin.remotedriver.webservice
 import com.jetbrains.performancePlugin.remotedriver.webservice.routing.CantFindRouteException
 import com.jetbrains.performancePlugin.remotedriver.webservice.routing.StaticFile
 import com.jetbrains.performancePlugin.remotedriver.webservice.routing.route
-import com.jetbrains.performancePlugin.remotedriver.dataextractor.server.TextToKeyCache
+import com.jetbrains.performancePlugin.remotedriver.dataextractor.TextToKeyCache
 import com.jetbrains.performancePlugin.remotedriver.xpath.XpathDataModelCreator
 import com.jetbrains.performancePlugin.remotedriver.xpath.convertToHtml
 import io.netty.buffer.Unpooled

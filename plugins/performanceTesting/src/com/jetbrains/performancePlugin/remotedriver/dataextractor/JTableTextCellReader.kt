@@ -1,6 +1,5 @@
-package com.jetbrains.performancePlugin.remotedriver.dataextractor.server.textCellRenderers
+package com.jetbrains.performancePlugin.remotedriver.dataextractor
 
-import com.jetbrains.performancePlugin.remotedriver.dataextractor.server.TextParser
 import org.assertj.swing.cell.JTableCellReader
 import java.awt.Color
 import java.awt.Dimension
