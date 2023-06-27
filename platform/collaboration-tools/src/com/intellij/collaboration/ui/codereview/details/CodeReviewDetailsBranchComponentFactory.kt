@@ -2,7 +2,6 @@
 package com.intellij.collaboration.ui.codereview.details
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.codereview.action.CodeReviewCheckoutRemoteBranchAction
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
@@ -33,7 +32,10 @@ import javax.swing.JComponent
 import javax.swing.ListCellRenderer
 
 object CodeReviewDetailsBranchComponentFactory {
-  fun create(scope: CoroutineScope, branchesVm: CodeReviewBranchesViewModel, checkoutAction: AnAction, dataContext: DataContext): JComponent {
+  fun create(scope: CoroutineScope,
+             branchesVm: CodeReviewBranchesViewModel,
+             checkoutAction: AnAction,
+             dataContext: DataContext): JComponent {
     val sourceBranch = JBLabel(CollaborationToolsIcons.Review.Branch).apply {
       border = JBUI.Borders.empty(1, 2, 1, 4)
       addHoverAndPressStateListener(comp = this, pressedStateCallback = { branchLabel, isPressed ->
@@ -44,9 +46,7 @@ object CodeReviewDetailsBranchComponentFactory {
         }
       })
       JLabelUtil.setTrimOverflow(this, true)
-      CollaborationToolsUIUtil.overrideUIDependentProperty(this) {
-        foreground = CurrentBranchComponent.TEXT_COLOR
-      }
+      foreground = CurrentBranchComponent.TEXT_COLOR
       bindTextIn(scope, branchesVm.sourceBranch)
       bindIconIn(scope, branchesVm.isCheckedOut.map { isCheckedOut ->
         if (isCheckedOut) CollaborationToolsIcons.Review.BranchCurrent else CollaborationToolsIcons.Review.Branch

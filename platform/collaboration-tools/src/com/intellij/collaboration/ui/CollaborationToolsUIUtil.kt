@@ -166,6 +166,7 @@ object CollaborationToolsUIUtil {
   /**
    * Add [listener] that will be invoked on each UI update
    */
+  @Deprecated("Not needed when using proper color and fonts. For complicated colors see JBColor.lazy")
   fun <T : JComponent> overrideUIDependentProperty(component: T, listener: T.() -> Unit) {
     UiNotifyConnector.installOn(component, object : Activatable {
       private var listenerDisposable: Disposable? by Delegates.observable(null) { _, oldValue, _ ->
