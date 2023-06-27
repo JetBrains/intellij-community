@@ -8,10 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.IconPathPatcher;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
@@ -122,9 +119,11 @@ public abstract class ExperimentalUI {
 
     public static @NotNull List<IconModel> getData() {
       List<IconModel> result = new ArrayList<>(paths.size());
-
       for (Pair<String, ClassLoader> p : paths) {
-        result.add(new IconModel(IconLoader.getIcon(p.first, p.second != null ? p.second : NotPatchedIconRegistry.class.getClassLoader()), p.first));
+        String path = p.first;
+        ClassLoader classLoader = p.second != null ? p.second : NotPatchedIconRegistry.class.getClassLoader();
+        Icon icon = IconLoaderKt.findIconUsingNewImplementation(path, classLoader, null);
+        result.add(new IconModel(icon, path));
       }
       return result;
     }

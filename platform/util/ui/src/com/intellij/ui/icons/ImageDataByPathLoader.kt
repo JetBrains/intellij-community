@@ -131,7 +131,7 @@ private val LOOKUP = MethodHandles.lookup()
 
 @Internal
 fun isReflectivePath(path: String): Boolean {
-  return !path.startsWith('/') && path.contains("Icons.")
+  return !path.startsWith('/') && path.contains("Icons.") && !path.endsWith(".svg")
 }
 
 @Internal
