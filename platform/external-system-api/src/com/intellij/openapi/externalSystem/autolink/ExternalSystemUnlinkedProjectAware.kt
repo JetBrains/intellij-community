@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Allows to show and hide notification about unlinked projects with [systemId].
@@ -27,7 +26,6 @@ interface ExternalSystemUnlinkedProjectAware {
   fun linkAndLoadProject(project: Project, externalProjectPath: String) {
   }
 
-  @ApiStatus.Experimental
   suspend fun linkAndLoadProjectAsync(project: Project, externalProjectPath: String) {
     withContext(Dispatchers.EDT) {
       blockingContext {
