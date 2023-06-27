@@ -105,6 +105,9 @@ const val SEE_REFERENCE = "\$SEE_REFERENCE\$"
 val seePattern = Regex("<p>See <a href=\"/$BUILT_LANG/$WEB_DOCS/([a-z0-9_\\-/]+)(#[a-z]+)?\"><code>[a-z0-9_\\-]+</code></a>\\.</p>",
                        RegexOption.IGNORE_CASE)
 
+val svgAttributeSectionsPattern = Regex("(.*)<em>Value type</em>\\s*:(.*);\\s*<em>Default value(?:</em>)?\\s*:(.*);\\s*(?:<em>)?Animatable</em>\\s*:\\s*(.*)",
+                                        RegexOption.DOT_MATCHES_ALL)
+
 val bcd: Bcd = readBcd(BROWSER_COMPAT_DATA_PATH)
 
 val jsWebApiNameFilter: (String) -> Boolean = { name ->
@@ -635,7 +638,10 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
     return docAttrs.keys.asSequence()
       .plus(compatAttrs.keys).distinct()
       .map { StringUtil.toLowerCase(it) }
-      .map { Pair(it, MdnHtmlAttributeDocumentation(urlPrefix + it, compatAttrs[it]?.first, compatAttrs[it]?.second, docAttrs[it])) }
+      .map {
+        val (doc, sections) = docAttrs[it].extractSvgAttributesSections()
+        Pair(it, MdnHtmlAttributeDocumentation(urlPrefix + it, compatAttrs[it]?.first, compatAttrs[it]?.second, doc, sections))
+      }
       .plus(fromGlobal)
       .sortedBy { it.first }
       .toMap()
@@ -1153,6 +1159,20 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
     }
 
   }
+}
+
+private fun String?.extractSvgAttributesSections(): Pair<String?, Map<String,String>?> {
+  if (this == null) return Pair(null, null)
+  val match = svgAttributeSectionsPattern.matchEntire(this)
+              ?: return Pair(this, null)
+  return Pair(
+    match.groupValues[1].trim().removeSuffix("<br>"),
+    mapOf(
+      "Value type" to match.groupValues[2].trim(),
+      "Default" to match.groupValues[3].trim(),
+      "Animatable" to match.groupValues[4].trim(),
+    )
+  )
 }
 
 private fun Map<String, MdnJsSymbolDocumentation>.resolveReferences(): Map<String, MdnJsSymbolDocumentation> =

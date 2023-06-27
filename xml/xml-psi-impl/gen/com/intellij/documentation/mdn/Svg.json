@@ -690,7 +690,12 @@
           "compatibility": {
             "Firefox": "20"
           },
-          "doc": "Instructs browsers to download a <a href=\"$MDN_URL$/Glossary/URL\">URL</a> instead of navigating to it, so the user will be prompted to save it as a local file.\n<em>Value type</em>: <strong>&lt;string&gt;</strong> ; <em>Default value</em>: <em>none</em>; <em>Animatable</em>: <strong>no</strong>"
+          "doc": "Instructs browsers to download a <a href=\"$MDN_URL$/Glossary/URL\">URL</a> instead of navigating to it, so the user will be prompted to save it as a local file.",
+          "details": {
+            "Value type": "<strong>&lt;string&gt;</strong>",
+            "Default": "<em>none</em>",
+            "Animatable": "<strong>no</strong>"
+          }
         },
         "href": {
           "url": "$MDN_URL$/web/svg/element/a#href",
@@ -707,7 +712,12 @@
             "Safari": "12.1",
             "SafariIOS": "12.2"
           },
-          "doc": "The <a href=\"$MDN_URL$/Glossary/URL\">URL</a> or URL fragment the hyperlink points to.\n<em>Value type</em>: <strong><a href=\"$MDN_URL$/Web/SVG/Content_type#url\">&lt;URL&gt;</a></strong> ; <em>Default value</em>: <em>none</em>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "The <a href=\"$MDN_URL$/Glossary/URL\">URL</a> or URL fragment the hyperlink points to.",
+          "details": {
+            "Value type": "<strong><a href=\"$MDN_URL$/Web/SVG/Content_type#url\">&lt;URL&gt;</a></strong>",
+            "Default": "<em>none</em>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "hreflang": {
           "url": "$MDN_URL$/web/svg/element/a#hreflang",
@@ -717,7 +727,12 @@
           "compatibility": {
             "Firefox": "61"
           },
-          "doc": "The human language of the URL or URL fragment that the hyperlink points to.\n<em>Value type</em>: <strong>&lt;string&gt;</strong> ; <em>Default value</em>: <em>none</em>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "The human language of the URL or URL fragment that the hyperlink points to.",
+          "details": {
+            "Value type": "<strong>&lt;string&gt;</strong>",
+            "Default": "<em>none</em>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "ping": {
           "url": "$MDN_URL$/web/svg/element/a#ping",
@@ -726,7 +741,12 @@
             "StandardTrack"
           ],
           "compatibility": {},
-          "doc": "A space-separated list of URLs to which, when the hyperlink is followed, <a href=\"$MDN_URL$/Web/HTTP/Methods/POST\"><code>POST</code></a> requests with the body <code>PING</code> will be sent by the browser (in the background). Typically used for tracking. For a more widely-supported feature addressing the same use cases, see <a href=\"$MDN_URL$/Web/API/Navigator/sendBeacon\"><code>Navigator.sendBeacon()</code></a>.\n<em>Value type</em>: <strong><a href=\"$MDN_URL$/Web/SVG/Content_type#list-of-ts\">&lt;list-of-URLs&gt;</a></strong> ; <em>Default value</em>: <em>none</em>; <em>Animatable</em>: <strong>no</strong>"
+          "doc": "A space-separated list of URLs to which, when the hyperlink is followed, <a href=\"$MDN_URL$/Web/HTTP/Methods/POST\"><code>POST</code></a> requests with the body <code>PING</code> will be sent by the browser (in the background). Typically used for tracking. For a more widely-supported feature addressing the same use cases, see <a href=\"$MDN_URL$/Web/API/Navigator/sendBeacon\"><code>Navigator.sendBeacon()</code></a>.",
+          "details": {
+            "Value type": "<strong><a href=\"$MDN_URL$/Web/SVG/Content_type#list-of-ts\">&lt;list-of-URLs&gt;</a></strong>",
+            "Default": "<em>none</em>",
+            "Animatable": "<strong>no</strong>"
+          }
         },
         "referrerpolicy": {
           "url": "$MDN_URL$/web/svg/element/a#referrerpolicy",
@@ -742,7 +762,12 @@
             "Safari": "14",
             "SafariIOS": "14"
           },
-          "doc": "Which <a href=\"$MDN_URL$/Web/HTTP/Headers/Referer\">referrer</a> to send when fetching the <a href=\"$MDN_URL$/Glossary/URL\">URL</a>.\n<em>Value type</em>: <code>no-referrer</code>|<code>no-referrer-when-downgrade</code>|<code>same-origin</code>|<code>origin</code>|<code>strict-origin</code>|<code>origin-when-cross-origin</code>|<code>strict-origin-when-cross-origin</code>|<code>unsafe-url</code> ; <em>Default value</em>: <em>none</em>; <em>Animatable</em>: <strong>no</strong>"
+          "doc": "Which <a href=\"$MDN_URL$/Web/HTTP/Headers/Referer\">referrer</a> to send when fetching the <a href=\"$MDN_URL$/Glossary/URL\">URL</a>.",
+          "details": {
+            "Value type": "<code>no-referrer</code>|<code>no-referrer-when-downgrade</code>|<code>same-origin</code>|<code>origin</code>|<code>strict-origin</code>|<code>origin-when-cross-origin</code>|<code>strict-origin-when-cross-origin</code>|<code>unsafe-url</code>",
+            "Default": "<em>none</em>",
+            "Animatable": "<strong>no</strong>"
+          }
         },
         "rel": {
           "url": "$MDN_URL$/web/svg/element/a#rel",
@@ -752,7 +777,12 @@
           "compatibility": {
             "Firefox": "61"
           },
-          "doc": "The relationship of the target object to the link object.\n<em>Value type</em>: <strong><a href=\"$MDN_URL$/Web/HTML/Attributes/rel\">&lt;list-of-Link-Types&gt;</a></strong> ; <em>Default value</em>: <em>none</em>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "The relationship of the target object to the link object.",
+          "details": {
+            "Value type": "<strong><a href=\"$MDN_URL$/Web/HTML/Attributes/rel\">&lt;list-of-Link-Types&gt;</a></strong>",
+            "Default": "<em>none</em>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "target": {
           "url": "$MDN_URL$/web/svg/element/a#target",
@@ -769,7 +799,12 @@
             "Safari": "3.1",
             "SafariIOS": "2"
           },
-          "doc": "Where to display the linked <a href=\"$MDN_URL$/Glossary/URL\">URL</a>.\n<em>Value type</em>: <code>_self</code>|<code>_parent</code>|<code>_top</code>|<code>_blank</code>|<strong>&lt;name&gt;</strong> ; <em>Default value</em>: <code>_self</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "Where to display the linked <a href=\"$MDN_URL$/Glossary/URL\">URL</a>.",
+          "details": {
+            "Value type": "<code>_self</code>|<code>_parent</code>|<code>_top</code>|<code>_blank</code>|<strong>&lt;name&gt;</strong>",
+            "Default": "<code>_self</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "type": {
           "url": "$MDN_URL$/web/svg/element/a#type",
@@ -779,11 +814,21 @@
           "compatibility": {
             "Firefox": "61"
           },
-          "doc": "A <a href=\"$MDN_URL$/Glossary/MIME_type\">MIME type</a> for the linked URL.\n<em>Value type</em>: <strong>&lt;string&gt;</strong> ; <em>Default value</em>: <em>none</em>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "A <a href=\"$MDN_URL$/Glossary/MIME_type\">MIME type</a> for the linked URL.",
+          "details": {
+            "Value type": "<strong>&lt;string&gt;</strong>",
+            "Default": "<em>none</em>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "xlink:href": {
           "url": "$MDN_URL$/web/svg/element/a#xlink:href",
-          "doc": "The URL or URL fragment that the hyperlink points to. May be required for backwards compatibility for older browsers.\n<em>Value type</em>: <strong><a href=\"$MDN_URL$/Web/SVG/Content_type#url\">&lt;URL&gt;</a></strong> ; <em>Default value</em>: <em>none</em>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "The URL or URL fragment that the hyperlink points to. May be required for backwards compatibility for older browsers.",
+          "details": {
+            "Value type": "<strong><a href=\"$MDN_URL$/Web/SVG/Content_type#url\">&lt;URL&gt;</a></strong>",
+            "Default": "<em>none</em>",
+            "Animatable": "<strong>yes</strong>"
+          }
         }
       }
     },
@@ -979,7 +1024,12 @@
             "Safari": "6",
             "SafariIOS": "6"
           },
-          "doc": "This attribute defines the path of the motion, using the same syntax as the <code><a href=\"$MDN_URL$/Web/SVG/Attribute/d\">d</a></code> attribute.\n<em>Value type</em>: <strong>&lt;string&gt;</strong>; <em>Default value</em>: none; <em>Animatable</em>: <strong>no</strong>"
+          "doc": "This attribute defines the path of the motion, using the same syntax as the <code><a href=\"$MDN_URL$/Web/SVG/Attribute/d\">d</a></code> attribute.",
+          "details": {
+            "Value type": "<strong>&lt;string&gt;</strong>",
+            "Default": "none",
+            "Animatable": "<strong>no</strong>"
+          }
         },
         "rotate": {
           "url": "$MDN_URL$/web/svg/element/animatemotion#rotate",
@@ -995,7 +1045,12 @@
             "Safari": "6",
             "SafariIOS": "6"
           },
-          "doc": "This attribute defines a rotation applied to the element animated along a path, usually to make it pointing in the direction of the animation.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#number\"><strong>&lt;number&gt;</strong></a>|<code>auto</code>|<code>auto-reverse</code>; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>no</strong>"
+          "doc": "This attribute defines a rotation applied to the element animated along a path, usually to make it pointing in the direction of the animation.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#number\"><strong>&lt;number&gt;</strong></a>|<code>auto</code>|<code>auto-reverse</code>",
+            "Default": "<code>0</code>",
+            "Animatable": "<strong>no</strong>"
+          }
         }
       }
     },
@@ -1113,7 +1168,12 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "The x-axis coordinate of the center of the circle.\n<em>Value type</em>: <strong><a href=\"$MDN_URL$/Web/SVG/Content_type#length\">&lt;length&gt;</a></strong>|<strong><a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\">&lt;percentage&gt;</a></strong> ; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "The x-axis coordinate of the center of the circle.",
+          "details": {
+            "Value type": "<strong><a href=\"$MDN_URL$/Web/SVG/Content_type#length\">&lt;length&gt;</a></strong>|<strong><a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\">&lt;percentage&gt;</a></strong>",
+            "Default": "<code>0</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "cy": {
           "url": "$MDN_URL$/web/svg/element/circle#cy",
@@ -1130,7 +1190,12 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "The y-axis coordinate of the center of the circle.\n<em>Value type</em>: <strong><a href=\"$MDN_URL$/Web/SVG/Content_type#length\">&lt;length&gt;</a></strong>|<strong><a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\">&lt;percentage&gt;</a></strong> ; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "The y-axis coordinate of the center of the circle.",
+          "details": {
+            "Value type": "<strong><a href=\"$MDN_URL$/Web/SVG/Content_type#length\">&lt;length&gt;</a></strong>|<strong><a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\">&lt;percentage&gt;</a></strong>",
+            "Default": "<code>0</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "pathlength": {
           "url": "$MDN_URL$/web/svg/element/circle#pathlength"
@@ -1150,7 +1215,12 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "The radius of the circle. A value lower or equal to zero disables rendering of the circle.\n<em>Value type</em>: <strong><a href=\"$MDN_URL$/Web/SVG/Content_type#length\">&lt;length&gt;</a></strong>|<strong><a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\">&lt;percentage&gt;</a></strong> ; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "The radius of the circle. A value lower or equal to zero disables rendering of the circle.",
+          "details": {
+            "Value type": "<strong><a href=\"$MDN_URL$/Web/SVG/Content_type#length\">&lt;length&gt;</a></strong>|<strong><a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\">&lt;percentage&gt;</a></strong>",
+            "Default": "<code>0</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         }
       }
     },
@@ -1319,7 +1389,12 @@
             "Safari": "3",
             "SafariIOS": "3"
           },
-          "doc": "The x position of the center of the ellipse.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "The x position of the center of the ellipse.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>",
+            "Default": "<code>0</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "cy": {
           "url": "$MDN_URL$/web/svg/element/ellipse#cy",
@@ -1336,7 +1411,12 @@
             "Safari": "3",
             "SafariIOS": "3"
           },
-          "doc": "The y position of the center of the ellipse.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "The y position of the center of the ellipse.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>",
+            "Default": "<code>0</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "pathlength": {
           "url": "$MDN_URL$/web/svg/element/ellipse#pathlength"
@@ -1356,7 +1436,12 @@
             "Safari": "3",
             "SafariIOS": "3"
           },
-          "doc": "The radius of the ellipse on the x axis.\n<em>Value type</em>: <code>auto</code>|<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value</em>: <code>auto</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "The radius of the ellipse on the x axis.",
+          "details": {
+            "Value type": "<code>auto</code>|<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>",
+            "Default": "<code>auto</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "ry": {
           "url": "$MDN_URL$/web/svg/element/ellipse#ry",
@@ -1373,7 +1458,12 @@
             "Safari": "3",
             "SafariIOS": "3"
           },
-          "doc": "The radius of the ellipse on the y axis.\n<em>Value type</em>: <code>auto</code>|<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value</em>: <code>auto</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "The radius of the ellipse on the y axis.",
+          "details": {
+            "Value type": "<code>auto</code>|<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>",
+            "Default": "<code>auto</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         }
       }
     },
@@ -2138,7 +2228,12 @@
             "Safari": "6",
             "SafariIOS": "6"
           },
-          "doc": "This attribute defines the x offset of the drop shadow.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#number\"><strong>&lt;number&gt;</strong></a>; <em>Default value</em>: <code>2</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "This attribute defines the x offset of the drop shadow.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#number\"><strong>&lt;number&gt;</strong></a>",
+            "Default": "<code>2</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "dy": {
           "url": "$MDN_URL$/web/svg/element/fedropshadow#dy",
@@ -2154,7 +2249,12 @@
             "Safari": "6",
             "SafariIOS": "6"
           },
-          "doc": "This attribute defines the y offset of the drop shadow.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#number\"><strong>&lt;number&gt;</strong></a>; <em>Default value</em>: <code>2</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "This attribute defines the y offset of the drop shadow.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#number\"><strong>&lt;number&gt;</strong></a>",
+            "Default": "<code>2</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "in": {
           "url": "$MDN_URL$/web/svg/attribute/in",
@@ -3393,7 +3493,12 @@
             "Safari": "3",
             "SafariIOS": "3"
           },
-          "doc": "The height of the foreignObject.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value</em>: <code>auto</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "The height of the foreignObject.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>",
+            "Default": "<code>auto</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "width": {
           "url": "$MDN_URL$/web/svg/element/foreignobject#width",
@@ -3409,7 +3514,12 @@
             "Safari": "3",
             "SafariIOS": "3"
           },
-          "doc": "The width of the foreignObject.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value</em>: <code>auto</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "The width of the foreignObject.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>",
+            "Default": "<code>auto</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "x": {
           "url": "$MDN_URL$/web/svg/element/foreignobject#x",
@@ -3425,7 +3535,12 @@
             "Safari": "3",
             "SafariIOS": "3"
           },
-          "doc": "The x coordinate of the foreignObject.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "The x coordinate of the foreignObject.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>",
+            "Default": "<code>0</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "y": {
           "url": "$MDN_URL$/web/svg/element/foreignobject#y",
@@ -3441,7 +3556,12 @@
             "Safari": "3",
             "SafariIOS": "3"
           },
-          "doc": "The y coordinate of the foreignObject.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "The y coordinate of the foreignObject.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>",
+            "Default": "<code>0</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         }
       }
     },
@@ -3794,7 +3914,12 @@
             "Safari": "3",
             "SafariIOS": "3"
           },
-          "doc": "Defines the x-axis coordinate of the line starting point.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#number\"><strong>&lt;number&gt;</strong></a> ; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "Defines the x-axis coordinate of the line starting point.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#number\"><strong>&lt;number&gt;</strong></a>",
+            "Default": "<code>0</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "x2": {
           "url": "$MDN_URL$/web/svg/element/line#x2",
@@ -3811,7 +3936,12 @@
             "Safari": "3",
             "SafariIOS": "3"
           },
-          "doc": "Defines the x-axis coordinate of the line ending point.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#number\"><strong>&lt;number&gt;</strong></a> ; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "Defines the x-axis coordinate of the line ending point.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#number\"><strong>&lt;number&gt;</strong></a>",
+            "Default": "<code>0</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "y1": {
           "url": "$MDN_URL$/web/svg/element/line#y1",
@@ -3828,7 +3958,12 @@
             "Safari": "3",
             "SafariIOS": "3"
           },
-          "doc": "Defines the y-axis coordinate of the line starting point.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#number\"><strong>&lt;number&gt;</strong></a> ; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "Defines the y-axis coordinate of the line starting point.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#number\"><strong>&lt;number&gt;</strong></a>",
+            "Default": "<code>0</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "y2": {
           "url": "$MDN_URL$/web/svg/element/line#y2",
@@ -3845,7 +3980,12 @@
             "Safari": "3",
             "SafariIOS": "3"
           },
-          "doc": "Defines the y-axis coordinate of the line ending point.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#number\"><strong>&lt;number&gt;</strong></a> ; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "Defines the y-axis coordinate of the line ending point.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#number\"><strong>&lt;number&gt;</strong></a>",
+            "Default": "<code>0</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         }
       }
     },
@@ -3900,7 +4040,12 @@
         },
         "href": {
           "url": "$MDN_URL$/web/svg/element/lineargradient#href",
-          "doc": "This attribute defines a reference to another <code>&lt;linearGradient&gt;</code> element that will be used as a template.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#url\"><strong>&lt;URL&gt;</strong></a> ; <em>Default value</em>: none; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "This attribute defines a reference to another <code>&lt;linearGradient&gt;</code> element that will be used as a template.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#url\"><strong>&lt;URL&gt;</strong></a>",
+            "Default": "none",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "spreadmethod": {
           "url": "$MDN_URL$/web/svg/attribute/spreadmethod",
@@ -3932,7 +4077,12 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This attribute defines the x coordinate of the starting point of the vector gradient along which the linear gradient is drawn.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> | <a href=\"$MDN_URL$/Web/CSS/number\"><code>&lt;number&gt;</code></a>; <em>Default value</em>: <code>0%</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "This attribute defines the x coordinate of the starting point of the vector gradient along which the linear gradient is drawn.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> | <a href=\"$MDN_URL$/Web/CSS/number\"><code>&lt;number&gt;</code></a>",
+            "Default": "<code>0%</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "x2": {
           "url": "$MDN_URL$/web/svg/element/lineargradient#x2",
@@ -3948,11 +4098,21 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This attribute defines the x coordinate of the ending point of the vector gradient along which the linear gradient is drawn.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> | <a href=\"$MDN_URL$/Web/CSS/number\"><code>&lt;number&gt;</code></a>; <em>Default value</em>: <code>100%</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "This attribute defines the x coordinate of the ending point of the vector gradient along which the linear gradient is drawn.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> | <a href=\"$MDN_URL$/Web/CSS/number\"><code>&lt;number&gt;</code></a>",
+            "Default": "<code>100%</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "xlink:href": {
           "url": "$MDN_URL$/web/svg/element/lineargradient#xlink:href",
-          "doc": "<div class=\"notecard deprecated\" id=\"sect2\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\nAn\n<a href=\"$MDN_URL$/Web/SVG/Content_type#iri\">&lt;IRI&gt;</a>\nreference to another\n<code>&lt;linearGradient&gt;</code>\nelement that will be used as a template.\n<em>Value type</em>\n:\n<a href=\"$MDN_URL$/Web/SVG/Content_type#iri\"><strong>&lt;IRI&gt;</strong></a>\n;\n<em>Default value</em>\n: none;\n<em>Animatable</em>\n:\n<strong>yes</strong>"
+          "doc": "<div class=\"notecard deprecated\" id=\"sect2\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\nAn\n<a href=\"$MDN_URL$/Web/SVG/Content_type#iri\">&lt;IRI&gt;</a>\nreference to another\n<code>&lt;linearGradient&gt;</code>\nelement that will be used as a template.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#iri\"><strong>&lt;IRI&gt;</strong></a>",
+            "Default": "none",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "y1": {
           "url": "$MDN_URL$/web/svg/element/lineargradient#y1",
@@ -3968,7 +4128,12 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This attribute defines the y coordinate of the starting point of the vector gradient along which the linear gradient is drawn.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> | <a href=\"$MDN_URL$/Web/CSS/number\"><code>&lt;number&gt;</code></a>; <em>Default value</em>: <code>0%</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "This attribute defines the y coordinate of the starting point of the vector gradient along which the linear gradient is drawn.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> | <a href=\"$MDN_URL$/Web/CSS/number\"><code>&lt;number&gt;</code></a>",
+            "Default": "<code>0%</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "y2": {
           "url": "$MDN_URL$/web/svg/element/lineargradient#y2",
@@ -3984,7 +4149,12 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This attribute defines the y coordinate of the ending point of the vector gradient along which the linear gradient is drawn.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> | <a href=\"$MDN_URL$/Web/CSS/number\"><code>&lt;number&gt;</code></a>; <em>Default value</em>: <code>0%</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "This attribute defines the y coordinate of the ending point of the vector gradient along which the linear gradient is drawn.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> | <a href=\"$MDN_URL$/Web/CSS/number\"><code>&lt;number&gt;</code></a>",
+            "Default": "<code>0%</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         }
       }
     },
@@ -4071,7 +4241,12 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This attribute defines the orientation of the marker relative to the shape it is attached to.\n<em>Value type</em>: <code>auto</code>|<code>auto-start-reverse</code>|<strong><a href=\"$MDN_URL$/Web/SVG/Content_type#angle\">&lt;angle&gt;</a></strong> ; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "This attribute defines the orientation of the marker relative to the shape it is attached to.",
+          "details": {
+            "Value type": "<code>auto</code>|<code>auto-start-reverse</code>|<strong><a href=\"$MDN_URL$/Web/SVG/Content_type#angle\">&lt;angle&gt;</a></strong>",
+            "Default": "<code>0</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "preserveaspectratio": {
           "url": "$MDN_URL$/web/svg/element/marker#preserveaspectratio"
@@ -4161,7 +4336,12 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This attribute defines the height of the masking area.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a> ; <em>Default value</em>: <code>120%</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "This attribute defines the height of the masking area.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>",
+            "Default": "<code>120%</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "maskcontentunits": {
           "url": "$MDN_URL$/web/svg/attribute/maskcontentunits",
@@ -4210,7 +4390,12 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This attribute defines the width of the masking area.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a> ; <em>Default value</em>: <code>120%</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "This attribute defines the width of the masking area.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>",
+            "Default": "<code>120%</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "x": {
           "url": "$MDN_URL$/web/svg/element/mask#x",
@@ -4227,7 +4412,12 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This attribute defines the x-axis coordinate of the top-left corner of the masking area.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#coordinate\"><strong>&lt;coordinate&gt;</strong></a> ; <em>Default value</em>: <code>-10%</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "This attribute defines the x-axis coordinate of the top-left corner of the masking area.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#coordinate\"><strong>&lt;coordinate&gt;</strong></a>",
+            "Default": "<code>-10%</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "y": {
           "url": "$MDN_URL$/web/svg/element/mask#y",
@@ -4244,7 +4434,12 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This attribute defines the y-axis coordinate of the top-left corner of the masking area.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#coordinate\"><strong>&lt;coordinate&gt;</strong></a> ; <em>Default value</em>: <code>-10%</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "This attribute defines the y-axis coordinate of the top-left corner of the masking area.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#coordinate\"><strong>&lt;coordinate&gt;</strong></a>",
+            "Default": "<code>-10%</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         }
       }
     },
@@ -4341,7 +4536,12 @@
             "Safari": "3",
             "SafariIOS": "3"
           },
-          "doc": "This attribute defines the shape of the path.\n<em>Value type</em>: <strong>&lt;string&gt;</strong> ; <em>Default value</em>: <code>''</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "This attribute defines the shape of the path.",
+          "details": {
+            "Value type": "<strong>&lt;string&gt;</strong>",
+            "Default": "<code>''</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "pathlength": {
           "url": "$MDN_URL$/web/svg/element/path#pathlength"
@@ -4380,7 +4580,12 @@
             "Safari": "3",
             "SafariIOS": "3"
           },
-          "doc": "This attribute determines the height of the pattern tile.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "This attribute determines the height of the pattern tile.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>",
+            "Default": "<code>0</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "href": {
           "url": "$MDN_URL$/web/svg/element/pattern#href",
@@ -4396,7 +4601,12 @@
             "Safari": "12.1",
             "SafariIOS": "12.2"
           },
-          "doc": "This attribute reference a template pattern that provides default values for the <code>&lt;pattern&gt;</code> attributes.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#url\"><strong>&lt;URL&gt;</strong></a>; <em>Default value</em>: <em>none</em>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "This attribute reference a template pattern that provides default values for the <code>&lt;pattern&gt;</code> attributes.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#url\"><strong>&lt;URL&gt;</strong></a>",
+            "Default": "<em>none</em>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "patterncontentunits": {
           "url": "$MDN_URL$/web/svg/attribute/patterncontentunits",
@@ -4467,7 +4677,12 @@
             "Safari": "3",
             "SafariIOS": "3"
           },
-          "doc": "This attribute determines the width of the pattern tile.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "This attribute determines the width of the pattern tile.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>",
+            "Default": "<code>0</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "x": {
           "url": "$MDN_URL$/web/svg/element/pattern#x",
@@ -4484,11 +4699,21 @@
             "Safari": "3",
             "SafariIOS": "3"
           },
-          "doc": "This attribute determines the x coordinate shift of the pattern tile.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "This attribute determines the x coordinate shift of the pattern tile.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>",
+            "Default": "<code>0</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "xlink:href": {
           "url": "$MDN_URL$/web/svg/element/pattern#xlink:href",
-          "doc": "This attribute references a template pattern that provides default values for the <code>&lt;pattern&gt;</code> attributes.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#url\"><strong>&lt;URL&gt;</strong></a>; <em>Default value</em>: <em>none</em>; <em>Animatable</em>: <strong>yes</strong>\n<div class=\"notecard note\" id=\"sect3\">\n<p><strong>Note:</strong> For browsers implementing <code>href</code>, if both <code>href</code> and <code>xlink:href</code> are set, <code>xlink:href</code> will be ignored and only <code>href</code> will be used.\n</div>"
+          "doc": "This attribute references a template pattern that provides default values for the <code>&lt;pattern&gt;</code> attributes.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#url\"><strong>&lt;URL&gt;</strong></a>",
+            "Default": "<em>none</em>",
+            "Animatable": "<strong>yes</strong>\n<div class=\"notecard note\" id=\"sect3\">\n<p><strong>Note:</strong> For browsers implementing <code>href</code>, if both <code>href</code> and <code>xlink:href</code> are set, <code>xlink:href</code> will be ignored and only <code>href</code> will be used.\n</div>"
+          }
         },
         "y": {
           "url": "$MDN_URL$/web/svg/element/pattern#y",
@@ -4505,7 +4730,12 @@
             "Safari": "3",
             "SafariIOS": "3"
           },
-          "doc": "This attribute determines the y coordinate shift of the pattern tile.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "This attribute determines the y coordinate shift of the pattern tile.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>",
+            "Default": "<code>0</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         }
       }
     },
@@ -4544,7 +4774,12 @@
             "Safari": "3",
             "SafariIOS": "3"
           },
-          "doc": "This attribute defines the list of points (pairs of <code>x,y</code> absolute coordinates) required to draw the polygon.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#number\"><strong>&lt;number&gt;</strong></a>+ ; <em>Default value</em>: <code>\"\"</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "This attribute defines the list of points (pairs of <code>x,y</code> absolute coordinates) required to draw the polygon.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#number\"><strong>&lt;number&gt;</strong></a>+",
+            "Default": "<code>\"\"</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         }
       }
     },
@@ -4583,7 +4818,12 @@
             "Safari": "3",
             "SafariIOS": "3"
           },
-          "doc": "This attribute defines the list of points (pairs of x,y absolute coordinates) required to draw the polyline\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#number\"><strong>&lt;number&gt;</strong></a>+ ; <em>Default value</em>: <code>\"\"</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "This attribute defines the list of points (pairs of x,y absolute coordinates) required to draw the polyline",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#number\"><strong>&lt;number&gt;</strong></a>+",
+            "Default": "<code>\"\"</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         }
       }
     },
@@ -4618,7 +4858,12 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This attribute defines the x coordinate of the end circle of the radial gradient.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a> ; <em>Default value</em>: <code>50%</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "This attribute defines the x coordinate of the end circle of the radial gradient.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>",
+            "Default": "<code>50%</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "cy": {
           "url": "$MDN_URL$/web/svg/element/radialgradient#cy",
@@ -4634,7 +4879,12 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This attribute defines the y coordinate of the end circle of the radial gradient.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a> ; <em>Default value</em>: <code>50%</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "This attribute defines the y coordinate of the end circle of the radial gradient.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>",
+            "Default": "<code>50%</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "fr": {
           "url": "$MDN_URL$/web/svg/element/radialgradient#fr",
@@ -4650,7 +4900,12 @@
             "Safari": "7",
             "SafariIOS": "7"
           },
-          "doc": "This attribute defines the radius of the start circle of the radial gradient. The gradient will be drawn such that the 0% <a href=\"$MDN_URL$/Web/SVG/Element/stop\"><code>&lt;stop&gt;</code></a> is mapped to the perimeter of the start circle.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a> ; <em>Default value</em>: <code>0%</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "This attribute defines the radius of the start circle of the radial gradient. The gradient will be drawn such that the 0% <a href=\"$MDN_URL$/Web/SVG/Element/stop\"><code>&lt;stop&gt;</code></a> is mapped to the perimeter of the start circle.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>",
+            "Default": "<code>0%</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "fx": {
           "url": "$MDN_URL$/web/svg/element/radialgradient#fx",
@@ -4666,7 +4921,12 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This attribute defines the x coordinate of the start circle of the radial gradient.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a> ; <em>Default value</em>: Same as <code>cx</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "This attribute defines the x coordinate of the start circle of the radial gradient.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>",
+            "Default": "Same as <code>cx</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "fy": {
           "url": "$MDN_URL$/web/svg/element/radialgradient#fy",
@@ -4682,7 +4942,12 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This attribute defines the y coordinate of the start circle of the radial gradient.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a> ; <em>Default value</em>: Same as <code>cy</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "This attribute defines the y coordinate of the start circle of the radial gradient.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>",
+            "Default": "Same as <code>cy</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "gradienttransform": {
           "url": "$MDN_URL$/web/svg/attribute/gradienttransform",
@@ -4730,7 +4995,12 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This attribute defines a reference to another <code>&lt;radialGradient&gt;</code> element that will be used as a template.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#url\"><strong>&lt;URL&gt;</strong></a> ; <em>Default value</em>: none; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "This attribute defines a reference to another <code>&lt;radialGradient&gt;</code> element that will be used as a template.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#url\"><strong>&lt;URL&gt;</strong></a>",
+            "Default": "none",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "r": {
           "url": "$MDN_URL$/web/svg/element/radialgradient#r",
@@ -4746,7 +5016,12 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This attribute defines the radius of the end circle of the radial gradient. The gradient will be drawn such that the 100% <a href=\"$MDN_URL$/Web/SVG/Element/stop\"><code>&lt;stop&gt;</code></a> is mapped to the perimeter of the end circle.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a> ; <em>Default value</em>: <code>50%</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "This attribute defines the radius of the end circle of the radial gradient. The gradient will be drawn such that the 100% <a href=\"$MDN_URL$/Web/SVG/Element/stop\"><code>&lt;stop&gt;</code></a> is mapped to the perimeter of the end circle.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>",
+            "Default": "<code>50%</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "spreadmethod": {
           "url": "$MDN_URL$/web/svg/attribute/spreadmethod",
@@ -4766,7 +5041,12 @@
         },
         "xlink:href": {
           "url": "$MDN_URL$/web/svg/element/radialgradient#xlink:href",
-          "doc": "<div class=\"notecard deprecated\" id=\"sect3\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\nAn\n<a href=\"$MDN_URL$/Web/SVG/Content_type#iri\">&lt;IRI&gt;</a>\nreference to another\n<code>&lt;radialGradient&gt;</code>\nelement that will be used as a template.\n<em>Value type</em>\n:\n<a href=\"$MDN_URL$/Web/SVG/Content_type#iri\"><strong>&lt;IRI&gt;</strong></a>\n;\n<em>Default value</em>\n: none;\n<em>Animatable</em>\n:\n<strong>yes</strong>"
+          "doc": "<div class=\"notecard deprecated\" id=\"sect3\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\nAn\n<a href=\"$MDN_URL$/Web/SVG/Content_type#iri\">&lt;IRI&gt;</a>\nreference to another\n<code>&lt;radialGradient&gt;</code>\nelement that will be used as a template.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#iri\"><strong>&lt;IRI&gt;</strong></a>",
+            "Default": "none",
+            "Animatable": "<strong>yes</strong>"
+          }
         }
       }
     },
@@ -4802,7 +5082,12 @@
             "Safari": "3.1",
             "SafariIOS": "2"
           },
-          "doc": "The height of the rect.\n<em>Value type</em>: <code>auto</code>|<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value</em>: <code>auto</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "The height of the rect.",
+          "details": {
+            "Value type": "<code>auto</code>|<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>",
+            "Default": "<code>auto</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "pathlength": {
           "url": "$MDN_URL$/web/svg/element/rect#pathlength"
@@ -4822,7 +5107,12 @@
             "Safari": "3.1",
             "SafariIOS": "2"
           },
-          "doc": "The horizontal corner radius of the rect. Defaults to <code>ry</code> if it is specified.\n<em>Value type</em>: <code>auto</code>|<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value</em>: <code>auto</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "The horizontal corner radius of the rect. Defaults to <code>ry</code> if it is specified.",
+          "details": {
+            "Value type": "<code>auto</code>|<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>",
+            "Default": "<code>auto</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "ry": {
           "url": "$MDN_URL$/web/svg/element/rect#ry",
@@ -4839,7 +5129,12 @@
             "Safari": "3.1",
             "SafariIOS": "2"
           },
-          "doc": "The vertical corner radius of the rect. Defaults to <code>rx</code> if it is specified.\n<em>Value type</em>: <code>auto</code>|<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value</em>: <code>auto</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "The vertical corner radius of the rect. Defaults to <code>rx</code> if it is specified.",
+          "details": {
+            "Value type": "<code>auto</code>|<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>",
+            "Default": "<code>auto</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "width": {
           "url": "$MDN_URL$/web/svg/element/rect#width",
@@ -4856,7 +5151,12 @@
             "Safari": "3.1",
             "SafariIOS": "2"
           },
-          "doc": "The width of the rect.\n<em>Value type</em>: <code>auto</code>|<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value</em>: <code>auto</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "The width of the rect.",
+          "details": {
+            "Value type": "<code>auto</code>|<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>",
+            "Default": "<code>auto</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "x": {
           "url": "$MDN_URL$/web/svg/element/rect#x",
@@ -4873,7 +5173,12 @@
             "Safari": "3.1",
             "SafariIOS": "2"
           },
-          "doc": "The x coordinate of the rect.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "The x coordinate of the rect.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>",
+            "Default": "<code>0</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "y": {
           "url": "$MDN_URL$/web/svg/element/rect#y",
@@ -4890,7 +5195,12 @@
             "Safari": "3.1",
             "SafariIOS": "2"
           },
-          "doc": "The y coordinate of the rect.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "The y coordinate of the rect.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>",
+            "Default": "<code>0</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         }
       }
     },
@@ -4913,11 +5223,21 @@
       "attrs": {
         "crossorigin": {
           "url": "$MDN_URL$/web/svg/element/script#crossorigin",
-          "doc": "This attribute defines <a href=\"$MDN_URL$/Web/HTML/Attributes/crossorigin\">CORS settings</a> as define for the HTML <a href=\"$MDN_URL$/Web/HTML/Element/script\"><code>&lt;script&gt;</code></a> element.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#string\"><strong>&lt;string&gt;</strong></a>; <em>Default value</em>: <code>?</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "This attribute defines <a href=\"$MDN_URL$/Web/HTML/Attributes/crossorigin\">CORS settings</a> as define for the HTML <a href=\"$MDN_URL$/Web/HTML/Element/script\"><code>&lt;script&gt;</code></a> element.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#string\"><strong>&lt;string&gt;</strong></a>",
+            "Default": "<code>?</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "href": {
           "url": "$MDN_URL$/web/svg/element/script#href",
-          "doc": "The <a href=\"$MDN_URL$/Glossary/URL\">URL</a> to the script to load.\n<em>Value type</em>: <strong><a href=\"$MDN_URL$/Web/SVG/Content_type#url\">&lt;URL&gt;</a></strong> ; <em>Default value</em>: <em>none</em>; <em>Animatable</em>: <strong>no</strong>"
+          "doc": "The <a href=\"$MDN_URL$/Glossary/URL\">URL</a> to the script to load.",
+          "details": {
+            "Value type": "<strong><a href=\"$MDN_URL$/Web/SVG/Content_type#url\">&lt;URL&gt;</a></strong>",
+            "Default": "<em>none</em>",
+            "Animatable": "<strong>no</strong>"
+          }
         },
         "type": {
           "url": "$MDN_URL$/web/svg/element/script#type",
@@ -4933,11 +5253,21 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This attribute defines type of the script language to use.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#string\"><strong>&lt;string&gt;</strong></a>; <em>Default value</em>: <code>application/ecmascript</code>; <em>Animatable</em>: <strong>no</strong>"
+          "doc": "This attribute defines type of the script language to use.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#string\"><strong>&lt;string&gt;</strong></a>",
+            "Default": "<code>application/ecmascript</code>",
+            "Animatable": "<strong>no</strong>"
+          }
         },
         "xlink:href": {
           "url": "$MDN_URL$/web/svg/element/script#xlink:href",
-          "doc": "The <a href=\"$MDN_URL$/Glossary/URL\">URL</a> to the script to load.\n<em>Value type</em>: <strong><a href=\"$MDN_URL$/Web/SVG/Content_type#url\">&lt;URL&gt;</a></strong> ; <em>Default value</em>: <em>none</em>; <em>Animatable</em>: <strong>no</strong>"
+          "doc": "The <a href=\"$MDN_URL$/Glossary/URL\">URL</a> to the script to load.",
+          "details": {
+            "Value type": "<strong><a href=\"$MDN_URL$/Web/SVG/Content_type#url\">&lt;URL&gt;</a></strong>",
+            "Default": "<em>none</em>",
+            "Animatable": "<strong>no</strong>"
+          }
         }
       }
     },
@@ -4971,7 +5301,12 @@
             "Safari": "3",
             "SafariIOS": ""
           },
-          "doc": "This attribute defines the value to be applied to the target attribute for the duration of the animation. The value must match the requirements of the target attribute.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#anything\"><strong>&lt;anything&gt;</strong></a>; <em>Default value</em>: none; <em>Animatable</em>: <strong>no</strong>"
+          "doc": "This attribute defines the value to be applied to the target attribute for the duration of the animation. The value must match the requirements of the target attribute.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#anything\"><strong>&lt;anything&gt;</strong></a>",
+            "Default": "none",
+            "Animatable": "<strong>no</strong>"
+          }
         }
       }
     },
@@ -5007,15 +5342,30 @@
             "Safari": "3",
             "SafariIOS": "3"
           },
-          "doc": "This attribute defines where the gradient stop is placed along the gradient vector.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#number\"><strong>&lt;number&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "This attribute defines where the gradient stop is placed along the gradient vector.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#number\"><strong>&lt;number&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>",
+            "Default": "<code>0</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "stop-color": {
           "url": "$MDN_URL$/web/svg/element/stop#stop-color",
-          "doc": "This attribute defines the color of the gradient stop. It can be used as a CSS property.\n<em>Value type</em>: <code>currentcolor</code>|<a href=\"$MDN_URL$/Web/SVG/Content_type#color\"><strong>&lt;color&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#icccolor\"><strong>&lt;icccolor&gt;</strong></a>; <em>Default value</em>: <code>black</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "This attribute defines the color of the gradient stop. It can be used as a CSS property.",
+          "details": {
+            "Value type": "<code>currentcolor</code>|<a href=\"$MDN_URL$/Web/SVG/Content_type#color\"><strong>&lt;color&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#icccolor\"><strong>&lt;icccolor&gt;</strong></a>",
+            "Default": "<code>black</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "stop-opacity": {
           "url": "$MDN_URL$/web/svg/element/stop#stop-opacity",
-          "doc": "This attribute defines the opacity of the gradient stop. It can be used as a CSS property.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#opacity_value\"><strong>&lt;opacity&gt;</strong></a>; <em>Default value</em>: <code>1</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "This attribute defines the opacity of the gradient stop. It can be used as a CSS property.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#opacity_value\"><strong>&lt;opacity&gt;</strong></a>",
+            "Default": "<code>1</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         }
       }
     },
@@ -5050,7 +5400,12 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This attribute defines to which <a href=\"$MDN_URL$/Web/CSS/@media\"><code>media</code></a> the style applies.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#string\"><strong><code>&lt;string&gt;</code></strong></a>; <em>Default value</em>: <code>all</code>; <em>Animatable</em>: <strong>no</strong>"
+          "doc": "This attribute defines to which <a href=\"$MDN_URL$/Web/CSS/@media\"><code>media</code></a> the style applies.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#string\"><strong><code>&lt;string&gt;</code></strong></a>",
+            "Default": "<code>all</code>",
+            "Animatable": "<strong>no</strong>"
+          }
         },
         "title": {
           "url": "$MDN_URL$/web/svg/element/style#title",
@@ -5066,7 +5421,12 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This attribute the title of the style sheet which can be used to switch between <a href=\"$MDN_URL$/Web/CSS/Alternative_style_sheets\">alternate style sheets</a>.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#string\"><strong><code>&lt;string&gt;</code></strong></a>; <em>Default value</em>: <em>none</em>; <em>Animatable</em>: <strong>no</strong>"
+          "doc": "This attribute the title of the style sheet which can be used to switch between <a href=\"$MDN_URL$/Web/CSS/Alternative_style_sheets\">alternate style sheets</a>.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#string\"><strong><code>&lt;string&gt;</code></strong></a>",
+            "Default": "<em>none</em>",
+            "Animatable": "<strong>no</strong>"
+          }
         },
         "type": {
           "url": "$MDN_URL$/web/svg/element/style#type",
@@ -5082,7 +5442,12 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This attribute defines type of the style sheet language to use as a media type string.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#string\"><strong>&lt;string&gt;</strong></a>; <em>Default value</em>: <code>text/css</code>; <em>Animatable</em>: <strong>no</strong>"
+          "doc": "This attribute defines type of the style sheet language to use as a media type string.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#string\"><strong>&lt;string&gt;</strong></a>",
+            "Default": "<code>text/css</code>",
+            "Animatable": "<strong>no</strong>"
+          }
         }
       }
     },
@@ -5161,7 +5526,12 @@
             "Safari": "3",
             "SafariIOS": "3"
           },
-          "doc": "The displayed height of the rectangular viewport. (Not the height of its coordinate system.)\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value</em>: <code>auto</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "The displayed height of the rectangular viewport. (Not the height of its coordinate system.)",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>",
+            "Default": "<code>auto</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "preserveaspectratio": {
           "url": "$MDN_URL$/web/svg/attribute/preserveaspectratio",
@@ -5195,7 +5565,12 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "Which version of SVG is used for the inner content of the element.\n<em>Value type</em>: <strong><a href=\"$MDN_URL$/Web/SVG/Content_type#number\">&lt;number&gt;</a></strong> ; <em>Default value</em>: none; <em>Animatable</em>: <strong>no</strong>"
+          "doc": "Which version of SVG is used for the inner content of the element.",
+          "details": {
+            "Value type": "<strong><a href=\"$MDN_URL$/Web/SVG/Content_type#number\">&lt;number&gt;</a></strong>",
+            "Default": "none",
+            "Animatable": "<strong>no</strong>"
+          }
         },
         "viewbox": {
           "url": "$MDN_URL$/web/svg/attribute/viewbox",
@@ -5229,7 +5604,12 @@
             "Safari": "3",
             "SafariIOS": "3"
           },
-          "doc": "The displayed width of the rectangular viewport. (Not the width of its coordinate system.)\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value</em>: <code>auto</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "The displayed width of the rectangular viewport. (Not the width of its coordinate system.)",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>",
+            "Default": "<code>auto</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "x": {
           "url": "$MDN_URL$/web/svg/element/svg#x",
@@ -5246,7 +5626,12 @@
             "Safari": "3",
             "SafariIOS": "3"
           },
-          "doc": "The displayed x coordinate of the svg container. No effect on outermost <code>svg</code> elements.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "The displayed x coordinate of the svg container. No effect on outermost <code>svg</code> elements.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>",
+            "Default": "<code>0</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "y": {
           "url": "$MDN_URL$/web/svg/element/svg#y",
@@ -5263,7 +5648,12 @@
             "Safari": "3",
             "SafariIOS": "3"
           },
-          "doc": "The displayed y coordinate of the svg container. No effect on outermost <code>svg</code> elements.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "The displayed y coordinate of the svg container. No effect on outermost <code>svg</code> elements.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>",
+            "Default": "<code>0</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "zoomandpan": {
           "url": "$MDN_URL$/web/svg/attribute/zoomandpan",
@@ -5336,7 +5726,12 @@
       "attrs": {
         "height": {
           "url": "$MDN_URL$/web/svg/element/symbol#height",
-          "doc": "This attribute determines the height of the symbol.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value</em>: <code>auto</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "This attribute determines the height of the symbol.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>",
+            "Default": "<code>auto</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "preserveaspectratio": {
           "url": "$MDN_URL$/web/svg/attribute/preserveaspectratio",
@@ -5378,15 +5773,30 @@
         },
         "width": {
           "url": "$MDN_URL$/web/svg/element/symbol#width",
-          "doc": "This attribute determines the width of the symbol.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value</em>: <code>auto</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "This attribute determines the width of the symbol.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>",
+            "Default": "<code>auto</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "x": {
           "url": "$MDN_URL$/web/svg/element/symbol#x",
-          "doc": "This attribute determines the x coordinate of the symbol.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "This attribute determines the x coordinate of the symbol.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>",
+            "Default": "<code>0</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "y": {
           "url": "$MDN_URL$/web/svg/element/symbol#y",
-          "doc": "This attribute determines the y coordinate of the symbol.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "This attribute determines the y coordinate of the symbol.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>",
+            "Default": "<code>0</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         }
       }
     },
@@ -5422,7 +5832,12 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "Shifts the text position horizontally from a previous text element.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value</em>: <em>none</em>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "Shifts the text position horizontally from a previous text element.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>",
+            "Default": "<em>none</em>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "dy": {
           "url": "$MDN_URL$/web/svg/element/text#dy",
@@ -5439,7 +5854,12 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "Shifts the text position vertically from a previous text element.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value</em>: <em>none</em>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "Shifts the text position vertically from a previous text element.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>",
+            "Default": "<em>none</em>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "lengthadjust": {
           "url": "$MDN_URL$/web/svg/attribute/lengthadjust",
@@ -5473,7 +5893,12 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "Rotates orientation of each individual glyph. Can rotate glyphs individually.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#list-of-ts\"><strong>&lt;list-of-number&gt;</strong></a> ; <em>Default value</em>: none; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "Rotates orientation of each individual glyph. Can rotate glyphs individually.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#list-of-ts\"><strong>&lt;list-of-number&gt;</strong></a>",
+            "Default": "none",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "textlength": {
           "url": "$MDN_URL$/web/svg/element/text#textlength",
@@ -5506,7 +5931,12 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "The x coordinate of the starting point of the text baseline.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "The x coordinate of the starting point of the text baseline.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>",
+            "Default": "<code>0</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "y": {
           "url": "$MDN_URL$/web/svg/element/text#y",
@@ -5523,7 +5953,12 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "The y coordinate of the starting point of the text baseline.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "The y coordinate of the starting point of the text baseline.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>",
+            "Default": "<code>0</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         }
       }
     },
@@ -5559,14 +5994,24 @@
             "Safari": "12.1",
             "SafariIOS": "12.2"
           },
-          "doc": "The URL to the path or basic shape on which to render the text. If the <code>path</code> attribute is set, <code>href</code> has no effect.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#url\"><strong>&lt;URL&gt;</strong></a> ; <em>Default value</em>: none; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "The URL to the path or basic shape on which to render the text. If the <code>path</code> attribute is set, <code>href</code> has no effect.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#url\"><strong>&lt;URL&gt;</strong></a>",
+            "Default": "none",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "lengthadjust": {
           "url": "$MDN_URL$/web/svg/element/textpath#lengthadjust"
         },
         "method": {
           "url": "$MDN_URL$/web/svg/element/textpath#method",
-          "doc": "Which method to render individual glyphs along the path.\n<em>Value type</em>: <code>align</code>|<code>stretch</code> ; <em>Default value</em>: <code>align</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "Which method to render individual glyphs along the path.",
+          "details": {
+            "Value type": "<code>align</code>|<code>stretch</code>",
+            "Default": "<code>align</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "path": {
           "url": "$MDN_URL$/web/svg/element/textpath#path",
@@ -5577,7 +6022,12 @@
           "compatibility": {
             "Firefox": "61"
           },
-          "doc": "The path on which the text should be rendered.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Attribute/path#path-data\"><strong>&lt;path_data&gt;</strong></a> ; <em>Default value</em>: none; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "The path on which the text should be rendered.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Attribute/path#path-data\"><strong>&lt;path_data&gt;</strong></a>",
+            "Default": "none",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "side": {
           "url": "$MDN_URL$/web/svg/element/textpath#side",
@@ -5588,7 +6038,12 @@
           "compatibility": {
             "Firefox": "61"
           },
-          "doc": "Which side of the path the text should be rendered.\n<em>Value type</em>: <code>left</code>|<code>right</code> ; <em>Default value</em>: <code>left</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "Which side of the path the text should be rendered.",
+          "details": {
+            "Value type": "<code>left</code>|<code>right</code>",
+            "Default": "<code>left</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "spacing": {
           "url": "$MDN_URL$/web/svg/element/textpath#spacing",
@@ -5604,7 +6059,12 @@
             "Safari": "3.1",
             "SafariIOS": "2"
           },
-          "doc": "How space between glyphs should be handled.\n<em>Value type</em>: <code>auto</code>|<code>exact</code> ; <em>Default value</em>: <code>exact</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "How space between glyphs should be handled.",
+          "details": {
+            "Value type": "<code>auto</code>|<code>exact</code>",
+            "Default": "<code>exact</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "startoffset": {
           "url": "$MDN_URL$/web/svg/attribute/startoffset",
@@ -5686,7 +6146,12 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "Shifts the text position horizontally from a previous text element.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value</em>: <em>none</em>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "Shifts the text position horizontally from a previous text element.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>",
+            "Default": "<em>none</em>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "dy": {
           "url": "$MDN_URL$/web/svg/element/tspan#dy",
@@ -5703,7 +6168,12 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "Shifts the text position vertically from a previous text element.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value: none; Animatable</em>: <strong>yes</strong>"
+          "doc": "Shifts the text position vertically from a previous text element.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>",
+            "Default": "none",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "lengthadjust": {
           "url": "$MDN_URL$/web/svg/attribute/lengthadjust",
@@ -5736,7 +6206,12 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "Rotates orientation of each individual glyph. Can rotate glyphs individually.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#list-of-ts\"><strong>&lt;list-of-number&gt;</strong></a> ; <em>Default value</em>: none; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "Rotates orientation of each individual glyph. Can rotate glyphs individually.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#list-of-ts\"><strong>&lt;list-of-number&gt;</strong></a>",
+            "Default": "none",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "textlength": {
           "url": "$MDN_URL$/web/svg/element/tspan#textlength",
@@ -5769,7 +6244,12 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "The x coordinate of the starting point of the text baseline.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value: none; Animatable</em>: <strong>yes</strong>"
+          "doc": "The x coordinate of the starting point of the text baseline.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>",
+            "Default": "none",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "y": {
           "url": "$MDN_URL$/web/svg/element/tspan#y",
@@ -5786,7 +6266,12 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "The y coordinate of the starting point of the text baseline.\n<em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value: none; Animatable</em>: <strong>yes</strong>"
+          "doc": "The y coordinate of the starting point of the text baseline.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&lt;percentage&gt;</strong></a>",
+            "Default": "none",
+            "Animatable": "<strong>yes</strong>"
+          }
         }
       }
     },
@@ -5822,7 +6307,12 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "The height of the use element.<br><em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong><code>&lt;length&gt;</code></strong></a> ; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "The height of the use element.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong><code>&lt;length&gt;</code></strong></a>",
+            "Default": "<code>0</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "href": {
           "url": "$MDN_URL$/web/svg/element/use#href",
@@ -5839,7 +6329,12 @@
             "Safari": "12.1",
             "SafariIOS": "12.2"
           },
-          "doc": "The URL to an element/fragment that needs to be duplicated.<br><em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#url\"><strong><code>&lt;URL&gt;</code></strong></a> ; <em>Default value</em>: none; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "The URL to an element/fragment that needs to be duplicated.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#url\"><strong><code>&lt;URL&gt;</code></strong></a>",
+            "Default": "none",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "width": {
           "url": "$MDN_URL$/web/svg/element/use#width",
@@ -5856,7 +6351,12 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "The width of the use element.<br><em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong><code>&lt;length&gt;</code></strong></a> ; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "The width of the use element.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#length\"><strong><code>&lt;length&gt;</code></strong></a>",
+            "Default": "<code>0</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "x": {
           "url": "$MDN_URL$/web/svg/element/use#x",
@@ -5873,11 +6373,21 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "The x coordinate of an additional final offset transformation applied to the <code>&lt;use&gt;</code> element.<br><em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#coordinate\"><strong><code>&lt;coordinate&gt;</code></strong></a> ; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "The x coordinate of an additional final offset transformation applied to the <code>&lt;use&gt;</code> element.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#coordinate\"><strong><code>&lt;coordinate&gt;</code></strong></a>",
+            "Default": "<code>0</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "xlink:href": {
           "url": "$MDN_URL$/web/svg/element/use#xlink:href",
-          "doc": "An <a href=\"$MDN_URL$/Web/SVG/Content_type#iri\"><code>&lt;IRI&gt;</code></a> reference to an element/fragment that needs to be duplicated. If both <code><a href=\"$MDN_URL$/Web/SVG/Attribute/href\">href</a></code> and <code><a href=\"$MDN_URL$/Web/SVG/Attribute/xlink:href\">xlink:href</a></code> are present, the value given by <code><a href=\"$MDN_URL$/Web/SVG/Attribute/href\">href</a></code> is used.<br><em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#iri\"><strong><code>&lt;IRI&gt;</code></strong></a> ; <em>Default value</em>: none; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "An <a href=\"$MDN_URL$/Web/SVG/Content_type#iri\"><code>&lt;IRI&gt;</code></a> reference to an element/fragment that needs to be duplicated. If both <code><a href=\"$MDN_URL$/Web/SVG/Attribute/href\">href</a></code> and <code><a href=\"$MDN_URL$/Web/SVG/Attribute/xlink:href\">xlink:href</a></code> are present, the value given by <code><a href=\"$MDN_URL$/Web/SVG/Attribute/href\">href</a></code> is used.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#iri\"><strong><code>&lt;IRI&gt;</code></strong></a>",
+            "Default": "none",
+            "Animatable": "<strong>yes</strong>"
+          }
         },
         "y": {
           "url": "$MDN_URL$/web/svg/element/use#y",
@@ -5894,7 +6404,12 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "The y coordinate of an additional final offset transformation applied to the <code>&lt;use&gt;</code> element.<br><em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#coordinate\"><strong><code>&lt;coordinate&gt;</code></strong></a> ; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong>"
+          "doc": "The y coordinate of an additional final offset transformation applied to the <code>&lt;use&gt;</code> element.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#coordinate\"><strong><code>&lt;coordinate&gt;</code></strong></a>",
+            "Default": "<code>0</code>",
+            "Animatable": "<strong>yes</strong>"
+          }
         }
       }
     },
