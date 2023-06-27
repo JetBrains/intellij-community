@@ -65,10 +65,10 @@ class ImportQuickFix(
         override val fqName: FqName,
         override val declarationToImport: PsiElement?,
         override val icon: Icon?,
-        val renderedDeclaration: String,
+        override val debugRepresentation: String,
         val statisticsInfo: StatisticsInfo
     ) : AutoImportVariant {
-        override val hint: String = renderedDeclaration // TODO: fix after changing tests
+        override val hint: String = fqName.asString()
     }
 
     init {
@@ -157,7 +157,7 @@ class ImportQuickFix(
         }
 
         override fun execute(): Boolean {
-            KotlinAddImportActionInfo.executeListener?.onExecute(listOf(importVariants.map { it.hint }))
+            KotlinAddImportActionInfo.executeListener?.onExecute(importVariants)
             when (importVariants.size) {
                 1 -> {
                     addImport(importVariants.single())

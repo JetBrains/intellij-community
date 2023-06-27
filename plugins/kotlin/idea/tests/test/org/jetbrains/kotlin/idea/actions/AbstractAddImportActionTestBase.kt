@@ -5,6 +5,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.statistics.StatisticsInfo
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl
+import org.jetbrains.kotlin.idea.quickfix.AutoImportVariant
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import java.io.File
@@ -28,9 +29,9 @@ abstract class AbstractAddImportActionTestBase : KotlinLightCodeInsightFixtureTe
 
         fixture.configureByFile(fileName())
 
-        var actualVariants: List<List<String>>? = null
+        var actualVariants: List<AutoImportVariant>? = null
         val executeListener = object : KotlinAddImportActionInfo.ExecuteListener {
-            override fun onExecute(variants: List<List<String>>) {
+            override fun onExecute(variants: List<AutoImportVariant>) {
                 assertNull(actualVariants)
                 actualVariants = variants
             }
@@ -49,7 +50,7 @@ abstract class AbstractAddImportActionTestBase : KotlinLightCodeInsightFixtureTe
         val expectedAbsentVariantNames = InTextDirectivesUtils.findListWithPrefixes(fixture.file.text, EXPECT_VARIANT_NOT_PRESENT_DIRECTIVE)
 
         if (expectedVariantNames.isNotEmpty() || expectedAbsentVariantNames.isNotEmpty()) {
-            val actualVariantNames = actualVariants!!.flatten()
+            val actualVariantNames = actualVariants.orEmpty().map { it.debugRepresentation }
 
             for (i in expectedVariantNames.indices) {
                 assertTrue(

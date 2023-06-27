@@ -4,11 +4,12 @@ package org.jetbrains.kotlin.idea.actions
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.idea.quickfix.AutoImportVariant
 
 /** Test hooks allowing inspection of data used for KotlinAddImportAction. **/
 object KotlinAddImportActionInfo {
     interface ExecuteListener {
-        fun onExecute(variants: List<List<String>>)
+        fun onExecute(variants: List<AutoImportVariant>)
     }
 
     @Volatile

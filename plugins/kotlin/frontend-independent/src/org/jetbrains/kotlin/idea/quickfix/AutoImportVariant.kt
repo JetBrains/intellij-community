@@ -10,4 +10,6 @@ interface AutoImportVariant {
     val icon: Icon?
     val declarationToImport: PsiElement?
     val fqName: FqName
+
+    val debugRepresentation: String
 }

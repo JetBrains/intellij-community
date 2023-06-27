@@ -179,9 +179,7 @@ class KotlinAddImportAction internal constructor(
         if (!element.isValid) return false
 
         val variantsList = variantsList()
-        KotlinAddImportActionInfo.executeListener?.onExecute(variantsList.map {
-            it.descriptorsToImport.map { descriptorToImport -> descriptorToImport.variantNameForDebug() }.toList()
-        })
+        KotlinAddImportActionInfo.executeListener?.onExecute(variantsList)
 
         if (variantsList.isEmpty()) return false
 
@@ -243,20 +241,6 @@ class KotlinAddImportAction internal constructor(
             }
         }
     }
-
-    companion object {
-        private val debugRenderer = DescriptorRenderer.DEBUG_TEXT.withOptions {
-            annotationFilter = { false }
-        }
-
-        private fun DeclarationDescriptor.variantNameForDebug() = when (this) {
-            is ClassDescriptor ->
-                fqNameOrNull()?.toString()?.let { "class $it" } ?: debugRenderer.render(this)
-
-            else ->
-                debugRenderer.render(this)
-        }
-    }
 }
 
 internal data class VariantWithPriority(val variant: DescriptorBasedAutoImportVariant, val priority: ImportComparablePriority)
@@ -295,9 +279,26 @@ internal abstract class DescriptorBasedAutoImportVariant(
     val descriptorsToImport: Collection<DeclarationDescriptor>,
     override val fqName: FqName,
     project: Project,
-): AutoImportVariant {
+) : AutoImportVariant {
     override val declarationToImport: PsiElement? = DescriptorToSourceUtilsIde.getAnyDeclaration(project, descriptorsToImport.first())
     override val icon: Icon? = KotlinDescriptorIconProvider.getIcon(descriptorsToImport.first(), declarationToImport, 0)
+
+    override val debugRepresentation: String
+        get() = descriptorsToImport.first().variantNameForDebug()
+
+    companion object {
+        private val debugRenderer = DescriptorRenderer.DEBUG_TEXT.withOptions {
+            annotationFilter = { false }
+        }
+
+        private fun DeclarationDescriptor.variantNameForDebug() = when (this) {
+            is ClassDescriptor ->
+                fqNameOrNull()?.toString()?.let { "class $it" } ?: debugRenderer.render(this)
+
+            else ->
+                debugRenderer.render(this)
+        }
+    }
 }
 
 private class GroupedImportVariant(
