@@ -5,11 +5,11 @@ import com.intellij.devkit.workspaceModel.metaModel.IncorrectObjInterfaceExcepti
 import com.intellij.devkit.workspaceModel.metaModel.WorkspaceMetaModelProvider
 import com.intellij.openapi.module.Module
 import com.intellij.workspaceModel.codegen.deft.meta.*
-import com.intellij.workspaceModel.deft.api.annotations.Default
-import com.intellij.workspaceModel.storage.EqualsBy
-import org.jetbrains.deft.annotations.Abstract
-import org.jetbrains.deft.annotations.Child
-import org.jetbrains.deft.annotations.Open
+import com.intellij.platform.workspace.storage.annotations.Default
+import com.intellij.platform.workspace.storage.EqualsBy
+import com.intellij.platform.workspace.storage.annotations.Abstract
+import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Open
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotated
@@ -243,9 +243,13 @@ private object StandardNames {
   val MAP_INTERFACE = FqName(Map::class.qualifiedName!!)
 }
 
+private val entitiesSuperclassFqn = FqName(com.intellij.platform.workspace.storage.WorkspaceEntity::class.java.name)
+
 private val ClassDescriptor.isEntityInterface: Boolean
   get() {
-    return isInterface(this) && defaultType.isSubclassOf(FqName(org.jetbrains.deft.Obj::class.java.name))
+    // If is `WorkspaceEntity` interface we need to check it
+    if (fqNameSafe == entitiesSuperclassFqn) return true
+    return isInterface(this) && defaultType.isSubclassOf(entitiesSuperclassFqn)
   }
 
 private val ClassDescriptor.isEntityBuilderInterface: Boolean

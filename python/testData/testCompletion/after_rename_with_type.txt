@@ -1,0 +1,10 @@
+import pytest
+
+
+@pytest.fixture()
+def new_fixture():
+    return 1
+
+
+def test(new_fixture: int):
+    pass

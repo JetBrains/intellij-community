@@ -15,10 +15,10 @@
  */
 package com.siyeh.ig.j2me;
 
-import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -126,7 +126,7 @@ public class MultiplyOrDivideByPowerOfTwoInspection
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
       final PsiExpression expression = (PsiExpression)startElement;
       CommentTracker commentTracker = new CommentTracker();
       final String newExpression = calculateReplacementShift(expression, commentTracker);

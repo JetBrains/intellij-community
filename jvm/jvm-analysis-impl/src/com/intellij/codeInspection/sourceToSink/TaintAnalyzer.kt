@@ -22,7 +22,7 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
   private val myCurrentParameters: MutableMap<PsiElement, TaintValue> = HashMap()
   private val myVisitedMethods: MutableMap<Pair<PsiElement, List<TaintValue>>, TaintValue> = HashMap()
   private val myNonMarkedElements: MutableList<NonMarkedElement> = ArrayList()
-  private val safeLambdaClass = listOf("java.lang.Iterable", "java.util.Collection", "java.util.Map",
+  private val safeLambdaClass = setOf("java.lang.Iterable", "java.util.Collection", "java.util.Map",
                                        "kotlin.collections.CollectionsKt___CollectionsKt")
   private val skipClasses: Set<String> = myTaintValueFactory.getConfiguration()
     .skipClasses
@@ -47,7 +47,8 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
       depthNestedMethods = 1,
       next = true,
       untilTaintValue = untilTaintValue,
-      parameterOfPrivateMethodIsUntainted = myTaintValueFactory.getConfiguration().parameterOfPrivateMethodIsUntainted)
+      parameterOfPrivateMethodIsUntainted = myTaintValueFactory.getConfiguration().parameterOfPrivateMethodIsUntainted,
+      privateOrFinalFieldSafe = myTaintValueFactory.getConfiguration().privateOrFinalFieldSafe)
     return fromExpressionInner(expression, context)
   }
 
@@ -74,7 +75,8 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
     //mark for propagation tree that it is a leaf
     val checkPropagationNext: Boolean,
     val untilTaintValue: TaintValue,
-    val parameterOfPrivateMethodIsUntainted: Boolean) {
+    val parameterOfPrivateMethodIsUntainted: Boolean,
+    val privateOrFinalFieldSafe: Boolean) {
     companion object {
       fun create(processOuterMethodAsQualifierAndArguments: Boolean,
                  processInnerMethodAsQualifierAndArguments: Boolean,
@@ -87,7 +89,8 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
                  depthNestedMethods: Int,
                  next: Boolean,
                  untilTaintValue: TaintValue,
-                 parameterOfPrivateMethodIsUntainted: Boolean): AnalyzeContext {
+                 parameterOfPrivateMethodIsUntainted: Boolean,
+                 privateOrFinalFieldSafe: Boolean): AnalyzeContext {
         return AnalyzeContext(processOuterMethodAsQualifierAndArguments = processOuterMethodAsQualifierAndArguments,
                               processInnerMethodAsQualifierAndArguments = processInnerMethodAsQualifierAndArguments,
                               file = file,
@@ -100,7 +103,8 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
                               checkPropagationNext = next,
                               untilTaintValue = untilTaintValue,
                               collectMarkedByDefault = true,
-                              parameterOfPrivateMethodIsUntainted = parameterOfPrivateMethodIsUntainted)
+                              parameterOfPrivateMethodIsUntainted = parameterOfPrivateMethodIsUntainted,
+                              privateOrFinalFieldSafe = privateOrFinalFieldSafe)
       }
     }
 
@@ -412,19 +416,20 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
       val callExpression = lambda.uastParent as? UCallExpression ?: return TaintValue.TAINTED
       val valueArguments = callExpression.valueArguments
       if (analyzeContext.processOuterMethodAsQualifierAndArguments &&
-          valueArguments.map { it.sourcePsi }.contains(targetPsi) &&
-          safeLambdaClass.contains((callExpression.resolve() as PsiMember).containingClass?.qualifiedName ?: "")
-      ) {
-        taintValue = taintValue.joinUntil(analyzeContext.untilTaintValue) {
-          fromExpressionWithoutCollection(callExpression.receiver, analyzeContext)
-        }
-        for (valueArgument in valueArguments) {
-          if (targetPsi != null && valueArgument.sourcePsi == targetPsi) continue
+          valueArguments.map { it.sourcePsi }.contains(targetPsi)) {
+        val psiMember = callExpression.resolve() as? PsiMember
+        if (psiMember != null && safeLambdaClass.contains(psiMember.containingClass?.qualifiedName ?: "")) {
           taintValue = taintValue.joinUntil(analyzeContext.untilTaintValue) {
-            fromExpressionWithoutCollection(valueArgument, analyzeContext)
+            fromExpressionWithoutCollection(callExpression.receiver, analyzeContext)
           }
+          for (valueArgument in valueArguments) {
+            if (targetPsi != null && valueArgument.sourcePsi == targetPsi) continue
+            taintValue = taintValue.joinUntil(analyzeContext.untilTaintValue) {
+              fromExpressionWithoutCollection(valueArgument, analyzeContext)
+            }
+          }
+          return taintValue
         }
-        return taintValue
       }
     }
 
@@ -490,6 +495,10 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
     }
 
     if (equalFiles) {
+      if (analyzeContext.privateOrFinalFieldSafe &&
+          (jvmModifiersOwner.hasModifier(JvmModifier.PRIVATE) || jvmModifiersOwner.hasModifier(JvmModifier.FINAL))) {
+        return TaintValue.UNTAINTED
+      }
       val isImmutable = (ClassUtils.isImmutable(uElement.type) ||
                          (target is PsiModifierListOwner && Mutability.getMutability(target) in setOf(Mutability.UNMODIFIABLE,
                                                                                                       Mutability.UNMODIFIABLE_VIEW)))
@@ -621,6 +630,9 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
       }
       is UClassLiteralExpression -> {
         return TaintValue.UNTAINTED
+      }
+      is UBinaryExpressionWithType -> {
+        return withCache(uExpression) { fromExpressionWithoutCollection(uExpression.operand, analyzeContext.minusPart()) }
       }
       is UResolvable -> {
         if (uExpression is UPostfixExpression && uExpression.operator.text == "!!") {

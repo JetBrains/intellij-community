@@ -406,15 +406,13 @@ public class CustomizableActionsPanel {
       try {
         icon = CustomActionsSchema.loadCustomIcon(path);
       }
-      catch (IOException e) {
+      catch (Throwable t) {
         Logger.getInstance(CustomizableActionsPanel.class)
-          .warn(String.format("Failed to load icon with path '%s' and set it to action '%s'", path, actionId));
+          .warn(String.format("Failed to load icon with path '%s' and set it to action '%s'", path, actionId), t);
         return false;
       }
-      if (icon != null) {
-        node.setUserObject(Pair.create(value, icon));
-        schema.addIconCustomization(actionId, path);
-      }
+      node.setUserObject(Pair.create(value, icon));
+      schema.addIconCustomization(actionId, path);
     }
     return true;
   }
@@ -531,9 +529,13 @@ public class CustomizableActionsPanel {
               ActionUrl url = new ActionUrl(getGroupPath(new TreePath(node.getPath()), true), action, ADDED, newActionPosition);
               addCustomizedAction(url);
               DefaultMutableTreeNode newNode = addPathToActionsTree(myActionsTree, url);
-              if (newNode != null && action instanceof String) {
-                Icon icon = CustomizationUtil.getIconForPath(ActionManager.getInstance(),mySelectedSchema.getIconPath((String)action));
-                newNode.setUserObject(Pair.create(action, icon));
+              if (newNode != null && action instanceof String actionId) {
+                String path = mySelectedSchema.getIconPath(actionId);
+                if (path.isEmpty()) {
+                  path = actionId;
+                }
+                Icon icon = CustomizationUtil.getIconForPath(ActionManager.getInstance(), path);
+                newNode.setUserObject(Pair.create(actionId, icon));
               }
             }
 

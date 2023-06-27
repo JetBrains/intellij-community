@@ -4,7 +4,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithUtil;
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.ModCommands;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
@@ -50,7 +50,7 @@ public class AddExceptionToCatchFix implements ModCommandAction {
     return ModCommands.psiUpdate(tryStatement, (ts, updater) -> invoke(ts, unhandledExceptions, updater));
   }
   
-  private static void invoke(@NotNull PsiTryStatement tryStatement, @NotNull List<PsiClassType> unhandledExceptions, @NotNull EditorUpdater updater) {
+  private static void invoke(@NotNull PsiTryStatement tryStatement, @NotNull List<PsiClassType> unhandledExceptions, @NotNull ModPsiUpdater updater) {
     PsiFile file = tryStatement.getContainingFile();
     PsiCodeBlock catchBlockToSelect = null;
 

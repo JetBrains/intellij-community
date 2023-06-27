@@ -8,7 +8,7 @@ internal class Library {
 
 internal class User {
     fun main() {
-        val lib = Library()
+        val lib: Library = Library()
         lib.call()
         lib.string.isEmpty()
         Library().call()

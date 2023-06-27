@@ -22,6 +22,7 @@ import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
+import kotlin.time.Duration.Companion.seconds
 
 private val LOG = logger<GitLabMergeRequest>()
 
@@ -45,6 +46,7 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
   val isDraft: Flow<Boolean>
   val reviewRequestState: Flow<ReviewRequestState>
   val isMergeable: Flow<Boolean>
+  val shouldBeRebased: Flow<Boolean>
   val approvedBy: Flow<List<GitLabUserDTO>>
   val reviewers: Flow<List<GitLabUserDTO>>
   val pipeline: Flow<GitLabPipelineDTO?>
@@ -66,6 +68,8 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
   suspend fun merge(commitMessage: String)
 
   suspend fun squashAndMerge(commitMessage: String)
+
+  suspend fun rebase()
 
   suspend fun approve()
 
@@ -131,6 +135,7 @@ internal class LoadedGitLabMergeRequest(
       }
     }
   override val isMergeable: Flow<Boolean> = mergeRequestDetailsState.map { it.isMergeable }
+  override val shouldBeRebased: Flow<Boolean> = mergeRequestDetailsState.map { it.shouldBeRebased }
   override val approvedBy: Flow<List<GitLabUserDTO>> = mergeRequestDetailsState.map { it.approvedBy }
   override val reviewers: Flow<List<GitLabUserDTO>> = mergeRequestDetailsState.map { it.reviewers }
   override val pipeline: Flow<GitLabPipelineDTO?> = mergeRequestDetailsState.map { it.headPipeline }
@@ -228,6 +233,20 @@ internal class LoadedGitLabMergeRequest(
     }
     discussionsContainer.checkUpdates()
     GitLabStatistics.logMrActionExecuted(GitLabStatistics.MergeRequestAction.SQUASH_MERGE)
+  }
+
+  override suspend fun rebase() {
+    withContext(cs.coroutineContext + Dispatchers.IO) {
+      api.rest.mergeRequestRebase(glProject, mergeRequestDetailsState.value)
+      do {
+        val updatedMergeRequest = api.graphQL.loadMergeRequest(glProject, mergeRequestDetailsState.value).body()!!
+        mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
+        delay(1.seconds)
+      }
+      while (updatedMergeRequest.rebaseInProgress)
+    }
+    discussionsContainer.checkUpdates()
+    GitLabStatistics.logMrActionExecuted(GitLabStatistics.MergeRequestAction.REBASE)
   }
 
   override suspend fun approve() {

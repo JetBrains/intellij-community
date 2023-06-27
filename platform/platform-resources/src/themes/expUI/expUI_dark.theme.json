@@ -317,6 +317,53 @@
       "borderColor": "Grey4"
     },
 
+    "Ide.Shadow": {
+      "borderInsets": "6,10,14,10",
+      "topLeftSize": "18,14",
+      "topRightSize": "18,14",
+      "bottomLeftSize": "18,22",
+      "bottomRightSize": "18,22",
+      "top0Color": "#1C1C1C92",
+      "top1Color": "#14141492",
+      "bottom0Color": "#10101092",
+      "bottom1Color": "#1D1D1D92",
+      "left0Color": "#1D1D1D92",
+      "left1Color": "#10101092",
+      "right0Color": "#10101092",
+      "right1Color": "#1D1D1D92",
+      "topLeft0Color": "#1D1D1D92",
+      "topLeft1Color": "#10101092",
+      "topRight0Color": "#14141492",
+      "topRight1Color": "#1D1D1D92",
+      "bottomLeft0Color": "#13131392",
+      "bottomLeft1Color": "#1C1C1C92",
+      "bottomRight0Color": "#10101092",
+      "bottomRight1Color": "#1C1C1C92"
+    },
+    "Notification.Shadow": {
+      "borderInsets": "6,10,6,10",
+      "topLeftSize": "18,14",
+      "topRightSize": "18,14",
+      "bottomLeftSize": "18,22",
+      "bottomRightSize": "18,22",
+      "top0Color": "#1C1C1C32",
+      "top1Color": "#14141432",
+      "bottom0Color": "#10101032",
+      "bottom1Color": "#1D1D1D32",
+      "left0Color": "#1D1D1D32",
+      "left1Color": "#10101032",
+      "right0Color": "#10101032",
+      "right1Color": "#1D1D1D32",
+      "topLeft0Color": "#1D1D1D32",
+      "topLeft1Color": "#10101032",
+      "topRight0Color": "#14141432",
+      "topRight1Color": "#1D1D1D32",
+      "bottomLeft0Color": "#13131332",
+      "bottomLeft1Color": "#1C1C1C32",
+      "bottomRight0Color": "#10101032",
+      "bottomRight1Color": "#1C1C1C32"
+    },
+
     "Notification": {
       "background": "Grey3",
       "borderColor": "Grey4",
@@ -560,6 +607,11 @@
       "separatorColor": "Grey4"
     },
 
+    "WindowControls": {
+      "foreground": "#CED0D6",
+      "inactiveForeground": "#6F737A"
+    },
+
     "Tree": {
       "collapsedIcon": "/expui/general/chevronRight.svg",
       "collapsedSelectedIcon": "/expui/general/chevronRight.svg",
@@ -635,7 +687,7 @@
         }
       },
       "Color3": {
-        "MainToolbarGradientStart": "#505139",
+        "MainToolbarGradientStart": "#455038",
         "Avatar": {
           "Start": "#A1A359",
           "End": "#87AA59"
@@ -832,6 +884,7 @@
       }
     },
     "HelpBrowser": {
+      "titleHighlightForeground": "Blue6",
       "UserMessage": {
         "background": "Grey4",
         "Snippet": {

@@ -58,9 +58,6 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     if (isNewImportingProcess) {
       assertTrue(MavenImportingManager.getInstance(myProject).isImportingInProgress());
     }
-    else {
-      assertSame(Promise.State.PENDING, result.getState());
-    }
   }
 
   @Test

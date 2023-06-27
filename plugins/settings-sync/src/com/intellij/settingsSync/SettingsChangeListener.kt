@@ -4,12 +4,6 @@ import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
 
-@Internal
-fun interface SettingsChangeListener : EventListener {
-
-  fun settingChanged(event: SyncSettingsEvent)
-
-}
 
 @Internal
 sealed class SyncSettingsEvent {

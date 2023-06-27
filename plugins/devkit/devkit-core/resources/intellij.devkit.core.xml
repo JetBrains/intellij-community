@@ -295,7 +295,7 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.LightServiceMigrationXMLInspection"
                      key="inspection.light.service.migration.display.name"/>
-    <localInspection language="JVM" shortName="LightServiceMigrationCode"
+    <localInspection language="UAST" shortName="LightServiceMigrationCode"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
@@ -305,8 +305,8 @@
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="false" level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.ActionPresentationInitializedInCtorInspection"
-                     key="inspection.an.action.initializes.template.presentation.in.ctor.display.name"/>
+                     implementationClass="org.jetbrains.idea.devkit.inspections.ActionPresentationInstantiatedInCtorInspection"
+                     key="inspection.action.presentation.instantiated.in.ctor.display.name"/>
     <localInspection language="UAST" shortName="NonDefaultConstructor"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
@@ -516,6 +516,10 @@
                  This results in better stack traces when generated assertions throw exceptions, but might slow down the compilation."/>
     <registryKey key="kotlin.commit.message.validation.enabled" defaultValue="true"
                  description="Enables commit messages validation for kotlin plugin"/>
+
+    <smartUpdateStep implementation="org.jetbrains.idea.devkit.actions.updateFromSources.UpdateFromSourcesStep" order="first"/>
+    <registryKey key="intellij.commit.message.validation.enabled" defaultValue="false"
+                 description="Enables commit messages validation for intellij project"/>
   </extensions>
 
   <extensions defaultExtensionNs="DevKit.lang">
@@ -524,13 +528,13 @@
     <cancellationCheckInLoopsFixProvider language="JAVA" implementationClass="org.jetbrains.idea.devkit.inspections.quickfix.JavaCancellationCheckInLoopsFixProvider"/>
     <visitorProviderForRBCInspection language="JAVA"
       implementationClass="org.jetbrains.idea.devkit.inspections.CallingMethodShouldBeRequiresBlockingContextInspection$VisitorProviderForJava"/>
-    <extensionClassShouldNotBePublicProvider language="JAVA"
-      implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionClassShouldNotBePublicProviderForJava"/>
-    <extensionClassShouldBeFinalErrorMessageProvider language="JAVA"
+    <extensionClassShouldNotBePublicProvider language="JVM"
+      implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionClassShouldNotBePublicProviderForJVM"/>
+    <extensionClassShouldBeFinalErrorMessageProvider language="JVM"
       implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionClassShouldBeFinalErrorMessageProvider"/>
-    <serviceLevelExtractor language="JAVA"
-      implementationClass="org.jetbrains.idea.devkit.inspections.ServiceLevelExtractorForJava"/>
-    <lightServiceMustBeFinalErrorMessageProvider language="JAVA"
+    <serviceLevelExtractor language="JVM"
+      implementationClass="org.jetbrains.idea.devkit.inspections.ServiceLevelExtractorForJVM"/>
+    <lightServiceMustBeFinalErrorMessageProvider language="JVM"
       implementationClass="org.jetbrains.idea.devkit.inspections.LightServiceMustBeFinalErrorMessageProvider"/>
     <appServiceAsStaticFinalFieldQuickFixProvider
       language="JAVA"

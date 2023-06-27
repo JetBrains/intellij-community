@@ -1,0 +1,13 @@
+// "Make B.foo open" "true"
+abstract class A {
+    abstract fun foo()
+}
+
+open class B : A() {
+    override fun foo() {}
+}
+
+class C : B() {
+    override fun foo() {}
+}
+/* IGNORE_FIR */

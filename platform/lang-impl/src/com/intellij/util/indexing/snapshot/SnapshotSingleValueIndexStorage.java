@@ -139,6 +139,11 @@ public class SnapshotSingleValueIndexStorage<Key, Value> implements VfsAwareInde
     clearCaches();
   }
 
+  @Override
+  public boolean isDirty() {
+    return mySnapshotInputMappings.isDirty();
+  }
+
   private void checkKeyInputIdConsistency(Key key, int inputId) {
     if (!Comparing.equal(key, inputId)) {
       LOG.error("key (" + key + ") and inputId (" + inputId + ") should be the same for " + SingleEntryFileBasedIndexExtension.class.getName());

@@ -1,14 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Path
 
-abstract class PerformanceWatcher : Disposable {
+abstract class PerformanceWatcher {
   interface Snapshot {
     fun logResponsivenessSinceCreation(activityName: @NonNls String)
 
@@ -98,4 +98,7 @@ abstract class PerformanceWatcher : Disposable {
    * library internals might be omitted.
    */
   abstract fun dumpThreads(pathPrefix: String, appendMillisecondsToFileName: Boolean, stripDump: Boolean): Path?
+
+  @Internal
+  abstract fun startEdtSampling()
 }

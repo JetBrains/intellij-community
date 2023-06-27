@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.backend.navigation.impl
 
-import com.intellij.codeInsight.navigation.NavigationUtil.shouldOpenAsNative
+import com.intellij.codeInsight.navigation.shouldOpenAsNative
 import com.intellij.ide.util.EditSourceUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.LazyRangeMarkerFactory

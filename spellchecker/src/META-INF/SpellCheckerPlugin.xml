@@ -38,5 +38,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.spellchecker.statistics.SpellcheckerActionStatistics"/>
 
     <notificationGroup id="Spellchecker" displayType="BALLOON" bundle="messages.SpellCheckerBundle" key="notification.group.spellchecker"/>
+
+    <iconMapper mappingFile="SpellcheckerIconMappings.json"/>
   </extensions>
 </idea-plugin>

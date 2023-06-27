@@ -20,7 +20,17 @@ class TipAndTrickManagerImpl : TipAndTrickManager {
   override suspend fun showTipDialog(project: Project, tip: TipAndTrickBean) = showTipDialog(project = project, tips = listOf(tip))
 
   private suspend fun showTipDialog(project: Project?, tips: List<TipAndTrickBean>) {
-    val sortingResult = if (tips.size > 1) TipOrderUtil.getInstance().sort(tips, project) else TipsSortingResult(tips)
+    val sortingResult = if (tips.size > 1) {
+      TipOrderUtil.getInstance().sort(tips, project).also { result ->
+        val tipsUsageManager = TipsUsageManager.getInstance()
+        if (!tipsUsageManager.wereTipsShownToday()) {
+          tipsUsageManager.fireTipProposed(result.tips[0])
+        }
+      }
+    }
+    else {
+      TipsSortingResult(tips)
+    }
     withContext(Dispatchers.EDT) {
       if (project?.isDisposed != true) {
         closeTipDialog()

@@ -29,7 +29,10 @@ class KotlinJUnit3Framework: JUnit3Framework(), KotlinPsiBasedTestFramework {
             get() = JUnitUtil.TEST_CASE_CLASS
 
         override val disabledTestAnnotation: String
-            get() = "org.junit.Ignore"
+            get() = throw UnsupportedOperationException("JUnit3 does not support Ignore methods")
+
+        override val allowTestMethodsInObject: Boolean
+            get() = false
 
         override fun isTestClass(declaration: KtClassOrObject): Boolean {
             return super.isTestClass(declaration) && CachedValuesManager.getCachedValue(declaration) {
@@ -45,6 +48,8 @@ class KotlinJUnit3Framework: JUnit3Framework(), KotlinPsiBasedTestFramework {
 
             return isTestClass(classOrObject)
         }
+
+        override fun isIgnoredMethod(declaration: KtNamedFunction): Boolean = false
 
         override fun findSetUp(classOrObject: KtClassOrObject): KtNamedFunction? =
             findFunctionWithName(classOrObject.takeIf { isTestClass(it) }, "setUp")

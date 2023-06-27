@@ -58,7 +58,7 @@ class ExecutorAction private constructor(val origin: AnAction,
           }
 
           override fun equals(other: Any?): Boolean {
-            return other is ActionGroupWrapper && delegate == other.delegate;
+            return other is ActionGroupWrapper && delegate == other.delegate
           }
 
           override fun hashCode(): Int {

@@ -867,7 +867,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     TemplatesGroup group = myProjectTypeList.getSelectedValue();
     if (group == null) return;
 
-    FeatureUsageData data = new FeatureUsageData();
+    FeatureUsageData data = new FeatureUsageData("FUS");
     data.addData("projectType", group.getId());
     data.addPluginInfo(group.getPluginInfo());
     if (myCurrentCard.equals(FRAMEWORKS_CARD)) {

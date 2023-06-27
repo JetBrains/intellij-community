@@ -93,9 +93,15 @@ class AccountMenuItemRenderer : ListCellRenderer<AccountMenuItem> {
 
   private val listSelectionBackground = UIUtil.getListSelectionBackground(true)
 
-  private val accountRenderer = AccountItemRenderer()
-  private val actionRenderer = ActionItemRenderer()
-  private val groupRenderer = GroupItemRenderer()
+  private val accountRenderer = AccountItemRenderer().apply {
+    isOpaque = false
+  }
+  private val actionRenderer = ActionItemRenderer().apply {
+    isOpaque = false
+  }
+  private val groupRenderer = GroupItemRenderer().apply {
+    isOpaque = false
+  }
 
   override fun getListCellRendererComponent(list: JList<out AccountMenuItem>?,
                                             value: AccountMenuItem,
@@ -116,10 +122,15 @@ class AccountMenuItemRenderer : ListCellRenderer<AccountMenuItem> {
     private val listSelectionForeground = NamedColorUtil.getListSelectionForeground(true)
 
     val avatarLabel = JLabel()
-    val titleComponent = SimpleColoredComponent()
-    val link = SimpleColoredComponent()
-
-    val nextStepIconLabel = SimpleColoredComponent()
+    val titleComponent = SimpleColoredComponent().apply {
+      isOpaque = false
+    }
+    val link = SimpleColoredComponent().apply {
+      isOpaque = false
+    }
+    val nextStepIconLabel = SimpleColoredComponent().apply {
+      isOpaque = false
+    }
 
     init {
       val insets = JBUI.insets(innerInset, leftInset, innerInset, innerInset)
@@ -173,7 +184,9 @@ class AccountMenuItemRenderer : ListCellRenderer<AccountMenuItem> {
   }
 
   private inner class ActionItemRenderer : JPanel(GridBagLayout()), ListCellRenderer<AccountMenuItem.Action> {
-    val actionTextLabel = SimpleColoredComponent()
+    val actionTextLabel = SimpleColoredComponent().apply {
+      isOpaque = false
+    }
     val rightIconLabel = JLabel()
 
     init {

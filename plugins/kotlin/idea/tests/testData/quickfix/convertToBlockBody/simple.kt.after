@@ -1,0 +1,14 @@
+// "Convert to block body" "true"
+fun foo(): Int {
+    return when {
+        true -> {
+            if (true) return 1
+            bar()
+            2
+        }
+
+        else -> 3
+    }
+}
+
+fun bar() {}

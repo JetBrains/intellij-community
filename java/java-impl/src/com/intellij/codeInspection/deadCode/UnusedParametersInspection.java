@@ -19,8 +19,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.UDeclaration;
 import org.jetbrains.uast.UElementKt;
+import org.jetbrains.uast.UMethod;
 import org.jetbrains.uast.UParameter;
 
 import javax.swing.*;
@@ -47,7 +47,7 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     }
     List<RefParameter> unusedParameters = getUnusedParameters(refMethod);
     if (unusedParameters.isEmpty()) return null;
-    UDeclaration uMethod = refMethod.getUastElement();
+    UMethod uMethod = refMethod.getUastElement();
     if (uMethod == null) return null;
     PsiElement element = uMethod.getJavaPsi();
     if (refMethod.isAppMain()) {
@@ -109,9 +109,9 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
         if (unusedParameters.isEmpty()) return;
         if (scope != null && scope.isTotalScope()) return;
 
-        UDeclaration uastElement = refMethod.getUastElement();
+        UMethod uastElement = refMethod.getUastElement();
         if (uastElement == null) return;
-        PsiMethod element = (PsiMethod)uastElement.getJavaPsi();
+        PsiMethod element = uastElement.getJavaPsi();
         if (element == null) {
           return;
         }

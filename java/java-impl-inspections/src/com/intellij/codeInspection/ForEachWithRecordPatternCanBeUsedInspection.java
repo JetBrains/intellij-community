@@ -3,8 +3,8 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
-import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -333,7 +333,7 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
     return expectedCallExpression;
   }
 
-  private class ForEachWithRecordCanBeUsedFix implements LocalQuickFix {
+  private class ForEachWithRecordCanBeUsedFix extends PsiUpdateModCommandQuickFix {
     private final SmartPsiElementPointer<PsiForeachStatementBase> myForEachStatement;
     private final SmartPsiElementPointer<PsiParameter> myParameter;
 
@@ -350,23 +350,10 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
       return InspectionGadgetsBundle.message("inspection.enhanced.for.with.record.pattern.can.be.used.fix.family.name");
     }
 
-
     @Override
-    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-      PsiForeachStatementBase foreachStatementBase = myForEachStatement.getElement();
-      PsiParameter parameter = myParameter.getElement();
-      if (foreachStatementBase == null || parameter == null) {
-        return null;
-      }
-      PsiForeachStatementBase foreachInCopy = PsiTreeUtil.findSameElementInCopy(foreachStatementBase, target);
-      PsiParameter parameterInCopy = PsiTreeUtil.findSameElementInCopy(parameter, target);
-      return new ForEachWithRecordCanBeUsedFix(foreachInCopy, parameterInCopy);
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiForeachStatementBase foreachStatementBase = myForEachStatement.getElement();
-      PsiParameter parameter = myParameter.getElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiForeachStatementBase foreachStatementBase = updater.getWritable(myForEachStatement.getElement());
+      PsiParameter parameter = updater.getWritable(myParameter.getElement());
       if (foreachStatementBase == null || parameter == null) {
         return;
       }

@@ -140,7 +140,7 @@ class VSWinTransferSettingsProvider : TransferSettingsProvider {
         id = instanceIdForIdeVersion,
         name = name,
         subName = subName,
-        icon = AllIcons.Idea_logo_welcome,
+        icon = AllIcons.TransferSettings.VS,
 
         lastUsed = hive.lastUsage,
         settings = settings,
@@ -163,8 +163,6 @@ class VSWinTransferSettingsProvider : TransferSettingsProvider {
   }
 
   override fun isAvailable(): Boolean = SystemInfoRt.isWindows
-
-  override fun getImportPerformer(ideVersion: IdeVersion): DefaultImportPerformer = DefaultImportPerformer()
 
   private fun timeFn() = System.nanoTime()
   private fun convertTimeFn(time: Long): Long = time / 1_000_000

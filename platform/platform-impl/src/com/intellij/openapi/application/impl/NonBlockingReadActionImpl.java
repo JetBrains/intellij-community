@@ -7,7 +7,7 @@ import com.intellij.concurrency.ContextAwareRunnable;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.ThreadDumper;
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
@@ -22,10 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -38,13 +35,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.RunnableCallable;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.Propagation;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import io.opentelemetry.api.metrics.Meter;
+import kotlin.Pair;
 import kotlin.coroutines.CoroutineContext;
 import kotlin.reflect.KClass;
-import kotlinx.coroutines.Job;
+import kotlinx.coroutines.CompletableJob;
 import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -93,7 +92,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   static {
     LOG.info("OTel monitoring for NonBlockingReadAction is " + (ENABLE_OTEL_MONITORING ? "enabled" : "disabled"));
     if (ENABLE_OTEL_MONITORING) {
-      Meter meter = TelemetryTracer.getMeter(EDT);
+      Meter meter = TelemetryManager.getMeter(EDT);
       MONITOR = new OTelMonitor(meter);
     }
     else {
@@ -244,6 +243,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     @Nullable private final ProgressIndicator myProgressIndicator;
     @NotNull private final NonBlockingReadActionImpl<T> builder;
     @NotNull private final CoroutineContext myContext;
+    @Nullable private final CompletableJob myJob;
 
     // a sum composed of: 1 for non-done promise, 1 for each currently running thread,
     // so 0 means that the process is marked completed or canceled, and it has no running not-yet-finished threads
@@ -255,7 +255,9 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     Submission(@NotNull NonBlockingReadActionImpl<T> builder,
                @NotNull Executor backgroundThreadExecutor,
                @Nullable ProgressIndicator outerIndicator) {
-      myContext = ThreadContext.currentThreadContext().minusKey(Job.Key);
+      Pair<CoroutineContext, CompletableJob> pair = Propagation.createChildContext();
+      myContext = pair.getFirst();
+      myJob = pair.getSecond();
       backendExecutor = backgroundThreadExecutor;
       this.builder = builder;
       if (builder.myCoalesceEquality != null) {
@@ -292,7 +294,10 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
           @Override
           public void dispose() {
             disposed = true;
-            cancel();
+            // NB: We call here `super.cancel()` directly instead of `cancel()`
+            // The reason is that `Job` is needed to cover the scheduling of `myUiThreadAction`,
+            // so its lifetime is bigger than the lifetime of computation in NBRA, hence `Job` should not be cancelled in `dispose`.
+            Submission.super.cancel();
           }
         };
         //noinspection TestOnlyProblems
@@ -585,6 +590,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     private void insideReadAction(@NotNull ProgressIndicator indicator, @NotNull Ref<? super ContextConstraint> outUnsatisfiedConstraint) {
       try {
         if (checkObsolete()) {
+          cancelJob(null);
           return;
         }
         ContextConstraint constraint = builder.findUnsatisfiedConstraint();
@@ -599,29 +605,68 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
           safeTransferToEdt(result);
         }
         else {
-          setResult(result);
+          try {
+            setResult(result);
+          } finally {
+            completeJob();
+          }
         }
       }
       catch (ServiceNotReadyException e) {
+        failJob(e);
         throw e;
       }
       catch (ProcessCanceledException e) {
         if (!indicator.isCanceled()) {
+          failJob(e);
           setError(e); // don't restart after a manually thrown PCE
         }
         throw e;
       }
       catch (Throwable e) {
+        failJob(e);
         setError(e);
       }
+    }
+
+    @Override
+    public void cancel() {
+      super.cancel();
+      cancelJob(null);
+    }
+
+    @Override
+    public boolean isCancelled() {
+      return super.isCancelled() || (myJob != null && myJob.isCancelled());
     }
 
     private boolean shouldFinishOnEdt() {
       return builder.myModalityState != null;
     }
 
+    private void cancelJob(@Nullable CancellationException e) {
+      if (myJob != null) {
+        myJob.cancel(e);
+      }
+    }
+
+    private void completeJob() {
+      if (myJob != null) {
+        myJob.complete();
+      }
+    }
+
+    private void failJob(@NotNull Throwable reason) {
+      if (myJob != null) {
+        myJob.completeExceptionally(reason);
+      }
+    }
+
     private boolean checkObsolete() {
-      if (Promises.isRejected(this)) return true;
+      if (Promises.isRejected(this)) {
+        cancelJob(new CancellationException("Cancelled by rejection"));
+        return true;
+      }
       for (BooleanSupplier condition : builder.myCancellationConditions) {
         if (condition.getAsBoolean()) {
           cancel();
@@ -636,7 +681,10 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     }
 
     private void safeTransferToEdt(T result) {
-      if (Promises.isRejected(this)) return;
+      if (Promises.isRejected(this)) {
+        cancelJob(null);
+        return;
+      }
 
       long stamp = AsyncExecutionServiceImpl.getWriteActionCounter();
 
@@ -647,18 +695,23 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
         }
 
         if (checkObsolete()) {
+          cancelJob(null);
           return;
         }
 
         setResult(result);
 
         if (isSucceeded()) { // in case when another thread managed to cancel it just before `setResult`
-          if (AppExecutorUtil.propagateContextOrCancellation()) {
-            try (AccessToken ignored = ThreadContext.installThreadContext(myContext, false)) {
+          try {
+            if (AppExecutorUtil.propagateContextOrCancellation()) {
+              try (AccessToken ignored = ThreadContext.installThreadContext(myContext, false)) {
+                builder.myUiThreadAction.accept(result);
+              }
+            } else {
               builder.myUiThreadAction.accept(result);
             }
-          } else {
-            builder.myUiThreadAction.accept(result);
+          } finally {
+            completeJob();
           }
         }
       }, builder.myModalityState, __ -> isCancelled());

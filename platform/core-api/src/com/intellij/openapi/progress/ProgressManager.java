@@ -196,8 +196,8 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @param task task to run (either {@link Task.Modal} or {@link Task.Backgroundable}).
    *
    * @see com.intellij.openapi.progress.TasksKt#withBackgroundProgress
-   * @see com.intellij.openapi.progress.TasksKt#withModalProgressIndicator
-   * @see com.intellij.openapi.progress.TasksKt#runBlockingModal
+   * @see com.intellij.openapi.progress.TasksKt#withModalProgress
+   * @see com.intellij.openapi.progress.TasksKt#runWithModalProgressBlocking
    */
   @RequiresBlockingContext
   public abstract void run(@NotNull Task task);

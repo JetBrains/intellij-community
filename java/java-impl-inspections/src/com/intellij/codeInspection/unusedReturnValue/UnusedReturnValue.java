@@ -45,7 +45,7 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
         return null;
       }
 
-      final PsiMethod psiMethod = (PsiMethod)refMethod.getUastElement().getJavaPsi();
+      final PsiMethod psiMethod = refMethod.getUastElement().getJavaPsi();
       if (psiMethod == null) return null;
       if (IGNORE_BUILDER_PATTERN && (PropertyUtilBase.isSimplePropertySetter(psiMethod)) || MethodUtils.isChainable(psiMethod)) return null;
       final boolean isNative = psiMethod.hasModifierProperty(PsiModifier.NATIVE);

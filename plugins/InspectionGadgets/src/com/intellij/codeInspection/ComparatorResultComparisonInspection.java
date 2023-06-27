@@ -1,10 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
@@ -73,7 +74,7 @@ public class ComparatorResultComparisonInspection extends AbstractBaseJavaLocalI
         }
       }
 
-      private boolean coversPartially(LongRangeSet testedRange, LongRangeSet coveredRange) {
+      private static boolean coversPartially(LongRangeSet testedRange, LongRangeSet coveredRange) {
         LongRangeSet intersection = testedRange.meet(coveredRange);
         return !intersection.isEmpty() && !coveredRange.subtract(intersection).isEmpty();
       }
@@ -86,7 +87,7 @@ public class ComparatorResultComparisonInspection extends AbstractBaseJavaLocalI
     };
   }
 
-  private static class ComparatorComparisonFix implements LocalQuickFix {
+  private static class ComparatorComparisonFix extends PsiUpdateModCommandQuickFix {
     private final boolean myYodaCondition;
     private final RelationType myRelation;
 
@@ -115,8 +116,8 @@ public class ComparatorResultComparisonInspection extends AbstractBaseJavaLocalI
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiBinaryExpression binOp = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiBinaryExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiBinaryExpression binOp = PsiTreeUtil.getParentOfType(element, PsiBinaryExpression.class);
       if (binOp == null) return;
       CommentTracker ct = new CommentTracker();
       String replacement;

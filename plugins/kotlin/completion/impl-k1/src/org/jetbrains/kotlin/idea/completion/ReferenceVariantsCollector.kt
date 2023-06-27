@@ -36,6 +36,7 @@ class ReferenceVariantsCollector(
     private val referenceVariantsHelper: ReferenceVariantsHelper,
     private val indicesHelper: KotlinIndicesHelper,
     private val prefixMatcher: PrefixMatcher,
+    private val applicabilityFilter: (DeclarationDescriptor) -> Boolean,
     private val nameExpression: KtSimpleNameExpression,
     private val callTypeAndReceiver: CallTypeAndReceiver<*, *>,
     private val resolutionFacade: ResolutionFacade,
@@ -117,6 +118,27 @@ class ReferenceVariantsCollector(
         consumer(basic)
         val extensions = collectExtensionVariants(config, basic).fixDescriptors()
         consumer(extensions)
+    }
+
+    data class ReferenceVariantsCollectors(
+        val basic: Lazy<ReferenceVariants>,
+        val extensions: Lazy<ReferenceVariants>
+    )
+
+    fun makeReferenceVariantsCollectors(descriptorKindFilter: DescriptorKindFilter): ReferenceVariantsCollectors {
+        val config = configuration(descriptorKindFilter)
+
+        val basic = lazy {
+            assert(!isCollectingFinished)
+            collectBasicVariants(config).fixDescriptors()
+        }
+
+        val extensions = lazy {
+            assert(!isCollectingFinished)
+            collectExtensionVariants(config, basic.value).fixDescriptors()
+        }
+
+        return ReferenceVariantsCollectors(basic, extensions)
     }
 
     private fun collectBasicVariants(filterConfiguration: FilterConfiguration): ReferenceVariants {
@@ -201,6 +223,8 @@ class ReferenceVariantsCollector(
             basicVariants = basicVariants.distinct()
         }
 
+        basicVariants = basicVariants.filter { applicabilityFilter(it) }
+
         return ReferenceVariants(filterConfiguration.filterVariants(basicVariants).toHashSet(), emptyList())
     }
 
@@ -219,7 +243,7 @@ class ReferenceVariantsCollector(
                     callTypeAndReceiver, nameExpression, bindingContext, receiverTypeFromDiagnostic = null, nameFilter
                 )
 
-            val (extensionsVariants, notImportedExtensions) = extensions.partition {
+            val (extensionsVariants, notImportedExtensions) = extensions.filter { applicabilityFilter(it) }.partition {
                 importableFqNameClassifier.isImportableDescriptorImported(
                     it
                 )
@@ -273,16 +297,15 @@ class ReferenceVariantsCollector(
             if (descriptor.isArtificialImportAliasedDescriptor) return false // do not exclude aliased descriptors - they cannot be completed via indices
             val containingPackage = descriptor.containingDeclaration as? PackageFragmentDescriptor ?: return false
             // TODO: temporary solution for Android synthetic extensions
-            if (containingPackage.fqName.asString().startsWith("kotlinx.android.synthetic.")) return false
-            return true
+            return !containingPackage.fqName.asString().startsWith("kotlinx.android.synthetic.")
         }
 
         override val fullyExcludedDescriptorKinds: Int get() = 0
     }
 
     private fun isDataClassComponentFunction(descriptor: DeclarationDescriptor): Boolean =
-        descriptor is FunctionDescriptor && descriptor.isOperator && DataClassResolver.isComponentLike(descriptor.name) && descriptor.kind == CallableMemberDescriptor.Kind
-            .SYNTHESIZED
+        descriptor is FunctionDescriptor && descriptor.isOperator &&
+                DataClassResolver.isComponentLike(descriptor.name) && descriptor.kind == CallableMemberDescriptor.Kind.SYNTHESIZED
 
     private fun isEnumEntriesProperty(descriptor: DeclarationDescriptor): Boolean {
         return descriptor.name == StandardNames.ENUM_ENTRIES &&

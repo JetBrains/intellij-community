@@ -22,8 +22,8 @@ interface PartialImportPerformer {
   fun willPerform(settings: Settings): Boolean
   fun collectAllRequiredPlugins(settings: Settings): Set<PluginId>
   fun patchSettingsAfterPluginInstallation(settings: Settings, pluginIds: Set<String>): Settings
-  fun perform(project: Project, settings: Settings, pi: ProgressIndicator)
-  fun performEdt(project: Project, settings: Settings)
+  fun perform(project: Project?, settings: Settings, pi: ProgressIndicator)
+  fun performEdt(project: Project?, settings: Settings)
 }
 
 class LookAndFeelImportPerformer : PartialImportPerformer {
@@ -50,9 +50,9 @@ class LookAndFeelImportPerformer : PartialImportPerformer {
     return settings
   }
 
-  override fun perform(project: Project, settings: Settings, pi: ProgressIndicator) {}
+  override fun perform(project: Project?, settings: Settings, pi: ProgressIndicator) {}
 
-  override fun performEdt(project: Project, settings: Settings) {
+  override fun performEdt(project: Project?, settings: Settings) {
     (settings.laf as? BundledLookAndFeel)?.let {
       val mgr = LafManager.getInstance()
       mgr.currentLookAndFeel = it.lafInfo
@@ -85,9 +85,9 @@ class SyntaxSchemeImportPerformer : PartialImportPerformer {
     return settings
   }
 
-  override fun perform(project: Project, settings: Settings, pi: ProgressIndicator) {}
+  override fun perform(project: Project?, settings: Settings, pi: ProgressIndicator) {}
 
-  override fun performEdt(project: Project, settings: Settings) {
+  override fun performEdt(project: Project?, settings: Settings) {
     val scheme = settings.syntaxScheme ?: return
     if (scheme !is BundledEditorColorScheme) {
       logger.warn("scheme is not BundledEditorColorScheme, but instead ${scheme::class.java.simpleName}")
@@ -137,9 +137,9 @@ class KeymapSchemeImportPerformer : PartialImportPerformer {
     return settings
   }
 
-  override fun perform(project: Project, settings: Settings, pi: ProgressIndicator) {}
+  override fun perform(project: Project?, settings: Settings, pi: ProgressIndicator) {}
 
-  override fun performEdt(project: Project, settings: Settings) {
+  override fun performEdt(project: Project?, settings: Settings) {
     val keymap = settings.keymap ?: return
 
     when (keymap) {
@@ -192,9 +192,9 @@ class RecentProjectsImportPerformer : PartialImportPerformer {
 
   override fun patchSettingsAfterPluginInstallation(settings: Settings, pluginIds: Set<String>): Settings = settings
 
-  override fun perform(project: Project, settings: Settings, pi: ProgressIndicator) {}
+  override fun perform(project: Project?, settings: Settings, pi: ProgressIndicator) {}
 
-  override fun performEdt(project: Project, settings: Settings) {
+  override fun performEdt(project: Project?, settings: Settings) {
     val recentProjectsManagerBase = RecentProjectsManagerBase.getInstanceEx()
     settings.recentProjects.sortedBy { (_, info) -> info.projectOpenTimestamp }.forEach { (path, info) ->
       recentProjectsManagerBase.addRecentPath(path, info)

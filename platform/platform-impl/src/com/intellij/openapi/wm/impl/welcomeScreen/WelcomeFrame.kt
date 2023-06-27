@@ -200,7 +200,7 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
 
       val show = prepareToShow() ?: return
       @Suppress("DEPRECATION")
-      app.coroutineScope.launch(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
+      app.coroutineScope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
         blockingContext {
           val windowManager = WindowManager.getInstance() as WindowManagerImpl
           windowManager.disposeRootFrame()

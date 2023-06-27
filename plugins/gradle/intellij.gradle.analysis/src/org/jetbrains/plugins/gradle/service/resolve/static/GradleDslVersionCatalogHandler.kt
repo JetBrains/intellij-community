@@ -15,13 +15,13 @@ class GradleDslVersionCatalogHandler : GradleVersionCatalogHandler {
   }
 
   override fun getVersionCatalogFiles(project: Project): Map<String, VirtualFile> {
-    return ProjectBuildModel.get(project).context.rootProjectFile?.versionCatalogFiles?.associate { it.catalogName to it.file } ?: emptyMap()
+    return ProjectBuildModel.get(project).context.versionCatalogFiles.associate { it.catalogName to it.file } ?: emptyMap()
   }
 
   override fun getAccessorClass(context: PsiElement, catalogName: String): PsiClass? {
     val project = context.project
     val scope = context.resolveScope
-    val versionCatalogModel = ProjectBuildModel.get(project).versionCatalogModel ?: return null
+    val versionCatalogModel = ProjectBuildModel.get(project).versionCatalogsModel ?: return null
     return SyntheticVersionCatalogAccessor(project, scope, versionCatalogModel, catalogName)
   }
 }

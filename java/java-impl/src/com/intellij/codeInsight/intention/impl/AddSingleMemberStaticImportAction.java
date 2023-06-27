@@ -2,7 +2,7 @@
 
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -293,7 +293,7 @@ public class AddSingleMemberStaticImportAction extends PsiUpdateModCommandAction
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiIdentifier element, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiIdentifier element, @NotNull ModPsiUpdater updater) {
     invoke(element.getContainingFile(), element);
   }
 }

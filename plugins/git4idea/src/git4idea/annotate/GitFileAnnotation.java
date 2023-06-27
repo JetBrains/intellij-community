@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.annotate;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -256,7 +256,7 @@ public final class GitFileAnnotation extends FileAnnotation {
         if (root == null) return;
 
         CompletableFuture<Boolean> shownInLog;
-        if (ModalityState.current() == ModalityState.NON_MODAL &&
+        if (ModalityState.current() == ModalityState.nonModal() &&
             Registry.is("vcs.blame.show.affected.files.in.log")) {
           Hash hash = HashImpl.build(info.getRevisionNumber().asString());
           shownInLog = VcsLogNavigationUtil.jumpToRevisionAsync(myProject, root, hash, info.getFilePath());

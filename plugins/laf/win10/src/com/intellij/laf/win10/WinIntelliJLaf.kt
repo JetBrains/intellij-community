@@ -2,12 +2,12 @@ package com.intellij.laf.win10
 
 import com.intellij.ide.ui.laf.IntelliJLaf
 import com.intellij.ide.ui.laf.MenuArrowIcon
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.StartupUiUtil
 import javax.swing.UIDefaults
 
 internal class WinIntelliJLaf : IntelliJLaf() {
   init {
-    putUserData(UIUtil.PLUGGABLE_LAF_KEY, name)
+    putUserData(StartupUiUtil.PLUGGABLE_LAF_KEY, name)
   }
 
   override fun getName() = WinLafProvider.LAF_NAME

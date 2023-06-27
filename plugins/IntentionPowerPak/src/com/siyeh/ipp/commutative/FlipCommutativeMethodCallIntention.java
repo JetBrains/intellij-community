@@ -20,12 +20,12 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ipp.base.MutablyNamedIntention;
+import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class FlipCommutativeMethodCallIntention extends MutablyNamedIntention {
+public class FlipCommutativeMethodCallIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -33,7 +33,7 @@ public class FlipCommutativeMethodCallIntention extends MutablyNamedIntention {
   }
 
   @Override
-  protected String getTextForElement(PsiElement element) {
+  protected String getTextForElement(@NotNull PsiElement element) {
     final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
     final PsiReferenceExpression methodExpression = call.getMethodExpression();
     @NonNls final String methodName = methodExpression.getReferenceName();

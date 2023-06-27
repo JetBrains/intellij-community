@@ -12,7 +12,7 @@ class TransferSettingsIdeRepresentation(ideVersion: IdeVersion, sectionFactory: 
   : TransferSettingsRepresentationPanel {
   private val sections = sectionFactory(ideVersion)
 
-  override fun getComponent(): DialogPanel = panel {
+  private val comp = panel {
     for (section in sections) {
       if (!section.worthShowing()) continue
 
@@ -21,4 +21,10 @@ class TransferSettingsIdeRepresentation(ideVersion: IdeVersion, sectionFactory: 
       }
     }
   }
+
+  override fun block() {
+    sections.forEach { it.block() }
+  }
+
+  override fun getComponent(): DialogPanel = comp
 }

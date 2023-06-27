@@ -8,17 +8,18 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.storage.EntityChange;
+import com.intellij.platform.workspace.storage.VersionedStorageChange;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
-import com.intellij.workspaceModel.storage.EntityChange;
-import com.intellij.workspaceModel.storage.VersionedStorageChange;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.sdk.PythonSdkUtil;
-import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 
 public final class PythonModulePathCache extends PythonPathCache implements Disposable {
@@ -61,7 +62,7 @@ public final class PythonModulePathCache extends PythonPathCache implements Disp
       if (!myModule.isDisposed()) {
         updateCacheForSdk(myModule);
       }
-      Iterable<EntityChange<ModuleEntity>> changes = SequencesKt.asIterable(event.getChanges(ModuleEntity.class));
+      List<EntityChange<ModuleEntity>> changes = event.getChanges(ModuleEntity.class);
       for (EntityChange<ModuleEntity> change : changes) {
         ModuleEntity entity = null;
         if (change instanceof EntityChange.Replaced) {

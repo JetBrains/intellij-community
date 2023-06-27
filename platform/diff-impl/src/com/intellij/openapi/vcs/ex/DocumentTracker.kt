@@ -1220,21 +1220,14 @@ sealed class RangeExclusionState {
   abstract val hasExcluded: Boolean
   abstract val hasIncluded: Boolean
 
-  abstract val isFullyExcluded: Boolean
-  abstract val isFullyIncluded: Boolean
-
   object Included : RangeExclusionState() {
     override val hasExcluded: Boolean = false
     override val hasIncluded: Boolean = true
-    override val isFullyExcluded: Boolean = false
-    override val isFullyIncluded: Boolean = true
   }
 
   object Excluded : RangeExclusionState() {
     override val hasExcluded: Boolean = true
     override val hasIncluded: Boolean = false
-    override val isFullyExcluded: Boolean = true
-    override val isFullyIncluded: Boolean = false
   }
 
   @Experimental
@@ -1256,12 +1249,6 @@ sealed class RangeExclusionState {
               includedAdditions.nextClearBit(0) < additionsCount
     override val hasIncluded: Boolean
       get() = !includedDeletions.isEmpty || !includedAdditions.isEmpty
-
-    override val isFullyExcluded: Boolean
-      get() = !hasIncluded
-
-    override val isFullyIncluded: Boolean
-      get() = !hasExcluded
 
     val includedDeletionsCount: Int get() = includedDeletions.cardinality()
     val includedAdditionsCount: Int get() = includedAdditions.cardinality()

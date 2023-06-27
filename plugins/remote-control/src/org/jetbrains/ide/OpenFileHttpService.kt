@@ -171,7 +171,7 @@ internal class OpenFileHttpService : RestService() {
           }
         }
       }
-    }, ModalityState.NON_MODAL)
+    }, ModalityState.nonModal())
 
     session.addAllFiles(*ManagingFS.getInstance().localRoots)
     refreshSessionId = session.id

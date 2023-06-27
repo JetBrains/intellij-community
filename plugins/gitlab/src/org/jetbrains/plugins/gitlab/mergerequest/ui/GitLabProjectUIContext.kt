@@ -7,11 +7,9 @@ import com.intellij.collaboration.ui.icon.CachingIconsProvider
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowProjectContext
 import com.intellij.openapi.project.Project
+import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
@@ -50,14 +48,7 @@ private constructor(cs: CoroutineScope, project: Project, connection: GitLabProj
     }
 
   init {
-    cs.launch(start = CoroutineStart.UNDISPATCHED) {
-      try {
-        awaitCancellation()
-      }
-      finally {
-        filesController.closeAllFiles()
-      }
-    }
+    cs.awaitCancellationAndInvoke { filesController.closeAllFiles() }
   }
 
   companion object {

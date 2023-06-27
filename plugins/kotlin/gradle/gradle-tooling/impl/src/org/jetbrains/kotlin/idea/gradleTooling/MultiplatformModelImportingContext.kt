@@ -79,7 +79,8 @@ internal enum class GradleImportProperties(val id: String, val defaultValue: Boo
     IS_HMPP_ENABLED("kotlin.mpp.enableGranularSourceSetsMetadata", false),
     COERCE_ROOT_SOURCE_SETS_TO_COMMON("kotlin.mpp.coerceRootSourceSetsToCommon", true),
     IMPORT_ORPHAN_SOURCE_SETS("import_orphan_source_sets", true),
-    ENABLE_KGP_DEPENDENCY_RESOLUTION("kotlin.mpp.import.enableKgpDependencyResolution", true)
+    ENABLE_KGP_DEPENDENCY_RESOLUTION("kotlin.mpp.import.enableKgpDependencyResolution", true),
+    LEGACY_TEST_SOURCE_SET_DETECTION("kotlin.mpp.import.legacyTestSourceSetDetection", false),
     ;
 }
 
@@ -101,7 +102,7 @@ internal class MultiplatformModelImportingContextImpl(
     override lateinit var sourceSetsByName: Map<String, KotlinSourceSetImpl>
         private set
 
-    private val downloadSources = java.lang.Boolean.parseBoolean(System.getProperty("idea.disable.gradle.download.sources", "true"))
+    private val downloadSources = java.lang.Boolean.parseBoolean(System.getProperty("idea.gradle.download.sources", "true"))
 
     override val dependencyResolver = DependencyResolverImpl(project, false, downloadSources, SourceSetCachedFinder(modelBuilderContext))
     override val dependencyMapper = KotlinDependencyMapper()

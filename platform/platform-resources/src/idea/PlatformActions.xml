@@ -1229,6 +1229,7 @@
                 class="com.intellij.internal.cachedValueProfiler.TurnOnOffCachedValueProfilerAction"/>
         <action id="LaggingMode" internal="true" class="com.intellij.internal.ToggleLaggingModeAction"/>
       </group>
+      <action id="ShowIconsNotPatchedForExpUi" class="com.intellij.internal.ui.ShowIconsNotPatchedForExpUi" internal="true" />
       <separator/>
       <group id="Internal.Editor" popup="true">
         <action id="AddInlayInternalAction" internal="true" class="com.intellij.internal.AddInlayInternalAction"/>

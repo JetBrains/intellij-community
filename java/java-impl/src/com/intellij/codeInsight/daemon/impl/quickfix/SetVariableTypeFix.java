@@ -1,18 +1,17 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SetVariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-  @SafeFieldForPreview
+public class SetVariableTypeFix extends PsiUpdateModCommandAction<PsiVariable> {
   private final @NotNull SmartTypePointer myTypePointer;
   private final @NotNull @NlsSafe String myTypeText;
 
@@ -23,30 +22,25 @@ public class SetVariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElem
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiVariable variable, @NotNull ModPsiUpdater updater) {
     PsiType type = myTypePointer.getType();
     if (type == null) return;
-    PsiVariable variable = (PsiVariable)startElement;
     if (!(variable instanceof PsiReceiverParameter)) {
       JavaSharedImplUtil.normalizeBrackets(variable);
     }
     PsiTypeElement typeElement = variable.getTypeElement();
     if (typeElement == null) return;
-    PsiTypeElement typeElementByExplicitType = JavaPsiFacade.getElementFactory(project).createTypeElement(type);
+    PsiTypeElement typeElementByExplicitType = JavaPsiFacade.getElementFactory(context.project()).createTypeElement(type);
     typeElement.replace(typeElementByExplicitType);
   }
 
   @Override
-  protected boolean isAvailable() {
-    return super.isAvailable() && myTypePointer.getType() != null;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiVariable element) {
+    return myTypePointer.getType() == null ? null : Presentation.of(getText());
   }
 
-  @Override
-  public @NotNull String getText() {
+  @NotNull
+  protected @Nls String getText() {
     return JavaBundle.message("intention.name.set.variable.type", myTypeText);
   }
 

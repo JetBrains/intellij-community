@@ -1,12 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.javadoc;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.xml.XmlFile;
@@ -15,14 +18,13 @@ import com.intellij.psi.xml.XmlTagValue;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final boolean packageInfoExists = ((Boolean)infos[1]).booleanValue();
     if (packageInfoExists) {
       return new DeletePackageDotHtmlFix();
@@ -31,10 +33,11 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
     return new PackageDotHtmlMayBePackageInfoFix(aPackage);
   }
 
+  @SuppressWarnings("DialogTitleCapitalization")
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    if (((Boolean)infos[1]).booleanValue()) {
+    if ((Boolean)infos[1]) {
       return InspectionGadgetsBundle.message("package.dot.html.may.be.package.info.exists.problem.descriptor");
     }
     return InspectionGadgetsBundle.message("package.dot.html.may.be.package.info.problem.descriptor");
@@ -45,7 +48,7 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
     return new PackageDotHtmlMayBePackageInfoVisitor();
   }
 
-  private static class DeletePackageDotHtmlFix extends InspectionGadgetsFix {
+  private static class DeletePackageDotHtmlFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -54,16 +57,14 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof XmlFile)) {
-        return;
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      if (element instanceof XmlFile xmlFile) {
+        xmlFile.delete();
       }
-      element.delete();
     }
   }
 
-  private static class PackageDotHtmlMayBePackageInfoFix extends InspectionGadgetsFix {
+  private static class PackageDotHtmlMayBePackageInfoFix extends PsiUpdateModCommandQuickFix {
 
     private final String aPackage;
 
@@ -78,12 +79,11 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(final @NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (!(element instanceof XmlFile xmlFile)) {
         return;
       }
-      final PsiDirectory directory = xmlFile.getContainingDirectory();
+      final PsiDirectory directory = updater.getWritable(xmlFile.getOriginalFile().getContainingDirectory());
       if (directory == null) {
         return;
       }
@@ -104,10 +104,9 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
       else {
         packageInfoFile.add(comment);
       }
+      CodeStyleManager.getInstance(project).reformat(packageInfoFile);
       xmlFile.delete();
-      if (isOnTheFly()) {
-        packageInfoFile.navigate(true);
-      }
+      updater.moveTo(packageInfoFile);
     }
 
     @NotNull
@@ -168,7 +167,7 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
         return;
       }
       final boolean exists = directory.findFile("package-info.java") != null;
-      registerError(file, aPackage, Boolean.valueOf(exists));
+      registerError(file, aPackage, exists);
     }
 
     public static String getPackage(@NotNull PsiDirectory directory) {

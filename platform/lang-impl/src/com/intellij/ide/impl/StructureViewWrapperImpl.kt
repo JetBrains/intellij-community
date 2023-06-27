@@ -199,16 +199,20 @@ class StructureViewWrapperImpl(private val myProject: Project,
       ReadAction.nonBlocking<VirtualFile?> { getTargetVirtualFile(asyncDataContext) }
         .coalesceBy(this, owner)
         .finishOnUiThread(ModalityState.defaultModalityState()) { file: VirtualFile? ->
-          if (file != null) {
-            setFile(file)
-          }
-          else if (myFirstRun) {
-            setFileFromSelectionHistory()
-          }
-          else {
-            setFile(null)
-          }
+          val firstRun = myFirstRun
           myFirstRun = false
+
+          coroutineScope.launch {
+            if (file != null) {
+              setFile(file)
+            }
+            else if (firstRun) {
+              setFileFromSelectionHistory()
+            }
+            else {
+              setFile(null)
+            }
+          }
         }
         .submit(AppExecutorUtil.getAppExecutorService())
     }
@@ -216,34 +220,63 @@ class StructureViewWrapperImpl(private val myProject: Project,
 
   private fun setFileFromSelectionHistory() {
     val editorManager = FileEditorManager.getInstance(myProject) as FileEditorManagerImpl
-    val history = editorManager.getSelectionHistory()
-    if (!history.isEmpty()) {
-      setFile(history[0].getFirst())
+    val firstInHistory = editorManager.getSelectionHistory().firstOrNull()
+    if (firstInHistory != null) {
+      coroutineScope.launch {
+        setFile(firstInHistory.first)
+      }
     }
   }
 
-  private fun setFile(file: VirtualFile?) {
-    var forceRebuild = !Comparing.equal(file, myFile)
-    if (!forceRebuild && myStructureView != null) {
-      val model = myStructureView!!.treeModel
-      if (model is TextEditorBasedStructureViewModel && !model.isValid) {
-        forceRebuild = true
-      }
-      else {
-        val treeElement = model.root
-        val value = treeElement.value
-        if (value == null || value is PsiElement && !value.isValid || myStructureView is StructureViewComposite && (myStructureView as StructureViewComposite).isOutdated) {
-          forceRebuild = true
-        }
-        else if (file != null) {
-          forceRebuild = FileEditorManager.getInstance(myProject).getSelectedEditor(file) !== myFileEditor
-        }
-      }
-    }
-    if (forceRebuild) {
+  private suspend fun setFile(file: VirtualFile?) {
+    suspend fun setFileAndRebuild() = withContext(Dispatchers.EDT) {
+      // myFile access on EDT
       myFile = file
       LOG.debug("show structure for file: ", file)
       scheduleRebuild()
+    }
+
+    // File is different
+    val differentFiles = withContext(Dispatchers.EDT) { !Comparing.equal(file, myFile) }
+    if (differentFiles) {
+      setFileAndRebuild()
+      return
+    }
+
+    // structure view is outdated
+    val structureView = myStructureView ?: return
+    if (structureView is StructureViewComposite && structureView.isOutdated) {
+      setFileAndRebuild()
+      return
+    }
+
+    // tree model is not valid (checking isValid is costly and requires PSI)
+    val model = structureView.treeModel
+    if (model is TextEditorBasedStructureViewModel && readAction { !model.isValid }) {
+      setFileAndRebuild()
+      return
+    }
+
+    // root element invalid
+    val rootTreeElementInvalid = readAction {
+      val treeElement = model.root
+      val value = treeElement.value
+      return@readAction value == null || (value is PsiElement && !value.isValid)
+    }
+    if (rootTreeElementInvalid) {
+      setFileAndRebuild()
+      return
+    }
+
+    // editor is different
+    if (file != null) {
+      val editorIsDifferent = withContext(Dispatchers.EDT) {
+        FileEditorManager.getInstance(myProject).getSelectedEditor(file) !== myFileEditor
+      }
+      if (editorIsDifferent) {
+        setFileAndRebuild()
+        return
+      }
     }
   }
 
@@ -352,7 +385,7 @@ class StructureViewWrapperImpl(private val myProject: Project,
       else {
         val editor = FileEditorManager.getInstance(myProject).getSelectedEditor(file)
         val structureViewBuilder = if (editor != null && editor.isValid)
-          editor.structureViewBuilder else createStructureViewBuilder(file)
+          readAction { editor.structureViewBuilder } else createStructureViewBuilder(file)
         if (structureViewBuilder != null) {
           val structureView = structureViewBuilder.createStructureView(editor, myProject)
           myStructureView = structureView
@@ -429,19 +462,19 @@ class StructureViewWrapperImpl(private val myProject: Project,
     return panel
   }
 
-  private fun createStructureViewBuilder(file: VirtualFile): StructureViewBuilder? {
+  private suspend fun createStructureViewBuilder(file: VirtualFile): StructureViewBuilder? {
     if (file.length > PersistentFSConstants.getMaxIntellisenseFileSize()) return null
-    val providers = getInstance().getProviderList(myProject, file)
+    val providers = getInstance().getProvidersAsync(myProject, file)
     val provider = (if (providers.isEmpty()) null else providers[0]) ?: return null
     if (provider is StructureViewFileEditorProvider) {
-      return (provider as StructureViewFileEditorProvider).getStructureViewBuilder(myProject, file)
+      return readAction { (provider as StructureViewFileEditorProvider).getStructureViewBuilder(myProject, file) }
     }
-    val editor = provider.createEditor(myProject, file)
+    val editor = withContext(Dispatchers.EDT) { provider.createEditor (myProject, file) }
     return try {
-      editor.structureViewBuilder
+      readAction { editor.structureViewBuilder }
     }
     finally {
-      Disposer.dispose(editor)
+      withContext(Dispatchers.EDT) { Disposer.dispose(editor) }
     }
   }
 

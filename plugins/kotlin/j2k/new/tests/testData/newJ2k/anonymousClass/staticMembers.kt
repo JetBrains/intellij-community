@@ -2,8 +2,8 @@ internal class J1 {
     fun run() {
         problem()
         object : Runnable {
-            val x = 0
-            var y = 0
+            val x: Int = 0
+            var y: Int = 0
             override fun run() {
                 x + y
                 problem()
@@ -18,8 +18,8 @@ internal class J1 {
 
 internal object J2 {
     private val foo: Runnable = object : Runnable {
-        val x = 0
-        var y = 0
+        val x: Int = 0
+        var y: Int = 0
         override fun run() {
             x + y
             problem()

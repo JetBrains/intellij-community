@@ -46,10 +46,13 @@ class DialogsCounterUsagesCollector : CounterUsagesCollector() {
 
 class SettingsCounterUsagesCollector : CounterUsagesCollector() {
   companion object {
-    private val GROUP = EventLogGroup("ui.settings", 61)
+    private val GROUP = EventLogGroup("ui.settings", 62)
 
     private val CONFIGURABLE_CLASS = EventFields.Class("configurable")
-    val SELECT: EventId1<Class<*>?> = GROUP.registerEvent("select", CONFIGURABLE_CLASS)
+    val SELECT: EventId3<Class<*>?, Boolean, Long> = GROUP.registerEvent("select",
+                                                                         CONFIGURABLE_CLASS,
+                                                                         EventFields.Boolean("loaded_from_cache"),
+                                                                         EventFields.DurationMs)
     val APPLY: EventId1<Class<*>?> = GROUP.registerEvent("apply", CONFIGURABLE_CLASS)
     val RESET: EventId1<Class<*>?> = GROUP.registerEvent("reset", CONFIGURABLE_CLASS)
     @JvmField
@@ -66,9 +69,15 @@ class SettingsCounterUsagesCollector : CounterUsagesCollector() {
 }
 
 class FeatureUsageUiEventsImpl : FeatureUsageUiEvents {
-  override fun logSelectConfigurable(configurable: Configurable) {
+  override fun logSelectConfigurable(configurable: Configurable, loadedFromCache: Boolean, loadTimeMs: Long) {
     if (FeatureUsageLogger.isEnabled()) {
-      logSettingsEvent(configurable, SettingsCounterUsagesCollector.SELECT)
+      val wrapper = configurable as? ConfigurableWrapper
+      SettingsCounterUsagesCollector.SELECT.log(
+        wrapper?.project,
+        (wrapper?.configurable ?: configurable)::class.java,
+        loadedFromCache,
+        loadTimeMs
+      )
     }
   }
 

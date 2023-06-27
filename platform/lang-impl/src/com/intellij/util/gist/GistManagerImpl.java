@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.gist;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -150,7 +150,7 @@ public final class GistManagerImpl extends GistManager {
       }
     };
     if (myMergingDropCachesRequestors.get() == 0) {
-      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, dropCaches);
+      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.nonModal(), dropCaches);
     }
     else {
       myDropCachesQueue.queue(Update.create(this, dropCaches));

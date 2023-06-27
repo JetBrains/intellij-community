@@ -39,7 +39,7 @@ public final class InlayProperties {
   /**
    * Tells whether this inlay is associated with the preceding or the following text.
    * This relation affects the inlay's behavior with respect to changes in the editor.
-   * For example, when text is inserted at the inlay's position,
+   * For example, when a text is inserted at the inlay's position,
    * the inlay will end up before the inserted text if the property is {@code false}
    * and after the text if it is {@code true}.
    * <p>

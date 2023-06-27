@@ -2,12 +2,12 @@
 package com.intellij.codeInspection.bulkOperation;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IteratorDeclaration;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -259,7 +259,7 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
       }
 
       @Contract("null -> false")
-      private boolean isSupportedQualifier(PsiExpression qualifier) {
+      private static boolean isSupportedQualifier(PsiExpression qualifier) {
         if (qualifier instanceof PsiQualifiedExpression) return true;
         if (qualifier instanceof PsiReferenceExpression) {
           PsiExpression subQualifier = ((PsiReferenceExpression)qualifier).getQualifierExpression();
@@ -270,7 +270,7 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
     };
   }
 
-  private static class UseBulkOperationFix implements LocalQuickFix {
+  private static class UseBulkOperationFix extends PsiUpdateModCommandQuickFix {
     @SafeFieldForPreview
     private final BulkMethodInfo myInfo;
 
@@ -293,8 +293,7 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getStartElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (!(element instanceof PsiReferenceExpression)) return;
       PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier((PsiReferenceExpression)element);
       if (qualifier == null) return;

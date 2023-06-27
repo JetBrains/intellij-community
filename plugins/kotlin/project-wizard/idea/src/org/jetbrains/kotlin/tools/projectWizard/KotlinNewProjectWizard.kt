@@ -18,8 +18,10 @@ import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.plugins.StructurePlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemPlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
+import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.gradle.GradlePlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.projectTemplates.applyProjectTemplate
-import org.jetbrains.kotlin.tools.projectWizard.projectTemplates.*
+import org.jetbrains.kotlin.tools.projectWizard.projectTemplates.ConsoleApplicationProjectTemplate
+import org.jetbrains.kotlin.tools.projectWizard.settings.version.Version
 import org.jetbrains.kotlin.tools.projectWizard.wizard.KotlinNewProjectWizardUIBundle
 import org.jetbrains.kotlin.tools.projectWizard.wizard.NewProjectWizardModuleBuilder
 import java.util.*
@@ -42,7 +44,8 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
             projectGroupId: String? = suggestGroupId(),
             artifactId: String? = projectName,
             version: String? = "1.0-SNAPSHOT",
-            addSampleCode: Boolean = true
+            addSampleCode: Boolean = true,
+            gradleVersion: String? = null
         ) {
             NewProjectWizardModuleBuilder()
                 .apply {
@@ -51,6 +54,10 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
                     wizard.context.writeSettings {
                         StructurePlugin.name.reference.setValue(projectName)
                         StructurePlugin.projectPath.reference.setValue(projectPath.asPath())
+
+                        gradleVersion?.let {
+                            GradlePlugin.gradleVersion.reference.setValue(Version.fromString(it))
+                        }
 
                         projectGroupId?.let { StructurePlugin.groupId.reference.setValue(it) }
                         artifactId?.let { StructurePlugin.artifactId.reference.setValue(it) }

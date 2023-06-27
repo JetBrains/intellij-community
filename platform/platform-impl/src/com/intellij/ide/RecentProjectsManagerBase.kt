@@ -26,7 +26,7 @@ import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.OpenProjectImplOptions
-import com.intellij.openapi.project.impl.createNewProjectFrame
+import com.intellij.openapi.project.impl.createNewProjectFrameProducer
 import com.intellij.openapi.project.impl.frame
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.io.FileUtilRt
@@ -291,7 +291,10 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     var effectiveOptions = options
     if (options.implOptions == null) {
       getProjectMetaInfo(projectFile)?.let { info ->
-        effectiveOptions = effectiveOptions.copy(implOptions = OpenProjectImplOptions(recentProjectMetaInfo = info, frameInfo = info.frame))
+        effectiveOptions = effectiveOptions.copy(
+          projectWorkspaceId = info.projectWorkspaceId,
+          implOptions = OpenProjectImplOptions(recentProjectMetaInfo = info, frameInfo = info.frame)
+        )
       }
     }
 
@@ -310,6 +313,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       // Reopening such a project should be similar to opening the dir first time (and trying to import known project formats)
       // IDEA-144453 IDEA rejects opening a recent project if there are no .idea subfolder
       // CPP-12106 Auto-load CMakeLists.txt on opening from Recent projects when .idea and cmake-build-debug were deleted
+      LOG.info("Opening project from the recent projects, but .idea is missing. Open project as this is first time.")
       return ProjectUtil.openOrImportAsync(projectFile, effectiveOptions)
     }
   }
@@ -523,7 +527,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       var activeTask: Pair<Path, OpenProjectTask>? = null
       for ((path, info) in toOpen) {
         val isActive = info == activeInfo
-        val ideFrame = createNewProjectFrame(info.frame).create()
+        val ideFrame = createNewProjectFrameProducer(info.frame).create()
         info.frameTitle?.let {
           ideFrame.title = it
         }

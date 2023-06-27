@@ -7,15 +7,14 @@ import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.impl.ui.ArchiveElementPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
+import com.intellij.platform.workspace.storage.EntitySource;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
+import com.intellij.java.workspace.entities.ArchivePackagingElementEntity;
+import com.intellij.java.workspace.entities.PackagingElementEntity;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.workspaceModel.storage.EntitySource;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.MutableEntityStorage;
-import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
-import com.intellij.workspaceModel.storage.bridgeEntities.ArchivePackagingElementEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.PackagingElementEntity;
 import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -105,7 +104,10 @@ public class ArchivePackagingElement extends CompositeElementWithManifest<Archiv
     });
 
     Objects.requireNonNull(myArchiveFileName, "archiveFileName is not specified");
-    var entity = ExtensionsKt.addArchivePackagingElementEntity(diff, myArchiveFileName, children, source);
+    var entity = diff.addEntity(ArchivePackagingElementEntity.create(myArchiveFileName, source, entityBuilder -> {
+      entityBuilder.setChildren(children);
+      return Unit.INSTANCE;
+    }));
     diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(entity, this);
     return entity;
   }

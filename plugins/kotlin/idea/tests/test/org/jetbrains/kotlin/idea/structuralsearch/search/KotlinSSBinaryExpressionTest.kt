@@ -5,8 +5,6 @@ package org.jetbrains.kotlin.idea.structuralsearch.search
 import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
 class KotlinSSBinaryExpressionTest : KotlinStructuralSearchTest() {
-    override fun getBasePath(): String = "binaryExpression"
-
     fun testNestedBinaryExpression() { doTest("1 + 2 - 3", """
         val a = <warning descr="SSR">1 + 2 - 3</warning>
     """.trimIndent()) }

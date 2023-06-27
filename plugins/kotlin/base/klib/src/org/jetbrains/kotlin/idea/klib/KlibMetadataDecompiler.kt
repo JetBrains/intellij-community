@@ -19,8 +19,7 @@ abstract class KlibMetadataDecompiler<out V : BinaryVersion>(
     private val serializerProtocol: () -> SerializerExtensionProtocol,
     private val flexibleTypeDeserializer: FlexibleTypeDeserializer,
     private val expectedBinaryVersion: () -> V,
-    private val invalidBinaryVersion: () -> V,
-    stubVersion: Int
+    private val invalidBinaryVersion: () -> V
 ) : ClassFileDecompilers.Full() {
     protected abstract val metadataStubBuilder: KlibMetadataStubBuilder
 

@@ -873,6 +873,9 @@ class ModuleRedeclarator(object):
             module_dict = dir(self.module)
         for item_name in module_dict:
             note("looking at %s", item_name)
+            # Python/C API can declare a symbol with an arbitrary name
+            if not is_identifier(item_name):  # noqa
+                continue
             if item_name in (
                 "__dict__", "__doc__", "__module__", "__file__", "__name__", "__builtins__", "__package__"):
                 continue # handled otherwise

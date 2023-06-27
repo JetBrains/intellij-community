@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -195,15 +196,15 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
       return true;
     }
 
-    private static final class ReplaceWithPrintFix implements LocalQuickFix {
+    private static final class ReplaceWithPrintFix extends PsiUpdateModCommandQuickFix {
       @Override
       public @IntentionFamilyName @NotNull String getFamilyName() {
         return CommonQuickFixBundle.message("fix.replace.x.with.y", "printf()", "print()");
       }
 
       @Override
-      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        final PsiMethodCallExpression printStreamPrintfCall = getDirectParentMethod(descriptor.getPsiElement());
+      protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+        final PsiMethodCallExpression printStreamPrintfCall = getDirectParentMethod(element);
         if (printStreamPrintfCall == null) return;
 
         ExpressionUtils.bindCallTo(printStreamPrintfCall, "print");
@@ -216,24 +217,22 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
       }
     }
 
-    private static final class RemoveRedundantStringFormatFix implements LocalQuickFix {
+    private static final class RemoveRedundantStringFormatFix extends PsiUpdateModCommandQuickFix {
       @Override
       public @IntentionFamilyName @NotNull String getFamilyName() {
         return InspectionGadgetsBundle.message("redundant.string.format.call.quickfix");
       }
 
       @Override
-      public void applyFix(@NotNull final Project project,
-                           @NotNull final ProblemDescriptor descriptor) {
-        final PsiMethodCallExpression stringFormat = getDirectParentMethod(descriptor.getPsiElement());
+      protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+        final PsiMethodCallExpression stringFormat = getDirectParentMethod(element);
         if (stringFormat != null) {
           removeRedundantStringFormatCall(stringFormat);
         }
-
       }
     }
 
-    private static final class ReplaceStringFormatWithPrintfFix implements LocalQuickFix {
+    private static final class ReplaceStringFormatWithPrintfFix extends PsiUpdateModCommandQuickFix {
       private final boolean myIsPrintlnCall;
 
       private ReplaceStringFormatWithPrintfFix(boolean isPrintlnCall) {
@@ -246,8 +245,8 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
       }
 
       @Override
-      public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-        final PsiMethodCallExpression stringFormatCall = getDirectParentMethod(descriptor.getPsiElement());
+      protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+        final PsiMethodCallExpression stringFormatCall = getDirectParentMethod(element);
         if (stringFormatCall == null) return;
 
         final PsiMethodCallExpression printlnCall = getDirectParentMethod(stringFormatCall);
@@ -264,15 +263,15 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
       }
     }
 
-    private static final class RemoveRedundantStringFormattedFix implements LocalQuickFix {
+    private static final class RemoveRedundantStringFormattedFix extends PsiUpdateModCommandQuickFix {
       @Override
       public @IntentionFamilyName @NotNull String getFamilyName() {
         return InspectionGadgetsBundle.message("redundant.string.formatted.call.quickfix");
       }
 
       @Override
-      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        final PsiMethodCallExpression stringFormattedCall = getDirectParentMethod(descriptor.getPsiElement());
+      protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+        final PsiMethodCallExpression stringFormattedCall = getDirectParentMethod(element);
         if (stringFormattedCall == null) return;
 
         final PsiExpression expression = stringFormattedCall.getMethodExpression().getQualifierExpression();
@@ -282,7 +281,7 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
       }
     }
 
-    private static final class ReplaceStringFormattedWithPrintfFix implements LocalQuickFix {
+    private static final class ReplaceStringFormattedWithPrintfFix extends PsiUpdateModCommandQuickFix {
       private final boolean myIsPrintlnCall;
 
       private ReplaceStringFormattedWithPrintfFix(boolean isPrintlnCall) {
@@ -295,8 +294,8 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
       }
 
       @Override
-      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        final PsiMethodCallExpression stringFormattedCall = getDirectParentMethod(descriptor.getPsiElement());
+      protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
+        final PsiMethodCallExpression stringFormattedCall = getDirectParentMethod(startElement);
         if (stringFormattedCall == null) return;
 
         final PsiMethodCallExpression printlnCall = PsiTreeUtil.getParentOfType(stringFormattedCall, PsiMethodCallExpression.class);

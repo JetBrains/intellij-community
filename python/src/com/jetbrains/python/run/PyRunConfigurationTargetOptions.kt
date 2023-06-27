@@ -34,9 +34,7 @@ class PyRunConfigurationTargetOptions : PyRunConfigurationEditorExtension {
 
       other as RunConfigurationsTargetOptionsFactory
 
-      if (adjuster != other.adjuster) return false
-
-      return true
+      return adjuster == other.adjuster
     }
 
     override fun hashCode(): Int {

@@ -187,7 +187,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
         ApplicationManager.getApplication().executeOnPooledThread(
           () -> reloadModifiedClasses(modifiedClasses, progress)
         );
-      }, ModalityState.NON_MODAL);
+      }, ModalityState.nonModal());
     });
   }
 

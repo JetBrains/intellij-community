@@ -43,6 +43,21 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
                 runTest("../completion/testData/basic/common/annotations/AnnotationTarget.kt");
             }
 
+            @TestMetadata("ArrayOf.kt")
+            public void testArrayOf() throws Exception {
+                runTest("../completion/testData/basic/common/annotations/ArrayOf.kt");
+            }
+
+            @TestMetadata("ArrayOf2.kt")
+            public void testArrayOf2() throws Exception {
+                runTest("../completion/testData/basic/common/annotations/ArrayOf2.kt");
+            }
+
+            @TestMetadata("ClassReference.kt")
+            public void testClassReference() throws Exception {
+                runTest("../completion/testData/basic/common/annotations/ClassReference.kt");
+            }
+
             @TestMetadata("Deprecated.kt")
             public void testDeprecated() throws Exception {
                 runTest("../completion/testData/basic/common/annotations/Deprecated.kt");
@@ -101,6 +116,26 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
             @TestMetadata("OnlyAnnotations.kt")
             public void testOnlyAnnotations() throws Exception {
                 runTest("../completion/testData/basic/common/annotations/OnlyAnnotations.kt");
+            }
+
+            @TestMetadata("OnlyCompileTimeConstants1.kt")
+            public void testOnlyCompileTimeConstants1() throws Exception {
+                runTest("../completion/testData/basic/common/annotations/OnlyCompileTimeConstants1.kt");
+            }
+
+            @TestMetadata("OnlyCompileTimeConstants2.kt")
+            public void testOnlyCompileTimeConstants2() throws Exception {
+                runTest("../completion/testData/basic/common/annotations/OnlyCompileTimeConstants2.kt");
+            }
+
+            @TestMetadata("OnlyCompileTimeConstants3.kt")
+            public void testOnlyCompileTimeConstants3() throws Exception {
+                runTest("../completion/testData/basic/common/annotations/OnlyCompileTimeConstants3.kt");
+            }
+
+            @TestMetadata("OnlyCompileTimeConstants4.kt")
+            public void testOnlyCompileTimeConstants4() throws Exception {
+                runTest("../completion/testData/basic/common/annotations/OnlyCompileTimeConstants4.kt");
             }
 
             @TestMetadata("ParameterAnnotation1.kt")
@@ -3171,6 +3206,11 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
             @TestMetadata("TypeParameterInReturnType.kt")
             public void testTypeParameterInReturnType() throws Exception {
                 runTest("../completion/testData/basic/common/TypeParameterInReturnType.kt");
+            }
+
+            @TestMetadata("VargsBeforeNoArgs.kt")
+            public void testVargsBeforeNoArgs() throws Exception {
+                runTest("../completion/testData/basic/common/VargsBeforeNoArgs.kt");
             }
 
             @TestMetadata("VariableClassName.kt")

@@ -15,6 +15,8 @@ import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
 import com.intellij.util.xml.highlighting.DomHighlightingHelper
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.toUElement
 
 internal class LightServiceMigrationXMLInspection : DevKitPluginXmlInspectionBase() {
 
@@ -22,20 +24,22 @@ internal class LightServiceMigrationXMLInspection : DevKitPluginXmlInspectionBas
     if (element !is Extension) return
     if (!isAllowed(holder)) return
 
-    if (LightServiceMigrationUtil.isVersion193OrHigher(element) ||
+    if (isVersion193OrHigher(element) ||
         ApplicationManager.getApplication().isUnitTestMode) {
-      val (aClass, level) = LightServiceMigrationUtil.getServiceImplementation(element) ?: return
+      val (aClass, level) = getServiceImplementation(element) ?: return
       if (!aClass.hasModifier(JvmModifier.FINAL) || isLibraryClass(aClass)) return
       if (level == Service.Level.APP &&
           JvmInheritanceUtil.isInheritor(aClass, PersistentStateComponent::class.java.canonicalName)) {
         return
       }
+      val uClass = aClass.toUElement(UClass::class.java)
+      if (uClass == null || containsUnitTestOrHeadlessModeCheck(uClass)) return
       if (aClass.hasAnnotation(Service::class.java.canonicalName)) {
         val message = DevKitBundle.message("inspection.light.service.migration.already.annotated.message")
         holder.createProblem(element, ProblemHighlightType.ERROR, message, null)
       }
       else {
-        val message = LightServiceMigrationUtil.getMessage(level)
+        val message = getMessage(level)
         holder.createProblem(element, message)
       }
     }

@@ -36,7 +36,6 @@ import kotlinx.coroutines.flow.combine
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestFileViewedState
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRCombinedDiffPreviewBase.Companion.createAndSetupDiffPreview
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
@@ -69,7 +68,6 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
   private val detailsLoadingModel = GHCompletableFutureLoadingModel<GHPullRequest>(disposable)
   private val commitsLoadingModel = GHCompletableFutureLoadingModel<List<GHCommit>>(disposable)
   private val changesLoadingModel = GHCompletableFutureLoadingModel<GitBranchComparisonResult>(disposable)
-  private val viewedStateLoadingModel = GHCompletableFutureLoadingModel<Map<String, GHPullRequestFileViewedState>>(disposable)
 
   init {
     dataProvider.detailsData.loadDetails(disposable) {
@@ -81,7 +79,6 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     dataProvider.changesData.loadChanges(disposable) {
       changesLoadingModel.future = it
     }
-    setupViewedStateModel()
     // pre-fetch to show diff quicker
     dataProvider.changesData.fetchBaseBranch()
     dataProvider.changesData.fetchHeadBranch()
@@ -123,15 +120,6 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     Disposer.register(disposable, it)
   }
 
-  private fun setupViewedStateModel() {
-    fun update() {
-      viewedStateLoadingModel.future = dataProvider.viewedStateData.loadViewedState()
-    }
-
-    dataProvider.viewedStateData.addViewedStateListener(disposable) { update() }
-    update()
-  }
-
   fun create(): JComponent =
     createInfoComponent().apply {
       DataManager.registerDataProvider(this) { dataId ->
@@ -150,13 +138,13 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     private val commitsVm: GHPRCommitsViewModel
   ) : GHPRCommitBrowserComponentController {
     override fun selectCommit(oid: String) {
-      val selectedCommit = commitsVm.reviewCommits.value.find { it.abbreviatedOid == oid }
+      val selectedCommit = commitsVm.reviewCommits.value.indexOfFirst { it.abbreviatedOid == oid }
       commitsVm.selectCommit(selectedCommit)
       CollaborationToolsUIUtil.focusPanel(tree)
     }
 
     override fun selectChange(oid: String?, filePath: String) {
-      commitsVm.selectAllCommits()
+      commitsVm.selectCommit(-1)
 
       tree.invokeAfterRefresh {
         if (oid == null) {

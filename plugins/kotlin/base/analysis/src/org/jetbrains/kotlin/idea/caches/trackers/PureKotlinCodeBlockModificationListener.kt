@@ -73,11 +73,6 @@ class PureKotlinCodeBlockModificationListener(val project: Project) : Disposable
 
         private inline fun isFormattingChange(changeSet: TreeChangeEvent): Boolean = isSpecificChange(changeSet) { it is PsiWhiteSpace }
 
-        private inline fun isStringLiteralChange(changeSet: TreeChangeEvent): Boolean = isSpecificChange(changeSet) {
-            it?.elementType == KtTokens.REGULAR_STRING_PART &&
-                    it?.psi?.parentOfTypes(KtAnnotationEntry::class, KtValVarKeywordOwner::class) == null
-        }
-
         /**
          * Has to be aligned with [getInsideCodeBlockModificationScope] :
          *
@@ -274,10 +269,7 @@ class PureKotlinCodeBlockModificationListener(val project: Project) : Disposable
                     // skip change if it contains only virtual/fake change
                     if (changedElements.isNotEmpty()) {
                         // ignore formatting (whitespaces etc)
-                        if (isFormattingChange(changeSet) ||
-                            isCommentChange(changeSet) ||
-                            isStringLiteralChange(changeSet)
-                        ) return
+                        if (isFormattingChange(changeSet) || isCommentChange(changeSet)) return
                     }
 
                     val inBlockElements = inBlockModifications(changedElements)

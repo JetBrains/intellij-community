@@ -11,6 +11,7 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -19,9 +20,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.progress.runBlockingModal
+import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.processOpenedProjects
+import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -63,7 +64,7 @@ object StoreUtil {
   fun saveDocumentsAndProjectSettings(project: Project) {
     runInAutoSaveDisabledMode {
       FileDocumentManager.getInstance().saveAllDocuments()
-      runBlockingModal(project, CommonBundle.message("title.save.project")) {
+      runWithModalProgressBlocking(project, CommonBundle.message("title.save.project")) {
         com.intellij.configurationStore.saveSettings(project)
       }
     }
@@ -81,7 +82,7 @@ object StoreUtil {
   fun saveDocumentsAndProjectsAndApp(forceSavingAllSettings: Boolean) {
     runInAutoSaveDisabledMode {
       FileDocumentManager.getInstance().saveAllDocuments()
-      runBlockingModal(ModalTaskOwner.guess(), "") {
+      runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
         saveProjectsAndApp(forceSavingAllSettings)
       }
     }
@@ -212,13 +213,29 @@ fun getPerOsSettingsStorageFolderName(): String {
 }
 
 /**
+ * Converts fileSpec passed to [StreamProvider]'s methods to a relative path from the root config directory.
+ */
+@Internal
+fun getFileRelativeToRootConfig(fileSpecPassedToProvider: String): String {
+  // For PersistentStateComponents the fileSpec is passed without the 'options' folder, e.g. 'editor.xml' or 'mac/keymaps.xml'
+  // OTOH for schemas it is passed together with the containing folder, e.g. 'keymaps/mykeymap.xml'
+  return if (!fileSpecPassedToProvider.contains("/") || fileSpecPassedToProvider.startsWith(getPerOsSettingsStorageFolderName() + "/")) {
+    "${PathManager.OPTIONS_DIRECTORY}/$fileSpecPassedToProvider"
+  }
+  else {
+    fileSpecPassedToProvider
+  }
+}
+
+
+/**
  * @param forceSavingAllSettings Whether to force save non-roamable component configuration.
  */
 suspend fun saveProjectsAndApp(forceSavingAllSettings: Boolean, onlyProject: Project? = null) {
   val start = System.currentTimeMillis()
   saveSettings(ApplicationManager.getApplication(), forceSavingAllSettings = forceSavingAllSettings)
   if (onlyProject == null) {
-    processOpenedProjects { project ->
+    for (project in getOpenedProjects()) {
       saveSettings(project, forceSavingAllSettings = forceSavingAllSettings)
     }
   }
@@ -258,7 +275,7 @@ inline fun runInAllowSaveMode(isSaveAllowed: Boolean = true, task: () -> Unit) {
 @Internal
 fun forPoorJavaClientOnlySaveProjectIndEdtDoNotUseThisMethod(project: Project, forceSavingAllSettings: Boolean = false) {
   runInAutoSaveDisabledMode {
-    runBlockingModal(project, CommonBundle.message("title.save.project")) {
+    runWithModalProgressBlocking(project, CommonBundle.message("title.save.project")) {
       saveSettings(project, forceSavingAllSettings = forceSavingAllSettings)
     }
   }

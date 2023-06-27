@@ -6,6 +6,7 @@ import com.intellij.ide.BootstrapBundle;
 import com.intellij.ide.CliResult;
 import com.intellij.ide.SpecialConfigFiles;
 import com.intellij.jna.JnaLoader;
+import com.intellij.openapi.diagnostic.LogLevel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.NioFiles;
@@ -59,8 +60,14 @@ final class DirectoryLock {
   private static final int HEADER_LENGTH = 6;  // the marker (4 bytes) + a packet length (2 bytes)
   private static final String SERVER_THREAD_NAME = "External Command Listener";
 
-  private static final Logger LOG = Logger.getInstance(DirectoryLock.class);
+  private static final Logger LOG = getLogger();
   private static final AtomicInteger COUNT = new AtomicInteger();  // to ensure redirected port file uniqueness in tests
+
+  private static Logger getLogger() {
+    Logger logger = Logger.getInstance(DirectoryLock.class);
+    if (Boolean.getBoolean("ij.dir.lock.debug")) logger.setLevel(LogLevel.DEBUG);
+    return logger;
+  }
 
   private final String myPid = String.valueOf(ProcessHandle.current().pid());
   private final Path myPortFile;
@@ -77,9 +84,14 @@ final class DirectoryLock {
 
     myFallbackMode = !areUdsSupported(myPortFile);
 
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("portFile=" + myPortFile + " lockFile=" + myLockFile + " fallback=" + myFallbackMode);
+    }
+
     if (!myFallbackMode && myPortFile.toString().length() > UDS_PATH_LENGTH_LIMIT) {
       var baseDir = SystemInfoRt.isWindows ? Path.of(System.getenv("SystemRoot"), "Temp") : Path.of("/tmp");
       myRedirectedPortFile = baseDir.resolve(".ij_redirected_port_" + myPid + "_" + COUNT.incrementAndGet());
+      if (LOG.isDebugEnabled()) LOG.debug("redirectedPortFile=" + myRedirectedPortFile);
     }
     else {
       myRedirectedPortFile = null;
@@ -169,6 +181,7 @@ final class DirectoryLock {
         address = UnixDomainSocketAddress.of(myPortFile);
       }
 
+      if (LOG.isDebugEnabled()) LOG.debug("connecting to " + address);
       socketChannel.connect(address);
 
       allowActivation();
@@ -214,6 +227,7 @@ final class DirectoryLock {
       address = UnixDomainSocketAddress.of(myPortFile);
     }
 
+    if (LOG.isDebugEnabled()) LOG.debug("binding to " + address);
     serverChannel.bind(address);
     myServerChannel = serverChannel;
 

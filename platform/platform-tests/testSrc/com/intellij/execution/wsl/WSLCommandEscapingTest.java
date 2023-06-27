@@ -258,19 +258,17 @@ public final class WSLCommandEscapingTest {
                                              String remoteWorkingDirectory,
                                              Map<String, String> env,
                                              List<String> command) throws ExecutionException {
-    var wsl = wslRule.getWsl();
     assertWslCommandOutput(expectedOut, env, command, new WSLCommandLineOptions().setLaunchWithWslExe(false)
       .setRemoteWorkingDirectory(remoteWorkingDirectory));
     assertWslCommandOutput(expectedOut, env, command, new WSLCommandLineOptions().setRemoteWorkingDirectory(remoteWorkingDirectory));
 
-    assertWslCommandOutput(expectedOut, env, command, new WSLCommandLineOptions().setShellPath(wsl.getShellPath())
+    assertWslCommandOutput(expectedOut, env, command, new WSLCommandLineOptions().setRemoteWorkingDirectory(remoteWorkingDirectory));
+
+    assertWslCommandOutput(expectedOut, env, command, new WSLCommandLineOptions().setExecuteCommandInLoginShell(true)
       .setRemoteWorkingDirectory(remoteWorkingDirectory));
 
-    assertWslCommandOutput(expectedOut, env, command, new WSLCommandLineOptions().setShellPath(wsl.getShellPath())
-      .setExecuteCommandInLoginShell(true).setRemoteWorkingDirectory(remoteWorkingDirectory));
-
-    assertWslCommandOutput(expectedOut, env, command, new WSLCommandLineOptions().setShellPath(wsl.getShellPath())
-      .setExecuteCommandInInteractiveShell(true).setRemoteWorkingDirectory(remoteWorkingDirectory));
+    assertWslCommandOutput(expectedOut, env, command, new WSLCommandLineOptions().setExecuteCommandInInteractiveShell(true)
+      .setRemoteWorkingDirectory(remoteWorkingDirectory));
 
     if (remoteWorkingDirectory == null && ContainerUtil.all(command, (param) -> {
       // wsl.exe --exec doesn't support empty parameters: https://github.com/microsoft/WSL/issues/6072

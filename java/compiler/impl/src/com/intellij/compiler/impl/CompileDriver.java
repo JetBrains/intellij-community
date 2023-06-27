@@ -346,24 +346,13 @@ public final class CompileDriver {
               }
             }
             case BUILD_COMPLETED -> {
-              ExitStatus status = ExitStatus.SUCCESS;
-              if (event.hasCompletionStatus()) {
-                final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status completionStatus =
-                  event.getCompletionStatus();
-                switch (completionStatus) {
-                  case CANCELED:
-                    status = ExitStatus.CANCELLED;
-                    break;
-                  case ERRORS:
-                    status = ExitStatus.ERRORS;
-                    break;
-                  case SUCCESS:
-                    break;
-                  case UP_TO_DATE:
-                    status = ExitStatus.UP_TO_DATE;
-                    break;
-                }
-              }
+              ExitStatus status = !event.hasCompletionStatus() ? ExitStatus.SUCCESS : 
+                                  switch (event.getCompletionStatus()) {
+                case CANCELED -> ExitStatus.CANCELLED;
+                case ERRORS -> ExitStatus.ERRORS;
+                case SUCCESS -> ExitStatus.SUCCESS;
+                case UP_TO_DATE -> ExitStatus.UP_TO_DATE;
+              };
               compileContext.putUserDataIfAbsent(COMPILE_SERVER_BUILD_STATUS, status);
             }
             case CUSTOM_BUILDER_MESSAGE -> {

@@ -1,7 +1,7 @@
 internal open class Base(nested: Nested?) {
     internal class Nested(p: Int) {
         companion object {
-            const val FIELD = 0
+            const val FIELD: Int = 0
         }
     }
 }

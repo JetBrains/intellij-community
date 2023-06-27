@@ -21,8 +21,7 @@ public class FileListRenderer implements ListCellRenderer<VirtualFile> {
   public FileListRenderer() {
     myPresentationRenderer = TargetPopup.createTargetPresentationRenderer((vf) -> {
       TargetPresentationBuilder builder = TargetPresentation.builder(vf.getPresentableName())
-        .icon((FileTypeRegistry.getInstance().getFileTypeByFileName(vf.getNameSequence()).getIcon()))
-        .presentableText(vf.getPresentableName());
+        .icon(FileTypeRegistry.getInstance().getFileTypeByFileName(vf.getNameSequence()).getIcon());
       VirtualFile vfParent = vf.getParent();
       if (vfParent != null) builder = builder.locationText(vfParent.getPresentableUrl());
       return builder.presentation();

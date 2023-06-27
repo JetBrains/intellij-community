@@ -78,7 +78,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
    * @deprecated Workaround fpr CWM-3308, in general, the runtime instance is internal and should not be exposed
    */
   @ApiStatus.Internal
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public ServerRuntimeInstance<D> getServerRuntimeInstance() {
     return myRuntimeInstance;

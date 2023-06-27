@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.lang.ASTNode;
@@ -481,7 +481,7 @@ public class PsiTreeUtil {
    * @return the element, or {@code null} if none was found.
    */
   @SafeVarargs
-  @Contract("null, _ -> null")
+  @Contract(value = "null, _ -> null", pure = true)
   public static @Nullable <T extends PsiElement> T getChildOfAnyType(@Nullable PsiElement element, Class<? extends T> @NotNull ... classes) {
     if (element != null) {
       for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
@@ -495,7 +495,7 @@ public class PsiTreeUtil {
     return null;
   }
 
-  @Contract("null, _ -> null")
+  @Contract(value = "null, _ -> null", pure = true)
   public static @Nullable <T extends PsiElement> T getNextSiblingOfType(@Nullable PsiElement sibling, @NotNull Class<T> aClass) {
     if (sibling != null) {
       for (PsiElement nextSibling = sibling.getNextSibling(); nextSibling != null; nextSibling = nextSibling.getNextSibling()) {
@@ -507,7 +507,7 @@ public class PsiTreeUtil {
     return null;
   }
 
-  @Contract("null, _ -> null")
+  @Contract(value = "null, _ -> null", pure = true)
   public static @Nullable <T extends PsiElement> T getPrevSiblingOfType(@Nullable PsiElement sibling, @NotNull Class<T> aClass) {
     if (sibling != null) {
       for (PsiElement prevSibling = sibling.getPrevSibling(); prevSibling != null; prevSibling = prevSibling.getPrevSibling()) {
@@ -519,7 +519,7 @@ public class PsiTreeUtil {
     return null;
   }
 
-  @Contract("null, _ -> null")
+  @Contract(value = "null, _ -> null", pure = true)
   public static @Nullable <T extends PsiElement> T getTopmostParentOfType(@Nullable PsiElement element, @NotNull Class<T> aClass) {
     T answer = getParentOfType(element, aClass);
     do {
@@ -531,7 +531,7 @@ public class PsiTreeUtil {
     return answer;
   }
 
-  @Contract("null, _ -> null")
+  @Contract(value = "null, _ -> null", pure = true)
   public static @Nullable <T extends PsiElement> T getParentOfType(@Nullable PsiElement element, @NotNull Class<T> aClass) {
     return getParentOfType(element, aClass, true);
   }

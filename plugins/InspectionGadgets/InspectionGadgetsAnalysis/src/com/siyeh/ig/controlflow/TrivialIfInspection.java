@@ -18,6 +18,7 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptCheckbox;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -28,7 +29,6 @@ import com.intellij.util.SmartList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
@@ -92,7 +92,7 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement ifKeywordElement, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement ifKeywordElement, @NotNull ModPsiUpdater updater) {
       final PsiIfStatement statement = (PsiIfStatement)ifKeywordElement.getParent();
       simplify(statement);
     }

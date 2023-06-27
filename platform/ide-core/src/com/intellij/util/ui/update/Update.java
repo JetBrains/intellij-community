@@ -3,6 +3,12 @@ package com.intellij.util.ui.update;
 
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.util.concurrency.Propagation;
+import kotlin.Pair;
+import kotlin.coroutines.CoroutineContext;
+import kotlinx.coroutines.CompletableJob;
+import com.intellij.concurrency.ThreadContext;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Propagation;
 import kotlin.coroutines.CoroutineContext;
@@ -26,6 +32,8 @@ public abstract class Update extends ComparableObject.Impl implements Runnable {
   private volatile boolean myProcessed;
   private volatile boolean myRejected;
   private final @Nullable CoroutineContext myContext;
+  private final @Nullable CompletableJob myJob;
+
   private final boolean myExecuteInWriteAction;
 
   private final int myPriority;
@@ -44,20 +52,21 @@ public abstract class Update extends ComparableObject.Impl implements Runnable {
 
   public Update(@NonNls Object identity, boolean executeInWriteAction, int priority) {
     this(identity, executeInWriteAction, priority,
-         AppExecutorUtil.propagateContextOrCancellation() ? ThreadContext.currentThreadContext().minusKey(Job.Key) : null);
+         AppExecutorUtil.propagateContextOrCancellation() ? Propagation.createChildContext() : new Pair<>(null, null));
   }
 
-  private Update(@NonNls Object identity, boolean executeInWriteAction, int priority, @Nullable CoroutineContext context) {
-    super(context == null ? new Object[]{identity} : new Object[]{identity, ThreadContext.getContextSkeleton(context)});
-    myContext = context;
+  private Update(@NonNls Object identity, boolean executeInWriteAction, int priority, @NotNull Pair<CoroutineContext, CompletableJob> pair) {
+    super(pair.getFirst() == null ? new Object[]{identity} : new Object[]{identity, ThreadContext.getContextSkeleton(pair.getFirst())});
     myExecuteInWriteAction = executeInWriteAction;
     myPriority = priority;
+    myContext = pair.getFirst();
+    myJob = pair.getSecond();
   }
 
   public boolean isDisposed() {
     return false;
   }
-  
+
   public boolean isExpired() {
     return false;
   }
@@ -99,9 +108,14 @@ public abstract class Update extends ComparableObject.Impl implements Runnable {
     if (myContext == null) {
       run();
     } else try (AccessToken ignored = ThreadContext.installThreadContext(myContext, true)) {
-      run();
+      if (myJob != null) {
+        Propagation.runAsCoroutine(myJob, this);
+      } else {
+        run();
+      }
     }
   }
+
 
   /**
    * Override this method and return {@code true} if this task is more generic than the passed {@code update}.
@@ -114,6 +128,9 @@ public abstract class Update extends ComparableObject.Impl implements Runnable {
 
   public void setRejected() {
     myRejected = true;
+    if (myJob != null) {
+      myJob.cancel(null);
+    }
   }
 
   public boolean isRejected() {

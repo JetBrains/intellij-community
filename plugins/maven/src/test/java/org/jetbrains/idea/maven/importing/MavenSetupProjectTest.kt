@@ -11,17 +11,6 @@ import org.junit.Test
 
 class MavenSetupProjectTest : MavenSetupProjectTestCase() {
 
-  override fun setUp() {
-    MavenUtil.setUpdateSuspendable()
-    super.setUp()
-  }
-  override fun tearDown() {
-    RunAll.runAll(
-      { super.tearDown() },
-      { MavenUtil.resetUpdateSuspendable() },
-    )
-  }
-
   @Test
   fun `test settings are not reset`() {
     runBlocking {

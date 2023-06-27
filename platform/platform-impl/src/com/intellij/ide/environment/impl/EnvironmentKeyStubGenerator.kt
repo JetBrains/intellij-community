@@ -66,6 +66,9 @@ private suspend fun generateKeyConfig(generateDescriptions: Boolean, configurati
     EnvironmentKeyProvider.EP_NAME.extensionList.flatMap { it.getKnownKeys().toList() }
   }.sortedBy { it.first.id }
 
+  val registeredKeys = environmentKeys.mapTo(HashSet()) { it.first }
+  val unregisteredValues = configuration.map.entries.filter { it.key !in registeredKeys }
+
   val byteStream = ByteArrayOutputStream()
   val generator = JsonFactory().createGenerator(byteStream).setPrettyPrinter(KeyConfigPrettyPrinter())
   with(generator) {
@@ -81,6 +84,12 @@ private suspend fun generateKeyConfig(generateDescriptions: Boolean, configurati
       }
       writeStringField("key", key.id)
       writeStringField("value", configuration.get(key) ?: "")
+      writeEndObject()
+    }
+    for ((key, value) in unregisteredValues) {
+      writeStartObject()
+      writeStringField("key", key.id)
+      writeStringField("value", value)
       writeEndObject()
     }
     writeEndArray()

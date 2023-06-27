@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.util.NlsContext;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +50,7 @@ public final class DialogUtil{
       }
       if (mnemonic != '\0') {
         button.setText(realText.toString());
-        if (UISettings.getShadowInstance().getDisableMnemonicsInControls()) {
+        if (LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred() && UISettings.getInstance().getDisableMnemonicsInControls()) {
           button.setMnemonic(0);
           button.setDisplayedMnemonicIndex(-1);
           button.setFocusable(true);

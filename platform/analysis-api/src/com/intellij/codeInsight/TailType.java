@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.InsertionContext;
@@ -73,8 +73,7 @@ public abstract class TailType {
     return psiFile.getFileType();
   }
 
-  @NotNull
-  private static PsiFile getFile(Editor editor) {
+  private static @NotNull PsiFile getFile(Editor editor) {
     Project project = editor.getProject();
     assert project != null;
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
@@ -146,7 +145,7 @@ public abstract class TailType {
     return new CharTailType(c);
   }
 
-  public boolean isApplicable(@NotNull final InsertionContext context) {
+  public boolean isApplicable(final @NotNull InsertionContext context) {
     return true;
   }
 }

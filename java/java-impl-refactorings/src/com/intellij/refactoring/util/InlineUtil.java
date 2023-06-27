@@ -452,10 +452,7 @@ public final class InlineUtil implements CommonJavaInlineUtil {
     if (expr instanceof PsiLiteralExpression && PsiTypes.booleanType().equals(expr.getType())) {
       Boolean value = tryCast(((PsiLiteralExpression)expr).getValue(), Boolean.class);
       if (value != null) {
-        SimplifyBooleanExpressionFix fix = new SimplifyBooleanExpressionFix(expr, value);
-        if (fix.isAvailable()) {
-          fix.invoke(project, expr.getContainingFile(), expr, expr);
-        }
+        SimplifyBooleanExpressionFix.trySimplify(expr, value);
       }
     }
     return initializer;

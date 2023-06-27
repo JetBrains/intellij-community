@@ -5,8 +5,8 @@ import com.intellij.openapi.module.UnloadedModuleDescription
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.util.containers.Interner
 import com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 
 class UnloadedModuleDescriptionBridge private constructor(
   private val name: String,

@@ -13,8 +13,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -453,7 +451,7 @@ public class SwitchBlockHighlightingModel {
           PsiPattern pattern = patternClasses.get(permittedClass);
           PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(selectorClass, permittedClass, PsiSubstitutor.EMPTY);
           PsiType permittedType = JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, substitutor);
-          if (pattern == null && (PsiUtil.getLanguageLevel(permittedClass).isLessThan(LanguageLevel.JDK_18_PREVIEW) ||
+          if (pattern == null && (PsiUtil.getLanguageLevel(permittedClass).isLessThan(LanguageLevel.JDK_18) ||
                                   TypeConversionUtil.areTypesConvertible(selectorType, permittedType)) ||
               pattern != null && !JavaPsiPatternUtil.isUnconditionalForType(pattern, TypeUtils.getType(permittedClass), true)) {
             nonVisited.add(permittedClass);
@@ -712,7 +710,7 @@ public class SwitchBlockHighlightingModel {
             if (isConstantLabelElement(nextElement)) {
               PsiExpression constExpr = ObjectUtils.tryCast(nextElement, PsiExpression.class);
               assert constExpr != null;
-              if ((PsiUtil.getLanguageLevel(constExpr).isAtLeast(LanguageLevel.JDK_18_PREVIEW) ||
+              if ((PsiUtil.getLanguageLevel(constExpr).isAtLeast(LanguageLevel.JDK_19_PREVIEW) ||
                    JavaPsiPatternUtil.isUnconditionalForType(currentElement, mySelectorType)) &&
                   JavaPsiPatternUtil.dominates(currentElement, constExpr.getType())) {
                 result.put(nextElement, current);
@@ -970,7 +968,7 @@ public class SwitchBlockHighlightingModel {
             isInCaseNullDefaultLabel(who)) {
           PsiSwitchLabelStatementBase labelStatementBase = PsiTreeUtil.getParentOfType(who, PsiSwitchLabelStatementBase.class);
           if (labelStatementBase != null) {
-            IntentionAction action = new MakeDefaultLastCaseFix(labelStatementBase);
+            var action = new MakeDefaultLastCaseFix(labelStatementBase);
             info.registerFix(action, null, null, null, null);
           }
         }
@@ -1147,10 +1145,10 @@ public class SwitchBlockHighlightingModel {
     private static Collection<PsiClass> getPermittedClasses(@NotNull PsiClass psiClass) {
       PsiReferenceList permitsList = psiClass.getPermitsList();
       if (permitsList == null) {
-        TreeSet<PsiClass> result = new TreeSet<>(Comparator.comparing(aClass -> aClass.getName()));
-        GlobalSearchScope fileScope = GlobalSearchScope.fileScope(psiClass.getContainingFile());
-        result.addAll(DirectClassInheritorsSearch.search(psiClass, fileScope).findAll());
-        return result;
+        return SyntaxTraverser.psiTraverser(psiClass.getContainingFile())
+          .filter(PsiClass.class)
+          .filter(cls -> cls.isInheritor(psiClass, false))
+          .toList();
       }
       return Stream.of(permitsList.getReferencedTypes()).map(type -> type.resolve()).filter(Objects::nonNull)
         .collect(Collectors.toCollection(LinkedHashSet::new));

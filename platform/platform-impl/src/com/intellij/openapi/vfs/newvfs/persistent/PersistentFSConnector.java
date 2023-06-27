@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.OffsetBasedNonStrictStringsEnumerator;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.LargeSizeStreamlinedBlobStorage;
@@ -12,7 +13,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlo
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagesStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.hash.ContentHashEnumerator;
@@ -45,13 +45,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 final class PersistentFSConnector {
   private static final Logger LOG = Logger.getInstance(PersistentFSConnector.class);
-
-  /**
-   * Run self-checks on a limited number of files during VFS init.
-   * Self-check all the files could significantly slow down VFS initialization, but even a small number of checks
-   * could catch VFS corruption, if any.
-   */
-  private static final int FILES_TO_SELF_CHECK_ON_INIT = SystemProperties.getIntProperty("vfs.files-to-self-check-on-init", 1024);
 
   private static final int MAX_INITIALIZATION_ATTEMPTS = 10;
 
@@ -193,6 +186,7 @@ final class PersistentFSConnector {
     final Path corruptionMarkerFile = persistentFSPaths.getCorruptionMarkerFile();
     try {
       if (Files.exists(corruptionMarkerFile)) {
+        // TODO on vfs corruption vfslog must be erased because enumerators are lost (force compaction to erase everything)
         final List<String> corruptionCause = Files.readAllLines(corruptionMarkerFile, UTF_8);
         throw new VFSNeedsRebuildException(SCHEDULED_REBUILD, "Corruption marker file found\n\tcontent: " + corruptionCause);
       }
@@ -399,17 +393,17 @@ final class PersistentFSConnector {
       LOG.info("VFS uses regular attributes storage");
       return new AttributesStorageOld(
         /*bulk attribute support: */false,
-        FSRecordsImpl.INLINE_ATTRIBUTES,
-        new Storage(attributesFile, PersistentFSConnection.REASONABLY_SMALL) {
-          @Override
-          protected AbstractRecordsTable createRecordsTable(@NotNull StorageLockContext context,
-                                                            @NotNull Path recordsFile)
-            throws IOException {
-            return FSRecordsImpl.INLINE_ATTRIBUTES && FSRecordsImpl.USE_SMALL_ATTR_TABLE
-                   ? new CompactRecordsTable(recordsFile, context, false)
-                   : super.createRecordsTable(context, recordsFile);
-          }
-        });
+                                    FSRecordsImpl.INLINE_ATTRIBUTES,
+                                    new Storage(attributesFile, PersistentFSConnection.REASONABLY_SMALL) {
+                                      @Override
+                                      protected AbstractRecordsTable createRecordsTable(@NotNull StorageLockContext context,
+                                                                                        @NotNull Path recordsFile)
+                                        throws IOException {
+                                        return FSRecordsImpl.INLINE_ATTRIBUTES && FSRecordsImpl.USE_SMALL_ATTR_TABLE
+                                               ? new CompactRecordsTable(recordsFile, context, false)
+                                               : super.createRecordsTable(context, recordsFile);
+                                      }
+                                    });
     }
   }
 
@@ -454,6 +448,13 @@ final class PersistentFSConnector {
     throws IOException {
     final long startedAtNs = System.nanoTime();
     try {
+      //VFS errors early on startup cause terrifying UX error messages -- it is much better to catch VFS
+      // corruption early on and rebuild VFS from 0. But we also don't want to always check each VFS file
+      // on startup, since it delays regular startup (i.e. without corruptions) quite a lot.
+      // A tradeoff between those two goals: check only fileId=1, 2, 4, 8... log(maxID) total checks,
+      // i.e. always < 32 checks, given fileId is int.
+      IntRef nextPowFileIdToCheck = new IntRef(0);
+
       records.processAllRecords((fileId, nameId, flags, parentId, attributeRecordId, contentId, corrupted) -> {
         if (hasDeletedFlag(flags)) {
           freeFileIds.add(fileId);
@@ -464,7 +465,8 @@ final class PersistentFSConnector {
           invertedNameIndexToFill.updateDataInner(fileId, nameId);
         }
 
-        if (fileId <= FILES_TO_SELF_CHECK_ON_INIT) {
+        if (fileId >> nextPowFileIdToCheck.get() == 1) {
+          nextPowFileIdToCheck.inc();
           //Try to resolve few nameId/contentId against apt enumerators -- which is quite likely fails
           //if enumerators' files are corrupted anyhow, hence serves as a self-check heuristic:
 
@@ -485,7 +487,7 @@ final class PersistentFSConnector {
             catch (IOException e) {
               throw new UncheckedIOException("file[#" + fileId + "].nameId(=" + nameId + ") failed resolution in namesEnumerator", e);
             }
-          }                                           
+          }
 
           if (contentHashesEnumerator != null
               && contentId != DataEnumeratorEx.NULL_ID) {

@@ -61,6 +61,10 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
 
     override fun visitCallExpression(node: UCallExpression): Boolean {
       val searcher = LOGGER_TYPE_SEARCHERS.mapFirst(node) ?: return true
+
+      val arguments = node.valueArguments
+      if (arguments.isEmpty()) return true
+
       val log4jAsImplementationForSlf4j = when (slf4jToLog4J2Type) {
         Slf4jToLog4J2Type.AUTO -> hasBridgeFromSlf4jToLog4j2(node)
         Slf4jToLog4J2Type.YES -> true
@@ -74,7 +78,6 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
       }
       val index = getIndex(parameters) ?: return true
 
-      val arguments = node.valueArguments
       var argumentCount = arguments.size - index
       val lastArgumentIsException = hasThrowableType(arguments[arguments.size - 1])
       val lastArgumentIsSupplier = couldBeThrowableSupplier(loggerType, parameters[parameters.size - 1], arguments[arguments.size - 1])

@@ -43,7 +43,7 @@ class RestartMavenEmbeddersQuickFix : BuildIssueQuickFix {
     val future = CompletableFuture<Void>()
     ApplicationManager.getApplication().executeOnPooledThread {
       MavenProjectsManager.getInstance(project).embeddersManager.reset()
-      MavenProjectsManager.getInstance(project).forceUpdateAllProjectsOrFindAllAvailablePomFiles();
+      MavenProjectsManager.getInstance(project).forceUpdateAllProjectsOrFindAllAvailablePomFiles()
       future.complete(null)
     }
     return future

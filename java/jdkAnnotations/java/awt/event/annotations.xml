@@ -40,17 +40,17 @@
   </item>
   <item name="java.awt.event.InputEvent InputEvent(java.awt.Component, int, long, int) 3">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
-      <val name="flags" val="{java.awt.Event.SHIFT_MASK, java.awt.Event.CTRL_MASK, java.awt.Event.META_MASK, java.awt.Event.ALT_MASK, java.awt.event.InputEvent.SHIFT_DOWN_MASK, java.awt.event.InputEvent.CTRL_DOWN_MASK, java.awt.event.InputEvent.META_DOWN_MASK, java.awt.event.InputEvent.ALT_DOWN_MASK, java.awt.event.InputEvent.BUTTON1_DOWN_MASK, java.awt.event.InputEvent.BUTTON2_DOWN_MASK, java.awt.event.InputEvent.BUTTON3_DOWN_MASK, java.awt.event.InputEvent.ALT_GRAPH_DOWN_MASK}" />
+      <val name="flags" val="{java.awt.event.InputEvent.SHIFT_DOWN_MASK, java.awt.event.InputEvent.CTRL_DOWN_MASK, java.awt.event.InputEvent.META_DOWN_MASK, java.awt.event.InputEvent.ALT_DOWN_MASK, java.awt.event.InputEvent.BUTTON1_DOWN_MASK, java.awt.event.InputEvent.BUTTON2_DOWN_MASK, java.awt.event.InputEvent.BUTTON3_DOWN_MASK, java.awt.event.InputEvent.ALT_GRAPH_DOWN_MASK}" />
     </annotation>
   </item>
   <item name="java.awt.event.InputEvent int getModifiers()">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
-      <val name="flags" val="{java.awt.Event.SHIFT_MASK, java.awt.Event.CTRL_MASK, java.awt.Event.META_MASK, java.awt.Event.ALT_MASK, java.awt.event.InputEvent.SHIFT_DOWN_MASK, java.awt.event.InputEvent.CTRL_DOWN_MASK, java.awt.event.InputEvent.META_DOWN_MASK, java.awt.event.InputEvent.ALT_DOWN_MASK, java.awt.event.InputEvent.BUTTON1_DOWN_MASK, java.awt.event.InputEvent.BUTTON2_DOWN_MASK, java.awt.event.InputEvent.BUTTON3_DOWN_MASK, java.awt.event.InputEvent.ALT_GRAPH_DOWN_MASK}" />
+      <val name="flags" val="{java.awt.Event.SHIFT_MASK, java.awt.Event.CTRL_MASK, java.awt.Event.META_MASK, java.awt.Event.ALT_MASK, java.awt.event.InputEvent.ALT_GRAPH_MASK, java.awt.event.InputEvent.BUTTON1_MASK}" />
     </annotation>
   </item>
   <item name="java.awt.event.InputEvent int getModifiersEx()">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
-      <val name="flags" val="{java.awt.Event.SHIFT_MASK, java.awt.Event.CTRL_MASK, java.awt.Event.META_MASK, java.awt.Event.ALT_MASK, java.awt.event.InputEvent.SHIFT_DOWN_MASK, java.awt.event.InputEvent.CTRL_DOWN_MASK, java.awt.event.InputEvent.META_DOWN_MASK, java.awt.event.InputEvent.ALT_DOWN_MASK, java.awt.event.InputEvent.BUTTON1_DOWN_MASK, java.awt.event.InputEvent.BUTTON2_DOWN_MASK, java.awt.event.InputEvent.BUTTON3_DOWN_MASK, java.awt.event.InputEvent.ALT_GRAPH_DOWN_MASK}" />
+      <val name="flags" val="{java.awt.event.InputEvent.SHIFT_DOWN_MASK, java.awt.event.InputEvent.CTRL_DOWN_MASK, java.awt.event.InputEvent.META_DOWN_MASK, java.awt.event.InputEvent.ALT_DOWN_MASK, java.awt.event.InputEvent.BUTTON1_DOWN_MASK, java.awt.event.InputEvent.BUTTON2_DOWN_MASK, java.awt.event.InputEvent.BUTTON3_DOWN_MASK, java.awt.event.InputEvent.ALT_GRAPH_DOWN_MASK}" />
     </annotation>
   </item>
   <item name="java.awt.event.ItemEvent ItemEvent(java.awt.ItemSelectable, int, java.lang.Object, int) 3">
@@ -93,17 +93,17 @@
   </item>
   <item name="java.awt.event.MouseEvent MouseEvent(java.awt.Component, int, long, int, int, int, int, boolean) 3">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
-      <val name="flags" val="{java.awt.Event.SHIFT_MASK, java.awt.Event.CTRL_MASK, java.awt.Event.META_MASK, java.awt.Event.ALT_MASK, java.awt.event.InputEvent.SHIFT_DOWN_MASK, java.awt.event.InputEvent.CTRL_DOWN_MASK, java.awt.event.InputEvent.META_DOWN_MASK, java.awt.event.InputEvent.ALT_DOWN_MASK, java.awt.event.InputEvent.BUTTON1_DOWN_MASK, java.awt.event.InputEvent.BUTTON2_DOWN_MASK, java.awt.event.InputEvent.BUTTON3_DOWN_MASK, java.awt.event.InputEvent.ALT_GRAPH_DOWN_MASK}" />
+      <val name="flags" val="{java.awt.event.InputEvent.SHIFT_DOWN_MASK, java.awt.event.InputEvent.CTRL_DOWN_MASK, java.awt.event.InputEvent.META_DOWN_MASK, java.awt.event.InputEvent.ALT_DOWN_MASK, java.awt.event.InputEvent.BUTTON1_DOWN_MASK, java.awt.event.InputEvent.BUTTON2_DOWN_MASK, java.awt.event.InputEvent.BUTTON3_DOWN_MASK, java.awt.event.InputEvent.ALT_GRAPH_DOWN_MASK}" />
     </annotation>
   </item>
   <item name="java.awt.event.MouseEvent MouseEvent(java.awt.Component, int, long, int, int, int, int, boolean, int) 3">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
-      <val name="flags" val="{java.awt.Event.SHIFT_MASK, java.awt.Event.CTRL_MASK, java.awt.Event.META_MASK, java.awt.Event.ALT_MASK, java.awt.event.InputEvent.SHIFT_DOWN_MASK, java.awt.event.InputEvent.CTRL_DOWN_MASK, java.awt.event.InputEvent.META_DOWN_MASK, java.awt.event.InputEvent.ALT_DOWN_MASK, java.awt.event.InputEvent.BUTTON1_DOWN_MASK, java.awt.event.InputEvent.BUTTON2_DOWN_MASK, java.awt.event.InputEvent.BUTTON3_DOWN_MASK, java.awt.event.InputEvent.ALT_GRAPH_DOWN_MASK}" />
+      <val name="flags" val="{java.awt.event.InputEvent.SHIFT_DOWN_MASK, java.awt.event.InputEvent.CTRL_DOWN_MASK, java.awt.event.InputEvent.META_DOWN_MASK, java.awt.event.InputEvent.ALT_DOWN_MASK, java.awt.event.InputEvent.BUTTON1_DOWN_MASK, java.awt.event.InputEvent.BUTTON2_DOWN_MASK, java.awt.event.InputEvent.BUTTON3_DOWN_MASK, java.awt.event.InputEvent.ALT_GRAPH_DOWN_MASK}" />
     </annotation>
   </item>
   <item name="java.awt.event.MouseEvent MouseEvent(java.awt.Component, int, long, int, int, int, int, int, int, boolean, int) 3">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
-      <val name="flags" val="{java.awt.Event.SHIFT_MASK, java.awt.Event.CTRL_MASK, java.awt.Event.META_MASK, java.awt.Event.ALT_MASK, java.awt.event.InputEvent.SHIFT_DOWN_MASK, java.awt.event.InputEvent.CTRL_DOWN_MASK, java.awt.event.InputEvent.META_DOWN_MASK, java.awt.event.InputEvent.ALT_DOWN_MASK, java.awt.event.InputEvent.BUTTON1_DOWN_MASK, java.awt.event.InputEvent.BUTTON2_DOWN_MASK, java.awt.event.InputEvent.BUTTON3_DOWN_MASK, java.awt.event.InputEvent.ALT_GRAPH_DOWN_MASK}" />
+      <val name="flags" val="{java.awt.event.InputEvent.SHIFT_DOWN_MASK, java.awt.event.InputEvent.CTRL_DOWN_MASK, java.awt.event.InputEvent.META_DOWN_MASK, java.awt.event.InputEvent.ALT_DOWN_MASK, java.awt.event.InputEvent.BUTTON1_DOWN_MASK, java.awt.event.InputEvent.BUTTON2_DOWN_MASK, java.awt.event.InputEvent.BUTTON3_DOWN_MASK, java.awt.event.InputEvent.ALT_GRAPH_DOWN_MASK}" />
     </annotation>
   </item>
   <item name='java.awt.event.MouseEvent java.awt.Point getPoint()'>

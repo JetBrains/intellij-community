@@ -13,7 +13,7 @@ import com.intellij.openapi.vcs.changes.Change
 class VcsStatisticsCollector : CounterUsagesCollector() {
   companion object {
     @JvmField
-    val GROUP = EventLogGroup("vcs", 12)
+    val GROUP = EventLogGroup("vcs", 13)
 
     @JvmField
     val UPDATE_ACTIVITY = GROUP.registerIdeActivity("update")
@@ -31,9 +31,6 @@ class VcsStatisticsCollector : CounterUsagesCollector() {
                                                                  UNVERSIONED_DELTA)
 
     val NON_MODAL_COMMIT_STATE_CHANGED = GROUP.registerEvent("non.modal.commit.state.changed", EventFields.Enabled)
-    val NON_MODAL_COMMIT_PROMOTION_SHOWN = GROUP.registerEvent("non.modal.commit.promotion.shown")
-    val NON_MODAL_COMMIT_PROMOTION_ACCEPTED = GROUP.registerEvent("non.modal.commit.promotion.accepted")
-    val NON_MODAL_COMMIT_PROMOTION_REJECTED = GROUP.registerEvent("non.modal.commit.promotion.rejected")
 
     @JvmField
     val CLONE = GROUP.registerEvent("clone.invoked", EventFields.Class("clone_dialog_extension"))

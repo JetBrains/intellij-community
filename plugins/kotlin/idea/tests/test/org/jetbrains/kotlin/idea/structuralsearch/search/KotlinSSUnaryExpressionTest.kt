@@ -5,21 +5,72 @@ package org.jetbrains.kotlin.idea.structuralsearch.search
 import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
 class KotlinSSUnaryExpressionTest : KotlinStructuralSearchTest() {
-    override fun getBasePath(): String = "unaryExpression"
+    fun testUnaryPlus() { doTest("+3", """
+        val a = <warning descr="SSR">+3</warning>+3
+        val b = <warning descr="SSR">3.unaryPlus()</warning>
+        val c = -3
+        val d = 3.unaryMinus()
+        val e = 3 +3
+    """.trimIndent()) }
 
-    fun testUnaryPlus() { doTest("+3") }
+    fun testUnaryMinus() { doTest("-3", """
+        val a = <warning descr="SSR">-3</warning>+3
+        val b = <warning descr="SSR">3.unaryMinus()</warning>
+        val c = +3
+        val d = 3.unaryPlus()
+        val e = 3 -3
+    """.trimIndent()) }
 
-    fun testUnaryMinus() { doTest("-3") }
+    fun testNot() { doTest("!'_", """
+        val a = true
+        val b = <warning descr="SSR">!a</warning>
+        val c = <warning descr="SSR">a.not()</warning>
+    """.trimIndent()) }
 
-    fun testNot() { doTest("!'_") }
+    fun testPreIncrement() { doTest("++'_ ", """
+        fun postIncrement(a: Int): Int {
+            var b = a
+            <warning descr="SSR">++b</warning>
+            <warning descr="SSR">++(b)</warning>
+            <warning descr="SSR">++(((b)))</warning>
+            <warning descr="SSR">b.inc()</warning>
+            return b
+        }
+    """.trimIndent()) }
 
-    fun testPreIncrement() { doTest("++'_ ") }
+    fun testPostIncrement() { doTest("'_ ++", """
+        fun postIncrement(a: Int): Int {
+            var b = a
+            <warning descr="SSR">b++</warning>
+            <warning descr="SSR">(b)++</warning>
+            <warning descr="SSR">(((b)))++</warning>
+            <warning descr="SSR">b.inc()</warning>
+            return b
+        }
+    """.trimIndent()) }
 
-    fun testPostIncrement() { doTest("'_ ++") }
+    fun testPreDecrement() { doTest("--'_", """
+        fun postDecrement(a: Int): Int {
+            var b = a
+            <warning descr="SSR">--b</warning>
+            <warning descr="SSR">b.dec()</warning>
+            return b
+        }
+    """.trimIndent()) }
 
-    fun testPreDecrement() { doTest("--'_") }
+    fun testPostDecrement() { doTest("'_--", """
+        fun postDecrement(a: Int): Int {
+            var b = a
+            <warning descr="SSR">b--</warning>
+            <warning descr="SSR">b.dec()</warning>
+            return b
+        }
+    """.trimIndent()) }
 
-    fun testPostDecrement() { doTest("'_--") }
-
-    fun testAssertNotNull() { doTest("'_!!") }
+    fun testAssertNotNull() { doTest("'_!!", """
+        fun main() {
+            val a: Int? = 1
+            print(<warning descr="SSR">a!!</warning>)
+        }
+    """.trimIndent()) }
 }

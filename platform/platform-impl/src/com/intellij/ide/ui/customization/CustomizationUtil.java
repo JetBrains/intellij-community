@@ -86,8 +86,8 @@ public final class CustomizationUtil {
       try {
         return CustomActionsSchema.loadCustomIcon(iconPath);
       }
-      catch (IOException e) {
-        LOG.info(e.getMessage());
+      catch (Throwable t) {
+        LOG.info(t.getMessage());
         return null;
       }
     }

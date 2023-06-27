@@ -22,11 +22,9 @@ import org.jetbrains.idea.maven.project.importing.MavenReadContext;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCase {
   private MavenProjectsNavigator myNavigator;
@@ -34,7 +32,6 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
 
   @Override
   protected void setUp() throws Exception {
-    MavenUtil.setUpdateSuspendable();
     super.setUp();
     ServiceContainerUtil.replaceService(myProject, ToolWindowManager.class, new ToolWindowHeadlessManagerImpl(myProject) {
       @Override
@@ -53,7 +50,6 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
 
   @Override
   protected void tearDown() throws Exception {
-    MavenUtil.resetUpdateSuspendable();
     myNavigator = null;
     myStructure = null;
     super.tearDown();
@@ -276,12 +272,14 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
     myNavigator.setShowIgnored(true);
     waitForMavenUtilRunnablesComplete();
     assertTrue(getRootNodes().get(0).isVisible());
-    assertEquals(3, getRootNodes().get(0).getChildren().length); // Lifecycle, Plugins, m
+    var childNodeNamesBefore = Arrays.stream(getRootNodes().get(0).getChildren()).map(node -> node.getName()).collect(Collectors.toSet());
+    assertEquals(Set.of("Lifecycle", "Plugins", "m"), childNodeNamesBefore);
 
     myNavigator.setShowIgnored(false);
     waitForMavenUtilRunnablesComplete();
     assertTrue(getRootNodes().get(0).isVisible());
-    assertEquals(2, getRootNodes().get(0).getChildren().length); // Lifecycle, Plugins
+    var childNodeNamesAfter = Arrays.stream(getRootNodes().get(0).getChildren()).map(node -> node.getName()).collect(Collectors.toSet());
+    assertEquals(Set.of("Lifecycle", "Plugins"), childNodeNamesAfter);
   }
 
   @Test

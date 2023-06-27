@@ -44,7 +44,7 @@ public interface AbstractAttributesStorage extends Forceable, Closeable {
    * I.e. the {@link AttributesStorageOverBlobStorage} binary format allows for 16k attributeId, see {@link AttributesStorageOverBlobStorage#MAX_SUPPORTED_ATTRIBUTE_ID},
    * while {@link AttributesStorageOld} has MAX_INT as a limit.
    */
-  int MAX_ATTRIBUTE_ID = 8 * 1024;
+  int MAX_ATTRIBUTE_ID = SystemProperties.getIntProperty("vfs.file-attribute-max-id", 8 * 1024);
 
   /**
    * Exclusive upper bound for inline attribute size: attribute is inlined if its size < this value

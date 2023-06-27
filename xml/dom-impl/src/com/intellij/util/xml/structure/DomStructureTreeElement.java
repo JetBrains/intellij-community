@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.xml.structure;
 
@@ -56,14 +56,9 @@ public class DomStructureTreeElement implements StructureViewTreeElement, ItemPr
         if (element instanceof GenericDomValue) return;
         final DomService.StructureViewMode viewMode = myDescriptor.fun(element);
         switch (viewMode) {
-          case SHOW:
-            result.add(createChildElement(element));
-            break;
-          case SHOW_CHILDREN:
-            DomUtil.acceptAvailableChildren(element, this);
-            break;
-          case SKIP:
-            break;
+          case SHOW -> result.add(createChildElement(element));
+          case SHOW_CHILDREN -> DomUtil.acceptAvailableChildren(element, this);
+          case SKIP -> {}
         }
       }
     };

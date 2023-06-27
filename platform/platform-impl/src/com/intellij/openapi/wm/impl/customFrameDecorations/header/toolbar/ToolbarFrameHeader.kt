@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
 import com.intellij.ide.ProjectWindowCustomizerService
@@ -10,14 +10,12 @@ import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.ToolbarHolder
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.AdjustableSizeCardLayout
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.FrameHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameCustomHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.SimpleCustomDecorationPath
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.headertoolbar.isToolbarInHeader
 import com.intellij.ui.WindowMoveListener
-import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsX
@@ -25,6 +23,7 @@ import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.GridBag
+import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.CustomFrameDecorations
 import java.awt.*
@@ -51,7 +50,7 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
   private var toolbar : MainToolbar? = null
   private val myToolbarPlaceholder = createToolbarPlaceholder()
   private val myHeaderContent = createHeaderContent()
-  private val expandableMenu = ExpandableMenu(myHeaderContent)
+  private val expandableMenu = ExpandableMenu(myHeaderContent, this)
   private val toolbarHeaderTitle = SimpleCustomDecorationPath(frame).apply {
     isOpaque = false
   }
@@ -62,9 +61,9 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
   }
 
   private fun createToolbarPlaceholder(): JPanel {
-    val panel = JPanel(CardLayout())
+    val panel = JPanel()
     panel.isOpaque = false
-    panel.layout = AdjustableSizeCardLayout()
+    panel.layout = BorderLayout()
     panel.border = JBUI.Borders.empty(0, JBUI.scale(4))
     return panel
   }
@@ -87,11 +86,10 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
   }
 
   private val mode: ShowMode
-    get() = if (isToolbarInHeader(UISettings.shadowInstance)) ShowMode.TOOLBAR else ShowMode.MENU
-  private val isCompact: Boolean get() = (root as? IdeRootPane)?.isCompactHeader == true
+    get() = if (isToolbarInHeader()) ShowMode.TOOLBAR else ShowMode.MENU
 
-  private fun toolbarCardName(isCompact: Boolean = this.isCompact): String =
-    if (isCompact) "PATH" else "TOOLBAR"
+  private val isCompact: Boolean
+    get() = (root as? IdeRootPane)?.isCompactHeader { MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()) } == true
 
   init {
     mainMenuButton.expandableMenu = expandableMenu
@@ -103,7 +101,7 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
     add(myHeaderContent, gb.next().fillCell().anchor(CENTER).weightx(1.0).weighty(1.0))
     buttonPanes?.let { add(wrap(it.getView()), gb.next().anchor(EAST)) }
 
-    setCustomFrameTopBorder({ false }, {true})
+    setCustomFrameTopBorder(isTopNeeded = { false }, isBottomNeeded = { mode == ShowMode.MENU })
 
     customizer.addListener(this, true) {
       isOpaque = !it
@@ -120,6 +118,7 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
 
   override fun initToolbar(toolbarActionGroups: List<Pair<ActionGroup, String>>) {
     doUpdateToolbar(toolbarActionGroups)
+    updateSize { toolbarActionGroups }
   }
 
   override fun updateToolbar() {
@@ -131,6 +130,7 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
     }
 
     updateToolbarAppearanceFromMode()
+    updateSize { MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()) }
   }
 
   override fun paint(g: Graphics?) {
@@ -148,12 +148,11 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
     toolbar.isOpaque = false
     toolbar.addComponentListener(contentResizeListener)
     this.toolbar = toolbar
-    myToolbarPlaceholder.add(toolbar, toolbarCardName(false))
-
     toolbarHeaderTitle.updateBorders(0)
-    myToolbarPlaceholder.add(toolbarHeaderTitle, toolbarCardName(true))
 
-    (myToolbarPlaceholder.layout as CardLayout).show(myToolbarPlaceholder, toolbarCardName())
+    if (isCompact) myToolbarPlaceholder.add(toolbarHeaderTitle, BorderLayout.CENTER)
+    else myToolbarPlaceholder.add(toolbar, BorderLayout.CENTER)
+
     myToolbarPlaceholder.revalidate()
   }
 
@@ -165,13 +164,17 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
 
   private fun updateMenuButtonMinimumSize() {
     mainMenuButton.button.setMinimumButtonSize(
-      if (isCompact) Dimension(toolbarHeaderTitle.expectedHeight, toolbarHeaderTitle.expectedHeight)
+      if (isCompact) JBDimension(toolbarHeaderTitle.expectedHeight, toolbarHeaderTitle.expectedHeight, true)
       else ActionToolbar.experimentalToolbarMinimumButtonSize()
     )
   }
 
   private fun updateMenuBarAppearance() {
     menuBarHeaderTitle.isVisible = (isCompact && mode == ShowMode.MENU)
+  }
+
+  private fun updateTitleButtonsMode() {
+    buttonPanes?.isCompactMode = isCompact
   }
 
   override fun installListeners() {
@@ -215,6 +218,7 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
   }
 
   private fun updateToolbarAppearanceFromMode() {
+    updateTitleButtonsMode()
     updateMenuButtonMinimumSize()
     if (mode == ShowMode.MENU) updateMenuBarAppearance()
   }
@@ -225,12 +229,6 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
     super.updateActive()
 
     expandableMenu.updateColor()
-  }
-
-  private fun getElementRect(comp: Component, rectProcessor: ((Rectangle) -> Unit)? = null): RelativeRectangle {
-    val rect = Rectangle(comp.size)
-    rectProcessor?.invoke(rect)
-    return RelativeRectangle(comp, rect)
   }
 
   private fun createHeaderContent(): JPanel {

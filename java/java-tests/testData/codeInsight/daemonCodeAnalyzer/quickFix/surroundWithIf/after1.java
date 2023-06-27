@@ -2,7 +2,7 @@
 class A {
     void foo(int x){
         String i = x > 0 ? "" : null;
-        <caret>if (i != null) {
+        if (i<caret> != null) {
             i.hashCode();
         }
     }

@@ -2,24 +2,19 @@
 package com.intellij.codeInspection.java18StreamApi;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.InspectionOptionsPanel;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
-import com.intellij.util.ui.UI;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Collection;
 
 /**
@@ -86,8 +81,7 @@ public class StaticPseudoFunctionalStyleMethodInspection extends AbstractBaseJav
     };
   }
 
-  public static final class ReplacePseudoLambdaWithLambda implements LocalQuickFix {
-    @SafeFieldForPreview
+  public static final class ReplacePseudoLambdaWithLambda extends PsiUpdateModCommandQuickFix {
     private final StaticPseudoFunctionalStyleMethodOptions.PipelineElement myHandler;
 
     private ReplacePseudoLambdaWithLambda(StaticPseudoFunctionalStyleMethodOptions.PipelineElement handler) {
@@ -101,8 +95,7 @@ public class StaticPseudoFunctionalStyleMethodInspection extends AbstractBaseJav
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement psiElement = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement psiElement, @NotNull ModPsiUpdater updater) {
       if (psiElement instanceof PsiReferenceExpression && psiElement.getParent() instanceof PsiMethodCallExpression call) {
         myHandler.template().convertToStream(call, null, false);
       }

@@ -18,14 +18,22 @@ public final class RenderingHelper {
   /**
    * This key can be set to a tree to resize renderer component if it exceed a visible area.
    *
-   * @see JComponent#putClientProperty
+   * @see ClientProperty#put(JComponent, Key, Object)
    */
   public static final Key<Boolean> SHRINK_LONG_RENDERER = Key.create("SHRINK_LONG_RENDERER");
+
+  /**
+   * This property can be set to a tree to shrink selection highlight if it exceeds the visible area.
+   *
+   * @see ClientProperty#put(JComponent, Key, Object)
+   */
+  public static final Key<Boolean> SHRINK_LONG_SELECTION = Key.create("SHRINK_LONG_SELECTION");
 
   private final Rectangle myViewBounds;
   private final int myHintIndex;
   private int myRightMargin;
-  private boolean myShrinkingDisabled;
+  private boolean myShrinkingDisabled = false;
+  private boolean myShrinkingSelectionDisabled = true;
 
   @ApiStatus.Internal
   public RenderingHelper(@NotNull JComponent component) {
@@ -39,6 +47,7 @@ public final class RenderingHelper {
         JScrollBar hsb = pane.getHorizontalScrollBar();
         if (hsb != null && hsb.isVisible()) {
           myShrinkingDisabled = !ClientProperty.isTrue(component, SHRINK_LONG_RENDERER);
+          myShrinkingSelectionDisabled = !ClientProperty.isTrue(component, SHRINK_LONG_SELECTION);
         }
         JScrollBar vsb = pane.getVerticalScrollBar();
         if (vsb != null && vsb.isVisible() && !vsb.isOpaque() && ClientProperty.isFalse(vsb, IGNORE_SCROLLBAR_IN_INSETS)) {
@@ -70,6 +79,10 @@ public final class RenderingHelper {
 
   public boolean isRendererShrinkingDisabled(int index) {
     return myShrinkingDisabled || isExpandableHintShown(index);
+  }
+
+  public boolean isShrinkingSelectionDisabled(int index) {
+    return myShrinkingSelectionDisabled || isExpandableHintShown(index);
   }
 
   public boolean isExpandableHintShown(int index) {

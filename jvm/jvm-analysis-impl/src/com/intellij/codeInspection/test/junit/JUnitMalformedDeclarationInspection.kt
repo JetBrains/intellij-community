@@ -299,15 +299,18 @@ private class JUnitMalformedSignatureVisitor(
   }
 
   private fun checkMalformedNestedClass(aClass: UClass) {
-    val outer = aClass.outerClass() ?: return
-    if (aClass == outer) return
+    val classHierarchy = aClass.nestedClassHierarchy()
+    if (classHierarchy.isEmpty()) return
+    if (classHierarchy.all { it.javaPsi.hasModifier(JvmModifier.ABSTRACT) }) return
+    val outer = classHierarchy.last()
     checkMalformedJUnit4NestedClass(aClass, outer)
     checkMalformedJUnit5NestedClass(aClass)
   }
 
-  private fun UClass.outerClass(): UClass? {
+  private fun UClass.nestedClassHierarchy(current: List<UClass> = emptyList()): List<UClass> {
     val containingClass = getContainingUClass()
-    return if (containingClass == null) this else containingClass.outerClass()
+    if (containingClass == null) return current
+    return listOf(containingClass) + containingClass.nestedClassHierarchy(current)
   }
 
   private fun checkMalformedJUnit4NestedClass(aClass: UClass, outerClass: UClass) {
@@ -328,7 +331,7 @@ private class JUnitMalformedSignatureVisitor(
     override fun getActions(project: Project, descriptor: ProblemDescriptor): List<(JvmModifiersOwner) -> List<IntentionAction>> {
       val list = super.getActions(project, descriptor).toMutableList()
       list.add { owner ->
-        val outerClass = owner.sourceElement?.toUElementOfType<UClass>()?.outerClass()!!
+        val outerClass = owner.sourceElement?.toUElementOfType<UClass>()?.nestedClassHierarchy()?.last()!!
         val request = annotationRequest(ORG_JUNIT_RUNNER_RUN_WITH, classAttribute("value", ORG_JUNIT_EXPERIMENTAL_RUNNERS_ENCLOSED))
         createAddAnnotationActions(outerClass.javaPsi, request)
       }
@@ -347,7 +350,7 @@ private class JUnitMalformedSignatureVisitor(
     val javaClass = aClass.javaPsi
     if (!javaClass.hasAnnotation(ORG_JUNIT_JUPITER_API_NESTED) && !aClass.methods.any { it.javaPsi.hasAnnotation(ORG_JUNIT_JUPITER_API_TEST) }) return
     if (javaClass.hasAnnotation(ORG_JUNIT_JUPITER_API_NESTED) && !aClass.isStatic && aClass.visibility != UastVisibility.PRIVATE) return
-    val message = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.missing.nested.annotation.descriptor", )
+    val message = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.missing.nested.annotation.descriptor")
     val fix = ClassSignatureQuickFix(
       aClass.javaPsi.name ?: return,
       false,
@@ -694,14 +697,16 @@ private class JUnitMalformedSignatureVisitor(
       )
       holder.registerProblem(annotation.navigationElement, message)
     } else {
-      var type = passedParameter.type
-      if (type is PsiClassType) type = type.rawType()
-      if (type is PsiArrayType
-          || type.equalsToText(JAVA_LANG_STRING)
-          || type.equalsToText(JAVA_UTIL_LIST)
-          || type.equalsToText(JAVA_UTIL_SET)
-          || type.equalsToText(JAVA_UTIL_MAP)
-      ) return
+      val type = passedParameter.type
+      if (type is PsiClassType) {
+        val psiClass = type.resolve() ?: return
+        if (validEmptySource.any { it == psiClass.qualifiedName }) return
+        val constructors = psiClass.constructors.mapNotNull { it.toUElementOfType<UMethod>() }
+        val isCollectionOrMap = InheritanceUtil.isInheritor(psiClass, JAVA_UTIL_COLLECTION)
+                                || InheritanceUtil.isInheritor(psiClass, JAVA_UTIL_MAP)
+        if (isCollectionOrMap && constructors.any { it.visibility == UastVisibility.PUBLIC && it.isNoArg() }) return
+      }
+      if (type is PsiArrayType) return
       val message = JvmAnalysisBundle.message(
         "jvm.inspections.junit.malformed.param.empty.source.unsupported.descriptor",
         annotation.shortName, type.presentableText
@@ -1228,6 +1233,18 @@ private class JUnitMalformedSignatureVisitor(
       "org.junit.internal.runners.JUnit4ClassRunner",
       "org.junit.experimental.categories.Categories",
       "org.junit.experimental.categories.Enclosed"
+    )
+
+    private val validEmptySource = listOf(
+      JAVA_LANG_STRING,
+      JAVA_UTIL_LIST,
+      JAVA_UTIL_SET,
+      JAVA_UTIL_SORTED_SET,
+      JAVA_UTIL_NAVIGABLE_SET,
+      JAVA_UTIL_SORTED_MAP,
+      JAVA_UTIL_NAVIGABLE_MAP,
+      JAVA_UTIL_MAP,
+      JAVA_UTIL_COLLECTION
     )
 
     val visibilityToModifier = mapOf(

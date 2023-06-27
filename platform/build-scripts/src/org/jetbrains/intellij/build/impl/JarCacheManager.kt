@@ -25,7 +25,7 @@ import java.util.*
 private const val jarSuffix = ".jar"
 private const val metaSuffix = ".json"
 
-private const val cacheVersion: Byte = 2
+private const val cacheVersion: Byte = 3
 
 internal sealed interface JarCacheManager {
   suspend fun computeIfAbsent(item: JarDescriptor,
@@ -52,6 +52,8 @@ private val json by lazy {
   }
 }
 
+private const val nonMavenLibPathPrefix = "__NOT_MAVEN__/"
+
 internal class LocalDiskJarCacheManager(private val cacheDir: Path) : JarCacheManager {
   init {
     Files.createDirectories(cacheDir)
@@ -69,21 +71,23 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path) : JarCacheMa
         return
       }
       else if (!source.file.startsWith(MAVEN_REPO)) {
-        span.addEvent("library file should be from maven repository", Attributes.of(AttributeKey.stringKey("file"), source.file.toString()))
-        producer()
-        return
+        sourceToRelativePath.put(nonMavenLibPathPrefix + source.file.toString(), source)
       }
-
-      val path = MAVEN_REPO.relativize(source.file).toString()
-      sourceToRelativePath.put(path, source)
+      else {
+        val path = MAVEN_REPO.relativize(source.file).toString()
+        sourceToRelativePath.put(path, source)
+      }
     }
 
     // 224 bit and not 256/512 - use a slightly shorter filename
     // xxh3 is not used as it is not secure and moreover, better to stick to JDK API
     val hash = sha3_224()
     hash.update(cacheVersion)
-    for (string in sourceToRelativePath.keys) {
+    for ((string, source) in sourceToRelativePath) {
       hash.update(string.encodeToByteArray())
+      if (string.startsWith(nonMavenLibPathPrefix)) {
+        hash.update(Files.readAllBytes(source.file))
+      }
       hash.update('-'.code.toByte())
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions.diff
 
 import com.intellij.diff.chains.DiffRequestProducer
@@ -44,11 +44,11 @@ abstract class CombinedDiffPreview(protected val tree: ChangesTree,
 
   override val updatePreviewProcessor get() = model
 
-  protected val model by lazy {
-    createModel().also { model ->
-      model.context.putUserData(COMBINED_DIFF_PREVIEW_TAB_NAME, ::getCombinedDiffTabTitle)
-      project.service<CombinedDiffModelRepository>().registerModel(tree.id, model)
-    }
+  protected open val model by lazy { createModel().also { model -> customizeModel(tree.id, model) } }
+
+  protected fun customizeModel(sourceId: String, model: CombinedDiffPreviewModel) {
+    model.context.putUserData(COMBINED_DIFF_PREVIEW_TAB_NAME, ::getCombinedDiffTabTitle)
+    project.service<CombinedDiffModelRepository>().registerModel(sourceId, model)
   }
 
   override fun updatePreview(fromModelRefresh: Boolean) {
@@ -178,7 +178,8 @@ abstract class CombinedDiffPreviewModel(protected val tree: ChangesTree,
 
   private fun scrollToChange(change: Wrapper) {
     context.getUserData(COMBINED_DIFF_VIEWER_KEY)
-      ?.selectDiffBlock(CombinedPathBlockId(change.filePath, change.fileStatus, change.tag), false)
+      ?.selectDiffBlock(CombinedPathBlockId(change.filePath, change.fileStatus, change.tag), false,
+                        CombinedDiffViewer.ScrollPolicy.SCROLL_TO_BLOCK)
   }
 
   open fun selectChangeInTree(change: Wrapper) {

@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("GraphicsSetClipInspection")
+
 package com.intellij.toolWindow
 
 import com.intellij.ide.RemoteDesktopService
@@ -27,7 +29,6 @@ import com.intellij.openapi.wm.impl.WindowInfoImpl
 import com.intellij.ui.JBColor
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.awt.DevicePoint
-import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
@@ -47,6 +48,7 @@ import java.lang.ref.SoftReference
 import java.util.concurrent.Future
 import javax.swing.JComponent
 import javax.swing.JFrame
+import javax.swing.JLayeredPane
 import javax.swing.LayoutFocusTraversalPolicy
 import kotlin.math.max
 import kotlin.math.min
@@ -54,19 +56,18 @@ import kotlin.math.min
 private val LOG = logger<ToolWindowPane>()
 
 /**
- * This panel contains all tool stripes and JLayeredPane at the center area. All tool windows are
- * located inside this layered pane.
+ * This panel contains all tool stripes and JLayeredPane at the center area. All tool windows are located inside this layered pane.
  */
 class ToolWindowPane internal constructor(
   frame: JFrame,
   parentDisposable: Disposable,
   val paneId: String,
   @field:JvmField internal val buttonManager: ToolWindowButtonManager,
-) : JBLayeredPane(), UISettingsListener {
+) : JLayeredPane(), UISettingsListener {
   companion object {
     const val TEMPORARY_ADDED: String = "TEMPORARY_ADDED"
 
-    // the size of topmost 'resize' area when toolwindow caption is used for both resize and drag
+    // the size of the topmost 'resize' area when toolwindow caption is used for both resize and drag
     internal val headerResizeArea: Int
       get() = JBUI.scale(Registry.intValue("ide.new.tool.window.resize.area.height", 14, 1, 26))
 
@@ -139,9 +140,7 @@ class ToolWindowPane internal constructor(
     buttonManager.addToToolWindowPane(this)
     add(layeredPane, DEFAULT_LAYER, -1)
     focusTraversalPolicy = LayoutFocusTraversalPolicy()
-    if (Registry.`is`("ide.new.tool.window.dnd")) {
-      ToolWindowDragHelper(parentDisposable, this).start()
-    }
+    ToolWindowDragHelper(parentDisposable, this).start()
     if (Registry.`is`("ide.allow.split.and.reorder.in.tool.window")) {
       ToolWindowInnerDragHelper(parentDisposable, this).start()
     }
@@ -165,8 +164,8 @@ class ToolWindowPane internal constructor(
   }
 
   /**
-   * @param dirtyMode if `true` then JRootPane will not be validated and repainted after adding
-   * the decorator. Moreover, in this (dirty) mode animation doesn't work.
+   * @param dirtyMode if `true` then JRootPane will not be validated and repainted after adding the decorator.
+   * Moreover, in this (dirty) mode, animation doesn't work.
    */
   fun addDecorator(decorator: JComponent, info: WindowInfo, dirtyMode: Boolean, manager: ToolWindowManagerImpl) {
     if (info.isDocked) {
@@ -551,7 +550,7 @@ class ToolWindowPane internal constructor(
     }
 
     var c = getComponentAt(anchor)
-    // if all components are hidden for anchor we should find the second component to put in a splitter
+    // if all components are hidden for anchor, we should find the second component to put in a splitter
     // otherwise we add empty splitter
     if (c == null) {
       val toolWindows = manager.getToolWindowsOn(paneId, anchor, info.id!!)
@@ -617,11 +616,11 @@ class ToolWindowPane internal constructor(
       layeredPane.setBoundsInPaletteLayer(component, info.anchor, info.weight)
     }
     else {
-      // Prepare top image. This image is scrolling over bottom image.
+      // Prepare top image. This image is scrolling over the bottom image.
       val topImage = layeredPane.topImage
       val bounds = component.bounds
       UIUtil.useSafely(topImage.graphics) { topGraphics ->
-        component.putClientProperty(TEMPORARY_ADDED, java.lang.Boolean.TRUE)
+        component.putClientProperty(TEMPORARY_ADDED, true)
         try {
           layeredPane.add(component, PALETTE_LAYER, -1)
           layeredPane.moveToFront(component)
@@ -637,7 +636,7 @@ class ToolWindowPane internal constructor(
       // prepare bottom image
       val bottomImage = layeredPane.bottomImage
       val bottomImageOffset = PaintUtil.getFractOffsetInRootPane(layeredPane)
-      UIUtil.useSafely(bottomImage.graphics) { bottomGraphics: Graphics2D ->
+      UIUtil.useSafely(bottomImage.graphics) { bottomGraphics ->
         bottomGraphics.setClip(0, 0, bounds.width, bounds.height)
         bottomGraphics.translate(bottomImageOffset.x - bounds.x, bottomImageOffset.y - bounds.y)
         layeredPane.paint(bottomGraphics)
@@ -667,12 +666,12 @@ class ToolWindowPane internal constructor(
   private fun removeSlidingComponent(component: Component, info: WindowInfo, dirtyMode: Boolean) {
     if (!dirtyMode && UISettings.getInstance().animateWindows && !RemoteDesktopService.isRemoteSession()) {
       val bounds = component.bounds
-      // Prepare top image. This image is scrolling over bottom image. It contains
-      // picture of component is being removed.
+      // Prepare top image. This image is scrolling over the bottom image. It contains a picture of component is being removed.
       val topImage: Image = layeredPane.topImage
       UIUtil.useSafely(topImage.graphics) { g: Graphics2D? -> component.paint(g) }
 
-      // Prepare bottom image. This image contains picture of component that is located
+      // Prepare the bottom image.
+      // This image contains a picture of a component that is located
       // under the component to is being removed.
       val bottomImage: Image = layeredPane.bottomImage
       val bottomImageOffset = PaintUtil.getFractOffsetInRootPane(layeredPane)
@@ -736,7 +735,7 @@ private class ImageCache(imageProvider: (ScaleContext) -> ImageRef) : ScaleConte
   }
 }
 
-private class FrameLayeredPane(splitter: JComponent, frame: JFrame) : JBLayeredPane() {
+private class FrameLayeredPane(splitter: JComponent, frame: JFrame) : JLayeredPane() {
   private val imageProvider: (ScaleContext) -> ImageRef = {
     val width = max(max(1, width), frame.width)
     val height = max(max(1, height), frame.height)

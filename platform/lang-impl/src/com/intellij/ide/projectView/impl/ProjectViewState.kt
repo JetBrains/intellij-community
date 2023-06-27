@@ -39,12 +39,14 @@ class ProjectViewState : PersistentStateComponent<ProjectViewState> {
   var showURL: Boolean = ProjectViewSettings.Immutable.DEFAULT.isShowURL
   var showVisibilityIcons: Boolean = ProjectViewSettings.Immutable.DEFAULT.isShowVisibilityIcons
   var useFileNestingRules: Boolean = ProjectViewSettings.Immutable.DEFAULT.isUseFileNestingRules
+  @get:ReportValue
   var sortKey: NodeSortKey = ProjectViewSettings.Immutable.DEFAULT.sortKey
 
   @Deprecated(
     "More sorting options are available now, use sortKey instead",
     replaceWith = ReplaceWith("sortKey == NodeSortKey.BY_TYPE")
   )
+  @get:SkipReportingStatistics
   var sortByType: Boolean
     get() = sortKey == NodeSortKey.BY_TYPE
     set(value) {

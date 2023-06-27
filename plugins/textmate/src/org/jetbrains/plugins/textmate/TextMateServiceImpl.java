@@ -147,7 +147,7 @@ public final class TextMateServiceImpl extends TextMateService {
         FileTypeManagerImpl fileTypeManager = (FileTypeManagerImpl)FileTypeManager.getInstance();
         fileTypeManager.makeFileTypesChange(reason, update);
       });
-    }, ModalityState.NON_MODAL);
+    }, ModalityState.nonModal());
   }
 
   private static List<Path> discoverBuiltinBundles(@NotNull TextMateBuiltinBundlesSettings builtinBundlesSettings) {

@@ -10,20 +10,18 @@ internal object GradleCompatibilityDataParser : IdeVersionedDataParser<GradleCom
   }
 
   override fun parseJson(data: JsonObject): GradleCompatibilityState? {
-    val supportedJavaVersionsArr = data["supportedJavaVersions"]?.takeIf { it.isJsonArray }?.asJsonArray ?: return null
-    val supportedGradleVersionsArr = data["supportedGradleVersions"]?.takeIf { it.isJsonArray }?.asJsonArray ?: return null
-    val compatibilityArr = data["compatibility"]?.takeIf { it.isJsonArray }?.asJsonArray ?: return null
+    val supportedJavaVersionsArr = data["supportedJavaVersions"]?.asSafeJsonArray ?: return null
+    val supportedGradleVersionsArr = data["supportedGradleVersions"]?.asSafeJsonArray ?: return null
+    val compatibilityArr = data["compatibility"]?.asSafeJsonArray ?: return null
 
     val supportedJavaVersions = supportedJavaVersionsArr.parseVersions()
     val supportedGradleVersions = supportedGradleVersionsArr.parseVersions()
     val versionMappings = compatibilityArr
-      .filter { it.isJsonObject }
       .mapNotNull { element ->
-        val obj = element.asJsonObject
+        val obj = element.asSafeJsonObject ?: return@mapNotNull null
         val versionMapping = VersionMapping()
-        versionMapping.javaVersionInfo = obj["java"]?.takeIf { it.isJsonPrimitive }?.asString ?: return null
-        versionMapping.gradleVersionInfo = obj["gradle"]?.takeIf { it.isJsonPrimitive }?.asString ?: return null
-        versionMapping.comment = obj["comment"]?.takeIf { it.isJsonPrimitive }?.asString
+        versionMapping.javaVersionInfo = obj["java"]?.asSafeString ?: return@mapNotNull null
+        versionMapping.gradleVersionInfo = obj["gradle"]?.asSafeString ?: return@mapNotNull null
         versionMapping
       }
 

@@ -44,6 +44,6 @@ final class LineMarkersPassFactory implements TextEditorHighlightingPassFactoryR
     ProperTextRange visibleRange = session.getVisibleRange();
     TextRange priorityBounds = expandRangeToCoverWholeLines(document, visibleRange);
     TextRange restrictRange = expandRangeToCoverWholeLines(document, dirtyTextRange);
-    return new LineMarkersPass(project, file, document, priorityBounds, restrictRange, myMode);
+    return new LineMarkersPass(project, file, document, priorityBounds, restrictRange, myMode, session);
   }
 }

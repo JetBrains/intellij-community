@@ -2,7 +2,10 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.lineMarkers
 
-import com.intellij.codeInsight.daemon.*
+import com.intellij.codeInsight.daemon.GutterIconNavigationHandler
+import com.intellij.codeInsight.daemon.LineMarkerInfo
+import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor
+import com.intellij.codeInsight.daemon.NavigateAction
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.markup.GutterIconRenderer
@@ -29,7 +32,10 @@ import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyFqnNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
+import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 import java.awt.event.MouseEvent
 
 class KotlinExpectActualLineMarkerProvider : LineMarkerProviderDescriptor() {
@@ -206,8 +212,9 @@ internal fun getModulesStringForMarkerTooltip(navigatableDeclarations: Collectio
     val projectStructureProvider = ProjectStructureProvider.getInstance(project)
 
     return navigatableDeclarations
-        .mapNotNull { it.element }
-        .joinToString { projectStructureProvider.getModule(it, null).moduleName }
+        .mapNotNull { navigatable -> navigatable.element?.let { projectStructureProvider.getModule(it, null).moduleName } }
+        .sorted()
+        .joinToString()
 }
 
 private val KtModule.moduleName: String

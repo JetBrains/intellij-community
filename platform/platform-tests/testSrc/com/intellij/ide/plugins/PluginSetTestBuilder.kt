@@ -11,7 +11,6 @@ class PluginSetTestBuilder(private val path: Path) {
 
   private var disabledPluginIds = mutableSetOf<String>()
   private var expiredPluginIds = mutableSetOf<String>()
-  private var enabledOnDemandPluginIds = mutableSetOf<String>()
   private var productBuildNumber = PluginManagerCore.getBuildNumber()
 
   private var context: DescriptorListLoadingContext? = null
@@ -25,10 +24,6 @@ class PluginSetTestBuilder(private val path: Path) {
     this.expiredPluginIds += expiredPluginIds
   }
 
-  fun withEnabledOnDemandPlugins(vararg enabledOnDemandPluginIds: String) = apply {
-    this.enabledOnDemandPluginIds += enabledOnDemandPluginIds
-  }
-
   fun withProductBuildNumber(productBuildNumber: BuildNumber) = apply {
     this.productBuildNumber = productBuildNumber
   }
@@ -37,7 +32,6 @@ class PluginSetTestBuilder(private val path: Path) {
     context = DescriptorListLoadingContext(
       disabledPlugins = PluginManagerCore.toPluginIds(disabledPluginIds),
       expiredPlugins = PluginManagerCore.toPluginIds(expiredPluginIds),
-      enabledOnDemandPlugins = PluginManagerCore.toPluginIds(enabledOnDemandPluginIds),
       brokenPluginVersions = emptyMap(),
       productBuildNumber = { productBuildNumber },
     )

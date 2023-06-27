@@ -28,7 +28,7 @@ private class SearchEverywhereSpellingCorrectorImpl(private val project: Project
 
 private class SearchEverywhereSpellingCorrectorFactoryImpl : SearchEverywhereSpellingCorrectorFactory {
   override fun isAvailable(project: Project): Boolean {
-    return isTypoFixingEnabled && (ActionsLanguageModel.getInstance()?.isComputed ?: false)
+    return isTypoFixingEnabled && (ActionsLanguageModel.getInstance(project)?.isComputed ?: false)
   }
 
   override fun create(project: Project): SearchEverywhereSpellingCorrector = SearchEverywhereSpellingCorrectorImpl(project)

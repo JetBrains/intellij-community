@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
@@ -44,8 +44,8 @@ public class DataFlowInspection extends DataFlowInspectionBase {
   private static final Logger LOG = Logger.getInstance(DataFlowInspection.class);
 
   @Override
-  protected LocalQuickFix createMutabilityViolationFix(PsiElement violation, boolean onTheFly) {
-    return WrapWithMutableCollectionFix.createFix(violation, onTheFly);
+  protected LocalQuickFix createMutabilityViolationFix(PsiElement violation) {
+    return WrapWithMutableCollectionFix.createFix(violation);
   }
 
   @Nullable
@@ -85,7 +85,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
     if (assignment == null || assignment.getRExpression() == null || !(assignment.getParent() instanceof PsiExpressionStatement)) {
       return null;
     }
-    return new DeleteSideEffectsAwareFix((PsiStatement)assignment.getParent(), assignment.getRExpression(), true);
+    return new DeleteSideEffectsAwareFix((PsiStatement)assignment.getParent(), assignment.getRExpression(), true).asQuickFix();
   }
 
   @Override

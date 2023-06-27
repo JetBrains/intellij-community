@@ -77,8 +77,9 @@ class KotlinJUnitLightTest : LightJavaCodeInsightFixtureTestCase() {
         )
     }
 
-    fun testAvailableInsideObject() {
-        doTestMethodConfiguration(
+    fun testNoAvailableInsideObject() {
+        myFixture.configureByText(
+            "tests.kt",
             """
                       import org.junit.Test
                       object tests {
@@ -87,13 +88,13 @@ class KotlinJUnitLightTest : LightJavaCodeInsightFixtureTestCase() {
                               <caret>
                           }
                       }
-                    """
+                    """.trimIndent()
         )
         assertEquals(ThreeState.UNSURE, RunLineMarkerProvider.hadAnythingRunnable(myFixture.file.virtualFile))
         assertEquals(0, myFixture.findGuttersAtCaret().size)
         val gutters = myFixture.findAllGutters()
-        assertEquals(2, gutters.size)
-        assertEquals(ThreeState.YES, RunLineMarkerProvider.hadAnythingRunnable(myFixture.file.virtualFile))
+        assertEquals(0, gutters.size)
+        assertEquals(ThreeState.NO, RunLineMarkerProvider.hadAnythingRunnable(myFixture.file.virtualFile))
     }
 
     fun testBackticksInNames() {
@@ -123,10 +124,10 @@ class KotlinJUnitLightTest : LightJavaCodeInsightFixtureTestCase() {
         val location = PsiLocation(element)
         val context = ConfigurationContext.createEmptyContextForLocation(location)
         val contexts = context.configurationsFromContext
-        Assert.assertEquals(1, contexts!!.size)
-        val fromContext = contexts[0]
-        assert(fromContext.configuration is JUnitConfiguration)
-        val configuration = fromContext.configuration as JUnitConfiguration
+        assertEquals(1, contexts?.size ?: 0)
+        val fromContext = contexts?.get(0)
+        assert(fromContext?.configuration is JUnitConfiguration)
+        val configuration = fromContext?.configuration as JUnitConfiguration
         val testObject = configuration.persistentData.TEST_OBJECT
         assert(testObject == JUnitConfiguration.TEST_METHOD) {
             "method should be suggested to run, but $testObject was used instead"

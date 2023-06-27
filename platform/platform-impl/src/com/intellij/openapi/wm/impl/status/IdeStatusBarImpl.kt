@@ -4,10 +4,10 @@
 package com.intellij.openapi.wm.impl.status
 
 import com.intellij.accessibility.AccessibilityUtils
-import com.intellij.diagnostic.runActivity
+import com.intellij.codeWithMe.ClientId
+import com.intellij.diagnostic.subtask
 import com.intellij.ide.HelpTooltipManager
 import com.intellij.ide.IdeEventQueue
-import com.intellij.ide.ui.UISettings
 import com.intellij.internal.statistic.service.fus.collectors.StatusBarPopupShown
 import com.intellij.internal.statistic.service.fus.collectors.StatusBarWidgetClicked
 import com.intellij.openapi.Disposable
@@ -21,6 +21,8 @@ import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.LoadingOrder.Orderable
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.impl.ProgressState
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.BalloonHandler
@@ -50,8 +52,7 @@ import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -99,6 +100,8 @@ open class IdeStatusBarImpl internal constructor(
 
   private val children = LinkedHashSet<IdeStatusBarImpl>()
   private val listeners = EventDispatcher.create(StatusBarListener::class.java)
+
+  private val progressFlow = MutableSharedFlow<ProgressSetChangeEvent>(replay = 1, extraBufferCapacity = Int.MAX_VALUE)
 
   companion object {
     internal val HOVERED_WIDGET_ID: DataKey<String> = DataKey.create("HOVERED_WIDGET_ID")
@@ -162,7 +165,7 @@ open class IdeStatusBarImpl internal constructor(
     rightPanel.border = JBUI.Borders.emptyLeft(1)
     add(rightPanel, BorderLayout.EAST)
 
-    infoAndProgressPanel = InfoAndProgressPanel(UISettings.shadowInstance)
+    infoAndProgressPanel = InfoAndProgressPanel(this)
     ClientProperty.put(infoAndProgressPanel.component, WIDGET_ID, infoAndProgressPanel.ID())
     centerPanel.add(infoAndProgressPanel.component)
     widgetMap.put(infoAndProgressPanel.ID(), WidgetBean(widget = infoAndProgressPanel,
@@ -242,11 +245,17 @@ open class IdeStatusBarImpl internal constructor(
 
   @ApiStatus.Experimental
   @RequiresEdt
-  fun setCentralWidget(id: String, component: JComponent) {
-    val widget = object : StatusBarWidget {
-      override fun ID(): String = id
+  fun setCentralWidget(id: String, component: JComponent?) {
+    if (component == null) {
+      widgetMap.remove(id)
     }
-    widgetMap.put(id, WidgetBean(widget = widget, position = Position.CENTER, component = component, order = LoadingOrder.ANY))
+    else {
+      val widget = object : StatusBarWidget {
+        override fun ID(): String = id
+      }
+      widgetMap.put(id, WidgetBean(widget = widget, position = Position.CENTER, component = component, order = LoadingOrder.ANY))
+    }
+
     infoAndProgressPanel.setCentralComponent(component)
     infoAndProgressPanel.component.revalidate()
   }
@@ -269,41 +278,38 @@ open class IdeStatusBarImpl internal constructor(
     addWidget(widget, Position.RIGHT, anchor)
   }
 
-  internal suspend fun init(project: Project, extraItems: List<kotlin.Pair<StatusBarWidget, LoadingOrder>> = emptyList()) {
+  internal suspend fun init(project: Project, frame: IdeFrame, extraItems: List<kotlin.Pair<StatusBarWidget, LoadingOrder>> = emptyList()) {
     val service = project.service<StatusBarWidgetsManager>()
-    val items = runActivity("status bar pre-init") {
-      blockingContext {
-        service.init()
-      }
+    val items = subtask("status bar pre-init") {
+      service.init(frame)
     }
-    runActivity("status bar init") {
+    subtask("status bar init") {
       doInit(widgets = items + extraItems, parentDisposable = service)
     }
   }
 
   private suspend fun doInit(widgets: List<kotlin.Pair<StatusBarWidget, LoadingOrder>>, parentDisposable: Disposable) {
-    val items: List<WidgetBean> = runActivity("status bar widget creating") {
+    val anyModality = ModalityState.any().asContextElement()
+    val items: List<WidgetBean> = subtask("status bar widget creating") {
       widgets.map { (widget, anchor) ->
-        val component = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          blockingContext {
-            val component = wrap(widget)
-            if (component is StatusBarWidgetWrapper) {
-              component.beforeUpdate()
-            }
-            component
+        val component = withContext(Dispatchers.EDT + anyModality) {
+          val component = wrap(widget)
+          if (component is StatusBarWidgetWrapper) {
+            component.beforeUpdate()
           }
+          component
         }
         val item = WidgetBean(widget = widget, position = Position.RIGHT, component = component, order = anchor)
         blockingContext {
-          widget.install(this)
+          widget.install(this@IdeStatusBarImpl)
         }
         Disposer.register(parentDisposable, widget)
         item
       }
     }
 
-    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      runActivity("status bar widget adding") {
+    withContext(Dispatchers.EDT + anyModality) {
+      subtask("status bar widget adding") {
         for (item in items) {
           widgetMap.put(item.widget.ID(), item)
         }
@@ -318,7 +324,7 @@ open class IdeStatusBarImpl internal constructor(
     }
 
     if (listeners.hasListeners()) {
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      withContext(Dispatchers.EDT + anyModality) {
         for (item in items) {
           fireWidgetAdded(widget = item.widget, anchor = item.anchor)
         }
@@ -426,10 +432,43 @@ open class IdeStatusBarImpl internal constructor(
   override fun getInfo(): @NlsContexts.StatusBarText String? = info
 
   override fun addProgress(indicator: ProgressIndicatorEx, info: TaskInfo) {
+    notifyProgressAdded(indicator, info)
     infoAndProgressPanel.addProgress(indicator, info)
   }
 
-  override fun getBackgroundProcesses(): List<Pair<TaskInfo, ProgressIndicator>> = infoAndProgressPanel.backgroundProcesses
+  private fun notifyProgressAdded(indicator: ProgressIndicatorEx, info: TaskInfo) {
+    EDT.assertIsEdt()
+    check(progressFlow.tryEmit(ProgressSetChangeEvent(Triple(info, indicator, ClientId.current), infoAndProgressPanel.backgroundProcesses)))
+  }
+
+  @ApiStatus.Internal
+  fun notifyProgressRemoved() {
+    EDT.assertIsEdt()
+    check(progressFlow.tryEmit(ProgressSetChangeEvent(null, infoAndProgressPanel.backgroundProcesses)))
+  }
+
+  /**
+   * Reports currently displayed progresses and the ones that will be displayed in future (never ending flow).
+   *
+   * NOTE: correct client id value is reported only for newly appearing progresses, older ones are reported with local client id.
+   * This isn't a problem for current usage, when the subscription is performed on first remote client's connection, but may need to be
+   * corrected for potential future usages.
+   */
+  @ApiStatus.Internal
+  fun getVisibleProcessFlow(): Flow<VisibleProgress> = flow {
+    var firstTime = true
+    progressFlow.collect { event ->
+      if (firstTime) {
+        firstTime = false
+        event.existingVisibleProgresses.forEach { emit(it) }
+      }
+      event.newVisibleProgress?.let { emit(it) }
+    }
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  override fun getBackgroundProcesses(): List<Pair<TaskInfo, ProgressIndicator>> =
+    infoAndProgressPanel.backgroundProcesses as List<Pair<TaskInfo, ProgressIndicator>>
 
   override fun setProcessWindowOpen(open: Boolean) {
     infoAndProgressPanel.isProcessWindowOpen = open
@@ -723,7 +762,7 @@ private class WidgetBean(
 
 @RequiresEdt
 internal fun createComponentByWidgetPresentation(presentation: WidgetPresentation, project: Project, scope: CoroutineScope): JComponent {
-  val toolTipTextSupplier = { runBlockingModal(project, title = "") { presentation.getTooltipText() } }
+  val toolTipTextSupplier = { runWithModalProgressBlocking(project, title = "") { presentation.getTooltipText() } }
   return when (presentation) {
     is TextWidgetPresentation -> {
       val panel = TextPanel(toolTipTextSupplier)
@@ -781,7 +820,7 @@ private fun configurePresentationComponent(presentation: WidgetPresentation, pan
     StatusBarWidgetClickListener(it).installOn(panel, true)
   }
   ClientProperty.put(panel, HelpTooltipManager.SHORTCUT_PROPERTY,
-                     Supplier { runBlockingModal(ModalTaskOwner.component(panel), title = "") { presentation.getShortcutText() } })
+                     Supplier { runWithModalProgressBlocking(ModalTaskOwner.component(panel), title = "") { presentation.getShortcutText() } })
 }
 
 private fun wrap(widget: StatusBarWidget): JComponent {
@@ -943,4 +982,60 @@ private class StatusBarPanel(layout: LayoutManager) : JPanel(layout) {
     font = JBUI.CurrentTheme.StatusBar.font()
   }
 
+}
+
+@ApiStatus.Internal
+class VisibleProgress(val title: @NlsContexts.ProgressTitle String,
+                      val clientId: ClientId,
+                      val canceler: (() -> Unit)?,
+                      val state: Flow<ProgressState> /* finite */) {
+  override fun toString(): String {
+    return "VisibleProgress['$title', ${if (canceler == null) "non-" else ""}cancelable]"
+  }
+}
+
+private val EMPTY_PROGRESS = ProgressState(null, null, -1.0)
+
+private fun createVisibleProgress(indicator: ProgressIndicatorEx, info: TaskInfo, clientId: ClientId): VisibleProgress {
+  val stateFlow = MutableStateFlow(EMPTY_PROGRESS)
+  val updater = {
+    stateFlow.value = ProgressState(indicator.text, indicator.text2, if (indicator.isIndeterminate) -1.0 else indicator.fraction)
+  }
+
+  val activeFlow = MutableStateFlow(true)
+  val finisher = { activeFlow.value = false }
+
+  indicator.addStateDelegate(object : AbstractProgressIndicatorExBase() {
+    override fun onProgressChange() {
+      super.onProgressChange()
+      updater.invoke()
+    }
+
+    override fun finish(task: TaskInfo) {
+      super.finish(task)
+      if (task == info) {
+        finisher.invoke()
+      }
+    }
+  })
+  if (indicator.isFinished(info)) {
+    finisher.invoke()
+  }
+  else {
+    updater.invoke()
+  }
+  val stateFlowTillCompletion = stateFlow
+    .combine(activeFlow) { state, active -> state.takeIf { active } }
+    .takeWhile { it != null }.map { it!! }
+  return VisibleProgress(info.title, clientId, { indicator.cancel() }.takeIf { info.isCancellable }, stateFlowTillCompletion)
+}
+
+private class ProgressSetChangeEvent(private val newProgress: Triple<TaskInfo, ProgressIndicatorEx, ClientId>?,
+                                     private val existingProgresses: List<Pair<TaskInfo, ProgressIndicatorEx>>) {
+  val newVisibleProgress by lazy {
+    newProgress?.let { createVisibleProgress(it.second, it.first, it.third) }
+  }
+  val existingVisibleProgresses by lazy {
+    existingProgresses.map { createVisibleProgress(it.second, it.first, ClientId.localId) }
+  }
 }

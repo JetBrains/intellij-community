@@ -5,11 +5,27 @@ package org.jetbrains.kotlin.idea.structuralsearch.search
 import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
 class KotlinSSCallableReferenceTest : KotlinStructuralSearchTest() {
-    override fun getBasePath(): String = "callableReference"
+    fun testCallableReference() { doTest("::'_", """
+        fun isOdd(x: Int) = x % 2 != 0
 
-    fun testCallableReference() { doTest("::'_") }
+        fun a() {
+            val numbers = listOf(1, 2, 3)
+            println(numbers.filter(<warning descr="SSR">::isOdd</warning>))
+        }
+    """.trimIndent()) }
 
-    fun testExtensionFun() { doTest("List<Int>::'_") }
+    fun testExtensionFun() { doTest("List<Int>::'_", """
+        val isEmptyStringList: List<String>.() -> Boolean = List<String>::isEmpty
 
-    fun testPropertyReference() { doTest("::'_.name") }
+        val isEmptyIntList: List<Int>.() -> Boolean = <warning descr="SSR">List<Int>::isEmpty</warning>
+    """.trimIndent()) }
+
+    fun testPropertyReference() { doTest("::'_.name", """
+        val x = 1
+
+        fun main() {
+            println(::x.get())
+            println(<warning descr="SSR">::x.name</warning>)
+        }
+    """.trimIndent()) }
 }

@@ -28,15 +28,10 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import kotlinx.coroutines.*
 import java.util.concurrent.CancellationException
 
-fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: CoroutineScope, appRegistered: Job) {
+fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: CoroutineScope, appRegistered: Job, initLafJob: Job) {
   val pathMacroJob = launch(CoroutineName("PathMacros preloading")) {
     // required for any persistence state component (pathMacroSubstitutor.expandPaths), so, preload
     app.serviceAsync<PathMacros>()
-  }
-
-  val registryManagerJob = asyncScope.launch {
-    pathMacroJob.join()
-    app.serviceAsync<RegistryManager>()
   }
 
   val managingFsJob = launch {
@@ -61,50 +56,67 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
     // FileTypeManager requires appStarter execution
     launch {
       appRegistered.join()
-      postAppRegistered(app, asyncScope, managingFsJob)
+      postAppRegistered(app, asyncScope, managingFsJob, initLafJob)
     }
 
     asyncScope.launch {
       // wants PropertiesComponent
-      launch { app.serviceAsync<DebugLogManager>() }
-
-      // wants RegistryManager
-      if (!app.isHeadlessEnvironment) {
-        registryManagerJob.join()
-        app.serviceAsync<PerformanceWatcher>()
-        // cache it as IdeEventQueue should use loaded PerformanceWatcher service as soon as it is ready (getInstanceIfCreated is used)
-        PerformanceWatcher.getInstance()
-      }
+      app.serviceAsync<DebugLogManager>()
     }
   }
 
-  if (!app.isHeadlessEnvironment) {
-    asyncScope.launch {
-      // KeymapManager is a PersistentStateComponent
+  asyncScope.launch {
+    launch {
       pathMacroJob.join()
-
-      launch(CoroutineName("UISettings preloading")) { app.serviceAsync<UISettings>() }
-      launch(CoroutineName("CustomActionsSchema preloading")) { app.serviceAsync<CustomActionsSchema>() }
-      // wants PathMacros
-      launch(CoroutineName("GeneralSettings preloading")) { app.serviceAsync<GeneralSettings>() }
-
-      // ActionManager uses KeymapManager
-      subtask("KeymapManager preloading") { app.serviceAsync<KeymapManager>() }
-      subtask("ActionManager preloading") { app.serviceAsync<ActionManager>() }
-
-      // serviceAsync is not supported for light services
-      app.service<ScreenReaderStateManager>()
+      app.serviceAsync<RegistryManager>()
     }
+
+    if (app.isHeadlessEnvironment) {
+      return@launch
+    }
+
+    pathMacroJob.join()
+
+    launch {
+      // https://youtrack.jetbrains.com/issue/IDEA-321138/Large-font-size-in-2023.2
+      initLafJob.join()
+      subtask("UISettings preloading") { app.serviceAsync<UISettings>() }
+    }
+    launch(CoroutineName("CustomActionsSchema preloading")) {
+      initLafJob.join()
+      app.serviceAsync<CustomActionsSchema>()
+    }
+    // wants PathMacros
+    launch(CoroutineName("GeneralSettings preloading")) { app.serviceAsync<GeneralSettings>() }
+
+    launch {
+      app.serviceAsync<PerformanceWatcher>()
+    }
+
+    // ActionManager uses KeymapManager
+    subtask("KeymapManager preloading") { app.serviceAsync<KeymapManager>() }
+
+    // https://youtrack.jetbrains.com/issue/IDEA-321138/Large-font-size-in-2023.2
+    // ActionManager resolves icons
+    initLafJob.join()
+
+    subtask("ActionManager preloading") { app.serviceAsync<ActionManager>() }
+
+    // serviceAsync is not supported for light services
+    app.service<ScreenReaderStateManager>()
   }
 }
 
-private fun CoroutineScope.postAppRegistered(app: ApplicationImpl, asyncScope: CoroutineScope, managingFsJob: Job) {
+private fun CoroutineScope.postAppRegistered(app: ApplicationImpl, asyncScope: CoroutineScope, managingFsJob: Job, initLafJob: Job) {
   launch {
     managingFsJob.join()
 
     // ProjectJdkTable wants FileTypeManager and VirtualFilePointerManager
     coroutineScope {
-      launch { app.serviceAsync<FileTypeManager>() }
+      launch {
+        initLafJob.join()
+        app.serviceAsync<FileTypeManager>()
+      }
       // wants ManagingFS
       launch { app.serviceAsync<VirtualFilePointerManager>() }
     }

@@ -1,15 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.configuration.ui
 
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.TaskCancellation
 import com.intellij.openapi.progress.progressStep
-import com.intellij.openapi.progress.runBlockingModal
+import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
@@ -32,6 +32,7 @@ private class KotlinConfigurationCheckerStartupActivity : ProjectActivity {
     }
 }
 
+@Service(Service.Level.PROJECT)
 class KotlinConfigurationCheckerService(private val project: Project) {
     private val syncDepth = AtomicInteger()
 
@@ -46,20 +47,20 @@ class KotlinConfigurationCheckerService(private val project: Project) {
     }
 
     fun performProjectPostOpenActionsInEdt() {
-        runBlockingModal(project, KotlinProjectConfigurationBundle.message("configure.kotlin.language.settings")) {
+        runWithModalProgressBlocking(project, KotlinProjectConfigurationBundle.message("configure.kotlin.language.settings")) {
             doPerformProjectPostOpenActions()
         }
     }
 
     private suspend fun doPerformProjectPostOpenActions() {
-        val kotlinLanguageVersionConfigured = runReadAction { isKotlinLanguageVersionConfigured(project) }
+        val kotlinLanguageVersionConfigured = readAction { isKotlinLanguageVersionConfigured(project) }
 
         val ktModules = if (kotlinLanguageVersionConfigured) {
             // we already have `.idea/kotlinc` so it's ok to add the jps version there
             KotlinJpsPluginSettings.validateSettings(project)
 
             // pick up modules with kotlin faces those use custom (non project) settings
-            val modulesWithKotlinFacets = runReadAction { project.modules }
+            val modulesWithKotlinFacets = readAction { project.modules }
                 .filter {
                     val facetSettings = KotlinFacet.get(it)?.configuration?.settings ?: return@filter false
                     // module uses custom (not a project-wide) kotlin facet settings and LV or ApiVersion is missed

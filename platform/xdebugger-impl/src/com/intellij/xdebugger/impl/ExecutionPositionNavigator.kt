@@ -21,6 +21,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import java.lang.ref.WeakReference
 
 
 enum class ExecutionPositionNavigationMode {
@@ -34,7 +35,11 @@ internal class ExecutionPositionNavigator(
   private val isTopFrame: Boolean,
   updateFlow: Flow<Boolean>,
 ) {
-  private var openedEditor: Editor? = null
+  private var openedEditorRef: WeakReference<Editor>? = null
+  private var openedEditor: Editor?
+    get() = openedEditorRef?.get()
+    set(value) { openedEditorRef = value?.let(::WeakReference) }
+
   private var openFileDescriptor: OpenFileDescriptor? = null
   private val descriptorMutex = Mutex()
 

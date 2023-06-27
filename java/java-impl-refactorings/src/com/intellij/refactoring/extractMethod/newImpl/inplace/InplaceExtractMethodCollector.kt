@@ -14,14 +14,14 @@ class InplaceExtractMethodCollector : CounterUsagesCollector() {
     private val GROUP = EventLogGroup("extract.method.inplace", 3)
 
 
-    @JvmField val settingsChange = EventFields.Enum("settingsChange", ExtractMethodSettingChange::class.java) { it.fusName }
+    @JvmField val settingsChange = EventFields.Enum<ExtractMethodSettingChange>("settingsChange") { it.fusName }
     @JvmField val changedOnHide = EventFields.Boolean("changedOnHide")
     @JvmField val nameChanged = EventFields.Boolean("nameChanged")
     @JvmField val linkUsed = EventFields.Boolean("linkUsed")
-    @JvmField val prepareTargetPlacesMs = LongEventField("prepare_target_places_ms")
-    @JvmField val prepareTemplateMs = LongEventField("prepare_template_ms")
-    @JvmField val prepareTotalMs = LongEventField("prepare_total_ms")
-    @JvmField val numberOfTargetPlaces = IntEventField("number_of_target_places")
+    @JvmField val prepareTargetPlacesMs = EventFields.Long("prepare_target_places_ms")
+    @JvmField val prepareTemplateMs = EventFields.Long("prepare_template_ms")
+    @JvmField val prepareTotalMs = EventFields.Long("prepare_total_ms")
+    @JvmField val numberOfTargetPlaces = EventFields.Int("number_of_target_places")
 
     @JvmField val show = GROUP.registerEvent("showPopup", EventFields.InputEvent)
     @JvmField val duplicatesSearched = GROUP.registerEvent("duplicates_searched", EventFields.DurationMs)

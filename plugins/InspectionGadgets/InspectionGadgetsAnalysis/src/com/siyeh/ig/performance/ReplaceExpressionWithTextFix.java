@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNewExpression;
@@ -27,7 +27,7 @@ public class ReplaceExpressionWithTextFix extends PsiUpdateModCommandQuickFix {
 
 
   @Override
-  protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
     PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(startElement, PsiNewExpression.class);
     if (newExpression == null) return;
     PsiElement result = new CommentTracker().replaceAndRestoreComments(newExpression, myReplacementText);

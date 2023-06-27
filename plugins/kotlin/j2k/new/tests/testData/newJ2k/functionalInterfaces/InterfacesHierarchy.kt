@@ -10,5 +10,5 @@ interface MyRunnableBase {
 
 @FunctionalInterface
 interface MyRunnable : MyRunnableBase {
-    abstract override val value: Int
+    override val value: Int
 }

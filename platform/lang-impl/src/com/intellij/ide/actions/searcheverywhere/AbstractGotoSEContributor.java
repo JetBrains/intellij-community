@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
@@ -53,14 +53,15 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public abstract class AbstractGotoSEContributor implements WeightedSearchEverywhereContributor<Object>, ScopeSupporting, SearchFieldActionsContributor {
+public abstract class AbstractGotoSEContributor implements WeightedSearchEverywhereContributor<Object>, ScopeSupporting,
+                                                           SearchEverywhereExtendedInfoProvider {
   protected static final Pattern ourPatternToDetectAnonymousClasses = Pattern.compile("([.\\w]+)((\\$[\\d]+)*(\\$)?)");
   private static final Logger LOG = Logger.getInstance(AbstractGotoSEContributor.class);
   private static final Key<Map<String, String>> SE_SELECTED_SCOPES = Key.create("SE_SELECTED_SCOPES");
 
   private static final Pattern ourPatternToDetectLinesAndColumns = Pattern.compile(
     "(.+?)" + // name, non-greedy matching
-    "(?::|@|,| |#|#L|\\?l=| on line | at line |:?\\(|:?\\[)" + // separator
+    "(?::|@|,| |#|#L|\\?l=| on line | at line |:line |:?\\(|:?\\[)" + // separator
     "(\\d+)?(?:\\W(\\d+)?)?" + // line + column
     "[)\\]]?" // possible closing paren/brace
   );
@@ -237,13 +238,6 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
       boolean everywhere = scope.isSearchInLibraries();
       ChooseByNameViewModel viewModel = new MyViewModel(myProject, model);
 
-      if (Registry.is("search.everywhere.recents")) {
-        if (provider.fetchRecents(myProject, progressIndicator, pattern, viewModel,
-                                  item -> processElement(progressIndicator, consumer, model, item.getItem(), item.getWeight()))) {
-          return;
-        }
-      }
-
       if (provider instanceof ChooseByNameInScopeItemProvider) {
         FindSymbolParameters parameters = FindSymbolParameters.wrap(pattern, scope);
         ((ChooseByNameInScopeItemProvider)provider).filterElementsWithWeights(viewModel, parameters, progressIndicator,
@@ -275,13 +269,6 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
       ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(fetchRunnable, progressIndicator);
     }
   }
-
-  @NotNull
-  @Override
-  public List<AnAction> createRightActions(@NotNull String pattern, @NotNull Runnable onChanged) {
-    return ContainerUtil.emptyList();
-  }
-
   protected boolean processElement(@NotNull ProgressIndicator progressIndicator,
                                    @NotNull Processor<? super FoundItemDescriptor<Object>> consumer,
                                    FilteringGotoByModel<?> model, Object element, int degree) {
@@ -357,7 +344,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
           Navigatable extNavigatable = createExtendedNavigatable(psiElement, searchText, modifiers);
           return new Pair<>(psiElement, extNavigatable);
         })
-        .finishOnUiThread(ModalityState.NON_MODAL,
+        .finishOnUiThread(ModalityState.nonModal(),
                           pair -> {
                             Navigatable extNavigatable = pair.second;
                             PsiElement psiElement = pair.first;

@@ -3,7 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IntRef;
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.PagedFileStorageLockFree;
 import com.intellij.util.io.pagecache.Page;
@@ -45,7 +45,7 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
   //          recordHeader: recordType[int8], capacity, length?, redirectTo?, recordData[length]?
   //                        First byte of header contains the record type, which defines other header
   //                        fields & their length. A lot of bits wiggling are used to compress header
-  //                        into as few bytes as possible -- see RecordLayout below for details.
+  //                        into as few bytes as possible -- see LargeBlobStorageRecordLayout for details.
   //
   //  1. capacity is the allocated size of the record payload _excluding_ header, so
   //     nextRecordOffset = currentRecordOffset + recordHeader + recordCapacity
@@ -70,6 +70,8 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
   //          implicitly ordered: lock is always acquired on old page first, then on new. But this
   //          is just a lucky coincidence, and could change as soon as we implement free-lists and
   //          removed records re-use -> we'll get hard to debug deadlocks.
+  //      RC: actually, it could be easier to just use single per-file lock to protect all the pages
+  //          than to deal with page lock ordering
 
   //TODO RC: implement space reclamation: re-use space of deleted records for the newly allocated ones.
   //         Need to keep a free-list.
@@ -232,9 +234,10 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
           }
           else {
             nextRecordId = offsetToId(recordsStartOffset());
+
+            putHeaderInt(HEADER_OFFSET_STORAGE_VERSION, STORAGE_VERSION_CURRENT);
+            putHeaderInt(HEADER_OFFSET_FILE_STATUS, FILE_STATUS_OPENED);
           }
-          putHeaderInt(HEADER_OFFSET_STORAGE_VERSION, STORAGE_VERSION_CURRENT);
-          putHeaderInt(HEADER_OFFSET_FILE_STATUS, FILE_STATUS_OPENED);
         }
         finally {
           headerPage.unlockPageForWrite();
@@ -1066,7 +1069,7 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
 
   @NotNull
   private BatchCallback setupReportingToOpenTelemetry(final Path fileName) {
-    final Meter meter = TelemetryTracer.getMeter(Storage);
+    final Meter meter = TelemetryManager.getMeter(Storage);
 
     final var recordsAllocated = meter.counterBuilder("StreamlinedBlobStorage.recordsAllocated").buildObserver();
     final var recordsRelocated = meter.counterBuilder("StreamlinedBlobStorage.recordsRelocated").buildObserver();

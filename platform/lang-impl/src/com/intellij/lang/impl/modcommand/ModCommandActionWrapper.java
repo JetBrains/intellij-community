@@ -8,6 +8,7 @@ import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModCommandService;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
@@ -65,7 +66,7 @@ import java.util.Objects;
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     ModCommand command = myAction.perform(ModCommandAction.ActionContext.from(editor, file));
-    command.execute(project);
+    ModCommandService.getInstance().executeInteractively(project, command);
   }
 
   @Override

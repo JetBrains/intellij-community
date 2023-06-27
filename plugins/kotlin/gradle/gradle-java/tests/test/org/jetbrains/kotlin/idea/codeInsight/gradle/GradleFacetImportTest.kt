@@ -595,6 +595,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
     }
 
     @Test
+    @TargetVersions("<7.6")
     fun testNoFacetInModuleWithoutKotlinPlugin() {
         configureByFiles()
 

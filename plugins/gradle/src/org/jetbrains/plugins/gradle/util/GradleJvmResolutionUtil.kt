@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.Id
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
@@ -38,7 +39,10 @@ fun setupGradleJvm(project: Project, projectSettings: GradleProjectSettings, gra
     resolutionContext.canUseJavaHomeJdk() -> projectSettings.gradleJvm = ExternalSystemJdkUtil.USE_JAVA_HOME
     else -> getGradleJvmLookupProvider(project, projectSettings)
       .newLookupBuilder()
-      .withVersionFilter { isSupported(gradleVersion, it) }
+      .withVersionFilter {
+        GradleJvmSupportMatrix.isJavaSupportedByIdea(it) &&
+        GradleJvmSupportMatrix.isSupported(gradleVersion, it)
+      }
       .withSdkType(ExternalSystemJdkUtil.getJavaSdkType())
       .withSdkHomeFilter { ExternalSystemJdkUtil.isValidJdk(it) }
       .onSdkNameResolved { sdk ->

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -325,7 +325,7 @@ public final class InplaceEditingLayer extends JComponent{
         return;
       }
       // [vova] we need LaterInvocator here to prevent write-access assertions
-      ApplicationManager.getApplication().invokeLater(() -> finishInplaceEditing(), ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater(() -> finishInplaceEditing(), ModalityState.nonModal());
     }
   }
 

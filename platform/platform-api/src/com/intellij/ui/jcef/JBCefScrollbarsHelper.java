@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.openapi.diagnostic.Logger;
@@ -198,6 +199,10 @@ public final class JBCefScrollbarsHelper {
 
 
   private static @Nullable Integer getScrollbarAlpha(ColorKey colorKey) {
+    if (!LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred() || !UISettings.getInstance().getUseContrastScrollbars()) {
+      return null;
+    }
+
     final var contrastElementsKeys = List.of(
       ScrollBarPainter.THUMB_OPAQUE_FOREGROUND,
       ScrollBarPainter.THUMB_OPAQUE_BACKGROUND,
@@ -209,7 +214,9 @@ public final class JBCefScrollbarsHelper {
       ScrollBarPainter.THUMB_HOVERED_BACKGROUND
     );
 
-    if (!UISettings.getShadowInstance().getUseContrastScrollbars() || !contrastElementsKeys.contains(colorKey)) return null;
+    if (!contrastElementsKeys.contains(colorKey)) {
+      return null;
+    }
 
     int lightAlpha = SystemInfo.isMac ? 120 : 160;
     int darkAlpha = SystemInfo.isMac ? 255 : 180;

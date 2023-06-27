@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconPathPatcher;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager;
 import com.intellij.openapi.util.registry.Registry;
@@ -17,6 +18,7 @@ import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +27,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -47,6 +52,8 @@ public abstract class ExperimentalUI {
   private static final String FIRST_PROMOTION_DATE_PROPERTY = "experimental.ui.first.promotion.localdate";
 
   private final AtomicBoolean isIconPatcherSet = new AtomicBoolean();
+  @Nullable
+  private static volatile Boolean newUiOneSessionOverrideForThinClient = null;
   private IconPathPatcher iconPathPatcher;
 
   public static ExperimentalUI getInstance() {
@@ -55,9 +62,19 @@ public abstract class ExperimentalUI {
 
   @Contract(pure = true)
   public static boolean isNewUI() {
-    // The content of this method is duplicated to EmptyIntentionAction.isNewUi (because of modules dependency problem).
-    // Please apply any modifications here and there synchronously. Or solve the dependency problem :)
-    return EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY);
+    Boolean override = newUiOneSessionOverrideForThinClient;
+    return override == null
+           ? EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY)
+           : override;
+  }
+
+  protected static boolean isNewUiOverriden() {
+    return newUiOneSessionOverrideForThinClient != null;
+  }
+
+  public static void overrideNewUiForOneSessionForThinClient(boolean newUi) {
+    newUiOneSessionOverrideForThinClient = newUi;
+    getInstance().lookAndFeelChanged();
   }
 
   public static void setNewUI(boolean newUI) {
@@ -95,6 +112,31 @@ public abstract class ExperimentalUI {
 
   public static boolean isEditorTabsWithScrollBar() {
     return isNewUI() && Registry.is("ide.experimental.ui.editor.tabs.scrollbar");
+  }
+
+  public static final class NotPatchedIconRegistry {
+    private static final HashSet<Pair<String, ClassLoader>> paths = new HashSet<>();
+    public static class IconModel {
+      public Icon icon;
+      public String originalPath;
+      public IconModel(Icon icon, String originalPath) {
+        this.icon = icon;
+        this.originalPath = originalPath;
+      }
+    }
+
+    public static @NotNull List<IconModel> getData() {
+      List<IconModel> result = new ArrayList<>(paths.size());
+
+      for (Pair<String, ClassLoader> p : paths) {
+        result.add(new IconModel(IconLoader.getIcon(p.first, p.second != null ? p.second : NotPatchedIconRegistry.class.getClassLoader()), p.first));
+      }
+      return result;
+    }
+
+    public static void registerNotPatchedIcon(String path, ClassLoader classLoader) {
+      paths.add(new Pair<>(path, classLoader));
+    }
   }
 
   @SuppressWarnings("unused")
@@ -146,11 +188,19 @@ public abstract class ExperimentalUI {
 
   private @NotNull IconPathPatcher createPathPatcher() {
     Map<ClassLoader, Map<String, String>> paths = getIconMappings();
+    boolean dumpNotPatchedIcons = SystemProperties.getBooleanProperty("ide.experimental.ui.dump.not.patched.icons", false);
     return new IconPathPatcher() {
       @Override
       public @Nullable String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
         Map<String, String> mappings = paths.get(classLoader);
-        return mappings != null ? mappings.get(Strings.trimStart(path, "/")) : null;
+        if (mappings == null) {
+          return null;
+        }
+        String patchedPath = mappings.get(Strings.trimStart(path, "/"));
+        if (patchedPath == null && dumpNotPatchedIcons) {
+          NotPatchedIconRegistry.registerNotPatchedIcon(path, classLoader);
+        }
+        return patchedPath;
       }
 
       @Override

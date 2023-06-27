@@ -311,7 +311,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
       return true;
     }
 
-    ModalityState current = ApplicationManager.getApplication().getCurrentModalityState();
+    ModalityState current = ModalityState.current();
     ModalityState modalityState = getModalityState();
     return !current.dominates(modalityState);
   }
@@ -432,6 +432,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
       myActive = false;
       finishActivity();
       clearWaiter();
+      cancelAllUpdates();
     }
     finally {
       if (ourQueues != null) {
@@ -457,7 +458,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   @NotNull
   public ModalityState getModalityState() {
     if (myModalityStateComponent == null) {
-      return ModalityState.NON_MODAL;
+      return ModalityState.nonModal();
     }
     return ModalityState.stateForComponent(myModalityStateComponent);
   }
@@ -479,7 +480,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     return myFlushing;
   }
 
-  public void setTrackUiActivity(boolean trackUiActivity) {
+  protected void setTrackUiActivity(boolean trackUiActivity) {
     if (myTrackUiActivity && !trackUiActivity) {
       finishActivity();
     }

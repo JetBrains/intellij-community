@@ -189,9 +189,8 @@ internal class MouseWheelSmoothScrollOptionsAction : DumbAwareAction() {
       if (frames.isNotEmpty()) {
         GraphicsUtil.setupAntialiasing(g)
         g.color = UIUtil.getLabelDisabledForeground()
-        val b = bounds
         val text = IdeBundle.message("label.smooth.scrolling.bezier.panel.updates", frames.size)
-        g.drawString(text, width / 16, b.height - 5)
+        g.drawString(text, width / 16, bounds.height - 5)
       }
     }
 

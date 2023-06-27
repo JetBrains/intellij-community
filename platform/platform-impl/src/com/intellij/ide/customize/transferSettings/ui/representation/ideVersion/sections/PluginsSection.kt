@@ -12,7 +12,7 @@ import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.util.ui.UIUtil
 import javax.swing.JComponent
 
-class PluginsSection(private val ideVersion: IdeVersion) : IdeRepresentationSection(ideVersion.settings.preferences, SettingsPreferencesKind.Plugins, AllIcons.Plugins.PluginLogo) {
+class PluginsSection(private val ideVersion: IdeVersion) : IdeRepresentationSection(ideVersion.settings.preferences, SettingsPreferencesKind.Plugins, AllIcons.TransferSettings.PluginsAndFeatures) {
   override val name: String = "Plugins and Features"
   override fun worthShowing(): Boolean = ideVersion.settings.plugins.isNotEmpty()
 
@@ -39,6 +39,9 @@ class PluginsSection(private val ideVersion: IdeVersion) : IdeRepresentationSect
       label(plugin.name).bold().customize(UnscaledGaps(right = 4)).applyToComponent {
         _isSelected.afterChange {
           this.foreground = if (it) UIUtil.getLabelForeground() else UIUtil.getLabelDisabledForeground()
+        }
+        _isEnabled.afterChange {
+          this.foreground = if (it || !_isSelected.get()) UIUtil.getLabelForeground() else UIUtil.getLabelDisabledForeground()
         }
       }
 

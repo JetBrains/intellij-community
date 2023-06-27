@@ -53,6 +53,9 @@ class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutineAdapt
     suspendCancellableCoroutine { continuation ->
       busConnection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, object : DaemonListener {
         override fun daemonFinished() {
+          if (spanRef == null) {
+            return
+          }
           val daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl
           val document = FileEditorManager.getInstance(project).selectedTextEditor!!.document
           val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document)!!
@@ -125,7 +128,7 @@ class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutineAdapt
         }
       },\neditorTracker=$editorTracker)"
 
-      takeScreenshotOfFrame("no-focus-in-editor")
+      takeScreenshotOfAllWindows("no-focus-in-editor")
 
       if (focusOwner == null) {
         val activeEditors = editorTracker.activeEditors

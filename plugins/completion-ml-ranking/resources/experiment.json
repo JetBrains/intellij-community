@@ -57,6 +57,27 @@
       "useMLRanking": true,
       "showArrows": false,
       "calculateFeatures": true
+    },
+    {
+      "number": 17,
+      "description": "Completion performance (early lookup & MLRanking)",
+      "useMLRanking": true,
+      "showArrows": false,
+      "calculateFeatures": true
+    },
+    {
+      "number": 18,
+      "description": "Completion performance (early lookup)",
+      "useMLRanking": false,
+      "showArrows": false,
+      "calculateFeatures": true
+    },
+    {
+      "number": 19,
+      "description": "Completion performance",
+      "useMLRanking": false,
+      "showArrows": false,
+      "calculateFeatures": true
     }
   ],
   "languages": [
@@ -75,8 +96,8 @@
     {
       "id": "kotlin",
       "experimentBucketsCount": 8,
-      "includeGroups": [ 7, 8, 11, 12, 13 ],
-      "shouldLogElementFeatures": false
+      "includeGroups": [ 7, 8, 8, 12, 13, 17, 17, 17 ],
+      "shouldLogElementFeatures": true
     },
     {
       "id": "scala",

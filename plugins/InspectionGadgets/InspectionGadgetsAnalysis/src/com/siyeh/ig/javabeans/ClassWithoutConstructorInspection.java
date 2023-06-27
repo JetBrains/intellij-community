@@ -15,9 +15,9 @@
  */
 package com.siyeh.ig.javabeans;
 
-import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -52,7 +52,7 @@ public class ClassWithoutConstructorInspection extends BaseInspection {
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement classIdentifier, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement classIdentifier, @NotNull ModPsiUpdater updater) {
       final PsiClass aClass = (PsiClass)classIdentifier.getParent();
       final PsiElementFactory factory =
         JavaPsiFacade.getElementFactory(project);

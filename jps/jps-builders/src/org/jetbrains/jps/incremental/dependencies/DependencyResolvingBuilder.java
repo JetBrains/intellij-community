@@ -210,11 +210,14 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
       try {
         // list of missing roots needed to be resolved
         List<File> required = ContainerUtil.filter(compiledRoots, root -> !verifyLibraryArtifact(context, lib.getName(), descriptor, root));
+
+        // be strict and verify effective repo manager exists (will throw an exception if bind repository is required, but missing)
+        ArtifactRepositoryManager effectiveRepoManager = getRepositoryManager(context, descriptor, lib.getName(), useBindRepositories);
+
         if (!required.isEmpty()) {
           context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.resolving.0.library", lib.getName()), currentTargets));
           LOG.debug("Downloading missing files for " + lib.getName() + " library: " + required);
 
-          ArtifactRepositoryManager effectiveRepoManager = getRepositoryManager(context, descriptor, lib.getName(), useBindRepositories);
           final Collection<File> resolved = effectiveRepoManager.resolveDependency(descriptor.getGroupId(), descriptor.getArtifactId(),
                                                                                    descriptor.getVersion(),
                                                                                    descriptor.isIncludeTransitiveDependencies(), descriptor.getExcludedDependencies());
@@ -425,10 +428,10 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
     Path outputDir = Path.of(outputDirPath);
 
     Properties description = new Properties();
-    description.put("libraryName", libraryName);
-    description.put("mavenId", descriptor.getMavenId());
-    description.put("problem", problemKind);
-    description.put("sha256", sha256sum);
+    description.setProperty("libraryName", libraryName);
+    description.setProperty("mavenId", descriptor.getMavenId());
+    description.setProperty("problem", problemKind);
+    description.setProperty("sha256", sha256sum);
 
     Path artifactCopy;
     try {

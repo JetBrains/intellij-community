@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -102,7 +103,7 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
     };
   }
 
-  private static class ReplaceWithVarFix implements LocalQuickFix {
+  private static class ReplaceWithVarFix extends PsiUpdateModCommandQuickFix {
     @Nls
     @NotNull
     @Override
@@ -111,11 +112,10 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
-      if (element instanceof PsiTypeElement) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      if (element instanceof PsiTypeElement typeElement) {
         CodeStyleManager.getInstance(project)
-          .reformat(IntroduceVariableUtil.expandDiamondsAndReplaceExplicitTypeWithVar((PsiTypeElement)element, element));
+          .reformat(IntroduceVariableUtil.expandDiamondsAndReplaceExplicitTypeWithVar(typeElement, element));
       }
     }
   }

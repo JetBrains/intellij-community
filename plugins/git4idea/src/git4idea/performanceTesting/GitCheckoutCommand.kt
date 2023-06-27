@@ -2,6 +2,7 @@
 package git4idea.performanceTesting
 
 import com.intellij.ide.DataManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.AbstractCommand
 import com.intellij.openapi.util.ActionCallback
@@ -21,9 +22,11 @@ import org.jetbrains.concurrency.toPromise
 class GitCheckoutCommand(text: String, line: Int) : AbstractCommand(text, line, true) {
   companion object {
     const val PREFIX = "${CMD_PREFIX}gitCheckout"
+    private val LOG = Logger.getInstance(GitCheckoutCommand::class.java)
   }
 
   override fun _execute(context: PlaybackContext): Promise<Any?> {
+    LOG.info("GitCheckoutCommand starts its execution")
     val actionCallback: ActionCallback = ActionCallbackProfilerStopper()
     val branchName = extractCommandArgument(PREFIX).replace("\"".toRegex(), "")
     val brancher: GitBrancher = GitBrancher.getInstance(context.project)
@@ -31,6 +34,6 @@ class GitCheckoutCommand(text: String, line: Int) : AbstractCommand(text, line, 
     val dataContext = DataManager.getInstance().getDataContext(focusedComponent)
     val gitRepository = GitBranchUtil.guessRepositoryForOperation(context.project, dataContext)
     brancher.checkoutNewBranchStartingFrom(branchName, branchName, true, mutableListOf(gitRepository), Runnable { actionCallback.setDone() })
-    return actionCallback.toPromise();
+    return actionCallback.toPromise()
   }
 }

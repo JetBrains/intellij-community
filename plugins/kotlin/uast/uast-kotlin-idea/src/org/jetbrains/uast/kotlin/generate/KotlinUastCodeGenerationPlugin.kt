@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.asSafely
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -293,6 +294,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         return blockExpression
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("use version with context parameter")
     fun createIfExpression(condition: UExpression, thenBranch: UExpression, elseBranch: UExpression?): UIfExpression? {
         logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
@@ -321,6 +323,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         )
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("use version with context parameter")
     fun createParenthesizedExpression(expression: UExpression): UParenthesizedExpression? {
         logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
@@ -333,6 +336,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         return KotlinUParenthesizedExpression(parenthesized, null)
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("use version with context parameter")
     fun createSimpleReference(name: String): USimpleNameReferenceExpression {
         logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
@@ -343,6 +347,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         return KotlinUSimpleReferenceExpression(psiFactory(context).createSimpleName(name), null)
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("use version with context parameter")
     fun createSimpleReference(variable: UVariable): USimpleNameReferenceExpression? {
         logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
@@ -353,6 +358,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         return createSimpleReference(variable.name ?: return null, context)
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("use version with context parameter")
     fun createReturnExpresion(expression: UExpression?, inLambda: Boolean): UReturnExpression {
         logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
@@ -371,6 +377,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         return KotlinUReturnExpression(returnExpression, null)
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("use version with context parameter")
     fun createBinaryExpression(
         leftOperand: UExpression,
@@ -406,6 +413,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         return binaryExpression
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("use version with context parameter")
     fun createFlatBinaryExpression(
         leftOperand: UExpression,
@@ -435,6 +443,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         return psiFactory(context).createExpression(binaryExpression.text).toUElementOfType()!!
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("use version with context parameter")
     fun createBlockExpression(expressions: List<UExpression>): UBlockExpression {
         logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
@@ -452,6 +461,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         return KotlinUBlockExpression(block, null)
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("use version with context parameter")
     fun createDeclarationExpression(declarations: List<UDeclaration>): UDeclarationsExpression {
         logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
@@ -502,6 +512,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         return ktLambdaExpression.toUElementOfType()!!
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("use version with context parameter")
     fun createLambdaExpression(parameters: List<UParameterInfo>, body: UExpression): ULambdaExpression? {
         logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
@@ -537,6 +548,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         return newVariable.toUElementOfType<UVariable>() as ULocalVariable
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("use version with context parameter")
     fun createLocalVariable(
         suggestedName: String?,

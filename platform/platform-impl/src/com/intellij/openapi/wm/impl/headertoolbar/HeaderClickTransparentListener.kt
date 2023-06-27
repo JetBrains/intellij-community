@@ -5,7 +5,7 @@ import com.jetbrains.WindowDecorations.CustomTitleBar
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 
-abstract class HeaderClickTransparentListener(private val customTitleBar: CustomTitleBar): MouseAdapter() {
+open class HeaderClickTransparentListener(private val customTitleBar: CustomTitleBar): MouseAdapter() {
   protected fun hit() = customTitleBar.forceHitTest(false)
   override fun mouseClicked(e: MouseEvent) = hit()
   override fun mousePressed(e: MouseEvent) = hit()
@@ -13,5 +13,4 @@ abstract class HeaderClickTransparentListener(private val customTitleBar: Custom
   override fun mouseEntered(e: MouseEvent) = hit()
   override fun mouseDragged(e: MouseEvent) = hit()
   override fun mouseMoved(e: MouseEvent) = hit()
-
 }

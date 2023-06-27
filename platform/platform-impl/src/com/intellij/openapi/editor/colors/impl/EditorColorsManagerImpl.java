@@ -10,7 +10,6 @@ import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
@@ -98,6 +97,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
 
   private State myState = new State();
   private boolean themeIsCustomized;
+  private boolean myInitialConfigurationLoaded = false;
 
   public EditorColorsManagerImpl() {
     this(SchemeManagerFactory.getInstance());
@@ -251,13 +251,8 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   // initScheme has to execute only after the LaF has been set in LafManagerImpl.initializeComponent
   private void initScheme(@NotNull UIManager.LookAndFeelInfo currentLaf) {
     EditorColorsScheme scheme = null;
-    String wizardEditorScheme = WelcomeWizardUtil.getWizardEditorScheme();
-    if (wizardEditorScheme != null) {
-      scheme = getScheme(wizardEditorScheme);
-      LOG.assertTrue(scheme != null, "Wizard scheme " + wizardEditorScheme + " not found");
-    }
 
-    if (!themeIsCustomized && scheme == null) {
+    if (!themeIsCustomized) {
       if (currentLaf instanceof UIThemeBasedLookAndFeelInfo) {
         String schemeName = ((UIThemeBasedLookAndFeelInfo)currentLaf).getTheme().getEditorSchemeName();
         if (schemeName != null) {
@@ -493,8 +488,9 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     mySchemeManager.setCurrent(scheme == null ? getDefaultScheme() : scheme, notify, processChangeSynchronously);
   }
 
-  private void setGlobalSchemeInner(@Nullable EditorColorsScheme scheme) {
-    mySchemeManager.setCurrent(scheme == null ? getDefaultScheme() : scheme, false);
+  private void setGlobalSchemeLoadedFromConfiguration(@Nullable EditorColorsScheme scheme) {
+    mySchemeManager.setCurrent(scheme == null ? getDefaultScheme() : scheme, myInitialConfigurationLoaded);
+    myInitialConfigurationLoaded = true;
   }
 
   private @NotNull EditorColorsScheme getDefaultScheme() {
@@ -561,7 +557,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   @Override
   public void noStateLoaded() {
     themeIsCustomized = false;
-    setGlobalSchemeInner(StartupUiUtil.isUnderDarcula() ? getScheme("Darcula") : getDefaultScheme());
+    setGlobalSchemeLoadedFromConfiguration(StartupUiUtil.isUnderDarcula() ? getScheme("Darcula") : getDefaultScheme());
   }
 
   @Override
@@ -587,7 +583,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
           }
         });
       }
-      setGlobalSchemeInner(schemeRef.get());
+      setGlobalSchemeLoadedFromConfiguration(schemeRef.get());
       notifyAboutSolarizedColorSchemeDeprecationIfSet(colorsScheme);
     }
   }
@@ -596,7 +592,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   public void initializeComponent() {
     Activity activity = StartUpMeasurer.startActivity("editor color scheme initialization");
     // LafManager is initialized in EDT, so, that's ok to call it here
-    LookAndFeelInfo laf = LafManager.getInstance().getCurrentLookAndFeel();
+    LookAndFeelInfo laf = ApplicationManager.getApplication().isUnitTestMode() ? null : LafManager.getInstance().getCurrentLookAndFeel();
     // null in a headless mode
     if (laf != null) {
       initScheme(laf);
@@ -766,7 +762,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
             });
           }
           notification.notify(project);
-        }, ModalityState.NON_MODAL);
+        }, ModalityState.nonModal());
       }
     });
   }

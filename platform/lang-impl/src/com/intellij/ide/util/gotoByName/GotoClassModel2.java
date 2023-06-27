@@ -2,7 +2,6 @@
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.actions.GotoClassItemProvider;
 import com.intellij.ide.actions.GotoClassPresentationUpdater;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
@@ -10,7 +9,6 @@ import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.GotoClassContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.IdeUICustomization;
@@ -141,11 +139,5 @@ public class GotoClassModel2 extends FilteringGotoByModel<LanguageRef> {
   @Override
   public boolean willOpenEditor() {
     return true;
-  }
-
-  @NotNull
-  @Override
-  public ChooseByNameItemProvider getItemProvider(@Nullable PsiElement context) {
-    return !Registry.is("search.everywhere.recents") ? super.getItemProvider(context) : new GotoClassItemProvider(context);
   }
 }

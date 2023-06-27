@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.CommonBundle;
+import com.intellij.codeInsight.daemon.HighlightingPassesCache;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
@@ -13,7 +14,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableAdapter;
 import com.intellij.ui.*;
@@ -21,6 +24,7 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
@@ -39,6 +43,7 @@ import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -519,6 +524,7 @@ public final class XFramesView extends XDebugView {
     private String myErrorMessage;
     private int myNextFrameIndex;
     private volatile boolean myRunning;
+    private long myStartTimeMs;
     private boolean myAllFramesLoaded;
     private final XDebugSession mySession;
     private Object myToSelect;
@@ -564,6 +570,7 @@ public final class XFramesView extends XDebugView {
           if (myVisibleRect != null) {
             myFramesList.scrollRectToVisible(myVisibleRect);
           }
+          XDebuggerActionsCollector.logFramesUpdated(System.currentTimeMillis() - myStartTimeMs, myStackFrames);
           myRunning = false;
           myListenersEnabled = true;
         }
@@ -594,6 +601,9 @@ public final class XFramesView extends XDebugView {
         }
         //noinspection unchecked
         model.addAll(insertIndex, values);
+
+        scheduleFilesHighlighting(values, myProject);
+
         if (last) {
           if (loadingPresent) {
             model.remove(model.getSize() - 1);
@@ -607,6 +617,17 @@ public final class XFramesView extends XDebugView {
       }
     }
 
+    private static void scheduleFilesHighlighting(@NotNull List<?> values, @NotNull Project project) {
+      if (!Registry.is("highlighting.passes.cache")) return;
+
+      List<VirtualFile> files = StreamEx.of(values).select(XStackFrame.class)
+        .map(it -> ObjectUtils.doIfNotNull(it.getSourcePosition(), XSourcePosition::getFile))
+        .filter(Objects::nonNull)
+        .toList();
+
+      HighlightingPassesCache.getInstance(project).schedule(files, true);
+    }
+
     @Override
     public boolean isObsolete() {
       return !myRunning;
@@ -614,6 +635,7 @@ public final class XFramesView extends XDebugView {
 
     public void dispose() {
       myRunning = false;
+      myStartTimeMs = 0;
       myExecutionStack = null;
     }
 
@@ -622,6 +644,7 @@ public final class XFramesView extends XDebugView {
         return false;
       }
       myRunning = true;
+      myStartTimeMs = System.currentTimeMillis();
       myExecutionStack.computeStackFrames(myNextFrameIndex, this);
       return true;
     }

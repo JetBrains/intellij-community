@@ -51,7 +51,8 @@ class CombinedChangeDiffComponentFactoryProvider : CombinedDiffComponentFactoryP
           model.selected = change
         }
         else {
-          viewer?.selectDiffBlock(CombinedPathBlockId(change.filePath, change.fileStatus, change.tag), true)
+          viewer?.selectDiffBlock(CombinedPathBlockId(change.filePath, change.fileStatus, change.tag), true,
+                                  CombinedDiffViewer.ScrollPolicy.SCROLL_TO_BLOCK)
         }
       }
     }

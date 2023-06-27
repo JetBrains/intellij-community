@@ -242,18 +242,21 @@ public class ExpectedHighlightingData {
     String text = document.getText();
 
     Set<String> markers = myHighlightingTypes.keySet();
-    String typesRx = "(?:" + StringUtil.join(markers, ")|(?:") + ")";
-    String openingTagRx = "<(" + typesRx + ")" +
-                          "(?:\\s+descr=\"((?:[^\"]|\\\\\"|\\\\\\\\\"|\\\\\\[|\\\\])*)\")?" +
-                          "(?:\\s+type=\"([0-9A-Z_]+)\")?" +
-                          "(?:\\s+foreground=\"([0-9xa-f]+)\")?" +
-                          "(?:\\s+background=\"([0-9xa-f]+)\")?" +
-                          "(?:\\s+effectcolor=\"([0-9xa-f]+)\")?" +
-                          "(?:\\s+effecttype=\"([A-Z]+)\")?" +
-                          "(?:\\s+fonttype=\"([0-9]+)\")?" +
-                          "(?:\\s+textAttributesKey=\"((?:[^\"]|\\\\\"|\\\\\\\\\"|\\\\\\[|\\\\])*)\")?" +
-                          "(?:\\s+tooltip=\"((?:[^\"]|\\\\\"|\\\\\\\\\")*)\")?" +
-                          "(/)?>";
+    String typesRx = String.join("|", markers);
+    String openingTagRx = "<(?<marker>" + typesRx + ")" +
+                          "(?:\\s+" +
+                          "(?:descr=\"(?<descr>(?:\\\\\"|[^\"])*)\"" +
+                          "|type=\"(?<type>[0-9A-Z_]+)\"" +
+                          "|foreground=\"(?<foreground>[0-9xa-f]+)\"" +
+                          "|background=\"(?<background>[0-9xa-f]+)\"" +
+                          "|effectcolor=\"(?<effectcolor>[0-9xa-f]+)\"" +
+                          "|effecttype=\"(?<effecttype>[A-Z]+)\"" +
+                          "|fonttype=\"(?<fonttype>[0-9]+)\"" +
+                          "|textAttributesKey=\"(?<textAttributesKey>(?:\\\\\"|[^\"])*)\"" +
+                          "|bundleMsg=\"(?<bundleMsg>(?:\\\\\"|[^\"])*)\"" +
+                          "|tooltip=\"(?<tooltip>(?:\\\\\"|[^\"])*)\"" +
+                          "))*" +
+                          "\\s*(?<closed>/)?>";
 
     Matcher matcher = Pattern.compile(openingTagRx).matcher(text);
     Ref<Integer> textOffset = Ref.create(0);
@@ -267,18 +270,18 @@ public class ExpectedHighlightingData {
   private int extractExpectedHighlight(Matcher matcher, String text, Document document, Ref<Integer> textOffset) {
     document.deleteString(textOffset.get(), textOffset.get() + matcher.end() - matcher.start());
 
-    int groupIdx = 1;
-    String marker = matcher.group(groupIdx++);
-    String descr = matcher.group(groupIdx++);
-    String typeString = matcher.group(groupIdx++);
-    String foregroundColor = matcher.group(groupIdx++);
-    String backgroundColor = matcher.group(groupIdx++);
-    String effectColor = matcher.group(groupIdx++);
-    String effectType = matcher.group(groupIdx++);
-    String fontType = matcher.group(groupIdx++);
-    String attrKey = matcher.group(groupIdx++);
-    String tooltip = matcher.group(groupIdx++);
-    boolean closed = matcher.group(groupIdx) != null;
+    String marker = matcher.group("marker");
+    @NlsSafe String descr = matcher.group("descr");
+    String typeString = matcher.group("type");
+    String foregroundColor = matcher.group("foreground");
+    String backgroundColor = matcher.group("background");
+    String effectColor = matcher.group("effectcolor");
+    String effectType = matcher.group("effecttype");
+    String fontType = matcher.group("fonttype");
+    String attrKey = matcher.group("textAttributesKey");
+    String bundleMessage = matcher.group("bundleMsg");
+    @NlsSafe String tooltip = matcher.group("tooltip");
+    boolean closed = matcher.group("closed") != null;
 
     if (descr == null) {
       descr = ANY_TEXT;  // no descr means any string by default
@@ -363,7 +366,12 @@ public class ExpectedHighlightingData {
         builder.description(descr);
       }
       if (tooltip != null) {
-        builder.unescapedToolTip(tooltip);
+        if (tooltip.startsWith("<html>")) {
+          builder.escapedToolTip(tooltip);
+        }
+        else {
+          builder.unescapedToolTip(tooltip);
+        }
       }
       if (expectedHighlightingSet.endOfLine) builder.endOfLine();
       HighlightInfo highlightInfo = builder.createUnconditionally();

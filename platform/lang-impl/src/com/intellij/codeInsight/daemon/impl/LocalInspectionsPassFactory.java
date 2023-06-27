@@ -50,7 +50,7 @@ public final class LocalInspectionsPassFactory implements MainHighlightingPassFa
                                    @NotNull TextRange textRange,
                                    @NotNull TextRange visibleRange,
                                    @NotNull HighlightInfoProcessor highlightInfoProcessor) {
-      super(file, document, textRange.getStartOffset(), textRange.getEndOffset(), visibleRange, true, highlightInfoProcessor, true);
+      super(file, document, textRange, visibleRange, true, highlightInfoProcessor, true);
     }
 
     @Override

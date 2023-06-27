@@ -16,7 +16,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
-import com.intellij.codeInspection.LocalQuickFixOnPsiElementAsIntentionAdapter;
 import com.intellij.codeInspection.dataFlow.fix.RedundantInstanceofFix;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.IdeBundle;
@@ -585,7 +584,7 @@ public final class HighlightUtil {
       String message = JavaErrorBundle.message("return.outside.switch.expr");
       HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message);
       if (statement.getReturnValue() != null) {
-        IntentionAction action = new ReplaceWithYieldFix(statement);
+        var action = new ReplaceWithYieldFix(statement);
         info.registerFix(action, null, null, null, null);
       }
       return info;
@@ -1815,7 +1814,7 @@ public final class HighlightUtil {
         .descriptionAndTooltip(variable instanceof PsiRecordComponent
           ? JavaErrorBundle.message("record.component.cstyle.declaration")
           : JavaErrorBundle.message("vararg.cstyle.array.declaration"));
-      IntentionAction action = new NormalizeBracketsFix(variable);
+      var action = new NormalizeBracketsFix(variable);
       info.registerFix(action, null, null, null, null);
       return info;
     }
@@ -1858,7 +1857,7 @@ public final class HighlightUtil {
       HighlightInfo.Builder info =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description);
       if (!VariableAccessUtils.variableIsUsed(variable, variable.getDeclarationScope())) {
-        IntentionAction action = new RedundantInstanceofFix(expression);
+        var action = new RedundantInstanceofFix(expression);
         info.registerFix(action, null, null, null, null);
       }
       return info;
@@ -2232,7 +2231,7 @@ public final class HighlightUtil {
           arrayTypeFixChecked = true;
         }
         if (fix != null) {
-          info.registerFix(new LocalQuickFixOnPsiElementAsIntentionAdapter(fix), null, null, null, null);
+          info.registerFix(fix, null, null, null, null);
         }
         holder.add(info.create());
       }
@@ -3279,8 +3278,8 @@ public final class HighlightUtil {
 
       HighlightInfo.Builder info =
         HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refName).descriptionAndTooltip(description);
-      if (isCallToStaticMember(outerParent)) {
-        IntentionAction action = new RemoveNewKeywordFix(outerParent);
+      if (outerParent instanceof PsiNewExpression newExpression && isCallToStaticMember(newExpression)) {
+        var action = new RemoveNewKeywordFix(newExpression);
         info.registerFix(action, null, null, null, null);
       }
       UnresolvedReferenceQuickFixUpdater.getInstance(containingFile.getProject()).registerQuickFixesLater(ref, info);
@@ -3445,8 +3444,8 @@ public final class HighlightUtil {
     PsiElement refGrandParent = referenceList.getParent();
     if (resolved instanceof PsiClass aClass) {
       if (refGrandParent instanceof PsiClass parentClass) {
-        if (refGrandParent instanceof PsiTypeParameter) {
-          builder = GenericsHighlightUtil.checkElementInTypeParameterExtendsList(referenceList, parentClass, resolveResult, ref);
+        if (refGrandParent instanceof PsiTypeParameter typeParameter) {
+          builder = GenericsHighlightUtil.checkElementInTypeParameterExtendsList(referenceList, typeParameter, resolveResult, ref);
         }
         else if (referenceList.equals(parentClass.getImplementsList()) ||
                  referenceList.equals(parentClass.getExtendsList())) {

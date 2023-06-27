@@ -30,6 +30,12 @@ import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
@@ -247,6 +253,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
           getFileEditorManager().removeTopComponent(fileEditor, component);
           info.removeFileLeverComponent(fileEditor);
         }
+        RangeHighlighterEx highlighter = info.highlighter;
+        if (highlighter != null) {
+          highlighter.dispose();
+        }
         infosToRemove.add(info);
       }
     }
@@ -260,24 +270,35 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     VirtualFile vFile = BackedVirtualFile.getOriginFileIfBacked(psiFile.getViewProvider().getVirtualFile());
     FileEditorManager fileEditorManager = getFileEditorManager();
     for (FileEditor fileEditor : fileEditorManager.getAllEditors(vFile)) {
-      if (fileEditor instanceof TextEditor) {
+      if (fileEditor instanceof TextEditor textEditor) {
         List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> actionRanges = new ArrayList<>();
         info.findRegisteredQuickFix((descriptor, range) -> {
           actionRanges.add(Pair.create(descriptor, range));
           return null;
         });
-        FileLevelIntentionComponent component = new FileLevelIntentionComponent(info.getDescription(), info.getSeverity(),
-                                                                                info.getGutterIconRenderer(), actionRanges,
-                                                                                psiFile, ((TextEditor)fileEditor).getEditor(), info.getToolTip());
-        fileEditorManager.addTopComponent(fileEditor, component);
         List<HighlightInfo> fileLevelInfos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
         if (fileLevelInfos == null) {
           fileLevelInfos = ContainerUtil.createConcurrentList(); // must be able to iterate in hasFileLevelHighlights() and concurrently modify in addFileLevelHighlight()
           fileEditor.putUserData(FILE_LEVEL_HIGHLIGHTS, fileLevelInfos);
         }
-        info.addFileLeverComponent(fileEditor, component);
-        info.setGroup(group);
-        fileLevelInfos.add(info);
+        if (!ContainerUtil.exists(fileLevelInfos, existing->existing.equalsByActualOffset(info))) {
+          Document document = textEditor.getEditor().getDocument();
+          MarkupModel markupModel = DocumentMarkupModel.forDocument(document, myProject, true);
+          RangeHighlighter highlighter = markupModel.addRangeHighlighter(0, document.getTextLength(), ANY_GROUP, null, HighlighterTargetArea.EXACT_RANGE);
+          highlighter.setGreedyToLeft(true);
+          highlighter.setGreedyToRight(true);
+          // for the condition `existing.equalsByActualOffset(info)` above work correctly,
+          // create a fake whole-file highlighter which will track the document size changes
+          // and which will make possible to calculate correct `info.getActualEndOffset()`
+          info.setHighlighter((RangeHighlighterEx)highlighter);
+          info.setGroup(group);
+          fileLevelInfos.add(info);
+          FileLevelIntentionComponent component = new FileLevelIntentionComponent(info.getDescription(), info.getSeverity(),
+                                                                                  info.getGutterIconRenderer(), actionRanges,
+                                                                                  psiFile, ((TextEditor)fileEditor).getEditor(), info.getToolTip());
+          fileEditorManager.addTopComponent(fileEditor, component);
+          info.addFileLeverComponent(fileEditor, component);
+        }
       }
     }
   }
@@ -443,8 +464,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
           if (savedException != null) throw savedException;
           return progress.isRunning();
         });
-        // it will wait for the async spawned processes
-        ((HighlightingSessionImpl)session).myExternalPassFuture.get(1, TimeUnit.MINUTES);
         if (progress.isRunning() && !progress.isCanceled()) {
           throw new RuntimeException("Highlighting still running after " +
              (System.currentTimeMillis() - start) / 1000 + " seconds. Still submitted passes: " +
@@ -500,18 +519,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
     long deadline = System.currentTimeMillis() + millis;
     try {
-      Future<Boolean> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        try {
-          return myPassExecutorService.waitFor(millis);
-        }
-        catch (Throwable e) {
-          throw new RuntimeException(e);
-        }
-      });
+      Future<?> passesFuture = ApplicationManager.getApplication().executeOnPooledThread(() -> myPassExecutorService.waitFor(System.currentTimeMillis() - deadline));
       do {
         assertOnModification.set(true);
         try {
-          future.get(50, TimeUnit.MILLISECONDS);
+          passesFuture.get(50, TimeUnit.MILLISECONDS);
         }
         catch (TimeoutException ignored) {
         }
@@ -519,6 +531,12 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
           assertOnModification.set(false); //do not assert during dispatchAllEvents() because that's where all quick fixes happen
         }
       } while (runWhile.compute() && System.currentTimeMillis() < deadline);
+      // it will wait for the async spawned processes
+      Future<?> externalPassFuture = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        ExternalAnnotatorManager.getInstance().waitForAllExecuted(deadline-System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+        return null;
+      });
+      externalPassFuture.get(1_000+deadline-System.currentTimeMillis(), TimeUnit.MILLISECONDS);
     }
     catch (InterruptedException ignored) {
     }
@@ -861,8 +879,16 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
   public static @NotNull List<LineMarkerInfo<?>> getLineMarkers(@NotNull Document document, @NotNull Project project) {
     List<LineMarkerInfo<?>> result = new ArrayList<>();
-    LineMarkersUtil.processLineMarkers(project, document, new TextRange(0, document.getTextLength()), -1,
-                                       new CommonProcessors.CollectProcessor<>(result));
+    MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
+    markupModel.processRangeHighlightersOverlappingWith(0, document.getTextLength(),
+      highlighter -> {
+        LineMarkerInfo<?> info = LineMarkersUtil.getLineMarkerInfo(highlighter);
+        if (info != null) {
+          result.add(info);
+        }
+        return true;
+      }
+    );
     return result;
   }
 
@@ -1207,7 +1233,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
                                                        editor -> editor.isDisposed() ? null: textEditorProvider.getTextEditor(editor));
     }
 
-    if (application.getCurrentModalityState() != ModalityState.NON_MODAL) {
+    if (ModalityState.current() != ModalityState.nonModal()) {
       return activeTextEditors;
     }
 

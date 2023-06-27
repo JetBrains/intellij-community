@@ -23,11 +23,11 @@ import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ComparisonUtils;
-import com.siyeh.ipp.base.MutablyNamedIntention;
+import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class NegateComparisonIntention extends MutablyNamedIntention {
+public class NegateComparisonIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -35,16 +35,11 @@ public class NegateComparisonIntention extends MutablyNamedIntention {
   }
 
   @Override
-  public String getTextForElement(PsiElement element) {
-    String operatorText = "";
-    String negatedOperatorText = "";
+  public String getTextForElement(@NotNull PsiElement element) {
     final PsiBinaryExpression exp = (PsiBinaryExpression)element;
-    if (exp != null) {
-      final PsiJavaToken sign = exp.getOperationSign();
-      operatorText = sign.getText();
-      negatedOperatorText =
-        ComparisonUtils.getNegatedComparison(sign.getTokenType());
-    }
+    final PsiJavaToken sign = exp.getOperationSign();
+    String operatorText = sign.getText();
+    String negatedOperatorText = ComparisonUtils.getNegatedComparison(sign.getTokenType());
     if (operatorText.equals(negatedOperatorText)) {
       return IntentionPowerPackBundle.message(
         "negate.comparison.intention.name", operatorText);

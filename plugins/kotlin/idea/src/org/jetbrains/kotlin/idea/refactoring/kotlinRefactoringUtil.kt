@@ -3,10 +3,12 @@
 package org.jetbrains.kotlin.idea.refactoring
 
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils
+import com.intellij.codeInsight.navigation.PsiTargetNavigator
+import com.intellij.codeInsight.navigation.TargetPresentationProvider
+import com.intellij.codeInsight.navigation.impl.PsiTargetPresentationRenderer
 import com.intellij.codeInsight.unwrap.RangeSplitter
 import com.intellij.codeInsight.unwrap.UnwrapHandler
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.util.PsiElementListCellRenderer
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -27,10 +29,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.JBPopup
-import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -47,6 +49,7 @@ import com.intellij.refactoring.util.ConflictsUtil
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.VisibilityUtil
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.*
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
@@ -234,33 +237,34 @@ fun reportDeclarationConflict(
 fun <T : PsiElement> getPsiElementPopup(
     editor: Editor,
     elements: List<T>,
-    renderer: PsiElementListCellRenderer<T>,
+    presentationProvider: TargetPresentationProvider<T>,
     @NlsContexts.PopupTitle title: String?,
     highlightSelection: Boolean,
     processor: (T) -> Boolean
-): JBPopup = with(JBPopupFactory.getInstance().createPopupChooserBuilder(elements)) {
+): JBPopup {
+    val project = elements.firstOrNull()?.project ?: throw IllegalArgumentException("Can't create popup because no elements are provided")
     val highlighter = if (highlightSelection) SelectionAwareScopeHighlighter(editor) else null
-    setRenderer(renderer)
-    setItemSelectedCallback { element: T? ->
-        highlighter?.dropHighlight()
-        element?.let {
-            highlighter?.highlight(element)
+    return PsiTargetNavigator(elements)
+        .presentationProvider(presentationProvider)
+        .builderConsumer { builder ->
+            builder
+                .setItemChosenCallback { presentation ->
+                    highlighter?.dropHighlight()
+                    val psiElement = (presentation?.item as? SmartPsiElementPointer<*>)?.element ?: return@setItemChosenCallback
+                    highlighter?.highlight(psiElement)
+                }
+                .setItemChosenCallback {
+                    @Suppress("UNCHECKED_CAST")
+                    val element = (it.item as? SmartPsiElementPointer<T>)?.element ?: return@setItemChosenCallback
+                    processor(element)
+                }
+                .addListener(object : JBPopupListener {
+                    override fun onClosed(event: LightweightWindowEvent) {
+                        highlighter?.dropHighlight()
+                    }
+                })
         }
-    }
-
-    if (title != null) {
-        setTitle(title)
-    }
-    renderer.installSpeedSearch(this, true)
-    setItemChosenCallback { it?.let(processor) }
-
-    addListener(object : JBPopupListener {
-        override fun onClosed(event: LightweightWindowEvent) {
-            highlighter?.dropHighlight()
-        }
-    })
-
-    createPopup()
+        .createPopup(project, title)
 }
 
 class SelectionAwareScopeHighlighter(val editor: Editor) {
@@ -317,6 +321,7 @@ fun PsiFile.getLineStartOffset(line: Int): Int? {
     return null
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
     "Use org.jetbrains.kotlin.idea.base.psi.getLineEndOffset() instead",
     ReplaceWith("this.getLineEndOffset(line)", "org.jetbrains.kotlin.idea.base.psi.getLineEndOffset"),
@@ -370,7 +375,8 @@ fun <T : PsiElement> chooseContainerElement(
     onSelect = onSelect,
 )
 
-private fun psiElementRenderer() = object : PsiElementListCellRenderer<PsiElement>() {
+private fun popupPresentationProvider() = object : PsiTargetPresentationRenderer<PsiElement>() {
+    @NlsSafe
     private fun PsiElement.renderName(): String = when {
         this is KtPropertyAccessor -> property.renderName() + if (isGetter) ".get" else ".set"
         this is KtObjectDeclaration && isCompanion() -> {
@@ -381,6 +387,7 @@ private fun psiElementRenderer() = object : PsiElementListCellRenderer<PsiElemen
         else -> (this as? PsiNamedElement)?.name ?: "<anonymous>"
     }
 
+    @NlsSafe
     private fun PsiElement.renderDeclaration(): String? {
         if (this is KtFunctionLiteral || isFunctionalExpression()) return renderText()
         val descriptor = when (this) {
@@ -400,6 +407,7 @@ private fun psiElementRenderer() = object : PsiElementListCellRenderer<PsiElemen
         return "$name$params"
     }
 
+    @NlsSafe
     private fun PsiElement.renderText(): String = when (this) {
         is SeparateFileWrapper -> KotlinBundle.message("refactoring.extract.to.separate.file.text")
         is PsiPackageBase -> qualifiedName
@@ -420,7 +428,7 @@ private fun psiElementRenderer() = object : PsiElementListCellRenderer<PsiElemen
         return representativeElement.renderDeclaration() ?: representativeElement.renderText()
     }
 
-    override fun getContainerText(element: PsiElement, name: String?): String? = null
+    override fun getContainerText(element: PsiElement): String? = null
 
     override fun getIcon(element: PsiElement): Icon? = super.getIcon(element.getRepresentativeElement())
 }
@@ -436,7 +444,7 @@ private fun <T, E : PsiElement> choosePsiContainerElement(
     val popup = getPsiElementPopup(
         editor,
         elements,
-        psiElementRenderer(),
+        popupPresentationProvider(),
         title,
         highlightSelection,
     ) { psiElement ->
@@ -1033,6 +1041,7 @@ fun <T : KtExpression> T.replaceWithCopyWithResolveCheck(
     return if (originDescriptor.canonicalRender() == newDescriptor.canonicalRender()) elementCopy.postHook() else null
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
     "Use org.jetbrains.kotlin.idea.base.psi.getLineCount() instead",
     ReplaceWith("this.getLineCount()", "org.jetbrains.kotlin.idea.base.psi.getLineCount"),

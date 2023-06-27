@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.execution.configurations.CompositeParameterTargetedValue;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.wsl.WSLDistribution;
@@ -57,6 +58,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
+import org.apache.commons.lang.StringUtils;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
@@ -167,15 +169,9 @@ public class MavenUtil {
 
   public static void invokeLater(final Project p, final ModalityState state, final Runnable r) {
     startTestRunnable(r);
-
-    if (isNoBackgroundMode()) {
+    ApplicationManager.getApplication().invokeLater(() -> {
       runAndFinishTestRunnable(r);
-    }
-    else {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        runAndFinishTestRunnable(r);
-      }, state, p.getDisposed());
-    }
+    }, state, p.getDisposed());
   }
 
 
@@ -230,12 +226,7 @@ public class MavenUtil {
 
   public static void invokeAndWait(final Project p, final ModalityState state, @NotNull Runnable r) {
     startTestRunnable(r);
-    if (isNoBackgroundMode()) {
-      runAndFinishTestRunnable(r);
-    }
-    else {
-      ApplicationManager.getApplication().invokeAndWait(DisposeAwareRunnable.create(() -> runAndFinishTestRunnable(r), p), state);
-    }
+    ApplicationManager.getApplication().invokeAndWait(DisposeAwareRunnable.create(() -> runAndFinishTestRunnable(r), p), state);
   }
 
 
@@ -269,11 +260,7 @@ public class MavenUtil {
       return;
     }
 
-    if (isNoBackgroundMode()) {
-      startTestRunnable(runnable);
-      runAndFinishTestRunnable(runnable);
-    }
-    else if (project.isInitialized()) {
+    if (project.isInitialized()) {
       runDumbAware(project, runnable);
     }
     else {
@@ -282,53 +269,7 @@ public class MavenUtil {
     }
   }
 
-  @TestOnly
-  public static void setNoBackgroundMode() {
-    noBackgroundMode = true;
-  }
-
-  @TestOnly
-  public static void resetNoBackgroundMode() {
-    noBackgroundMode = false;
-  }
-
-  private static volatile boolean noBackgroundMode = false;
-
-  @TestOnly
-  public static void setUpdateSuspendable() {
-    updateSuspendable = true;
-  }
-
-  @TestOnly
-  public static void resetUpdateSuspendable() {
-    updateSuspendable = false;
-  }
-
-  @ApiStatus.Internal
-  public static boolean updateSuspendable() {
-    return updateSuspendable;
-  }
-
-  private static volatile boolean updateSuspendable = false;
-
-
-  public static boolean isNoBackgroundMode() {
-    if (shouldRunTasksAsynchronouslyInTests() || isLinearImportEnabled()) {
-      return false;
-    }
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return noBackgroundMode;
-    }
-
-    //if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-    //  if (!CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()) return true;
-    //}
-    return false;
-  }
-
   public static boolean isInModalContext() {
-    if (isNoBackgroundMode()) return false;
     return LaterInvocator.isInModalContext();
   }
 
@@ -632,40 +573,30 @@ public class MavenUtil {
       }
     };
 
-    if (isNoBackgroundMode()) {
-      runnable.run();
-      return new MavenTaskHandler() {
-        @Override
-        public void waitFor() {
+    Future<?> future;
+    future = ApplicationManager.getApplication().executeOnPooledThread(runnable);
+    MavenTaskHandler handler = new MavenTaskHandler() {
+      @Override
+      public void waitFor() {
+        try {
+          future.get();
         }
-      };
-    }
-    else {
-      Future<?> future;
-      future = ApplicationManager.getApplication().executeOnPooledThread(runnable);
-      MavenTaskHandler handler = new MavenTaskHandler() {
-        @Override
-        public void waitFor() {
-          try {
-            future.get();
-          }
-          catch (InterruptedException | ExecutionException e) {
-            MavenLog.LOG.error(e);
-          }
+        catch (InterruptedException | ExecutionException e) {
+          MavenLog.LOG.error(e);
         }
-      };
-      invokeLater(project, () -> {
-        if (future.isDone()) return;
-        new Task.Backgroundable(project, title, cancellable) {
-          @Override
-          public void run(@NotNull ProgressIndicator i) {
-            indicator.setIndicator(i);
-            handler.waitFor();
-          }
-        }.queue();
-      });
-      return handler;
-    }
+      }
+    };
+    invokeLater(project, () -> {
+      if (future.isDone()) return;
+      new Task.Backgroundable(project, title, cancellable) {
+        @Override
+        public void run(@NotNull ProgressIndicator i) {
+          indicator.setIndicator(i);
+          handler.waitFor();
+        }
+      }.queue();
+    });
+    return handler;
   }
 
   @Nullable
@@ -729,15 +660,17 @@ public class MavenUtil {
       return;
     }
     String listenerPath = MavenServerManager.getInstance().getMavenEventListener().getAbsolutePath();
-    String extClassPath = params.getVMParametersList().getPropertyValue(MavenServerEmbedder.MAVEN_EXT_CLASS_PATH);
-    if (isEmpty(extClassPath)) {
-      params.getVMParametersList()
-        .addProperty(MavenServerEmbedder.MAVEN_EXT_CLASS_PATH, listenerPath);
+    String userExtClassPath = StringUtils.stripToEmpty(params.getVMParametersList().getPropertyValue(MavenServerEmbedder.MAVEN_EXT_CLASS_PATH));
+    String vmParameter = "-D" + MavenServerEmbedder.MAVEN_EXT_CLASS_PATH + "=";
+    String[] userListeners = userExtClassPath.split(File.pathSeparator);
+    CompositeParameterTargetedValue targetedValue = new CompositeParameterTargetedValue(vmParameter)
+      .addPathPart(listenerPath);
+
+    for (String path : userListeners) {
+      if(StringUtil.isEmptyOrSpaces(path)) continue;
+      targetedValue = targetedValue.addPathSeparator().addPathPart(path);
     }
-    else {
-      params.getVMParametersList()
-        .addProperty(MavenServerEmbedder.MAVEN_EXT_CLASS_PATH, extClassPath + File.pathSeparatorChar + listenerPath);
-    }
+    params.getVMParametersList().add(targetedValue);
   }
 
   @Nullable
@@ -891,6 +824,7 @@ public class MavenUtil {
       return null;
     }
     File directory = resolveMavenHomeDirectory(overriddenMavenHome);
+    if (directory == null) return null;
     return new File(new File(directory, CONF_DIR), SETTINGS_XML);
   }
 
@@ -1616,9 +1550,9 @@ public class MavenUtil {
 
   public static void setupProjectSdk(@NotNull Project project) {
     if (ProjectRootManager.getInstance(project).getProjectSdk() == null) {
+      Sdk projectSdk = suggestProjectSdk(project);
+      if (projectSdk == null) return;
       ApplicationManager.getApplication().runWriteAction(() -> {
-        Sdk projectSdk = suggestProjectSdk(project);
-        if (projectSdk == null) return;
         JavaSdkUtil.applyJdkToProject(project, projectSdk);
       });
     }

@@ -9,29 +9,34 @@ import org.jetbrains.annotations.ApiStatus
 import kotlin.time.*
 
 @ApiStatus.Internal
-val processElementsMaxDuration: Duration = 5000.toDuration(DurationUnit.MILLISECONDS)
+inline fun getByKeyMaxDuration(): Duration =
+    Registry.intValue("kotlin.indices.timing.threshold.single").toDuration(DurationUnit.MILLISECONDS)
+
 @ApiStatus.Internal
-val getByKeyMaxDuration: Duration = 2500.toDuration(DurationUnit.MILLISECONDS)
+inline fun processElementsMaxDuration(): Duration =
+    Registry.intValue("kotlin.indices.timing.threshold.batch").toDuration(DurationUnit.MILLISECONDS)
 
 @ApiStatus.Internal
 inline fun <T> processElementsAndMeasure(index: StubIndexKey<*, *>, log: Logger, crossinline block: () -> T): T =
-        measureIndexCall(index, "processElements", processElementsMaxDuration, log, block)
+    measureIndexCall(
+        index,
+        "processElements",
+        processElementsMaxDuration(),
+        log,
+        block
+    )
 
 @ApiStatus.Internal
 inline fun <T> processAllKeysAndMeasure(index: StubIndexKey<*, *>, log: Logger, crossinline block: () -> T): T =
-        measureIndexCall(index, "processAllKeys", processElementsMaxDuration, log, block)
+        measureIndexCall(index, "processAllKeys", processElementsMaxDuration(), log, block)
 
 @ApiStatus.Internal
 inline fun <T> getByKeyAndMeasure(index: StubIndexKey<*, *>, log: Logger, crossinline block: () -> T): T =
-        measureIndexCall(index, "getByKey", getByKeyMaxDuration, log, block)
+        measureIndexCall(index, "getByKey", getByKeyMaxDuration(), log, block)
 
 @ApiStatus.Internal
 inline fun <T> getAllKeysAndMeasure(index: StubIndexKey<*, *>, log: Logger, crossinline block: () -> T): T =
-        measureIndexCall(index, "getAllKeys", getByKeyMaxDuration, log, block)
-
-@ApiStatus.Internal
-inline fun <T> getElementsAndMeasure(index: StubIndexKey<*, *>, log: Logger, crossinline block: () -> T): T =
-        measureIndexCall(index, "getElements", getByKeyMaxDuration, log, block)
+    measureIndexCall(index, "getAllKeys", processElementsMaxDuration(), log, block)
 
 @ApiStatus.Internal
 @OptIn(ExperimentalTime::class)

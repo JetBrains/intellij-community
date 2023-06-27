@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.diagnostic.Developer.Companion.NULL
@@ -76,14 +76,12 @@ internal object ITNProxy {
     template
   }
 
-
   suspend fun fetchDevelopers(): List<Developer> {
     val context = currentCoroutineContext()
     return HttpRequests.request(DEVELOPERS_LIST_URL).connectTimeout(3000).connect { request: HttpRequests.Request ->
       val developers: MutableList<Developer> = ArrayList()
       developers.add(NULL)
-      var line: String
-      while (request.reader.readLine().also { line = it } != null) {
+      for (line in request.reader.lines()) {
         val i = line.indexOf('\t')
         if (i == -1) throw IOException("Protocol error")
         val id = line.substring(0, i).toInt()

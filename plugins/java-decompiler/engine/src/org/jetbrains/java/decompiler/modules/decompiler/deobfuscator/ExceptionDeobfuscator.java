@@ -73,7 +73,7 @@ public final class ExceptionDeobfuscator {
             Set<BasicBlock> setrange = new HashSet<>(range.protectedRange);
 
             for (Range range_super : lstRanges) { // finally or strict superset
-              cancellationManager.checkSavedCancelled();
+              cancellationManager.checkCanceled();
               if (range != range_super) {
 
                 Set<BasicBlock> setrange_super = new HashSet<>(range_super.protectedRange);

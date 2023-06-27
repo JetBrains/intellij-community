@@ -4,11 +4,13 @@ package com.intellij.ide.bootstrap
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.subtask
+import com.intellij.icons.AllIcons
 import com.intellij.ide.ApplicationLoadListener
 import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.ide.plugins.PluginSet
 import com.intellij.ide.ui.IconMapLoader
 import com.intellij.ide.ui.LafManager
+import com.intellij.ide.ui.UISettings
 import com.intellij.idea.AppMode
 import com.intellij.idea.AppStarter
 import com.intellij.idea.prepareShowEuaIfNeededTask
@@ -23,10 +25,14 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.IconLoader
+import com.intellij.ui.AnimatedIcon
+import com.intellij.util.ui.AsyncProcessIcon
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.VisibleForTesting
 
-internal suspend fun initServiceContainer(app: ApplicationImpl, pluginSetDeferred: CompletableDeferred<Deferred<PluginSet>>) {
+internal suspend fun initServiceContainer(app: ApplicationImpl, pluginSetDeferred: Deferred<Deferred<PluginSet>>) {
   val pluginSet = subtask("plugin descriptor init waiting") {
     pluginSetDeferred.await().await()
   }
@@ -69,6 +75,12 @@ internal suspend fun preInitApp(app: ApplicationImpl,
       }
     }
 
+    if (app.isInternal && !app.isHeadlessEnvironment) {
+      launch {
+        IconLoader.setStrictGlobally(true)
+      }
+    }
+
     initServiceContainerJob.join()
 
     val loadIconMapping = if (app.isHeadlessEnvironment) {
@@ -85,7 +97,7 @@ internal suspend fun preInitApp(app: ApplicationImpl,
     initConfigurationStore(app)
 
     launch(CoroutineName("critical services preloading")) {
-      preloadCriticalServices(app = app, asyncScope = asyncScope, appRegistered = appRegisteredJob)
+      preloadCriticalServices(app = app, asyncScope = asyncScope, appRegistered = appRegisteredJob, initLafJob = initLafJob)
     }
 
     if (!app.isHeadlessEnvironment) {
@@ -104,13 +116,26 @@ internal suspend fun preInitApp(app: ApplicationImpl,
     euaTaskDeferred?.await()?.invoke()
 
     asyncScope.launch {
+      if (!app.isHeadlessEnvironment) {
+        launch(CoroutineName("icons preloading") + Dispatchers.IO) {
+          Disposer.dispose(AsyncProcessIcon.createBig(""))
+          Disposer.dispose(AsyncProcessIcon(""))
+          AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
+          AnimatedIcon.FS()
+        }
+      }
+
       loadIconMapping?.join()
+      // preloaded as a part of preloadCriticalServices, used by LafManager
+      app.serviceAsync<UISettings>()
       subtask("laf initialization", RawSwingDispatcher) {
         app.serviceAsync<LafManager>()
       }
       if (!app.isHeadlessEnvironment) {
         // preload only when LafManager is ready
-        app.serviceAsync<EditorColorsManager>()
+        launch {
+          app.serviceAsync<EditorColorsManager>()
+        }
       }
     }
   }

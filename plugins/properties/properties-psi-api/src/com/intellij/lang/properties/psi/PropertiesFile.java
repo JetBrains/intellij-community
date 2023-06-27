@@ -81,7 +81,7 @@ public interface PropertiesFile {
    * @deprecated use {@link #addProperty(String, String)} instead
    * @see #addProperty(String, String)
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   PsiElement addProperty(@NotNull IProperty property) throws IncorrectOperationException;
 

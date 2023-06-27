@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.openapi.actionSystem.impl
@@ -117,7 +117,7 @@ open class EdtDataContext : DataContext, UserDataHolder, InjectedDataContextSupp
     }
 
     if (PlatformDataKeys.MODALITY_STATE.`is`(dataId)) {
-      return if (component == null) ModalityState.NON_MODAL else ModalityState.stateForComponent(component)
+      return if (component == null) ModalityState.nonModal() else ModalityState.stateForComponent(component)
     }
 
     if (PlatformDataKeys.SPEED_SEARCH_COMPONENT.`is`(dataId) || PlatformDataKeys.SPEED_SEARCH_TEXT.`is`(dataId)) {

@@ -183,7 +183,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   private void registerReferencesFromInjectedFragments(@NotNull PsiElement element) {
     InjectedLanguageManager manager = InjectedLanguageManager.getInstance(myFile.getProject());
-    manager.enumerateEx(element, myFile, false, (injectedPsi, places) -> injectedPsi.accept(REGISTER_REFERENCES_VISITOR));
+    manager.enumerateEx(element, myFile, false, (injectedPsi, places) -> {
+      if (InjectedLanguageJavaReferenceSupplier.doRegisterReferences(injectedPsi.getLanguage().getID())) {
+        injectedPsi.accept(REGISTER_REFERENCES_VISITOR);
+      }
+    });
   }
 
   @Override
@@ -1193,14 +1197,14 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (!myHolder.hasErrorResults()) add(GenericsHighlightUtil.checkGenericCannotExtendException((PsiAnonymousClass)parent));
     }
 
-    if (parent instanceof PsiNewExpression &&
+    if (parent instanceof PsiNewExpression newExpression &&
         !(resolved instanceof PsiClass) &&
         resolved instanceof PsiNamedElement &&
-        ((PsiNewExpression)parent).getClassOrAnonymousClassReference() == ref) {
+        newExpression.getClassOrAnonymousClassReference() == ref) {
       String text = JavaErrorBundle.message("cannot.resolve.symbol", ((PsiNamedElement)resolved).getName());
       HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(ref).descriptionAndTooltip(text);
-      if (HighlightUtil.isCallToStaticMember(parent)) {
-        IntentionAction action = new RemoveNewKeywordFix(parent);
+      if (HighlightUtil.isCallToStaticMember(newExpression)) {
+        var action = new RemoveNewKeywordFix(newExpression);
         info.registerFix(action, null, null, null, null);
       }
       add(info);

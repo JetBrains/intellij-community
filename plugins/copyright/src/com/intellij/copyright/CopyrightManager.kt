@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.copyright
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
@@ -276,7 +276,7 @@ private class CopyrightManagerDocumentListener : BulkFileListener {
 
     copyrightManager.getCopyrightOptions(file) ?: return
 
-    AppUIExecutor.onUiThread(ModalityState.NON_MODAL).later().withDocumentsCommitted(project).execute {
+    AppUIExecutor.onUiThread(ModalityState.nonModal()).later().withDocumentsCommitted(project).execute {
       if (project.isDisposed || !file.isValid) {
         return@execute
       }

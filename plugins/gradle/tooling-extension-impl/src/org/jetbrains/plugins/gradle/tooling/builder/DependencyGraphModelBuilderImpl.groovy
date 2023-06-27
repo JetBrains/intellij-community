@@ -30,7 +30,7 @@ class DependencyGraphModelBuilderImpl implements ModelBuilderService {
     def resolveSourceSetDependencies = System.properties.'idea.resolveSourceSetDependencies' as boolean
     if (!resolveSourceSetDependencies || !isIsNewDependencyResolutionApplicable()) return null
 
-    def sourceSetContainer = JavaPluginUtil.getSourceSetContainer(project)
+    def sourceSetContainer = JavaPluginUtil.getJavaPluginAccessor(project).sourceSetContainer
     if (sourceSetContainer == null) return null
 
     ProjectDependenciesImpl dependencies = new ProjectDependenciesImpl()

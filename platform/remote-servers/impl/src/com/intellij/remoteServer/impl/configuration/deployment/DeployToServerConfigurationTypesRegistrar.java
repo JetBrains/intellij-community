@@ -28,7 +28,7 @@ public final class DeployToServerConfigurationTypesRegistrar implements Disposab
   /**
    * @deprecated Please use {@link #getConfigurationType(ServerType)} directly.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull DeployToServerConfigurationType<?> getDeployConfigurationType(@NotNull ServerType<?> serverType) {
     return getInstance().getConfigurationType(serverType);
   }

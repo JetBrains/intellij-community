@@ -532,7 +532,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
 
   override fun hasPartialChangesToCommit(): Boolean {
     return documentTracker.readLock {
-      affectedChangeLists.size > 1 || blocks.any { !it.excludedFromCommit.isFullyIncluded }
+      affectedChangeLists.size > 1 || blocks.any { it.excludedFromCommit.hasExcluded }
     }
   }
 

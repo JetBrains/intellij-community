@@ -58,8 +58,18 @@ internal class GradleTestEventConverter(
     isJunit5ParametrizedTestMethod && parentMethodName == null
   }
 
+  private val isEnabledGroovyPlugin: Boolean by lazy {
+    try {
+      Class.forName("org.jetbrains.plugins.groovy.ext.spock.SpecificationKt")
+      true
+    }
+    catch (ex: Throwable) {
+      false
+    }
+  }
+
   private val isSpockTestMethod: Boolean by lazy {
-    isTestMethod && runReadAction {
+    isTestMethod && isEnabledGroovyPlugin && runReadAction {
       DumbService.getInstance(project).computeWithAlternativeResolveEnabled<Boolean, Throwable> {
         val scope = GlobalSearchScope.allScope(project)
         val psiFacade = JavaPsiFacade.getInstance(project)

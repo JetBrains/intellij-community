@@ -3,13 +3,13 @@
 package com.intellij.laf.macos
 
 import com.intellij.ide.ui.laf.IntelliJLaf
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.StartupUiUtil
 import javax.swing.UIDefaults
 import javax.swing.UIManager
 
 internal class MacIntelliJLaf : IntelliJLaf() {
   init {
-    putUserData(UIUtil.PLUGGABLE_LAF_KEY, name)
+    putUserData(StartupUiUtil.PLUGGABLE_LAF_KEY, name)
   }
 
   override fun getName() = MacLafProvider.LAF_NAME

@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -149,7 +150,7 @@ final class ModuleHighlightUtil {
           HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message);
         IntentionAction action1 = QuickFixFactory.getInstance().createDeleteFix(statement);
         info.registerFix(action1, null, null, null, null);
-        IntentionAction action = MergeModuleStatementsFix.createFix(statement);
+        var action = MergeModuleStatementsFix.createFix(statement);
         if (action != null) {
           info.registerFix(action, null, null, null, null);
         }
@@ -178,9 +179,9 @@ final class ModuleHighlightUtil {
               String message = JavaErrorBundle.message("module.service.unused");
               HighlightInfo.Builder info =
                 HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(range(ref)).descriptionAndTooltip(message);
-              IntentionAction action1 = new AddExportsDirectiveFix(module, packageName, "");
+              ModCommandAction action1 = new AddExportsDirectiveFix(module, packageName, "");
               info.registerFix(action1, null, null, null, null);
-              IntentionAction action = new AddUsesDirectiveFix(module, className);
+              ModCommandAction action = new AddUsesDirectiveFix(module, className);
               info.registerFix(action, null, null, null, null);
               holder.add(info.create());
             }

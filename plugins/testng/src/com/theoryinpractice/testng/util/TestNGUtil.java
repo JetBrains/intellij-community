@@ -61,7 +61,7 @@ public final class TestNGUtil {
   public static final String TEST_ANNOTATION_FQN = Test.class.getName();
   public static final String TESTNG_PACKAGE = "org.testng";
   public static final String FACTORY_ANNOTATION_FQN = Factory.class.getName();
-  @SuppressWarnings("deprecation") public static final String[] CONFIG_ANNOTATIONS_FQN = {
+  public static final String[] CONFIG_ANNOTATIONS_FQN = {
       "org.testng.annotations.Configuration",
       Factory.class.getName(),
       ObjectFactory.class.getName(),
@@ -78,7 +78,7 @@ public final class TestNGUtil {
       AfterTest.class.getName()
   };
 
-  @SuppressWarnings("deprecation") public static final String[] CONFIG_ANNOTATIONS_FQN_NO_TEST_LEVEL = {
+ public static final String[] CONFIG_ANNOTATIONS_FQN_NO_TEST_LEVEL = {
       "org.testng.annotations.Configuration",
       Factory.class.getName(),
       ObjectFactory.class.getName(),

@@ -139,7 +139,7 @@ class KotlinPlugin(context: Context) : Plugin(context) {
             withAction {
                 val version = version.propertyValue
                 val pluginRepository = version.buildSystemPluginRepository(buildSystemType)
-                BuildSystemPlugin.pluginRepositoreis.addValues(pluginRepository) andThen
+                BuildSystemPlugin.pluginRepositories.addValues(pluginRepository) andThen
                         updateBuildFiles { buildFile ->
                             buildFile.withIrs(
                                 version.repositories

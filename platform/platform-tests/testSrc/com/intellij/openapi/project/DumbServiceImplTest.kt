@@ -12,15 +12,13 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbServiceImpl.Companion.IDEA_FORCE_DUMB_QUEUE_TASKS
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiManagerImpl
-import com.intellij.testFramework.EdtRule
-import com.intellij.testFramework.ProjectRule
-import com.intellij.testFramework.RunsInEdt
+import com.intellij.testFramework.*
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
-import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ArrayUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.application
@@ -31,14 +29,21 @@ import com.intellij.util.indexing.contentQueue.IndexUpdateRunner
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
 import com.intellij.util.indexing.diagnostic.ScanningType
-import com.intellij.util.messages.Topic
+import com.intellij.util.messages.impl.MessageBusImpl
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 import org.junit.*
 import org.junit.Assert.*
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.io.File
-import java.util.concurrent.*
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Future
+import java.util.concurrent.Phaser
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
@@ -92,6 +97,97 @@ class DumbServiceImplTest {
   @After
   fun tearDown() {
     Disposer.dispose(testDisposable)
+  }
+
+  @Test
+  fun `test runWhenSmart does not hang in scheduler queue after Default dispatcher starvation`() {
+    val releaseDefaultDispatcher = CountDownLatch(1)
+    val inSmartMode = CountDownLatch(1)
+
+    try {
+      // occupy all the Dispatcher.Default threads with useless work
+      CoroutineScope(Dispatchers.Default).launch {
+        while (releaseDefaultDispatcher.count > 0) {
+          launch {
+            releaseDefaultDispatcher.awaitOrThrow(10, "releaseDefaultDispatcher was not invoked")
+          }
+          yield() // let just submitted coroutine to start and use current thread, so `yield` will suspend until releaseDefaultDispatcher.
+        }
+      }
+
+      Thread.sleep(100) // saturate default dispatcher (wait until `launch` suspended and cannot create new tasks)
+
+      runInEdtAndWait {
+        dumbService.queue {
+          dumbService.runWhenSmart {
+            inSmartMode.countDown()
+          }
+        }
+
+        assertTrue("Dumb mode didn't start", dumbService.isDumb)
+      }
+
+      // Wait until dumb mode is finished.
+      // Don't rely on dumbService.waitForSmartMode because it may need Default dispatcher, which is still busy.
+      // We want dumb service to become dumb and then smart WHILE all the dispatcher threads are busy, so all the StateFlows listeners
+      //   missed both these events (due to conflation)
+      for (i in 1..10) {
+        if (runInEdtAndGet { !dumbService.isDumb }) break
+        Thread.sleep(100)
+      }
+      assertFalse("Dumb mode didn't finish", runInEdtAndGet { dumbService.isDumb })
+
+      // now release Default dispatcher and see if runnable is executed (it should)
+      releaseDefaultDispatcher.countDown()
+      inSmartMode.awaitOrThrow(5, "Smart mode runnable didn't run")
+    }
+    finally {
+      releaseDefaultDispatcher.countDown()
+    }
+  }
+
+  private fun DumbServiceImpl.queue(task: (ProgressIndicator) -> Unit) {
+    queueTask(object : DumbModeTask() {
+      override fun performInDumbMode(indicator: ProgressIndicator) = task(indicator)
+    })
+  }
+  
+  @Test
+  fun `test runWhenSmart not invoked in dumb mode`() {
+    val toStringAlphabeticOrderComparator = Comparator<Any?> { s1, s2 ->
+      Strings.compare(s1?.toString(), s2?.toString(), false)
+    }
+
+    var invokedWhileDumb = false
+    project.messageBus.connect(testDisposable).subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
+      override fun enteredDumbMode() {
+        dumbService.runWhenSmart {
+          invokedWhileDumb = dumbService.isDumb
+        }
+      }
+    })
+
+    // Perform dumb task to initialize DumbService.DUMB_MODE lazy subscribers
+    queueEmptyDumbTaskOnEdtAndWaitForSmartMode()
+
+    // sort subscribers such that SmartModeScheduler is the last in the list
+    (project.messageBus as MessageBusImpl).sortSubscribers(DumbService.DUMB_MODE, toStringAlphabeticOrderComparator)
+    queueEmptyDumbTaskOnEdtAndWaitForSmartMode()
+    assertFalse("runWhenSmart should only be invoked in smart mode", invokedWhileDumb)
+
+    // sort subscribers such that SmartModeScheduler is the first in the list
+    (project.messageBus as MessageBusImpl).sortSubscribers(DumbService.DUMB_MODE, toStringAlphabeticOrderComparator.reversed())
+    queueEmptyDumbTaskOnEdtAndWaitForSmartMode()
+    assertFalse("runWhenSmart should only be invoked in smart mode", invokedWhileDumb)
+  }
+
+  private fun queueEmptyDumbTaskOnEdtAndWaitForSmartMode() {
+    runInEdtAndWait {
+      dumbService.queueTask(object : DumbModeTask() {
+        override fun performInDumbMode(indicator: ProgressIndicator) = Unit
+      })
+    }
+    waitForSmartModeFiveSecondsOrThrow()
   }
 
   @Test
@@ -284,72 +380,6 @@ class DumbServiceImplTest {
     assertEquals("Seems there's is a significant delay between becoming smart and waitForSmartMode() return. Delays in ms:\n" +
                  delays + "\n",
                  0, avg)
-  }
-
-  @Test
-  fun `test write lock in DumbModeListener does not propagate to runWhenSmart subscribers`() {
-    // The same is applicable to ScanningListener and ProjectActivity listeners in SmartModeScheduler.
-    // But test only considers DumbModeListener (two other tests look exactly the same).
-    // Proper solution (coming soon) - use async listeners in SmartModeScheduler (e.g. MutableStateFlow)
-
-    val TEST_DUMB_MODE: Topic<DumbService.DumbModeListener> = Topic("test dumb mode",
-                                                                    DumbService.DumbModeListener::class.java,
-                                                                    Topic.BroadcastDirection.NONE)
-
-    val TEST_TOPIC: Topic<Runnable> = Topic("test topic", Runnable::class.java, Topic.BroadcastDirection.NONE)
-
-    // First listener.
-    // Starts write action and publishes unrelated event. Publishing will propagate write action to subsequent DumbModeListener's
-    project.messageBus.connect(testDisposable).subscribe(TEST_DUMB_MODE, object : DumbService.DumbModeListener {
-      override fun exitDumbMode() {
-        // The whole point of the test is that this write action should not propagate to DumbService#runWhenSmart
-        application.runWriteAction {
-          project.messageBus.syncPublisher(TEST_TOPIC).run()
-        }
-      }
-    })
-
-    // subscriber for event published from first listener under write action (to enforce write action propagation)
-    project.messageBus.connect(testDisposable).subscribe(TEST_TOPIC, Runnable { })
-
-    // Second listener. Verifies that write action propagates, otherwise we didn't need this test at all
-    var writeActionPropagatesToSubscribers = false
-    project.messageBus.connect(testDisposable).subscribe(TEST_DUMB_MODE, object : DumbService.DumbModeListener {
-      override fun exitDumbMode() {
-        writeActionPropagatesToSubscribers = application.isWriteAccessAllowed
-      }
-    })
-
-    // Third listener. Ends dumb mode and invokes DumbService#runWhenSmart runnables. runWhenSmart runnables should not enjoy write action
-    project.messageBus.connect(testDisposable).subscribe(TEST_DUMB_MODE, SmartModeScheduler.SmartModeSchedulerDumbModeListener(project))
-
-    // now start dumb mode
-    assertEquals(0, project.service<SmartModeScheduler>().getCurrentMode())
-    runInEdtAndWait {
-      project.messageBus.syncPublisher(TEST_DUMB_MODE).enteredDumbMode()
-    }
-    assertNotEquals(0, project.service<SmartModeScheduler>().getCurrentMode())
-
-    // this is our runWhenSmart subscriber. We want it to not see write action started by the first listener
-    val writeIntentLockInRunWhenSmart = CompletableFuture<Boolean>()
-    dumbService.runWhenSmart {
-      writeIntentLockInRunWhenSmart.complete(application.isWriteAccessAllowed)
-    }
-
-    // Now end dumb mode and check how different listeners behave
-    runInEdtAndWait {
-      project.messageBus.syncPublisher(TEST_DUMB_MODE).exitDumbMode()
-    }
-    dumbService.waitForSmartMode()
-
-    assertTrue("Assumption about platform behavior failed. " +
-               "It is not that we want this behavior, this behavior is hard wired into the platform. " +
-               "If we don't observe write lock started by the first listener in the second listener, " +
-               "then the whole test does not make any sense.",
-               writeActionPropagatesToSubscribers)
-
-    assertFalse("DumbService should not propagate write action to runWhenSmart subscribers",
-                writeIntentLockInRunWhenSmart.get(5, TimeUnit.SECONDS))
   }
 
   @Test

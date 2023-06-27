@@ -1,4 +1,4 @@
-VERSION := 3.41.0-jb.2
+VERSION := 3.42.0-jb.1
 
 .phony: archive-native install-native
 
@@ -13,7 +13,7 @@ install-native: archive-native
       -Dpackaging=jar \
       -Dfile=target/sqlite-native.jar
 
-deploy-native: archive-native
+deploy-native: archive-native install-native
 	mvn deploy:deploy-file -DgroupId=org.sqlite \
       -DartifactId=native \
       -Dversion=$(VERSION) \

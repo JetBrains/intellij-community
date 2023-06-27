@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.AddMissingDeconstructionCom
 import com.intellij.codeInsight.daemon.impl.quickfix.AddMissingDeconstructionComponentsFix.Pattern;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -127,13 +128,12 @@ final class PatternHighlightingModel {
     String message = JavaErrorBundle.message("incorrect.number.of.nested.patterns", recordComponents.length, patternComponents.length);
     HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).description(message).escapedToolTip(message);
     PsiDeconstructionList deconstructionList = deconstructionPattern.getDeconstructionList();
-    final IntentionAction fix;
     if (needQuickFix) {
       if (patternComponents.length < recordComponents.length) {
         builder.range(deconstructionList);
         var missingRecordComponents = Arrays.copyOfRange(recordComponents, patternComponents.length, recordComponents.length);
         var missingPatterns = ContainerUtil.map(missingRecordComponents, component -> Pattern.create(component, deconstructionList));
-        fix = new AddMissingDeconstructionComponentsFix(deconstructionList, missingPatterns);
+        ModCommandAction fix = new AddMissingDeconstructionComponentsFix(deconstructionList, missingPatterns);
         builder.registerFix(fix, null, null, null, null);
       }
       else {
@@ -145,7 +145,7 @@ final class PatternHighlightingModel {
         PsiPattern[] elementsToDelete = Arrays.copyOfRange(patternComponents, recordComponents.length, patternComponents.length);
         int diff = patternComponents.length - recordComponents.length;
         String text = QuickFixBundle.message("remove.redundant.nested.patterns.fix.text", diff);
-        fix = QUICK_FIX_FACTORY.createDeleteFix(elementsToDelete, text);
+        IntentionAction fix = QUICK_FIX_FACTORY.createDeleteFix(elementsToDelete, text);
         builder.registerFix(fix, null, text, null, null);
       }
     }
@@ -231,7 +231,7 @@ final class PatternHighlightingModel {
         continue;
       }
       Collection<List<PsiPattern>> lists = groupedByType.get(group.psiType());
-      if (lists.size() == 0) continue;
+      if (lists.isEmpty()) continue;
       List<PsiPattern> next = lists.iterator().next();
       if (next == null || next.isEmpty()) continue;
       checkedExhaustivePatterns.add(next.get(0));
@@ -248,7 +248,7 @@ final class PatternHighlightingModel {
     List<BranchesExhaustiveness> coveredPatterns =
       ContainerUtil.filter(notExhaustive.values(), group ->
         group.branches().stream()
-          .filter(t -> t.size() > 0)
+          .filter(t -> !t.isEmpty())
           .map(patterns -> patterns.get(0))
           .anyMatch(pattern -> JavaPsiPatternUtil.isUnconditionalForType(pattern, typeToCheck, true)));
     if (!coveredPatterns.isEmpty()) {

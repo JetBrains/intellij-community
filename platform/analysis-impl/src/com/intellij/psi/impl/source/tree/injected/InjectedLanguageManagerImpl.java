@@ -341,9 +341,9 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
   }
 
   @Override
-  public boolean isInjectedFragment(@NotNull PsiFile injectedFile) {
+  public boolean isInjectedViewProvider(@NotNull FileViewProvider viewProvider) {
     //noinspection removal
-    return injectedFile.getViewProvider() instanceof InjectedFileViewProvider;
+    return viewProvider instanceof InjectedFileViewProvider;
   }
 
   @Override

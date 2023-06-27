@@ -41,18 +41,21 @@ suspend fun performAction(
   action: AnAction,
   project: Project? = null,
   systemId: ProjectSystemId? = null,
-  selectedFile: VirtualFile? = null
+  selectedFile: VirtualFile? = null,
+  blocking: Boolean = false
 ) {
   withSelectedFileIfNeeded(selectedFile) {
+    val event = TestActionEvent.createTestEvent {
+      when {
+        ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID.`is`(it) -> systemId
+        CommonDataKeys.PROJECT.`is`(it) -> project
+        CommonDataKeys.VIRTUAL_FILE.`is`(it) -> selectedFile
+        ExternalSystemDataKeys.BLOCKING_ACTIVITY.`is`(it) -> blocking
+        else -> null
+      }
+    }
     withContext(Dispatchers.EDT) {
-      action.actionPerformed(TestActionEvent.createTestEvent {
-        when {
-          ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID.`is`(it) -> systemId
-          CommonDataKeys.PROJECT.`is`(it) -> project
-          CommonDataKeys.VIRTUAL_FILE.`is`(it) -> selectedFile
-          else -> null
-        }
-      })
+      action.actionPerformed(event)
     }
   }
 }

@@ -7,9 +7,8 @@ import com.intellij.util.Urls.parseEncoded
 object GitLabSecurityUtil {
   private const val API_SCOPE = "api"
   private const val READ_USER_SCOPE = "read_user"
-  private val MASTER_SCOPES = listOf(API_SCOPE, READ_USER_SCOPE)
-
   private const val DEFAULT_CLIENT_NAME = "GitLab Integration Plugin"
+  val MASTER_SCOPES = listOf(API_SCOPE, READ_USER_SCOPE)
 
   internal fun buildNewTokenUrl(serverUri: String): String? {
     val productName = ApplicationNamesInfo.getInstance().fullProductName

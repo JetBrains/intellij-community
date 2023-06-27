@@ -101,6 +101,10 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
         doImplementFileTest()
     }
 
+   open fun testKtij16175() {
+        doImplementFileTest()
+    }
+
    open fun testOverrideUnitFunction() {
         doOverrideFileTest()
     }
@@ -227,6 +231,10 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
 
    open fun testEscapeIdentifiers() {
         doOverrideFileTest()
+    }
+
+    open fun testValueClass() {
+        doImplementFileTest()
     }
 
    open fun testVarArgs() {

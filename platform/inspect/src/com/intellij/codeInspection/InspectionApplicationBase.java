@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -122,6 +123,11 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     try {
       header();
       execute();
+    }
+    catch (ProcessCanceledException e) {
+      reportError(e);
+      gracefulExit();
+      return;
     }
     catch (Throwable e) {
       LOG.error(e);
@@ -909,9 +915,8 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       super.setText(text);
       if (text == null) return;
       switch (myVerboseLevel) {
-        case 0:
-          break;
-        case 1:
+        case 0 -> { }
+        case 1 -> {
           String prefix = getPrefix(text);
           if (prefix.equals(lastPrefix)) {
             reportMessageNoLineBreak(1, ".");
@@ -921,11 +926,9 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
             reportMessage(1, "");
             reportMessage(1, prefix);
           }
-          break;
-        case 2:
-          reportMessage(2, text);
-          break;
-        case 3:
+        }
+        case 2 -> reportMessage(2, text);
+        case 3 -> {
           int percent = (int)(getFraction() * 100);
           if (!isIndeterminate() && getFraction() > 0 && myLastPercent != percent && nestingLevel == 0) {
             // do not print duplicate "processing xx%"
@@ -934,7 +937,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
             String msg = getPrefix(text) + " " + percent + "%";
             reportMessage(2, msg);
           }
-          break;
+        }
       }
     }
 

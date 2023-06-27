@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.editor.highlighter.EditorHighlighter
 import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.*
@@ -23,9 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.childScope
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.beans.PropertyChangeListener
@@ -97,22 +94,13 @@ open class TextEditorImpl @Internal constructor(@JvmField protected val project:
       return factory.createMainEditor(document!!, project, file)
     }
 
-    @Internal
-    @RequiresEdt
-    fun setupEditor(editor: EditorEx, highlighter: EditorHighlighter) {
-      editor.settings.setLanguageSupplier { getDocumentLanguage(editor) }
-      editor.highlighter = highlighter
-    }
   }
 
   /**
    * @return a continuation to be called in EDT
    */
-  open suspend fun loadEditorInBackground(highlighterDeferred: Deferred<EditorHighlighter>): Runnable {
-    val highlighter = highlighterDeferred.await()
-    return Runnable {
-      setupEditor(component.editor, highlighter)
-    }
+  open suspend fun loadEditorInBackground(): Runnable? {
+    return null
   }
 
   protected open fun createEditorComponent(project: Project, file: VirtualFile, editor: EditorImpl): TextEditorComponent {

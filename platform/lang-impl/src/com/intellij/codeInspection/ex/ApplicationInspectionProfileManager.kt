@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
@@ -15,7 +15,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.SchemeManagerFactory
-import com.intellij.openapi.project.processOpenedProjects
+import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
@@ -90,7 +90,7 @@ open class ApplicationInspectionProfileManager @TestOnly @NonInjectable construc
   }
 
   override fun fireProfileChanged(profile: InspectionProfileImpl) {
-    processOpenedProjects { project ->
+    for (project in getOpenedProjects()) {
       ProjectInspectionProfileManager.getInstance(project).fireProfileChanged(profile)
     }
   }
@@ -112,7 +112,7 @@ open class ApplicationInspectionProfileManager @TestOnly @NonInjectable construc
                                                         Messages.showErrorDialog(
                                                           InspectionsBundle.message("inspection.error.loading.message", 0, file),
                                                           InspectionsBundle.message("inspection.errors.occurred.dialog.title"))
-                                                      }, ModalityState.NON_MODAL)
+                                                      }, ModalityState.nonModal())
     }
 
     return getProfile(path, false)

@@ -2,7 +2,6 @@
 package com.intellij.openapi.project
 
 import com.intellij.internal.statistic.StructuredIdeActivity
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -19,6 +18,7 @@ import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -168,7 +168,7 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
       catch (t: Throwable) {
         task.close()
         mySingleTaskExecutor.clearScheduledFlag()
-        LOG.error("Failed to start background index update task")
+        LOG.error("Failed to start background index update task", t)
         throw t
       }
     }
@@ -208,7 +208,7 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
   }
 
   open fun runSingleTask(task: QueuedTask<T>, activity: StructuredIdeActivity?) {
-    if (ApplicationManager.getApplication().isInternal) LOG.info("Running task: " + task.infoString)
+    LOG.info("Running task: " + task.infoString)
     if (activity != null) task.registerStageStarted(activity)
 
     // nested runProcess is needed for taskIndicator to be honored in ProgressManager.checkCanceled calls deep inside tasks
@@ -218,17 +218,29 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
           task.executeTask()
         }
         catch (ignored: ProcessCanceledException) {
+          LOG.info("Task canceled (PCE): ${task.infoString}")
         }
         catch (unexpected: Throwable) {
           LOG.error("Failed to execute task " + task.infoString + ". " + unexpected.message, unexpected)
         }
       }, task.indicator)
+    LOG.info("Task finished: " + task.infoString)
   }
 
   /**
    * @return state containing `true` if some task is currently executed in background thread.
    */
   val isRunning: StateFlow<Boolean> = mySingleTaskExecutor.isRunning
+
+  /**
+   * Modification tracker that increases each time the executor starts or stops
+   *
+   * This is not the same as [isRunning], because [isRunning] is a state flow, meaning that it is conflated and deduplicated, i.e. short
+   * transitions true-false-true can be missed in [isRunning]. [startedOrStoppedEvent] is still conflated, but never miss the latest event.
+   *
+   * TODO: [isRunning] should be a shared flow without deduplication, then we wont need [startedOrStoppedEvent]
+   */
+  internal val startedOrStoppedEvent: Flow<*> = mySingleTaskExecutor.modificationTrackerAsFlow
 
   /**
    * Suspends queue in this executor: new tasks will be added to the queue, but they will not be executed until [resumeQueue]

@@ -29,4 +29,9 @@ public interface CommonIntentionAction {
   @IntentionFamilyName
   @Contract(pure = true)
   String getFamilyName();
+
+  /**
+   * @return this action adapted to {@link IntentionAction} interface
+   */
+  @NotNull IntentionAction asIntention();
 }

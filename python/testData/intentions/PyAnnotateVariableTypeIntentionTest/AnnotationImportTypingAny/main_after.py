@@ -1,6 +1,6 @@
-from typing import Dict, Any
+from typing import Dict, LiteralString, Any
 
 
 def func(x):
-    var: [Dict[str, Any]] = {'foo': x}
+    var: [Dict[LiteralString, Any]] = {'foo': x}
     var

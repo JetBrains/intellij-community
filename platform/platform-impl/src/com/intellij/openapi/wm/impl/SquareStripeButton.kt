@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.icons.AllIcons
@@ -55,8 +55,9 @@ internal abstract class AbstractSquareStripeButton(action: AnAction, presentatio
   }
 }
 
-internal open class SquareStripeButton(action: SquareAnActionButton, val toolWindow: ToolWindowImpl) :
-  AbstractSquareStripeButton(action, createPresentation(toolWindow)) {
+internal open class SquareStripeButton(action: SquareAnActionButton, val toolWindow: ToolWindowImpl, presentation: Presentation) :
+  AbstractSquareStripeButton(action, presentation) {
+  constructor(action: SquareAnActionButton, toolWindow: ToolWindowImpl) : this(action, toolWindow, createPresentation(toolWindow))
   constructor(toolWindow: ToolWindowImpl) : this(SquareAnActionButton(toolWindow), toolWindow)
   companion object {
     fun createMoveGroup(): ToolWindowMoveAction.Group = ToolWindowMoveAction.Group()
@@ -64,6 +65,7 @@ internal open class SquareStripeButton(action: SquareAnActionButton, val toolWin
 
   init {
     doInit { createPopupGroup(toolWindow) }
+    @Suppress("LeakingThis")
     MouseDragHelper.setComponentDraggable(this, true)
   }
 
@@ -155,7 +157,8 @@ internal open class SquareAnActionButton(protected val window: ToolWindowImpl) :
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    if (e.project!!.isDisposed) {
+    val project = e.project
+    if (project == null || project.isDisposed) {
       return
     }
 

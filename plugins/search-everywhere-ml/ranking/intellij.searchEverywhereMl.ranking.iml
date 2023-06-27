@@ -60,13 +60,13 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="find-file-model-experimental" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-file-model:231.1.1" />
+        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-file-model:232.0.1" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/231.1.1/find-file-model-231.1.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/232.0.1/find-file-model-232.0.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/231.1.1/find-file-model-231.1.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/232.0.1/find-file-model-232.0.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -96,17 +96,16 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="find-all-model-experimental" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-all-model:231.0.1" />
+        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-all-model:232.1.1" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-all-model/231.0.1/find-all-model-231.0.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-all-model/232.1.1/find-all-model-232.1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-all-model/231.0.1/find-all-model-231.0.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-all-model/232.1.1/find-all-model-232.1.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="intellij.searchEverywhereMl.common" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.ranking.vcs" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.ranking.yaml" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.typos" scope="RUNTIME" />

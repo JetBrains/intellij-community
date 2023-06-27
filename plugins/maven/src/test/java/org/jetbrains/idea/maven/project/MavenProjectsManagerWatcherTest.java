@@ -12,6 +12,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.importing.MavenProjectLegacyImporter;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Test;
 
@@ -91,7 +92,10 @@ public class MavenProjectsManagerWatcherTest extends MavenMultiVersionImportingT
     assertModules("project", "module");
 
     replaceDocumentString(myProjectPom, "<modules><module>module</module></modules>", "");
-    configConfirmationForYesAnswer();
+
+    //configConfirmationForYesAnswer();
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
+
     scheduleProjectImportAndWait();
 
     assertModules("project");

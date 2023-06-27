@@ -63,7 +63,7 @@ internal class GitLabMergeRequestDetailsLoadingViewModelImpl(
         awaitCancellation()
       }
     }
-  }
+  }.modelFlow(scope, LOG)
 
   override fun requestLoad() {
     scope.launch {

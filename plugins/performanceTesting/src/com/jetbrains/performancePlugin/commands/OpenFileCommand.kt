@@ -17,7 +17,6 @@ import com.jetbrains.performancePlugin.PerformanceTestingBundle
 import com.jetbrains.performancePlugin.utils.DaemonCodeAnalyzerListener
 import com.sampullara.cli.Args
 import io.opentelemetry.api.trace.Span
-import io.opentelemetry.context.Scope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
@@ -59,14 +58,12 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
     val file = findFile(filePath, project) ?: error(PerformanceTestingBundle.message("command.file.not.found", filePath))
     val connection = project.messageBus.simpleConnect()
     val spanRef = Ref<Span>()
-    val scopeRef = Ref<Scope>()
     val projectPath = project.basePath
-    val job = DaemonCodeAnalyzerListener.listen(connection, spanRef, scopeRef, timeout)
+    val job = DaemonCodeAnalyzerListener.listen(connection, spanRef, timeout)
     if (suppressErrors) {
       job.suppressErrors()
     }
     spanRef.set(startSpan(SPAN_NAME))
-    scopeRef.set(spanRef.get().makeCurrent())
     setFilePath(projectPath = projectPath, span = spanRef.get(), file = file)
 
     // focus window

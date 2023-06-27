@@ -1,6 +1,6 @@
 package com.jetbrains.performancePlugin.commands;
 
-import com.intellij.platform.diagnostic.telemetry.impl.TraceUtil;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.searcheverywhere.*;
@@ -85,6 +85,9 @@ public class SearchEverywhereCommand extends AbstractCommand {
           DataContext dataContext = DataManager.getInstance().getDataContext(focusedComponent);
           IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
           AnActionEvent actionEvent = AnActionEvent.createFromDataContext(ActionPlaces.EDITOR_POPUP, null, dataContext);
+          if(actionEvent.getProject() == null) {
+            actionCallback.reject("Project is null");
+          }
           TraceUtil.runWithSpanThrows(PerformanceTestSpan.TRACER, "searchEverywhere_dialog_shown", dialogSpan -> {
             SearchEverywhereManager.getInstance(project).show(tabId.get(), "", actionEvent);
           });

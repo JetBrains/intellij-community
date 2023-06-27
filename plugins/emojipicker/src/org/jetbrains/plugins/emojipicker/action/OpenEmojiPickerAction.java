@@ -25,8 +25,7 @@ import java.util.function.Consumer;
 /**
  * An action that opens emoji picker popup, selected by user.
  */
-public class OpenEmojiPickerAction extends DumbAwareAction {
-
+final class OpenEmojiPickerAction extends DumbAwareAction {
   private static Context getContext(AnActionEvent e, boolean findOnly) {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor != null) {
@@ -104,8 +103,7 @@ public class OpenEmojiPickerAction extends DumbAwareAction {
     }
   }
 
-
-  private static class Context {
+  private static final class Context {
     private static final Context FOUND = new Context(null, null);
     private final Consumer<String> myInputCallback;
     private final Consumer<JBPopup> myPopupShowCallback;

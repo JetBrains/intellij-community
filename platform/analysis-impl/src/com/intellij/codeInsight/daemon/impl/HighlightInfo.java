@@ -181,9 +181,9 @@ public class HighlightInfo implements Segment {
                           @Nullable Boolean needsUpdateOnTyping,
                           boolean isFileLevelAnnotation,
                           int navigationShift,
-                          ProblemGroup problemGroup,
+                          @Nullable ProblemGroup problemGroup,
                           @Nullable String inspectionToolId,
-                          GutterMark gutterIconRenderer,
+                          @Nullable GutterMark gutterIconRenderer,
                           int group,
                           @Nullable PsiReference unresolvedReference,
                           @Nullable PsiElement psiElement) {
@@ -288,31 +288,41 @@ public class HighlightInfo implements Segment {
   public @Tooltip String getToolTip() {
     String toolTip = this.toolTip;
     String description = this.description;
-    if (toolTip == null || description == null || !toolTip.contains(DESCRIPTION_PLACEHOLDER)) return toolTip;
-    String decoded = StringUtil.replace(toolTip, DESCRIPTION_PLACEHOLDER, XmlStringUtil.escapeString(description));
-    return XmlStringUtil.wrapInHtml(decoded);
+
+    if (toolTip == null) return null;
+
+    String wrapped = XmlStringUtil.wrapInHtml(toolTip);
+    if (description == null || !wrapped.contains(DESCRIPTION_PLACEHOLDER)) {
+      return wrapped;
+    }
+
+    String decoded = StringUtil.replace(wrapped, DESCRIPTION_PLACEHOLDER, XmlStringUtil.escapeString(description));
+    return decoded;
   }
 
   /**
    * Encodes \p tooltip so that substrings equal to a \p description
    * are replaced with the special placeholder to reduce size of the
-   * tooltip. If encoding takes place, <html></html> tags are
-   * stripped of the tooltip.
+   * tooltip. <html></html> tags are stripped of the tooltip.
    *
    * @param tooltip     - html text
    * @param description - plain text (not escaped)
    * @return encoded tooltip (stripped html text with one or more placeholder characters)
    * or tooltip without changes.
    */
-  private static @Tooltip String encodeTooltip(@Tooltip String tooltip, @DetailedDescription String description) {
-    if (tooltip == null || description == null || description.isEmpty()) return tooltip;
+  @Nullable
+  private static @Tooltip String encodeTooltip(@Nullable @Tooltip String tooltip, @Nullable @DetailedDescription String description) {
+    if (tooltip == null) return null;
 
-    String encoded = StringUtil.replace(tooltip, XmlStringUtil.escapeString(description), DESCRIPTION_PLACEHOLDER);
-    if (Strings.areSameInstance(encoded, tooltip)) {
-      return tooltip;
+    String stripped = XmlStringUtil.stripHtml(tooltip);
+    if (description == null || description.isEmpty()) return stripped;
+
+    String encoded = StringUtil.replace(stripped, XmlStringUtil.escapeString(description), DESCRIPTION_PLACEHOLDER);
+    if (Strings.areSameInstance(encoded, stripped)) {
+      return stripped;
     }
     if (encoded.equals(DESCRIPTION_PLACEHOLDER)) encoded = DESCRIPTION_PLACEHOLDER;
-    return XmlStringUtil.stripHtml(encoded);
+    return encoded;
   }
 
   public @DetailedDescription String getDescription() {
@@ -694,7 +704,7 @@ public class HighlightInfo implements Segment {
   public static class IntentionActionDescriptor {
     private final IntentionAction myAction;
     volatile List<? extends IntentionAction> myOptions;
-    volatile HighlightDisplayKey myKey;
+    final @Nullable HighlightDisplayKey myKey;
     private final ProblemGroup myProblemGroup;
     private final HighlightSeverity mySeverity;
     private final @Nls String myDisplayName;
@@ -745,12 +755,11 @@ public class HighlightInfo implements Segment {
     boolean canCleanup(@NotNull PsiElement element) {
       if (myCanCleanup == null) {
         InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
-        HighlightDisplayKey key = myKey;
-        if (key == null) {
+        if (myKey == null) {
           myCanCleanup = false;
         }
         else {
-          InspectionToolWrapper<?, ?> toolWrapper = profile.getInspectionTool(key.toString(), element);
+          InspectionToolWrapper<?, ?> toolWrapper = profile.getInspectionTool(myKey.toString(), element);
           myCanCleanup = toolWrapper != null && toolWrapper.isCleanupTool();
         }
       }
@@ -853,7 +862,6 @@ public class HighlightInfo implements Segment {
       if (options == null) {
         myOptions = options = newOptions;
       }
-      myKey = null;
       return options;
     }
 
@@ -864,8 +872,7 @@ public class HighlightInfo implements Segment {
 
     @Override
     public String toString() {
-      String text = getAction().getText();
-      return "IntentionActionDescriptor: " + (text.isEmpty() ? IntentionActionDelegate.unwrap(getAction()).getClass() : text + " (" + IntentionActionDelegate.unwrap(getAction()).getClass() + ")");
+      return "IntentionActionDescriptor: " + IntentionActionDelegate.unwrap(getAction()).getClass();
     }
 
     @Nullable
@@ -876,6 +883,11 @@ public class HighlightInfo implements Segment {
     @Override
     public boolean equals(Object obj) {
       return obj instanceof IntentionActionDescriptor && myAction.equals(((IntentionActionDescriptor)obj).myAction);
+    }
+
+    @Nullable
+    public String getToolId() {
+      return myKey != null ? myKey.getID() : null;
     }
   }
 

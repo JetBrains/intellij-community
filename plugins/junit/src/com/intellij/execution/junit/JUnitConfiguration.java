@@ -221,7 +221,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   @Override
   public String suggestedName() {
     String repeat = switch (getRepeatMode()) {
-      case RepeatCount.UNLIMITED, RepeatCount.UNTIL_FAILURE -> " [*]";
+      case RepeatCount.UNLIMITED, RepeatCount.UNTIL_FAILURE, RepeatCount.UNTIL_SUCCESS -> " [*]";
       case RepeatCount.N -> " [" + getRepeatCount() + "]";
       default -> "";
     };

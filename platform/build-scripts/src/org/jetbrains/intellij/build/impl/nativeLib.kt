@@ -40,7 +40,11 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
     getCommonPath(paths)
   }
 
-  val libName = sourceFile.fileName.toString().substringBefore('-')
+  val libName = getLibNameBySourceFile(sourceFile)
+  // We need to keep async-profiler agents for all platforms to support remote target profiling,
+  // as a suitable agent is copied to a remote machine
+  val allPlatformsRequired = libName == "async-profiler"
+
   HashMapZipFile.load(sourceFile).use { zipFile ->
     val outDir = context.paths.tempDir.resolve(libName)
     Files.createDirectories(outDir)
@@ -49,14 +53,14 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
       val fileName = path.substring(path.lastIndexOf('/') + 1)
 
       val os = when {
-        osNameStartsWith(path, "darwin") || osNameStartsWith(path, "mac") -> OsFamily.MACOS
+        osNameStartsWith(path, "darwin") || osNameStartsWith(path, "mac") || osNameStartsWith(path, "macos") -> OsFamily.MACOS
         path.startsWith("win32-") || osNameStartsWith(path, "win") || osNameStartsWith(path, "windows") -> OsFamily.WINDOWS
         path.startsWith("Linux-Android/") || path.startsWith("Linux-Musl/") -> continue
         osNameStartsWith(path, "linux") -> OsFamily.LINUX
         else -> continue
       }
 
-      if (!context.options.targetOs.contains(os) && signTool.signNativeFileMode != SignNativeFileMode.PREPARE) {
+      if (!allPlatformsRequired && !context.options.targetOs.contains(os) && signTool.signNativeFileMode != SignNativeFileMode.PREPARE) {
         continue
       }
 
@@ -66,10 +70,13 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
         path.contains("x86-64") || path.contains("x86_64") -> JvmArchitecture.x64
         // universal library
         os == OsFamily.MACOS && path.count { it == '/' } == 1 -> null
-        else -> continue
+        !osAndArch.contains('-') && path.count { it == '/' } == 1 -> JvmArchitecture.x64
+        else -> {
+          continue
+        }
       }
 
-      if (arch != null &&
+      if (!allPlatformsRequired && arch != null &&
           (context.options.targetArch != null && context.options.targetArch != arch) &&
           signTool.signNativeFileMode != SignNativeFileMode.PREPARE) {
         continue
@@ -105,8 +112,11 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
         }
       }
 
-      val relativePath = "lib/$libName/" + (if (libName == "jna") "${arch!!.dirName}/$fileName" else path)
-      context.addDistFile(DistFile(file = file, relativePath = relativePath, os = os, arch = arch))
+      val relativePath = "lib/$libName/" + getRelativePath(libName, arch, fileName, path)
+      val distFile = DistFile(file = file, relativePath = relativePath,
+                              os = os.takeUnless { allPlatformsRequired },
+                              arch = arch.takeUnless { allPlatformsRequired })
+      context.addDistFile(distFile)
     }
   }
 
@@ -129,6 +139,21 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
       }
     }
   }
+}
+
+// each library has own implementation of handling path property
+private fun getRelativePath(libName: String, arch: JvmArchitecture?, fileName: String, path: String): String {
+  if (libName == "async-profiler") {
+    return if (arch == null) fileName else "${arch.dirName}/$fileName"
+  }
+  else {
+    return if (libName == "jna") "${arch!!.dirName}/$fileName" else path
+  }
+}
+
+private fun getLibNameBySourceFile(sourceFile: Path): String {
+  val fileName = sourceFile.fileName.toString()
+  return fileName.split('-').takeWhile { !it.contains('.') }.joinToString(separator = "-")
 }
 
 private fun osNameStartsWith(path: String, prefix: String): Boolean {

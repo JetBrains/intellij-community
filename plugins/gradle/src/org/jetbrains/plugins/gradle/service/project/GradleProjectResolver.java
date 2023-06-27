@@ -44,7 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.execution.target.TargetBuildLauncher;
 import org.jetbrains.plugins.gradle.issue.DeprecatedGradleVersionIssue;
-import org.jetbrains.plugins.gradle.issue.UnsupportedGradleVersionIssue;
+import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
@@ -220,8 +220,12 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       if (!isCustomSerializationSupported(resolverCtx, gradleVersion, isCompositeBuildsSupported)) {
         useCustomSerialization = false;
       }
-      if (UnsupportedGradleVersionIssue.isUnsupported(gradleVersion)) {
+      if (!GradleJvmSupportMatrix.isGradleSupportedByIdea(gradleVersion)) {
         throw new IllegalStateException("Unsupported Gradle version");
+      }
+      var javaHome = buildEnvironment.getJava().getJavaHome();
+      if (!GradleJvmSupportMatrix.isJavaHomeSupportedByIdea(javaHome.getPath())) {
+        throw new IllegalStateException("Unsupported Gradle JVM version");
       }
     }
     final ProjectImportAction projectImportAction =
@@ -305,7 +309,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
             buildFinishWaiter.countDown();
           }
         });
-      if (gradleVersion != null && DeprecatedGradleVersionIssue.isDeprecated(gradleVersion)) {
+      if (gradleVersion != null && GradleJvmSupportMatrix.isGradleDeprecatedByIdea(gradleVersion)) {
         resolverCtx.report(MessageEvent.Kind.WARNING, new DeprecatedGradleVersionIssue(gradleVersion, resolverCtx.getProjectPath()));
       }
       performanceTrace.addTrace(allModels.getPerformanceTrace());
@@ -572,6 +576,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   private static void configureExecutionArgumentsAndVmOptions(@NotNull GradleExecutionSettings executionSettings,
                                                               @NotNull DefaultProjectResolverContext resolverCtx,
                                                               boolean isBuildSrcProject) {
+    if (!Registry.is("gradle.download.sources", true)) {
+      executionSettings.withArgument("-Didea.gradle.download.sources=false");
+    }
     executionSettings.withArgument("-Didea.sync.active=true");
     if (resolverCtx.isResolveModulePerSourceSet()) {
       executionSettings.withArgument("-Didea.resolveSourceSetDependencies=true");

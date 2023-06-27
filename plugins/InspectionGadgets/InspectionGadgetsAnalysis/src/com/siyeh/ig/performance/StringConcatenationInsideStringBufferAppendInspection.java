@@ -15,10 +15,10 @@
  */
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.util.ChangeToAppendUtil;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -67,7 +67,7 @@ public class StringConcatenationInsideStringBufferAppendInspection extends BaseI
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement methodNameElement, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement methodNameElement, @NotNull ModPsiUpdater updater) {
       final PsiReferenceExpression methodExpression = (PsiReferenceExpression)methodNameElement.getParent();
       if (methodExpression == null) {
         return;

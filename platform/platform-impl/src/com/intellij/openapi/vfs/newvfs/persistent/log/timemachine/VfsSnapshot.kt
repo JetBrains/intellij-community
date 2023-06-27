@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.log.timemachine
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream
 import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordAccessor
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.bind
@@ -36,8 +37,19 @@ interface VfsSnapshot {
     /**
      * @return [State.NotAvailable] if recovery is not possible at all, [State.Ready] if an attempt to recover children ids was made,
      * but be cautious that the result may be incomplete in any case: some children ids may get lost if log was truncated from the start.
+     * Keep in mind that a file is considered a child here if its record has its parentId field set to our fileId, so it will be
+     * considered a child even if the record is marked as deleted.
+     * @see [notDeleted]
      */
-    fun getRecoverableChildrenIds(): DefinedState<RecoveredChildrenIds>
+    fun getChildrenIds(): DefinedState<RecoveredChildrenIds>
+
+    companion object {
+      val VirtualFileSnapshot.isDeleted: DefinedState<Boolean> get() =
+        flags.observeState().fmap { PersistentFSRecordAccessor.hasDeletedFlag(it) }
+
+      fun <T: VirtualFileSnapshot> Collection<T>.notDeleted(keepIfNotAvailable: Boolean = false) =
+        filter { it.isDeleted.mapCases({ keepIfNotAvailable }) { !it } }
+    }
 
     interface RecoveredChildrenIds: List<Int> {
       /**
@@ -45,9 +57,16 @@ interface VfsSnapshot {
        * which are not actually children).
        */
       val isComplete: Boolean
+
+      companion object {
+        private class RecoveredChildrenIdsImpl(val ids: List<Int>, override val isComplete: Boolean) : RecoveredChildrenIds, List<Int> by ids
+
+        fun of(ids: List<Int>, isComplete: Boolean): RecoveredChildrenIds = RecoveredChildrenIdsImpl(ids, isComplete)
+      }
     }
 
     abstract class Property<T> {
+      @Volatile
       var state: State = State.UnknownYet
         protected set
 
@@ -69,10 +88,10 @@ interface VfsSnapshot {
           }
         }
 
-      inline fun <R> observe(onNotAvailable: (cause: Throwable) -> R, onReady: (value: T) -> R): R =
+      inline fun <R> observe(onNotAvailable: (cause: NotEnoughInformationCause) -> R, onReady: (value: T) -> R): R =
         observeState().mapCases(onNotAvailable, onReady)
 
-      fun get(): T = observe(onNotAvailable = { throw IllegalStateException("property expected to be Ready", it.cause) }) { it }
+      fun get(): T = observe(onNotAvailable = { throw AssertionError("property expected to be Ready", it.cause) }) { it }
       fun getOrNull(): T? = observe(onNotAvailable = { null }) { it }
 
       companion object {
@@ -115,7 +134,9 @@ interface VfsSnapshot {
         }
 
         companion object {
-          inline fun <T, R> DefinedState<T>.mapCases(onNotAvailable: (cause: Throwable) -> R, onReady: (value: T) -> R): R = when (this) {
+          fun <T> DefinedState<T>.get(): T = mapCases({ throw AssertionError("value expected to be available", it) }) { it }
+
+          inline fun <T, R> DefinedState<T>.mapCases(onNotAvailable: (cause: NotEnoughInformationCause) -> R, onReady: (value: T) -> R): R = when (this) {
             is Ready<T> -> onReady(value)
             is NotAvailable -> onNotAvailable(cause)
           }
@@ -135,13 +156,6 @@ interface VfsSnapshot {
             is NotAvailable -> other()
             null -> other()
           }
-
-          sealed class GenericNotAvailableException(message: String? = null, cause: Throwable? = null) : Exception(message, cause)
-          open class NotEnoughInformationCause(message: String, cause: NotEnoughInformationCause? = null) : GenericNotAvailableException(message, cause) {
-            override fun toString(): String = localizedMessage
-          }
-          object UnspecifiedNotAvailableException : NotEnoughInformationCause("property value is not available") // TODO delete and fix usages
-          open class VfsRecoveryException(message: String? = null, cause: Throwable? = null) : GenericNotAvailableException(message, cause)
         }
       }
     }

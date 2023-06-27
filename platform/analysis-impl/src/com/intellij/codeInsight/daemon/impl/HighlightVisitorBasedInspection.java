@@ -9,7 +9,7 @@ import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -28,7 +28,7 @@ import java.util.List;
 
 import static com.intellij.codeInsight.util.HighlightVisitorScopeKt.*;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
-import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.runWithSpan;
+import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runWithSpan;
 
 public class HighlightVisitorBasedInspection extends GlobalSimpleInspectionTool {
   public static final String SHORT_NAME = "Annotator";
@@ -106,7 +106,7 @@ public class HighlightVisitorBasedInspection extends GlobalSimpleInspectionTool 
   }
 
   @NotNull
-  private static List<HighlightInfo> runAnnotatorsInGeneralHighlighting(@NotNull PsiFile file,
+  public static List<HighlightInfo> runAnnotatorsInGeneralHighlighting(@NotNull PsiFile file,
                                                                         boolean highlightErrorElements,
                                                                         boolean runAnnotators,
                                                                         boolean runVisitors) {
@@ -133,7 +133,7 @@ public class HighlightVisitorBasedInspection extends GlobalSimpleInspectionTool 
 
     String fileName = file.getName();
     List<HighlightInfo> result = new ArrayList<>();
-    IJTracer tracer = TelemetryTracer.getInstance().getTracer(HighlightVisitorScope, true);
+    IJTracer tracer = TelemetryManager.getInstance().getTracer(HighlightVisitorScope, true);
 
     for (TextEditorHighlightingPass pass : gpasses) {
       runWithSpan(tracer, pass.getClass().getSimpleName(), span -> {

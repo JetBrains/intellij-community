@@ -68,8 +68,6 @@ class KotlinLineMarkerProvider : LineMarkerProviderDescriptor() {
     }
 
     private fun collectCallableOverridings(element: KtCallableDeclaration, result: MutableCollection<in LineMarkerInfo<*>>) {
-        if (!(KotlinLineMarkerOptions.implementedOption.isEnabled || KotlinLineMarkerOptions.overriddenOption.isEnabled)) return
-
         if (!element.isOverridable()) {
             return
         }
@@ -77,12 +75,13 @@ class KotlinLineMarkerProvider : LineMarkerProviderDescriptor() {
         val klass = element.containingClassOrObject ?: return
         if (klass !is KtClass) return
 
+        val isAbstract = CallableOverridingsTooltip.isAbstract(element, klass)
+        val gutter = if (isAbstract) KotlinLineMarkerOptions.implementedOption else KotlinLineMarkerOptions.overriddenOption
+        if (!gutter.isEnabled) return
         if (element.findAllOverridings().firstOrNull() == null) return
 
         val anchor = element.nameIdentifier ?: element
 
-        val isAbstract = CallableOverridingsTooltip.isAbstract(element, klass)
-        val gutter = if (isAbstract) KotlinLineMarkerOptions.implementedOption else KotlinLineMarkerOptions.overriddenOption
         val icon = gutter.icon ?: return
 
         val lineMarkerInfo = InheritanceMergeableLineMarkerInfo(
@@ -103,10 +102,6 @@ class KotlinLineMarkerProvider : LineMarkerProviderDescriptor() {
     }
 
     private fun collectSuperDeclarations(declaration: KtCallableDeclaration, result: MutableCollection<in LineMarkerInfo<*>>) {
-        if (!(KotlinLineMarkerOptions.implementingOption.isEnabled || KotlinLineMarkerOptions.overridingOption.isEnabled)) {
-            return
-        }
-
         if (!(declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD) || (declaration.containingFile as KtFile).isCompiled)) {
             return
         }
@@ -121,6 +116,7 @@ class KotlinLineMarkerProvider : LineMarkerProviderDescriptor() {
             val implements = callableSymbol is KtSymbolWithModality && callableSymbol.modality != Modality.ABSTRACT &&
                     allOverriddenSymbols.all { it is KtSymbolWithModality && it.modality == Modality.ABSTRACT }
             val gutter = if (implements) KotlinLineMarkerOptions.implementingOption else KotlinLineMarkerOptions.overridingOption
+            if (!gutter.isEnabled) return
             val anchor = declaration.nameIdentifier ?: declaration
             val lineMarkerInfo = InheritanceMergeableLineMarkerInfo(
                 anchor,
@@ -144,17 +140,17 @@ class KotlinLineMarkerProvider : LineMarkerProviderDescriptor() {
     }
 
     private fun collectInheritedClassMarker(element: KtClass, result: MutableCollection<in LineMarkerInfo<*>>) {
-        if (!(KotlinLineMarkerOptions.implementedOption.isEnabled || KotlinLineMarkerOptions.overriddenOption.isEnabled)) return
-
         if (!element.isInheritable()) {
             return
         }
 
-        if (DirectKotlinClassInheritorsSearch.search(element).findFirst() == null) return
-
         val anchor = element.nameIdentifier ?: element
         val isInterface = element.isInterface()
         val gutter = if (isInterface) KotlinLineMarkerOptions.implementedOption else KotlinLineMarkerOptions.overriddenOption
+        if (!gutter.isEnabled) return
+
+        if (DirectKotlinClassInheritorsSearch.search(element).findFirst() == null) return
+
         val icon = gutter.icon ?: return
 
         val lineMarkerInfo = InheritanceMergeableLineMarkerInfo(

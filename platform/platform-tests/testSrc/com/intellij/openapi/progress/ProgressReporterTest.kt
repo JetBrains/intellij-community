@@ -5,10 +5,10 @@ import com.intellij.openapi.progress.impl.ACCEPTABLE_FRACTION_OVERFLOW
 import com.intellij.openapi.progress.impl.ProgressState
 import com.intellij.openapi.progress.impl.TextDetailsProgressReporter
 import com.intellij.testFramework.UsefulTestCase.assertOrderedEquals
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.init
 import com.intellij.util.containers.tail
-import com.intellij.util.timeoutRunBlocking
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test

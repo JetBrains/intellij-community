@@ -38,9 +38,12 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
 
   abstract class EvaluationCommand(name: String, help: String) : CliktCommand(name = name, help = help) {
     protected fun loadConfig(configPath: Path) = try {
-      ConfigFactory.load(configPath)
+      println("Load config: $configPath")
+      val config = ConfigFactory.load(configPath)
+      println("Config loaded!")
+      config
     }
-    catch (e: Exception) {
+    catch (e: Throwable) {
       fatalError("Error for loading config: $configPath, $e. StackTrace: ${stackTraceToString(e)}")
     }
 

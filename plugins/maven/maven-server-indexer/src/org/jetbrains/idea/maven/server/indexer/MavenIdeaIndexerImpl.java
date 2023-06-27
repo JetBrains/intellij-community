@@ -65,7 +65,6 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
       synchronized (myContexts) {
         IndexingContext context = myContexts.remove(mavenIndexId.indexId);
         if (context != null) context.close(false);
-
       }
     }
     catch (Exception e) {
@@ -124,11 +123,6 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
     }
   }
 
-  private static String getRepositoryPathOrUrl(IndexingContext index) {
-    File file = index.getRepository();
-    return file == null ? index.getRepositoryUrl() : file.getPath();
-  }
-
   @Override
   public void updateIndex(MavenIndexId mavenIndexId,
                           final MavenServerProgressIndicator indicator, MavenToken token)
@@ -142,22 +136,7 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
           scanAndUpdateLocalRepositoryIndex(indicator, context);
         }
         else {
-          Wagon httpWagon = myContainer.lookup(Wagon.class, "http");
-          ResourceFetcher resourceFetcher = new WagonHelper.WagonFetcher(httpWagon, null,
-                                                                         null, null);
-          Date currentTimestamp = context.getTimestamp();
-          IndexUpdateRequest request = new IndexUpdateRequest(context, resourceFetcher);
-          indicator.setText("Updating index for " + context.getRepositoryUrl());
-          IndexUpdateResult updateResult = myUpdater.fetchAndUpdateIndex(request);
-          if (updateResult.isFullUpdate()) {
-            indicator.setText("Index for " + context.getRepositoryUrl() + " updated");
-          }
-          else if (updateResult.getTimestamp().equals(currentTimestamp)) {
-            indicator.setText("Index for " + context.getRepositoryUrl() + "is up to date!");
-          }
-          else {
-            indicator.setText("Index for " + context.getRepositoryUrl() + " incrementally updated");
-          }
+          downloadRemoteIndex(indicator, context);
         }
       }
     }
@@ -171,6 +150,18 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
     }
   }
 
+  private void downloadRemoteIndex(MavenServerProgressIndicator indicator, IndexingContext context)
+    throws ComponentLookupException, IOException {
+    Wagon httpWagon = myContainer.lookup(Wagon.class, "http");
+    ResourceFetcher resourceFetcher = new WagonHelper.WagonFetcher(httpWagon, new WagonTransferListenerAdapter(indicator),
+                                                                   null, null);
+    Date currentTimestamp = context.getTimestamp();
+    IndexUpdateRequest request = new IndexUpdateRequest(context, resourceFetcher);
+    indicator.setText("Updating index for " + context.getRepositoryUrl());
+    IndexUpdateResult updateResult = myUpdater.fetchAndUpdateIndex(request);
+    updateIndicatorStatus(indicator, context, updateResult, currentTimestamp);
+  }
+
   private void scanAndUpdateLocalRepositoryIndex(MavenServerProgressIndicator indicator, IndexingContext context) throws
                                                                                                                   IOException {
 
@@ -179,8 +170,6 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
       throw new IOException("Repository directory " + repositoryDirectory + " does not exist");
     }
     indicator.setText("Scannning " + repositoryDirectory.getPath());
-
-    File indexDir = context.getIndexDirectoryFile();
 
     File tmpDir = Files.createTempDirectory(context.getId() + "-tmp").toFile();
 
@@ -270,7 +259,9 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
   }
 
   @Override
-  public @NotNull List<AddArtifactResponse> addArtifacts(@NotNull MavenIndexId indexId, @NotNull Collection<File> artifactFiles, MavenToken token) throws MavenServerIndexerException {
+  public @NotNull List<AddArtifactResponse> addArtifacts(@NotNull MavenIndexId indexId,
+                                                         @NotNull Collection<File> artifactFiles,
+                                                         MavenToken token) throws MavenServerIndexerException {
     MavenServerUtil.checkToken(token);
     try {
       IndexingContext context = getIndex(indexId);
@@ -294,16 +285,6 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
       throw new MavenServerIndexerException(wrapException(e));
     }
   }
-
-  //public static void invalidateSearchersAndReadersCache(NexusIndexer indexer, IndexingContext index, ArtifactContext artifactContext)
-  //  throws IOException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-  //  indexer.addArtifactToIndex(artifactContext, index);
-  //  // this hack is necessary to invalidate searcher's and reader's cache (may not be required then lucene or nexus library change
-  //  Method m = index.getClass().getDeclaredMethod("closeReaders");
-  //  m.setAccessible(true);
-  //  m.invoke(index);
-  //}
-
 
   @Override
   public Set<MavenArtifactInfo> search(MavenIndexId indexId, String pattern, int maxResult, MavenToken token)
@@ -338,11 +319,6 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
     }
   }
 
-  @NotNull
-  private static WildcardQuery getWildcardQuery(String pattern) {
-    return new WildcardQuery(new Term(SEARCH_TERM_CLASS_NAMES, "*/" + pattern.replaceAll("\\.", "/")));
-  }
-
   @Override
   public Collection<MavenArchetype> getInternalArchetypes(MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
@@ -353,6 +329,15 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
       throw wrapToSerializableRuntimeException(e);
     }
   }
+
+  //public static void invalidateSearchersAndReadersCache(NexusIndexer indexer, IndexingContext index, ArtifactContext artifactContext)
+  //  throws IOException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+  //  indexer.addArtifactToIndex(artifactContext, index);
+  //  // this hack is necessary to invalidate searcher's and reader's cache (may not be required then lucene or nexus library change
+  //  Method m = index.getClass().getDeclaredMethod("closeReaders");
+  //  m.setAccessible(true);
+  //  m.invoke(index);
+  //}
 
   private Set<MavenArchetype> getInternalArchetypes()
     throws RemoteException, ComponentLookupException {
@@ -371,7 +356,6 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
     return result;
   }
 
-
   @Override
   public void release(MavenToken token) {
     MavenServerUtil.checkToken(token);
@@ -386,6 +370,31 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);
     }
+  }
+
+  private static String getRepositoryPathOrUrl(IndexingContext index) {
+    File file = index.getRepository();
+    return file == null ? index.getRepositoryUrl() : file.getPath();
+  }
+
+  private static void updateIndicatorStatus(MavenServerProgressIndicator indicator,
+                                            IndexingContext context,
+                                            IndexUpdateResult updateResult,
+                                            Date currentTimestamp) throws RemoteException {
+    if (updateResult.isFullUpdate()) {
+      indicator.setText("Index for " + context.getRepositoryUrl() + " updated");
+    }
+    else if (updateResult.getTimestamp().equals(currentTimestamp)) {
+      indicator.setText("Index for " + context.getRepositoryUrl() + "is up to date!");
+    }
+    else {
+      indicator.setText("Index for " + context.getRepositoryUrl() + " incrementally updated");
+    }
+  }
+
+  @NotNull
+  private static WildcardQuery getWildcardQuery(String pattern) {
+    return new WildcardQuery(new Term(SEARCH_TERM_CLASS_NAMES, "*/" + pattern.replaceAll("\\.", "/")));
   }
 
   private static class MyScanningListener implements ArtifactScanningListener {

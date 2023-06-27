@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierPr
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.addTypeArguments
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.createStarTypeArgumentsList
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertSymbol
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertString
 import org.jetbrains.kotlin.idea.completion.createKeywordElement
 import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
@@ -271,7 +271,7 @@ private object WhenConditionInsertionHandler : InsertionHandlerBase<WhenConditio
         lookupObject: WhenConditionLookupObject
     ) {
         if (lookupObject.isSingleCondition && completionChar != ',') {
-            insertSymbol(" -> ")
+            insertString(" -> ")
             commitDocument()
         }
     }

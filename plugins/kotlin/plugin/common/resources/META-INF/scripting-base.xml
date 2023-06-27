@@ -112,6 +112,12 @@
             defaultValue="false"
             restartRequired="true"/>
 
+    <registryKey
+            key="kotlin.scripting.wait-init.timeout.sec"
+            description="Max time to wait for scripting initialization activity (in seconds)"
+            defaultValue="5"
+            restartRequired="false"/>
+
     <fileType name="script-definition-marker" fieldName="INSTANCE"
               implementationClass="org.jetbrains.kotlin.idea.script.ScriptDefinitionMarkerFileType"/>
   </extensions>

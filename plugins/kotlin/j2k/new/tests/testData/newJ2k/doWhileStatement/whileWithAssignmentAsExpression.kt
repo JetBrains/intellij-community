@@ -1,6 +1,6 @@
 class SomeClass {
-    var a = 0
-    var b = 0
+    var a: Int = 0
+    var b: Int = 0
     fun doSomeWhile(i: Int) {
         do {
             b = i

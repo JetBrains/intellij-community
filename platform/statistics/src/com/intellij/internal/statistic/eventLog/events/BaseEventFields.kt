@@ -283,7 +283,7 @@ class ObjectEventField(override val name: String, vararg val fields: EventField<
   constructor(name: String, description: ObjectDescription) : this(name, *description.getFields())
 
   override fun addData(fuData: FeatureUsageData, value: ObjectEventData) {
-    fuData.addObjectData(name, value.buildObjectData(fields))
+    fuData.addObjectData(name, value.buildObjectData(fuData.recorderId, fields))
   }
 
   override fun equals(other: Any?): Boolean {
@@ -335,8 +335,8 @@ class ObjectEventData(private val values: List<EventPair<*>>) {
 
   constructor(vararg values: EventPair<*>) : this(listOf(*values))
 
-  fun buildObjectData(allowedFields: Array<out EventField<*>>): Map<String, Any> {
-    val data = FeatureUsageData()
+  fun buildObjectData(recorderId: String, allowedFields: Array<out EventField<*>>): Map<String, Any> {
+    val data = FeatureUsageData(recorderId)
     for (eventPair in values) {
       val eventField = eventPair.field
       if (eventField !in allowedFields) throw IllegalArgumentException("Field ${eventField.name} is not in allowed object fields")
@@ -351,8 +351,7 @@ class ObjectEventData(private val values: List<EventPair<*>>) {
 
     other as ObjectEventData
 
-    if (values != other.values) return false
-    return true
+    return values == other.values
   }
 }
 
@@ -380,6 +379,6 @@ class ObjectListEventField(override val name: String, vararg val fields: EventFi
   constructor(name: String, description: ObjectDescription) : this(name, *description.getFields())
 
   override fun addData(fuData: FeatureUsageData, value: List<ObjectEventData>) {
-    fuData.addListObjectData(name, value.map { it.buildObjectData(fields) })
+    fuData.addListObjectData(name, value.map { it.buildObjectData(fuData.recorderId, fields) })
   }
 }

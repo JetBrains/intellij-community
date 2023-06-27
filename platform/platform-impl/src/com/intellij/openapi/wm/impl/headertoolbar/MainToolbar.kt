@@ -3,6 +3,8 @@ package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.customization.ActionUrl
+import com.intellij.ide.ui.customization.CustomActionsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.customization.CustomizationUtil
 import com.intellij.ide.ui.laf.darcula.ui.MainToolbarComboBoxButtonUI
@@ -17,6 +19,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
@@ -26,8 +29,10 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.Header
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.MainMenuButton
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.HorizontalLayout
+import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets
 import com.jetbrains.WindowDecorations
@@ -54,7 +59,7 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
     isOpaque = true
     if (IdeRootPane.isMenuButtonInToolbar) {
       mainMenuButton = MainMenuButton()
-      expandableMenu = ExpandableMenu(this)
+      expandableMenu = ExpandableMenu(this, disposable)
       mainMenuButton.expandableMenu = expandableMenu
     }
     else {
@@ -99,16 +104,66 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
       addWidget(it.button, HorizontalLayout.LEFT)
     }
 
-    val customizationGroup = CustomActionsSchema.getInstance().getCorrectedAction(MAIN_TOOLBAR_ID) as? ActionGroup
+    val schema = CustomActionsSchema.getInstance()
+    val customizationGroup = schema.getCorrectedAction(MAIN_TOOLBAR_ID) as? ActionGroup
 
     for ((actionGroup, position) in actionGroups) {
       addWidget(widget = createActionBar(actionGroup, customizationGroup), position = position)
     }
 
     customizationGroup
-      ?.let { CustomizationUtil.createToolbarCustomizationHandler(customizationGroup, MAIN_TOOLBAR_ID, this, ActionPlaces.MAIN_TOOLBAR) }
+      ?.let { CustomizationUtil.createToolbarCustomizationHandler(it, MAIN_TOOLBAR_ID, this, ActionPlaces.MAIN_TOOLBAR) }
       ?.let { installClickListener(it, customTitleBar) }
+
+    migratePreviousCustomizations(schema)
+  }
+
+  /*
+   * this is temporary solutions for migration customizations from 2023.1 version
+   * todo please remove it when users are not migrate any more from 2023.1
+   */
+  private fun migratePreviousCustomizations(schema: CustomActionsSchema) {
+    val mainToolbarName = schema.getDisplayName(MAIN_TOOLBAR_ID) ?: return
+    val mainToolbarPath = listOf("root", mainToolbarName)
+    val backup = CustomActionsSchema(null)
+    backup.copyFrom(schema)
+    val url = ActionUrl().apply { groupPath = ArrayList(mainToolbarPath) }
+    if (!schema.getChildActions(url).isEmpty()) return
+
+    val tmpSchema = CustomActionsSchema(null)
+    tmpSchema.copyFrom(schema)
+
+    val changed = migrateToolbar(tmpSchema, listOf("root", "Main Toolbar Left"), mainToolbarPath + "Left")
+                  || migrateToolbar(tmpSchema, listOf("root", "Main Toolbar Center"), mainToolbarPath + "Center")
+                  || migrateToolbar(tmpSchema, listOf("root", "Main Toolbar Right"), mainToolbarPath + "Right")
+
+    if (changed) {
+      schema.copyFrom(tmpSchema)
+      schemaChanged()
     }
+  }
+
+  private fun migrateToolbar(schema: CustomActionsSchema, fromPath: List<String>, toPath: List<String>): Boolean {
+    val parentURL = ActionUrl().apply { groupPath = ArrayList(fromPath) }
+    val childActions = schema.getChildActions(parentURL)
+    if (childActions.isEmpty()) return false
+
+    val newUrls = childActions.map { ActionUrl(ArrayList(toPath), it.component, it.actionType, it.absolutePosition) }
+    val actions = schema.getActions().toMutableList()
+    actions.addAll(newUrls)
+    actions.removeIf { url: ActionUrl -> fromPath == url.groupPath }
+    schema.setActions(actions)
+    return true
+  }
+
+  private fun schemaChanged() {
+    CustomActionsSchema.getInstance().initActionIcons()
+    CustomActionsSchema.setCustomizationSchemaForCurrentProjects()
+    if (SystemInfo.isMac) {
+      TouchbarSupport.reloadAllActions()
+    }
+    CustomActionsListener.fireSchemaChanged()
+  }
 
   private fun installClickListener(popupHandler: PopupHandler, customTitleBar: WindowDecorations.CustomTitleBar?) {
     if (IdeRootPane.hideNativeLinuxTitle) {
@@ -157,6 +212,7 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
   private fun createActionBar(group: ActionGroup, customizationGroup: ActionGroup?): JComponent {
     val toolbar = MyActionToolbarImpl(group, layoutCallBack, customizationGroup, MAIN_TOOLBAR_ID)
     toolbar.setActionButtonBorder(JBUI.Borders.empty(mainToolbarButtonInsets()))
+    toolbar.setActionButtonBorder(2, 5)
     toolbar.setCustomButtonLook(HeaderToolbarButtonLook())
 
     toolbar.setMinimumButtonSize { ActionToolbar.experimentalToolbarMinimumButtonSize() }
@@ -202,7 +258,7 @@ private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: Layout
     for (i in 0 until bounds.size) {
       val prevRect = if (i > 0) bounds[i - 1] else null
       val rect = bounds[i]
-      fitRectangle(prevRect, rect, getComponent(i))
+      fitRectangle(prevRect, rect, getComponent(i), size2Fit.height)
     }
   }
 
@@ -211,7 +267,7 @@ private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: Layout
     layoutCallBack?.invoke()
   }
 
-  private fun fitRectangle(prevRect: Rectangle?, currRect: Rectangle, cmp: Component) {
+  private fun fitRectangle(prevRect: Rectangle?, currRect: Rectangle, cmp: Component, toolbarHeight: Int) {
     val minSize = ActionToolbar.experimentalToolbarMinimumButtonSize()
     if (!isSeparator(cmp)) {
       currRect.width = Integer.max(currRect.width, minSize.width)
@@ -220,7 +276,7 @@ private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: Layout
     if (prevRect != null && prevRect.maxX > currRect.minX) {
       currRect.x = prevRect.maxX.toInt()
     }
-    currRect.y = 0
+    currRect.y = (toolbarHeight - currRect.height) / 2
   }
 
   override fun createCustomComponent(action: CustomComponentAction, presentation: Presentation): JComponent {
@@ -234,6 +290,7 @@ private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: Layout
 
     if (action is ComboBoxAction) {
       findComboButton(component)?.apply {
+        margin = JBInsets.emptyInsets()
         setUI(MainToolbarComboBoxButtonUI())
         addPropertyChangeListener("UI") { event -> if (event.newValue !is MainToolbarComboBoxButtonUI) setUI(MainToolbarComboBoxButtonUI())}
       }
@@ -288,10 +345,20 @@ private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: Layout
   }
 }
 
-internal fun isToolbarInHeader(settings: UISettings = UISettings.shadowInstance) : Boolean {
-  return IdeFrameDecorator.isCustomDecorationAvailable() &&
-         (SystemInfoRt.isMac || (SystemInfoRt.isWindows && !settings.separateMainMenu && settings.mergeMainMenuWithWindowTitle))
-         || IdeRootPane.hideNativeLinuxTitle && !settings.separateMainMenu
+internal fun isToolbarInHeader() : Boolean {
+  if (IdeFrameDecorator.isCustomDecorationAvailable()) {
+    if (SystemInfoRt.isMac) {
+      return true
+    }
+    val settings = UISettings.getInstance()
+    if (SystemInfoRt.isWindows && !settings.separateMainMenu && settings.mergeMainMenuWithWindowTitle) {
+      return true
+    }
+  }
+  if (IdeRootPane.hideNativeLinuxTitle && !UISettings.getInstance().separateMainMenu) {
+    return true
+  }
+  return false
 }
 
 internal fun isDarkHeader(): Boolean = ColorUtil.isDark(JBColor.namedColor("MainToolbar.background"))

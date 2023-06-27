@@ -7,9 +7,9 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.readText
 import org.jetbrains.kotlin.idea.core.util.analyzeInlinedFunctions
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
-import org.jetbrains.kotlin.idea.debugger.evaluate.LOG
-import org.jetbrains.kotlin.idea.debugger.evaluate.gatherProjectFilesDependedOnByFragment
+import org.jetbrains.kotlin.idea.debugger.evaluate.*
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
+import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
@@ -21,8 +21,10 @@ abstract class CodeFragmentCompilingStrategy(val codeFragment: KtCodeFragment) {
 
     abstract fun getFilesToCompile(resolutionFacade: ResolutionFacade, bindingContext: BindingContext): List<KtFile>
 
+    abstract fun onSuccess()
     abstract fun processError(e: CodeFragmentCodegenException, codeFragment: KtCodeFragment, executionContext: ExecutionContext)
     abstract fun getFallbackStrategy(): CodeFragmentCompilingStrategy?
+    abstract fun beforeRunningFallback()
 }
 
 class OldCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragmentCompilingStrategy(codeFragment) {
@@ -37,11 +39,27 @@ class OldCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragm
         )
     }
 
+    override fun onSuccess() {
+        KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(
+            codeFragment.project,
+            StatisticsEvaluator.OLD,
+            StatisticsEvaluationResult.SUCCESS
+        )
+    }
+
     override fun processError(e: CodeFragmentCodegenException, codeFragment: KtCodeFragment, executionContext: ExecutionContext) {
+        KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(
+            codeFragment.project,
+            StatisticsEvaluator.OLD,
+            StatisticsEvaluationResult.FAILURE
+        )
         throw e
     }
 
     override fun getFallbackStrategy(): CodeFragmentCompilingStrategy? = null
+
+    override fun beforeRunningFallback() {
+    }
 }
 
 class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragmentCompilingStrategy(codeFragment) {
@@ -84,14 +102,26 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
         }
     }
 
+    override fun onSuccess() {
+        KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(
+            codeFragment.project,
+            StatisticsEvaluator.IR,
+            StatisticsEvaluationResult.SUCCESS
+        )
+    }
+
     override fun processError(e: CodeFragmentCodegenException, codeFragment: KtCodeFragment, executionContext: ExecutionContext) {
+        KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(
+            codeFragment.project,
+            StatisticsEvaluator.IR,
+            StatisticsEvaluationResult.FAILURE
+        )
         if (isFallbackDisabled()) {
             throw e
         }
-        // TODO maybe break down known cases of failures and keep statistics on them?
-        //      This way, we will have a complete picture of what exact errors users
-        //      come across.
-        reportErrorWithAttachments(executionContext, codeFragment, e)
+        if (isApplicationInternalMode()) {
+            reportErrorWithAttachments(executionContext, codeFragment, e)
+        }
     }
 
     private fun reportErrorWithAttachments(
@@ -106,16 +136,27 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
         val file = suspendContext.activeExecutionStack?.topFrame?.sourcePosition?.file
         val fileContents = file?.readText()
 
+        val sessionName = suspendContext.debugProcess.session.sessionName
+
         val debuggerContext = """
             project: $projectName
+            session: $sessionName
             location: ${suspendContext.location} at ${file?.path}
         """.trimIndent()
+
+        val suspendStackTrace = suspendContext.thread?.frames()?.joinToString(System.lineSeparator()) {
+            val location = it.location()
+            "${location.method()} at line ${location.lineNumber()}"
+        }
 
         val attachments = buildList {
             add(Attachment("debugger_context.txt", debuggerContext).apply { isIncluded = true })
             add(Attachment("code_fragment.txt", codeFragment.text).apply { isIncluded = true })
+            suspendStackTrace?.let {
+                add(Attachment("suspend_stack_trace.txt", it).apply { isIncluded = true })
+            }
             fileContents?.let {
-                add(Attachment("opened_file_contents.txt", it))
+                add(Attachment("opened_file_contents.txt", it).apply { isIncluded = true })
             }
         }
 
@@ -131,6 +172,10 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
         if (isUnitTestMode()) return null
 
         return OldCodeFragmentCompilingStrategy(codeFragment)
+    }
+
+    override fun beforeRunningFallback() {
+        KotlinDebuggerEvaluatorStatisticsCollector.logFallbackToOldEvaluator(codeFragment.project)
     }
 
     private fun isFallbackDisabled(): Boolean {

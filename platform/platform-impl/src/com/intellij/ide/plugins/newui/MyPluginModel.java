@@ -36,9 +36,7 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.accessibility.AccessibleAnnouncerUtil;
-import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.xml.util.XmlStringUtil;
-import com.jetbrains.JBR;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1086,10 +1084,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
         InstalledPluginsState.getInstance().wasInstalledWithoutRestart(pluginId)) {
       // we'll actually install the plugin when the configurable is closed; at this time we don't know if there's any loadingError
       return List.of();
-    }
-
-    if (descriptor.isOnDemand() && !EnabledOnDemandPluginsState.isEnabled(pluginId)) {
-      return List.of(createTextChunk(IdeBundle.message("plugin.manager.on.demand.plugin.not.loaded")));
     }
 
     PluginLoadingError loadingError = PluginManagerCore.getLoadingError(pluginId);

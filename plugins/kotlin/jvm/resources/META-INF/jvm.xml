@@ -12,8 +12,6 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <postStartupActivity implementation="org.jetbrains.kotlin.idea.configuration.ui.KotlinConfigurationCheckerStartupActivity"/>
-
-        <projectService serviceImplementation="org.jetbrains.kotlin.idea.configuration.ui.KotlinConfigurationCheckerService"/>
     </extensions>
 
 </idea-plugin>

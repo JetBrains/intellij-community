@@ -67,6 +67,11 @@ public class CoreInjectedLanguageManager extends InjectedLanguageManager {
   }
 
   @Override
+  public boolean isInjectedViewProvider(@NotNull FileViewProvider viewProvider) {
+    return false;
+  }
+
+  @Override
   public @Nullable PsiElement findInjectedElementAt(@NotNull PsiFile hostFile, int hostDocumentOffset) {
     return null;
   }

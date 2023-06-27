@@ -35,8 +35,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
-import com.intellij.platform.diagnostic.telemetry.impl.TraceUtil;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.intellij.psi.util.ReadActionCache;
 import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.ui.ComponentUtil;
@@ -74,10 +74,8 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   }
 
   static final String MUST_NOT_EXECUTE_INSIDE_READ_ACTION = "Must not execute inside read action";
-  static final String MUST_EXECUTE_INSIDE_READ_ACTION =
-    "Read access is allowed from inside read-action or Event Dispatch Thread (EDT) only (see Application.runReadAction())";
-  static final String MUST_EXECUTE_INSIDE_WRITE_ACTION =
-    "Write access is allowed inside write-action only (see Application.runWriteAction())";
+  static final String MUST_EXECUTE_INSIDE_READ_ACTION = "Read access is allowed from inside read-action or Event Dispatch Thread (EDT) only (see Application.runReadAction())";
+  static final String MUST_EXECUTE_INSIDE_WRITE_ACTION = "Write access is allowed inside write-action only (see Application.runWriteAction())";
   static final String MUST_EXECUTE_UNDER_EDT = "Access is allowed from Event Dispatch Thread (EDT) only";
   static final String MUST_NOT_EXECUTE_UNDER_EDT = "Access from Event Dispatch Thread (EDT) is not allowed";
 
@@ -362,11 +360,6 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       runnable = captured.getFirst();
       expired = captured.getSecond();
     }
-    invokeLaterRaw(runnable, state, expired);
-  }
-
-  @Override
-  public void invokeLaterRaw(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition<?> expired) {
     Runnable r = myTransactionGuard.wrapLaterInvocation(runnable, state);
     // Don't need to enable implicit read, as Write Intent lock includes Explicit Read
     LaterInvocator.invokeLater(state, expired, wrapWithRunIntendedWriteAction(r));
@@ -380,7 +373,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     super.dispose();
     // Remove IW lock from EDT as EDT might be re-created, which might lead to deadlock if anybody uses this disposed app
     if (!StartupUtil.isImplicitReadOnEDTDisabled() || isUnitTestMode()) {
-      invokeLater(() -> releaseWriteIntentLock(), ModalityState.NON_MODAL);
+      invokeLater(() -> releaseWriteIntentLock(), ModalityState.nonModal());
     }
 
     // FileBasedIndexImpl can schedule some more activities to execute, so, shutdown executor only after service disposing
@@ -474,8 +467,8 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       throw new IllegalStateException("Calling invokeAndWait from read-action leads to possible deadlock.");
     }
 
-    Runnable r = myTransactionGuard.wrapLaterInvocation(runnable, modalityState);
-    LaterInvocator.invokeAndWait(modalityState, wrapWithRunIntendedWriteAction(AppScheduledExecutorService.capturePropagationAndCancellationContext(r)));
+    Runnable r = myTransactionGuard.wrapLaterInvocation(AppScheduledExecutorService.capturePropagationAndCancellationContext(runnable), modalityState);
+    LaterInvocator.invokeAndWait(modalityState, wrapWithRunIntendedWriteAction(r));
   }
 
   private @NotNull Runnable wrapWithRunIntendedWriteAction(@NotNull Runnable runnable) {
@@ -521,7 +514,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public @NotNull ModalityState getNoneModalityState() {
-    return ModalityState.NON_MODAL;
+    return ModalityState.nonModal();
   }
 
   @Override
@@ -593,7 +586,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   private void exit(int flags, boolean restart, String @NotNull [] beforeRestart, int exitCode) {
     if (!BitUtil.isSet(flags, FORCE_EXIT) &&
-        (myExitInProgress || (!BitUtil.isSet(flags, EXIT_CONFIRMED) && getDefaultModalityState() != ModalityState.NON_MODAL))) {
+        (myExitInProgress || (!BitUtil.isSet(flags, EXIT_CONFIRMED) && getDefaultModalityState() != ModalityState.nonModal()))) {
       return;
     }
 
@@ -602,7 +595,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       doExit(flags, restart, beforeRestart, exitCode);
     }
     else {
-      invokeLater(() -> doExit(flags, restart, beforeRestart, exitCode), ModalityState.NON_MODAL);
+      invokeLater(() -> doExit(flags, restart, beforeRestart, exitCode), ModalityState.nonModal());
     }
   }
 
@@ -612,7 +605,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   }
 
   private void doExit(int flags, boolean restart, String @NotNull [] beforeRestart, int exitCode) {
-    IJTracer tracer = TelemetryTracer.getInstance().getTracer(new com.intellij.platform.diagnostic.telemetry.Scope("exitApp", null));
+    IJTracer tracer = TelemetryManager.getInstance().getTracer(new com.intellij.platform.diagnostic.telemetry.Scope("exitApp", null));
     Span exitSpan = tracer.spanBuilder("application.exit").startSpan();
     boolean force = BitUtil.isSet(flags, FORCE_EXIT);
     try (Scope scope = exitSpan.makeCurrent()) {
@@ -981,8 +974,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     });
   }
 
-  private <T, E extends Throwable> T runWriteActionWithClass(@NotNull Class<?> clazz, @NotNull ThrowableComputable<T, E> computable)
-    throws E {
+  private <T, E extends Throwable> T runWriteActionWithClass(@NotNull Class<?> clazz, @NotNull ThrowableComputable<T, E> computable) throws E {
     startWrite(clazz);
     try {
       return computable.compute();
@@ -1437,30 +1429,16 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     boolean writeActionInProgress = isWriteActionInProgress();
     boolean writeAccessAllowed = isWriteAccessAllowed();
     return "Application"
-           +
-           (getContainerState().get() == ContainerState.COMPONENT_CREATED ? "" : " (containerState " + getContainerStateName() + ") ")
-           +
-           (isUnitTestMode() ? " (unit test)" : "")
-           +
-           (isInternal() ? " (internal)" : "")
-           +
-           (isHeadlessEnvironment() ? " (headless)" : "")
-           +
-           (isCommandLine() ? " (command line)" : "")
-           +
-           (writeActionPending || writeActionInProgress || writeAccessAllowed ? " (WA" +
-                                                                                (writeActionPending ? " pending" : "") +
-                                                                                (writeActionInProgress ? " inProgress" : "") +
-                                                                                (writeAccessAllowed ? " allowed" : "") +
-                                                                                ")" : "")
-           +
-           (isReadAccessAllowed() ? " (RA allowed)" : "")
-           +
-           (StartupUtil.isImplicitReadOnEDTDisabled() ? " (IR on EDT disabled)" : "")
-           +
-           (isInImpatientReader() ? " (impatient reader)" : "")
-           +
-           (isExitInProgress() ? " (exit in progress)" : "")
+           +(getContainerState().get() == ContainerState.COMPONENT_CREATED ? "" : " (containerState " + getContainerStateName() + ") ")
+           + (isUnitTestMode() ? " (unit test)" : "")
+           + (isInternal() ? " (internal)" : "")
+           + (isHeadlessEnvironment() ? " (headless)" : "")
+           + (isCommandLine() ? " (command line)" : "")
+           + (writeActionPending || writeActionInProgress || writeAccessAllowed ? " (WA" + (writeActionPending ? " pending" : "") + (writeActionInProgress ? " inProgress" : "") + (writeAccessAllowed ? " allowed" : "") + ")" : "")
+           + (isReadAccessAllowed() ? " (RA allowed)" : "")
+           + (StartupUtil.isImplicitReadOnEDTDisabled() ? " (IR on EDT disabled)" : "")
+           + (isInImpatientReader() ? " (impatient reader)" : "")
+           + (isExitInProgress() ? " (exit in progress)" : "")
       ;
   }
 

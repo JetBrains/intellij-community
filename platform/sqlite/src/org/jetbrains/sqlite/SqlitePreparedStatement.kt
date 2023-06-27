@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.sqlite
 
-class SqlitePreparedStatement<T : Binder> internal constructor(private val connection: SqliteConnection,
+class SqlitePreparedStatement<T : Binder> internal constructor(@JvmField internal val connection: SqliteConnection,
                                                                private val sql: ByteArray,
                                                                val binder: T) : SqliteStatement {
   private val resultSet = SqliteResultSet(this)
@@ -9,53 +9,45 @@ class SqlitePreparedStatement<T : Binder> internal constructor(private val conne
   @JvmField
   internal val pointer: SafeStatementPointer
 
-  var isClosed = false
-    private set
-
   private val columnCount: Int
 
   init {
-    val db = connection.db
-    val paramCount = synchronized(db) {
-      pointer = db.prepareForStatement(sql)
+    lateinit var pointer: SafeStatementPointer
+    var columnCount = 0
+    connection.useDb { db ->
+      pointer = db.addStatement(SafeStatementPointer(connection = connection, pointer = db.prepare_utf8(sql)))
       columnCount = db.column_count(pointer.pointer)
-      db.bind_parameter_count(pointer.pointer)
+      val paramCount = db.bind_parameter_count(pointer.pointer)
+      if (paramCount != binder.paramCount) {
+        pointer.close(db)
+        throw IllegalStateException("statement param count: $paramCount, binder param count: ${binder.paramCount}")
+      }
     }
-    if (paramCount != binder.paramCount) {
-      pointer.close()
-      throw IllegalStateException("statement param count: $paramCount, binder param count: ${binder.paramCount}")
-    }
+
+    this.pointer = pointer
+    this.columnCount = columnCount
   }
 
   override fun close() {
-    internalClose()
-    // isClosed() should only return true when close() happened
-    isClosed = true
+    connection.useDb(::close)
   }
 
-  internal val db: SqliteDb
-    get() = connection.db
-
-  private fun internalClose() {
+  internal fun close(db: NativeDB) {
     val pointer = pointer.takeIf { !it.isClosed } ?: return
-    check(!connection.isClosed) { "Connection is closed" }
-
-    resultSet.close()
+    resultSet.close(db)
     binder.clearBatch()
-    val status = pointer.close()
-    if (status != SqliteCodes.SQLITE_OK && status != SqliteCodes.SQLITE_MISUSE) {
-      throw db.newException(status)
-    }
+    pointer.close(db)
   }
 
   fun executeQuery(): SqliteResultSet {
     require(columnCount > 0) { "Query does not return results" }
-    pointer.ensureOpen()
-    resultSet.close()
     // SqliteResultSet is responsible for `db.reset`, that's why here we do not have try-finally as `executeLifecycle` does
-    synchronized(db) {
-      bindParams()
-      val isEmpty = connection.step(pointer.pointer, sql)
+    connection.useDb { db ->
+      pointer.ensureOpen()
+      resultSet.close(db)
+
+      bindParams(db)
+      val isEmpty = step(statementPointer = pointer.pointer, sql = sql, db = db)
       if (isEmpty) {
         // SQLITE_DONE means that the statement has finished executing successfully.
         // sqlite3_step() should not be called again on this virtual machine without first calling sqlite3_reset()
@@ -72,11 +64,11 @@ class SqlitePreparedStatement<T : Binder> internal constructor(private val conne
   }
 
   fun executeUpdate() {
-    pointer.ensureOpen()
-    synchronized(db) {
-      bindParams()
+    connection.useDb { db ->
+      pointer.ensureOpen()
+      bindParams(db)
       try {
-        connection.step(pointer.pointer, sql)
+        step(statementPointer = pointer.pointer, sql = sql, db = db)
       }
       finally {
         db.reset(pointer.pointer)
@@ -85,24 +77,36 @@ class SqlitePreparedStatement<T : Binder> internal constructor(private val conne
   }
 
   fun selectBoolean(): Boolean {
-    executeLifecycle { isEmpty ->
+    executeLifecycle { db, isEmpty ->
       return !isEmpty && db.column_int(pointer.pointer, 0) != 0
     }
   }
 
+  fun selectInt(): Int? {
+    executeLifecycle { db, isEmpty ->
+      return if (isEmpty) null else db.column_int(pointer.pointer, 0)
+    }
+  }
+
+  fun selectNotNullInt(): Int {
+    executeLifecycle { db, isEmpty ->
+      return if (isEmpty) throw IllegalStateException("Must be not empty") else db.column_int(pointer.pointer, 0)
+    }
+  }
+
   fun selectByteArray(): ByteArray? {
-    executeLifecycle { isEmpty ->
+    executeLifecycle { db, isEmpty ->
       return if (isEmpty) null else db.column_blob(pointer.pointer, 0)
     }
   }
 
-  private inline fun <T> executeLifecycle(executor: (isEmpty: Boolean) -> T): T {
-    pointer.ensureOpen()
-    synchronized(db) {
+  private inline fun <T> executeLifecycle(executor: (db: NativeDB, isEmpty: Boolean) -> T): T {
+    connection.useDb { db ->
+      pointer.ensureOpen()
       try {
-        bindParams()
-        val isEmpty = connection.step(pointer.pointer, sql)
-        return executor(isEmpty)
+        bindParams(db)
+        val isEmpty = step(statementPointer = pointer.pointer, sql = sql, db = db)
+        return executor(db, isEmpty)
       }
       finally {
         db.reset(pointer.pointer)
@@ -110,7 +114,7 @@ class SqlitePreparedStatement<T : Binder> internal constructor(private val conne
     }
   }
 
-  private fun bindParams() {
+  private fun bindParams(db: NativeDB) {
     binder.bindParams(pointer.pointer, db)
   }
 
@@ -122,10 +126,9 @@ class SqlitePreparedStatement<T : Binder> internal constructor(private val conne
     }
 
     try {
-      synchronized(db) {
+      connection.useDb { db ->
         pointer.ensureOpen()
         binder.executeBatch(pointer.pointer, db)
-        db.reset(pointer.pointer)
       }
     }
     finally {

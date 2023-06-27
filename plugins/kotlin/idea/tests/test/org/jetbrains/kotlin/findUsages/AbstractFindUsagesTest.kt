@@ -473,7 +473,10 @@ internal fun findUsages(
 
         handler.getFindUsagesOptions(null).let {
             if (it is KotlinFunctionFindUsagesOptions) it.isSearchForBaseMethod = searchSuperDeclaration
-            else if (it is KotlinPropertyFindUsagesOptions) it.isSearchForBaseAccessors = searchSuperDeclaration
+            else if (it is KotlinPropertyFindUsagesOptions) {
+                it.isSearchForBaseAccessors = searchSuperDeclaration
+                it.isSearchInOverridingMethods = if (options is KotlinPropertyFindUsagesOptions) options.isSearchInOverridingMethods else false
+            }
         }
 
         options.searchScope = GlobalSearchScope.allScope(project)

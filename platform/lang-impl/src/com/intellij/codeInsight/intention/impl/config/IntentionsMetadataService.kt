@@ -56,7 +56,7 @@ internal class IntentionsMetadataService {
     val instance = IntentionActionWrapper(extension)
     val descriptionDirectoryName = extension.getDescriptionDirectoryName() ?: instance.descriptionDirectoryName
     val metadata = try {
-      IntentionActionMetaData(instance, extension.loaderForClass, categories, descriptionDirectoryName)
+      IntentionActionMetaData(instance, extension.loaderForClass, categories, descriptionDirectoryName, extension.skipBeforeAfter)
     }
     catch (ignore: ExtensionNotApplicableException) {
       return
@@ -77,7 +77,7 @@ internal class IntentionsMetadataService {
     else {
       intentionAction.javaClass.classLoader
     }
-    val metadata = IntentionActionMetaData(intentionAction, classLoader, category, descriptionDirectoryName)
+    val metadata = IntentionActionMetaData(intentionAction, classLoader, category, descriptionDirectoryName, false)
     synchronized(this) {
       // not added as searchable option - this method is deprecated and intentionAction extension point must be used instead
       dynamicRegistrationMeta.add(metadata)

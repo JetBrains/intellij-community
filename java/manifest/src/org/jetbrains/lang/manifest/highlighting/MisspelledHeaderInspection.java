@@ -27,6 +27,7 @@ package org.jetbrains.lang.manifest.highlighting;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.PsiElement;
@@ -82,7 +83,7 @@ public final class MisspelledHeaderInspection extends LocalInspectionTool {
 
           List<LocalQuickFix> fixes = new ArrayList<>();
           for (Suggestion match : matches) {
-            fixes.add(new HeaderRenameQuickFix(header, match.getWord()));
+            fixes.add(new HeaderRenameQuickFix(header, match.getWord()).asQuickFix());
             if (fixes.size() == MAX_SUGGESTIONS) break;
           }
           if (bestMatch == null || bestMatch.getMetrics() > TYPO_DISTANCE) {
@@ -111,7 +112,7 @@ public final class MisspelledHeaderInspection extends LocalInspectionTool {
     return pane(OptPane.stringList("CUSTOM_HEADERS", ManifestBundle.message("inspection.header.ui.label")));
   }
 
-  private static final class HeaderRenameQuickFix extends AbstractManifestQuickFix {
+  private static final class HeaderRenameQuickFix extends PsiUpdateModCommandAction<Header> {
     private final String myNewName;
 
     private HeaderRenameQuickFix(Header header, String newName) {
@@ -121,13 +122,18 @@ public final class MisspelledHeaderInspection extends LocalInspectionTool {
 
     @NotNull
     @Override
-    public String getText() {
-      return ManifestBundle.message("inspection.header.rename.fix", myNewName);
+    public String getFamilyName() {
+      return ManifestBundle.message("inspection.header.rename.fix.family.name");
     }
 
     @Override
-    public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
-      ((Header)startElement).setName(myNewName);
+    protected @NotNull Presentation getPresentation(@NotNull ActionContext context, @NotNull Header element) {
+      return Presentation.of(ManifestBundle.message("inspection.header.rename.fix", myNewName));
+    }
+
+    @Override
+    protected void invoke(@NotNull ActionContext context, @NotNull Header header, @NotNull ModPsiUpdater updater) {
+      header.setName(myNewName);
     }
   }
 

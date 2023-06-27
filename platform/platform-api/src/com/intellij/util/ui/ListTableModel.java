@@ -205,10 +205,10 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements Editab
   }
 
   public void addRows(@NotNull Collection<? extends Item> items) {
+    if (items.isEmpty()) return;
+
     myItems.addAll(items);
-    if (!myItems.isEmpty()) {
-      fireTableRowsInserted(myItems.size() - items.size(), myItems.size() - 1);
-    }
+    fireTableRowsInserted(myItems.size() - items.size(), myItems.size() - 1);
   }
 
   public Item getItem(final int rowIndex) {

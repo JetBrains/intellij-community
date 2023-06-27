@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.ide.actions.ImportProjectAction
@@ -80,7 +80,8 @@ abstract class MavenSetupProjectTestCase : MavenMultiVersionImportingTestCase() 
       action = AddFileAsMavenProjectAction(),
       project = project,
       systemId = SYSTEM_ID,
-      selectedFile = projectFile
+      selectedFile = projectFile,
+      blocking = true
     )
     return project
   }
@@ -92,7 +93,7 @@ abstract class MavenSetupProjectTestCase : MavenMultiVersionImportingTestCase() 
   }
 
   private suspend fun waitForImportCompletion(project: Project) {
-    withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
+    withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
       NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     }
 
@@ -106,7 +107,7 @@ abstract class MavenSetupProjectTestCase : MavenMultiVersionImportingTestCase() 
       importFinishedContext.error?.let { throw it }
     }
     else {
-      withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
+      withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
         projectManager.waitForReadingCompletion()
         //projectManager.performScheduledImportInTests()
         projectManager.waitForImportCompletion()

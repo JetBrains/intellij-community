@@ -130,7 +130,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
   private fun renderPreview(result: IntentionPreviewInfo) {
     when (result) {
       is IntentionPreviewDiffResult -> {
-        val editors = IntentionPreviewModel.createEditors(project, result)
+        val editors = IntentionPreviewEditorsPanel.createEditors(project, result)
         if (editors.isEmpty()) {
           selectNoPreview()
           return
@@ -210,7 +210,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
         override fun recalculationEnds() {
           val height = (it as EditorImpl).offsetToXY(it.document.textLength).y + it.lineHeight + 6
           it.component.preferredSize = Dimension(it.component.preferredSize.width, min(height, MAX_HEIGHT))
-          it.component.parent.invalidate()
+          it.component.parent?.invalidate()
           popup.pack(true, true)
         }
 

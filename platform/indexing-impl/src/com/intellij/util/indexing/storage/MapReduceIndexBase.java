@@ -28,7 +28,6 @@ import java.util.Collections;
 import java.util.Map;
 
 @ApiStatus.Experimental
-@ApiStatus.Internal
 public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduceIndex<Key, Value, FileContent>
   implements UpdatableIndex<Key, Value, FileContent, FileCache> {
   private final boolean mySingleEntryIndex;

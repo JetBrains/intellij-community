@@ -12,13 +12,11 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.openapi.util.io.toNioPath
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.textMatching.PrefixMatchingUtil
 import org.jetbrains.annotations.ApiStatus
-import java.lang.IllegalArgumentException
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 

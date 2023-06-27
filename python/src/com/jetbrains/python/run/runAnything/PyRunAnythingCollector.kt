@@ -7,21 +7,9 @@ import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
 class PyRunAnythingCollector : CounterUsagesCollector() {
-  companion object {
-    private val PY_RUN_ANY_GROUP: EventLogGroup = EventLogGroup("python.run.anything", 1)
-    private val PYTHON: EventId1<Int> = PY_RUN_ANY_GROUP.registerEvent("py.run.any.python", EventFields.Count)
-    private val PIP: EventId1<Int> = PY_RUN_ANY_GROUP.registerEvent("py.run.any.pip", EventFields.Count)
-
-    enum class CommandType(val command: String) {
-      PYTHON("python"),
-      PIP("pip")
-    }
-
+  object Util {
     fun logEvent(command: CommandType) {
-      when (command) {
-        CommandType.PYTHON -> PYTHON.log(1)
-        CommandType.PIP -> PIP.log(1)
-      }
+      EXECUTED.log(command)
     }
   }
 
@@ -29,3 +17,12 @@ class PyRunAnythingCollector : CounterUsagesCollector() {
     return PY_RUN_ANY_GROUP
   }
 }
+
+enum class CommandType(val command: String) {
+  PYTHON("python"),
+  PIP("pip")
+}
+
+private val PY_RUN_ANY_GROUP: EventLogGroup = EventLogGroup("python.run.anything", 2)
+private val EXECUTED: EventId1<CommandType> = PY_RUN_ANY_GROUP.registerEvent("executed",
+                                                                             EventFields.Enum<CommandType>("command_type"))

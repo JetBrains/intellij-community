@@ -5,9 +5,13 @@ apt-cache
 apt-get
 assoc
 attrib
+aws
 az
+bash
+bazel
 brew
 cargo
+cargo add
 cargo bench
 cargo build
 cargo check
@@ -15,27 +19,28 @@ cargo clean
 cargo doc
 cargo fetch
 cargo fix
+cargo fmt
+cargo generate-lockfile
+cargo help
+cargo init
+cargo install
+cargo locale-project
+cargo metadata
+cargo miri
+cargo new
+cargo pkgid
+cargo remove
+cargo report
 cargo run
 cargo rustc
 cargo rustdoc
+cargo search
 cargo test
-cargo report
-cargo add
-cargo generate-lockfile
-cargo locale-project
-cargo metadata
-cargo pkgid
-cargo remove
 cargo tree
+cargo uninstall
 cargo update
 cargo vendor
 cargo verify-project
-cargo init
-cargo install
-cargo new
-cargo search
-cargo uninstall
-cargo help
 cargo version
 cat
 cd
@@ -45,6 +50,7 @@ chown
 cipher
 clear
 cls
+cmd
 code
 command
 compact
@@ -77,8 +83,8 @@ composer self-update
 composer show
 composer status
 composer suggests
-composer validate
 composer update
+composer validate
 copy
 cp
 curl
@@ -92,11 +98,14 @@ docker compose
 docker-compose
 du
 echo
+egrep
 eslint
 exit
 expand
 export
+fgrep
 find
+fish
 format
 free
 g++
@@ -104,25 +113,48 @@ gcc
 gdb
 git
 git add
+git apply
+git bisect
 git branch
 git checkout
+git cherry-pick
+git clean
 git clone
 git commit
+git config
 git diff
+git difftool
+git fetch
+git gc
+git grep
+git help
 git init
 git log
 git merge
+git mergetool
+git mv
+git prune
 git pull
 git push
 git rebase
+git repack
 git reset
+git restore
+git revert
+git rm
+git show
 git stash
 git status
+git submodule
+git switch
 git tag
+git version
+gitk
 gradle
 grep
 grunt
 gulp
+head
 helm
 help
 hg
@@ -139,8 +171,10 @@ karma
 kill
 kubectl
 less
+ll
 ls
 make
+man
 md
 mkdir
 mocha
@@ -164,6 +198,7 @@ npm test
 npx
 nslookup
 nvm
+pacman
 pathping
 pause
 ping
@@ -181,6 +216,7 @@ pwsh
 python
 rd
 reg
+rgrep
 rm
 rmdir
 route
@@ -193,6 +229,8 @@ scp
 screen
 service
 set
+sh
+shred
 shutdown
 sort
 source
@@ -208,11 +246,13 @@ svn status
 svn update
 systemctl
 systeminfo
+tail
 tar
 taskkill
 tasklist
 taskmgr
 telnet
+terraform
 title
 top
 touch
@@ -220,6 +260,7 @@ traceroute
 tracert
 tree
 type
+unalias
 unzip
 vagrant
 valgrind
@@ -227,8 +268,10 @@ ver
 vi
 vim
 vitest
+wc
 webpack
 wget
+whatis
 whence
 where
 which
@@ -240,3 +283,4 @@ yarn run
 yarn test
 yum
 zip
+zsh

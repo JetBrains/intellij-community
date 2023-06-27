@@ -23,19 +23,19 @@ private const val SNAPSHOT_TAG = "snapshot"
 
 class IdeaKotlinVersionProviderService : KotlinVersionProviderService(), IdeaWizardService {
     override fun getKotlinVersion(projectKind: ProjectKind): WizardKotlinVersion {
-        val version: Version
-
-        if (projectKind == ProjectKind.KMM) {
-            version = Versions.KOTLIN_FOR_COMPOSE
-        }
-        else {
-            version = getPatchedKotlinVersion()
-                ?: Versions.KOTLIN
+        val version = if (projectKind == ProjectKind.KMM) {
+            Versions.KOTLIN_FOR_COMPOSE
+        } else {
+            getPatchedKotlinVersion() ?: getKotlinVersionFromCompiler() ?: Versions.KOTLIN
         }
 
         return kotlinVersionWithDefaultValues(version)
     }
 
+    /**
+     * This allows QA to change the version used in the wizard by supplying the
+     * KOTLIN_COMPILER_VERSION_TAG property.
+     */
     private fun getPatchedKotlinVersion() =
         if (isApplicationInternalMode()) {
             System.getProperty(KOTLIN_COMPILER_VERSION_TAG)?.let { Version.fromString(it) }
@@ -46,9 +46,20 @@ class IdeaKotlinVersionProviderService : KotlinVersionProviderService(), IdeaWiz
     companion object {
         private const val KOTLIN_COMPILER_VERSION_TAG = "kotlin.compiler.version"
 
+        /**
+         * Returns the Kotlin version used by the bundled compiler in case it is not
+         * a snapshot or release artifact.
+         *
+         * In IJ release cycle (IntelliJ `master` branch and IntelliJ release branches),
+         * `standaloneCompilerVersion` is always release, so this function will return null
+         * in those cases
+         */
         private fun getKotlinVersionFromCompiler(): Version? {
             val kotlinCompilerVersion = KotlinPluginLayout.standaloneCompilerVersion
-            val kotlinArtifactVersion = kotlinCompilerVersion.takeUnless { it.isSnapshot }?.artifactVersion ?: return null
+            val kotlinArtifactVersion = kotlinCompilerVersion
+                .takeUnless { it.isSnapshot || it.isRelease }
+                ?.withoutBuildNumber()
+                ?.artifactVersion ?: return null
             return Version.fromString(kotlinArtifactVersion)
         }
     }

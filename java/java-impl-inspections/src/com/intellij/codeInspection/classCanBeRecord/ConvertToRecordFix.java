@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.classCanBeRecord;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -89,9 +89,9 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
    * There are some restrictions for records:
    * <a href="https://docs.oracle.com/javase/specs/jls/se15/preview/specs/records-jls.html">see the specification</a>.
    */
-  public static RecordCandidate getClassDefinition(@NotNull PsiClass psiClass,
-                                                   boolean suggestAccessorsRenaming,
-                                                   @NotNull List<String> ignoredAnnotations) {
+  static RecordCandidate getClassDefinition(@NotNull PsiClass psiClass,
+                                            boolean suggestAccessorsRenaming,
+                                            @NotNull List<String> ignoredAnnotations) {
     boolean isNotAppropriatePsiClass = psiClass.isEnum() || psiClass.isAnnotationType() || psiClass instanceof PsiAnonymousClass ||
                                        psiClass.isInterface() || psiClass.isRecord();
     if (isNotAppropriatePsiClass) return null;
@@ -241,9 +241,8 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
 
     private static boolean throwsOnlyUncheckedExceptions(@NotNull PsiMethod psiMethod) {
       for (PsiClassType throwsType : psiMethod.getThrowsList().getReferencedTypes()) {
-        PsiClassType throwsClassType = ObjectUtils.tryCast(throwsType, PsiClassType.class);
-        if (throwsClassType == null) continue;
-        if (!ExceptionUtil.isUncheckedException(throwsClassType)) {
+        if (throwsType == null) continue;
+        if (!ExceptionUtil.isUncheckedException(throwsType)) {
           return false;
         }
       }
@@ -272,7 +271,7 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
           }
         }
 
-        private boolean hasSuperQualifier(@NotNull PsiReferenceExpression expression) {
+        private static boolean hasSuperQualifier(@NotNull PsiReferenceExpression expression) {
           PsiElement qualifier = expression.getQualifier();
           return qualifier != null && PsiKeyword.SUPER.equals(qualifier.getText());
         }
@@ -336,7 +335,7 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
       Map<String, PsiType> ctorParamsWithType = Arrays.stream(ctorParams)
         .collect(Collectors.toMap(param -> param.getName(), param -> param.getType(), (first, second) -> first));
       for (PsiField instanceField : instanceFields) {
-        PsiType ctorParamType = ObjectUtils.tryCast(ctorParamsWithType.get(instanceField.getName()), PsiType.class);
+        PsiType ctorParamType = ctorParamsWithType.get(instanceField.getName());
         if (ctorParamType instanceof PsiEllipsisType) {
           ctorParamType = ((PsiEllipsisType)ctorParamType).toArrayType();
         }

@@ -751,6 +751,9 @@
     <inspection_tool class="PrivatePropertyName" enabled="true" level="WEAK WARNING" enabled_by_default="true">
       <option name="namePattern" value="([A-Z_][A-Z_\d]*)|(_?[a-z][A-Za-z\d]*)" />
     </inspection_tool>
+    <inspection_tool class="PublicApiImplicitType" enabled="true" level="INFORMATION" enabled_by_default="false" editorAttributes="INFORMATION_ATTRIBUTES">
+      <scope name="platform API" level="WARNING" enabled="true" editorAttributes="WARNING_ATTRIBUTES" />
+    </inspection_tool>
     <inspection_tool class="PublicConstructorInNonPublicClass" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="PublicFieldAccessedInSynchronizedContext" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="Query_bound_parameters" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -1501,6 +1504,11 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="k" regexp="\w+" negateName="true" within="" contains="" />
       </searchConfiguration>
+      <replaceConfiguration name="Redundant 'ObjectUtils.tryCast()' call" description="The expression that is casted already has the requested type" text="ObjectUtils.tryCast($x$, $y$.class)" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$x$">
+        <constraint name="__context__" script="&quot;import com.intellij.psi.util.InheritanceUtil&#10;&#10;def type1 = x.getType()&#10;def type2 = y.getType()&#10;if (type1 == type2) return true&#10;type1 != null &amp;&amp; type2 != null &amp;&amp; InheritanceUtil.isInheritor(type1, type2.getCanonicalText())&quot;" within="" contains="" />
+        <constraint name="x" within="" contains="" />
+        <constraint name="y" within="" contains="" />
+      </replaceConfiguration>
       <searchConfiguration name="remove test-only branch and use UIUtil.dispatchAllInvocationEvents() in tests" uuid="07f04ba3-90ed-3e4d-9f88-e45dfaa05771" text="if ($APP$.isUnitTestMode()) {&#10;  $DO$;&#10;} else {&#10;  $APP2$.$INV$($ARGS$);&#10;}" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="APP" within="" contains="" />
@@ -1870,6 +1878,30 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="s1" nameOfExprType="java\.lang\.String" within="" contains="" />
         <constraint name="s2" nameOfExprType="java\.lang\.String" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use explicit function to cast as SwiftExpression" description="Instances of SwiftExpression might still be a statement.&#10;Please be more explicit in what you are interested in by using either:&#10; - asSwiftExpressionThatMightBeStatement()&#10; - asSwiftExpression()&#10; - asSwiftExpressionThatIsNotUsedAsStatement()" suppressId="swift.explicit.expression.as" problemDescriptor="Use explicit function to cast as SwiftExpression" text="$ref$ as SwiftExpression" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$ref$.asSwiftExpression()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ref" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use explicit function to cast as SwiftExpression" text="$ref$ as? SwiftExpression" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$ref$.asSwiftExpression()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ref" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use explicit function to cast as SwiftExpression" text="$ref$.asSafely&lt;SwiftExpression&gt;()" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$ref$.asSwiftExpression()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ref" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use explicit function to cast as SwiftExpression" text="$ref$?.asSafely&lt;SwiftExpression&gt;()" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$ref$.asSwiftExpression()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ref" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use explicit function to cast SwiftExpression" description="Instances of SwiftExpression might still be a statement.&#10;Please be more explicit in what you are interested in by using either:&#10; - isSwiftExpressionThatMightBeStatement()&#10; - isSwiftExpression()&#10; - isSwiftExpressionThatIsNotUsedAsStatement()" suppressId="swift.explicit.expression.is" problemDescriptor="Use explicit function to cast SwiftExpression" text="$ref$ is SwiftExpression" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$ref$.isSwiftExpression()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ref" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use explicit function to cast SwiftExpression" text="$ref$ instanceof SwiftExpression" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="SwiftBranchStatementKt.isSwiftExpression($ref$, null)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ref" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="use explicit toArray() method" text="com.intellij.util.ArrayUtil.toObjectArray($collection$, $class$.class)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="$collection$.toArray(new $class$[0])">
         <constraint name="__context__" within="" contains="" />
@@ -2371,6 +2403,7 @@
     <inspection_tool class="UnusedProperty" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="fileNameMask" value=".*Bundle\.properties" />
     </inspection_tool>
+    <inspection_tool class="UsagesOfObsoleteApi" enabled="true" level="TEXT ATTRIBUTES" enabled_by_default="true" editorAttributes="DEPRECATED_ATTRIBUTES" />
     <inspection_tool class="UseJBColor" enabled="true" level="WARNING" enabled_by_default="true">
       <scope name="Tests" level="WARNING" enabled="false" />
     </inspection_tool>

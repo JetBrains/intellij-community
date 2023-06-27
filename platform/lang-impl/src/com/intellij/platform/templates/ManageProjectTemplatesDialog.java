@@ -25,9 +25,9 @@ import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,7 +65,7 @@ class ManageProjectTemplatesDialog extends DialogWrapper {
       }
     });
     myTemplatesList.setEmptyText(LangBundle.message("status.text.no.user.defined.project.templates"));
-    myTemplatesList.setCellRenderer(SimpleListCellRenderer.create("", ProjectTemplate::getName));
+    myTemplatesList.setCellRenderer(BuilderKt.simpleListCellRenderer(ProjectTemplate::getName));
     myTemplatesList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {

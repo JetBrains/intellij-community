@@ -16,10 +16,13 @@ internal abstract class SearchEverywhereMLRankingModelLoader {
     private val EP_NAME: ExtensionPointName<SearchEverywhereMLRankingModelLoader>
       = ExtensionPointName.create("com.intellij.searcheverywhere.ml.rankingModelLoader")
 
-    fun getForTab(contributorId: String): SearchEverywhereMLRankingModelLoader {
+    val allLoaders: List<SearchEverywhereMLRankingModelLoader>
+      get() = EP_NAME.extensionList
+
+    fun getForTab(tabId: String): SearchEverywhereMLRankingModelLoader {
       return EP_NAME.findFirstSafe {
-        it.supportedContributorName == contributorId
-      } ?: throw IllegalArgumentException("Unsupported contributor $contributorId")
+        it.supportedTab == tabId
+      } ?: throw IllegalArgumentException("Unsupported tab $tabId")
     }
   }
 
@@ -47,18 +50,18 @@ internal abstract class SearchEverywhereMLRankingModelLoader {
    */
   protected abstract fun getBundledModel(): DecisionFunction
 
-  protected abstract val supportedContributorName: String
+  protected abstract val supportedTab: String
 
   protected fun shouldProvideExperimentalModel(): Boolean {
-    return SearchEverywhereMlRankingService.getService()?.shouldUseExperimentalModel(supportedContributorName) ?: false
+    return SearchEverywhereMlRankingService.getService()?.shouldUseExperimentalModel(supportedTab) ?: false
   }
 
   private fun shouldProvideLocalModel(): Boolean {
-    return LocalRankingModelProviderUtil.isPathToLocalModelSpecified(supportedContributorName)
+    return LocalRankingModelProviderUtil.isPathToLocalModelSpecified(supportedTab)
   }
 
   private fun getLocalModel(): DecisionFunction {
-    return LocalRankingModelProviderUtil.getLocalModel(supportedContributorName)!!
+    return LocalRankingModelProviderUtil.getLocalModel(supportedTab)!!
   }
 
   protected fun getCatBoostModel(resourceDirectory: String, modelDirectory: String): DecisionFunction {

@@ -23,6 +23,7 @@ class KotlinJUnit4Framework: JUnit4Framework(), KotlinPsiBasedTestFramework {
     private val psiBasedDelegate = object : AbstractKotlinPsiBasedTestFramework() {
         override val markerClassFqn: String = JUnitUtil.TEST_ANNOTATION
         override val disabledTestAnnotation: String = "org.junit.Ignore"
+        override val allowTestMethodsInObject: Boolean = false
 
         override fun isTestClass(declaration: KtClassOrObject): Boolean {
             return super.isTestClass(declaration) && CachedValuesManager.getCachedValue(declaration) {

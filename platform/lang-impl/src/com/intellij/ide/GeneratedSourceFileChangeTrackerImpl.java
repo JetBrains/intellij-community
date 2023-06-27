@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.AppTopics;
@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.Alarm;
 import com.intellij.util.SingleAlarm;
@@ -76,7 +77,7 @@ public final class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceF
       }
 
       VirtualFile file = FileDocumentManager.getInstance().getFile(event.getDocument());
-      if (file == null) {
+      if (file == null || LightVirtualFile.shouldSkipEventSystem(file)) {
         return;
       }
 

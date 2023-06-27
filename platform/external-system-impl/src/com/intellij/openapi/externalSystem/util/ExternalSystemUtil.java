@@ -5,9 +5,6 @@ import com.intellij.build.*;
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.FailureResult;
 import com.intellij.build.events.FinishBuildEvent;
-import com.intellij.build.events.impl.FailureImpl;
-import com.intellij.build.events.impl.FailureResultImpl;
-import com.intellij.build.events.impl.SuccessResultImpl;
 import com.intellij.build.events.impl.*;
 import com.intellij.build.issue.BuildIssue;
 import com.intellij.execution.*;
@@ -28,7 +25,10 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
@@ -43,7 +43,8 @@ import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.task.*;
-import com.intellij.openapi.externalSystem.model.task.event.*;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
 import com.intellij.openapi.externalSystem.service.ImportCanceledException;
 import com.intellij.openapi.externalSystem.service.execution.*;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager;
@@ -92,7 +93,10 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NonNavigatable;
-import com.intellij.util.*;
+import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.PlatformUtils;
+import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.ApiStatus;
@@ -107,7 +111,6 @@ import java.util.*;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings.SyncType.*;
-import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.doWriteAction;
 import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
 public final class ExternalSystemUtil {
@@ -1060,17 +1063,13 @@ public final class ExternalSystemUtil {
   }
 
   public static @Nullable VirtualFile findLocalFileByPath(String path) {
-    return ApplicationManager.getApplication().isReadAccessAllowed()
-           ? findLocalFileByPathUnderReadAction(path)
-           : findLocalFileByPathUnderWriteAction(path);
-  }
-
-  private static @Nullable VirtualFile findLocalFileByPathUnderWriteAction(final String path) {
-    return doWriteAction(() -> StandardFileSystems.local().refreshAndFindFileByPath(path));
-  }
-
-  private static @Nullable VirtualFile findLocalFileByPathUnderReadAction(final String path) {
-    return ReadAction.compute(() -> StandardFileSystems.local().findFileByPath(path));
+    Application application = ApplicationManager.getApplication();
+    if (!application.isDispatchThread() && application.isReadAccessAllowed()) {
+      // can not refresh under Read lock on non-dispatch thread. See VirtualFileSystem.refreshAndFindFileByPath javadoc
+      return StandardFileSystems.local().findFileByPath(path);
+    } else {
+      return StandardFileSystems.local().refreshAndFindFileByPath(path);
+    }
   }
 
   public static void scheduleExternalViewStructureUpdate(final @NotNull Project project, final @NotNull ProjectSystemId systemId) {

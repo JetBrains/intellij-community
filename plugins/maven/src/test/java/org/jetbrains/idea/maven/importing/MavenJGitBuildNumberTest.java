@@ -15,8 +15,8 @@
  */
 package org.jetbrains.idea.maven.importing;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.maven.testFramework.MavenDomTestCase;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Test;
 
 import java.util.List;
@@ -113,7 +113,7 @@ public class MavenJGitBuildNumberTest extends MavenDomTestCase {
       </properties>
       """);
 
-    checkHighlighting(pom, true, false, true);
+    checkHighlighting(pom);
   }
 
   @Test
@@ -135,7 +135,7 @@ public class MavenJGitBuildNumberTest extends MavenDomTestCase {
                          <aaa>${<error>git.commitsCount</error>}</aaa></properties>
                        """);
 
-    checkHighlighting(myProjectPom);
+    checkHighlighting();
   }
 
 

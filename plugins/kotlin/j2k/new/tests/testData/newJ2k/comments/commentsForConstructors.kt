@@ -18,7 +18,7 @@ internal class CtorComment /*
      */
 // single line magic comments
 {
-    var myA = "a"
+    var myA: String = "a"
 }
 
 internal class CtorComment2  /*

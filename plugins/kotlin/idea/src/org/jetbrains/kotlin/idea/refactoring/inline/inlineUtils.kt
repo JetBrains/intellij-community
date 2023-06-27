@@ -96,6 +96,6 @@ fun Editor.findSimpleNameReference(): PsiReference? {
 fun findCallableConflictForUsage(usage: PsiElement): @NlsContexts.DialogMessage String? {
     val usageParent = usage.parent as? KtCallableReferenceExpression ?: return null
     if (usageParent.callableReference != usage) return null
-    if (ConvertReferenceToLambdaIntention.isApplicableTo(usageParent)) return null
+    if (ConvertReferenceToLambdaIntention.Holder.isApplicableTo(usageParent)) return null
     return KotlinBundle.message("text.reference.cannot.be.converted.to.a.lambda")
 }

@@ -448,7 +448,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
                   queryQualifiedNameUsages(ownerClass);
                 }
               }
-              UMethod uMethod = (UMethod)refMethod.getUastElement();
+              UMethod uMethod = refMethod.getUastElement();
               if (uMethod != null && (isSerializablePatternMethod(uMethod, refMethod.getOwnerClass()) ||
                                       // todo this method potentially leads to INRE. Perhaps, it should be reconsidered/deleted (IJ-CR-5556)
                                       belongsToRepeatableAnnotationContainer(uMethod, refMethod.getOwnerClass()))) {
@@ -531,8 +531,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     if (ownerRefClass == null) return false;
     if (!PsiUtil.isLanguageLevel8OrHigher(uMethod.getJavaPsi())) return false;
     if (!"value".equals(uMethod.getName())) return false;
-    UClass ownerUClass = ownerRefClass.getUastElement();
-    if (ownerUClass == null || !ownerUClass.isAnnotationType()) return false;
+    if (!ownerRefClass.isAnnotationType()) return false;
     PsiType returnType = uMethod.getReturnType();
     if (!(returnType instanceof PsiArrayType)) return false;
     PsiClass returnTypeClass = PsiUtil.resolveClassInType(returnType);

@@ -148,7 +148,7 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
     // kotlin receiver parameter (psi <-> uast conversion isn't symmetric)
     RefMethod method = ObjectUtils.tryCast(getOwner(), RefMethod.class);
     if (method == null) return null;
-    UMethod uMethod = ObjectUtils.tryCast(method.getUastElement(), UMethod.class);
+    UMethod uMethod = method.getUastElement();
     if (uMethod == null) return null;
     List<UParameter> parameters = uMethod.getUastParameters();
     if (parameters.size() <= getIndex()) return null;

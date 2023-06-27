@@ -5,6 +5,7 @@ import com.intellij.collaboration.auth.ui.login.LoginModel
 import com.intellij.collaboration.auth.ui.login.TokenLoginDialog
 import com.intellij.collaboration.auth.ui.login.TokenLoginInputPanelFactory
 import com.intellij.collaboration.auth.ui.login.TokenLoginPanelModel
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -78,7 +79,10 @@ object GitLabLoginUtil {
     serverFieldDisabled: Boolean
   ): LoginModel.LoginState {
     TokenLoginDialog(project, parentComponent, model) {
-      TokenLoginInputPanelFactory(model).create(serverFieldDisabled, null)
+      TokenLoginInputPanelFactory(model).create(
+        serverFieldDisabled,
+        tokenNote = CollaborationToolsBundle.message("clone.dialog.insufficient.scopes", GitLabSecurityUtil.MASTER_SCOPES)
+      )
     }.showAndGet()
     return model.loginState.value
   }
@@ -100,4 +104,7 @@ object GitLabLoginUtil {
       null
     }
   }
+
+  fun isAccountUnique(accounts: Collection<GitLabAccount>, server: GitLabServerPath, username: String): Boolean =
+    accounts.none { it.server == server && it.name == username }
 }

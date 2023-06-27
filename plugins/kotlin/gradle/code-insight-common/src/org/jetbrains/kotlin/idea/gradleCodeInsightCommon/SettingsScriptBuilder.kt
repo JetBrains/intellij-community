@@ -59,19 +59,6 @@ abstract class SettingsScriptBuilder<T: PsiFile>(private val scriptFile: T) {
 
     abstract fun addPluginRepository(repository: RepositoryDescription)
 
-    fun addResolutionStrategy(pluginId: String) {
-        val resolutionStrategyBody = getOrAppendInnerBlockBody("resolutionStrategy", getOrCreatePluginManagementBody())
-        val eachPluginBody = getOrAppendInnerBlockBody("eachPlugin", resolutionStrategyBody)
-        appendExpressionToBlockIfAbsent(
-            """
-                if (requested.id.id == "$pluginId") {
-                    useModule("org.jetbrains.kotlin:kotlin-gradle-plugin:${'$'}{requested.version}")
-                }
-            """.trimIndent(),
-            eachPluginBody
-        )
-    }
-
     fun addIncludedModules(modules: List<String>) {
         builder.append(modules.joinToString(prefix = "include ", postfix = "\n") { "'$it'" })
     }

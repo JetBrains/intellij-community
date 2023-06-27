@@ -10,7 +10,7 @@ import kotlin.io.path.pathString
  * Win drives -> /mnt
  */
 val WSLDistribution.rootMappings: List<PathMappingSettings.PathMapping>
-  get() = listWindowsRoots().map { PathMappingSettings.PathMapping(it.pathString, getWslPath(it.pathString)) } + listOf(
+  get() = listWindowsLocalDriveRoots().map { PathMappingSettings.PathMapping(it.pathString, getWslPath(it.pathString)) } + listOf(
     PathMappingSettings.PathMapping(getWindowsPath("/"), "/")
   )
 

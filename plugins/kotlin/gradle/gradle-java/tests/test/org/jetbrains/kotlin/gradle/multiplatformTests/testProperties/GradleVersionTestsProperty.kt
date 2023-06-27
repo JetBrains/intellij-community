@@ -7,8 +7,8 @@ object GradleVersionTestsProperty : KotlinTestsResolvableProperty {
     override val id: String = "gradle_version"
 
     enum class Value(val acronym: String, val version: String) {
-        ForMinAgp("REQUIRED_FOR_MIN_AGP", "7.4"),
-        ForStableAgp("REQUIRED_FOR_STABLE_AGP", "7.5.1"),
+        ForMinAgp("REQUIRED_FOR_MIN_AGP", "7.5.1"),
+        ForStableAgp("REQUIRED_FOR_STABLE_AGP", "8.0.2"),
         ForBetaAgp("REQUIRED_FOR_BETA_AGP", "8.0.2"),
         ForAlphaAgp("REQUIRED_FOR_ALPHA_AGP", "8.1.1")
     }

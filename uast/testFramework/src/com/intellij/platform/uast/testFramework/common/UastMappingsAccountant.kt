@@ -181,9 +181,7 @@ data class PairWithFirstIdentity<out F, out S>(val first: F, val second: S) {
     if (javaClass != other?.javaClass) return false
 
     other as PairWithFirstIdentity<*, *>
-    if (first != other.first) return false
-
-    return true
+    return first == other.first
   }
 
   override fun hashCode(): Int = first?.hashCode() ?: 0

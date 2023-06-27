@@ -16,8 +16,8 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
-import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -35,7 +35,7 @@ public class AddSerialVersionUIDFix extends PsiUpdateModCommandQuickFix {
   }
 
   @Override
-  protected void applyFix(@NotNull Project project, @NotNull PsiElement classIdentifier, @NotNull EditorUpdater updater) {
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement classIdentifier, @NotNull ModPsiUpdater updater) {
     final PsiClass aClass = (PsiClass)classIdentifier.getParent();
     assert aClass != null;
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(aClass.getProject());

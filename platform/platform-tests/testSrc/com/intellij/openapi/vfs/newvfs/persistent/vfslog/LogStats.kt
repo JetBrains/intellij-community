@@ -7,16 +7,14 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.*
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.VFileEventBasedIterator.ReadResult
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.forEachContainedOperation
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.OperationReadResult
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.*
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.NotEnoughInformationCause
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.fmap
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsTimeMachineImpl
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.withOracle
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.SimpleStringPersistentEnumerator
 import kotlinx.coroutines.runBlocking
+import java.io.Closeable
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
@@ -71,14 +69,14 @@ private fun calcStats(log: VfsLog): Stats {
               stats.operationsCount.incrementAndGet()
               stats.incompleteTagsCount.compute(it.tag, ::incStat)
             }
-            is OperationReadResult.Valid -> {
+            is OperationReadResult.Complete -> {
               stats.operationsCount.incrementAndGet()
               if (!it.operation.result.hasValue) stats.exceptionResultCount.incrementAndGet()
               stats.tagsCount.compute(it.operation.tag, ::incStat)
               when (val op = it.operation) {
                 is VfsOperation.AttributesOperation.WriteAttribute -> {
-                  val attributeId = stringEnumerator.valueOf(op.attributeIdEnumerated)
-                  if (attributeId == null) stats.nullEnumeratedString.incrementAndGet()
+                  val attr = deenumerateAttribute(op.enumeratedAttribute)
+                  if (attr == null) stats.nullEnumeratedString.incrementAndGet()
                   //else {
                   //  attrCount[attributeId] = attrCount.getOrDefault(attributeId, 0) + 1
                   //}
@@ -186,14 +184,21 @@ private fun vfsRecoveryDraft(log: VfsLog,
     if (data == null) State.NotAvailable(NotEnoughInformationCause("data is not available anymore"))
     else State.Ready(data)
   }
-  val vfsTimeMachine = VfsTimeMachineImpl(
+  val perPropVTM = PerPropertyCachingVfsTimeMachine(
     log.context,
     id2filename = fsRecordsOracle::getNameByNameId,
     payloadReader = payloadReader,
     attributeEnumerator = attributeEnumerator
   )
-    .withOracle(fsRecordsOracle)
-    //.withContradictionCheck(fsRecordsOracle)
+  val singlePassVTM = SinglePassVfsTimeMachine(
+    log.context,
+    id2filename = fsRecordsOracle::getNameByNameId,
+    payloadReader = payloadReader,
+    attributeEnumerator = attributeEnumerator
+  )
+  val vfsTimeMachine = singlePassVTM
+    //.withOracle(fsRecordsOracle)
+    .withContradictionCheck(perPropVTM)
 
   fun VfsSnapshot.VirtualFileSnapshot.represent(): String =
     "file: name=$name parent=$parentId id=$fileId ts=$timestamp len=$length flags=$flags contentId=$contentRecordId attrId=$attributesRecordId"
@@ -286,7 +291,7 @@ private fun vfsRecoveryDraft(log: VfsLog,
             when (rec.startTag) {
               VfsOperationTag.VFILE_EVENT_MOVE -> {
                 val startOp =
-                  (rec.begin().next() as OperationReadResult.Valid).operation as VfsOperation.VFileEventOperation.EventStart.Move
+                  (rec.begin().next() as OperationReadResult.Complete).operation as VfsOperation.VFileEventOperation.EventStart.Move
                 val file = snapshotBefore.getFileById(startOp.fileId)
                 println(file.represent())
                 //println("stub index stamp data: ${file.readStubIndexStampAttr()}")
@@ -296,13 +301,14 @@ private fun vfsRecoveryDraft(log: VfsLog,
                 println("MOVE FROM PARENT ${oldParent.name} to ${newParent.name}")
                 //println("old parent's children ids before: ${oldParent.readChildAttr()}")
                 //println("old parent's children ids after: ${oldParentAfter.readChildAttr()}")
-                println("old parent's children ids before: ${oldParent.getRecoverableChildrenIds().fmap { it.map { snapshotBefore.getFileById(it).name } }}")
-                println("old parent's children ids after: ${oldParentAfter.getRecoverableChildrenIds().fmap { it.map { snapshotAfter.getFileById(it).name } }}")
+                println("old parent's children ids before: ${oldParent.getChildrenIds().fmap { it.map { snapshotBefore.getFileById(it).name } }}")
+                println("old parent's children ids after: ${oldParentAfter.getChildrenIds().fmap { it.map { snapshotAfter.getFileById(it).name } }}")
               }
               VfsOperationTag.VFILE_EVENT_CONTENT_CHANGE -> {
                 val startOp =
-                  (rec.begin().next() as OperationReadResult.Valid).operation as VfsOperation.VFileEventOperation.EventStart.ContentChange
+                  (rec.begin().next() as OperationReadResult.Complete).operation as VfsOperation.VFileEventOperation.EventStart.ContentChange
                 val fileBefore = snapshotBefore.getFileById(startOp.fileId)
+                if (fileBefore.name.getOrNull()?.endsWith(".kt") != true) continue
                 val fileAfter = snapshotAfter.getFileById(startOp.fileId)
                 println(fileBefore.represent())
                 //println("stub index stamp data: ${fileBefore.readStubIndexStampAttr()}")
@@ -324,7 +330,7 @@ private fun vfsRecoveryDraft(log: VfsLog,
             }
 
             rec.forEachContainedOperation {
-              if (it is OperationReadResult.Valid) {
+              if (it is OperationReadResult.Complete) {
                 println(it.operation)
               }
               else println(it)
@@ -362,8 +368,10 @@ fun main(args: Array<String>) {
   //val names = PersistentStringEnumerator(logPath.parent / "names.dat", true)::valueOf
   val attributeEnumerator = SimpleStringPersistentEnumerator(logPath.parent / "attributes_enums.dat")
 
-  vfsRecoveryDraft(log, attributeEnumerator, fsRecordsOracle)
-
-  fsRecordsOracle.disposeConnection()
-  AppExecutorUtil.shutdownApplicationScheduledExecutorService()
+  Closeable {
+    fsRecordsOracle.disposeConnection()
+    AppExecutorUtil.shutdownApplicationScheduledExecutorService()
+  }.use {
+    vfsRecoveryDraft(log, attributeEnumerator, fsRecordsOracle)
+  }
 }

@@ -13,6 +13,7 @@ import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.jdi.StackFrameProxyEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.ViewsGeneralSettings;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
@@ -115,7 +116,7 @@ public final class DfaAssist extends DfaAssistBase implements DebuggerContextLis
           })
           .withDocumentsCommitted(myProject)
           .coalesceBy(DfaAssist.this)
-          .finishOnUiThread(ModalityState.NON_MODAL, hints -> DfaAssist.this.displayInlays(hints))
+          .finishOnUiThread(ModalityState.nonModal(), hints -> DfaAssist.this.displayInlays(hints))
           .submit(AppExecutorUtil.getAppExecutorService());
       }
     });
@@ -183,12 +184,14 @@ public final class DfaAssist extends DfaAssistBase implements DebuggerContextLis
    * @param session     X debugger session
    */
   public static void installDfaAssist(@NotNull DebuggerSession javaSession,
-                                      @NotNull XDebugSession session) {
+                                      @NotNull XDebugSession session,
+                                      @NotNull Disposable parent) {
     DebuggerStateManager manager = javaSession.getContextManager();
     DebuggerContextImpl context = manager.getContext();
     Project project = context.getProject();
     if (project != null) {
       DfaAssist assist = new DfaAssist(project, manager);
+      Disposer.register(parent, assist);
       manager.addListener(assist);
       session.addSessionListener(new XDebugSessionListener() {
         @Override

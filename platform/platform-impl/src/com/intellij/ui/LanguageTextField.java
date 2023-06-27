@@ -19,6 +19,7 @@ import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -101,7 +102,7 @@ public class LanguageTextField extends EditorTextField {
       // No need to guess project in getDocument - we already know it
       Document document;
       try (AccessToken ignored = ProjectLocator.withPreferredProject(psiFile.getVirtualFile(), notNullProject)) {
-        document = PsiDocumentManager.getInstance(notNullProject).getDocument(psiFile);
+        document = ReadAction.compute(() -> PsiDocumentManager.getInstance(notNullProject).getDocument(psiFile));
       }
       assert document != null;
 

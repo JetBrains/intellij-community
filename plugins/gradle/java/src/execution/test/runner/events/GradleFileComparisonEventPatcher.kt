@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.execution.test.runner.events
 import com.intellij.openapi.externalSystem.model.task.event.*
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
+import java.util.StringJoiner
 
 typealias TestFinishEvent = ExternalSystemFinishEvent<out TestOperationDescriptor>
 
@@ -18,29 +19,73 @@ typealias TestFinishEvent = ExternalSystemFinishEvent<out TestOperationDescripto
 @ApiStatus.Internal
 internal class GradleFileComparisonEventPatcher {
 
-  private var isGradleTestEventsUsed: Boolean = false
-  private val events = HashMap<String, TestFinishEvent>()
+  private var isBuiltInTestEventsUsed: Boolean = false
+  private val events = HashMap<String, TestEventData>()
 
-  fun setGradleTestEventsUsed() {
-    isGradleTestEventsUsed = true
+  fun setBuiltInTestEventsUsed() {
+    isBuiltInTestEventsUsed = true
   }
 
   fun patchTestFinishEvent(
     event: TestFinishEvent,
     isXml: Boolean
   ): TestFinishEvent? {
-    if (!isGradleTestEventsUsed) {
+    if (!isBuiltInTestEventsUsed) {
       return event
     }
     val patchId = getEventPatchId(event) ?: return event
-    val storedEvent = events[patchId]
-    if (storedEvent == null) {
-      events[patchId] = event
+    val eventData = events[patchId]
+    if (eventData == null) {
+      events[patchId] = when (isXml) {
+        true -> TestEventData(xmlTestEvent = event, tapiTestEvent = null)
+        else -> TestEventData(xmlTestEvent = null, tapiTestEvent = event)
+      }
       return null
     }
-    val tapiEvent = if (isXml) storedEvent else event
-    val xmlEvent = if (isXml) event else storedEvent
-    return createTestFinishEvent(tapiEvent, xmlEvent)
+    when (isXml) {
+      true -> check(eventData.xmlTestEvent == null) {
+        "Found XML test event duplication.\n" + getDebugInfo(event, eventData)
+      }
+      else -> check(eventData.tapiTestEvent == null) {
+        "Found TAPI test event duplication.\n" + getDebugInfo(event, eventData)
+      }
+    }
+    val tapiTestEvent = if (!isXml) event else eventData.tapiTestEvent!!
+    val xmlTestEvent = if (isXml) event else eventData.xmlTestEvent!!
+    events[patchId] = TestEventData(xmlTestEvent = xmlTestEvent, tapiTestEvent = tapiTestEvent)
+    return createTestFinishEvent(tapiTestEvent, xmlTestEvent)
+  }
+
+  private fun getDebugInfo(event: TestFinishEvent, eventData: TestEventData): String {
+    val xmlTestEvent = eventData.xmlTestEvent
+    val tapiTestEvent = eventData.tapiTestEvent
+    val joiner = StringJoiner("\n")
+    joiner.add("Current event:")
+    joiner.add("    ID=" + event.eventId)
+    joiner.add("    PARENT_ID=" + event.parentEventId)
+    joiner.add("    TIME=" + event.eventTime)
+    joiner.add("    NAME=" + event.displayName)
+    if (xmlTestEvent != null) {
+      joiner.add("XML event:")
+      joiner.add("    ID=" + xmlTestEvent.eventId)
+      joiner.add("    PARENT_ID=" + xmlTestEvent.parentEventId)
+      joiner.add("    TIME=" + xmlTestEvent.eventTime)
+      joiner.add("    NAME=" + xmlTestEvent.displayName)
+    }
+    else {
+      joiner.add("XML event = null")
+    }
+    if (tapiTestEvent != null) {
+      joiner.add("TAPI event:")
+      joiner.add("    ID=" + tapiTestEvent.eventId)
+      joiner.add("    PARENT_ID=" + tapiTestEvent.parentEventId)
+      joiner.add("    TIME=" + tapiTestEvent.eventTime)
+      joiner.add("    NAME=" + tapiTestEvent.displayName)
+    }
+    else {
+      joiner.add("TAPI event = null")
+    }
+    return joiner.toString()
   }
 
   private fun getEventPatchId(event: TestFinishEvent): String? {
@@ -104,7 +149,7 @@ internal class GradleFileComparisonEventPatcher {
   }
 
   private fun createFailure(tapiFailure: Failure, xmlFailure: Failure): Failure {
-    if (tapiFailure is TestAssertionFailure && xmlFailure is TestAssertionFailure) {
+    if (tapiFailure is TestFailure && xmlFailure is TestAssertionFailure) {
       return TestAssertionFailure(
         tapiFailure.exceptionName,
         tapiFailure.message,
@@ -119,4 +164,9 @@ internal class GradleFileComparisonEventPatcher {
     }
     return tapiFailure
   }
+
+  private class TestEventData(
+    val xmlTestEvent: TestFinishEvent?,
+    val tapiTestEvent: TestFinishEvent?
+  )
 }

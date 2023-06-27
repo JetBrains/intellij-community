@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
@@ -80,10 +81,10 @@ final class AdaptExpressionTypeFixUtil {
     if (parameterType instanceof PsiClassType &&
         ((PsiClassType)parameterType).rawType().equalsToText(CommonClassNames.JAVA_LANG_CLASS) &&
         typeParameter == getSoleTypeParameter(parameterType)) {
-      if (expectedTypeValue instanceof PsiClassType && JavaGenericsUtil.isReifiableType(expectedTypeValue)) {
+      if (expectedTypeValue instanceof PsiClassType classType && JavaGenericsUtil.isReifiableType(expectedTypeValue)) {
         ReplaceExpressionAction fix = new ReplaceExpressionAction(
-          arg, ((PsiClassType)expectedTypeValue).rawType().getCanonicalText() + ".class",
-          ((PsiClassType)expectedTypeValue).rawType().getPresentableText() + ".class");
+          arg, classType.rawType().getCanonicalText() + ".class",
+          classType.rawType().getPresentableText() + ".class");
         info.registerFix(fix, null, null, null, null);
       }
     }
@@ -236,7 +237,7 @@ final class AdaptExpressionTypeFixUtil {
       info.registerFix(action1, null, null, null, null);
       PsiType castToType = suggestCastTo(expectedType, actualType);
       if (castToType != null) {
-        IntentionAction action = new AddTypeCastFix(castToType, expression, role);
+        ModCommandAction action = new AddTypeCastFix(castToType, expression, role);
         info.registerFix(action, null, null, null, null);
       }
     }

@@ -22,7 +22,7 @@ class AttributesLogInterceptor(
 
         private fun interceptClose(data: ByteArray, result: OperationResult<Unit>) {
           context.enqueueOperationWrite(VfsOperationTag.ATTR_WRITE_ATTR) {
-            val attrIdEnumerated = stringEnumerator.enumerate(attribute.id)
+            val attrIdEnumerated = enumerateAttribute(attribute)
             val payloadRef =
               payloadStorage.writePayload(data.size.toLong()) {
                 write(data, 0, data.size)

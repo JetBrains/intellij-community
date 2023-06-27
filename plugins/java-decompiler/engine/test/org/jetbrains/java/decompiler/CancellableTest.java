@@ -39,14 +39,15 @@ public class CancellableTest {
       }
 
       @Override
-      public void saveCancelled() {
+      public void startMethod(String className, String methodName) {
 
       }
 
       @Override
-      public void checkSavedCancelled() {
-        check();
+      public void finishMethod(String className, String methodName) {
+
       }
+
 
       private void check() {
         if (myAtomicInteger.incrementAndGet() > MIN_CALL_NUMBERS) {

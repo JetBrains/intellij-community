@@ -1,4 +1,4 @@
 package com.example.demo;
 
-final class <warning descr="A service not going to be overridden does not need to be registered in plugin.xml.
-Instead, annotate service class with '@Service'">MyService</warning> {}
+final class <warning descr="Service can be converted to a light one.
+Annotate the service class with '@Service' and remove its registration from the 'plugin.xml' file.">MyService</warning> {}

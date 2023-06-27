@@ -105,9 +105,7 @@ class TextInlayPresentationEntry(
 
     other as TextInlayPresentationEntry
 
-    if (text != other.text) return false
-
-    return true
+    return text == other.text
   }
 
   override fun hashCode(): Int {

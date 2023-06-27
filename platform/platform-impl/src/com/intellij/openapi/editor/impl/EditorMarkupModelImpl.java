@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
@@ -610,7 +610,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     }
     ReadAction.nonBlocking(()->myTooltipRendererProvider.calcTooltipRenderer(highlighters))
       .expireWhen(() -> myEditor.isDisposed())
-      .finishOnUiThread(ModalityState.NON_MODAL, bigRenderer -> {
+      .finishOnUiThread(ModalityState.nonModal(), bigRenderer -> {
         if (bigRenderer != null) {
           LightweightHint hint = showTooltip(bigRenderer, createHint(e.getComponent(), new Point(0, y+1)).setForcePopup(true));
           myCurrentHint = new WeakReference<>(hint);

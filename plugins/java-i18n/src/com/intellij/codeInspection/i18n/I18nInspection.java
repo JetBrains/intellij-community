@@ -46,7 +46,10 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.intellij.lang.annotations.RegExp;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.expressions.UInjectionHost;
 import org.jetbrains.uast.expressions.UStringConcatenationsFacade;
@@ -277,7 +280,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
   }
 
   @NotNull
-  private static HtmlChunk exampleDescription(String exampleText) {
+  private static HtmlChunk exampleDescription(@NlsSafe String exampleText) {
     return HtmlChunk.fragment(
       HtmlChunk.text(JavaI18nBundle.message("tooltip.example")),
       HtmlChunk.br(),
@@ -600,10 +603,10 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     for (UExpression usage : usages) {
       NlsInfo info = NlsInfo.forExpression(usage);
       switch (info.getNlsStatus()) {
-        case YES: {
+        case YES -> {
           return info;
         }
-        case UNSURE: {
+        case UNSURE -> {
           if (ignoreForAllButNls) {
             break;
           }
@@ -616,8 +619,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
           ContainerUtil.addIfNotNull(nonNlsTargets, ((NlsInfo.NlsUnspecified)info).getAnnotationCandidate());
           return NlsInfo.localized();
         }
-        case NO:
-          break;
+        case NO -> {}
       }
     }
     return NlsInfo.nonLocalized();

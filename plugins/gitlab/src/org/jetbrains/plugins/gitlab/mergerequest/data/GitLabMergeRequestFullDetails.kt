@@ -29,7 +29,9 @@ data class GitLabMergeRequestFullDetails(
   val commits: List<GitLabCommitDTO>,
   val diffRefs: GitLabDiffRefs,
   val headPipeline: GitLabPipelineDTO?,
-  val userPermissions: GitLabMergeRequestPermissionsDTO
+  val userPermissions: GitLabMergeRequestPermissionsDTO,
+  val shouldBeRebased: Boolean,
+  val rebaseInProgress: Boolean
 ) : GitLabMergeRequestDetails(iid, title, createdAt, author, mergeStatus, isMergeable, state, draft, assignees, reviewers, webUrl,
                               detailedLabels.map { it.title }) {
 
@@ -57,7 +59,9 @@ data class GitLabMergeRequestFullDetails(
       diffRefs = dto.diffRefs,
       headPipeline = dto.headPipeline,
       userPermissions = dto.userPermissions,
-      detailedLabels = dto.labels
+      detailedLabels = dto.labels,
+      shouldBeRebased = dto.shouldBeRebased,
+      rebaseInProgress = dto.rebaseInProgress
     )
   }
 }

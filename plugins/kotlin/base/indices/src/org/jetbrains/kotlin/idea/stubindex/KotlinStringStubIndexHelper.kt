@@ -15,7 +15,6 @@ import com.intellij.util.Processors
 import com.intellij.util.SmartList
 import com.intellij.util.indexing.IdFilter
 import org.jetbrains.kotlin.idea.base.indices.*
-import org.jetbrains.kotlin.idea.base.indices.getElementsAndMeasure
 import org.jetbrains.kotlin.idea.base.indices.processAllKeysAndMeasure
 import org.jetbrains.kotlin.idea.base.indices.processElementsAndMeasure
 
@@ -26,7 +25,7 @@ abstract class KotlinStringStubIndexHelper<Key : NavigatablePsiElement>(private 
     abstract val indexKey: StubIndexKey<String, Key>
 
     operator fun get(fqName: String, project: Project, scope: GlobalSearchScope): Collection<Key> {
-        return getElementsAndMeasure(indexKey, logger) { StubIndex.getElements(indexKey, fqName, project, scope, valueClass) }
+        return getByKeyAndMeasure(indexKey, logger) { StubIndex.getElements(indexKey, fqName, project, scope, valueClass) }
     }
 
     fun getAllKeys(project: Project): Collection<String> {

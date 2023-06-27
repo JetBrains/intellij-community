@@ -29,8 +29,8 @@ internal class GHPRListComponentFactory(private val listModel: ListModel<GHPullR
       DataManager.registerDataProvider(it) { dataId ->
         if (GHPRActionKeys.SELECTED_PULL_REQUEST.`is`(dataId)) it.selectedValue else null
       }
-      val groupId = "Github.PullRequest.ToolWindow.List.Popup"
-      PopupHandler.installPopupMenu(it, ActionManager.getInstance().getAction(groupId) as ActionGroup, groupId)
+      val actionGroup = ActionManager.getInstance().getAction("Github.PullRequest.ToolWindow.List.Popup") as ActionGroup
+      PopupHandler.installPopupMenu(it, actionGroup, ActionPlaces.POPUP)
       val shortcuts = CompositeShortcutSet(CommonShortcuts.ENTER, CommonShortcuts.DOUBLE_CLICK_1)
       EmptyAction.registerWithShortcutSet("Github.PullRequest.Show", shortcuts, it)
     }

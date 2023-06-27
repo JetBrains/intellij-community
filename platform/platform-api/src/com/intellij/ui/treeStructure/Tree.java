@@ -129,6 +129,18 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
   }
 
+  /**
+   * Starts measuring the next expand operation if the tree supports that
+   * <p>
+   *   Internal API for statistics. Called by the UI and certain actions right before a path is expanded.
+   *   It's up to the tree then to stop measuring at the right moment and send the value to the collector.
+   * </p>
+   * @param path the path that will be expanded
+   */
+  @ApiStatus.Internal
+  public void startMeasuringExpandDuration(@NotNull TreePath path) {
+  }
+
   public boolean isEmpty() {
     return 0 >= getRowCount();
   }

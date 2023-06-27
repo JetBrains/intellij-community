@@ -19,10 +19,6 @@ public final class PythonIcons {
     /** 16x16 */ public static final @NotNull Icon CythonFile = load("icons/com/jetbrains/cython/cythonFile.svg", 2119301841, 0);
   }
 
-  public static final class Pyqt {
-    /** 16x16 */ public static final @NotNull Icon UiForm = load("icons/com/jetbrains/pyqt/uiForm.svg", 20186536, 0);
-  }
-
   public static final class Python {
     /** 16x16 */ public static final @NotNull Icon Anaconda = load("icons/com/jetbrains/python/anaconda.svg", 1315162781, 0);
     /** 16x16 */ public static final @NotNull Icon CommandQueue = load("icons/com/jetbrains/python/commandQueue.svg", -127964299, 2);

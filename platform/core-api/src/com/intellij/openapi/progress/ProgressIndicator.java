@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.ModalityState;
@@ -149,7 +149,7 @@ public interface ProgressIndicator {
 
   /**
    * Returns the modality state returned by {@link ModalityState#defaultModalityState()} on threads associated with this progress.
-   * By default, depending on implementation, it's {@link ModalityState#NON_MODAL} or current modality at the moment of progress indicator creation.
+   * By default, depending on implementation, it's {@link ModalityState#nonModal()} or current modality at the moment of progress indicator creation.
    * It can be later modified by {@link #setModalityProgress(ProgressIndicator)}, but it mostly makes sense for processes showing modal dialogs.
    */
   @NotNull ModalityState getModalityState();

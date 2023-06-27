@@ -9,6 +9,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.evaluation.expression.*
 import com.intellij.debugger.engine.jdi.StackFrameProxy
+import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Attachment
@@ -322,6 +323,14 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
 
                 override fun jdiNewInstance(clazz: ClassType, ctor: Method, args: List<Value?>, policy: Int): Value {
                     return context.newInstance(clazz, ctor, args)
+                }
+
+                override fun jdiMirrorOfString(str: String): StringReference {
+                    return DebuggerUtilsEx.mirrorOfString(str, context.vm, context.evaluationContext)
+                }
+
+                override fun jdiNewArray(arrayType: ArrayType, size: Int): ArrayReference {
+                    return DebuggerUtilsEx.mirrorOfArray(arrayType, size, context.evaluationContext)
                 }
             }
             interpreterLoop(mainMethod, makeInitialFrame(mainMethod, args.map { it.asValue() }), eval)

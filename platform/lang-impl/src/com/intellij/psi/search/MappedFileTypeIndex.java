@@ -106,6 +106,11 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
   }
 
   @Override
+  public boolean isDirty() {
+    return myDataController.isDirty();
+  }
+
+  @Override
   public void clear() throws StorageException {
     myDataController.clear();
   }
@@ -179,6 +184,10 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
 
     public void flush() throws StorageException {
       myForwardIndex.flush();
+    }
+
+    public boolean isDirty() {
+      return myForwardIndex.isDirty();
     }
 
     public void close() throws StorageException {
@@ -331,6 +340,11 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
         catch (IOException e) {
           throw closeWithException(new StorageException(e));
         }
+      }
+
+      public boolean isDirty() {
+        //TODO
+        return false;
       }
 
       public void close() throws StorageException {

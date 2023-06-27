@@ -13,7 +13,7 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
     const val ACTION_FINISHED_EVENT_ID: String = "action.finished"
 
     @JvmField
-    val GROUP: EventLogGroup = EventLogGroup("actions", 72)
+    val GROUP: EventLogGroup = EventLogGroup("actions", 73)
 
     @JvmField
     val ACTION_ID: StringEventField = EventFields.StringValidatedByCustomRule("action_id", ActionRuleValidator::class.java)

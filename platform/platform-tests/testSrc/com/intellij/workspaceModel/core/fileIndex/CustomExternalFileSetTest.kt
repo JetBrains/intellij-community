@@ -6,20 +6,20 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
-import com.intellij.testFramework.workspaceModel.updateProjectModelAsync
+import com.intellij.testFramework.workspaceModel.update
 import com.intellij.util.indexing.testEntities.IndexingTestEntity
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
-import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.ide.toVirtualFileUrl
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
@@ -55,7 +55,7 @@ class CustomExternalFileSetTest {
       assertEquals(module, ModuleUtilCore.findModuleForFile(file, projectModel.project))
     }
     
-    WorkspaceModel.getInstance(projectModel.project).updateProjectModelAsync {
+    WorkspaceModel.getInstance(projectModel.project).update {
       val url = externalRoot.toVirtualFileUrl(VirtualFileUrlManager.getInstance(projectModel.project))
       val excludedUrl = excludedRoot.toVirtualFileUrl(VirtualFileUrlManager.getInstance(projectModel.project))
       it.addEntity(IndexingTestEntity(listOf(url), listOf(excludedUrl), NonPersistentEntitySource))
@@ -68,7 +68,7 @@ class CustomExternalFileSetTest {
       assertNull(ModuleUtilCore.findModuleForPsiElement(psiFile.parent!!))
     }
 
-    WorkspaceModel.getInstance(projectModel.project).updateProjectModelAsync {
+    WorkspaceModel.getInstance(projectModel.project).update {
       it.removeEntity(it.entities(IndexingTestEntity::class.java).single())
     }
 

@@ -63,7 +63,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
@@ -775,7 +774,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
 
       myOptionsPanel.removeAll();
-      JPanel severityPanel = new JPanel(new GridBagLayout());
+      JPanel severityPanel;
       final JPanel configPanelAnchor = new JPanel(new GridBagLayout());
 
       final boolean showOptionPanel;
@@ -879,35 +878,13 @@ public class SingleInspectionProfilePanel extends JPanel {
           }
         });
 
-        final GridBag constraint = new GridBag()
-          .setDefaultInsets(0, 0, 0, UIUtil.DEFAULT_HGAP)
-          .setDefaultWeightX(1.0)
-          .setDefaultFill(GridBagConstraints.HORIZONTAL);
-
-        final var scopesChooserPanel = UI.PanelFactory.panel(scopesChooserComponent)
-          .withLabel(InspectionsBundle.message("inspection.scope"))
-          .moveLabelOnTop()
-          .createPanel();
-        severityPanel.add(scopesChooserPanel, constraint.next().weightx(0.0));
-
-        final var severityLevelChooserPanel = UI.PanelFactory.panel(severityLevelChooserComponent)
-          .withLabel(InspectionsBundle.message("inspection.severity"))
-          .moveLabelOnTop()
-          .createPanel();
-        severityLevelChooserPanel.setMinimumSize(severityLevelChooserPanel.getPreferredSize());
-        severityPanel.add(severityLevelChooserPanel, constraint.next());
-
-        final var highlightChooserPanel = UI.PanelFactory.panel(highlightsChooserComponent)
-          .withLabel(InspectionsBundle.message("inspection.highlighting"))
-          .moveLabelOnTop()
-          .createPanel();
-        highlightChooserPanel.setMinimumSize(highlightChooserPanel.getPreferredSize());
-        severityPanel.add(highlightChooserPanel, constraint.next());
+        ScopesPanel scopesPanel = new ScopesPanel(scopesChooserComponent, severityLevelChooserComponent, highlightsChooserComponent);
+        severityPanel = scopesPanel.panel;
 
         if (toolState != null) {
           if (!showDefaultConfigurationOptions) {
-            severityLevelChooserPanel.setVisible(false);
-            scopesChooserPanel.setVisible(false);
+            scopesPanel.setSeverityLevelVisible(false);
+            scopesPanel.setScopesChooserVisible(false);
           }
 
           setConfigPanel(configPanelAnchor, toolState);

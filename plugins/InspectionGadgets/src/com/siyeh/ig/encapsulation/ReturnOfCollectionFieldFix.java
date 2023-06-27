@@ -1,17 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.encapsulation;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-final class ReturnOfCollectionFieldFix extends InspectionGadgetsFix {
+final class ReturnOfCollectionFieldFix extends PsiUpdateModCommandQuickFix {
 
   private final String myReplacementText;
   private final String myQualifiedClassName;
@@ -31,7 +30,7 @@ final class ReturnOfCollectionFieldFix extends InspectionGadgetsFix {
   }
 
   @Nullable
-  public static InspectionGadgetsFix build(PsiReferenceExpression referenceExpression) {
+  public static ReturnOfCollectionFieldFix build(PsiReferenceExpression referenceExpression) {
     final String text = referenceExpression.getText();
     if (TypeUtils.expressionHasTypeOrSubtype(referenceExpression, CommonClassNames.JAVA_UTIL_MAP)) {
       if (TypeUtils.expressionHasTypeOrSubtype(referenceExpression, "java.util.SortedMap")) {
@@ -67,16 +66,15 @@ final class ReturnOfCollectionFieldFix extends InspectionGadgetsFix {
   }
 
   @Override
-  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiElement element = descriptor.getPsiElement();
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     if (!(element instanceof PsiReferenceExpression referenceExpression)) {
       return;
     }
-    fixContainingMethodReturnType(referenceExpression);
+    fixContainingMethodReturnType(referenceExpression, updater);
     PsiReplacementUtil.replaceExpressionAndShorten(referenceExpression, myReplacementText);
   }
 
-  private void fixContainingMethodReturnType(PsiReferenceExpression referenceExpression) {
+  private void fixContainingMethodReturnType(PsiReferenceExpression referenceExpression, @NotNull ModPsiUpdater updater) {
     final PsiMethod method = PsiTreeUtil.getParentOfType(referenceExpression, PsiMethod.class, true, PsiLambdaExpression.class);
     if (method == null) {
       return;
@@ -123,8 +121,6 @@ final class ReturnOfCollectionFieldFix extends InspectionGadgetsFix {
     final PsiElement replacement = returnTypeElement.replace(newTypeElement);
     final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
     javaCodeStyleManager.shortenClassReferences(replacement);
-    if (isOnTheFly()) {
-      HighlightUtils.highlightElement(replacement);
-    }
+    updater.highlight(replacement);
   }
 }

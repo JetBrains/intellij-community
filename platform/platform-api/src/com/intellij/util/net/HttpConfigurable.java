@@ -342,7 +342,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
                                      IdeBundle.message("dialog.title.proxy.setup"), Messages.getWarningIcon());
           editConfigurable(frame.getComponent());
         }
-      }, ModalityState.NON_MODAL);
+      }, ModalityState.nonModal());
     }
   }
 

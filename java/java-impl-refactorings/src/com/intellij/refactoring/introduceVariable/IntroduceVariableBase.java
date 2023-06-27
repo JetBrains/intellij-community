@@ -206,7 +206,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   /**
    * @deprecated use CommonJavaRefactoringUtil.collectExpressions
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static List<PsiExpression> collectExpressions(final PsiFile file,
                                                        final Editor editor,
                                                        final int offset) {

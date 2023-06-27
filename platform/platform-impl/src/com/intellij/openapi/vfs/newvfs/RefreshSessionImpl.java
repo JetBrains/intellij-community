@@ -71,7 +71,7 @@ final class RefreshSessionImpl extends RefreshSession {
 
   private static ModalityState getSafeModalityState() {
     ModalityState state = ModalityState.defaultModalityState();
-    return state != ModalityState.any() ? state : ModalityState.NON_MODAL;
+    return state != ModalityState.any() ? state : ModalityState.nonModal();
   }
 
   @Override
@@ -121,7 +121,7 @@ final class RefreshSessionImpl extends RefreshSession {
     if (myWorkQueue.isEmpty()) return;
     var workQueue = myWorkQueue;
     myWorkQueue = new ArrayList<>();
-    var forceRefresh = !myIsRecursive && !myIsAsync;  // shallow sync refresh (e.g. project config files on open)
+    var forceRefresh = !myIsRecursive && !myIsAsync;  // shallow sync refresh (e.g., project config files on open)
 
     var fs = LocalFileSystem.getInstance();
     if (!forceRefresh && fs instanceof LocalFileSystemImpl) {

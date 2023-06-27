@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("XmlReader")
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplacePutWithAssignment", "ReplaceGetOrSet")
 package com.intellij.ide.plugins
@@ -35,7 +35,6 @@ import javax.xml.stream.events.XMLEvent
 
 @ApiStatus.Internal const val PACKAGE_ATTRIBUTE: String = "package"
 @ApiStatus.Internal const val IMPLEMENTATION_DETAIL_ATTRIBUTE: String = "implementation-detail"
-@ApiStatus.Experimental const val ON_DEMAND_ATTRIBUTE: String = "on-demand"
 
 private const val defaultXPointerValue = "xpointer(/idea-plugin/*)"
 
@@ -144,7 +143,6 @@ private fun readRootAttributes(reader: XMLStreamReader2, descriptor: RawPluginDe
       "use-idea-classloader" -> descriptor.isUseIdeaClassLoader = reader.getAttributeAsBoolean(i)
       "allow-bundled-update" -> descriptor.isBundledUpdateAllowed = reader.getAttributeAsBoolean(i)
       IMPLEMENTATION_DETAIL_ATTRIBUTE -> descriptor.implementationDetail = reader.getAttributeAsBoolean(i)
-      ON_DEMAND_ATTRIBUTE -> descriptor.onDemand = reader.getAttributeAsBoolean(i)
       "require-restart" -> descriptor.isRestartRequired = reader.getAttributeAsBoolean(i)
       "version" -> {
         // internalVersionString - why it is not used, but just checked?
@@ -350,11 +348,11 @@ private fun readActions(descriptor: RawPluginDescriptor, reader: XMLStreamReader
       ActionDescriptorName.group -> {
         var className = element.attributes.get("class")
         if (className.isNullOrEmpty()) {
-          className = if ("true" == element.attributes.get("compact")) {
+          className = if (element.attributes.get("compact") == "true") {
             "com.intellij.openapi.actionSystem.DefaultCompactActionGroup"
           }
           else {
-            "com.intellij.openapi.actionSystem.DefaultActionGroup"
+            null
           }
         }
 

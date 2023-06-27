@@ -35,6 +35,8 @@ internal interface GitLabMergeRequestDiffChangeViewModel {
   val draftDiscussions: DiscussionsFlow
   val newDiscussions: NewDiscussionsFlow
 
+  val discussionsViewOption: StateFlow<DiscussionsViewOption>
+
   fun requestNewDiscussion(location: DiffLineLocation, focus: Boolean)
   fun cancelNewDiscussion(location: DiffLineLocation)
 }
@@ -46,7 +48,7 @@ internal class GitLabMergeRequestDiffChangeViewModelImpl(
   private val currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest,
   private val diffData: GitTextFilePatchWithHistory,
-  discussionsViewOption: Flow<DiscussionsViewOption>
+  override val discussionsViewOption: StateFlow<DiscussionsViewOption>
 ) : GitLabMergeRequestDiffChangeViewModel {
 
   private val cs = parentCs.childScope(Dispatchers.Default + CoroutineName("GitLab Merge Request Review Diff Change"))

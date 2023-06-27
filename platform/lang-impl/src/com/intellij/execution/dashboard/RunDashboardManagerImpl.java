@@ -15,9 +15,11 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.services.ServiceEventListener;
 import com.intellij.execution.services.ServiceViewDescriptor;
 import com.intellij.execution.services.ServiceViewManager;
-import com.intellij.execution.services.ServiceViewManagerImpl;
 import com.intellij.execution.services.ServiceViewUIUtils;
-import com.intellij.execution.ui.*;
+import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManager;
+import com.intellij.execution.ui.RunContentManagerImpl;
+import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.lightEdit.LightEdit;
@@ -234,9 +236,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
         myToolWindowId = ToolWindowId.SERVICES;
       }
       else {
-        String toolWindowId =
-          ((ServiceViewManagerImpl)ServiceViewManager.getInstance(myProject))
-            .getToolWindowId(RunDashboardServiceViewContributor.class);
+        String toolWindowId = ServiceViewManager.getInstance(myProject).getToolWindowId(RunDashboardServiceViewContributor.class);
         myToolWindowId = toolWindowId != null ? toolWindowId : ToolWindowId.SERVICES;
       }
     }
@@ -642,7 +642,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     RunContentDescriptor descriptor = RunContentManagerImpl.getRunContentDescriptorByContent(content);
     RunnerLayoutUiImpl ui = getRunnerLayoutUi(descriptor);
     if (ui != null) {
-      if (!UIExperiment.isNewDebuggerUIEnabled()) {
+      if (!ServiceViewUIUtils.isNewServicesUIEnabled()) {
         ui.setLeftToolbarVisible(visible);
       }
       ui.setContentToolbarBefore(visible);
@@ -721,7 +721,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
       textPanel.setFocusable(true);
       JPanel mainPanel = new NonOpaquePanel(new BorderLayout());
       mainPanel.add(textPanel, BorderLayout.CENTER);
-      if (UIExperiment.isNewDebuggerUIEnabled()) {
+      if (ServiceViewUIUtils.isNewServicesUIEnabled()) {
         if (ActionManager.getInstance().getAction(RUN_DASHBOARD_CONTENT_TOOLBAR) instanceof ActionGroup group) {
           group.registerCustomShortcutSet(textPanel, myProject);
           ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.SERVICES_TOOLBAR, group, true);

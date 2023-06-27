@@ -26,4 +26,13 @@ class JavaObsoleteApiUsageInspectionTest : ObsoleteApiUsageInspectionTestBase() 
       }      
     """.trimIndent())
   }
+
+  fun `test generic reference`() {
+    myFixture.addClass("@org.jetbrains.annotations.ApiStatus.Obsolete interface I<T> {}")
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+class U {
+  void u(<warning descr="Obsolete API is used">I</warning><Integer> i) {}
+}
+""".trimIndent())
+  }
 }

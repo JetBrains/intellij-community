@@ -225,6 +225,7 @@ class TestApplicationManager private constructor() {
         ?.cancelAllAndWait(10, TimeUnit.SECONDS)
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(
       message = "moved to dump.kt",
       replaceWith = ReplaceWith("com.intellij.testFramework.common.publishHeapDump(fileNamePrefix)")

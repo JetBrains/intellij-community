@@ -363,7 +363,7 @@ public final class StubIndexImpl extends StubIndexEx {
       if (indicesRegistrationSink.hasChangedIndexes()) {
         final Throwable e = new Throwable(indicesRegistrationSink.changedIndices());
         // avoid direct forceRebuild as it produces dependency cycle (IDEA-105485)
-        AppUIExecutor.onWriteThread(ModalityState.NON_MODAL).later().submit(() -> forceRebuild(e));
+        AppUIExecutor.onWriteThread(ModalityState.nonModal()).later().submit(() -> forceRebuild(e));
       }
 
       myInitialized = true;

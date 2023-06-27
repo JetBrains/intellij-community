@@ -76,6 +76,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     return addLineHighlighter(textAttributesKey, null, lineNumber, layer);
   }
 
+  @NotNull
   private RangeHighlighter addLineHighlighter(@Nullable TextAttributesKey textAttributesKey,
                                               @Nullable TextAttributes textAttributes,
                                               int lineNumber,
@@ -116,14 +117,14 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
     Consumer<RangeHighlighterEx> changeAction = textAttributes == null ? null : ex -> ex.setTextAttributes(textAttributes);
 
-    PersistentRangeHighlighterImpl rangeHighlighter = PersistentRangeHighlighterImpl.create(
+    PersistentRangeHighlighterImpl highlighter = PersistentRangeHighlighterImpl.create(
       this, offset, layer, HighlighterTargetArea.LINES_IN_RANGE, textAttributesKey, false);
-    return addRangeHighlighter(rangeHighlighter, changeAction);
+    return addRangeHighlighter(highlighter, changeAction);
   }
 
   // NB: Can return invalid highlighters
   @Override
-  public RangeHighlighter @NotNull [] getAllHighlighters() {
+  public @NotNull RangeHighlighter @NotNull [] getAllHighlighters() {
     RangeHighlighter[] cachedHighlighters = myCachedHighlighters;
     if (cachedHighlighters == null) {
       int size = myHighlighterTree.size() + myHighlighterTreeForLines.size();
@@ -146,10 +147,10 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
                                                                    @NotNull HighlighterTargetArea targetArea,
                                                                    boolean isPersistent,
                                                                    @Nullable Consumer<? super RangeHighlighterEx> changeAttributesAction) {
-    RangeHighlighterImpl rangeHighlighter = isPersistent ?
+    RangeHighlighterImpl highlighter = isPersistent ?
       PersistentRangeHighlighterImpl.create(this, startOffset, layer, targetArea, textAttributesKey, true)
       : new RangeHighlighterImpl(this, startOffset, endOffset, layer, targetArea, textAttributesKey, false, false);
-    return addRangeHighlighter(rangeHighlighter, changeAttributesAction);
+    return addRangeHighlighter(highlighter, changeAttributesAction);
   }
 
   @NotNull
@@ -185,8 +186,8 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   }
 
   @NotNull
-  RangeHighlighterTree treeFor(RangeHighlighter marker) {
-    return marker.getTargetArea() == HighlighterTargetArea.EXACT_RANGE ? myHighlighterTree : myHighlighterTreeForLines;
+  RangeHighlighterTree treeFor(@NotNull RangeHighlighter highlighter) {
+    return highlighter.getTargetArea() == HighlighterTargetArea.EXACT_RANGE ? myHighlighterTree : myHighlighterTreeForLines;
   }
 
   @Override
@@ -211,11 +212,11 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   }
 
   @Override
-  public void removeHighlighter(@NotNull RangeHighlighter segmentHighlighter) {
+  public void removeHighlighter(@NotNull RangeHighlighter highlighter) {
     myCachedHighlighters = null;
-    if (!segmentHighlighter.isValid()) return;
+    if (!highlighter.isValid()) return;
 
-    treeFor(segmentHighlighter).removeInterval((RangeHighlighterEx)segmentHighlighter);
+    treeFor(highlighter).removeInterval((RangeHighlighterEx)highlighter);
   }
 
   @Override
@@ -268,21 +269,21 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     }
   }
 
-  private void fireAfterAdded(@NotNull RangeHighlighterEx segmentHighlighter) {
+  private void fireAfterAdded(@NotNull RangeHighlighterEx highlighter) {
     for (MarkupModelListener listener : myListeners) {
-      listener.afterAdded(segmentHighlighter);
+      listener.afterAdded(highlighter);
     }
   }
 
-  void fireBeforeRemoved(@NotNull RangeHighlighterEx segmentHighlighter) {
+  void fireBeforeRemoved(@NotNull RangeHighlighterEx highlighter) {
     for (MarkupModelListener listener : myListeners) {
-      listener.beforeRemoved(segmentHighlighter);
+      listener.beforeRemoved(highlighter);
     }
   }
 
-  void fireAfterRemoved(@NotNull RangeHighlighterEx segmentHighlighter) {
+  void fireAfterRemoved(@NotNull RangeHighlighterEx highlighter) {
     for (MarkupModelListener listener : myListeners) {
-      listener.afterRemoved(segmentHighlighter);
+      listener.afterRemoved(highlighter);
     }
   }
 

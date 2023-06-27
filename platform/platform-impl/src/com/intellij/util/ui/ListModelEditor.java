@@ -3,9 +3,9 @@ package com.intellij.util.ui;
 
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.ScrollingUtil;
-import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +22,7 @@ public class ListModelEditor<T> extends ListModelEditorBase<T> {
     super(itemEditor);
 
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    list.setCellRenderer(SimpleListCellRenderer.create("", o -> itemEditor.getName(o)));
+    list.setCellRenderer(BuilderKt.simpleListCellRenderer(o -> itemEditor.getName(o)));
 
     toolbarDecorator = ToolbarDecorator.createDecorator(list, model)
       .setAddAction(button -> {

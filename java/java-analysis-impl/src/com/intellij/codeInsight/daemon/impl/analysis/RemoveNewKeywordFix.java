@@ -1,21 +1,20 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiReferenceParameterList;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-import static com.intellij.util.ObjectUtils.tryCast;
-
-final class RemoveNewKeywordFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-  RemoveNewKeywordFix(PsiElement outerParent) {super(outerParent);}
+final class RemoveNewKeywordFix extends PsiUpdateModCommandAction<PsiNewExpression> {
+  RemoveNewKeywordFix(@NotNull PsiNewExpression outerParent) {super(outerParent);}
 
   @Override
   public @NotNull String getFamilyName() {
@@ -23,19 +22,7 @@ final class RemoveNewKeywordFix extends LocalQuickFixAndIntentionActionOnPsiElem
   }
 
   @Override
-  public @NotNull String getText() {
-    return JavaAnalysisBundle.message("intention.name.remove.new.display.name");
-  }
-
-  @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
-    PsiNewExpression newDeclaration = tryCast(startElement, PsiNewExpression.class);
-    if (newDeclaration == null) return;
-
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiNewExpression newDeclaration, @NotNull ModPsiUpdater updater) {
     PsiJavaCodeReferenceElement reference = newDeclaration.getClassOrAnonymousClassReference();
     if (reference == null) return;
     PsiElement qualifier = reference.getQualifier();

@@ -35,7 +35,6 @@ abstract class MavenNewProjectWizardTestCase : NewProjectWizardTestCase() {
 
   override fun setUp() {
     super.setUp()
-    MavenUtil.setUpdateSuspendable()
     testDisposable = Disposer.newDisposable()
 
     mySdk = ExternalSystemJdkProvider.getInstance().internalJdk
@@ -54,7 +53,6 @@ abstract class MavenNewProjectWizardTestCase : NewProjectWizardTestCase() {
     runAll(
       { Disposer.dispose(testDisposable) },
       { super.tearDown() },
-      { MavenUtil.resetUpdateSuspendable() },
     )
   }
 
@@ -96,7 +94,7 @@ abstract class MavenNewProjectWizardTestCase : NewProjectWizardTestCase() {
   fun <R> withWizard(action: () -> R, configure: Step.() -> Unit): R {
     Disposer.newDisposable().use { disposable ->
       val factory = object : NewProjectWizardFactory {
-        override fun create(project: Project?, modulesProvider: ModulesProvider): NewProjectWizard {
+        override fun create(project: Project?, modulesProvider: ModulesProvider, defaultPath: String?): NewProjectWizard {
           return object : NewProjectWizard(project, modulesProvider, null) {
             override fun showAndGet(): Boolean {
               while (true) {

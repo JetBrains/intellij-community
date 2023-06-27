@@ -1671,6 +1671,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/equalsOrHashCode/equalsInExpectClass.kt");
         }
 
+        @TestMetadata("equalsInInterface.kt")
+        public void testEqualsInInterface() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsOrHashCode/equalsInInterface.kt");
+        }
+
         @TestMetadata("equalsWithKotlinAnyParam.kt")
         public void testEqualsWithKotlinAnyParam() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/equalsOrHashCode/equalsWithKotlinAnyParam.kt");
@@ -2394,6 +2399,154 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/redundantIf")
+    public abstract static class RedundantIf extends AbstractK2LocalInspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/redundantIf/comment")
+        public static class Comment extends AbstractK2LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("bothBranchesHaveComments.kt")
+            public void testBothBranchesHaveComments() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/redundantIf/comment/bothBranchesHaveComments.kt");
+            }
+
+            @TestMetadata("bothBranchesHaveComments2.kt")
+            public void testBothBranchesHaveComments2() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/redundantIf/comment/bothBranchesHaveComments2.kt");
+            }
+
+            @TestMetadata("bothBranchesHaveComments3.kt")
+            public void testBothBranchesHaveComments3() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/redundantIf/comment/bothBranchesHaveComments3.kt");
+            }
+
+            @TestMetadata("bothBranchesHaveComments4.kt")
+            public void testBothBranchesHaveComments4() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/redundantIf/comment/bothBranchesHaveComments4.kt");
+            }
+
+            @TestMetadata("bothBranchesHaveComments5.kt")
+            public void testBothBranchesHaveComments5() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/redundantIf/comment/bothBranchesHaveComments5.kt");
+            }
+
+            @TestMetadata("bothBranchesHaveComments6.kt")
+            public void testBothBranchesHaveComments6() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/redundantIf/comment/bothBranchesHaveComments6.kt");
+            }
+
+            @TestMetadata("onlyElseHasComment.kt")
+            public void testOnlyElseHasComment() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/redundantIf/comment/onlyElseHasComment.kt");
+            }
+
+            @TestMetadata("onlyThenHasComment.kt")
+            public void testOnlyThenHasComment() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/redundantIf/comment/onlyThenHasComment.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/redundantIf/floatingPoint")
+        public static class FloatingPoint extends AbstractK2LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("eq.kt")
+            public void testEq() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/redundantIf/floatingPoint/eq.kt");
+            }
+
+            @TestMetadata("greaterThan.kt")
+            public void testGreaterThan() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/redundantIf/floatingPoint/greaterThan.kt");
+            }
+
+            @TestMetadata("greaterThanEq.kt")
+            public void testGreaterThanEq() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/redundantIf/floatingPoint/greaterThanEq.kt");
+            }
+
+            @TestMetadata("lessThan.kt")
+            public void testLessThan() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/redundantIf/floatingPoint/lessThan.kt");
+            }
+
+            @TestMetadata("lessThanEq.kt")
+            public void testLessThanEq() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/redundantIf/floatingPoint/lessThanEq.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/redundantIf/ignoreChainedIf")
+        public abstract static class IgnoreChainedIf extends AbstractK2LocalInspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/inspectionsLocal/redundantIf/ignoreChainedIf/false")
+            public static class False extends AbstractK2LocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("chainedIf.kt")
+                public void testChainedIf() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/redundantIf/ignoreChainedIf/false/chainedIf.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/inspectionsLocal/redundantIf/ignoreChainedIf/true")
+            public static class True extends AbstractK2LocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("chainedIf.kt")
+                public void testChainedIf() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/redundantIf/ignoreChainedIf/true/chainedIf.kt");
+                }
+
+                @TestMetadata("chainedIfWithElse.kt")
+                public void testChainedIfWithElse() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/redundantIf/ignoreChainedIf/true/chainedIfWithElse.kt");
+                }
+
+                @TestMetadata("notChainedIf.kt")
+                public void testNotChainedIf() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/redundantIf/ignoreChainedIf/true/notChainedIf.kt");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/redundantIf/invertEmptinessCheck")
+        public static class InvertEmptinessCheck extends AbstractK2LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("isBlank.kt")
+            public void testIsBlank() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/redundantIf/invertEmptinessCheck/isBlank.kt");
+            }
+
+            @TestMetadata("isEmpty.kt")
+            public void testIsEmpty() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/redundantIf/invertEmptinessCheck/isEmpty.kt");
+            }
+
+            @TestMetadata("isNotEmpty.kt")
+            public void testIsNotEmpty() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/redundantIf/invertEmptinessCheck/isNotEmpty.kt");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal")
     public abstract static class InspectionsLocal extends AbstractK2LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
@@ -3059,6 +3212,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("rangeToSanityTest.kt")
             public void testRangeToSanityTest() throws Exception {
                 runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/rangeToSanityTest.kt");
+            }
+
+            @TestMetadata("rangeUntilSanityTest.kt")
+            public void testRangeUntilSanityTest() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/rangeUntilSanityTest.kt");
             }
 
             @TestMetadata("remSanityTest.kt")

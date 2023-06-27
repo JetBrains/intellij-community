@@ -3,6 +3,7 @@ package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.jetbrains.python.packaging.PyPackageVersion
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
@@ -19,6 +20,7 @@ abstract class PythonRepositoryManager(val project: Project, val sdk: Sdk) {
   suspend fun addRepository(repository: PyPackageRepository) { TODO() }
   suspend fun removeRepository(repository: PyPackageRepository) { TODO() }
   abstract suspend fun getPackageDetails(pkg: PythonPackageSpecification): PythonPackageDetails
+  abstract suspend fun getLatestVersion(spec: PythonPackageSpecification): PyPackageVersion?
 
   abstract suspend fun refreshCashes()
 

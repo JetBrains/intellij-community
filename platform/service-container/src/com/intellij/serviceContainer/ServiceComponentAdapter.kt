@@ -40,10 +40,7 @@ internal class ServiceComponentAdapter(
         LOG.warn(Throwable("Getting service from write-action leads to possible deadlock. Service implementation $implementationClassName"))
       }
     }
-    return createAndInitialize(componentManager, implementationClass)
-  }
 
-  private fun <T : Any> createAndInitialize(componentManager: ComponentManagerImpl, implementationClass: Class<T>): T {
     val instance = componentManager.instantiateClassWithConstructorInjection(implementationClass, componentKey, pluginId)
     if (instance is Disposable) {
       Disposer.register(componentManager.serviceParentDisposable, instance)

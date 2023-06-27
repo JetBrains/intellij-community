@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.script
 
 import com.intellij.ide.CliResult
@@ -22,6 +22,7 @@ import java.nio.file.Path
  * @author gregsh
  */
 internal class IdeScriptStarter : ApplicationStarterBase() {
+  @Suppress("OVERRIDE_DEPRECATION")
   override val commandName: String
     get() = "ideScript"
 
@@ -62,10 +63,6 @@ private fun redirectStreamsAndGetLogger(result: List<Pair<Path, IdeScriptEngine>
     pair.second.stdIn = InputStreamReader(System.`in`, Charset.defaultCharset())
   }
   return object : DefaultLogger(null) {
-    override fun info(message: String) {
-      println("INFO: $message")
-    }
-
     override fun info(message: String, t: Throwable?) {
       println("INFO: $message")
     }

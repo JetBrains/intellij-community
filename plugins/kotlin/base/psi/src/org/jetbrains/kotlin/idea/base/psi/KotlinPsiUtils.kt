@@ -8,6 +8,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentsOfType
 import com.intellij.util.asSafely
 import com.intellij.util.text.CharArrayUtil
@@ -222,8 +223,6 @@ fun PsiElement.childrenDfsSequence(): Sequence<PsiElement> =
         visit(this@childrenDfsSequence)
     }
 
-fun KtExpression.isAnnotationArgument(): Boolean = this.parents.any { it is KtAnnotationEntry }
-
 fun ValueArgument.findSingleLiteralStringTemplateText(): String? {
     return getArgumentExpression()
         ?.safeAs<KtStringTemplateExpression>()
@@ -232,3 +231,5 @@ fun ValueArgument.findSingleLiteralStringTemplateText(): String? {
         ?.safeAs<KtLiteralStringTemplateEntry>()
         ?.text
 }
+
+fun PsiElement.isInsideAnnotationEntryArgumentList(): Boolean = parentOfType<KtValueArgumentList>()?.parent is KtAnnotationEntry

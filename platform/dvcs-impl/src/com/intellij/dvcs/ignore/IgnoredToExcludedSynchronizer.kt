@@ -45,9 +45,9 @@ import com.intellij.ui.EditorNotifications
 import com.intellij.util.Alarm
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
-import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.util.*
@@ -74,8 +74,8 @@ class IgnoredToExcludedSynchronizer(project: Project, cs: CoroutineScope) : File
     cs.launch {
       WorkspaceModel.getInstance(project).changesEventFlow.collect { event ->
         // listen content roots, source roots, excluded roots
-        if (event.getChanges(ContentRootEntity::class.java).any() ||
-            event.getChanges(SourceRootEntity::class.java).any()) {
+        if (event.getChanges(ContentRootEntity::class.java).isNotEmpty() ||
+            event.getChanges(SourceRootEntity::class.java).isNotEmpty()) {
           updateNotificationState()
         }
       }

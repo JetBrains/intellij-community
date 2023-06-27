@@ -15,4 +15,8 @@ private class LightServiceMustBeFinalErrorMessageProvider : ErrorMessageProvider
   override fun provideErrorMessage(): @Nls String {
     return DevKitBundle.message("inspection.light.service.must.be.final.message")
   }
+
+  override fun isApplicableForKotlin(): Boolean {
+    return false
+  }
 }

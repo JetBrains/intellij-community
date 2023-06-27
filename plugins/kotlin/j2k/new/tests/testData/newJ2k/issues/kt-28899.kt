@@ -1,3 +1,3 @@
 class J {
-    var x = 0.0
+    var x: Double = 0.0
 }

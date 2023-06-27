@@ -22,7 +22,7 @@ public class JavaReferenceImporter implements ReferenceImporter {
   /**
    * @deprecated use {@link JavaReferenceImporter#computeAutoImportAtOffset(Editor, PsiFile, int, boolean)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file, boolean allowCaretNearRef) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return new JavaReferenceImporter().autoImportReferenceAtCursor(editor, file);

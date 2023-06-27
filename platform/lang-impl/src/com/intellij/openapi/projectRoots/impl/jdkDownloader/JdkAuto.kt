@@ -95,7 +95,13 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
 
   fun createResolverImpl(project: Project?, indicator: ProgressIndicator): UnknownSdkLookup? {
     val sdkType = SdkType.getAllTypes()
-                    .singleOrNull(notSimpleJavaSdkTypeIfAlternativeExistsAndNotDependentSdkType()::value) ?: return null
+                    .filter(notSimpleJavaSdkTypeIfAlternativeExistsAndNotDependentSdkType()::value)
+                    .also { sdkTypes ->
+                      if (sdkTypes.count() > 1) {
+                        val sdkTypeNames = sdkTypes.map { it.name }
+                        LOG.warn("Multiple SdkType candidates $sdkTypeNames. Proceeding with a first candidate: ${sdkTypeNames.first()}")
+                      }
+                    }.firstOrNull() ?: return null
 
     return object : UnknownSdkLookup {
       val projectWslDistribution by lazy {

@@ -15,10 +15,10 @@
  */
 package com.siyeh.ig.cloneable;
 
-import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
@@ -83,7 +83,7 @@ public class CloneDeclaresCloneNotSupportedInspection extends BaseInspection {
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement methodNameIdentifier, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement methodNameIdentifier, @NotNull ModPsiUpdater updater) {
       final PsiMethod method = (PsiMethod)methodNameIdentifier.getParent();
       PsiUtil.addException(method, "java.lang.CloneNotSupportedException");
     }

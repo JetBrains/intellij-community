@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FoldingModelImpl;
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -795,6 +796,49 @@ public final class EditorActionUtil {
     int lineShift = calcVisualLineIncrement(editor, editor.getCaretModel().getVisualPosition().line, visibleArea.height);
     editor.getCaretModel().moveCaretRelatively(0, lineShift, isWithSelection, editor.isColumnMode(), true);
   }
+
+  public static void moveCaretToTextStart(@NotNull Editor editor, @Nullable Project project) {
+    editor.getCaretModel().removeSecondaryCarets();
+    editor.getCaretModel().moveToOffset(0);
+    editor.getSelectionModel().removeSelection();
+
+    ScrollingModel scrollingModel = editor.getScrollingModel();
+    scrollingModel.disableAnimation();
+    scrollingModel.scrollToCaret(ScrollType.RELATIVE);
+    scrollingModel.enableAnimation();
+
+    if (project != null) {
+      IdeDocumentHistory instance = IdeDocumentHistory.getInstance(project);
+      if (instance != null) {
+        instance.includeCurrentCommandAsNavigation();
+      }
+    }
+  }
+
+  public static void moveCaretToTextEnd(@NotNull Editor editor, @Nullable Project project) {
+    editor.getCaretModel().removeSecondaryCarets();
+    int offset = editor.getDocument().getTextLength();
+    if (editor instanceof EditorImpl) {
+      editor.getCaretModel().moveToLogicalPosition(editor.offsetToLogicalPosition(offset).leanForward(true));
+    }
+    else {
+      editor.getCaretModel().moveToOffset(offset);
+    }
+    editor.getSelectionModel().removeSelection();
+
+    ScrollingModel scrollingModel = editor.getScrollingModel();
+    scrollingModel.disableAnimation();
+    scrollingModel.scrollToCaret(ScrollType.CENTER);
+    scrollingModel.enableAnimation();
+
+    if (project != null) {
+      IdeDocumentHistory instance = IdeDocumentHistory.getInstance(project);
+      if (instance != null) {
+        instance.includeCurrentCommandAsNavigation();
+      }
+    }
+  }
+
 
   private static int adjustYToVisualLineBase(@NotNull Editor editor, int y) {
     int visualLineBaseY = editor.visualLineToY(editor.yToVisualLine(y));

@@ -21,7 +21,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.IdeFrame
@@ -58,7 +57,7 @@ import kotlin.math.sqrt
 import kotlin.time.Duration.Companion.milliseconds
 
 @Suppress("LeakingThis")
-open class IdeMenuBar internal constructor() : JMenuBar(), IdeEventQueue.EventDispatcher, UISettingsListener {
+open class IdeMenuBar internal constructor() : JMenuBar(), UISettingsListener {
   enum class State {
     EXPANDED,
     COLLAPSING,
@@ -282,14 +281,17 @@ open class IdeMenuBar internal constructor() : JMenuBar(), IdeEventQueue.EventDi
     animator.resume()
   }
 
-  override fun addNotify() {
-    super.addNotify()
+  internal fun initScreeMenuPeer(window: Window?) {
+    if (screenMenuPeer != null) {
+      return
+    }
+
     val activity = StartUpMeasurer.startActivity("ide menu bar init")
     val screenMenuPeer: MenuBar?
     if (Menu.isJbScreenMenuEnabled()) {
       screenMenuPeer = MenuBar("MainMenu")
       this.screenMenuPeer = screenMenuPeer
-      screenMenuPeer.setFrame(SwingUtilities.getWindowAncestor(this))
+      screenMenuPeer.setFrame(window ?: SwingUtilities.getWindowAncestor(this))
     }
     else {
       screenMenuPeer = null
@@ -297,8 +299,19 @@ open class IdeMenuBar internal constructor() : JMenuBar(), IdeEventQueue.EventDi
 
     scheduleUpdateActions(screenMenuPeer = screenMenuPeer)
     activity.end()
+  }
 
-    IdeEventQueue.getInstance().addDispatcher(dispatcher = this, scope = coroutineScope)
+  override fun addNotify() {
+    super.addNotify()
+
+    initScreeMenuPeer(null)
+
+    IdeEventQueue.getInstance().addDispatcher(dispatcher = { event ->
+      if (event is MouseEvent && state != State.EXPANDED /*&& !myState.isInProgress()*/) {
+        considerRestartingAnimator(event)
+      }
+      false
+    }, scope = coroutineScope)
   }
 
   private fun scheduleUpdateActions(screenMenuPeer: MenuBar?) {
@@ -313,22 +326,18 @@ open class IdeMenuBar internal constructor() : JMenuBar(), IdeEventQueue.EventDi
       subtask("ide menu bar actions init") {
         val mainActionGroup = getMainMenuActionGroupAsync()
         withContext(Dispatchers.EDT) {
-          blockingContext {
-            val actions = doUpdateMenuActions(mainActionGroup = mainActionGroup,
-                                              forceRebuild = false,
-                                              manager = actionManager,
-                                              screenMenuPeer = screenMenuPeer)
-            for (action in actions) {
-              if (action is ActionGroup) {
-                PopupMenuPreloader.install(this@IdeMenuBar, ActionPlaces.MAIN_MENU, null) { action }
-              }
+          val actions = doUpdateMenuActions(mainActionGroup = mainActionGroup,
+                                            forceRebuild = false,
+                                            manager = actionManager,
+                                            screenMenuPeer = screenMenuPeer)
+          for (action in actions) {
+            if (action is ActionGroup) {
+              PopupMenuPreloader.install(this@IdeMenuBar, ActionPlaces.MAIN_MENU, null) { action }
             }
           }
         }
 
-        blockingContext {
-          actionManager.addTimerListener(timerListener)
-        }
+        actionManager.addTimerListener(timerListener)
         coroutineScope.coroutineContext.job.invokeOnCompletion {
           actionManager.removeTimerListener(timerListener)
         }
@@ -351,13 +360,6 @@ open class IdeMenuBar internal constructor() : JMenuBar(), IdeEventQueue.EventDi
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
     check(updateRequests.tryEmit(Unit))
-  }
-
-  override fun dispatch(e: AWTEvent): Boolean {
-    if (e is MouseEvent && state != State.EXPANDED /*&& !myState.isInProgress()*/) {
-      considerRestartingAnimator(e)
-    }
-    return false
   }
 
   private fun considerRestartingAnimator(mouseEvent: MouseEvent) {

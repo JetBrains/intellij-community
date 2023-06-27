@@ -4,7 +4,13 @@ import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.configurationStore.*
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.configurationStore.schemeManager.SchemeManagerImpl
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY
+import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorage
@@ -12,6 +18,7 @@ import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.options.SchemeManagerFactory
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
 import com.intellij.util.SystemProperties
@@ -25,7 +32,6 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.time.Instant
 import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
-import java.util.function.Consumer
 import java.util.function.Predicate
 import kotlin.concurrent.withLock
 import kotlin.io.path.exists
@@ -46,6 +52,16 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
   override val enabled: Boolean
     get() = enabledCondition()
 
+  private val restartRequiredReasons: MutableMap<String, String> = hashMapOf()
+
+  init {
+    SettingsSyncEvents.getInstance().addListener(object : SettingsSyncEventListener {
+      override fun restartRequired(cause: String, details: String) {
+        restartRequiredReasons[cause] = details
+      }
+    })
+  }
+
   override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean {
     return true
   }
@@ -55,12 +71,6 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     val settingsSyncFileState = snapshot.fileStates.find { it.file == "$OPTIONS_DIRECTORY/${SettingsSyncSettings.FILE_SPEC}" }
     if (settingsSyncFileState != null) {
       writeStatesToAppConfig(listOf(settingsSyncFileState))
-    }
-
-    if (SystemProperties.getBooleanProperty("settings.sync.test.fail.on.settings.apply", false)) {
-      if (Random.nextBoolean()) {
-        throw IllegalStateException("Applying settings failed")
-      }
     }
 
     // 2. update plugins
@@ -83,6 +93,26 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
         LOG.warn("Couldn't find provider for id '$id' and state '${state.javaClass}'")
       }
     }
+    notifyRestartNeeded()
+  }
+
+
+  private fun notifyRestartNeeded() {
+    if (restartRequiredReasons.isEmpty())
+      return
+    val message = restartRequiredReasons.values.joinToString()
+    val notification = NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP)
+      .createNotification(SettingsSyncBundle.message("sync.restart.notification.title"),
+                          SettingsSyncBundle.message("sync.restart.notification.message",
+                                                     restartRequiredReasons.size, message),
+                          NotificationType.INFORMATION)
+    notification.addAction(NotificationAction.create(
+      SettingsSyncBundle.message("sync.restart.notification.action", ApplicationNamesInfo.getInstance().fullProductName),
+      com.intellij.util.Consumer {
+        val app = ApplicationManager.getApplication() as ApplicationEx
+        app.restart(true)
+      }))
+    notification.notify(null)
   }
 
   override fun activateStreamProvider() {
@@ -106,7 +136,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     LOG.debug("Collected following plugin state: $pluginsState")
 
     val settingsFromProviders = mutableMapOf<String, Any>()
-    SettingsProvider.SETTINGS_PROVIDER_EP.forEachExtensionSafe(Consumer {
+    SettingsProvider.SETTINGS_PROVIDER_EP.forEachExtensionSafe(java.util.function.Consumer {
       val currentSettings = it.collectCurrentSettings()
       if (currentSettings != null) {
         settingsFromProviders[it.id] = currentSettings
@@ -251,7 +281,13 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
       }
     }
 
-    invokeAndWaitIfNeeded { reloadComponents(changedFileSpecs, deletedFileSpecs) }
+    invokeAndWaitIfNeeded {
+      reloadComponents(changedFileSpecs, deletedFileSpecs)
+      if (Registry.getInstance().isRestartNeeded){
+        SettingsSyncEvents.getInstance().fireRestartRequired("registry", SettingsSyncBundle.message("sync.registry.update.message"))
+      }
+
+    }
   }
 
   private fun <R> writeUnderLock(fileSpec: String, writingProcedure: () -> R): R {

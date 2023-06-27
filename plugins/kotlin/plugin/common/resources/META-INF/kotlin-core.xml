@@ -57,6 +57,10 @@
             qualifiedName="org.jetbrains.kotlin.ktModuleFactory"
             interface="org.jetbrains.kotlin.idea.base.projectStructure.KtModuleFactory"
             dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.classImportFilter"
+            interface="org.jetbrains.kotlin.idea.util.ClassImportFilter"
+            dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -124,11 +128,11 @@
 
     <projectPathMacroContributor implementation="org.jetbrains.kotlin.idea.macros.KotlinBundledPathMacroContributor"/>
 
-    <postStartupActivity implementation="org.jetbrains.kotlin.idea.PluginStartupActivity"/>
     <backgroundPostStartupActivity implementation="org.jetbrains.kotlin.idea.update.KotlinPluginUpdateCheckerStartActivity"/>
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetector$MyStartupActivity"/>
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.macros.KotlinBundledRefresher"/>
 
+    <typeDeclarationProvider implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinTypeDeclarationProvider"/>
 
     <lang.foldingBuilder
             language="kotlin"
@@ -201,6 +205,16 @@
             description="Disables auto-completion inside expressions"
             defaultValue="false"
             restartRequired="false"/>
+    <registryKey
+            key="kotlin.auto.completion.prefer.vararg.to.noargs"
+            description="For functions show vararg variant before no argruments variant"
+            defaultValue="true"
+            restartRequired="false"/>
+    <registryKey
+            key="kotlin.auto.completion.insert.constructor.parenthesis"
+            description="Insert constructor parenthesis on class autocompletion"
+            defaultValue="false"
+            restartRequired="false"/>
 
     <registryKey key="kotlin.create.sealed.templates.enabled"
                  defaultValue="false"
@@ -239,7 +253,7 @@
               topic="org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetectorListener"/>
 
     <listener class="org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetector$ModelChangeListener"
-              topic="com.intellij.workspaceModel.ide.WorkspaceModelChangeListener"/>
+              topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
   </projectListeners>
 
   <applicationListeners>
@@ -388,7 +402,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <advancedSetting
             id="kotlin.mpp.experimental"
-            default="true"
+            default="false"
             groupKey="group.advanced.settings.kotlin"
             bundle="messages.KotlinBundle"/>
   </extensions>

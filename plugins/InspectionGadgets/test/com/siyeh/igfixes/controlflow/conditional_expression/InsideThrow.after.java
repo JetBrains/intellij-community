@@ -3,9 +3,9 @@ package com.siyeh.ipp.conditional.withIf;
 class ConditionalInBinaryExpression {
 
   public String foo(int num) {
-      if (num > 0) {
+      if (num > 0)<caret> {
           throw new RuntimeException();
-      }<caret>
+      }
       throw new IllegalStateException();
   }
 }

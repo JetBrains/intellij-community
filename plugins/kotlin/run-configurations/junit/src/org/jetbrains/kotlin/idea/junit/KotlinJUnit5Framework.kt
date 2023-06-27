@@ -23,6 +23,7 @@ class KotlinJUnit5Framework: JUnit5Framework(), KotlinPsiBasedTestFramework {
 
         override val markerClassFqn: String = JUnitUtil.TEST5_ANNOTATION
         override val disabledTestAnnotation: String = "org.junit.jupiter.api.Disabled"
+        override val allowTestMethodsInObject: Boolean = true
 
         override fun isTestClass(declaration: KtClassOrObject): Boolean =
             super.isTestClass(declaration) && CachedValuesManager.getCachedValue(declaration) {

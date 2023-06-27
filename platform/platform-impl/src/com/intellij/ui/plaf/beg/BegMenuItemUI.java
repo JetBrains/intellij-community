@@ -553,10 +553,13 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     @Override
     public void mouseReleased(MouseEvent e){
       MenuSelectionManager manager=MenuSelectionManager.defaultManager();
-      Point p=e.getPoint();
-      if(p.x>=0&&p.x<menuItem.getWidth()&&p.y>=0&&p.y<menuItem.getHeight()){
-        doClick(manager,e);
-      } else{
+      Point p = e.getPoint();
+      if (p.x >= 0 && p.x < menuItem.getWidth() && p.y >= 0 && p.y < menuItem.getHeight()) {
+        if (e.getButton() == MouseEvent.BUTTON1) {
+          doClick(manager, e);
+        }
+      }
+      else {
         manager.processMouseEvent(e);
       }
     }

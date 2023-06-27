@@ -11,7 +11,7 @@ object ProjectFsStatsCollector {
 
   @JvmStatic
   fun watchedRoots(project: Project, pctNonWatched: Int) {
-    FUStateUsagesLogger.logStateEvent(groupId, "roots-watched", FeatureUsageData()
+    FUStateUsagesLogger.logStateEvent(groupId, "roots-watched", FeatureUsageData(groupId.recorder)
       .addProject(project)
       .addData("pct-non-watched", pctNonWatched))
   }

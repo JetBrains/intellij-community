@@ -6,12 +6,16 @@ import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -133,7 +137,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
         });
     }
 
-    static final class RedundantThrowsQuickFix implements LocalQuickFix {
+    static final class RedundantThrowsQuickFix extends PsiUpdateModCommandQuickFix {
 
       @NotNull private final String myMethodName;
       @NotNull private final String myExceptionName;
@@ -154,8 +158,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
       }
 
       @Override
-      public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-        final PsiElement elem = descriptor.getPsiElement();
+      protected void applyFix(@NotNull Project project, @NotNull PsiElement elem, @NotNull ModPsiUpdater updater) {
         if (!(elem instanceof PsiJavaCodeReferenceElement)) return;
 
         final PsiElement maybeMethod = PsiTreeUtil.skipParentsOfType(elem, PsiReferenceList.class);

@@ -111,6 +111,9 @@ internal class GitVcsPanel(private val project: Project) :
         comment(
           message("settings.explicitly.check.condition.comment", message("advanced.setting.git.update.incoming.outgoing.info")))
           .visibleIf(predicate.not())
+          .applyToComponent {
+            putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap(top = false))
+          }
       }
     }
   }

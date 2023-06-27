@@ -41,4 +41,12 @@ internal class KtLightServiceMigrationInspectionTest : LightServiceMigrationInsp
   fun testLightService() {
     doTest(getCodeFilePath(), getXmlFilePath())
   }
+
+  fun testUnitTestMode() {
+    doTest(getCodeFilePath(), CANNOT_BE_LIGHT_SERVICE_XML)
+  }
+
+  fun testHeadlessEnvironment() {
+    doTest(getCodeFilePath(), CANNOT_BE_LIGHT_SERVICE_XML)
+  }
 }

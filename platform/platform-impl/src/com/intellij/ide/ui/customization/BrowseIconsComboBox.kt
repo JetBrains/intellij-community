@@ -150,7 +150,7 @@ internal class BrowseIconsComboBox(private val customActionsSchema: CustomAction
       catch (ex: NoSuchFileException) {
         ValidationInfo(IdeBundle.message("icon.validation.message.not.found"), this)
       }
-      catch (ex: IOException) {
+      catch (t: Throwable) {
         ValidationInfo(IdeBundle.message("icon.validation.message.format"), this)
       }
     }).installOn(this)
@@ -186,16 +186,14 @@ internal class BrowseIconsComboBox(private val customActionsSchema: CustomAction
       val icon = try {
         CustomActionsSchema.loadCustomIcon(iconFile.path)
       }
-      catch (ex: IOException) {
-        thisLogger().warn("Failed to load icon from disk, path: ${iconFile.path}", ex)
+      catch (t: Throwable) {
+        thisLogger().warn("Failed to load icon from disk, path: ${iconFile.path}", t)
         IconManager.getInstance().getPlatformIcon(PlatformIcons.Stub)
       }
-      if (icon != null) {
-        val info = ActionIconInfo(icon, iconFile.name, null, iconFile.path)
-        val separatorInd = model.getIndexOf(SEPARATOR)
-        model.insertElementAt(info, separatorInd + 1)
-        selectedIndex = separatorInd + 1
-      }
+      val info = ActionIconInfo(icon, iconFile.name, null, iconFile.path)
+      val separatorInd = model.getIndexOf(SEPARATOR)
+      model.insertElementAt(info, separatorInd + 1)
+      selectedIndex = separatorInd + 1
     }
   }
 

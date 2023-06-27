@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.animation
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.registry.Registry.intValue
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.DoubleConsumer
@@ -10,6 +11,8 @@ open class ShowHideAnimator(easing: Easing, private val consumer: DoubleConsumer
   private val animator = JBAnimator()
   private val atomicVisible = AtomicBoolean()
   private val statefulEasing = easing.stateful()
+
+  val disposable: Disposable get() = animator
 
   constructor(consumer: DoubleConsumer) : this(Easing.LINEAR, consumer)
 

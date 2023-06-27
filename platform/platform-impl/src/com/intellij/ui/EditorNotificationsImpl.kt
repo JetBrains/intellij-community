@@ -1,5 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+@file:OptIn(FlowPreview::class)
 
 package com.intellij.ui
 
@@ -27,32 +28,37 @@ import com.intellij.psi.PsiFile
 import com.intellij.refactoring.listeners.RefactoringElementAdapter
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider
-import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.annotations.VisibleForTesting
 import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.function.BiFunction
 import javax.swing.JComponent
+import kotlin.time.Duration.Companion.milliseconds
 
-class EditorNotificationsImpl(private val project: Project, private val coroutineScope: CoroutineScope) : EditorNotifications(), Disposable {
-  private val updateAllAlarm = SingleAlarm(::doUpdateAllNotifications, 100, this)
+private val EDITOR_NOTIFICATION_PROVIDER =
+  Key.create<MutableMap<Class<EditorNotificationProvider>, JComponent>>("editor.notification.provider")
+
+private val PENDING_UPDATE = Key.create<Boolean>("pending.notification.update")
+
+class EditorNotificationsImpl(private val project: Project,
+                              private val coroutineScope: CoroutineScope) : EditorNotifications(), Disposable {
+  private val updateAllRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val fileToUpdateNotificationJob = CollectionFactory.createConcurrentWeakMap<VirtualFile, Job>()
-  private val fileEditorToMap =
-    CollectionFactory.createConcurrentWeakMap<FileEditor, MutableMap<Class<out EditorNotificationProvider>, JComponent>>()
+
+  private val updateAllRequestFlowJob: Job
 
   init {
     val connection = project.messageBus.connect()
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
-      override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
-        updateNotifications(file)
-      }
-
       override fun selectionChanged(event: FileEditorManagerEvent) {
         val file = event.newFile ?: return
         val editor = event.newEditor ?: return
@@ -87,27 +93,34 @@ class EditorNotificationsImpl(private val project: Project, private val coroutin
           updateNotifications(extension)
         }
       }, false, null)
+
+    updateAllRequestFlowJob = coroutineScope.launch {
+      updateAllRequests
+        .debounce(100.milliseconds)
+        .collectLatest {
+          withContext(Dispatchers.EDT) {
+            doUpdateAllNotifications()
+          }
+        }
+    }
   }
 
   override fun dispose() {
+    // todo fix HttpRequestBaseFixtureTestCase and then remove `dispose`.
     coroutineScope.cancel()
     // help GC
     fileToUpdateNotificationJob.clear()
-    fileEditorToMap.clear()
   }
 
-  companion object {
-    private val PENDING_UPDATE = Key.create<Boolean>("pending.notification.update")
-  }
-
-  @VisibleForTesting
-  fun getNotificationPanels(fileEditor: FileEditor): MutableMap<Class<out EditorNotificationProvider>, JComponent> {
-    return fileEditorToMap.computeIfAbsent(fileEditor) { WeakHashMap() }
+  @TestOnly
+  fun getNotificationPanels(fileEditor: FileEditor): Map<Class<EditorNotificationProvider>, JComponent> {
+    return fileEditor.getUserData(EDITOR_NOTIFICATION_PROVIDER) ?: emptyMap()
   }
 
   @TestOnly
   fun completeAsyncTasks() {
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+    @Suppress("DEPRECATION")
     runUnderModalProgressIfIsEdt {
       val parentJob = coroutineScope.coroutineContext[Job]!!
       while (true) {
@@ -116,7 +129,7 @@ class EditorNotificationsImpl(private val project: Project, private val coroutin
           yield()
         }
 
-        val jobs = parentJob.children.toList()
+        val jobs = parentJob.children.filter { it != updateAllRequestFlowJob }.toList()
         if (jobs.isEmpty()) {
           break
         }
@@ -239,7 +252,7 @@ class EditorNotificationsImpl(private val project: Project, private val coroutin
 
   @RequiresEdt
   private fun updateNotification(fileEditor: FileEditor, provider: EditorNotificationProvider, component: JComponent?) {
-    val panels = fileEditorToMap.get(fileEditor)
+    val panels = fileEditor.getUserData(EDITOR_NOTIFICATION_PROVIDER)
     val providerClass = provider.javaClass
     panels?.get(providerClass)?.let { old ->
       FileEditorManager.getInstance(project).removeTopComponent(fileEditor, old)
@@ -256,7 +269,12 @@ class EditorNotificationsImpl(private val project: Project, private val coroutin
       logNotificationShown(project, provider)
       FileEditorManager.getInstance(project).addTopComponent(fileEditor, component)
 
-      (panels ?: getNotificationPanels(fileEditor)).put(providerClass, component)
+      if (panels != null) {
+        panels.put(providerClass, component)
+      }
+      else {
+        fileEditor.putUserData(EDITOR_NOTIFICATION_PROVIDER, mutableMapOf(providerClass to component))
+      }
     }
   }
 
@@ -269,7 +287,7 @@ class EditorNotificationsImpl(private val project: Project, private val coroutin
       doUpdateAllNotifications()
     }
     else {
-      updateAllAlarm.cancelAndRequest()
+      check(updateAllRequests.tryEmit(Unit))
     }
   }
 

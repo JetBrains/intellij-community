@@ -784,6 +784,29 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../completion/testData/handlers/basic/superEntry")
+    public static class SuperEntry extends AbstractPerformanceBasicCompletionHandlerTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doPerfTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("SuperTypeArg.kt")
+        public void testSuperTypeArg() throws Exception {
+            runTest("../completion/testData/handlers/basic/superEntry/SuperTypeArg.kt");
+        }
+
+        @TestMetadata("SuperTypeArgWithCall.kt")
+        public void testSuperTypeArgWithCall() throws Exception {
+            runTest("../completion/testData/handlers/basic/superEntry/SuperTypeArgWithCall.kt");
+        }
+
+        @TestMetadata("SuperTypeArgWithCall2.kt")
+        public void testSuperTypeArgWithCall2() throws Exception {
+            runTest("../completion/testData/handlers/basic/superEntry/SuperTypeArgWithCall2.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../completion/testData/handlers/basic/topLevelDeclarations")
     public static class TopLevelDeclarations extends AbstractPerformanceBasicCompletionHandlerTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -1029,6 +1052,11 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
             KotlinTestUtils.runTest(this::doPerfTest, this, testDataFilePath);
         }
 
+        @TestMetadata("AbstractClassParenthesis.kt")
+        public void testAbstractClassParenthesis() throws Exception {
+            runTest("../completion/testData/handlers/basic/AbstractClassParenthesis.kt");
+        }
+
         @TestMetadata("AddLabelToReturn.kt")
         public void testAddLabelToReturn() throws Exception {
             runTest("../completion/testData/handlers/basic/AddLabelToReturn.kt");
@@ -1077,6 +1105,26 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
         @TestMetadata("ClassNameWithPackageConflict.kt")
         public void testClassNameWithPackageConflict() throws Exception {
             runTest("../completion/testData/handlers/basic/ClassNameWithPackageConflict.kt");
+        }
+
+        @TestMetadata("ClassParenthesis.kt")
+        public void testClassParenthesis() throws Exception {
+            runTest("../completion/testData/handlers/basic/ClassParenthesis.kt");
+        }
+
+        @TestMetadata("ClassParenthesisInSuper.kt")
+        public void testClassParenthesisInSuper() throws Exception {
+            runTest("../completion/testData/handlers/basic/ClassParenthesisInSuper.kt");
+        }
+
+        @TestMetadata("ClassParenthesisWithGenerics.kt")
+        public void testClassParenthesisWithGenerics() throws Exception {
+            runTest("../completion/testData/handlers/basic/ClassParenthesisWithGenerics.kt");
+        }
+
+        @TestMetadata("ClassParenthesisWithParam.kt")
+        public void testClassParenthesisWithParam() throws Exception {
+            runTest("../completion/testData/handlers/basic/ClassParenthesisWithParam.kt");
         }
 
         @TestMetadata("ClassWithClassObject.kt")
@@ -1154,6 +1202,11 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
             runTest("../completion/testData/handlers/basic/InterfaceNameBeforeRunBug.kt");
         }
 
+        @TestMetadata("InterfaceParenthesis.kt")
+        public void testInterfaceParenthesis() throws Exception {
+            runTest("../completion/testData/handlers/basic/InterfaceParenthesis.kt");
+        }
+
         @TestMetadata("JavaClassName.kt")
         public void testJavaClassName() throws Exception {
             runTest("../completion/testData/handlers/basic/JavaClassName.kt");
@@ -1177,6 +1230,11 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
         @TestMetadata("JavaClassNameWithKotlinNestedClassConflict.kt")
         public void testJavaClassNameWithKotlinNestedClassConflict() throws Exception {
             runTest("../completion/testData/handlers/basic/JavaClassNameWithKotlinNestedClassConflict.kt");
+        }
+
+        @TestMetadata("JavaClassParenthesis.kt")
+        public void testJavaClassParenthesis() throws Exception {
+            runTest("../completion/testData/handlers/basic/JavaClassParenthesis.kt");
         }
 
         @TestMetadata("JavaSAM.kt")
@@ -1229,6 +1287,11 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
             runTest("../completion/testData/handlers/basic/NestedClassNameWithPackageLevelConflict.kt");
         }
 
+        @TestMetadata("NestedClassParenthesis.kt")
+        public void testNestedClassParenthesis() throws Exception {
+            runTest("../completion/testData/handlers/basic/NestedClassParenthesis.kt");
+        }
+
         @TestMetadata("NestedTypeArg.kt")
         public void testNestedTypeArg() throws Exception {
             runTest("../completion/testData/handlers/basic/NestedTypeArg.kt");
@@ -1267,6 +1330,11 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
         @TestMetadata("NonExtensionMember.kt")
         public void testNonExtensionMember() throws Exception {
             runTest("../completion/testData/handlers/basic/NonExtensionMember.kt");
+        }
+
+        @TestMetadata("ObjectParenthesis.kt")
+        public void testObjectParenthesis() throws Exception {
+            runTest("../completion/testData/handlers/basic/ObjectParenthesis.kt");
         }
 
         @TestMetadata("PreferClassToConstructor.kt")
@@ -1329,11 +1397,6 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
             runTest("../completion/testData/handlers/basic/SuperMethodWithDifferentParameterNames.kt");
         }
 
-        @TestMetadata("SuperTypeArg.kt")
-        public void testSuperTypeArg() throws Exception {
-            runTest("../completion/testData/handlers/basic/SuperTypeArg.kt");
-        }
-
         @TestMetadata("SyntheticExtension.kt")
         public void testSyntheticExtension() throws Exception {
             runTest("../completion/testData/handlers/basic/SyntheticExtension.kt");
@@ -1372,6 +1435,11 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
         @TestMetadata("TypeParameter.kt")
         public void testTypeParameter() throws Exception {
             runTest("../completion/testData/handlers/basic/TypeParameter.kt");
+        }
+
+        @TestMetadata("VarargBeforeNoArg.kt")
+        public void testVarargBeforeNoArg() throws Exception {
+            runTest("../completion/testData/handlers/basic/VarargBeforeNoArg.kt");
         }
     }
 

@@ -15,9 +15,9 @@
  */
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -66,7 +66,7 @@ public class PublicConstructorInNonPublicClassInspection extends BaseInspection 
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       ((PsiModifierList)element.getParent()).setModifierProperty(PsiModifier.PRIVATE, true);
     }
   }

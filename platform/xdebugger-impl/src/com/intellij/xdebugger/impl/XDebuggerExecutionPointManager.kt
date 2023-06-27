@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.impl.EditorMouseHoverPopupControl
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.asSafely
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.xdebugger.XSourcePosition
@@ -44,7 +45,14 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
   var gutterIconRenderer: GutterIconRenderer? by _gutterIconRendererState::value
 
   private val executionPointVmState = MutableStateFlow<ExecutionPointVm?>(null)
-  private var executionPointVm: ExecutionPointVm? by executionPointVmState::value
+  private var executionPointVm: ExecutionPointVm?
+    get() = executionPointVmState.value
+    set(value) {
+      executionPointVmState.update { oldValue ->
+        oldValue.asSafely<ExecutionPointVmImpl>()?.coroutineScope?.cancel()
+        value
+      }
+    }
 
   init {
     val uiScope = coroutineScope.childScope(CoroutineName("${javaClass.simpleName}/UI"))
@@ -80,7 +88,7 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
     }
 
     executionPointVm = ExecutionPointVmImpl.create(project,
-                                                   coroutineScope,
+                                                   coroutineScope.childScope(CoroutineName(ExecutionPointVm::class.java.simpleName)),
                                                    mainSourcePosition,
                                                    alternativeSourcePosition,
                                                    isTopFrame,
@@ -99,7 +107,7 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
   }
 
   private fun isCurrentFile(file: VirtualFile): Boolean {
-    val pointVm = executionPointVmState.value ?: return false
+    val pointVm = executionPointVm ?: return false
     return pointVm.mainPositionVm?.file == file ||
            pointVm.alternativePositionVm?.file == file
   }

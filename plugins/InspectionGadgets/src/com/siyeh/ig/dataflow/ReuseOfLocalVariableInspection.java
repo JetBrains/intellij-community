@@ -16,11 +16,13 @@
 package com.siyeh.ig.dataflow;
 
 import com.intellij.codeInsight.BlockUtils;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -31,20 +33,18 @@ import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 public class ReuseOfLocalVariableInspection extends BaseInspection {
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new ReuseOfLocalVariableFix();
   }
 
@@ -65,7 +65,7 @@ public class ReuseOfLocalVariableInspection extends BaseInspection {
     return new ReuseOfLocalVariableVisitor();
   }
 
-  private static class ReuseOfLocalVariableFix extends InspectionGadgetsFix {
+  private static class ReuseOfLocalVariableFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -74,8 +74,8 @@ public class ReuseOfLocalVariableInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
       final PsiLocalVariable variable = (PsiLocalVariable)referenceExpression.resolve();
       if (variable == null) return;
       final PsiAssignmentExpression assignment = (PsiAssignmentExpression)PsiUtil.skipParenthesizedExprUp(referenceExpression.getParent());
@@ -85,14 +85,15 @@ public class ReuseOfLocalVariableInspection extends BaseInspection {
       if (lExpression == null) return;
       final String originalVariableName = lExpression.getText();
       final PsiType type = variable.getType();
-      final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
-      final PsiCodeBlock variableBlock = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
-      final String newVariableName = codeStyleManager.suggestUniqueVariableName(originalVariableName, variableBlock, false);
+      final PsiExpression rhs = assignment.getRExpression();
+      final PsiCodeBlock variableBlock = Objects.requireNonNull(PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class));
+      List<String> names = new VariableNameGenerator(variableBlock, VariableKind.LOCAL_VARIABLE)
+        .byExpression(rhs).byType(type).byName(originalVariableName).generateAll(true);
+      final String newVariableName = names.get(0);
       final SearchScope scope = new LocalSearchScope(assignmentStatement.getParent());
       final Query<PsiReference> query = ReferencesSearch.search(variable, scope, false);
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
       final PsiElementFactory factory = psiFacade.getElementFactory();
-      List<PsiReferenceExpression> collectedReferences = new ArrayList<>();
       for (PsiReference reference : query) {
         final PsiElement referenceElement = reference.getElement();
         final TextRange textRange = assignmentStatement.getTextRange();
@@ -100,11 +101,9 @@ public class ReuseOfLocalVariableInspection extends BaseInspection {
           continue;
         }
         final PsiExpression newExpression = factory.createExpressionFromText(newVariableName, referenceElement);
-        final PsiReferenceExpression replacementExpression = (PsiReferenceExpression)referenceElement.replace(newExpression);
-        collectedReferences.add(replacementExpression);
+        referenceElement.replace(newExpression);
       }
       CommentTracker commentTracker = new CommentTracker();
-      final PsiExpression rhs = assignment.getRExpression();
       final String rhsText = rhs == null ? "" : commentTracker.text(rhs);
       @NonNls final String newStatementText = type.getCanonicalText() + ' ' + newVariableName + " =  " + rhsText + ';';
 
@@ -113,8 +112,7 @@ public class ReuseOfLocalVariableInspection extends BaseInspection {
       commentTracker.deleteAndRestoreComments(Objects.requireNonNull(assignmentStatement));
       final PsiElement[] elements = declarationStatement.getDeclaredElements();
       final PsiLocalVariable newVariable = (PsiLocalVariable)elements[0];
-      final PsiElement context = declarationStatement.getParent();
-      HighlightUtils.showRenameTemplate(context, newVariable, collectedReferences.toArray(new PsiReferenceExpression[0]));
+      updater.rename(newVariable, names);
     }
   }
 

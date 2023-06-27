@@ -15,14 +15,12 @@
  */
 package com.siyeh.ig.fixes;
 
-import com.intellij.codeInspection.EditorUpdater;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -51,7 +49,7 @@ public class InlineGetterSetterCallFix extends PsiUpdateModCommandQuickFix {
   }
 
   @Override
-  protected void applyFix(@NotNull Project project, @NotNull PsiElement nameElement, @NotNull EditorUpdater updater) {
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement nameElement, @NotNull ModPsiUpdater updater) {
     final PsiReferenceExpression methodExpression = (PsiReferenceExpression)nameElement.getParent();
     if (methodExpression == null) return;
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)methodExpression.getParent();

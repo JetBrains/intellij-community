@@ -5,6 +5,9 @@ import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
+import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
@@ -20,6 +23,20 @@ fun getAnonymizedSystemId(systemId: ProjectSystemId): String {
     return if (isMaven) systemId.readableName else "undefined.system"
   }
   return if (getPluginInfo(manager.javaClass).isDevelopedByJetBrains()) systemId.readableName else "third.party"
+}
+
+class SystemIdValidationRule : CustomValidationRule() {
+  override fun getRuleId(): String {
+    return "external_system_id"
+  }
+
+  override fun doValidate(data: String, context: EventContext): ValidationResultType {
+    if (isThirdPartyValue(data)) return ValidationResultType.ACCEPTED
+    if (ExternalSystemApiUtil.getAllManagers().any { it.getSystemId().readableName.equals(data, ignoreCase = true) }) {
+      return ValidationResultType.ACCEPTED
+    }
+    return ValidationResultType.REJECTED
+  }
 }
 
 fun addExternalSystemId(data: FeatureUsageData,

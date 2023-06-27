@@ -5,7 +5,12 @@ import com.intellij.concurrency.TestElement
 import com.intellij.concurrency.TestElementKey
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.testFramework.common.timeoutRunBlocking
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions
 
 internal suspend fun doPropagationTest(submit: (() -> Unit) -> Unit) {
@@ -18,6 +23,28 @@ internal suspend fun doPropagationTest(submit: (() -> Unit) -> Unit) {
         }
         continuation.resumeWith(result)
       }
+    }
+  }
+}
+
+/**
+ * Regular IDE unit tests are executed in EDT, so this function takes care of launching coroutine code without
+ * blocking the event loop.
+ */
+internal fun doPropagationApplicationTest(propagateCancellation: Boolean = false, action: suspend () -> Unit) {
+  ApplicationManager.getApplication().assertIsNonDispatchThread()
+  runWithContextPropagationEnabled {
+    val test = {
+      timeoutRunBlocking {
+        withContext(Dispatchers.EDT) {
+          action()
+        }
+      }
+    }
+    if (propagateCancellation) {
+      runWithCancellationPropagationEnabled(test)
+    } else {
+      test()
     }
   }
 }

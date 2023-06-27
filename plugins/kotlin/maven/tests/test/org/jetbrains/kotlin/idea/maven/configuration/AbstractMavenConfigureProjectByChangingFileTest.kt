@@ -30,6 +30,7 @@ abstract class AbstractMavenConfigureProjectByChangingFileTest : AbstractConfigu
         file: PsiFile,
         configurator: KotlinMavenConfigurator,
         version: IdeKotlinVersion,
+        jvmTarget: String,
         collector: NotificationMessageCollector
     ) {
         WriteCommandAction.runWriteCommandAction(module.project) {

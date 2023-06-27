@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
 import com.intellij.ide.ui.UISettings
@@ -17,7 +17,7 @@ import javax.swing.JFrame
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
-class SimpleCustomDecorationPath(val frame: JFrame, private val isGrey: Boolean = false): JPanel(), UISettingsListener {
+internal class SimpleCustomDecorationPath(@JvmField val frame: JFrame, private val isGrey: Boolean = false): JPanel(), UISettingsListener {
   private val frameTitleListener = PropertyChangeListener { updateTitle() }
   private val label = JBLabel().apply {
     horizontalAlignment = SwingConstants.CENTER
@@ -73,8 +73,11 @@ class SimpleCustomDecorationPath(val frame: JFrame, private val isGrey: Boolean 
   }
 
   private fun updateLabelForeground() {
-    label.foreground =
-      if (isGrey) JBUI.CurrentTheme.Popup.headerForeground(false)
-      else JBColor.namedColor("MainToolbar.Dropdown.foreground", JBColor.foreground())
+    label.foreground = if (isGrey) {
+      JBUI.CurrentTheme.Popup.headerForeground(false)
+    }
+    else {
+      JBColor.namedColor("MainToolbar.Dropdown.foreground", JBColor.foreground())
+    }
   }
 }

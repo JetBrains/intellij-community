@@ -30,7 +30,6 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
-import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
@@ -53,20 +52,17 @@ public final class MavenProjectsManagerWatcher {
   private final Project myProject;
   private MavenProjectsTree myProjectsTree;
   private final MavenGeneralSettings myGeneralSettings;
-  private final MavenProjectsProcessor myReadingProcessor;
   private final MavenProjectsAware myProjectsAware;
   private final ExecutorService myBackgroundExecutor;
   private final Disposable myDisposable;
 
   public MavenProjectsManagerWatcher(Project project,
                                      MavenProjectsTree projectsTree,
-                                     MavenGeneralSettings generalSettings,
-                                     MavenProjectsProcessor readingProcessor) {
+                                     MavenGeneralSettings generalSettings) {
     myBackgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("MavenProjectsManagerWatcher.backgroundExecutor", 1);
     myProject = project;
     myProjectsTree = projectsTree;
     myGeneralSettings = generalSettings;
-    myReadingProcessor = readingProcessor;
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
     myProjectsAware = new MavenProjectsAware(project, projectsManager, this, myBackgroundExecutor);
     myDisposable = Disposer.newDisposable(projectsManager, MavenProjectsManagerWatcher.class.toString());
@@ -91,12 +87,6 @@ public final class MavenProjectsManagerWatcher {
   public synchronized void stop() {
     Disposer.dispose(myDisposable);
   }
-
-  public synchronized void addManagedFilesWithProfiles(List<VirtualFile> files, MavenExplicitProfiles explicitProfiles) {
-    myProjectsTree.addManagedFilesWithProfiles(files, explicitProfiles);
-    scheduleUpdateAll(new MavenImportSpec(false, true, true));
-  }
-
 
   public void setProjectsTree(MavenProjectsTree tree) {
     myProjectsTree = tree;
@@ -123,89 +113,51 @@ public final class MavenProjectsManagerWatcher {
    * if project is closed)
    */
   public Promise<Void> scheduleUpdateAll(MavenImportSpec spec) {
-    return scheduleUpdateAll(spec, false);
-  }
-
-  /**
-   * Returned {@link Promise} instance isn't guarantied to be marked as rejected in all cases where importing wasn't performed (e.g.
-   * if project is closed)
-   */
-  public Promise<Void> scheduleUpdateAll(MavenImportSpec spec, boolean forceUpdateInBackground) {
     if (MavenUtil.isLinearImportEnabled()) {
       return MavenImportingManager.getInstance(myProject).scheduleImportAll(spec).getFinishPromise().then(it -> null);
     }
 
-    if (MavenUtil.updateSuspendable()) {
-      return scheduleUpdateAllSuspendable(spec, forceUpdateInBackground);
-    }
-
-    final AsyncPromise<Void> promise = new AsyncPromise<>();
-    // display all import activities using the same build progress
-    MavenSyncConsole.startTransaction(myProject);
-    try {
-      Runnable onCompletion = createScheduleImportAction(spec, promise);
-      scheduleReadingTask(new MavenProjectsProcessorReadingTask(spec.isForceReading(), myProjectsTree, myGeneralSettings, onCompletion));
-    }
-    finally {
-      if (!spec.isForceResolve()) {
-        promise.onProcessed(unused -> MavenSyncConsole.finishTransaction(myProject));
-      }
-    }
-    return promise;
+    return scheduleUpdateAllSuspendable(spec);
   }
 
   /**
    * Returned {@link Promise} instance isn't guarantied to be marked as rejected in all cases where importing wasn't performed (e.g.
    * if project is closed)
    */
-  private Promise<Void> scheduleUpdateAllSuspendable(MavenImportSpec spec, boolean forceUpdateInBackground) {
+  private Promise<Void> scheduleUpdateAllSuspendable(MavenImportSpec spec) {
     final AsyncPromise<Void> promise = new AsyncPromise<>();
 
-    if (ApplicationManager.getApplication().isUnitTestMode()
-      && !forceUpdateInBackground) {
-      MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-      try {
-        projectsManager.updateAllMavenProjectsSync(spec);
-        promise.setResult(null);
-      }
-      catch (Exception e) {
-        promise.setError(e);
-      }
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      updateAllMavenProjectsSync(spec, promise);
     }
     else {
       AppExecutorUtil.getAppExecutorService().execute(() -> {
-        MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-        try {
-          projectsManager.updateAllMavenProjectsSync(spec);
-          promise.setResult(null);
-        }
-        catch (Exception e) {
-          promise.setError(e);
-        }
+        updateAllMavenProjectsSync(spec, promise);
       });
     }
 
     return promise;
   }
 
+  private void updateAllMavenProjectsSync(MavenImportSpec spec, AsyncPromise<Void> promise) {
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
+    try {
+      projectsManager.updateAllMavenProjectsSync(spec);
+      promise.setResult(null);
+    }
+    catch (Exception e) {
+      promise.setError(e);
+    }
+  }
 
   private Promise<Void> scheduleUpdateSuspendable(MavenImportSpec spec,
                                                   List<VirtualFile> filesToUpdate,
-                                                  List<VirtualFile> filesToDelete,
-                                                  boolean forceUpdateInBackground) {
+                                                  List<VirtualFile> filesToDelete) {
     final AsyncPromise<Void> promise = new AsyncPromise<>();
 
-    if (ApplicationManager.getApplication().isUnitTestMode()
-        && !forceUpdateInBackground) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
       if (!ApplicationManager.getApplication().isWriteAccessAllowed()) {
-        MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-        try {
-          projectsManager.updateMavenProjectsSync(spec, filesToUpdate, filesToDelete);
-          promise.setResult(null);
-        }
-        catch (Exception e) {
-          promise.setError(e);
-        }
+        updateMavenProjectsSync(spec, filesToUpdate, filesToDelete, promise);
       }
       else {
         MavenLog.LOG.warn("updateAllMavenProjectsSync skipped in write action");
@@ -213,90 +165,36 @@ public final class MavenProjectsManagerWatcher {
     }
     else {
       AppExecutorUtil.getAppExecutorService().execute(() -> {
-        MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-        try {
-          projectsManager.updateMavenProjectsSync(spec, filesToUpdate, filesToDelete);
-          promise.setResult(null);
-        }
-        catch (Exception e) {
-          promise.setError(e);
-        }
+        updateMavenProjectsSync(spec, filesToUpdate, filesToDelete, promise);
       });
     }
 
     return promise;
   }
 
-  public Promise<Void> scheduleUpdate(@NotNull List<VirtualFile> filesToUpdate,
-                                      @NotNull List<VirtualFile> filesToDelete,
-                                      MavenImportSpec spec) {
-    return scheduleUpdate(filesToUpdate, filesToDelete, spec, false);
+  private void updateMavenProjectsSync(MavenImportSpec spec,
+                                       List<VirtualFile> filesToUpdate,
+                                       List<VirtualFile> filesToDelete,
+                                       AsyncPromise<Void> promise) {
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
+    try {
+      projectsManager.updateMavenProjectsSync(spec, filesToUpdate, filesToDelete);
+      promise.setResult(null);
+    }
+    catch (Exception e) {
+      promise.setError(e);
+    }
   }
 
   public Promise<Void> scheduleUpdate(@NotNull List<VirtualFile> filesToUpdate,
                                       @NotNull List<VirtualFile> filesToDelete,
-                                      MavenImportSpec spec,
-                                      boolean forceUpdateInBackground) {
+                                      MavenImportSpec spec) {
 
     if (MavenUtil.isLinearImportEnabled()) {
       return MavenImportingManager.getInstance(myProject).scheduleUpdate(filesToUpdate, filesToDelete, spec).getFinishPromise().then(it -> null);
     }
 
-    if (MavenUtil.updateSuspendable()) {
-      return scheduleUpdateSuspendable(spec, filesToUpdate, filesToDelete, forceUpdateInBackground);
-    }
-
-    final AsyncPromise<Void> promise = new AsyncPromise<>();
-    // display all import activities using the same build progress
-    MavenSyncConsole.startTransaction(myProject);
-    try {
-      Runnable onCompletion = createScheduleImportAction(spec, promise);
-      if (LOG.isDebugEnabled()) {
-        String withForceOptionMessage = spec.isForceReading() ? " with force option" : "";
-        LOG.debug("Scheduling update for " + myProjectsTree + withForceOptionMessage +
-                  ". Files to update: " + filesToUpdate + ". Files to delete: " + filesToDelete);
-      }
-
-      scheduleReadingTask(new MavenProjectsProcessorDeltaReadingTask(
-        filesToUpdate, filesToDelete, spec.isForceReading(), myProjectsTree, myGeneralSettings, onCompletion));
-    }
-    finally {
-      if (!spec.isForceResolve()) {
-        promise.onProcessed(unused -> MavenSyncConsole.finishTransaction(myProject));
-      }
-    }
-    return promise;
-  }
-
-  /**
-   * All changed documents must be saved before reading
-   */
-  private void scheduleReadingTask(@NotNull MavenProjectsProcessorTask readingTask) {
-    myReadingProcessor.scheduleTask(readingTask);
-  }
-
-  @NotNull
-  private Runnable createScheduleImportAction(MavenImportSpec spec, final AsyncPromise<Void> promise) {
-    return () -> {
-      if (myProject.isDisposed()) {
-        promise.setError("Project disposed");
-        return;
-      }
-
-      if (spec.isForceResolve()) {
-        MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-        try {
-          projectsManager.resolveAndImportMavenProjectsSync(spec);
-          promise.setResult(null);
-        }
-        catch (Exception e) {
-          promise.setError(e);
-        }
-      }
-      else {
-        promise.setResult(null);
-      }
-    };
+    return scheduleUpdateSuspendable(spec, filesToUpdate, filesToDelete);
   }
 
   private class MyRootChangesListener implements ModuleRootListener {

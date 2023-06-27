@@ -9,8 +9,8 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsScope
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
-import com.intellij.platform.diagnostic.telemetry.impl.computeWithSpan
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.helpers.computeWithSpan
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.*
@@ -146,7 +146,7 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
 
     @Throws(VcsException::class)
     fun getContainingBranches(): List<String> {
-      return computeWithSpan(TelemetryTracer.getInstance().getTracer(VcsScope), "get containing branches") {
+      return computeWithSpan(TelemetryManager.getInstance().getTracer(VcsScope), "get containing branches") {
         try {
           getContainingBranches(myProvider, myRoot, myHash)
         }

@@ -50,7 +50,6 @@ internal class HeaderToolbarButtonLook(
   override fun getStateBackground(component: JComponent, state: Int): Color? = getHeaderBackgroundColor(component, state)
 
   override fun paintLookBorder(g: Graphics, rect: Rectangle, color: Color) {}
-  override fun getButtonArc(): JBValue = JBValue.Float(0f)
 
   override fun getDisabledIcon(icon: Icon): Icon {
     return IconLoader.getDisabledIcon(icon, lightThemeDarkHeaderDisableFilter)

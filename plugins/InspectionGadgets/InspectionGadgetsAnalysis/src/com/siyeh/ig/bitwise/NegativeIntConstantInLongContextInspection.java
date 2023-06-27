@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bitwise;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFieldImpl;
@@ -73,15 +74,15 @@ public class NegativeIntConstantInLongContextInspection extends AbstractBaseJava
     return value != null && value < 0;
   }
 
-  private static class AddLongSuffixFix implements LocalQuickFix {
+  private static class AddLongSuffixFix extends PsiUpdateModCommandQuickFix {
     @Override
     public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("negative.int.constant.in.long.context.fix.add.suffix");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiLiteralExpression literal = tryCast(descriptor.getStartElement(), PsiLiteralExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiLiteralExpression literal = tryCast(element, PsiLiteralExpression.class);
       if (literal == null) return;
       PsiType type = literal.getType();
       if (!PsiTypes.intType().equals(type)) return;
@@ -89,15 +90,15 @@ public class NegativeIntConstantInLongContextInspection extends AbstractBaseJava
     }
   }
 
-  private static class ConvertToLongFix implements LocalQuickFix {
+  private static class ConvertToLongFix extends PsiUpdateModCommandQuickFix {
     @Override
     public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("negative.int.constant.in.long.context.fix.convert");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiLiteralExpression literal = tryCast(descriptor.getStartElement(), PsiLiteralExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiLiteralExpression literal = tryCast(element, PsiLiteralExpression.class);
       if (literal == null) return;
       Integer value = tryCast(literal.getValue(), Integer.class);
       if (value == null || value >= 0) return;

@@ -36,7 +36,7 @@ class RedundantValueArgumentInspection : AbstractKotlinInspection() {
 
         analyze(argument, action = fun KtAnalysisSession.() {
             val argumentConstantValue = argumentExpression.evaluate(CONSTANT_EXPRESSION_EVALUATION) ?: return
-            val call = callElement.resolveCall().successfulFunctionCallOrNull() ?: return
+            val call = callElement.resolveCall()?.successfulFunctionCallOrNull() ?: return
             val parameterSymbol = findTargetParameter(argumentExpression, call) ?: return
 
             if (parameterSymbol.hasDefaultValue) {

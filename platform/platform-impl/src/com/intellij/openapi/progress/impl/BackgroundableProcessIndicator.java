@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.progress.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.TaskInfo;
@@ -18,6 +19,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 public class BackgroundableProcessIndicator extends ProgressWindow {
+  private static final Logger LOG = Logger.getInstance(BackgroundableProcessIndicator.class);
+
   private StatusBarEx myStatusBar;
 
   private TaskInfo myInfo;
@@ -73,6 +76,10 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
       Project nonDefaultProject = myProject == null || myProject.isDisposed() || myProject.isDefault() ? null : myProject;
       IdeFrame frame = WindowManagerEx.getInstanceEx().findFrameHelper(nonDefaultProject);
       myStatusBar = frame != null ? (StatusBarEx)frame.getStatusBar() : null;
+      if (myStatusBar == null && LOG.isDebugEnabled()) {
+        LOG.debug("No status bar for [" + this + "], progress will be displayed in a popup\nproject:" + myProject + "\nframe:" + frame,
+                  new Throwable());
+      }
     }
     doBackground(myStatusBar);
   }

@@ -25,7 +25,6 @@ import com.intellij.openapi.externalSystem.service.project.settings.RunConfigura
 import com.intellij.openapi.project.Project
 import com.intellij.rt.execution.junit.RepeatCount
 import com.intellij.util.ObjectUtils.consumeIfCast
-import java.util.*
 
 /**
  * Created by Nikita.Skvortsov
@@ -78,6 +77,7 @@ class JUnitRunConfigurationImporter : RunConfigurationImporter {
     runConfig.repeatMode = when (repeatValue) {
       "untilStop"    -> RepeatCount.UNLIMITED
       "untilFailure" -> RepeatCount.UNTIL_FAILURE
+      "untilSuccess" -> RepeatCount.UNTIL_SUCCESS
       is Number      -> RepeatCount.N.also { runConfig.repeatCount = repeatValue.toInt() }
       else           -> runConfig.repeatMode
     }

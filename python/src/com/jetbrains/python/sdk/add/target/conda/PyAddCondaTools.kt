@@ -36,7 +36,7 @@ import kotlin.io.path.pathString
 val condaSupportedLanguages: List<LanguageLevel>
   get() = LanguageLevel.SUPPORTED_LEVELS
     .asReversed()
-    .filter { it < LanguageLevel.PYTHON311 }
+    .filter { it < LanguageLevel.PYTHON312 }
 
 /**
  * See [com.jetbrains.env.conda.PyCondaSdkTest]
@@ -157,12 +157,16 @@ private suspend fun TargetCommandExecutor.getExpandedPathIfExecutable(file: Full
 interface TargetCommandExecutor {
   val targetPlatform: CompletableFuture<TargetPlatform>
   fun execute(command: List<String>): CompletableFuture<ProcessOutput>
+  /**
+   * Command will be executed on local machine
+   */
+  val local: Boolean
 }
 
 @ApiStatus.Internal
 class TargetEnvironmentRequestCommandExecutor(internal val request: TargetEnvironmentRequest) : TargetCommandExecutor {
   override val targetPlatform: CompletableFuture<TargetPlatform> = CompletableFuture.completedFuture(request.targetPlatform)
-
+  override val local: Boolean = request is LocalTargetEnvironmentRequest
   override fun execute(command: List<String>): CompletableFuture<ProcessOutput> {
     val commandLineBuilder = TargetedCommandLineBuilder(request)
     commandLineBuilder.setExePath(command.first())
@@ -178,6 +182,7 @@ private fun Process.captureProcessOutput(commandLine: List<String>): ProcessOutp
 }
 
 internal class IntrospectableCommandExecutor(private val introspectable: LanguageRuntimeType.Introspectable) : TargetCommandExecutor {
+  override val local: Boolean = false // we never introspect local machine for now
   override val targetPlatform: CompletableFuture<TargetPlatform>
     get() = introspectable.targetPlatform
 

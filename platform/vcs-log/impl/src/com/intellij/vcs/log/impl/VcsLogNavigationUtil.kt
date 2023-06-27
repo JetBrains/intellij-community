@@ -8,8 +8,8 @@ import com.google.common.util.concurrent.SettableFuture
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.indicatorRunBlockingCancellable
 import com.intellij.openapi.progress.runBackgroundableTask
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.IntRef
@@ -50,7 +50,7 @@ object VcsLogNavigationUtil {
 
     val progressTitle = VcsLogBundle.message("vcs.log.show.commit.in.log.process", hash.asString())
     runBackgroundableTask(progressTitle, project, true) { indicator ->
-      indicatorRunBlockingCancellable(indicator) {
+      runBlockingCancellable {
         resultFuture.computeResult {
           withContext(Dispatchers.EDT) {
             jumpToRevision(project, root, hash, filePath)

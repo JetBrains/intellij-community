@@ -12,19 +12,18 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
-import com.intellij.workspaceModel.storage.EntityChange;
-import com.intellij.workspaceModel.storage.VersionedStorageChange;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.WorkspaceEntityWithSymbolicId;
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
+import com.intellij.platform.workspace.storage.EntityChange;
+import com.intellij.platform.workspace.storage.VersionedStorageChange;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
+import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceProjectImporterKt;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenServerManager;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Assume;
 import org.junit.Test;
 
@@ -40,7 +39,6 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Override
   protected void setUp() throws Exception {
-    MavenUtil.setUpdateSuspendable();
     super.setUp();
     myEventsTestHelper.setUp(myProject);
   }
@@ -48,7 +46,6 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      MavenUtil.resetUpdateSuspendable();
       myEventsTestHelper.tearDown();
     }
     catch (Throwable e) {
@@ -382,8 +379,7 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
 
     removeFromLocalRepository("junit");
 
-    resolveAndImportAllMavenProjects(); // force resolving
-    resolveDependenciesAndImport();
+    updateAllProjects();
 
     File jarFile = new File(getRepositoryFile(), "junit/junit/4.0/junit-4.0.jar");
     assertTrue(jarFile.exists());
@@ -406,8 +402,7 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
     assertFalse(jarFile.exists());
 
     try {
-      resolveAndImportAllMavenProjects(); // force resolving
-      resolveDependenciesAndImport();
+      updateAllProjects();
     }
     finally {
       // LightweightHttpWagon does not clear settings if they were not set before a proxy was configured.
@@ -418,8 +413,7 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
 
     restoreSettingsFile();
 
-    resolveAndImportAllMavenProjects(); // force resolving
-    resolveDependenciesAndImport();
+    updateAllProjects();
     assertTrue(jarFile.exists());
   }
 

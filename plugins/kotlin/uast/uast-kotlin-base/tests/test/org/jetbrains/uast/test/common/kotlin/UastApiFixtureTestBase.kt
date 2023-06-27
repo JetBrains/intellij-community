@@ -12,6 +12,8 @@ import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.uast.*
 import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
+import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.uast.util.isConstructorCall
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
@@ -640,4 +642,51 @@ interface UastApiFixtureTestBase : UastPluginSelection {
         })
     }
 
+    fun checkLambdaBodyAsParentOfDestructuringDeclaration(myFixture: JavaCodeInsightTestFixture) {
+        // KTIJ-24108
+        myFixture.configureByText(
+            "main.kt", """
+                fun fi(data: List<String>) =
+                    data.filter {
+                        va<caret>l (a, b)
+                    }
+            """.trimIndent()
+        )
+
+        val destructuringDeclaration =
+            myFixture.file.findElementAt(myFixture.caretOffset)
+                ?.getParentOfType<KtDestructuringDeclaration>(strict = true)
+                .orFail("Cannot find KtDestructuringDeclaration")
+
+        val uDestructuringDeclaration =
+            destructuringDeclaration.toUElement().orFail("Cannot convert to KotlinUDestructuringDeclarationExpression")
+
+        TestCase.assertNotNull(uDestructuringDeclaration.uastParent)
+    }
+
+    fun checkIdentifierOfNullableExtensionReceiver(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                enum class SortOrder {
+                  ASCENDING, DESCENDING, UNSORTED
+                }
+
+                fun <C> Comparator<C>?.withOrder(sortOrder: SortOrder): Comparator<C>? =
+                  this?.let {
+                    when (sortOrder) {
+                      SortOrder.ASCENDING -> it
+                      SortOrder.DESCENDING -> it.reversed()
+                      SortOrder.UNSORTED -> null
+                    }
+                  }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val withOrder = uFile.findElementByTextFromPsi<UMethod>("withOrder", strict = false)
+            .orFail("can't convert extension function: withOrder")
+        val extensionReceiver = withOrder.uastParameters.first()
+        val identifier = extensionReceiver.uastAnchor as? UIdentifier
+        TestCase.assertNotNull(identifier)
+    }
 }

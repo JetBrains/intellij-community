@@ -51,7 +51,9 @@ class EditorConfigInspectionsTest : BasePlatformTestCase() {
    * See [EDITORCONFIG-T-3](https://jetbrains.team/p/editorconfig/issues/3)
    */
   fun testSpaceInHeader2() = doTest(EditorConfigSpaceInHeaderInspection::class, checkWeakWarnings = true)
-
+  fun testSpaceInKey() = doTest(EditorConfigVerifyByCoreInspection::class)
+  fun testUnclosedGlob() = doTest(EditorConfigVerifyByCoreInspection::class)
+  fun testUnexpectedChar() = doTest(EditorConfigVerifyByCoreInspection::class)
   fun testUnexpectedComma() = doTest(EditorConfigUnexpectedCommaInspection::class)
   fun testUnusedDeclaration() = doTest(EditorConfigUnusedDeclarationInspection::class)
   fun testValueCorrectness() = doTest(EditorConfigValueCorrectnessInspection::class)

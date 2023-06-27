@@ -8,13 +8,15 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
-import org.jetbrains.kotlin.idea.intentions.*
+import org.jetbrains.kotlin.idea.intentions.AddNameToArgumentIntention
+import org.jetbrains.kotlin.idea.intentions.branches
+import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
@@ -23,13 +25,13 @@ class FoldIfToFunctionCallIntention : SelfTargetingRangeIntention<KtIfExpression
     KotlinBundle.lazyMessage("lift.function.call.out.of.if"),
 ) {
     override fun applicabilityRange(element: KtIfExpression): TextRange? =
-        if (canFoldToFunctionCall(element)) element.ifKeyword.textRange else null
+        if (Holder.canFoldToFunctionCall(element)) element.ifKeyword.textRange else null
 
     override fun applyTo(element: KtIfExpression, editor: Editor?) {
-        foldToFunctionCall(element)
+        Holder.foldToFunctionCall(element)
     }
 
-    companion object {
+    object Holder {
         fun branches(expression: KtExpression): List<KtExpression>? {
             val branches = when (expression) {
                 is KtIfExpression -> expression.branches
@@ -41,7 +43,7 @@ class FoldIfToFunctionCallIntention : SelfTargetingRangeIntention<KtIfExpression
             return branches.filterNotNull().takeIf { it.size == branchesSize }
         }
 
-        private fun canFoldToFunctionCall(element: KtExpression): Boolean {
+        internal fun canFoldToFunctionCall(element: KtExpression): Boolean {
             val branches = branches(element) ?: return false
 
             val callExpressions = branches.mapNotNull { it.callExpression() }
@@ -59,7 +61,7 @@ class FoldIfToFunctionCallIntention : SelfTargetingRangeIntention<KtIfExpression
             }
         }
 
-        private fun foldToFunctionCall(element: KtExpression) {
+        internal fun foldToFunctionCall(element: KtExpression) {
             val branches = branches(element) ?: return
 
             val callExpressions = branches.mapNotNull { it.callExpression() }
@@ -76,7 +78,7 @@ class FoldIfToFunctionCallIntention : SelfTargetingRangeIntention<KtIfExpression
             headCall.valueArguments[argumentIndex].getArgumentExpression()?.replace(copiedIf)
             if (hasNamedArgument) {
                 headCall.valueArguments.forEach {
-                    if (it.getArgumentName() == null) AddNameToArgumentIntention.apply(it, givenResolvedCall = null)
+                    if (it.getArgumentName() == null) AddNameToArgumentIntention.Holder.apply(it, givenResolvedCall = null)
                 }
             }
             element.replace(headCall.getQualifiedExpressionForSelectorOrThis()).reformatted()

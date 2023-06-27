@@ -34,7 +34,7 @@ import static com.intellij.openapi.util.NlsContexts.*;
  * Two lines: title and content line; title and actions; content line and actions; contents on two lines.<br>
  * Three lines: title and content line and actions; contents on two lines and actions; contents on three lines or more; etc.</p>
  *
- * <p><b>Warning:</b> please avoid links in HTML content, use {@link #addAction(AnAction)} instead.</p>
+ * <p><b>Warning:</b> please avoid links in HTML content, use {@link #addAction(AnAction)} and {@link NotificationAction#createSimpleExpiring(String, Runnable)} instead.</p>
  * <p>Use {@link Notifications.Bus} to show notifications.</p>
  *
  * @see NotificationAction
@@ -73,6 +73,7 @@ public class Notification {
   private boolean myImportantSuggestion;
   private String myDoNotAskId;
   private @Nls String myDoNotAskDisplayName;
+  private boolean myIsShowingPopupSuppressed;
   private String myRemindLaterHandlerId;
   private @Nullable String myToolWindowId;
 
@@ -188,6 +189,16 @@ public class Notification {
     manager.setValue("Notification.DoNotAsk-" + myDoNotAskId, true);
     manager.setValue("Notification.DisplayName-DoNotAsk-" + myDoNotAskId, myDoNotAskDisplayName);
     return this;
+  }
+
+  @ApiStatus.Internal
+  public void setSuppressShowingPopup(boolean isShowingPopupSuppressed) {
+    myIsShowingPopupSuppressed = isShowingPopupSuppressed;
+  }
+
+  @ApiStatus.Internal
+  public boolean isShowingPopupSuppressed() {
+    return myIsShowingPopupSuppressed;
   }
 
   @ApiStatus.Internal

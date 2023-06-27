@@ -8,10 +8,14 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
@@ -294,22 +298,29 @@ open class ProjectFrameHelper internal constructor(
 
   override fun getProject(): Project? = project
 
-  @RequiresEdt
-  fun setProject(project: Project) {
+  // any activities that will not access a workspace model
+  internal suspend fun setRawProject(project: Project) {
     if (this.project === project) {
       return
     }
 
     this.project = project
-    rootPane.setProject(project)
+
+    withContext(Dispatchers.EDT) {
+      applyInitBounds()
+    }
     frameDecorator?.setProject()
+  }
+
+  internal suspend fun setProject(project: Project) {
+    rootPane.setProject(project)
     activationTimestamp?.let {
       RecentProjectsManager.getInstance().setActivationTimestamp(project, it)
     }
-    applyInitBounds()
   }
 
-  fun setInitBounds(bounds: Rectangle?) {
+  @RequiresEdt
+  internal fun setInitBounds(bounds: Rectangle?) {
     if (bounds != null && frame.isInFullScreen) {
       frame.rootPane.putClientProperty(INIT_BOUNDS_KEY, bounds)
     }
@@ -321,26 +332,17 @@ open class ProjectFrameHelper internal constructor(
       rootPane.putClientProperty(INIT_BOUNDS_KEY, null)
       if (bounds is Rectangle) {
         ProjectFrameBounds.getInstance(project!!).markDirty(bounds)
-        if (IDE_FRAME_EVENT_LOG.isDebugEnabled) { // avoid unnecessary concatenation
-          IDE_FRAME_EVENT_LOG.debug("Applied init bounds for full screen from client property: $bounds")
-        }
+        IDE_FRAME_EVENT_LOG.debug { "Applied init bounds for full screen from client property: $bounds" }
       }
     }
     else {
       ProjectFrameBounds.getInstance(project!!).markDirty(frame.bounds)
-      if (IDE_FRAME_EVENT_LOG.isDebugEnabled) { // avoid unnecessary concatenation
-        IDE_FRAME_EVENT_LOG.debug("Applied init bounds for non-fullscreen from the frame: ${frame.bounds}")
-      }
+      IDE_FRAME_EVENT_LOG.debug { "Applied init bounds for non-fullscreen from the frame: ${frame.bounds}" }
     }
   }
 
   open suspend fun installDefaultProjectStatusBarWidgets(project: Project) {
-    rootPane.statusBar!!.init(project)
-
-    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      val navBar = rootPane.navBarStatusWidgetComponent ?: return@withContext
-      statusBar!!.setCentralWidget(IdeStatusBarImpl.NAVBAR_WIDGET_KEY, navBar)
-    }
+    rootPane.statusBar!!.init(project, frame)
   }
 
   fun appClosing() {
@@ -406,7 +408,7 @@ open class ProjectFrameHelper internal constructor(
         modalBlockerField.isAccessible = true
         val modalBlocker = modalBlockerField.get(frame) as? Window
         if (modalBlocker != null) {
-          ApplicationManager.getApplication().invokeLater({ toggleFullScreen(state) }, ModalityState.NON_MODAL)
+          ApplicationManager.getApplication().invokeLater({ toggleFullScreen(state) }, ModalityState.nonModal())
           return true
         }
       }

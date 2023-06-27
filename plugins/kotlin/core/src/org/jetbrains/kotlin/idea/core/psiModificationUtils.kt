@@ -17,9 +17,11 @@ import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.extensions.DeclarationAttributeAltererExtension
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.*
+import org.jetbrains.kotlin.idea.base.psi.addTypeParameter
 import org.jetbrains.kotlin.idea.base.psi.appendDeclaration
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
-import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.psi.setDefaultValue
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
@@ -568,20 +570,11 @@ fun KtParameter.dropDefaultValue() {
     deleteChildRange(from, to)
 }
 
-fun KtTypeParameterListOwner.addTypeParameter(typeParameter: KtTypeParameter): KtTypeParameter? {
-    typeParameterList?.let { return it.addParameter(typeParameter) }
-
-    val list = KtPsiFactory(project).createTypeParameterList("<X>")
-    list.parameters[0].replace(typeParameter)
-    val leftAnchor = when (this) {
-        is KtClass -> nameIdentifier
-        is KtNamedFunction -> funKeyword
-        is KtProperty -> valOrVarKeyword
-        is KtTypeAlias -> nameIdentifier
-        else -> null
-    } ?: return null
-    return (addAfter(list, leftAnchor) as KtTypeParameterList).parameters.first()
-}
+@Deprecated(
+    "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils' instead",
+    ReplaceWith("this.addTypeParameter(typeParameter)", "org.jetbrains.kotlin.idea.base.psi.addTypeParameter")
+)
+fun KtTypeParameterListOwner.addTypeParameter(typeParameter: KtTypeParameter) = addTypeParameter(typeParameter)
 
 fun KtNamedFunction.getOrCreateValueParameterList(): KtParameterList {
     valueParameterList?.let { return it }
@@ -610,13 +603,11 @@ fun KtCallableDeclaration.setReceiverType(type: KotlinType) {
     ShortenReferences.DEFAULT.process(receiverTypeReference!!)
 }
 
-fun KtParameter.setDefaultValue(newDefaultValue: KtExpression): PsiElement {
-    defaultValue?.let { return it.replaced(newDefaultValue) }
-
-    val psiFactory = KtPsiFactory(project)
-    val eq = equalsToken ?: add(psiFactory.createEQ())
-    return addAfter(newDefaultValue, eq) as KtExpression
-}
+@Deprecated(
+    "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils' instead",
+    ReplaceWith("this.setDefaultValue(newDefaultValue)", "org.jetbrains.kotlin.idea.base.psi.setDefaultValue")
+)
+fun KtParameter.setDefaultValue(newDefaultValue: KtExpression): PsiElement = setDefaultValue(newDefaultValue)
 
 fun KtModifierList.appendModifier(modifier: KtModifierKeywordToken) {
     add(KtPsiFactory(project).createModifier(modifier))

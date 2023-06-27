@@ -1,15 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
-import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.vcs.changes.Change
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.findCumulativeChange
+import org.jetbrains.plugins.gitlab.mergerequest.diff.ChangesSelection
 
 interface GitLabMergeRequestNotePositionMapping {
-  class Actual(val change: Change, val location: DiffLineLocation? = null) : GitLabMergeRequestNotePositionMapping
-  class Outdated(val change: Change, val originalLocation: DiffLineLocation? = null) : GitLabMergeRequestNotePositionMapping
+  class Actual(val change: ChangesSelection.Precise) : GitLabMergeRequestNotePositionMapping
+  class Outdated(val change: ChangesSelection.Precise) : GitLabMergeRequestNotePositionMapping
   object Obsolete : GitLabMergeRequestNotePositionMapping
   class Error(val error: Throwable) : GitLabMergeRequestNotePositionMapping
 
@@ -33,7 +32,8 @@ interface GitLabMergeRequestNotePositionMapping {
             LOG.debug("Current head differs from $position")
             val change = mrChanges.findCumulativeChange(position.sha, position.filePath)
             if (change != null) {
-              return Outdated(change, textLocation)
+              val changeSelection = ChangesSelection.Precise(mrChanges.changes, change, textLocation)
+              return Outdated(changeSelection)
             }
             else {
               return Obsolete
@@ -66,7 +66,8 @@ interface GitLabMergeRequestNotePositionMapping {
         LOG.debug("Can't find change for $position")
         return Obsolete
       }
-      return Actual(change, textLocation)
+      val changeSelection = ChangesSelection.Precise(changes, change, textLocation)
+      return Actual(changeSelection)
     }
   }
 }

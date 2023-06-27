@@ -7,11 +7,19 @@ import com.intellij.openapi.diagnostic.logger
 import java.util.logging.Level
 import java.util.logging.Logger
 
+private const val LOG_DEBUG_CATEGORIES = "log.debug.categories"
+private const val LOG_TRACE_CATEGORIES = "log.trace.categories"
+private const val LOG_ALL_CATEGORIES = "log.all.categories"
+private const val LOG_DEBUG_CATEGORIES_SYSTEM_PROPERTY = "idea.$LOG_DEBUG_CATEGORIES"
+private const val LOG_TRACE_CATEGORIES_SYSTEM_PROPERTY = "idea.$LOG_TRACE_CATEGORIES"
+private const val LOG_ALL_CATEGORIES_SYSTEM_PROPERTY = "idea.$LOG_ALL_CATEGORIES"
+
 /**
  * Allows applying & persisting custom log debug categories
  * which can be turned on by user via the [com.intellij.ide.actions.DebugLogConfigureAction].
  * Applies these custom categories on startup.
  */
+@Suppress("LightServiceMigrationCode")
 class DebugLogManager {
   enum class DebugLogLevel { DEBUG, TRACE, ALL }
 
@@ -44,10 +52,12 @@ class DebugLogManager {
   }
 
   fun clearCategories(categories: List<Category>) {
-    categories.flatMap {
-      val trimmed = it.category.trimStart('#')
-      listOf(it.category, trimmed, "#$trimmed")
-    }.distinct()
+    categories
+      .flatMap {
+        val trimmed = it.category.trimStart('#')
+        listOf(it.category, trimmed, "#$trimmed")
+      }
+      .distinct()
       .forEach {
         Logger.getLogger(it)?.level = null
       }
@@ -86,29 +96,24 @@ class DebugLogManager {
     properties.setValue(LOG_TRACE_CATEGORIES, toString(categories, DebugLogLevel.TRACE), null)
     properties.setValue(LOG_ALL_CATEGORIES, toString(categories, DebugLogLevel.ALL), null)
   }
-
-  private fun fromString(text: String?, level: DebugLogLevel): List<Category> {
-    return when {
-      text != null -> {
-        val byNewlines = text.lineSequence().toList()
-        val byCommas = text.split(",")
-        if (byCommas.size > 1 && byNewlines.size > 1) error("Do not mix commas and newlines as category separators: $text")
-        val categories = if (byCommas.size > byNewlines.size) byCommas else byNewlines
-        categories.mapNotNull { if (it.isBlank()) null else Category(it, level) }.toList()
-      }
-      else -> emptyList()
-    }
-  }
-
-  private fun toString(categories: List<Category>, level: DebugLogLevel): String? {
-    val filtered = categories.asSequence().filter { it.level == level }.map { it.category }.toList()
-    return if (filtered.isNotEmpty()) filtered.joinToString("\n") else null
-  }
 }
 
-private const val LOG_DEBUG_CATEGORIES = "log.debug.categories"
-private const val LOG_TRACE_CATEGORIES = "log.trace.categories"
-private const val LOG_ALL_CATEGORIES = "log.all.categories"
-private const val LOG_DEBUG_CATEGORIES_SYSTEM_PROPERTY = "idea.$LOG_DEBUG_CATEGORIES"
-private const val LOG_TRACE_CATEGORIES_SYSTEM_PROPERTY = "idea.$LOG_TRACE_CATEGORIES"
-private const val LOG_ALL_CATEGORIES_SYSTEM_PROPERTY = "idea.$LOG_ALL_CATEGORIES"
+private fun fromString(text: String?, level: DebugLogManager.DebugLogLevel): List<DebugLogManager.Category> {
+  if (text == null) {
+    return emptyList()
+  }
+
+  val byNewlines = text.lines()
+  val byCommas = text.split(',')
+  if (byCommas.size > 1 && byNewlines.size > 1) {
+    error("Do not mix commas and newlines as category separators: $text")
+  }
+  val categories = if (byCommas.size > byNewlines.size) byCommas else byNewlines
+  return categories.mapNotNull { if (it.isBlank()) null else DebugLogManager.Category(it, level) }
+}
+
+
+private fun toString(categories: List<DebugLogManager.Category>, level: DebugLogManager.DebugLogLevel): String? {
+  val filtered = categories.asSequence().filter { it.level == level }.map { it.category }.toList()
+  return if (filtered.isEmpty()) null else filtered.joinToString("\n")
+}

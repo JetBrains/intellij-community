@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -64,9 +64,8 @@ public class EmptyEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     return 2;
   }
 
-  @NotNull
   @Override
-  public HighlighterIterator createIterator(int startOffset) {
+  public @NotNull HighlighterIterator createIterator(int startOffset) {
     return new HighlighterIterator(){
       private final TextAttributesKey[] myKeys = new TextAttributesKey[]{myKey};
       private int index = 0;
@@ -106,9 +105,8 @@ public class EmptyEditorHighlighter implements EditorHighlighter, PrioritizedDoc
         return index != 0;
       }
 
-      @NotNull
       @Override
-      public Document getDocument() {
+      public @NotNull Document getDocument() {
         return myEditor.getDocument();
       }
 

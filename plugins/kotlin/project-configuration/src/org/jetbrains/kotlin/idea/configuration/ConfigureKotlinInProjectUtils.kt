@@ -2,10 +2,12 @@
 
 package org.jetbrains.kotlin.idea.configuration
 
+import com.intellij.externalSystem.JavaModuleData
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.Extensions
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
@@ -25,12 +27,14 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinNativeLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.detectLibraryKind
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.util.projectScope
@@ -41,6 +45,7 @@ import org.jetbrains.kotlin.idea.core.syncNonBlockingReadAction
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinNotConfiguredSuppressedModulesState
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
+import org.jetbrains.kotlin.idea.projectConfiguration.getDefaultJvmTarget
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.vfilefinder.IdeVirtualFileFinder
@@ -50,8 +55,10 @@ import org.jetbrains.kotlin.idea.vfilefinder.hasSomethingInPackage
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.isJs
+import org.jetbrains.kotlin.platform.isWasm
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.isNative
+import org.jetbrains.plugins.gradle.util.GradleUtil
 
 private val LOG = Logger.getInstance("#org.jetbrains.kotlin.idea.configuration.ConfigureKotlinInProjectUtils")
 
@@ -259,6 +266,17 @@ private fun KotlinProjectConfigurator.canConfigure(moduleSourceRootGroup: Module
     getStatus(moduleSourceRootGroup) == ConfigureKotlinStatus.CAN_BE_CONFIGURED &&
             (allConfigurators().toList() - this).none { it.getStatus(moduleSourceRootGroup) == ConfigureKotlinStatus.CONFIGURED }
 
+fun getConfiguredModules(project: Project, configurator: KotlinProjectConfigurator): Map<String, Module> {
+    val projectModules = project.modules.asList()
+    val result = mutableMapOf<String, Module>()
+    for (moduleGroup in ModuleSourceRootMap(project).groupByBaseModules(projectModules)) {
+        if (configurator.getStatus(moduleGroup) == ConfigureKotlinStatus.CONFIGURED) {
+            result[moduleGroup.baseModule.name] = moduleGroup.sourceRootModules.first() // They all either have or don't have Kotlin
+        }
+    }
+    return result
+}
+
 /**
  * Returns a list of modules which contain sources in Kotlin and for which it's possible to run the given configurator.
  * Note that this method is expensive and should not be called more often than strictly necessary.
@@ -313,10 +331,26 @@ fun findApplicableConfigurator(module: Module): KotlinProjectConfigurator {
         ?: KotlinJavaModuleConfigurator.instance
 }
 
+/**
+ * Returns true if the Kotlin compiler plugin (Gradle/Maven/JPS) is enabled
+ * in the module and the Kotlin compiler is set up.
+ */
 fun Module.hasKotlinPluginEnabled(): Boolean {
-    val settings = KotlinFacetSettingsProvider.getInstance(project)
-    val moduleSettings = settings?.getSettings(this) ?: return false
-    return moduleSettings.compilerSettings != null
+    if (buildSystemType == BuildSystemType.JPS) {
+        // JPS uses the built-in Kotlin compiler as soon as there is any Kotlin stdlib
+        // on the classpath, even from transitive dependencies.
+        return hasAnyKotlinRuntimeInScope(this)
+    } else {
+        val settings = KotlinFacetSettingsProvider.getInstance(project)
+        val moduleSettings = settings?.getSettings(this) ?: return false
+        return moduleSettings.compilerSettings != null
+    }
+}
+
+fun getKotlinCompilerArguments(module: Module): CommonCompilerArguments? {
+    val settings = KotlinFacetSettingsProvider.getInstance(module.project)
+    val moduleSettings = settings?.getSettings(module)
+    return moduleSettings?.compilerArguments
 }
 
 fun hasAnyKotlinRuntimeInScope(module: Module): Boolean {
@@ -343,7 +377,7 @@ fun getPlatform(module: Module): String {
             if (module.name.contains("android")) "jvm.android"
             else "jvm"
         }
-        module.platform.isJs() && hasKotlinWasmRuntimeInScope(module) -> "wasm"
+        module.platform.isWasm() && hasKotlinWasmRuntimeInScope(module) -> "wasm"
         module.platform.isJs() && hasKotlinJsRuntimeInScope(module) -> "js"
         module.platform.isCommon() -> "common"
         module.platform.isNative() -> "native." + (module.platform?.componentPlatforms?.first()?.targetName ?: "unknown")
@@ -378,7 +412,7 @@ fun hasKotlinJsRuntimeInScope(module: Module): Boolean {
 }
 
 fun hasKotlinWasmRuntimeInScope(module: Module): Boolean {
-    return hasKotlinPlatformRuntimeInScope(module, KOTLIN_WASM_FQ_NAME, KotlinJavaScriptLibraryKind)
+    return hasKotlinPlatformRuntimeInScope(module, KOTLIN_WASM_FQ_NAME, KotlinWasmLibraryKind)
 }
 
 fun hasKotlinNativeRuntimeInScope(module: Module): Boolean {
@@ -389,11 +423,83 @@ fun hasKotlinPlatformRuntimeInScope(
     module: Module,
     fqName: FqName,
     libraryKind: PersistentLibraryKind<*>
-    ): Boolean {
+): Boolean {
     return module.project.runReadActionInSmartMode {
         val scope = module.getModuleWithDependenciesAndLibrariesScope(true)
         hasSomethingInPackage(KlibMetaFileIndex.NAME, fqName, LibraryKindSearchScope(module, scope, libraryKind))
     }
+}
+
+private val KOTLIN_STDLIB_VERSION_REGEX = Regex("kotlin-stdlib-([A-Za-z]+-)?(\\d\\.\\d(\\.\\d{1,2}(-(M1|M2|Beta|RC(2)?))?)?)")
+private const val ARTIFACT_NAME = "kotlin-stdlib"
+private const val GROUP_WITH_KOTLIN_VERSION = 2
+
+typealias ModulesNamesAndFirstSourceRootModules = Map<String, Module>
+typealias KotlinVersionsAndModules = Map<String, ModulesNamesAndFirstSourceRootModules>
+
+fun getKotlinVersionsAndModules(
+    project: Project,
+    configurator: KotlinProjectConfigurator
+): KotlinVersionsAndModules {
+    val configuredModules = getConfiguredModules(project, configurator)
+    val kotlinVersionsAndModules: MutableMap<String, MutableMap<String, Module>> = mutableMapOf()
+    for (moduleEntity in configuredModules) {
+        val module = moduleEntity.value
+        getKotlinCompilerArguments(module)?.pluginClasspaths?.let { pluginsClasspaths ->
+            pluginsClasspaths.firstOrNull { it.contains(ARTIFACT_NAME) }?.let {
+                val version = KOTLIN_STDLIB_VERSION_REGEX.find(it)?.groups?.get(GROUP_WITH_KOTLIN_VERSION)?.value
+                version?.let {
+                    val modulesForThisVersion = kotlinVersionsAndModules.getOrDefault(version, mutableMapOf())
+                    modulesForThisVersion[moduleEntity.key] = module
+                    kotlinVersionsAndModules[version] = modulesForThisVersion
+                }
+            }
+        }
+    }
+    return kotlinVersionsAndModules
+}
+
+typealias ModuleName = String
+typealias TargetJvm = String?
+
+fun getModulesTargetingUnsupportedJvmAndTargetsForAllModules(
+    modulesToConfigure: List<Module>,
+    kotlinVersion: IdeKotlinVersion
+): Pair<Map<String, List<String>>, Map<ModuleName, TargetJvm>> {
+    val modulesAndJvmTargets = mutableMapOf<ModuleName, TargetJvm>()
+    val jvmModulesTargetingUnsupportedJvm = mutableMapOf<String,  MutableList<String>>()
+    for (module in modulesToConfigure) {
+        val jvmTarget = getTargetBytecodeVersionFromModule(module, kotlinVersion)
+        modulesAndJvmTargets[module.name] = jvmTarget
+        jvmTarget?.removePrefix("1.")?.toIntOrNull()?.let {
+            if (it < 8) {
+                val modulesForThisTarget = jvmModulesTargetingUnsupportedJvm.getOrDefault(jvmTarget, mutableListOf())
+                modulesForThisTarget.add(module.name)
+                jvmModulesTargetingUnsupportedJvm[jvmTarget] = modulesForThisTarget
+            }
+        }
+    }
+    return Pair(jvmModulesTargetingUnsupportedJvm, modulesAndJvmTargets)
+}
+
+fun getTargetBytecodeVersionFromModule(
+    module: Module,
+    kotlinVersion: IdeKotlinVersion
+): String? {
+    return GradleUtil.findGradleModuleData(module)?.let { moduleDataNode ->
+        val javaModuleData = ExternalSystemApiUtil.find(moduleDataNode, JavaModuleData.KEY)
+        javaModuleData?.let {
+            javaModuleData.data.targetBytecodeVersion
+        }
+    } ?: getJvmTargetFromSdkOrDefault(module, kotlinVersion)
+}
+
+private fun getJvmTargetFromSdkOrDefault(
+    module: Module,
+    kotlinVersion: IdeKotlinVersion
+): String? {
+    val sdk = module.let { ModuleRootManager.getInstance(it).sdk }
+    return getDefaultJvmTarget(sdk, kotlinVersion)?.description
 }
 
 private val KOTLIN_JS_FQ_NAME = FqName("kotlin.js")

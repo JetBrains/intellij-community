@@ -72,9 +72,12 @@ class MavenShowEffectivePom : AnAction(), DumbAware {
     }
 
     private fun findPomXml(dataContext: DataContext): VirtualFile? {
-      var file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext) ?: return null
+      val file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext) ?: return null
       if (file.isDirectory) {
-        file = MavenUtil.streamPomFiles(MavenActionUtil.getProject(dataContext), file).findFirst().orElse(null)
+        val project = MavenActionUtil.getProject(dataContext) ?: return null
+        val files = file.children.filter { MavenUtil.isPomFile(project, it) }
+        if (files.isEmpty()) return null
+        return files[0]
       }
       val manager = MavenActionUtil.getProjectsManager(dataContext) ?: return null
       manager.findProject(file) ?: return null

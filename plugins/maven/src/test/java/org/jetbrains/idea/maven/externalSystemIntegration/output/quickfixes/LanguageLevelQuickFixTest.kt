@@ -11,15 +11,10 @@ import org.junit.Test
 
 class LanguageLevelQuickFixTest : MavenDomTestCase() {
 
-  override fun setUp() {
-    MavenUtil.setUpdateSuspendable()
-    super.setUp()
-  }
   override fun tearDown() {
     RunAll.runAll(
       { stopMavenImportManager() },
       { super.tearDown() },
-      { MavenUtil.resetUpdateSuspendable() },
     )
   }
 

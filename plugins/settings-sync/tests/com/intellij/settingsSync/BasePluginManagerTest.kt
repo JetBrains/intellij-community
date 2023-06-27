@@ -67,6 +67,11 @@ abstract class BasePluginManagerTest {
     listOf(TestPluginDependency("com.intellij.modules.platform", isOptional = false)),
     bundled = true
   )
+  internal val scala = TestPluginDescriptor(
+    "org.intellij.scala",
+    listOf(TestPluginDependency("com.intellij.modules.java", isOptional = false)),
+    isDynamic = false
+  )
 
   @BeforeEach
   fun setUp() {
@@ -133,8 +138,9 @@ internal fun assertPluginsState(expectedStates: Map<PluginId, PluginData>, actua
       .joinToString { (id, data) -> "$id: ${enabledOrDisabled(data.enabled)}" }
 
   if (expectedStates.size != actualStates.size) {
-    assertEquals("Expected and actual states have different number of elements",
-                 stringifyStates(expectedStates), stringifyStates(actualStates))
+    assertEquals(stringifyStates(expectedStates), stringifyStates(actualStates),
+                 "Expected and actual states have different number of elements"
+    )
   }
   for ((expectedId, expectedData) in expectedStates) {
     val actualData = actualStates[expectedId]

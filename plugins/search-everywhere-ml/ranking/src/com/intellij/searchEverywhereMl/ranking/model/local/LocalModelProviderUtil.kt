@@ -2,7 +2,7 @@ package com.intellij.searchEverywhereMl.ranking.model.local
 
 import com.intellij.internal.ml.DecisionFunction
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.searchEverywhereMl.common.SearchEverywhereTabWithMlRanking
+import com.intellij.searchEverywhereMl.SearchEverywhereTabWithMlRanking
 
 
 internal object LocalRankingModelProviderUtil {

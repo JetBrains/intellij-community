@@ -111,8 +111,7 @@ public interface EditorColors {
   ColorKey PREVIEW_BACKGROUND = ColorKey.createColorKey("PREVIEW_BACKGROUND");
   ColorKey PREVIEW_BORDER_COLOR = ColorKey.createColorKeyWithFallback("PREVIEW_BORDER_COLOR", INDENT_GUIDE_COLOR);
 
-  @NotNull
-  static TextAttributesKey createInjectedLanguageFragmentKey(@Nullable Language language) {
+  static @NotNull TextAttributesKey createInjectedLanguageFragmentKey(@Nullable Language language) {
     Stack<Language> languages = new Stack<>();
     while (language != null && language != Language.ANY) {
       languages.push(language);
@@ -130,8 +129,7 @@ public interface EditorColors {
   }
 
   final class GlobalScheme {
-    @Nullable
-    public static Color getColor(@NotNull ColorKey key) {
+    public static @Nullable Color getColor(@NotNull ColorKey key) {
       return EditorColorsManager.getInstance().getGlobalScheme().getColor(key);
     }
   }

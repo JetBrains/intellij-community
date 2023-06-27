@@ -74,14 +74,13 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.OptionsMessageDialog;
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
-import com.intellij.workspaceModel.storage.EntityChange;
-import com.intellij.workspaceModel.storage.VersionedStorageChange;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleCustomImlDataEntity;
-import kotlin.sequences.SequencesKt;
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
+import com.intellij.platform.workspace.storage.EntityChange;
+import com.intellij.platform.workspace.storage.VersionedStorageChange;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
+import com.intellij.platform.workspace.jps.entities.LibraryEntity;
+import com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntity;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
@@ -1140,7 +1139,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
     private static <T extends WorkspaceEntity> boolean hasAnnotationRootInChanges(@NotNull VersionedStorageChange event,
                                                                                   @NotNull Class<T> entityClass,
                                                                                   @NotNull Predicate<T> hasAnnotationRoot) {
-      for (EntityChange<T> change : SequencesKt.asIterable(event.getChanges(entityClass))) {
+      for (EntityChange<T> change : event.getChanges(entityClass)) {
         T newEntity = change.getNewEntity();
         T oldEntity = change.getOldEntity();
         if (newEntity != null && hasAnnotationRoot.test(newEntity) || oldEntity != null && hasAnnotationRoot.test(oldEntity)) {

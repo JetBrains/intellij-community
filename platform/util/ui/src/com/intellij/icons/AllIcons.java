@@ -714,9 +714,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Linux = load("linux/linux.svg", 1537000687, 2);
   }
 
-  /** 80x80 */ public static final @NotNull Icon Logo_welcomeScreen = load("Logo_welcomeScreen.png", 0, 1);
-  /** 80x80 */ public static final @NotNull Icon Logo_welcomeScreen_CE = load("Logo_welcomeScreen_CE.png", 0, 1);
-
   public static final class Mac {
     /** 55x55 */ public static final @NotNull Icon AppIconOk512 = load("mac/appIconOk512.png", 0, 0);
 
@@ -1182,6 +1179,18 @@ public class AllIcons {
     /** 13x13 */ public static final @NotNull Icon ToolWindowVariableView = load("toolwindows/toolWindowVariableView.svg", -1682998576, 2);
     /** 13x13 */ public static final @NotNull Icon WarningEvents = load("toolwindows/warningEvents.svg", 713048877, 2);
     /** 13x13 */ public static final @NotNull Icon WebToolWindow = load("toolwindows/webToolWindow.svg", -1661468267, 2);
+  }
+
+  public static final class TransferSettings {
+    /** 40x40 */ public static final @NotNull Icon Keymap = load("transferSettings/keymap.svg", 330705864, 0);
+    /** 40x40 */ public static final @NotNull Icon PluginsAndFeatures = load("transferSettings/pluginsAndFeatures.svg", -1408670444, 0);
+    /** 40x40 */ public static final @NotNull Icon RecentProjects = load("transferSettings/recentProjects.svg", 922160179, 0);
+    /** 20x20 */ public static final @NotNull Icon Resharper = load("transferSettings/resharper.svg", -1274033923, 0);
+    /** 40x40 */ public static final @NotNull Icon Settings = load("transferSettings/settings.svg", 675619677, 0);
+    /** 40x40 */ public static final @NotNull Icon VS = load("transferSettings/vs.svg", 831330663, 0);
+    /** 40x40 */ public static final @NotNull Icon Vscode = load("transferSettings/vscode.svg", -450706552, 0);
+    /** 40x40 */ public static final @NotNull Icon Vsmac = load("transferSettings/vsmac.svg", 813593626, 0);
+    /** 40x40 */ public static final @NotNull Icon Xcode = load("transferSettings/xcode.svg", 1180575913, 0);
   }
 
   public static final class Vcs {

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.elements;
 
+import com.intellij.java.workspace.entities.FileCopyPackagingElementEntity;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -11,16 +12,14 @@ import com.intellij.packaging.elements.RenameablePackagingElement;
 import com.intellij.packaging.impl.ui.FileCopyPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
+import com.intellij.platform.backend.workspace.VirtualFileUrls;
+import com.intellij.platform.workspace.storage.EntitySource;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager;
 import com.intellij.util.PathUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.workspaceModel.ide.VirtualFileUrls;
-import com.intellij.workspaceModel.storage.EntitySource;
-import com.intellij.workspaceModel.storage.MutableEntityStorage;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
-import com.intellij.workspaceModel.storage.bridgeEntities.FileCopyPackagingElementEntity;
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager;
 import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -149,10 +148,13 @@ public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElemen
     VirtualFileUrlManager fileUrlManager = VirtualFileUrls.getVirtualFileUrlManager(project);
     VirtualFileUrl fileUrl = fileUrlManager.fromPath(filePath);
     if (renamedOutputFileName != null) {
-      addedEntity = ExtensionsKt.addFileCopyPackagingElementEntity(diff, fileUrl, renamedOutputFileName, source);
+      addedEntity = diff.addEntity(FileCopyPackagingElementEntity.create(fileUrl, source, entityBuilder -> {
+        entityBuilder.setRenamedOutputFileName(renamedOutputFileName);
+        return Unit.INSTANCE;
+      }));
     }
     else {
-      addedEntity = ExtensionsKt.addFileCopyPackagingElementEntity(diff, fileUrl, null, source);
+      addedEntity = diff.addEntity(FileCopyPackagingElementEntity.create(fileUrl, source));
     }
     diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(addedEntity, this);
     return addedEntity;

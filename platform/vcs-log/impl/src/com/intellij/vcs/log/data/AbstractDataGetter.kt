@@ -101,7 +101,7 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails> internal constructo
   @RequiresBackgroundThread
   @Throws(VcsException::class)
   protected open fun doLoadCommitsData(commits: IntSet, consumer: Consumer<in T>) {
-    val hashesGroupedByRoot = commits.mapNotNull { storage.getCommitId(it) }
+    val hashesGroupedByRoot = storage.getCommitIds(commits).values
       .groupBy<CommitId, VirtualFile, @NlsSafe String>({ it.root }) { it.hash.asString() }
 
     for ((root, hashes) in hashesGroupedByRoot) {

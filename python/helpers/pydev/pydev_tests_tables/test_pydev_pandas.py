@@ -4,6 +4,7 @@ Here we test aux methods for pandas tables handling, namely,
 check functions from _pydevd_bundle.tables.pydevd_pandas module.
 """
 
+import sys
 import pytest
 import pandas as pd
 import _pydevd_bundle.tables.pydevd_pandas as pandas_tables_helpers
@@ -24,15 +25,17 @@ def setup_dataframe():
             "B": "foo",
             "C": [None] * rows_number,
             "D": [1 + 20j] * rows_number,
-            "E": [None, "bar", 2., 1 + 10j],
-            "F": [True, False] * (rows_number // 2),
-            "G": pd.Timestamp("20130102"),
-            "H": pd.Series(1, index=list(range(rows_number)),
+            "E": [1 + 20j] * rows_number,
+            "F": [None, "bar", 2., 1 + 10j],
+            "G": [None, "bar", 2., 1 + 10j],
+            "H": [True, False] * (rows_number // 2),
+            "I": pd.Timestamp("20130102"),
+            "J": pd.Series(1, index=list(range(rows_number)),
                            dtype="float32"),
-            "I": pd.Series(range(rows_number),
+            "K": pd.Series(range(rows_number),
                            index=list(range(rows_number)),
                            dtype="int32"),
-            "J": pd.Categorical(["test", "train"] * (rows_number // 2)),
+            "L": pd.Categorical(["test", "train"] * (rows_number // 2)),
         }
     )
     df_html = repr(df.head().to_html(notebook=True, max_cols=max_cols))
@@ -47,6 +50,15 @@ def setup_series_no_names():
     Here we create a fixture for tests that are related to Series without a name.
     """
     return pd.Series([1, 2, 3])
+
+
+@pytest.fixture
+def setup_dataframe_many_columns():
+    """
+    Here we create a fixture for tests that are related to DataFrames.
+    We check that we don't miss columns for big dataframes
+    """
+    return pd.read_csv('test_data/dataframe_many_columns_before.csv')
 
 
 def test_info_command(setup_dataframe):
@@ -146,6 +158,7 @@ def test_convert_to_df_ndarray(setup_dataframe):
         assert converted_series.columns[0] == 0
 
 
+@pytest.mark.skipif(sys.version_info < (3, 0), reason="TODO: investigate pd.Categorical/complex cases")
 def test_get_info_format(setup_dataframe):
     """
     We have a common format for the result for dataframe info command.
@@ -166,18 +179,93 @@ def test_get_info_format(setup_dataframe):
     :param setup_dataframe: fixture/data for the test, dataframe
     """
     _, max_cols, df, _, _ = setup_dataframe
-    actual_get_info_com_result = [pandas_tables_helpers.get_type(df),
-                                  NEXT_VALUE_SEPARATOR,
-                                  pandas_tables_helpers.get_shape(df),
-                                  NEXT_VALUE_SEPARATOR,
-                                  pandas_tables_helpers.get_head(df, max_cols),
-                                  NEXT_VALUE_SEPARATOR,
-                                  pandas_tables_helpers.get_column_types(df)]
-    actual_get_info_com_result = '\n'.join(actual_get_info_com_result)
+    actual = [pandas_tables_helpers.get_type(df),
+              NEXT_VALUE_SEPARATOR,
+              pandas_tables_helpers.get_shape(df),
+              NEXT_VALUE_SEPARATOR,
+              pandas_tables_helpers.get_head(df, max_cols),
+              NEXT_VALUE_SEPARATOR,
+              pandas_tables_helpers.get_column_types(df)]
+    actual = '\n'.join(actual)
 
-    with open('test_data/pandas_getInfo_result.txt', 'r') as in_f:
-        expected_get_info_com_result = in_f.read()
+    read_expected_from_file_and_compare_with_actual(
+        actual=actual,
+        expected_file='test_data/pandas_getInfo_result.txt'
+    )
+
+
+@pytest.mark.skipif(sys.version_info < (3, 0), reason="Different format for Python2")
+def test_describe_many_columns_check_html(setup_dataframe_many_columns):
+    df = setup_dataframe_many_columns
+    actual = pandas_tables_helpers.get_column_desciptions(df, -1, 1000)
+
+    read_expected_from_file_and_compare_with_actual(
+        actual=actual,
+        expected_file='test_data/dataframe_many_columns_describe_after.txt'
+    )
+
+
+@pytest.mark.skipif(sys.version_info < (3, 0), reason="Different format for Python2")
+def test_counts_many_columns_check_html(setup_dataframe_many_columns):
+    df = setup_dataframe_many_columns
+    actual = pandas_tables_helpers.get_value_counts(df, -1, 1000)
+
+    read_expected_from_file_and_compare_with_actual(
+        actual=actual,
+        expected_file='test_data/dataframe_many_columns_counts_after.txt'
+    )
+
+
+def test_describe_shape_numeric_types(setup_dataframe_many_columns):
+    df = setup_dataframe_many_columns
+    describe_df = pandas_tables_helpers.__get_describe_df(df)
+
+    # for dataframes with only numeric types in columns we have 10 statistics
+    assert describe_df.shape[0] == 10
+    # the number of columns should be the same
+    assert describe_df.shape[1] == describe_df.shape[1]
+
+
+def test_counts_shape(setup_dataframe_many_columns):
+    df = setup_dataframe_many_columns
+    counts_df = pandas_tables_helpers.__get_counts_df(df)
+
+    # only one row in counts_df with the number of non-NaN-s values
+    assert counts_df.shape[0] == 1
+    # the number of columns should be the same
+    assert counts_df.shape[1] == df.shape[1]
+
+
+def test_describe_shape_all_types(setup_dataframe):
+    _, _, df, _, _ = setup_dataframe
+    describe_df = pandas_tables_helpers.__get_describe_df(df)
+    # for dataframes with different types in columns we have 13/15 statistics
+    if sys.version_info < (3, 0):
+        # python2 have 2 additional statistics that we don't use: first and last
+        assert describe_df.shape[0] == 15
+    else:
+        assert describe_df.shape[0] == 13
+    # the number of columns should be the same
+    assert describe_df.shape[1] == df.shape[1]
+
+
+def test_get_describe_save_columns(setup_dataframe):
+    _, _, df, _, _ = setup_dataframe
+    describe_df = pandas_tables_helpers.__get_describe_df(df)
+    original_columns, describe_columns = df.columns.tolist(), describe_df.columns.tolist()
+
+    # the number of columns is the same in described and in original
+    assert len(original_columns) == len(describe_columns)
+
+    # compare columns and it's order
+    for expected, actual in zip(original_columns, describe_columns):
+        assert expected == actual
+
+
+def read_expected_from_file_and_compare_with_actual(actual, expected_file):
+    with open(expected_file, 'r') as in_f:
+        expected = in_f.read()
 
     # for a more convenient assertion fails messages here we compare string char by char
-    for act, exp in zip(actual_get_info_com_result, expected_get_info_com_result):
+    for act, exp in zip(actual, expected):
         assert act == exp

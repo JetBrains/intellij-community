@@ -5,7 +5,9 @@ import org.jetbrains.intellij.build.images.generateIconClasses
 import org.jetbrains.intellij.build.images.isImage
 import org.jetbrains.intellij.build.images.shutdownAppScheduledExecutorService
 import org.jetbrains.intellij.build.images.sync.*
+import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.exists
 import kotlin.io.path.name
 
 object DotnetIconSync {
@@ -15,11 +17,11 @@ object DotnetIconSync {
 
   private class SyncPath(val iconsPath: String, val devPath: String)
 
-  private const val riderIconsRelativePath = "Rider/Frontend/rider/icons"
+  private const val RIDER_ICONS_RELATIVE_PATH = "Rider/Frontend/rider/icons"
 
   private val syncPaths = listOf(
-    SyncPath("rider", "$riderIconsRelativePath/resources/rider"),
-    SyncPath("net", "$riderIconsRelativePath/resources/resharper")
+    SyncPath("rider", "$RIDER_ICONS_RELATIVE_PATH/resources/rider"),
+    SyncPath("net", "$RIDER_ICONS_RELATIVE_PATH/resources/resharper")
   )
 
   private val committer by lazy(::triggeredBy)
@@ -53,7 +55,7 @@ object DotnetIconSync {
       transformIconsToIdeaFormat()
       syncPaths.forEach(this::sync)
       generateClasses()
-      RiderIconsJsonGenerator.generate(context.devRepoRoot.resolve(riderIconsRelativePath))
+      RiderIconsJsonGenerator.generate(context.devRepoRoot.resolve(RIDER_ICONS_RELATIVE_PATH))
       if (stageChanges().isEmpty()) {
         println("Nothing to commit")
       }
@@ -96,9 +98,20 @@ object DotnetIconSync {
     }
   }
 
+  private fun findProjectHomePath(devRepoDir: Path): String {
+    var currentPath = devRepoDir
+    while (currentPath.parent != null) {
+      if (currentPath.resolve("Frontend").resolve(".idea").exists()) {
+        return currentPath.resolve("Frontend").toAbsolutePath().toString()
+      }
+      currentPath = currentPath.parent
+    }
+    error("can't find project home path for devRepoDir: $devRepoDir")
+  }
+
   private fun generateClasses() {
     step("Generating classes..")
-    generateIconClasses(config = DotnetIconClasses(context.devRepoDir.toAbsolutePath().toString()))
+    generateIconClasses(config = DotnetIconClasses(findProjectHomePath(context.devRepoDir)))
   }
 
   private fun stageChanges(): Collection<String> {

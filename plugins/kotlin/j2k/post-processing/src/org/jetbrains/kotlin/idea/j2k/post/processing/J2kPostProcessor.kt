@@ -183,17 +183,15 @@ private val removeRedundantElementsProcessingGroup =
             RemoveJavaStreamsCollectCallTypeArgumentsProcessing(),
             ExplicitThisInspectionBasedProcessing(),
             RemoveOpenModifierOnTopLevelDeclarationsProcessing(),
-            inspectionBasedProcessing(KotlinInspectionFacade.instance.removeEmptyClassBody)
         )
     )
 
 private val inspectionLikePostProcessingGroup =
     InspectionLikeProcessingGroup(
-        RemoveExplicitOpenInInterfaceProcessing(),
         RemoveRedundantOverrideVisibilityProcessing(),
         MoveLambdaOutsideParenthesesProcessing(),
         intentionBasedProcessing(ConvertToStringTemplateIntention(), writeActionNeeded = false) {
-            ConvertToStringTemplateIntention.shouldSuggestToConvert(it)
+            ConvertToStringTemplateIntention.Holder.shouldSuggestToConvert(it)
         },
         intentionBasedProcessing(UsePropertyAccessSyntaxIntention(), writeActionNeeded = false),
         UninitializedVariableReferenceFromInitializerToThisReferenceProcessing(),
@@ -202,8 +200,6 @@ private val inspectionLikePostProcessingGroup =
         RemoveRedundantCastToNullableProcessing(),
         inspectionBasedProcessing(ReplacePutWithAssignmentInspection()),
         ReplaceGetterBodyWithSingleReturnStatementWithExpressionBody(),
-        inspectionBasedProcessing(UnnecessaryVariableInspection(), writeActionNeeded = false),
-        RedundantExplicitTypeInspectionBasedProcessing(),
         JavaObjectEqualsToEqOperatorProcessing(),
         RemoveExplicitPropertyTypeProcessing(),
         RemoveRedundantNullabilityProcessing(),
@@ -267,7 +263,6 @@ private val processings: List<NamedPostProcessingGroup> = listOf(
         listOf(
             InspectionLikeProcessingGroup(VarToValProcessing()),
             ConvertGettersAndSettersToPropertyProcessing(),
-            InspectionLikeProcessingGroup(MoveGetterAndSetterAnnotationsToPropertyProcessing()),
             InspectionLikeProcessingGroup(
                 RemoveExplicitGetterInspectionBasedProcessing(),
                 RemoveExplicitSetterInspectionBasedProcessing()
@@ -294,7 +289,7 @@ private fun shouldConvertToRawString(element: KtBinaryExpression): Boolean {
     fun KtStringTemplateEntry.isNewline(): Boolean =
         this is KtEscapeStringTemplateEntry && unescapedValue == "\n"
 
-    val middleNewlinesExist = ConvertToStringTemplateIntention.buildReplacement(element)
+    val middleNewlinesExist = ConvertToStringTemplateIntention.Holder.buildReplacement(element)
         .entries
         .dropLastWhile { it.isNewline() }
         .any { it.isNewline() }

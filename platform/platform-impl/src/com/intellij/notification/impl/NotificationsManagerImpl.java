@@ -33,6 +33,9 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeBalloonLayoutImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
+import com.intellij.platform.diagnostic.telemetry.IJTracer;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.GradientViewport;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -47,6 +50,7 @@ import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
+import io.opentelemetry.api.trace.Span;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -80,6 +84,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   private static final Logger LOG = Logger.getInstance(NotificationsManagerImpl.class);
 
   private @Nullable List<Pair<Notification, @Nullable Project>> myEarlyNotifications = new ArrayList<>();
+  private final IJTracer myTracer = TelemetryManager.getInstance().getTracer(NotificationScopeKt.NotificationScope);;
 
   public NotificationsManagerImpl() {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
@@ -129,19 +134,21 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       configuration.register(notification.getGroupId(), NotificationDisplayType.BALLOON);
     }
 
-    if (!settings.isShouldLog() && (settings.getDisplayType() == NotificationDisplayType.NONE || !configuration.SHOW_BALLOONS)) {
+    if (!settings.isShouldLog() && (settings.getDisplayType() == NotificationDisplayType.NONE ||
+                                    notification.isShowingPopupSuppressed() ||
+                                    !configuration.SHOW_BALLOONS)) {
       notification.expire();
     }
 
     if (configuration.SHOW_BALLOONS) {
       if (project == null) {
         ModalityUiUtil.invokeLaterIfNeeded(ModalityState.any(), ApplicationManager.getApplication().getDisposed(),
-                                           () -> showNotification(notification, null)
+                                           () -> showNotificationWithSpan(notification, null)
         );
       }
       else if (!project.isDisposed()) {
         StartupManager.getInstance(project).runAfterOpened(() -> {
-          ModalityUiUtil.invokeLaterIfNeeded(ModalityState.any(), project.getDisposed(), () -> showNotification(notification, project));
+          ModalityUiUtil.invokeLaterIfNeeded(ModalityState.any(), project.getDisposed(), () -> showNotificationWithSpan(notification, project));
         });
       }
     }
@@ -154,7 +161,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       List<Pair<Notification, @Nullable Project>> copy = myEarlyNotifications;
       myEarlyNotifications = null;
       if (LOG.isDebugEnabled()) LOG.debug("dispatching early notifications: " + copy);
-      copy.forEach(early -> showNotification(early.first, early.second));
+      copy.forEach(early -> showNotificationWithSpan(early.first, early.second));
     }
   }
 
@@ -178,6 +185,11 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     if (type == NotificationDisplayType.TOOL_WINDOW &&
         (toolWindowId == null || project == null || !ToolWindowManager.getInstance(project).canShowNotification(toolWindowId))) {
       type = NotificationDisplayType.BALLOON;
+    }
+
+    if (notification.isShowingPopupSuppressed()) {
+      type = NotificationDisplayType.NONE;
+      if (LOG.isDebugEnabled()) LOG.debug("showing popup is suppressed for the notification");
     }
 
     switch (type) {
@@ -276,6 +288,17 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         NotificationCollector.getInstance().logToolWindowNotificationShown(project, notification);
       }
     }
+  }
+
+  @RequiresEdt
+  private void showNotificationWithSpan(Notification notification, @Nullable Project project) {
+    TraceUtil.runWithSpanThrows(myTracer, "show notification", (Span span) -> {
+      if(project != null) {
+        span.setAttribute("project", project.toString());
+      }
+      span.setAttribute("notification", notification.toString());
+      showNotification(notification, project);
+    });
   }
 
   private static @Nullable Balloon notifyByBalloon(Notification notification,

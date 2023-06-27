@@ -6,8 +6,8 @@ package org.jetbrains.intellij.build.impl
 import com.fasterxml.jackson.jr.ob.JSON
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
-import com.intellij.platform.diagnostic.telemetry.impl.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.Compressor
 import com.jetbrains.plugin.blockmap.core.BlockMap
@@ -44,6 +44,7 @@ import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.util.JpsPathUtil
+import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.ZonedDateTime
@@ -167,7 +168,7 @@ internal suspend fun buildDistribution(state: DistributionBuilderState,
                                     buildPaths = context.paths)
         val contentJson = context.paths.artifactDir.resolve("content.json")
         Files.newOutputStream(contentJson).use {
-          buildJarContentReport(entries = entries, out = it, buildPaths = context.paths)
+          buildJarContentReport(entries = entries, out = it, buildPaths = context.paths, context = context)
         }
         context.notifyArtifactBuilt(contentMappingJson)
         context.notifyArtifactBuilt(contentJson)
@@ -807,7 +808,7 @@ fun satisfiesBundlingRequirements(plugin: PluginLayout,
     return false
   }
 
-  if (bundlingRestrictions.includeInNightlyOnly && context.buildNumber.count { it == '.' } > 1) {
+  if (bundlingRestrictions.includeInNightlyOnly && !context.options.isNightlyBuild) {
     return false
   }
 
@@ -1135,7 +1136,7 @@ private fun buildBlockMap(file: Path, json: JSON) {
   val fileParent = file.parent
   val fileName = file.fileName.toString()
   writeNewZip(fileParent.resolve("$fileName.blockmap.zip"), compress = true) {
-    it.compressedData("blockmap.json", bytes)
+    it.compressedData("blockmap.json", ByteBuffer.wrap(bytes))
   }
 
   val hashFile = fileParent.resolve("$fileName.hash.json")

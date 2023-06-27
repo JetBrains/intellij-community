@@ -17,7 +17,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ModalTaskOwner
-import com.intellij.openapi.progress.runBlockingModal
+import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction
@@ -207,7 +207,7 @@ open class ImportModuleAction : AnAction(), NewProjectOrModuleAction {
       }
 
       val openProcessor = builder.getProjectOpenProcessor()
-      return runBlockingModal(ModalTaskOwner.guess(), "") {
+      return runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
         // openProjectAsync must be implemented
         openProcessor.openProjectAsync(virtualFile = file, projectToClose = null, forceOpenInNewFrame = false)!!
       }

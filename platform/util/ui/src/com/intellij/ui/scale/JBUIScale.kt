@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("LiftReturnOrAssignment")
 
 package com.intellij.ui.scale
 
+import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.runActivity
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.SystemInfo
@@ -12,6 +13,7 @@ import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.JBScalableIcon
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import java.awt.*
 import java.awt.geom.AffineTransform
 import java.awt.geom.Point2D
@@ -45,19 +47,20 @@ object JBUIScale {
 
   @Internal
   fun preload(uiDefaults: Supplier<UIDefaults?>) {
-    if (!systemScaleFactor.isInitialized()) {
-      runActivity("system scale factor computation") {
-        computeSystemScaleFactor(uiDefaults).let {
-          systemScaleFactor.value = it
-        }
-      }
+    if (systemScaleFactor.isInitialized()) {
+      thisLogger().error("Must be not computed before that call")
+    }
+
+    runActivity("system scale factor computation") {
+      systemScaleFactor.value = computeSystemScaleFactor(uiDefaults)
     }
 
     runActivity("user scale factor computation") {
+      userScaleFactor.drop()
       userScaleFactor.value
     }
 
-    getSystemFontData(uiDefaults)
+    systemFontData.value = computeSystemFontData(uiDefaults)
   }
 
   private val systemScaleFactor: SynchronizedClearableLazy<Float> = SynchronizedClearableLazy {
@@ -81,14 +84,16 @@ object JBUIScale {
   }
 
   private var systemFontData = SynchronizedClearableLazy<Pair<String?, Int>> {
-    runActivity("system font data computation") {
-      computeSystemFontData(null)
-    }
+    computeSystemFontData(uiDefaults = null)
   }
 
   private fun computeSystemFontData(uiDefaults: Supplier<UIDefaults?>?): Pair<String, Int> {
     if (GraphicsEnvironment.isHeadless()) {
       return Pair("Dialog", 12)
+    }
+
+    if (uiDefaults == null) {
+      thisLogger().error("Must be precomputed")
     }
 
     // with JB Linux JDK, the label font comes properly scaled based on Xft.dpi settings.
@@ -113,7 +118,7 @@ object JBUIScale {
     if (SystemInfoRt.isLinux) {
       val value = Toolkit.getDefaultToolkit().getDesktopProperty("gnome.Xft/DPI")
       if (isScaleVerbose) {
-        log.info(String.format("gnome.Xft/DPI: %s", value))
+        log.info("gnome.Xft/DPI: $value")
       }
       if (value is Int) { // defined by JB JDK when the resource is available in the system
         // If the property is defined, then:
@@ -142,13 +147,13 @@ object JBUIScale {
       if (winFont != null) {
         font = winFont // comes scaled
         if (isScaleVerbose) {
-          log.info(String.format("Windows sys font: %s, %d", winFont.fontName, winFont.size))
+          log.info("Windows sys font: ${winFont.fontName}, ${winFont.size}")
         }
       }
     }
     val result = Pair(font.name, font.size)
     if (isScaleVerbose) {
-      log.info(String.format("systemFontData: %s, %d", result.first, result.second))
+      log.info("systemFontData: ${result.first}, ${result.second}")
     }
     return result
   }
@@ -172,9 +177,15 @@ object JBUIScale {
     }
   }
 
-  private fun computeSystemScaleFactor(uiDefaults: Supplier<UIDefaults?>?): Float {
+  @VisibleForTesting
+  fun computeSystemScaleFactor(uiDefaults: Supplier<UIDefaults?>?): Float {
     if (!java.lang.Boolean.parseBoolean(System.getProperty("hidpi", "true"))) {
       return 1f
+    }
+
+    // we have init tests in a non-headless mode, but we cannot use here ApplicationManager
+    if (uiDefaults == null && !LoadingState.APP_STARTED.isOccurred && !GraphicsEnvironment.isHeadless()) {
+      thisLogger().error("Must be precomputed")
     }
 
     if (JreHiDpiUtil.isJreHiDPIEnabled()) {
@@ -382,6 +393,9 @@ object JBUIScale {
     }
     return computeSystemFontData(uiDefaults).also { systemFontData.value = it }
   }
+
+  @JvmStatic
+  fun getSystemFontDataIfInitialized(): Pair<String?, Int>? = systemFontData.valueIfInitialized
 
   /**
    * Returns the system scale factor, corresponding to the graphics.

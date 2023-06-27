@@ -113,36 +113,9 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
 
   override fun loadBundledScheme(resourceName: String, requestor: Any?, pluginDescriptor: PluginDescriptor?): T? {
     try {
-      val bytes: ByteArray?
-      if (pluginDescriptor == null) {
-        when (requestor) {
-          is TempUIThemeBasedLookAndFeelInfo -> {
-            bytes = Files.readAllBytes(Path.of(resourceName))
-          }
-          is UITheme -> {
-            bytes = ResourceUtil.getResourceAsBytes(resourceName.removePrefix("/"), requestor.providerClassLoader)
-            if (bytes == null) {
-              LOG.error("Cannot find $resourceName in ${requestor.providerClassLoader}")
-              return null
-            }
-          }
-          else -> {
-            bytes = ResourceUtil.getResourceAsBytes(resourceName.removePrefix("/"),
-                                                    (if (requestor is ClassLoader) requestor else requestor!!.javaClass.classLoader))
-            if (bytes == null) {
-              LOG.error("Cannot read scheme from $resourceName")
-              return null
-            }
-          }
-        }
-      }
-      else {
-        val classLoader = pluginDescriptor.classLoader
-        bytes = ResourceUtil.getResourceAsBytes(resourceName.removePrefix("/"), classLoader)
-        if (bytes == null) {
-          LOG.error("Cannot found scheme $resourceName in $classLoader")
-          return null
-        }
+      val bytes = loadBytes(pluginDescriptor, requestor, resourceName)
+      if (bytes == null) {
+        return null
       }
 
       lazyPreloadScheme(bytes, isOldSchemeNaming) { name, parser ->
@@ -190,6 +163,43 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
       LOG.error("Cannot read scheme from $resourceName", e)
     }
     return null
+  }
+
+  private fun loadBytes(pluginDescriptor: PluginDescriptor?,
+                        requestor: Any?,
+                        resourceName: String): ByteArray? {
+    val bytes: ByteArray?
+    if (pluginDescriptor == null) {
+      when (requestor) {
+        is TempUIThemeBasedLookAndFeelInfo -> {
+          bytes = Files.readAllBytes(Path.of(resourceName))
+        }
+        is UITheme -> {
+          bytes = ResourceUtil.getResourceAsBytes(resourceName.removePrefix("/"), requestor.providerClassLoader)
+          if (bytes == null) {
+            LOG.error("Cannot find $resourceName in ${requestor.providerClassLoader}")
+            return null
+          }
+        }
+        else -> {
+          bytes = ResourceUtil.getResourceAsBytes(resourceName.removePrefix("/"),
+                                                  (if (requestor is ClassLoader) requestor else requestor!!.javaClass.classLoader))
+          if (bytes == null) {
+            LOG.error("Cannot read scheme from $resourceName")
+            return null
+          }
+        }
+      }
+    }
+    else {
+      val classLoader = pluginDescriptor.classLoader
+      bytes = ResourceUtil.getResourceAsBytes(resourceName.removePrefix("/"), classLoader)
+      if (bytes == null) {
+        LOG.error("Cannot found scheme $resourceName in $classLoader")
+        return null
+      }
+    }
+    return bytes
   }
 
   internal fun createSchemeLoader(isDuringLoad: Boolean = false): SchemeLoader<T, MUTABLE_SCHEME> {

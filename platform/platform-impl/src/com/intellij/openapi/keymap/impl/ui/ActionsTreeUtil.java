@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.diagnostic.PluginException;
@@ -13,6 +13,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.QuickList;
+import com.intellij.openapi.actionSystem.impl.ActionGroupStub;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -49,8 +50,7 @@ import static com.intellij.codeInsight.intention.IntentionShortcuts.WRAPPER_PREF
 public final class ActionsTreeUtil {
   private static final Logger LOG = Logger.getInstance(ActionsTreeUtil.class);
 
-  @NonNls
-  private static final String EDITOR_PREFIX = "Editor";
+  private static final @NonNls String EDITOR_PREFIX = "Editor";
 
   private ActionsTreeUtil() {
   }
@@ -91,7 +91,7 @@ public final class ActionsTreeUtil {
       .unique().toList();
     for (PluginId pluginId : pluginsIds) {
       if (PluginManagerCore.CORE_ID.equals(pluginId)
-          || KeymapExtension.EXTENSION_POINT_NAME.getExtensionList().stream().anyMatch(e -> e.skipPluginGroup(pluginId))) {
+          || ContainerUtil.exists(KeymapExtension.EXTENSION_POINT_NAME.getExtensionList(), e -> e.skipPluginGroup(pluginId))) {
         continue;
       }
       String[] pluginActions = actionManager.getPluginActions(pluginId);
@@ -108,10 +108,9 @@ public final class ActionsTreeUtil {
     return pluginsGroup;
   }
 
-  @NotNull
-  private static Group createPluginActionsGroup(@NlsActions.ActionText String name,
-                                                String[] pluginActions,
-                                                Condition<? super AnAction> filtered) {
+  private static @NotNull Group createPluginActionsGroup(@NlsActions.ActionText String name,
+                                                         String[] pluginActions,
+                                                         Condition<? super AnAction> filtered) {
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     Group pluginGroup = new Group(name, null, null);
     Arrays.sort(pluginActions, Comparator.comparing(ActionsTreeUtil::getTextToCompare));
@@ -135,7 +134,7 @@ public final class ActionsTreeUtil {
     return group;
   }
 
-  private static @NotNull Condition<AnAction> wrapFilter(@Nullable final Condition<? super AnAction> filter,
+  private static @NotNull Condition<AnAction> wrapFilter(final @Nullable Condition<? super AnAction> filter,
                                                          final Keymap keymap,
                                                          final ActionManager actionManager) {
     final ActionShortcutRestrictions shortcutRestrictions = ActionShortcutRestrictions.getInstance();
@@ -187,14 +186,13 @@ public final class ActionsTreeUtil {
     return createGroup(actionGroup, getName(actionGroup), actionGroup.getTemplatePresentation().getIcon(), null, forceAsPopup, filtered);
   }
 
-  @NlsActions.ActionText
-  public static String getName(AnAction action) {
+  public static @NlsActions.ActionText String getName(AnAction action) {
     final String name = action.getTemplateText();
     if (name != null && !name.isEmpty()) {
       return name;
     }
     else {
-      @NlsSafe final String id = ActionManager.getInstance().getId(action);
+      final @NlsSafe String id = ActionManager.getInstance().getId(action);
       if (id != null) {
         return id;
       }
@@ -267,11 +265,10 @@ public final class ActionsTreeUtil {
     return group;
   }
 
-  @NotNull
-  public static Group createCorrectedGroup(@NotNull ActionGroup actionGroup,
-                                           @NotNull @NlsActions.ActionText String groupName,
-                                           @NotNull List<? super String> path,
-                                           @NotNull List<? extends ActionUrl> actionUrls) {
+  public static @NotNull Group createCorrectedGroup(@NotNull ActionGroup actionGroup,
+                                                    @NotNull @NlsActions.ActionText String groupName,
+                                                    @NotNull List<? super String> path,
+                                                    @NotNull List<ActionUrl> actionUrls) {
     path.add(groupName);
 
     ActionManager actionManager = ActionManager.getInstance();
@@ -299,7 +296,7 @@ public final class ActionsTreeUtil {
             AnAction anAction = children.get(actionUrl.getAbsolutePosition());
             if (anAction.getTemplateText() == null
                 ? (componentAction.getTemplateText() != null &&
-                   componentAction.getTemplateText().length() > 0)
+                   !componentAction.getTemplateText().isEmpty())
                 : !anAction.getTemplateText().equals(componentAction.getTemplateText())) {
               continue;
             }
@@ -423,8 +420,7 @@ public final class ActionsTreeUtil {
     return group;
   }
 
-  @NotNull
-  private static Group createOtherGroup(@Nullable Condition<? super AnAction> filtered, Group mainGroup, @Nullable Keymap keymap) {
+  private static @NotNull Group createOtherGroup(@Nullable Condition<? super AnAction> filtered, Group mainGroup, @Nullable Keymap keymap) {
     mainGroup.initIds();
     Set<String> result = new HashSet<>();
 
@@ -654,7 +650,7 @@ public final class ActionsTreeUtil {
                                                      final Shortcut shortcut,
                                                      final String filter,
                                                      final boolean force) {
-    return filter != null && filter.length() > 0 ? isActionFiltered(filter, force) :
+    return filter != null && !filter.isEmpty() ? isActionFiltered(filter, force) :
            shortcut != null ? isActionFiltered(actionManager, keymap, shortcut) : null;
   }
 
@@ -728,7 +724,7 @@ public final class ActionsTreeUtil {
   }
 
   private static AnAction @NotNull [] getActions(@NotNull ActionGroup group, @NotNull ActionManager actionManager) {
-    // ActionManagerImpl#preloadActions does not preload action groups, e.g. File | New, so unstub it
+    // ActionManagerImpl#preloadActions does not preload action groups, e.g., File | New, so unstub it
     ActionGroup adjusted = group;
     if (group instanceof ActionGroupStub) {
       String id = ((ActionGroupStub)group).getId();
@@ -745,8 +741,7 @@ public final class ActionsTreeUtil {
            : adjusted.getChildren(null);
   }
 
-  @NotNull
-  private static AnAction tryUnstubAction(@NotNull AnAction action) {
+  private static @NotNull AnAction tryUnstubAction(@NotNull AnAction action) {
     if (action instanceof ActionStub) {
       AnAction newAction = ActionManager.getInstance().getActionOrStub(((ActionStub)action).getId());
       if (newAction != null) return newAction;
@@ -754,74 +749,60 @@ public final class ActionsTreeUtil {
     return action;
   }
 
-  @Nls
-  public static String getMainMenuTitle() {
+  public static @Nls String getMainMenuTitle() {
     return KeyMapBundle.message("main.menu.action.title");
   }
 
-  @Nls
-  public static String getMainToolbar() {
+  public static @Nls String getMainToolbar() {
     return KeyMapBundle.message("main.toolbar.title");
   }
 
-  @Nls
-  public static String getMainToolbarLeft() {
+  public static @Nls String getMainToolbarLeft() {
     return ActionsBundle.message("group.MainToolbarLeft.text");
   }
 
-  @Nls
-  public static String getMainToolbarCenter() {
+  public static @Nls String getMainToolbarCenter() {
     return ActionsBundle.message("group.MainToolbarCenter.text");
   }
 
-  @Nls
-  public static String getMainToolbarRight() {
+  public static @Nls String getMainToolbarRight() {
     return ActionsBundle.message("group.MainToolbarRight.text");
   }
 
-  @Nls
-  public static String getExperimentalToolbar() {
+  public static @Nls String getExperimentalToolbar() {
     return KeyMapBundle.message("experimental.toolbar.title");
   }
 
-  @Nls
-  public static String getExperimentalToolbarXamarin() {
+  public static @Nls String getExperimentalToolbarXamarin() {
     return KeyMapBundle.message("experimental.toolbar.xamarin.title");
   }
 
-  @Nls
-  public static String getEditorPopup() {
+  public static @Nls String getEditorPopup() {
     return KeyMapBundle.message("editor.popup.menu.title");
   }
 
-  @Nls
-  public static String getEditorGutterPopupMenu() {
+  public static @Nls String getEditorGutterPopupMenu() {
     return KeyMapBundle.message("editor.gutter.popup.menu");
   }
 
-  @Nls
-  public static String getScopeViewPopupMenu() {
+  public static @Nls String getScopeViewPopupMenu() {
     return KeyMapBundle.message("scope.view.popup.menu");
   }
 
-  @Nls
-  public static String getNavigationBarPopupMenu() {
+  public static @Nls String getNavigationBarPopupMenu() {
     return KeyMapBundle.message("navigation.bar.popup.menu");
   }
 
-  @Nls
-  public static String getNavigationBarToolbar() {
+  public static @Nls String getNavigationBarToolbar() {
     return KeyMapBundle.message("navigation.bar.toolbar");
   }
 
-  @Nls
-  public static String getEditorTabPopup() {
+  public static @Nls String getEditorTabPopup() {
     return KeyMapBundle.message("editor.tab.popup.menu.title");
   }
 
 
-  @Nls
-  public static String getProjectViewPopup() {
+  public static @Nls String getProjectViewPopup() {
     return KeyMapBundle.message("project.view.popup.menu.title");
   }
 }

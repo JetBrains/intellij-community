@@ -7,8 +7,9 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
@@ -62,9 +63,20 @@ public interface ModCommandAction extends CommonIntentionAction {
   /**
    * @return this action adapted to {@link IntentionAction} interface
    */
+  @Override
   @Contract(pure = true)
   default @NotNull IntentionAction asIntention() {
-    return ApplicationManager.getApplication().getService(ModCommandService.class).wrap(this);
+    return ModCommandService.getInstance().wrap(this);
+  }
+
+  /**
+   * @return this action adapted to {@link LocalQuickFix} interface. The adapter is not perfect. In particular,
+   * its {@link LocalQuickFix#getName()} simply returns the result of {@link #getFamilyName()}. If the client
+   * of the quick-fix is ModCommand-aware, it can use {@link ModCommandService#unwrap(LocalQuickFix)} to get
+   * this ModCommandAction back.
+   */
+  default @NotNull LocalQuickFix asQuickFix() {
+    return ModCommandService.getInstance().wrapToQuickFix(this);
   }
 
   /**
@@ -73,7 +85,7 @@ public interface ModCommandAction extends CommonIntentionAction {
    */
   @Contract(pure = true)
   static @Nullable ModCommandAction unwrap(@NotNull IntentionAction action) {
-    return ApplicationManager.getApplication().getService(ModCommandService.class).unwrap(action);
+    return ModCommandService.getInstance().unwrap(action);
   }
 
   /**
@@ -83,14 +95,21 @@ public interface ModCommandAction extends CommonIntentionAction {
    * @param file current file
    * @param offset caret offset within the file
    * @param selection selection
+   * @param element context PsiElement
    */
-  record ActionContext(@NotNull Project project, @NotNull PsiFile file, int offset, @NotNull TextRange selection) {
+  record ActionContext(
+    @NotNull Project project,
+    @NotNull PsiFile file,
+    int offset,
+    @NotNull TextRange selection,
+    @Nullable PsiElement element
+  ) {
     /**
      * @param file file copy
      * @return new context, which is bound to the file copy, rather than the original file
      */
     public @NotNull ActionContext withFile(@NotNull PsiFile file) {
-      return new ActionContext(project, file, offset, selection);
+      return new ActionContext(project, file, offset, selection, element);
     }
 
     /**
@@ -101,17 +120,46 @@ public interface ModCommandAction extends CommonIntentionAction {
     }
 
     /**
+     * @return a context leaf element left to caret, if available
+     */
+    public @Nullable PsiElement findLeafOnTheLeft() {
+      return offset == 0 ? null : file.findElementAt(offset - 1);
+    }
+
+    public ActionContext withElement(@NotNull PsiElement element) {
+      return new ActionContext(project, file, offset, selection, element);
+    }
+
+    /**
      * @param editor editor the action is invoked in
      * @param file file the action is invoked on
      * @return ActionContext
      */
-    public static @NotNull ModCommandAction.ActionContext from(@Nullable Editor editor, @NotNull PsiFile file) {
+    public static @NotNull ActionContext from(@Nullable Editor editor, @NotNull PsiFile file) {
       if (editor == null) {
-        return new ActionContext(file.getProject(), file, 0, TextRange.from(0, 0));
+        return new ActionContext(file.getProject(), file, 0, TextRange.from(0, 0), null);
       }
       SelectionModel model = editor.getSelectionModel();
       return new ActionContext(file.getProject(), file, editor.getCaretModel().getOffset(),
-                                                TextRange.create(model.getSelectionStart(), model.getSelectionEnd()));
+                                                TextRange.create(model.getSelectionStart(), model.getSelectionEnd()), null);
+    }
+
+    /**
+     * @param descriptor problem descriptor to create an ActionContext from
+     * @return ActionContext. The caret position is set to the beginning of highlighting, 
+     * and selection is set to the highlighting range. 
+     */
+    public static @NotNull ActionContext from(@NotNull ProblemDescriptor descriptor) {
+      PsiElement startElement = descriptor.getStartElement();
+      PsiFile file = startElement.getContainingFile();
+      PsiElement psiElement = descriptor.getPsiElement();
+      TextRange range = descriptor.getTextRangeInElement();
+      if (range != null) {
+        range = range.shiftRight(psiElement.getTextRange().getStartOffset());
+      } else {
+        range = psiElement.getTextRange();
+      }
+      return new ActionContext(file.getProject(), file, range.getStartOffset(), range, startElement);
     }
   }
 

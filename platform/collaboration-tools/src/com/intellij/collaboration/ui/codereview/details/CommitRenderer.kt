@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.details
 
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.ui.popup.util.RoundedCellRenderer
@@ -16,10 +17,15 @@ import javax.swing.JLabel
 import javax.swing.JList
 import javax.swing.ListCellRenderer
 
-class CommitRenderer<T> private constructor(private val presenter: (T?) -> SelectableWrapper<CommitPresenter>) : ListCellRenderer<T> {
+class CommitRenderer<T> private constructor(
+  private val commitsCount: Int,
+  private val presenter: (T?) -> SelectableWrapper<CommitPresentation?>
+) : ListCellRenderer<T> {
+
   private val allCommitsMessage: JLabel = JLabel().apply {
     border = JBUI.Borders.empty(ALL_COMMITS_TOP_BOTTOM, LEFT_RIGHT_GAP)
     iconTextGap = JBUIScale.scale(ICON_TEXT_OFFSET)
+    text = CollaborationToolsBundle.message("review.details.commits.popup.all", commitsCount)
   }
 
   private val commitMessage: JLabel = JLabel().apply {
@@ -38,7 +44,7 @@ class CommitRenderer<T> private constructor(private val presenter: (T?) -> Selec
 
   private val commitPanel: BorderLayoutPanel = BorderLayoutPanel()
 
-  override fun getListCellRendererComponent(list: JList<out T>,
+  override fun getListCellRendererComponent(list: JList<out T?>,
                                             value: T?,
                                             index: Int,
                                             cellSelected: Boolean,
@@ -52,17 +58,14 @@ class CommitRenderer<T> private constructor(private val presenter: (T?) -> Selec
     allCommitsMessage.icon = if (presentation.isSelected) AllIcons.Actions.Checked_selected else emptyIcon
     authorAndDate.icon = emptyIcon
 
-    when (commit) {
-      is CommitPresenter.SingleCommit -> {
-        commitMessage.text = commit.title
-        authorAndDate.text = "${commit.author}, ${DateFormatUtil.formatPrettyDateTime(commit.committedDate)}"
-        textPanel.addToCenter(commitMessage).addToBottom(authorAndDate)
-        commitPanel.addToCenter(textPanel)
-      }
-      is CommitPresenter.AllCommits -> {
-        allCommitsMessage.text = commit.title
-        commitPanel.addToCenter(allCommitsMessage)
-      }
+    if (commit == null) {
+      commitPanel.addToCenter(allCommitsMessage)
+    }
+    else {
+      commitMessage.text = commit.title
+      authorAndDate.text = "${commit.author}, ${DateFormatUtil.formatPrettyDateTime(commit.committedDate)}"
+      textPanel.addToCenter(commitMessage).addToBottom(authorAndDate)
+      commitPanel.addToCenter(textPanel)
     }
 
     return commitPanel.apply {
@@ -87,27 +90,21 @@ class CommitRenderer<T> private constructor(private val presenter: (T?) -> Selec
     private val emptyIcon: EmptyIcon = JBUIScale.scaleIcon(EmptyIcon.create(AllIcons.Actions.Checked_selected))
 
     @JvmStatic
-    fun <T> createCommitRenderer(presenter: (T?) -> SelectableWrapper<CommitPresenter>): ListCellRenderer<T> {
-      var commitRenderer: ListCellRenderer<T> = CommitRenderer(presenter)
+    fun <T> createCommitRenderer(commitsCount: Int, presenter: (T?) -> SelectableWrapper<CommitPresentation?>): ListCellRenderer<T> {
+      var commitRenderer: ListCellRenderer<T> = CommitRenderer(commitsCount, presenter)
       if (ExperimentalUI.isNewUI()) {
         commitRenderer = RoundedCellRenderer(commitRenderer, false)
       }
       return GroupedRenderer(commitRenderer, hasSeparatorBelow = { value, _ ->
-        presenter(value).value is CommitPresenter.AllCommits
+        presenter(value).value == null
       })
     }
   }
 }
 
-sealed interface CommitPresenter {
-  class SingleCommit(
-    val title: @NlsSafe String,
-    val description: @NlsSafe String,
-    val author: @NlsSafe String,
-    val committedDate: Date
-  ) : CommitPresenter
-
-  class AllCommits(
-    val title: @NlsSafe String
-  ) : CommitPresenter
-}
+data class CommitPresentation(
+  val title: @NlsSafe String,
+  val description: @NlsSafe String,
+  val author: @NlsSafe String,
+  val committedDate: Date
+)

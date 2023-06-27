@@ -48,6 +48,7 @@ abstract class AbstractGradleConfigureProjectByChangingFileTest :
         file: PsiFile,
         configurator: KotlinWithGradleConfigurator,
         version: IdeKotlinVersion,
+        jvmTarget: String,
         collector: NotificationMessageCollector
     ) {
         if (file !is GroovyFile && file !is KtFile) {
@@ -55,8 +56,8 @@ abstract class AbstractGradleConfigureProjectByChangingFileTest :
             return
         }
 
-        configurator.configureModule(module, file, true, version, collector, ArrayList())
-        configurator.configureModule(module, file, false, version, collector, ArrayList())
+        configurator.configureModule(module, file, true, version, jvmTarget, collector, ArrayList())
+        configurator.configureModule(module, file, false, version, jvmTarget, collector, ArrayList())
     }
 
     override fun getProjectJDK(): Sdk {

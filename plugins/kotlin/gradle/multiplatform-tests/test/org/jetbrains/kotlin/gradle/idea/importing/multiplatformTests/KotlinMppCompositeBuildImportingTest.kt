@@ -32,7 +32,7 @@ class KotlinMppCompositeBuildImportingTest : AbstractKotlinMppGradleImportingTes
     }
 
     @Test
-    @PluginTargetVersions(pluginVersion = "1.9.20-dev-2358+") // See: KTIJ-25679
+    @PluginTargetVersions(pluginVersion = "1.8.20-dev-3309+", gradleVersion = "7.5.1+") // Indirectly limit to AGP 7.4.1+, see: KTIJ-25679
     fun testJvmAndAndroid() {
         doTest {
             onlyCheckers(OrderEntriesChecker)

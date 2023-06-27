@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -34,7 +35,7 @@ public final class ActionPanel extends NonOpaquePanel {
     myInfo = tabInfo;
     ActionGroup group = tabInfo.getTabLabelActions() != null ? tabInfo.getTabLabelActions() : new DefaultActionGroup();
     AnAction[] children = group.getChildren(null);
-    if(!UISettings.getShadowInstance().getCloseTabButtonOnTheRight()) {
+    if (LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred() && !UISettings.getInstance().getCloseTabButtonOnTheRight()) {
       List<AnAction> list = Arrays.asList(children);
       Collections.reverse(list);
       children = list.toArray(AnAction[]::new);

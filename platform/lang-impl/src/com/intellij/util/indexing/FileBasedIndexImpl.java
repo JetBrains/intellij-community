@@ -40,7 +40,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VfsData;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -126,7 +126,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private static final boolean USE_GENTLE_FLUSHER = SystemProperties.getBooleanProperty("indexes.flushing.use-gentle-flusher", true);
   /** How often, on average, flush each index to the disk */
-  private static final long FLUSHING_PERIOD_MS = SECONDS.toMillis(5);
+  private static final long FLUSHING_PERIOD_MS = SECONDS.toMillis(FlushingDaemon.FLUSHING_PERIOD_IN_SECONDS);
 
 
   private volatile RegisteredIndexes myRegisteredIndexes;
@@ -966,9 +966,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                                      @Nullable Project project,
                                      @Nullable GlobalSearchScope filter,
                                      @Nullable VirtualFile restrictedFile) {
-    if (myUpToDateIndicesForUnsavedOrTransactedDocuments.contains(indexId)) {
-      return; // no need to index unsaved docs        // todo: check scope ?
-    }
+    //if (myUpToDateIndicesForUnsavedOrTransactedDocuments.contains(indexId)) {
+    //  return; // no need to index unsaved docs        // todo: check scope ?
+    //}
 
     Document[] unsavedDocuments = myFileDocumentManager.getUnsavedDocuments();
     Set<Document> transactedDocuments = getTransactedDocuments();
@@ -995,7 +995,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           documentsToProcessForProject.size() == documents.size() &&
           !hasActiveTransactions()
       ) {
-        myUpToDateIndicesForUnsavedOrTransactedDocuments.add(indexId);
+        //myUpToDateIndicesForUnsavedOrTransactedDocuments.add(indexId);
       }
     }
   }
@@ -2264,7 +2264,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       super("IndexesFlusher",
             scheduler, FLUSHING_PERIOD_MS,
             MIN_CONTENTION_QUOTA, MAX_CONTENTION_QUOTA, INITIAL_CONTENTION_QUOTA,
-            TelemetryTracer.getMeter(Indexes)
+            TelemetryManager.getMeter(Indexes)
       );
     }
 
@@ -2302,11 +2302,22 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
 
     @Override
-    protected boolean betterPostponeFlushNow() {
-      if (HeavyProcessLatch.INSTANCE.isRunning()) {
-        return true;
+    public boolean hasSomethingToFlush() {
+      if (IndexingStamp.isDirty()) return true;
+
+      IndexConfiguration indexes = getState();
+      for (ID<?, ?> indexId : indexes.getIndexIDs()) {
+        UpdatableIndex<?, ?, FileContent, ?> index = indexes.getIndex(indexId);
+        if (index != null && index.isDirty()) {
+          return true;
+        }
       }
 
+      return SnapshotHashEnumeratorService.getInstance().isDirty();
+    }
+
+    @Override
+    protected boolean betterPostponeFlushNow() {
       //RC: Basically, we're trying to flush 'if idle': i.e. we don't want to
       //    issue a flush if somebody actively writes to indexes because flush
       //    will slow them down, if not stall them -- and (regular) flush is

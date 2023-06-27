@@ -16,7 +16,7 @@ internal class Test {
     }
 
     companion object {
-        var field = Java8Class()
+        var field: Java8Class = Java8Class()
         fun staticFun(): Java8Class {
             TODO("_root_ide_package_")
         }

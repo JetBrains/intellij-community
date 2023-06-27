@@ -4,7 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.LargeBlobStorageRecordLayout.ActualRecords.LargeRecord;
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.DirectBufferWrapper;
 import com.intellij.util.io.PagedFileStorage;
@@ -50,7 +50,7 @@ public class LargeSizeStreamlinedBlobStorage implements StreamlinedBlobStorage {
   //          recordHeader: recordType[int8], capacity, length?, redirectTo?, recordData[length]?
   //                        First byte of header contains the record type, which defines other header
   //                        fields & their length. A lot of bits wiggling are used to compress header
-  //                        into as few bytes as possible -- see LargeBlobStorageRecordLayout below for details.
+  //                        into as few bytes as possible -- see LargeBlobStorageRecordLayout for details.
   //
   //  1. capacity is the allocated size of the record payload _excluding_ header, so
   //     nextRecordOffset = currentRecordOffset + recordHeader + recordCapacity
@@ -65,16 +65,6 @@ public class LargeSizeStreamlinedBlobStorage implements StreamlinedBlobStorage {
   //  4. records are always allocated on a single page: i.e. record never breaks a page boundary.
   //     If a record doesn't fit the current page, it is moved to another page (remaining space on
   //     page is filled by placeholder record, if needed).
-
-  //FIXME RC: there are hidden deadlocks possibilities: sometimes we need to change >1 page at a time,
-  //          and hence we acquire >1 page lock. E.g. this happens during record re-allocation: we
-  //          need to write new record content to a new place (which may be on a new page) and then
-  //          put reference to a new location into an old location header (MOVED record type .redirectedTo
-  //          field). Now this issues are hidden: it is not a frequent case, and also today all new
-  //          records are allocated at the end of storage -> old and new page locks are always
-  //          implicitly ordered: lock is always acquired on old page first, then on new. But this
-  //          is just a lucky coincidence, and could change as soon as we implement free-lists and
-  //          removed records re-use -> we'll get hard to debug deadlocks.
 
   //TODO RC: implement space reclamation: re-use space of deleted records for the newly allocated ones.
   //         Need to keep a free-list.
@@ -227,6 +217,7 @@ public class LargeSizeStreamlinedBlobStorage implements StreamlinedBlobStorage {
               throw new IOException(
                 "Can't read file[" + pagedStorage + "]: too big, " + length + " > Integer.MAX_VALUE * " + OFFSET_BUCKET);
             }
+
             nextRecordId = offsetToId(length);
 
             recordsAllocated.set(readHeaderInt(HEADER_OFFSET_RECORDS_ALLOCATED));
@@ -237,11 +228,12 @@ public class LargeSizeStreamlinedBlobStorage implements StreamlinedBlobStorage {
           }
           else {
             nextRecordId = offsetToId(recordsStartOffset());
+
+            putHeaderInt(HEADER_OFFSET_STORAGE_VERSION, STORAGE_VERSION_CURRENT);
+            putHeaderInt(HEADER_OFFSET_FILE_STATUS, FILE_STATUS_OPENED);
+            headerPage.fileSizeMayChanged(HEADER_SIZE);
+            headerPage.markDirty();
           }
-          putHeaderInt(HEADER_OFFSET_STORAGE_VERSION, STORAGE_VERSION_CURRENT);
-          putHeaderInt(HEADER_OFFSET_FILE_STATUS, FILE_STATUS_OPENED);
-          headerPage.fileSizeMayChanged(HEADER_SIZE);
-          headerPage.markDirty();
         }
         finally {
           headerPage.unlock();
@@ -1148,7 +1140,7 @@ public class LargeSizeStreamlinedBlobStorage implements StreamlinedBlobStorage {
 
   @NotNull
   private BatchCallback setupReportingToOpenTelemetry(final Path fileName) {
-    final Meter meter = TelemetryTracer.getMeter(Storage);
+    final Meter meter = TelemetryManager.getMeter(Storage);
 
     final var recordsAllocated = meter.counterBuilder("StreamlinedBlobStorage.recordsAllocated").buildObserver();
     final var recordsRelocated = meter.counterBuilder("StreamlinedBlobStorage.recordsRelocated").buildObserver();

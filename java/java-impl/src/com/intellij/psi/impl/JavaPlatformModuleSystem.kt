@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl
 
 import com.intellij.codeInsight.JavaModuleSystemEx
@@ -129,7 +129,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
         val fixes = when {
           packageName.isEmpty() -> emptyList()
           targetModule is PsiCompiledElement && module != null -> listOf(AddExportsOptionFix(module, targetName, packageName, useName))
-          targetModule !is PsiCompiledElement && useModule != null -> listOf(AddExportsDirectiveFix(targetModule, packageName, useName))
+          targetModule !is PsiCompiledElement && useModule != null -> listOf(AddExportsDirectiveFix(targetModule, packageName, useName).asIntention())
           else -> emptyList()
         }
         return when (useModule) {
@@ -145,7 +145,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
           quick -> ERR
           PsiNameHelper.isValidModuleName(targetName, useModule) -> ErrorWithFixes(
             JavaErrorBundle.message("module.access.does.not.read", packageName, targetName, useName),
-            listOf(AddRequiresDirectiveFix(useModule, targetName)))
+            listOf(AddRequiresDirectiveFix(useModule, targetName).asIntention()))
           else -> ErrorWithFixes(JavaErrorBundle.message("module.access.bad.name", packageName, targetName))
         }
       }

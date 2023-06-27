@@ -1,13 +1,18 @@
 package com.jetbrains.performancePlugin.commands
 
+import com.intellij.codeHighlighting.Pass
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInsight.daemon.impl.DaemonFusReporter
+import com.intellij.codeInsight.daemon.impl.FileStatusMap
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.impl.CoreProgressManager
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.AbstractCommand
 import com.intellij.openapi.util.Ref
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.ConcurrencyUtil
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper
 import org.jetbrains.concurrency.Promise
@@ -35,13 +40,27 @@ class WaitForFinishedCodeAnalysis(text: String, line: Int) : AbstractCommand(tex
     val connection = project.messageBus.simpleConnect()
     val dateTimeWhenCodeAnalysisFinished = Ref<LocalDateTime>()
     LOG.info("Subscribing")
-    connection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, object : DaemonCodeAnalyzer.DaemonListener {
-      override fun daemonFinished() {
-        dateTimeWhenCodeAnalysisFinished.set(LocalDateTime.now())
+    val wasEntireFileHighlighted = Ref<Boolean>(false)
+    connection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, object : DaemonFusReporter(project) {
+      override fun daemonFinished(fileEditors: Collection<FileEditor>) {
+        val editor = fileEditors.filterIsInstance<TextEditor>().firstOrNull()?.editor
+        val document = editor?.document
+
+        if (document == null) return
+        val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document)
+        if (psiFile == null) return
+        val dirtyRange = FileStatusMap.getDirtyTextRange(document, psiFile, Pass.UPDATE_ALL)
+
+        if (!canceled) {
+          wasEntireFileHighlighted.set(dirtyRange == null)
+        }
+        if (wasEntireFileHighlighted.get()) {
+          dateTimeWhenCodeAnalysisFinished.set(LocalDateTime.now())
+        }
       }
     })
     ApplicationManager.getApplication().executeOnPooledThread(Runnable {
-      checkCondition(BooleanSupplier { CoreProgressManager.getCurrentIndicators().size == 0 && !dateTimeWhenCodeAnalysisFinished.isNull }).await(20, TimeUnit.MINUTES)
+      checkCondition(BooleanSupplier { wasEntireFileHighlighted.get() }).await(20, TimeUnit.MINUTES)
       connection.disconnect()
       val rowFirstDateTimeFromLog = Paths.get(PathManager.getLogPath(), "idea.log")
         .readLines()

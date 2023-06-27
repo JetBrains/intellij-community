@@ -56,7 +56,7 @@ open class JDIEval(
                     "(Ljava/lang/String;)Ljava/lang/Class;",
                     true
                 ),
-                listOf(vm.mirrorOf(classType.jdiName).asValue())
+                listOf(loadString(classType.jdiName))
             )
         } else {
             return invokeStaticMethod(
@@ -67,7 +67,7 @@ open class JDIEval(
                     true
                 ),
                 listOf(
-                    vm.mirrorOf(classType.jdiName).asValue(),
+                    loadString(classType.jdiName),
                     boolean(true),
                     classLoader.asValue()
                 )
@@ -87,7 +87,9 @@ open class JDIEval(
             Type.getType("[".repeat(dimensions) + baseType.asType().descriptor).asReferenceType(classLoader)
     }
 
-    override fun loadString(str: String): Value = vm.mirrorOf(str).asValue()
+    open fun jdiMirrorOfString(str: String): StringReference = vm.mirrorOf(str)
+
+    override fun loadString(str: String): Value = jdiMirrorOfString(str).asValue()
 
     override fun newInstance(classType: Type): Value {
         return NewObjectValue(classType)
@@ -117,9 +119,11 @@ open class JDIEval(
     private fun Type.asArrayType(classLoader: ClassLoaderReference? = this@JDIEval.defaultClassLoader): ArrayType =
         asReferenceType(classLoader) as ArrayType
 
+    open fun jdiNewArray(arrayType: ArrayType, size: Int): ArrayReference = arrayType.newInstance(size)
+
     override fun newArray(arrayType: Type, size: Int): Value {
         val jdiArrayType = arrayType.asArrayType()
-        return jdiArrayType.newInstance(size).asValue()
+        return jdiNewArray(jdiArrayType, size).asValue()
     }
 
     private val Type.arrayElementType: Type
@@ -414,7 +418,7 @@ open class JDIEval(
                 "(Ljava/lang/String;[L${CLASS.internalName};)Ljava/lang/reflect/Method;",
                 true
             ),
-            listOf(vm.mirrorOf(methodDesc.name).asValue(), *methodDesc.parameterTypes.map { loadClass(it) }.toTypedArray())
+            listOf(loadString(methodDesc.name), *methodDesc.parameterTypes.map { loadClass(it) }.toTypedArray())
         )
 
         invokeMethod(

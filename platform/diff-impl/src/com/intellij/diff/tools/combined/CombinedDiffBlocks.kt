@@ -73,7 +73,7 @@ class CombinedSimpleDiffBlockFactory : CombinedDiffBlockFactory<CombinedPathBloc
     }
 }
 
-private class CombinedSimpleDiffHeader(project: Project,
+class CombinedSimpleDiffHeader(project: Project,
                                        blockId: CombinedPathBlockId,
                                        withPathOnly: Boolean) : BorderLayoutPanel() {
   init {
@@ -165,10 +165,10 @@ private class CombinedSimpleDiffHeader(project: Project,
 
 data class CombinedPathBlockId(val path: FilePath, val fileStatus: FileStatus, val tag: Any? = null) : CombinedBlockId
 
-private class CombinedSimpleDiffBlock(project: Project,
-                                      override val id: CombinedPathBlockId,
-                                      initialContent: JComponent,
-                                      isPathOnlyHeader: Boolean) :
+class CombinedSimpleDiffBlock(project: Project,
+                                       override val id: CombinedPathBlockId,
+                                       initialContent: JComponent,
+                                       isPathOnlyHeader: Boolean) :
   JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true)),
   CombinedDiffBlock<CombinedPathBlockId> {
 

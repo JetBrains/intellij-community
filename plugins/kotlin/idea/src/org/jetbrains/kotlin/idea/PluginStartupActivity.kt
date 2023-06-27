@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea
 
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.openapi.application.*
 import com.intellij.openapi.progress.blockingContext
@@ -12,7 +11,6 @@ import com.intellij.openapi.updateSettings.impl.UpdateChecker.excludedFromUpdate
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
-import org.jetbrains.kotlin.idea.base.util.containsKotlinFile
 import org.jetbrains.kotlin.idea.base.util.containsNonScriptKotlinFile
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePluginVersion
@@ -23,7 +21,7 @@ import org.jetbrains.kotlin.idea.reporter.KotlinReportSubmitter.Companion.setupR
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import java.util.concurrent.Callable
 
-internal class PluginStartupActivity : ProjectActivity {
+internal open class PluginStartupActivity : ProjectActivity {
     override suspend fun execute(project: Project) : Unit = blockingContext {
         excludedFromUpdateCheckPlugins.add("org.jetbrains.kotlin")
         checkPluginCompatibility()
@@ -32,22 +30,13 @@ internal class PluginStartupActivity : ProjectActivity {
         //todo[Sedunov]: wait for fix in platform to avoid misunderstood from Java newbies (also ConfigureKotlinInTempDirTest)
         //KotlinSdkType.Companion.setUpIfNeeded();
 
-        val pluginDisposable = KotlinPluginDisposable.getInstance(project)
-        ReadAction.nonBlocking(Callable { project.containsKotlinFile() })
-            .inSmartMode(project)
-            .expireWith(pluginDisposable)
-            .finishOnUiThread(ModalityState.any()) { hasKotlinFiles ->
-                if (!hasKotlinFiles) return@finishOnUiThread
-
-                val daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project) as DaemonCodeAnalyzerImpl
-                daemonCodeAnalyzer.serializeCodeInsightPasses(true)
-            }
-            .submit(AppExecutorUtil.getAppExecutorService())
+        executeExtraActions(project)
 
         if (ApplicationManager.getApplication().isHeadlessEnvironment) {
             return@blockingContext
         }
 
+        val pluginDisposable = KotlinPluginDisposable.getInstance(project)
         ReadAction.nonBlocking(Callable { project.containsNonScriptKotlinFile() })
             .inSmartMode(project)
             .expireWith(pluginDisposable)
@@ -61,6 +50,8 @@ internal class PluginStartupActivity : ProjectActivity {
             }
             .submit(AppExecutorUtil.getAppExecutorService())
     }
+
+    protected open fun executeExtraActions(project: Project) = Unit
 
     private fun checkPluginCompatibility() {
         val platformBuild = ApplicationInfo.getInstance().build

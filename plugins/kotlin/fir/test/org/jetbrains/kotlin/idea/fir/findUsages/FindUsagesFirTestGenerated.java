@@ -617,9 +617,19 @@ public abstract class FindUsagesFirTestGenerated extends AbstractFindUsagesFirTe
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("dataClassComponent.0.kt")
+            public void testDataClassComponent() throws Exception {
+                runTest("../idea/tests/testData/findUsages/kotlin/findFunctionUsages/dataClassComponent.0.kt");
+            }
+
             @TestMetadata("enumFunctionUsages.0.kt")
             public void testEnumFunctionUsages() throws Exception {
                 runTest("../idea/tests/testData/findUsages/kotlin/findFunctionUsages/enumFunctionUsages.0.kt");
+            }
+
+            @TestMetadata("enumValueOf.0.kt")
+            public void testEnumValueOf() throws Exception {
+                runTest("../idea/tests/testData/findUsages/kotlin/findFunctionUsages/enumValueOf.0.kt");
             }
 
             @TestMetadata("functionUsedInPlainText.0.kt")
@@ -949,14 +959,44 @@ public abstract class FindUsagesFirTestGenerated extends AbstractFindUsagesFirTe
                 runTest("../idea/tests/testData/findUsages/kotlin/findParameterUsages/kotlinFunctionParameterUsages.0.kt");
             }
 
+            @TestMetadata("kotlinFunctionTypeParameterUsages.0.kt")
+            public void testKotlinFunctionTypeParameterUsages() throws Exception {
+                runTest("../idea/tests/testData/findUsages/kotlin/findParameterUsages/kotlinFunctionTypeParameterUsages.0.kt");
+            }
+
             @TestMetadata("kotlinHighlightParameterUsages.0.kt")
             public void testKotlinHighlightParameterUsages() throws Exception {
                 runTest("../idea/tests/testData/findUsages/kotlin/findParameterUsages/kotlinHighlightParameterUsages.0.kt");
             }
 
+            @TestMetadata("kotlinMemberFunctionMultipleParametersWithSearchInOverridings.0.kt")
+            public void testKotlinMemberFunctionMultipleParametersWithSearchInOverridings() throws Exception {
+                runTest("../idea/tests/testData/findUsages/kotlin/findParameterUsages/kotlinMemberFunctionMultipleParametersWithSearchInOverridings.0.kt");
+            }
+
+            @TestMetadata("kotlinMemberFunctionParameterUsages.0.kt")
+            public void testKotlinMemberFunctionParameterUsages() throws Exception {
+                runTest("../idea/tests/testData/findUsages/kotlin/findParameterUsages/kotlinMemberFunctionParameterUsages.0.kt");
+            }
+
+            @TestMetadata("kotlinMemberFunctionParameterUsagesWithSearchInOverridings.0.kt")
+            public void testKotlinMemberFunctionParameterUsagesWithSearchInOverridings() throws Exception {
+                runTest("../idea/tests/testData/findUsages/kotlin/findParameterUsages/kotlinMemberFunctionParameterUsagesWithSearchInOverridings.0.kt");
+            }
+
             @TestMetadata("parameterNameInTextFile.0.kt")
             public void testParameterNameInTextFile() throws Exception {
                 runTest("../idea/tests/testData/findUsages/kotlin/findParameterUsages/parameterNameInTextFile.0.kt");
+            }
+
+            @TestMetadata("parameterUsageInAnonymousInheritor.0.kt")
+            public void testParameterUsageInAnonymousInheritor() throws Exception {
+                runTest("../idea/tests/testData/findUsages/kotlin/findParameterUsages/parameterUsageInAnonymousInheritor.0.kt");
+            }
+
+            @TestMetadata("parameterUsageInAnonymousInheritorWithSearchInOverridings.0.kt")
+            public void testParameterUsageInAnonymousInheritorWithSearchInOverridings() throws Exception {
+                runTest("../idea/tests/testData/findUsages/kotlin/findParameterUsages/parameterUsageInAnonymousInheritorWithSearchInOverridings.0.kt");
             }
         }
 
@@ -1001,6 +1041,11 @@ public abstract class FindUsagesFirTestGenerated extends AbstractFindUsagesFirTe
             public void testPrimaryConstructorWithKeyword() throws Exception {
                 runTest("../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages/primaryConstructorWithKeyword.0.kt");
             }
+
+            @TestMetadata("primaryConstructorWithOverloadedOption.0.kt")
+            public void testPrimaryConstructorWithOverloadedOption() throws Exception {
+                runTest("../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages/primaryConstructorWithOverloadedOption.0.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -1013,6 +1058,11 @@ public abstract class FindUsagesFirTestGenerated extends AbstractFindUsagesFirTe
             @TestMetadata("extensionPropertyUsages.0.kt")
             public void testExtensionPropertyUsages() throws Exception {
                 runTest("../idea/tests/testData/findUsages/kotlin/findPropertyUsages/extensionPropertyUsages.0.kt");
+            }
+
+            @TestMetadata("javaAndKotlinImplementations.0.kt")
+            public void testJavaAndKotlinImplementations() throws Exception {
+                runTest("../idea/tests/testData/findUsages/kotlin/findPropertyUsages/javaAndKotlinImplementations.0.kt");
             }
 
             @TestMetadata("javaAndKotlinOverrides.0.kt")
@@ -1201,6 +1251,11 @@ public abstract class FindUsagesFirTestGenerated extends AbstractFindUsagesFirTe
             @TestMetadata("secondaryConstructor.0.kt")
             public void testSecondaryConstructor() throws Exception {
                 runTest("../idea/tests/testData/findUsages/kotlin/findSecondaryConstructorUsages/secondaryConstructor.0.kt");
+            }
+
+            @TestMetadata("secondaryConstructorWithOverloadedOption.0.kt")
+            public void testSecondaryConstructorWithOverloadedOption() throws Exception {
+                runTest("../idea/tests/testData/findUsages/kotlin/findSecondaryConstructorUsages/secondaryConstructorWithOverloadedOption.0.kt");
             }
         }
 

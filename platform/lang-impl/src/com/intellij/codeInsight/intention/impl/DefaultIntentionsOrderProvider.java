@@ -61,6 +61,7 @@ public class DefaultIntentionsOrderProvider implements IntentionsOrderProvider {
       case TOP -> 20;
       case HIGH -> 3;
       case LOW -> -3;
+      case BOTTOM -> -20;
       default -> 0;
     };
   }

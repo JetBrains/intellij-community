@@ -3,9 +3,9 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class UnwrapSwitchLabelFix implements LocalQuickFix {
+public class UnwrapSwitchLabelFix extends PsiUpdateModCommandQuickFix {
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   @Override
@@ -33,8 +33,8 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiCaseLabelElement label = ObjectUtils.tryCast(descriptor.getStartElement(), PsiCaseLabelElement.class);
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    PsiCaseLabelElement label = ObjectUtils.tryCast(element, PsiCaseLabelElement.class);
     if (label == null) return;
     PsiSwitchLabelStatementBase labelStatement = PsiImplUtil.getSwitchLabel(label);
     if (labelStatement == null) return;

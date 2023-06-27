@@ -40,6 +40,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.refactoring.util.ConflictsUtil
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.NonNls
+import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractMethodCollector.Companion as IEMC
 
 data class ExtractedElements(val callElements: List<PsiElement>, val method: PsiMethod)
 
@@ -73,11 +74,12 @@ class MethodExtractor {
   }
 
   private fun reportPerformanceStatistics(preparePlacesMs: Long, prepareTemplateMs: Long, numberOfTargetPlaces: Int){
-    val preparePlaces = EventPair(InplaceExtractMethodCollector.prepareTargetPlacesMs, preparePlacesMs)
-    val numberOfPlaces = EventPair(InplaceExtractMethodCollector.numberOfTargetPlaces, numberOfTargetPlaces)
-    val prepareTemplate = EventPair(InplaceExtractMethodCollector.prepareTemplateMs, prepareTemplateMs)
-    val prepareTotal = EventPair(InplaceExtractMethodCollector.prepareTotalMs, preparePlacesMs + prepareTemplateMs)
-    InplaceExtractMethodCollector.templateShown.log(preparePlaces, numberOfPlaces, prepareTemplate, prepareTotal)
+    IEMC.templateShown.log(
+      IEMC.prepareTargetPlacesMs.with(preparePlacesMs),
+      IEMC.numberOfTargetPlaces.with(numberOfTargetPlaces),
+      IEMC.prepareTemplateMs.with(prepareTemplateMs),
+      IEMC.prepareTotalMs.with(preparePlacesMs + prepareTemplateMs)
+    )
   }
 
   private fun prepareDescriptorsForAllTargetPlaces(editor: Editor, file: PsiFile, range: TextRange): List<ExtractOptions> {

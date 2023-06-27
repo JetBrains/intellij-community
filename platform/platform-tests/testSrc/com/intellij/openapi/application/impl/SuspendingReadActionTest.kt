@@ -4,15 +4,15 @@ package com.intellij.openapi.application.impl
 import com.intellij.openapi.application.*
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.Disposer
-import com.intellij.testFramework.LeakHunter
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.util.concurrency.Semaphore
-import com.intellij.util.timeoutRunBlocking
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.assertThrows
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.Continuation
+import kotlin.coroutines.resume
 import kotlinx.coroutines.sync.Semaphore as KSemaphore
 
 private const val REPETITIONS: Int = 100
@@ -86,14 +86,16 @@ abstract class SuspendingReadActionTest : CancellableReadActionTests() {
   @RepeatedTest(REPETITIONS)
   fun `read action honors constraints`(): Unit = timeoutRunBlocking {
     val scheduled = KSemaphore(1, 1)
-    lateinit var constraintRunnable: Runnable
+    lateinit var constraintContinuation: Continuation<Unit>
     var satisfied = false
     val constraint = object : ReadConstraint {
       override fun toString(): String = "dummy constraint"
       override fun isSatisfied(): Boolean = satisfied
-      override fun schedule(runnable: Runnable) {
-        constraintRunnable = runnable
-        scheduled.release()
+      override suspend fun awaitConstraint() {
+        suspendCancellableCoroutine {
+          constraintContinuation = it
+          scheduled.release()
+        }
       }
     }
     launch {
@@ -104,19 +106,19 @@ abstract class SuspendingReadActionTest : CancellableReadActionTests() {
     }
     scheduled.acquire() // constraint was unsatisfied initially
     satisfied = true
-    constraintRunnable.run() // retry with satisfied constraint
+    constraintContinuation.resume(Unit) // retry with satisfied constraint
   }
 
   @RepeatedTest(REPETITIONS)
   fun `read action with unsatisfiable constraint is cancellable`(): Unit = timeoutRunBlocking {
     val scheduled = KSemaphore(1, 1)
-    lateinit var constraintRunnable: Runnable
     val unsatisfiableConstraint = object : ReadConstraint {
       override fun toString(): String = "unsatisfiable constraint"
       override fun isSatisfied(): Boolean = false
-      override fun schedule(runnable: Runnable) {
-        constraintRunnable = runnable
-        scheduled.release()
+      override suspend fun awaitConstraint() {
+        suspendCancellableCoroutine<Unit> {
+          scheduled.release()
+        }
       }
     }
     val job = launch {
@@ -126,7 +128,6 @@ abstract class SuspendingReadActionTest : CancellableReadActionTests() {
     }
     scheduled.acquire()
     job.cancelAndJoin()
-    LeakHunter.checkLeak(constraintRunnable, Continuation::class.java)
   }
 
   /**
@@ -146,7 +147,7 @@ abstract class SuspendingReadActionTest : CancellableReadActionTests() {
   protected abstract suspend fun <T> cra(vararg constraints: ReadConstraint, action: () -> T): T
 }
 
-class NonBlocking : SuspendingReadActionTest() {
+class NonBlockingSuspendingReadActionTest : SuspendingReadActionTest() {
 
   override suspend fun <T> cra(vararg constraints: ReadConstraint, action: () -> T): T {
     return constrainedReadAction(*constraints, action = action)
@@ -200,14 +201,16 @@ class NonBlocking : SuspendingReadActionTest() {
   @RepeatedTest(REPETITIONS)
   fun `read action with constraints is cancelled by write and restarted`(): Unit = timeoutRunBlocking {
     val constraintScheduled = KSemaphore(1, 1)
-    lateinit var constraintRunnable: Runnable
+    lateinit var constraintContinuation: Continuation<Unit>
     val constraint = object : ReadConstraint {
       var satisfied: Boolean = true
       override fun toString(): String = "dummy constraint"
       override fun isSatisfied(): Boolean = satisfied
-      override fun schedule(runnable: Runnable) {
-        constraintRunnable = runnable
-        constraintScheduled.release()
+      override suspend fun awaitConstraint() {
+        suspendCancellableCoroutine {
+          constraintContinuation = it
+          constraintScheduled.release()
+        }
       }
     }
     val application = ApplicationManager.getApplication()
@@ -244,7 +247,7 @@ class NonBlocking : SuspendingReadActionTest() {
     application.invokeLater {
       application.runWriteAction {
         constraint.satisfied = true
-        constraintRunnable.run() // reschedule
+        constraintContinuation.resume(Unit) // reschedule
       }
     }
   }
@@ -275,7 +278,7 @@ class NonBlocking : SuspendingReadActionTest() {
   }
 }
 
-class NonBlockingUndispatched : SuspendingReadActionTest() {
+class NonBlockingUndispatchedSuspendingReadActionTest : SuspendingReadActionTest() {
 
   override suspend fun <T> cra(vararg constraints: ReadConstraint, action: () -> T): T {
     return constrainedReadActionUndispatched(*constraints, action = action)
@@ -289,7 +292,7 @@ class NonBlockingUndispatched : SuspendingReadActionTest() {
     val unsatisfiableConstraint = object : ReadConstraint {
       override fun toString(): String = "unsatisfiable constraint"
       override fun isSatisfied(): Boolean = false
-      override fun schedule(runnable: Runnable): Unit = fail("must not be called")
+      override suspend fun awaitConstraint(): Unit = fail("must not be called")
     }
     cra {
       runBlockingCancellable {
@@ -303,7 +306,7 @@ class NonBlockingUndispatched : SuspendingReadActionTest() {
   }
 }
 
-class Blocking : SuspendingReadActionTest() {
+class BlockingSuspendingReadActionTest : SuspendingReadActionTest() {
 
   override suspend fun <T> cra(vararg constraints: ReadConstraint, action: () -> T): T {
     return constrainedReadActionBlocking(*constraints, action = action)

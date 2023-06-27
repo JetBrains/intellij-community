@@ -9,7 +9,7 @@ internal class F {
         //c1
         /*c2*/
         fun f1() {}
-        var i = 0
+        var i: Int = 0
 
         //c5
         fun f5() {} //c6

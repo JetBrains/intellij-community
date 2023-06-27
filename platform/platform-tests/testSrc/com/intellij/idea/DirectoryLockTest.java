@@ -62,7 +62,8 @@ public abstract sealed class DirectoryLockTest {
   public static final class CustomFileSystemTest extends DirectoryLockTest {
     @Override
     protected Path getTestDir() {
-      return memoryFs.getFs().getPath(tempDir.getRootPath().toString());
+      var path = SystemInfo.isWindows ? "C:\\tests\\" + tempDir.getRootPath().getFileName().toString() : tempDir.getRootPath().toString();
+      return memoryFs.getFs().getPath(path);
     }
   }
 

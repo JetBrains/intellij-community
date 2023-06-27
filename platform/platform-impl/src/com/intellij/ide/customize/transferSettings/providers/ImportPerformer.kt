@@ -17,18 +17,18 @@ import java.util.function.Consumer
 interface ImportPerformer {
 
   fun collectAllRequiredPlugins(settings: Settings): Set<PluginId>
-  fun installPlugins(project: Project, pluginIds: Set<PluginId>, pi: ProgressIndicator)
+  fun installPlugins(project: Project?, pluginIds: Set<PluginId>, pi: ProgressIndicator)
   fun patchSettingsAfterPluginInstallation(settings: Settings, successPluginIds: Set<String>): Settings
 
   /**
    * Heavy tasks should be performed there (on pooled thread)
    */
-  fun perform(project: Project, settings: Settings, pi: ProgressIndicator)
+  fun perform(project: Project?, settings: Settings, pi: ProgressIndicator)
 
   /**
    * Quick tasks that will be performed on EDT after perform() is finished
    */
-  fun performEdt(project: Project, settings: Settings)
+  fun performEdt(project: Project?, settings: Settings)
 }
 
 private val logger = logger<DefaultImportPerformer>()
@@ -50,7 +50,7 @@ class DefaultImportPerformer(private val partials: Collection<PartialImportPerfo
     return ids
   }
 
-  override fun installPlugins(project: Project, pluginIds: Set<PluginId>, pi: ProgressIndicator) {
+  override fun installPlugins(project: Project?, pluginIds: Set<PluginId>, pi: ProgressIndicator) {
     logger.info("Installing plugins")
     val installedPlugins = PluginManagerCore.getPlugins().map { it.pluginId.idString }.toSet()
     val pluginsToInstall = pluginIds.filter { !installedPlugins.contains(it.idString) }.toSet()
@@ -97,14 +97,14 @@ class DefaultImportPerformer(private val partials: Collection<PartialImportPerfo
     return settings
   }
 
-  override fun perform(project: Project, settings: Settings, pi: ProgressIndicator) {
+  override fun perform(project: Project?, settings: Settings, pi: ProgressIndicator) {
     onlyRequiredPartials(settings).forEach {
       logger.info("perform: ${it.javaClass.simpleName}")
       it.perform(project, settings, pi)
     }
   }
 
-  override fun performEdt(project: Project, settings: Settings) {
+  override fun performEdt(project: Project?, settings: Settings) {
     onlyRequiredPartials(settings).forEach {
       logger.info("performEdt: ${it.javaClass.simpleName}")
       it.performEdt(project, settings)

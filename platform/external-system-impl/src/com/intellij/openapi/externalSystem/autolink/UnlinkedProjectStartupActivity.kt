@@ -2,9 +2,10 @@
 package com.intellij.openapi.externalSystem.autolink
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.createExtensionDisposable
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener.Companion.installAsyncVirtualFileListener
@@ -27,12 +28,17 @@ import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isConfiguredByPlatformProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isNewProject
 import com.intellij.util.containers.DisposableWrapperList
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.CopyOnWriteArrayList
 
 @VisibleForTesting
 class UnlinkedProjectStartupActivity : ProjectActivity {
+  @Service(Service.Level.PROJECT)
+  private class CoroutineScopeService(val coroutineScope: CoroutineScope)
 
   override suspend fun execute(project: Project) {
     loadProjectIfSingleUnlinkedProjectFound(project)
@@ -73,9 +79,7 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
     if (!isNewExternalProject) {
       if (isExpectedAutoLink && unlinkedProjects.size == 1 && linkedProjects.isEmpty()) {
         val extension = unlinkedProjects.single()
-        withContext(Dispatchers.EDT) {
-          extension.linkAndLoadProject(project, externalProjectPath)
-        }
+        extension.linkAndLoadProjectAsync(project, externalProjectPath)
         if (LOG.isDebugEnabled) {
           val projectId = extension.createProjectId(externalProjectPath)
           LOG.debug(projectId.debugName + ": project is auto-linked")
@@ -120,19 +124,18 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
     if (rootProjectPath != null) {
       projectRoots.addProjectRoot(rootProjectPath)
     }
+    val cs = project.getService(CoroutineScopeService::class.java).coroutineScope
     EP_NAME.withEachExtensionSafeAsync(project) { extension, extensionDisposable ->
       extension.subscribe(project, object : ExternalSystemProjectLinkListener {
 
         override fun onProjectLinked(externalProjectPath: String) {
-          @OptIn(DelicateCoroutinesApi::class)
-          GlobalScope.launch(extensionDisposable) {
+          cs.launch(extensionDisposable) {
             projectRoots.removeProjectRoot(externalProjectPath)
           }
         }
 
         override fun onProjectUnlinked(externalProjectPath: String) {
-          @OptIn(DelicateCoroutinesApi::class)
-          GlobalScope.launch(extensionDisposable) {
+          cs.launch(extensionDisposable) {
             projectRoots.addProjectRoot(externalProjectPath)
           }
         }
@@ -162,36 +165,41 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
 
   private suspend fun updateNotification(project: Project, projectRoot: String, extension: ExternalSystemUnlinkedProjectAware) {
     when {
-      extension.isLinkedProject(project, projectRoot) -> blockingContext {
+      extension.isLinkedProject(project, projectRoot) ->
         expireNotification(project, projectRoot, extension)
-      }
       extension.hasBuildFiles(project, projectRoot) ->
-        blockingContext {
-          notifyNotification(project, projectRoot, extension)
-        }
+        notifyNotification(project, projectRoot, extension)
       else ->
         expireNotification(project, projectRoot, extension)
     }
   }
 
-  private fun notifyNotification(
+  private suspend fun notifyNotification(
     project: Project,
     externalProjectPath: String,
     extension: ExternalSystemUnlinkedProjectAware
   ) {
-    UnlinkedProjectNotificationAware.getInstance(project)
-      .notificationNotify(extension.createProjectId(externalProjectPath)) {
-        extension.linkAndLoadProject(project, externalProjectPath)
-      }
+    blockingContext {
+      val extensionDisposable = EP_NAME.createExtensionDisposable(extension, project)
+      UnlinkedProjectNotificationAware.getInstance(project)
+        .notificationNotify(extension.createProjectId(externalProjectPath)) {
+          val cs = project.getService(CoroutineScopeService::class.java).coroutineScope
+          cs.launch(extensionDisposable) {
+            extension.linkAndLoadProjectAsync(project, externalProjectPath)
+          }
+        }
+    }
   }
 
-  private fun expireNotification(
+  private suspend fun expireNotification(
     project: Project,
     externalProjectPath: String,
     extension: ExternalSystemUnlinkedProjectAware
   ) {
-    UnlinkedProjectNotificationAware.getInstance(project)
-      .notificationExpire(extension.createProjectId(externalProjectPath))
+    blockingContext {
+      UnlinkedProjectNotificationAware.getInstance(project)
+        .notificationExpire(extension.createProjectId(externalProjectPath))
+    }
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)

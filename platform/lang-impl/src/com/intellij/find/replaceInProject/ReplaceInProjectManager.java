@@ -122,7 +122,7 @@ public final class ReplaceInProjectManager {
       findModel.setReplaceState(true);
       findModel.setOpenInNewTabEnabled(isOpenInNewTabEnabled);
       findModel.setOpenInNewTab(toOpenInNewTab);
-      FindInProjectUtil.setDirectoryName(findModel, dataContext);
+      FindInProjectUtil.setScope(myProject, findModel, dataContext);
       FindInProjectUtil.initStringToFindFromDataContext(findModel, dataContext);
     }
     else {

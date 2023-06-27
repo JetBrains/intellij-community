@@ -30,6 +30,7 @@ abstract class PersistentVar<T>(
   }
 
   private val fileChannelRetryer = FileChannelInterruptsRetryer(path, EnumSet.of(READ, WRITE, CREATE))
+  @Volatile
   protected var cachedValue: T? =
     fileChannelRetryer.retryIfInterrupted {
       DataInputStream(Channels.newInputStream(it.position(0))).readValue()

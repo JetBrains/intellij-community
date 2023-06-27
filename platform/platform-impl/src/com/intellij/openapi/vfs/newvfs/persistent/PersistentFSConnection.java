@@ -14,8 +14,9 @@ import com.intellij.openapi.util.io.GentleFlusherBase;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.*;
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.FlushingDaemon;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.hash.ContentHashEnumerator;
@@ -430,7 +431,7 @@ public final class PersistentFSConnection {
    */
   private class GentleVFSFlusher extends GentleFlusherBase {
     /** How often, on average, flush each index to the disk */
-    private static final long FLUSHING_PERIOD_MS = SECONDS.toMillis(5);
+    private static final long FLUSHING_PERIOD_MS = SECONDS.toMillis(FlushingDaemon.FLUSHING_PERIOD_IN_SECONDS);
 
 
     private static final int MIN_CONTENTION_QUOTA = 2;
@@ -446,16 +447,12 @@ public final class PersistentFSConnection {
       super("VFSFlusher",
             scheduler, FLUSHING_PERIOD_MS,
             MIN_CONTENTION_QUOTA, MAX_CONTENTION_QUOTA, INITIAL_CONTENTION_QUOTA,
-            TelemetryTracer.getMeter(Indexes)
+            TelemetryManager.getMeter(Indexes)
       );
     }
 
     @Override
     protected boolean betterPostponeFlushNow() {
-      if (HeavyProcessLatch.INSTANCE.isRunning()) {
-        return true;
-      }
-
       //RC: Basically, we're trying to flush 'if idle': i.e. we don't want to issue a flush if
       //    somebody actively writes to VFS because flush will slow them down, if not stall
       //    them -- and (regular) flush is less important than e.g. a current UI task. So we
@@ -531,6 +528,11 @@ public final class PersistentFSConnection {
       finally {
         contentionQuota.set(unspentContentionQuota);
       }
+    }
+
+    @Override
+    public boolean hasSomethingToFlush() {
+      return isDirty();
     }
 
     private static int competingThreads() {

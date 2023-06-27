@@ -178,7 +178,7 @@ object CodeReviewChatItemUIUtil {
   object ComponentFactory {
     fun wrapWithHeader(item: JComponent, title: JComponent, actions: JComponent?): JComponent {
       val headerPanel = JPanel(null).apply {
-        layout = MigLayout(LC().gridGap("0", "0").insets("0")
+        layout = MigLayout(LC().gridGap("0", "0").insets("0").height("16")
                              .hideMode(3).fill())
         isOpaque = false
 

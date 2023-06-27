@@ -2,12 +2,15 @@
 package com.intellij.codeWithMe
 
 import com.intellij.concurrency.currentThreadContext
+import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.Processor
 import com.intellij.util.ThrowableRunnable
@@ -20,6 +23,8 @@ import java.util.function.Function
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
+
+private val logger = logger<ClientId>()
 
 /**
  * ClientId is a global context class that is used to distinguish the originator of an action in multi-client systems
@@ -35,9 +40,9 @@ data class ClientId(val value: String) {
     RETURN_LOCAL,
 
     /**
-     * Throw an exception if ClientId is not set
+     * Write error to logger and return localId
      */
-    THROW
+    LOG_ERROR,
   }
 
   companion object {
@@ -52,7 +57,25 @@ data class ClientId(val value: String) {
     /**
      * Specifies behavior for [ClientId.current]
      */
-    private var AbsenceBehaviorValue: AbsenceBehavior = AbsenceBehavior.RETURN_LOCAL
+    val absenceBehaviorValue: AbsenceBehavior get() {
+      if (!LoadingState.COMPONENTS_LOADED.isOccurred)
+        return AbsenceBehavior.RETURN_LOCAL
+      if (!Registry.getInstance().isLoaded) {
+        return AbsenceBehavior.RETURN_LOCAL
+      }
+      return absenceBehaviorValueCached
+    }
+
+    private val absenceBehaviorValueCached: AbsenceBehavior by lazy {
+      val selectedOption = Registry.get("clientid.absence.behavior").selectedOption ?: return@lazy AbsenceBehavior.RETURN_LOCAL
+      return@lazy try {
+        AbsenceBehavior.valueOf(selectedOption)
+      }
+      catch (t: Throwable) {
+        logger.error("Wrong option '$selectedOption' for registry key 'clientid.absence.behavior'")
+        AbsenceBehavior.RETURN_LOCAL
+      }
+    }
 
     /**
      * Controls propagation behavior. When false, decorateRunnable does nothing.
@@ -89,13 +112,22 @@ data class ClientId(val value: String) {
       }
 
     /**
-     * Gets the current [ClientId]. Subject to [AbsenceBehaviorValue]
+     * Gets the current [ClientId]. Subject to [absenceBehaviorValue]
      */
     @JvmStatic
     val current: ClientId
-      get() = when (AbsenceBehaviorValue) {
+      get() = when (absenceBehaviorValue) {
         AbsenceBehavior.RETURN_LOCAL -> currentOrNull ?: localId
-        AbsenceBehavior.THROW -> currentOrNull ?: throw NullPointerException("ClientId not set")
+        AbsenceBehavior.LOG_ERROR -> {
+          val currentId = currentOrNull
+          if (currentId == null) {
+            logger.error("'ClientId.current' is not set'")
+            localId
+          }
+          else {
+            currentId
+          }
+        }
       }
 
     @JvmStatic
@@ -189,6 +221,9 @@ data class ClientId(val value: String) {
     @JvmStatic
     fun withClientId(clientId: ClientId?): AccessToken {
       if (clientId == null) {
+        if (absenceBehaviorValue == AbsenceBehavior.LOG_ERROR) {
+          LOG.error("Attempt to call withClientId with ClientId==null")
+        }
         return AccessToken.EMPTY_ACCESS_TOKEN
       }
       return withClientId(clientId.value)

@@ -37,7 +37,9 @@ object GitLabNoteComponentFactory {
     val actionsVm = vm.actionsVm
     val contentPanel = if (actionsVm != null) {
       EditableComponentFactory.create(cs, textPanel, actionsVm.editVm) { editCs, editVm ->
-        GitLabNoteEditorComponentFactory.create(project, editCs, editVm, createEditActionsConfig(actionsVm, editVm))
+        val editor = GitLabNoteEditorComponentFactory.create(project, editCs, editVm, createEditActionsConfig(actionsVm, editVm))
+        editVm.requestFocus()
+        editor
       }
     }
     else {

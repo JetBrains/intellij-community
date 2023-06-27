@@ -24,12 +24,12 @@ import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ImportUtils;
-import com.siyeh.ipp.base.MutablyNamedIntention;
+import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceAssertLiteralWithAssertEqualsIntention extends MutablyNamedIntention {
+public class ReplaceAssertLiteralWithAssertEqualsIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -37,7 +37,7 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention extends MutablyNamedI
   }
 
   @Override
-  protected String getTextForElement(PsiElement element) {
+  protected String getTextForElement(@NotNull PsiElement element) {
     final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
     final PsiExpressionList argumentList = call.getArgumentList();
     final PsiExpression[] arguments = argumentList.getExpressions();

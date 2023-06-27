@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -36,8 +37,18 @@ public abstract class IntroduceHandlerBase implements RefactoringActionHandler, 
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
     final PsiElement[] elements = ExtractMethodHandler.getElements(file.getProject(), editor, file);
     if (elements != null && elements.length > 0) return true;
-    return acceptLocalVariable() &&
-           PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PsiLocalVariable.class) != null;
+    return acceptLocalVariable() && findLocalVariable(editor, file) != null;
+  }
+
+  @Nullable
+  private static PsiLocalVariable findLocalVariable(@NotNull Editor editor, @NotNull PsiFile file) {
+    SelectionModel selection = editor.getSelectionModel();
+    if (selection.hasSelection()) {
+      return PsiTreeUtil.findElementOfClassAtRange(file, selection.getSelectionStart(), selection.getSelectionEnd(), PsiLocalVariable.class);
+    }
+    else {
+      return PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PsiLocalVariable.class);
+    }
   }
 
   protected boolean acceptLocalVariable() {

@@ -422,7 +422,7 @@ private class AlertDialog(project: Project?,
   private fun wrapToScrollPaneIfNeeded(messageComponent: JEditorPane): JComponent {
     val width450 = JBUI.scale(450)
     val size2D = messageComponent.font.size2D
-    val maximumHeight = (size2D * 9).toInt()
+    val maximumHeight = (size2D * 9.45).toInt()
     val preferred: Dimension = messageComponent.preferredSize
 
     if (preferred.height < maximumHeight) {

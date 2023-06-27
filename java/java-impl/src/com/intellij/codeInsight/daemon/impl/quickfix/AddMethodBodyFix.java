@@ -2,16 +2,12 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.codeInspection.PsiUpdateModCommandAction;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -19,67 +15,47 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public final class AddMethodBodyFix implements IntentionActionWithFixAllOption {
-  private final PsiMethod myMethod;
+public final class AddMethodBodyFix extends PsiUpdateModCommandAction<PsiMethod> {
   private final @Nls String myText;
 
   public AddMethodBodyFix(@NotNull PsiMethod method) {
-    myMethod = method;
+    super(method);
     myText = QuickFixBundle.message("add.method.body.text");
   }
 
   public AddMethodBodyFix(@NotNull PsiMethod method, @NotNull @Nls String text) {
-    myMethod = method;
+    super(method);
     myText = text;
   }
 
   @Override
-  @NotNull
-  public String getText() {
-    return myText;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiMethod method) {
+    if (method.getBody() != null || method.getContainingClass() == null) return null;
+    return Presentation.of(getFamilyName()).withFixAllOption(this);
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return getText();
+    return myText;
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myMethod.isValid() &&
-           myMethod.getBody() == null &&
-           myMethod.getContainingClass() != null &&
-           BaseIntentionAction.canModify(myMethod);
-  }
-
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    PsiUtil.setModifierProperty(myMethod, PsiModifier.ABSTRACT, false);
-    if (Objects.requireNonNull(myMethod.getContainingClass()).isInterface() &&
-        !myMethod.hasModifierProperty(PsiModifier.STATIC) &&
-        !myMethod.hasModifierProperty(PsiModifier.DEFAULT) &&
-        !myMethod.hasModifierProperty(PsiModifier.PRIVATE)) {
-      PsiUtil.setModifierProperty(myMethod, PsiModifier.DEFAULT, true);
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiMethod method, @NotNull ModPsiUpdater updater) {
+    PsiUtil.setModifierProperty(method, PsiModifier.ABSTRACT, false);
+    PsiClass aClass = method.getContainingClass();
+    if (Objects.requireNonNull(aClass).isInterface() &&
+        !method.hasModifierProperty(PsiModifier.STATIC) &&
+        !method.hasModifierProperty(PsiModifier.DEFAULT) &&
+        !method.hasModifierProperty(PsiModifier.PRIVATE)) {
+      PsiUtil.setModifierProperty(method, PsiModifier.DEFAULT, true);
     }
-    CreateFromUsageUtils.setupMethodBody(myMethod);
-    if (myMethod.getContainingFile() == file) {
-      CreateFromUsageUtils.setupEditor(myMethod, editor);
+    CreateFromUsageUtils.setupMethodBody(method, updater);
+    if (method.getContainingFile().getOriginalFile() == context.file()) {
+      PsiCodeBlock body = method.getBody();
+      if (body != null) {
+        CreateFromUsageUtils.setupEditor(body, updater);
+      }
     }
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
-  @Override
-  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
-    return myMethod.getContainingFile();
-  }
-
-  @Override
-  public @NotNull FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new AddMethodBodyFix(PsiTreeUtil.findSameElementInCopy(myMethod, target));
   }
 }

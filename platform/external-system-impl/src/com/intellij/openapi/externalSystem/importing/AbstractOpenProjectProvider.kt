@@ -36,7 +36,16 @@ abstract class AbstractOpenProjectProvider {
     return if (file.isDirectory) file else file.parent
   }
 
-  abstract fun linkToExistingProject(projectFile: VirtualFile, project: Project)
+  @Deprecated("use async method instead")
+  open fun linkToExistingProject(projectFile: VirtualFile, project: Project) {}
+
+  open suspend fun linkToExistingProjectAsync(projectFile: VirtualFile, project: Project) {
+    withContext(Dispatchers.EDT) {
+      blockingContext {
+        linkToExistingProject(projectFile, project)
+      }
+    }
+  }
 
   open suspend fun openProject(projectFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
     LOG.debug("Open ${systemId.readableName} project from $projectFile")
@@ -60,11 +69,7 @@ abstract class AbstractOpenProjectProvider {
         else {
           project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true)
           project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, true)
-          withContext(Dispatchers.EDT) {
-            blockingContext {
-              linkToExistingProject(projectFile, project)
-            }
-          }
+          linkToExistingProjectAsync(projectFile, project)
           ProjectUtil.updateLastProjectLocation(nioPath)
         }
         true
@@ -74,13 +79,21 @@ abstract class AbstractOpenProjectProvider {
   }
 
   fun linkToExistingProject(projectFilePath: String, project: Project) {
+    linkToExistingProject(getProjectFile(projectFilePath), project)
+  }
+
+  suspend fun linkToExistingProjectAsync(projectFilePath: String, project: Project) {
+    linkToExistingProjectAsync(getProjectFile(projectFilePath), project)
+  }
+
+  protected fun getProjectFile(projectFilePath: String): VirtualFile {
     val localFileSystem = LocalFileSystem.getInstance()
     val projectFile = localFileSystem.refreshAndFindFileByPath(projectFilePath)
     if (projectFile == null) {
       val shortPath = getPresentablePath(projectFilePath)
       throw IllegalArgumentException(ExternalSystemBundle.message("error.project.does.not.exist", systemId.readableName, shortPath))
     }
-    linkToExistingProject(projectFile, project)
+    return projectFile
   }
 
   private fun focusOnOpenedSameProject(projectDirectory: Path): Boolean {

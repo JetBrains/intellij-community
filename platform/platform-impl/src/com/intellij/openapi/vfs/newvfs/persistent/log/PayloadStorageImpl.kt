@@ -37,6 +37,8 @@ class PayloadStorageImpl(
     position = SkipListAdvancingPositionTracker(lastSafeSize ?: 0L)
   }
 
+  // TODO small payload (e.g. <= 7 bytes) can be inlined into a PayloadRef and this will eliminate IO for them. This should considerably
+  //      increase write performance for attributes (there are lots of small __index_stamps__ attrs)
   override fun writePayload(sizeBytes: Long, body: OutputStream.() -> Unit): PayloadRef {
     assert(sizeBytes >= 0)
     if (sizeBytes == 0L) {

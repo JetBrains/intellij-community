@@ -7,5 +7,5 @@ interface SearchFieldActionsContributor {
   /**
    * Creates actions that are placed on the right side of SE search input field
    */
-  fun createRightActions(pattern: String, onChanged: Runnable): List<AnAction>
+  fun createRightActions(onChanged: Runnable): List<AnAction>
 }

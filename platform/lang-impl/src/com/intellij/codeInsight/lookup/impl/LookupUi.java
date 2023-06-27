@@ -179,7 +179,7 @@ class LookupUi {
     if (item != null && item.isValid()) {
       ReadAction.nonBlocking(() -> myLookup.getActionsFor(item))
         .expireWhen(() -> !item.isValid() || myHintAlarm.isDisposed())
-        .finishOnUiThread(ModalityState.NON_MODAL, actions -> {
+        .finishOnUiThread(ModalityState.nonModal(), actions -> {
           if (!actions.isEmpty()) {
             myHintAlarm.addRequest(() -> {
               if (ShowHideIntentionIconLookupAction.shouldShowLookupHint() &&

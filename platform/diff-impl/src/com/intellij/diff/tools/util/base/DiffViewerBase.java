@@ -132,7 +132,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
 
     abortRediff();
 
-    if (getComponent().isShowing()) {
+    if (UIUtil.isShowing(getComponent())) {
       myTaskAlarm.addRequest(this::rediff, ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
     }
   }

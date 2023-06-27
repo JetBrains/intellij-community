@@ -75,7 +75,7 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection implem
     public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
       ReadAction.nonBlocking(() -> prepareDataForFix(element))
-        .finishOnUiThread(ModalityState.NON_MODAL, data -> applyInWriteCommand(project, List.of(element), () -> data.apply()))
+        .finishOnUiThread(ModalityState.nonModal(), data -> applyInWriteCommand(project, List.of(element), () -> data.apply()))
         .submit(AppExecutorUtil.getAppExecutorService());
     }
 
@@ -91,7 +91,7 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection implem
                          @Nullable Runnable refreshViews) {
       List<PsiElement> elements = Stream.of(descriptors).map(d -> ((ProblemDescriptor)d).getPsiElement()).toList();
       ReadAction.nonBlocking(() -> ContainerUtil.map(elements, WeakenVisibilityFix::prepareDataForFix))
-        .finishOnUiThread(ModalityState.NON_MODAL, data -> {
+        .finishOnUiThread(ModalityState.nonModal(), data -> {
           applyInWriteCommand(project, elements, () -> {
             for (FixData fixData : data) {
               fixData.apply();

@@ -171,25 +171,25 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
 
     @Override
     public void onReferencesBuild(RefElement refElement) {
-      if (refElement instanceof RefClass) {
-        UClass uClass = ((RefClass)refElement).getUastElement();
+      if (refElement instanceof RefClass refClass) {
+        UClass uClass = refClass.getUastElement();
         if (uClass != null) {
           for (UClassInitializer initializer : uClass.getInitializers()) {
             findUnusedLocalVariables(initializer.getUastBody(), refElement);
           }
         }
       }
-      else if (refElement instanceof RefMethod) {
-        UDeclaration element = ((RefMethod)refElement).getUastElement();
-        if (element instanceof UMethod) {
-          UExpression body = ((UMethod)element).getUastBody();
+      else if (refElement instanceof RefMethod refMethod) {
+        UMethod element = refMethod.getUastElement();
+        if (element != null) {
+          UExpression body = element.getUastBody();
           if (body != null) {
             findUnusedLocalVariables(body, refElement);
           }
         }
       }
-      else if (refElement instanceof RefField) {
-        UField field = ((RefField)refElement).getUastElement();
+      else if (refElement instanceof RefField refField) {
+        UField field = refField.getUastElement();
         if (field != null) {
           UExpression initializer = field.getUastInitializer();
           findUnusedLocalVariables(initializer, refElement);

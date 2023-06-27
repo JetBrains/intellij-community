@@ -13,7 +13,11 @@ import org.jetbrains.idea.maven.model.MavenModel;
 import java.io.File;
 import java.nio.file.Path;
 import java.rmi.RemoteException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class AbstractMavenServerConnector implements MavenServerConnector {
 
@@ -22,7 +26,7 @@ public abstract class AbstractMavenServerConnector implements MavenServerConnect
   protected final Project myProject;
   protected @NotNull final MavenDistribution myDistribution;
   protected final Sdk myJdk;
-  protected final Set<String> myMultimoduleDirectories;
+  protected final Set<String> myMultimoduleDirectories = ConcurrentHashMap.newKeySet();
   private final Object embedderLock = new Object();
 
   protected final String myVmOptions;
@@ -36,7 +40,6 @@ public abstract class AbstractMavenServerConnector implements MavenServerConnect
     myDistribution = mavenDistribution;
     myVmOptions = vmOptions;
     myJdk = jdk;
-    myMultimoduleDirectories = new LinkedHashSet<>();
     myMultimoduleDirectories.add(multimoduleDirectory);
   }
 

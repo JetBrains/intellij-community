@@ -9,18 +9,18 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
+import org.jetbrains.uast.LazyParentUIdentifier
 import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.toUElement
 
 @ApiStatus.Internal
 class KotlinUIdentifier(
-    javaPsiSupplier: () -> PsiElement?,
+    private val javaPsiSupplier: () -> PsiElement?,
     override val sourcePsi: PsiElement?,
     givenParent: UElement?
-) : UIdentifier(sourcePsi, givenParent) {
-
-    override val javaPsi: PsiElement? by lz(javaPsiSupplier) // don't know any real need to call it in production
+) : LazyParentUIdentifier(sourcePsi, givenParent) {
+    override val javaPsi: PsiElement?
+        get() = javaPsiSupplier() // don't know any real need to call it in production
 
     override val psi: PsiElement?
         get() = javaPsi ?: sourcePsi
@@ -41,11 +41,10 @@ class KotlinUIdentifier(
         return false
     }
 
-    override val uastParent: UElement? by lz {
-        if (givenParent != null) return@lz givenParent
-        val parent = sourcePsi?.parent ?: return@lz null
+    override fun computeParent(): UElement? {
+        val parent = sourcePsi?.parent ?: return null
 
-        return@lz if (parent is KDocName && parent.getQualifier() != null) // e.g. for UElement in org.jetbrains.uast.UElement
+        return if (parent is KDocName && parent.getQualifier() != null) // e.g. for UElement in org.jetbrains.uast.UElement
             createKDocNameSimpleNameReference(parentKDocName = parent, givenParent = null)
         else
             getIdentifierParentForCall(parent) ?: parent.toUElement()
@@ -56,19 +55,29 @@ class KotlinUIdentifier(
         if (parentParent is KtCallElement && parentParent.calleeExpression == parent) { // method identifiers in calls
             return parentParent.toUElement()
         }
-        return generateSequence(parent) { it.parent }.take(3)
-            .mapNotNull { (it as? KtTypeReference)?.parentAs<KtConstructorCalleeExpression>() }
-            .mapNotNull {
-                val entry = it.parentAs<KtSuperTypeCallEntry>()
-                if (entry != null)
-                    (entry.getParentObjectLiteralExpression()?.toUElement() as? KotlinUObjectLiteralExpression)?.constructorCall
-                        ?: entry.toUElement()
-                else
-                    it.parentAs<KtAnnotationEntry>()?.toUElement()
-            }
+
+        return generateSequence(parent, parentsSequence)
+            .take(3)
+            .mapNotNull(findConstructorCalleeMapper)
+            .mapNotNull(superCallOrAnnotationMapper)
             .firstOrNull()
     }
 
     constructor(javaPsi: PsiElement?, sourcePsi: PsiElement?, uastParent: UElement?) : this({ javaPsi }, sourcePsi, uastParent)
     constructor(sourcePsi: PsiElement?, uastParent: UElement?) : this({ null }, sourcePsi, uastParent)
+
+    private companion object {
+        val parentsSequence: (PsiElement) -> PsiElement? = { it.parent }
+        val findConstructorCalleeMapper: (PsiElement) -> KtConstructorCalleeExpression? = {
+            (it as? KtTypeReference)?.parentAs<KtConstructorCalleeExpression>()
+        }
+        val superCallOrAnnotationMapper: (KtConstructorCalleeExpression) -> UElement? = {
+            val entry = it.parentAs<KtSuperTypeCallEntry>()
+            if (entry != null)
+                (entry.getParentObjectLiteralExpression()?.toUElement() as? KotlinUObjectLiteralExpression)?.constructorCall
+                    ?: entry.toUElement()
+            else
+                it.parentAs<KtAnnotationEntry>()?.toUElement()
+        }
+    }
 }

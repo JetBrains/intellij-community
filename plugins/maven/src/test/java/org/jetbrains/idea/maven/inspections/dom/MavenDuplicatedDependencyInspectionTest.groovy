@@ -122,7 +122,7 @@ class MavenDuplicatedDependencyInspectionTest extends MavenDomWithIndicesTestCas
 
     importProject()
 
-    checkHighlighting(myProjectPom, true, false, true)
+    checkHighlighting()
   }
 
   @Test 
@@ -171,7 +171,7 @@ class MavenDuplicatedDependencyInspectionTest extends MavenDomWithIndicesTestCas
 
     importProjectWithErrors()
 
-    checkHighlighting(myProjectPom, true, false, true)
+    checkHighlighting()
   }
 
   @Test 
@@ -217,7 +217,7 @@ class MavenDuplicatedDependencyInspectionTest extends MavenDomWithIndicesTestCas
   </dependencies>
 """)
 
-    checkHighlighting(myProjectPom, true, false, true)
+    checkHighlighting()
   }
 
   @Test 

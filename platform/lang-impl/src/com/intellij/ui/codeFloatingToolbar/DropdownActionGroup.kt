@@ -12,11 +12,22 @@ class DropdownActionGroup: DefaultActionGroup(), CustomComponentAction {
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     return object: ActionButtonWithText(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
       override fun actionPerformed(event: AnActionEvent) {
-        val popup = PopupFactoryImpl.getInstance().createActionGroupPopup(null, this@DropdownActionGroup,
-                                                                          event.dataContext, null, true)
+        val group = this@DropdownActionGroup
+        val popupPlace = ActionPlaces.getPopupPlace(place)
+        val context = event.dataContext
+        val popup = PopupFactoryImpl.getInstance().createActionGroupPopup(null, group, context, null, true, popupPlace)
         popup.setRequestFocus(false)
         popup.showUnderneathOf(this)
       }
     }
+  }
+
+  override fun update(e: AnActionEvent) {
+    val activeActions = ActionGroupUtil.getActiveActions(this, e)
+    e.presentation.isEnabled = activeActions.isNotEmpty
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.facet;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -79,7 +79,7 @@ public class PythonSdkTableListener implements ProjectJdkTable.Listener {
         libraryTableModel.removeLibrary(library);
       }
       libraryTableModel.commit();
-    }), ModalityState.NON_MODAL);
+    }), ModalityState.nonModal());
   }
 
   private static void renameLibrary(final Sdk sdk, final String previousName) {
@@ -93,6 +93,6 @@ public class PythonSdkTableListener implements ProjectJdkTable.Listener {
         model.commit();
       }
       libraryTableModel.commit();
-    }), ModalityState.NON_MODAL);
+    }), ModalityState.nonModal());
   }
 }

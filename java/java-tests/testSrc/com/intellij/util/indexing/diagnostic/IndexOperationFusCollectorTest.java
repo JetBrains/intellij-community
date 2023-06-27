@@ -3,7 +3,7 @@ package com.intellij.util.indexing.diagnostic;
 
 import com.intellij.testFramework.LightPlatform4TestCase;
 import com.intellij.util.indexing.IndexId;
-import com.intellij.util.indexing.diagnostic.IndexOperationFUS.IndexOperationAggregatesCollector;
+import com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.IndexOperationAggregatesCollector;
 import org.junit.After;
 import org.junit.Test;
 
@@ -11,13 +11,13 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashSet;
 
-import static com.intellij.util.indexing.diagnostic.IndexOperationFUS.IndexOperationFusCollector.*;
-import static com.intellij.util.indexing.diagnostic.IndexOperationFUS.MAX_LOOKUP_DEPTH;
+import static com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.IndexOperationFusCollector.*;
+import static com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.MAX_LOOKUP_DEPTH;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 /**
- * Tests for {@linkplain IndexOperationFUS.IndexOperationFusCollector}
+ * Tests for {@linkplain IndexLookupTimingsReporting.IndexOperationFusCollector}
  */
 public class IndexOperationFusCollectorTest extends LightPlatform4TestCase/*JavaCodeInsightFixtureTestCase*/ {
 
@@ -108,7 +108,7 @@ public class IndexOperationFusCollectorTest extends LightPlatform4TestCase/*Java
   @Test
   public void reportingDontThrowExceptionIfStartedCalledMoreThanMaxDepth_without_THROW_ON_INCORRECT_USAGE() {
     assumeFalse("Check only if !THROW_ON_INCORRECT_USAGE",
-                IndexOperationFUS.THROW_ON_INCORRECT_USAGE);
+                IndexLookupTimingsReporting.THROW_ON_INCORRECT_USAGE);
     //check for 'allKeys' only because all them have same superclass
     try {
       for (int i = 0; i <= MAX_LOOKUP_DEPTH; i++) {
@@ -125,7 +125,7 @@ public class IndexOperationFusCollectorTest extends LightPlatform4TestCase/*Java
   @Test
   public void reportingDontThrowAnythingIfReportingMethodsCalledWithoutStartedFirst_without_THROW_ON_INCORRECT_USAGE() {
     assumeFalse("Check only if !THROW_ON_INCORRECT_USAGE",
-                IndexOperationFUS.THROW_ON_INCORRECT_USAGE);
+                IndexLookupTimingsReporting.THROW_ON_INCORRECT_USAGE);
     //check for 'allKeys' only because all them have same superclass
     try (var trace = TRACE_OF_ALL_KEYS_LOOKUP.get()) {
       trace.withProject(null);
@@ -140,7 +140,7 @@ public class IndexOperationFusCollectorTest extends LightPlatform4TestCase/*Java
   @Test
   public void lookupFinishedThrowExceptionIfCalledWithoutStartedFirst_with_THROW_ON_INCORRECT_USAGE() {
     assumeTrue("Check only if THROW_ON_INCORRECT_USAGE",
-               IndexOperationFUS.THROW_ON_INCORRECT_USAGE);
+               IndexLookupTimingsReporting.THROW_ON_INCORRECT_USAGE);
     //check for 'allKeys' only because all them have same superclass
     var trace = TRACE_OF_ALL_KEYS_LOOKUP.get();
     boolean finishWithoutStartFails;

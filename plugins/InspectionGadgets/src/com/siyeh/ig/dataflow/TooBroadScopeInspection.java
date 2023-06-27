@@ -17,9 +17,11 @@ package com.siyeh.ig.dataflow;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -33,7 +35,6 @@ import com.intellij.util.SmartList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NonNls;
@@ -42,7 +43,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class TooBroadScopeInspection extends BaseInspection {
 
@@ -199,7 +201,7 @@ public class TooBroadScopeInspection extends BaseInspection {
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     final PsiVariable variable = (PsiVariable)infos[0];
     return new TooBroadScopeInspectionFix(variable.getName());
   }
@@ -337,7 +339,7 @@ public class TooBroadScopeInspection extends BaseInspection {
       registerVariableError(variable, variable);
     }
 
-    private boolean isAssignmentToVariable(PsiElement element, PsiLocalVariable variable) {
+    private static boolean isAssignmentToVariable(PsiElement element, PsiLocalVariable variable) {
       if (!(element instanceof PsiExpressionStatement expressionStatement)) {
         return false;
       }
@@ -358,7 +360,7 @@ public class TooBroadScopeInspection extends BaseInspection {
     }
   }
 
-  private class TooBroadScopeInspectionFix extends InspectionGadgetsFix {
+  private class TooBroadScopeInspectionFix extends PsiUpdateModCommandQuickFix {
 
     private final String variableName;
 
@@ -379,8 +381,7 @@ public class TooBroadScopeInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement variableIdentifier = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement variableIdentifier, @NotNull ModPsiUpdater updater) {
       if (!(variableIdentifier instanceof PsiIdentifier)) {
         return;
       }
@@ -451,12 +452,10 @@ public class TooBroadScopeInspection extends BaseInspection {
       newDeclaration = codeStyleManager.reformat(newDeclaration);
       removeOldVariable(variable, tracker);
       tracker.insertCommentsBefore(newDeclaration);
-      if (isOnTheFly()) {
-        HighlightUtils.highlightElement(newDeclaration);
-      }
+      updater.highlight(newDeclaration);
     }
 
-    private void removeOldVariable(@NotNull PsiVariable variable, CommentTracker tracker) {
+    private static void removeOldVariable(@NotNull PsiVariable variable, CommentTracker tracker) {
       final PsiDeclarationStatement declaration = (PsiDeclarationStatement)variable.getParent();
       if (declaration == null) {
         return;
@@ -470,9 +469,9 @@ public class TooBroadScopeInspection extends BaseInspection {
       }
     }
 
-    private PsiDeclarationStatement createNewDeclaration(@NotNull PsiVariable variable,
-                                                         @Nullable PsiExpression initializer,
-                                                         CommentTracker tracker) {
+    private static PsiDeclarationStatement createNewDeclaration(@NotNull PsiVariable variable,
+                                                                @Nullable PsiExpression initializer,
+                                                                CommentTracker tracker) {
       final Project project = variable.getProject();
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
       final PsiElementFactory factory = psiFacade.getElementFactory();

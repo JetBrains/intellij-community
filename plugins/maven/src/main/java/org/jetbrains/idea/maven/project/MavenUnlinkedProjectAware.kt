@@ -10,6 +10,10 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.CollectionFactory
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
 
@@ -32,8 +36,18 @@ internal class MavenUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
     mavenProjectsManager.addProjectsTreeListener(ProjectsTreeListener(project, listener), parentDisposable)
   }
 
+  @Deprecated("use async method instead")
   override fun linkAndLoadProject(project: Project, externalProjectPath: String) {
-    MavenOpenProjectProvider().linkToExistingProject(externalProjectPath, project)
+    val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
+    cs.launch {
+      withContext(Dispatchers.Default) {
+        linkAndLoadProjectAsync(project, externalProjectPath)
+      }
+    }
+  }
+
+  override suspend fun linkAndLoadProjectAsync(project: Project, externalProjectPath: String) {
+    MavenOpenProjectProvider().linkToExistingProjectAsync(externalProjectPath, project)
   }
 
   private class ProjectsTreeListener(project: Project, val listener: ExternalSystemProjectLinkListener) : MavenProjectsTree.Listener {

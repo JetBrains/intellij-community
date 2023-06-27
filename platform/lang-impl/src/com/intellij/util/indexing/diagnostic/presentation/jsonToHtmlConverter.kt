@@ -389,10 +389,10 @@ private fun TR.printIndexingActivityRow(times: JsonProjectIndexingActivityHistor
       td(NOT_APPLICABLE)
     }
     is JsonProjectDumbIndexingFileCount -> {
-      if (IndexDiagnosticDumper.shouldPrintScanningRefreshedFilesInformationDuringIndexingActionInAggregateHtml) {
-        td(fileCount.numberOfRefreshedScannedFiles.toString())
-        td(fileCount.numberOfRefreshedFilesIndexedByInfrastructureExtensionsDuringScan.toString())
-        td(fileCount.numberOfRefreshedFilesScheduledForIndexingAfterScan.toString())
+      if (IndexDiagnosticDumper.shouldPrintInformationAboutChangedDuringIndexingActionFilesInAggregateHtml) {
+        td(fileCount.numberOfChangedDuringIndexingFiles.toString())
+        td(NOT_APPLICABLE)
+        td(fileCount.numberOfChangedDuringIndexingFiles.toString())
       }
       else {
         td(NOT_APPLICABLE)
@@ -400,11 +400,11 @@ private fun TR.printIndexingActivityRow(times: JsonProjectIndexingActivityHistor
         td(NOT_APPLICABLE)
       }
       td(fileCount.numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage.toString())
-      if (fileCount.numberOfRefreshedFilesScheduledForIndexingAfterScan > 0) {
+      if (fileCount.numberOfChangedDuringIndexingFiles > 0) {
         td {
           text(fileCount.numberOfFilesIndexedWithLoadingContent.toString())
           br()
-          text("(incl. ${fileCount.numberOfRefreshedFilesScheduledForIndexingAfterScan} refreshed)")
+          text("(incl. ${fileCount.numberOfChangedDuringIndexingFiles} changed during indexing)")
         }
       }
       else {
@@ -491,7 +491,6 @@ private const val SECTION_STATS_PER_INDEXER_TITLE = "Statistics per indexer"
 private const val SECTION_SCANNING_ID = "id-scanning"
 private const val SECTION_SCANNING_TITLE = "Scanning"
 private const val SECTION_SCANNING_PER_PROVIDER_TITLE = "Scanning per provider"
-private const val SECTION_SCANNING_OF_REFRESHED_FILES_TITLE = "Scanning of refreshed files"
 
 private const val SECTION_INDEXING_ID = "id-indexing"
 private const val SECTION_INDEXING_TITLE = "Indexing"
@@ -1250,13 +1249,6 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
               text(SECTION_INDEXING_TITLE)
             }
           }
-          if (scanningStatisticsOfRefreshedFiles.numberOfScannedFiles != 0) {
-            li {
-              a("#$SECTION_SCANNING_ID") {
-                text(SECTION_SCANNING_OF_REFRESHED_FILES_TITLE)
-              }
-            }
-          }
         }
         hr("solid")
         ul {
@@ -1325,7 +1317,7 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
                   td(String.format("%.2f", visibleTimeToAllThreadTimeRatio))
                 }
               }
-              tr { td("Scanning time for refreshed files"); td(times.refreshedFilesScanTime.presentableDuration()) }
+              tr { td("Time of retrieving files changed during indexing"); td(times.retrievingChangedDuringIndexingFilesTime.presentableDuration()) }
               tr { td("Content loading time"); td(times.contentLoadingVisibleTime.presentableDuration()) }
               tr {
                 td("Index writing time")
@@ -1347,6 +1339,10 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
               tr {
                 td("Number of too large for indexing files")
                 td(fileProviderStatistics.sumOf { it.numberOfTooLargeForIndexingFiles }.toString())
+              }
+              tr {
+                td("Number of files changed during indexing")
+                td(statisticsOfChangedDuringIndexingFiles.numberOfFiles.toString())
               }
             }
           }
@@ -1399,7 +1395,7 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
                 th("Total processing time (% of total processing time)")
                 th("Content loading time (% of total content loading time)")
                 th("Total files size")
-                th("Total processing speed")
+                th("Total processing speed (relative to CPU time)")
                 th("The biggest contributors")
               }
             }
@@ -1448,7 +1444,7 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
                 th("Part of total indexing time")
                 th("Total number of files indexed by $INDEX_INFRA_EXTENSIONS")
                 th("Total files size")
-                th("Indexing speed")
+                th("Indexing speed (relative to CPU time)")
                 th("Snapshot input mapping statistics")
               }
             }
@@ -1515,74 +1511,6 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
                         }
                       )
                     }
-                  }
-                }
-              }
-            }
-          }
-        }
-
-        if (scanningStatisticsOfRefreshedFiles.numberOfScannedFiles != 0) {
-          div(id = SECTION_SCANNING_ID) {
-            table(classes = "table-with-margin narrow-activity-table") {
-              thead {
-                tr {
-                  th(SECTION_SCANNING_OF_REFRESHED_FILES_TITLE) { colSpan = "2" }
-                }
-              }
-              tbody {
-                val classes = getMinorDataClass(scanningStatisticsOfRefreshedFiles.scanningTime.milliseconds < 100 &&
-                                                scanningStatisticsOfRefreshedFiles.numberOfScannedFiles < 1000)
-                tr(classes = classes) {
-                  td("Number of scanned files"); td(scanningStatisticsOfRefreshedFiles.numberOfScannedFiles.toString())
-                }
-                tr(classes = classes) {
-                  td("Number of files scheduled for indexing"); td(scanningStatisticsOfRefreshedFiles.numberOfFilesForIndexing.toString())
-                }
-                tr(classes = classes) {
-                  td("Number of files fully indexed by $INDEX_INFRA_EXTENSIONS"); td(
-                  scanningStatisticsOfRefreshedFiles.numberOfFilesFullyIndexedByInfrastructureExtensions.toString())
-                }
-                tr(classes = classes) {
-                  td("Number of double-scanned skipped files"); td(scanningStatisticsOfRefreshedFiles.numberOfSkippedFiles.toString())
-                }
-                tr(classes = classes) {
-                  td("Total time of getting files' statuses (part of scanning)")
-                  td(scanningStatisticsOfRefreshedFiles.statusTime.presentableDuration())
-                }
-                tr(classes = classes) {
-                  td("Scanning time"); td(scanningStatisticsOfRefreshedFiles.scanningTime.presentableDuration())
-                }
-                tr(classes = classes) {
-                  td("Time processing up-to-date files")
-                  td(scanningStatisticsOfRefreshedFiles.timeProcessingUpToDateFiles.presentableDuration())
-                }
-                tr(classes = classes) {
-                  td("Time updating content-less indexes")
-                  td(scanningStatisticsOfRefreshedFiles.timeUpdatingContentLessIndexes.presentableDuration())
-                }
-                tr(classes = classes) {
-                  td("Time indexing without content")
-                  td(scanningStatisticsOfRefreshedFiles.timeIndexingWithoutContentViaInfrastructureExtension.presentableDuration())
-                }
-                if (scanningStatisticsOfRefreshedFiles.roots.isNotEmpty()) {
-                  tr(classes = classes) {
-                    td("Roots");td { textArea(scanningStatisticsOfRefreshedFiles.roots.sorted().joinToString("\n")) }
-                  }
-                }
-                if (scanningStatisticsOfRefreshedFiles.scannedFiles.orEmpty().isNotEmpty()) {
-                  tr(classes = classes) {
-                    td("Scanned files"); td {
-                    textArea(
-                      scanningStatisticsOfRefreshedFiles.scannedFiles.orEmpty().joinToString("\n") { file ->
-                        file.path.presentablePath + when {
-                          file.wasFullyIndexedByInfrastructureExtension -> " [by infrastructure]"
-                          file.isUpToDate -> " [up-to-date]"
-                          else -> ""
-                        }
-                      }
-                    )
-                  }
                   }
                 }
               }

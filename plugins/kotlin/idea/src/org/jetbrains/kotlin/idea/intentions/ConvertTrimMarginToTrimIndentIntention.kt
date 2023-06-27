@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
-import org.jetbrains.kotlin.idea.intentions.ConvertTrimIndentToTrimMarginIntention.Companion.calculateIndent
-import org.jetbrains.kotlin.idea.intentions.ConvertTrimIndentToTrimMarginIntention.Companion.isStartOfLine
-import org.jetbrains.kotlin.idea.intentions.ConvertTrimIndentToTrimMarginIntention.Companion.isSurroundedByLineBreaksOrBlanks
+import org.jetbrains.kotlin.idea.intentions.ConvertTrimIndentToTrimMarginIntention.Holder.calculateIndent
+import org.jetbrains.kotlin.idea.intentions.ConvertTrimIndentToTrimMarginIntention.Holder.isStartOfLine
+import org.jetbrains.kotlin.idea.intentions.ConvertTrimIndentToTrimMarginIntention.Holder.isSurroundedByLineBreaksOrBlanks
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtLiteralStringTemplateEntry

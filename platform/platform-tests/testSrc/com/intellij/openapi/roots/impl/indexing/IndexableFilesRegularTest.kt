@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl.indexing
 
 import com.intellij.openapi.application.runWriteAction
@@ -16,10 +16,12 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.UsageSearchContext
 import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexEx
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.IndexableSetContributor
+import com.intellij.util.indexing.roots.IndexableEntityProviderMethods
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -385,6 +387,9 @@ class IndexableFilesRegularTest : IndexableFilesBaseTest() {
     }
     val fileBasedIndexEx = FileBasedIndex.getInstance() as FileBasedIndexEx
     val providers = fileBasedIndexEx.getIndexableFilesProviders(project)
-    UsefulTestCase.assertSize(1, providers)
+    assertSameElements(providers.map { it.origin },
+                       (IndexableEntityProviderMethods.createModuleContentIterators(module) +
+                        IndexableEntityProviderMethods.createModuleContentIterators(otherModule) +
+                        IndexableEntityProviderMethods.createLibraryIterators("libraryName", project)).map { it.origin })
   }
 }

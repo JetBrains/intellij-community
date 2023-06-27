@@ -17,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
 
 /**
  * Command to execute find usages with popup
@@ -32,7 +33,7 @@ class FindUsagesCommand(text: String, line: Int) : PerformanceCommandCoroutineAd
   @Suppress("TestOnlyProblems")
   override suspend fun doExecute(context: PlaybackContext) {
     val options = FindUsagesArguments()
-    Args.parse(options, extractCommandArgument(PREFIX).split(" ").toTypedArray())
+    Args.parse(options, extractCommandArgument(PREFIX).split("|").flatMap { it.split(" ", limit= 2) }.toTypedArray())
 
     val position = options.position
     val elementName = options.expectedName
@@ -41,6 +42,7 @@ class FindUsagesCommand(text: String, line: Int) : PerformanceCommandCoroutineAd
       result.exceptionally { e ->
         throw Exception("fail to go to element $elementName", e)
       }
+      result.get(30, TimeUnit.SECONDS)
     }
 
     val currentOTContext = Context.current()

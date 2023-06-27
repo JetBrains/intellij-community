@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
@@ -233,8 +234,13 @@ public class GistStorageImpl extends GistStorage {
             else {
               Path gistPath = dedicatedGistFilePath(file, gistRecord.externalFileSuffix);
               if (!Files.exists(gistPath)) {
+                if (VfsLog.LOG_VFS_OPERATIONS_ENABLED) {
+                  // maybe there was a recovery: gists were lost, but attributes were recovered
+                  LOG.warn("Gist file [" + gistPath + "] doesn't exist, probably a vfs recovery has happened recently?");
+                  return GistData.empty();
+                }
                 //looks like data corruption: if gist value was indeed null, we would have stored it as VALUE_KIND_NULL
-                throw new IOException("Gist file [" + gistPath + "] doesn't exists -> looks like data corruption?");
+                throw new IOException("Gist file [" + gistPath + "] doesn't exist -> looks like data corruption?");
               }
               try (DataInputStream gistStream = new DataInputStream(Files.newInputStream(gistPath, READ))) {
                 return GistData.valid(

@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -46,7 +47,7 @@ public class SuspiciousReturnByteInputStreamInspection extends AbstractBaseJavaL
     };
   }
 
-  private static class ConvertToUnsignedByteFix implements LocalQuickFix {
+  private static class ConvertToUnsignedByteFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     public @NotNull String getFamilyName() {
@@ -54,8 +55,8 @@ public class SuspiciousReturnByteInputStreamInspection extends AbstractBaseJavaL
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      if (!(descriptor.getPsiElement() instanceof PsiExpression expression)) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      if (!(element instanceof PsiExpression expression)) {
         return;
       }
       CommentTracker tracker = new CommentTracker();

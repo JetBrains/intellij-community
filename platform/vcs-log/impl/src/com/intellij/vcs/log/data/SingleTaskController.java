@@ -217,7 +217,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
                             ApplicationManager.getApplication().isUnitTestMode();
       try {
         int timeout;
-        if (longTimeOut) timeout = 1000;
+        if (longTimeOut) timeout = disposeLongTimeout();
         else timeout = 20;
 
         task.waitFor(timeout, TimeUnit.MILLISECONDS);
@@ -231,6 +231,10 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
         if (longTimeOut) LOG.warn(formMessage("Wait time out "), e);
       }
     }
+  }
+
+  protected int disposeLongTimeout() {
+    return 1000;
   }
 
   public interface SingleTask {

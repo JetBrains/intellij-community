@@ -12,6 +12,7 @@
       "groupByTestProduction.svg": "actions/groupByTestProduction.svg",
       "inSelection.svg": "actions/inSelection.svg",
       "install.svg": "actions/install.svg",
+      "lightning.svg": "actions/lightning.svg",
       "moveToBottomLeft.svg": "actions/moveToBottomLeft.svg",
       "moveToBottomRight.svg": "actions/moveToBottomRight.svg",
       "moveToButton.svg": "actions/move-to-button.svg",
@@ -26,6 +27,7 @@
       "playLast.svg": "actions/play_last.svg",
       "profileCPU.svg": "actions/profileCPU.svg",
       "projectDirectory.svg": "actions/projectDirectory.svg",
+      "runAll.svg": "actions/runAll.svg",
       "showReadAccess.svg": "actions/showReadAccess.svg",
       "showWriteAccess.svg": "actions/showWriteAccess.svg",
       "swapPanels.svg": "actions/swapPanels.svg",
@@ -397,6 +399,7 @@
     },
     "ide": {
       "configFile.svg": "ide/configFile.svg",
+      "externalLink.svg": "ide/external_link_arrow.svg",
       "feedbackRating.svg": "ide/feedbackRating.svg",
       "feedbackRatingFocused.svg": "ide/feedbackRatingFocused.svg",
       "feedbackRatingFocusedOn.svg": "ide/feedbackRatingFocusedOn.svg",
@@ -533,7 +536,10 @@
         "nodes/newParameter.svg",
         "nodes/parameter.svg"
       ],
-      "plugin.svg": "nodes/plugin.svg",
+      "plugin.svg": [
+        "nodes/plugin.svg",
+        "nodes/pluginobsolete.svg"
+      ],
       "ppWeb.svg": "nodes/ppWeb.svg",
       "property.svg": [
         "nodes/property.svg",
@@ -708,7 +714,10 @@
       "todo.svg": "toolwindows/toolWindowTodo.svg",
       "toolWindowVariableView.svg": "toolwindows/toolWindowVariableView.svg",
       "vcs.svg": "toolwindows/toolWindowChanges.svg",
-      "web.svg": "toolwindows/webToolWindow.svg"
+      "web.svg": [
+        "toolwindows/webToolWindow.svg",
+        "general/web.svg"
+      ]
     },
     "vcs": {
       "branch.svg": "vcs/branch.svg",

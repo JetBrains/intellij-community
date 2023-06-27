@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow
 
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
 import com.intellij.collaboration.ui.toolwindow.ReviewListTabComponentDescriptor
@@ -23,11 +24,11 @@ import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModelImpl
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
+import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import org.jetbrains.plugins.gitlab.mergerequest.diff.ChangesSelection
-import org.jetbrains.plugins.gitlab.mergerequest.diff.ChangesSelection.Companion.toSelection
-import org.jetbrains.plugins.gitlab.mergerequest.diff.isEqual
+import org.jetbrains.plugins.gitlab.mergerequest.diff.selectedChange
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContext
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContextHolder
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestDetailsComponentFactory
@@ -88,40 +89,43 @@ internal class GitLabReviewTabComponentFactory(
 
     cs.launch(Dispatchers.EDT, start = CoroutineStart.UNDISPATCHED) {
       detailsVmFlow.flatMapLatest {
-        it.detailsInfoVm.showTimelineRequests
+        it.showTimelineRequests
       }.collect {
         ctx.filesController.openTimeline(reviewId, true)
       }
     }
 
     val diffBridge = ctx.getDiffBridge(reviewId)
-    cs.launch(Dispatchers.EDT, start = CoroutineStart.UNDISPATCHED) {
-      detailsVmFlow.flatMapLatest {
-        it.changesVm.userChangesSelection
-      }.collectLatest {
-        diffBridge.setChanges(it.toSelection())
-      }
-    }
 
-    cs.launch(Dispatchers.EDT, start = CoroutineStart.UNDISPATCHED) {
+    cs.launchNow(Dispatchers.EDT) {
       detailsVmFlow.collectLatest { detailsVm ->
-        diffBridge.displayedChanges.collectLatest { changes ->
-          if (changes !is ChangesSelection.Multiple) {
-            diffBridge.selectedChange.distinctUntilChanged { old, new ->
-              if (old == null || new == null) false else old.isEqual(new)
-            }.filterNotNull().collect {
-              detailsVm.changesVm.selectChange(it)
+        val changesVm = detailsVm.changesVm
+        val changeListVms = changesVm.changeListVm.mapNotNull { it.getOrNull() }
+
+        launchNow {
+          changeListVms.flatMapLatest {
+            it.changesSelection
+          }.filterNotNull().collectLatest {
+            diffBridge.setChanges(it)
+          }
+        }
+
+        launchNow {
+          diffBridge.displayedChanges.mapNotNull {
+            (it as? ChangesSelection.Precise)?.selectedChange
+          }.collect {
+            changesVm.selectChange(it)
+          }
+        }
+
+        launchNow {
+          changeListVms.collectLatest {
+            it.showDiffRequests.collectLatest {
+              ctx.filesController.openDiff(reviewId, true)
             }
           }
         }
-      }
-    }
-
-    cs.launch(Dispatchers.EDT, start = CoroutineStart.UNDISPATCHED) {
-      detailsVmFlow.flatMapLatest {
-        it.changesVm.showDiffRequests
-      }.collect {
-        ctx.filesController.openDiff(reviewId, true)
+        awaitCancellation()
       }
     }
 
@@ -140,15 +144,25 @@ internal class GitLabReviewTabComponentFactory(
   }
 
   private fun createSelectorsComponent(cs: CoroutineScope): JComponent {
+    val preferences = project.service<GitLabMergeRequestsPreferences>()
     // TODO: move vm creation to another place
     val selectorVm = GitLabRepositoryAndAccountSelectorViewModel(
       cs, toolwindowViewModel.projectsManager, toolwindowViewModel.accountManager,
       onSelected = { mapping, account ->
         withContext(cs.coroutineContext) {
           toolwindowViewModel.connectionManager.openConnection(mapping, account)
+          preferences.selectedRepoAndAccount = mapping to account
         }
       }
     )
+
+    preferences.selectedRepoAndAccount?.let { (repo, account) ->
+      with(selectorVm) {
+        repoSelectionState.value = repo
+        accountSelectionState.value = account
+        submitSelection()
+      }
+    }
 
     val accountsDetailsProvider = GitLabAccountsDetailsProvider(cs) {
       // TODO: separate loader
@@ -175,13 +189,13 @@ internal class GitLabReviewTabComponentFactory(
         val account = req.account
         if (account == null) {
           val (newAccount, token) = GitLabLoginUtil.logInViaToken(project, selectors, req.repo.repository.serverPath) { server, name ->
-            req.accounts.none { it.server == server || it.name == name }
+            GitLabLoginUtil.isAccountUnique(req.accounts, server, name)
           } ?: return@collect
           req.login(newAccount, token)
         }
         else {
           val token = GitLabLoginUtil.updateToken(project, selectors, account) { server, name ->
-            req.accounts.none { it.server == server || it.name == name }
+            GitLabLoginUtil.isAccountUnique(req.accounts, server, name)
           } ?: return@collect
           req.login(account, token)
         }

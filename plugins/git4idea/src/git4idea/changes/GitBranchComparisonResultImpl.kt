@@ -26,8 +26,8 @@ class GitBranchComparisonResultImpl(private val project: Project,
 
   private val _changes = mutableListOf<Change>()
   override val changes: List<Change> = Collections.unmodifiableList(_changes)
-  private val _changesByCommits = mutableMapOf<String, Collection<Change>>()
-  override val changesByCommits: Map<String, Collection<Change>> = Collections.unmodifiableMap(_changesByCommits)
+  private val _changesByCommits = mutableMapOf<String, List<Change>>()
+  override val changesByCommits: Map<String, List<Change>> = Collections.unmodifiableMap(_changesByCommits)
   private val _commitByChange: MutableMap<Change, String> =
     CollectionFactory.createCustomHashingStrategyMap(GitBranchComparisonResult.REVISION_COMPARISON_HASHING_STRATEGY)
   override val commitByChange: Map<Change, String> = Collections.unmodifiableMap(_commitByChange)

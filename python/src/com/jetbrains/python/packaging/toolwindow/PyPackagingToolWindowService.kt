@@ -7,7 +7,6 @@ import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
@@ -25,7 +24,6 @@ import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.childScope
 import com.jetbrains.python.PyBundle.*
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.PythonHelpersLocator
@@ -50,8 +48,8 @@ import kotlinx.coroutines.*
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
 import org.jetbrains.annotations.Nls
 
-@Service
-class PyPackagingToolWindowService(val project: Project) : Disposable {
+@Service(Service.Level.PROJECT)
+class PyPackagingToolWindowService(val project: Project, val serviceScope: CoroutineScope) : Disposable {
 
   private var toolWindowPanel: PyPackagingToolWindowPanel? = null
   lateinit var manager: PythonPackageManager
@@ -59,7 +57,6 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
   internal var currentSdk: Sdk? = null
   private var searchJob: Job? = null
   private var currentQuery: String = ""
-  private val serviceScope = ApplicationManager.getApplication().coroutineScope.childScope(Dispatchers.Default)
 
   private val invalidRepositories: List<PyInvalidRepositoryViewData>
     get() = service<PyPackageRepositories>().invalidRepositories.map(::PyInvalidRepositoryViewData)
@@ -120,6 +117,11 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
     if (result.isSuccess) showPackagingNotification(message("python.packaging.notification.deleted", selectedPackage.name))
   }
 
+  suspend fun updatePackage(specification: PythonPackageSpecification) {
+    val result = manager.updatePackage(specification)
+    if (result.isSuccess) showPackagingNotification(message("python.packaging.notification.updated", specification.name, specification.version))
+  }
+
   internal suspend fun initForSdk(sdk: Sdk?) {
     val previousSdk = currentSdk
     currentSdk = sdk
@@ -176,7 +178,15 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
   suspend fun refreshInstalledPackages() {
     val packages = manager.installedPackages.map {
       val repository = installedPackages.find { pkg -> pkg.name == it.name }?.repository ?: PyEmptyPackagePackageRepository
-      InstalledPackage(it, repository)
+      val specification = repository.createPackageSpecification(it.name)
+      val latestVersion = manager.repositoryManager.getLatestVersion(specification)
+      val currentVersion = PyPackageVersionNormalizer.normalize(it.version)
+
+      val upgradeTo = if (latestVersion != null
+                          && currentVersion != null
+                          && PyPackageVersionComparator.compare(latestVersion, currentVersion) > 0) latestVersion else null
+
+      InstalledPackage(it, repository, upgradeTo)
     }
 
     withContext(Dispatchers.Main) {
@@ -213,7 +223,7 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
 
   suspend fun convertToHTML(contentType: String?, description: String): String {
     return withContext(Dispatchers.IO) {
-      when (contentType) {
+      when (contentType?.split(';')?.firstOrNull()?.trim()) {
         "text/markdown" -> markdownToHtml(description, ProjectRootManager.getInstance(project).contentRoots.first(), project)
         "text/x-rst", "" -> rstToHtml(description, currentSdk!!)
         else -> description

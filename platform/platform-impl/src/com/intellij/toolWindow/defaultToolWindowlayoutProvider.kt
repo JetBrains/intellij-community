@@ -259,7 +259,10 @@ internal class DefaultToolWindowLayoutBuilderImpl : DefaultToolWindowLayoutBuild
             contentUiType = ToolWindowDescriptor.ToolWindowContentUiType.COMBO
           }
           addOrUpdate("Commit") { weight = 0.25f }
-          addOrUpdate("Structure") { weight = 0.25f }
+          addOrUpdate("Structure") {
+            weight = 0.25f
+            isSplit = true
+          }
         }
         ToolWindowDescriptor.ToolWindowAnchor.RIGHT -> {
           addOrUpdate("Notifications") {
@@ -270,7 +273,6 @@ internal class DefaultToolWindowLayoutBuilderImpl : DefaultToolWindowLayoutBuild
           addOrUpdate("Database") { weight = 0.25f }
           addOrUpdate("Gradle") { weight = 0.25f }
           addOrUpdate("Maven") { weight = 0.25f }
-          addOrUpdate("Web Inspector") { weight = 0.25f }
         }
         ToolWindowDescriptor.ToolWindowAnchor.BOTTOM -> {
           addOrUpdate("Version Control")
@@ -366,5 +368,4 @@ class DefaultToolWindowLayoutProviderToExtensionAdapter : DefaultToolWindowLayou
       }
     }
   }
-
 }

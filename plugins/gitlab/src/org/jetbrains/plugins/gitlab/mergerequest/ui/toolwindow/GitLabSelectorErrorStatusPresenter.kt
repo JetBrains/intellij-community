@@ -10,7 +10,6 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.exception.GitLabHttpStatusErrorAction
-import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.Action
 
 internal class GitLabSelectorErrorStatusPresenter(
@@ -30,7 +29,7 @@ internal class GitLabSelectorErrorStatusPresenter(
 
   override fun getErrorDescription(error: RepositoryAndAccountSelectorViewModel.Error): String = when (error) {
     is RepositoryAndAccountSelectorViewModel.Error.SubmissionError -> ExceptionUtil.getPresentableMessage(error.exception)
-    is RepositoryAndAccountSelectorViewModel.Error.MissingCredentials -> GitLabBundle.message("account.token.missing")
+    is RepositoryAndAccountSelectorViewModel.Error.MissingCredentials -> CollaborationToolsBundle.message("account.token.missing")
   }
 
   override fun getErrorAction(error: RepositoryAndAccountSelectorViewModel.Error): Action? = when (error) {

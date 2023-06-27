@@ -46,6 +46,7 @@
                      enabledByDefault="true"
                      cleanupTool="true"
                      level="WARNING" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                     runForWholeFile="true"
                      language="kotlin"
                      suppressId="UnusedImport"
                      key="inspection.kotlin.unused.import.display.name" bundle="messages.KotlinBundle"/>

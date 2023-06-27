@@ -3,9 +3,10 @@ package com.intellij.codeInspection.sillyAssignment;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -132,7 +133,7 @@ public class SillyAssignmentInspection extends AbstractBaseJavaLocalInspectionTo
     return rExpression;
   }
 
-  private static class RemoveSillyAssignmentFix implements LocalQuickFix {
+  private static class RemoveSillyAssignmentFix extends PsiUpdateModCommandQuickFix {
 
     @Nls
     @NotNull
@@ -142,8 +143,8 @@ public class SillyAssignmentInspection extends AbstractBaseJavaLocalInspectionTo
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiExpression expression = ObjectUtils.tryCast(descriptor.getPsiElement(), PsiExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      final PsiExpression expression = ObjectUtils.tryCast(element, PsiExpression.class);
       if (!(getArrayExpressionOrItself(expression) instanceof PsiReferenceExpression)) {
         return;
       }

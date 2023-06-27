@@ -46,10 +46,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
-import com.jetbrains.python.psi.types.PyCallableParameter;
-import com.jetbrains.python.psi.types.PyNoneType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.refactoring.NameSuggesterUtil;
 import com.jetbrains.python.refactoring.PyRefactoringUiService;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
@@ -212,7 +209,10 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     if (type != null && type != PyNoneType.INSTANCE) {
       String typeName = type.getName();
       if (typeName != null) {
-        if (type.isBuiltin()) {
+        if (type instanceof PyLiteralStringType) { // we don't want to suggest "L" for inferred LiteralStrings
+          typeName = "s";
+        }
+        else if (type.isBuiltin()) {
           typeName = typeName.substring(0, 1);
         }
         candidates.addAll(NameSuggesterUtil.generateNamesByType(typeName));

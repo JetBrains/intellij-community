@@ -5,7 +5,7 @@ internal class A {
     var field1: Int = TODO("_root_ide_package_")
 
     @Transient
-    var field2 = 1
+    var field2: Int = 1
 
     // Should work even for bad modifiers
     @Strictfp

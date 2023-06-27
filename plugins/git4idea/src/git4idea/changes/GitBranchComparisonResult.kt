@@ -29,7 +29,7 @@ interface GitBranchComparisonResult {
   val changes: List<Change>
 
   val commits: List<GitCommitShaWithPatches>
-  val changesByCommits: Map<String, Collection<Change>>
+  val changesByCommits: Map<String, List<Change>>
   val commitByChange: Map<Change, String>
 
   val patchesByChange: Map<Change, GitTextFilePatchWithHistory>

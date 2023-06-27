@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.diff.util.Side
 import com.intellij.openapi.diagnostic.logger
+import git4idea.changes.GitTextFilePatchWithHistory
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDraftNoteRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
 
@@ -126,3 +127,16 @@ sealed class GitLabNotePosition(
 
 val GitLabNotePosition.filePath: String
   get() = (filePathAfter ?: filePathBefore)!!
+
+fun GitLabNotePosition.mapToLocation(diffData: GitTextFilePatchWithHistory): DiffLineLocation? {
+  if (this !is GitLabNotePosition.Text) return null
+
+  if ((filePathBefore != null && !diffData.contains(parentSha, filePathBefore)) &&
+      (filePathAfter != null && !diffData.contains(sha, filePathAfter))) return null
+
+  val (side, lineIndex) = location
+  // context should be mapped to the left side
+  val commitSha = side.select(parentSha, sha)!!
+
+  return diffData.mapLine(commitSha, lineIndex, side)
+}

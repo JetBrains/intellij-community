@@ -6,10 +6,12 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.browsers.WebBrowser;
 import com.intellij.ide.browsers.WebBrowserManager;
 import com.intellij.ide.browsers.WebBrowserXmlService;
+import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.CachedValue;
@@ -31,6 +33,12 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
     p.setText(IdeBundle.messagePointer("open.in.browser"));
     p.setDescription(IdeBundle.messagePointer("open.selected.file.in.browser"));
     p.setIcon(AllIcons.Nodes.PpWeb);
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    e.getPresentation().setEnabledAndVisible(project != null && TrustedProjects.isTrusted(project));
   }
 
   @Override

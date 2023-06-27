@@ -2,25 +2,36 @@
 package com.intellij.ui
 
 import com.intellij.feedback.new_ui.dialog.NewUIFeedbackDialog
+import com.intellij.icons.AllIcons
+import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.experimental.ExperimentalUiCollector
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
+import com.intellij.util.IconUtil
 import com.intellij.util.PlatformUtils
+import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
+import java.awt.Font
+import javax.swing.JLabel
+
+private const val PROMO_URL = "https://youtu.be/WGwECgPmQ-8"
 
 /**
  * @author Konstantin Bulenkov
  */
-open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.message("configurable.new.ui.name"), "reference.settings.ide.settings.new.ui"), Configurable.Beta {
+open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.message("configurable.new.ui.name"),
+                                                                    "reference.settings.ide.settings.new.ui"), Configurable.Beta {
 
   companion object {
     @JvmStatic
@@ -47,8 +58,12 @@ open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.me
         newUiCheckBox = checkBox(IdeBundle.message("checkbox.enable.new.ui"))
           .bindSelected(
             { ExperimentalUI.isNewUI() },
-            { ExperimentalUI.setNewUI(it) })
-          .comment(IdeBundle.message("checkbox.enable.new.ui.description"))
+            {
+              if (it != ExperimentalUI.isNewUI()) {
+                ExperimentalUiCollector.logSwitchUi(ExperimentalUiCollector.SwitchSource.PREFERENCES, it)
+                ExperimentalUI.setNewUI(it)
+              }
+            })
           .enabled(PlatformUtils.isAqua().not()) // the new UI is always enabled for Aqua and cannot be disabled
       }.comment(IdeBundle.message("ide.restart.required.comment"))
 
@@ -72,14 +87,37 @@ open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.me
         }
       }
 
-      row { browserLink(getMainChangesAndKnowIssuesLabel(), getMainChangesAndKnownIssuesUrl()) }
-        .topGap(TopGap.MEDIUM)
-      row { link(IdeBundle.message("new.ui.submit.feedback")) { onSubmitFeedback() } }
+      separator()
+        .topGap(TopGap.SMALL)
+        .bottomGap(BottomGap.SMALL)
+
+      row {
+        icon(IconUtil.scale(AllIcons.Actions.EnableNewUi, newUiCheckBox.component, JBUI.scale(24).toFloat() / AllIcons.Actions.EnableNewUi.iconWidth))
+          .gap(RightGap.SMALL)
+        label(IdeBundle.message("new.ui.title")).applyToComponent {
+          font = JBFont.create(Font("Sans", Font.PLAIN, 18))
+        }
+      }
+      row {
+        text(IdeBundle.message("new.ui.description"))
+      }.topGap(TopGap.SMALL)
+      row {
+        browserLink(getExploreNewUiLabel(), getExploreNewUiUrl())
+        link(IdeBundle.message("new.ui.submit.feedback")) { onSubmitFeedback() }
+      }.bottomGap(BottomGap.SMALL)
+      row {
+        val img = IconLoader.getIcon("images/newUiPreview.png", this@panel::class.java.classLoader)
+        val promo = VideoPromoComponent(JLabel(img), IdeBundle.message("new.ui.watch.new.ui.overview"), alwaysDisplayLabel = true,
+                                        darkLabel = true) {
+          BrowserUtil.browse(PROMO_URL)
+        }
+        cell(promo)
+      }
     }
   }
 
-  open fun getMainChangesAndKnownIssuesUrl(): String = "https://youtrack.jetbrains.com/articles/IDEA-A-156/Main-changes-and-known-issues"
-  open fun getMainChangesAndKnowIssuesLabel(): @Nls String = IdeBundle.message("new.ui.blog.changes.and.issues")
+  open fun getExploreNewUiUrl(): String = "https://www.jetbrains.com/help/idea/new-ui.html"
+  open fun getExploreNewUiLabel(): @Nls String = IdeBundle.message("new.ui.explore.new.ui")
   open fun onSubmitFeedback(): Unit = NewUIFeedbackDialog(null, false).show()
   open fun getRedefinedHelpTopic(): String? = null
   open fun onApply() {}

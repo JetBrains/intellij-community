@@ -65,13 +65,12 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
   LocalInspectionsPass(@NotNull PsiFile file,
                        @NotNull Document document,
-                       int startOffset,
-                       int endOffset,
+                       @NotNull TextRange restrictRange,
                        @NotNull TextRange priorityRange,
                        boolean ignoreSuppressed,
                        @NotNull HighlightInfoProcessor highlightInfoProcessor,
                        boolean inspectInjectedPsi) {
-    super(file.getProject(), document, DaemonBundle.message("pass.inspection"), file, null, new TextRange(startOffset, endOffset), true, highlightInfoProcessor);
+    super(file.getProject(), document, DaemonBundle.message("pass.inspection"), file, null, restrictRange, true, highlightInfoProcessor);
     assert file.isPhysical() : "can't inspect non-physical file: " + file + "; " + file.getVirtualFile();
     myPriorityRange = priorityRange;
     myIgnoreSuppressed = ignoreSuppressed;

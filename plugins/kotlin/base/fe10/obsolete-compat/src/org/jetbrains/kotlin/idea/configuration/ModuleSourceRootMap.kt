@@ -3,8 +3,10 @@ package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
+import org.jetbrains.annotations.ApiStatus
 
-@Deprecated(
+@get:ApiStatus.ScheduledForRemoval
+@get:Deprecated(
     "Use 'org.jetbrains.kotlin.idea.base.projectStructure.externalProjectPath' instead",
     ReplaceWith("this.externalProjectPath", imports = ["org.jetbrains.kotlin.idea.base.projectStructure.externalProjectPath"])
 )

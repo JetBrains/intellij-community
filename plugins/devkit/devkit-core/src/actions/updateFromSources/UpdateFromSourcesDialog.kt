@@ -13,10 +13,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
-import com.intellij.ui.dsl.builder.AlignX
-import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.dsl.builder.bindText
-import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.enteredTextSatisfies
 import com.intellij.util.io.isWritable
 import org.jetbrains.idea.devkit.DevKitBundle
@@ -43,18 +40,7 @@ class UpdateFromSourcesDialog(private val project: Project,
 
   override fun createCenterPanel(): DialogPanel {
     panel = panel {
-      row(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.row.ide.installation")) {
-        pathField = textFieldWithHistoryWithBrowseButton(
-          project, DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.installation.choose.ide.directory.title"),
-          FileChooserDescriptorFactory.createSingleFolderDescriptor(), { state.workIdePathsHistory })
-        cell(pathField)
-          .align(AlignX.FILL)
-          .bindText({ state.actualIdePath }, { state.workIdePath = it })
-      }
-      row {
-        checkBox(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.enabled.plugins.only"))
-          .bindSelected({ !state.buildDisabledPlugins }, { state.buildDisabledPlugins = !it })
-      }
+      pathField = optionsPanel(project, state)
       row {
         checkBox(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.restart.automatically"))
           .bindSelected({ state.restartAutomatically }, { state.restartAutomatically = it })
@@ -100,4 +86,20 @@ class UpdateFromSourcesDialog(private val project: Project,
     panel.apply()
     service<UpdateFromSourcesSettings>().loadState(state)
   }
+}
+
+internal fun Panel.optionsPanel(project: Project, state: UpdateFromSourcesSettingsState): TextFieldWithHistoryWithBrowseButton {
+  val pathField = textFieldWithHistoryWithBrowseButton(
+    project, DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.installation.choose.ide.directory.title"),
+    FileChooserDescriptorFactory.createSingleFolderDescriptor(), { state.workIdePathsHistory })
+  row(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.row.ide.installation")) {
+    cell(pathField)
+      .align(AlignX.FILL)
+      .bindText({ state.actualIdePath }, { state.workIdePath = it })
+  }
+  row {
+    checkBox(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.enabled.plugins.only"))
+      .bindSelected({ !state.buildDisabledPlugins }, { state.buildDisabledPlugins = !it })
+  }
+  return pathField
 }

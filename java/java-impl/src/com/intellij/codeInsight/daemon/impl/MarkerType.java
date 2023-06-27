@@ -174,7 +174,12 @@ public class MarkerType {
       .elementsConsumer((methods, navigator) -> {
         if (!methods.isEmpty()) {
           boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature(methods.toArray(PsiMethod.EMPTY_ARRAY));
-          navigator.presentationProvider(element -> GotoTargetHandler.computePresentation(element, showMethodNames));
+          navigator.presentationProvider(element -> {
+            if (element instanceof PsiCompiledElement) {
+              ((PsiCompiledElement)element).getMirror(); // load decompiler in background thread
+            }
+            return GotoTargetHandler.computePresentation(element, showMethodNames);
+          });
         }
       })
       .navigate(e, DaemonBundle.message("navigation.title.super.method", method.getName()), method.getProject());

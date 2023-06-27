@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project
 
+import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
@@ -14,7 +15,6 @@ import org.jetbrains.idea.maven.server.MavenGoalExecutionResult
 import org.jetbrains.idea.maven.server.MavenServerConnector
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
-import org.jetbrains.idea.maven.utils.withBackgroundProgressIfApplicable
 import java.io.File
 import java.util.function.Supplier
 
@@ -25,7 +25,7 @@ class MavenFolderResolver(private val project: Project) {
   suspend fun resolveFoldersAndImport() = resolveFoldersAndImport(projectsManager.projects)
 
   suspend fun resolveFoldersAndImport(projects: Collection<MavenProject>) {
-    withBackgroundProgressIfApplicable(project, MavenProjectBundle.message("maven.updating.folders"), true) {
+    withBackgroundProgress(project, MavenProjectBundle.message("maven.updating.folders"), true) {
       doResolveFoldersAndImport(projects)
     }
   }

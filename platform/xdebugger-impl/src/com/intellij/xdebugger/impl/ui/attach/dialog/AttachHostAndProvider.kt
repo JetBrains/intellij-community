@@ -12,13 +12,13 @@ import javax.swing.Icon
 
 @Suppress("UNCHECKED_CAST")
 data class AttachHostAndProvider(
-  val host: XAttachHost,
+  override val host: XAttachHost,
   val provider: XAttachHostProvider<out XAttachHost>,
   val project: Project,
-  val dataHolder: UserDataHolder) {
+  val dataHolder: UserDataHolder): AttachHostItem {
 
   @Nls
-  fun getPresentation(): String {
+  override fun getPresentation(): String {
     val presentationGroup = provider.presentationGroup as XAttachPresentationGroup<XAttachHost>
     return presentationGroup.getItemDisplayText(project, host, dataHolder)
   }
@@ -28,7 +28,7 @@ data class AttachHostAndProvider(
     return getPresentation()
   }
 
-  fun getIcon(): Icon {
+  override fun getIcon(): Icon {
     val presentationGroup = provider.presentationGroup as XAttachPresentationGroup<XAttachHost>
     return presentationGroup.getItemIcon(project, host, dataHolder)
   }

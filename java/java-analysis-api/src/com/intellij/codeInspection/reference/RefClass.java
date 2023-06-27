@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.psi.PsiClass;
@@ -61,6 +61,13 @@ public interface RefClass extends RefJavaElement, RefOverridable {
    * @return true if this class is a record, false otherwise.
    */
   default boolean isRecord() {
+    return false;
+  }
+
+  /**
+   * @return true if this is an annotation type declaration, false otherwise
+   */
+  default boolean isAnnotationType() {
     return false;
   }
 

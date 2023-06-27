@@ -169,7 +169,7 @@ public class UnnecessaryDefault{
 
     void defaultLabelElementInEnum2(MyEnum e) {
         switch (e) {
-          case MyEnum ee && ee != null:
+          case MyEnum ee when ee != null:
             break;
           default:
             break;
@@ -191,7 +191,7 @@ public class UnnecessaryDefault{
         switch (i) {
           case C1 c1:
             break;
-          case C2 c2 && c2 != null:
+          case C2 c2 when c2 != null:
             break;
           default:
             break;

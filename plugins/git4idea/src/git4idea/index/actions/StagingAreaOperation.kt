@@ -43,6 +43,19 @@ object GitAddOperation : StagingAreaOperation {
   }
 }
 
+object GitAddWithoutContentOperation : StagingAreaOperation {
+  override val actionText get() = GitBundle.messagePointer("stage.add.no.content.action.text")
+  override val progressTitle get() = GitBundle.message("stage.add.process")
+  override val icon = null
+  override val errorMessage: String get() = GitBundle.message("stage.add.error.title")
+
+  override fun matches(statusNode: GitFileStatusNode) = statusNode.kind == NodeKind.UNTRACKED
+
+  override fun processPaths(project: Project, root: VirtualFile, nodes: List<GitFileStatusNode>) {
+    GitFileUtils.addPathsToIndex(project, root, nodes.map { it.filePath })
+  }
+}
+
 object GitResetOperation : StagingAreaOperation {
   override val actionText get() = GitBundle.messagePointer("stage.reset.action.text")
   override val progressTitle get() = GitBundle.message("stage.reset.process")

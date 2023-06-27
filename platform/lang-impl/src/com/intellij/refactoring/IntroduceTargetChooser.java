@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
@@ -74,7 +74,7 @@ public final class IntroduceTargetChooser {
     }
     else {
       ReadAction.nonBlocking(() -> ContainerUtil.map(expressions, t -> new MyIntroduceTarget<>(t, ranger.fun(t), renderer.fun(t))))
-        .finishOnUiThread(ModalityState.NON_MODAL, targets ->
+        .finishOnUiThread(ModalityState.nonModal(), targets ->
           showIntroduceTargetChooser(editor, targets, target -> callback.accept(target.getPlace()), title, selection))
         .expireWhen(() -> editor.isDisposed())
         .submit(AppExecutorUtil.getAppExecutorService());

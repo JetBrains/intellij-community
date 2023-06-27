@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.NlsContexts
@@ -32,11 +33,13 @@ import java.util.function.*
 
 class PsiTargetNavigator<T: PsiElement>(val supplier: Supplier<Collection<T>>) {
 
+  constructor(elements: List<T>) : this(Supplier { elements })
   constructor(elements: Array<T>) : this(Supplier { elements.toList() })
 
   private var selection: PsiElement? = null
   private var presentationProvider: TargetPresentationProvider<T> = TargetPresentationProvider { targetPresentation(it) }
   private var elementsConsumer: BiConsumer<Collection<T>, PsiTargetNavigator<T>>? = null
+  private var builderConsumer: Consumer<IPopupChooserBuilder<ItemWithPresentation>>? = null
   private var title: @PopupTitle String? = null
   private var tabTitle: @TabTitle String? = null
   private var updater: BackgroundUpdaterTaskBase<ItemWithPresentation>? = null
@@ -44,6 +47,7 @@ class PsiTargetNavigator<T: PsiElement>(val supplier: Supplier<Collection<T>>) {
   fun selection(selection: PsiElement?): PsiTargetNavigator<T> = apply { this.selection = selection }
   fun presentationProvider(provider: TargetPresentationProvider<T>): PsiTargetNavigator<T> = apply { this.presentationProvider = provider }
   fun elementsConsumer(consumer: BiConsumer<Collection<T>, PsiTargetNavigator<T>>): PsiTargetNavigator<T> = apply { elementsConsumer = consumer }
+  fun builderConsumer(consumer: Consumer<IPopupChooserBuilder<ItemWithPresentation>>): PsiTargetNavigator<T> = apply { builderConsumer = consumer }
   fun title(title: @PopupTitle String?): PsiTargetNavigator<T> = apply { this.title = title }
   fun tabTitle(title: @TabTitle String?): PsiTargetNavigator<T> = apply { this.tabTitle = title }
   fun updater(updater: TargetUpdaterTask): PsiTargetNavigator<T> = apply { this.updater = updater }
@@ -143,6 +147,7 @@ class PsiTargetNavigator<T: PsiElement>(val supplier: Supplier<Collection<T>>) {
     }
     selected?.let { builder.setSelectedValue(selected, true) }
     updater?.let { builder.setCancelCallback { updater!!.cancelTask() }}
+    builderConsumer?.accept(builder)
 
     val popup = builder.createPopup()
     updater?.init(popup, builder.backgroundUpdater, ref)

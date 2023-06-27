@@ -29,7 +29,6 @@ import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.Splitter
@@ -54,10 +53,10 @@ import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBRectangle
-import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.awt.*
@@ -211,8 +210,7 @@ open class EditorsSplitters internal constructor(
     if (showEmptyText()) {
       val gg = IdeBackgroundUtil.withFrameBackground(g, this)
       super.paintComponent(gg)
-      @Suppress("UseJBColor")
-      g.color = if (StartupUiUtil.isUnderDarcula) JBColor.border() else Color(0, 0, 0, 50)
+      g.color = JBColor.border()
       g.drawLine(0, 0, width, 0)
     }
   }
@@ -477,7 +475,7 @@ open class EditorsSplitters internal constructor(
     }
 
     val project = manager.project
-    val frame = getFrame(project) ?: return
+    val frame = getFrame() ?: return
     val file = currentFile
     if (file == null) {
       withContext(Dispatchers.EDT) {
@@ -501,14 +499,12 @@ open class EditorsSplitters internal constructor(
     }
   }
 
-  protected open fun getFrame(project: Project): IdeFrameEx? {
-    val frame = WindowManagerEx.getInstanceEx().getFrameHelper(project)
-    val app = ApplicationManager.getApplication()
-    LOG.assertTrue((app.isUnitTestMode || app.isHeadlessEnvironment) || frame != null)
-    return frame
+  private fun getFrame(): IdeFrameEx? {
+    val frame = (ComponentUtil.findUltimateParent(this) as? Window) ?: return null
+    return if (frame is IdeFrameEx) frame else ProjectFrameHelper.getFrameHelper(frame as Window?)
   }
 
-  val isInsideChange: Boolean
+  internal val isInsideChange: Boolean
     get() = insideChange > 0
 
   internal fun updateFileBackgroundColorAsync(file: VirtualFile) {
@@ -690,6 +686,7 @@ open class EditorsSplitters internal constructor(
 
   fun containsWindow(window: EditorWindow): Boolean = windows.contains(window)
 
+  @ApiStatus.ScheduledForRemoval
   @Suppress("DEPRECATION")
   @Deprecated("Use {@link #getAllComposites()}")
   fun getEditorComposites(): List<EditorWithProviderComposite> {
@@ -907,20 +904,18 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
   private suspend fun processFiles(fileEntries: List<EditorSplitterState.FileEntry>, tabSizeLimit: Int, context: JPanel?): JPanel {
     return coroutineScope {
       val windowDeferred = async(Dispatchers.EDT) {
-        blockingContext {
-          var editorWindow = context?.let(splitters::findWindowWith)
-          if (editorWindow == null) {
-            editorWindow = EditorWindow(owner = splitters, splitters.coroutineScope.childScope(CoroutineName("EditorWindow")))
-            editorWindow.panel.isFocusable = false
-          }
-          else if (splitters.currentWindow == null) {
-            splitters.setCurrentWindow(window = editorWindow, requestFocus = false)
-          }
-          if (tabSizeLimit != 1) {
-            editorWindow.tabbedPane.component.putClientProperty(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, tabSizeLimit)
-          }
-          editorWindow
+        var editorWindow = context?.let(splitters::findWindowWith)
+        if (editorWindow == null) {
+          editorWindow = EditorWindow(owner = splitters, splitters.coroutineScope.childScope(CoroutineName("EditorWindow")))
+          editorWindow.panel.isFocusable = false
         }
+        else if (splitters.currentWindow == null) {
+          splitters.setCurrentWindow(window = editorWindow, requestFocus = false)
+        }
+        if (tabSizeLimit != 1) {
+          editorWindow.tabbedPane.component.putClientProperty(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, tabSizeLimit)
+        }
+        editorWindow
       }
 
       var focusedFile: VirtualFile? = null

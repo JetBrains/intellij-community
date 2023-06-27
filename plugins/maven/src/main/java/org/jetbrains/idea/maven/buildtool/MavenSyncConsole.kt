@@ -533,7 +533,6 @@ class MavenSyncConsole(private val myProject: Project) {
     @ApiStatus.Experimental
     @JvmStatic
     fun startTransaction(project: Project) {
-      debugLog("Maven sync: start sync transaction")
       val syncConsole = MavenProjectsManager.getInstance(project).syncConsole
       synchronized(syncConsole) {
         syncConsole.syncTransactionStarted = true
@@ -543,7 +542,6 @@ class MavenSyncConsole(private val myProject: Project) {
     @ApiStatus.Experimental
     @JvmStatic
     fun finishTransaction(project: Project) {
-      debugLog("Maven sync: finish sync transaction")
       val syncConsole = MavenProjectsManager.getInstance(project).syncConsole
       synchronized(syncConsole) {
         syncConsole.syncTransactionStarted = false

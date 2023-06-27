@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.icons
 
-import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ScalableIcon
+import com.intellij.openapi.util.findIconUsingNewImplementation
 import com.intellij.ui.RetrievableIcon
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.IconUtil
@@ -43,7 +43,7 @@ private fun loadIconCustomVersion(icon: CachedImageIcon, width: Int, height: Int
   }
 
   val modifiedPath = "${path.substring(0, path.length - 4)}@${width}x$height.svg"
-  val foundIcon = IconLoader.findIcon(path = modifiedPath, classLoader = coords.second) ?: return null
+  val foundIcon = findIconUsingNewImplementation(path = modifiedPath, classLoader = coords.second) ?: return null
   if (foundIcon is CachedImageIcon &&
       foundIcon.getIconWidth() == JBUIScale.scale(width) && foundIcon.getIconHeight() == JBUIScale.scale(height)) {
     return foundIcon.withAnotherIconModifications(icon)

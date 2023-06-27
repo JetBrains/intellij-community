@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal;
 
 import com.intellij.application.options.EditorFontsConstants;
@@ -301,7 +301,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
     }
 
     if (GeneralSettings.getInstance().isSaveOnFrameDeactivation()) {
-      ApplicationManager.getApplication().invokeLater(() -> FileDocumentManager.getInstance().saveAllDocuments(), ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater(() -> FileDocumentManager.getInstance().saveAllDocuments(), ModalityState.nonModal());
     }
   }
 

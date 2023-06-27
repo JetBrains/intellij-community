@@ -31,6 +31,8 @@ class GitLabMergeRequestDTO(
   val targetProject: GitLabProjectDTO,
   val sourceProject: GitLabProjectDTO,
   val userPermissions: GitLabMergeRequestPermissionsDTO,
+  val shouldBeRebased: Boolean,
+  val rebaseInProgress: Boolean,
   approvedBy: UserCoreConnection,
   assignees: AssigneeConnection,
   reviewers: ReviewerConnection,

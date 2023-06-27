@@ -372,7 +372,7 @@ public abstract class FileBasedIndex {
   }
 
   @ApiStatus.Internal
-  public static final boolean ourSnapshotMappingsEnabled = SystemProperties.getBooleanProperty("idea.index.snapshot.mappings.enabled", true);
+  public static final boolean ourSnapshotMappingsEnabled = SystemProperties.getBooleanProperty("idea.index.snapshot.mappings.enabled", false);
 
   @ApiStatus.Internal
   public static boolean isIndexAccessDuringDumbModeEnabled() {

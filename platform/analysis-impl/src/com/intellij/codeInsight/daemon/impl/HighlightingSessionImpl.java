@@ -31,7 +31,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Future;
+import java.util.concurrent.RunnableFuture;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -47,9 +50,6 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   private final CanISilentlyChange.Result myCanChangeFileSilently;
   private final Number myDaemonCancelEventCount;
   private final int myDaemonInitialCancelEventCount;
-  // treat ExternalToolPass specially because it launches external processes in its own MergingUpdateQueue asynchronously, which needs to be waited for manually
-  @NotNull
-  volatile CompletableFuture<Void> myExternalPassFuture = CompletableFuture.completedFuture(null);
   private volatile boolean myIsEssentialHighlightingOnly;
   private final Long2ObjectMap<RangeMarker> myRange2markerCache = Long2ObjectMaps.synchronize(new Long2ObjectOpenHashMap<>());
   private volatile boolean myInContent;
@@ -158,7 +158,6 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   }
 
   static void waitForAllSessionsHighlightInfosApplied(@NotNull DaemonProgressIndicator progressIndicator) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     ConcurrentMap<PsiFile, HighlightingSession> map = progressIndicator.getUserData(HIGHLIGHTING_SESSION);
     if (map != null) {
       for (HighlightingSession session : map.values()) {

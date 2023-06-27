@@ -121,17 +121,15 @@ abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>? = null) : Grou
                                             index: Int,
                                             isSelected: Boolean,
                                             cellHasFocus: Boolean): Component {
-    val model = (list?.model as? ListPopupModel)
-
     coloredComponent.apply {
       clear()
       customize(this, value, index, isSelected, cellHasFocus)
     }
 
     mySeparatorComponent.apply {
-      isVisible = model?.isSeparatorAboveOf(value) == true
+      isVisible = isSeparatorVisible(list, value)
       if (isVisible) {
-        caption = model!!.getCaptionAboveOf(value)
+        caption = getCaption(list, value)
         (this as GroupHeaderSeparator).setHideLine(index == 0)
       }
     }
@@ -163,4 +161,9 @@ abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>? = null) : Grou
 
     return myRendererComponent
   }
+
+  protected open fun getCaption(list: JList<out T>?,
+                                value: T): @NlsContexts.Separator String? = (list?.model as ListPopupModel).getCaptionAboveOf(value)
+
+  protected open fun isSeparatorVisible(list: JList<out T>?, value: T) = (list?.model as? ListPopupModel)?.isSeparatorAboveOf(value) == true
 }

@@ -117,6 +117,11 @@ class SnapshotHashEnumeratorService : Closeable {
     }
   }
 
+  fun isDirty(): Boolean {
+    val enumerator = contentHashEnumerator ?: return false
+    return enumerator.isDirty
+  }
+
   fun createHashEnumeratorHandle(requestorIndexId: ID<*, *>): HashEnumeratorHandle {
     val handle = HashEnumeratorHandleImpl(requestorIndexId)
     lock.withLock {

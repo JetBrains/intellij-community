@@ -2,13 +2,16 @@
 package org.jetbrains.tools.model.updater
 
 import org.jetbrains.tools.model.updater.GeneratorPreferences.ArtifactMode
-import org.jetbrains.tools.model.updater.impl.JpsLibrary
-import org.jetbrains.tools.model.updater.impl.JpsPath
-import org.jetbrains.tools.model.updater.impl.JpsUrl
-import org.jetbrains.tools.model.updater.impl.MavenId
+import org.jetbrains.tools.model.updater.impl.*
 
 private const val ktGroup = "org.jetbrains.kotlin"
 private const val BOOTSTRAP_VERSION = "1.9.255"
+
+// see .idea/jarRepositories.xml
+private val KOTLIN_IDE_DEPS_REPOSITORY = JpsRemoteRepository(
+    "kotlin-ide-plugin-deps",
+    "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies"
+)
 
 private class ArtifactCoordinates(private val originalVersion: String, val mode: ArtifactMode) {
     val version: String
@@ -93,7 +96,11 @@ internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommu
 
             val annotationLibrary = JpsLibrary(
                 "kotlinc.kotlin-stdlib",
-                JpsLibrary.LibraryType.Repository(mavenIds.first(), excludes = listOf(MavenId("org.jetbrains", "annotations"))),
+                JpsLibrary.LibraryType.Repository(
+                    mavenIds.first(),
+                    excludes = listOf(MavenId("org.jetbrains", "annotations")),
+                    remoteRepository = KOTLIN_IDE_DEPS_REPOSITORY
+                ),
                 annotations = listOf(JpsUrl.File(JpsPath.ProjectDir("lib/annotations/kotlin", isCommunity))),
                 classes = mavenIds.map { JpsUrl.Jar(JpsPath.MavenRepository(it)) },
                 sources = mavenIds.map { JpsUrl.Jar(JpsPath.MavenRepository(it, "sources")) }
@@ -132,6 +139,7 @@ private fun LibraryListBuilder.kotlincWithStandardNaming(
     postfix: String = "",
     transitive: Boolean = false,
     excludes: List<MavenId> = emptyList(),
+    repository: JpsRemoteRepository = KOTLIN_IDE_DEPS_REPOSITORY
 ) {
     require(name.startsWith("kotlinc."))
     val jpsLibrary = singleJarMavenLibrary(
@@ -140,6 +148,7 @@ private fun LibraryListBuilder.kotlincWithStandardNaming(
         transitive = transitive,
         includeSources = includeSources,
         excludes = excludes,
+        repository = repository
     )
     addLibrary(jpsLibrary.convertMavenUrlToCooperativeIfNeeded(coordinates.mode, isCommunity))
 }
@@ -150,11 +159,12 @@ private fun singleJarMavenLibrary(
     excludes: List<MavenId> = emptyList(),
     transitive: Boolean = true,
     includeSources: Boolean = true,
+    repository: JpsRemoteRepository,
 ): JpsLibrary {
     val mavenId = MavenId.parse(mavenCoordinates)
     return JpsLibrary(
         name,
-        JpsLibrary.LibraryType.Repository(mavenId, includeTransitive = transitive, excludes = excludes),
+        JpsLibrary.LibraryType.Repository(mavenId, includeTransitive = transitive, excludes = excludes, remoteRepository = repository),
         classes = listOf(JpsUrl.Jar(JpsPath.MavenRepository(mavenId))),
         sources = listOf(JpsUrl.Jar(JpsPath.MavenRepository(mavenId, classifier = "sources"))).takeIf { includeSources } ?: emptyList()
     )

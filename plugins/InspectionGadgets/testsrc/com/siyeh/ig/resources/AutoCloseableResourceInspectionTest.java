@@ -606,6 +606,54 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
         }""");
   }
 
+  public void testEscapeLoop1() {
+    doTest(
+      """
+        import java.io.FileOutputStream;
+        import java.io.IOException;
+        import java.io.OutputStream;
+        import java.util.List;
+        
+        class AutoCloseableSample {
+          private void processFiles(List<String> files) throws IOException {
+            OutputStream stream = null;
+            try {
+              for (String file : files) {
+                stream = new <warning descr="'FileOutputStream' used without 'try'-with-resources statement">FileOutputStream</warning>(file);
+              }
+            } finally {
+              stream.close();
+            }
+          }
+        }
+        """);
+  }
+
+  public void testEscapeLoop2() {
+    doTest(
+      """
+        import java.io.FileOutputStream;
+        import java.io.IOException;
+        import java.io.OutputStream;
+        import java.util.List;
+        
+        class AutoCloseableSample {
+          private static void processFiles(List<String> files) throws IOException {
+            OutputStream stream = null;
+            try {
+              for (String file : files) {
+                stream = new FileOutputStream(file);
+                stream.close();
+              }
+            } finally {
+              stream.close();
+            }
+          }
+        }
+        """);
+  }
+
+
   @Override
   protected LocalInspectionTool getInspection() {
     AutoCloseableResourceInspection inspection = new AutoCloseableResourceInspection();

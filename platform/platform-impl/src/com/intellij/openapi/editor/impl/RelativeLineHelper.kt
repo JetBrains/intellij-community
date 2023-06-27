@@ -4,8 +4,6 @@ package com.intellij.openapi.editor.impl
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import kotlin.math.abs
-import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.sign
 
 
@@ -15,31 +13,6 @@ import kotlin.math.sign
  * - We do not increment the counter for collapsed lines and skip them
  */
 object RelativeLineHelper {
-  /**
-   * @param editor the target editor.
-   * @param caretLine the logical line that serves as the reference point (zero) for relative numeration.
-   * @param relativeLine the distance from the logical line to the caretLine.
-   * It is negative for lines above the caret line and positive otherwise.
-   * @return the logical line that is considered to be [relativeLine] for [caretLine].
-   * Please note that the line is NOT normalized. It can be negative or exceed the number of lines in the file.
-   */
-  fun getLogicalLine(editor: Editor, caretLine: Int, relativeLine: Int): Int {
-    var relativeDistance = 0
-    val step = relativeLine.sign
-    val shouldHandleFolds = checkIfShouldCheckForFolds(editor, caretLine, step)
-
-    var line = getFoldBorderLine(editor, caretLine, step)
-    while (relativeDistance < abs(relativeLine)) {
-      line += step
-      if (shouldHandleFolds) {
-        line = getFoldBorderLine(editor, line, step)
-      }
-      ++relativeDistance
-    }
-    // here fold start line is returned
-    return getFoldBorderLine(editor, line, -1)
-  }
-
   /**
    * @param editor the target editor.
    * @param caretLine the logical line that serves as the reference point (zero) for relative numeration.
@@ -66,26 +39,57 @@ object RelativeLineHelper {
    * It is negative for lines above the caret line and positive otherwise.
    */
   fun getRelativeLine(editor: Editor, caretLine: Int, logicalLine: Int): Int {
-    val step = (logicalLine - caretLine).sign
-    if (step == 0) return 0
-    val shouldHandleFolds = checkIfShouldCheckForFolds(editor, caretLine, step)
+    val foldingModel = editor.foldingModel as FoldingModelImpl
+    val caretOffset = getOffsetAtFoldStart(editor, caretLine)
+    val lineOffset = getOffsetAtFoldStart(editor, logicalLine)
+    val foldedBeforeCaret = foldingModel.getFoldedLinesCountBefore(caretOffset)
+    val foldedBeforeLine = foldingModel.getFoldedLinesCountBefore(lineOffset)
 
-    var relativeLineCount = 0
-    var line = getFoldBorderLine(editor, caretLine, step) + step
-    val lineRange = min(caretLine, logicalLine) .. max(caretLine, logicalLine)
-    while (line in lineRange) {
-      if (shouldHandleFolds) {
-        line = getFoldBorderLine(editor, line, step)
+    // same lines, but moved to fold start if necessary
+    val caretLineAtFoldStart = editor.offsetToLogicalPosition(caretOffset).line
+    val logicalLineAtFoldStart = editor.offsetToLogicalPosition(lineOffset).line
+
+    return logicalLineAtFoldStart - caretLineAtFoldStart - (foldedBeforeLine - foldedBeforeCaret)
+  }
+
+  /**
+   * @param editor the target editor.
+   * @param caretLine the logical line that serves as the reference point (zero) for relative numeration.
+   * @param relativeLine the distance from the logical line to the caretLine.
+   * It is negative for lines above the caret line and positive otherwise.
+   * @return the logical line that is considered to be [relativeLine] for [caretLine].
+   * Please note that the line is NOT normalized.
+   * It can be negative or exceed the number of lines in the file.
+   */
+  fun getLogicalLine(editor: Editor, caretLine: Int, relativeLine: Int): Int {
+    var relativeDistance = 0
+    val step = relativeLine.sign
+    val shouldHandleFolds = checkIfShouldCheckForFolds(editor, caretLine, step)
+    return if (!shouldHandleFolds) {
+      caretLine + relativeLine
+    } else {
+      var line = getFoldBorderLine(editor, caretLine, step)
+      while (relativeDistance < abs(relativeLine)) {
+        line = getFoldBorderLine(editor, line + step, step)
+        ++relativeDistance
       }
-      line += step
-      relativeLineCount += step
+      // here fold start line is returned
+      getFoldBorderLine(editor, line, -1)
     }
-    return relativeLineCount
+  }
+
+  private fun getOffsetAtFoldStart(editor: Editor, line: Int): Int {
+    val document = editor.document
+    val lineStartOffset = document.getLineStartOffset(line)
+    return EditorUtil.getNotFoldedLineStartOffset(editor, lineStartOffset)
   }
 
   private fun checkIfShouldCheckForFolds(editor: Editor, caretLine: Int, step: Int): Boolean {
+    val document = editor.document
     val foldingModelImpl = editor.foldingModel as FoldingModelImpl
-    val caretLineOffset = editor.document.getLineStartOffset(caretLine)
+    val caretLineOffset = if (step < 0) document.getLineEndOffset(caretLine) else document.getLineStartOffset(caretLine)
+    if (foldingModelImpl.isOffsetCollapsed(caretLineOffset)) return true
+
     val foldedLinesBeforeCaret = foldingModelImpl.getFoldedLinesCountBefore(caretLineOffset)
     val foldedLinesAfterCaret = foldingModelImpl.totalNumberOfFoldedLines - foldedLinesBeforeCaret
     return if (step < 0) foldedLinesBeforeCaret != 0 else foldedLinesAfterCaret != 0

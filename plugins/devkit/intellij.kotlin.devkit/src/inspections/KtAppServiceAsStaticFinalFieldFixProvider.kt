@@ -7,17 +7,18 @@ import com.intellij.openapi.application.CachedSingletonsRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiEditorUtil
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.idea.devkit.inspections.quickfix.AppServiceAsStaticFinalFieldFixProvider
 import org.jetbrains.idea.devkit.inspections.quickfix.WrapInSupplierQuickFix
-import org.jetbrains.kotlin.analysis.utils.printer.parentOfType
-import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.intentions.ConvertPropertyToFunctionIntention
-import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.refactoring.inline.KotlinInlinePropertyProcessor
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
@@ -47,19 +48,26 @@ private class KtWrapInSupplierQuickFix(ktProperty: KtProperty) : WrapInSupplierQ
   override fun createSupplierElement(project: Project, element: KtProperty): KtProperty {
     val supplierPropertyName = suggestSupplierPropertyName(element)
 
-    val ktPropertyType = (element.resolveToDescriptorIfAny() as CallableDescriptor).returnType
+    // can be called both from EDT and from the preview
+    @OptIn(KtAllowAnalysisOnEdt::class)
+    val ktPropertyType = allowAnalysisOnEdt {
+      analyze(element) {
+        val returnType = element.getReturnKtType().lowerBoundIfFlexible()
+        (returnType as? KtNonErrorClassType)?.classId
+      }
+    }
 
     val supplierProperty = KtPsiFactory(project).createProperty(
       modifiers = element.modifierList?.text,
       name = supplierPropertyName,
-      type = "${Supplier::class.java.canonicalName}<${ktPropertyType!!.fqName}>",
+      type = "${Supplier::class.java.canonicalName}<${ktPropertyType!!.asSingleFqName()}>",
       isVar = false,
       initializer = "${CachedSingletonsRegistry::class.java.canonicalName}.lazy { ${element.initializer!!.text} }"
     )
 
     return (element.parent.addBefore(supplierProperty, element) as KtProperty).also {
       copyComments(element, it, element.initializer)
-      ShortenReferences.DEFAULT.process(it)
+      ShortenReferencesFacility.getInstance().shorten(it)
     }
   }
 

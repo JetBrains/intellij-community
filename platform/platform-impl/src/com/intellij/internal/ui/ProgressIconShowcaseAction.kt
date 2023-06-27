@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.ColorChooserService
 import com.intellij.ui.SpinningProgressIcon
+import com.intellij.ui.bigSpinningProgressIcon
 import com.intellij.ui.components.dialog
 import com.intellij.ui.dsl.builder.panel
 
@@ -18,7 +19,7 @@ internal class ProgressIconShowcaseAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val icon = SpinningProgressIcon()
-    val iconBig = SpinningProgressIcon.Big()
+    val iconBig = bigSpinningProgressIcon()
     val panel = panel {
       row {
         icon(icon)

@@ -20,6 +20,7 @@ import com.intellij.ui.BadgeIcon
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.tabs.impl.JBEditorTabs
 import com.intellij.ui.tabs.impl.MorePopupAware
 import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.util.BitUtil
@@ -44,7 +45,9 @@ internal class CloseTab(component: JComponent,
 
   override fun update(e: AnActionEvent) {
     val pinned = isPinned()
-    e.presentation.isVisible = UISettings.getInstance().showCloseButton || pinned || (ExperimentalUI.isNewUI() && isModified())
+    val modified = isModified()
+    e.presentation.putClientProperty(JBEditorTabs.MARK_MODIFIED_KEY, modified)
+    e.presentation.isVisible = UISettings.getInstance().showCloseButton || pinned || (ExperimentalUI.isNewUI() && modified)
     e.presentation.icon = getIcon(isHovered = false)
     e.presentation.hoveredIcon = getIcon(isHovered = true)
 

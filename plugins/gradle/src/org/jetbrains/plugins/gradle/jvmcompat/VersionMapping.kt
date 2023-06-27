@@ -4,13 +4,12 @@ package org.jetbrains.plugins.gradle.jvmcompat
 import com.intellij.openapi.components.BaseState
 
 class VersionMapping() : BaseState() {
-  constructor(initialVersionInfo: String, initialGradleInfo: String, initialComment: String? = null) : this() {
-    javaVersionInfo = initialVersionInfo
-    gradleVersionInfo = initialGradleInfo
-    comment = initialComment
-  }
 
   var javaVersionInfo by string()
   var gradleVersionInfo by string()
-  var comment by string()
+
+  constructor(java: String, gradle: String) : this() {
+    javaVersionInfo = java
+    gradleVersionInfo = gradle
+  }
 }

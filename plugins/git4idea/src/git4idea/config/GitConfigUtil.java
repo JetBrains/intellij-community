@@ -134,7 +134,7 @@ public final class GitConfigUtil {
                               @NotNull @NonNls String value,
                               @NonNls String... additionalParameters) throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.CONFIG);
-    h.setSilent(true);
+    h.setSilent(false);
     h.addParameters(additionalParameters);
     h.addParameters(key, value);
     Git.getInstance().runCommand(h).throwOnError(1);

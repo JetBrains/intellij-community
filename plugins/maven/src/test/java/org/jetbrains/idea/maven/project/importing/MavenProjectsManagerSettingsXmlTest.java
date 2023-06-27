@@ -14,16 +14,9 @@ import java.util.List;
 public class MavenProjectsManagerSettingsXmlTest extends MavenMultiVersionImportingTestCase {
   @Override
   protected void setUp() throws Exception {
-    MavenUtil.setUpdateSuspendable();
     super.setUp();
     initProjectsManager(true);
     Assume.assumeFalse(MavenUtil.isLinearImportEnabled());
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    MavenUtil.resetUpdateSuspendable();
-    super.tearDown();
   }
 
   @Test

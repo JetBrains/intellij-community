@@ -25,12 +25,10 @@ class VSMacTransferSettingsProvider : TransferSettingsProvider {
     else -> SmartList(getIdeVersion(version))
   }
 
-  override fun getImportPerformer(ideVersion: IdeVersion): DefaultImportPerformer = DefaultImportPerformer()
-
   private fun getIdeVersion(version: String) = IdeVersion(
     name = "Visual Studio for Mac",
     id = "VSMAC",
-    icon = AllIcons.Idea_logo_welcome,
+    icon = AllIcons.TransferSettings.Vsmac,
     lastUsed = getLastUsed(version),
     settings = VSMacSettingsProcessor().getProcessedSettings(version),
     provider = this

@@ -213,10 +213,11 @@ class LogEventJsonDeserializer : JsonDeserializer<LogEvent>() {
     return LogEvent(session, build, bucket, time, LogEventGroup(groupId, groupVersion), recorderVersion, action)
   }
 
-  private fun transformData(value: Any): Any {
+  private fun transformData(value: JsonNode): Any {
     return when (value) {
       is TextNode -> value.textValue()
       is LongNode -> value.longValue()
+      is BooleanNode -> value.booleanValue()
       is ArrayNode -> value.map { if (it != null) transformData(it) else null }
       is ObjectNode -> {
         val data = HashMap<Any, Any?>()

@@ -8,6 +8,7 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.lang.ASTNode;
+import com.intellij.modcommand.ModPsiNavigator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -15,6 +16,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
@@ -141,31 +143,10 @@ public final class GenerateMembersUtil {
       PsiMethod method = (PsiMethod)firstMember;
       PsiCodeBlock body = method.getBody();
       if (body != null) {
-        PsiElement firstBodyElement = body.getFirstBodyElement();
-        PsiElement l = firstBodyElement;
-        while (l instanceof PsiWhiteSpace) l = l.getNextSibling();
-        if (l == null) l = body;
-        PsiElement lastBodyElement = body.getLastBodyElement();
-        PsiElement r = lastBodyElement;
-        while (r instanceof PsiWhiteSpace) r = r.getPrevSibling();
-        if (r == null) r = body;
-
-        int start = l.getTextRange().getStartOffset();
-        int end = r.getTextRange().getEndOffset();
-
-        boolean adjustLineIndent = false;
-
-        // body is whitespace
-        if (start > end &&
-            firstBodyElement == lastBodyElement &&
-            firstBodyElement instanceof PsiWhiteSpaceImpl
-          ) {
-          CharSequence chars = ((PsiWhiteSpaceImpl)firstBodyElement).getChars();
-          if (chars.length() > 1 && chars.charAt(0) == '\n' && chars.charAt(1) == '\n') {
-            start = end = firstBodyElement.getTextRange().getStartOffset() + 1;
-            adjustLineIndent = true;
-          }
-        }
+        PositionInfo info = getPositionInfo(body);
+        int start = info.start();
+        int end = info.end();
+        boolean adjustLineIndent = info.adjustLineIndent();
 
         editor.getCaretModel().moveToOffset(Math.min(start, end));
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
@@ -184,26 +165,87 @@ public final class GenerateMembersUtil {
       }
     }
 
-    int offset;
-    if (firstMember instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)firstMember;
-      PsiCodeBlock body = method.getBody();
-      if (body == null) {
-        offset = method.getTextRange().getStartOffset();
-      }
-      else {
-        PsiJavaToken lBrace = body.getLBrace();
-        assert lBrace != null : firstMember.getText();
-        offset = lBrace.getTextRange().getEndOffset();
-      }
-    }
-    else {
-      offset = firstMember.getTextRange().getStartOffset();
-    }
+    int offset = getOffsetInMethod(firstMember);
 
     editor.getCaretModel().moveToOffset(offset);
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     editor.getSelectionModel().removeSelection();
+  }
+
+  public static void positionCaret(@NotNull ModPsiNavigator updater, @NotNull PsiElement firstMember, boolean toEditMethodBody) {
+    LOG.assertTrue(firstMember.isValid());
+    Project project = firstMember.getProject();
+
+    if (toEditMethodBody) {
+      PsiMethod method = (PsiMethod)firstMember;
+      PsiCodeBlock body = method.getBody();
+      if (body != null) {
+        PositionInfo info = getPositionInfo(body);
+
+        updater.moveTo(Math.min(info.start(), info.end()));
+        if (info.start() < info.end()) {
+          //Not an empty body
+          updater.select(TextRange.create(info.start(), info.end()));
+        } else if (info.adjustLineIndent()) {
+          Document document = firstMember.getContainingFile().getViewProvider().getDocument();
+          RangeMarker marker = document.createRangeMarker(info.start(), info.start());
+          PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
+          if (marker.isValid()) {
+            CodeStyleManager.getInstance(project).adjustLineIndent(document, marker.getStartOffset());
+          }
+        }
+        return;
+      }
+    }
+
+    int offset = getOffsetInMethod(firstMember);
+    updater.moveTo(offset);
+  }
+
+  @NotNull
+  private static PositionInfo getPositionInfo(PsiCodeBlock body) {
+    PsiElement firstBodyElement = body.getFirstBodyElement();
+    PsiElement l = firstBodyElement;
+    while (l instanceof PsiWhiteSpace) l = l.getNextSibling();
+    if (l == null) l = body;
+    PsiElement lastBodyElement = body.getLastBodyElement();
+    PsiElement r = lastBodyElement;
+    while (r instanceof PsiWhiteSpace) r = r.getPrevSibling();
+    if (r == null) r = body;
+
+    int start = l.getTextRange().getStartOffset();
+    int end = r.getTextRange().getEndOffset();
+
+    boolean adjustLineIndent = false;
+
+    // body is whitespace
+    if (start > end &&
+        firstBodyElement == lastBodyElement &&
+        firstBodyElement instanceof PsiWhiteSpaceImpl
+    ) {
+      CharSequence chars = ((PsiWhiteSpaceImpl)firstBodyElement).getChars();
+      if (chars.length() > 1 && chars.charAt(0) == '\n' && chars.charAt(1) == '\n') {
+        start = end = firstBodyElement.getTextRange().getStartOffset() + 1;
+        adjustLineIndent = true;
+      }
+    }
+    return new PositionInfo(start, end, adjustLineIndent);
+  }
+
+  private record PositionInfo(int start, int end, boolean adjustLineIndent) {
+  }
+
+  private static int getOffsetInMethod(@NotNull PsiElement member) {
+    if (member instanceof PsiMethod method) {
+      PsiCodeBlock body = method.getBody();
+      if (body == null) {
+        return method.getTextRange().getStartOffset();
+      }
+      PsiJavaToken lBrace = body.getLBrace();
+      assert lBrace != null : member.getText();
+      return lBrace.getTextRange().getEndOffset();
+    }
+    return member.getTextRange().getStartOffset();
   }
 
   public static PsiElement insert(@NotNull PsiClass aClass, @NotNull PsiMember member, @Nullable PsiElement anchor, boolean before) throws IncorrectOperationException {
@@ -574,7 +616,7 @@ public final class GenerateMembersUtil {
 
     if (overridden == null) {
       if (emptyTemplate) {
-        CreateFromUsageUtils.setupMethodBody(method, containingClass);
+        CreateFromUsageUtils.setupMethodBody(method);
       }
       return;
     }

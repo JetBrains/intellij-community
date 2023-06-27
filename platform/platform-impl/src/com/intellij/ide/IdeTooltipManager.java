@@ -20,10 +20,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryManager;
-import com.intellij.openapi.util.registry.RegistryValue;
-import com.intellij.openapi.util.registry.RegistryValueListener;
+import com.intellij.openapi.util.registry.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -102,7 +99,7 @@ public class IdeTooltipManager implements Disposable {
       }
     });
 
-    RegistryManager.Companion.executeWhenReady(coroutineScope, registryManager -> {
+    RegistryManagerKt.useRegistryManagerWhenReadyJavaAdapter(coroutineScope, registryManager -> {
       Toolkit.getDefaultToolkit().addAWTEventListener(this::eventDispatched, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
 
       isEnabled = registryManager.is(IDE_TOOLTIP_CALLOUT_KEY);

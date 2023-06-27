@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.editor.*
+import com.intellij.openapi.editor.actions.EditorActionUtil
 import com.intellij.openapi.editor.ex.EditorEventMulticasterEx
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FocusChangeListener
@@ -60,6 +61,7 @@ class CombinedDiffViewer(
   context: DiffContext
 ) : DiffViewer,
     CombinedDiffNavigation,
+    CombinedDiffCaretNavigation,
     DataProvider {
   private val project = context.project!! // CombinedDiffContext expected
 
@@ -140,17 +142,17 @@ class CombinedDiffViewer(
 
     override fun goNext() {
       currentBlockIndex++
-      selectDiffBlock(currentBlockIndex, ScrollPolicy.SCROLL_TO_BLOCK)
-
+      selectDiffBlock(currentBlockIndex)
     }
 
     override fun goPrev() {
       currentBlockIndex--
-      selectDiffBlock(currentBlockIndex, ScrollPolicy.SCROLL_TO_BLOCK)
+      selectDiffBlock(currentBlockIndex)
     }
 
     fun setCurrentBlock(index: Int) {
-      this.currentBlockIndex = index
+      if (index >= 0 && index < getDiffBlocksCount())
+        this.currentBlockIndex = index
     }
   }
 
@@ -266,7 +268,7 @@ class CombinedDiffViewer(
   }
 
   override fun canGoNextDiff(): Boolean = isNavigationEnabled() && (currentDiffIterable.canGoNext() || canGoNextBlock())
-  override fun canGoPrevDiff(): Boolean = isNavigationEnabled() && (currentDiffIterable.canGoNext() || canGoPrevBlock())
+  override fun canGoPrevDiff(): Boolean = isNavigationEnabled() && (currentDiffIterable.canGoPrev() || canGoPrevBlock())
 
   override fun goNextDiff() {
     when {
@@ -298,11 +300,15 @@ class CombinedDiffViewer(
   override fun goNextBlock() {
     if (!canGoNextBlock()) return
     blockNavigation.goNext()
+    selectDiffBlock(blockNavigation.currentBlockIndex, ScrollPolicy.SCROLL_TO_BLOCK)
+    getCurrentDiffViewer()?.editor?.let { EditorActionUtil.moveCaretToTextStart(it, null) }
   }
 
   override fun goPrevBlock() {
     if (!canGoPrevBlock()) return
     blockNavigation.goPrev()
+    selectDiffBlock(blockNavigation.currentBlockIndex, ScrollPolicy.SCROLL_TO_BLOCK)
+    getCurrentDiffViewer()?.editor?.let { EditorActionUtil.moveCaretToTextStart(it, null) }
   }
 
   private fun isNavigationEnabled(): Boolean = diffBlocks.isNotEmpty()
@@ -437,16 +443,16 @@ class CombinedDiffViewer(
 
   internal fun getDiffViewerForId(id: CombinedBlockId): DiffViewer? = diffViewers[id]
 
-  fun selectDiffBlock(blockId: CombinedBlockId?, focusBlock: Boolean) {
+  fun selectDiffBlock(blockId: CombinedBlockId?, focusBlock: Boolean, scrollPolicy: ScrollPolicy? = ScrollPolicy.SCROLL_TO_BLOCK) {
     blockId ?: return
     val index = getBlockIndex(blockId)
     if (index == null || index == -1) return
 
-    selectDiffBlock(index, ScrollPolicy.SCROLL_TO_BLOCK, focusBlock)
+    selectDiffBlock(index, scrollPolicy, focusBlock)
   }
 
   private fun selectDiffBlock(index: Int,
-                              scrollPolicy: ScrollPolicy,
+                              scrollPolicy: ScrollPolicy? = null,
                               focusBlock: Boolean = true) {
     val blockId = getBlockId(index) ?: return
     val block = getBlockForId(blockId) ?: return
@@ -486,10 +492,6 @@ class CombinedDiffViewer(
   internal fun contentChanged() {
     combinedEditorSettingsAction.installGutterPopup()
     combinedEditorSettingsAction.applyDefaults()
-    editors.forEach { editor ->
-      //editor.settings.additionalLinesCount = 5
-      //(editor as? EditorEx)?.setVerticalScrollbarVisible(false)
-    }
   }
 
   private val foldingModels: List<FoldingModelSupport>
@@ -508,6 +510,59 @@ class CombinedDiffViewer(
     }
 
     return currentDiffViewer?.let(DiffViewer::getComponent)?.let(DataManager::getDataProvider)
+  }
+
+  override fun moveCaretToPrevBlock() {
+    blockNavigation.goPrev()
+    val editor = getCurrentDiffViewer()?.editor ?: return
+    EditorActionUtil.moveCaretToTextEnd(editor, null)
+    scrollToCaret()
+  }
+
+  override fun moveCaretToNextBlock() {
+    blockNavigation.goNext()
+    val editor = getCurrentDiffViewer()?.editor ?: return
+    EditorActionUtil.moveCaretToTextStart(editor, null)
+    scrollToCaret()
+  }
+
+  override fun moveCaretPageUp() = movePageUpDown(pageUp = true)
+
+  override fun moveCaretPageDown() = movePageUpDown(pageUp = false)
+
+  private fun movePageUpDown(pageUp: Boolean) {
+    // move viewport in the new position
+    val viewRect = scrollPane.viewport.viewRect
+
+    val pageHeightWithoutStickyHeader = viewRect.height - stickyHeaderPanel.height
+    val editor = getCurrentDiffViewer()?.editor ?: return
+    val lineHeight = editor.lineHeight
+    val pageOffset = (if (pageUp) -pageHeightWithoutStickyHeader else pageHeightWithoutStickyHeader) / lineHeight * lineHeight
+
+    val maxNewY = scrollPane.viewport.view.height - stubPanelAfterBlock.height - 1
+    viewRect.y = (viewRect.y + pageOffset).coerceAtLeast(0).coerceAtMost(maxNewY)
+
+    scrollPane.viewport.viewPosition = Point(viewRect.x, viewRect.y)
+
+    // move caret
+    val visualPositionInCurrentEditor = editor.caretModel.visualPosition
+    val pointInCurrentEditor = editor.visualPositionToXY(visualPositionInCurrentEditor)
+    val pointInView = SwingUtilities.convertPoint(editor.component, pointInCurrentEditor, scrollPane.viewport.view)
+
+    val newPointInView = Point(pointInView.x, (pointInView.y + pageOffset).coerceAtLeast(0).coerceAtMost(maxNewY))
+    val newComponent = scrollPane.viewport.view.getComponentAt(newPointInView)
+    if (newComponent is CombinedSimpleDiffBlock) {
+      selectDiffBlock(newComponent.id, true, null)
+      val newEditor = getCurrentDiffViewer()?.editor ?: return
+      val pointInNewEditor = SwingUtilities.convertPoint(scrollPane.viewport.view, newPointInView, newEditor.component)
+      val visualPositionInNewEditor = newEditor.xyToVisualPosition(pointInNewEditor)
+      newEditor.caretModel.moveToVisualPosition(visualPositionInNewEditor)
+    }
+    scrollToCaret()
+  }
+
+  fun scrollToCaret() {
+    scrollSupport.combinedEditorsScrollingModel.scrollToCaret(ScrollType.RELATIVE)
   }
 
   private val editors: List<Editor>
@@ -557,9 +612,9 @@ class CombinedDiffViewer(
 
     val currentPrevNextIterable = CombinedDiffPrevNextDifferenceIterable()
 
-    private val combinedEditorsScrollingModel = ScrollingModelImpl(CombinedEditorsScrollingModelHelper(project, viewer))
+    val combinedEditorsScrollingModel = ScrollingModelImpl(CombinedEditorsScrollingModelHelper(project, viewer))
 
-    fun scroll(index: Int, block: CombinedDiffBlock<*>, scrollPolicy: ScrollPolicy) {
+    fun scroll(index: Int, block: CombinedDiffBlock<*>, scrollPolicy: ScrollPolicy?) {
       val isEditorBased = viewer.getDiffViewerForId(block.id)?.isEditorBased ?: false
       if (scrollPolicy == ScrollPolicy.SCROLL_TO_BLOCK || !isEditorBased) {
         scrollToDiffBlock(index)

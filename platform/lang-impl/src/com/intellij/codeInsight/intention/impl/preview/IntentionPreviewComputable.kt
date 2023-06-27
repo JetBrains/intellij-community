@@ -13,7 +13,6 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeInspection.ex.QuickFixWrapper
 import com.intellij.diagnostic.PluginException
-import com.intellij.diff.comparison.ComparisonManager
 import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
@@ -24,7 +23,6 @@ import com.intellij.model.SideEffectGuard
 import com.intellij.model.SideEffectGuard.SideEffectNotAllowedException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -37,7 +35,7 @@ import java.io.IOException
 import java.lang.ref.Reference
 import java.util.concurrent.Callable
 
-internal class IntentionPreviewComputable(private val project: Project,
+class IntentionPreviewComputable(private val project: Project,
                                           private val action: IntentionAction,
                                           private val originalFile: PsiFile,
                                           private val originalEditor: Editor) : Callable<IntentionPreviewInfo> {
@@ -86,13 +84,7 @@ internal class IntentionPreviewComputable(private val project: Project,
     if (project.isDisposed) return null
     val origPair = ShowIntentionActionsHandler.chooseFileForAction(originalFile, originalEditor, action) ?: return null
     ProgressManager.checkCanceled()
-    val writable = originalEditor.document.isWritable
-    try {
-      return invokePreview(origPair.first, origPair.second)
-    }
-    finally {
-      originalEditor.document.setReadOnly(!writable)
-    }
+    return invokePreview(origPair.first, origPair.second)
   }
 
   private fun invokePreview(origFile: PsiFile, origEditor: Editor): IntentionPreviewInfo? {
@@ -117,7 +109,6 @@ internal class IntentionPreviewComputable(private val project: Project,
       psiFileCopy = IntentionPreviewUtils.obtainCopyForPreview(fileToCopy)
       editorCopy = IntentionPreviewEditor(psiFileCopy, originalEditor.settings)
     }
-    originalEditor.document.setReadOnly(true)
     ProgressManager.checkCanceled()
     // force settings initialization, as it may spawn EDT action which is not allowed inside generatePreview()
     val settings = CodeStyle.getSettings(editorCopy)
@@ -148,29 +139,17 @@ internal class IntentionPreviewComputable(private val project: Project,
         val document = copyFile.viewProvider.document
         val policy = if (info == IntentionPreviewInfo.DIFF) ComparisonPolicy.TRIM_WHITESPACES else ComparisonPolicy.DEFAULT
         val text = origFile.text
-        IntentionPreviewDiffResult(
+        IntentionPreviewDiffResult.create(
           fileType = copyFile.fileType,
-          newText = document.text,
+          updatedText = document.text,
           origText = text,
-          policy = policy,
           fileName = if (anotherFile) copyFile.name else null,
           normalDiff = !anotherFile,
-          lineFragments = ComparisonManager.getInstance().compareLines(text, document.text, policy,
-                                                                       DumbProgressIndicator.INSTANCE))
-      }
-      is IntentionPreviewInfo.Diff -> {
-        IntentionPreviewDiffResult(
-          fileType = origFile.fileType,
-          newText = info.modifiedText(),
-          origText = info.originalText(),
-          policy = ComparisonPolicy.DEFAULT,
-          fileName = null,
-          normalDiff = true,
-          lineFragments = ComparisonManager.getInstance().compareLines(
-            info.originalText(), info.modifiedText(), ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE))
+          policy = policy)
       }
       IntentionPreviewInfo.EMPTY, IntentionPreviewInfo.FALLBACK_DIFF -> null
       is IntentionPreviewInfo.CustomDiff -> IntentionPreviewDiffResult.fromCustomDiff(info)
+      is IntentionPreviewInfo.MultiFileDiff -> IntentionPreviewDiffResult.fromMultiDiff(info)
       else -> info
     }
   }

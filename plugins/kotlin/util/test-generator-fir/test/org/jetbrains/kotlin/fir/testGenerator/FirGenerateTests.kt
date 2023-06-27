@@ -37,6 +37,9 @@ import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOTS
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOT_AND_FIR_PREFIX
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_FIR_PREFIX
 import org.jetbrains.kotlin.idea.fir.resolve.*
+import org.jetbrains.kotlin.idea.fir.navigation.AbstractFirGotoTypeDeclarationTest
+import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
+import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_OR_KTS
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     generateK2Tests()
@@ -109,6 +112,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("resolve/referenceInJava/binaryAndSource", pattern = JAVA)
         }
 
+        testClass<AbstractFirGotoTypeDeclarationTest> {
+            model("navigation/gotoTypeDeclaration", pattern = TEST)
+        }
+
         testClass<AbstractHighLevelQuickFixTest> {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$")
             model("quickfix/abstract", pattern = pattern)
@@ -143,6 +150,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("quickfix/typeMismatch/typeMismatchOnReturnedExpression", pattern = pattern)
             model("quickfix/toString", pattern = pattern)
             model("quickfix/specifySuperType", pattern = pattern)
+            model("quickfix/convertToBlockBody", pattern = pattern)
         }
 
         testClass<AbstractHighLevelQuickFixMultiFileTest> {
@@ -273,7 +281,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
     testGroup("uast/uast-kotlin-fir/tests") {
         testClass<AbstractFirUastDeclarationTest> {
-            model("declaration")
+            model("declaration", pattern = KT_OR_KTS)
         }
 
         testClass<AbstractFirUastTypesTest> {

@@ -36,8 +36,6 @@
     <string>APPL</string>
     <key>CFBundleIdentifier</key>
     <string>@@bundle_identifier@@@@product_state@@</string>
-    <key>CFBundleSignature</key>
-    <string>????</string>
     <key>CFBundleGetInfoString</key>
     <string>@@bundle_name@@ @@version@@, build @@build@@. Copyright JetBrains s.r.o., (c) 2000-@@year@@</string>
     <key>CFBundleShortVersionString</key>

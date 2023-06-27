@@ -18,6 +18,13 @@ interface SourceToSinkProvider {
     val sourceToSinkLanguageProvider = LanguageExtension<SourceToSinkProvider>(EP_NAME.name)
   }
 
+  /**
+   * Returns a physical element for a given light element.
+   * Analog UElement.getSourcePsi()
+   *
+   * @param element the light or non-physical element
+   * @return physical element corresponding to the light element, null if no physical element exists.
+   */
   fun getPhysicalForLightElement(element: PsiElement?): PsiElement?
 }
 

@@ -1307,6 +1307,39 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
+  public static @Unmodifiable @NotNull List<String> split(@NotNull String s,
+                                                          @NotNull CharFilter separator,
+                                                          boolean excludeSeparator,
+                                                          boolean excludeEmptyStrings) {
+    //noinspection unchecked,rawtypes
+    return (List)split((CharSequence)s, separator, excludeSeparator, excludeEmptyStrings);
+  }
+
+  @Contract(pure = true)
+  public static @Unmodifiable @NotNull List<CharSequence> split(@NotNull CharSequence s,
+                                                                @NotNull CharFilter separator,
+                                                                boolean excludeSeparator,
+                                                                boolean excludeEmptyStrings) {
+    List<CharSequence> result = new ArrayList<>();
+    int pos = 0;
+    int index = 0;
+    while (index < s.length()) {
+      if (separator.accept(s.charAt(index))) {
+        CharSequence token = s.subSequence(pos, excludeSeparator ? index : index + 1);
+        if (token.length() != 0 || !excludeEmptyStrings) {
+          result.add(token);
+        }
+        pos = index + 1;
+      }
+      index++;
+    }
+    if (pos < s.length() || !excludeEmptyStrings && pos == s.length()) {
+      result.add(s.subSequence(pos, s.length()));
+    }
+    return result;
+  }
+
+  @Contract(pure = true)
   public static @NotNull Iterable<String> tokenize(@NotNull String s, @NotNull String separators) {
     return tokenize(new StringTokenizer(s, separators));
   }
@@ -1874,6 +1907,13 @@ public class StringUtil extends StringUtilRt {
     int i = text.lastIndexOf(subString);
     if (i == -1) return text;
     return text.substring(0, i);
+  }
+
+  @Contract(pure = true)
+  public static @NotNull String substringBeforeLast(@NotNull String text, @NotNull String subString, boolean includeLast) {
+    int i = text.lastIndexOf(subString);
+    if (i == -1) return text;
+    return includeLast ? text.substring(0, i + subString.length()) : text.substring(0, i);
   }
 
   @Contract(pure = true)
@@ -3051,6 +3091,7 @@ public class StringUtil extends StringUtilRt {
    * @deprecated use {@link com.intellij.ide.nls.NlsMessages#formatAndList(java.util.Collection)} instead to get properly localized concatenation
    */
   @SuppressWarnings("HardCodedStringLiteral")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static @Nls @NotNull String naturalJoin(List<String> strings) {
     if (strings.isEmpty()) return "";

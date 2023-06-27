@@ -80,6 +80,10 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   public void changed() {
+    changed(true);
+  }
+
+  public void changed(boolean fireUpdate) {
     if (myBulkUpdateLevel > 0) return;
 
     myEffectiveLocalRepositoryCache = null;
@@ -87,7 +91,9 @@ public class MavenGeneralSettings implements Cloneable {
     myEffectiveLocalHomeCache = null;
     myEffectiveSuperPomCache = null;
     mavenConfigCache = null;
-    fireChanged();
+    if (fireUpdate) {
+      fireChanged();
+    }
   }
 
   @Property
@@ -123,7 +129,7 @@ public class MavenGeneralSettings implements Cloneable {
    */
   @Transient
   @NotNull
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public MavenExecutionOptions.LoggingLevel getLoggingLevel() {
     return getOutputLevel();
   }
@@ -518,7 +524,7 @@ public class MavenGeneralSettings implements Cloneable {
     threads = threadsConfig;
 
     if (needUpdate) {
-      changed();
+      changed(false);
     }
     mavenConfigCache = config;
   }

@@ -14,10 +14,11 @@ import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsLogProperties;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.data.SingleTaskController;
@@ -38,6 +39,7 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.sqlite.AlreadyClosedException;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -128,7 +130,9 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
   }
 
   private static int getIndexingLimit() {
-    return Math.max(1, Registry.intValue("vcs.log.index.limit.minutes"));
+    int limitValue = Registry.intValue("vcs.log.index.limit.minutes");
+    if (limitValue < 0) return -1;
+    return Math.max(1, limitValue);
   }
 
   @Override
@@ -324,6 +328,13 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     }
 
     @Override
+    protected int disposeLongTimeout() {
+      if (SqliteVcsLogStorageBackendKt.isSqliteBackend(myBackend)) return 5000;
+
+      return super.disposeLongTimeout();
+    }
+
+    @Override
     protected @NotNull SingleTask startNewBackgroundTask() {
       ProgressIndicator indicator = myProgress.createProgressIndicator(true, INDEXING);
       Consumer<ProgressIndicator> task = progressIndicator -> {
@@ -375,13 +386,15 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
 
   private final class IndexingRequest {
     private static final int BATCH_SIZE = 20_000;
-    private static final int FLUSHED_COMMITS_NUMBER = 15000;
     private static final int LOGGED_ERRORS_COUNT = 5;
     private static final int STOPPING_ERROR_COUNT = 30;
+
     private final @NotNull VirtualFile myRoot;
     private final @NotNull IntSet myCommits;
     private final @NotNull VcsLogIndexer.PathsEncoder myPathsEncoder;
     private final boolean myFull;
+
+    private final int myFlushedCommitsNumber = SqliteVcsLogStorageBackendKt.isSqliteBackend(myBackend) ? 5000 : 15000;
 
     private final @NotNull AtomicInteger myNewIndexedCommits = new AtomicInteger();
     private final @NotNull AtomicInteger myOldCommits = new AtomicInteger();
@@ -412,7 +425,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       indicator.setIndeterminate(false);
       indicator.setFraction(0);
 
-      mySpan = TelemetryTracer.getInstance().getTracer(VcsScope).spanBuilder("git-log-indexing").startSpan();
+      mySpan = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder("git-log-indexing").startSpan();
       myScope = mySpan.makeCurrent();
       myStartTime = getCurrentTimeMillis();
 
@@ -438,6 +451,9 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
         }
         performCommit = true;
       }
+      catch (AlreadyClosedException e) {
+        throw new ProcessCanceledException(e);
+      }
       catch (ProcessCanceledException e) {
         performCommit = true;
         scheduleReindex();
@@ -456,7 +472,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
         try {
           mutator.close(performCommit);
         }
-        catch (ProcessCanceledException ignored) {
+        catch (AlreadyClosedException | ProcessCanceledException ignored) {
         }
         catch (Exception e) {
           myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
@@ -521,7 +537,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     private void scheduleReindex() {
       int unindexedCommits = myCommits.size() - myNewIndexedCommits.get() - myOldCommits.get();
       if (mySingleTaskController.isClosed()) {
-        LOG.debug("Reindexing of " + myRoot.getName() +  " is not scheduled since dispose has already started. " +
+        LOG.debug("Reindexing of " + myRoot.getName() + " is not scheduled since dispose has already started. " +
                   unindexedCommits + " unindexed commits left.");
         return;
       }
@@ -550,11 +566,12 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       IntCollectionUtil.processBatches(commits, BATCH_SIZE, batch -> {
         indicator.checkCanceled();
 
-        List<String> hashes = IntCollectionUtil.map2List(batch, value -> myStorage.getCommitId(value).getHash().asString());
+        Map<@NotNull Integer, @NotNull CommitId> ids = myStorage.getCommitIds(batch);
+        List<String> hashes = ContainerUtil.map(ids.values(), value -> value.getHash().asString());
         myIndexers.get(myRoot).readFullDetails(myRoot, hashes, myPathsEncoder, detail -> {
           indicator.checkCanceled();
           storeDetail(detail, mutator);
-          if (myNewIndexedCommits.incrementAndGet() % FLUSHED_COMMITS_NUMBER == 0) {
+          if (myNewIndexedCommits.incrementAndGet() % myFlushedCommitsNumber == 0) {
             mutator.flush();
           }
 
@@ -568,7 +585,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
         indicator.checkCanceled();
         storeDetail(details, mutator);
 
-        if (myNewIndexedCommits.incrementAndGet() % FLUSHED_COMMITS_NUMBER == 0) {
+        if (myNewIndexedCommits.incrementAndGet() % myFlushedCommitsNumber == 0) {
           mutator.flush();
         }
 
@@ -581,7 +598,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       int limit = myIndexingLimit.get(myRoot).get();
       boolean isBigRoot = myBigRepositoriesList.isBig(myRoot);
       boolean isOvertime = !myIdleIndexer.isEnabled()
-                           && (time >= (Math.max(limit, 1L) * 60 * 1000) && !isBigRoot);
+                           && (limit > 0 && time >= (Math.max(limit, 1L) * 60 * 1000) && !isBigRoot);
       if (isOvertime || (isBigRoot && !indicator.isCanceled())) {
         mySpan.setAttribute("cancelled", true);
         LOG.warn("Indexing " + myRoot.getName() + " was cancelled after " + StopWatch.formatTime(time));

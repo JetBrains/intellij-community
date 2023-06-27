@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit
 
 import com.apple.eawt.event.FullScreenEvent
@@ -16,7 +16,7 @@ import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.project.impl.applyBoundsOrDefault
-import com.intellij.openapi.project.impl.createNewProjectFrame
+import com.intellij.openapi.project.impl.createNewProjectFrameProducer
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.*
@@ -54,7 +54,7 @@ internal class LightEditFrameWrapper(
       return runBlockingModalWithRawProgressReporter(project, "") {
         withContext(Dispatchers.EDT) {
           val wrapper = allocateLightEditFrame(project) { frame ->
-            LightEditFrameWrapper(project = project, frame = frame ?: createNewProjectFrame(frameInfo).create(), closeHandler = closeHandler)
+            LightEditFrameWrapper(project = project, frame = frame ?: createNewProjectFrameProducer(frameInfo).create(), closeHandler = closeHandler)
           } as LightEditFrameWrapper
           (FileEditorManager.getInstance(project) as LightEditFileEditorManagerImpl).internalInit()
           wrapper
@@ -139,7 +139,9 @@ internal class LightEditFrameWrapper(
   val lightEditPanel: LightEditPanel
     get() = editPanel!!
 
-  override fun createIdeRootPane(loadingState: FrameLoadingState?): IdeRootPane = LightEditRootPane(frame = frame, parentDisposable = this)
+  override fun createIdeRootPane(loadingState: FrameLoadingState?): IdeRootPane {
+    return LightEditRootPane(frame = frame, parentDisposable = this)
+  }
 
   override suspend fun installDefaultProjectStatusBarWidgets(project: Project) {
     val editorManager = LightEditService.getInstance().editorManager
@@ -166,6 +168,7 @@ internal class LightEditFrameWrapper(
 
     statusBar.init(
       project,
+      frame,
       extraItems = listOf(
         LightEditAutosaveWidget(editorManager) to LoadingOrder.before(IdeMessagePanel.FATAL_ERROR),
         LightEditEncodingWidgetWrapper(project, coroutineScope) to LoadingOrder.after(StatusBar.StandardWidgets.POSITION_PANEL),
@@ -222,7 +225,9 @@ internal class LightEditFrameWrapper(
     }
 
     override fun updateNorthComponents() {}
-    override fun installNorthComponents(project: Project) {}
+
+    override suspend fun installNorthComponents(project: Project) {}
+
     override fun deinstallNorthComponents(project: Project) {}
   }
 

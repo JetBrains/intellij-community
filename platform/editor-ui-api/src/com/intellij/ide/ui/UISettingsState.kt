@@ -5,24 +5,12 @@ import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.ReportValue
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.PlatformUtils
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Transient
 import javax.swing.SwingConstants
 
 class UISettingsState : BaseState() {
-  companion object {
-    /**
-     * Returns the default font size scaled by #defFontScale
-     *
-     * @return the default scaled font size
-     */
-    @JvmStatic
-    val defFontSize: Float
-      get() = JBUIScale.DEF_SYSTEM_FONT_SIZE * UISettings.defFontScale
-  }
-
   @get:OptionTag("FONT_FACE")
   @Deprecated("", replaceWith = ReplaceWith("NotRoamableUiOptions.fontFace"))
   var fontFace: String? by string()
@@ -195,16 +183,11 @@ class UISettingsState : BaseState() {
   @get:OptionTag("FULL_PATHS_IN_TITLE_BAR")
   var fullPathsInWindowHeader: Boolean by property(false)
   @get:OptionTag("BORDERLESS_MODE")
-  var mergeMainMenuWithWindowTitle: Boolean by property(SystemInfo.isWin10OrNewer && SystemInfo.isJetBrainsJvm)
+  var mergeMainMenuWithWindowTitle: Boolean by property((SystemInfo.isWin10OrNewer || SystemInfoRt.isXWindow) && SystemInfo.isJetBrainsJvm)
 
   var animatedScrolling: Boolean by property(!SystemInfoRt.isMac || !SystemInfo.isJetBrainsJvm)
-  var animatedScrollingDuration: Int by property(
-    when {
-      SystemInfoRt.isWindows -> 200
-      SystemInfoRt.isMac -> 50
-      else -> 150
-    }
-  )
+  var animatedScrollingDuration: Int by property(getDefaultAnimatedScrollingDuration())
+
   var animatedScrollingCurvePoints: Int by property(
     when {
       SystemInfoRt.isWindows -> 1684366536
@@ -232,4 +215,12 @@ class UISettingsState : BaseState() {
 
   @Suppress("FunctionName")
   fun _incrementModificationCount(): Unit = incrementModificationCount()
+}
+
+fun getDefaultAnimatedScrollingDuration(): Int {
+  return when {
+    SystemInfoRt.isWindows -> 200
+    SystemInfoRt.isMac -> 50
+    else -> 150
+  }
 }

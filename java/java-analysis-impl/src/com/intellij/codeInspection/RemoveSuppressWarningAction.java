@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -21,7 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-class RemoveSuppressWarningAction implements LocalQuickFix {
+class RemoveSuppressWarningAction extends PsiUpdateModCommandQuickFix {
   private static final Logger LOG = Logger.getInstance(RemoveSuppressWarningAction.class);
 
   @NotNull
@@ -44,41 +45,38 @@ class RemoveSuppressWarningAction implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement element = descriptor.getPsiElement();
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     try {
-      if (element != null) {
-        if (element instanceof PsiComment) {
-          removeFromComment((PsiComment)element);
-        }
-        else {
-          PsiModifierListOwner commentOwner = PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class, false);
-          if (commentOwner != null) {
-            PsiElement psiElement = JavaSuppressionUtil.getElementMemberSuppressedIn(commentOwner, myID);
-            if (psiElement instanceof PsiAnnotation) {
-              removeFromAnnotation((PsiAnnotation)psiElement, commentOwner);
-            }
-            else if (psiElement instanceof PsiDocComment) {
-              removeFromJavaDoc((PsiDocComment)psiElement);
-            }
-            else { //try to remove from all comments
-              Set<PsiComment> comments = new HashSet<>();
-              commentOwner.accept(new PsiRecursiveElementWalkingVisitor() {
-                @Override
-                public void visitComment(@NotNull PsiComment comment) {
-                  super.visitComment(comment);
-                  if (comment.getText().contains(myID)) {
-                    comments.add(comment);
-                  }
+      if (element instanceof PsiComment comment) {
+        removeFromComment(comment);
+      }
+      else {
+        PsiModifierListOwner commentOwner = PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class, false);
+        if (commentOwner != null) {
+          PsiElement psiElement = JavaSuppressionUtil.getElementMemberSuppressedIn(commentOwner, myID);
+          if (psiElement instanceof PsiAnnotation annotation) {
+            removeFromAnnotation(annotation, commentOwner);
+          }
+          else if (psiElement instanceof PsiDocComment docComment) {
+            removeFromJavaDoc(docComment);
+          }
+          else { //try to remove from all comments
+            Set<PsiComment> comments = new HashSet<>();
+            commentOwner.accept(new PsiRecursiveElementWalkingVisitor() {
+              @Override
+              public void visitComment(@NotNull PsiComment comment) {
+                super.visitComment(comment);
+                if (comment.getText().contains(myID)) {
+                  comments.add(comment);
                 }
-              });
-              for (PsiComment comment : comments) {
-                try {
-                  removeFromComment(comment);
-                }
-                catch (IncorrectOperationException e) {
-                  LOG.error(e);
-                }
+              }
+            });
+            for (PsiComment comment : comments) {
+              try {
+                removeFromComment(comment);
+              }
+              catch (IncorrectOperationException e) {
+                LOG.error(e);
               }
             }
           }
@@ -156,10 +154,11 @@ class RemoveSuppressWarningAction implements LocalQuickFix {
 
   @Nullable
   private String removeFromElementText(PsiElement @NotNull ... elements) {
-    String text = "";
+    StringBuilder textBuilder = new StringBuilder();
     for (PsiElement element : elements) {
-      text += StringUtil.trimStart(element.getText(), "//").trim();
+      textBuilder.append(StringUtil.trimStart(element.getText(), "//").trim());
     }
+    String text = textBuilder.toString();
     text = StringUtil.trimStart(text, "@").trim();
     int secondCommentIdx = text.indexOf("//");
     if (secondCommentIdx > 0) {

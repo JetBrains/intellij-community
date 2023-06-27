@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -185,6 +186,27 @@ public class LocalHintManager implements ClientHintManager {
       }
     }
     return false;
+  }
+
+  @Override
+  public void showGutterHint(@NotNull LightweightHint hint,
+                             @NotNull Editor editor,
+                             @NotNull HintHint hintInfo,
+                             int lineNumber,
+                             int horizontalOffset,
+                             int flags,
+                             int timeout,
+                             boolean reviveOnEditorChange,
+                             @Nullable Runnable onHintHidden) {
+    Point point = HintManagerImpl.getHintPosition(hint, editor, new LogicalPosition(lineNumber, 0), HintManager.UNDER);
+    EditorGutterComponentEx gutterComponent = (EditorGutterComponentEx)editor.getGutter();
+    final JRootPane rootPane = gutterComponent.getRootPane();
+    if (rootPane != null) {
+      JLayeredPane layeredPane = rootPane.getLayeredPane();
+      point.x = SwingUtilities.convertPoint(gutterComponent, horizontalOffset, point.y, layeredPane).x;
+    }
+
+    showEditorHint(hint, editor, hintInfo, point, flags, timeout, reviveOnEditorChange, onHintHidden);
   }
 
   @Override

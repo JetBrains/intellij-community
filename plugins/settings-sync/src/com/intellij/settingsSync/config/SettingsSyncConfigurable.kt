@@ -2,13 +2,20 @@ package com.intellij.settingsSync.config
 
 import com.intellij.configurationStore.StateStorageManagerImpl
 import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
+import com.intellij.ide.plugins.InstalledPluginsState
+import com.intellij.ide.plugins.PluginManagerConfigurable
+import com.intellij.ide.plugins.PluginStateManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
+import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.ui.DialogPanel
@@ -17,7 +24,7 @@ import com.intellij.settingsSync.*
 import com.intellij.settingsSync.SettingsSyncBundle.message
 import com.intellij.settingsSync.UpdateResult.*
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
-import com.intellij.ui.JBColor
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.and
@@ -38,7 +45,12 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
   private lateinit var enableButton: Cell<JButton>
   private lateinit var statusLabel: JLabel
 
+  @Volatile
+  private var marketplacePluginInstalled = false
+
   private val syncEnabler = SettingsSyncEnabler()
+  private val MARKETPLACE_PLUGIN_ID = PluginId.getId("com.intellij.marketplace")
+
 
   init {
     syncEnabler.addListener(this)
@@ -58,7 +70,7 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
 
   inner class EnabledPredicate : ComponentPredicate() {
     override fun addListener(listener: (Boolean) -> Unit) {
-      SettingsSyncEvents.getInstance().addEnabledStateChangeListener(object : SettingsSyncEnabledStateListener {
+      SettingsSyncEvents.getInstance().addListener(object : SettingsSyncEventListener {
         override fun enabledStateChanged(syncEnabled: Boolean) {
           listener(invoke())
         }
@@ -92,9 +104,31 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
     override fun invoke(): Boolean = isRunning
   }
 
+  inner class AuthServiceRestartPredicate : ComponentPredicate() {
+    init {
+      marketplacePluginInstalled = InstalledPluginsState.getInstance().wasInstalled(MARKETPLACE_PLUGIN_ID)
+    }
+
+    override fun addListener(listener: (Boolean) -> Unit) {
+      PluginStateManager.addStateListener { descriptor ->
+        if (descriptor.pluginId == MARKETPLACE_PLUGIN_ID) {
+          // InstalledPluginsState.getInstance().wasInstalled(MARKETPLACE_PLUGIN_ID) is still false at that time,
+          // so we just cache the value
+          marketplacePluginInstalled = true
+          listener(marketplacePluginInstalled)
+        }
+      }
+    }
+
+    override fun invoke(): Boolean {
+      return marketplacePluginInstalled
+    }
+  }
+
   override fun createPanel(): DialogPanel {
     val categoriesPanel = SettingsSyncPanelFactory.createPanel(message("configurable.what.to.sync.label"))
     val authService = SettingsSyncAuthService.getInstance()
+    val authAvailable = authService.isLoginAvailable()
     configPanel = panel {
       val isSyncEnabled = LoggedInPredicate().and(EnabledPredicate())
       if (settingsRepositoryIsEnabled()) {
@@ -106,43 +140,65 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
         }
       }
 
-      row {
-        val statusCell = label("")
-        statusCell
-          .visibleIf(LoggedInPredicate())
-          .enabled(!settingsRepositoryIsEnabled())
-        statusLabel = statusCell.component
-        updateStatusInfo()
-        label(message("sync.status.login.message"))
-          .visibleIf(LoggedInPredicate().not())
-          .enabled(!settingsRepositoryIsEnabled())
+      // authService is not available without restart
+      if (authAvailable) {
+        row {
+          val statusCell = label("")
+          statusCell
+            .visibleIf(LoggedInPredicate())
+            .enabled(!settingsRepositoryIsEnabled())
+          statusLabel = statusCell.component
+          updateStatusInfo()
+          label(message("sync.status.login.message"))
+            .visibleIf(LoggedInPredicate().not())
+            .enabled(!settingsRepositoryIsEnabled())
+        }
+        row {
+          button(message("config.button.login")) {
+            authService.login()
+          }.visibleIf(LoggedInPredicate().not())
+            .enabled(!settingsRepositoryIsEnabled())
+          enableButton = button(message("config.button.enable")) {
+            syncEnabler.checkServerState()
+          }.visibleIf(LoggedInPredicate().and(EnabledPredicate().not()))
+            .enabledIf(SyncEnablerRunning().not())
+            .enabled(!settingsRepositoryIsEnabled())
+
+          button(message("config.button.disable")) {
+            LoggedInPredicate().and(EnabledPredicate())
+            disableSync()
+          }.visibleIf(isSyncEnabled)
+          bottomGap(BottomGap.MEDIUM)
+        }
+      }
+      else {
+        val authServiceRestartPredicate = AuthServiceRestartPredicate()
+        row {
+          label(message("sync.status.login.not.available")).gap(RightGap.SMALL)
+          @Suppress("DialogTitleCapitalization", "HardCodedStringLiteral")
+          link("JetBrains Marketplace Licensing Support") {
+            val settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(it.source as ActionLink))
+            val pluginManager = settings?.find("preferences.pluginManager")
+            if (pluginManager is PluginManagerConfigurable) {
+              settings.select(pluginManager).doWhenDone {
+                pluginManager.openMarketplaceTab("/organization:JetBrains Marketplace Licensing")
+              }
+            }
+          }
+        }.visibleIf(authServiceRestartPredicate.not())
+        row {
+          label(message("sync.status.restart.required", ApplicationNamesInfo.getInstance().fullProductName))
+        }.visibleIf(authServiceRestartPredicate)
+        row {
+          button(message("sync.status.restart.ide.button")) {
+            val app = ApplicationManager.getApplication() as ApplicationEx
+            app.restart(true)
+          }
+        }.visibleIf(authServiceRestartPredicate)
       }
       row {
         comment(message("settings.sync.info.message"), 80)
           .visibleIf(isSyncEnabled.not())
-      }
-      row {
-        button(message("config.button.login")) {
-          authService.login()
-        }.visibleIf(LoggedInPredicate().not())
-         .enabled(authService.isLoginAvailable() && !settingsRepositoryIsEnabled())
-
-        label(message("error.label.login.not.available")).component.apply {
-          isVisible = !authService.isLoginAvailable()
-          icon = AllIcons.General.Error
-          foreground = JBColor.red
-        }
-        enableButton = button(message("config.button.enable")) {
-          syncEnabler.checkServerState()
-        }.visibleIf(LoggedInPredicate().and(EnabledPredicate().not()))
-         .enabledIf(SyncEnablerRunning().not())
-         .enabled(!settingsRepositoryIsEnabled())
-
-        button(message("config.button.disable")) {
-          LoggedInPredicate().and(EnabledPredicate())
-          disableSync()
-        }.visibleIf(isSyncEnabled)
-        bottomGap(BottomGap.MEDIUM)
       }
       row {
         cell(categoriesPanel)

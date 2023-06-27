@@ -43,8 +43,7 @@ class KotlinDfaAssistProvider : DfaAssistProvider {
         val file = element.containingFile
         if (file !is KtFile) return false
         val classNames = ClassNameCalculator.getClassNames(file)
-        val psiClassName = element.parentsWithSelf.firstNotNullOfOrNull { e -> classNames[e] }
-        return psiClassName == jdiClassName
+        return element.parentsWithSelf.any { e -> classNames[e] == jdiClassName }
     }
 
     override fun getAnchor(element: PsiElement): KtExpression? {
@@ -137,12 +136,12 @@ class KotlinDfaAssistProvider : DfaAssistProvider {
             val dfType = state.getDfType(value)
             var psi = when (anchor) {
                 is KotlinAnchor.KotlinExpressionAnchor -> {
-                    if (shouldTrackExpressionValue(anchor.expression) &&
-                        !KotlinConstantConditionsInspection.shouldSuppress(dfType, anchor.expression) &&
-                        dfType.tryNegate()
-                            ?.let { negated -> KotlinConstantConditionsInspection.shouldSuppress(negated, anchor.expression) } == false
-                    ) anchor.expression
-                    else return
+                    if (!shouldTrackExpressionValue(anchor.expression)) return
+                    if (KotlinConstantConditionsInspection.shouldSuppress(dfType, anchor.expression) && 
+                        dfType.tryNegate()?.let { negated -> KotlinConstantConditionsInspection.shouldSuppress(negated, anchor.expression) } != false) {
+                        return
+                    }
+                    anchor.expression
                 }
 
                 is KotlinAnchor.KotlinWhenConditionAnchor -> anchor.condition
@@ -205,7 +204,7 @@ class KotlinDfaAssistProvider : DfaAssistProvider {
                     val prevExpression = PsiTreeUtil.skipWhitespacesAndCommentsBackward(element) as? KtExpression
                     if (prevExpression != null && unreachableElements.contains(prevExpression)) null
                     else {
-                        val lastExpression = PsiTreeUtil.skipWhitespacesAndCommentsBackward(parent.rBrace) as? KtExpression
+                        val lastExpression = parent.statements.last()
                         if (lastExpression == null || prevExpression == null) null
                         else {
                             if (prevExpression is KtLoopExpression && PsiTreeUtil.isAncestor(prevExpression, startAnchor, false)) {
@@ -230,11 +229,8 @@ class KotlinDfaAssistProvider : DfaAssistProvider {
             while (parent is KtParenthesizedExpression) {
                 parent = parent.parent
             }
-            if ((parent as? KtPrefixExpression)?.operationToken == KtTokens.EXCL) {
-                // It's enough to report for parent only
-                return false
-            }
-            return true
+            // It's enough to report for parent only
+            return (parent as? KtPrefixExpression)?.operationToken != KtTokens.EXCL
         }
 
         override fun computeHints(): Map<PsiElement, DfaHint> {

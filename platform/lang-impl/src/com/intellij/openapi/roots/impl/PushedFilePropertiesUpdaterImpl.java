@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.ContentIteratorEx;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,10 +43,10 @@ import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
 import com.intellij.util.indexing.roots.*;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.util.messages.SimpleMessageBusConnection;
-import com.intellij.workspaceModel.ide.WorkspaceModel;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
-import com.intellij.workspaceModel.storage.EntityStorage;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
+import com.intellij.platform.workspace.storage.EntityStorage;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
 import kotlin.sequences.Sequence;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.ApiStatus;
@@ -97,6 +98,12 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     List<Runnable> syncTasks = new ArrayList<>();
     List<Runnable> delayedTasks = new ArrayList<>();
     List<FilePropertyPusher<?>> filePushers = getFilePushers();
+
+    // this is useful for debugging. Especially in integration tests: it is often clear why large file sets have changed
+    // (e.g. imported modules or jdk), but it is often unclear why small file sets change and what these files are.
+    if (LOG.isDebugEnabled() && events.size() < 20) {
+      for (VFileEvent event : events) LOG.debug("File changed: " + event.getPath() + ".\nevent:" + event);
+    }
 
     for (VFileEvent event : events) {
       if (event instanceof VFileCreateEvent) {
@@ -308,6 +315,10 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
 
   @Override
   public void pushAll(FilePropertyPusher<?> @NotNull ... pushers) {
+    if (!StartupManager.getInstance(myProject).postStartupActivityPassed()) {
+      LOG.info("Ignoring push request, as project is not yet initialized");
+      return;
+    }
     queueTasks(Collections.singletonList(() -> doPushAll(Arrays.asList(pushers))), "Push all on " + Arrays.toString(pushers));
   }
 

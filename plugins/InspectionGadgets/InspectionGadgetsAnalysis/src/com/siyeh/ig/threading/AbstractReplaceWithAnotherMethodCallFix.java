@@ -2,8 +2,8 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -22,7 +22,7 @@ abstract class AbstractReplaceWithAnotherMethodCallFix extends PsiUpdateModComma
   }
 
   @Override
-  protected void applyFix(@NotNull Project project, @NotNull PsiElement methodNameElement, @NotNull EditorUpdater updater) {
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement methodNameElement, @NotNull ModPsiUpdater updater) {
     final PsiReferenceExpression methodExpression = (PsiReferenceExpression)methodNameElement.getParent();
     assert methodExpression != null;
     final PsiExpression qualifier = methodExpression.getQualifierExpression();

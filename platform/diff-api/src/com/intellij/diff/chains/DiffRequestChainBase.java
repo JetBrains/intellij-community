@@ -20,7 +20,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 /**
  * @deprecated Do not use: see {@link #setIndex(int)} deprecation.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class DiffRequestChainBase extends UserDataHolderBase implements DiffRequestChain {
   private int myIndex;
 

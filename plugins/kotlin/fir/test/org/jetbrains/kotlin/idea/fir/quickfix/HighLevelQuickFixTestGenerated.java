@@ -160,6 +160,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../idea/tests/testData/quickfix/abstract/mustBeInitializedOrBeAbstractInSealedClass.kt");
         }
 
+        @TestMetadata("mustBeInitializedOrFinalOrAbstract.kt")
+        public void testMustBeInitializedOrFinalOrAbstract() throws Exception {
+            runTest("../idea/tests/testData/quickfix/abstract/mustBeInitializedOrFinalOrAbstract.kt");
+        }
+
+        @TestMetadata("mustBeInitializedOrFinalOrAbstractWarning.kt")
+        public void testMustBeInitializedOrFinalOrAbstractWarning() throws Exception {
+            runTest("../idea/tests/testData/quickfix/abstract/mustBeInitializedOrFinalOrAbstractWarning.kt");
+        }
+
         @TestMetadata("nonAbstractFunctionWithNoBody.kt")
         public void testNonAbstractFunctionWithNoBody() throws Exception {
             runTest("../idea/tests/testData/quickfix/abstract/nonAbstractFunctionWithNoBody.kt");
@@ -516,6 +526,36 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("memberPropertyWithDelegateRuntime.kt")
         public void testMemberPropertyWithDelegateRuntime() throws Exception {
             runTest("../idea/tests/testData/quickfix/addInitializer/memberPropertyWithDelegateRuntime.kt");
+        }
+
+        @TestMetadata("mustBeInitializedOrBeAbstract.kt")
+        public void testMustBeInitializedOrBeAbstract() throws Exception {
+            runTest("../idea/tests/testData/quickfix/addInitializer/mustBeInitializedOrBeAbstract.kt");
+        }
+
+        @TestMetadata("mustBeInitializedOrBeFinal.kt")
+        public void testMustBeInitializedOrBeFinal() throws Exception {
+            runTest("../idea/tests/testData/quickfix/addInitializer/mustBeInitializedOrBeFinal.kt");
+        }
+
+        @TestMetadata("mustBeInitializedOrBeFinalWarning.kt")
+        public void testMustBeInitializedOrBeFinalWarning() throws Exception {
+            runTest("../idea/tests/testData/quickfix/addInitializer/mustBeInitializedOrBeFinalWarning.kt");
+        }
+
+        @TestMetadata("mustBeInitializedOrFinalOrAbstract.kt")
+        public void testMustBeInitializedOrFinalOrAbstract() throws Exception {
+            runTest("../idea/tests/testData/quickfix/addInitializer/mustBeInitializedOrFinalOrAbstract.kt");
+        }
+
+        @TestMetadata("mustBeInitializedOrFinalOrAbstractWarning.kt")
+        public void testMustBeInitializedOrFinalOrAbstractWarning() throws Exception {
+            runTest("../idea/tests/testData/quickfix/addInitializer/mustBeInitializedOrFinalOrAbstractWarning.kt");
+        }
+
+        @TestMetadata("mustBeInitializedWarning.kt")
+        public void testMustBeInitializedWarning() throws Exception {
+            runTest("../idea/tests/testData/quickfix/addInitializer/mustBeInitializedWarning.kt");
         }
 
         @TestMetadata("topLevelExtensionProperty.kt")
@@ -1503,6 +1543,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("overridingFinalMethodInLocal.kt")
         public void testOverridingFinalMethodInLocal() throws Exception {
             runTest("../idea/tests/testData/quickfix/override/overridingFinalMethodInLocal.kt");
+        }
+
+        @TestMetadata("overridingFinalOverrideMethod.kt")
+        public void testOverridingFinalOverrideMethod() throws Exception {
+            runTest("../idea/tests/testData/quickfix/override/overridingFinalOverrideMethod.kt");
         }
 
         @TestMetadata("overridingFinalProperty.kt")
@@ -3117,6 +3162,19 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("typeMismatch.kt")
         public void testTypeMismatch() throws Exception {
             runTest("../idea/tests/testData/quickfix/specifySuperType/typeMismatch.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/quickfix/convertToBlockBody")
+    public static class ConvertToBlockBody extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../idea/tests/testData/quickfix/convertToBlockBody/simple.kt");
         }
     }
 }

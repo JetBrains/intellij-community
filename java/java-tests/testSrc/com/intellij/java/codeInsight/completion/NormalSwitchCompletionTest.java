@@ -10,7 +10,7 @@ public class NormalSwitchCompletionTest extends NormalCompletionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_17;
+    return JAVA_20;
   }
 
   public void testDefaultInRuleSwitch() { doTest(); }

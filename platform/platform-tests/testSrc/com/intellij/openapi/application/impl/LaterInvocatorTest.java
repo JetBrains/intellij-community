@@ -113,11 +113,11 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
       LaterInvocator.enterModal(myWindow1);
       synchronized (this) {
         blockSwingThread();
-        ApplicationManager.getApplication().invokeLater(new MyRunnable("1"), ModalityState.NON_MODAL);
+        ApplicationManager.getApplication().invokeLater(new MyRunnable("1"), ModalityState.nonModal());
         SwingUtilities.invokeLater(ENTER_MODAL);
         LaterInvocator.leaveModal(myWindow1);
         SwingUtilities.invokeLater(LEAVE_MODAL);
-        ApplicationManager.getApplication().invokeLater(new MyRunnable("2"), ModalityState.NON_MODAL);
+        ApplicationManager.getApplication().invokeLater(new MyRunnable("2"), ModalityState.nonModal());
       }
       flushSwingQueue();
       checkOrder(2);
@@ -127,11 +127,11 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
   public void testTrueReorder() {
     SwingUtilities.invokeLater(() -> {
       LaterInvocator.enterModal(myWindow1);
-      ApplicationManager.getApplication().invokeLater(new MyRunnable("1"), ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater(new MyRunnable("1"), ModalityState.nonModal());
       SwingUtilities.invokeLater(ENTER_MODAL);
       LaterInvocator.leaveModal(myWindow1);
       SwingUtilities.invokeLater(LEAVE_MODAL);
-      ApplicationManager.getApplication().invokeLater(new MyRunnable("2"), ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater(new MyRunnable("2"), ModalityState.nonModal());
     });
     flushSwingQueue();
     flushSwingQueue();
@@ -141,8 +141,8 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
   public void testEverInvoked() {
     UIUtil.invokeAndWaitIfNeeded(() -> {
       LaterInvocator.enterModal(myWindow1);
-      ApplicationManager.getApplication().invokeLater(ENTER_MODAL, ModalityState.NON_MODAL);
-      ApplicationManager.getApplication().invokeLater(new MyRunnable("1"), ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater(ENTER_MODAL, ModalityState.nonModal());
+      ApplicationManager.getApplication().invokeLater(new MyRunnable("1"), ModalityState.nonModal());
       LaterInvocator.leaveModal(myWindow1);
       flushSwingQueue();
       flushSwingQueue();
@@ -158,8 +158,8 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
     UIUtil.invokeAndWaitIfNeeded(() -> {
       LaterInvocator.enterModal(myWindow1);
 
-      ApplicationManager.getApplication().invokeLater(ENTER_MODAL, ModalityState.NON_MODAL);
-      ApplicationManager.getApplication().invokeLater(new MyRunnable("1"), ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater(ENTER_MODAL, ModalityState.nonModal());
+      ApplicationManager.getApplication().invokeLater(new MyRunnable("1"), ModalityState.nonModal());
       LaterInvocator.leaveModal(myWindow1);
       flushSwingQueue();
       checkOrder(0);
@@ -180,7 +180,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
         TestCase.assertTrue(LaterInvocator.isInModalContext());
         TestCase.assertEquals(1, LaterInvocator.getCurrentModalEntities().length);
 
-        LaterInvocator.invokeLater(ModalityState.NON_MODAL, Conditions.alwaysFalse(), new Runnable() {
+        LaterInvocator.invokeLater(ModalityState.nonModal(), Conditions.alwaysFalse(), new Runnable() {
           @Override
           public void run() {
             assertFalse(LaterInvocator.isInModalContext());
@@ -190,9 +190,9 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
             return "ass2";
           }
         });
-        LaterInvocator.invokeLater(ModalityState.NON_MODAL, Conditions.alwaysFalse(), ENTER_MODAL);
+        LaterInvocator.invokeLater(ModalityState.nonModal(), Conditions.alwaysFalse(), ENTER_MODAL);
 
-        LaterInvocator.invokeLater(ModalityState.NON_MODAL, Conditions.alwaysFalse(), new MyRunnable("1"));
+        LaterInvocator.invokeLater(ModalityState.nonModal(), Conditions.alwaysFalse(), new MyRunnable("1"));
 
         //some weird things like MyFireIdleRequest may still sneak in
         //java.util.List<Object> dump = LaterInvocator.dumpQueue();
@@ -223,10 +223,10 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
       LaterInvocator.enterModal(myWindow1);
       synchronized (this) {
         blockSwingThread();
-        ApplicationManager.getApplication().invokeLater(new MyRunnable("2"), ModalityState.NON_MODAL);
+        ApplicationManager.getApplication().invokeLater(new MyRunnable("2"), ModalityState.nonModal());
         SwingUtilities.invokeLater(LEAVE_MODAL);
         SwingUtilities.invokeLater(new MyRunnable("1"));
-        ApplicationManager.getApplication().invokeLater(new MyRunnable("3"), ModalityState.NON_MODAL);
+        ApplicationManager.getApplication().invokeLater(new MyRunnable("3"), ModalityState.nonModal());
       }
       flushSwingQueue();
       checkOrder(3);
@@ -239,9 +239,9 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
       synchronized (this) {
         blockSwingThread();
         SwingUtilities.invokeLater(new MyRunnable("1"));
-        ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().invokeLater(new MyRunnable("3"), ModalityState.NON_MODAL), ModalityState.NON_MODAL);
+        ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().invokeLater(new MyRunnable("3"), ModalityState.nonModal()), ModalityState.nonModal());
         SwingUtilities.invokeLater(LEAVE_MODAL);
-        ApplicationManager.getApplication().invokeLater(new MyRunnable("2"), ModalityState.NON_MODAL);
+        ApplicationManager.getApplication().invokeLater(new MyRunnable("2"), ModalityState.nonModal());
       }
       flushSwingQueue();
       checkOrder(3);
@@ -267,11 +267,11 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
               }, Conditions.alwaysTrue());
               consumed.add("1");
             }
-          }, ModalityState.NON_MODAL);
+          }, ModalityState.nonModal());
           ApplicationManager.getApplication().invokeLater(() -> {
             new MyRunnable("2").run();
             consumed.add("2");
-          }, ModalityState.NON_MODAL);
+          }, ModalityState.nonModal());
         }
         flushSwingQueue();
 
@@ -287,14 +287,14 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
       synchronized (this) {
         blockSwingThread();
         SwingUtilities.invokeLater(new MyRunnable("1"));
-        ApplicationManager.getApplication().invokeLater(new MyRunnable("3"), ModalityState.NON_MODAL);
+        ApplicationManager.getApplication().invokeLater(new MyRunnable("3"), ModalityState.nonModal());
         SwingUtilities.invokeLater(LEAVE_MODAL);
         SwingUtilities.invokeLater(ENTER_MODAL);
         SwingUtilities.invokeLater(() -> {
           SwingUtilities.invokeLater(new MyRunnable("2"));
-          ApplicationManager.getApplication().invokeLater(new MyRunnable("5"), ModalityState.NON_MODAL);
+          ApplicationManager.getApplication().invokeLater(new MyRunnable("5"), ModalityState.nonModal());
         });
-        ApplicationManager.getApplication().invokeLater(new MyRunnable("4"), ModalityState.NON_MODAL);
+        ApplicationManager.getApplication().invokeLater(new MyRunnable("4"), ModalityState.nonModal());
       }
       flushSwingQueue();
       SwingUtilities.invokeLater(LEAVE_MODAL);
@@ -315,7 +315,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
           thread.set(ApplicationManager.getApplication().executeOnPooledThread(() -> {
             synchronized (lock) {
               started[0] = true;
-              ApplicationManager.getApplication().invokeLater(new MyRunnable("1"), ModalityState.NON_MODAL);
+              ApplicationManager.getApplication().invokeLater(new MyRunnable("1"), ModalityState.nonModal());
               lock.notifyAll();
             }
           }));
@@ -331,7 +331,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
           synchronized (lock) {
             checkOrder(0);
           }
-        }, ModalityState.NON_MODAL);
+        }, ModalityState.nonModal());
       }
       flushSwingQueue();
       flushSwingQueue();
@@ -671,7 +671,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
   public void testInvokeLaterGoesIntoTransparentModality() {
     ApplicationManager.getApplication().invokeAndWait(() -> {
       AtomicBoolean invoked = new AtomicBoolean();
-      ApplicationManager.getApplication().invokeLater(() -> invoked.set(true), ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater(() -> invoked.set(true), ModalityState.nonModal());
       LaterInvocator.enterModal(myWindow1);
 
       UIUtil.dispatchAllInvocationEvents();
@@ -687,7 +687,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
     ApplicationManager.getApplication().invokeAndWait(() -> {
       AtomicBoolean invoked = new AtomicBoolean();
       LaterInvocator.markTransparent(ModalityState.stateForComponent(myModalDialog));
-      ApplicationManager.getApplication().invokeLater(() -> invoked.set(true), ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater(() -> invoked.set(true), ModalityState.nonModal());
       LaterInvocator.enterModal(myModalDialog);
       UIUtil.dispatchAllInvocationEvents();
       assertTrue(invoked.get());
@@ -702,7 +702,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
       };
       AtomicBoolean gotPCE = new AtomicBoolean();
       LaterInvocator.enterModal(myWindow1);
-      var indicator = new EmptyProgressIndicator(ModalityState.NON_MODAL);
+      var indicator = new EmptyProgressIndicator(ModalityState.nonModal());
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         ProgressManager.getInstance().runProcess(() -> {
           try {

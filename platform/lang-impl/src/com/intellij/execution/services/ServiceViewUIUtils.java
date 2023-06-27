@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.*;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,6 +26,10 @@ import java.util.function.Supplier;
 
 public final class ServiceViewUIUtils {
   private ServiceViewUIUtils() {
+  }
+
+  public static boolean isNewServicesUIEnabled() {
+    return !PlatformUtils.isDataGrip() && UIExperiment.isNewDebuggerUIEnabled();
   }
 
   public static @NotNull ContentUI getServicesAlignedTabbedPaneContentUI() {
@@ -43,7 +48,7 @@ public final class ServiceViewUIUtils {
           }
         });
 
-        if (UIExperiment.isNewDebuggerUIEnabled()) {
+        if (ServiceViewUIUtils.isNewServicesUIEnabled()) {
           tabbedPane.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
@@ -116,7 +121,7 @@ public final class ServiceViewUIUtils {
     @Override
     protected void installComponents() {
       super.installComponents();
-      if (!UIExperiment.isNewDebuggerUIEnabled()) return;
+      if (!isNewServicesUIEnabled()) return;
 
       myToolbarWrapper = new TabbedPaneToolbarWrapper();
       tabPane.add(myToolbarWrapper);
@@ -191,6 +196,7 @@ public final class ServiceViewUIUtils {
 
           ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(content.getPlace(), actionGroup, true);
           toolbar.setTargetComponent(content.getActionsContextComponent());
+          toolbarWrapper.removeAll();
           toolbarWrapper.add(wrapServicesAligned(toolbar), BorderLayout.CENTER);
 
           toolbarWrapper.revalidate();

@@ -1,30 +1,31 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.CommonBundle
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.icons.AllIcons
-import com.intellij.ide.actions.ToggleDistractionFreeModeAction
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.MnemonicHelper
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
+import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.ui.*
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleContextCache
-import com.intellij.util.ui.JBEmptyBorder
-import com.intellij.util.ui.JBFont
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import com.jetbrains.JBR
 import com.jetbrains.WindowDecorations
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.*
 import java.beans.PropertyChangeListener
@@ -70,26 +71,17 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
 
   private var windowListener: WindowAdapter
   private val componentListener: ComponentListener
-  private val iconProvider = ScaleContextCache(::getFrameIcon)
+
+  private val iconProvider = ScaleContextCache {
+    AppUIUtil.loadSmallApplicationIcon(it)
+  }
 
   protected var myActive = false
 
   private var customFrameTopBorder: CustomFrameTopBorder? = null
-  protected val customTitleBar: WindowDecorations.CustomTitleBar?
 
-  private val icon: Icon
-    get() = getFrameIcon()
-
-  private fun getFrameIcon(): Icon {
-    val scaleContext = ScaleContext.create(window)
-    //scaleContext.overrideScale(ScaleType.USR_SCALE.of(UISettings.defFontScale.toDouble()))
-    return iconProvider.getOrProvide(scaleContext)!!
-  }
-
-  protected open fun getFrameIcon(scaleContext: ScaleContext): Icon {
-    val size = (JBUIScale.scale(16f) * UISettings.defFontScale).toInt()
-    return AppUIUtil.loadSmallApplicationIcon(scaleContext, size)
-  }
+  @ApiStatus.Internal
+  val customTitleBar: WindowDecorations.CustomTitleBar?
 
   protected val productIcon: JComponent by lazy {
     createProductIcon()
@@ -139,23 +131,36 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
 
   override fun updateUI() {
     super.updateUI()
-    if (ExperimentalUI.isNewUI()) {
-      preferredSize = preferredSize.apply {
-        height = JBUI.scale(
-          when {
-            ToggleDistractionFreeModeAction.shouldMinimizeCustomHeader() -> HEADER_HEIGHT_DFM
-            UISettings.getInstance().compactMode -> HEADER_HEIGHT_COMPACT
-            else -> HEADER_HEIGHT_NORMAL
-          }
-        )
-      }
+    updateWinControlsTheme()
+    updateSize { MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()) }
+  }
+
+  protected fun updateSize(mainToolbarActionSupplier: () -> List<Pair<ActionGroup, String>>) {
+    if (!ExperimentalUI.isNewUI()) {
+      return
     }
+
+    preferredSize = preferredSize.apply {
+      height = JBUI.scale(
+        when {
+          (rootPane as? IdeRootPane)?.isCompactHeader(mainToolbarActionSupplier) == true -> HEADER_HEIGHT_DFM
+          UISettings.getInstance().compactMode -> HEADER_HEIGHT_COMPACT
+          else -> HEADER_HEIGHT_NORMAL
+        }
+      )
+    }
+  }
+
+  private fun updateWinControlsTheme() {
+    customTitleBar?.putProperty("controls.dark", ColorUtil.isDark(background))
+    customTitleBar?.putProperty("controls.foreground.normal", UIManager.getColor("WindowControls.foreground"))
+    customTitleBar?.putProperty("controls.foreground.inactive", UIManager.getColor("WindowControls.inactiveForeground"))
   }
 
   protected open fun getHeaderBackground(active: Boolean = true) = JBUI.CurrentTheme.CustomFrameDecorations.titlePaneBackground(active)
 
   protected fun setCustomFrameTopBorder(isTopNeeded: () -> Boolean = { true }, isBottomNeeded: () -> Boolean = { false }) {
-    customFrameTopBorder = CustomFrameTopBorder(isTopNeeded, isBottomNeeded)
+    customFrameTopBorder = CustomFrameTopBorder(isTopNeeded = isTopNeeded, isBottomNeeded = isBottomNeeded)
     border = customFrameTopBorder
   }
 
@@ -211,13 +216,17 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
       setCustomTitleBar(customTitleBar)
     }
 
-    border = JBUI.Borders.empty(0, customTitleBar.leftInset.toInt(), 0, customTitleBar.rightInset.toInt())
+    //border = JBUI.Borders.empty(0, customTitleBar.leftInset.toInt(), 0, customTitleBar.rightInset.toInt())
   }
 
   private fun setCustomTitleBar(titleBar: WindowDecorations.CustomTitleBar?) {
     JBR.getWindowDecorations()?.let {
-      if (window is Dialog) it.setCustomTitleBar(window, titleBar)
-      else if (window is Frame) it.setCustomTitleBar(window, titleBar)
+      if (window is Dialog) {
+        it.setCustomTitleBar(window, titleBar)
+      }
+      else if (window is Frame) {
+        it.setCustomTitleBar(window, titleBar)
+      }
     }
   }
 
@@ -231,7 +240,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
     customFrameTopBorder?.repaintBorder()
 
     background = getHeaderBackground(myActive)
-    customTitleBar?.putProperty("controls.dark", ColorUtil.isDark(background))
+    updateWinControlsTheme()
   }
 
   protected val myCloseAction: Action = CustomFrameAction(CommonBundle.getCloseButtonText(), AllIcons.Windows.CloseSmall) { close() }
@@ -253,7 +262,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
 
     val ic = object : JLabel() {
       override fun getIcon(): Icon {
-        return this@CustomHeader.icon
+        return iconProvider.getOrProvide(ScaleContext.create(window))!!
       }
     }
     ic.addMouseListener(object : MouseAdapter() {
@@ -424,9 +433,11 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
 
     override fun getBorderInsets(c: Component): Insets {
       val thickness = calculateWindowBorderThicknessInLogicalPx()
-      val top = if (isTopNeeded() && (colorizationAffectsBorders || UIUtil.isUnderIntelliJLaF())) ceil(thickness).toInt() else 0
+      val top = if (isTopNeeded() && (colorizationAffectsBorders || StartupUiUtil.isUnderIntelliJLaF())) ceil(thickness).toInt() else 0
       val bottom = if (isBottomNeeded()) bottomBorderWidthLogicalPx else 0
-      return Insets(top, 0, bottom, 0)
+      val left = customTitleBar?.leftInset?.toInt() ?: 0
+      val right = customTitleBar?.rightInset?.toInt() ?: 0
+      return Insets(top, left, bottom, right)
     }
 
     override fun isBorderOpaque(): Boolean = true

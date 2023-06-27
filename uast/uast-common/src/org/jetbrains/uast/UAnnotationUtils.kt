@@ -70,14 +70,31 @@ fun getUParentForAnnotationIdentifier(identifier: PsiElement): UElement? {
  * @param uElement an element that occurs in annotation
  * @return the annotation in which this element occurs and a corresponding parameter name if available
  */
-fun getContainingUAnnotationEntry(uElement: UElement?): Pair<UAnnotation, String?>? {
+fun getContainingUAnnotationEntry(uElement: UElement?, annotationsHint: Collection<String>): Pair<UAnnotation, String?>? {
   if (uElement == null) return null
 
   val sourcePsi = uElement.sourcePsi
   if (sourcePsi == null) return null
 
   val plugin = UastLanguagePlugin.byLanguage(sourcePsi.language) ?: return null
-  return plugin.getContainingAnnotationEntry(uElement)
+  val entry = plugin.getContainingAnnotationEntry(uElement, annotationsHint)
+
+  if (entry != null && annotationsHint.isNotEmpty()) {
+    val qualifiedName = entry.first.qualifiedName ?: return null
+    if (!annotationsHint.contains(qualifiedName)) {
+      return null
+    }
+  }
+
+  return entry
+}
+
+/**
+ * @param uElement an element that occurs in annotation
+ * @return the annotation in which this element occurs and a corresponding parameter name if available
+ */
+fun getContainingUAnnotationEntry(uElement: UElement?): Pair<UAnnotation, String?>? {
+  return getContainingUAnnotationEntry(uElement, emptyList())
 }
 
 fun getContainingAnnotationEntry(uElement: UElement?): Pair<PsiAnnotation, String?>? {

@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
@@ -149,7 +150,7 @@ public class RedundantComparatorComparingInspection extends AbstractBaseJavaLoca
     return null;
   }
 
-  static class DeleteComparingCallFix implements LocalQuickFix {
+  static class DeleteComparingCallFix extends PsiUpdateModCommandQuickFix {
     private final String mySourceMethod;
     private final String myTargetMethod;
 
@@ -175,8 +176,8 @@ public class RedundantComparatorComparingInspection extends AbstractBaseJavaLoca
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodCallExpression comparingCall = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiMethodCallExpression comparingCall = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
       if (comparingCall == null) return;
       PsiMethodCallExpression thenComparingCall = PsiTreeUtil.getParentOfType(comparingCall, PsiMethodCallExpression.class);
       if (thenComparingCall == null) return;
@@ -186,7 +187,7 @@ public class RedundantComparatorComparingInspection extends AbstractBaseJavaLoca
     }
   }
 
-  private static class ReplaceMaxMinFix implements LocalQuickFix {
+  private static class ReplaceMaxMinFix extends PsiUpdateModCommandQuickFix {
     private final String myReplacement;
 
     ReplaceMaxMinFix(String replacement) {
@@ -208,8 +209,8 @@ public class RedundantComparatorComparingInspection extends AbstractBaseJavaLoca
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
       if (call == null) return;
       PsiExpression comparator = ArrayUtil.getLastElement(call.getArgumentList().getExpressions());
       if (comparator == null) return;
@@ -221,7 +222,7 @@ public class RedundantComparatorComparingInspection extends AbstractBaseJavaLoca
     }
   }
 
-  private static class ReplaceWithEntryComparatorFix implements LocalQuickFix {
+  private static class ReplaceWithEntryComparatorFix extends PsiUpdateModCommandQuickFix {
     private final String myReplacementMethod;
 
     ReplaceWithEntryComparatorFix(String replacementMethod) {
@@ -243,8 +244,8 @@ public class RedundantComparatorComparingInspection extends AbstractBaseJavaLoca
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
       if (call == null) return;
       String params = getGenericParameters(call);
       PsiExpression[] args = call.getArgumentList().getExpressions();

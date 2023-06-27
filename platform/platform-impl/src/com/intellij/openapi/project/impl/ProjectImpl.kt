@@ -17,6 +17,7 @@ import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.client.ClientAwareComponentManager
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.impl.stores.IProjectStore
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -107,7 +108,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
   private var cachedName: String?
 
   private val componentStoreValue = SynchronizedClearableLazy {
-    ApplicationManager.getApplication().getService(ProjectStoreFactory::class.java).createStore(this)
+    ApplicationManager.getApplication().service<ProjectStoreFactory>().createStore(this)
   }
 
   init {
@@ -164,19 +165,13 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
           val frame = WindowManager.getInstance().getFrame(this) ?: return@Runnable
           val title = FrameTitleBuilder.getInstance().getProjectTitle(this) ?: return@Runnable
           frame.title = title
-        }, ModalityState.NON_MODAL, disposed)
+        }, ModalityState.nonModal(), disposed)
       }
     }
   }
 
-  final override var componentStore: IProjectStore
+  final override val componentStore: IProjectStore
     get() = componentStoreValue.value
-    set(value) {
-      if (componentStoreValue.isInitialized()) {
-        throw java.lang.IllegalStateException("store is already initialized")
-      }
-      componentStoreValue.value = value
-    }
 
   final override fun getProjectFilePath(): String = componentStore.projectFilePath.systemIndependentPath
 
@@ -204,7 +199,6 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     }
     else {
       path = store.projectFilePath
-      @Suppress("UsePropertyAccessSyntax")
       prefix = getName()
     }
     return "$prefix${Integer.toHexString(path.systemIndependentPath.hashCode())}"

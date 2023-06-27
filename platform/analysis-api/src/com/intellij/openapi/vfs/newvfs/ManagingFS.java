@@ -30,11 +30,9 @@ public abstract class ManagingFS implements FileSystemInterface {
     ApplicationManager.registerCleaner(() -> ourInstance = null);
   }
 
-  @Nullable
-  public abstract AttributeInputStream readAttribute(@NotNull VirtualFile file, @NotNull FileAttribute att);
+  public abstract @Nullable AttributeInputStream readAttribute(@NotNull VirtualFile file, @NotNull FileAttribute att);
 
-  @NotNull
-  public abstract AttributeOutputStream writeAttribute(@NotNull VirtualFile file, @NotNull FileAttribute att);
+  public abstract @NotNull AttributeOutputStream writeAttribute(@NotNull VirtualFile file, @NotNull FileAttribute att);
 
   /**
    * @return a number that's incremented every time something changes for the file: name, size, flags, content.
@@ -43,7 +41,7 @@ public abstract class ManagingFS implements FileSystemInterface {
    * @deprecated to be dropped as there is no real use for it
    */
   //FIXME RC: drop this method from API -- the only use is in test code
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract int getModificationCount(@NotNull VirtualFile fileOrDirectory);
 
   /**
@@ -54,7 +52,7 @@ public abstract class ManagingFS implements FileSystemInterface {
    * @deprecated to be dropped as there is no real use for it 
    */
   //FIXME RC: drop this method from API -- the only use is in test code
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract int getModificationCount();
 
   /**
@@ -77,8 +75,7 @@ public abstract class ManagingFS implements FileSystemInterface {
 
   public abstract boolean wereChildrenAccessed(@NotNull VirtualFile dir);
 
-  @Nullable
-  public abstract NewVirtualFile findRoot(@NotNull String path, @NotNull NewVirtualFileSystem fs);
+  public abstract @Nullable NewVirtualFile findRoot(@NotNull String path, @NotNull NewVirtualFileSystem fs);
 
   public abstract VirtualFile @NotNull [] getRoots();
 
@@ -86,10 +83,8 @@ public abstract class ManagingFS implements FileSystemInterface {
 
   public abstract VirtualFile @NotNull [] getLocalRoots();
 
-  @Nullable
-  public abstract VirtualFile findFileById(int id);
+  public abstract @Nullable VirtualFile findFileById(int id);
 
   @ApiStatus.Internal
-  @NotNull
-  protected abstract <P, R> Function<P, R> accessDiskWithCheckCanceled(Function<? super P, ? extends R> function);
+  protected abstract @NotNull <P, R> Function<P, R> accessDiskWithCheckCanceled(Function<? super P, ? extends R> function);
 }

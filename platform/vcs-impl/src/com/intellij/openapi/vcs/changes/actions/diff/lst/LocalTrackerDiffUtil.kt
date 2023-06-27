@@ -24,10 +24,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.editor.markup.HighlighterLayer
-import com.intellij.openapi.editor.markup.HighlighterTargetArea
-import com.intellij.openapi.editor.markup.LineMarkerRenderer
-import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.editor.markup.*
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.text.StringUtil
@@ -44,6 +41,7 @@ import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import java.awt.event.MouseEvent
 import java.util.*
 import javax.swing.Icon
 import javax.swing.JPanel
@@ -284,22 +282,40 @@ object LocalTrackerDiffUtil {
   }
 
   @JvmStatic
-  fun createToggleAreaThumb(editor: EditorEx, line1: Int, line2: Int): RangeHighlighter {
+  fun createToggleAreaThumb(editor: EditorEx, line1: Int, line2: Int, onClick: Runnable): RangeHighlighter {
     val range = DiffUtil.getLinesRange(editor.document, line1, line2)
     val checkboxHighlighter = editor.markupModel.addRangeHighlighter(null, range.startOffset, range.endOffset,
                                                                      DiffDrawUtil.LST_LINE_MARKER_LAYER,
                                                                      HighlighterTargetArea.LINES_IN_RANGE)
-    checkboxHighlighter.lineMarkerRenderer = ToggleAreaThumbRenderer()
+    checkboxHighlighter.lineMarkerRenderer = ToggleAreaThumbRenderer(onClick)
     return checkboxHighlighter
   }
 
-  private class ToggleAreaThumbRenderer : LineMarkerRenderer {
-    override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
+  private class ToggleAreaThumbRenderer(val onClick: Runnable) : LineMarkerRenderer, ActiveGutterRenderer {
+    private fun getDrawArea(editor: Editor): Pair<Int, Int> {
       val gutter = (editor as EditorEx).gutterComponentEx
       val width = JBUIScale.scale(3)
       val x = gutter.whitespaceSeparatorOffset - width
+      return Pair(x, x + width)
+    }
+
+    override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
+      val (x1, x2) = getDrawArea(editor)
       g.color = editor.colorsScheme.getColor(EditorColors.DIFF_BLOCK_AREA_HIGHLIGHT_MARKER) ?: return
-      g.fillRect(x, r.y, width, r.height)
+      g.fillRect(x1, r.y, x2 - x1, r.height)
+    }
+
+    override fun getTooltipText(): String {
+      return DiffBundle.message("action.presentation.diff.include.into.commit.area.marker.text")
+    }
+
+    override fun canDoAction(editor: Editor, e: MouseEvent): Boolean {
+      val (x1, x2) = getDrawArea(editor)
+      return e.x in x1 until x2
+    }
+
+    override fun doAction(editor: Editor, e: MouseEvent) {
+      onClick.run()
     }
   }
 
@@ -443,19 +459,21 @@ object LocalTrackerDiffUtil {
           isExclude -> ActionsBundle.message("action.Vcs.Diff.ExcludeChangedLinesFromCommit.text")
           else -> ActionsBundle.message("action.Vcs.Diff.IncludeChangedLinesIntoCommit.text")
         }
+
+        e.presentation.isEnabled = affectedRanges.any {
+          val selectionState = checkPartialSelectionState(it, selectedLines)
+          if (isExclude) selectionState.hasIncluded else selectionState.hasExcluded
+        }
       }
       else {
         e.presentation.text = when {
           isExclude -> VcsBundle.message("changes.ExcludeChangedLinesFromCommit.chunks.action.text")
           else -> VcsBundle.message("changes.IncludeChangedLinesIntoCommit.chunks.action.text")
         }
-      }
-      e.presentation.isEnabled = affectedRanges.any {
-        if (isExclude) {
-          !it.exclusionState.isFullyExcluded
-        }
-        else {
-          !it.exclusionState.isFullyIncluded
+
+        e.presentation.isEnabled = affectedRanges.any {
+          val exclusionState = it.exclusionState
+          if (isExclude) exclusionState.hasIncluded else exclusionState.hasExcluded
         }
       }
     }
@@ -495,15 +513,65 @@ object LocalTrackerDiffUtil {
       if (range.exclusionState is RangeExclusionState.Partial) return true
 
       if (selectedLines.localLines != null && range.line1 != range.line2 &&
-          selectedLines.localLines.nextClearBit(range.line1) < range.line2) {
+          !selectionCovers(selectedLines.localLines, range.line1, range.line2)) {
         return true
       }
       if (selectedLines.vcsLines != null && range.vcsLine1 != range.vcsLine2 &&
-          selectedLines.vcsLines.nextClearBit(range.vcsLine1) < range.vcsLine2) {
+          !selectionCovers(selectedLines.vcsLines, range.vcsLine1, range.vcsLine2)) {
         return true
       }
       return false
     }
+
+    private fun checkPartialSelectionState(range: LocalRange, selectedLines: SelectedTrackerLine): SelectionState {
+      val exclusionState = range.exclusionState
+      if (exclusionState !is RangeExclusionState.Partial) {
+        return SelectionState(exclusionState.hasExcluded, exclusionState.hasIncluded)
+      }
+
+      var hasExcluded = false
+      var hasIncluded = false
+      if (selectedLines.localLines != null) {
+        val changeStart = range.line1
+        exclusionState.iterateAdditionOffsets { start, end, isIncluded ->
+          if (selectionIntersects(selectedLines.localLines, changeStart + start, changeStart + end)) {
+            if (isIncluded) {
+              hasIncluded = true
+            }
+            else {
+              hasExcluded = true
+            }
+          }
+        }
+      }
+
+      if (selectedLines.vcsLines != null) {
+        val changeStart = range.vcsLine1
+        exclusionState.iterateDeletionOffsets { start, end, isIncluded ->
+          if (selectionIntersects(selectedLines.vcsLines, changeStart + start, changeStart + end)) {
+            if (isIncluded) {
+              hasIncluded = true
+            }
+            else {
+              hasExcluded = true
+            }
+          }
+        }
+      }
+
+      return SelectionState(hasExcluded, hasIncluded)
+    }
+
+    private fun selectionCovers(selection: BitSet, startLine: Int, endLine: Int): Boolean {
+      return selection.nextClearBit(startLine) >= endLine
+    }
+
+    private fun selectionIntersects(selection: BitSet, startLine: Int, endLine: Int): Boolean {
+      val nextSetBit = selection.nextSetBit(startLine)
+      return nextSetBit != -1 && nextSetBit < endLine
+    }
+
+    private class SelectionState(val hasExcluded: Boolean, val hasIncluded: Boolean)
   }
 
   private fun getLocalSelectedLines(changes: List<LocalTrackerChange>): BitSet {

@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.searchEverywhereMl.typos.models.ActionsLanguageModel
 import com.intellij.spellchecker.SpellCheckerManager
 
-internal class ActionsTabTypoFixSuggestionProvider(project: Project) {
+internal class ActionsTabTypoFixSuggestionProvider(private val project: Project) {
   private val spellChecker = SpellCheckerManager.getInstance(project)
 
   // Use the backing field, so that we can just provide suggestion ranker if it has already been constructed,
@@ -21,7 +21,7 @@ internal class ActionsTabTypoFixSuggestionProvider(project: Project) {
     get() {
       if (_suggestionRanker != null) return _suggestionRanker
 
-      val languageModel = ActionsLanguageModel.getInstance() ?: return null
+      val languageModel = ActionsLanguageModel.getInstance(project) ?: return null
       if (!languageModel.isComputed) return null
 
       _suggestionRanker = LinearAggregatingSuggestionRanker(

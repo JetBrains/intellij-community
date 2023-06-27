@@ -169,7 +169,7 @@ public final class MavenProjectReader {
                                         Collection<MavenProjectProblem> problems,
                                         VirtualFile file) {
     String version = MavenJDOMUtil.findChildValueByPath(xmlProject, "parent.version");
-    if (version != null || !MavenConsumerPomUtil.isConsumerPomResolutionApplicable(myProject)) {
+    if (version != null || !MavenConsumerPomUtil.isAutomaticVersionFeatureEnabled(file, myProject)) {
       return StringUtil.notNullize(version, UNKNOWN);
     }
     String parentGroupId = MavenJDOMUtil.findChildValueByPath(xmlProject, "parent.groupId");
@@ -180,7 +180,8 @@ public final class MavenProjectReader {
                                            false));
       return UNKNOWN;
     }
-    VirtualFile parentFile = file.findFileByRelativePath("../../pom.xml");
+    String relativePath = MavenJDOMUtil.findChildValueByPath(xmlProject, "parent.relativePath", "../pom.xml");
+    VirtualFile parentFile = file.getParent().findFileByRelativePath(relativePath);
     if (parentFile == null) {
       problems.add(new MavenProjectProblem(file.getPath(), MavenProjectBundle.message("consumer.pom.cannot.determine.parent.version"),
                                            MavenProjectProblem.ProblemType.STRUCTURE,
@@ -194,47 +195,6 @@ public final class MavenProjectReader {
       return version;
     }
     return calculateParentVersion(parentXmlProject, problems, parentFile);
-  }
-
-  private static void readModelBody(MavenModelBase mavenModelBase, MavenBuildBase mavenBuildBase, Element xmlModel) {
-    mavenModelBase.setModules(MavenJDOMUtil.findChildrenValuesByPath(xmlModel, "modules", "module"));
-    collectProperties(MavenJDOMUtil.findChildByPath(xmlModel, "properties"), mavenModelBase);
-
-    Element xmlBuild = MavenJDOMUtil.findChildByPath(xmlModel, "build");
-
-    mavenBuildBase.setFinalName(MavenJDOMUtil.findChildValueByPath(xmlBuild, "finalName"));
-    mavenBuildBase.setDefaultGoal(MavenJDOMUtil.findChildValueByPath(xmlBuild, "defaultGoal"));
-    mavenBuildBase.setDirectory(MavenJDOMUtil.findChildValueByPath(xmlBuild, "directory"));
-    mavenBuildBase.setResources(collectResources(MavenJDOMUtil.findChildrenByPath(xmlBuild, "resources", "resource")));
-    mavenBuildBase.setTestResources(collectResources(MavenJDOMUtil.findChildrenByPath(xmlBuild, "testResources", "testResource")));
-    mavenBuildBase.setFilters(MavenJDOMUtil.findChildrenValuesByPath(xmlBuild, "filters", "filter"));
-
-    if (mavenBuildBase instanceof MavenBuild mavenBuild) {
-
-      String source = MavenJDOMUtil.findChildValueByPath(xmlBuild, "sourceDirectory");
-      if (!isEmptyOrSpaces(source)) mavenBuild.addSource(source);
-      String testSource = MavenJDOMUtil.findChildValueByPath(xmlBuild, "testSourceDirectory");
-      if (!isEmptyOrSpaces(testSource)) mavenBuild.addTestSource(testSource);
-
-      mavenBuild.setOutputDirectory(MavenJDOMUtil.findChildValueByPath(xmlBuild, "outputDirectory"));
-      mavenBuild.setTestOutputDirectory(MavenJDOMUtil.findChildValueByPath(xmlBuild, "testOutputDirectory"));
-    }
-  }
-
-  private static List<MavenResource> collectResources(List<Element> xmlResources) {
-    List<MavenResource> result = new ArrayList<>();
-    for (Element each : xmlResources) {
-      String directory = MavenJDOMUtil.findChildValueByPath(each, "directory");
-      boolean filtered = "true".equals(MavenJDOMUtil.findChildValueByPath(each, "filtering"));
-      String targetPath = MavenJDOMUtil.findChildValueByPath(each, "targetPath");
-      List<String> includes = MavenJDOMUtil.findChildrenValuesByPath(each, "includes", "include");
-      List<String> excludes = MavenJDOMUtil.findChildrenValuesByPath(each, "excludes", "exclude");
-
-      if (null == directory) continue;
-
-      result.add(new MavenResource(directory, filtered, targetPath, includes, excludes));
-    }
-    return result;
   }
 
   private void repairModelBody(MavenModel model) {
@@ -401,20 +361,6 @@ public final class MavenProjectReader {
     }
     result.add(profile);
     return true;
-  }
-
-  private static void collectProperties(Element xmlProperties, MavenModelBase mavenModelBase) {
-    if (xmlProperties == null) return;
-
-    Properties props = mavenModelBase.getProperties();
-
-    for (Element each : xmlProperties.getChildren()) {
-      String name = each.getName();
-      String value = each.getTextTrim();
-      if (!props.containsKey(name) && !isEmptyOrSpaces(name)) {
-        props.setProperty(name, value);
-      }
-    }
   }
 
   private ProfileApplicationResult applyProfiles(MavenModel model,
@@ -588,6 +534,61 @@ public final class MavenProjectReader {
         }
         return result;
       });
+    }
+  }
+
+  private static void readModelBody(MavenModelBase mavenModelBase, MavenBuildBase mavenBuildBase, Element xmlModel) {
+    mavenModelBase.setModules(MavenJDOMUtil.findChildrenValuesByPath(xmlModel, "modules", "module"));
+    collectProperties(MavenJDOMUtil.findChildByPath(xmlModel, "properties"), mavenModelBase);
+
+    Element xmlBuild = MavenJDOMUtil.findChildByPath(xmlModel, "build");
+
+    mavenBuildBase.setFinalName(MavenJDOMUtil.findChildValueByPath(xmlBuild, "finalName"));
+    mavenBuildBase.setDefaultGoal(MavenJDOMUtil.findChildValueByPath(xmlBuild, "defaultGoal"));
+    mavenBuildBase.setDirectory(MavenJDOMUtil.findChildValueByPath(xmlBuild, "directory"));
+    mavenBuildBase.setResources(collectResources(MavenJDOMUtil.findChildrenByPath(xmlBuild, "resources", "resource")));
+    mavenBuildBase.setTestResources(collectResources(MavenJDOMUtil.findChildrenByPath(xmlBuild, "testResources", "testResource")));
+    mavenBuildBase.setFilters(MavenJDOMUtil.findChildrenValuesByPath(xmlBuild, "filters", "filter"));
+
+    if (mavenBuildBase instanceof MavenBuild mavenBuild) {
+
+      String source = MavenJDOMUtil.findChildValueByPath(xmlBuild, "sourceDirectory");
+      if (!isEmptyOrSpaces(source)) mavenBuild.addSource(source);
+      String testSource = MavenJDOMUtil.findChildValueByPath(xmlBuild, "testSourceDirectory");
+      if (!isEmptyOrSpaces(testSource)) mavenBuild.addTestSource(testSource);
+
+      mavenBuild.setOutputDirectory(MavenJDOMUtil.findChildValueByPath(xmlBuild, "outputDirectory"));
+      mavenBuild.setTestOutputDirectory(MavenJDOMUtil.findChildValueByPath(xmlBuild, "testOutputDirectory"));
+    }
+  }
+
+  private static List<MavenResource> collectResources(List<Element> xmlResources) {
+    List<MavenResource> result = new ArrayList<>();
+    for (Element each : xmlResources) {
+      String directory = MavenJDOMUtil.findChildValueByPath(each, "directory");
+      boolean filtered = "true".equals(MavenJDOMUtil.findChildValueByPath(each, "filtering"));
+      String targetPath = MavenJDOMUtil.findChildValueByPath(each, "targetPath");
+      List<String> includes = MavenJDOMUtil.findChildrenValuesByPath(each, "includes", "include");
+      List<String> excludes = MavenJDOMUtil.findChildrenValuesByPath(each, "excludes", "exclude");
+
+      if (null == directory) continue;
+
+      result.add(new MavenResource(directory, filtered, targetPath, includes, excludes));
+    }
+    return result;
+  }
+
+  private static void collectProperties(Element xmlProperties, MavenModelBase mavenModelBase) {
+    if (xmlProperties == null) return;
+
+    Properties props = mavenModelBase.getProperties();
+
+    for (Element each : xmlProperties.getChildren()) {
+      String name = each.getName();
+      String value = each.getTextTrim();
+      if (!props.containsKey(name) && !isEmptyOrSpaces(name)) {
+        props.setProperty(name, value);
+      }
     }
   }
 

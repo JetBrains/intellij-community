@@ -87,6 +87,7 @@ public final class ModalityStateEx extends ModalityState {
     }
   }
 
+  @SuppressWarnings("deprecation")
   public @NonNls String toString() {
     return this == NON_MODAL
            ? "ModalityState.NON_MODAL"

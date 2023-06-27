@@ -2,35 +2,18 @@
 package com.intellij.codeInspection;
 
 import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.lang.injection.InjectionEditService;
 import com.intellij.modcommand.*;
-import com.intellij.modcommand.ModUpdateFileText.Fragment;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.LocalTimeCounter;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -49,6 +32,14 @@ public final class ModCommands {
     return ModNothing.NOTHING;
   }
 
+  /**
+   * @param message error message to display
+   * @return a command that displays the specified error message in the editor
+   */
+  public static @NotNull ModCommand error(@NotNull @NlsContexts.Tooltip String message) {
+    return new ModDisplayError(message);
+  }
+  
   /**
    * @param target element to select
    * @return a command that selects given element in the editor, assuming that it's opened in the editor
@@ -86,6 +77,17 @@ public final class ModCommands {
   }
 
   /**
+   * @param context a context of the original action
+   * @param updater a function that accepts an updater, so it can query writable copies from it and perform modifications;
+   *                also additional editor operation like caret positioning could be performed
+   * @return a command that will perform the corresponding update to the original elements and the editor
+   */
+  public static @NotNull ModCommand psiUpdate(@NotNull ModCommandAction.ActionContext context,
+                                              @NotNull Consumer<@NotNull ModPsiUpdater> updater) {
+    return ModCommandService.getInstance().psiUpdate(context, updater);
+  }
+
+  /**
    * @param orig    PsiElement to update
    * @param updater a function that accepts a non-physical copy of the supplied orig element and performs
    *                PSI write operations in background to modify this copy
@@ -94,7 +96,7 @@ public final class ModCommands {
   public static <E extends PsiElement> @NotNull ModCommand psiUpdate(@NotNull E orig, @NotNull Consumer<@NotNull E> updater) {
     return psiUpdate(orig, (e, ctx) -> updater.accept(e));
   }
-
+  
   /**
    * @param orig    PsiElement to update
    * @param updater a function that accepts a non-physical copy of the supplied orig element and a context to
@@ -103,254 +105,7 @@ public final class ModCommands {
    * @return a command that will perform the corresponding update to the original element
    */
   public static <E extends PsiElement> @NotNull ModCommand psiUpdate(@NotNull E orig,
-                                                                     @NotNull BiConsumer<@NotNull E, @NotNull EditorUpdater> updater) {
-    PsiFile origFile = orig.getContainingFile();
-    Project project = origFile.getProject();
-    ModCommandAction.ActionContext actionContext = createContext(project, origFile);
-    PsiFile copyFile = actionContext.file();
-    E copy = PsiTreeUtil.findSameElementInCopy(orig, copyFile);
-    PostprocessReformattingAspect aspect = PostprocessReformattingAspect.getInstance(project);
-    PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
-    Document document = copyFile.getViewProvider().getDocument();
-    InjectedLanguageManager injectionManager = InjectedLanguageManager.getInstance(project);
-    Disposable disposable;
-    PsiFile targetFile;
-    Document positionDocument;
-    boolean injected = injectionManager.isInjectedFragment(origFile);
-    PsiLanguageInjectionHost hostCopy;
-    if (injected) {
-      PsiLanguageInjectionHost host = Objects.requireNonNull(injectionManager.getInjectionHost(origFile));
-      PsiFile hostFile = host.getContainingFile();
-      PsiFile hostFileCopy = (PsiFile)hostFile.copy();
-      PsiFile injectedFileCopy = getInjectedFileCopy(host, hostFileCopy, orig.getLanguage());
-      hostCopy = injectionManager.getInjectionHost(injectedFileCopy);
-      disposable = ApplicationManager.getApplication().getService(InjectionEditService.class)
-        .synchronizeWithFragment(injectedFileCopy, document);
-      targetFile = hostFileCopy;
-      origFile = hostFile;
-      positionDocument = hostFileCopy.getViewProvider().getDocument();
-    } else {
-      hostCopy = null;
-      disposable = null;
-      targetFile = copyFile;
-      positionDocument = document;
-    }
-    EditorUpdaterImpl context = new EditorUpdaterImpl(actionContext, positionDocument, manager, document, hostCopy, copyFile);
-    try {
-      String oldText = targetFile.getText();
-      aspect.postponeFormattingInside(
-        () -> aspect.forcePostprocessFormatInside(copyFile, () -> updater.accept(copy, context)));
-      manager.commitDocument(document);
-      manager.doPostponedOperationsAndUnblockDocument(document);
-      String newText = targetFile.getText();
-      VirtualFile origVirtualFile = origFile.getOriginalFile().getVirtualFile();
-      if (origVirtualFile == null) return new ModNothing();
-      ModCommand command =
-        oldText.equals(newText) ? new ModNothing() : new ModUpdateFileText(origVirtualFile, oldText, newText, context.myFragments);
-      int start = -1, end = -1, caret = -1;
-      if (context.mySelectionEnd <= newText.length()) {
-        start = context.mySelectionStart;
-        end = context.mySelectionEnd;
-      }
-      if (context.myCaretOffset <= newText.length()) {
-        caret = context.myCaretOffset;
-      }
-      if (start != -1 || end != -1 || caret != -1) {
-        command = command.andThen(new ModNavigate(origVirtualFile, start, end, caret));
-      }
-      return command;
-    }
-    finally {
-      if (disposable != null) {
-        Disposer.dispose(disposable);
-      }
-      positionDocument.removeDocumentListener(context);
-    }
-  }
-
-  private static @NotNull PsiFile getInjectedFileCopy(@NotNull PsiLanguageInjectionHost host,
-                                                      @NotNull PsiFile hostFileCopy,
-                                                      @NotNull Language injectedLanguage) {
-    InjectedLanguageManager injectionManager = InjectedLanguageManager.getInstance(hostFileCopy.getProject());
-    PsiLanguageInjectionHost hostCopy = PsiTreeUtil.findSameElementInCopy(host, hostFileCopy);
-    var visitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-      private final Language origLanguage = injectedLanguage;
-      PsiFile injectedFileCopy = null;
-
-      @Override
-      public void visit(@NotNull PsiFile injectedPsi, @NotNull List<? extends PsiLanguageInjectionHost.Shred> places) {
-        if (injectedPsi.getLanguage() == origLanguage) {
-          injectedFileCopy = injectedPsi;
-        }
-      }
-    };
-    injectionManager.enumerate(hostCopy, visitor);
-    return Objects.requireNonNull(visitor.injectedFileCopy);
-  }
-
-  private static ModCommandAction.@NotNull ActionContext createContext(Project project, PsiFile origFile) {
-    var manager = InjectedLanguageManager.getInstance(project);
-    boolean injectedFragment = manager.isInjectedFragment(origFile);
-    VirtualFile origVirtualFile = (injectedFragment ? manager.getTopLevelFile(origFile) : origFile).getOriginalFile().getVirtualFile();
-    Editor origEditor =
-      origVirtualFile != null && FileEditorManager.getInstance(project).getSelectedEditor(origVirtualFile) instanceof TextEditor textEditor
-      ?
-      textEditor.getEditor()
-      : null;
-    int offset = 0, start = 0, end = 0;
-    if (origEditor != null) {
-      offset = origEditor.getCaretModel().getOffset();
-      start = origEditor.getSelectionModel().getSelectionStart();
-      end = origEditor.getSelectionModel().getSelectionEnd();
-    }
-    PsiFile copyFile;
-    if (!injectedFragment) {
-      copyFile = (PsiFile)origFile.copy();
-    } else {
-      copyFile = PsiFileFactory.getInstance(project).createFileFromText(
-        origFile.getName(), origFile.getFileType(), manager.getUnescapedText(origFile),
-        LocalTimeCounter.currentTime(), false);
-    }
-    return new ModCommandAction.ActionContext(project, copyFile, offset, TextRange.create(start, end));
-  }
-
-  private static class EditorUpdaterImpl implements EditorUpdater, DocumentListener {
-    private final @NotNull Document myPositionDocument;
-    private final @NotNull PsiDocumentManager myManager;
-    private final @NotNull Document myDocument;
-    private final @Nullable PsiLanguageInjectionHost myHost;
-    private final @NotNull PsiFile myCopyFile;
-    private final @NotNull List<Fragment> myFragments = new ArrayList<>();
-    private int myCaretOffset, mySelectionStart, mySelectionEnd;
-
-    private EditorUpdaterImpl(@NotNull ModCommandAction.ActionContext actionContext,
-                              @NotNull Document positionDocument,
-                              @NotNull PsiDocumentManager manager,
-                              @NotNull Document document,
-                              @Nullable PsiLanguageInjectionHost host,
-                              @NotNull PsiFile copyFile) {
-      myPositionDocument = positionDocument;
-      myManager = manager;
-      myDocument = document;
-      myHost = host;
-      myCopyFile = copyFile;
-      myCaretOffset = actionContext.offset();
-      mySelectionStart = actionContext.selection().getStartOffset();
-      mySelectionEnd = actionContext.selection().getEndOffset();
-      myPositionDocument.addDocumentListener(this);
-    }
-
-    @Override
-    public void select(@NotNull PsiElement element) {
-      validate(element);
-      myManager.doPostponedOperationsAndUnblockDocument(myDocument);
-      TextRange range = element.getTextRange();
-      select(range);
-    }
-
-    @Override
-    public void select(@NotNull TextRange range) {
-      if (myHost != null) {
-        InjectedLanguageManager instance = InjectedLanguageManager.getInstance(myCopyFile.getProject());
-        PsiFile file = findInjectedFile(instance, myHost);
-        int start = instance.mapUnescapedOffsetToInjected(file, range.getStartOffset());
-        int end = instance.mapUnescapedOffsetToInjected(file, range.getEndOffset());
-        range = instance.injectedToHost(file, TextRange.create(start, end));
-      }
-      mySelectionStart = range.getStartOffset();
-      mySelectionEnd = range.getEndOffset();
-      myCaretOffset = range.getStartOffset();
-    }
-    
-    @Override
-    public void moveTo(int offset) {
-      if (myHost != null) {
-        InjectedLanguageManager instance = InjectedLanguageManager.getInstance(myCopyFile.getProject());
-        PsiFile file = findInjectedFile(instance, myHost);
-        offset = instance.mapUnescapedOffsetToInjected(file, offset);
-        offset = instance.injectedToHost(file, offset);
-      }
-      myCaretOffset = offset;
-    }
-
-    @Override
-    public void moveTo(@NotNull PsiElement element) {
-      validate(element);
-      myManager.doPostponedOperationsAndUnblockDocument(myDocument);
-      moveTo(element.getTextRange().getStartOffset());
-    }
-
-    private PsiFile findInjectedFile(InjectedLanguageManager instance, PsiLanguageInjectionHost host) {
-      var visitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-        PsiFile myFile = null;
-        
-        @Override
-        public void visit(@NotNull PsiFile injectedPsi, @NotNull List<? extends PsiLanguageInjectionHost.Shred> places) {
-          if (injectedPsi.getLanguage() == myCopyFile.getLanguage()) {
-            myFile = injectedPsi;
-          }
-        }
-      };
-      instance.enumerate(host, visitor);
-      return Objects.requireNonNull(visitor.myFile);
-    }
-
-    @Override
-    public void moveToPrevious(char ch) {
-      myManager.doPostponedOperationsAndUnblockDocument(myDocument);
-      String text = myPositionDocument.getText();
-      int idx = text.lastIndexOf(ch, myCaretOffset);
-      if (idx == -1) return;
-      myCaretOffset = idx;
-    }
-
-    private void validate(@NotNull PsiElement element) {
-      if (!element.isValid()) throw new IllegalArgumentException();
-      if (!PsiTreeUtil.isAncestor(myCopyFile, element, false)) throw new IllegalArgumentException();
-    }
-
-    @Override
-    public void documentChanged(@NotNull DocumentEvent event) {
-      myCaretOffset = updateOffset(event, myCaretOffset);
-      mySelectionStart = updateOffset(event, mySelectionStart);
-      mySelectionEnd = updateOffset(event, mySelectionEnd);
-      recordFragment(new Fragment(event.getOffset(), event.getOldLength(), event.getNewLength()));
-    }
-
-    private void recordFragment(@NotNull Fragment newFragment) {
-      int insertionPoint = 0;
-      int intersect = 0;
-      for (int i = myFragments.size() - 1; i >= 0; i--) {
-        Fragment fragment = myFragments.get(i);
-        if (fragment.offset() > newFragment.offset() + newFragment.oldLength()) {
-          myFragments.set(i, fragment.shift(newFragment.newLength() - newFragment.oldLength()));
-        } else if (fragment.intersects(newFragment)) {
-          intersect++;
-        } else {
-          insertionPoint = i + 1;
-          break;
-        }
-      }
-      List<Fragment> intersected = myFragments.subList(insertionPoint, insertionPoint + intersect);
-      if (!intersected.isEmpty()) {
-        Fragment first = intersected.get(0);
-        Fragment last = intersected.get(intersected.size() - 1);
-        int diff = intersected.stream().mapToInt(f -> f.newLength() - f.oldLength()).sum();
-        Fragment mergedFragment = new Fragment(first.offset(), last.offset() + last.newLength() - diff - first.offset(),
-                                               last.offset() + last.newLength() - first.offset());
-        newFragment = mergedFragment.mergeWithNext(newFragment);
-      }
-      intersected.clear();
-      intersected.add(newFragment);
-    }
-
-    private static int updateOffset(DocumentEvent event, int pos) {
-      int offset = event.getOffset();
-      int oldLength = event.getOldLength();
-      int newLength = event.getNewLength();
-      if (pos <= offset) return pos;
-      if (pos >= offset + oldLength) return pos + newLength - oldLength;
-      return offset + newLength;
-    }
+                                                                     @NotNull BiConsumer<@NotNull E, @NotNull ModPsiUpdater> updater) {
+    return psiUpdate(ModCommandAction.ActionContext.from(null, orig.getContainingFile()), eu -> updater.accept(eu.getWritable(orig), eu));
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.DynamicBundle;
@@ -244,7 +244,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
 
   public abstract JobDescriptor @NotNull [] getJobDescriptors(@NotNull GlobalInspectionContext context);
 
-  public HighlightDisplayKey getDisplayKey() {
+  public @Nullable HighlightDisplayKey getDisplayKey() {
     HighlightDisplayKey key = myDisplayKey;
     if (key == null) {
       myDisplayKey = key = HighlightDisplayKey.find(getShortName());

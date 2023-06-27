@@ -60,6 +60,23 @@ internal enum class OptionsParser {
             }
         }
     },
+    CONSTRUCTOR {
+        override fun parse(text: String, project: Project): FindUsagesOptions {
+            return KotlinFunctionFindUsagesOptions(project).apply {
+                isUsages = false
+                for (s in InTextDirectivesUtils.findListWithPrefixes(text, "// OPTIONS: ")) {
+                    if (parseCommonOptions(this, s)) continue
+
+                    when (s) {
+                        "overloadUsages" -> {
+                            isIncludeOverloadUsages = true
+                        }
+                        else -> throw IllegalStateException("Invalid option: $s")
+                    }
+                }
+            }
+        }
+    },
     PROPERTY {
         override fun parse(text: String, project: Project): FindUsagesOptions {
             return KotlinPropertyFindUsagesOptions(project).apply {
@@ -71,6 +88,7 @@ internal enum class OptionsParser {
                         "overrides" -> searchOverrides = true
                         "skipRead" -> isReadAccess = false
                         "skipWrite" -> isWriteAccess = false
+                        "overridingMethods" -> isSearchInOverridingMethods = true
                         "expected" -> searchExpected = true
                         else -> throw IllegalStateException("Invalid option: $s")
                     }
@@ -189,6 +207,7 @@ internal enum class OptionsParser {
         fun getParserByPsiElementClass(klass: Class<out PsiElement>): OptionsParser? {
             return when (klass) {
                 KtNamedFunction::class.java -> FUNCTION
+                KtPrimaryConstructor::class.java, KtSecondaryConstructor::class.java -> CONSTRUCTOR
                 KtProperty::class.java, KtParameter::class.java -> PROPERTY
                 KtClass::class.java -> CLASS
                 PsiMethod::class.java -> JAVA_METHOD

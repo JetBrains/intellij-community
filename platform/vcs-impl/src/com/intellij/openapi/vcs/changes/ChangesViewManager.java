@@ -1,11 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
@@ -88,7 +88,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.VFS;
 import static com.intellij.openapi.actionSystem.EmptyAction.registerWithShortcutSet;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_KEYS;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GROUP;
@@ -107,7 +106,7 @@ public class ChangesViewManager implements ChangesViewEx,
                                            PersistentStateComponent<ChangesViewManager.State>,
                                            Disposable {
 
-  private static final Tracer TRACER = TelemetryTracer.getInstance().getTracer(VcsScopeKt.VcsScope);
+  private static final Tracer TRACER = TelemetryManager.getInstance().getTracer(VcsScopeKt.VcsScope);
   private static final String CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION = "ChangesViewManager.DETAILS_SPLITTER_PROPORTION";
 
   @NotNull private final Project myProject;
@@ -740,11 +739,11 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     public void scheduleRefresh() {
-      scheduleRefreshWithDelay(100, ModalityState.NON_MODAL);
+      scheduleRefreshWithDelay(100, ModalityState.nonModal());
     }
 
     private void scheduleRefreshNow() {
-      scheduleRefreshWithDelay(0, ModalityState.NON_MODAL);
+      scheduleRefreshWithDelay(0, ModalityState.nonModal());
     }
 
     @CalledInAny
@@ -820,7 +819,7 @@ public class ChangesViewManager implements ChangesViewEx,
       myView.setPaintBusy(true);
       ApplicationManager.getApplication().invokeLater(() -> {
         scheduleRefreshNow();
-      }, ModalityState.NON_MODAL);
+      }, ModalityState.nonModal());
     }
 
     @RequiresEdt
@@ -898,11 +897,11 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     private void invokeLater(Runnable runnable) {
-      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL, myProject.getDisposed());
+      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.nonModal(), myProject.getDisposed());
     }
 
     private void invokeLaterIfNeeded(Runnable runnable) {
-      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, myProject.getDisposed(), runnable);
+      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.nonModal(), myProject.getDisposed(), runnable);
     }
 
     private class MyChangeListListener extends ChangeListAdapter {

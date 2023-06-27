@@ -1,8 +1,5 @@
 import org.apache.tools.ant.taskdefs.condition.Os
 
-import java.nio.file.Paths
-import java.util.regex.Pattern
-
 plugins {
   id "com.jetbrains.python.envs" version "0.0.31"
 }
@@ -22,7 +19,7 @@ envs {
   String python39version = "3.9.13"
   String python310version = "3.10.8"
   String python311version = "3.11.0"
-  String python312version = "3.12.0a7"
+  String python312version = "3.12.0b3"
 
   def customBuildDir = System.getenv().get("PYCHARM_BUILD_DIR")
   project.buildDir = customBuildDir? new File(customBuildDir): buildDir

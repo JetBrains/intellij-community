@@ -1,5 +1,5 @@
 open class Base internal constructor(x: Int) {
-    var x = 42
+    var x: Int = 42
 
     init {
         this.x = x

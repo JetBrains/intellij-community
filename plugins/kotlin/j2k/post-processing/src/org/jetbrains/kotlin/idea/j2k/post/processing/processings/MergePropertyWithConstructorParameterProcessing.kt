@@ -30,17 +30,18 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 internal class MergePropertyWithConstructorParameterProcessing : ElementsBasedPostProcessing() {
     override fun runProcessing(elements: List<PsiElement>, converterContext: NewJ2kConverterContext) {
         for (klass in runReadAction { elements.descendantsOfType<KtClass>() }) {
-            convertClass(klass)
+            klass.convert()
         }
     }
 
-    private fun convertClass(klass: KtClass) {
-        val initializations = runReadAction { collectPropertyInitializations(klass) }
+    private fun KtClass.convert() {
+        val initializations = runReadAction { collectPropertyInitializations(this) }
         runUndoTransparentActionInEdt(inWriteAction = true) {
             initializations.forEach(::convertInitialization)
-            klass.removeEmptyInitBlocks()
-            klass.removeRedundantEnumSemicolon()
-            klass.removeIllegalDataModifierIfNeeded()
+            removeEmptyInitBlocks()
+            removeRedundantEnumSemicolon()
+            removeIllegalDataModifierIfNeeded()
+            removeEmptyClassBody()
         }
     }
 
@@ -180,6 +181,15 @@ internal class MergePropertyWithConstructorParameterProcessing : ElementsBasedPo
         ) {
             removeModifier(DATA_KEYWORD)
             findAnnotation(declaration = this, FqName("kotlin.jvm.JvmRecord"))?.delete()
+        }
+    }
+
+    private fun KtClass.removeEmptyClassBody() {
+        val body = body ?: return
+        if (body.declarations.isEmpty()) {
+            val commentSaver = CommentSaver(body)
+            body.delete()
+            commentSaver.restore(resultElement = this)
         }
     }
 }

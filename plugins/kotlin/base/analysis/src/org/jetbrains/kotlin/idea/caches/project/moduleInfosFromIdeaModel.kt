@@ -23,13 +23,13 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.messages.MessageBusConnection
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
-import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
+import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
@@ -183,7 +183,7 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
             val moduleChanges = event.getChanges(ModuleEntity::class.java)
             val sourceRootChanges = event.getChanges(SourceRootEntity::class.java)
 
-            if (moduleChanges.none() && sourceRootChanges.none()) {
+            if (moduleChanges.isEmpty() && sourceRootChanges.isEmpty()) {
                 return
             }
 
@@ -306,8 +306,7 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
         override fun modelChanged(event: VersionedStorageChange) {
             val storageBefore = event.storageBefore
             val storageAfter = event.storageAfter
-            val moduleChanges = event.getChanges(ModuleEntity::class.java)
-            if (moduleChanges.none()) return
+            val moduleChanges = event.getChanges(ModuleEntity::class.java).ifEmpty { return }
 
             val outdatedModuleSdks: Set<Sdk> = moduleChanges.asSequence()
                 .mapNotNull { it.oldEntity }

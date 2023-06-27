@@ -2,19 +2,20 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ProjectWindowCustomizerService;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.hover.HoverListener;
-import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtilities;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.View;
@@ -30,6 +31,7 @@ public class MainToolbarComboBoxButtonUI extends DarculaButtonUI {
   private static final Icon EXPAND_ICON = AllIcons.General.ChevronDown;
 
   private static final @NotNull JBColor HOVER_COLOR = JBColor.namedColor("MainToolbar.Dropdown.hoverBackground", JBColor.background());
+  private static final @NotNull JBColor TRANSPARENT_HOVER_COLOR = JBColor.namedColor("MainToolbar.Dropdown.transparentHoverBackground", JBColor.background());
   private static final @NotNull JBColor COLOR = JBColor.namedColor("MainToolbar.Dropdown.background", JBColor.foreground());
   private static final Object HOVER_PROP = "MainToolbarComboBoxButtonUI.isHovered";
 
@@ -59,7 +61,7 @@ public class MainToolbarComboBoxButtonUI extends DarculaButtonUI {
     c.setBackground(COLOR);
 
     Insets insets = JBUI.CurrentTheme.MainToolbar.Dropdown.borderInsets();
-    JBEmptyBorder border = JBUI.Borders.empty(insets.top, insets.left, insets.bottom, insets.right);
+    Border border = new EmptyBorder(insets);
     c.setBorder(border);
     c.setOpaque(true);
 
@@ -77,7 +79,7 @@ public class MainToolbarComboBoxButtonUI extends DarculaButtonUI {
     if (!(c instanceof ComboBoxAction.ComboBoxButton button)) return;
 
     if (c.isOpaque()) paintBackground(g, button, button.getBackground());
-    if (button.isEnabled() && button.getClientProperty(HOVER_PROP) == Boolean.TRUE) paintHover(g, button, HOVER_COLOR);
+    if (button.isEnabled() && button.getClientProperty(HOVER_PROP) == Boolean.TRUE) paintHover(g, button);
     paintContents(g, button);
   }
 
@@ -144,13 +146,13 @@ public class MainToolbarComboBoxButtonUI extends DarculaButtonUI {
 
     if (((ComboBoxAction.ComboBoxButton)c).isArrowVisible())
       size.width += ((AbstractButton)c).getIconTextGap() + EXPAND_ICON.getIconWidth();
-    if (StringUtil.isNotEmpty(button.getText())) size.width += button.getIconTextGap();
 
     JBInsets.addTo(size, button.getMargin());
     return size;
   }
 
-  private static void paintHover(Graphics g, JComponent c, Color color) {
+  private static void paintHover(Graphics g, JComponent c) {
+    Color color = ProjectWindowCustomizerService.getInstance().isActive() ? TRANSPARENT_HOVER_COLOR : HOVER_COLOR;
     doFill(g, c, color, true);
   }
 
@@ -159,12 +161,13 @@ public class MainToolbarComboBoxButtonUI extends DarculaButtonUI {
   }
 
   private static void doFill(Graphics g, JComponent c, Color color, boolean rounded) {
-    Graphics g2 = g.create();
+    Graphics2D g2 = (Graphics2D)g.create();
     try {
       g2.setColor(color);
       Rectangle bounds = c.getVisibleRect();
-      JBInsets.removeFrom(bounds, c.getInsets());
       if (rounded) {
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
         int arc = DarculaUIUtil.COMPONENT_ARC.get();
         g2.fillRoundRect(bounds.x, bounds.y, bounds.width, bounds.height, arc, arc);
       }

@@ -114,7 +114,7 @@ private class ExperimentalUIImpl : ExperimentalUI() {
 
 private fun setRegistryKeyIfNecessary(key: String, value: Boolean, registryManager: RegistryManager) {
   val registryValue = registryManager.get(key)
-  if (registryValue.isBoolean != value) {
+  if (registryValue.asBoolean() != value) {
     registryValue.setValue(value)
   }
 }
@@ -129,7 +129,7 @@ private class ExperimentalUiAppLifecycleListener : AppLifecycleListener {
   override fun appClosing() {
     val experimentalUi = (ExperimentalUI.getInstance() as? ExperimentalUIImpl) ?: return
     val newValue = experimentalUi.newValue
-    if (newValue != ExperimentalUI.isNewUI()) {
+    if (newValue != ExperimentalUI.isNewUI() && !ExperimentalUI.isNewUiOverriden()) {
       // if RegistryManager not yet created on appClosing, it means that something fatal is occurred, do not try to use it
       val registryManager = ApplicationManager.getApplication().serviceIfCreated<RegistryManager>() ?: return
       registryManager.get("ide.experimental.ui").setValue(newValue)

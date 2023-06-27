@@ -1,8 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
@@ -15,16 +18,27 @@ class EditorState(val editor: Editor){
 
   fun revert() {
     val project = editor.project
+    val undoManager = if (project != null) UndoManager.getInstance(project) else UndoManager.getGlobalInstance()
     runWriteAction {
-      if (project != null) {
-        PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(::doRevert)
-      } else {
-        doRevert()
+      if (undoManager.isUndoOrRedoInProgress) {
+        ApplicationManager.getApplication().invokeLater { revertWithoutPostprocessing(project) }
+      }
+      else {
+        revertWithoutPostprocessing(project)
       }
     }
   }
 
-  private fun doRevert() {
+  private fun revertWithoutPostprocessing(project: Project?) {
+    if (project != null) {
+      PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(::revertState)
+    }
+    else {
+      revertState()
+    }
+  }
+
+  private fun revertState() {
     val project = editor.project
     editor.document.setText(textToRevert)
     if (project != null) {

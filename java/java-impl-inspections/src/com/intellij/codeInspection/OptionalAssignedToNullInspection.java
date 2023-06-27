@@ -6,6 +6,7 @@ import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -186,7 +187,7 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (!(element instanceof PsiExpression)) return;
       String emptyCall = myTypeName + "." + myTypeParameter + myMethodName + "()";
       PsiElement result = new CommentTracker().replaceAndRestoreComments(element, emptyCall);
@@ -212,7 +213,7 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiBinaryExpression binOp = ObjectUtils.tryCast(element, PsiBinaryExpression.class);
       if (binOp == null) return;
       PsiExpression value = ExpressionUtils.getValueComparedWithNull(binOp);

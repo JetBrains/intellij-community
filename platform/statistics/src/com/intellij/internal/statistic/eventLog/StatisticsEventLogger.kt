@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Disposer
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -33,7 +34,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
                                              private val maxFileSizeInBytes: Int,
                                              val sendLogsOnIdeClose: Boolean = false,
                                              val isCharsEscapingRequired: Boolean = true) {
-
+  @ApiStatus.ScheduledForRemoval
   @Deprecated(message = "Use primary constructor instead")
   constructor(recorderId: String,
               version: Int,

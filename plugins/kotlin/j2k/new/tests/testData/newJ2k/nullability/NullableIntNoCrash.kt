@@ -1,5 +1,5 @@
 internal class A {
-    var field = foo()
+    var field: Int = foo()
     fun foo(): Int {
         return 1
     }

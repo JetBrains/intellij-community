@@ -5,6 +5,7 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.util.Disposer;
@@ -48,6 +49,7 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
   private void doTestWithFix(String intentionAction) {
     doTest();
     myFixture.launchAction(myFixture.findSingleIntention(intentionAction));
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 

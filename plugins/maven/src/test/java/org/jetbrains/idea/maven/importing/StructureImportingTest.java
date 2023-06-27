@@ -7,16 +7,14 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.jps.entities.ModuleId;
+import com.intellij.platform.workspace.storage.EntitySource;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.RunAll;
-import com.intellij.workspaceModel.ide.WorkspaceModel;
-import com.intellij.workspaceModel.storage.EntitySource;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Assume;
 import org.junit.Test;
 
@@ -26,19 +24,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    MavenUtil.setUpdateSuspendable();
-    super.setUp();
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    RunAll.runAll(
-      () -> super.tearDown(),
-      () -> MavenUtil.resetUpdateSuspendable()
-    );
-  }
 
   @Test
   public void testInheritProjectJdkForModules() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.ui;
 
 import com.intellij.icons.AllIcons;
@@ -187,7 +187,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
         projectStructure.setIgnored(notIgnoredNode == null);
 
         // execute when current dialog is closed
-        ExternalSystemUtil.invokeLater(myProject, ModalityState.NON_MODAL, () -> {
+        ExternalSystemUtil.invokeLater(myProject, ModalityState.nonModal(), () -> {
           final ProjectData projectData = projectStructure.getData();
           String title = ExternalSystemBundle.message(
             "progress.refresh.text", projectData.getExternalName(), projectData.getOwner().getReadableName());

@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -107,6 +108,8 @@ internal class CommandRunnerExtension(
       else return null
     }
     catch (e: Exception) {
+      if (e is ControlFlowException) throw e
+
       LOG.warn(e)
       return null
     }

@@ -319,8 +319,14 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             return
         }
         val operandType = operand.getKotlinType()
-        if (operandType.toDfType() is DfPrimitiveType) {
+        val operandDfType = operandType.toDfType()
+        if (operandDfType is DfPrimitiveType) {
             addInstruction(WrapDerivedVariableInstruction(DfTypes.NOT_NULL_OBJECT, SpecialField.UNBOX))
+        }
+        else if (operandType?.constructor?.declarationDescriptor?.isInlineClass() == true &&
+                 expr.getKotlinType()?.constructor?.declarationDescriptor?.isInlineClass() != true) {
+            addInstruction(PopInstruction())
+            addInstruction(PushValueInstruction(operandDfType))
         }
         if (ref.text == "as?") {
             val tempVariable: DfaVariableValue = flow.createTempVariable(DfTypes.OBJECT_OR_NULL)
@@ -1514,10 +1520,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val expectedDfType = expectedType.toDfType()
         if (actualType.constructor.declarationDescriptor?.isInlineClass() == true &&
             expectedType.constructor.declarationDescriptor?.isInlineClass() != true) {
-            // Boxing of inline class: it's a new object
-            // represent it as a constant to add knowledge that it's distinct from any other constant
             addInstruction(PopInstruction())
-            addInstruction(PushValueInstruction(DfTypes.constant(Any(), actualDfType)))
+            addInstruction(PushValueInstruction(actualDfType))
         }
         if (actualDfType !is DfPrimitiveType && expectedDfType is DfPrimitiveType) {
             addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))

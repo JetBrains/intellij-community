@@ -37,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -49,7 +48,6 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
   private final AnnotationHolderImpl myAnnotationHolder;
   private final List<MyData<?,?>> myAnnotationData = new ArrayList<>();
   private volatile @NotNull List<? extends HighlightInfo> myHighlightInfos = Collections.emptyList();
-  private final @NotNull CompletableFuture<Void> myFuture;
 
   private static class MyData<K,V> {
     final @NotNull ExternalAnnotator<K,V> annotator;
@@ -72,7 +70,6 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
                    @NotNull HighlightInfoProcessor processor) {
     super(file.getProject(), document, LangBundle.message("pass.external.annotators"), file, editor, new TextRange(startOffset, endOffset), false, processor);
     myAnnotationHolder = new AnnotationHolderImpl(new AnnotationSession(file), false);
-    ((HighlightingSessionImpl)HighlightingSessionImpl.getFromCurrentIndicator(file)).myExternalPassFuture = myFuture = new CompletableFuture<>();
   }
 
   @Override
@@ -146,42 +143,33 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     }
 
     long modificationStampBefore = myDocument.getModificationStamp();
-    // complete 'HighlightingSessionImpl.myExternalPassFuture' when this Update is run
     Update update = new Update(myFile) {
       @Override
       public void setRejected() {
-        try {
-          super.setRejected();
+        super.setRejected();
+        if (!myProject.isDisposed()) { // Project close in EDT might call MergeUpdateQueue.dispose which calls setRejected in EDT
           doFinish(convertToHighlights());
-        }
-        finally {
-          myFuture.complete(null);
         }
       }
 
       @Override
       public void run() {
-        try {
-          if (documentChanged(modificationStampBefore) || myProject.isDisposed()) {
-            return;
-          }
-          // have to instantiate new indicator because the old one (progress) might have already been canceled
-          DaemonProgressIndicator indicator = new DaemonProgressIndicator();
-          BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
-            // run annotators outside the read action because they could start OSProcessHandler
-            runChangeAware(myDocument, () -> doAnnotate());
-            ReadAction.run(() -> {
-              ProgressManager.checkCanceled();
-              if (!documentChanged(modificationStampBefore)) {
-                doApply();
-                doFinish(convertToHighlights());
-              }
-            });
-          }, indicator);
+        if (documentChanged(modificationStampBefore) || myProject.isDisposed()) {
+          return;
         }
-        finally {
-          myFuture.complete(null);
-        }
+        // have to instantiate new indicator because the old one (progress) might have already been canceled
+        DaemonProgressIndicator indicator = new DaemonProgressIndicator();
+        BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
+          // run annotators outside the read action because they could start OSProcessHandler
+          runChangeAware(myDocument, () -> doAnnotate());
+          ReadAction.run(() -> {
+            ProgressManager.checkCanceled();
+            if (!documentChanged(modificationStampBefore)) {
+              doApply();
+              doFinish(convertToHighlights());
+            }
+          });
+        }, indicator);
       }
     };
     ExternalAnnotatorManager.getInstance().queue(update);
@@ -189,8 +177,9 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
 
   @Override
   public @NotNull List<HighlightInfo> getInfos() {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     try {
-      myFuture.get(1, TimeUnit.MINUTES);
+      ExternalAnnotatorManager.getInstance().waitForAllExecuted(1, TimeUnit.MINUTES);
     }
     catch (ExecutionException | InterruptedException | TimeoutException e) {
       throw new RuntimeException(e);

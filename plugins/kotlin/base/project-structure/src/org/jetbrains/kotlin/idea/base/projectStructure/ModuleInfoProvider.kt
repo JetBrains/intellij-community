@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.openapi.components.Service
@@ -67,6 +67,17 @@ class ModuleInfoProvider(private val project: Project) {
         internal val LOG = Logger.getInstance(ModuleInfoProvider::class.java)
 
         fun getInstance(project: Project): ModuleInfoProvider = project.service()
+
+        fun findAnchorFile(element: PsiElement): PsiFile? = when {
+            element !is KtLightElement<*, *> -> element.containingFile
+            /**
+             * We shouldn't unwrap decompiled classes
+             * @see [ModuleInfoProvider.collectByLightElement]
+             */
+            element.getNonStrictParentOfType<KtLightClassForDecompiledDeclaration>() != null -> null
+            element is KtLightClassForFacade -> element.files.first()
+            else -> element.kotlinOrigin?.let(::findAnchorFile)
+        }
     }
 
     class Configuration(val createSourceLibraryInfoForLibraryBinaries: Boolean = true) {
@@ -219,8 +230,8 @@ class ModuleInfoProvider(private val project: Project) {
 
                 return MappingIterator(iterator) { module ->
                     if (module.isDisposed) return@MappingIterator null
-                    val moduleFileIndex = ModuleRootManager.getInstance(module).fileIndex
-                    val sourceRootType: KotlinSourceRootType? = moduleFileIndex.getKotlinSourceRootType(virtualFile)
+                    val projectFileIndex = ProjectFileIndex.getInstance(project)
+                    val sourceRootType: KotlinSourceRootType? = projectFileIndex.getKotlinSourceRootType(virtualFile)
                     module.asSourceInfo(sourceRootType)?.let(Result.Companion::success)
                 }
             }
@@ -233,10 +244,10 @@ class ModuleInfoProvider(private val project: Project) {
     }
 
     private fun collectByOrderEntry(
-      virtualFile: VirtualFile,
-      orderEntry: OrderEntry,
-      isLibrarySource: Boolean,
-      visited: HashSet<IdeaModuleInfo>
+        virtualFile: VirtualFile,
+        orderEntry: OrderEntry,
+        isLibrarySource: Boolean,
+        visited: HashSet<IdeaModuleInfo>
     ): IdeaModuleInfo? {
         if (orderEntry is ModuleOrderEntry) {
             // Module-related entries are covered in 'collectModuleRelatedModuleInfosByFile()'

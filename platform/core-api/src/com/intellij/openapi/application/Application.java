@@ -379,14 +379,6 @@ public interface Application extends ComponentManager {
   void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition<?> expired);
 
   /**
-   * @see com.intellij.util.concurrency.ContextPropagatingExecutor#executeRaw
-   */
-  @ApiStatus.Internal
-  default void invokeLaterRaw(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition<?> expired) {
-    invokeLater(runnable, state, expired);
-  }
-
-  /**
    * <p>Causes {@code runnable.run()} to be executed synchronously on the
    * AWT event dispatching thread under Write Intent lock, when the IDE is in the specified modality
    * state (or a state with less modal dialogs open). This call blocks until all pending AWT events have been processed and (then)
@@ -417,8 +409,12 @@ public interface Application extends ComponentManager {
    * Please use {@link ModalityState#current()} instead.
    *
    * @return the current modality state.
+   * @deprecated for attention
    */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   @RequiresEdt
+  @ApiStatus.Internal
   @NotNull ModalityState getCurrentModalityState();
 
   /**
@@ -438,17 +434,24 @@ public interface Application extends ComponentManager {
   @NotNull ModalityState getDefaultModalityState();
 
   /**
-   * Please use {@link ModalityState#NON_MODAL} instead.
+   * Please use {@link ModalityState#nonModal()} instead.
    *
    * @return the modality state for no modal dialogs.
+   * @deprecated for attention
    */
+  @Deprecated
+  @ApiStatus.Internal
   @NotNull ModalityState getNoneModalityState();
 
   /**
    * Please use {@link ModalityState#any()} instead, and only if you absolutely must, after carefully reading its documentation.
    *
    * @return modality state which is always applicable
+   * @deprecated for attention
    */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
+  @ApiStatus.Internal
   @NotNull ModalityState getAnyModalityState();
 
   /**
@@ -600,6 +603,7 @@ public interface Application extends ComponentManager {
   @NotNull AccessToken acquireWriteActionLock(@NotNull Class<?> marker);
 
   /** @deprecated Internal API */
+  @ApiStatus.ScheduledForRemoval
   @ApiStatus.Internal
   @Deprecated
   @SuppressWarnings({"override", "DeprecatedIsStillUsed"})

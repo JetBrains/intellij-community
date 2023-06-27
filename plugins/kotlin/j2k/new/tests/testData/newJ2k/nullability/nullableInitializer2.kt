@@ -3,7 +3,7 @@ class TestJava {
         return if (p > 0) "response" else null
     }
 
-    var nullableInitializerFieldCast = nullableObj(3) as String?
+    var nullableInitializerFieldCast: String? = nullableObj(3) as String?
     private val nullableInitializerPrivateFieldCast = nullableObj(3) as String?
     fun testProperty() {
         nullableInitializerFieldCast!![0]

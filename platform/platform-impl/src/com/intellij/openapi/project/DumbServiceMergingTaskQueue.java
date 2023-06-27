@@ -2,6 +2,7 @@
 package com.intellij.openapi.project;
 
 import com.intellij.internal.statistic.StructuredIdeActivity;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
@@ -20,9 +21,13 @@ public class DumbServiceMergingTaskQueue extends MergingTaskQueue<DumbModeTask> 
   private final AtomicBoolean myFirstExecution = new AtomicBoolean(true);
 
   private void waitRequiredTasksToStartIndexing() {
+    var logger = Logger.getInstance(DumbServiceMergingTaskQueue.class);
+    logger.info("Initializing DumbServiceMergingTaskQueue...");
     if (myFirstExecution.compareAndSet(true, false)) {
       for (DumbServiceInitializationCondition condition : DUMB_SERVICE_INITIALIZATION_CONDITION_EXTENSION_POINT_NAME.getExtensionList()) {
+        logger.info("Running initialization condition: " + condition);
         condition.waitForInitialization();
+        logger.info("Finished: " + condition);
       }
     }
   }

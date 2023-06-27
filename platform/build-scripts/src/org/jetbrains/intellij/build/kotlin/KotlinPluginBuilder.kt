@@ -176,6 +176,7 @@ object KotlinPluginBuilder {
     "kotlin.code-insight.postfix-templates-k1",
     "kotlin.code-insight.postfix-templates-k2",
     "kotlin.code-insight.structural-search-k1",
+    "kotlin.code-insight.structural-search-k2",
     "kotlin.code-insight.line-markers-shared",
     "kotlin.code-insight.line-markers-k2",
     "kotlin.fir",
@@ -268,16 +269,27 @@ object KotlinPluginBuilder {
         spec.withProjectLibrary(library, LibraryPackMode.STANDALONE_MERGED)
       }
 
-      if (ultimateSources == KotlinUltimateSources.WITH_ULTIMATE_MODULES && kind == KotlinPluginKind.IJ) {
-        spec.withModules(persistentListOf(
-          "kotlin-ultimate.common-native",
-          //noinspection SpellCheckingInspection
-          "kotlin-ultimate.javascript.debugger",
-          "kotlin-ultimate.javascript.nodeJs",
-          "kotlin-ultimate.ultimate-plugin",
-          "kotlin-ultimate.ultimate-native",
-          "kotlin-ultimate.profiler",
-        ))
+      if (ultimateSources == KotlinUltimateSources.WITH_ULTIMATE_MODULES) {
+        val ultimateModules = when (kind) {
+          KotlinPluginKind.IJ -> persistentListOf(
+            "kotlin-ultimate.common-native",
+            "kotlin-ultimate.javascript.debugger",
+            "kotlin-ultimate.javascript.nodeJs",
+            "kotlin-ultimate.ultimate-plugin",
+            "kotlin-ultimate.ultimate-native",
+            "kotlin-ultimate.profiler",
+          )
+          KotlinPluginKind.Fleet -> persistentListOf(
+            "kotlin-ultimate.common-native",
+            "kotlin-ultimate.javascript.debugger",
+            "kotlin-ultimate.javascript.nodeJs",
+            "kotlin-ultimate.ultimate-fleet-plugin",
+            "kotlin-ultimate.ultimate-native",
+            //"kotlin-ultimate.profiler", FIXME: Causes perf problems in Fleet
+          )
+          else -> persistentListOf()
+        }
+        spec.withModules(ultimateModules)
       }
 
       val kotlincKotlinCompilerCommon = "kotlinc.kotlin-compiler-common"
@@ -358,7 +370,7 @@ object KotlinPluginBuilder {
         }
 
         when (kind) {
-          KotlinPluginKind.IJ ->
+          KotlinPluginKind.IJ, KotlinPluginKind.Fleet ->
             //noinspection SpellCheckingInspection
             replace(
               text,
@@ -376,18 +388,23 @@ object KotlinPluginBuilder {
         }
       }
 
-      if (kind == KotlinPluginKind.IJ && ultimateSources == KotlinUltimateSources.WITH_ULTIMATE_MODULES) {
-        // TODO KTIJ-11539 change to `System.getenv("TEAMCITY_VERSION") == null` later but make sure
-        //  that `IdeaUltimateBuildTest.testBuild` passes on TeamCity
-        val skipIfDoesntExist = true
+      if (ultimateSources == KotlinUltimateSources.WITH_ULTIMATE_MODULES) {
+        when (kind) {
+          KotlinPluginKind.IJ, KotlinPluginKind.Fleet -> {
+            // TODO KTIJ-11539 change to `System.getenv("TEAMCITY_VERSION") == null` later but make sure
+            //  that `IdeaUltimateBuildTest.testBuild` passes on TeamCity
+            val skipIfDoesntExist = true
 
-        // Use 'DownloadAppCodeDependencies' run configuration to download LLDBFrontend
-        spec.withBin("../CIDR/cidr-debugger/bin/lldb/linux/bin/LLDBFrontend", "bin/linux", skipIfDoesntExist)
-        spec.withBin("../CIDR/cidr-debugger/bin/lldb/mac/LLDBFrontend", "bin/macos", skipIfDoesntExist)
-        spec.withBin("../CIDR/cidr-debugger/bin/lldb/win/x64/bin/LLDBFrontend.exe", "bin/windows", skipIfDoesntExist)
-        spec.withBin("../CIDR/cidr-debugger/bin/lldb/renderers", "bin/lldb/renderers")
+            // Use 'DownloadAppCodeDependencies' run configuration to download LLDBFrontend
+            spec.withBin("../CIDR/cidr-debugger/bin/lldb/linux/bin/LLDBFrontend", "bin/linux", skipIfDoesntExist)
+            spec.withBin("../CIDR/cidr-debugger/bin/lldb/mac/LLDBFrontend", "bin/macos", skipIfDoesntExist)
+            spec.withBin("../CIDR/cidr-debugger/bin/lldb/win/x64/bin/LLDBFrontend.exe", "bin/windows", skipIfDoesntExist)
+            spec.withBin("../CIDR/cidr-debugger/bin/lldb/renderers", "bin/lldb/renderers")
 
-        spec.withBin("../mobile-ide/common-native/scripts", "scripts")
+            spec.withBin("../mobile-ide/common-native/scripts", "scripts")
+          }
+          else -> {}
+        }
       }
     }
   }
@@ -416,6 +433,6 @@ object KotlinPluginBuilder {
   }
 
   enum class KotlinPluginKind {
-    IJ, AS, MI,
+    IJ, AS, MI, Fleet,
   }
 }

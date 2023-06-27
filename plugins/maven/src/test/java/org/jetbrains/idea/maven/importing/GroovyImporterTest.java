@@ -24,18 +24,9 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
 
   @Override
   protected void setUp() throws Exception {
-    MavenUtil.setUpdateSuspendable();
     super.setUp();
     repoPath = new File(myDir, "repo").getPath();
     setRepositoryPath(repoPath);
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    RunAll.runAll(
-      () -> super.tearDown(),
-      () -> MavenUtil.resetUpdateSuspendable()
-    );
   }
 
   @Test

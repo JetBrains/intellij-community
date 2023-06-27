@@ -62,15 +62,14 @@ import java.util.*;
 public abstract class InspectionProfileEntry implements BatchSuppressableTool, OptionContainer {
   private static final Logger LOG = Logger.getInstance(InspectionProfileEntry.class);
 
-  private volatile static Set<String> ourBlackList;
+  private static volatile Set<String> ourBlackList;
   private static final Object BLACK_LIST_LOCK = new Object();
   private Boolean myUseNewSerializer;
 
   /**
    * For global tools read-only, for local tools would be used instead getID for modules with alternative classpath storage
    */
-  @NonNls
-  public @Nullable String getAlternativeID() {
+  public @NonNls @Nullable String getAlternativeID() {
     return null;
   }
 
@@ -108,8 +107,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
   /**
    * Tool ID passed to {@link InspectionSuppressor}.
    */
-  @NonNls
-  public @NotNull String getSuppressId() {
+  public @NonNls @NotNull String getSuppressId() {
     return getShortName();
   }
 
@@ -272,8 +270,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
   /**
    * @see InspectionEP#groupKey
    */
-  @NonNls
-  public @Nullable String getGroupKey() {
+  public @NonNls @Nullable String getGroupKey() {
     if (myNameProvider != null) {
       return myNameProvider.getGroupKey();
     }
@@ -314,8 +311,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
    *
    * @see InspectionEP#shortName
    */
-  @NonNls
-  public @NotNull String getShortName() {
+  public @NonNls @NotNull String getShortName() {
     if (myNameProvider != null) {
       String name = myNameProvider.getDefaultShortName();
       if (name != null) {
@@ -432,8 +428,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
     return myUseNewSerializer;
   }
 
-  @NotNull
-  private static Set<String> loadBlackList() {
+  private static @NotNull Set<String> loadBlackList() {
     Set<String> blackList = new HashSet<>();
 
     URL url = InspectionProfileEntry.class.getResource("inspection-black-list.txt");
@@ -494,8 +489,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
     return null;
   }
 
-  @NotNull
-  private Class<? extends InspectionProfileEntry> getDescriptionContextClass() {
+  private @NotNull Class<? extends InspectionProfileEntry> getDescriptionContextClass() {
     return getClass();
   }
 
@@ -506,8 +500,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
   /**
    * @return short name of tool whose results will be used
    */
-  @NonNls
-  public @Nullable String getMainToolId() {
+  public @NonNls @Nullable String getMainToolId() {
     return null;
   }
 

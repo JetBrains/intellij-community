@@ -1,20 +1,24 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.*;
+
+import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.dropdown;
 import static com.intellij.codeInspection.options.OptPane.pane;
@@ -59,7 +63,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
 
   @Override
   @Nullable
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiExpression argument = (PsiExpression)infos[1];
     return new ToArrayCallWithZeroLengthArrayArgumentFix(myMode.isEmptyPreferred(argument));
   }
@@ -114,7 +118,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
     return CollectionUtils.isCollectionOrMapSize(dimensions[0], qualifier);
   }
 
-  private static class ToArrayCallWithZeroLengthArrayArgumentFix extends InspectionGadgetsFix {
+  private static class ToArrayCallWithZeroLengthArrayArgumentFix extends PsiUpdateModCommandQuickFix {
     private final boolean myEmptyPreferred;
 
     ToArrayCallWithZeroLengthArrayArgumentFix(boolean emptyPreferred) {
@@ -137,8 +141,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       final PsiElement parent = element.getParent();
       final PsiElement grandParent = parent.getParent();
       if (!(grandParent instanceof PsiMethodCallExpression methodCallExpression)) return;
@@ -170,31 +173,22 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
       if (statement == null) return;
       final PsiType qualifierType = qualifier.getType();
       if (qualifierType == null) return;
-      PsiDeclarationStatement declarationStatement = factory.createVariableDeclarationStatement("var", qualifierType, qualifier);
+      List<String> names = new VariableNameGenerator(statement, VariableKind.LOCAL_VARIABLE)
+        .byExpression(qualifier).byType(qualifierType).generateAll(true);
+      String name = names.get(0);
+      PsiDeclarationStatement declarationStatement = factory.createVariableDeclarationStatement(name, qualifierType, qualifier);
       PsiElement statementParent = statement.getParent();
       while (statementParent instanceof PsiLoopStatement || statementParent instanceof PsiIfStatement) {
         statement = (PsiStatement)statementParent;
         statementParent = statement.getParent();
       }
-      final String toArrayText = "var.toArray(new " + typeText + "[var.size()])";
+      final String toArrayText = name + ".toArray(new " + typeText + "[" + name + ".size()])";
       PsiMethodCallExpression newMethodCallExpression =
         (PsiMethodCallExpression)factory.createExpressionFromText(toArrayText, methodCallExpression);
       declarationStatement = (PsiDeclarationStatement)statementParent.addBefore(declarationStatement, statement);
-      newMethodCallExpression = (PsiMethodCallExpression)methodCallExpression.replace(newMethodCallExpression);
-      showRenameTemplate(declarationStatement, newMethodCallExpression, statementParent);
-    }
-
-    private void showRenameTemplate(PsiDeclarationStatement declarationStatement, PsiMethodCallExpression methodCallExpression,
-                                    PsiElement context) {
-      if (!isOnTheFly()) {
-        return;
-      }
+      methodCallExpression.replace(newMethodCallExpression);
       final PsiVariable variable = (PsiVariable)declarationStatement.getDeclaredElements()[0];
-      final PsiReferenceExpression ref1 = (PsiReferenceExpression)methodCallExpression.getMethodExpression().getQualifierExpression();
-      final PsiNewExpression argument = (PsiNewExpression)methodCallExpression.getArgumentList().getExpressions()[0];
-      final PsiMethodCallExpression sizeExpression = (PsiMethodCallExpression)argument.getArrayDimensions()[0];
-      final PsiReferenceExpression ref2 = (PsiReferenceExpression)sizeExpression.getMethodExpression().getQualifierExpression();
-      HighlightUtils.showRenameTemplate(context, variable, ref1, ref2);
+      updater.rename(variable, names);
     }
   }
 }

@@ -9,6 +9,7 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -19,7 +20,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -649,7 +649,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
      * {@link String#substring(int, int)} with {@link String#charAt(int)} or
      * {@code stringValue.substring(i, i + 1).equals("_")} with {@code stringValue.charAt(i) == '_'}
      */
-    private static class SubstringToCharAtQuickFix implements LocalQuickFix {
+    private static class SubstringToCharAtQuickFix extends PsiUpdateModCommandQuickFix {
       @NotNull private final String myText;
       @NotNull private final String myConverted;
       private final boolean myEquality;
@@ -671,12 +671,12 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       }
 
       @Override
-      public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+      protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
         if (myEquality) {
-          applyEqualityFix(descriptor);
+          applyEqualityFix(element);
         }
         else {
-          PsiMethodCallExpression call = tryCast(descriptor.getPsiElement().getParent().getParent(), PsiMethodCallExpression.class);
+          PsiMethodCallExpression call = tryCast(element.getParent().getParent(), PsiMethodCallExpression.class);
           if (call == null) return;
           PsiExpression[] args = call.getArgumentList().getExpressions();
           if (args.length != 2) return;
@@ -685,8 +685,8 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
         }
       }
 
-      private static void applyEqualityFix(@NotNull final ProblemDescriptor descriptor) {
-        final PsiElement element = descriptor.getPsiElement().getParent().getParent();
+      private static void applyEqualityFix(@NotNull PsiElement startElement) {
+        final PsiElement element = startElement.getParent().getParent();
         final PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
         if (call == null) return;
 
@@ -730,7 +730,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     ExpressionUtils.bindCallTo(equalsCall, methodToUse);
   }
 
-  private static class UseContentEqualsFix implements LocalQuickFix {
+  private static class UseContentEqualsFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     public @NotNull String getFamilyName() {
@@ -745,14 +745,14 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodCallExpression changeCaseCall = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiMethodCallExpression changeCaseCall = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
       if (changeCaseCall == null) return;
       useMethodInsteadOfRedundantCall(CONTENT_EQUALS, changeCaseCall);
     }
   }
 
-  private static class RemoveRedundantChangeCaseFix implements LocalQuickFix {
+  private static class RemoveRedundantChangeCaseFix extends PsiUpdateModCommandQuickFix {
     private final @NotNull String caseRedundant;
     private final @NotNull PlaceCaseEqualType myPlaceCaseEqualType;
 
@@ -780,9 +780,8 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-
-      PsiMethodCallExpression changeCaseCall = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiMethodCallExpression changeCaseCall = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
       if (changeCaseCall == null) return;
 
       if (myPlaceCaseEqualType == PlaceCaseEqualType.RIGHT) {
@@ -813,7 +812,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     }
   }
 
-  private static class RemoveRedundantSubstringFix implements LocalQuickFix {
+  private static class RemoveRedundantSubstringFix extends PsiUpdateModCommandQuickFix {
     private final @NotNull String myBindCallName;
 
     RemoveRedundantSubstringFix(@NotNull @NonNls String bindCallName) {
@@ -836,8 +835,8 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodCallExpression substringCall = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiMethodCallExpression substringCall = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
       if (substringCall == null) return;
       PsiExpression stringExpr = substringCall.getMethodExpression().getQualifierExpression();
       if (stringExpr == null) return;
@@ -854,7 +853,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     }
   }
 
-  private static class StripIsEmptyToIsBlankFix implements LocalQuickFix {
+  private static class StripIsEmptyToIsBlankFix extends PsiUpdateModCommandQuickFix {
     @Nls
     @NotNull
     @Override
@@ -870,8 +869,8 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodCallExpression stripCall = PsiTreeUtil.getNonStrictParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiMethodCallExpression stripCall = PsiTreeUtil.getNonStrictParentOfType(element, PsiMethodCallExpression.class);
       if (stripCall == null) return;
       PsiMethodCallExpression isEmptyCall = ExpressionUtils.getCallForQualifier(stripCall);
       if (isEmptyCall == null) return;
@@ -882,7 +881,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     }
   }
 
-  private static class RemoveRedundantStringCallFix implements LocalQuickFix {
+  private static class RemoveRedundantStringCallFix extends PsiUpdateModCommandQuickFix {
     private final FixType myFixType;
     private final String myToRemove;
 
@@ -906,8 +905,8 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodCallExpression call = PsiTreeUtil.getNonStrictParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiMethodCallExpression call = PsiTreeUtil.getNonStrictParentOfType(element, PsiMethodCallExpression.class);
       if (call == null) return;
       PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(call.getMethodExpression());
       if (qualifier == null) return;
@@ -943,7 +942,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     }
   }
 
-  private static final class StringConstructorFix extends InspectionGadgetsFix {
+  private static final class StringConstructorFix extends PsiUpdateModCommandQuickFix {
     private final @IntentionName String myName;
 
     private StringConstructorFix(boolean noArguments) {
@@ -965,8 +964,8 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiNewExpression expression = tryCast(descriptor.getPsiElement().getParent(), PsiNewExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      final PsiNewExpression expression = tryCast(element.getParent(), PsiNewExpression.class);
       if (expression == null) return;
       final PsiExpressionList argList = expression.getArgumentList();
       if (argList == null) return;
@@ -984,7 +983,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     return tryCast(resolvedExpression, PsiMethodCallExpression.class);
   }
 
-  private static final class ByteArrayOutputStreamToStringFix extends InspectionGadgetsFix {
+  private static final class ByteArrayOutputStreamToStringFix extends PsiUpdateModCommandQuickFix {
     private final String myText;
 
     private ByteArrayOutputStreamToStringFix(String text) {
@@ -1004,8 +1003,8 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiNewExpression expression = tryCast(descriptor.getPsiElement().getParent(), PsiNewExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      final PsiNewExpression expression = tryCast(element.getParent(), PsiNewExpression.class);
       if (expression == null) return;
 
       final PsiExpressionList args = expression.getArgumentList();
@@ -1030,7 +1029,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     }
   }
 
-  private static final class SubstringToEmptyStringFix extends InspectionGadgetsFix {
+  private static final class SubstringToEmptyStringFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -1045,14 +1044,14 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiMethodCallExpression expression = tryCast(descriptor.getPsiElement().getParent().getParent(), PsiMethodCallExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      final PsiMethodCallExpression expression = tryCast(element.getParent().getParent(), PsiMethodCallExpression.class);
       if (expression == null) return;
       new CommentTracker().replaceAndRestoreComments(expression, "\"\"");
     }
   }
 
-  private static final class ReplaceWithValueOfFix extends InspectionGadgetsFix {
+  private static final class ReplaceWithValueOfFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -1067,8 +1066,8 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiNewExpression expression = tryCast(descriptor.getPsiElement().getParent(), PsiNewExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      final PsiNewExpression expression = tryCast(element.getParent(), PsiNewExpression.class);
       if (expression == null) return;
       final CharArrayCreationArgument charArrayCreationArgument = CharArrayCreationArgument.from(expression.getArgumentList());
       if (charArrayCreationArgument == null) return;
@@ -1078,7 +1077,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     }
   }
 
-  private static final class UnwrapArrayInitializerFix extends InspectionGadgetsFix {
+  private static final class UnwrapArrayInitializerFix extends PsiUpdateModCommandQuickFix {
     private final String myInitializerText;
 
     private UnwrapArrayInitializerFix(String initializerText) {
@@ -1098,8 +1097,8 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiNewExpression expression = tryCast(descriptor.getPsiElement(), PsiNewExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      final PsiNewExpression expression = tryCast(element, PsiNewExpression.class);
       if (expression == null) return;
       final PsiArrayInitializerExpression initializer = expression.getArrayInitializer();
       if (initializer == null || initializer.getInitializers().length != 1) return;

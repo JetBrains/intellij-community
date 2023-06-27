@@ -12,6 +12,7 @@ import com.intellij.lang.LanguageParserDefinitions
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.elementType
+import org.jetbrains.annotations.ApiStatus
 
 
 object StrategyUtils {
@@ -93,6 +94,7 @@ object StrategyUtils {
    * @param checkType predicate to check if type is accepted
    * @return sequence of siblings with whitespace tokens
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use com.intellij.grazie.utils.getNotSoDistantSimilarSiblings")
   fun getNotSoDistantSiblingsOfTypes(strategy: GrammarCheckingStrategy, element: PsiElement, checkType: (IElementType?) -> Boolean) =
     getNotSoDistantSimilarSiblings(strategy, element) { sibling -> checkType(sibling.elementType) }
@@ -105,6 +107,7 @@ object StrategyUtils {
    * @param checkSibling predicate to check if sibling is accepted
    * @return sequence of siblings with whitespace tokens
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use com.intellij.grazie.utils.getNotSoDistantSimilarSiblings")
   fun getNotSoDistantSimilarSiblings(strategy: GrammarCheckingStrategy, element: PsiElement, checkSibling: (PsiElement?) -> Boolean) =
     sequence {

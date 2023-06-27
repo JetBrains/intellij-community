@@ -6,12 +6,13 @@ import com.intellij.find.FindManager
 import com.intellij.find.FindModel
 import com.intellij.find.FindSettings
 import com.intellij.find.impl.TextSearchRightActionAction.*
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.GotoActionBase
 import com.intellij.ide.actions.SearchEverywhereBaseAction
 import com.intellij.ide.actions.SearchEverywhereClassifier
 import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor.createContext
-import com.intellij.ide.actions.searcheverywhere.footer.createPsiExtendedInfo
+import com.intellij.ide.actions.searcheverywhere.footer.createTextExtendedInfo
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.ide.util.scopeChooser.ScopeModel
 import com.intellij.openapi.Disposable
@@ -27,24 +28,28 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.reference.SoftReference
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageViewPresentation
 import com.intellij.util.Processor
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.JBIterable
+import com.intellij.util.ui.StatusText
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import java.awt.event.ActionEvent
+import java.awt.event.ActionListener
 import java.lang.ref.Reference
 import java.lang.ref.WeakReference
 import javax.swing.ListCellRenderer
 
 @ApiStatus.Internal
-class TextSearchContributor(
-  val event: AnActionEvent
-) : WeightedSearchEverywhereContributor<SearchEverywhereItem>,
-    SearchFieldActionsContributor,
-    PossibleSlowContributor,
-    DumbAware, ScopeSupporting, Disposable {
+class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhereContributor<SearchEverywhereItem>,
+                                                        SearchFieldActionsContributor,
+                                                        SearchEverywhereExtendedInfoProvider,
+                                                        PossibleSlowContributor,
+                                                        SearchEverywhereEmptyTextProvider,
+                                                        DumbAware, ScopeSupporting, Disposable {
 
   private val project = event.getRequiredData(CommonDataKeys.PROJECT)
   private val model = FindManager.getInstance(project).findInProjectModel
@@ -127,7 +132,7 @@ class TextSearchContributor(
   override fun getActions(onChanged: Runnable): List<AnAction> =
     listOf(ScopeAction { onChanged.run() }, JComboboxAction(project) { onChanged.run() }.also { onDispose = it.saveMask })
 
-  override fun createRightActions(pattern: String, onChanged: Runnable): List<TextSearchRightActionAction> {
+  override fun createRightActions(onChanged: Runnable): List<TextSearchRightActionAction> {
     lateinit var regexp: AtomicBooleanProperty
     val word = AtomicBooleanProperty(model.isWholeWordsOnly).apply {
       afterChange {
@@ -208,7 +213,25 @@ class TextSearchContributor(
     if (this::onDispose.isInitialized) onDispose()
   }
 
-  override fun createExtendedInfo() = createPsiExtendedInfo()
+  override fun createExtendedInfo() = createTextExtendedInfo()
+
+  override fun updateEmptyStatus(statusText: StatusText, rebuild: () -> Unit) {
+    statusText.appendLine(IdeBundle.message("searcheverywhere.nothing.found.for.all.anywhere")).appendText(".").appendLine("")
+
+    if (!(model.isCaseSensitive || model.isWholeWordsOnly || model.isRegularExpressions || model.fileFilter?.isNotBlank() == true)) return
+
+    statusText.appendLine(FindBundle.message("message.nothingFound.used.options")).appendLine("")
+
+    if (model.isCaseSensitive) { statusText.appendText(FindBundle.message("find.popup.case.sensitive.label")) }
+    if (model.isWholeWordsOnly) { statusText.appendText(" ").appendText(FindBundle.message("find.whole.words.label")) }
+    if (model.isRegularExpressions) { statusText.appendText(" ").appendText(FindBundle.message("find.regex.label")) }
+    if (model.fileFilter?.isNotBlank() == true) { statusText.appendText(" ").appendText(FindBundle.message("find.popup.filemask")) }
+
+    val clear = { model.isCaseSensitive = false; model.isWholeWordsOnly = false; model.isRegularExpressions = false;  }
+    statusText.appendLine(FindBundle.message("find.popup.clear.all.options"),
+                          SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
+                          ActionListener { _: ActionEvent? -> clear.invoke(); rebuild.invoke() })
+  }
 
   companion object {
     private const val ID = "TextSearchContributor"

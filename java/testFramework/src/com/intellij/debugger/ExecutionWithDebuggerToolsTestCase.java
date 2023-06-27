@@ -415,8 +415,8 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
           }
           case "ConditionalReturn" -> {
             breakpoint = breakpointManager.addLineBreakpoint(document, commentLine + 1, p -> {
-              // Note that we don't support `return` inside of lambda in unit tests.
-              p.setEncodedInlinePosition(JavaLineBreakpointProperties.COND_RET_CODE);
+              int lambdaOrdinal = -1; // Note that we don't support `return` inside of lambda in unit tests.
+              p.setEncodedInlinePosition(JavaLineBreakpointProperties.encodeInlinePosition(lambdaOrdinal, true));
             });
             if (breakpoint != null) {
               systemPrintln("ConditionalReturnBreakpoint created at " + breakpointLocation);

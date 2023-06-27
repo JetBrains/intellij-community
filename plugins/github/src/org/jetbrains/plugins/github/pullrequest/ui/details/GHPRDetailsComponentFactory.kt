@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
-import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.codereview.details.*
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
@@ -48,8 +47,8 @@ internal object GHPRDetailsComponentFactory {
   ): JComponent {
     val commitsAndBranches = JPanel(MigLayout(LC().emptyBorders().fill(), AC().gap("push"))).apply {
       isOpaque = false
-      add(CodeReviewDetailsCommitsComponentFactory.create(scope, commitsVm) { commit: GHCommit? ->
-        createCommitsPopupPresenter(commit, commitsVm.reviewCommits.value.size, securityService.ghostUser)
+      add(CodeReviewDetailsCommitsComponentFactory.create(scope, commitsVm) { commit: GHCommit ->
+        createCommitsPopupPresenter(commit, securityService.ghostUser)
       })
       add(CodeReviewDetailsBranchComponentFactory.create(
         scope, branchesVm,
@@ -67,6 +66,7 @@ internal object GHPRDetailsComponentFactory {
         .emptyBorders()
         .fill()
         .flowY()
+        .noGrid()
         .hideMode(3)
     )).apply {
       isOpaque = false
@@ -79,16 +79,16 @@ internal object GHPRDetailsComponentFactory {
           CC().growX().gap(ReviewDetailsUIUtil.DESCRIPTION_GAPS))
       add(commitsAndBranches, CC().growX().gap(ReviewDetailsUIUtil.COMMIT_POPUP_BRANCHES_GAPS))
       add(CodeReviewDetailsCommitInfoComponentFactory.create(scope, commitsVm.selectedCommit,
-                                                             commitPresenter = { commit ->
-                                                               createCommitInfoPresenter(commit, commitsVm.ghostUser)
+                                                             commitPresentation = { commit ->
+                                                               createCommitsPopupPresenter(commit, commitsVm.ghostUser)
                                                              },
                                                              htmlPaneFactory = { SimpleHtmlPane() }),
           CC().growX().gap(ReviewDetailsUIUtil.COMMIT_INFO_GAPS))
-      add(commitFilesBrowserComponent, CC().grow().push())
+      add(commitFilesBrowserComponent, CC().grow().shrinkPrioY(200))
       add(statusChecks, CC().growX().gap(ReviewDetailsUIUtil.STATUSES_GAPS).maxHeight("${ReviewDetailsUIUtil.STATUSES_MAX_HEIGHT}"))
       add(actionsComponent, CC().growX().pushX().gap(ReviewDetailsUIUtil.ACTIONS_GAPS).minHeight("pref"))
 
-      PopupHandler.installPopupMenu(this, actionGroup, "GHPRDetailsPopup")
+      PopupHandler.installPopupMenu(this, actionGroup, ActionPlaces.POPUP)
     }
   }
 
@@ -97,21 +97,10 @@ internal object GHPRDetailsComponentFactory {
     ActionUtil.invokeAction(action, parentComponent, ActionPlaces.UNKNOWN, null, null)
   }
 
-  private fun createCommitsPopupPresenter(commit: GHCommit?, commitsCount: Int, ghostUser: GHUser): CommitPresenter {
-    return if (commit == null) {
-      CommitPresenter.AllCommits(title = CollaborationToolsBundle.message("review.details.commits.popup.all", commitsCount))
-    }
-    else {
-      createCommitInfoPresenter(commit, ghostUser)
-    }
-  }
-
-  private fun createCommitInfoPresenter(commit: GHCommit, ghostUser: GHUser): CommitPresenter {
-    return CommitPresenter.SingleCommit(
-      title = commit.messageHeadlineHTML,
-      description = commit.messageBodyHTML,
-      author = (commit.author?.user ?: ghostUser).getPresentableName(),
-      committedDate = commit.committedDate
-    )
-  }
+  private fun createCommitsPopupPresenter(commit: GHCommit, ghostUser: GHUser) = CommitPresentation(
+    title = commit.messageHeadlineHTML,
+    description = commit.messageBodyHTML,
+    author = (commit.author?.user ?: ghostUser).getPresentableName(),
+    committedDate = commit.committedDate
+  )
 }

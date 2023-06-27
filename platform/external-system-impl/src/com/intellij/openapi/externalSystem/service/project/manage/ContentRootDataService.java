@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.ide.projectView.ProjectView;
@@ -17,6 +17,7 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
+import com.intellij.openapi.externalSystem.statistics.HasSharedSourcesUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
@@ -33,16 +34,16 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource;
+import com.intellij.platform.workspace.jps.JpsImportedEntitySource;
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity;
+import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.workspaceModel.storage.MutableEntityStorage;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.ExcludeUrlEntity;
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import kotlin.Pair;
 import org.jetbrains.annotations.Nls;
@@ -127,7 +128,7 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
               ApplicationManager.getApplication().invokeLater(() -> {
                 final ProjectView projectView = ProjectView.getInstance(project);
                 projectView.changeViewCB(ProjectViewPane.ID, null).doWhenProcessed(() -> projectView.selectCB(null, virtualFile, false));
-              }, ModalityState.NON_MODAL, project.getDisposed());
+              }, ModalityState.nonModal(), project.getDisposed());
             });
           }
         }
@@ -427,7 +428,9 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
         return r2;
       }, LinkedHashMap::new));
 
-    if (!toReport.isEmpty()) {
+    boolean hasDuplicates = !toReport.isEmpty();
+    HasSharedSourcesUtil.setHasSharedSources(project, hasDuplicates);
+    if (hasDuplicates) {
       String notificationMessage = prepareMessageAndLogWarnings(toReport);
       if (notificationMessage != null) {
         showNotificationsPopup(project, toReport.size(), notificationMessage);

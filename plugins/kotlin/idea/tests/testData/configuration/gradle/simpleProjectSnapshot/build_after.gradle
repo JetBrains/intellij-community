@@ -1,7 +1,6 @@
 apply plugin: 'java'
 apply plugin: 'kotlin'
 
-sourceCompatibility = 1.5
 version = '1.0'
 
 repositories {
@@ -24,7 +23,7 @@ buildscript {
     }
 }
 kotlin {
-    jvmToolchain(11)
+    jvmToolchain(8)
 }
 
 // VERSION: 1.7.255-SNAPSHOT

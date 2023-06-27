@@ -16,13 +16,12 @@
 package com.siyeh.ig.style;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -37,9 +36,7 @@ import com.intellij.util.SmartList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -72,11 +69,11 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new UnnecessaryFullyQualifiedNameFix(((Boolean)infos[0]).booleanValue());
   }
 
-  private static class UnnecessaryFullyQualifiedNameFix extends InspectionGadgetsFix {
+  private static class UnnecessaryFullyQualifiedNameFix extends ModCommandQuickFix {
 
     private final boolean inSameFile;
 
@@ -99,15 +96,20 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
-      final PsiJavaCodeReferenceElement referenceElement;
-      if (descriptor.getHighlightType() == ProblemHighlightType.INFORMATION) {
-        referenceElement = (PsiJavaCodeReferenceElement)element;
-      }
-      else {
-        referenceElement = (PsiJavaCodeReferenceElement)element.getParent();
-      }
+    public final @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      return ModCommands.psiUpdate(descriptor.getStartElement(), (element, updater) -> {
+        final PsiJavaCodeReferenceElement referenceElement;
+        if (descriptor.getHighlightType() == ProblemHighlightType.INFORMATION) {
+          referenceElement = (PsiJavaCodeReferenceElement)element;
+        }
+        else {
+          referenceElement = (PsiJavaCodeReferenceElement)element.getParent();
+        }
+        applyFix(referenceElement, updater);
+      });
+    }
+
+    private static void applyFix(@NotNull PsiJavaCodeReferenceElement referenceElement, @NotNull ModPsiUpdater updater) {
       final PsiFile file = referenceElement.getContainingFile();
       final PsiElement target = referenceElement.resolve();
       if (!(target instanceof PsiClass aClass)) {
@@ -121,21 +123,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       final String fullyQualifiedText = referenceElement.getText();
       final QualificationRemover qualificationRemover = new QualificationRemover(fullyQualifiedText);
       file.accept(qualificationRemover);
-      if (isOnTheFly()) {
-        final Collection<PsiElement> shortenedElements = qualificationRemover.getShortenedElements();
-        HighlightUtils.highlightElements(shortenedElements);
-        showStatusMessage(file.getProject(), shortenedElements.size());
-      }
-    }
-
-    private static void showStatusMessage(Project project, int elementCount) {
-      final WindowManager windowManager = WindowManager.getInstance();
-      final StatusBar statusBar = windowManager.getStatusBar(project);
-      if (statusBar == null) {
-        return;
-      }
-      statusBar.setInfo(InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.status.bar.escape.highlighting.message",
-                                                        elementCount));
+      qualificationRemover.getShortenedElements().forEach(updater::highlight);
     }
   }
 

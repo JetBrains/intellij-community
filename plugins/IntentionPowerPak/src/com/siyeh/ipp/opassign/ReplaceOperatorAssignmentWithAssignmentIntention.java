@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.opassign;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -7,14 +7,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaToken;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ipp.base.MutablyNamedIntention;
+import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ReplaceOperatorAssignmentWithAssignmentIntention extends MutablyNamedIntention {
+public class ReplaceOperatorAssignmentWithAssignmentIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -28,7 +28,7 @@ public class ReplaceOperatorAssignmentWithAssignmentIntention extends MutablyNam
   }
 
   @Override
-  protected String getTextForElement(PsiElement element) {
+  protected String getTextForElement(@NotNull PsiElement element) {
     final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)element;
     final PsiJavaToken sign = assignmentExpression.getOperationSign();
     final String operator = sign.getText();

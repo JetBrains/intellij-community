@@ -12,7 +12,9 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.util.ConcurrencyUtil
+import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import org.picocontainer.ComponentAdapter
 import java.lang.invoke.MethodHandles
@@ -85,6 +87,7 @@ internal sealed class BaseComponentAdapter(
     }
 
     LoadingState.COMPONENTS_REGISTERED.checkOccurred()
+    checkCanceledIfNotInClassInit()
     checkContainerIsActive(componentManager)
 
     val activityCategory = if (StartUpMeasurer.isEnabled()) getActivityCategory(componentManager) else null
@@ -99,13 +102,26 @@ internal sealed class BaseComponentAdapter(
       throw PluginException("Cyclic service initialization: ${toString()}", pluginId)
     }
 
-    while (!deferred.isCompleted) {
-      ProgressManager.checkCanceled()
-      try {
-        Thread.sleep(ConcurrencyUtil.DEFAULT_TIMEOUT_MS)
+    if (EDT.isCurrentThreadEdt()) {
+      while (!deferred.isCompleted) {
+        ProgressManager.checkCanceled()
+        try {
+          Thread.sleep(ConcurrencyUtil.DEFAULT_TIMEOUT_MS)
+        }
+        catch (e: InterruptedException) {
+          throw ProcessCanceledException(e)
+        }
       }
-      catch (e: InterruptedException) {
-        throw ProcessCanceledException(e)
+    }
+    else if (Cancellation.isInNonCancelableSection()) {
+      @Suppress("RAW_RUN_BLOCKING")
+      runBlocking {
+        deferred.join()
+      }
+    }
+    else {
+      runBlockingMaybeCancellable {
+        deferred.join()
       }
     }
 
@@ -133,7 +149,7 @@ internal sealed class BaseComponentAdapter(
       PluginException("Cyclic service initialization: ${toString()}", pluginId)
     }
 
-    return Cancellation.withCancelableSection().use {
+    return Cancellation.withNonCancelableSection().use {
       doCreateInstance(keyClass = keyClass, componentManager = componentManager, activityCategory = activityCategory)
     }
   }
@@ -190,14 +206,7 @@ internal sealed class BaseComponentAdapter(
     }
   }
 
-  /**
-   * Indicator must always be passed - if under progress, then ProcessCanceledException will be thrown instead of AlreadyDisposedException.
-   */
   private fun checkContainerIsActive(componentManager: ComponentManagerImpl) {
-    if (isUnderIndicatorOrJob()) {
-      checkCanceledIfNotInClassInit()
-    }
-
     if (componentManager.isDisposed) {
       throwAlreadyDisposedError(toString(), componentManager)
     }

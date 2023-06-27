@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -49,17 +49,17 @@ public class JavadocLinkAsPlainTextInspection extends LocalInspectionTool {
           String prefix = commentText.substring(0, start);
           String suffix = commentText.substring(end);
           if (isContentOfATag(prefix, suffix) || isHtmlTagAttribute(prefix, suffix)) continue;
-          holder.registerProblem(comment, range, JavaBundle.message("inspection.javadoc.link.as.plain.text.message"),
-                                 new UrlToHtmlFix(comment, start, end));
+          holder.problem(comment, JavaBundle.message("inspection.javadoc.link.as.plain.text.message"))
+            .range(range).fix(new UrlToHtmlFix(comment, start, end)).register();
         }
       }
 
-      private boolean isContentOfATag(String prefix, String suffix) {
+      private static boolean isContentOfATag(String prefix, String suffix) {
         return Pattern.compile("<\\w+\\s+\\w+\\s*=\\s*\"?.*\"?\\s*>.*$", Pattern.DOTALL).matcher(prefix).find() &&
                Pattern.compile("^.*</\\w+>", Pattern.DOTALL).matcher(suffix).find();
       }
 
-      private boolean isHtmlTagAttribute(String prefix, String suffix) {
+      private static boolean isHtmlTagAttribute(String prefix, String suffix) {
         return Pattern.compile("<\\w+\\s.*\\w+\\s*=\\s*\"?\\s*$", Pattern.DOTALL).matcher(prefix).find() &&
                Pattern.compile("^\\s*\"?.*>", Pattern.DOTALL).matcher(suffix).find();
       }

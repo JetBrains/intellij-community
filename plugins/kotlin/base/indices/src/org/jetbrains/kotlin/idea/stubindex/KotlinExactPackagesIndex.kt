@@ -7,7 +7,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
-import org.jetbrains.kotlin.idea.base.indices.getElementsAndMeasure
+import org.jetbrains.kotlin.idea.base.indices.getByKeyAndMeasure
 import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinExactPackagesIndex internal constructor() : StringStubIndexExtension<KtFile>() {
@@ -21,7 +21,7 @@ class KotlinExactPackagesIndex internal constructor() : StringStubIndexExtension
         @JvmStatic
         @JvmName("getFiles")
         fun get(fqName: String, project: Project, scope: GlobalSearchScope): Collection<KtFile> {
-            return getElementsAndMeasure(NAME, LOG) { StubIndex.getElements (NAME, fqName, project, scope, KtFile::class.java) }
+            return getByKeyAndMeasure(NAME, LOG) { StubIndex.getElements (NAME, fqName, project, scope, KtFile::class.java) }
         }
     }
 

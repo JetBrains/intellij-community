@@ -196,11 +196,6 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
   }
 
   @Override
-  public void dispose() {
-    super.dispose();
-  }
-
-  @Override
   public void selectFilePath(@NotNull FilePath filePath, boolean requestFocus) {
     getMainFrame().selectFilePath(filePath, requestFocus);
   }

@@ -137,7 +137,7 @@ open class FeatureUsageSettingsEventPrinter(private val recordDefault: Boolean) 
     private val counter = AtomicInteger(0)
 
     fun createComponentData(project: Project?, componentName: String, pluginInfo: PluginInfo): FeatureUsageData {
-      val data = FeatureUsageData()
+      val data = FeatureUsageData("FUS")
         .addData("component", componentName)
         .addPluginInfo(pluginInfo)
       if (project?.isDefault == true) {

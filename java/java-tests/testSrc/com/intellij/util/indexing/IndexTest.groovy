@@ -1337,7 +1337,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
-  void "test composite index with snapshot mappings hash id"() {
+  void "_test composite index with snapshot mappings hash id"() {
     def groovyFileId = ((VirtualFileWithId)myFixture.addFileToProject("Foo.groovy", "class Foo {}").virtualFile).getId()
     def javaFileId = ((VirtualFileWithId)myFixture.addFileToProject("Foo.java", "class Foo {}").virtualFile).getId()
 
@@ -1345,7 +1345,6 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     fbi.ensureUpToDate(IdIndex.NAME, getProject(), GlobalSearchScope.allScope(getProject()))
     def idIndex = ((FileBasedIndexImpl)fbi).getIndex(IdIndex.NAME)
 
-    assertTrue(FileBasedIndex.ourSnapshotMappingsEnabled)
     def idIndexForwardIndex = (IntForwardIndex)((VfsAwareMapReduceIndex)idIndex).getForwardIndex()
 
     // id index depends on file type

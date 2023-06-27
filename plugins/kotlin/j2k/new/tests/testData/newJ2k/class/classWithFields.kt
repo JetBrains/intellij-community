@@ -1,4 +1,4 @@
 internal class T {
-    var a = "abc"
-    var b = 10
+    var a: String = "abc"
+    var b: Int = 10
 }

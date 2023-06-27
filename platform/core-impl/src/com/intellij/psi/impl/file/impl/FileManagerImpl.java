@@ -4,7 +4,6 @@ package com.intellij.psi.impl.file.impl;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -188,7 +187,7 @@ public final class FileManagerImpl implements FileManager {
       return Objects.requireNonNull(tempMap.get(vFile), "Recursive file view provider creation");
     }
 
-    viewProvider = createFileViewProvider(vFile, ModelBranch.getFileBranch(vFile) == null);
+    viewProvider = createFileViewProvider(vFile, !LightVirtualFile.shouldSkipEventSystem(vFile));
     if (vFile instanceof LightVirtualFile) {
       checkLightFileHasNoOtherPsi((LightVirtualFile)vFile);
       return vFile.putUserDataIfAbsent(myPsiHardRefKey, viewProvider);

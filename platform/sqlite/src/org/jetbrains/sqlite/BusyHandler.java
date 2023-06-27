@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.sqlite;
 
+import kotlin.Unit;
+
 import java.io.IOException;
 
 /** <a href="https://www.sqlite.org/c3ref/busy_handler.html">...</a> */
@@ -19,15 +21,18 @@ public abstract class BusyHandler {
   /**
    * commit the busy handler for the connection.
    *
-   * @param conn        the SQLite connection
+   * @param connection        the SQLite connection
    * @param busyHandler the busyHandler
    */
-  private static void commitHandler(SqliteConnection conn, BusyHandler busyHandler) throws IOException {
-    if (conn.isClosed()) {
+  private static void commitHandler(SqliteConnection connection, BusyHandler busyHandler) throws IOException {
+    if (connection.isClosed()) {
       throw new IOException("connection closed");
     }
 
-    conn.db.busy_handler(busyHandler);
+    connection.useDb$intellij_platform_sqlite(db -> {
+      db.busy_handler(busyHandler);
+      return Unit.INSTANCE;
+    });
   }
 
   /**

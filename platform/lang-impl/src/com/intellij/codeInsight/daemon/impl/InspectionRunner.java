@@ -121,8 +121,7 @@ final class InspectionRunner {
       }
       //sort init according to the priorities saved earlier to run in order
       InspectionProfilerDataHolder profileData = InspectionProfilerDataHolder.getInstance(myPsiFile.getProject());
-      profileData.sort(myPsiFile, init);
-      profileData.retrieveFavoriteElements(myPsiFile, init);
+      profileData.sortAndRetrieveFavoriteElement(myPsiFile, init);
 
       // injected -> host
       Map<PsiFile, PsiElement> foundInjected = createInjectedFileMap();

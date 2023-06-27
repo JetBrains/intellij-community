@@ -187,6 +187,10 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doTest("UserFlags");
   }
 
+  public void testSafeDeleteOfFieldAndParameterOfConstructor() throws Exception {
+    doSingleFileTest();
+  }
+
   public void testSafeDeleteStaticImports() {
     doTest("A");
   }

@@ -133,7 +133,10 @@ public class CustomTemplateCallback {
   }
 
   public void deleteTemplateKey(@NotNull String key) {
-    int caretAt = myEditor.getCaretModel().getOffset();
+    deleteTemplateKey(key, myEditor.getCaretModel().getOffset());
+  }
+
+  public void deleteTemplateKey(@NotNull String key, int caretAt) {
     int templateStart = caretAt - key.length();
     myEditor.getDocument().deleteString(templateStart, caretAt);
     myEditor.getCaretModel().moveToOffset(templateStart);

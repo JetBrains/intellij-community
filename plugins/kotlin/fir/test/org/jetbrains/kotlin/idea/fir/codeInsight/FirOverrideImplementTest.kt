@@ -102,6 +102,10 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
         super.testInterfaceNullableFunction()
     }
 
+    override fun testKtij16175() {
+        super.testKtij16175()
+    }
+
     override fun testOverrideUnitFunction() {
         super.testOverrideUnitFunction()
     }
@@ -228,6 +232,10 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
 
     override fun testEscapeIdentifiers() {
         super.testEscapeIdentifiers()
+    }
+
+    override fun testValueClass() {
+        super.testValueClass()
     }
 
     override fun testVarArgs() {

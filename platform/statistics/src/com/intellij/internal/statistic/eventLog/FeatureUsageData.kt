@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Version
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
@@ -41,7 +42,9 @@ private val LOG = logger<FeatureUsageData>()
  * </p>
  */
 @ApiStatus.Internal
-class FeatureUsageData(private val recorderId: String) {
+class FeatureUsageData(val recorderId: String) {
+  @TestOnly
+  @Deprecated("Recorder ID should be explicitly provided", replaceWith = ReplaceWith("FeatureUsageData(recorderId)"), DeprecationLevel.WARNING)
   constructor() : this("FUS")
 
   private var data: MutableMap<String, Any> = HashMap()
@@ -339,7 +342,7 @@ class FeatureUsageData(private val recorderId: String) {
   }
 
   fun copy(): FeatureUsageData {
-    val result = FeatureUsageData()
+    val result = FeatureUsageData(recorderId)
     for ((key, value) in data) {
       result.data[key] = value
     }
@@ -352,9 +355,7 @@ class FeatureUsageData(private val recorderId: String) {
 
     other as FeatureUsageData
 
-    if (data != other.data) return false
-
-    return true
+    return data == other.data
   }
 
   override fun hashCode(): Int {

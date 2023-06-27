@@ -10,7 +10,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.customizingIteration.GenericContentEntityIterator;
 import com.intellij.util.indexing.roots.origin.GenericContentEntityOrigin;
 import com.intellij.util.indexing.roots.origin.GenericContentEntityOriginImpl;
-import com.intellij.workspaceModel.storage.EntityReference;
+import com.intellij.platform.workspace.storage.EntityReference;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -4,7 +4,6 @@ package com.intellij.vcs.log.data.index
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.data.VcsLogProgress
 import com.intellij.vcs.log.data.VcsLogStorageImpl
@@ -21,15 +20,29 @@ fun VcsLogPersistentIndex.index(root: VirtualFile, commits: Set<Int>) {
   doIndex(true)
 }
 
-fun setUpIndex(project: Project, root: VirtualFile, logProvider: VcsLogProvider, disposable: Disposable): VcsLogPersistentIndex {
+fun setUpIndex(project: Project,
+                        root: VirtualFile,
+                        logProvider: VcsLogProvider,
+                        useSqlite: Boolean,
+                        disposable: Disposable): VcsLogPersistentIndex {
   val providersMap = mapOf(root to logProvider)
   val errorConsumer = FailingErrorHandler()
 
-  val storage = VcsLogStorageImpl(project, providersMap, errorConsumer, disposable)
+  val storage = if (useSqlite) {
+    SqliteVcsLogStorageBackend(project = project, logProviders = providersMap, errorHandler = errorConsumer, disposable = disposable)
+  }
+  else {
+    VcsLogStorageImpl(project, providersMap, errorConsumer, disposable)
+  }
   return VcsLogPersistentIndex.create(project, storage, providersMap, VcsLogProgress(disposable), errorConsumer, disposable)!!
 }
 
-class FailingErrorHandler : VcsLogErrorHandler {
-  override fun handleError(source: VcsLogErrorHandler.Source, throwable: Throwable) = HeavyPlatformTestCase.fail(throwable.message)
-  override fun displayMessage(message: String) = HeavyPlatformTestCase.fail(message)
+private class FailingErrorHandler : VcsLogErrorHandler {
+  override fun handleError(source: VcsLogErrorHandler.Source, throwable: Throwable) {
+    throw throwable
+  }
+
+  override fun displayMessage(message: String) {
+    throw RuntimeException(message)
+  }
 }

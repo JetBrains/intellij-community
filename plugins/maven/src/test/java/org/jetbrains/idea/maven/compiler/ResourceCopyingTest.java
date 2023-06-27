@@ -36,20 +36,11 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
 
   @Override
   protected void setUpInWriteAction() throws Exception {
-    if (!isWorkspaceImport()) {
-      MavenUtil.setUpdateSuspendable();
-    }
     super.setUpInWriteAction();
 
     CompilerConfiguration.getInstance(myProject).addResourceFilePattern("!*.xxx");
     CompilerConfiguration.getInstance(myProject).addResourceFilePattern("!*.yyy");
     CompilerConfiguration.getInstance(myProject).addResourceFilePattern("!*.zzz");
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    MavenUtil.resetUpdateSuspendable();
-    super.tearDown();
   }
 
   @Test

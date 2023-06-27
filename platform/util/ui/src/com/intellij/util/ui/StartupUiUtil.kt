@@ -1,18 +1,24 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.util.ui
 
+import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
 import com.intellij.ui.scale.isHiDPIEnabledAndApplicable
 import com.intellij.util.JBHiDPIScaledImage
+import com.intellij.util.concurrency.Semaphore
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 import java.awt.*
 import java.awt.event.AWTEventListener
 import java.awt.event.InputEvent
@@ -22,10 +28,7 @@ import java.awt.image.BufferedImage
 import java.awt.image.BufferedImageOp
 import java.awt.image.ImageObserver
 import java.util.*
-import javax.swing.InputMap
-import javax.swing.KeyStroke
-import javax.swing.UIDefaults
-import javax.swing.UIManager
+import javax.swing.*
 import javax.swing.plaf.FontUIResource
 import javax.swing.text.DefaultEditorKit
 import javax.swing.text.StyleContext
@@ -35,6 +38,12 @@ import kotlin.math.pow
 import kotlin.math.roundToInt
 
 object StartupUiUtil {
+  @JvmField
+  val PLUGGABLE_LAF_KEY: Key<String> = Key.create("Pluggable.laf.name")
+
+  @JvmField
+  val LAF_WITH_THEME_KEY: Key<Boolean> = Key.create("Laf.with.ui.theme")
+
   @Internal
   @JvmField
   val patchableFontResources: Array<String> = arrayOf("Button.font", "ToggleButton.font", "RadioButton.font",
@@ -51,9 +60,53 @@ object StartupUiUtil {
   val isUnderDarcula: Boolean
     get() = UIManager.getLookAndFeel().name.contains("Darcula")
 
-  @Internal
   @JvmStatic
-  fun doGetLcdContrastValueForSplash(isUnderDarcula: Boolean): Int {
+  fun isUnderIntelliJLaF(): Boolean {
+    return UIManager.getLookAndFeel().name.contains("IntelliJ") || isUnderDefaultMacTheme() || UIUtil.isUnderWin10LookAndFeel()
+  }
+
+  @JvmStatic
+  fun isUnderDefaultMacTheme(): Boolean {
+    if (!SystemInfoRt.isMac) {
+      return false
+    }
+
+    val lookAndFeel = UIManager.getLookAndFeel()
+    if (lookAndFeel is UserDataHolder) {
+      return lookAndFeel.getUserData(LAF_WITH_THEME_KEY) != true && lookAndFeel.getUserData(PLUGGABLE_LAF_KEY) == "macOS Light"
+    }
+    else {
+      return false
+    }
+  }
+
+  @JvmStatic
+  fun isUnderWin10LookAndFeel(): Boolean {
+    if (!SystemInfoRt.isWindows) {
+      return false
+    }
+
+    val lookAndFeel = UIManager.getLookAndFeel()
+    if (lookAndFeel is UserDataHolder) {
+      return lookAndFeel.getUserData(LAF_WITH_THEME_KEY) != true && lookAndFeel.getUserData(PLUGGABLE_LAF_KEY) == "Windows 10 Light"
+    }
+    else {
+      return false
+    }
+  }
+
+  @JvmStatic
+  fun getLcdContrastValue(): Int {
+    val lcdContrastValue = if (LoadingState.APP_STARTED.isOccurred) Registry.intValue("lcd.contrast.value", 0) else 0
+    return if (lcdContrastValue == 0) {
+      doGetLcdContrastValueForSplash(isUnderDarcula)
+    }
+    else {
+      normalizeLcdContrastValue(lcdContrastValue)
+    }
+  }
+
+  private fun doGetLcdContrastValueForSplash(isUnderDarcula: Boolean): Int {
     if (SystemInfoRt.isMac) {
       return if (isUnderDarcula) 140 else 230
     }
@@ -64,8 +117,7 @@ object StartupUiUtil {
     return normalizeLcdContrastValue(lcdContrastValue)
   }
 
-  @JvmStatic
-  fun normalizeLcdContrastValue(lcdContrastValue: Int): Int {
+  private fun normalizeLcdContrastValue(lcdContrastValue: Int): Int {
     return if (lcdContrastValue < 100 || lcdContrastValue > 250) 140 else lcdContrastValue
   }
 
@@ -233,6 +285,19 @@ object StartupUiUtil {
   fun addAwtListener(listener: AWTEventListener, mask: Long, parent: Disposable) {
     Toolkit.getDefaultToolkit().addAWTEventListener(listener, mask)
     Disposer.register(parent) { Toolkit.getDefaultToolkit().removeAWTEventListener(listener) }
+  }
+
+  /**
+   * Waits for the EDT to dispatch all its invocation events.
+   * Must be called outside EDT.
+   * Use [com.intellij.testFramework.PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue] if you want to pump from inside EDT
+   */
+  @TestOnly
+  fun pump() {
+    assert(!SwingUtilities.isEventDispatchThread())
+    val lock = Semaphore(1)
+    SwingUtilities.invokeLater { lock.up() }
+    lock.waitFor()
   }
 }
 

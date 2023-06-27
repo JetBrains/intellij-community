@@ -28,4 +28,8 @@ internal class RetrievingServiceInspectionTest : RetrievingServiceInspectionTest
   fun testReplaceWithGetInstanceProjectLevel() {
     doTest(DevKitBundle.message("inspection.retrieving.service.replace.with", "MyService", "getInstance"))
   }
+
+  fun testUnregisteredService() {
+    doTest()
+  }
 }

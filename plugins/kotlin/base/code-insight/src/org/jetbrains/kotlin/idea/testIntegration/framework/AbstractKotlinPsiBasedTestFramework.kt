@@ -9,8 +9,9 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
 abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework {
-    abstract val markerClassFqn: String
-    abstract val disabledTestAnnotation: String
+    protected abstract val markerClassFqn: String
+    protected abstract val disabledTestAnnotation: String
+    protected abstract val allowTestMethodsInObject: Boolean
 
     protected fun isFrameworkAvailable(element: KtElement): Boolean {
         val module = element.module ?: return false
@@ -33,6 +34,7 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
         return when {
             declaration.isPrivate() -> false
             declaration.isAnnotation() -> false
+            (declaration.isTopLevel() && declaration is KtObjectDeclaration) && !allowTestMethodsInObject -> false
             declaration.annotations.isNotEmpty() -> true
             declaration.superTypeListEntries.any { it is KtSuperTypeCallEntry } -> true
             declaration.declarations.any { it is KtNamedFunction && it.isPublic } -> true
@@ -47,14 +49,17 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
             declaration.hasModifier(KtTokens.PRIVATE_KEYWORD) -> false
             declaration.hasModifier(KtTokens.ABSTRACT_KEYWORD) -> false
             declaration.isExtensionDeclaration() -> false
-            declaration.containingClassOrObject?.isObjectLiteral() == true -> false
-            else -> declaration.containingClass()?.let(::isTestClass) ?: false
+            else -> {
+                val ktClassOrObject =
+                    if (allowTestMethodsInObject) declaration.getStrictParentOfType<KtClassOrObject>() else declaration.containingClass()
+                ktClassOrObject?.let(::isTestClass) ?: false
+            }
         }
     }
 
     override fun isIgnoredMethod(declaration: KtNamedFunction): Boolean {
-        return isAnnotated(declaration, KOTLIN_TEST_IGNORE)
-                || isAnnotated(declaration, disabledTestAnnotation)
+        return (isAnnotated(declaration, KOTLIN_TEST_IGNORE)
+                || isAnnotated(declaration, disabledTestAnnotation)) && isTestMethod(declaration)
     }
 
     protected fun checkNameMatch(file: KtFile, fqNames: Set<String>, shortName: String): Boolean {

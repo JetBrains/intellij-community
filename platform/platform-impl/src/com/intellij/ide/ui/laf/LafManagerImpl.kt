@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.ide.ui.laf
@@ -10,15 +10,12 @@ import com.intellij.diagnostic.runActivity
 import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.WelcomeWizardUtil
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.ui.*
 import com.intellij.ide.ui.UISettings.Companion.getPreferredFractionalMetricsValue
-import com.intellij.ide.ui.UISettings.Companion.shadowInstance
 import com.intellij.ide.ui.laf.SystemDarkThemeDetector.Companion.createDetector
-import com.intellij.ide.ui.laf.darcula.DarculaInstaller
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI
@@ -28,7 +25,6 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.SettingsCategory
@@ -62,7 +58,6 @@ import com.intellij.ui.tree.ui.DefaultTreeUI
 import com.intellij.util.EventDispatcher
 import com.intellij.util.FontUtil
 import com.intellij.util.IJSwingUtilities
-import com.intellij.util.ModalityUiUtil
 import com.intellij.util.SVGLoader.colorPatcherProvider
 import com.intellij.util.SVGLoader.setSelectionColorPatcherProvider
 import com.intellij.util.concurrency.SynchronizedClearableLazy
@@ -70,6 +65,7 @@ import com.intellij.util.ui.*
 import com.intellij.util.ui.LafIconLookup.getIcon
 import com.intellij.util.ui.LafIconLookup.getSelectedIcon
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -98,6 +94,10 @@ private const val ELEMENT_PREFERRED_DARK_LAF: @NonNls String = "preferred-dark-l
 private const val ATTRIBUTE_AUTODETECT: @NonNls String = "autodetect"
 private const val ATTRIBUTE_CLASS_NAME: @NonNls String = "class-name"
 private const val ATTRIBUTE_THEME_NAME: @NonNls String = "themeId"
+private const val ELEMENT_LAFS_TO_PREVIOUS_SCHEMES: @NonNls String = "lafs-to-previous-schemes"
+private const val ELEMENT_LAF_TO_SCHEME: @NonNls String = "laf-to-scheme"
+private const val ATTRIBUTE_LAF: @NonNls String = "laf"
+private const val ATTRIBUTE_SCHEME: @NonNls String = "scheme"
 private const val HIGH_CONTRAST_THEME_ID = "JetBrainsHighContrastTheme"
 private const val DARCULA_EDITOR_THEME_KEY = "Darcula.SavedEditorTheme"
 private const val DEFAULT_EDITOR_THEME_KEY = "Default.SavedEditorTheme"
@@ -164,7 +164,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   private var preferredDarkLaf: LookAndFeelInfo? = null
   private val myStoredDefaults = HashMap<LafReference?, MutableMap<String, Any?>>()
   private val myLafComboBoxModel = SynchronizedClearableLazy<CollectionComboBoxModel<LafReference>> { LafComboBoxModel() }
-  private val settingsToolbar: Lazy<ActionToolbar> = SynchronizedClearableLazy {
+  private val settingsToolbar = lazy {
     val group = DefaultActionGroup(PreferredLafAction())
     val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, group, true)
     toolbar.targetComponent = toolbar.component
@@ -178,6 +178,8 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   private var isUpdatingPlugin = false
   private var themeIdBeforePluginUpdate: String? = null
   private var autodetect = false
+  // We remember the last used editor scheme for each laf in order to restore it after switching laf
+  private val lafToPreviousScheme: MutableMap<String, String> = mutableMapOf()
 
   override fun getDefaultLightLaf(): LookAndFeelInfo {
     return if (ExperimentalUI.isNewUI()) {
@@ -280,36 +282,36 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   }
 
   override fun initializeComponent() {
-    ModalityUiUtil.invokeLaterIfNeeded(ModalityState.any()) {
-      val currentLaf = myCurrentLaf!!
-      if (currentLaf is UIThemeBasedLookAndFeelInfo) {
-        if (!currentLaf.isInitialised) {
-          doSetLaF(currentLaf, false)
-        }
+    // we preload LafManagerImpl in EDT, no one can access LafManagerImpl early
+    EDT.assertIsEdt()
+
+    val currentLaf = myCurrentLaf!!
+    if (currentLaf is UIThemeBasedLookAndFeelInfo) {
+      if (!currentLaf.isInitialised) {
+        doSetLaF(currentLaf, false)
+      }
+    }
+    else {
+      val laf = if (currentLaf.className == DarculaLaf::class.java.name) {
+        lafList.firstOrNull { it.name == "Darcula" && it.className == DarculaLaf::class.java.name } ?: findLaf(currentLaf.className)
       }
       else {
-        val laf = if (currentLaf.className == DarculaLaf::class.java.name) {
-          lafList.firstOrNull { it.name == "Darcula" && it.className == DarculaLaf::class.java.name } ?: findLaf(currentLaf.className)
-        } else {
-          findLaf(currentLaf.className)
-        }
-        if (laf != null) {
-          val needUninstall = StartupUiUtil.isUnderDarcula
-          // setup default LAF or one specified by readExternal
-          doSetLaF(lookAndFeelInfo = laf, installEditorScheme = false)
-          updateWizardLAF(needUninstall)
-        }
+        findLaf(currentLaf.className)
       }
-      selectComboboxModel()
-      updateUI()
-      // must be after updateUI
-      isFirstSetup = false
-      detectAndSyncLaf()
-      runActivity("new ui configuration") {
-        ExperimentalUI.getInstance().lookAndFeelChanged()
+      if (laf != null) {
+        // setup default LAF or one specified by readExternal
+        doSetLaF(lookAndFeelInfo = laf, installEditorScheme = false)
       }
-      addThemeAndDynamicPluginListeners()
     }
+    selectComboboxModel()
+    updateUI()
+    // must be after updateUI
+    isFirstSetup = false
+    detectAndSyncLaf()
+    runActivity("new ui configuration") {
+      ExperimentalUI.getInstance().lookAndFeelChanged()
+    }
+    addThemeAndDynamicPluginListeners()
   }
 
   private fun addThemeAndDynamicPluginListeners() {
@@ -366,36 +368,31 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     }
   }
 
-  fun updateWizardLAF(wasUnderDarcula: Boolean) {
-    if (WelcomeWizardUtil.getWizardLAF() == null) {
-      return
-    }
-
-    if (StartupUiUtil.isUnderDarcula) {
-      DarculaInstaller.install()
-    }
-    else if (wasUnderDarcula) {
-      DarculaInstaller.uninstall()
-    }
-    WelcomeWizardUtil.setWizardLAF(null)
-  }
-
   override fun dispose() {}
 
   override fun loadState(element: Element) {
     val oldLaF = myCurrentLaf
-    myCurrentLaf = loadLafState(element, ELEMENT_LAF)
-    if (myCurrentLaf == null) {
-      myCurrentLaf = loadDefaultLaf()
-    }
+    val newLaF = loadLafState(element, ELEMENT_LAF) ?: loadDefaultLaf()
     autodetect = java.lang.Boolean.parseBoolean(element.getAttributeValue(ATTRIBUTE_AUTODETECT))
     preferredLightLaf = loadLafState(element, ELEMENT_PREFERRED_LIGHT_LAF)
     preferredDarkLaf = loadLafState(element, ELEMENT_PREFERRED_DARK_LAF)
+
+    val lafsToSchemesElement = element.getChild(ELEMENT_LAFS_TO_PREVIOUS_SCHEMES)
+    if (lafsToSchemesElement != null) {
+      val lafToSchemes = lafsToSchemesElement.getChildren(ELEMENT_LAF_TO_SCHEME)
+      for (lafToScheme in lafToSchemes) {
+        lafToPreviousScheme.put(lafToScheme.getAttributeValue(ATTRIBUTE_LAF), lafToScheme.getAttributeValue(ATTRIBUTE_SCHEME))
+      }
+    }
+
     if (autodetect) {
       orCreateLafDetector
     }
-    if (!isFirstSetup && myCurrentLaf != oldLaF) {
-      QuickChangeLookAndFeel.switchLafAndUpdateUI(this, myCurrentLaf!!, true, true)
+    if (!isFirstSetup && newLaF != oldLaF) {
+      QuickChangeLookAndFeel.switchLafAndUpdateUI(this, newLaF, true, true)
+    }
+    else {
+      myCurrentLaf = newLaF
     }
   }
 
@@ -461,6 +458,19 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     if (preferredDarkLaf != null && preferredDarkLaf !== getDefaultDarkLaf()) {
       getLafState(element, ELEMENT_PREFERRED_DARK_LAF, preferredDarkLaf)
     }
+
+    if (lafToPreviousScheme.isNotEmpty()) {
+      val lafsToSchemes = Element(ELEMENT_LAFS_TO_PREVIOUS_SCHEMES)
+      val lafToPreviousSchemeSorted = lafToPreviousScheme.toList().sortedBy { it.first }
+      for ((laf, scheme) in lafToPreviousSchemeSorted) {
+        val lafToScheme = Element(ELEMENT_LAF_TO_SCHEME)
+        lafToScheme.setAttribute(ATTRIBUTE_LAF, laf)
+        lafToScheme.setAttribute(ATTRIBUTE_SCHEME, scheme)
+        lafsToSchemes.addContent(lafToScheme)
+      }
+      element.addContent(lafsToSchemes)
+    }
+
     return element
   }
 
@@ -503,14 +513,6 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   override fun getSettingsToolbar(): JComponent = settingsToolbar.value.component
 
   private fun loadDefaultLaf(): LookAndFeelInfo {
-    val wizardLafName = WelcomeWizardUtil.getWizardLAF()
-    if (wizardLafName != null) {
-      val laf = findLaf(wizardLafName)
-      if (laf != null) {
-        return laf
-      }
-      LOG.error("Could not find wizard L&F: $wizardLafName")
-    }
     if (SystemInfoRt.isMac) {
       val className = DarculaLaf::class.java.name
       val laf = findLaf(className)
@@ -562,6 +564,11 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
    */
   private fun setLookAndFeelImpl(lookAndFeelInfo: LookAndFeelInfo, installEditorScheme: Boolean, processChangeSynchronously: Boolean) {
     val oldLaf = myCurrentLaf
+
+    if (oldLaf != null) {
+      rememberSchemeForLaf(oldLaf, EditorColorsManager.getInstance().globalScheme)
+    }
+
     if (oldLaf !== lookAndFeelInfo && oldLaf is UIThemeBasedLookAndFeelInfo) {
       oldLaf.dispose()
     }
@@ -577,13 +584,13 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     if (!isFirstSetup && installEditorScheme) {
       if (processChangeSynchronously) {
         updateEditorSchemeIfNecessary(oldLaf, true)
-        shadowInstance.fireUISettingsChanged()
+        UISettings.getInstance().fireUISettingsChanged()
         ActionToolbarImpl.updateAllToolbarsImmediately()
       }
       else {
         ApplicationManager.getApplication().invokeLater {
           updateEditorSchemeIfNecessary(oldLaf, false)
-          shadowInstance.fireUISettingsChanged()
+          UISettings.getInstance().fireUISettingsChanged()
           ActionToolbarImpl.updateAllToolbarsImmediately()
         }
       }
@@ -591,9 +598,13 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     isFirstSetup = false
   }
 
+  @Internal
+  fun updateLafNoSave(lookAndFeelInfo: LookAndFeelInfo) = doSetLaF(lookAndFeelInfo, false)
+
   private fun doSetLaF(lookAndFeelInfo: LookAndFeelInfo, installEditorScheme: Boolean): Boolean {
     val defaults = UIManager.getDefaults()
     defaults.clear()
+    IdeaLaf.fillFallbackDefaults(defaults)
     defaults.putAll(ourDefaults)
     if (!isFirstSetup) {
       colorPatcherProvider = null
@@ -633,7 +644,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
           // avoid loading MetalLookAndFeel class here - check for UIThemeBasedLookAndFeelInfo first
           if (lookAndFeelInfo is UIThemeBasedLookAndFeelInfo) {
             if (laf is UserDataHolder) {
-              (laf as UserDataHolder).putUserData(UIUtil.LAF_WITH_THEME_KEY, true)
+              (laf as UserDataHolder).putUserData(StartupUiUtil.LAF_WITH_THEME_KEY, true)
             }
             //if (lafNameOrder.containsKey(lookAndFeelInfo.getName()) && lookAndFeelInfo.getName().endsWith("Light")) {
             //  updateIconsUnderSelection(false);
@@ -715,7 +726,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     }
     if (newDensity == UIDensity.COMPACT) {
       // main toolbar
-      defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), cmSize(34, 34))
+      defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), cmSize(30, 30))
       defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonIconSizeKey(), 16)
       defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarFontKey(), Supplier { JBFont.medium().asUIResource() })
       defaults.put(JBUI.CurrentTheme.TitlePane.buttonPreferredSizeKey(), cmSize(44, 34))
@@ -775,7 +786,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       defaults.put(JBUI.CurrentTheme.VersionControl.Log.verticalPaddingKey(), 4)
     }
   }
-  
+
   private fun cmSize(width: Int, height: Int): Dimension = Dimension(width, height)
 
   @Suppress("UseDPIAwareInsets")
@@ -798,9 +809,18 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
         return
       }
     }
-    val dark = StartupUiUtil.isUnderDarcula
+
     val editorColorManager = EditorColorsManager.getInstance()
     val current = editorColorManager.globalScheme
+    if (myCurrentLaf != null) {
+      val previousSchemeForLaf = getPreviousSchemeForLaf(myCurrentLaf!!)
+      if (previousSchemeForLaf != null) {
+        (editorColorManager as EditorColorsManagerImpl).setGlobalScheme(previousSchemeForLaf, processChangeSynchronously)
+        return
+      }
+    }
+
+    val dark = StartupUiUtil.isUnderDarcula
     val wasUITheme = oldLaf is UIThemeBasedLookAndFeelInfo
     if (dark != ColorUtil.isDark(current.defaultBackground) || wasUITheme) {
       var targetScheme: String? = if (dark) DarculaLaf.NAME else EditorColorsScheme.DEFAULT_SCHEME_NAME
@@ -847,7 +867,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     // super-huge DPI causes issues like IDEA-170295 if `laf.scaleFactor` property is missing
     uiDefaults.put("laf.scaleFactor", scale(1f))
     uiDefaults.put(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false))
-    uiDefaults.put(RenderingHints.KEY_TEXT_LCD_CONTRAST, UIUtil.getLcdContrastValue())
+    uiDefaults.put(RenderingHints.KEY_TEXT_LCD_CONTRAST, StartupUiUtil.getLcdContrastValue())
     uiDefaults.put(RenderingHints.KEY_FRACTIONALMETRICS, AppUIUtil.adjustFractionalMetrics(getPreferredFractionalMetricsValue()))
     if (isFirstSetup) {
       ApplicationManager.getApplication().invokeLater { notifyLookAndFeelChanged() }
@@ -982,6 +1002,15 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
 
   override fun setPreferredLightLaf(value: LookAndFeelInfo) {
     preferredLightLaf = value
+  }
+
+  override fun getPreviousSchemeForLaf(lookAndFeelInfo: LookAndFeelInfo): EditorColorsScheme? {
+    val schemeName = lafToPreviousScheme[lookAndFeelInfo.name] ?: return null
+    return EditorColorsManager.getInstance().getScheme(schemeName)
+  }
+
+  private fun rememberSchemeForLaf(lookAndFeelInfo: LookAndFeelInfo, editorColorsScheme: EditorColorsScheme) {
+    lafToPreviousScheme[lookAndFeelInfo.name] = editorColorsScheme.name
   }
 
   private inner class UiThemeEpListener : ExtensionPointListener<UIThemeProvider> {

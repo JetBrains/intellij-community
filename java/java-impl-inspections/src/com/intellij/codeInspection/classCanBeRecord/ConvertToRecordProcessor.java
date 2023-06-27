@@ -40,6 +40,10 @@ import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 import static com.intellij.psi.PsiModifier.PRIVATE;
 
 class ConvertToRecordProcessor extends BaseRefactoringProcessor {
+  private static final CallMatcher OBJECT_EQUALS = CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_OBJECT, "equals")
+    .parameterTypes(CommonClassNames.JAVA_LANG_OBJECT);
+  private static final CallMatcher OBJECT_HASHCODE =
+    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_OBJECT, "hashCode").parameterCount(0);
   private final RecordCandidate myRecordCandidate;
   private final boolean myShowAffectedMembers;
 
@@ -268,7 +272,7 @@ class ConvertToRecordProcessor extends BaseRefactoringProcessor {
       }
       nextElement = nextElement.getNextSibling();
     }
-    List<PsiMethod> redundantObjectMethods = findRedundantObjectMethods();
+    CallMatcher redundantObjectMethods = findRedundantObjectMethods();
     PsiClass result = (PsiClass)psiClass.replace(recordBuilder.build());
     tryToCompactCanonicalCtor(result);
     removeRedundantObjectMethods(result, redundantObjectMethods);
@@ -287,24 +291,25 @@ class ConvertToRecordProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  @NotNull
-  private List<PsiMethod> findRedundantObjectMethods() {
+  private CallMatcher findRedundantObjectMethods() {
     PsiMethod equalsMethod = myRecordCandidate.getEqualsMethod();
     PsiMethod hashCodeMethod = myRecordCandidate.getHashCodeMethod();
-    if (equalsMethod == null && hashCodeMethod == null) return Collections.emptyList();
-    List<PsiMethod> result = new SmartList<>();
+    if (equalsMethod == null && hashCodeMethod == null) return CallMatcher.none();
+    List<CallMatcher> result = new SmartList<>();
     Set<PsiField> fields = myRecordCandidate.getFieldAccessors().keySet();
-    // todo for equals method
+    if (EqualsChecker.isStandardEqualsMethod(equalsMethod, fields)) {
+      result.add(OBJECT_EQUALS);
+    }
     if (hashCodeMethod != null) {
       var hashCodeVisitor = new HashCodeVisitor(fields);
       hashCodeMethod.accept(hashCodeVisitor);
       if (hashCodeVisitor.myNonVisitedFields.isEmpty()) {
-        result.add(hashCodeMethod);
+        result.add(OBJECT_HASHCODE);
       }
     }
-    return result;
+    return CallMatcher.anyOf(result.toArray(new CallMatcher[0]));
   }
-
+  
   private static class HashCodeVisitor extends JavaRecursiveElementWalkingVisitor {
     private final CallMatcher OBJECTS_CALL = CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_OBJECTS, "hash", "hashCode");
     private final CallMatcher FLOAT_CALL = CallMatcher.staticCall(CommonClassNames.JAVA_LANG_FLOAT, "floatToIntBits");
@@ -416,10 +421,9 @@ class ConvertToRecordProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private static void removeRedundantObjectMethods(@NotNull PsiClass record, @NotNull List<PsiMethod> redundantObjectMethods) {
-    redundantObjectMethods.stream().map(method -> record.findMethodBySignature(method, false))
-      .filter(Objects::nonNull)
-      .forEach(PsiMethod::delete);
+  private static void removeRedundantObjectMethods(@NotNull PsiClass record, CallMatcher redundantObjectMethods) {
+    ContainerUtil.filter(record.getMethods(), redundantObjectMethods::methodMatches)
+        .forEach(PsiMethod::delete);
   }
 
   private void generateJavaDocForDocumentedFields(@NotNull PsiClass record) {
@@ -437,7 +441,7 @@ class ConvertToRecordProcessor extends BaseRefactoringProcessor {
                                : StringUtil.trimEnd(commentText.substring(2), "*/");
         fieldComment.append(unwrappedText);
       }
-      if (fieldComment.length() > 0) {
+      if (!fieldComment.isEmpty()) {
         comments.put(field.getName(), fieldComment.toString());
       }
     }

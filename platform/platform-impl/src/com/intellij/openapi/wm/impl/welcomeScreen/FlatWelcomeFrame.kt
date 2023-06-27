@@ -9,7 +9,6 @@ import com.intellij.ide.RecentProjectListActionProvider
 import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.LightEditServiceListener
-import com.intellij.ide.plugins.PluginDropHandler
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.notification.NotificationsManager
 import com.intellij.notification.impl.NotificationsManagerImpl
@@ -163,7 +162,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
     UIUtil.decorateWindowHeader(getRootPane())
     ToolbarUtil.setTransparentTitleBar(this, getRootPane()) { runnable -> Disposer.register(this) { runnable.run() } }
     app.invokeLater({ (NotificationsManager.getNotificationsManager() as NotificationsManagerImpl).dispatchEarlyNotifications() },
-                    ModalityState.NON_MODAL)
+                    ModalityState.nonModal())
   }
 
   protected open fun setupCloseAction() {
@@ -321,11 +320,8 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
           val transferable = e.transferable
           val list = FileCopyPasteUtil.getFiles(transferable)
           if (list != null && list.size > 0) {
-            val pluginHandler = PluginDropHandler()
-            if (!pluginHandler.canHandle(transferable, null) || !pluginHandler.handleDrop(transferable, null, null)) {
-              ApplicationManager.getApplication().coroutineScope.launch {
-                ProjectUtil.openOrImportFilesAsync(list, "WelcomeFrame")
-              }
+            ApplicationManager.getApplication().coroutineScope.launch {
+              ProjectUtil.openOrImportFilesAsync(list, "WelcomeFrame")
             }
             e.dropComplete(true)
             return

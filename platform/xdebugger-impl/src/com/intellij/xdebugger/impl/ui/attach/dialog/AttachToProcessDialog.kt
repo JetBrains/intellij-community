@@ -6,6 +6,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.observable.properties.AtomicLazyProperty
 import com.intellij.openapi.project.DumbAware
@@ -56,6 +57,8 @@ open class AttachToProcessDialog(
 
   companion object {
     internal const val ATTACH_DIALOG_SELECTED_DEBUGGER = "ATTACH_DIALOG_SELECTED_DEBUGGER"
+
+    private val logger = Logger.getInstance(AttachToProcessDialog::class.java)
   }
 
   protected val filterTextField = SearchTextField(false).apply {
@@ -159,11 +162,11 @@ open class AttachToProcessDialog(
     state.selectedDebuggerItem.afterChange {
       updateProblemStripe(if (it != null && it.getGroups().isEmpty()) XDebuggerBundle.message("xdebugger.attach.dialog.no.debuggers.is.available.message") else null)
       attachAction.setItem(it)
-      getOkButton().options = attachAction.options
+      getOkOptionButton()?.options = attachAction.options
     }
     state.selectedDebuggersFilter.afterChange {
       attachAction.onFilterUpdated()
-      getOkButton().options = attachAction.options
+      getOkOptionButton()?.options = attachAction.options
     }
     okAction.isEnabled = false
 
@@ -263,7 +266,19 @@ open class AttachToProcessDialog(
   }
 
   private fun getAttachAction(): AttachAction = okAction as AttachAction
-  private fun getOkButton(): JBOptionButton = getButton(okAction) as JBOptionButton
+  private fun getOkOptionButton(): JBOptionButton? {
+    val button = getButton(okAction)
+    if (button == null) {
+      logger.error("Ok button is not available")
+      return null
+    }
+    if (button !is JBOptionButton) {
+      logger.warn("Attach dialog OK button is not an ${JBOptionButton::class.java.simpleName} (Actual button type is ${button::class.java}). Do you have 'ide.allow.merge.buttons' registry value disabled?")
+      return null
+    }
+
+    return button
+  }
 
   private fun updateView(view: AttachToProcessView) {
     if (viewPanel.components.size > 1) {

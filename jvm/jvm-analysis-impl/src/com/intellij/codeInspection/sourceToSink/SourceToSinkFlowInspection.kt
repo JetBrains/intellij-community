@@ -4,10 +4,9 @@ package com.intellij.codeInspection.sourceToSink
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInsight.options.JavaClassValidator
 import com.intellij.codeInspection.*
-import com.intellij.codeInspection.options.OptDescribedComponent
-import com.intellij.codeInspection.options.OptPane
-import com.intellij.codeInspection.options.OptRegularComponent
+import com.intellij.codeInspection.options.*
 import com.intellij.codeInspection.restriction.AnnotationContext
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.CommonClassNames
@@ -32,7 +31,27 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
   var untaintedAnnotations: MutableList<String?> = mutableListOf("javax.annotation.Untainted",
                                                                  "org.checkerframework.checker.tainting.qual.Untainted")
 
+  @JvmField
+  var untaintedParameterIndex: MutableList<String?> = mutableListOf()
+
+  @JvmField
+  var untaintedParameterMethodClass: MutableList<String?> = mutableListOf()
+
+  @JvmField
+  var untaintedParameterMethodName: MutableList<String?> = mutableListOf()
+
+  @JvmField
+  var taintedParameterIndex: MutableList<String?> = mutableListOf()
+
+  @JvmField
+  var taintedParameterMethodClass: MutableList<String?> = mutableListOf()
+
+  @JvmField
+  var taintedParameterMethodName: MutableList<String?> = mutableListOf()
+
   private val myUntaintedMethodMatcher: MethodMatcher = MethodMatcher().finishDefault()
+
+  private val myTaintedMethodMatcher: MethodMatcher = MethodMatcher(false, "myTaintedMethodMatcher").finishDefault()
 
   @JvmField
   var myUntaintedFieldClasses: MutableList<String?> = mutableListOf()
@@ -57,21 +76,60 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
 
   override fun getOptionsPane(): OptPane {
     return OptPane.pane(
+
       OptPane.stringList("taintedAnnotations",
                          JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.tainted.annotations"),
                          JavaClassValidator().annotationsOnly()
       ).comment(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.tainted.annotations.comment")),
+
       OptPane.stringList("untaintedAnnotations",
                          JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.annotations"),
                          JavaClassValidator().annotationsOnly()
       ).comment(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.annotations.comment")),
+
+      OptPane.table(
+        JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.tainted.parameters"),
+        OptPane.column("taintedParameterMethodClass",
+                       InspectionGadgetsBundle.message("result.of.method.call.ignored.class.column.title"),
+                       JavaClassValidator()),
+        OptPane.column("taintedParameterMethodName",
+                       InspectionGadgetsBundle.message("method.name.regex"),
+                       RegexValidator()),
+        OptPane.column("taintedParameterIndex",
+                       JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.index.parameter"),
+                       IntValidator),
+      ).comment(
+        JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.tainted.parameters.comment")),
+
+      OptPane.table(
+        JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.parameters"),
+        OptPane.column("untaintedParameterMethodClass",
+                       InspectionGadgetsBundle.message("result.of.method.call.ignored.class.column.title"),
+                       JavaClassValidator()),
+        OptPane.column("untaintedParameterMethodName",
+                       InspectionGadgetsBundle.message("method.name.regex"),
+                       RegexValidator()),
+        OptPane.column("untaintedParameterIndex",
+                       JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.index.parameter"),
+                       IntValidator),
+      ).comment(
+        JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.parameters.comment")),
+
       OptPane.checkbox("processOuterMethodAsQualifierAndArguments",
                        JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.process.as.qualifier.arguments"))
         .comment(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.process.as.qualifier.arguments.comment")),
-      myUntaintedMethodMatcher.getTable(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.methods")).prefix("myUntaintedMethodMatcher")
+
+      myTaintedMethodMatcher.getTable(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.tainted.methods")).prefix(
+        "myTaintedMethodMatcher")
+        .comment(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.tainted.methods.comment")),
+
+      myUntaintedMethodMatcher.getTable(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.methods")).prefix(
+        "myUntaintedMethodMatcher")
         .comment(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.methods.comment")),
+
       OptPane.stringList("skipClasses", JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.safe.class"))
         .comment(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.safe.class.comment")),
+
       OptPane.table(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.fields"),
                     OptPane.column("myUntaintedFieldClasses",
                                    InspectionGadgetsBundle.message("result.of.method.call.ignored.class.column.title"),
@@ -79,9 +137,11 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
                     OptPane.column("myUntaintedFieldNames",
                                    JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.fields.name"))
       ).comment(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.fields.comment")),
+
       OptPane.checkbox("parameterOfPrivateMethodIsUntainted",
                        JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.check.private.methods"))
         .comment(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.check.private.methods.comment")),
+
       OptPane.checkbox("warnIfComplex",
                        JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.check.warn.if.complex"))
         .comment(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.check.warn.if.complex.comment"))
@@ -92,9 +152,13 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
                             isOnTheFly: Boolean,
                             session: LocalInspectionToolSession): PsiElementVisitor {
     val scope = GlobalSearchScope.allScope(holder.project)
-    val firstAnnotation: String = untaintedAnnotations.firstOrNull {
+    val firstAnnotation: String? = untaintedAnnotations.firstOrNull {
       it != null && JavaPsiFacade.getInstance(holder.project).findClass(it, scope) != null
-    } ?: return PsiElementVisitor.EMPTY_VISITOR
+    }
+
+    if (firstAnnotation == null && untaintedParameterIndex.size == 0) {
+      return PsiElementVisitor.EMPTY_VISITOR
+    }
 
     val configuration = UntaintedConfiguration(taintedAnnotations = taintedAnnotations,
                                                unTaintedAnnotations = untaintedAnnotations,
@@ -108,8 +172,24 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
                                                skipClasses = skipClasses,
                                                parameterOfPrivateMethodIsUntainted = parameterOfPrivateMethodIsUntainted).copy()
 
+    val factory = TaintValueFactory(configuration).also {
+
+      it.add(TaintValueFactory.fromMethodResult(methodNames = myTaintedMethodMatcher.methodNamePatterns,
+                                                methodClass = myTaintedMethodMatcher.classNames,
+                                                targetValue = TaintValue.TAINTED))
+
+      it.add(TaintValueFactory.fromParameters(methodNames = untaintedParameterMethodName,
+                                              methodClass = untaintedParameterMethodClass,
+                                              methodParameterIndex = untaintedParameterIndex.map { index -> index?.toIntOrNull() },
+                                              targetValue = TaintValue.UNTAINTED))
+
+      it.add(TaintValueFactory.fromParameters(methodNames = taintedParameterMethodName,
+                                              methodClass = taintedParameterMethodClass,
+                                              methodParameterIndex = taintedParameterIndex.map { index -> index?.toIntOrNull() },
+                                              targetValue = TaintValue.TAINTED))
+    }
     return UastHintedVisitorAdapter.create(holder.file.language,
-                                           SourceToSinkFlowVisitor(holder, TaintValueFactory(configuration), warnIfComplex),
+                                           SourceToSinkFlowVisitor(holder, factory, warnIfComplex),
                                            arrayOf(UCallExpression::class.java,
                                                    UReturnExpression::class.java,
                                                    UBinaryExpression::class.java,
@@ -196,8 +276,13 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
       val sourcePsi = expression.sourcePsi
       if (sourcePsi != null && taintValue === TaintValue.UNKNOWN &&
           taintAnalyzer.nonMarkedElements.any { it.myNonMarked != null }) {
-        fixes = arrayOf(MarkAsSafeFix(sourcePsi, factory),
-                        PropagateFix(sourcePsi, factory, true))
+        if (factory.getConfiguration().firstAnnotation != null) {
+          fixes = arrayOf(MarkAsSafeFix(sourcePsi, factory),
+                          PropagateFix(sourcePsi, factory, true))
+        }
+        else {
+          fixes = arrayOf(PropagateFix(sourcePsi, factory, false))
+        }
       }
       holder.registerUProblem(expression, errorMessage, *fixes)
     }
@@ -209,19 +294,45 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
 
   override fun readSettings(element: Element) {
     super.readSettings(element)
+
     myUntaintedMethodMatcher.readSettings(element)
+    myTaintedMethodMatcher.readSettings(element)
   }
 
   override fun writeSettings(element: Element) {
     super.writeSettings(element)
+
     myUntaintedMethodMatcher.writeSettings(element)
+    myTaintedMethodMatcher.writeSettings(element)
+  }
+
+  fun setTaintedMethod(className: String, methodName: String) {
+    myTaintedMethodMatcher.add(className, methodName)
+  }
+
+  fun setUntaintedMethod(className: String, methodName: String) {
+    myUntaintedMethodMatcher.add(className, methodName)
   }
 }
 
 private fun OptRegularComponent.comment(@NlsContexts.Tooltip @NlsSafe comment: String): OptRegularComponent {
-  if(this is OptDescribedComponent){
+  if (this is OptDescribedComponent) {
     val component = this.description(comment)
     return component ?: this
   }
   return this
+}
+
+private val IntValidator = object : StringValidator {
+  override fun validatorId(): String {
+    return "Int.Validator"
+  }
+
+  override fun getErrorMessage(project: Project?, string: String): String? {
+    val intOrNull = string.toIntOrNull()
+    if (intOrNull != null) {
+      return null
+    }
+    return JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.not.number")
+  }
 }

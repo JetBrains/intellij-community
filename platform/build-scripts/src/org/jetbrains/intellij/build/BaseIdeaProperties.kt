@@ -23,8 +23,8 @@ private val BASE_CLASS_VERSIONS = persistentHashMapOf(
   "plugins/java-coverage/lib/java-coverage-rt.jar" to "1.7",
   "plugins/junit/lib/junit-rt.jar" to "1.7",
   "plugins/junit/lib/junit5-rt.jar" to "1.8",
-  "plugins/gradle/lib/gradle-tooling-extension-api.jar" to "1.7",
-  "plugins/gradle/lib/gradle-tooling-extension-impl.jar" to "1.7",
+  "plugins/gradle/lib/gradle-tooling-extension-api.jar" to "1.8",
+  "plugins/gradle/lib/gradle-tooling-extension-impl.jar" to "1.8",
   "plugins/maven-server/lib/maven-server.jar" to "1.8",
   "plugins/maven-model/lib/maven-model.jar" to "1.8",
   "plugins/maven/lib/maven3-server-common.jar" to "1.8",
@@ -101,6 +101,7 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + per
   "intellij.keymap.visualStudio",
   "intellij.keymap.netbeans",
   "intellij.performanceTesting",
+  "intellij.turboComplete",
 )
 
 val CE_CLASS_VERSIONS: PersistentMap<String, String> = BASE_CLASS_VERSIONS.putAll(persistentHashMapOf(
@@ -145,6 +146,7 @@ abstract class BaseIdeaProperties : ProductProperties() {
         "intellij.platform.testFramework.common",
         "intellij.platform.testFramework.junit5",
         "intellij.platform.testFramework",
+        "intellij.platform.debugger.testFramework",
         "intellij.platform.uast.testFramework",
         "intellij.tools.testsBootstrap",
       )) {

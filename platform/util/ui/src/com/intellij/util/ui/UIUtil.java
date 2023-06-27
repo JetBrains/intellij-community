@@ -3,7 +3,6 @@ package com.intellij.util.ui;
 
 import com.intellij.BundleBase;
 import com.intellij.concurrency.ThreadContext;
-import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
@@ -21,7 +20,6 @@ import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.*;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -85,7 +83,6 @@ public final class UIUtil {
   public static final Key<String> PLUGGABLE_LAF_KEY = Key.create("Pluggable.laf.name");
 
   private static final Key<WeakReference<Component>> FOSTER_PARENT = Key.create("Component.fosterParent");
-  private static final Key<Boolean> IS_SHOWING = Key.create("Component.isShowing");
   private static final Key<Boolean> HAS_FOCUS = Key.create("Component.hasFocus");
 
   /**
@@ -101,10 +98,7 @@ public final class UIUtil {
   }
 
   public static void decorateWindowHeader(JRootPane pane) {
-    if (pane != null && SystemInfoRt.isMac) {
-      pane.putClientProperty("apple.awt.windowAppearance",
-                             isUnderDarcula() ? "NSAppearanceNameVibrantDark" : "NSAppearanceNameVibrantLight");
-    }
+    ComponentUtil.decorateWindowHeader(pane);
   }
 
   public static int getTransparentTitleBarHeight(JRootPane rootPane) {
@@ -632,10 +626,9 @@ public final class UIUtil {
 
     for (int i = 0; i < text.length(); i++) {
       char ch = text.charAt(i);
+      currentAtom.append(ch);
 
       boolean lineBreak = ch == '\n';
-      if (!lineBreak) currentAtom.append(ch);
-
       if (lineBreak || ch == separator) {
         currentLine.append(currentAtom);
         currentAtom.setLength(0);
@@ -1064,29 +1057,11 @@ public final class UIUtil {
   }
 
   public static boolean isUnderDefaultMacTheme() {
-    if (!SystemInfoRt.isMac) {
-      return false;
-    }
-
-    LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
-    if (lookAndFeel instanceof UserDataHolder dh) {
-      return Boolean.TRUE != dh.getUserData(LAF_WITH_THEME_KEY) &&
-             Objects.equals(dh.getUserData(PLUGGABLE_LAF_KEY), "macOS Light");
-    }
-    return false;
+    return StartupUiUtil.isUnderDefaultMacTheme();
   }
 
   public static boolean isUnderWin10LookAndFeel() {
-    if (!SystemInfoRt.isWindows) {
-      return false;
-    }
-
-    LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
-    if (lookAndFeel instanceof UserDataHolder dataHolder) {
-      return Boolean.TRUE != dataHolder.getUserData(LAF_WITH_THEME_KEY) &&
-             Objects.equals(dataHolder.getUserData(PLUGGABLE_LAF_KEY), "Windows 10 Light");
-    }
-    return false;
+    return StartupUiUtil.isUnderWin10LookAndFeel();
   }
 
   public static boolean isUnderDarcula() {
@@ -1094,7 +1069,7 @@ public final class UIUtil {
   }
 
   public static boolean isUnderIntelliJLaF() {
-    return UIManager.getLookAndFeel().getName().contains("IntelliJ") || isUnderDefaultMacTheme() || isUnderWin10LookAndFeel();
+    return StartupUiUtil.isUnderIntelliJLaF();
   }
 
   @Deprecated(forRemoval = true)
@@ -1639,12 +1614,15 @@ public final class UIUtil {
    */
   @ApiStatus.Experimental
   public static @Nullable Component getParent(@NotNull Component component) {
-    Component realParent = component.getParent();
-    if (realParent != null) {
-      return realParent;
-    }
     WeakReference<Component> ref = ClientProperty.get(component, FOSTER_PARENT);
-    return ref != null ? ref.get() : null;
+    if (ref != null) {
+      Component fosterParent = ref.get();
+      if (fosterParent != null) {
+        return fosterParent;
+      }
+    }
+
+    return component.getParent();
   }
 
   /**
@@ -2183,7 +2161,7 @@ public final class UIUtil {
     return UI_TRAVERSER.withRoot(component).expandAndFilter(o -> !(o instanceof CellRendererPane));
   }
 
-  public static final Key<Iterable<? extends Component>> NOT_IN_HIERARCHY_COMPONENTS = Key.create("NOT_IN_HIERARCHY_COMPONENTS");
+  public static final Key<Iterable<? extends Component>> NOT_IN_HIERARCHY_COMPONENTS = ComponentUtil.NOT_IN_HIERARCHY_COMPONENTS;
 
   private static final JBTreeTraverser<Component> UI_TRAVERSER = JBTreeTraverser.from((Function<Component, JBIterable<Component>>)c -> {
     JBIterable<Component> result;
@@ -2504,13 +2482,7 @@ public final class UIUtil {
   }
 
   public static int getLcdContrastValue() {
-    int lcdContrastValue = LoadingState.APP_STARTED.isOccurred() ? Registry.intValue("lcd.contrast.value", 0) : 0;
-    if (lcdContrastValue == 0) {
-      return StartupUiUtil.doGetLcdContrastValueForSplash(StartupUiUtil.isUnderDarcula());
-    }
-    else {
-      return StartupUiUtil.normalizeLcdContrastValue(lcdContrastValue);
-    }
+    return StartupUiUtil.getLcdContrastValue();
   }
 
   /**
@@ -3196,22 +3168,7 @@ public final class UIUtil {
    */
   @ApiStatus.Experimental
   public static boolean isShowing(@NotNull Component component, boolean checkHeadless) {
-    if (checkHeadless && Boolean.getBoolean("java.awt.headless")) {
-      return true;
-    }
-    if (component.isShowing()) {
-      return true;
-    }
-
-    while (component != null) {
-      JComponent jComponent = component instanceof JComponent ? (JComponent)component : null;
-      if (jComponent != null && Boolean.TRUE.equals(jComponent.getClientProperty(IS_SHOWING))) {
-        return true;
-      }
-      component = component.getParent();
-    }
-
-    return false;
+    return ComponentUtil.isShowing(component, checkHeadless);
   }
 
   /**
@@ -3220,10 +3177,7 @@ public final class UIUtil {
   @ApiStatus.Internal
   @ApiStatus.Experimental
   public static void markAsShowing(@NotNull JComponent component, boolean value) {
-    if (Boolean.getBoolean("java.awt.headless")) {
-      return;
-    }
-    component.putClientProperty(IS_SHOWING, value ? Boolean.TRUE : null);
+    ComponentUtil.markAsShowing(component, value);
   }
 
   public static void runWhenFocused(@NotNull Component component, @NotNull Runnable runnable) {
@@ -3329,18 +3283,9 @@ public final class UIUtil {
     StartupUiUtilKt.drawImage(g, image, dstBounds, srcBounds, null, observer);
   }
 
-  /**
-   * Waits for the EDT to dispatch all its invocation events.
-   * Must be called outside EDT.
-   * Use {@link com.intellij.testFramework.PlatformTestUtil#dispatchAllInvocationEventsInIdeEventQueue()} if you want to pump from inside EDT
-   **/
   @TestOnly
   public static void pump() {
-    assert !SwingUtilities.isEventDispatchThread();
-    Semaphore lock = new Semaphore(1);
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(() -> lock.up());
-    lock.waitFor();
+    StartupUiUtil.INSTANCE.pump();
   }
 
   public static boolean isJreHiDPI() {
@@ -3401,15 +3346,16 @@ public final class UIUtil {
     return SystemInfo.isXWindow && !SystemInfo.isWayland && System.getenv("WSLENV") != null;
   }
 
-  public static void applyDeprecatedBackground(@NotNull JComponent component) {
+  public static void applyDeprecatedBackground(@Nullable JComponent component) {
     Color color = getDeprecatedBackground();
-    if (color != null) {
+    if (component != null && color != null) {
       component.setBackground(color);
       component.setOpaque(true);
     }
   }
 
-  private static @Nullable Color getDeprecatedBackground() {
+  @ApiStatus.Internal
+  public static @Nullable Color getDeprecatedBackground() {
     return Registry.getColor("ui.deprecated.components.color", null);
   }
 

@@ -1,6 +1,6 @@
 internal class Test {
-    val c = 1.toChar()
-    val i = 1
+    val c: Char = 1.toChar()
+    val i: Int = 1
     fun operationsWithChar() {
         b(i > c.code)
         b(i >= c.code)

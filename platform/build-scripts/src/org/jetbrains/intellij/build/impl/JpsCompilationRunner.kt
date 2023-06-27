@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "HardCodedStringLiteral")
 
 package org.jetbrains.intellij.build.impl
@@ -6,15 +6,14 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants
 import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.platform.diagnostic.telemetry.impl.use
-import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
+import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.containers.MultiMap
 import com.jetbrains.plugin.structure.base.utils.createParentDirs
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.NonNls
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
@@ -44,7 +43,6 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.function.BiConsumer
-import kotlin.io.path.createFile
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
@@ -497,7 +495,7 @@ private class JpsMessageHandler(private val context: CompilationContext) : Messa
 }
 
 private class BackedLogger(category: String?, private val fileLogger: Logger?) : DefaultLogger(category) {
-  override fun error(@Nls message: @NonNls String?, t: Throwable?, vararg details: String) {
+  override fun error(@Nls message: String?, t: Throwable?, vararg details: String) {
     if (t == null) {
       messageHandler.processMessage(CompilerMessage(COMPILER_NAME, BuildMessage.Kind.ERROR, message))
     }
@@ -507,14 +505,9 @@ private class BackedLogger(category: String?, private val fileLogger: Logger?) :
     fileLogger?.error(message, t, *details)
   }
 
-  override fun warn(message: @NonNls String?, t: Throwable?) {
+  override fun warn(message: String?, t: Throwable?) {
     messageHandler.processMessage(CompilerMessage(COMPILER_NAME, BuildMessage.Kind.WARNING, message))
     fileLogger?.warn(message, t)
-  }
-
-  override fun info(message: String?) {
-    messageHandler.processMessage(CompilerMessage(COMPILER_NAME, BuildMessage.Kind.INFO, message))
-    fileLogger?.info(message)
   }
 
   override fun info(message: String?, t: Throwable?) {
@@ -522,25 +515,13 @@ private class BackedLogger(category: String?, private val fileLogger: Logger?) :
     fileLogger?.info(message, t)
   }
 
-  override fun isDebugEnabled(): Boolean {
-    return fileLogger != null && fileLogger.isDebugEnabled
-  }
-
-  override fun debug(message: String?) {
-    fileLogger?.debug(message)
-  }
-
-  override fun debug(t: Throwable?) {
-    fileLogger?.debug(t)
-  }
+  override fun isDebugEnabled(): Boolean = fileLogger != null && fileLogger.isDebugEnabled
 
   override fun debug(message: String?, t: Throwable?) {
     fileLogger?.debug(message, t)
   }
 
-  override fun isTraceEnabled(): Boolean {
-    return fileLogger != null && fileLogger.isTraceEnabled
-  }
+  override fun isTraceEnabled(): Boolean = fileLogger != null && fileLogger.isTraceEnabled
 
   override fun trace(message: String?) {
     fileLogger?.trace(message)

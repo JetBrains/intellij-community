@@ -1,20 +1,35 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.codeFloatingToolbar
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.text.TextEditorCustomizer
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.util.childScope
+import kotlinx.coroutines.CoroutineScope
 
-internal class FloatingCodeToolbarEditorCustomizer : TextEditorCustomizer {
+internal class FloatingCodeToolbarEditorCustomizer: TextEditorCustomizer {
   override fun customize(textEditor: TextEditor) {
     val editor = textEditor.editor
     val project = editor.project ?: return
     val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
-    if (!FloatingToolbarFilter.isEnabledForLanguage(file.language)) return
-    val toolbar = CodeFloatingToolbar(editor)
+    if (!FloatingToolbarFilter.isEnabledForLanguage(file.language)) {
+      return
+    }
+    val coroutineScope = FloatingCodeToolbarScope.createChildScope(project)
+    val toolbar = CodeFloatingToolbar(editor, coroutineScope)
     Disposer.register(textEditor, toolbar)
   }
+}
 
+@Service(Service.Level.PROJECT)
+private class FloatingCodeToolbarScope(private val coroutineScope: CoroutineScope) {
+  companion object {
+    fun createChildScope(project: Project): CoroutineScope {
+      return project.service<FloatingCodeToolbarScope>().coroutineScope.childScope()
+    }
+  }
 }

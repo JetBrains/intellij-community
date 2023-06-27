@@ -33,10 +33,10 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.diagnostic.telemetry.Scope
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
-import com.intellij.platform.diagnostic.telemetry.impl.use
-import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
-import com.intellij.platform.diagnostic.telemetry.impl.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.ModalityUiUtil
 import io.opentelemetry.api.common.AttributeKey
@@ -59,7 +59,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.coroutineContext
 
 private val LOG = logger<StartupManagerImpl>()
-private val tracer by lazy { TelemetryTracer.getInstance().getTracer(Scope("startupManager")) }
+private val tracer by lazy { TelemetryManager.getInstance().getTracer(Scope("startupManager")) }
 
 /**
  * Acts as [StartupActivity.POST_STARTUP_ACTIVITY], but executed with 5-seconds delay after project opening.
@@ -392,7 +392,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
 
   override fun runWhenProjectIsInitialized(action: Runnable) {
     if (DumbService.isDumbAware(action)) {
-      runAfterOpened { ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, project.disposed, action) }
+      runAfterOpened { ModalityUiUtil.invokeLaterIfNeeded(ModalityState.nonModal(), project.disposed, action) }
     }
     else if (!LightEdit.owns(project)) {
       runAfterOpened { DumbService.getInstance(project).runWhenSmart(action) }

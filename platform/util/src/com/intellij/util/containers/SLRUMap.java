@@ -123,9 +123,15 @@ public class SLRUMap<K,V> {
     }
   }
 
-  public Set<Map.Entry<K, V>> entrySet() {
+  public @NotNull Set<Map.Entry<K, V>> entrySet() {
     Set<Map.Entry<K, V>> set = new HashSet<Map.Entry<K,V>>(myProtectedQueue.entrySet());
     set.addAll(myProbationalQueue.entrySet());
+    return set;
+  }
+
+  public @NotNull Set<V> values() {
+    Set<V> set = new HashSet<>(myProtectedQueue.values());
+    set.addAll(myProbationalQueue.values());
     return set;
   }
 

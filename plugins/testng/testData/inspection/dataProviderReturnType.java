@@ -44,7 +44,7 @@ class MyTest {
   }
 
   @DataProvider
-  public <warning descr="Data provider must return either an array or iterator">Object</warning> someTestData7() {return null;}
+  public <error descr="Data provider must return either an array or iterator">Object</error> someTestData7() {return null;}
 }
 
 

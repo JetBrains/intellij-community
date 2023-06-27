@@ -5,24 +5,22 @@ import com.google.gson.JsonObject
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
-import org.jetbrains.plugins.gradle.jvmcompat.IdeVersionedDataParser
-import org.jetbrains.plugins.gradle.jvmcompat.IdeVersionedDataState
-import org.jetbrains.plugins.gradle.jvmcompat.IdeVersionedDataStorage
+import org.jetbrains.plugins.gradle.jvmcompat.*
 
 internal object KotlinWizardVersionParser : IdeVersionedDataParser<KotlinWizardVersionState>() {
     override fun parseJson(data: JsonObject): KotlinWizardVersionState? {
-        val obj = data.takeIf { it.isJsonObject }?.asJsonObject ?: return null
+        val obj = data.asSafeJsonObject ?: return null
 
         val versionData = KotlinWizardVersionState()
 
-        versionData.kotlinPluginVersion = obj["kotlinVersion"]?.takeIf { it.isJsonPrimitive }?.asString ?: return null
-        versionData.kotlinForComposeVersion = obj["kotlinForComposeVersion"]?.takeIf { it.isJsonPrimitive }?.asString ?: return null
-        versionData.composeCompilerExtension = obj["composeCompilerExtension"]?.takeIf { it.isJsonPrimitive }?.asString ?: return null
-        versionData.minGradleFoojayVersion = obj["minGradleFoojayVersion"]?.takeIf { it.isJsonPrimitive }?.asString ?: return null
-        versionData.gradleAndroidVersion = obj["gradleAndroidVersion"]?.takeIf { it.isJsonPrimitive }?.asString ?: return null
-        versionData.foojayVersion = obj["foojayVersion"]?.takeIf { it.isJsonPrimitive }?.asString ?: return null
-        versionData.failsafeVersion = obj["failsafeVersion"]?.takeIf { it.isJsonPrimitive }?.asString ?: return null
-        versionData.surefireVersion = obj["surefireVersion"]?.takeIf { it.isJsonPrimitive }?.asString ?: return null
+        versionData.kotlinPluginVersion = obj["kotlinVersion"]?.asSafeString ?: return null
+        versionData.kotlinForComposeVersion = obj["kotlinForComposeVersion"]?.asSafeString ?: return null
+        versionData.composeCompilerExtension = obj["composeCompilerExtension"]?.asSafeString ?: return null
+        versionData.minGradleFoojayVersion = obj["minGradleFoojayVersion"]?.asSafeString ?: return null
+        versionData.gradleAndroidVersion = obj["gradleAndroidVersion"]?.asSafeString ?: return null
+        versionData.foojayVersion = obj["foojayVersion"]?.asSafeString ?: return null
+        versionData.failsafeVersion = obj["failsafeVersion"]?.asSafeString ?: return null
+        versionData.surefireVersion = obj["surefireVersion"]?.asSafeString ?: return null
 
         return versionData
     }

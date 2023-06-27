@@ -318,6 +318,11 @@ public class PersistentInMemoryFSRecordsStorage implements PersistentFSRecordsSt
     return allocatedRecordsCount.get();
   }
 
+  @Override
+  public int maxAllocatedID() {
+    return allocatedRecordsCount.get();
+  }
+
   public long actualDataLength() {
     final int recordsCount = recordsCount();
     return (RECORD_SIZE_IN_INTS * (long)recordsCount) * Integer.BYTES + HEADER_SIZE;

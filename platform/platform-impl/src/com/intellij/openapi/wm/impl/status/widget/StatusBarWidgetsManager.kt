@@ -23,8 +23,11 @@ import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.openapi.wm.impl.status.createComponentByWidgetPresentation
 import com.intellij.util.childScope
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import javax.swing.JComponent
 
 @Service(Service.Level.PROJECT)
@@ -159,7 +162,7 @@ class StatusBarWidgetsManager(private val project: Project,
     return factory.isAvailable(project) && factory.isConfigurable && factory.canBeEnabledOn(statusBar)
   }
 
-  internal fun init(): List<Pair<StatusBarWidget, LoadingOrder>> {
+  internal fun init(frame: IdeFrame): List<Pair<StatusBarWidget, LoadingOrder>> {
     val isLightEditProject = LightEdit.owns(project)
     val statusBarWidgetSettings = StatusBarWidgetSettings.getInstance()
     val availableFactories: List<Pair<StatusBarWidgetFactory, LoadingOrder>> = StatusBarWidgetFactory.EP_NAME.filterableLazySequence()
@@ -182,7 +185,7 @@ class StatusBarWidgetsManager(private val project: Project,
       val pendingFactories = availableFactories.toMutableList()
       @Suppress("removal", "DEPRECATION")
       StatusBarWidgetProvider.EP_NAME.extensionList.mapTo(pendingFactories) {
-        StatusBarWidgetProviderToFactoryAdapter(project, it) to anchorToOrder(it.anchor)
+        StatusBarWidgetProviderToFactoryAdapter(project, frame, it) to anchorToOrder(it.anchor)
       }
 
       val result = mutableListOf<Pair<StatusBarWidget, LoadingOrder>>()

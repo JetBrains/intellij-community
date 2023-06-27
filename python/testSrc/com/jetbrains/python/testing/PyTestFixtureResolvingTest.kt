@@ -16,6 +16,7 @@ class PyTestFixtureResolvingTest : PyTestCase() {
     const val SIMPLE_TEST_DIR = "/testSimple"
     const val SIMPLE_TEST_CONFTEST_FIXTURE = "/test_conftest_fixture.py"
     const val SIMPLE_TEST_NONE_RESOLVE = "/test_none_resolve.py"
+    const val SIMPLE_TEST_ASYNCIO_FIXTURE = "test_asyncio_fixture.py"
 
     const val CLASS_TEST_DIR = "/testClass"
     const val CLASS_TEST_TWO_PARENTS = "/test_two_parents.py"
@@ -122,6 +123,10 @@ class PyTestFixtureResolvingTest : PyTestCase() {
 
   fun testSimpleNotResolve() {
     assertCorrectFile(SIMPLE_TEST_DIR, SIMPLE_TEST_NONE_RESOLVE, null)
+  }
+
+  fun testSimpleAsyncioFixture() {
+    assertCorrectFile(SIMPLE_TEST_DIR, "/$SIMPLE_TEST_ASYNCIO_FIXTURE", SIMPLE_TEST_ASYNCIO_FIXTURE)
   }
 
   fun testClassWithTwoParents() {

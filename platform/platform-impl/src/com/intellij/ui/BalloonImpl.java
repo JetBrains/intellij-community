@@ -850,6 +850,10 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     }
   }
 
+  public @Nullable ShadowBorderProvider getShadowBorderProvider() {
+    return myShadowBorderProvider;
+  }
+
   public void setShadowBorderProvider(@NotNull ShadowBorderProvider provider) {
     myShadowBorderProvider = provider;
   }

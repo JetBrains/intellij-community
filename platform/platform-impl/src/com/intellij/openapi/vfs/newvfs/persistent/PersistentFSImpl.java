@@ -35,6 +35,7 @@ import com.intellij.util.containers.*;
 import com.intellij.util.io.ReplicatorInputStream;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
@@ -57,8 +58,21 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 
+import static com.intellij.util.SystemProperties.getBooleanProperty;
+
 public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private static final Logger LOG = Logger.getInstance(PersistentFSImpl.class);
+
+  /**
+   * If true, all roots are load from {@link FSRecords} and cached on the first attempt to load the fileId
+   * under yet-uncached root. This may take time and lead to a freeze, hence the flag to disable it.
+   */
+  private static final boolean CACHE_MISSED_ROOTS_ALL_AT_ONCE = getBooleanProperty("PersistentFSImpl.CACHE_MISSED_ROOTS_ALL_AT_ONCE", false);
+  //TODO better use single property & enum as a value?
+  /** If true, on the attempt to load fileId under yet-uncached root only this specific root is loaded (if exists) */
+  private static final boolean CACHE_MISSED_ROOTS_ONE_BY_ONE = getBooleanProperty("PersistentFSImpl.CACHE_MISSED_ROOTS_ONE_BY_ONE", true);
+
+  private final AtomicBoolean missedRootsLoaded = new AtomicBoolean(false);
 
   private final Map<String, VirtualFileSystemEntry> myRoots;
 
@@ -87,7 +101,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     AsyncEventSupport.startListening();
 
-    app.getMessageBus().simpleConnect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener(){
+    app.getMessageBus().simpleConnect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
       public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
         // `myIdToDirCache` could retain alien file systems
@@ -98,7 +112,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           VirtualFileSystemEntry root = entry.getValue();
           if (VirtualFileManager.getInstance().getFileSystem(root.getFileSystem().getProtocol()) == null) {
             // the file system must have been unregistered
-            iterator.remove();
+            iterator.remove();//TODO RC: but entry in a .idToDirCache.myIdToRootCache -- still remains?
           }
         }
       }
@@ -109,7 +123,18 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private void initVfsLog() {
     var readOnly = !VfsLog.LOG_VFS_OPERATIONS_ENABLED;
-    myVfsLog = new VfsLog(Path.of(FSRecords.getCachesDir() + "/vfslog"), readOnly);
+    var vfsLogPath = new PersistentFSPaths(Path.of(FSRecords.getCachesDir())).getVfsLogStorage();
+    if (!VfsLog.LOG_VFS_OPERATIONS_ENABLED) {
+      // forcefully erase VfsLog storages if the feature is disabled so that when it will be
+      // enabled again we won't consider old data as a source for recovery
+      try {
+        VfsLog.Companion.clearStorage(vfsLogPath);
+      }
+      catch (Throwable e) {
+        LOG.error("failed to clear the storage of VfsLog", e);
+      }
+    }
+    myVfsLog = new VfsLog(vfsLogPath, readOnly);
   }
 
   @ApiStatus.Internal
@@ -117,7 +142,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     myIdToDirCache.clear();
     myVfsData = new VfsData(app);
     LOG.assertTrue(!myConnected.get());
-    initVfsLog();
     doConnect();
     PersistentFsConnectionListener.EP_NAME.getExtensionList().forEach(PersistentFsConnectionListener::connectionOpen);
   }
@@ -141,6 +165,17 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private void doConnect() {
     if (myConnected.compareAndSet(false, true)) {
       Activity activity = StartUpMeasurer.startActivity("connect FSRecords", ActivityCategory.DEFAULT);
+      if (VfsLog.LOG_VFS_OPERATIONS_ENABLED) {
+        try {
+          if (VfsRecoveryUtils.INSTANCE.applyStoragesReplacementIfMarkerExists(Path.of(FSRecords.getCachesDir()))) {
+            LOG.info("FSRecords storages replacement was applied");
+          }
+        }
+        catch (Throwable e) {
+          LOG.error("FSRecords storages replacement has failed", e);
+        }
+      }
+      initVfsLog();
       FSRecords.connect(myVfsLog.getConnectionInterceptors());
       activity.end();
     }
@@ -214,7 +249,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     NewVirtualFileSystem fs = getFileSystem(dir);
 
     try {
-      String[] fsNames = VfsUtil.filterNames(fs instanceof LocalFileSystemImpl ? ((LocalFileSystemImpl)fs).listWithCaching(dir) : fs.list(dir));
+      String[] fsNames = VfsUtil.filterNames(
+        fs instanceof LocalFileSystemImpl ? ((LocalFileSystemImpl)fs).listWithCaching(dir) : fs.list(dir)
+      );
 
       Map<String, ChildInfo> justCreated = new HashMap<>();
       ListResult saved = FSRecords.update(dir, id, current -> {
@@ -345,7 +382,12 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   // returns `nameId` > 0 if write successful, -1 if not
-  private static int writeAttributesToRecord(int id, int parentId, @NotNull CharSequence name, boolean cs, @NotNull FileAttributes attributes, boolean overwriteMissed) {
+  private static int writeAttributesToRecord(int id,
+                                             int parentId,
+                                             @NotNull CharSequence name,
+                                             boolean cs,
+                                             @NotNull FileAttributes attributes,
+                                             boolean overwriteMissed) {
     assert id > 0 : id;
     assert parentId >= 0 : parentId; // 0 means there's no parent
     if (!name.isEmpty()) {
@@ -355,7 +397,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       if (areChildrenLoaded(id)) return -1; // TODO: hack
     }
 
-    return FSRecords.writeAttributesToRecord(id, parentId, attributes, name.toString(), overwriteMissed);
+    return FSRecords.updateRecordFields(id, parentId, attributes, name.toString(), overwriteMissed);
   }
 
   @Override
@@ -467,7 +509,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return result.get();
   }
 
-  private static ChildInfo findExistingChildInfo(@NotNull VirtualFile parent, @NotNull String childName, @NotNull List<? extends ChildInfo> children) {
+  private static ChildInfo findExistingChildInfo(@NotNull VirtualFile parent,
+                                                 @NotNull String childName,
+                                                 @NotNull List<? extends ChildInfo> children) {
     if (children.isEmpty()) {
       return null;
     }
@@ -504,7 +548,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
-  public @NotNull VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile parent, @NotNull String name) throws IOException {
+  public @NotNull VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile parent, @NotNull String name)
+    throws IOException {
     getFileSystem(file).copyFile(requestor, file, parent, name);
     processEvent(new VFileCopyEvent(requestor, file, parent, name));
 
@@ -665,7 +710,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       long storedLength = getLengthIfUpToDate(file);
       boolean mustReloadLength = storedLength == -1;
 
-      if (mustReloadLength || mustReloadContent(file) || FileUtilRt.isTooLarge(file.getLength()) || (contentStream = readContent(file)) == null) {
+      if (mustReloadLength
+          || mustReloadContent(file)
+          || FileUtilRt.isTooLarge(file.getLength())
+          || (contentStream = readContent(file)) == null) {
         NewVirtualFileSystem fs = getFileSystem(file);
         len = mustReloadLength ? reloadLengthFromFS(file, fs) : storedLength;
         contentStream = fs.getInputStream(file);
@@ -928,7 +976,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                  @NotNull MostlySingularMultiMap<String, VFileEvent> filesInvolved,
                                  @NotNull Set<? super String> middleDirsInvolved,
                                  @NotNull Set<? super VirtualFile> deleted,
-                                 @NotNull Map<VirtualDirectoryImpl, Object> toCreate,// dir -> VFileCreateEvent|Collection<VFileCreateEvent> in this dir
+                                 @NotNull Map<VirtualDirectoryImpl, Object> toCreate,
+                                 // dir -> VFileCreateEvent|Collection<VFileCreateEvent> in this dir
                                  @NotNull Set<? super VFileEvent> eventsToRemove) {
     // storing all paths from all events (including all parents),
     // checking each new event's path against this set, and if it's there, this event is conflicting
@@ -948,7 +997,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         }
         else {
           if (createEvents instanceof VFileCreateEvent prevEvent) {
-            Set<VFileCreateEvent> children = parent.isCaseSensitive() ? new LinkedHashSet<>() : CollectionFactory.createLinkedCustomHashingStrategySet(CASE_INSENSITIVE_STRATEGY);
+            Set<VFileCreateEvent> children = parent.isCaseSensitive()
+                                             ? new LinkedHashSet<>()
+                                             : CollectionFactory.createLinkedCustomHashingStrategySet(CASE_INSENSITIVE_STRATEGY);
             children.add(prevEvent);
             toCreate.put(parent, children);
             createEvents = children;
@@ -979,10 +1030,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private static String getAlternativePath(@NotNull VFileEvent event) {
-    if (event instanceof VFilePropertyChangeEvent pce && ((VFilePropertyChangeEvent)event).getPropertyName().equals(VirtualFile.PROP_NAME)) {
+    if (event instanceof VFilePropertyChangeEvent pce
+        && ((VFilePropertyChangeEvent)event).getPropertyName().equals(VirtualFile.PROP_NAME)) {
       VirtualFile parent = pce.getFile().getParent();
       String newName = (String)pce.getNewValue();
-      return parent == null ? newName : parent.getPath()+"/"+newName;
+      return parent == null ? newName : parent.getPath() + "/" + newName;
     }
     if (event instanceof VFileCopyEvent) {
       return ((VFileCopyEvent)event).getFile().getPath();
@@ -1031,7 +1083,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     files.add(path, event);
     int li = path.length();
     while (true) {
-      int liPrev = path.lastIndexOf('/', li-1);
+      int liPrev = path.lastIndexOf('/', li - 1);
       if (liPrev == -1) break;
       String parentDir = path.substring(0, liPrev);
       if (files.containsKey(parentDir)) {
@@ -1049,7 +1101,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     if (event instanceof VFileContentChangeEvent) return true;
     if (event instanceof VFilePropertyChangeEvent) {
       String p = ((VFilePropertyChangeEvent)event).getPropertyName();
-      return p.equals(VirtualFile.PROP_WRITABLE) || p.equals(VirtualFile.PROP_ENCODING) || p.equals(VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY);
+      return p.equals(VirtualFile.PROP_WRITABLE) ||
+             p.equals(VirtualFile.PROP_ENCODING) ||
+             p.equals(VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY);
     }
     return false;
   }
@@ -1070,7 +1124,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                @NotNull Set<? super VirtualFile> toDelete,
                                boolean excludeAsyncListeners) {
     int endIndex = groupByPath(events, startIndex, filesInvolved, middleDirsInvolved, toDelete, toCreate, toIgnore);
-    assert endIndex > startIndex : events.get(startIndex) +"; files: "+filesInvolved+"; middleDirs: "+middleDirsInvolved;
+    assert endIndex > startIndex : events.get(startIndex) + "; files: " + filesInvolved + "; middleDirs: " + middleDirsInvolved;
     // since all events in the group events[`startIndex`..`endIndex`) are mutually non-conflicting, we can re-arrange creations/deletions together
     groupCreations(outValidatedEvents, outApplyActions, toCreate);
     groupDeletions(events, startIndex, endIndex, outValidatedEvents, outApplyActions, toIgnore);
@@ -1201,7 +1255,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       toCreate.clear();
       toIgnore.clear();
       toDelete.clear();
-      startIndex = groupAndValidate(events, startIndex, applyActions, validated, files, middleDirs, toCreate, toIgnore, toDelete, excludeAsyncListeners);
+      startIndex = groupAndValidate(events, startIndex, applyActions, validated, files, middleDirs, toCreate, toIgnore, toDelete,
+                                    excludeAsyncListeners);
 
       if (!validated.isEmpty()) {
         applyMultipleEvents(publisher, applyActions, validated, excludeAsyncListeners);
@@ -1258,7 +1313,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     runSuppressing(
       () -> publisher.before(toSend),
       () -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).before(toSend),
-      ()->{}
+      () -> {
+      }
     );
   }
 
@@ -1309,11 +1365,13 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
   }
 
-  private void applyCreateEventsInDirectory(@NotNull VirtualDirectoryImpl parent, @NotNull Collection<? extends VFileCreateEvent> createEvents) {
+  private void applyCreateEventsInDirectory(@NotNull VirtualDirectoryImpl parent,
+                                            @NotNull Collection<? extends VFileCreateEvent> createEvents) {
     int parentId = getFileId(parent);
     NewVirtualFile vf = findFileById(parentId);
     if (!(vf instanceof VirtualDirectoryImpl)) return;
-    parent = (VirtualDirectoryImpl)vf;  // retain in `myIdToDirCache` at least for the duration of this block, so that subsequent `findFileById` won't crash
+    parent =
+      (VirtualDirectoryImpl)vf;  // retain in `myIdToDirCache` at least for the duration of this block, so that subsequent `findFileById` won't crash
     NewVirtualFileSystem fs = getFileSystem(parent);
 
     List<ChildInfo> childrenAdded = new ArrayList<>(createEvents.size());
@@ -1330,7 +1388,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     childrenAdded.sort(ChildInfo.BY_ID);
     boolean caseSensitive = parent.isCaseSensitive();
     FSRecords.update(parent, parentId, oldChildren -> oldChildren.merge(childrenAdded, caseSensitive));
-    parent.createAndAddChildren(childrenAdded, false, (__,___)->{});
+    parent.createAndAddChildren(childrenAdded, false, (__, ___) -> {
+    });
 
     saveScannedChildrenRecursively(createEvents, fs, parent.isCaseSensitive());
   }
@@ -1388,6 +1447,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       return null;
     }
 
+    //RC: Why do we strip the trailing '/'? This makes rootUrl not a correct URL anymore, e.g.:
+    //   'file:///' -> 'file:'
+    //   'jar:///rt.jar!/' -> 'jar:///rt.jar!'
     String rootUrl = UriUtil.trimTrailingSlashes(VirtualFileManager.constructUrl(fs.getProtocol(), path));
     VirtualFileSystemEntry root = myRoots.get(rootUrl);
     if (root != null) return root;
@@ -1396,14 +1458,21 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     String rootPath;
     FileAttributes attributes;
     if (fs instanceof ArchiveFileSystem afs) {
+      //RC: I suspect that in most cases this will be an identity transformation:
+      //   path(/x/y/z.jar!/) -> localFile(/x/y/z.jar) -> rootPath(/x/y/z.jar!/)
+      //   So this branch is basically assigns rootName to jar-file name (instead of root path)
+      //   and attributes to _archive_ attributes, instead of file attributes
       VirtualFile localFile = afs.findLocalByRootPath(path);
       if (localFile == null) return null;
       rootName = localFile.getName();
-      rootPath = afs.getRootPathByLocal(localFile);
+      rootPath = afs.getRootPathByLocal(localFile);// '/x/y/z.jar' -> '/x/y/z.jar!/'
       rootUrl = UriUtil.trimTrailingSlashes(VirtualFileManager.constructUrl(fs.getProtocol(), rootPath));
       attributes = afs.getArchiveRootAttributes(new StubVirtualFile(fs) {
-        @Override public @NotNull String getPath() { return rootPath; }
-        @Override public @Nullable VirtualFile getParent() { return null; }
+        @Override
+        public @NotNull String getPath() { return rootPath; }
+
+        @Override
+        public @Nullable VirtualFile getParent() { return null; }
       });
     }
     else {
@@ -1415,7 +1484,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       return null;
     }
     // assume roots have the FS default case sensitivity
-    attributes = attributes.withCaseSensitivity(fs.isCaseSensitive() ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE);
+    attributes = attributes.withCaseSensitivity(
+      fs.isCaseSensitive() ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE);
     // avoid creating gazillions of roots which are not actual roots
     String parentPath;
     if (fs instanceof LocalFileSystem && !(parentPath = PathUtil.getParentPath(rootPath)).isEmpty()) {
@@ -1426,7 +1496,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       }
     }
 
-    int rootId = FSRecords.findRootRecord(rootUrl);
+    int rootId = FSRecords.findOrCreateRootRecord(rootUrl);
     FSRecords.loadRootData(rootId, path, fs);
 
     int rootNameId = FileNameCache.storeName(rootName);
@@ -1444,15 +1514,17 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         for (Map.Entry<String, VirtualFileSystemEntry> entry : myRoots.entrySet()) {
           VirtualFileSystemEntry existingRoot = entry.getValue();
           if (existingRoot.getId() == rootId) {
-            String message = "Duplicate FS roots: " + rootUrl + " / " + entry.getKey() + " id=" + rootId + " valid=" + existingRoot.isValid();
+            String message =
+              "Duplicate FS roots: " + rootUrl + " / " + entry.getKey() + " id=" + rootId + " valid=" + existingRoot.isValid();
             throw new RuntimeException(message, e);
           }
         }
-        throw new RuntimeException("No root duplication, rootName='" + rootName + "'; rootNameId=" + rootNameId + "; rootId=" + rootId + ";" +
-                                   " path='" + path + "'; fs=" + fs + "; rootUrl='" + rootUrl + "'", e);
+        throw new RuntimeException(
+          "No root duplication, rootName='" + rootName + "'; rootNameId=" + rootNameId + "; rootId=" + rootId + ";" +
+          " path='" + path + "'; fs=" + fs + "; rootUrl='" + rootUrl + "'", e);
       }
       incStructuralModificationCount();
-      mark = writeAttributesToRecord(rootId, 0, rootName, fs.isCaseSensitive(), attributes, false) != -1;
+      mark = writeAttributesToRecord(rootId, FSRecords.NULL_FILE_ID, rootName, fs.isCaseSensitive(), attributes, false) != -1;
 
       myRoots.put(rootUrl, newRoot);
       myIdToDirCache.cacheDir(newRoot);
@@ -1469,8 +1541,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private static @Nullable FileAttributes loadAttributes(@NotNull NewVirtualFileSystem fs, @NotNull String path) {
     return fs.getAttributes(new StubVirtualFile(fs) {
-      @Override public @NotNull String getPath() { return path; }
-      @Override public @Nullable VirtualFile getParent() { return null; }
+      @Override
+      public @NotNull String getPath() { return path; }
+
+      @Override
+      public @Nullable VirtualFile getParent() { return null; }
     });
   }
 
@@ -1481,9 +1556,259 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
-  public @Nullable NewVirtualFile findFileById(int id) {
-    VirtualFileSystemEntry cached = myIdToDirCache.getCachedDir(id);
-    return cached != null ? cached : FSRecords.findFileById(id, myIdToDirCache);
+  public @Nullable NewVirtualFile findFileById(int fileId) {
+    VirtualFileSystemEntry cached = myIdToDirCache.getCachedDir(fileId);
+    if (cached != null) {
+      return cached;
+    }
+
+    ParentFinder finder = new ParentFinder(FSRecords.implOrFail());
+    return finder.find(fileId);
+  }
+
+  /**
+   * Usually we cache the roots during {@link #findRoot(String, NewVirtualFileSystem)} call, so at a given
+   * moment some roots _could_ be not (yet) cached. So we need to force idToDirCache to cache the root it
+   * misses: (it happens to be easier to force it to cache _all_ the roots it misses, at once)
+   */
+  private void cacheAllMissedRootsFromPersistence(@NotNull FSRecordsImpl fsRecords) {
+    //better to collect roots first, to not spend too much time holding root lock inside .forEachRoot()
+    List<String> missedRootUrls = new ArrayList<>();
+    fsRecords.forEachRoot((rootUrl, rootFileId) -> {
+      if (myIdToDirCache.getCachedRoot(rootFileId) == null) {
+        missedRootUrls.add(rootUrl);
+      }
+    });
+
+    cacheRootsByUrls(missedRootUrls);
+  }
+
+  /**
+   * Usually we cache the roots during {@link #findRoot(String, NewVirtualFileSystem)} call, so at a given
+   * moment some roots _could_ be not (yet) cached. So we need to force idToDirCache to cache the root it
+   * misses
+   */
+  private void cacheSingleMissedRootFromPersistence(@NotNull FSRecordsImpl fsRecords,
+                                                    int rootId) {
+    //better to collect roots first, to not spend too much time holding root lock inside .forEachRoot()
+    List<String> missedRootUrl = new ArrayList<>(1);
+    fsRecords.forEachRoot((rootUrl, rootFileId) -> {
+      if (rootId == rootFileId) {
+        missedRootUrl.add(rootUrl);
+      }
+    });
+
+    cacheRootsByUrls(missedRootUrl);
+  }
+
+  private void cacheRootsByUrls(@NotNull Iterable<String> missedRootUrls) {
+    VirtualFileManager fileManager = VirtualFileManager.getInstance();
+    for (String missedRootUrl : missedRootUrls) {
+      //we truncated all trailing / in the .findRoot(), before putting rootUrl into FSRecords.findOrCreateRoot()
+      // -- so now we need to append it/them back, otherwise some matching in .findRoot() won't happen:
+      if (missedRootUrl.endsWith(":")) {      // 'file:' -> 'file:///'
+        missedRootUrl += "///";
+      }
+      else if (missedRootUrl.endsWith("!")) { // '.../file.jar!' -> '.../file.jar!/'
+        missedRootUrl += '/';
+      }
+      String protocol = VirtualFileManager.extractProtocol(missedRootUrl);
+      VirtualFileSystem fs = fileManager.getFileSystem(protocol);
+      String rootPath = VirtualFileManager.extractPath(missedRootUrl);
+      if (fs instanceof NewVirtualFileSystem) {
+        NewVirtualFile cachedRoot = findRoot(rootPath, (NewVirtualFileSystem)fs);
+        LOG.trace("\tforce caching " + missedRootUrl + " (protocol: " + protocol + ", path: " + rootPath + ") -> " + cachedRoot);
+      }
+      else {
+        if (fs == null) {
+          LOG.warn("\tcan't force caching " + missedRootUrl + " (protocol: " + protocol + ", path: " + rootPath + ") " +
+                   "-> protocol:'" + protocol + "' is not registered (yet?)");
+        }
+        else {
+          LOG.warn("\tcan't force caching " + missedRootUrl + " (protocol: " + protocol + ", path: " + rootPath + ") " +
+                   "-> " + fs + " is not NewVirtualFileSystem");
+        }
+      }
+    }
+  }
+
+
+  /**
+   * We climb up from fileId, collecting parentIds (=path), until find a parent which is already cached
+   * (in idToDirCache). From that (grand)parent we climb down (findDescendantByIdPath) back to fileId,
+   * resolving every child on the way via idToDirCache:
+   */
+  class ParentFinder {
+
+    private final FSRecordsImpl fsRecords;
+
+    /**
+     * List of parentIds towards the root (or first cached directory).
+     * null, if the first parent is already cached
+     */
+    private @Nullable IntList parentIds;
+    private VirtualFileSystemEntry foundParent;
+
+    ParentFinder(@NotNull FSRecordsImpl fsRecords) {
+      this.fsRecords = fsRecords;
+    }
+
+    private void ascendUntilCachedParent(int fileId) {
+      int currentId = fileId;
+
+      while (true) {
+
+        int parentId = fsRecords.getParent(currentId);
+
+        if (parentId != FSRecords.NULL_FILE_ID) {
+          foundParent = myIdToDirCache.getCachedDir(parentId);
+          if (foundParent != null) {
+            return;
+          }
+        }
+        else {
+          //RC: currentId is root, but not cached -- it is OK, root _could_ be not (yet) cached, since
+          //    idToDirCache caches a root only during PersistentFSImpl.findRoot() call -- could be not
+          //    all the roots known to FSRecords were requested at a given moment.
+          //    => we need to force idToDirCache to cache the root it misses:
+          boolean shouldCacheAllRoots = CACHE_MISSED_ROOTS_ALL_AT_ONCE && missedRootsLoaded.compareAndSet(false, true);
+          if (shouldCacheAllRoots || CACHE_MISSED_ROOTS_ONE_BY_ONE) {
+            if (shouldCacheAllRoots) {
+              //Call it only once, because it could be some roots are repeatedly not resolved
+              // because apt FileSystem wasn't registered (yet -- or at all), and this could make
+              // everything slow.
+              // MAYBE: reset missedRootsLoaded if new FileSystem registered?
+              cacheAllMissedRootsFromPersistence(fsRecords);
+            }
+            else {// if CACHE_MISSED_ROOTS_ONE_BY_ONE
+              cacheSingleMissedRootFromPersistence(fsRecords, currentId);
+            }
+
+            foundParent = myIdToDirCache.getCachedDir(currentId);
+            if (foundParent != null) {
+              //currentId is in the list, but shouldn't be, if it is == foundParent
+              // => remove it
+              if (parentIds != null && !parentIds.isEmpty()) {
+                parentIds.removeInt(parentIds.size() - 1);
+              }
+              else {
+                parentIds = null;
+              }
+              return;
+            }
+          }
+
+
+          //MAYBE RC: i dispite all the efforts the root entry wasn't found/loaded -- it means VFS is corrupted,
+          // and we should throw assertion (VFS rebuild?).
+          // But (it seems) the method .findFileById() is used in an assumption it just returns null if 'incorrect'
+          // fileId is passed in? -- so I keep that legacy behaviour (just log warning with diagnostic) until I'll
+          // be sure all 'legal' cases are covered:
+          logVeryDetailedErrorMessageAboutParentNotFound(currentId, fileId);
+          return;
+        }
+
+
+        if (parentIds != null && (parentIds.size() % 128 == 0 && parentIds.contains(parentId))) {
+          //circularity check is expensive: do it only once-in-a-while, as path became deep enough
+          //  to start to suspect something may be wrong.
+          throw new AssertionError("Cyclic parent-child relations: fileId: " + fileId + ", parentId: " + parentId + ", path: " + parentIds);
+        }
+
+        if (parentIds == null) {
+          parentIds = new IntArrayList(IntArrayList.DEFAULT_INITIAL_CAPACITY);
+        }
+        parentIds.add(parentId);
+
+        currentId = parentId;
+      }
+    }
+
+    private @Nullable VirtualFileSystemEntry findDescendantByIdPath(int fileId) {
+      VirtualFileSystemEntry parent = foundParent;
+      if (parentIds != null) {
+        for (int i = parentIds.size() - 1; i >= 0; i--) {
+          parent = findChild(parent, parentIds.getInt(i));
+        }
+      }
+
+      return findChild(parent, fileId);
+    }
+
+    private @Nullable VirtualFileSystemEntry findChild(VirtualFileSystemEntry parent,
+                                                       int childId) {
+      if (!(parent instanceof VirtualDirectoryImpl)) {
+        return null;
+      }
+      VirtualFileSystemEntry child = ((VirtualDirectoryImpl)parent).doFindChildById(childId);
+      if (child instanceof VirtualDirectoryImpl) {
+        if (child.getId() != childId) {
+          LOG.error("doFindChildById(" + childId + "): " + child + " doesn't have expected id!");
+        }
+        VirtualFileSystemEntry old = myIdToDirCache.cacheDirIfAbsent(child);
+        if (old != null) child = old;
+      }
+      return child;
+    }
+
+    private void logVeryDetailedErrorMessageAboutParentNotFound(int currentId, int startingFileId) {
+      String preRootFileName = fsRecords.getName(currentId);
+      int preRootIdFlags = fsRecords.getFlags(currentId);
+      int startingFileFlags = fsRecords.getFlags(startingFileId);
+
+      FSRecords.THROTTLED_LOG.info(
+        () -> {
+          //Check roots and cachedRoots are consistent
+          IntOpenHashSet cachedRootsIds = new IntOpenHashSet();
+          for (VirtualFileSystemEntry cachedRoot : myIdToDirCache.getCachedRootDirs()) {
+            cachedRootsIds.add(cachedRoot.getId());
+          }
+          IntOpenHashSet rootIds = new IntOpenHashSet();
+          for (final VirtualFile root : PersistentFS.getInstance().getRoots()) {
+            rootIds.add(((VirtualFileWithId)root).getId());
+          }
+          int[] nonCachedRoots = rootIds.intStream()
+            .filter(rootId -> !cachedRootsIds.contains(rootId))
+            .toArray();
+          int[] cachedNonRoots = cachedRootsIds.intStream()
+            .filter(rootId -> !rootIds.contains(rootId))
+            .toArray();
+          int[] fsRootsNonPFSRoots = Arrays.stream(fsRecords.listRoots())
+            .filter(rootId -> !rootIds.contains(rootId))
+            .toArray();
+          boolean fsRootsHasCurrentId = Arrays.stream(fsRecords.listRoots())
+            .anyMatch(rootId -> rootId == currentId);
+
+          StringBuilder sb = new StringBuilder();
+          fsRecords.forEachRoot((rootUrl, rootFileId) -> {
+            if (myIdToDirCache.getCachedDir(rootFileId) == null) {
+              String rootName = fsRecords.getName(rootFileId);
+              sb.append("\t" + rootFileId + ": [name:'" + rootName + "'][url:'" + rootUrl + "']\n");
+            }
+          });
+
+          return
+            "file[" + startingFileId + ", flags: " + startingFileFlags + "]: " +
+            "top parent (id: " + currentId + ", name: '" + preRootFileName + "', flags: " + preRootIdFlags + " parent: 0), " +
+            "is still not in the idToDirCache. " +
+            "path: " + parentIds + ", cachedRoots.size(=" + cachedRootsIds.size() + "), roots.size(=" + rootIds.size() + "), " +
+            "pfs.roots.contains(" + currentId + ")=" + rootIds.contains(currentId) + ", " +
+            "fs.roots.contains(" + currentId + ")=" + fsRootsHasCurrentId + ", " +
+            "non-cached roots: " + nonCachedRoots.length + ", cached non-roots: " + cachedNonRoots.length + ", " +
+            "FS roots not PFS roots: " + fsRootsNonPFSRoots.length + ": \n" + sb;
+        }
+      );
+    }
+
+    public NewVirtualFile find(int fileId) {
+      try {
+        ascendUntilCachedParent(fileId);
+      }
+      catch (Exception e) {
+        throw fsRecords.handleError(e);
+      }
+      return findDescendantByIdPath(fileId);
+    }
   }
 
   @Override
@@ -1651,6 +1976,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   public static void moveChildrenRecords(int fromParentId, int toParentId) {
     if (fromParentId == -1) return;
+    if (fromParentId == FSRecords.NULL_FILE_ID) {
+      throw new AssertionError("Move(" + fromParentId + " -> " + toParentId + "): can't move root to become non-root");
+    }
 
     for (ChildInfo childToMove : FSRecords.list(fromParentId).children) {
       FSRecords.setParent(childToMove.getId(), toParentId);
@@ -1680,7 +2008,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private void executeDelete(@NotNull VFileDeleteEvent event) {
     VirtualFile file = event.getFile();
     if (!file.exists()) {
-      LOG.error("Deleting a file which does not exist: " +((VirtualFileWithId)file).getId()+ " "+file.getPath());
+      LOG.error("Deleting a file which does not exist: " + ((VirtualFileWithId)file).getId() + " " + file.getPath());
       return;
     }
     clearIdCache();
