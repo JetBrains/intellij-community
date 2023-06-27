@@ -59,14 +59,21 @@ object ChooserPopupUtil {
   suspend fun <T> showAsyncChooserPopup(point: RelativePoint,
                                         itemsLoader: suspend () -> List<T>,
                                         presenter: (T) -> PopupItemPresentation,
+                                        popupConfig: PopupConfig = PopupConfig.DEFAULT): T? =
+    showAsyncChooserPopup(point, itemsLoader, { presenter(it).shortText }, createSimpleItemRenderer(presenter), popupConfig)
+
+  suspend fun <T> showAsyncChooserPopup(point: RelativePoint,
+                                        itemsLoader: suspend () -> List<T>,
+                                        filteringMapper: (T) -> String,
+                                        renderer: ListCellRenderer<T>,
                                         popupConfig: PopupConfig = PopupConfig.DEFAULT): T? {
     val listModel = CollectionListModel<T>()
-    val list = createList(listModel, createSimpleItemRenderer(presenter))
+    val list = createList(listModel, renderer)
     val loadingListener = ListLoadingListener(listModel, itemsLoader, list)
 
     @Suppress("UNCHECKED_CAST")
     val popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
-      .setFilteringEnabled { presenter(it as T).shortText }
+      .setFilteringEnabled { filteringMapper(it as T) }
       .setResizable(true)
       .setMovable(true)
       .setFilterAlwaysVisible(popupConfig.alwaysShowSearchField)
@@ -78,7 +85,6 @@ object ChooserPopupUtil {
     PopupUtil.setPopupToggleComponent(popup, point.component)
     return popup.showAndAwaitSubmission(list, point)
   }
-
 
 
   suspend fun <T> JBPopup.showAndAwaitListSubmission(point: RelativePoint): T? {
