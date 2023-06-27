@@ -133,6 +133,13 @@ abstract class ComponentStoreImpl : IComponentStore {
         component.initializeComponent()
       }
       else if (loadPolicy == StateLoadPolicy.LOAD && component is com.intellij.openapi.util.JDOMExternalizable) {
+        if (component.javaClass.name !in ignoredDeprecatedJDomExternalizableComponents) {
+          LOG.error(PluginException("""
+          |Component ${component.javaClass.name} implements deprecated JDOMExternalizable interface to serialize its state.
+          |IntelliJ Platform will stop supporting such components in the future, so it must be migrated to use PersistentStateComponent.
+          |See https://plugins.jetbrains.com/docs/intellij/persisting-state-of-components.html for details.
+          """.trimMargin(), pluginId))
+        }
         componentName = getComponentName(component)
         val componentInfo = createComponentInfo(component = component, stateSpec = null, serviceDescriptor = null)
         val element = storageManager.getOldStorage(component, componentName, StateStorageOperation.READ)
@@ -688,6 +695,14 @@ private fun findNonDeprecated(storages: List<Storage>): Storage {
 enum class StateLoadPolicy {
   LOAD, LOAD_ONLY_DEFAULT, NOT_LOAD
 }
+
+/**
+ * Provides a way to temporarily ignore a known component extending deprecated JDOMExternalizable interface to avoid having unnecessary
+ * errors in the log. Each entry must be accompanied by a link to the corresponding YouTrack issue.
+ */
+private val ignoredDeprecatedJDomExternalizableComponents = setOf(
+  "jetbrains.buildServer.codeInspection.InspectionPassRegistrar", //TW-82189
+)
 
 internal fun sortStoragesByDeprecated(storages: List<Storage>): List<Storage> {
   if (storages.size < 2) {
