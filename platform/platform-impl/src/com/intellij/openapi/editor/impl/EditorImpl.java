@@ -1993,6 +1993,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void setHeaderComponent(JComponent header) {
+    JComponent oldComponent = getHeaderComponent();
     myHeaderPanel.removeAll();
     JComponent permanentHeader = getPermanentHeaderComponent();
     if (header == null) {
@@ -2005,6 +2006,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       header = headerPanel;
     }
     if (header != null) {
+      myPropertyChangeSupport.firePropertyChange(PROP_HEADER_COMPONENT, oldComponent, header);
       myHeaderPanel.add(header);
     }
 
