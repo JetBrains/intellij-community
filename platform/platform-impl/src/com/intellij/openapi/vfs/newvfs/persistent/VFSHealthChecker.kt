@@ -17,7 +17,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckerConstants.HEAL
 import com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckerConstants.LOG
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.BitUtil
-import com.intellij.util.SystemProperties
 import com.intellij.util.SystemProperties.getBooleanProperty
 import com.intellij.util.SystemProperties.getIntProperty
 import com.intellij.util.io.DataEnumeratorEx
@@ -297,8 +296,10 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
           }
 
           //TODO RC: try read _all_ attributes, check all them are readable
+          //TODO RC: check attribute storage _has_ such a record (not deleted)
           //if(attributeRecordId!=AbstractAttributesStorage.NON_EXISTENT_ATTR_RECORD_ID) {
-          //  TODO RC: check attribute storage _has_ such a record (not deleted)
+            //connection.attributes.forEachAttribute(connection, fileId){
+            //}
           //}
 
         }

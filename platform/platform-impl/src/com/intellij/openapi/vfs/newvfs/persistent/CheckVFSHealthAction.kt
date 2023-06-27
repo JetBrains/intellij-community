@@ -8,32 +8,30 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.progress.ModalTaskOwner
-import com.intellij.openapi.progress.TaskCancellation
-import com.intellij.openapi.progress.withModalProgress
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.*
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
+
+//Just to get coroutineScope
+@ApiStatus.Internal
+@Service
+class CheckVFSHealthService(val coroutineScope: CoroutineScope)
+
 
 internal class CheckVFSHealthAction : AnAction() {
-
   override fun actionPerformed(e: AnActionEvent) {
-    val cs = CoroutineScope(SupervisorJob())
-    cs.launch {
-      //withBackgroundProgress(project, ActionsBundle.message("action.CheckVfsSanity.progress"), cancellable = false) {
-      //Use modal dialog to prevent calling more than once:
-      withModalProgress(ModalTaskOwner.guess(), ActionsBundle.message("action.CheckVfsSanity.progress"), TaskCancellation.nonCancellable() ){
-        val checker = VFSHealthChecker(FSRecords.implOrFail(), FSRecords.LOG)
-        val report = checker.checkHealth()
-        FSRecords.LOG.info("VFS health check report: $report")
 
-        //run an old version still -- to compare:
-        try {
-          FSRecords.checkSanity()
-        }
-        catch (t: Throwable){
-          FSRecords.LOG.warn("VFS health check: old sanity-checking version", t)
-        }
+    service<CheckVFSHealthService>().coroutineScope.launch(Dispatchers.IO) {
+      //Use modal dialog to prevent calling more than once:
+      withModalProgress(ModalTaskOwner.guess(),
+                        ActionsBundle.message("action.CheckVfsSanity.progress"),
+                        TaskCancellation.nonCancellable()) {
+        val checker = VFSHealthChecker(FSRecords.implOrFail(), FSRecords.LOG)
+        checker.checkHealth()
       }
     }
   }
