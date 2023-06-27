@@ -273,7 +273,7 @@ public final class HighlightUtil {
             HighlightInfo.Builder errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
               .range(conjunct)
               .descriptionAndTooltip(JavaErrorBundle.message("interface.expected"));
-            IntentionAction action = new FlipIntersectionSidesFix(aClass.getName(), conjunct, castTypeElement);
+            var action = new FlipIntersectionSidesFix(aClass.getName(), conjunct, castTypeElement);
             errorResult.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(null), null, null);
             return errorResult;
           }
@@ -287,7 +287,7 @@ public final class HighlightUtil {
           HighlightInfo.Builder highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
             .range(conjunct)
             .descriptionAndTooltip(JavaErrorBundle.message("repeated.interface"));
-          IntentionAction action = new DeleteRepeatedInterfaceFix(conjunct);
+          var action = new DeleteRepeatedInterfaceFix(conjunct);
           highlightInfo.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(null), null, null);
           return highlightInfo;
         }

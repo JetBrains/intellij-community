@@ -283,13 +283,13 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createDeleteMultiCatchFix(@NotNull PsiTypeElement element) {
-    return new DeleteMultiCatchFix(element);
+    return new DeleteMultiCatchFix(element).asIntention();
   }
 
   @NotNull
   @Override
   public IntentionAction createConvertSwitchToIfIntention(@NotNull PsiSwitchStatement statement) {
-    return new ConvertSwitchToIfIntention(statement);
+    return new ConvertSwitchToIfIntention(statement).asIntention();
   }
 
   @NotNull
@@ -476,7 +476,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createDeleteMethodBodyFix(@NotNull PsiMethod method) {
-    return new DeleteMethodBodyFix(method);
+    return new DeleteMethodBodyFix(method).asIntention();
   }
 
   @NotNull
@@ -830,7 +830,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction createSurroundWithQuotesAnnotationParameterValueFix(@NotNull PsiAnnotationMemberValue value,
                                                                              @NotNull PsiType expectedType) {
-    return new SurroundWithQuotesAnnotationParameterValueFix(value, expectedType);
+    return new SurroundWithQuotesAnnotationParameterValueFix(value, expectedType).asIntention();
   }
 
   @NotNull
@@ -904,7 +904,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   public IntentionAction createCollectionToArrayFix(@NotNull PsiExpression collectionExpression,
                                                     @NotNull PsiExpression expressionToReplace,
                                                     @NotNull PsiArrayType arrayType) {
-    return new ConvertCollectionToArrayFix(collectionExpression, expressionToReplace, arrayType);
+    return new ConvertCollectionToArrayFix(collectionExpression, expressionToReplace, arrayType).asIntention();
   }
 
   @NotNull
@@ -1056,7 +1056,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @Override
   public @NotNull IntentionAction createRemoveDuplicateExtendsAction(@NotNull String className) {
-    return new UnimplementInterfaceAction.RemoveDuplicateExtendFix(className);
+    return new UnimplementInterfaceAction.RemoveDuplicateExtendFix(className).asIntention();
   }
 
   @Override

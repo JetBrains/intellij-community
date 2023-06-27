@@ -1,24 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.singlereturn;
 
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,34 +22,19 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-import static com.intellij.util.ObjectUtils.tryCast;
-
-public class ConvertToSingleReturnAction extends PsiElementBaseIntentionAction {
-
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    PsiCodeBlock block = findBlock(element);
-    if (block == null) return;
-
-    ThrowableComputable<PsiCodeBlock, RuntimeException> bodyGenerator = 
-      () -> generateBody(project, block, ProgressManager.getInstance().getProgressIndicator());
-    PsiCodeBlock replacement = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> ReadAction.compute(bodyGenerator), JavaBundle.message("intention.convert.to.single.return.progress.title"), true, project);
-    if (replacement != null) {
-      Runnable action = () -> CodeStyleManager.getInstance(project).reformat(block.replace(replacement));
-      WriteCommandAction.runWriteCommandAction(project, JavaBundle.message("intention.convert.to.single.return.command.text"), null, action, element.getContainingFile());
-    }
+public class ConvertToSingleReturnAction extends PsiUpdateModCommandAction<PsiParameterListOwner> {
+  
+  public ConvertToSingleReturnAction() {
+    super(PsiParameterListOwner.class);
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiElement element = getElement(editor, file);
-    PsiCodeBlock block = findBlock(element);
-    if (block == null) return IntentionPreviewInfo.EMPTY;
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiParameterListOwner element, @NotNull ModPsiUpdater updater) {
+    if (!(element.getBody() instanceof PsiCodeBlock block)) return;
+    Project project = context.project();
     PsiCodeBlock replacement = generateBody(project, block, new EmptyProgressIndicator());
-    if (replacement == null) return IntentionPreviewInfo.EMPTY;
+    if (replacement == null) return;
     CodeStyleManager.getInstance(project).reformat(block.replace(replacement));
-    return IntentionPreviewInfo.DIFF;
   }
 
   @Nullable
@@ -105,29 +85,12 @@ public class ConvertToSingleReturnAction extends PsiElementBaseIntentionAction {
   }
 
   @Override
-  public boolean startInWriteAction() {
-    return false;
-  }
-
-  @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    PsiCodeBlock block = findBlock(element);
-    if (block == null) return false;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiParameterListOwner owner) {
+    if (PsiTreeUtil.getParentOfType(context.findLeaf(), PsiParameterListOwner.class, true, PsiCodeBlock.class) != owner) return null;
+    if (!(owner.getBody() instanceof PsiCodeBlock block)) return null;
     PsiType returnType = PsiTypesUtil.getMethodReturnType(block);
-    return returnType != null && getNonTerminalReturn(block) != null;
-  }
-
-  @NotNull
-  @Override
-  public String getText() {
-    return getFamilyName();
-  }
-
-  @Nullable
-  private static PsiCodeBlock findBlock(@Nullable PsiElement element) {
-    PsiParameterListOwner owner = PsiTreeUtil.getParentOfType(element, PsiParameterListOwner.class, false, PsiCodeBlock.class);
-    if (owner == null) return null;
-    return tryCast(owner.getBody(), PsiCodeBlock.class);
+    if (returnType == null || getNonTerminalReturn(block) == null) return null;
+    return Presentation.of(getFamilyName());
   }
 
   private static PsiReturnStatement getNonTerminalReturn(@NotNull PsiCodeBlock block) {
