@@ -30,7 +30,10 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModCommandService;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -54,7 +57,6 @@ import com.intellij.psi.stubs.StubTextInconsistencyException;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ThreeState;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -278,21 +280,22 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
                                           @NotNull @NlsContexts.Command String commandName,
                                           @NotNull ModCommandAction commandAction) {
     record ContextAndCommand(@NotNull ModCommandAction.ActionContext context, @NotNull ModCommand command) { }
-    ReadAction.nonBlocking(() -> {
-        ModCommandAction.ActionContext context = chooseContextForAction(hostFile, hostEditor, commandAction);
-        return context == null ? null : new ContextAndCommand(context, commandAction.perform(context));
-      })
-      .finishOnUiThread(ModalityState.defaultModalityState(), contextAndCommand -> {
-        if (contextAndCommand == null) return;
-        ModCommandAction.ActionContext context = contextAndCommand.context();
-        Project project = context.project();
-        IntentionFUSCollector.record(project, commandAction, context.file().getLanguage());
-        CommandProcessor.getInstance().executeCommand(project, () -> {
-          ModCommandService.getInstance().executeInteractively(project, contextAndCommand.command());
-        }, commandName, null);
-      })
-      .expireWhen(() -> hostFile.getProject().isDisposed())
-      .submit(AppExecutorUtil.getAppExecutorService());
+    ThrowableComputable<ContextAndCommand, RuntimeException> computable =
+      () -> ReadAction.nonBlocking(() -> {
+          ModCommandAction.ActionContext context = chooseContextForAction(hostFile, hostEditor, commandAction);
+          return context == null ? null : new ContextAndCommand(context, commandAction.perform(context));
+        })
+        .expireWhen(() -> hostFile.getProject().isDisposed())
+        .executeSynchronously();
+    ContextAndCommand contextAndCommand = ProgressManager.getInstance().
+      runProcessWithProgressSynchronously(computable, commandName, true, hostFile.getProject());
+    if (contextAndCommand == null) return;
+    ModCommandAction.ActionContext context = contextAndCommand.context();
+    Project project = context.project();
+    IntentionFUSCollector.record(project, commandAction, context.file().getLanguage());
+    CommandProcessor.getInstance().executeCommand(project, () -> {
+      ModCommandService.getInstance().executeInteractively(project, contextAndCommand.command());
+    }, commandName, null);
   }
 
   @Nullable
