@@ -22,7 +22,6 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -40,6 +39,7 @@ import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Objects;
 
 public class ReuseOfLocalVariableInspection extends BaseInspection {
@@ -85,9 +85,11 @@ public class ReuseOfLocalVariableInspection extends BaseInspection {
       if (lExpression == null) return;
       final String originalVariableName = lExpression.getText();
       final PsiType type = variable.getType();
-      final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
-      final PsiCodeBlock variableBlock = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
-      final String newVariableName = codeStyleManager.suggestUniqueVariableName(originalVariableName, variableBlock, false);
+      final PsiExpression rhs = assignment.getRExpression();
+      final PsiCodeBlock variableBlock = Objects.requireNonNull(PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class));
+      List<String> names = new VariableNameGenerator(variableBlock, VariableKind.LOCAL_VARIABLE)
+        .byExpression(rhs).byType(type).byName(originalVariableName).generateAll(true);
+      final String newVariableName = names.get(0);
       final SearchScope scope = new LocalSearchScope(assignmentStatement.getParent());
       final Query<PsiReference> query = ReferencesSearch.search(variable, scope, false);
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
@@ -102,7 +104,6 @@ public class ReuseOfLocalVariableInspection extends BaseInspection {
         referenceElement.replace(newExpression);
       }
       CommentTracker commentTracker = new CommentTracker();
-      final PsiExpression rhs = assignment.getRExpression();
       final String rhsText = rhs == null ? "" : commentTracker.text(rhs);
       @NonNls final String newStatementText = type.getCanonicalText() + ' ' + newVariableName + " =  " + rhsText + ';';
 
@@ -111,8 +112,7 @@ public class ReuseOfLocalVariableInspection extends BaseInspection {
       commentTracker.deleteAndRestoreComments(Objects.requireNonNull(assignmentStatement));
       final PsiElement[] elements = declarationStatement.getDeclaredElements();
       final PsiLocalVariable newVariable = (PsiLocalVariable)elements[0];
-      updater.rename(newVariable, new VariableNameGenerator(newVariable, VariableKind.LOCAL_VARIABLE)
-        .byExpression(newVariable.getInitializer()).byType(newVariable.getType()).generateAll(true));
+      updater.rename(newVariable, names);
     }
   }
 
