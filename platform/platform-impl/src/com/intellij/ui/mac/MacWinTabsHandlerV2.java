@@ -26,7 +26,7 @@ import java.util.Objects;
 /**
  * @author Alexander Lobas
  */
-public class MacWinTabsHandlerV2 extends MacWinTabsHandler {
+public final class MacWinTabsHandlerV2 extends MacWinTabsHandler {
   private static final String WINDOW_TABS_CONTAINER = "WINDOW_TABS_CONTAINER_KEY";
 
   static @NotNull JComponent _wrapRootPaneNorthSide(@NotNull JRootPane rootPane, @NotNull JComponent northComponent) {

@@ -16,7 +16,7 @@ import java.awt.*;
  * @author Alexander Lobas
  */
 @SuppressWarnings("unused")
-public class MacFullScreenSupport implements FullScreenSupport {
+public final class MacFullScreenSupport implements FullScreenSupport {
   private FullScreenListener myListener;
   private boolean myIsFullScreen;
 

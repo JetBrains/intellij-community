@@ -17,7 +17,7 @@ import javax.swing.JFrame
 /**
  * @author Alexander Lobas
  */
-object MacFullScreenControlsManager {
+internal object MacFullScreenControlsManager {
   fun enabled(): Boolean = Registry.`is`("apple.awt.newFullScreeControls", true)
 
   fun configureEnable(parentDisposable: Disposable, block: () -> Unit) {

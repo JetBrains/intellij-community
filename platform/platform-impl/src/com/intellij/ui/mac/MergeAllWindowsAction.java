@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac;
 
 import com.intellij.ide.AppLifecycleListener;
@@ -25,7 +25,7 @@ import java.util.Objects;
 /**
  * @author Alexander Lobas
  */
-public class MergeAllWindowsAction extends IdeDependentAction {
+public final class MergeAllWindowsAction extends IdeDependentAction {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {

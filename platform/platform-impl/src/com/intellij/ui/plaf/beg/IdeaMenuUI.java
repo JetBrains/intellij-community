@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.ide.ui.UISettings;
@@ -188,7 +188,7 @@ public class IdeaMenuUI extends BasicMenuUI {
         icon.paintIcon(comp, g, ourIconRect.x, ourIconRect.y);
       }
     }
-    if (s1 != null && s1.length() > 0){
+    if (s1 != null && !s1.isEmpty()){
       if (buttonmodel.isEnabled()){
         if (buttonmodel.isArmed() || buttonmodel.isSelected()){
           g.setColor(selectionForeground);
