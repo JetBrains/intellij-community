@@ -4,6 +4,7 @@ package com.intellij.openapi.externalSystem.autolink
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.createExtensionDisposable
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener.Companion.installAsyncVirtualFileListener
@@ -159,36 +160,41 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
 
   private suspend fun updateNotification(project: Project, projectRoot: String, extension: ExternalSystemUnlinkedProjectAware) {
     when {
-      extension.isLinkedProject(project, projectRoot) -> blockingContext {
+      extension.isLinkedProject(project, projectRoot) ->
         expireNotification(project, projectRoot, extension)
-      }
       extension.hasBuildFiles(project, projectRoot) ->
-        blockingContext {
-          notifyNotification(project, projectRoot, extension)
-        }
+        notifyNotification(project, projectRoot, extension)
       else ->
         expireNotification(project, projectRoot, extension)
     }
   }
 
-  private fun notifyNotification(
+  private suspend fun notifyNotification(
     project: Project,
     externalProjectPath: String,
     extension: ExternalSystemUnlinkedProjectAware
   ) {
-    UnlinkedProjectNotificationAware.getInstance(project)
-      .notificationNotify(extension.createProjectId(externalProjectPath)) {
-        extension.linkAndLoadProject(project, externalProjectPath)
-      }
+    blockingContext {
+      val extensionDisposable = EP_NAME.createExtensionDisposable(extension, project)
+      UnlinkedProjectNotificationAware.getInstance(project)
+        .notificationNotify(extension.createProjectId(externalProjectPath)) {
+          @Suppress("OPT_IN_USAGE")
+          GlobalScope.launch(extensionDisposable) {
+            extension.linkAndLoadProjectAsync(project, externalProjectPath)
+          }
+        }
+    }
   }
 
-  private fun expireNotification(
+  private suspend fun expireNotification(
     project: Project,
     externalProjectPath: String,
     extension: ExternalSystemUnlinkedProjectAware
   ) {
-    UnlinkedProjectNotificationAware.getInstance(project)
-      .notificationExpire(extension.createProjectId(externalProjectPath))
+    blockingContext {
+      UnlinkedProjectNotificationAware.getInstance(project)
+        .notificationExpire(extension.createProjectId(externalProjectPath))
+    }
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
