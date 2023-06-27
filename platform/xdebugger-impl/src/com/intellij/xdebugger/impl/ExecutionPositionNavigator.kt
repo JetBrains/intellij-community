@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
@@ -16,6 +17,7 @@ import com.intellij.util.ui.EDT
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -43,7 +45,7 @@ internal class ExecutionPositionNavigator(
   private val descriptorMutex = Mutex()
 
   init {
-    coroutineScope.launch {
+    coroutineScope.launch(Dispatchers.EDT) {
       updateFlow.collect { isToScrollToPosition ->
         invalidate()
         if (isToScrollToPosition) {

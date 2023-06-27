@@ -59,7 +59,7 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
     showExecutionPointUi(project, uiScope, executionPointVmState)
 
     if (!ApplicationManager.getApplication().isUnitTestMode) {
-      uiScope.launch {
+      uiScope.launch(Dispatchers.EDT) {
         executionPointVmState
           .map { it != null }.distinctUntilChanged()
           .dropWhile { !it }  // ignore initial 'false' value

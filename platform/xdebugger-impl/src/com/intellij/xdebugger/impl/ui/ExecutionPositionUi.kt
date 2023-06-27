@@ -3,6 +3,7 @@
 
 package com.intellij.xdebugger.impl.ui
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -36,7 +37,7 @@ internal fun showExecutionPointUi(project: Project, coroutineScope: CoroutineSco
 }
 
 internal fun showExecutionPositionUi(project: Project, coroutineScope: CoroutineScope, vmFlow: Flow<ExecutionPositionVm?>) {
-  coroutineScope.launch {
+  coroutineScope.launch(Dispatchers.EDT) {
     vmFlow
       .distinctUntilChanged()
       .mapLatest { vm ->
