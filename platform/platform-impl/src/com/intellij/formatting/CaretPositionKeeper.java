@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
  * So, if 'virtual space in editor' is enabled, we save target visual column. Caret indent is ensured otherwise
  */
 public class CaretPositionKeeper {
-  final static Key<CaretPositionKeeper> POSITION_KEEPER_KEY = Key.create("formatter.caret.position.keeper");
 
   Editor      myEditor;
   Document    myDocument;

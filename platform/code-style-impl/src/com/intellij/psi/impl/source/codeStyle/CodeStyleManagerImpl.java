@@ -140,13 +140,16 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
 
     myProject.getMessageBus().syncPublisher(Listener.TOPIC).beforeReformatText(file);
 
-    if (FormatterUtil.isFormatterCalledExplicitly()) {
-      removeEndingWhiteSpaceFromEachRange(file, ranges);
+    try {
+      if (FormatterUtil.isFormatterCalledExplicitly()) {
+        removeEndingWhiteSpaceFromEachRange(file, ranges);
+      }
+
+      FormattingServiceUtil.formatRanges(file, ranges, false);
     }
-
-    FormattingServiceUtil.formatRanges(file, ranges, false);
-
-    myProject.getMessageBus().syncPublisher(Listener.TOPIC).afterReformatText(file);
+    finally {
+      myProject.getMessageBus().syncPublisher(Listener.TOPIC).afterReformatText(file);
+    }
   }
 
   private void ensureDocumentCommitted(@NotNull PsiFile file) {

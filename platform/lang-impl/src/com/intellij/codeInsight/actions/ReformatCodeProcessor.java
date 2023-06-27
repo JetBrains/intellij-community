@@ -182,7 +182,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
         KeptLineFeedsCollector.setup(fileToProcess);
       }
       try {
-        EditorScrollingPositionKeeper.perform(document, true, () -> SlowOperations.allowSlowOperations(() -> {
+        SlowOperations.allowSlowOperations(() -> {
           if (document != null) {
             // In languages that are supported by a non-commit typing assistant (such as C++ and Kotlin),
             // the `document` here can be in an uncommitted state. In the case of an external formatter,
@@ -200,7 +200,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
             Collection<TextRange> ranges = getRangesToFormat(fileToProcess);
             CodeStyleManager.getInstance(myProject).reformatText(fileToProcess, ranges);
           }
-        }));
+        });
       }
       catch (ProcessCanceledException pce) {
         if (before != null) {
