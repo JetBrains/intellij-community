@@ -27,7 +27,7 @@ internal class GHPRSearchPanelViewModel(
   ReviewListSearchPanelViewModelBase<GHPRListSearchValue, GHPRListQuickFilter>(
     scope, historyViewModel,
     emptySearch = GHPRListSearchValue.EMPTY,
-    defaultQuickFilter = Open(currentUser)
+    defaultQuickFilter = AssignedToYou(currentUser)
   ) {
 
   override fun GHPRListSearchValue.withQuery(query: String?) = copy(searchQuery = query)
