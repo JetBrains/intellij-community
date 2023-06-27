@@ -797,10 +797,12 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
               actions.add(() -> highlighter.addHighlights(List.of(rangeInFile), range.getHighlightKey()));
             }
           }
-          return () -> actions.forEach(Runnable::run);
+          return () -> {
+            dropHighlight();
+            actions.forEach(Runnable::run);
+          };
         }
-        return () -> {
-        };
+        return this::dropHighlight;
       }
     }
 

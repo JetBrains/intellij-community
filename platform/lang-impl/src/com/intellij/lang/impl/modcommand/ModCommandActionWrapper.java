@@ -2,6 +2,7 @@
 package com.intellij.lang.impl.modcommand;
 
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
+import com.intellij.codeInsight.intention.CustomizableIntentionAction;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
@@ -15,6 +16,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +27,8 @@ import java.util.Objects;
 /**
  * A bridge from {@link ModCommandAction} to {@link IntentionAction} interface.
  */
-/*package*/ final class ModCommandActionWrapper implements IntentionAction, PriorityAction, Iconable, IntentionActionWithFixAllOption {
+/*package*/ final class ModCommandActionWrapper implements IntentionAction, PriorityAction, Iconable, IntentionActionWithFixAllOption,
+                                                           CustomizableIntentionAction {
   private final @NotNull ModCommandAction myAction;
   private @Nullable ModCommandAction.Presentation myPresentation;
 
@@ -97,6 +100,12 @@ import java.util.Objects;
            IntentionActionWithFixAllOption.super.getOptions() : List.of();
   }
 
+  @Override
+  public @NotNull List<RangeToHighlight> getRangesToHighlight(@NotNull Editor editor, @NotNull PsiFile file) {
+    if (myPresentation == null) return List.of();
+    return ContainerUtil.map(myPresentation.rangesToHighlight(), range -> new RangeToHighlight(file, range.range(), range.highlightKey()));
+  }
+  
   @Override
   public boolean belongsToMyFamily(@NotNull IntentionActionWithFixAllOption action) {
     ModCommandAction unwrapped = ModCommandAction.unwrap(action);

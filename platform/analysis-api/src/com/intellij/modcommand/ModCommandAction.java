@@ -12,15 +12,19 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 import java.util.function.Predicate;
 
 /**
@@ -169,6 +173,17 @@ public interface ModCommandAction extends CommonIntentionAction {
   ) {}
 
   /**
+   * Represents a tuple of a TextRange and TextAttributesKey used for highlighting a specific range of text.
+   *
+   * @param range The TextRange to be highlighted.
+   * @param highlightKey The TextAttributesKey to be used for highlighting the range.
+   */
+  record HighlightRange(
+    @NotNull TextRange range,
+    @NotNull TextAttributesKey highlightKey
+  ) {}
+
+  /**
    * Action presentation
    * 
    * @param name localized name of the action to be displayed in UI
@@ -178,6 +193,7 @@ public interface ModCommandAction extends CommonIntentionAction {
   record Presentation(
     @NotNull @IntentionName String name,
     @NotNull PriorityAction.Priority priority,
+    @NotNull List<HighlightRange> rangesToHighlight,
     @Nullable Icon icon,
     @Nullable FixAllOption fixAllOption
   ) {
@@ -186,7 +202,7 @@ public interface ModCommandAction extends CommonIntentionAction {
      * @return new presentation with updated priority
      */
     public @NotNull Presentation withPriority(@NotNull PriorityAction.Priority priority) {
-      return new Presentation(name, priority, icon, fixAllOption);
+      return new Presentation(name, priority, rangesToHighlight, icon, fixAllOption);
     }
 
     /**
@@ -194,7 +210,7 @@ public interface ModCommandAction extends CommonIntentionAction {
      * @return new presentation with updated icon
      */
     public @NotNull Presentation withIcon(@Nullable Icon icon) {
-      return new Presentation(name, priority, icon, fixAllOption);
+      return new Presentation(name, priority, rangesToHighlight, icon, fixAllOption);
     }
 
     /**
@@ -206,7 +222,20 @@ public interface ModCommandAction extends CommonIntentionAction {
       FixAllOption fixAllOption = new FixAllOption(
         AnalysisBundle.message("intention.name.apply.all.fixes.in.file", thisAction.getFamilyName()),
         action -> action.getClass().equals(thisAction.getClass()));
-      return new Presentation(name, priority, icon, fixAllOption);
+      return new Presentation(name, priority, rangesToHighlight, icon, fixAllOption);
+    }
+
+    /**
+     * @param ranges the ranges to highlight in the current file
+     * @return a presentation that highlights the specified ranges
+     */
+    public @NotNull Presentation withHighlighting(@NotNull HighlightRange @NotNull ... ranges) {
+      return new Presentation(name, priority, List.of(ranges), icon, fixAllOption);
+    }
+    
+    public @NotNull Presentation withHighlighting(@NotNull TextRange @NotNull ... ranges) {
+      List<HighlightRange> highlightRanges = ContainerUtil.map(ranges, r -> new HighlightRange(r, EditorColors.SEARCH_RESULT_ATTRIBUTES));
+      return new Presentation(name, priority, highlightRanges, icon, fixAllOption);
     }
 
     /**
@@ -214,7 +243,7 @@ public interface ModCommandAction extends CommonIntentionAction {
      * @return simple presentation with NORMAL priority and no icon
      */
     public static @NotNull Presentation of(@NotNull @IntentionName String name) {
-      return new Presentation(name, PriorityAction.Priority.NORMAL, null, null);
+      return new Presentation(name, PriorityAction.Priority.NORMAL, List.of(), null, null);
     }
   }
 }

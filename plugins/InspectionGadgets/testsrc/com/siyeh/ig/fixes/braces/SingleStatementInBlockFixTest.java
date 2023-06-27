@@ -1,24 +1,16 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes.braces;
 
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.util.TextRange;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.style.SingleStatementInBlockInspection;
+
+import java.util.List;
 
 /**
  * @author Bas Leijdekkers
@@ -43,6 +35,24 @@ public class SingleStatementInBlockFixTest extends IGQuickFixesTestCase {
   public void testIncompleteIf() { assertQuickfixNotAvailable(getMessage("for")); }
   public void testNestedFor() { assertQuickfixNotAvailable(getMessage("for")); }
   public void testNestedFor2() { doTest("for"); }
+  public void testHighlighting() {
+    myFixture.configureByText("Test.java", """
+      class X {
+        void test(int x) {
+         if(x > 0) {
+            System.out.println<caret>("Positive");
+         }
+        }
+      }""");
+    IntentionAction action = myFixture.findSingleIntention(getMessage("if"));
+    ModCommandAction mcAction = ModCommandAction.unwrap(action);
+    assertNotNull(mcAction);
+    ModCommandAction.Presentation presentation =
+      mcAction.getPresentation(ModCommandAction.ActionContext.from(myFixture.getEditor(), myFixture.getFile()));
+    assertNotNull(presentation);
+    assertEquals(List.of(new ModCommandAction.HighlightRange(TextRange.from(44, 1), EditorColors.DELETED_TEXT_ATTRIBUTES),
+      new ModCommandAction.HighlightRange(TextRange.from(87, 1), EditorColors.DELETED_TEXT_ATTRIBUTES)), presentation.rangesToHighlight());
+  }
 
   @Override
   protected void setUp() throws Exception {

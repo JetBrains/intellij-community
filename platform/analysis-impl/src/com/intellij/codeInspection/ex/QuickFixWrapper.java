@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -235,9 +236,20 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
              containingFile.getViewProvider().getVirtualFile().equals(context.file().getViewProvider().getVirtualFile()))) {
         return null;
       }
-      return Presentation.of(myFix.getName())
-        .withPriority(myFix instanceof PriorityAction ? ((PriorityAction)myFix).getPriority() : Priority.NORMAL)
-        .withIcon(myFix instanceof Iconable ? ((Iconable)myFix).getIcon(0) : null);
+      Presentation presentation = Presentation.of(myFix.getName());
+      List<RangeToHighlight> highlight = myFix.getRangesToHighlight(context.project(), myDescriptor);
+      if (!highlight.isEmpty()) {
+        HighlightRange[] ranges = ContainerUtil.map2Array(highlight, HighlightRange.class,
+                                                          r -> new HighlightRange(r.getRangeInFile(), r.getHighlightKey()));
+        presentation = presentation.withHighlighting(ranges);
+      }
+      if (myFix instanceof Iconable iconable) {
+        presentation = presentation.withIcon(iconable.getIcon(0));
+      }
+      if (myFix instanceof PriorityAction priorityAction) {
+        presentation = presentation.withPriority(priorityAction.getPriority());
+      }
+      return presentation;
     }
 
     @Override
