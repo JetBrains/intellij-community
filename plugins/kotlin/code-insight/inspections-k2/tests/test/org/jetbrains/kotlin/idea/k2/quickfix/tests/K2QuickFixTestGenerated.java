@@ -830,6 +830,16 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("finalizeNotReal.kt")
+        public void testFinalizeNotReal() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/protectedInFinal/finalizeNotReal.kt");
+        }
+
+        @TestMetadata("finalizeNotRealImplicitReturnInt.kt")
+        public void testFinalizeNotRealImplicitReturnInt() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/protectedInFinal/finalizeNotRealImplicitReturnInt.kt");
+        }
+
         @TestMetadata("protected.kt")
         public void testProtected() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/protectedInFinal/protected.kt");

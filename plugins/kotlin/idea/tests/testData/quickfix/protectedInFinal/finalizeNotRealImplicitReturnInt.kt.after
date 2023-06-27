@@ -1,0 +1,4 @@
+// "Make private" "true"
+class Op {
+    private fun finalize() = 1
+}

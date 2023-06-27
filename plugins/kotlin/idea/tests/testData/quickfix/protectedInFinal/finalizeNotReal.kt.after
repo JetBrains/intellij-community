@@ -1,0 +1,4 @@
+// "Make class open" "true"
+open class Op {
+    protected fun finalize(): Int {return 1}
+}
