@@ -3,7 +3,6 @@ package com.intellij.collaboration.ui.codereview.comment
 
 import com.intellij.CommonBundle
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.colors.EditorColors
@@ -36,16 +35,20 @@ object CodeReviewCommentUIUtil {
   }
 
   fun createEditorInlayPanel(component: JComponent): JPanel {
-    val roundedLineBorder = IdeBorderFactory.createRoundedBorder(EDITOR_INLAY_PANEL_ARC)
+    val roundedLineBorder = IdeBorderFactory.createRoundedBorder(EDITOR_INLAY_PANEL_ARC).apply {
+      setColor(JBColor.lazy {
+        val scheme = EditorColorsManager.getInstance().globalScheme
+        scheme.getColor(EditorColors.TEARLINE_COLOR) ?: JBColor.border()
+      })
+    }
     return RoundedPanel(BorderLayout(), EDITOR_INLAY_PANEL_ARC - 2).apply {
       border = roundedLineBorder
+      background = JBColor.lazy {
+        val scheme = EditorColorsManager.getInstance().globalScheme
+        scheme.defaultBackground
+      }
       add(component)
     }.also {
-      CollaborationToolsUIUtil.overrideUIDependentProperty(it) {
-        val scheme = EditorColorsManager.getInstance().globalScheme
-        background = scheme.defaultBackground
-        roundedLineBorder.setColor(scheme.getColor(EditorColors.TEARLINE_COLOR) ?: JBColor.border())
-      }
       component.addComponentListener(object : ComponentAdapter() {
         override fun componentResized(e: ComponentEvent?) =
           it.dispatchEvent(ComponentEvent(component, ComponentEvent.COMPONENT_RESIZED))

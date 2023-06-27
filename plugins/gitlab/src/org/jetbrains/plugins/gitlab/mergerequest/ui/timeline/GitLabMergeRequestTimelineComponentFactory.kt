@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.ColorUtil
+import com.intellij.ui.JBColor
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.panels.ListLayout
@@ -91,8 +92,9 @@ internal object GitLabMergeRequestTimelineComponentFactory {
     return ScrollPaneFactory.createScrollPane(timelinePanel, true).apply {
       horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
       viewport.isOpaque = false
-      CollaborationToolsUIUtil.overrideUIDependentProperty(this) {
-        background = EditorColorsManager.getInstance().globalScheme.defaultBackground
+      background = JBColor.lazy {
+        val scheme = EditorColorsManager.getInstance().globalScheme
+        scheme.defaultBackground
       }
     }.also {
       UiNotifyConnector.doWhenFirstShown(it) {

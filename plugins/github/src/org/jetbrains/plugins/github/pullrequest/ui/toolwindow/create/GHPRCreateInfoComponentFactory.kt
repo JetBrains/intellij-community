@@ -13,10 +13,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.text.HtmlBuilder
-import com.intellij.ui.*
+import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.HyperlinkAdapter
+import com.intellij.ui.IdeBorderFactory
+import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
+import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
@@ -123,24 +127,20 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
       background = UIUtil.getListBackground()
       border = BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM),
                                                   JBUI.Borders.empty(8))
+      font = JBFont.label()
       emptyText.text = GithubBundle.message("pull.request.create.title")
       lineWrap = true
     }.also {
-      CollaborationToolsUIUtil.overrideUIDependentProperty(it) {
-        font = StartupUiUtil.labelFont
-      }
       CollaborationToolsUIUtil.registerFocusActions(it)
     }
 
     val descriptionField = JBTextArea(descriptionDocument).apply {
       background = UIUtil.getListBackground()
       border = JBUI.Borders.empty(8, 8, 0, 8)
+      font = JBFont.label()
       emptyText.text = GithubBundle.message("pull.request.create.description")
       lineWrap = true
     }.also {
-      CollaborationToolsUIUtil.overrideUIDependentProperty(it) {
-        font = StartupUiUtil.labelFont
-      }
       CollaborationToolsUIUtil.registerFocusActions(it)
     }
     descriptionDocument.addAndInvokeEnabledStateListener {

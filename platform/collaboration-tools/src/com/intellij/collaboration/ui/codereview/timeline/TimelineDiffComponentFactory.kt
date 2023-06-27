@@ -225,8 +225,9 @@ object TimelineDiffComponentFactory {
 
     return RoundedPanel(ListLayout.vertical(0), 8).apply {
       add(cs.createFileNameComponent(filePath, expandCollapseButton, fileNameClickListener))
-      CollaborationToolsUIUtil.overrideUIDependentProperty(this) {
-        background = EditorColorsManager.getInstance().globalScheme.defaultBackground
+      background = JBColor.lazy {
+        val scheme = EditorColorsManager.getInstance().globalScheme
+        scheme.defaultBackground
       }
 
       bindChildIn(cs, collapseVm.collapsed) { collapsed ->
