@@ -1,6 +1,4 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:OptIn(FlowPreview::class)
-
 package com.intellij.openapi.wm.impl
 
 import com.intellij.DynamicBundle
@@ -8,7 +6,6 @@ import com.intellij.diagnostic.runActivity
 import com.intellij.diagnostic.subtask
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.UISettings
-import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.PopupMenuPreloader
@@ -32,16 +29,11 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.debounce
 import java.awt.*
 import java.awt.event.MouseEvent
 import java.awt.geom.AffineTransform
 import javax.swing.*
 import javax.swing.border.Border
-import kotlin.time.Duration.Companion.milliseconds
 
 internal enum class IdeMenuBarState {
   EXPANDED,
@@ -58,8 +50,6 @@ internal enum class IdeMenuBarState {
 open class IdeMenuBar internal constructor(@JvmField protected val coroutineScope: CoroutineScope, frame: JFrame) : JMenuBar() {
   private val menuBarHelper: IdeMenuBarHelper
   private val timerListener = MyTimerListener(this)
-
-  private val updateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   @JvmField
   internal var activated = false
@@ -79,12 +69,29 @@ open class IdeMenuBar internal constructor(@JvmField protected val coroutineScop
       }
     }
 
+    val facade = object : IdeMenuBarHelper.MenuBarImpl {
+      override val coroutineScope: CoroutineScope
+        get() = this@IdeMenuBar.coroutineScope
+      override val isDarkMenu: Boolean
+        get() = this@IdeMenuBar.isDarkMenu
+      override val component: JComponent
+        get() = this@IdeMenuBar
+
+      override fun updateGlobalMenuRoots() {
+        this@IdeMenuBar.updateGlobalMenuRoots()
+      }
+
+      override suspend fun getMainMenuActionGroup(): ActionGroup? {
+        return getMainMenuActionGroupAsync(rootPane)
+      }
+    }
+
     screenMenuPeer = runActivity("ide menu bar init") { createScreeMenuPeer(frame) }
     if (screenMenuPeer == null) {
-      menuBarHelper = IdeMenuBarHelper(flavor = flavor, isDarkMenu = ::isDarkMenu)
+      menuBarHelper = IdeMenuBarHelper(flavor = flavor, menuBar = facade)
     }
     else {
-      menuBarHelper = PeerBasedIdeMenuBarHelper(screenMenuPeer = screenMenuPeer, flavor = flavor, isDarkMenu = ::isDarkMenu)
+      menuBarHelper = PeerBasedIdeMenuBarHelper(screenMenuPeer = screenMenuPeer, flavor = flavor, menuBar = facade)
     }
 
     val rootPane = try {
@@ -97,25 +104,6 @@ open class IdeMenuBar internal constructor(@JvmField protected val coroutineScop
 
     if (IdeFrameDecorator.isCustomDecorationActive()) {
       isOpaque = false
-    }
-
-    val app = ApplicationManager.getApplication()
-    @Suppress("IfThenToSafeAccess")
-    if (app != null) {
-      app.messageBus.connect(coroutineScope).subscribe(UISettingsListener.TOPIC, UISettingsListener {
-        check(updateRequests.tryEmit(Unit))
-      })
-    }
-
-    coroutineScope.launch {
-      updateRequests
-        .debounce(50.milliseconds)
-        .collectLatest {
-          withContext(Dispatchers.EDT) {
-            menuBarHelper.presentationFactory.reset()
-            updateMenuActionsAsync(forceRebuild = true)
-          }
-        }
     }
   }
 

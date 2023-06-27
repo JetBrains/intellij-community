@@ -1,16 +1,30 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(FlowPreview::class)
+
 package com.intellij.openapi.wm.impl
 
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.ui.mac.screenmenu.MenuBar
 import com.intellij.util.IJSwingUtilities
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import java.awt.Component
+import javax.swing.JComponent
 import javax.swing.JFrame
 import javax.swing.SwingUtilities
+import kotlin.time.Duration.Companion.milliseconds
 
 internal interface IdeMenuFlavor {
   var state: IdeMenuBarState
@@ -31,14 +45,52 @@ internal interface IdeMenuFlavor {
   fun suspendAnimator() {}
 }
 
-internal open class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor, @JvmField protected val isDarkMenu: () -> Boolean) {
+internal open class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor, @JvmField protected val menuBar: MenuBarImpl) {
+  interface MenuBarImpl {
+    val coroutineScope: CoroutineScope
+    val isDarkMenu: Boolean
+    val component: JComponent
+
+    fun updateGlobalMenuRoots()
+
+    suspend fun getMainMenuActionGroup(): ActionGroup?
+  }
+
   @JvmField protected var visibleActions = ArrayList<ActionGroup>()
-  @JvmField val presentationFactory: MenuItemPresentationFactory = MenuItemPresentationFactory()
+  @JvmField
+  protected val presentationFactory: MenuItemPresentationFactory = MenuItemPresentationFactory()
+
+  private val updateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+  init {
+    val app = ApplicationManager.getApplication()
+    @Suppress("IfThenToSafeAccess")
+    if (app != null) {
+      app.messageBus.connect(menuBar.coroutineScope).subscribe(UISettingsListener.TOPIC, UISettingsListener {
+        check(updateRequests.tryEmit(Unit))
+      })
+    }
+
+    menuBar.coroutineScope.launch {
+      updateRequests
+        .debounce(50.milliseconds)
+        .collectLatest {
+          withContext(Dispatchers.EDT) {
+            presentationFactory.reset()
+            doUpdateMenuActions(mainActionGroup = menuBar.getMainMenuActionGroup(),
+                                forceRebuild = true,
+                                manager = ApplicationManager.getApplication().serviceAsync<ActionManager>(),
+                                menuBar = menuBar.component)
+
+          }
+        }
+    }
+  }
 
   open fun doUpdateMenuActions(mainActionGroup: ActionGroup?,
                                forceRebuild: Boolean,
                                manager: ActionManager,
-                               menuBar: IdeMenuBar): List<AnAction> {
+                               menuBar: JComponent): List<AnAction> {
     val newVisibleActions = ArrayList<ActionGroup>()
     mainActionGroup?.let {
       expandMainActionGroup(mainActionGroup = it, menuBar = menuBar, newVisibleActions = newVisibleActions, manager = manager)
@@ -63,7 +115,7 @@ internal open class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor, @JvmFi
     }
     presentationFactory.resetNeedRebuild()
     flavor.updateAppMenu()
-    menuBar.updateGlobalMenuRoots()
+    this.menuBar.updateGlobalMenuRoots()
     flavor.addClockPanel()
     menuBar.validate()
     if (changeBarVisibility) {
@@ -74,7 +126,7 @@ internal open class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor, @JvmFi
   }
 
   protected fun expandMainActionGroup(mainActionGroup: ActionGroup,
-                                      menuBar: IdeMenuBar,
+                                      menuBar: Component,
                                       newVisibleActions: ArrayList<ActionGroup>,
                                       manager: ActionManager) {
     val targetComponent = IJSwingUtilities.getFocusedComponentInWindowOrSelf(menuBar)
@@ -94,7 +146,7 @@ internal open class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor, @JvmFi
     val enableMnemonics = !UISettings.getInstance().disableMnemonics
     val isCustomDecorationActive = IdeFrameDecorator.isCustomDecorationActive()
     for (action in newVisibleActions) {
-      val actionMenu = ActionMenu(null, ActionPlaces.MAIN_MENU, action, presentationFactory, enableMnemonics, isDarkMenu(), true)
+      val actionMenu = ActionMenu(null, ActionPlaces.MAIN_MENU, action, presentationFactory, enableMnemonics, menuBar.isDarkMenu, true)
       if (isCustomDecorationActive) {
         actionMenu.isOpaque = false
         actionMenu.isFocusable = false
@@ -106,11 +158,11 @@ internal open class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor, @JvmFi
 
 internal open class PeerBasedIdeMenuBarHelper(private val screenMenuPeer: MenuBar,
                                               flavor: IdeMenuFlavor,
-                                              isDarkMenu: () -> Boolean) : IdeMenuBarHelper(flavor, isDarkMenu) {
+                                              menuBar: MenuBarImpl) : IdeMenuBarHelper(flavor, menuBar) {
   override fun doUpdateMenuActions(mainActionGroup: ActionGroup?,
                                    forceRebuild: Boolean,
                                    manager: ActionManager,
-                                   menuBar: IdeMenuBar): List<AnAction> {
+                                   menuBar: JComponent): List<AnAction> {
     val newVisibleActions = ArrayList<ActionGroup>()
     mainActionGroup?.let {
       expandMainActionGroup(mainActionGroup = it, menuBar = menuBar, newVisibleActions = newVisibleActions, manager = manager)
