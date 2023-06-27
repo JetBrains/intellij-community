@@ -56,9 +56,12 @@ class TerminalTitle {
   }
 
   fun buildTitle(): @Nls String {
-    val title = userDefinedTitle ?: applicationTitle ?: defaultTitle ?: ExecutionBundle.message("terminal.default.title")
-    val trimmedTitle = StringUtil.trimMiddle(title, 20)
-    return if (tag != null) "$trimmedTitle ($tag)" else trimmedTitle
+    val title = userDefinedTitle ?: shortenApplicationTitle() ?: defaultTitle ?: ExecutionBundle.message("terminal.default.title")
+    return if (tag != null) "$title ($tag)" else title
+  }
+
+  private fun shortenApplicationTitle(): String? {
+    return StringUtil.trimMiddle(applicationTitle ?: return null, 30)
   }
 
   private fun fireTitleChanged() {
