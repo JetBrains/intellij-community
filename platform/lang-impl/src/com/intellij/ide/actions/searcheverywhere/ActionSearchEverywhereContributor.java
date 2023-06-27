@@ -115,7 +115,7 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
             if (action == null) return true;
 
             String id = ActionManager.getInstance().getId(action);
-            int degree = Registry.intValue("search.everywhere.recents.limit") - actionIDs.stream().toList().indexOf(id);
+            int degree = actionIDs.stream().toList().indexOf(id);
 
             return consumer.process(new FoundItemDescriptor<>(element, degree));
           };
