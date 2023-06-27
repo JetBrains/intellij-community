@@ -5,6 +5,7 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.impl.TextDetailsProgressReporter
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
@@ -15,8 +16,6 @@ import com.jetbrains.rd.framework.util.startChildAsync
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.lifetime.isNotAlive
-import com.jetbrains.rd.util.reactive.WriteOnceProperty
-import com.jetbrains.rd.util.reactive.adviseOnce
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
@@ -347,36 +346,43 @@ private class ProgressCoroutineScopeBridge private constructor(coroutineContext:
   }
 }
 
-class BridgeIndicator(val coroutineContext: CoroutineContext, private val isModalFlag: Boolean) : EmptyProgressIndicatorBase(coroutineContext.contextModality() ?: ModalityState.nonModal()), StandardProgressIndicator {
+private interface BridgeIndicatorBase : ProgressIndicatorEx{
+  var reporter:  RawProgressReporter
+  val reporterIsSet: Boolean
+}
 
-  private var isCancelledFlag = false
-  lateinit var reporter:  RawProgressReporter
+private class BridgeIndicator(val coroutineContext: CoroutineContext, private val isModalFlag: Boolean) : BridgeIndicatorBase by BridgeIndicatorEx(coroutineContext) {
 
-  val reporterIsSet get() = this::reporter.isInitialized
+  override fun getModalityState(): ModalityState = coroutineContext.contextModality() ?: ModalityState.nonModal()
 
   override fun isModal(): Boolean {
     return isModalFlag
   }
+}
+
+private class BridgeIndicatorEx(val coroutineContext: CoroutineContext) : AbstractProgressIndicatorExBase(), StandardProgressIndicator, BridgeIndicatorBase {
+  override lateinit var reporter:  RawProgressReporter
+
+  override val reporterIsSet get() = this::reporter.isInitialized
 
   override fun cancel() {
-    isCancelledFlag = true
     coroutineContext.cancel()
-  }
-
-  override fun isCanceled(): Boolean {
-    return isCancelledFlag
+    super.cancel()
   }
 
   override fun setText(text: String?) {
     reporter.text(text)
+    super.setText(text)
   }
 
   override fun setText2(text: String?) {
     reporter.details(text)
+    super.setText2(text)
   }
 
   override fun setFraction(fraction: Double) {
     reporter.fraction(fraction)
+    super.setFraction(fraction)
   }
 
   override fun setIndeterminate(indeterminate: Boolean) {
@@ -386,6 +392,8 @@ class BridgeIndicator(val coroutineContext: CoroutineContext, private val isModa
     else {
       reporter.fraction(0.0)
     }
+
+    super.setIndeterminate(indeterminate)
   }
 }
 
