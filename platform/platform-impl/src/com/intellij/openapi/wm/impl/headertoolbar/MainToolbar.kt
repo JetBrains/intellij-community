@@ -136,11 +136,11 @@ internal class MainToolbar(private val coroutineScope: CoroutineScope, frame: JF
     val tmpSchema = CustomActionsSchema(null)
     tmpSchema.copyFrom(schema)
 
-    val changed = migrateToolbar(tmpSchema, listOf("root", "Main Toolbar Left"), mainToolbarPath + "Left")
-                  || migrateToolbar(tmpSchema, listOf("root", "Main Toolbar Center"), mainToolbarPath + "Center")
-                  || migrateToolbar(tmpSchema, listOf("root", "Main Toolbar Right"), mainToolbarPath + "Right")
+    val leftChanged = migrateToolbar(tmpSchema, listOf("root", "Main Toolbar Left"), mainToolbarPath + "Left")
+    val centerChanged = migrateToolbar(tmpSchema, listOf("root", "Main Toolbar Center"), mainToolbarPath + "Center")
+    val rightChanged = migrateToolbar(tmpSchema, listOf("root", "Main Toolbar Right"), mainToolbarPath + "Right")
 
-    if (changed) {
+      if (leftChanged || centerChanged || rightChanged) {
       schema.copyFrom(tmpSchema)
       schemaChanged()
     }
