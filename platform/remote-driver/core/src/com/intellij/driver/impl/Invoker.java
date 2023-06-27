@@ -2,15 +2,18 @@ package com.intellij.driver.impl;
 
 import com.intellij.driver.model.LockSemantics;
 import com.intellij.driver.model.OnDispatcher;
-import com.intellij.driver.model.Ref;
+import com.intellij.driver.model.ProductVersion;
+import com.intellij.driver.model.transport.Ref;
 import com.intellij.driver.model.transport.*;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.BuildNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +37,15 @@ public class Invoker implements InvokerMBean {
   static final AtomicInteger REF_SEQUENCE = new AtomicInteger(1);
 
   @Override
-  public void ping() {
+  public ProductVersion getProductVersion() {
+    BuildNumber build = ApplicationInfoImpl.getShadowInstanceImpl().getBuild();
+
+    return new ProductVersion(
+      build.getProductCode(),
+      build.isSnapshot(),
+      build.getBaselineVersion(),
+      build.asString()
+    );
   }
 
   @Override

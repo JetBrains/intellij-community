@@ -1,7 +1,5 @@
 package com.intellij.driver.model.transport;
 
-import com.intellij.driver.model.Ref;
-
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;

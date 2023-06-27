@@ -17,16 +17,56 @@ import java.util.Map;
 
 public class JmxCallHandler implements InvocationHandler {
   private final JmxHost hostInfo;
-  private final String objectName;
+  private final ObjectName mbeanName;
+  private JMXConnector currentConnector;
 
   public JmxCallHandler(JmxHost hostInfo, String objectName) {
     this.hostInfo = hostInfo;
-    this.objectName = objectName;
+
+    try {
+      this.mbeanName = new ObjectName(objectName);
+    }
+    catch (MalformedObjectNameException e) {
+      throw new RuntimeException("Incorrect JMX object name", e);
+    }
   }
 
-  // todo inline for Invoker, get rid of Proxy usage inside of Proxy
   @Override
-  public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+  public synchronized Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+    if ("close".equals(method.getName())) {
+      if (this.currentConnector != null) {
+        try {
+          this.currentConnector.close();
+        }
+        finally {
+          this.currentConnector = null;
+        }
+      }
+      return null;
+    }
+
+    if (this.currentConnector == null) {
+      try {
+        this.currentConnector = getConnector();
+      }
+      catch (IOException e) {
+        this.currentConnector = null;
+        throw new JmxCallException("Unable to connect to JMX host", e);
+      }
+    }
+
+    try {
+      MBeanServerConnection mbsc = this.currentConnector.getMBeanServerConnection();
+
+      MBeanServerInvocationHandler wrappedHandler = new MBeanServerInvocationHandler(mbsc, mbeanName);
+      return wrappedHandler.invoke(proxy, method, args);
+    }
+    catch (IOException e) {
+      throw new JmxCallException("Unable to perform JMX call", e);
+    }
+  }
+
+  public JMXConnector getConnector() throws IOException {
     JMXServiceURL url;
     try {
       url = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://" + hostInfo.getAddress() + "/jmxrmi");
@@ -40,25 +80,7 @@ public class JmxCallHandler implements InvocationHandler {
       properties.put(JMXConnector.CREDENTIALS, new String[]{hostInfo.getUser(), hostInfo.getPassword()});
     }
 
-    // todo reuse connection for withContext until session cleanup, much faster instead of connect each time
-    try (JMXConnector jmxc = JMXConnectorFactory.connect(url, properties)) {
-      MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
-
-      ObjectName mbeanName;
-      try {
-        mbeanName = new ObjectName(objectName);
-      }
-      catch (MalformedObjectNameException e) {
-        throw new RuntimeException("Incorrect JMX object name", e);
-      }
-
-      MBeanServerInvocationHandler wrappedHandler = new MBeanServerInvocationHandler(mbsc, mbeanName);
-
-      return wrappedHandler.invoke(proxy, method, args);
-    }
-    catch (IOException e) {
-      throw new JmxCallException("Unable to perform JMX call", e);
-    }
+    return JMXConnectorFactory.connect(url, properties);
   }
 
   public static <T> T jmx(Class<T> clazz) {
@@ -76,7 +98,7 @@ public class JmxCallHandler implements InvocationHandler {
       throw new RuntimeException("JmxName.value is empty for " + clazz);
     }
 
-    return (T)Proxy.newProxyInstance(JmxCallHandler.class.getClassLoader(), new Class[]{clazz},
+    return (T)Proxy.newProxyInstance(JmxCallHandler.class.getClassLoader(), new Class[]{clazz, AutoCloseable.class},
                                      new JmxCallHandler(hostInfo, jmxName.value()));
   }
 }

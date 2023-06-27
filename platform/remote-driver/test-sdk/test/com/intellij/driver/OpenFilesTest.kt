@@ -23,7 +23,9 @@ class OpenFilesTest {
   fun openFiles() {
     val driver = Driver.create()
 
-    assertTrue(driver.isAvailable)
+    assertTrue(driver.isConnected)
+
+    val productVersion = driver.getProductVersion()
 
     val projectManager = driver.service(ProjectManager::class)
     val projects = projectManager.openProjects

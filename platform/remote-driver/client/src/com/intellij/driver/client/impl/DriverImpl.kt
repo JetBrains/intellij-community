@@ -5,7 +5,8 @@ import com.intellij.driver.client.ProjectRef
 import com.intellij.driver.client.Remote
 import com.intellij.driver.model.LockSemantics
 import com.intellij.driver.model.OnDispatcher
-import com.intellij.driver.model.Ref
+import com.intellij.driver.model.ProductVersion
+import com.intellij.driver.model.transport.Ref
 import com.intellij.driver.model.transport.*
 import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
@@ -22,10 +23,10 @@ internal class DriverImpl(host: JmxHost?) : Driver {
   private val projectServices: MutableMap<ProjectRef, MutableMap<Class<*>, Any>> = ConcurrentHashMap()
   private val utils: MutableMap<Class<*>, Any> = ConcurrentHashMap()
 
-  override val isAvailable: Boolean
+  override val isConnected: Boolean
     get() {
       try {
-        invoker.ping()
+        invoker.getProductVersion()
       }
       catch (ioe: JmxCallException) {
         return false
@@ -33,6 +34,10 @@ internal class DriverImpl(host: JmxHost?) : Driver {
 
       return true
     }
+
+  override fun getProductVersion(): ProductVersion {
+    return invoker.getProductVersion()
+  }
 
   @Suppress("UNCHECKED_CAST")
   override fun <T : Any> service(clazz: KClass<T>): T {
@@ -265,6 +270,10 @@ internal class DriverImpl(host: JmxHost?) : Driver {
     return withContext(OnDispatcher.EDT, LockSemantics.WRITE_ACTION, code)
   }
 
+  override fun close() {
+    invoker.close()
+  }
+
   override fun <T> withReadAction(dispatcher: OnDispatcher, code: Driver.() -> T): T {
     return withContext(dispatcher, LockSemantics.READ_ACTION, code)
   }
@@ -285,8 +294,8 @@ internal data class Session(
 private val NO_SESSION: Session = Session(0, OnDispatcher.DEFAULT, LockSemantics.NO_LOCK)
 
 @JmxName("com.intellij.driver:type=Invoker")
-internal interface Invoker {
-  fun ping()
+internal interface Invoker : AutoCloseable {
+  fun getProductVersion(): ProductVersion
 
   fun invoke(call: RemoteCall): RemoteCallResult
 

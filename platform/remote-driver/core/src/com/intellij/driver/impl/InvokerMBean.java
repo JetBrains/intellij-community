@@ -1,5 +1,6 @@
 package com.intellij.driver.impl;
 
+import com.intellij.driver.model.ProductVersion;
 import com.intellij.driver.model.transport.RemoteCall;
 import com.intellij.driver.model.transport.RemoteCallResult;
 
@@ -8,7 +9,7 @@ import java.lang.management.ManagementFactory;
 
 @SuppressWarnings("unused")
 public interface InvokerMBean {
-  void ping();
+  ProductVersion getProductVersion();
 
   RemoteCallResult invoke(RemoteCall call);
 

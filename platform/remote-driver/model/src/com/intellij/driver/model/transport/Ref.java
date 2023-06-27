@@ -1,4 +1,4 @@
-package com.intellij.driver.model;
+package com.intellij.driver.model.transport;
 
 import java.io.Serial;
 import java.io.Serializable;

@@ -2,7 +2,6 @@ package com.intellij.driver.model.transport;
 
 import com.intellij.driver.model.LockSemantics;
 import com.intellij.driver.model.OnDispatcher;
-import com.intellij.driver.model.Ref;
 
 import java.io.Serial;
 
