@@ -307,6 +307,37 @@ class DefaultTreeLayoutCacheTest {
   }
 
   @Test
+  fun `expand a node deep down a not yet loaded branch`() {
+    testStructure(
+      initOps = {
+        setModelStructure("""
+          |r
+          | a1
+          |  b1
+          |   c1
+          |    d1
+          """.trimMargin()
+        )
+        sut.isRootVisible = true
+        selectionModel.expect { repeat(2) { resetRowSelection() } }
+      },
+      modOps = {
+        sut.setExpandedState("r/a1/b1/c1", true)
+      },
+      assertions = {
+        assertStructure("""
+          |r
+          | a1
+          |  b1
+          |   c1
+          |    d1
+          """.trimMargin()
+        )
+      },
+    )
+  }
+
+  @Test
   fun `insert the only node and expand`() {
     testStructure(
       initOps = {
