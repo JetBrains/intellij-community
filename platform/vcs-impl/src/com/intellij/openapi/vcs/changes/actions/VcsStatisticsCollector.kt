@@ -13,7 +13,7 @@ import com.intellij.openapi.vcs.changes.Change
 class VcsStatisticsCollector : CounterUsagesCollector() {
   companion object {
     @JvmField
-    val GROUP = EventLogGroup("vcs", 12)
+    val GROUP = EventLogGroup("vcs", 13)
 
     @JvmField
     val UPDATE_ACTIVITY = GROUP.registerIdeActivity("update")
