@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AbbreviationManager
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
@@ -16,6 +17,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.Consumer
 import com.intellij.util.Processor
 import org.jetbrains.annotations.NotNull
+import org.mockito.Mockito
 
 import javax.swing.*
 import java.util.function.Supplier
@@ -238,6 +240,26 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
     finally {
       registryValue.setValue(savedFlag)
     }
+  }
+
+  void "test search events topic"() {
+    def contributor1 = new StubContributor("contributor1", 1)
+    def contributor2 = new StubContributor("contributor2", 2)
+    contributor1.addElements(["item1": 10, "item2": 12, "item3": 8])
+    contributor2.addElements(["item3": 9, "item4": 10, "item5": 11])
+
+    def ui = createTestUI([contributor1, contributor2])
+    SearchListener mockListener = Mockito.mock(SearchListener.class)
+    ApplicationManager.getApplication().getMessageBus().connect(ui).subscribe(SearchEverywhereUI.SEARCH_EVENTS, mockListener)
+    def future = ui.findElementsForPattern("ignored")
+    waitForFuture(future, SEARCH_TIMEOUT)
+
+    def inOrder = Mockito.inOrder(mockListener)
+    inOrder.verify(mockListener).searchStarted(Mockito.eq("ignored"), Mockito.any())
+    inOrder.verify(mockListener).elementsAdded(Mockito.any())
+    inOrder.verify(mockListener).contributorFinished(contributor1, false)
+    inOrder.verify(mockListener).contributorFinished(contributor2, false)
+    inOrder.verify(mockListener).searchFinished(Mockito.any())
   }
 
   private SearchEverywhereUI createTestUI(List<SearchEverywhereContributor<Object>> contributorsList) {
