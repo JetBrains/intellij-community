@@ -27,7 +27,7 @@ public abstract class KotlinIfSurrounderBase extends KotlinStatementsSurrounder 
 
     @Nullable
     @Override
-    protected TextRange surroundStatements(Project project, Editor editor, PsiElement container, PsiElement[] statements) {
+    protected TextRange surroundStatements(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement container, PsiElement @NotNull [] statements) {
         statements = MoveDeclarationsOutHelperKt.move(container, statements, isGenerateDefaultInitializers());
 
         if (statements.length == 0) {

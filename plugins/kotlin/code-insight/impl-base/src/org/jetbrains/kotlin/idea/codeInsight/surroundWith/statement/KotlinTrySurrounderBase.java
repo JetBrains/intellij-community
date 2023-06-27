@@ -24,7 +24,7 @@ public abstract class KotlinTrySurrounderBase extends KotlinStatementsSurrounder
     @Nullable
     @Override
     protected TextRange surroundStatements(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement container,
-            @NotNull PsiElement[] statements)
+            PsiElement @NotNull [] statements)
     {
         statements = MoveDeclarationsOutHelperKt.move(container, statements, true);
 

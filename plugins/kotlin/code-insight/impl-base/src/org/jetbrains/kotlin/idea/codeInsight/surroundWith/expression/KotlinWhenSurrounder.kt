@@ -44,7 +44,9 @@ class KotlinWhenSurrounder : KotlinExpressionSurrounder() {
             val context = AddRemainingWhenBranchesUtils.Context(remainingBranches, enumToStarImport = null)
             AddRemainingWhenBranchesUtils.addRemainingWhenBranches(whenExpression, context)
             whenExpression.entries.also {
+                //remove `b -> {}` fake branch
                 it.first().delete()
+                //remove `else -> {}` fake branch
                 it.last().delete()
             }
         }

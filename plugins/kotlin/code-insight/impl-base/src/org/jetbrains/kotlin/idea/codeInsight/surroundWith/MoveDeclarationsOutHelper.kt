@@ -16,131 +16,139 @@ import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.types.Variance
 
-@OptIn(KtAllowAnalysisOnEdt::class)
 fun move(container: PsiElement, statements: Array<PsiElement>, generateDefaultInitializers: Boolean): Array<PsiElement> {
-  if (statements.isEmpty()) {
-    return statements
-  }
-
-  val project = container.project
-
-  val resultStatements = ArrayList<PsiElement>()
-  val propertiesDeclarations = ArrayList<KtProperty>()
-
-  // Dummy element to add new declarations at the beginning
-  val psiFactory = KtPsiFactory(project)
-  val dummyFirstStatement = container.addBefore(psiFactory.createExpression("dummyStatement"), statements[0])
-
-  try {
-    val scope = LocalSearchScope(container)
-    val lastStatementOffset = statements[statements.size - 1].textRange.endOffset
-
-    statements.forEachIndexed { i, statement ->
-      if (needToDeclareOut(statement, lastStatementOffset, scope)) {
-        val property = statement as? KtProperty
-        if (property?.initializer != null) {
-          if (i == statements.size - 1) {
-            kotlinStyleDeclareOut(container, dummyFirstStatement, resultStatements, propertiesDeclarations, property)
-          }
-          else {
-            declareOut(container, dummyFirstStatement, generateDefaultInitializers, resultStatements, propertiesDeclarations, property)
-          }
-        }
-        else {
-          val newStatement = container.addBefore(statement, dummyFirstStatement)
-          container.addAfter(psiFactory.createNewLine(), newStatement)
-          container.deleteChildRange(statement, statement)
-        }
-      }
-      else {
-        resultStatements.add(statement)
-      }
+    if (statements.isEmpty()) {
+        return statements
     }
-  }
-  finally {
-    dummyFirstStatement.delete()
-  }
 
-  val shortenReferencesFacility = ShortenReferencesFacility.getInstance()
-  for (ktProperty in propertiesDeclarations) {
-    shortenReferencesFacility.shorten(ktProperty)
-  }
+    val project = container.project
 
-  return PsiUtilCore.toPsiElementArray(resultStatements)
+    val resultStatements = ArrayList<PsiElement>()
+    val propertiesDeclarations = ArrayList<KtProperty>()
+
+    // Dummy element to add new declarations at the beginning
+    val psiFactory = KtPsiFactory(project)
+    val dummyFirstStatement = container.addBefore(psiFactory.createExpression("dummyStatement"), statements[0])
+
+    try {
+        val scope = LocalSearchScope(container)
+        val lastStatementOffset = statements[statements.size - 1].textRange.endOffset
+
+        statements.forEachIndexed { i, statement ->
+            if (needToDeclareOut(statement, lastStatementOffset, scope)) {
+                val property = statement as? KtProperty
+                if (property?.initializer != null) {
+                    if (i == statements.size - 1) {
+                        prepareLastPropertyToBeInitializedWithExpression(
+                            container, dummyFirstStatement, resultStatements, propertiesDeclarations, property
+                        )
+                    } else {
+                        declareOut(
+                            container, dummyFirstStatement, generateDefaultInitializers, resultStatements, propertiesDeclarations, property
+                        )
+                    }
+                } else {
+                    val newStatement = container.addBefore(statement, dummyFirstStatement)
+                    container.addAfter(psiFactory.createNewLine(), newStatement)
+                    container.deleteChildRange(statement, statement)
+                }
+            } else {
+                resultStatements.add(statement)
+            }
+        }
+    } finally {
+        dummyFirstStatement.delete()
+    }
+
+    val shortenReferencesFacility = ShortenReferencesFacility.getInstance()
+    for (ktProperty in propertiesDeclarations) {
+        shortenReferencesFacility.shorten(ktProperty)
+    }
+
+    return PsiUtilCore.toPsiElementArray(resultStatements)
 }
 
-private fun kotlinStyleDeclareOut(container: PsiElement,
-                                  dummyFirstStatement: PsiElement,
-                                  resultStatements: ArrayList<PsiElement>,
-                                  propertiesDeclarations: ArrayList<KtProperty>,
-                                  property: KtProperty) {
-  val name = property.name ?: return
-  val psiFactory = KtPsiFactory(property.project)
-  var declaration = psiFactory.createProperty(name, property.typeReference?.text, property.isVar, null)
-  declaration = container.addBefore(declaration, dummyFirstStatement) as KtProperty
-  container.addAfter(psiFactory.createEQ(), declaration)
-  propertiesDeclarations.add(declaration)
-  property.initializer?.let {
-    resultStatements.add(property.replace(it))
-  }
+/**
+ * As a result: `property_initializerval property=`; should be fixed on the call site of [move] method
+ */
+private fun prepareLastPropertyToBeInitializedWithExpression(
+    container: PsiElement,
+    dummyFirstStatement: PsiElement,
+    resultStatements: ArrayList<PsiElement>,
+    propertiesDeclarations: ArrayList<KtProperty>,
+    property: KtProperty
+) {
+    val name = property.name ?: return
+    val psiFactory = KtPsiFactory(property.project)
+    var declaration = psiFactory.createProperty(name, property.typeReference?.text, property.isVar, null)
+    declaration = container.addBefore(declaration, dummyFirstStatement) as KtProperty
+    container.addAfter(psiFactory.createEQ(), declaration)
+    propertiesDeclarations.add(declaration)
+    property.initializer?.let {
+        resultStatements.add(property.replace(it))
+    }
 }
 
-private fun declareOut(container: PsiElement,
-                       dummyFirstStatement: PsiElement,
-                       generateDefaultInitializers: Boolean,
-                       resultStatements: ArrayList<PsiElement>,
-                       propertiesDeclarations: ArrayList<KtProperty>,
-                       property: KtProperty) {
-  var declaration = createVariableDeclaration(property, generateDefaultInitializers)
-  declaration = container.addBefore(declaration, dummyFirstStatement) as KtProperty
-  propertiesDeclarations.add(declaration)
-  val assignment = createVariableAssignment(property)
-  resultStatements.add(property.replace(assignment))
+private fun declareOut(
+    container: PsiElement,
+    dummyFirstStatement: PsiElement,
+    generateDefaultInitializers: Boolean,
+    resultStatements: ArrayList<PsiElement>,
+    propertiesDeclarations: ArrayList<KtProperty>,
+    property: KtProperty
+) {
+    var declaration = createVariableDeclaration(property, generateDefaultInitializers)
+    declaration = container.addBefore(declaration, dummyFirstStatement) as KtProperty
+    propertiesDeclarations.add(declaration)
+    val assignment = createVariableAssignment(property)
+    resultStatements.add(property.replace(assignment))
 }
 
 private fun createVariableAssignment(property: KtProperty): KtBinaryExpression {
-  val propertyName = property.name ?: error("Property should have a name " + property.text)
-  val assignment = KtPsiFactory(property.project).createExpression("$propertyName = x") as KtBinaryExpression
-  val right = assignment.right ?: error("Created binary expression should have a right part " + assignment.text)
-  val initializer = property.initializer ?: error("Initializer should exist for property " + property.text)
-  right.replace(initializer)
-  return assignment
+    val propertyName = property.name ?: error("Property should have a name " + property.text)
+    val assignment = KtPsiFactory(property.project).createExpression("$propertyName = x") as KtBinaryExpression
+    val right = assignment.right ?: error("Created binary expression should have a right part " + assignment.text)
+    val initializer = property.initializer ?: error("Initializer should exist for property " + property.text)
+    right.replace(initializer)
+    return assignment
 }
 
 @OptIn(KtAllowAnalysisOnEdt::class)
 private fun createVariableDeclaration(property: KtProperty, generateDefaultInitializers: Boolean): KtProperty {
-  allowAnalysisOnEdt {
-    analyze(property) {
-      val propertyType = property.getReturnKtType()
+    allowAnalysisOnEdt {
+        analyze(property) {
+            val propertyType = property.getReturnKtType()
 
-      var defaultInitializer: String? = null
-      if (generateDefaultInitializers && property.isVar) {
-        defaultInitializer = propertyType.defaultInitializer
+            var defaultInitializer: String? = null
+            if (generateDefaultInitializers && property.isVar) {
+                defaultInitializer = propertyType.defaultInitializer
 
-      }
-      val typeRef = property.typeReference
-      val typeString = when {
-        typeRef != null -> typeRef.text
-        propertyType !is KtErrorType -> propertyType.render(KtDeclarationRendererForSource.WITH_QUALIFIED_NAMES.typeRenderer,
-                                                            Variance.INVARIANT)
-        else -> null
-      }
+            }
+            val typeRef = property.typeReference
+            val typeString = when {
+                typeRef != null -> typeRef.text
+                propertyType !is KtErrorType -> propertyType.render(
+                    KtDeclarationRendererForSource.WITH_QUALIFIED_NAMES.typeRenderer, Variance.INVARIANT
+                )
 
-      return KtPsiFactory(property.project).createProperty(property.name!!, typeString, property.isVar, defaultInitializer)
+                else -> null
+            }
+
+            return KtPsiFactory(property.project).createProperty(property.name!!, typeString, property.isVar, defaultInitializer)
+        }
     }
-  }
 }
 
 private fun needToDeclareOut(element: PsiElement, lastStatementOffset: Int, scope: SearchScope): Boolean {
-  if (element is KtProperty || element is KtClassOrObject || element is KtFunction) {
-    val refs = ReferencesSearch.search(element, scope, false).toArray(PsiReference.EMPTY_ARRAY)
-    if (refs.isNotEmpty()) {
-      val lastRef = refs.maxByOrNull { it.element.textOffset } ?: return false
-      if (lastRef.element.textOffset > lastStatementOffset) {
-        return true
-      }
+    if (element is KtProperty || element is KtClassOrObject || element is KtFunction) {
+        val refs = ReferencesSearch.search(element, scope, false).toArray(PsiReference.EMPTY_ARRAY)
+        if (refs.isNotEmpty()) {
+            val lastRef = refs.maxByOrNull { it.element.textOffset } ?: return false
+            if (lastRef.element.textOffset > lastStatementOffset) {
+                return true
+            }
+        }
     }
-  }
 
-  return false
+    return false
 }

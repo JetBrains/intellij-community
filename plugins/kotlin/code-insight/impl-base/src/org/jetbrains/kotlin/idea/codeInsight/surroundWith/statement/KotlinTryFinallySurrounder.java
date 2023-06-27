@@ -22,7 +22,7 @@ public class KotlinTryFinallySurrounder extends KotlinTrySurrounderBase {
 
     @Nullable
     @Override
-    protected TextRange surroundStatements(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement container, @NotNull PsiElement[] statements) {
+    protected TextRange surroundStatements(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement container,  PsiElement @NotNull[] statements) {
         TextRange textRange = super.surroundStatements(project, editor, container, statements);
         if (textRange == null) {
             return null;

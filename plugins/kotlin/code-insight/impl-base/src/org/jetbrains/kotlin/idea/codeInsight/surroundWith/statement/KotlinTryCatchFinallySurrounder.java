@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement;
 
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightBundle;
 import org.jetbrains.kotlin.psi.KtTryExpression;
 
 public class KotlinTryCatchFinallySurrounder extends KotlinTrySurrounderBase {
@@ -19,9 +20,9 @@ public class KotlinTryCatchFinallySurrounder extends KotlinTrySurrounderBase {
         return getCatchTypeParameterTextRange(expression);
     }
 
+    @SuppressWarnings("DialogTitleCapitalization")
     @Override
     public String getTemplateDescription() {
-        //noinspection HardCodedStringLiteral,DialogTitleCapitalization
-        return "try / catch / finally";
+        return KotlinCodeInsightBundle.message("surround.with.try.catch.finally.template");
     }
 }

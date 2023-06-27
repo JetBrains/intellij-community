@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.MoveDeclarationsOutHelperKt;
 import org.jetbrains.kotlin.psi.*;
@@ -16,7 +17,7 @@ import static org.jetbrains.kotlin.idea.codeInsight.surroundWith.SurroundWithUti
 public class KotlinFunctionLiteralSurrounder extends KotlinStatementsSurrounder {
     @Nullable
     @Override
-    protected TextRange surroundStatements(Project project, Editor editor, PsiElement container, PsiElement[] statements) {
+    protected TextRange surroundStatements(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement container, PsiElement @NotNull [] statements) {
         statements = MoveDeclarationsOutHelperKt.move(container, statements, true);
 
         if (statements.length == 0) {

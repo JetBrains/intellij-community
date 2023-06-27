@@ -13,34 +13,36 @@ import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.psi.KtExpression
 
 abstract class KotlinStatementsSurrounder : Surrounder {
-  @OptIn(KtAllowAnalysisOnEdt::class)
-  override fun isApplicable(elements: Array<PsiElement>): Boolean {
-    if (elements.isEmpty()) {
-      return false
-    }
-    if (elements.size == 1 && elements[0] is KtExpression) {
-      val expr = elements[0] as KtExpression
-        if (!isApplicableWhenUsedAsExpression) {
-            allowAnalysisOnEdt {
-                if (analyze(expr) { expr.isUsedAsExpression() }) {
-                    return false
+    @OptIn(KtAllowAnalysisOnEdt::class)
+    override fun isApplicable(elements: Array<PsiElement>): Boolean {
+        if (elements.isEmpty()) {
+            return false
+        }
+        if (elements.size == 1 && elements[0] is KtExpression) {
+            val expr = elements[0] as KtExpression
+            if (!isApplicableWhenUsedAsExpression) {
+                allowAnalysisOnEdt {
+                    if (analyze(expr) { expr.isUsedAsExpression() }) {
+                        return false
+                    }
                 }
             }
         }
+        return true
     }
-    return true
-  }
 
-  protected open val isApplicableWhenUsedAsExpression: Boolean = true
+    protected open val isApplicableWhenUsedAsExpression: Boolean = true
 
-  @Throws(IncorrectOperationException::class)
-  override fun surroundElements(project: Project, editor: Editor, elements: Array<PsiElement>): TextRange? {
-    val container = elements[0].parent ?: return null
-    return surroundStatements(project, editor, container, elements)
-  }
+    @Throws(IncorrectOperationException::class)
+    override fun surroundElements(project: Project, editor: Editor, elements: Array<PsiElement>): TextRange? {
+        val container = elements[0].parent ?: return null
+        return surroundStatements(project, editor, container, elements)
+    }
 
-  protected abstract fun surroundStatements(project: Project?,
-                                            editor: Editor?,
-                                            container: PsiElement?,
-                                            statements: Array<PsiElement>?): TextRange?
+    protected abstract fun surroundStatements(
+        project: Project,
+        editor: Editor,
+        container: PsiElement,
+        statements: Array<PsiElement>
+    ): TextRange?
 }

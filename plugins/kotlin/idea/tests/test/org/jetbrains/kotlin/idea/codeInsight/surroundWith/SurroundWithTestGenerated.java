@@ -335,6 +335,11 @@ public abstract class SurroundWithTestGenerated extends AbstractSurroundWithTest
             runTest("testData/codeInsight/surroundWith/not/booleanExprAtCaret.kt");
         }
 
+        @TestMetadata("booleanExprSmartCast.kt")
+        public void testBooleanExprSmartCast() throws Exception {
+            runTest("testData/codeInsight/surroundWith/not/booleanExprSmartCast.kt");
+        }
+
         @TestMetadata("expressionInIf.kt")
         public void testExpressionInIf() throws Exception {
             runTest("testData/codeInsight/surroundWith/not/expressionInIf.kt");
@@ -640,6 +645,11 @@ public abstract class SurroundWithTestGenerated extends AbstractSurroundWithTest
         @TestMetadata("complexBoolean.kt")
         public void testComplexBoolean() throws Exception {
             runTest("testData/codeInsight/surroundWith/withIfExpression/complexBoolean.kt");
+        }
+
+        @TestMetadata("smartCast.kt")
+        public void testSmartCast() throws Exception {
+            runTest("testData/codeInsight/surroundWith/withIfExpression/smartCast.kt");
         }
 
         @TestMetadata("variable.kt")
