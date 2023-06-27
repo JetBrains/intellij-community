@@ -13,8 +13,6 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.JBPopup
-import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.psi.*
 import com.intellij.psi.statistics.StatisticsInfo
 import com.intellij.psi.statistics.StatisticsManager
@@ -33,6 +31,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
 import org.jetbrains.kotlin.idea.actions.KotlinAddImportActionInfo
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -43,6 +42,7 @@ import org.jetbrains.kotlin.idea.codeInsight.K2StatisticsInfoProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixActionBase
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFqNameIfPackageOrNonLocal
+import org.jetbrains.kotlin.idea.quickfix.AutoImportVariant
 import org.jetbrains.kotlin.idea.quickfix.ImportFixHelper
 import org.jetbrains.kotlin.idea.quickfix.ImportPrioritizer
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
@@ -54,16 +54,25 @@ import org.jetbrains.kotlin.psi.KtPsiUtil.isSelectorInQualified
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.unwrapNullability
 import org.jetbrains.kotlin.resolve.ImportPath
+import javax.swing.Icon
 
 class ImportQuickFix(
     element: KtElement,
     @IntentionName private val text: String,
-    private val importCandidates: List<ImportCandidate>
+    private val importVariants: List<AutoImportVariant>
 ) : QuickFixActionBase<KtElement>(element), HintAction {
-    data class ImportCandidate(val fqName: FqName, val renderedDeclaration: String, val statisticsInfo: StatisticsInfo)
+    private data class SymbolBasedAutoImportVariant(
+        override val fqName: FqName,
+        override val declarationToImport: PsiElement?,
+        override val icon: Icon?,
+        val renderedDeclaration: String,
+        val statisticsInfo: StatisticsInfo
+    ) : AutoImportVariant {
+        override val hint: String = renderedDeclaration // TODO: fix after changing tests
+    }
 
     init {
-        require(importCandidates.isNotEmpty())
+        require(importVariants.isNotEmpty())
     }
 
     override fun getText(): String = text
@@ -77,7 +86,7 @@ class ImportQuickFix(
     }
 
     private fun createAddImportAction(project: Project, editor: Editor, file: KtFile): QuestionAction {
-        return ImportQuestionAction(project, editor, file, importCandidates)
+        return ImportQuestionAction(project, editor, file, importVariants)
     }
 
     override fun showHint(editor: Editor): Boolean {
@@ -93,7 +102,7 @@ class ImportQuickFix(
         val project = file.project
 
         val elementRange = element.textRange
-        val autoImportHintText = KotlinBundle.message("fix.import.question", importCandidates.first().fqName.asString())
+        val autoImportHintText = KotlinBundle.message("fix.import.question", importVariants.first().fqName.asString())
 
         HintManager.getInstance().showQuestionHint(
             editor,
@@ -113,7 +122,7 @@ class ImportQuickFix(
         if (!ShowAutoImportPass.isAddUnambiguousImportsOnTheFlyEnabled(file)) return false
         val project = file.project
         val addImportAction = createAddImportAction(project, editor, file)
-        if (importCandidates.size == 1) {
+        if (importVariants.size == 1) {
             addImportAction.execute()
             return true
         } else {
@@ -140,18 +149,18 @@ class ImportQuickFix(
         private val project: Project,
         private val editor: Editor,
         private val file: KtFile,
-        private val importCandidates: List<ImportCandidate>
+        private val importVariants: List<AutoImportVariant>
     ) : QuestionAction {
 
         init {
-            require(importCandidates.isNotEmpty())
+            require(importVariants.isNotEmpty())
         }
 
         override fun execute(): Boolean {
-            KotlinAddImportActionInfo.executeListener?.onExecute(listOf(importCandidates.map { it.renderedDeclaration }))
-            when (importCandidates.size) {
+            KotlinAddImportActionInfo.executeListener?.onExecute(listOf(importVariants.map { it.hint }))
+            when (importVariants.size) {
                 1 -> {
-                    addImport(importCandidates.single())
+                    addImport(importVariants.single())
                     return true
                 }
 
@@ -161,29 +170,23 @@ class ImportQuickFix(
 
                 else -> {
                     if (ApplicationManager.getApplication().isUnitTestMode) {
-                        addImport(importCandidates.first())
+                        addImport(importVariants.first())
                         return true
                     }
-                    createImportSelectorPopup().showInBestPositionFor(editor)
+                    ImportFixHelper.createListPopupWithImportVariants(project, importVariants, ::addImport).showInBestPositionFor(editor)
 
                     return true
                 }
             }
         }
 
-        private fun createImportSelectorPopup(): JBPopup {
-            return JBPopupFactory.getInstance()
-                .createPopupChooserBuilder(importCandidates)
-                .setTitle(KotlinBundle.message("action.add.import.chooser.title"))
-                .setItemChosenCallback { selectedValue: ImportCandidate -> addImport(selectedValue) }
-                .createPopup()
-        }
+        private fun addImport(importVariant: AutoImportVariant) {
+            require(importVariant is SymbolBasedAutoImportVariant)
 
-        private fun addImport(importCandidate: ImportCandidate) {
-            StatisticsManager.getInstance().incUseCount(importCandidate.statisticsInfo)
+            StatisticsManager.getInstance().incUseCount(importVariant.statisticsInfo)
 
             project.executeWriteCommand(QuickFixBundle.message("add.import")) {
-                file.addImport(importCandidate.fqName)
+                file.addImport(importVariant.fqName)
             }
         }
     }
@@ -268,10 +271,18 @@ class ImportQuickFix(
                 suggestions = sortedImportCandidateSymbolsWithPriorities.map { (symbol, _) -> symbol.getFqName() }.distinct()
             )
 
-            val sortedImportCandidates = sortedImportCandidateSymbolsWithPriorities
-                .map { (symbol, priority) -> ImportCandidate(symbol.getFqName(), renderSymbol(symbol), priority.statisticsInfo) }
+            val sortedImportVariants = sortedImportCandidateSymbolsWithPriorities
+                .map { (symbol, priority) ->
+                    SymbolBasedAutoImportVariant(
+                        symbol.getFqName(),
+                        symbol.psi,
+                        getIconFor(symbol),
+                        renderSymbol(symbol),
+                        priority.statisticsInfo,
+                    )
+                }
 
-            return ImportQuickFix(element, text, sortedImportCandidates)
+            return ImportQuickFix(element, text, sortedImportVariants)
         }
 
         context(KtAnalysisSession)
