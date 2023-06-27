@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.collectors.fus.actions.persistence.MainMe
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
+import com.intellij.openapi.actionSystem.impl.actionholder.ActionRefKt;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
@@ -58,7 +59,7 @@ public final class ActionMenuItem extends JBCheckBoxMenuItem {
                  boolean enableMnemonics,
                  boolean insideCheckedGroup,
                  boolean useDarkIcons) {
-    myAction = ActionRef.fromAction(action);
+    myAction = ActionRefKt.createActionRef(action);
     myPlace = place;
     myContext = context;
     myEnableMnemonics = enableMnemonics;
@@ -158,7 +159,7 @@ public final class ActionMenuItem extends JBCheckBoxMenuItem {
     for (Shortcut shortcut : shortcuts) {
       if (shortcut instanceof KeyboardShortcut) {
         final KeyStroke firstKeyStroke = ((KeyboardShortcut)shortcut).getFirstKeyStroke();
-        //If action has Enter shortcut, do not add it. Otherwise, user won't be able to chose any ActionMenuItem other than that
+        // If the action has `Enter` shortcut, do not add it. Otherwise, user won't be able to choose any ActionMenuItem other than that
         if (!isEnterKeyStroke(firstKeyStroke)) {
           setAccelerator(firstKeyStroke);
           if (myScreenMenuItemPeer != null) myScreenMenuItemPeer.setLabel(getText(), firstKeyStroke);

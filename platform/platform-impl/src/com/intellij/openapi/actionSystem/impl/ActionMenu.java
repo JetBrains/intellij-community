@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.MainMenuPresentationAware;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
+import com.intellij.openapi.actionSystem.impl.actionholder.ActionRefKt;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.*;
@@ -95,7 +96,7 @@ public final class ActionMenu extends JBMenu {
                     boolean headerMenuItem) {
     myContext = context;
     myPlace = place;
-    myGroup = ActionRef.fromAction(group);
+    myGroup = ActionRefKt.createActionRef(group);
     myPresentationFactory = presentationFactory;
     myPresentation = myPresentationFactory.getPresentation(group);
     myMnemonicEnabled = enableMnemonics;
@@ -358,8 +359,8 @@ public final class ActionMenu extends JBMenu {
 
       if (SystemInfo.isMacSystemMenu && isMainMenuPlace()) {
         // Menu items may contain mnemonic, and they can affect key-event dispatching (when Alt pressed)
-        // To avoid influence of mnemonic it's necessary to clear items when menu was hidden.
-        // When user selects item of system menu (under macOS) AppKit generates such sequence: CloseParentMenu -> PerformItemAction
+        // To avoid the influence of mnemonic it's necessary to clear items when a menu was hidden.
+        // When a user selects item of a system menu (under macOS), AppKit generates such sequence: CloseParentMenu -> PerformItemAction
         // So we can destroy menu-item before item's action performed, and because of that action will not be executed.
         // Defer clearing to avoid this problem.
         myDelayedClear = EdtScheduledExecutorService.getInstance().schedule(clearSelf, 1000, TimeUnit.MILLISECONDS);

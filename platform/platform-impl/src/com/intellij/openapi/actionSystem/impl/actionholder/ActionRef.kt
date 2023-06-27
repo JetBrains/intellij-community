@@ -1,39 +1,27 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.intellij.openapi.actionSystem.impl.actionholder;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.actionSystem.impl.actionholder
 
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
 
-public abstract class ActionRef<T extends AnAction> {
-  private static ActionManager ourManager;
-  static ActionManager getManager() {
-    if (ourManager == null) {
-      ourManager = ActionManager.getInstance();
-    }
-    return ourManager;
+internal sealed class ActionRef<T : AnAction> {
+  abstract fun getAction(): T
+}
+
+private val manager by lazy { ActionManager.getInstance() }
+
+internal fun <T : AnAction> createActionRef(action: T): ActionRef<T> {
+  val id = manager.getId(action)
+  return id?.let { IdActionRef(it) } ?: SimpleActionRef(action)
+}
+
+internal class IdActionRef<T : AnAction>(private val id: String) : ActionRef<T>() {
+  override fun getAction(): T {
+    @Suppress("UNCHECKED_CAST")
+    return requireNotNull(manager.getAction(id)) { "There's no registered action with id=$id" } as T
   }
+}
 
-  public static <T extends AnAction> ActionRef<T> fromAction(@NotNull T action) {
-    String id = getManager().getId(action);
-    return id == null ? new SimpleActionRef<>(action) : new IdActionRef<>(id);
-  }
-
-
-  @NotNull
-  public abstract T getAction();
+internal class SimpleActionRef<T : AnAction>(private val action: T) : ActionRef<T>() {
+  override fun getAction() = action
 }
