@@ -6,7 +6,6 @@ enum class GitLabGQLQuery(val filePath: String) {
   GET_MERGE_REQUEST("graphql/query/getMergeRequest.graphql"),
   GET_MERGE_REQUEST_DISCUSSIONS("graphql/query/getMergeRequestDiscussions.graphql"),
   GET_PROJECT_LABELS("graphql/query/getProjectLabels.graphql"),
-  GET_PROJECT_MEMBERS("graphql/query/getProjectMembers.graphql"),
 
   TOGGLE_MERGE_REQUEST_DISCUSSION_RESOLVE("graphql/query/toggleMergeRequestDiscussionResolve.graphql"),
 

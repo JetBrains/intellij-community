@@ -29,7 +29,7 @@ internal interface GitLabMergeRequestsFiltersViewModel : ReviewListSearchPanelVi
   val reviewerFilterState: MutableStateFlow<MergeRequestsMemberFilterValue?>
   val labelFilterState: MutableStateFlow<GitLabMergeRequestsFiltersValue.LabelFilterValue?>
 
-  suspend fun getMergeRequestMembers(): List<GitLabMemberDTO>
+  suspend fun getMergeRequestMembers(): List<GitLabUserDTO>
 
   suspend fun getLabels(): List<GitLabLabelDTO>
 }
@@ -93,15 +93,5 @@ internal class GitLabMergeRequestsFiltersViewModelImpl(
 
   override suspend fun getLabels(): List<GitLabLabelDTO> = projectData.getLabels()
 
-  override suspend fun getMergeRequestMembers(): List<GitLabMemberDTO> =
-    projectData.getMembers().filter { isValidMergeRequestAccessLevel(it.accessLevel) }
-
-  companion object {
-    private fun isValidMergeRequestAccessLevel(accessLevel: GitLabAccessLevel): Boolean {
-      return accessLevel == GitLabAccessLevel.REPORTER ||
-             accessLevel == GitLabAccessLevel.DEVELOPER ||
-             accessLevel == GitLabAccessLevel.MAINTAINER ||
-             accessLevel == GitLabAccessLevel.OWNER
-    }
-  }
+  override suspend fun getMergeRequestMembers(): List<GitLabUserDTO> =    projectData.getMembers()
 }

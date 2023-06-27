@@ -244,18 +244,5 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
     }
   }
 
-  override suspend fun getPotentialReviewers(): List<GitLabUserDTO> {
-    return projectData.getMembers()
-      .filter { member -> isValidMergeRequestAccessLevel(member.accessLevel) }
-      .map { member -> member.user }
-  }
-
-  companion object {
-    private fun isValidMergeRequestAccessLevel(accessLevel: GitLabAccessLevel): Boolean {
-      return accessLevel == GitLabAccessLevel.REPORTER ||
-             accessLevel == GitLabAccessLevel.DEVELOPER ||
-             accessLevel == GitLabAccessLevel.MAINTAINER ||
-             accessLevel == GitLabAccessLevel.OWNER
-    }
-  }
+  override suspend fun getPotentialReviewers(): List<GitLabUserDTO> = projectData.getMembers()
 }

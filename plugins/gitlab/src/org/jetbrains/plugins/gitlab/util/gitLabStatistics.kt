@@ -34,7 +34,7 @@ internal object GitLabStatistics {
   //endregion
 
   //region Counters
-  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters",  version = 3)
+  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters",  version = 4)
 
   /**
    * Server returned 5** error
@@ -165,6 +165,7 @@ internal object GitLabStatistics {
 
 enum class GitLabApiRequestName {
   REST_GET_CURRENT_USER,
+  REST_GET_PROJECT_USERS,
   REST_GET_COMMIT,
   REST_GET_COMMIT_DIFF,
   REST_GET_MERGE_REQUEST_DIFF,
@@ -184,7 +185,6 @@ enum class GitLabApiRequestName {
   GQL_GET_MERGE_REQUEST,
   GQL_GET_MERGE_REQUEST_DISCUSSIONS,
   GQL_GET_PROJECT_LABELS,
-  GQL_GET_PROJECT_MEMBERS,
   GQL_TOGGLE_MERGE_REQUEST_DISCUSSION_RESOLVE,
   GQL_CREATE_NOTE,
   GQL_CREATE_DIFF_NOTE,
@@ -202,7 +202,6 @@ enum class GitLabApiRequestName {
       GitLabGQLQuery.GET_MERGE_REQUEST -> GQL_GET_MERGE_REQUEST
       GitLabGQLQuery.GET_MERGE_REQUEST_DISCUSSIONS -> GQL_GET_MERGE_REQUEST_DISCUSSIONS
       GitLabGQLQuery.GET_PROJECT_LABELS -> GQL_GET_PROJECT_LABELS
-      GitLabGQLQuery.GET_PROJECT_MEMBERS -> GQL_GET_PROJECT_MEMBERS
       GitLabGQLQuery.TOGGLE_MERGE_REQUEST_DISCUSSION_RESOLVE -> GQL_TOGGLE_MERGE_REQUEST_DISCUSSION_RESOLVE
       GitLabGQLQuery.CREATE_NOTE -> GQL_CREATE_NOTE
       GitLabGQLQuery.CREATE_DIFF_NOTE -> GQL_CREATE_DIFF_NOTE
