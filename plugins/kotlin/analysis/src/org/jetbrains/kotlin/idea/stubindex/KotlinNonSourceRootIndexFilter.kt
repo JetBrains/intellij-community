@@ -13,7 +13,6 @@ import com.intellij.util.indexing.IndexId
 import com.intellij.util.indexing.IndexedFile
 import com.intellij.util.indexing.hints.BaseFileTypeInputFilter
 import com.intellij.util.indexing.hints.BaseGlobalFileTypeInputFilter
-import com.intellij.util.indexing.hints.FileTypeIndexingHint
 import com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy.BEFORE_SUBSTITUTION
 import org.jetbrains.kotlin.idea.KotlinFileType
 
@@ -22,7 +21,7 @@ private const val KOTLIN_DOT_FILE_EXTENSION = ".${KotlinFileType.EXTENSION}"
 class KotlinNonSourceRootIndexFilter : BaseGlobalFileTypeInputFilter() {
     private val enabled = !System.getProperty("kotlin.index.non.source.roots", "false").toBoolean()
 
-    override fun getFileTypeHintForAffectedIndex(indexId: IndexId<*, *>): FileTypeIndexingHint {
+    override fun getFileTypeHintForAffectedIndex(indexId: IndexId<*, *>): BaseFileTypeInputFilter {
         return object : BaseFileTypeInputFilter(BEFORE_SUBSTITUTION) {
             override fun acceptFileType(fileType: FileType): ThreeState {
                 return if (fileType == KotlinFileType.INSTANCE) ThreeState.UNSURE else ThreeState.YES

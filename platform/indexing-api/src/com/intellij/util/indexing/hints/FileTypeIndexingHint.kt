@@ -55,7 +55,7 @@ import org.jetbrains.annotations.ApiStatus.Experimental
  * **When used with [com.intellij.util.indexing.GlobalIndexFilter]:**
  *
  * You cannot use this [FileTypeIndexingHint] with [com.intellij.util.indexing.GlobalIndexFilter] directly.
- * Please use [GlobalFileTypeIndexingHint] instead.
+ * Please use [GlobalIndexSpecificIndexingHint] instead.
  *
  * **A few words about filetype substitution.**
  *

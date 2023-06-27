@@ -171,9 +171,9 @@ internal class RequiredIndexesEvaluator(private val registeredIndexes: Registere
   private fun getGlobalIndexedFilePredicateForRegularFile(indexId: IndexId<*, *>, fileType: FileType): IndexedFilePredicate {
     var allGlobalHints: IndexedFilePredicate = truePredicate
     for (filter in GlobalIndexFilter.EP_NAME.extensionList) {
-      val hint = (filter as? GlobalFileTypeIndexingHint)?.globalFileTypeHintForIndex(indexId)
-      val hintPredicate = if (hint != null) {
-        applyFileTypeHints(hint, fileType)
+      val inputFilter = (filter as? GlobalIndexSpecificIndexingHint)?.globalInputFilterForIndex(indexId)
+      val hintPredicate = if (inputFilter != null) {
+        inputFilerToIndexedFilePredicateForRegularFile(inputFilter, fileType)
       }
       else {
         globalFilterToIndexedFilePredicate(filter, indexId)

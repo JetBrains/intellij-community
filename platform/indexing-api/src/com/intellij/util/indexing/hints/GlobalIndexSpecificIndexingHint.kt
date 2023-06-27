@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.hints
 
+import com.intellij.util.indexing.FileBasedIndex.InputFilter
 import com.intellij.util.indexing.IndexId
 import org.jetbrains.annotations.ApiStatus
 
@@ -13,11 +14,11 @@ import org.jetbrains.annotations.ApiStatus
  * @see FileTypeIndexingHint
  */
 @ApiStatus.Internal
-interface GlobalFileTypeIndexingHint {
+interface GlobalIndexSpecificIndexingHint {
   /**
    * @return index-specific hint. There may be several global hints. All the hints will be ANDed with all the other global and
    * non-global hints applicable to given [indexId]. Therefore, if current hint does not care about provided [indexId],
    * it should return [com.intellij.util.indexing.hints.AcceptAllIndexingHint].
    */
-  fun globalFileTypeHintForIndex(indexId: IndexId<*, *>): FileTypeIndexingHint
+  fun globalInputFilterForIndex(indexId: IndexId<*, *>): InputFilter
 }
