@@ -16,9 +16,9 @@ import java.util.List;
 import java.util.function.BiConsumer;
 
 /**
- * A helper to perform editor command when building the {@link com.intellij.modcommand.ModCommand}
+ * A helper to perform editor command when building the {@link ModCommand}
  * 
- * @see ModCommands#psiUpdate(PsiElement, BiConsumer) 
+ * @see com.intellij.codeInspection.ModCommands#psiUpdate(PsiElement, BiConsumer)
  */
 @ApiStatus.Experimental
 public interface ModPsiUpdater extends ModPsiNavigator {
@@ -29,7 +29,7 @@ public interface ModPsiUpdater extends ModPsiNavigator {
    * Other write operations on the directory may not work.
    * @param <E> type of the element
    */
-  @Contract(value = "null -> null; !null -> !null")
+  @Contract("null -> null; !null -> !null")
   <E extends PsiElement> E getWritable(E e);
   
   /**
