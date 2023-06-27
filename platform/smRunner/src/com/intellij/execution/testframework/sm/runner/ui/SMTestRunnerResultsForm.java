@@ -464,7 +464,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   @Override
   public boolean hasTestSuites() {
-    return getRoot().getChildren().size() > 0;
+    return !getRoot().getChildren().isEmpty();
   }
 
   @Override
