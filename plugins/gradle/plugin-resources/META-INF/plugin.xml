@@ -182,7 +182,7 @@
                  description="Send information on recently saved files to Gradle Daemon right before executing a task"/>
     <registryKey key="gradle.version.catalogs.dynamic.support" defaultValue="true"
                  description="Enable experimental support of version catalogs based on after-sync gradle models"/>
-    <registryKey key="idea.disable.gradle.download.sources" defaultValue="true"
+    <registryKey key="gradle.download.sources" defaultValue="true"
                  description="Download sources of project dependencies during import"/>
     <commandLineInspectionProjectConfigurator implementation="org.jetbrains.plugins.gradle.GradleCommandLineProjectConfigurator"/>
     <warmupConfigurator implementation="org.jetbrains.plugins.gradle.GradleWarmupConfigurator"/>

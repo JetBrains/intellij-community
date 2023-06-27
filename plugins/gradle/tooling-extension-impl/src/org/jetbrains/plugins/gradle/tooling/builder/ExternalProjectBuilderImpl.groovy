@@ -238,7 +238,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     def ideaResourceDirs = null
     def ideaTestSourceDirs = null
     def ideaTestResourceDirs = null
-    def downloadSourcesFlag = System.getProperty("idea.disable.gradle.download.sources")
+    def downloadSourcesFlag = System.getProperty("idea.gradle.download.sources")
     def downloadSources = downloadSourcesFlag == null ? true : Boolean.valueOf(downloadSourcesFlag)
     def downloadJavadoc = downloadSourcesFlag == null ? false : downloadSources
 

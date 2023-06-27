@@ -576,8 +576,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   private static void configureExecutionArgumentsAndVmOptions(@NotNull GradleExecutionSettings executionSettings,
                                                               @NotNull DefaultProjectResolverContext resolverCtx,
                                                               boolean isBuildSrcProject) {
-    if (!Registry.is("idea.disable.gradle.download.sources", true)) {
-      executionSettings.withArgument("-Didea.disable.gradle.download.sources=false");
+    if (!Registry.is("gradle.download.sources", true)) {
+      executionSettings.withArgument("-Didea.gradle.download.sources=false");
     }
     executionSettings.withArgument("-Didea.sync.active=true");
     if (resolverCtx.isResolveModulePerSourceSet()) {

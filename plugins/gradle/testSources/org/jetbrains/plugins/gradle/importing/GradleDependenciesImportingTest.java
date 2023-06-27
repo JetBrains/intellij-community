@@ -1943,7 +1943,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testSourcesExcludedFromGradleCacheOnDisabledFlag() throws Exception {
-    setRegistryPropertyForTest("idea.disable.gradle.download.sources", "false");
+    setRegistryPropertyForTest("gradle.download.sources", "false");
     overrideGradleUserHome("project/cache");
     var dependency = "junit:junit:4.12";
     var dependencyName = "Gradle: junit:junit:4.12";
@@ -1962,7 +1962,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testSourcesExcludedFromGradleCacheOnDisabledFlagWithIdeaPlugin() throws Exception {
-    setRegistryPropertyForTest("idea.disable.gradle.download.sources", "false");
+    setRegistryPropertyForTest("gradle.download.sources", "false");
     overrideGradleUserHome("project/cache");
     var dependency = "junit:junit:4.12";
     var dependencyName = "Gradle: junit:junit:4.12";
@@ -1982,7 +1982,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testSourcesExcludedFromGradleMultiModuleProjectCacheOnDisabledFlag() throws Exception {
-    setRegistryPropertyForTest("idea.disable.gradle.download.sources", "false");
+    setRegistryPropertyForTest("gradle.download.sources", "false");
     overrideGradleUserHome("project/cache");
     var dependency = "junit:junit:4.12";
     var dependencyName = "Gradle: junit:junit:4.12";

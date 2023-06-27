@@ -102,7 +102,7 @@ internal class MultiplatformModelImportingContextImpl(
     override lateinit var sourceSetsByName: Map<String, KotlinSourceSetImpl>
         private set
 
-    private val downloadSources = java.lang.Boolean.parseBoolean(System.getProperty("idea.disable.gradle.download.sources", "true"))
+    private val downloadSources = java.lang.Boolean.parseBoolean(System.getProperty("idea.gradle.download.sources", "true"))
 
     override val dependencyResolver = DependencyResolverImpl(project, false, downloadSources, SourceSetCachedFinder(modelBuilderContext))
     override val dependencyMapper = KotlinDependencyMapper()
