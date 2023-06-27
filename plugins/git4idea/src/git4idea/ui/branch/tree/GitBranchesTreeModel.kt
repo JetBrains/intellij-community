@@ -23,7 +23,11 @@ interface GitBranchesTreeModel : TreeModel {
     const val NAME = "TreeRoot"
     override fun getPathElementId(): String = NAME
   }
-  data class BranchesPrefixGroup(val type: BranchType, val prefix: List<String>, val repository: GitRepository? = null)
+  data class BranchesPrefixGroup(val type: BranchType,
+                                 val prefix: List<String>,
+                                 val repository: GitRepository? = null) : PathElementIdProvider {
+    override fun getPathElementId(): String = type.name + "/" + prefix.toString()
+  }
   data class BranchTypeUnderRepository(val repository: GitRepository, val type: BranchType)
   data class BranchUnderRepository(val repository: GitRepository, val branch: GitBranch): PresentableNode {
     override fun getPresentableText(): String = branch.name

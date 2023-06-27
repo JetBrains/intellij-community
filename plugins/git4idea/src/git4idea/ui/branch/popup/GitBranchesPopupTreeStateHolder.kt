@@ -4,6 +4,7 @@ package git4idea.ui.branch.popup
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.components.*
 import com.intellij.ui.tree.TreePathUtil
+import com.intellij.util.ui.tree.TreeUtil
 import javax.swing.JTree
 
 @State(name = "GitBranchesPopupTreeState", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)], reportStatistic = false)
@@ -28,8 +29,13 @@ class GitBranchesPopupTreeStateHolder : PersistentStateComponent<TreeState> {
       (0 until model.getChildCount(root))
         .asSequence()
         .map { index -> model.getChild(root, index) }
-        .filter { child -> model.getChildCount(child) > 0 }
-        .map { child -> TreePathUtil.convertCollectionToTreePath(listOf(root, child)) }
+        .filter { firstLevelChild -> model.getChildCount(firstLevelChild) > 0 }
+        .flatMap { firstLevelChild ->
+          TreeUtil.nodeChildren(firstLevelChild, model)
+            .mapTo(arrayListOf(TreePathUtil.convertCollectionToTreePath(listOf(root, firstLevelChild)))) { secondLevelChild ->
+              TreePathUtil.convertCollectionToTreePath(listOf(root, firstLevelChild, secondLevelChild))
+            }
+        }
         .filter(tree::isExpanded)
         .toList()
 
