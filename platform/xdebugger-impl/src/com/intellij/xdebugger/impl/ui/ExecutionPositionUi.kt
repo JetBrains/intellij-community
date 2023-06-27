@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.DocumentUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.EDT
 import com.intellij.xdebugger.impl.ExecutionPointVm
 import com.intellij.xdebugger.impl.ExecutionPositionVm
 import com.intellij.xdebugger.ui.DebuggerColors
@@ -90,16 +91,16 @@ internal class ExecutionPositionUi private constructor(
       error("not reached")
     }
 
-    @RequiresEdt
     private suspend fun create(coroutineScope: CoroutineScope, project: Project, vm: ExecutionPositionVm): ExecutionPositionUi? {
+      EDT.assertIsEdt()
       val rangeHighlighter = createRangeHighlighter(project, vm) ?: return null
       rangeHighlighter.editorFilter = MarkupEditorFilter { it.editorKind == EditorKind.MAIN_EDITOR }
 
       return ExecutionPositionUi(coroutineScope, vm, rangeHighlighter)
     }
 
-    @RequiresEdt
     private suspend fun createRangeHighlighter(project: Project, vm: ExecutionPositionVm): RangeHighlighter? {
+      EDT.assertIsEdt()
       val document = withContext(Dispatchers.Default) {
         readAction {
           FileDocumentManager.getInstance().getDocument(vm.file)

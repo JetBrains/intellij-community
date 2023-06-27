@@ -12,6 +12,7 @@ import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.ui.EDT
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 import kotlinx.coroutines.CoroutineScope
@@ -54,8 +55,8 @@ internal class ExecutionPositionNavigator(
     }
   }
 
-  @RequiresEdt
   suspend fun navigateTo(navigationMode: ExecutionPositionNavigationMode, isActiveSourceKind: Boolean = true) {
+    EDT.assertIsEdt()
     val effectiveNavigationMode = if (isActiveSourceKind) navigationMode else ExecutionPositionNavigationMode.SCROLL
     val descriptor = getDescriptor()
     navigateTo(descriptor, effectiveNavigationMode)
