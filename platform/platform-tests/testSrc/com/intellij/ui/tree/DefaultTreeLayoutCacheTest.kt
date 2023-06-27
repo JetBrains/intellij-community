@@ -433,6 +433,134 @@ class DefaultTreeLayoutCacheTest {
   }
 
   @Test
+  fun `expand a non-existing child of a node with loaded children`() {
+    testStructure(
+      initOps = {
+        setModelStructure("""
+          |r
+          | a1
+          |  b1
+          |   c1
+          |    d1
+          """.trimMargin()
+        )
+        sut.isRootVisible = true
+        selectionModel.expect { resetRowSelection() }
+      },
+      modOps = {
+        sut.setExpandedState(fakePath("r/a2"), true)
+      },
+      assertions = {
+        assertStructure("""
+          |r
+          | a1
+          """.trimMargin()
+        )
+        assertThatExpanded("r").isTrue()
+        assertThatExpanded("r/a1").isFalse()
+        assertThatExpanded("r/a1/b1").isFalse()
+        assertThatExpanded("r/a1/b1/c1").isFalse()
+      },
+    )
+  }
+
+  @Test
+  fun `expand a non-existing node deep down a not yet loaded branch`() {
+    testStructure(
+      initOps = {
+        setModelStructure("""
+          |r
+          | a1
+          |  b1
+          |   c1
+          |    d1
+          """.trimMargin()
+        )
+        sut.isRootVisible = true
+        selectionModel.expect { resetRowSelection() }
+      },
+      modOps = {
+        sut.setExpandedState(fakePath("r/a1/b1/c1111"), true)
+      },
+      assertions = {
+        assertStructure("""
+          |r
+          | a1
+          """.trimMargin()
+        )
+        assertThatExpanded("r").isTrue()
+        assertThatExpanded("r/a1").isFalse()
+        assertThatExpanded("r/a1/b1").isFalse()
+        assertThatExpanded("r/a1/b1/c1").isFalse()
+      },
+    )
+  }
+
+  @Test
+  fun `expand a node from an alien root`() {
+    testStructure(
+      initOps = {
+        setModelStructure("""
+          |r
+          | a1
+          |  b1
+          |   c1
+          |    d1
+          """.trimMargin()
+        )
+        sut.isRootVisible = true
+        selectionModel.expect { resetRowSelection() }
+      },
+      modOps = {
+        sut.setExpandedState(fakePath("r2/a1/b1"), true)
+      },
+      assertions = {
+        assertStructure("""
+          |r
+          | a1
+          """.trimMargin()
+        )
+        assertThatExpanded("r").isTrue()
+        assertThatExpanded("r/a1").isFalse()
+        assertThatExpanded("r/a1/b1").isFalse()
+        assertThatExpanded("r/a1/b1/c1").isFalse()
+      },
+    )
+  }
+
+  @Test
+  fun `expand an alien root`() {
+    testStructure(
+      initOps = {
+        setModelStructure("""
+          |r
+          | a1
+          |  b1
+          |   c1
+          |    d1
+          """.trimMargin()
+        )
+        sut.isRootVisible = true
+        selectionModel.expect { resetRowSelection() }
+      },
+      modOps = {
+        sut.setExpandedState(fakePath("r2"), true)
+      },
+      assertions = {
+        assertStructure("""
+          |r
+          | a1
+          """.trimMargin()
+        )
+        assertThatExpanded("r").isTrue()
+        assertThatExpanded("r/a1").isFalse()
+        assertThatExpanded("r/a1/b1").isFalse()
+        assertThatExpanded("r/a1/b1/c1").isFalse()
+      },
+    )
+  }
+
+  @Test
   fun `insert the only node and expand`() {
     testStructure(
       initOps = {
@@ -844,20 +972,34 @@ class DefaultTreeLayoutCacheTest {
 
   private fun node(path: String) = path(path).lastPathComponent as Node
 
-  private fun path(s: String): TreePath {
+  private fun path(s: String): TreePath = pathImpl(s, true)
+
+  private fun fakePath(s: String): TreePath = pathImpl(s, false)
+
+  private fun pathImpl(s: String, onlyExisting: Boolean): TreePath {
     val names = s.split('/')
     var path: TreePath? = null
     for (name in names) {
       if (path == null) {
-        assertThat((model.root as Node).userObject).isEqualTo(name)
-        path = TreePath(model.root)
+        if (onlyExisting) {
+          assertThat((model.root as Node).userObject).isEqualTo(name)
+          path = TreePath(model.root)
+        }
+        else {
+          path = TreePath(Node(name))
+        }
       }
       else {
         val parent = path.lastPathComponent
-        val child = (0 until model.getChildCount(parent))
+        var child = (0 until model.getChildCount(parent))
           .map { model.getChild(parent, it) }
           .firstOrNull { (it as Node).userObject == name }
-        requireNotNull(child) { "Node $name not found in path $s" }
+        if (onlyExisting) {
+          requireNotNull(child) { "Node $name not found in path $s" }
+        }
+        else {
+          child = Node(name)
+        }
         path = path.pathByAddingChild(child)
       }
     }
