@@ -76,6 +76,32 @@ def display_data(table, max_cols, max_colwidth, start, end):
     pd.set_option('display.max_colwidth', _jb_max_colwidth)
 
 
+def get_column_desciptions(table, max_cols, max_colwidth):
+    # type: (pd.DataFrame, int, int) -> str
+    described_df = __get_describe_df(table)
+
+    return get_data(described_df, max_cols, max_colwidth, None, None)
+
+
+def get_value_counts(table, max_cols, max_colwidth):
+    # type: (pd.DataFrame, int, int) -> str
+    count_df = __get_counts_df(table)
+
+    return get_data(count_df, max_cols, max_colwidth, None, None)
+
+
+def __get_describe_df(table):
+    # type: (pd.DataFrame) -> pd.DataFrame
+    described_df = table.describe(percentiles=[.05, .25, .5, .75, .95],
+                                  exclude=[np.complex64, np.complex128])
+    return described_df.reindex(columns=table.columns, copy=False)
+
+
+def __get_counts_df(table):
+    # type: (pd.DataFrame) -> pd.DataFrame
+    return table.count().to_frame().transpose()
+
+
 # noinspection PyUnresolvedReferences
 def __convert_to_df(table):
     # type: (Union[pd.DataFrame, pd.Series, np.ndarray, pd.Categorical]) -> pd.DataFrame
