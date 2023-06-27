@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.PsiTestUtil
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
+import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.analysis.providers.analysisMessageBus
 import org.jetbrains.kotlin.analysis.providers.topics.KotlinModuleStateModificationListener
 import org.jetbrains.kotlin.analysis.providers.topics.KotlinTopics
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
 import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.addEmptyClassesRoot
+import org.jetbrains.kotlin.psi.KtFile
 import org.junit.Assert
 import java.io.File
 import org.jetbrains.kotlin.test.util.addDependency
@@ -238,7 +240,84 @@ class KotlinModuleStateModificationTest : AbstractMultiModuleTest() {
         disposeTrackers(trackerA, trackerB, trackerC, trackerD)
     }
 
+    fun `test script module state modification after moving the script file to another module`() {
+        val scriptA = createScript("a")
+        val scriptB = createScript("b")
+        val libraryC = createProjectLibrary("c")
+        val moduleD = createModuleInTmpDir("d")
+        val moduleE = createModuleInTmpDir("e")
+
+        val destination = getVirtualFile(createTempDirectory())
+        PsiTestUtil.addContentRoot(moduleE, destination)
+
+        val trackerA = createTracker(scriptA)
+        val trackerB = createTracker(scriptB)
+        val trackerC = createTracker(libraryC)
+        val trackerD = createTracker(moduleD)
+        val trackerE = createTracker(moduleE)
+
+        move(scriptA.virtualFile, destination)
+
+        trackerA.assertModifiedOnce("moved script A")
+        trackerB.assertNotModified("unchanged script B")
+        trackerC.assertNotModified("unchanged library C")
+        trackerD.assertNotModified("unchanged module D")
+
+        // The file move will cause a global PSI tree change event, and thereby a global out-of-block modification event, but the module
+        // state of the destination module E is not affected by a file move, so the tracker should not register any module state
+        // modification events.
+        trackerE.assertNotModified("unchanged destination module E")
+
+        disposeTrackers(trackerA, trackerB, trackerC, trackerD, trackerE)
+    }
+
+    fun `test script module state modification after moving the script file outside the content root`() {
+        val scriptA = createScript("a")
+        val scriptB = createScript("b")
+        val libraryC = createProjectLibrary("c")
+        val moduleD = createModuleInTmpDir("d")
+
+        val destination = getVirtualFile(createTempDirectory())
+
+        val trackerA = createTracker(scriptA)
+        val trackerB = createTracker(scriptB)
+        val trackerC = createTracker(libraryC)
+        val trackerD = createTracker(moduleD)
+
+        move(scriptA.virtualFile, destination)
+
+        trackerA.assertModifiedOnce("moved script A")
+        trackerB.assertNotModified("unchanged script B")
+        trackerC.assertNotModified("unchanged library C")
+        trackerD.assertNotModified("unchanged module D")
+
+        disposeTrackers(trackerA, trackerB, trackerC, trackerD)
+    }
+
+    fun `test script module state modification after deleting the script file`() {
+        val scriptA = createScript("a")
+        val scriptB = createScript("b")
+        val libraryC = createProjectLibrary("c")
+        val moduleD = createModuleInTmpDir("d")
+
+        val trackerA = createTracker(scriptA)
+        val trackerB = createTracker(scriptB)
+        val trackerC = createTracker(libraryC)
+        val trackerD = createTracker(moduleD)
+
+        delete(scriptA.virtualFile)
+
+        trackerA.assertModifiedOnce("deleted script A", shouldBeRemoval = true)
+        trackerB.assertNotModified("unchanged script B")
+        trackerC.assertNotModified("unchanged library C")
+        trackerD.assertNotModified("unchanged module D")
+
+        disposeTrackers(trackerA, trackerB, trackerC, trackerD)
+    }
+
     private fun createProjectLibrary(name: String): Library = ConfigLibraryUtil.addProjectLibraryWithClassesRoot(myProject, name)
+
+    private fun createScript(name: String): KtFile = createKtFileUnderNewContentRoot(FileWithText("$name.kts", ""))
 
     private fun createTracker(module: KtModule): ModuleStateModificationTracker = ModuleStateModificationTracker(module)
 
@@ -246,6 +325,9 @@ class KotlinModuleStateModificationTest : AbstractMultiModuleTest() {
 
     private fun createTracker(library: Library): ModuleStateModificationTracker =
         createTracker(LibraryInfoCache.getInstance(myProject)[library].single().toKtModule())
+
+    private fun createTracker(file: KtFile): ModuleStateModificationTracker =
+        createTracker(ProjectStructureProvider.getModule(myProject, file, contextualModule = null))
 
     private fun disposeTrackers(vararg trackers: ModuleStateModificationTracker) {
         trackers.forEach { Disposer.dispose(it) }

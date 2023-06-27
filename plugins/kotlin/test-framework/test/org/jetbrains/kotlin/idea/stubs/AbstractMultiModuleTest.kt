@@ -25,6 +25,7 @@ import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
+import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
 import org.jetbrains.kotlin.idea.facet.initializeIfNeeded
 import org.jetbrains.kotlin.idea.test.*
@@ -32,9 +33,9 @@ import org.jetbrains.kotlin.idea.test.KotlinTestUtils.allowProjectRootAccess
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.disposeVfsRootAccess
 import org.jetbrains.kotlin.idea.test.util.slashedPath
 import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.psi.KtFile
 import org.junit.Assert
 import java.io.File
-import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.*
 
@@ -98,7 +99,6 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase() {
     }
 
     protected data class FileWithText(val name: String, val text: String)
-
 
     override fun tearDown() {
         runAll(
@@ -186,6 +186,20 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase() {
             ?: error("Facet settings are not found")
 
         facetSettings.useProjectSettings = false
+    }
+
+    protected fun createKtFileUnderNewContentRoot(fileWithText: FileWithText): KtFile {
+        val tmpDir = createTempDirectory().toPath()
+
+        // We need to add the script to a module so that it's part of the project's content root.
+        val containingModule = createModule(tmpDir, moduleType)
+        PsiTestUtil.addContentRoot(containingModule, getVirtualFile(tmpDir.toFile()))
+
+        val filePath = tmpDir / fileWithText.name
+        filePath.writeText(fileWithText.text)
+
+        val file = getVirtualFile(filePath.toFile())
+        return file.toPsiFile(project)!! as KtFile
     }
 
     protected fun checkFiles(
