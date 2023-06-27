@@ -1,5 +1,7 @@
 package com.jetbrains.performancePlugin.remotedriver.webservice
 
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.performancePlugin.remotedriver.dataextractor.TextToKeyCache
 import com.jetbrains.performancePlugin.remotedriver.webservice.routing.CantFindRouteException
 import com.jetbrains.performancePlugin.remotedriver.webservice.routing.Routing
@@ -14,7 +16,11 @@ import org.jetbrains.ide.RestService
 import org.jetbrains.io.response
 
 internal class UiHierarchyWebService : RestService() {
-  // todo under Registry flag
+  init {
+    if (!Registry.`is`("expose.ui.hierarchy.url")) {
+      throw ExtensionNotApplicableException.create()
+    }
+  }
 
   override fun getServiceName(): String {
     return "remote-driver"
