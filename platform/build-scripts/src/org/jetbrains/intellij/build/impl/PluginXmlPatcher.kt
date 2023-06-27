@@ -58,8 +58,9 @@ internal fun patchPluginXml(moduleOutputPatcher: ModuleOutputPatcher,
     else -> CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
   }
 
-  val defaultPluginVersion = if (context.buildNumber.endsWith(".SNAPSHOT")) {
-    "${context.buildNumber}.${pluginDateFormat.format(ZonedDateTime.now())}"
+  val snapshotSuffix = ".SNAPSHOT"
+  val defaultPluginVersion = if (context.buildNumber.endsWith(snapshotSuffix)) {
+    "${context.buildNumber.removeSuffix(snapshotSuffix)}.${pluginDateFormat.format(ZonedDateTime.now())}$snapshotSuffix"
   }
   else {
     context.buildNumber
