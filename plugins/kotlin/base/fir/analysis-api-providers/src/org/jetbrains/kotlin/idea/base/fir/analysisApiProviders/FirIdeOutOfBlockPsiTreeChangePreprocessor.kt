@@ -16,7 +16,8 @@ import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.util.module
-import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtAnnotated
+import org.jetbrains.kotlin.psi.KtCodeFragment
 
 @OptIn(LLFirInternals::class)
 internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Project) : PsiTreeChangePreprocessor {
@@ -98,6 +99,8 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
         psi is PsiWhiteSpace || psi is PsiComment -> ChangeType.Invisible
         else -> {
             val inBlockModificationOwner = psi.getNonLocalReanalyzableContainingDeclaration()
+                ?: psi.containingFile as? KtCodeFragment
+
             if (inBlockModificationOwner != null && (psi.parent != inBlockModificationOwner || code != PsiEventType.CHILD_ADDED)) {
                 ChangeType.InBlock(inBlockModificationOwner)
             } else {
@@ -126,5 +129,5 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
 private sealed class ChangeType {
     object OutOfBlock : ChangeType()
     object Invisible : ChangeType()
-    class InBlock(val blockOwner: KtDeclaration) : ChangeType()
+    class InBlock(val blockOwner: KtAnnotated) : ChangeType()
 }
