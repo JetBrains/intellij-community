@@ -28,13 +28,9 @@ import com.intellij.ui.mac.foundation.NSDefaults;
 import com.intellij.ui.mac.screenmenu.Menu;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
 import com.intellij.ui.plaf.beg.IdeaMenuUI;
-import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.SingleAlarm;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -157,7 +153,7 @@ public final class ActionMenu extends JBMenu {
   @Override
   public void updateUI() {
     setUI(IdeaMenuUI.createUI(this));
-    setFont(UIUtil.getMenuFont());
+    setFont(FontUtil.getMenuFont());
 
     JPopupMenu popupMenu = getPopupMenu();
     if (popupMenu != null) {
@@ -165,7 +161,9 @@ public final class ActionMenu extends JBMenu {
     }
   }
 
-  public @Nullable Menu getScreenMenuPeer() { return myScreenMenuPeer; }
+  public @Nullable Menu getScreenMenuPeer() {
+    return myScreenMenuPeer;
+  }
 
   public boolean isHeaderMenuItem() {
     return myHeaderMenuItem;
@@ -223,7 +221,8 @@ public final class ActionMenu extends JBMenu {
       if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
         // JDK can't paint correctly our HiDPI icons at the system menu bar
         icon = IconUtilKt.getMenuBarIcon(icon, myUseDarkIcons);
-      } else if (shouldConvertIconToDarkVariant()) {
+      }
+      else if (shouldConvertIconToDarkVariant()) {
         icon = IconLoader.getDarkIcon(icon, true);
       }
       if (isShowNoIcons()) {
@@ -232,13 +231,11 @@ public final class ActionMenu extends JBMenu {
       }
       else {
         setIcon(icon);
-        if (myPresentation.getDisabledIcon() != null) {
-          setDisabledIcon(myPresentation.getDisabledIcon());
+        Icon presentationDisabledIcon = myPresentation.getDisabledIcon();
+        setDisabledIcon(presentationDisabledIcon == null ? IconLoader.getDisabledIcon(icon) : presentationDisabledIcon);
+        if (myScreenMenuPeer != null) {
+          myScreenMenuPeer.setIcon(icon);
         }
-        else {
-          setDisabledIcon(IconLoader.getDisabledIcon(icon));
-        }
-        if (myScreenMenuPeer != null) myScreenMenuPeer.setIcon(icon);
       }
     }
   }
@@ -248,21 +245,25 @@ public final class ActionMenu extends JBMenu {
   }
 
   static boolean isShowNoIcons() {
-    return SystemInfo.isMac && (Registry.get("ide.macos.main.menu.alignment.options").isOptionEnabled("No icons") || ExperimentalUI.isNewUI());
+    return SystemInfoRt.isMac && (Registry.get("ide.macos.main.menu.alignment.options").isOptionEnabled("No icons") || ExperimentalUI.isNewUI());
   }
 
   static boolean isShowNoIcons(AnAction action) {
-    if (action == null) return false;
-    if (action instanceof MainMenuPresentationAware && ((MainMenuPresentationAware)action).alwaysShowIconInMainMenu()) return false;
+    if (action == null) {
+      return false;
+    }
+    if (action instanceof MainMenuPresentationAware && ((MainMenuPresentationAware)action).alwaysShowIconInMainMenu()) {
+      return false;
+    }
     return isShowNoIcons();
   }
 
   static boolean isAligned() {
-    return SystemInfo.isMac && Registry.get("ide.macos.main.menu.alignment.options").isOptionEnabled("Aligned");
+    return SystemInfoRt.isMac && Registry.get("ide.macos.main.menu.alignment.options").isOptionEnabled("Aligned");
   }
 
   static boolean isAlignedInGroup() {
-    return SystemInfo.isMac && Registry.get("ide.macos.main.menu.alignment.options").isOptionEnabled("Aligned in group");
+    return SystemInfoRt.isMac && Registry.get("ide.macos.main.menu.alignment.options").isOptionEnabled("Aligned in group");
   }
 
   @Override
@@ -530,7 +531,6 @@ public final class ActionMenu extends JBMenu {
       Toolkit.getDefaultToolkit().removeAWTEventListener(this);
     }
   }
-
 
   private static final class SubElementSelector {
     static final boolean isForceDisabled =

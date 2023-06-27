@@ -926,8 +926,13 @@ public final class UIUtil {
     return UIManager.getFont("OptionPane.messageFont");
   }
 
+  /**
+   * @deprecated Use {@link FontUtil#getMenuFont()}
+   */
+  @Deprecated
+  @SuppressWarnings("unused")
   public static Font getMenuFont() {
-    return UIManager.getFont("Menu.font");
+    return FontUtil.getMenuFont();
   }
 
   /**
