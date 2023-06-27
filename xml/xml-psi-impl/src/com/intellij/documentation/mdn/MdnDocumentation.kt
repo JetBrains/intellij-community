@@ -75,7 +75,7 @@ fun getHtmlMdnDocumentation(element: PsiElement, context: XmlTag?): MdnSymbolDoc
       PsiTreeUtil.getParentOfType(element, XmlAttribute::class.java, false)?.let { attr ->
         symbolName = attr.localName
         getAttributeDocumentation(getHtmlApiNamespace(attr.namespace, attr, toLowerCase(symbolName)),
-          attr.parent.localName, toLowerCase(symbolName))
+                                  attr.parent.localName, toLowerCase(symbolName))
       }
     }
     else -> {
@@ -292,7 +292,11 @@ data class MdnHtmlAttributeDocumentation(override val url: String?,
                                          override val status: Set<MdnApiStatus>?,
                                          @JsonDeserialize(using = CompatibilityMapDeserializer::class)
                                          override val compatibility: CompatibilityMap?,
-                                         override val doc: String?) : MdnRawSymbolDocumentation
+                                         override val doc: String?,
+                                         val details: Map<String, String>? = null) : MdnRawSymbolDocumentation {
+  override val sections: Map<String, String>
+    get() = details ?: emptyMap()
+}
 
 data class MdnDomEventDocumentation(override val url: String?,
                                     override val status: Set<MdnApiStatus>?,
