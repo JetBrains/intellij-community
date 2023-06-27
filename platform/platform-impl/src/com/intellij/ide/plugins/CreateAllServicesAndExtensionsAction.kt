@@ -14,6 +14,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runModalTask
@@ -47,11 +48,15 @@ private class CreateAllServicesAndExtensionsAction : AnAction("Create All Servic
       checkExtensionPoint(StubElementTypeHolderEP.EP_NAME.point as ExtensionPointImpl<*>, taskExecutor)
 
       val application = ApplicationManager.getApplication() as ComponentManagerImpl
-      checkContainer(application, indicator, taskExecutor)
+      checkContainer(application, "app", indicator, taskExecutor)
 
       val project = ProjectUtil.getOpenProjects().firstOrNull() as? ComponentManagerImpl
-      project?.let {
-        checkContainer(it, indicator, taskExecutor)
+      if (project != null) {
+        checkContainer(project, "project", indicator, taskExecutor)
+        val module = ModuleManager.getInstance(project as Project).modules.firstOrNull() as? ComponentManagerImpl
+        if (module != null) {
+          checkContainer(module, "module", indicator, taskExecutor)
+        }
       }
 
       indicator.text2 = "Checking light services..."
@@ -139,10 +144,11 @@ private val servicesWhichRequireReadAction = setOf(
 )
 
 @Suppress("HardCodedStringLiteral")
-private fun checkContainer(container: ComponentManagerImpl, indicator: ProgressIndicator, taskExecutor: (task: () -> Unit) -> Unit) {
-  indicator.text2 = "Checking ${container.activityNamePrefix()}services..."
+private fun checkContainer(container: ComponentManagerImpl, levelDescription: String?, indicator: ProgressIndicator,
+                           taskExecutor: (task: () -> Unit) -> Unit) {
+  indicator.text2 = "Checking ${levelDescription} services..."
   ComponentManagerImpl.createAllServices(container, servicesWhichRequireEdt, servicesWhichRequireReadAction)
-  indicator.text2 = "Checking ${container.activityNamePrefix()}extensions..."
+  indicator.text2 = "Checking ${levelDescription} extensions..."
   container.extensionArea.processExtensionPoints { extensionPoint ->
     // requires a read action
     if (extensionPoint.name == "com.intellij.favoritesListProvider" ||
