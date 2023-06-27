@@ -23,11 +23,15 @@ internal class KotlinUnusedImportInspection : AbstractKotlinInspection() {
             analyseImports(file)
         }
 
-        if (result.unusedImports.isEmpty()) return null
+        // Imports in a 'KtCodeFragment' aren't a part of the AST, so we can't attach an inspection on them.
+        val unusedImports = result.unusedImports
+            .filter { it.isPhysical }
+            .takeIf { it.isNotEmpty() }
+            ?: return null
 
         val quickFixes = arrayOf(KotlinOptimizeImportsQuickFix(file))
 
-        val problems = result.unusedImports.map { importPsiElement ->
+        val problems = unusedImports.map { importPsiElement ->
             manager.createProblemDescriptor(
                 importPsiElement,
                 KotlinBundle.message("unused.import.directive"),
