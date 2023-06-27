@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.idea.refactoring.canRefactor
 import org.jetbrains.kotlin.idea.util.actualsForExpected
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.lexer.KtTokens.OPEN_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.OVERRIDE_KEYWORD
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
@@ -99,7 +100,12 @@ class MakeOverriddenMemberOpenFix(declaration: KtDeclaration) : KotlinQuickFixAc
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         for (overriddenMember in overriddenNonOverridableMembers) {
-            overriddenMember.element?.addModifier(OPEN_KEYWORD)
+            val member = overriddenMember.element ?: continue
+            member.addModifier(OPEN_KEYWORD) // as a side effect, this may remove an incompatible modifier such as 'final'
+            if (member.hasModifier(OVERRIDE_KEYWORD)) {
+                // 'open' modifier is redundant on 'override' members and can be omitted
+                member.removeModifier(OPEN_KEYWORD)
+            }
         }
     }
 

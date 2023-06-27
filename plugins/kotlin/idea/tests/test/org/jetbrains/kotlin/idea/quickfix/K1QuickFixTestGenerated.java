@@ -11717,6 +11717,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/override/overridingFinalMethodInLocal.kt");
             }
 
+            @TestMetadata("overridingFinalOverrideMethod.kt")
+            public void testOverridingFinalOverrideMethod() throws Exception {
+                runTest("testData/quickfix/override/overridingFinalOverrideMethod.kt");
+            }
+
             @TestMetadata("overridingFinalProperty.kt")
             public void testOverridingFinalProperty() throws Exception {
                 runTest("testData/quickfix/override/overridingFinalProperty.kt");

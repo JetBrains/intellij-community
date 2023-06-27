@@ -1545,6 +1545,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../idea/tests/testData/quickfix/override/overridingFinalMethodInLocal.kt");
         }
 
+        @TestMetadata("overridingFinalOverrideMethod.kt")
+        public void testOverridingFinalOverrideMethod() throws Exception {
+            runTest("../idea/tests/testData/quickfix/override/overridingFinalOverrideMethod.kt");
+        }
+
         @TestMetadata("overridingFinalProperty.kt")
         public void testOverridingFinalProperty() throws Exception {
             runTest("../idea/tests/testData/quickfix/override/overridingFinalProperty.kt");
