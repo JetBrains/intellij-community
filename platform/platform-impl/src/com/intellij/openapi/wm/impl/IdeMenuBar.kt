@@ -57,7 +57,7 @@ internal enum class IdeMenuBarState {
 @Suppress("LeakingThis")
 open class IdeMenuBar internal constructor(@JvmField protected val coroutineScope: CoroutineScope, frame: JFrame) : JMenuBar() {
   private val menuBarHelper: IdeMenuBarHelper
-  private val timerListener = MyTimerListener()
+  private val timerListener = MyTimerListener(this)
 
   private val updateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -368,15 +368,15 @@ open class IdeMenuBar internal constructor(@JvmField protected val coroutineScop
 
   internal open fun updateGlobalMenuRoots() {}
 
-  private inner class MyTimerListener : TimerListener {
-    override fun getModalityState(): ModalityState = ModalityState.stateForComponent(this@IdeMenuBar)
+  private class MyTimerListener(private val bar: IdeMenuBar) : TimerListener {
+    override fun getModalityState(): ModalityState = ModalityState.stateForComponent(bar)
 
     override fun run() {
-      if (!isShowing) {
+      if (!bar.isShowing) {
         return
       }
 
-      val w = SwingUtilities.windowForComponent(this@IdeMenuBar)
+      val w = SwingUtilities.windowForComponent(bar)
       if (w != null && !w.isActive) {
         return
       }
@@ -389,11 +389,11 @@ open class IdeMenuBar internal constructor(@JvmField protected val coroutineScop
         return
       }
 
-      coroutineScope.launch(Dispatchers.EDT) {
+      bar.coroutineScope.launch(Dispatchers.EDT) {
         // don't update the toolbar if there is currently active modal dialog
         val window = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow
         if (window !is Dialog || !window.isModal) {
-          updateMenuActionsAsync()
+          bar.updateMenuActionsAsync()
         }
       }
     }
