@@ -93,7 +93,7 @@ fun Lifetime.startWithModalProgressAsync(
 }
 
 @Deprecated("Use withModalProgress")
-suspend fun <T>  withModalProgressContext(
+private suspend fun <T>  withModalProgressContextBridge(
   @Nls(capitalization = Nls.Capitalization.Title) title: String,
   canBeCancelled: Boolean = true,
   isIndeterminate: Boolean = true,
@@ -111,12 +111,26 @@ suspend fun <T>  withModalProgressContext(
 }
 
 @Deprecated("Use withModalProgress")
-suspend fun <T>  withModalProgressContext(
+private suspend fun <T>  withModalProgressContextBridge(
   @Nls(capitalization = Nls.Capitalization.Title) title: String,
   canBeCancelled: Boolean = true,
   project: Project? = null,
   action: suspend ProgressCoroutineScope.() -> T
-): T = withModalProgressContext(title, canBeCancelled, true, project, Lifetime.Eternal, action)
+): T = withModalProgressContextBridge(title, canBeCancelled, true, project, Lifetime.Eternal, action)
+
+@Deprecated("Use withModalProgress")
+suspend fun <T>  withModalProgressContext(
+  @Nls(capitalization = Nls.Capitalization.Title) title: String,
+  canBeCancelled: Boolean = true,
+  isIndeterminate: Boolean = true,
+  project: Project? = null,
+  lifetime: Lifetime = Lifetime.Eternal,
+  action: suspend ProgressCoroutineScope.() -> T
+): T {
+  //return withModalProgressContextBridge(title, canBeCancelled, isIndeterminate, project, lifetime, action);
+  val context = CoroutineProgressContext.createModal(lifetime, title, canBeCancelled, isIndeterminate, project)
+  return doRunUnderProgress(context, action)
+}
 
 @Deprecated("Use withBackgroundProgress")
 suspend fun <T> withBackgroundProgressContext(
@@ -155,7 +169,7 @@ fun Lifetime.launchUnderModalProgress(
   project: Project? = null,
   action: suspend ProgressCoroutineScope.() -> Unit
 ): Job = launchBackground {
-  withModalProgressContext(title, canBeCancelled, isIndeterminate, project, this@launchUnderModalProgress, action)
+  withModalProgressContextBridge(title, canBeCancelled, isIndeterminate, project, this@launchUnderModalProgress, action)
 }
 
 @Deprecated("Use launchWithBackgroundProgress")
@@ -182,7 +196,7 @@ fun <T> Lifetime.startUnderModalProgressAsync(
   project: Project? = null,
   action: suspend ProgressCoroutineScope.() -> T
 ): Deferred<T> = startBackgroundAsync {
-  withModalProgressContext(title, canBeCancelled, isIndeterminate, project, this@startUnderModalProgressAsync, action)
+  withModalProgressContextBridge(title, canBeCancelled, isIndeterminate, project, this@startUnderModalProgressAsync, action)
 }
 
 @Deprecated("Use startWithBackgroundProgressAsync")
@@ -292,6 +306,18 @@ private class CoroutineProgressContext(
       project: Project? = null,
     ) = create(lifetime, isIndeterminate) { run ->
       object : Task.Backgroundable(project, title, canBeCancelled, ALWAYS_BACKGROUND) {
+        override fun run(indicator: ProgressIndicator) = run(indicator)
+      }
+    }
+
+    fun createModal(
+      lifetime: Lifetime,
+      @Nls(capitalization = Nls.Capitalization.Title) title: String,
+      canBeCancelled: Boolean = true,
+      isIndeterminate: Boolean = true,
+      project: Project? = null,
+    ) = create(lifetime, isIndeterminate) { run ->
+      object : Task.Modal(project, title, canBeCancelled) {
         override fun run(indicator: ProgressIndicator) = run(indicator)
       }
     }
