@@ -22,4 +22,6 @@ class AttachDialogProcessNode(
   }
 
   override fun getRenderer(column: Int): TableCellRenderer? = null
+
+  override fun toString(): String = item.toString()
 }

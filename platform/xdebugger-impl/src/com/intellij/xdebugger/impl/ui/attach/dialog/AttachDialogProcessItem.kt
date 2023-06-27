@@ -56,6 +56,8 @@ open class AttachDialogProcessItem protected constructor(
 
   val indexedString: String
     get() = presentationInfo.value.indexedString
+
+  override fun toString(): String = "pid${processInfo.pid}"
 }
 
 internal class AttachDialogRecentItem(dialogItem: AttachDialogProcessItem,

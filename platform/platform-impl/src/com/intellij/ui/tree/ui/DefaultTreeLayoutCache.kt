@@ -640,6 +640,10 @@ class DefaultTreeLayoutCache(
       children?.forEach { it.disposeRecursively() }
     }
 
+    override fun toString(): String {
+      val childCount = children?.size?.let { "childCount=$it" } ?: "<NOT-LOADED>"
+      return "${javaClass.simpleName}{$childCount}: $path"
+    }
   }
 
   private class NodeList(private val onUpdate: () -> Unit) : Iterable<Node> {

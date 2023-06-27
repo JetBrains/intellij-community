@@ -21,4 +21,6 @@ internal class AttachTreeRootNode : AttachDialogElementNode, AttachSelectionIgno
   }
 
   override fun getProcessItem(): AttachDialogProcessItem? = null
+
+  override fun toString(): String = javaClass.simpleName
 }
