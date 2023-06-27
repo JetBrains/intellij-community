@@ -50,6 +50,8 @@ public class AntTestContentHandler extends DefaultHandler {
   private static final String DURATION = "time";
   private static final String ERROR = "error";
   private static final String FAILURE = "failure";
+  private static final String SKIPPED = "skipped";
+  private static final String IGNORED = "ignored";
   private static final String OUT = "system-out";
   private static final String ERR = "system-err";
 
@@ -92,6 +94,12 @@ public class AntTestContentHandler extends DefaultHandler {
     else if (ERR.equals(qName)) {
       myErrorOutput = true;
     }
+    else if (SKIPPED.equals(qName)) {
+      myStatus = TestResultsXmlFormatter.STATUS_SKIPPED;
+    }
+    else if (IGNORED.equals(qName)) {
+      myStatus = TestResultsXmlFormatter.STATUS_IGNORED;
+    }
     else if (FAILURE.equals(qName)) {
       myStatus = TestResultsXmlFormatter.STATUS_FAILED;
     }
@@ -115,8 +123,14 @@ public class AntTestContentHandler extends DefaultHandler {
     }
     else if (TESTCASE.equals(qName)) {
       if (myStatus != null) {
-        myProcessor.onTestFailure(
-          new TestFailedEvent(myCurrentTest, "", currentText, myStatus.equals(TestResultsXmlFormatter.STATUS_ERROR), null, null));
+        switch (myStatus) {
+          case TestResultsXmlFormatter.STATUS_ERROR, TestResultsXmlFormatter.STATUS_FAILED -> myProcessor.onTestFailure(
+            new TestFailedEvent(myCurrentTest, "", currentText, myStatus.equals(TestResultsXmlFormatter.STATUS_ERROR), null, null)
+          );
+          case TestResultsXmlFormatter.STATUS_IGNORED, TestResultsXmlFormatter.STATUS_SKIPPED-> myProcessor.onTestIgnored(
+            new TestIgnoredEvent(myCurrentTest, "", currentText)
+          );
+        }
       }
       long time;
       try {
