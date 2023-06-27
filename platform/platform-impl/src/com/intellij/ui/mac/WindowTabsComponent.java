@@ -150,6 +150,9 @@ public final class WindowTabsComponent extends JBTabsImpl {
                 container.cancel();
               }
             }
+            else if (e.getButton() == MouseEvent.BUTTON2) {
+              closeTab((IdeFrameImpl)getInfo().getObject(), false);
+            }
             else {
               handlePopup(e);
             }
