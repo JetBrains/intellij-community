@@ -3,13 +3,11 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.module.LanguageLevelUtil;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -118,9 +116,7 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
 
   private class SizeReplaceableByIsEmptyVisitor extends BaseInspectionVisitor {
     private static boolean isLanguageLevelCompatible(PsiElement element, PsiMethod method) {
-      Module module = ModuleUtilCore.findModuleForPsiElement(element);
-      if (module == null) return false;
-      LanguageLevel languageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module);
+      LanguageLevel languageLevel = PsiUtil.getLanguageLevel(element);
       LanguageLevel lastIncompatibleLanguageLevel = LanguageLevelUtil.getLastIncompatibleLanguageLevel(method, languageLevel);
       return lastIncompatibleLanguageLevel == null || lastIncompatibleLanguageLevel.isLessThan(languageLevel);
     }
