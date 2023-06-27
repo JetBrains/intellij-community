@@ -686,6 +686,45 @@ class DefaultTreeLayoutCacheTest {
         }
       }.joinToString("\n")
     assertThat(actualStructure).isEqualTo(structureString)
+    val visiblePaths = mutableListOf<TreePath>()
+    for (row in 0 until sut.rowCount) {
+      val path = sut.getPathForRow(row)
+      visiblePaths += path
+      assertThat(sut.getRowForPath(path)).`as`("row %d", row).isEqualTo(row)
+    }
+    for ((i, path) in visiblePaths.withIndex()) {
+      assertThat(sut.getVisiblePathsFrom(path).toList()).isEqualTo(visiblePaths.subList(i, visiblePaths.size))
+    }
+    assertPathVisibilityInvariants(model.root?.let { CachingTreePath(it) }, visiblePaths.toSet())
+  }
+
+  private fun assertPathVisibilityInvariants(path: TreePath?, visiblePaths: Set<TreePath>) {
+    if (path == null) {
+      return
+    }
+    assertThat(sut.getVisibleChildCount(path)).`as`("getVisibleChildCount(%s)", path).isEqualTo(countVisibleChildren(path, visiblePaths))
+    if (path !in visiblePaths) {
+      assertThat(sut.getRowForPath(path)).isEqualTo(-1)
+    }
+    val value = path.lastPathComponent
+    for (i in 0 until model.getChildCount(value)) {
+      val child = model.getChild(value, i)
+      assertPathVisibilityInvariants(path.pathByAddingChild(child), visiblePaths)
+    }
+  }
+
+  private fun countVisibleChildren(path: TreePath, visiblePaths: Set<TreePath>): Int {
+    var result = 0
+    val value = path.lastPathComponent
+    for (i in 0 until model.getChildCount(value)) {
+      val child = model.getChild(value, i)
+      val childPath = path.pathByAddingChild(child)
+      if (childPath in visiblePaths) {
+        ++result // the child itself
+        result += countVisibleChildren(childPath, visiblePaths)
+      }
+    }
+    return result
   }
 
   private class NodeDimensionsImpl(private val heights: Map<String, Int>) : NodeDimensions() {
