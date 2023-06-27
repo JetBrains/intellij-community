@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.analysis.api.utils
 
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMember
@@ -10,8 +11,13 @@ import com.intellij.util.SmartList
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.getSymbolOfTypeSafe
+import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.name.Name
@@ -148,6 +154,68 @@ class KtSymbolFromIndexProvider private constructor(private val project: Project
 
     }
 
+
+    /**
+     *  Returns top-level callables, excluding extensions. To obtain extensions use [getTopLevelExtensionCallableSymbolsByNameFilter].
+     */
+    context(KtAnalysisSession)
+    fun getTopLevelCallableSymbolsByNameFilter(
+        nameFilter: (Name) -> Boolean,
+        psiFilter: (KtCallableDeclaration) -> Boolean = { true }
+    ): Sequence<KtCallableSymbol> {
+        val values = SmartList<KtCallableDeclaration>()
+        val processor = CancelableCollectFilterProcessor(values) {
+            psiFilter(it) && !it.isKotlinBuiltins() && it.receiverTypeReference == null
+        }
+
+        val keyFilter: (String) -> Boolean = { nameFilter(getShortName(it)) }
+        KotlinTopLevelFunctionFqnNameIndex.processAllElements(project, scope, keyFilter, processor)
+        KotlinTopLevelPropertyFqnNameIndex.processAllElements(project, scope, keyFilter, processor)
+
+        return sequence {
+            for (callableDeclaration in values) {
+                callableDeclaration.getSymbolOfTypeSafe<KtCallableSymbol>()?.let { yield(it) }
+            }
+            yieldAll(
+                getResolveExtensionScopeWithTopLevelDeclarations().getCallableSymbols(nameFilter).filter { !it.isExtension }
+            )
+        }
+    }
+
+    context(KtAnalysisSession)
+    fun getTopLevelExtensionCallableSymbolsByNameFilter(
+        nameFilter: (Name) -> Boolean,
+        receiverTypes: List<KtType>,
+        psiFilter: (KtCallableDeclaration) -> Boolean = { true }
+    ): Sequence<KtCallableSymbol> {
+        val receiverTypeNames = receiverTypes.flatMapTo(hashSetOf()) { findAllNamesForType(it) }
+        if (receiverTypeNames.isEmpty) return emptySequence()
+
+        val keyFilter: (String) -> Boolean = { key ->
+            val receiverTypeName = KotlinTopLevelExtensionsByReceiverTypeIndex.receiverTypeNameFromKey(key)
+            val callableName = KotlinTopLevelExtensionsByReceiverTypeIndex.callableNameFromKey(key)
+            receiverTypeName in receiverTypeNames && nameFilter(Name.identifier(callableName))
+        }
+        val valueFilter: (KtCallableDeclaration) -> Boolean = { psiFilter(it) && !it.isKotlinBuiltins() }
+        val values = KotlinTopLevelExtensionsByReceiverTypeIndex.getAllElements(project, scope, keyFilter, valueFilter)
+
+        return sequence {
+            for (extension in values) {
+                extension.getSymbolOfTypeSafe<KtCallableSymbol>()?.let { yield(it) }
+            }
+
+            val nonNullableReceiverTypes = receiverTypes.map { it.withNullability(KtTypeNullability.NON_NULLABLE) }
+            yieldAll(
+                getResolveExtensionScopeWithTopLevelDeclarations().getCallableSymbols(nameFilter).filter { symbol ->
+                    if (!symbol.isExtension) return@filter false
+                    val symbolReceiverType = symbol.receiverType ?: return@filter false
+
+                    nonNullableReceiverTypes.any { it isPossiblySubTypeOf symbolReceiverType }
+                }
+            )
+        }
+    }
+
     private inline fun forEachNonKotlinCache(action: (cache: PsiShortNamesCache) -> Unit) {
         for (cache in PsiShortNamesCache.EP_NAME.getExtensions(project)) {
             if (cache::class.java.name == "org.jetbrains.kotlin.idea.caches.KotlinShortNamesCache") continue
@@ -156,6 +224,37 @@ class KtSymbolFromIndexProvider private constructor(private val project: Project
     }
 
     private fun getShortName(fqName: String) = Name.identifier(fqName.substringAfterLast('.'))
+
+    context(KtAnalysisSession)
+    private fun findAllNamesForType(type: KtType): Set<String> = buildSet {
+        if (type !is KtNonErrorClassType) return@buildSet
+
+        val typeName = type.classId.shortClassName.let {
+            if (it.isSpecial) return@buildSet
+            it.identifier
+        }
+
+        add(typeName)
+        addAll(getPossibleTypeAliasExpansionNames(typeName))
+
+        val superTypes = (type.classSymbol as? KtClassOrObjectSymbol)?.superTypes
+        superTypes?.forEach { superType ->
+            addAll(findAllNamesForType(superType))
+        }
+    }
+
+    private fun getPossibleTypeAliasExpansionNames(originalTypeName: String): Set<String> = buildSet {
+        fun searchRecursively(typeName: String) {
+            ProgressManager.checkCanceled()
+            KotlinTypeAliasByExpansionShortNameIndex[typeName, project, scope]
+                .asSequence()
+                .mapNotNull { it.name }
+                .filter { add(it) }
+                .forEach(::searchRecursively)
+        }
+
+        searchRecursively(originalTypeName)
+    }
 
     companion object {
         context(KtAnalysisSession)

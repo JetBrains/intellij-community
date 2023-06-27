@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.base.fir.codeInsight.HLIndexHelper
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.LookupElementSink
@@ -27,7 +26,6 @@ internal class FirBasicCompletionContext(
     val fakeKtFile: KtFile,
     val project: Project,
     val targetPlatform: TargetPlatform,
-    val indexHelper: HLIndexHelper,
     val symbolFromIndexProvider: KtSymbolFromIndexProvider,
     val importStrategyDetector: ImportStrategyDetector,
     val lookupElementFactory: KotlinFirLookupElementFactory = KotlinFirLookupElementFactory(),
@@ -43,7 +41,6 @@ internal class FirBasicCompletionContext(
             val useSiteKtElement = parameters.position.parentOfType<KtElement>(withSelf = true) ?: return null
             val targetPlatform = originalKtFile.platform
             val project = originalKtFile.project
-            val indexHelper = createIndexHelper(parameters)
 
             return FirBasicCompletionContext(
                 parameters,
@@ -53,14 +50,9 @@ internal class FirBasicCompletionContext(
                 fakeKtFile,
                 project,
                 targetPlatform,
-                indexHelper,
                 KtSymbolFromIndexProvider.createForElement(useSiteKtElement),
                 ImportStrategyDetector(originalKtFile, project),
             )
-        }
-
-        private fun createIndexHelper(parameters: CompletionParameters): HLIndexHelper {
-            return HLIndexHelper.createForPosition(parameters.position)
         }
     }
 }

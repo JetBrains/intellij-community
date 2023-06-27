@@ -22,10 +22,9 @@ import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
-import org.jetbrains.kotlin.idea.base.fir.codeInsight.HLIndexHelper
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.checkers.ApplicableExtension
@@ -50,8 +49,6 @@ internal open class FirCallableCompletionContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int,
 ) : FirCompletionContributorBase<FirNameReferencePositionContext>(basicContext, priority) {
-    private val typeNamesProvider = TypeNamesProvider(indexHelper)
-
     protected open fun KtAnalysisSession.getImportStrategy(signature: KtCallableSignature<*>, noImportRequired: Boolean): ImportStrategy =
         if (noImportRequired) {
             ImportStrategy.DoNothing
@@ -215,16 +212,11 @@ internal open class FirCallableCompletionContributor(
 
 
         if (shouldCompleteTopLevelCallablesFromIndex) {
-            val topLevelCallables = indexHelper.getTopLevelCallables(scopeNameFilter)
-            val callablesFromIndex = topLevelCallables.asSequence()
-                .filterNot { it.canDefinitelyNotBeSeenFromOtherFile() }
-                .filter { it.canBeAnalysed() }
-                .map { it.getSymbol() as KtCallableSymbol }
+            val topLevelCallablesFromIndex = symbolFromIndexProvider.getTopLevelCallableSymbolsByNameFilter(scopeNameFilter) {
+                !it.canDefinitelyNotBeSeenFromOtherFile() && it.canBeAnalysed()
+            }
 
-            val callablesFromExtensions = getResolveExtensionScopeWithTopLevelDeclarations().getCallableSymbols(scopeNameFilter)
-
-            (callablesFromIndex + callablesFromExtensions)
-                .filterNot { it.isExtension } // extensions should be collected and checked with `collectTopLevelExtensionsFromIndices`
+            topLevelCallablesFromIndex
                 .filter { filter(it, sessionParameters) }
                 .forEach { yield(createCallableWithMetadata(it.asSignature(), CompletionSymbolOrigin.Index)) }
         }
@@ -421,20 +413,16 @@ internal open class FirCallableCompletionContributor(
     ): Collection<ApplicableExtension> {
         if (receiverTypes.isEmpty()) return emptyList()
 
-        val implicitReceiverNames = findAllNamesOfTypes(receiverTypes)
-        val topLevelExtensionsFromIndex = indexHelper.getTopLevelExtensions(scopeNameFilter, implicitReceiverNames)
-            .filterNot { it.canDefinitelyNotBeSeenFromOtherFile() }
-            .filter { it.canBeAnalysed() }
-            .map { it.getSymbol() as KtCallableSymbol }
+        val topLevelExtensionsFromIndex = symbolFromIndexProvider.getTopLevelExtensionCallableSymbolsByNameFilter(
+            scopeNameFilter,
+            receiverTypes,
+        ) { !it.canDefinitelyNotBeSeenFromOtherFile() && it.canBeAnalysed() }
 
-        val resolveExtensionScope = getResolveExtensionScopeWithTopLevelDeclarations()
-        val topLevelExtensionsFromResolveExtension = resolveExtensionScope.getCallableSymbols(scopeNameFilter).filter { it.isExtension }
-
-        return (topLevelExtensionsFromIndex + topLevelExtensionsFromResolveExtension)
+        return topLevelExtensionsFromIndex
             .filter { filter(it, sessionParameters) }
             .filter { visibilityChecker.isVisible(it) }
             .mapNotNull { checkApplicabilityAndSubstitute(it, extensionChecker) }
-            .let { ShadowedCallablesFilter.sortExtensions(it, receiverTypes) }
+            .let { ShadowedCallablesFilter.sortExtensions(it.toList(), receiverTypes) }
     }
 
     private fun KtAnalysisSession.collectSuitableExtensions(
@@ -487,9 +475,6 @@ internal open class FirCallableCompletionContributor(
         val insertionOptions = getExtensionOptions(signature, applicabilityResult) ?: return null
         return ApplicableExtension(signature, insertionOptions)
     }
-
-    private fun KtAnalysisSession.findAllNamesOfTypes(implicitReceiversTypes: List<KtType>) =
-        implicitReceiversTypes.flatMapTo(hashSetOf()) { typeNamesProvider.findAllNames(it) }
 
     context(KtAnalysisSession)
     protected fun createCallableWithMetadata(
@@ -759,28 +744,5 @@ internal class FirKDocCallableCompletionContributor(
                 .filter { it !is KtSyntheticJavaPropertySymbol }
                 .forEach { symbol -> yield(createCallableWithMetadata(symbol.asSignature(), scopeWithKind.kind, noImportRequired = true)) }
         }
-    }
-}
-
-private class TypeNamesProvider(private val indexHelper: HLIndexHelper) {
-    context(KtAnalysisSession)
-    fun findAllNames(type: KtType): Set<String> {
-        if (type !is KtNonErrorClassType) return emptySet()
-
-        val typeName = type.classId.shortClassName.let {
-            if (it.isSpecial) return emptySet()
-            it.identifier
-        }
-
-        val result = hashSetOf<String>()
-        result += typeName
-        result += indexHelper.getPossibleTypeAliasExpansionNames(typeName)
-
-        val superTypes = (type.classSymbol as? KtClassOrObjectSymbol)?.superTypes
-        superTypes?.forEach { superType ->
-            result += findAllNames(superType)
-        }
-
-        return result
     }
 }
