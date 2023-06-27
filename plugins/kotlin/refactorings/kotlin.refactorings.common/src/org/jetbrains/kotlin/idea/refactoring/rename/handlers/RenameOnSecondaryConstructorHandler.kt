@@ -51,8 +51,3 @@ class RenameOnSecondaryConstructorHandler : RenameHandler {
   }
 }
 
-class A {
-  constructor() {
-
-  }
-}
