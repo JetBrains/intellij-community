@@ -3,6 +3,7 @@ package com.intellij.ui.tree
 
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.ui.tree.ui.DefaultTreeLayoutCache
+import org.assertj.core.api.AbstractBooleanAssert
 import org.easymock.EasyMock.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -156,7 +157,10 @@ class DefaultTreeLayoutCacheTest {
       modOps = {
         sut.setExpandedState("r", false)
       },
-      assertions = { assertStructure("r".trimMargin()) },
+      assertions = {
+        assertStructure("r".trimMargin())
+        assertThatExpanded("r").isFalse()
+      },
     )
   }
 
@@ -174,7 +178,10 @@ class DefaultTreeLayoutCacheTest {
       modOps = {
         sut.setExpandedState("r", false)
       },
-      assertions = { assertStructure("".trimMargin()) },
+      assertions = {
+        assertStructure("".trimMargin())
+        assertThatExpanded("r").isFalse()
+      },
     )
   }
 
@@ -203,6 +210,9 @@ class DefaultTreeLayoutCacheTest {
           | a2
           """.trimMargin()
         )
+        assertThatExpanded("r").isTrue()
+        assertThatExpanded("r/a1").isFalse()
+        assertThatExpanded("r/a2").isFalse()
      },
     )
   }
@@ -232,6 +242,14 @@ class DefaultTreeLayoutCacheTest {
           | a2
           """.trimMargin()
         )
+        // The only difference between our implementations of these two is that for the invisible root,
+        // getExpandedState() always returns false, but isExpanded() returns the actual state.
+        // This is different from VariableHeightLayoutCache, but makes more sense, according to
+        // the way it's actually used.
+        assertThatExpandedState("r").isFalse()
+        assertThatIsExpanded("r").isTrue()
+        assertThatExpanded("r/a1").isFalse()
+        assertThatExpanded("r/a2").isFalse()
      },
     )
   }
@@ -265,6 +283,9 @@ class DefaultTreeLayoutCacheTest {
           |  b21
           """.trimMargin()
         )
+        assertThatExpanded("r").isTrue()
+        assertThatExpanded("r/a1").isTrue()
+        assertThatExpanded("r/a2").isTrue()
      },
     )
   }
@@ -302,6 +323,41 @@ class DefaultTreeLayoutCacheTest {
           |  b21
           """.trimMargin()
         )
+        assertThatExpanded("r").isTrue()
+        assertThatExpanded("r/a1").isTrue()
+        assertThatExpanded("r/a2").isTrue()
+      },
+    )
+  }
+
+  @Test
+  fun `collapse visible root with previously expanded children`() {
+    testStructure(
+      initOps = {
+        setModelStructure("""
+          |r
+          | a1
+          |  b11
+          | a2
+          |  b21
+          """.trimMargin()
+        )
+        sut.isRootVisible = true
+        selectionModel.expect {
+          repeat(4) { resetRowSelection() }
+        }
+      },
+      modOps = {
+        sut.setExpandedState("r", true)
+        sut.setExpandedState("r/a1", true)
+        sut.setExpandedState("r/a2", true)
+        sut.setExpandedState("r", false)
+      },
+      assertions = {
+        assertStructure("r")
+        assertThatExpanded("r").isFalse()
+        assertThatExpanded("r/a1").isFalse()
+        assertThatExpanded("r/a2").isFalse()
       },
     )
   }
@@ -333,6 +389,10 @@ class DefaultTreeLayoutCacheTest {
           |    d1
           """.trimMargin()
         )
+        assertThatExpanded("r").isTrue()
+        assertThatExpanded("r/a1").isTrue()
+        assertThatExpanded("r/a1/b1").isTrue()
+        assertThatExpanded("r/a1/b1/c1").isTrue()
       },
     )
   }
@@ -360,6 +420,8 @@ class DefaultTreeLayoutCacheTest {
           |  b11
           """.trimMargin()
         )
+        assertThatExpanded("r").isTrue()
+        assertThatExpanded("r/a1").isTrue()
       },
     )
   }
@@ -392,6 +454,8 @@ class DefaultTreeLayoutCacheTest {
           |  b13
           """.trimMargin()
         )
+        assertThatExpanded("r").isTrue()
+        assertThatExpanded("r/a1").isTrue()
       },
     )
   }
@@ -429,6 +493,13 @@ class DefaultTreeLayoutCacheTest {
           |  b13
           """.trimMargin()
         )
+        assertThatExpanded("r").isTrue()
+        assertThatExpanded("r/a1").isTrue()
+        assertThatExpanded("r/a1/b10").isFalse()
+        assertThatExpanded("r/a1/b11").isTrue()
+        assertThatExpanded("r/a1/b115").isFalse()
+        assertThatExpanded("r/a1/b12").isFalse()
+        assertThatExpanded("r/a1/b13").isFalse()
       },
     )
   }
@@ -463,6 +534,7 @@ class DefaultTreeLayoutCacheTest {
           | a2
           """.trimMargin()
         )
+        assertThatExpanded("r2").isTrue()
       },
     )
   }
@@ -545,9 +617,30 @@ class DefaultTreeLayoutCacheTest {
     function()
   }
 
+  private fun assertThatExpanded(path: String): AbstractBooleanAssert<*> {
+    val expandedState = sut.getExpandedState(path)
+    val isExpanded = sut.isExpanded(path)
+    val both = when {
+      expandedState && isExpanded -> true
+      !expandedState && !isExpanded -> false
+      else -> null
+    }
+    return assertThat(both).`as`("getExpandedState($path), isExpanded($path)")
+  }
+
+  private fun assertThatExpandedState(path: String): AbstractBooleanAssert<*> =
+    assertThat(sut.getExpandedState(path)).`as`("getExpandedState($path)")
+
+  private fun assertThatIsExpanded(path: String): AbstractBooleanAssert<*> =
+    assertThat(sut.isExpanded(path)).`as`("isExpanded($path)")
+
   private fun AbstractLayoutCache.setExpandedState(path: String, isExpanded: Boolean) {
     setExpandedState(path(path), isExpanded)
   }
+
+  private fun AbstractLayoutCache.getExpandedState(path: String) = getExpandedState(path(path))
+
+  private fun AbstractLayoutCache.isExpanded(path: String) = isExpanded(path(path))
 
   private fun node(path: String) = path(path).lastPathComponent as Node
 
