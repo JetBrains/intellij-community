@@ -6,6 +6,8 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+
 /**
  * Represents a tool which manages IDE updates instead of a built-in update engine.
  */
@@ -33,8 +35,10 @@ public enum ExternalUpdateManager {
    */
   public static final @Nullable ExternalUpdateManager ACTUAL;
   static {
+    String toolboxPath = System.getProperty("ide.managed.by.toolbox");
     String home = PathManager.getHomePath().replace('\\', '/');
     if (home.contains("/apps/") && home.contains("/ch-")) ACTUAL = TOOLBOX;
+    else if (toolboxPath != null && new File(toolboxPath).exists()) ACTUAL = TOOLBOX;
     else if (SystemInfo.isLinux && (home.startsWith("/snap/") || home.startsWith("/var/lib/snapd/snap/"))) ACTUAL = SNAP;
     else if (System.getProperty("ide.no.platform.update") != null) ACTUAL = UNKNOWN;
     else ACTUAL = null;
