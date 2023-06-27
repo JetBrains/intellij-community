@@ -12,4 +12,9 @@ class JsoncHighlightingTest : JsonHighlightingTestBase() {
     myFixture.enableInspections(JsonStandardComplianceInspection())
     doTestHighlighting(false, true, true)
   }
+
+  fun testJsoncComplianceProblems() {
+    myFixture.enableInspections(JsonStandardComplianceInspection())
+    doTestHighlighting(false, true, true)
+  }
 }

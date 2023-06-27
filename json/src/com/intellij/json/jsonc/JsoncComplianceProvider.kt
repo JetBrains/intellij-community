@@ -3,10 +3,15 @@ package com.intellij.json.jsonc
 
 import com.intellij.json.codeinsight.JsonStandardComplianceProvider
 import com.intellij.psi.PsiComment
+import com.intellij.psi.util.PsiUtilCore
 
 class JsoncComplianceProvider : JsonStandardComplianceProvider() {
+  private val JSONC_DEFAULT_EXTENSION = "jsonc"
+
   override fun isCommentAllowed(comment: PsiComment): Boolean {
-    if (comment.containingFile.virtualFile.nameSequence.endsWith(JsoncFileType.DEFAULT_EXTENSION)) {
+    val virtualFile = PsiUtilCore.getVirtualFile(comment)
+
+    if (virtualFile?.extension == JSONC_DEFAULT_EXTENSION) {
       return true
     }
 

@@ -188,6 +188,8 @@
       <bundleName>messages.JsonBundle</bundleName>
       <categoryKey>json.intention.category.name</categoryKey>
     </intentionAction>
+
+    <json.jsonStandardComplianceProvider implementation="com.intellij.json.jsonc.JsoncComplianceProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="JavaScript">
