@@ -19,13 +19,13 @@ import com.intellij.ui.ColorUtil
 import com.intellij.ui.GotItTooltip
 import com.intellij.ui.JBColor
 import com.intellij.util.PlatformUtils
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.ColorPalette
 import java.awt.*
 import javax.swing.Icon
 import javax.swing.JComponent
 
-private fun getProjectPath(project: Project): String {
-  val recentProjectManager = RecentProjectsManagerBase.getInstanceEx()
+private fun getProjectPath(project: Project, recentProjectManager: RecentProjectsManagerBase): String {
   return recentProjectManager.getProjectPath(project) ?: project.basePath ?: run {
     //thisLogger().warn("Impossible: no path for project $project")
     ""
@@ -33,32 +33,29 @@ private fun getProjectPath(project: Project): String {
 }
 
 private fun getProjectNameForIcon(project: Project): String {
-  val path = getProjectPath(project)
-  return RecentProjectIconHelper.getProjectName(path)
+  val recentProjectManager = RecentProjectsManagerBase.getInstanceEx()
+  val path = getProjectPath(project, recentProjectManager)
+  return RecentProjectIconHelper.getProjectName(path, recentProjectManager)
 }
 
 @Service(Service.Level.PROJECT)
 private class ProjectWindowCustomizerIconCache(private val project: Project) {
-  var cachedIcon = getIconRaw()
-    private set
+  val cachedIcon: SynchronizedClearableLazy<Icon> = SynchronizedClearableLazy { getIconRaw() }
 
   init {
-    project.messageBus.connect().subscribe(UISettingsListener.TOPIC, UISettingsListener {
-      revalidate()
+    val busConnection = project.messageBus.simpleConnect()
+    busConnection.subscribe(UISettingsListener.TOPIC, UISettingsListener {
+      cachedIcon.drop()
     })
-
-    project.messageBus.connect().subscribe(LafManagerListener.TOPIC, LafManagerListener {
-      revalidate()
+    busConnection.subscribe(LafManagerListener.TOPIC, LafManagerListener {
+      cachedIcon.drop()
     })
-  }
-
-  private fun revalidate() {
-    cachedIcon = getIconRaw()
   }
 
   private fun getIconRaw(): Icon {
-    val path = getProjectPath(project)
-    return RecentProjectsManagerBase.getInstanceEx().getProjectIcon(path, true)
+    val recentProjectsManager = RecentProjectsManagerBase.getInstanceEx()
+    val path = getProjectPath(project, recentProjectsManager)
+    return recentProjectsManager.getProjectIcon(path = path, isProjectValid = true)
   }
 }
 
@@ -81,7 +78,6 @@ private const val TOOLBAR_BACKGROUND_KEY = "PROJECT_TOOLBAR_COLOR"
 @Service
 class ProjectWindowCustomizerService : Disposable {
   companion object {
-    @JvmStatic
     fun getInstance(): ProjectWindowCustomizerService = service<ProjectWindowCustomizerService>()
   }
 
@@ -119,10 +115,11 @@ class ProjectWindowCustomizerService : Disposable {
     )
 
   fun getProjectIcon(project: Project): Icon {
-    return project.service<ProjectWindowCustomizerIconCache>().cachedIcon
+    return project.service<ProjectWindowCustomizerIconCache>().cachedIcon.get()
   }
 
-  fun getGradientProjectColor(project: Project): Color = getProjectColor(project).gradient
+  private fun getGradientProjectColor(project: Project): Color = getProjectColor(project).gradient
+
   fun getBackgroundProjectColor(project: Project): Color = getProjectColor(project).background
 
   private fun getProjectColor(project: Project): ProjectColors {
@@ -133,7 +130,7 @@ class ProjectWindowCustomizerService : Disposable {
       return ProjectColors(color, color)
     }
 
-    return colorCache.getOrPut(projectPath) {
+    return colorCache.computeIfAbsent(projectPath) {
       Disposer.register(project) { colorCache.remove(projectPath) }
       ProjectColors(ColorPalette.select (gradientColors, projectPath), ColorPalette.select(backgroundColors, projectPath))
     }
@@ -164,11 +161,8 @@ class ProjectWindowCustomizerService : Disposable {
     get() = PropertiesComponent.getInstance().getBoolean("colorful.instances.gotIt.shown", false)
     set(value) { PropertiesComponent.getInstance().setValue("colorful.instances.gotIt.shown", value) }
 
-  fun paint(window: Window, parent: JComponent, g: Graphics?): Boolean {
-    g ?: return false
-    val project = ProjectFrameHelper.getFrameHelper(window)?.project ?: return false
-
-    return paint(project, parent, g as Graphics2D)
+  fun paint(window: Window, parent: JComponent, g: Graphics): Boolean {
+    return paint(project = ProjectFrameHelper.getFrameHelper(window)?.project ?: return false, parent = parent, g = g as Graphics2D)
   }
 
   fun enableIfNeeded() {
@@ -221,11 +215,14 @@ class ProjectWindowCustomizerService : Disposable {
    * @return true if method painted something
    */
   fun paint(project: Project, parent: JComponent, g: Graphics2D): Boolean {
+    if (!isActive() || !getPaintingType().isGradient()) {
+      return false
+    }
+
     g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
     g.color = parent.background
     g.fillRect(0, 0, parent.width, parent.height)
 
-    if (!isActive() || !getPaintingType().isGradient()) return false
     val color = getGradientProjectColor(project)
 
     val length = Registry.intValue("ide.colorful.toolbar.gradient.length", 600)
@@ -234,7 +231,8 @@ class ProjectWindowCustomizerService : Disposable {
     if (getPaintingType().isCircularGradient()) {
       val offset = 150f
       g.paint = RadialGradientPaint(x + offset, y + parent.height / 2, length - offset, floatArrayOf(0.0f, 0.6f), arrayOf(color, parent.background))
-    } else {
+    }
+    else {
       g.paint = GradientPaint(x, y, color, length.toFloat(), y, parent.background)
     }
     g.fillRect(0, 0, length, parent.height)

@@ -36,7 +36,7 @@ import java.util.Objects;
 
 import static com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUiSizes.*;
 
-public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeListener {
+public final class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeListener {
   private static final Icon EXPAND_ICON = AllIcons.General.ChevronDown;
   private static final int SEPARATOR_WIDTH = 1;
   private static final int SEPARATOR_HEIGHT = 20;
@@ -95,9 +95,10 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
     }
   }
 
-  private void tryUpdateHtmlRenderer(ToolbarComboWidget widget, String text) {
-    if (widget.getFont() == null && BasicHTML.isHTMLString(text))
+  private static void tryUpdateHtmlRenderer(ToolbarComboWidget widget, String text) {
+    if (widget.getFont() == null && BasicHTML.isHTMLString(text)) {
       return;
+    }
     BasicHTML.updateRenderer(widget, text);
   }
 
@@ -210,7 +211,7 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
 
       if (c.isEnabled()) {
         Rectangle hoverRect = hoverTracker.getHoverRect();
-        Color hoverBackground = ProjectWindowCustomizerService.getInstance().isActive()
+        Color hoverBackground = ProjectWindowCustomizerService.Companion.getInstance().isActive()
                                 ? c.getTransparentHoverBackground() : c.getHoverBackground();
         if (hoverRect != null && hoverBackground != null) {
           g2.setColor(hoverBackground);
@@ -337,7 +338,7 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
     return res;
   }
 
-  private @Nls String getText(ToolbarComboWidget widget) {
+  private static @Nls String getText(ToolbarComboWidget widget) {
     View v = (View)widget.getClientProperty(BasicHTML.propertyKey);
     if (v != null) {
       try {

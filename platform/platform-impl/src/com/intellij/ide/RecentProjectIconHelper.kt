@@ -66,11 +66,10 @@ internal class RecentProjectIconHelper {
       projectIconCache.remove(path)
     }
 
-    fun getProjectName(path: @SystemIndependent String): String {
-      val projectManager = RecentProjectsManagerBase.getInstanceEx()
-      val displayName = projectManager.getDisplayName(path)
+    fun getProjectName(path: @SystemIndependent String, recentProjectManager: RecentProjectsManagerBase): String {
+      val displayName = recentProjectManager.getDisplayName(path)
       return when {
-        displayName == null -> projectManager.getProjectName(path)
+        displayName == null -> recentProjectManager.getProjectName(path)
         displayName.contains(',') -> iconTextForCommaSeparatedName(displayName)
         else -> displayName
       }
@@ -78,7 +77,7 @@ internal class RecentProjectIconHelper {
 
     @JvmStatic
     fun generateProjectIcon(path: @SystemIndependent String, isProjectValid: Boolean): Icon {
-      val name = getProjectName(path)
+      val name = getProjectName(path, RecentProjectsManagerBase.getInstanceEx())
       var generatedProjectIcon: Icon = AvatarIcon(targetSize = unscaledProjectIconSize(),
                                                   arcRatio = 0.3,
                                                   gradientSeed = name,

@@ -85,8 +85,8 @@ internal class MacToolbarFrameHeader(private val frame: JFrame, private val root
     return toolbar
   }
 
-  override fun paint(g: Graphics?) {
-    ProjectWindowCustomizerService.getInstance().paint(frame, this, g)
+  override fun paint(g: Graphics) {
+    ProjectWindowCustomizerService.getInstance().paint(window = frame, parent = this, g = g)
     super.paint(g)
   }
 

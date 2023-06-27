@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
@@ -21,8 +21,7 @@ import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.View;
 import java.awt.*;
 
-public class MainToolbarComboBoxButtonUI extends DarculaButtonUI {
-
+public final class MainToolbarComboBoxButtonUI extends DarculaButtonUI {
   public static ComponentUI createUI(JComponent c) {
     return new MainToolbarComboBoxButtonUI();
   }
@@ -152,7 +151,7 @@ public class MainToolbarComboBoxButtonUI extends DarculaButtonUI {
   }
 
   private static void paintHover(Graphics g, JComponent c) {
-    Color color = ProjectWindowCustomizerService.getInstance().isActive() ? TRANSPARENT_HOVER_COLOR : HOVER_COLOR;
+    Color color = ProjectWindowCustomizerService.Companion.getInstance().isActive() ? TRANSPARENT_HOVER_COLOR : HOVER_COLOR;
     doFill(g, c, color, true);
   }
 

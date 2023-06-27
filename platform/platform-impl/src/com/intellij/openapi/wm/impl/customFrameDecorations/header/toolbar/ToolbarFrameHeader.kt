@@ -144,8 +144,8 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
     updateSize { MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()) }
   }
 
-  override fun paint(g: Graphics?) {
-    customizer.paint(frame, this, g)
+  override fun paint(g: Graphics) {
+    customizer.paint(window = frame, parent = this, g = g)
     super.paint(g)
   }
 
