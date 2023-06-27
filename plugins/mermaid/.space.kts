@@ -20,7 +20,7 @@ fun Container.publishingEnvironment(channel: String = PublishChannels.STABLE) {
 
 val defaultJdkImage = "amazoncorretto:17"
 
-job("Mermaid / Build for 231.8770+") {
+job("Mermaid / Build for 232") {
   startOn {
     gitPush {
       enabled = true
