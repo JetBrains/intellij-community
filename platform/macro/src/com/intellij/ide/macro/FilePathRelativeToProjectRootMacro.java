@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.BaseProjectDirectories;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -48,10 +49,17 @@ public class FilePathRelativeToProjectRootMacro extends Macro {
     if (file == null) {
       return null;
     }
-    final VirtualFile baseDirectory = BaseProjectDirectories.getInstance(project).getBaseDirectoryFor(file);
-    if (baseDirectory == null) {
-      return null;
+
+    VirtualFile contentRoot = ProjectRootManager.getInstance(project).getFileIndex().getContentRootForFile(file);
+    if (contentRoot != null && contentRoot.isDirectory()) {
+      return FileUtil.getRelativePath(getIOFile(contentRoot), getIOFile(file));
     }
-    return FileUtil.getRelativePath(getIOFile(baseDirectory), getIOFile(file));
+
+    VirtualFile baseDirectory = BaseProjectDirectories.getInstance(project).getBaseDirectoryFor(file);
+    if (baseDirectory != null) {
+      return FileUtil.getRelativePath(getIOFile(baseDirectory), getIOFile(file));
+    }
+
+    return null;
   }
 }
