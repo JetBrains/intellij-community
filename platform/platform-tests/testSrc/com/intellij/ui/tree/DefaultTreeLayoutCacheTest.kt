@@ -256,6 +256,40 @@ class DefaultTreeLayoutCacheTest {
   }
 
   @Test
+  fun `re-expand visible root`() {
+    testStructure(
+      initOps = {
+        setModelStructure("""
+          |r
+          | a1
+          |  b11
+          | a2
+          |  b21
+          """.trimMargin()
+        )
+        sut.isRootVisible = true
+        selectionModel.expect { repeat(3) { resetRowSelection() } }
+      },
+      modOps = {
+        sut.setExpandedState("r", false)
+        sut.setExpandedState("r", true)
+      },
+      assertions = {
+        assertStructure("""
+          |r
+          | a1
+          | a2
+          """.trimMargin()
+        )
+        assertThatExpandedState("r").isTrue()
+        assertThatIsExpanded("r").isTrue()
+        assertThatExpanded("r/a1").isFalse()
+        assertThatExpanded("r/a2").isFalse()
+     },
+    )
+  }
+
+  @Test
   fun `expand visible root and its children`() {
     testStructure(
       initOps = {
@@ -536,6 +570,41 @@ class DefaultTreeLayoutCacheTest {
           """.trimMargin()
         )
         assertThatExpanded("r2").isTrue()
+      },
+    )
+  }
+
+  @Test
+  fun `change invisible root`() {
+    testStructure(
+      initOps = {
+        setModelStructure("""
+          |r1
+          | a1
+          |  b11
+          |   c111
+          |  b12
+          """.trimMargin()
+        )
+        sut.isRootVisible = false
+        selectionModel.expect {
+          repeat(2) { resetRowSelection() }
+          clearSelection()
+        }
+      },
+      modOps = {
+        setModelStructure("""
+          |r2
+          | a2
+        """.trimMargin())
+      },
+      assertions = {
+        assertStructure("""
+          | a2
+          """.trimMargin()
+        )
+        assertThatExpandedState("r2").isFalse()
+        assertThatIsExpanded("r2").isTrue()
       },
     )
   }
