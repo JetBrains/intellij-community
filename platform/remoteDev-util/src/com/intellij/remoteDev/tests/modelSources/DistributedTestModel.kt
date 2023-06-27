@@ -38,6 +38,7 @@ object DistributedTestModel : Ext(TestRoot) {
 
   private val RdTestSessionException = structdef {
     field("type", string)
+    field("originalType", string.nullable)
     field("message", string.nullable)
     field("stacktrace", immutableList(RdTestSessionStackTraceElement))
     field("cause", RdTestSessionExceptionCause.nullable)

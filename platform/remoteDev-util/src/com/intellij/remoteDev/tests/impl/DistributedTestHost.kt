@@ -16,12 +16,14 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.remoteDev.tests.*
 import com.intellij.remoteDev.tests.modelGenerated.RdAgentType
+import com.intellij.remoteDev.tests.modelGenerated.RdTestSession
 import com.intellij.remoteDev.tests.modelGenerated.distributedTestModel
 import com.intellij.util.application
 import com.intellij.util.ui.ImageUtil
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.impl.RdTask
 import com.jetbrains.rd.util.lifetime.EternalLifetime
+import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.measureTimeMillis
 import com.jetbrains.rd.util.reactive.viewNotNull
 import org.jetbrains.annotations.ApiStatus
@@ -37,7 +39,7 @@ import javax.imageio.ImageIO
 import kotlin.reflect.full.createInstance
 
 @ApiStatus.Internal
-class DistributedTestHost {
+open class DistributedTestHost {
   companion object {
     private val logger = Logger.getInstance(DistributedTestHost::class.java)
 
@@ -46,6 +48,15 @@ class DistributedTestHost {
     fun getDistributedTestPort(): Int? =
       (System.getProperty(AgentConstants.protocolPortEnvVar)
        ?: System.getenv(AgentConstants.protocolPortEnvVar))?.toIntOrNull()
+  }
+
+  open fun setUpLogging(sessionLifetime: Lifetime, session: RdTestSession) {
+    logger.info("Setting up loggers")
+    LogFactoryHandler.bindSession<AgentTestLoggerFactory>(sessionLifetime, session)
+  }
+
+  protected open fun assertLoggerFactory() {
+    LogFactoryHandler.assertLoggerFactory<AgentTestLoggerFactory>()
   }
 
   val projectOrNull: Project?
@@ -88,9 +99,8 @@ class DistributedTestHost {
     logger.info("Advise for session...")
     model.session.viewNotNull(lifetime) { sessionLifetime, session ->
       try {
-        logger.info("Setting up loggers")
-        AgentTestLoggerFactory.bindSession(sessionLifetime, session)
-        if (session.testMethodName == null || session.testClassName == null ) {
+        setUpLogging(sessionLifetime, session)
+        if (session.testMethodName == null || session.testClassName == null) {
           logger.info("Test session without test class to run.")
         }
         else {
@@ -125,7 +135,7 @@ class DistributedTestHost {
 
               // Execute test method
               lateinit var result: RdTask<Boolean>
-              val context =  when (session.agentInfo.agentType) {
+              val context = when (session.agentInfo.agentType) {
                 RdAgentType.HOST -> HostAgentContextImpl(session.agentInfo, application, projectOrNull, protocol)
                 RdAgentType.CLIENT -> ClientAgentContextImpl(session.agentInfo, application, projectOrNull, protocol)
                 RdAgentType.GATEWAY -> GatewayAgentContextImpl(session.agentInfo, application, projectOrNull, protocol)
@@ -147,7 +157,7 @@ class DistributedTestHost {
               }
 
               // Assert state
-              assertStateAfterTestMethod()
+              assertLoggerFactory()
 
               return@set result
             }
@@ -264,14 +274,6 @@ class DistributedTestHost {
       }
     }
     return result.get()
-  }
-
-  private fun assertStateAfterTestMethod() {
-    assert(Logger.getFactory() is AgentTestLoggerFactory) {
-      "Logger Factory was overridden during test method execution. " +
-      "Inspect logs to find stack trace of the overrider. " +
-      "Overriding logger factory leads to breaking distributes test log processing."
-    }
   }
 
   @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
