@@ -57,8 +57,6 @@ private fun KtFile.calculateShouldHighlightFile(): Boolean {
         return true
     }
 
-    if (isCompiled) return false
-
     if (OutsidersPsiFileSupport.isOutsiderFile(virtualFile)) {
         return true
     }
