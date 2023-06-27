@@ -64,7 +64,6 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
   private val popupActionGroup = DefaultActionGroup()
   private val touchbarActionGroup = DefaultActionGroup()
 
-  private val panel: JPanel
   private val mainPanel = MyMainPanel()
   private val contentPanel = Wrapper()
   private val topPanel: JPanel
@@ -113,7 +112,6 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
 
     rightToolbarWrapper = Wrapper(JBUI.Panels.simplePanel(rightToolbar.component))
 
-    panel = JBUI.Panels.simplePanel(mainPanel)
     diffInfoWrapper = Wrapper()
     topPanel = buildTopPanel()
     topPanel.border = JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0)
@@ -156,7 +154,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
     return if (component.isShowing) component else null
   }
 
-  fun getComponent(): JComponent = panel
+  fun getComponent(): JComponent = mainPanel
 
   @RequiresEdt
   fun startProgress() = progressBar.startProgress()
@@ -172,7 +170,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
   }
 
   fun isWindowFocused(): Boolean {
-    val window = SwingUtilities.getWindowAncestor(panel)
+    val window = SwingUtilities.getWindowAncestor(mainPanel)
     return window != null && window.isFocused
   }
 
@@ -388,7 +386,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
     override fun actionPerformed(e: AnActionEvent) {
       val popup = JBPopupFactory.getInstance().createActionGroupPopup(DiffBundle.message("diff.actions"), popupActionGroup, e.dataContext,
                                                                       JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false)
-      popup.showInCenterOf(panel)
+      popup.showInCenterOf(mainPanel)
     }
   }
 
