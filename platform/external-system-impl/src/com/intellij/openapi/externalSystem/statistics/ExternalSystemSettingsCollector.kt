@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.statistics
 
 import com.intellij.internal.statistic.beans.MetricEvent
@@ -22,6 +22,8 @@ class ExternalSystemSettingsCollector : ProjectUsagesCollector() {
 
     val trackerSettings = ExternalSystemProjectTrackerSettings.getInstance(project)
     usages.add(AUTO_RELOAD_TYPE.metric(trackerSettings.autoReloadType))
+
+    usages.add(HAS_SHARED_SOURCES.metric(HasSharedSourcesUtil.hasSharedSources(project)))
 
     for (manager in ExternalSystemApiUtil.getAllManagers()) {
       val systemId = getAnonymizedSystemId(manager.systemId)
@@ -47,7 +49,7 @@ class ExternalSystemSettingsCollector : ProjectUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("build.tools.state", 4)
+    private val GROUP = EventLogGroup("build.tools.state", 5)
     private val AUTO_RELOAD_TYPE = GROUP.registerEvent("autoReloadType",
                                                        EventFields.Enum("value",
                                                                         ExternalSystemProjectTrackerSettings.AutoReloadType::class.java) {
@@ -57,5 +59,6 @@ class ExternalSystemSettingsCollector : ProjectUsagesCollector() {
     private val NUMBER_OF_LINKED_PROJECT = GROUP.registerEvent("numberOfLinkedProject", EventFields.Count, EXTERNAL_SYSTEM_ID)
     private val USE_QUALIFIED_MODULE_NAMES = GROUP.registerEvent("useQualifiedModuleNames", EventFields.Enabled, EXTERNAL_SYSTEM_ID)
     private val MODULES_COUNT = GROUP.registerEvent("modules.count", EventFields.RoundedInt("count_rounded"), EXTERNAL_SYSTEM_ID)
+    private val HAS_SHARED_SOURCES = GROUP.registerEvent("hasSharedSources", EventFields.Enabled)
   }
 }
