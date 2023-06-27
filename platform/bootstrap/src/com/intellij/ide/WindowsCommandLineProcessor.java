@@ -9,7 +9,6 @@ import com.intellij.idea.StartupUtil;
 @SuppressWarnings("unused")
 public final class WindowsCommandLineProcessor {
   public static int processWindowsLauncherCommandLine(String currentDirectory, String[] args) {
-    StartupUtil.processWindowsLauncherCommandLine(currentDirectory, args);
-    return 1;
+    return StartupUtil.processWindowsLauncherCommandLine(currentDirectory, args);
   }
 }
