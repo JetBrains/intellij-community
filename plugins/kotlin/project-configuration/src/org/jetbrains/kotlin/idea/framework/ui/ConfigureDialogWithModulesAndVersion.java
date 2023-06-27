@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.text.VersionComparatorUtil;
@@ -62,6 +63,7 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper {
     private JPanel infoPanel;
     private JTextPane listOfKotlinVersionsAndModules;
     private JTextPane deprecatedJvmTargetsUsedWarning;
+    private JTextPane textPaneForLink;
 
     private final AsyncProcessIcon processIcon = new AsyncProcessIcon("loader");
 
@@ -183,12 +185,16 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper {
                                                                                          jvmTargetVersion, modulesEnumeration.toString()));
                              }
                     );
-            message.append(KotlinProjectConfigurationBundle.message("configurator.kotlin.jvm.target.bump.manually"));
             // It's not hardcoded, we take strings from resources
             //noinspection HardCodedStringLiteral
             deprecatedJvmTargetsUsedWarning.setText(message.toString());
+
+            Messages.installHyperlinkSupport(textPaneForLink);
+            textPaneForLink.setText(KotlinProjectConfigurationBundle.message("configurator.kotlin.jvm.target.bump.manually.learn.more"));
+            textPaneForLink.setVisible(true);
             deprecatedJvmTargetsUsedWarning.setVisible(true);
         } else {
+            textPaneForLink.setVisible(false);
             deprecatedJvmTargetsUsedWarning.setVisible(false);
         }
     }
