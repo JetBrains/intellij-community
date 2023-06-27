@@ -88,7 +88,10 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
       initLafJob.join()
       subtask("UISettings preloading") { app.serviceAsync<UISettings>() }
     }
-    launch(CoroutineName("CustomActionsSchema preloading")) { app.serviceAsync<CustomActionsSchema>() }
+    launch(CoroutineName("CustomActionsSchema preloading")) {
+      initLafJob.join()
+      app.serviceAsync<CustomActionsSchema>()
+    }
     // wants PathMacros
     launch(CoroutineName("GeneralSettings preloading")) { app.serviceAsync<GeneralSettings>() }
 
