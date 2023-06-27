@@ -43,19 +43,19 @@ import javax.swing.*
 import javax.swing.border.Border
 import kotlin.time.Duration.Companion.milliseconds
 
+internal enum class IdeMenuBarState {
+  EXPANDED,
+  COLLAPSING,
+  COLLAPSED,
+  EXPANDING,
+  TEMPORARY_EXPANDED;
+
+  val isInProgress: Boolean
+    get() = this == COLLAPSING || this == EXPANDING
+}
+
 @Suppress("LeakingThis")
 open class IdeMenuBar internal constructor(@JvmField protected val coroutineScope: CoroutineScope, frame: JFrame) : JMenuBar() {
-  internal enum class State {
-    EXPANDED,
-    COLLAPSING,
-    COLLAPSED,
-    EXPANDING,
-    TEMPORARY_EXPANDED;
-
-    val isInProgress: Boolean
-      get() = this == COLLAPSING || this == EXPANDING
-  }
-
   private val menuBarHelper: IdeMenuBarHelper
   private val timerListener = MyTimerListener()
 
@@ -71,7 +71,7 @@ open class IdeMenuBar internal constructor(@JvmField protected val coroutineScop
     }
     else {
       object : IdeMenuFlavor {
-        override var state: State = State.EXPANDED
+        override var state: IdeMenuBarState = IdeMenuBarState.EXPANDED
 
         override fun updateAppMenu() {
           doUpdateAppMenu()
@@ -126,9 +126,9 @@ open class IdeMenuBar internal constructor(@JvmField protected val coroutineScop
 
   override fun getBorder(): Border? {
     @Suppress("UNNECESSARY_SAFE_CALL")
-    val state = menuBarHelper?.flavor?.state ?: State.EXPANDED
+    val state = menuBarHelper?.flavor?.state ?: IdeMenuBarState.EXPANDED
     // avoid moving lines
-    if (state == State.EXPANDING || state == State.COLLAPSING) {
+    if (state == IdeMenuBarState.EXPANDING || state == IdeMenuBarState.COLLAPSING) {
       return JBUI.Borders.empty()
     }
 
@@ -137,12 +137,12 @@ open class IdeMenuBar internal constructor(@JvmField protected val coroutineScop
     }
 
     // fix for a Darcula double border
-    if (state == State.TEMPORARY_EXPANDED && StartupUiUtil.isUnderDarcula) {
+    if (state == IdeMenuBarState.TEMPORARY_EXPANDED && StartupUiUtil.isUnderDarcula) {
       return JBUI.Borders.customLine(Gray._75, 0, 0, 1, 0)
     }
 
     // save 1px for mouse handler
-    if (state == State.COLLAPSED) {
+    if (state == IdeMenuBarState.COLLAPSED) {
       return JBUI.Borders.emptyBottom(1)
     }
 
@@ -152,7 +152,7 @@ open class IdeMenuBar internal constructor(@JvmField protected val coroutineScop
 
   override fun paint(g: Graphics) {
     // otherwise, there will be a 1px line on top
-    if (menuBarHelper.flavor.state != State.COLLAPSED) {
+    if (menuBarHelper.flavor.state != IdeMenuBarState.COLLAPSED) {
       super.paint(g)
     }
   }
@@ -164,16 +164,16 @@ open class IdeMenuBar internal constructor(@JvmField protected val coroutineScop
   }
 
   override fun menuSelectionChanged(isIncluded: Boolean) {
-    if (!isIncluded && menuBarHelper.flavor.state == State.TEMPORARY_EXPANDED) {
+    if (!isIncluded && menuBarHelper.flavor.state == IdeMenuBarState.TEMPORARY_EXPANDED) {
       activated = false
-      menuBarHelper.flavor.state = State.COLLAPSING
+      menuBarHelper.flavor.state = IdeMenuBarState.COLLAPSING
       menuBarHelper.flavor.restartAnimator()
       return
     }
 
-    if (isIncluded && menuBarHelper.flavor.state == State.COLLAPSED) {
+    if (isIncluded && menuBarHelper.flavor.state == IdeMenuBarState.COLLAPSED) {
       activated = true
-      menuBarHelper.flavor.state = State.TEMPORARY_EXPANDED
+      menuBarHelper.flavor.state = IdeMenuBarState.TEMPORARY_EXPANDED
       revalidate()
       repaint()
       SwingUtilities.invokeLater {
@@ -199,9 +199,9 @@ open class IdeMenuBar internal constructor(@JvmField protected val coroutineScop
     if (state.isInProgress) {
       val progress = menuBarHelper.flavor.getProgress()
       dimension.height = COLLAPSED_HEIGHT +
-                         ((if (state == State.COLLAPSING) 1 - progress else progress) * (dimension.height - COLLAPSED_HEIGHT)).toInt()
+                         ((if (state == IdeMenuBarState.COLLAPSING) 1 - progress else progress) * (dimension.height - COLLAPSED_HEIGHT)).toInt()
     }
-    else if (state == State.COLLAPSED) {
+    else if (state == IdeMenuBarState.COLLAPSED) {
       dimension.height = COLLAPSED_HEIGHT
     }
     return dimension
@@ -211,7 +211,7 @@ open class IdeMenuBar internal constructor(@JvmField protected val coroutineScop
     super.addNotify()
 
     IdeEventQueue.getInstance().addDispatcher(dispatcher = { event ->
-      if (event is MouseEvent && menuBarHelper.flavor.state != State.EXPANDED /*&& !myState.isInProgress()*/) {
+      if (event is MouseEvent && menuBarHelper.flavor.state != IdeMenuBarState.EXPANDED /*&& !myState.isInProgress()*/) {
         considerRestartingAnimator(event)
       }
       false
@@ -265,19 +265,19 @@ open class IdeMenuBar internal constructor(@JvmField protected val coroutineScop
     if (mouseEvent.id == MouseEvent.MOUSE_EXITED && mouseEvent.source === SwingUtilities.windowForComponent(this) && !activated) {
       mouseInside = false
     }
-    if (mouseInside && menuBarHelper.flavor.state == State.COLLAPSED) {
-      menuBarHelper.flavor.state = State.EXPANDING
+    if (mouseInside && menuBarHelper.flavor.state == IdeMenuBarState.COLLAPSED) {
+      menuBarHelper.flavor.state = IdeMenuBarState.EXPANDING
       menuBarHelper.flavor.restartAnimator()
     }
-    else if (!mouseInside && menuBarHelper.flavor.state != State.COLLAPSING && menuBarHelper.flavor.state != State.COLLAPSED) {
-      menuBarHelper.flavor.state = State.COLLAPSING
+    else if (!mouseInside && menuBarHelper.flavor.state != IdeMenuBarState.COLLAPSING && menuBarHelper.flavor.state != IdeMenuBarState.COLLAPSED) {
+      menuBarHelper.flavor.state = IdeMenuBarState.COLLAPSING
       menuBarHelper.flavor.restartAnimator()
     }
   }
 
   private fun findActualComponent(mouseEvent: MouseEvent): Component? {
     var component: Component? = mouseEvent.component ?: return null
-    val deepestComponent = if (menuBarHelper.flavor.state != State.EXPANDED &&
+    val deepestComponent = if (menuBarHelper.flavor.state != IdeMenuBarState.EXPANDED &&
                                !menuBarHelper.flavor.state.isInProgress &&
                                contains(SwingUtilities.convertPoint(component, mouseEvent.point, this))) {
       this
@@ -344,7 +344,7 @@ open class IdeMenuBar internal constructor(@JvmField protected val coroutineScop
       super.paintChildren(g2)
       g2.transform = oldTransform
     }
-    else if (menuBarHelper.flavor.state != State.COLLAPSED) {
+    else if (menuBarHelper.flavor.state != IdeMenuBarState.COLLAPSED) {
       super.paintChildren(g)
     }
   }

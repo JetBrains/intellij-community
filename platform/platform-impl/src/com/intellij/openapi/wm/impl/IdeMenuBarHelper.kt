@@ -13,7 +13,7 @@ import javax.swing.JFrame
 import javax.swing.SwingUtilities
 
 internal interface IdeMenuFlavor {
-  var state: IdeMenuBar.State
+  var state: IdeMenuBarState
 
   fun getProgress(): Double = 0.0
 
