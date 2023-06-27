@@ -1945,6 +1945,15 @@ public final class PyTypeChecker {
     public boolean isEmpty() {
       return typeVars.isEmpty() && typeVarTuples.isEmpty() && paramSpecs.isEmpty() && concatenates.isEmpty() && self == null;
     }
+
+    @Override
+    public String toString() {
+      return "Generics{" +
+             "typeVars=" + typeVars +
+             ", typeVarTuples" + typeVarTuples +
+             ", paramSpecs=" + paramSpecs +
+             '}';
+    }
   }
 
   @ApiStatus.Experimental

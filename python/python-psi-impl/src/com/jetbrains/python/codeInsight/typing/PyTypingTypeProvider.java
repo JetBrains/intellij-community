@@ -630,11 +630,21 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
       List<PyTypeParameterType> superTypeParameters = collectTypeParameters(superClassType.getPyClass(), context);
       List<PyType> superTypeArguments = superClassType instanceof PyCollectionType parameterized ?
                                         parameterized.getElementTypes() : Collections.emptyList();
-      for (int i = 0; i < superTypeParameters.size(); i++) {
-        PyTypeParameterType superTypeParameter = superTypeParameters.get(i);
-        PyType superTypeArgument = ContainerUtil.getOrElse(superTypeArguments, i, null);
-        if (!superTypeParameter.equals(superTypeArgument)) {
-          results.put(superTypeParameter, superTypeArgument);
+      if (ContainerUtil.exists(superTypeParameters, it -> it instanceof PyGenericVariadicType)) {
+        var substitutions = new PyTypeChecker.GenericSubstitutions();
+        var matchContext = PyTypeChecker.getMatchContext(context.myContext, substitutions);
+        List<PyType> superTypes = new ArrayList<>(superTypeParameters);
+        PyTypeChecker.matchElementTypes(superTypes, superTypeArguments, matchContext, false, false);
+        results.putAll(substitutions.getTypeVars());
+        results.putAll(substitutions.getTypeVarTuples());
+      }
+      else {
+        for (int i = 0; i < superTypeParameters.size(); i++) {
+          PyTypeParameterType superTypeParameter = superTypeParameters.get(i);
+          PyType superTypeArgument = ContainerUtil.getOrElse(superTypeArguments, i, null);
+          if (!superTypeParameter.equals(superTypeArgument)) {
+            results.put(superTypeParameter, superTypeArgument);
+          }
         }
       }
     }
