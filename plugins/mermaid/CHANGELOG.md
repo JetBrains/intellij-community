@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## 0.0.13
+- [MERMAID-25](https://youtrack.jetbrains.com/issue/MERMAID-25) Added `Export Mermaid Diagram` action for exporting standalone diagrams to SVG 
+- [MERMAID-69](https://youtrack.jetbrains.com/issue/MERMAID-69) Added support for Markdown strings inside flowchart and mindmap labels
+- [MERMAID-77](https://youtrack.jetbrains.com/issue/MERMAID-77) Added support for quadrant charts
+- [MERMAID-78](https://youtrack.jetbrains.com/issue/MERMAID-78) Added support for hyphens inside class diagram identifiers
+- [MERMAID-79](https://youtrack.jetbrains.com/issue/MERMAID-79) Added support for namespaces in class diagrams
+
 ## 0.0.12
 - [MERMAID-56](https://youtrack.jetbrains.com/issue/MERMAID-56) Fixed freezes during diagram directive editing
 
