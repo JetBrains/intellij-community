@@ -180,7 +180,7 @@ open class ProjectFrameHelper internal constructor(
     }
     else {
       if (SystemInfoRt.isLinux) {
-        IdeMenuBar.installAppMenuIfNeeded(frame)
+        installAppMenuIfNeeded(frame)
       }
 
       // in production (not from sources) it makes sense only on Linux

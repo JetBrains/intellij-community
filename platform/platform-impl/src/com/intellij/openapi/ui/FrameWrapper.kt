@@ -292,7 +292,7 @@ open class FrameWrapper @JvmOverloads constructor(private var project: Project?,
       glassPane = IdeGlassPaneImpl(rootPane = getRootPane(), installPainters = true)
       if (SystemInfoRt.isMac && !(SystemInfo.isMacSystemMenu && java.lang.Boolean.getBoolean("mac.system.menu.singleton"))) {
         @Suppress("DEPRECATION")
-        jMenuBar = IdeMenuBar.createMenuBar(coroutineScope = ApplicationManager.getApplication().coroutineScope.childScope(), this)
+        jMenuBar = createMenuBar(coroutineScope = ApplicationManager.getApplication().coroutineScope.childScope(), this)
 
       }
       MouseGestureManager.getInstance().add(this)

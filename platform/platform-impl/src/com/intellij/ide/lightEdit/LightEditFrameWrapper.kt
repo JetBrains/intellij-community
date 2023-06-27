@@ -124,7 +124,7 @@ internal class LightEditFrameWrapper(
         frame.toggleFullScreen(true)
       }
       uiFrame.addComponentListener(FrameStateListener(windowManager.defaultFrameInfoHelper))
-      IdeMenuBar.installAppMenuIfNeeded(uiFrame)
+      installAppMenuIfNeeded(uiFrame)
 
       @Suppress("DEPRECATION")
       project.coroutineScope.launch {

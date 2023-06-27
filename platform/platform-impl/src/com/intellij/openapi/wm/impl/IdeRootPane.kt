@@ -144,7 +144,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
 
     val isDecoratedMenu = isDecoratedMenu
     if (!isDecoratedMenu && !isFloatingMenuBarSupported) {
-      jMenuBar = IdeMenuBar.createMenuBar(coroutineScope.childScope(), frame)
+      jMenuBar = createMenuBar(coroutineScope.childScope(), frame)
       helper = UndecoratedHelper
     }
     else {
@@ -164,7 +164,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
         else {
           selectedEditorFilePath = CustomDecorationPath(frame)
           MenuFrameHeader(frame = frame, headerTitle = selectedEditorFilePath,
-                          ideMenu = IdeMenuBar.createMenuBar(coroutineScope.childScope(), frame))
+                          ideMenu = createMenuBar(coroutineScope.childScope(), frame))
         }
         helper = DecoratedHelper(
           customFrameTitlePane = customFrameTitlePane,
@@ -187,7 +187,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
       }
 
       if (isFloatingMenuBarSupported) {
-        menuBar = IdeMenuBar.createMenuBar(coroutineScope.childScope(), frame)
+        menuBar = createMenuBar(coroutineScope.childScope(), frame)
         menuBar.isOpaque = true
         layeredPane.add(menuBar, (JLayeredPane.DEFAULT_LAYER - 1) as Any)
       }

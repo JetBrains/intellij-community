@@ -24,8 +24,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
-import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.WindowManagerImpl
+import com.intellij.openapi.wm.impl.installAppMenuIfNeeded
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
 import com.intellij.ui.BalloonLayout
@@ -173,7 +173,7 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
         registerKeyboardShortcuts(jFrame.rootPane)
         hideSplashBeforeShow(jFrame)
         jFrame.isVisible = true
-        IdeMenuBar.installAppMenuIfNeeded(jFrame)
+        installAppMenuIfNeeded(jFrame)
         instance = frame
         if (SystemInfoRt.isMac) {
           touchbar = TouchbarSupport.showWindowActions(frame.component)

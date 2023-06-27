@@ -7,9 +7,9 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionToolbar
-import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.ToolbarHolder
+import com.intellij.openapi.wm.impl.createMenuBar
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.FrameHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameCustomHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.SimpleCustomDecorationPath
@@ -44,7 +44,7 @@ private enum class ShowMode {
 internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) : FrameHeader(frame), UISettingsListener, ToolbarHolder, MainFrameCustomHeader {
   private val coroutineScope = root.coroutineScope.childScope()
 
-  private val myMenuBar = IdeMenuBar.createMenuBar(coroutineScope.childScope(), frame)
+  private val myMenuBar = createMenuBar(coroutineScope.childScope(), frame)
   private val ideMenuHelper = IdeMenuHelper(myMenuBar, this)
   private val menuBarHeaderTitle = SimpleCustomDecorationPath(frame, true).apply {
     isOpaque = false

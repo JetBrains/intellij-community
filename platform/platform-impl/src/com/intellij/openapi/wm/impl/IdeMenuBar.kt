@@ -44,7 +44,7 @@ import javax.swing.border.Border
 import kotlin.time.Duration.Companion.milliseconds
 
 @Suppress("LeakingThis")
-open class IdeMenuBar internal constructor(@JvmField protected val coroutineScope: CoroutineScope, frame: JFrame) : JMenuBar(), UISettingsListener {
+open class IdeMenuBar internal constructor(@JvmField protected val coroutineScope: CoroutineScope, frame: JFrame) : JMenuBar() {
   internal enum class State {
     EXPANDED,
     COLLAPSING,
@@ -97,6 +97,14 @@ open class IdeMenuBar internal constructor(@JvmField protected val coroutineScop
       isOpaque = false
     }
 
+    val app = ApplicationManager.getApplication()
+    @Suppress("IfThenToSafeAccess")
+    if (app != null) {
+      app.messageBus.connect(coroutineScope).subscribe(UISettingsListener.TOPIC, UISettingsListener {
+        check(updateRequests.tryEmit(Unit))
+      })
+    }
+
     coroutineScope.launch {
       updateRequests
         .debounce(50.milliseconds)
@@ -106,28 +114,6 @@ open class IdeMenuBar internal constructor(@JvmField protected val coroutineScop
             updateMenuActionsAsync(forceRebuild = true)
           }
         }
-    }
-  }
-
-  companion object {
-    internal fun createMenuBar(coroutineScope: CoroutineScope, frame: JFrame): IdeMenuBar {
-      return if (SystemInfoRt.isLinux) LinuxIdeMenuBar(coroutineScope, frame) else IdeMenuBar(coroutineScope, frame)
-    }
-
-    fun installAppMenuIfNeeded(frame: JFrame) {
-      val menuBar = frame.jMenuBar
-      // must be called when frame is visible (otherwise frame.getPeer() == null)
-      if (menuBar is IdeMenuBar) {
-        try {
-          menuBar.doInstallAppMenuIfNeeded(frame)
-        }
-        catch (e: Throwable) {
-          LOG.warn("cannot install app menu", e)
-        }
-      }
-      else if (menuBar != null) {
-        LOG.info("The menu bar '$menuBar of frame '$frame' isn't instance of IdeMenuBar")
-      }
     }
   }
 
@@ -292,10 +278,6 @@ open class IdeMenuBar internal constructor(@JvmField protected val coroutineScop
     super.removeNotify()
   }
 
-  override fun uiSettingsChanged(uiSettings: UISettings) {
-    check(updateRequests.tryEmit(Unit))
-  }
-
   private fun considerRestartingAnimator(mouseEvent: MouseEvent) {
     var mouseInside = activated || UIUtil.isDescendingFrom(findActualComponent(mouseEvent), this)
     if (mouseEvent.id == MouseEvent.MOUSE_EXITED && mouseEvent.source === SwingUtilities.windowForComponent(this) && !activated) {
@@ -436,7 +418,7 @@ open class IdeMenuBar internal constructor(@JvmField protected val coroutineScop
     }
   }
 
-  protected open fun doInstallAppMenuIfNeeded(frame: JFrame) {}
+  internal open fun doInstallAppMenuIfNeeded(frame: JFrame) {}
 
   open fun onToggleFullScreen(isFullScreen: Boolean) {}
 }
@@ -478,5 +460,25 @@ private fun createScreeMenuPeer(frame: JFrame): MenuBar? {
   }
   else {
     return null
+  }
+}
+
+internal fun createMenuBar(coroutineScope: CoroutineScope, frame: JFrame): IdeMenuBar {
+  return if (SystemInfoRt.isLinux) LinuxIdeMenuBar(coroutineScope, frame) else IdeMenuBar(coroutineScope, frame)
+}
+
+internal fun installAppMenuIfNeeded(frame: JFrame) {
+  val menuBar = frame.jMenuBar
+  // must be called when frame is visible (otherwise frame.getPeer() == null)
+  if (menuBar is IdeMenuBar) {
+    try {
+      menuBar.doInstallAppMenuIfNeeded(frame)
+    }
+    catch (e: Throwable) {
+      LOG.warn("cannot install app menu", e)
+    }
+  }
+  else if (menuBar != null) {
+    LOG.info("The menu bar '$menuBar of frame '$frame' isn't instance of IdeMenuBar")
   }
 }
