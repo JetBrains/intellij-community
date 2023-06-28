@@ -15,7 +15,7 @@ import java.util.List;
  * @param actions actions to select from. If there's only one action, then it could be executed right away without asking the user. 
  */
 public record ModChooseAction(@NotNull @NlsContexts.PopupTitle String title, 
-                              @NotNull List<@NotNull ModCommandAction> actions) implements ModCommand {
+                              @NotNull List<? extends @NotNull ModCommandAction> actions) implements ModCommand {
   @Override
   public boolean isEmpty() {
     return actions.isEmpty();

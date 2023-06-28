@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.integer;
 
 import com.intellij.codeInsight.intention.numeric.NumberConverter;
+import com.intellij.java.JavaBundle;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +29,7 @@ public final class JavaNumberConverters {
     }
 
     @Override
-    public String toString() { return "hex";}
+    public String toString() { return JavaBundle.message("convert.number.hex");}
   };
   static final NumberConverter INTEGER_TO_BINARY = new NumberConverter() {
     @Override
@@ -45,7 +46,7 @@ public final class JavaNumberConverters {
     }
 
     @Override
-    public String toString() { return "binary";}
+    public String toString() { return JavaBundle.message("convert.number.binary");}
   };
   static final NumberConverter INTEGER_TO_OCTAL = new NumberConverter() {
     @Override
@@ -62,7 +63,7 @@ public final class JavaNumberConverters {
 
     @Override
     public String toString() {
-      return "octal";
+      return JavaBundle.message("convert.number.octal");
     }
   };
   static final NumberConverter INTEGER_TO_DECIMAL = new NumberConverter() {
@@ -80,7 +81,7 @@ public final class JavaNumberConverters {
 
     @Override
     public String toString() {
-      return "decimal";
+      return JavaBundle.message("convert.number.decimal");
     }
   };
   static final NumberConverter FLOAT_TO_HEX = new NumberConverter() {
@@ -98,7 +99,7 @@ public final class JavaNumberConverters {
     }
 
     @Override
-    public String toString() { return "hex";}
+    public String toString() { return JavaBundle.message("convert.number.hex");}
   };
   static final NumberConverter FLOAT_TO_DECIMAL = new NumberConverter() {
     @Override
@@ -115,7 +116,7 @@ public final class JavaNumberConverters {
     }
 
     @Override
-    public String toString() { return "decimal";}
+    public String toString() { return JavaBundle.message("convert.number.decimal");}
   };
   static final NumberConverter FLOAT_TO_PLAIN = new NumberConverter() {
     @Override
@@ -143,7 +144,7 @@ public final class JavaNumberConverters {
     }
 
     @Override
-    public String toString() { return "plain format";}
+    public String toString() { return JavaBundle.message("convert.number.plain.format");}
   };
   static final NumberConverter FLOAT_TO_SCIENTIFIC = new NumberConverter() {
     private final DecimalFormat FORMAT = new DecimalFormat("0.0#############E00", new DecimalFormatSymbols(Locale.US));
@@ -159,6 +160,6 @@ public final class JavaNumberConverters {
     }
 
     @Override
-    public String toString() { return "scientific format";}
+    public String toString() { return JavaBundle.message("convert.number.scientific.format");}
   };
 }

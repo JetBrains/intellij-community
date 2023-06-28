@@ -1,6 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.integer;
 
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.lang.LangBundle;
 import com.intellij.ui.ChooserInterceptor;
 import com.intellij.ui.UiInterceptors;
 import com.siyeh.ipp.IPPTestCase;
@@ -37,6 +39,12 @@ public class JavaConvertNumericBaseTest extends IPPTestCase {
   public void testHexToBin2() { doTestWithChooser("Binary"); }
   public void testOctToBin1() { doTestWithChooser("Binary"); }
   public void testOctToBin2() { doTestWithChooser("Binary"); }
+  
+  public void testPreview() {
+    myFixture.configureByText("Test.java", "class Test {int x = 123<caret>;}");
+    IntentionAction action = myFixture.findSingleIntention(LangBundle.message("intention.name.convert.number.to"));
+    myFixture.checkIntentionPreviewHtml(action, "Convert number to hex, binary, or octal");
+  }
 
   private void doTestWithChooser(String selectedOption) {
     UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote(selectedOption) + " \\(.*\\)"));

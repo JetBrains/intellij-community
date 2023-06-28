@@ -1,41 +1,29 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.numeric;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInspection.ModCommands;
 import com.intellij.codeInspection.util.IntentionFamilyName;
-import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ModChooseAction;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public abstract class AbstractNumberConversionIntention implements IntentionAction {
-  private @IntentionName String myText;
-
-  @IntentionName
-  @NotNull
-  @Override
-  public String getText() {
-    return myText == null ? LangBundle.message("intention.name.convert.number.to") : myText;
-  }
+public abstract class AbstractNumberConversionIntention implements ModCommandAction {
 
   @IntentionFamilyName
   @NotNull
@@ -45,12 +33,13 @@ public abstract class AbstractNumberConversionIntention implements IntentionActi
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!BaseIntentionAction.canModify(file)) return false;
+  public @Nullable Presentation getPresentation(@NotNull ActionContext actionCtx) {
+    PsiFile file = actionCtx.file();
+    if (!BaseIntentionAction.canModify(file)) return null;
     List<NumberConverter> converters = getConverters(file);
-    if (converters.isEmpty()) return false;
-    NumberConversionContext context = getContext(file, editor);
-    if (context == null) return false;
+    if (converters.isEmpty()) return null;
+    NumberConversionContext context = getContext(actionCtx);
+    if (context == null) return null;
     Number number = context.myNumber;
     String text = context.myText;
     NumberConverter singleConverter = null;
@@ -58,43 +47,36 @@ public abstract class AbstractNumberConversionIntention implements IntentionActi
       String convertedText = converter.getConvertedText(text, number);
       if (convertedText != null) {
         if (singleConverter != null) {
-          myText = null;
-          return true;
+          return Presentation.of(LangBundle.message("intention.name.convert.number.to"));
         }
         singleConverter = converter;
       }
     }
-    if (singleConverter == null) return false;
+    if (singleConverter == null) return null;
     String convertedText = singleConverter.getConvertedText(text, number);
-    myText = getActionName(singleConverter, convertedText);
-    return true;
+    return Presentation.of(LangBundle.message("intention.name.convert.number.to.with.text", singleConverter, convertedText));
   }
 
   @Nullable
-  private NumberConversionContext getContext(@NotNull PsiFile file, @NotNull Editor editor) {
-    int offset = editor.getCaretModel().getOffset();
-    PsiElement element = file.findElementAt(offset);
+  private NumberConversionContext getContext(@NotNull ActionContext actionContext) {
+    PsiElement element = actionContext.findLeaf();
     NumberConversionContext context = element == null ? null : extract(element);
-    if (context == null && offset > 0) {
-      element = file.findElementAt(offset - 1);
+    if (context == null) {
+      element = actionContext.findLeafOnTheLeft();
       context = element == null ? null : extract(element);
     }
     return context;
   }
 
-  public @IntentionName String getActionName(NumberConverter converter, String convertedText) {
-    return LangBundle.message("intention.name.convert.number.to.with.text", converter, convertedText);
-  }
-
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    List<NumberConverter> converters = getConverters(file);
-    if (converters.isEmpty()) return;
-    NumberConversionContext context = getContext(file, editor);
-    if (context == null) return;
+  public @NotNull ModCommand perform(@NotNull ActionContext actionContext) {
+    List<NumberConverter> converters = getConverters(actionContext.file());
+    if (converters.isEmpty()) return ModCommands.nop();
+    NumberConversionContext context = getContext(actionContext);
+    if (context == null) return ModCommands.nop();
     Number number = context.myNumber;
     String text = context.myText;
-    class Conversion {
+    class Conversion implements ModCommandAction {
       final NumberConverter myConverter;
       final String myResult;
 
@@ -103,48 +85,35 @@ public abstract class AbstractNumberConversionIntention implements IntentionActi
         myResult = result;
       }
 
-      void convert(NumberConversionContext context) {
-        WriteCommandAction.runWriteCommandAction(context.getProject(), getName(), null, () -> {
-          PsiElement element = context.getElement();
-          if (element != null) {
-            replace(element, myResult);
-          }
-        }, file);
+      @Override
+      public @NotNull ModCommand perform(@NotNull ActionContext ctx) {
+        PsiElement element = context.getElement();
+        if (element == null) return ModCommands.nop();
+        return ModCommands.psiUpdate(element, e -> replace(e, myResult));
       }
 
-      private @NlsContexts.Command String getName() {
-        return getActionName(myConverter, myResult);
+      @Override
+      public @Nullable Presentation getPresentation(@NotNull ActionContext ctx) {
+        if (context.getElement() == null) return null;
+        return Presentation.of(toString());
       }
 
+      @NlsSafe
       @Override
       public String toString() {
         return StringUtil.capitalize(myConverter.toString()) + " (" + myResult + ")";
       }
+
+      @Override
+      public @NotNull String getFamilyName() {
+        return myConverter.toString();
+      }
     }
-    List<Conversion> list = getConverters(file).stream()
+    List<Conversion> list = getConverters(actionContext.file()).stream()
       .map(converter -> new Conversion(converter, converter.getConvertedText(text, number)))
       .filter(conversion -> conversion.myResult != null)
       .collect(Collectors.toList());
-    if (myText != null) {
-      list.stream().filter(c -> c.getName().equals(myText)).findFirst().ifPresent(conversion -> conversion.convert(context));
-      // For some reason preselected conversion is not available anymore: do nothing
-      return;
-    }
-    JBPopup popup = JBPopupFactory.getInstance().createPopupChooserBuilder(list)
-      .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
-      .setAccessibleName(LangBundle.message("intention.name.convert.number.to"))
-      .setTitle(LangBundle.message("intention.name.convert.number.to.title"))
-      .setMovable(false)
-      .setResizable(false)
-      .setRequestFocus(true)
-      .setItemChosenCallback(conversion -> conversion.convert(context))
-      .createPopup();
-    popup.showInBestPositionFor(editor);
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
+    return new ModChooseAction(LangBundle.message("intention.name.convert.number.to.title"), list);
   }
 
   /**

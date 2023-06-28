@@ -1,8 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.integer;
 
 import com.intellij.codeInsight.intention.numeric.AbstractNumberConversionIntention;
 import com.intellij.codeInsight.intention.numeric.NumberConverter;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
+import com.intellij.ide.nls.NlsMessages;
+import com.intellij.lang.LangBundle;
+import com.intellij.modcommand.ModChooseAction;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -30,6 +37,16 @@ public class JavaNumberConversionIntention extends AbstractNumberConversionInten
     static final List<NumberConverter> JAVA_7_CONVERTERS = List.of(
       INTEGER_TO_DECIMAL, INTEGER_TO_HEX, INTEGER_TO_BINARY, INTEGER_TO_OCTAL,
       FLOAT_TO_DECIMAL, FLOAT_TO_PLAIN, FLOAT_TO_SCIENTIFIC, FLOAT_TO_HEX);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull ActionContext context) {
+    ModCommand command = perform(context);
+    if (command instanceof ModChooseAction chooser) {
+      String options = chooser.actions().stream().map(ModCommandAction::getFamilyName).collect(NlsMessages.joiningOr());
+      return new IntentionPreviewInfo.Html(LangBundle.message("intention.name.convert.number.to.with.text.preview", options));
+    }
+    return IntentionPreviewUtils.getModCommandPreview(command, context);
   }
 
   @Override
