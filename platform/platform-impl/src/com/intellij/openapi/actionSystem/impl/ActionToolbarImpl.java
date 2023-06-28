@@ -327,9 +327,15 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   @Override
   public void addNotify() {
     super.addNotify();
-    if (ComponentUtil.getParentOfType(CellRendererPane.class, this) != null) return;
+    if (ComponentUtil.getParentOfType(CellRendererPane.class, this) != null) {
+      return;
+    }
     ourToolbars.add(this);
 
+    updateActionsOnAdd();
+  }
+
+  protected void updateActionsOnAdd() {
     if (isShowing()) {
       updateActionsImmediately();
     }
@@ -1343,7 +1349,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       return;
     }
 
-    long fastTrackTimeout = ExperimentalUI.isNewUI() && !PlatformUtils.isJetBrainsClient() ? 30_000 : Utils.getFastTrackTimeout();
+    long fastTrackTimeout = ActionPlaces.MAIN_TOOLBAR.equals(myPlace) && ExperimentalUI.isNewUI() && !PlatformUtils.isJetBrainsClient()
+                            ? 5_000
+                            : Utils.getFastTrackTimeout();
     List<AnAction> actions = Utils.expandActionGroupFastTrack(updater, myActionGroup, myHideDisabled, null, fastTrackTimeout);
     if (actions != null) {
       actionsUpdated(true, actions);
