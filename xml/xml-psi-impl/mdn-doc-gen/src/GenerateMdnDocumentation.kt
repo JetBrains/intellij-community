@@ -286,7 +286,13 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
           val mdnUrl = bcdInfo.compat?.mdnUrl?.lowercase(Locale.US)?.removePrefix("https://developer.mozilla.org/docs/web/")
                         ?: mdnUrlBuilder?.invoke(name, bcdInfo)
                         ?: "$mdnPath/$name"
-          val dir = getMdnDir(mdnUrl)
+          val dir = getMdnDir(mdnUrl).let {
+            if (it.name.endsWith("()") && !it.exists()) {
+              val suffixed = File(it.parentFile, it.name.removeSuffix("()") + "_function")
+              if (suffixed.exists()) return@let suffixed
+            }
+            it
+          }
           if (!dir.exists()) {
             System.err.println("Dir not found: $dir")
             emptyList()
@@ -479,7 +485,7 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
     val dirName = dir.name
     return when {
       dirName.startsWith('_') || dirName.endsWith("()") ->
-        MdnCssBasicSymbolDocumentation(url, status, compatibility, description)
+        MdnCssBasicSymbolDocumentation(url, status, compatibility, description, extractFormalSyntax(contents.prose))
       dirName.startsWith('@') ->
         MdnCssAtRuleSymbolDocumentation(
           url, status, compatibility, description,
@@ -497,7 +503,7 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
               System.err.println("Error for $docDir: ${e.message}")
               throw e
             }
-          }.takeIf { it.isNotEmpty() }
+          }.takeIf { it.isNotEmpty() }, extractFormalSyntax(contents.prose)
         )
       else ->
         MdnCssPropertySymbolDocumentation(
@@ -701,6 +707,10 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
         if (tag.name == "pre"
             && tag.getAttributeValue("class")?.matches(Regex("brush: ?(js|html|css|xml|http)[a-z0-9-;\\[\\] ]*")) == true) {
           tag.findSubTag("code")?.let { toSimplify.add(it) }
+        } else if (tag.name == "span"
+                   && tag.getAttributeValue("class")?.trim() == "language-name") {
+          tag.children.filterTo(toRemove) { it is XmlText }
+          super.visitXmlTag(tag)
         }
         else if ((tag.getAttributeValue("class")?.contains("hidden", true) == true)
                  || tag.getAttributeValue("id")
@@ -1088,11 +1098,11 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
           || dirName.startsWith("_doublecolon_")
           || dirName.startsWith("@")
           || dirName.endsWith("()")
+          || dirName.endsWith("_function")
       ) {
-        name = dirName
-      }
-      else if (dirName.endsWith("_function")) {
-        name = dirName.removeSuffix("_function") + "()"
+        name = if (dirName.endsWith("_function")) {
+          dirName.removeSuffix("_function") + "()"
+        } else dirName
       }
       else {
         val doc = parseIndexJson(docDir).getAsJsonObject("doc")
