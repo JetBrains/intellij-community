@@ -181,12 +181,16 @@ open class FrameWrapper @JvmOverloads constructor(private var project: Project?,
       return
     }
 
+    // The order matters here: dispose() may need to access some properties of the still visible frame,
+    // for example windowed tool windows need to remember their bounds,
+    // and that must be done while the frame is still visible (otherwise the bounds are 0,0,0,0).
+    Disposer.dispose(this)
+    // The following no longer seems to be reproducible, but keeping that line won't hurt anyway:
     // if you remove this line, problems will start happen on Mac OS X
     // 2 projects opened, call Cmd+D on the second opened project and then Esc.
     // Weird situation: 2nd IdeFrame will be active, but focus will be somewhere inside the 1st IdeFrame
     // App is unusable until Cmd+Tab, Cmd+tab
     frame?.isVisible = false
-    Disposer.dispose(this)
   }
 
   override fun dispose() {
