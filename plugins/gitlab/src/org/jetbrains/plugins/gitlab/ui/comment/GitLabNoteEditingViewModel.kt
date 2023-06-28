@@ -1,13 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.ui.comment
 
+import com.intellij.collaboration.ui.util.bindEnabledIn
+import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.util.SingleCoroutineLauncher
+import javax.swing.AbstractAction
 
 interface GitLabNoteEditingViewModel {
   val text: MutableStateFlow<String>
@@ -97,4 +101,11 @@ fun GitLabNoteEditingViewModel.onDoneIn(cs: CoroutineScope, callback: suspend ()
       callback()
     }
   }
+}
+
+fun GitLabNoteEditingViewModel.submitActionIn(cs: CoroutineScope, actionName: @Nls String): AbstractAction {
+  val enabledFlow = text.combine(state) { text, state -> text.isNotBlank() && state != GitLabNoteEditingViewModel.SubmissionState.Loading }
+  return swingAction(actionName) {
+    submit()
+  }.apply { bindEnabledIn(cs, enabledFlow) }
 }

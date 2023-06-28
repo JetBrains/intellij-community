@@ -74,12 +74,6 @@ object GitLabDiscussionComponentFactory {
                        resolveVm: GitLabDiscussionResolveViewModel?,
                        iconsProvider: IconsProvider<GitLabUserDTO>,
                        cancelAction: Action? = null): JComponent {
-    val submitAction = swingAction(CollaborationToolsBundle.message("review.comments.reply.action")) {
-      vm.submit()
-    }.apply {
-      bindEnabledIn(cs, vm.state.map { it != GitLabNoteEditingViewModel.SubmissionState.Loading })
-    }
-
     val resolveAction = resolveVm?.takeIf { it.canResolve }?.let {
       swingAction(CollaborationToolsBundle.message("review.comments.resolve.action")) {
         resolveVm.changeResolvedState()
@@ -90,7 +84,7 @@ object GitLabDiscussionComponentFactory {
     }
 
     val actions = CommentInputActionsComponentFactory.Config(
-      primaryAction = MutableStateFlow(submitAction),
+      primaryAction = MutableStateFlow(vm.submitActionIn(cs, CollaborationToolsBundle.message("review.comments.reply.action"))),
       additionalActions = MutableStateFlow(listOfNotNull(resolveAction)),
       cancelAction = MutableStateFlow(cancelAction),
       submitHint = MutableStateFlow(CollaborationToolsBundle.message("review.comments.reply.hint",
