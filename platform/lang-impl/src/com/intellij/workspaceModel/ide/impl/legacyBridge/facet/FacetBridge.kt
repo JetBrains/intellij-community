@@ -29,7 +29,7 @@ interface FacetBridge<T : ModuleSettingsBase> {
    */
   fun addToStorage(mutableStorage: MutableEntityStorage, moduleEntity: ModuleEntity, entitySource: EntitySource) {
     config.init(moduleEntity, entitySource)
-    val settingsEntity = config.getEntity()
+    val settingsEntity = config.getEntity(moduleEntity)
     mutableStorage.addEntity(settingsEntity)
     mutableStorage.mutableFacetMapping().addMapping(settingsEntity, this as Facet<*>)
   }
@@ -103,5 +103,5 @@ interface FacetConfigurationBridge<T : ModuleSettingsBase> {
   /**
    * Returns the entity holding current configuration
    */
-  fun getEntity(): T
+  fun getEntity(moduleEntity: ModuleEntity): T
 }
