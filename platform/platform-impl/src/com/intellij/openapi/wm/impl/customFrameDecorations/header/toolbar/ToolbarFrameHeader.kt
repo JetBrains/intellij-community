@@ -24,7 +24,6 @@ import com.intellij.ui.dsl.gridLayout.UnscaledGapsX
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.util.childScope
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
@@ -33,8 +32,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.CardLayout
+import java.awt.Graphics
 import java.awt.GridBagConstraints.*
+import java.awt.GridBagLayout
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
@@ -130,14 +132,18 @@ internal class ToolbarFrameHeader(frame: JFrame,
     }
   }
 
-  private fun wrap(comp: JComponent) = object : NonOpaquePanel(comp) {
-    override fun getPreferredSize(): Dimension = comp.preferredSize
-    override fun getMinimumSize(): Dimension = comp.preferredSize
+  private fun wrap(comp: JComponent): NonOpaquePanel {
+    return object : NonOpaquePanel(comp) {
+      override fun getPreferredSize() = comp.preferredSize
+      override fun getMinimumSize() = comp.preferredSize
+    }
   }
 
   override suspend fun initToolbar(toolbarActionGroups: List<Pair<ActionGroup, String>>) {
-    doUpdateToolbar(toolbarActionGroups)
-    updateSize { toolbarActionGroups }
+    withContext(Dispatchers.EDT) {
+      doUpdateToolbar(toolbarActionGroups)
+      updateSize { toolbarActionGroups }
+    }
   }
 
   override suspend fun updateToolbar() {
@@ -159,13 +165,14 @@ internal class ToolbarFrameHeader(frame: JFrame,
     super.paint(g)
   }
 
-  @RequiresEdt
   private suspend fun doUpdateToolbar(toolbarActionGroups: List<Pair<ActionGroup, String>>) {
     removeToolbar()
 
     val toolbar = MainToolbar(root.coroutineScope.childScope(), frame)
     toolbar.layoutCallBack = { updateCustomTitleBar() }
-    toolbar.init(toolbarActionGroups, customTitleBar)
+    withContext(Dispatchers.Default) {
+      toolbar.init(toolbarActionGroups, customTitleBar)
+    }
     toolbar.isOpaque = false
     toolbar.addComponentListener(contentResizeListener)
     this.toolbar = toolbar
@@ -189,8 +196,12 @@ internal class ToolbarFrameHeader(frame: JFrame,
 
   private fun updateMenuButtonMinimumSize() {
     mainMenuButton.button.setMinimumButtonSize(
-      if (isCompact) JBDimension(toolbarHeaderTitle.expectedHeight, toolbarHeaderTitle.expectedHeight, true)
-      else ActionToolbar.experimentalToolbarMinimumButtonSize()
+      if (isCompact) {
+        JBDimension(toolbarHeaderTitle.expectedHeight, toolbarHeaderTitle.expectedHeight, true)
+      }
+      else {
+        ActionToolbar.experimentalToolbarMinimumButtonSize()
+      }
     )
   }
 
@@ -248,7 +259,9 @@ internal class ToolbarFrameHeader(frame: JFrame,
   private fun updateToolbarAppearanceFromMode() {
     updateTitleButtonsMode()
     updateMenuButtonMinimumSize()
-    if (mode == ShowMode.MENU) updateMenuBarAppearance()
+    if (mode == ShowMode.MENU) {
+      updateMenuBarAppearance()
+    }
   }
 
   override fun getHeaderBackground(active: Boolean) = CustomFrameDecorations.mainToolbarBackground(active)
