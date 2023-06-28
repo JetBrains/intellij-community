@@ -48,7 +48,6 @@ abstract class IssueIDPrePushHandler : PrePushHandler {
   }
 
   private fun handlerIsApplicable(project: Project): Boolean = isAvailable() && PsiUtil.isIdeaProject(project)
-  override fun getPresentableName(): String = DevKitGitBundle.message("push.commit.handler.name")
 
   override fun handle(project: Project, pushDetails: MutableList<PushInfo>, indicator: ProgressIndicator): PrePushHandler.Result {
     if (!handlerIsApplicable(project)) return PrePushHandler.Result.OK
