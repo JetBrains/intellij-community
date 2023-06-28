@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiTypesUtil
@@ -26,9 +27,9 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.projectStructure.hasKotlinJvmRuntime
 import org.jetbrains.kotlin.idea.core.syncNonBlockingReadAction
 import org.jetbrains.kotlin.idea.core.util.CodeFragmentUtils
-import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.DebugLabelPropertyDescriptorProvider
-import org.jetbrains.kotlin.idea.debugger.core.getContextElement
 import org.jetbrains.kotlin.idea.debugger.base.util.hopelessAware
+import org.jetbrains.kotlin.idea.debugger.core.getContextElement
+import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.DebugLabelPropertyDescriptorProvider
 import org.jetbrains.kotlin.idea.j2k.J2kPostProcessor
 import org.jetbrains.kotlin.idea.j2k.convertToKotlin
 import org.jetbrains.kotlin.idea.j2k.j2kText
@@ -266,7 +267,7 @@ class KotlinCodeFragmentFactory : CodeFragmentFactory() {
             contextElement is PsiCodeBlock -> isContextAccepted(contextElement.context?.context)
             contextElement == null -> false
             contextElement.language == KotlinFileType.INSTANCE.language -> true
-            contextElement.language == JavaFileType.INSTANCE.language -> {
+            contextElement.language == JavaFileType.INSTANCE.language && isJavaContextAccepted() -> {
                 val project = contextElement.project
                 val scope = contextElement.resolveScope
                 syncNonBlockingReadAction(project) { scope.hasKotlinJvmRuntime(project) }
@@ -274,6 +275,8 @@ class KotlinCodeFragmentFactory : CodeFragmentFactory() {
             else -> false
         }
     }
+
+    private fun isJavaContextAccepted(): Boolean = Registry.`is`("debugger.enable.kotlin.evaluator.in.java.context", false)
 
     override fun getFileType(): KotlinFileType = KotlinFileType.INSTANCE
 
