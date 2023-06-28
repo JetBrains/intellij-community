@@ -25,17 +25,17 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.renderer.render
 
-private val FOR_EACH_NAME = Name.identifier("forEach")
+private val FOR_EACH_NAME: Name = Name.identifier("forEach")
 
-private val FOR_EACH_CALLABLE_IDS = setOf(
+private val FOR_EACH_CALLABLE_IDS: Set<CallableId> = setOf(
     CallableId(StandardClassIds.BASE_COLLECTIONS_PACKAGE, FOR_EACH_NAME),
     CallableId(StandardClassIds.BASE_KOTLIN_PACKAGE.child(Name.identifier("sequences")), FOR_EACH_NAME),
     CallableId(StandardClassIds.BASE_KOTLIN_PACKAGE.child(Name.identifier("text")), FOR_EACH_NAME),
 )
 
-private val FOR_EACH_INDEXED_NAME = Name.identifier("forEachIndexed")
+private val FOR_EACH_INDEXED_NAME: Name = Name.identifier("forEachIndexed")
 
-private val FOR_EACH_INDEXED_CALLABLE_IDS = setOf(
+private val FOR_EACH_INDEXED_CALLABLE_IDS: Set<CallableId> = setOf(
     CallableId(StandardClassIds.BASE_COLLECTIONS_PACKAGE, FOR_EACH_INDEXED_NAME),
     CallableId(StandardClassIds.BASE_KOTLIN_PACKAGE.child(Name.identifier("sequences")), FOR_EACH_INDEXED_NAME),
     CallableId(StandardClassIds.BASE_KOTLIN_PACKAGE.child(Name.identifier("text")), FOR_EACH_INDEXED_NAME),
@@ -54,9 +54,14 @@ internal class ConvertForEachToForLoopIntention
         val implicitReceiverInfo: ImplicitReceiverInfo?,
     )
 
-    private object NameSuggester : AbstractKotlinNameSuggester()
+    private object LoopLabelSuggester : AbstractKotlinNameSuggester() {
+        fun suggest(lambda: KtLambdaExpression): String = suggestNameByName("loop") { candidate ->
+            !lambda.anyDescendantOfType<KtLabeledExpression> { it.getLabelName() == candidate }
+        }
+    }
 
     override fun getFamilyName(): String = KotlinBundle.message("replace.with.a.for.loop")
+
     override fun getActionName(element: KtCallExpression, context: Context): String = familyName
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtCallExpression> = ApplicabilityRanges.SELF
@@ -122,19 +127,18 @@ internal class ConvertForEachToForLoopIntention
         val isForEachIndexed =  element.getCallNameExpression()?.getReferencedName() == FOR_EACH_INDEXED_NAME.asString()
         val loop = generateLoop(receiverExpression, lambda, isForEachIndexed, context) ?: return
         val result = targetExpression.replace(loop)
-
-        if (editor != null) {
-            if (result is KtLabeledExpression) {
-                editor.caretModel.moveToOffset(result.startOffset)
-                PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
-                KotlinVariableInplaceRenameHandler().doRename(result, editor, null)
-            } else {
-                val forExpression = result as? KtForExpression ?: result.collectDescendantsOfType<KtForExpression>().first()
-                forExpression.loopParameter?.let { editor.caretModel.moveToOffset(it.startOffset) }
-            }
-        }
-
         commentSaver.restore(result)
+
+        if (editor == null) return
+
+        if (result is KtLabeledExpression) {
+            editor.caretModel.moveToOffset(result.startOffset)
+            PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
+            KotlinVariableInplaceRenameHandler().doRename(result, editor, null)
+        } else {
+            val forExpression = result as? KtForExpression ?: result.collectDescendantsOfType<KtForExpression>().first()
+            forExpression.loopParameter?.let { editor.caretModel.moveToOffset(it.startOffset) }
+        }
     }
 
     private fun generateLoop(
@@ -146,23 +150,32 @@ internal class ConvertForEachToForLoopIntention
         val factory = KtPsiFactory(lambda.project)
         val body = lambda.bodyExpression ?: return null
 
-        val loopLabelName = NameSuggester.suggestNameByName("loop") { candidate ->
-            !lambda.anyDescendantOfType<KtLabeledExpression> { it.getLabelName() == candidate }
-        }
+        val loopLabelName by lazy { LoopLabelSuggester.suggest(lambda) }
         var needLoopLabel = false
 
-        val returnsToReplace = context.returnsToReplace.dereferenceValidPointers()
-        returnsToReplace.forEach {
-            val parentLoop = it.getStrictParentOfType<KtLoopExpression>()
+        for (returnExpr in context.returnsToReplace.dereferenceValidPointers()) {
+            val parentLoop = returnExpr.getStrictParentOfType<KtLoopExpression>()
             if (parentLoop?.getStrictParentOfType<KtLambdaExpression>() == lambda) {
-                it.replace(factory.createExpression("continue@$loopLabelName"))
+                returnExpr.replace(factory.createExpression("continue@$loopLabelName"))
                 needLoopLabel = true
             } else {
-                it.replace(factory.createExpression("continue"))
+                returnExpr.replace(factory.createExpression("continue"))
             }
         }
 
-        val loopRange = if (receiver != null) {
+        val loopRange = getLoopRange(receiver, context, factory) ?: return null
+        val loopLabel = if (needLoopLabel) "$loopLabelName@ " else ""
+        val loop = createLoopExpression(loopLabel, loopRange, lambda.valueParameters, body, isForEachIndexed, factory)
+
+        return if (loopRange.getQualifiedExpressionForReceiver() is KtSafeQualifiedExpression) {
+            factory.createExpressionByPattern("if ($0 != null) { $1 }", loopRange, loop)
+        } else {
+            loop
+        }
+    }
+
+    private fun getLoopRange(receiver: KtExpression?, context: Context, factory: KtPsiFactory): KtExpression? {
+        return if (receiver != null) {
             KtPsiUtil.safeDeparenthesize(receiver)
         } else {
             val implicitReceiverInfo = context.implicitReceiverInfo ?: return null
@@ -173,34 +186,35 @@ internal class ConvertForEachToForLoopIntention
                 factory.createThisExpression(label.render())
             }
         }
-        val parameters = lambda.valueParameters
-        val loopLabel = if (needLoopLabel) "$loopLabelName@ " else ""
-        val loop = if (isForEachIndexed) {
-            val loopRangeWithIndex = if (loopRange is KtThisExpression && loopRange.labelQualifier == null) {
-                factory.createExpression("withIndex()")
-            } else {
-                factory.createExpressionByPattern("$0.withIndex()", loopRange)
-            }
-            factory.createExpressionByPattern(
-                "${loopLabel}for(($0, $1) in $2){ $3 }",
-                parameters[0].text,
-                parameters[1].text,
-                loopRangeWithIndex,
-                body.allChildren
-            )
+    }
+
+    private fun createLoopExpression(
+        loopLabel: String,
+        loopRange: KtExpression,
+        parameters: List<KtParameter>,
+        body: KtBlockExpression,
+        isForEachIndexed: Boolean,
+        factory: KtPsiFactory
+    ): KtExpression = if (isForEachIndexed) {
+        val loopRangeWithIndex = if (loopRange is KtThisExpression && loopRange.labelQualifier == null) {
+            factory.createExpression("withIndex()")
         } else {
-            factory.createExpressionByPattern(
-                "${loopLabel}for($0 in $1){ $2 }",
-                parameters.singleOrNull() ?: "it",
-                loopRange,
-                body.allChildren
-            )
+            factory.createExpressionByPattern("$0.withIndex()", loopRange)
         }
 
-        return if (loopRange.getQualifiedExpressionForReceiver() is KtSafeQualifiedExpression) {
-            factory.createExpressionByPattern("if ($0 != null) { $1 }", loopRange, loop)
-        } else {
-            loop
-        }
+        factory.createExpressionByPattern(
+            "${loopLabel}for(($0, $1) in $2){ $3 }",
+            parameters[0].text,
+            parameters[1].text,
+            loopRangeWithIndex,
+            body.allChildren
+        )
+    } else {
+        factory.createExpressionByPattern(
+            "${loopLabel}for($0 in $1){ $2 }",
+            parameters.singleOrNull() ?: "it",
+            loopRange,
+            body.allChildren
+        )
     }
 }
