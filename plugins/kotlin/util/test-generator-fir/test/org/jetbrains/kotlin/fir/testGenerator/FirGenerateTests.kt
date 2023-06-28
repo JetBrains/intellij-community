@@ -111,6 +111,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("resolve/referenceInJava/binaryAndSource", pattern = JAVA)
         }
 
+        testClass<AbstractFirInLibraryResolveEverythingTest> {
+            model("resolve/compiled/sources")
+        }
+
         testClass<AbstractFirGotoTypeDeclarationTest> {
             model("navigation/gotoTypeDeclaration", pattern = TEST)
         }
