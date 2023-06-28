@@ -83,14 +83,15 @@ internal open class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
 
   init {
     val app = ApplicationManager.getApplication()
+    val coroutineScope = menuBar.coroutineScope
     @Suppress("IfThenToSafeAccess")
     if (app != null) {
-      app.messageBus.connect(menuBar.coroutineScope).subscribe(UISettingsListener.TOPIC, UISettingsListener {
+      app.messageBus.connect(coroutineScope).subscribe(UISettingsListener.TOPIC, UISettingsListener {
         check(updateRequests.tryEmit(Unit))
       })
     }
 
-    menuBar.coroutineScope.launch {
+    coroutineScope.launch {
       updateRequests
         .debounce(50.milliseconds)
         .collectLatest {
@@ -102,12 +103,12 @@ internal open class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
     }
 
     val job = scheduleUpdateActions()
-    menuBar.coroutineScope.launch {
+    coroutineScope.launch {
       job.join()
 
       val actionManager = ApplicationManager.getApplication().serviceAsync<ActionManager>()
       actionManager.addTimerListener(timerListener)
-      menuBar.coroutineScope.coroutineContext.job.invokeOnCompletion {
+      coroutineScope.coroutineContext.job.invokeOnCompletion {
         actionManager.removeTimerListener(timerListener)
       }
     }
