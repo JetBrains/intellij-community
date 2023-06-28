@@ -101,7 +101,7 @@ class LoadedGitLabDiscussion(
     loadedNotes
       .mapCaching(
         GitLabNoteDTO::id,
-        { cs, note -> MutableGitLabMergeRequestNote(cs, api, project, mr, noteEvents::emit, note) },
+        { note -> MutableGitLabMergeRequestNote(this, api, project, mr, noteEvents::emit, note) },
         MutableGitLabMergeRequestNote::destroy,
         MutableGitLabMergeRequestNote::update
       ).combine(draftNotes) { notes, draftNotes ->

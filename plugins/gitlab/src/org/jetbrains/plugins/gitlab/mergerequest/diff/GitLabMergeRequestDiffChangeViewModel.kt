@@ -58,14 +58,14 @@ internal class GitLabMergeRequestDiffChangeViewModelImpl(
   override val discussions: DiscussionsFlow = mergeRequest.discussions
     .mapCaching(
       GitLabDiscussion::id,
-      { cs, disc -> GitLabMergeRequestDiffDiscussionViewModelImpl(cs, diffData, currentUser, disc, discussionsViewOption) },
+      { disc -> GitLabMergeRequestDiffDiscussionViewModelImpl(this, diffData, currentUser, disc, discussionsViewOption) },
       GitLabMergeRequestDiffDiscussionViewModelImpl::destroy
     ).modelFlow(cs, LOG)
 
   override val draftDiscussions: DiscussionsFlow = mergeRequest.draftNotes.mapFiltered { it.discussionId == null }
     .mapCaching(
       GitLabNote::id,
-      { cs, note -> GitLabMergeRequestDiffDraftDiscussionViewModel(cs, diffData, note) },
+      { note -> GitLabMergeRequestDiffDraftDiscussionViewModel(this, diffData, note) },
       GitLabMergeRequestDiffDraftDiscussionViewModel::destroy
     ).modelFlow(cs, LOG)
 
