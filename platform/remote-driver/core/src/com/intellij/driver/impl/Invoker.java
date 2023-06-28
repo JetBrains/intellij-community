@@ -69,7 +69,7 @@ public class Invoker implements InvokerMBean {
 
   @Override
   public @NotNull RemoteCallResult invoke(@NotNull RemoteCall call) {
-    Object[] args = transformArgs(call);
+    Object[] transformedArgs = transformArgs(call);
 
     Object result;
 
@@ -79,10 +79,10 @@ public class Invoker implements InvokerMBean {
 
       LOG.debug("Creating instance of " + targetClass);
 
-      result = withSemantics(call, () -> constructor.newInstance(args));
+      result = withSemantics(call, () -> constructor.newInstance(transformedArgs));
     }
     else {
-      CallTarget callTarget = getCallTarget(call);
+      CallTarget callTarget = getCallTarget(call, transformedArgs);
 
       LOG.debug("Calling " + callTarget);
 
@@ -99,13 +99,13 @@ public class Invoker implements InvokerMBean {
       if (call.getDispatcher() == OnDispatcher.EDT) {
         Object[] res = new Object[1];
         ApplicationManager.getApplication().invokeAndWait(() -> {
-          res[0] = withSemantics(call, () -> invokeMethod(callTarget, instance, args));
+          res[0] = withSemantics(call, () -> invokeMethod(callTarget, instance, transformedArgs));
         });
         result = res[0];
       }
       else {
         // todo handle OnDispatcher: Default or IO
-        result = withSemantics(call, () -> invokeMethod(callTarget, instance, args));
+        result = withSemantics(call, () -> invokeMethod(callTarget, instance, transformedArgs));
       }
     }
 
@@ -246,7 +246,7 @@ public class Invoker implements InvokerMBean {
       .orElseThrow(() -> new IllegalStateException("No such constructor found in " + targetClass));
   }
 
-  private @NotNull CallTarget getCallTarget(@NotNull RemoteCall call) {
+  private @NotNull CallTarget getCallTarget(@NotNull RemoteCall call, Object[] transformedArgs) {
     Class<?> clazz = getTargetClass(call);
 
     int argCount = call.getArgs().length;
@@ -262,7 +262,7 @@ public class Invoker implements InvokerMBean {
     }
 
     if (targetMethods.size() > 1) {
-      List<@Nullable Class<?>> argumentTypes = Arrays.stream(call.getArgs())
+      List<@Nullable Class<?>> argumentTypes = Arrays.stream(transformedArgs)
         .map(a -> {
           if (a == null) return (Class<?>)null;
           return a.getClass();
