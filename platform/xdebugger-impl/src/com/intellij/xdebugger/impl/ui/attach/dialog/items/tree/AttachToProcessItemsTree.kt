@@ -121,7 +121,6 @@ internal class AttachToProcessItemsTree(
     refilterSaveSelection(filters) {
       getFilteringModel().refilter()
       TreeUtil.expandAll(this.tree)
-      updateUI()
     }
   }
 
@@ -154,6 +153,9 @@ internal class AttachTreeModel(private val rootNode: AttachTreeNodeWrapper, priv
   override fun setTree(tree: JTree?) {
   }
 
+  internal fun treeStructureChanged() {
+    super.treeStructureChanged(null, null, null)
+  }
 }
 
 internal suspend fun buildTree(
