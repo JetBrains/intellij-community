@@ -12,7 +12,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.NewUi;
+import com.intellij.ui.NewUiValue;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -34,7 +34,7 @@ public class ClassPresentationProvider implements ItemPresentationProvider<PsiCl
           PsiClassOwner classOwner = (PsiClassOwner)file;
           String packageName = classOwner.getPackageName();
           if (packageName.isEmpty()) return null;
-          return NewUi.isEnabled() ? JavaPsiBundle.message("aux.context.display", packageName) : "(" + packageName + ")";
+          return NewUiValue.isEnabled() ? JavaPsiBundle.message("aux.context.display", packageName) : "(" + packageName + ")";
         }
         return null;
       }
