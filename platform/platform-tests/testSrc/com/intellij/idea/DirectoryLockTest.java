@@ -35,7 +35,7 @@ public abstract sealed class DirectoryLockTest {
     Logger.setFactory(TestLoggerFactory.class);
   }
 
-  public static final class DirectModeTest extends DirectoryLockTest {
+  public static final class StandardModeTest extends DirectoryLockTest {
     @Override
     protected Path getTestDir() throws IOException {
       var testDir = tempDir.getRootPath();
@@ -47,7 +47,7 @@ public abstract sealed class DirectoryLockTest {
     }
   }
 
-  public static final class IndirectModeTest extends DirectoryLockTest {
+  public static final class RedirectedModeTest extends DirectoryLockTest {
     @Override
     protected Path getTestDir() throws IOException {
       var testDir = tempDir.getRootPath();
@@ -59,7 +59,7 @@ public abstract sealed class DirectoryLockTest {
     }
   }
 
-  public static final class CustomFileSystemTest extends DirectoryLockTest {
+  public static final class FallbackModeTest extends DirectoryLockTest {
     @Override
     protected Path getTestDir() {
       var path = SystemInfo.isWindows ? "C:\\tests\\" + tempDir.getRootPath().getFileName().toString() : tempDir.getRootPath().toString();
