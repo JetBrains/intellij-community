@@ -129,6 +129,9 @@
     </group>
 
     <group id="GitLab.Merge.Request.Timeline.Popup">
+      <action id="GitLab.Merge.Request.Timeline.ShowEvents"
+              class="org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.action.GitLabMergeRequestTimelineShowEventsAction"/>
+      <separator/>
       <reference id="GitLab.Merge.Request.Refresh"/>
       <reference id="GitLab.Merge.Request.Open.Link"/>
       <reference id="GitLab.Merge.Request.Copy.Link"/>

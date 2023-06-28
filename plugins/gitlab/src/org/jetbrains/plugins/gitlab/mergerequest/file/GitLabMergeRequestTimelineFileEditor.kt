@@ -53,7 +53,7 @@ internal class GitLabMergeRequestTimelineFileEditor(private val project: Project
       ctx.projectData.mergeRequests.getShared(file.mergeRequestId).mapScoped { mrResult ->
         val cs = this
         mrResult.map {
-          LoadAllGitLabMergeRequestTimelineViewModel(cs, ctx.currentUser, it)
+          LoadAllGitLabMergeRequestTimelineViewModel(cs, project.service(), ctx.currentUser, it)
         }
       }
     val accountVm = GitLabAccountViewModelImpl(project, cs, ctx.account, accountManager)
