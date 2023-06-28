@@ -49,6 +49,8 @@ import kotlin.math.min
 
 @ApiStatus.Internal
 class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
+  constructor(text: @Nls String) : this({ text })
+
   @Nls
   private val text: String
   private val linkActionsMap: Map<Int, () -> Unit>

@@ -1,11 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.newUiOnboarding
 
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.WindowManager
+import com.intellij.util.ui.UIUtil
 import com.intellij.openapi.diagnostic.thisLogger
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Component
 import java.awt.Dimension
 
 @ApiStatus.Internal
@@ -14,6 +18,22 @@ object NewUiOnboardingUtil {
   private const val LOTTIE_HTML_PATH = "newUiOnboarding/lottiePage.html"
   private const val LOTTIE_SCRIPT_PLACEHOLDER = "{{lottieScript}}"
   private const val LOTTIE_JSON_PLACEHOLDER = "{{lottieJson}}"
+
+  inline fun <reified T : Component> findUiComponent(project: Project, predicate: (T) -> Boolean): T? {
+    val root = WindowManager.getInstance().getFrame(project) ?: return null
+    findUiComponent(root, predicate)?.let { return it }
+    for (window in root.ownedWindows) {
+      findUiComponent(window, predicate)?.let { return it }
+    }
+    return null
+  }
+
+  inline fun <reified T : Component> findUiComponent(root: Component, predicate: (T) -> Boolean): T? {
+    val component = UIUtil.uiTraverser(root).find {
+      it is T && it.isVisible && it.isShowing && predicate(it)
+    }
+    return component as? T
+  }
 
   /**
    * Creates an HTML page with provided lottie animation
