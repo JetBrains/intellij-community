@@ -16,7 +16,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
@@ -50,23 +50,41 @@ import kotlin.math.max
 
 private const val MAIN_TOOLBAR_ID = IdeActions.GROUP_MAIN_TOOLBAR_NEW_UI
 
-internal class MainToolbar(private val coroutineScope: CoroutineScope, frame: JFrame) : JPanel(HorizontalLayout(10)) {
-  private val mainMenuButton: MainMenuButton?
-  private val expandableMenu: ExpandableMenu?
+private sealed interface MainToolbarFlavor {
+  fun addWidget() {
+  }
+}
 
-  var layoutCallBack : LayoutCallBack? = null
+private class MenuButtonInToolbarMainToolbarFlavor(private val coroutineScope: CoroutineScope,
+                                                    private val headerContent: JComponent,
+                                                    frame: JFrame) : MainToolbarFlavor {
+  private val mainMenuButton = MainMenuButton()
+
+  init {
+    val expandableMenu = ExpandableMenu(headerContent = headerContent, coroutineScope = coroutineScope, frame)
+    mainMenuButton.expandableMenu = expandableMenu
+    mainMenuButton.rootPane = frame.rootPane
+  }
+
+  override fun addWidget() {
+    addWidget(widget = mainMenuButton.button, parent = headerContent, coroutineScope = coroutineScope, position = HorizontalLayout.LEFT)
+  }
+}
+
+private object DefaultMainToolbarFlavor : MainToolbarFlavor
+
+internal class MainToolbar(private val coroutineScope: CoroutineScope, frame: JFrame) : JPanel(HorizontalLayout(10)) {
+  var layoutCallBack: LayoutCallBack? = null
+  private val flavor: MainToolbarFlavor
 
   init {
     background = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(true)
     isOpaque = true
-    if (IdeRootPane.isMenuButtonInToolbar) {
-      mainMenuButton = MainMenuButton()
-      expandableMenu = ExpandableMenu(headerContent = this, coroutineScope = coroutineScope, frame)
-      mainMenuButton.expandableMenu = expandableMenu
+    flavor = if (IdeRootPane.isMenuButtonInToolbar) {
+      MenuButtonInToolbarMainToolbarFlavor(headerContent = this, coroutineScope = coroutineScope, frame = frame)
     }
     else {
-      mainMenuButton = null
-      expandableMenu = null
+      DefaultMainToolbarFlavor
     }
     ClientProperty.put(this, IdeBackgroundUtil.NO_BACKGROUND, true)
   }
@@ -79,15 +97,16 @@ internal class MainToolbar(private val coroutineScope: CoroutineScope, frame: JF
     withContext(Dispatchers.EDT) {
       removeAll()
 
-      mainMenuButton?.let {
-        addWidget(it.button, HorizontalLayout.LEFT)
-      }
+      flavor.addWidget()
 
       val schema = CustomActionsSchema.getInstanceAsync()
       val customizationGroup = schema.getCorrectedAction(MAIN_TOOLBAR_ID) as? ActionGroup
 
       for ((actionGroup, position) in actionGroups) {
-        addWidget(widget = createActionBar(actionGroup, customizationGroup), position = position)
+        addWidget(widget = createActionBar(actionGroup, customizationGroup),
+                  parent = this@MainToolbar,
+                  coroutineScope = coroutineScope,
+                  position = position)
       }
 
       customizationGroup
@@ -174,27 +193,9 @@ internal class MainToolbar(private val coroutineScope: CoroutineScope, frame: JF
     addMouseMotionListener(listener)
   }
 
-  override fun addNotify() {
-    super.addNotify()
-    mainMenuButton?.rootPane = rootPane
-  }
-
   override fun removeNotify() {
     super.removeNotify()
     coroutineScope.cancel()
-  }
-
-  private fun addWidget(widget: JComponent, position: String) {
-    add(position, widget)
-    if (widget is Disposable) {
-      thisLogger().error("Do not implement Disposable: ${widget.javaClass.name}")
-      val handle = coroutineScope.coroutineContext.job.invokeOnCompletion {
-        Disposer.dispose(widget)
-      }
-      Disposer.register(widget, Disposable {
-        handle.dispose()
-      })
-    }
   }
 
   private fun createActionBar(group: ActionGroup, customizationGroup: ActionGroup?): JComponent {
@@ -227,6 +228,19 @@ internal class MainToolbar(private val coroutineScope: CoroutineScope, frame: JF
 
   private inner class AccessibleMainToolbar : AccessibleJPanel() {
     override fun getAccessibleRole(): AccessibleRole = AccessibilityUtils.GROUPED_ELEMENTS
+  }
+}
+
+private fun addWidget(widget: JComponent, parent: JComponent, coroutineScope: CoroutineScope, position: String) {
+  parent.add(position, widget)
+  if (widget is Disposable) {
+    logger<MainToolbar>().error("Do not implement Disposable: ${widget.javaClass.name}")
+    val handle = coroutineScope.coroutineContext.job.invokeOnCompletion {
+      Disposer.dispose(widget)
+    }
+    Disposer.register(widget, Disposable {
+      handle.dispose()
+    })
   }
 }
 
@@ -304,17 +318,21 @@ private class MyActionToolbarImpl(group: ActionGroup,
       findComboButton(component)?.apply {
         margin = JBInsets.emptyInsets()
         setUI(MainToolbarComboBoxButtonUI())
-        addPropertyChangeListener("UI") { event -> if (event.newValue !is MainToolbarComboBoxButtonUI) setUI(MainToolbarComboBoxButtonUI())}
+        addPropertyChangeListener("UI") { event ->
+          if (event.newValue !is MainToolbarComboBoxButtonUI) {
+            setUI(MainToolbarComboBoxButtonUI())
+          }
+        }
       }
     }
     return component
   }
 
   private fun adjustIcons(presentation: Presentation) {
-    iconUpdater.registerFor(presentation, "icon", { it.icon }, { pst, icn -> pst.icon = icn})
-    iconUpdater.registerFor(presentation, "selectedIcon", { it.selectedIcon }, { pst, icn -> pst.selectedIcon = icn})
-    iconUpdater.registerFor(presentation, "hoveredIcon", { it.hoveredIcon }, { pst, icn -> pst.hoveredIcon = icn})
-    iconUpdater.registerFor(presentation, "disabledIcon", { it.disabledIcon }, { pst, icn -> pst.disabledIcon = icn})
+    iconUpdater.registerFor(presentation, "icon", { it.icon }, { pst, icn -> pst.icon = icn })
+    iconUpdater.registerFor(presentation, "selectedIcon", { it.selectedIcon }, { pst, icn -> pst.selectedIcon = icn })
+    iconUpdater.registerFor(presentation, "hoveredIcon", { it.hoveredIcon }, { pst, icn -> pst.hoveredIcon = icn })
+    iconUpdater.registerFor(presentation, "disabledIcon", { it.disabledIcon }, { pst, icn -> pst.disabledIcon = icn })
   }
 
   override fun getSeparatorColor(): Color {
@@ -359,7 +377,7 @@ private class MyActionToolbarImpl(group: ActionGroup,
   }
 }
 
-internal fun isToolbarInHeader() : Boolean {
+internal fun isToolbarInHeader(): Boolean {
   if (IdeFrameDecorator.isCustomDecorationAvailable()) {
     if (SystemInfoRt.isMac) {
       return true
