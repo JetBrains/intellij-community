@@ -3,11 +3,16 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.util.OperatorNameConventions
+import org.jetbrains.kotlin.util.match
 
 fun KtDotQualifiedExpression.isToString(): Boolean {
     val callExpression = selectorExpression as? KtCallExpression ?: return false
@@ -29,4 +34,17 @@ fun KtDeclaration.isFinalizeMethod(): Boolean {
     return function.name == "finalize"
             && function.valueParameters.isEmpty()
             && function.getReturnKtType().isUnit
+}
+
+context(KtAnalysisSession)
+fun KtValueArgument.getValueArgumentName(): Name? {
+    val callElement = this.parents.match(KtValueArgumentList::class, last = KtCallElement::class) ?: return null
+    return analyze(callElement) {
+        val resolvedCall = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return null
+        if (!resolvedCall.symbol.hasStableParameterNames) {
+            null
+        } else {
+            getArgumentNameIfCanBeUsedForCalls(this@getValueArgumentName, resolvedCall)
+        }
+    }
 }

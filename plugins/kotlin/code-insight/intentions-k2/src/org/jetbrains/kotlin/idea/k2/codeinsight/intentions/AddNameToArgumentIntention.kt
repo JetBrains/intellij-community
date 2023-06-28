@@ -6,19 +6,18 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.utils.getValueArgumentName
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddArgumentNamesUtils.addArgumentName
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddArgumentNamesUtils.getArgumentNameIfCanBeUsedForCalls
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.psi.KtContainerNode
+import org.jetbrains.kotlin.psi.KtLambdaArgument
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.KtValueArgumentList
 
 internal class AddNameToArgumentIntention :
     AbstractKotlinApplicableIntentionWithContext<KtValueArgument, AddNameToArgumentIntention.Context>(KtValueArgument::class),
@@ -48,14 +47,7 @@ internal class AddNameToArgumentIntention :
 
     context(KtAnalysisSession)
     override fun prepareContext(element: KtValueArgument): Context? {
-        val callElement = element.parents.match(KtValueArgumentList::class, last = KtCallElement::class) ?: return null
-        val resolvedCall = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return null
-
-        if (!resolvedCall.symbol.hasStableParameterNames) {
-            return null
-        }
-
-        return getArgumentNameIfCanBeUsedForCalls(element, resolvedCall)?.let { Context(it) }
+        return element.getValueArgumentName()?.let { Context(it) }
     }
 
     override fun apply(element: KtValueArgument, context: Context, project: Project, editor: Editor?) =
