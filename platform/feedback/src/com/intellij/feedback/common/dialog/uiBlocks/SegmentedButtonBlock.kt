@@ -4,6 +4,7 @@ package com.intellij.feedback.common.dialog.uiBlocks
 import com.intellij.feedback.common.bundle.CommonFeedbackBundle
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBUI
@@ -16,8 +17,14 @@ class SegmentedButtonBlock(@NlsContexts.Label private val myMainLabel: String?,
                            private val myJsonElementName: String) : FeedbackBlock, TextDescriptionProvider, JsonDataProvider {
 
   private var myProperty: String = ""
+
+  @NlsSafe
   private var myLeftBottomLabel: String? = null
+
+  @NlsSafe
   private var myMiddleBottomLabel: String? = null
+
+  @NlsSafe
   private var myRightBottomLabel: String? = null
 
   override fun addToPanel(panel: Panel) {

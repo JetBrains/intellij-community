@@ -5,6 +5,7 @@ import com.intellij.feedback.common.dialog.TEXT_AREA_COLUMN_SIZE
 import com.intellij.feedback.common.dialog.TEXT_AREA_ROW_SIZE
 import com.intellij.feedback.common.dialog.adjustBehaviourForFeedbackForm
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.dsl.builder.*
 import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.put
@@ -14,6 +15,8 @@ class TextAreaBlock(@NlsContexts.Label private val myLabel: String,
   private var myProperty: String = ""
   private var myTextAreaRowSize: Int = TEXT_AREA_ROW_SIZE
   private var myTextAreaColumnSize: Int = TEXT_AREA_COLUMN_SIZE
+
+  @NlsSafe
   private var myRequireNotEmptyMessage: String? = null
 
   override fun addToPanel(panel: Panel) {

@@ -4,6 +4,7 @@ package com.intellij.feedback.common.dialog.uiBlocks
 import com.intellij.feedback.common.bundle.CommonFeedbackBundle
 import com.intellij.feedback.common.dialog.COMBOBOX_COLUMN_SIZE
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.dsl.builder.*
 import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.put
@@ -13,6 +14,8 @@ class ComboBoxBlock(@NlsContexts.Label private val myLabel: String,
                     private val myJsonElementName: String) : FeedbackBlock, TextDescriptionProvider, JsonDataProvider {
 
   private var myProperty: String? = ""
+
+  @NlsSafe
   private var myComment: String? = null
   private var myColumnSize: Int = COMBOBOX_COLUMN_SIZE
 
