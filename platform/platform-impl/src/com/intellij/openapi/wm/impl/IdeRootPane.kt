@@ -146,7 +146,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
   }
 
   init {
-    if (SystemInfoRt.isWindows && (StartupUiUtil.isUnderDarcula || UIUtil.isUnderIntelliJLaF())) {
+    if (SystemInfoRt.isWindows && (StartupUiUtil.isUnderDarcula || StartupUiUtil.isUnderIntelliJLaF())) {
       runCatching {
         windowDecorationStyle = FRAME
       }.getOrLogException(logger<IdeRootPane>())
@@ -630,7 +630,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
   }
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
-    UIUtil.decorateWindowHeader(this)
+    ComponentUtil.decorateWindowHeader(this)
     updateToolbarVisibility()
     updateStatusBarVisibility()
     val frame = frame
