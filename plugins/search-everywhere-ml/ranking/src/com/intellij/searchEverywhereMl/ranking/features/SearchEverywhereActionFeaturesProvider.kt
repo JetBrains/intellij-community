@@ -20,12 +20,10 @@ import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.actionSystem.EditorAction
 import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereGeneralActionFeaturesProvider.Companion.IS_ENABLED
-import com.intellij.searchEverywhereMl.semantics.contributors.SemanticActionSearchEverywhereContributor
 import com.intellij.util.Time
 
 internal class SearchEverywhereActionFeaturesProvider :
-  SearchEverywhereElementFeaturesProvider(ActionSearchEverywhereContributor::class.java, TopHitSEContributor::class.java,
-                                          SemanticActionSearchEverywhereContributor::class.java) {
+  SearchEverywhereElementFeaturesProvider(ActionSearchEverywhereContributor::class.java, TopHitSEContributor::class.java) {
   companion object {
     internal val IS_ACTION_DATA_KEY = EventFields.Boolean("isAction")
     internal val IS_TOGGLE_ACTION_DATA_KEY = EventFields.Boolean("isToggleAction")

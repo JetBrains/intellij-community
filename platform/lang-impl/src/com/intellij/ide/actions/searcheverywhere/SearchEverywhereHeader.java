@@ -179,7 +179,8 @@ public final class SearchEverywhereHeader {
     };
 
     if (contributors.size() > 1) {
-      SETab allTab = createAllTab(contributors, onChanged);
+      var allTabContributors = contributors.stream().filter(c -> !(c instanceof AllTabExcludedSearchEverywhereContributor)).toList();
+      SETab allTab = createAllTab(allTabContributors, onChanged);
       res.add(allTab);
     }
 
@@ -189,7 +190,7 @@ public final class SearchEverywhereHeader {
     var tabIdToTab = separateTabContributors
       .stream()
       .collect(Collectors.groupingBy(
-        SearchEverywhereContributor::getGroupName,
+        SearchEverywhereContributor::getSearchProviderId,
         Collectors.collectingAndThen(Collectors.toList(), contributorList -> {
           return createMultipleContributorsTab(contributorList, onChanged);
         })
@@ -197,7 +198,7 @@ public final class SearchEverywhereHeader {
 
     var addedTabs = new HashSet<String>();
     for (var contributor : separateTabContributors) {
-      String tabId = contributor.getGroupName();
+      String tabId = contributor.getSearchProviderId();
       if (!addedTabs.contains(tabId)) {
         res.add(tabIdToTab.get(tabId));
         addedTabs.add(tabId);
@@ -208,10 +209,22 @@ public final class SearchEverywhereHeader {
   }
 
   private static PersistentSearchEverywhereContributorFilter<String> createContributorsFilter(List<? extends SearchEverywhereContributor<?>> contributors) {
-    Map<String, @Nls String> namesMap = ContainerUtil.map2Map(contributors, c -> Pair.create(c.getSearchProviderId(),
-                                                                                             c.getFullGroupName()));
+    var uniqueProviderIds = new HashSet<String>();
+    // If there are multiple contributors in the same tab with the same provider id, then do not duplicate filters checkbox for them
+    var filteredContributors = contributors.stream().filter(c -> {
+      var providerId = c.getSearchProviderId();
+      if (!uniqueProviderIds.contains(providerId)) {
+        uniqueProviderIds.add(providerId);
+        return true;
+      }
+      return false;
+    }).toList();
+
+    Map<String, @Nls String> namesMap = ContainerUtil.map2Map(filteredContributors, c -> Pair.create(c.getSearchProviderId(),
+                                                                                                     c.getFullGroupName()));
+
     return new PersistentSearchEverywhereContributorFilter<>(
-      ContainerUtil.map(contributors, c -> c.getSearchProviderId()),
+      ContainerUtil.map(filteredContributors, c -> c.getSearchProviderId()),
       SearchEverywhereConfiguration.getInstance(),
       namesMap::get, c -> null);
   }
@@ -308,8 +321,7 @@ public final class SearchEverywhereHeader {
       allActions.addAll(contributor.getActions(onChanged));
     });
 
-    String tabId = contributors.get(0).getGroupName();
-    return new SETab(tabId, contributors.get(0).getGroupName(), contributors, allActions, null);
+    return new SETab(contributors.get(0).getSearchProviderId(), contributors.get(0).getGroupName(), contributors, allActions, null);
   }
 
   @NotNull
@@ -367,7 +379,7 @@ public final class SearchEverywhereHeader {
       everywhereAction = (SearchEverywhereToggleAction)ContainerUtil.find(actions, o -> o instanceof SearchEverywhereToggleAction);
       myFilterToReset = actions.stream()
         .filter(a -> a instanceof SearchEverywhereFiltersAction)
-        .findAny().map(a -> ((SearchEverywhereFiltersAction) a).getFilter())
+        .findAny().map(a -> ((SearchEverywhereFiltersAction)a).getFilter())
         .orElse(null);
     }
 

@@ -9,6 +9,7 @@ import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -17,6 +18,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.searchEverywhereMl.semantics.providers.LocalSemanticActionsProvider
 import com.intellij.searchEverywhereMl.semantics.providers.SemanticActionsProvider
 import com.intellij.searchEverywhereMl.semantics.providers.ServerSemanticActionsProvider
+import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettingsManager
 import com.intellij.ui.JBColor
 import com.intellij.util.Processor
 import java.awt.Component
@@ -51,7 +53,7 @@ class SemanticActionSearchEverywhereContributor(
     }
   }
 
-  override fun getSearchProviderId(): String = SemanticActionSearchEverywhereContributor::class.java.simpleName
+  override fun getSearchProviderId(): String = delegateContributor.searchProviderId
 
   override fun getGroupName() = delegateContributor.groupName
 

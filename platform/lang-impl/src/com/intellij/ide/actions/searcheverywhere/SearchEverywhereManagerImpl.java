@@ -244,10 +244,10 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
   }
 
   @Override
-  public void setSelectedTabID(@NotNull String contributorID) {
+  public void setSelectedTabID(@NotNull String tabID) {
     checkIsShown();
-    if (!contributorID.equals(getSelectedTabID())) {
-      mySearchEverywhereUI.switchToTab(contributorID);
+    if (!tabID.equals(getSelectedTabID())) {
+      mySearchEverywhereUI.switchToTab(tabID);
     }
   }
 
@@ -271,7 +271,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     if (LightEdit.owns(project)) {
       contributors = ContainerUtil.filter(contributors, (contributor) -> contributor instanceof LightEditCompatible);
     }
-    SearchEverywhereUI view = new SearchEverywhereUI(project, contributors,  myTabsShortcutsMap::get, spellingCorrector);
+    SearchEverywhereUI view = new SearchEverywhereUI(project, contributors, myTabsShortcutsMap::get, spellingCorrector);
 
     view.setSearchFinishedHandler(() -> {
       if (isShown()) {
@@ -390,9 +390,9 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     return res;
   }
 
-  private static void addShortcut(Map<String, @Nls String> map, String contributorID, String actionID) {
+  private static void addShortcut(Map<String, @Nls String> map, String tabId, String actionID) {
     KeyboardShortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(actionID);
-    if (shortcut != null) map.put(contributorID, KeymapUtil.getShortcutText(shortcut));
+    if (shortcut != null) map.put(tabId, KeymapUtil.getShortcutText(shortcut));
   }
 
   private static class SearchHistoryList {

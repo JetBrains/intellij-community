@@ -84,7 +84,7 @@ abstract class SEResultsListFactory {
     if (component == null) {
       SearchEverywhereContributor<Object> contributor = searchListModel.getContributorForIndex(index);
       assert contributor != null : "Null contributor is not allowed here";
-      ListCellRenderer<? super Object> renderer = renderersCache.computeIfAbsent(contributor.getSearchProviderId(), s -> contributor.getElementsRenderer());
+      ListCellRenderer<? super Object> renderer = renderersCache.computeIfAbsent(contributor.getClass().getSimpleName(), s -> contributor.getElementsRenderer());
       unselectedBackground = extractUnselectedBackground(selected, () ->
         detachParent(renderer.getListCellRendererComponent(list, value, index, false, true)));
       component = detachParent(renderer.getListCellRendererComponent(list, value, index, selected, true));

@@ -9,11 +9,9 @@ import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.searchEverywhereMl.semantics.contributors.SemanticActionSearchEverywhereContributor
 
 internal class SearchEverywhereGeneralActionFeaturesProvider
-  : SearchEverywhereElementFeaturesProvider(ActionSearchEverywhereContributor::class.java, TopHitSEContributor::class.java,
-                                            SemanticActionSearchEverywhereContributor::class.java) {
+  : SearchEverywhereElementFeaturesProvider(ActionSearchEverywhereContributor::class.java, TopHitSEContributor::class.java) {
   companion object {
     internal val IS_ENABLED = EventFields.Boolean("isEnabled")
 
@@ -43,8 +41,8 @@ internal class SearchEverywhereGeneralActionFeaturesProvider
       data.add(ITEM_TYPE.with(element.type))
       data.add(TYPE_WEIGHT.with(element.valueTypeWeight))
 
-      if (element.similarityScore != null) {
-        data.add(SIMILARITY_SCORE.with(element.similarityScore))
+      element.similarityScore?.let {
+        data.add(SIMILARITY_SCORE.with(it))
       }
     }
 

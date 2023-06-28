@@ -26,7 +26,7 @@ class SlowContributorDetector: SearchListener {
   override fun elementsRemoved(list: List<SearchEverywhereFoundElementInfo>): Unit = updateContributorsWithEvents(list)
 
   private fun updateContributorsWithEvents(list: Collection<SearchEverywhereFoundElementInfo>) {
-    list.mapNotNull { it.contributor?.searchProviderId }.let { contributorsWithEvents.addAll(it) }
+    list.mapNotNull { it.contributor?.javaClass?.simpleName }.let { contributorsWithEvents.addAll(it) }
   }
 
   override fun contributorWaits(contributor: SearchEverywhereContributor<*>): Unit = logContributorFinished(contributor)
@@ -56,9 +56,9 @@ class SlowContributorDetector: SearchListener {
   }
 
   private fun logContributorFinished(contributor: SearchEverywhereContributor<*>) {
-    if (finishedContributors.containsKey(contributor.searchProviderId)) return
+    if (finishedContributors.containsKey(contributor.javaClass.simpleName)) return
     if (PossibleSlowContributor.checkSlow(contributor)) return //don't worry about contributors already marked as slow
-    finishedContributors[contributor.searchProviderId] = System.currentTimeMillis() - startTimestamp!!
+    finishedContributors[contributor.javaClass.simpleName] = System.currentTimeMillis() - startTimestamp!!
   }
 
   private fun restart() {

@@ -1,3 +1,7 @@
 package com.intellij.searchEverywhereMl.semantics.contributors
 
-interface SemanticSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.AllTabExcludedSearchEverywhereContributor
+import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Internal
+interface SemanticSearchEverywhereContributor: AllTabExcludedSearchEverywhereContributor
