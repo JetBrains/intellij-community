@@ -97,6 +97,6 @@ public class SplitIfActionTest extends LightJavaCodeInsightTestCase {
     ModCommandAction.ActionContext context = ModCommandAction.ActionContext.from(getEditor(), getFile());
     assertNotNull(action.getPresentation(context));
     ModCommand command = action.perform(context);
-    ApplicationManager.getApplication().runWriteAction(() -> ModCommandService.getInstance().executeInteractively(getProject(), command));
+    ApplicationManager.getApplication().runWriteAction(() -> ModCommandService.getInstance().executeInteractively(context, command));
   }
 }

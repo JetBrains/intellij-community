@@ -61,7 +61,7 @@ public interface ModCommandAction extends CommonIntentionAction {
   @Contract(pure = true)
   default @NotNull IntentionPreviewInfo generatePreview(@NotNull ActionContext context) {
     ModCommand command = perform(context);
-    return IntentionPreviewUtils.getModCommandPreview(command, context.file());
+    return IntentionPreviewUtils.getModCommandPreview(command, context);
   }
 
   /**

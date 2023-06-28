@@ -4,9 +4,11 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.ModCommands;
+import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.modcommand.ModChooseTarget;
+import com.intellij.modcommand.ModChooseAction;
 import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -35,15 +37,27 @@ public final class AddExceptionToExistingCatchFix extends PsiBasedModCommandActi
     List<? extends PsiClassType> unhandledExceptions = context.myExceptions;
     List<? extends PsiCatchSection> catches = context.myCatches;
 
-    var items = ContainerUtil.map(
-      catches, c -> ModChooseTarget.ListItem.of(
-        c,
-        Objects.requireNonNull(c.getCatchType()).getPresentableText(),
-        Objects.requireNonNull(c.getParameter()).getTextRange()));
-    return ModCommands.chooser(
-      items,
-      section -> ModCommands.psiUpdate(section, s -> addTypeToCatch(unhandledExceptions, s, s.getProject())),
-      QuickFixBundle.message("add.exception.to.existing.catch.chooser.title"));
+    return new ModChooseAction(QuickFixBundle.message("add.exception.to.existing.catch.chooser.title"),
+                               ContainerUtil.map(catches, c -> new PsiUpdateModCommandAction<PsiCatchSection>(c) {
+                                 @Override
+                                 protected void invoke(@NotNull ActionContext context,
+                                                       @NotNull PsiCatchSection section,
+                                                       @NotNull ModPsiUpdater updater) {
+                                   addTypeToCatch(unhandledExceptions, section, context.project());
+                                 }
+
+                                 @Override
+                                 protected @NotNull Presentation getPresentation(@NotNull ActionContext context,
+                                                                                 @NotNull PsiCatchSection section) {
+                                   return Presentation.of(getFamilyName())
+                                     .withHighlighting(Objects.requireNonNull(section.getParameter()).getTextRange());
+                                 }
+
+                                 @Override
+                                 public @NotNull String getFamilyName() {
+                                   return Objects.requireNonNull(c.getCatchType()).getPresentableText();
+                                 }
+                               }));
   }
 
   private static List<PsiCatchSection> findSuitableSections(List<? extends PsiCatchSection> sections, @NotNull List<? extends PsiClassType> exceptionTypes, boolean isJava7OrHigher) {

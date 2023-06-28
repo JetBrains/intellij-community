@@ -6,6 +6,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.*;
+import com.intellij.modcommand.ModCommandAction.ActionContext;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -149,12 +150,13 @@ public final class IntentionPreviewUtils {
 
   /**
    * @param modCommand {@link ModCommand} to generate preview for
-   * @param file current file
+   * @param context context in which the action is about to be executed
    * @return default preview for a given ModCommand
    */
   @ApiStatus.Experimental
-  public static @NotNull IntentionPreviewInfo getModCommandPreview(@NotNull ModCommand modCommand, @NotNull PsiFile file) {
-    Project project = file.getProject();
+  public static @NotNull IntentionPreviewInfo getModCommandPreview(@NotNull ModCommand modCommand, @NotNull ActionContext context) {
+    Project project = context.project();
+    PsiFile file = context.file();
     List<IntentionPreviewInfo.CustomDiff> customDiffList = new ArrayList<>();
     IntentionPreviewInfo navigateInfo = IntentionPreviewInfo.EMPTY;
     for (ModCommand command : modCommand.unpack()) {
@@ -176,8 +178,8 @@ public final class IntentionPreviewUtils {
           navigateInfo = IntentionPreviewInfo.navigate(target, navigate.caret());
         }
       }
-      else if (command instanceof ModChooseTarget<?> target) {
-        return getChoosePreview(file, target);
+      else if (command instanceof ModChooseAction target) {
+        return getChoosePreview(context, target);
       }
       else if (command instanceof ModDisplayError error) {
         return new IntentionPreviewInfo.Html(new HtmlBuilder().append(
@@ -189,11 +191,11 @@ public final class IntentionPreviewUtils {
            new IntentionPreviewInfo.MultiFileDiff(customDiffList);
   }
 
-  private static @NotNull <T extends PsiElement> IntentionPreviewInfo getChoosePreview(@NotNull PsiFile file, @NotNull ModChooseTarget<@NotNull T> target) {
-    var elements = target.elements();
-    if (elements.isEmpty()) {
-      return IntentionPreviewInfo.EMPTY;
-    }
-    return getModCommandPreview(target.nextStep().apply(elements.get(0).element()), file);
+  private static @NotNull IntentionPreviewInfo getChoosePreview(@NotNull ActionContext context, @NotNull ModChooseAction target) {
+    return target.actions().stream()
+      .filter(action -> action.getPresentation(context) != null)
+      .findFirst()
+      .map(action -> action.generatePreview(context))
+      .orElse(IntentionPreviewInfo.EMPTY);
   }
 }

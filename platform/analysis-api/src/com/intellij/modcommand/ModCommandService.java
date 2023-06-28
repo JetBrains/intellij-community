@@ -3,8 +3,8 @@ package com.intellij.modcommand;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.ModCommandAction.ActionContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,25 +48,25 @@ public interface ModCommandService {
 
   /**
    * Executes given {@link ModCommand} interactively (may require user input, navigate into editors, etc.).
-   * 
-   * @param project current project
+   *
+   * @param context current context
    * @param command a command to execute
    */
   @RequiresEdt
-  void executeInteractively(@NotNull Project project, @NotNull ModCommand command);
+  void executeInteractively(@NotNull ActionContext context, @NotNull ModCommand command);
 
   /**
-   * Executes given {@link ModCommand} in batch (applies default options, do not navigate) 
+   * Executes given {@link ModCommand} in batch (applies default options, do not navigate)
    *
-   * @param project current project
+   * @param context current context
    * @param command a command to execute
    */
-  void executeInBatch(@NotNull Project project, @NotNull ModCommand command);
+  void executeInBatch(@NotNull ActionContext context, @NotNull ModCommand command);
 
   /**
    * Implementation of ModCommands.psiUpdate; should not be used directly.
    */
-  @NotNull ModCommand psiUpdate(@NotNull ModCommandAction.ActionContext context,
+  @NotNull ModCommand psiUpdate(@NotNull ActionContext context,
                                 @NotNull Consumer<@NotNull ModPsiUpdater> updater);
 
   /**

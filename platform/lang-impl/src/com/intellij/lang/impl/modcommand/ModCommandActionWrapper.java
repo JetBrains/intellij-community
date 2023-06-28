@@ -68,8 +68,9 @@ import java.util.Objects;
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    ModCommand command = myAction.perform(ModCommandAction.ActionContext.from(editor, file));
-    ModCommandService.getInstance().executeInteractively(project, command);
+    ModCommandAction.ActionContext context = ModCommandAction.ActionContext.from(editor, file);
+    ModCommand command = myAction.perform(context);
+    ModCommandService.getInstance().executeInteractively(context, command);
   }
 
   @Override

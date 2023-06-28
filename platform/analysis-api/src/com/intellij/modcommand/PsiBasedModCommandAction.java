@@ -96,7 +96,7 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
    */
   protected @NotNull IntentionPreviewInfo generatePreview(ActionContext context, E element) {
     ModCommand command = perform(context, element);
-    return IntentionPreviewUtils.getModCommandPreview(command, context.file());
+    return IntentionPreviewUtils.getModCommandPreview(command, context);
   }
 
   /**
