@@ -22,11 +22,13 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.InputValidatorEx
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.KotlinFileType
@@ -46,9 +48,9 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import java.util.*
-import javax.xml.stream.events.Characters
+import javax.swing.Icon
 
-internal class NewKotlinFileAction : AbstractNewKotlinFileAction(), DumbAware {
+class NewKotlinFileAction : AbstractNewKotlinFileAction(), DumbAware {
     override fun isAvailable(dataContext: DataContext): Boolean {
         if (!super.isAvailable(dataContext)) return false
 
@@ -69,75 +71,27 @@ internal class NewKotlinFileAction : AbstractNewKotlinFileAction(), DumbAware {
         builder.setTitle(KotlinBundle.message("action.new.file.dialog.title"))
 
         builder
-            .addKind(
-                KotlinBundle.message("action.new.file.dialog.class.title"),
-                KotlinIcons.CLASS,
-                "Kotlin Class"
-            )
-            .addKind(
-                KotlinBundle.message("action.new.file.dialog.file.title"),
-                KotlinFileType.INSTANCE.icon,
-                "Kotlin File"
-            )
-            .addKind(
-                KotlinBundle.message("action.new.file.dialog.interface.title"),
-                KotlinIcons.INTERFACE,
-                "Kotlin Interface"
-            )
+            .addKind(KotlinFileTemplate.Class)
+            .addKind(KotlinFileTemplate.File)
+            .addKind(KotlinFileTemplate.Interface)
 
         if (sealedTemplatesEnabled && project.languageVersionSettings.supportsFeature(LanguageFeature.SealedInterfaces)) {
-            builder.addKind(
-                KotlinBundle.message("action.new.file.dialog.sealed.interface.title"),
-                KotlinIcons.INTERFACE,
-                "Kotlin Sealed Interface"
-            )
+            builder.addKind(KotlinFileTemplate.SealedInterface)
         }
 
         builder
-            .addKind(
-                KotlinBundle.message("action.new.file.dialog.data.class.title"),
-                KotlinIcons.CLASS,
-                "Kotlin Data Class"
-            )
-            .addKind(
-                KotlinBundle.message("action.new.file.dialog.enum.title"),
-                KotlinIcons.ENUM,
-                "Kotlin Enum"
-            )
+            .addKind(KotlinFileTemplate.DataClass)
+            .addKind(KotlinFileTemplate.Enum)
 
         if (sealedTemplatesEnabled) {
-            builder.addKind(
-                KotlinBundle.message("action.new.file.dialog.sealed.class.title"),
-                KotlinIcons.CLASS,
-                "Kotlin Sealed Class"
-            )
+            builder.addKind(KotlinFileTemplate.SealedClass)
         }
 
         builder
-            .addKind(
-                KotlinBundle.message("action.new.file.dialog.annotation.title"),
-                KotlinIcons.ANNOTATION,
-                "Kotlin Annotation"
-            )
-
-        builder
-            .addKind(
-                KotlinBundle.message("action.new.script.name"),
-                KotlinIcons.SCRIPT,
-                KOTLIN_SCRIPT_TEMPLATE_NAME
-            )
-            .addKind(
-                KotlinBundle.message("action.new.worksheet.name"),
-                KotlinIcons.SCRIPT,
-                KOTLIN_WORKSHEET_TEMPLATE_NAME
-            )
-
-        builder
-            .addKind(
-                KotlinBundle.message("action.new.file.dialog.object.title"),
-                KotlinIcons.OBJECT,
-                "Kotlin Object"
-            )
+            .addKind(KotlinFileTemplate.Annotation)
+            .addKind(KotlinFileTemplate.Script)
+            .addKind(KotlinFileTemplate.Worksheet)
+            .addKind(KotlinFileTemplate.Object)
 
         builder.setValidator(NewKotlinFileNameValidator)
     }
@@ -150,7 +104,7 @@ internal class NewKotlinFileAction : AbstractNewKotlinFileAction(), DumbAware {
     override fun equals(other: Any?): Boolean = other is NewKotlinFileAction
 }
 
-internal abstract class AbstractNewKotlinFileAction : CreateFileFromTemplateAction() {
+abstract class AbstractNewKotlinFileAction : CreateFileFromTemplateAction() {
 
     private fun KtFile.editor(): Editor? =
         FileEditorManager.getInstance(this.project).selectedTextEditor?.takeIf { it.document == this.viewProvider.document }
@@ -190,7 +144,7 @@ internal abstract class AbstractNewKotlinFileAction : CreateFileFromTemplateActi
     override fun startInWriteAction() = false
 
     override fun createFileFromTemplate(name: String, template: FileTemplate, dir: PsiDirectory): PsiFile? {
-        val targetTemplate = if (KOTLIN_WORKSHEET_TEMPLATE_NAME != template.name) {
+        val targetTemplate = if (KotlinFileTemplate.Worksheet.fileName != template.name) {
             template
         } else {
             object : FileTemplate by template {
@@ -256,9 +210,6 @@ private fun findOrCreateTarget(dir: PsiDirectory, name: String, directorySeparat
 }
 
 const val KOTLIN_WORKSHEET_EXTENSION: String = "ws.kts"
-
-internal const val KOTLIN_WORKSHEET_TEMPLATE_NAME: String = "Kotlin Worksheet"
-internal const val KOTLIN_SCRIPT_TEMPLATE_NAME: String = "Kotlin Script"
 
 private fun removeKotlinExtensionIfPresent(name: String): String = when {
     name.endsWith(".$KOTLIN_WORKSHEET_EXTENSION") -> name.removeSuffix(".$KOTLIN_WORKSHEET_EXTENSION")
@@ -334,4 +285,21 @@ internal fun createKotlinFileFromTemplate(name: String, template: FileTemplate, 
         }
         return@computeWithAlternativeResolveEnabled psiFile
     }
+}
+
+internal fun CreateFileFromTemplateDialog.Builder.addKind(t: KotlinFileTemplate) =
+    addKind(t.title, t.icon, t.fileName)
+
+internal enum class KotlinFileTemplate(@NlsContexts.ListItem val title: String, val icon: Icon, val fileName: String) {
+    Class(KotlinBundle.message("action.new.file.dialog.class.title"), KotlinIcons.CLASS, "Kotlin Class"),
+    File(KotlinBundle.message("action.new.file.dialog.file.title"), KotlinFileType.INSTANCE.icon, "Kotlin File"),
+    Interface(KotlinBundle.message("action.new.file.dialog.interface.title"), KotlinIcons.INTERFACE, "Kotlin Interface"),
+    SealedInterface(KotlinBundle.message("action.new.file.dialog.sealed.interface.title"), KotlinIcons.INTERFACE, "Kotlin Sealed Interface"),
+    DataClass(KotlinBundle.message("action.new.file.dialog.data.class.title"), KotlinIcons.CLASS, "Kotlin Data Class"),
+    Enum(KotlinBundle.message("action.new.file.dialog.enum.title"), KotlinIcons.ENUM, "Kotlin Enum"),
+    SealedClass(KotlinBundle.message("action.new.file.dialog.sealed.class.title"), KotlinIcons.CLASS, "Kotlin Sealed Class"),
+    Annotation(KotlinBundle.message("action.new.file.dialog.annotation.title"), KotlinIcons.ANNOTATION, "Kotlin Annotation"),
+    Script(KotlinBundle.message("action.new.script.name"), KotlinIcons.SCRIPT, "Kotlin Script"),
+    Worksheet(KotlinBundle.message("action.new.worksheet.name"), KotlinIcons.SCRIPT, "Kotlin Worksheet"),
+    Object(KotlinBundle.message("action.new.file.dialog.object.title"), KotlinIcons.OBJECT, "Kotlin Object")
 }
