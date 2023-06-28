@@ -28,7 +28,6 @@ import java.awt.KeyboardFocusManager
 import javax.swing.JComponent
 import javax.swing.JFrame
 import javax.swing.MenuSelectionManager
-import javax.swing.SwingUtilities
 import kotlin.time.Duration.Companion.milliseconds
 
 internal interface ActionAwareIdeMenuBar {
@@ -72,7 +71,7 @@ internal open class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
   protected var visibleActions = emptyList<ActionGroup>()
 
   @JvmField
-  protected val presentationFactory: MenuItemPresentationFactory = MenuItemPresentationFactory()
+  protected val presentationFactory: PresentationFactory = MenuItemPresentationFactory()
 
   private val updateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -95,10 +94,8 @@ internal open class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
       updateRequests
         .debounce(50.milliseconds)
         .collectLatest {
-          withContext(Dispatchers.EDT) {
-            presentationFactory.reset()
-          }
-          doUpdateMenuActions(mainActionGroup = menuBar.getMainMenuActionGroup(), forceRebuild = true)
+          presentationFactory.reset()
+          updateMenuActions(mainActionGroup = menuBar.getMainMenuActionGroup(), forceRebuild = true)
         }
     }
 
@@ -121,7 +118,7 @@ internal open class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
       }
 
       subtask("ide menu bar actions init") {
-        val actions = doUpdateMenuActions(mainActionGroup = menuBar.getMainMenuActionGroup(), forceRebuild = false)
+        val actions = updateMenuActions(mainActionGroup = menuBar.getMainMenuActionGroup(), forceRebuild = false)
         withContext(Dispatchers.EDT) {
           for (action in actions) {
             PopupMenuPreloader.install(menuBar.component, ActionPlaces.MAIN_MENU, null) { action }
@@ -133,16 +130,16 @@ internal open class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
 
   override suspend fun updateMenuActions(forceRebuild: Boolean) {
     val mainActionGroup = menuBar.getMainMenuActionGroup()
-    doUpdateMenuActions(mainActionGroup = mainActionGroup, forceRebuild = forceRebuild)
+    updateMenuActions(mainActionGroup = mainActionGroup, forceRebuild = forceRebuild)
   }
 
-  open suspend fun doUpdateMenuActions(mainActionGroup: ActionGroup?, forceRebuild: Boolean): List<ActionGroup> {
+  open suspend fun updateMenuActions(mainActionGroup: ActionGroup?, forceRebuild: Boolean): List<ActionGroup> {
     val menuBarComponent = menuBar.component
     val newVisibleActions = mainActionGroup?.let {
       expandMainActionGroup(mainActionGroup = it, menuBar = menuBarComponent, frame = menuBar.frame, presentationFactory = presentationFactory)
     } ?: emptyList()
 
-    if (!forceRebuild && newVisibleActions == visibleActions && withContext(Dispatchers.EDT) { !presentationFactory.isNeedRebuild }) {
+    if (!forceRebuild && newVisibleActions == visibleActions && !presentationFactory.isNeedRebuild) {
       val enableMnemonics = !UISettings.getInstance().disableMnemonics
       withContext(Dispatchers.EDT) {
         for (child in menuBarComponent.components) {
@@ -169,7 +166,7 @@ internal open class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
       menuBarComponent.validate()
       if (changeBarVisibility) {
         menuBarComponent.invalidate()
-        (SwingUtilities.getAncestorOfClass(JFrame::class.java, menuBarComponent) as JFrame?)?.validate()
+        menuBar.frame.validate()
       }
     }
     return newVisibleActions
@@ -196,7 +193,7 @@ internal open class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
 internal open class PeerBasedIdeMenuBarHelper(private val screenMenuPeer: MenuBar,
                                               flavor: IdeMenuFlavor,
                                               menuBar: MenuBarImpl) : IdeMenuBarHelper(flavor, menuBar) {
-  override suspend fun doUpdateMenuActions(mainActionGroup: ActionGroup?, forceRebuild: Boolean): List<ActionGroup> {
+  override suspend fun updateMenuActions(mainActionGroup: ActionGroup?, forceRebuild: Boolean): List<ActionGroup> {
     val newVisibleActions = mainActionGroup?.let {
       expandMainActionGroup(mainActionGroup = it,
                             menuBar = menuBar.component,
@@ -204,7 +201,7 @@ internal open class PeerBasedIdeMenuBarHelper(private val screenMenuPeer: MenuBa
                             presentationFactory = presentationFactory)
     } ?: emptyList()
 
-    if (!forceRebuild && newVisibleActions == visibleActions && withContext(Dispatchers.EDT) { !presentationFactory.isNeedRebuild}) {
+    if (!forceRebuild && newVisibleActions == visibleActions && !presentationFactory.isNeedRebuild) {
       return newVisibleActions
     }
 

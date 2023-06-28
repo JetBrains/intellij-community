@@ -3,7 +3,6 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.WeakList;
@@ -18,7 +17,8 @@ import java.util.Objects;
 public class PresentationFactory {
   private static final Key<Boolean> NEED_UPDATE_PRESENTATION = Key.create("NEED_UPDATE_PRESENTATION");
   private final Map<AnAction, Presentation> myPresentations = CollectionFactory.createConcurrentWeakMap();
-  private boolean myNeedRebuild;
+
+  private volatile boolean myNeedRebuild;
 
   private static final Collection<PresentationFactory> ourAllFactories = new WeakList<>();
 
@@ -62,7 +62,6 @@ public class PresentationFactory {
   }
 
   public void reset() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     myPresentations.clear();
     myNeedRebuild = true;
   }
