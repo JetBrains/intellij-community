@@ -123,13 +123,14 @@ public class AntTestContentHandler extends DefaultHandler {
     }
     else if (TESTCASE.equals(qName)) {
       if (myStatus != null) {
-        switch (myStatus) {
-          case TestResultsXmlFormatter.STATUS_ERROR, TestResultsXmlFormatter.STATUS_FAILED -> myProcessor.onTestFailure(
-            new TestFailedEvent(myCurrentTest, "", currentText, myStatus.equals(TestResultsXmlFormatter.STATUS_ERROR), null, null)
-          );
-          case TestResultsXmlFormatter.STATUS_IGNORED, TestResultsXmlFormatter.STATUS_SKIPPED-> myProcessor.onTestIgnored(
-            new TestIgnoredEvent(myCurrentTest, "", currentText)
-          );
+        if (myStatus.equals(TestResultsXmlFormatter.STATUS_ERROR) || myStatus.equals(TestResultsXmlFormatter.STATUS_FAILED)) {
+          myProcessor.onTestFailure(
+            new TestFailedEvent(myCurrentTest, "", currentText, myStatus.equals(TestResultsXmlFormatter.STATUS_ERROR), null, null));
+        }
+        else if (myStatus.equals(TestResultsXmlFormatter.STATUS_IGNORED) || myStatus.equals(TestResultsXmlFormatter.STATUS_SKIPPED)) {
+          myProcessor.onTestIgnored(new TestIgnoredEvent(myCurrentTest, "", currentText));
+        } else {
+          throw new IllegalStateException("Unknown status: " + myStatus);
         }
       }
       long time;
