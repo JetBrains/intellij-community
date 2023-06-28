@@ -190,8 +190,11 @@ internal class MainToolbar(private val coroutineScope: CoroutineScope, frame: JF
   }
 
   private fun installClickListener(popupHandler: PopupHandler, customTitleBar: WindowDecorations.CustomTitleBar?) {
-    if (IdeRootPane.hideNativeLinuxTitle) {
-      return
+    if (IdeRootPane.hideNativeLinuxTitle && !UISettings.shadowInstance.separateMainMenu) {
+      WindowMoveListener(this).apply {
+        setLeftMouseButtonOnly(true)
+        installTo(this@MainToolbar)
+      }
     }
 
     if (customTitleBar == null) {
