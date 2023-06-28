@@ -35,7 +35,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "8",
         "Safari": "",
         "SafariIOS": ""
@@ -724,7 +723,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "8",
         "Safari": "",
         "SafariIOS": ""
@@ -764,7 +762,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "10",
         "Safari": "4",
         "SafariIOS": "3"
@@ -781,7 +778,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "10",
         "Safari": "4",
         "SafariIOS": "3"
@@ -814,7 +810,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "",
-        "IE": "5",
         "Opera": "8",
         "Safari": "",
         "SafariIOS": ""
@@ -831,7 +826,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5",
         "Opera": "8",
         "Safari": "3",
         "SafariIOS": ""
@@ -848,7 +842,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "5",
         "Opera": "8",
         "Safari": "3",
         "SafariIOS": ""
@@ -865,7 +858,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "5",
         "Opera": "8",
         "Safari": "3",
         "SafariIOS": ""
@@ -882,7 +874,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5",
         "Opera": "8",
         "Safari": "3",
         "SafariIOS": ""
@@ -952,7 +943,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "10",
         "Safari": "4",
         "SafariIOS": "3"
@@ -989,7 +979,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5",
         "Opera": "8",
         "Safari": "",
         "SafariIOS": ""
@@ -1024,7 +1013,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "6",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -1042,7 +1030,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -1060,7 +1047,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -1082,7 +1068,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "4",
         "Opera": "9.5",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -1100,7 +1085,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "5",
         "Opera": "9.5",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -1138,7 +1122,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "8",
         "Safari": "",
         "SafariIOS": ""
@@ -1156,7 +1139,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -1174,7 +1156,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "8",
         "Opera": "8",
         "Safari": "",
         "SafariIOS": ""
@@ -1195,7 +1176,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -1213,7 +1193,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "8",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -1251,7 +1230,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "",
-        "IE": "5",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -1268,7 +1246,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "8",
         "Safari": "",
         "SafariIOS": ""
@@ -1359,7 +1336,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "10",
         "Safari": "4",
         "SafariIOS": "3"
@@ -1376,7 +1352,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -1416,7 +1391,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -1433,7 +1407,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "10",
         "Safari": "4",
         "SafariIOS": "3"
@@ -1450,7 +1423,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "11",
-        "IE": "4",
         "Opera": "8",
         "Safari": "1.3",
         "SafariIOS": ""
@@ -1487,7 +1459,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -1527,7 +1498,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "10",
         "Safari": "4",
         "SafariIOS": "3"
@@ -1544,7 +1514,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "10",
         "Safari": "3.1",
         "SafariIOS": "2"
@@ -1568,7 +1537,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "10",
         "Safari": "3.1",
         "SafariIOS": "2"
@@ -1592,7 +1560,6 @@
         "ChromeAndroid": "55",
         "Edge": "",
         "Firefox": "59",
-        "IE": "11",
         "Opera": "42",
         "Safari": "13",
         "SafariIOS": "13"
@@ -1633,7 +1600,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5",
         "Opera": "8",
         "Safari": "",
         "SafariIOS": ""
@@ -1654,7 +1620,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "6",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -1678,7 +1643,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -1825,7 +1789,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "21",
-        "IE": "5",
         "Opera": "8",
         "Safari": "",
         "SafariIOS": ""
@@ -1879,7 +1842,6 @@
         "ChromeAndroid": "86",
         "Edge": "86",
         "Firefox": "",
-        "IE": "5",
         "Opera": "8",
         "Safari": "",
         "SafariIOS": ""
@@ -1923,7 +1885,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5",
         "Opera": "8",
         "Safari": "",
         "SafariIOS": ""
@@ -1947,7 +1908,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -1964,7 +1924,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5",
         "Opera": "8",
         "Safari": "",
         "SafariIOS": ""
@@ -1989,7 +1948,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "6",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -2007,7 +1965,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -2025,7 +1982,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -2039,8 +1995,7 @@
         "Deprecated"
       ],
       "compatibility": {
-        "Firefox": "4",
-        "IE": "5"
+        "Firefox": "4"
       },
       "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div><div class=\"notecard nonstandard\" id=\"sect2\"><p><strong>Non-standard:</strong> This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</div>\n<p>Call this method during the handling of a mousedown event to retarget all mouse events\nto this element until the mouse button is released or <a href=\"$MDN_URL$/Web/API/Document/releaseCapture\"><code>document.releaseCapture()</code></a> is called.\n<div class=\"notecard warning\" id=\"sect3\">\n<p><strong>Warning:</strong> This interface never had much cross-browser\nsupport and you probably looking for <a href=\"$MDN_URL$/Web/API/Element/setPointerCapture\"><code>element.setPointerCapture</code></a> instead,\nfrom the Pointer Events API.\n</div>",
       "parameters": {
@@ -2077,7 +2032,6 @@
         "ChromeAndroid": "55",
         "Edge": "",
         "Firefox": "59",
-        "IE": "11",
         "Opera": "42",
         "Safari": "13",
         "SafariIOS": "13"
@@ -2133,7 +2087,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5",
         "Opera": "8",
         "Safari": "",
         "SafariIOS": ""
@@ -3194,10 +3147,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "27",
-        "IE": "10",
         "Opera": "11",
         "Safari": "6",
-        "SafariIOS": "6"
+        "SafariIOS": "6",
+        "Deno": ""
       },
       "doc": "The <strong><code>ErrorEvent</code></strong> interface represents events providing information related to errors in scripts or in files."
     },
@@ -3211,11 +3164,11 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "6",
         "Opera": "4",
         "Safari": "",
         "SafariIOS": "",
-        "Nodejs": "14.5.0"
+        "Nodejs": "14.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>Event</code></strong> interface represents an event which takes place in the DOM.\n<p>An event can be triggered by the user action e.g. clicking the mouse button or tapping keyboard, or generated by APIs to represent the progress of an asynchronous task. It can also be triggered programmatically, such as by calling the <a href=\"$MDN_URL$/Web/API/HTMLElement/click\"><code>HTMLElement.click()</code></a> method of an element, or by defining the event, then sending it to a specified target using <a href=\"$MDN_URL$/Web/API/EventTarget/dispatchEvent\"><code>EventTarget.dispatchEvent()</code></a>.\n<p>There are many types of events, some of which use other interfaces based on the main <code>Event</code> interface. <code>Event</code> itself contains the properties and methods which are common to all events.\n<p>Many DOM elements can be set up to accept (or \"listen\" for) these events, and execute code in response to process (or \"handle\") them. Event-handlers are usually connected (or \"attached\") to various <a href=\"$MDN_URL$/Web/HTML/Element\">HTML elements</a> (such as <code>&lt;button&gt;</code>, <code>&lt;div&gt;</code>, <code>&lt;span&gt;</code>, etc.) using <a href=\"$MDN_URL$/Web/API/EventTarget/addEventListener\"><code>EventTarget.addEventListener()</code></a>, and this generally replaces using the old HTML <a href=\"$MDN_URL$/Web/HTML/Global_attributes\">event handler attributes</a>. Further, when properly added, such handlers can also be disconnected if needed using <a href=\"$MDN_URL$/Web/API/EventTarget/removeEventListener\"><code>removeEventListener()</code></a>.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> One element can have several such handlers, even for the exact same event—particularly if separate, independent code modules attach them, each for its own independent purposes. (For example, a webpage with an advertising-module and statistics-module both monitoring video-watching.)\n</div>\n<p>When there are many nested elements, each with its own handler(s), event processing can become very complicated—especially where a parent element receives the very same event as its child elements because \"spatially\" they overlap so the event technically occurs in both, and the processing order of such events depends on the <a href=\"$MDN_URL$/Learn/JavaScript/Building_blocks/Events#event_bubbling_and_capture\">Event bubbling and capture</a> settings of each handler triggered."
     },
@@ -3229,11 +3182,11 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": "",
-        "Nodejs": "14.5.0"
+        "Nodejs": "14.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>bubbles</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/Event\"><code>Event</code></a> interface indicates whether the event bubbles up through the DOM tree or not.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> See <a href=\"$MDN_URL$/Learn/JavaScript/Building_blocks/Events#event_bubbling_and_capture\">Event bubbling and capture</a> for more information on bubbling.\n</div>"
     },
@@ -3247,11 +3200,11 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": "",
-        "Nodejs": "14.5.0"
+        "Nodejs": "14.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>cancelable</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/Event\"><code>Event</code></a> interface indicates whether the event\ncan be canceled, and therefore prevented as if the event never happened.\n<p>If the event is <em>not</em> cancelable, then its <code>cancelable</code> property will be\n<code>false</code> and the event listener cannot stop the event from occurring.\n<p>Most browser-native events that can be canceled are the ones that result from the user\ninteracting with the page. Canceling the <a href=\"$MDN_URL$/Web/API/Element/click_event\" ><code>click</code></a>,\n<a href=\"$MDN_URL$/Web/API/Element/wheel_event\"  ><code>wheel</code></a>, or\n<a href=\"$MDN_URL$/Web/API/Window/beforeunload_event\" ><code>beforeunload</code></a> events would prevent the user\nfrom clicking on something, scrolling the page with the mouse wheel, or\nnavigating away from the page, respectively.\n<p><a href=\"$MDN_URL$/Web/API/Event/Event\">Synthetic events</a> created by other JavaScript\ncode define if they can be canceled when they are created.\n<p>To cancel an event, call the <a href=\"$MDN_URL$/Web/API/Event/preventDefault\" ><code>preventDefault()</code></a>\nmethod on the event. This keeps the implementation from executing the default action\nthat is associated with the event.\n<p>Event listeners that handle multiple kinds of events may want to check\n<code>cancelable</code> before invoking their <a href=\"$MDN_URL$/Web/API/Event/preventDefault\" ><code>preventDefault()</code></a> methods."
     },
@@ -3266,11 +3219,11 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "53",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": "",
-        "Nodejs": "14.5.0"
+        "Nodejs": "14.5.0",
+        "Deno": ""
       },
       "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>cancelBubble</code></strong> property of the <a href=\"$MDN_URL$/Web/API/Event\"><code>Event</code></a>\ninterface is deprecated. Use <a href=\"$MDN_URL$/Web/API/Event/stopPropagation\"><code>Event.stopPropagation()</code></a> instead.\nSetting its value to <code>true</code> before returning from an event handler prevents propagation\nof the event. In later implementations, setting this to <code>false</code> does nothing.\nSee <a href=\"#browser_compatibility\">Browser compatibility</a> for details."
     },
@@ -3287,7 +3240,8 @@
         "Opera": "40",
         "Safari": "10",
         "SafariIOS": "10",
-        "Nodejs": "14.5.0"
+        "Nodejs": "14.5.0",
+        "Deno": ""
       },
       "doc": "The read-only <strong><code>composed</code></strong> property of the\n<a href=\"$MDN_URL$/Web/API/Event\"><code>Event</code></a> interface returns a boolean value which indicates whether\nor not the event will propagate across the shadow DOM boundary into the standard DOM.\n<p>All UA-dispatched UI events are composed (click/touch/mouseover/copy/paste, etc.). Most\nother types of events are not composed, and so will return <code>false</code>. For\nexample, this includes synthetic events that are created without their\n<code>composed</code> option set to <code>true</code>.\n<p>Propagation only occurs if the <a href=\"$MDN_URL$/Web/API/Event/bubbles\" ><code>bubbles</code></a> property is also\n<code>true</code>. However, capturing only composed events are also handled at host as\nif they were in <code>AT_TARGET</code> phase. You can determine the path the event will\nfollow through the shadow root to the DOM root by calling\n<a href=\"$MDN_URL$/Web/API/Event/composedPath\" ><code>composedPath()</code></a>."
     },
@@ -3304,7 +3258,8 @@
         "Opera": "40",
         "Safari": "10",
         "SafariIOS": "10",
-        "Nodejs": "14.5.0"
+        "Nodejs": "14.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>composedPath()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Event\"><code>Event</code></a>\ninterface returns the event's path which is an array of the objects on which listeners\nwill be invoked. This does not include nodes in shadow trees if the shadow root was\ncreated with its <a href=\"$MDN_URL$/Web/API/ShadowRoot/mode\"><code>ShadowRoot.mode</code></a> closed.",
       "returns": "An array of <a href=\"$MDN_URL$/Web/API/EventTarget\"><code>EventTarget</code></a> objects representing the objects on which an\n  event listener will be invoked."
@@ -3319,11 +3274,11 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "7",
         "Safari": "",
         "SafariIOS": "",
-        "Nodejs": "14.5.0"
+        "Nodejs": "14.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>currentTarget</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/Event\"><code>Event</code></a> interface identifies the current target for the event, as the event\ntraverses the DOM. It always refers to the element to which the event handler has been\nattached, as opposed to <a href=\"$MDN_URL$/Web/API/Event/target\"><code>Event.target</code></a>, which identifies the element on\nwhich the event occurred and which may be its descendant."
     },
@@ -3337,11 +3292,11 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "6",
-        "IE": "9",
         "Opera": "11",
         "Safari": "5",
         "SafariIOS": "5",
-        "Nodejs": "14.5.0"
+        "Nodejs": "14.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>defaultPrevented</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/Event\"><code>Event</code></a> interface returns a boolean value indicating whether or not the call to <a href=\"$MDN_URL$/Web/API/Event/preventDefault\"><code>Event.preventDefault()</code></a> canceled the event."
     },
@@ -3358,7 +3313,8 @@
         "Opera": "11.6",
         "Safari": "6",
         "SafariIOS": "6",
-        "Nodejs": "15.0.0"
+        "Nodejs": "15.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>Event()</code></strong> constructor creates a new <a href=\"$MDN_URL$/Web/API/Event\"><code>Event</code></a> object. An event created in this way is called a <em>synthetic event</em>, as opposed to an event fired by the browser, and can be <a href=\"$MDN_URL$/Web/Events/Creating_and_triggering_events\">dispatched</a> by a script.",
       "returns": "A new <a href=\"$MDN_URL$/Web/API/Event\"><code>Event</code></a> object."
@@ -3373,11 +3329,11 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": "",
-        "Nodejs": "14.5.0"
+        "Nodejs": "14.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>eventPhase</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/Event\"><code>Event</code></a> interface indicates which phase of the event flow is currently\nbeing evaluated."
     },
@@ -3399,7 +3355,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "17",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -3422,11 +3377,11 @@
         "ChromeAndroid": "46",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "33",
         "Safari": "10",
         "SafariIOS": "10",
-        "Nodejs": "14.5.0"
+        "Nodejs": "14.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>isTrusted</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/Event\"><code>Event</code></a> interface is a boolean value that is <code>true</code>\nwhen the event was generated by a user action, and <code>false</code> when the event was\ncreated or modified by a script or dispatched via\n<a href=\"$MDN_URL$/Web/API/EventTarget/dispatchEvent\"><code>EventTarget.dispatchEvent()</code></a>."
     },
@@ -3447,11 +3402,11 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "7",
         "Safari": "",
         "SafariIOS": "",
-        "Nodejs": "14.5.0"
+        "Nodejs": "14.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>preventDefault()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Event\"><code>Event</code></a> interface tells the <a href=\"$MDN_URL$/Glossary/User_agent\">user agent</a> that if the event does not get explicitly handled, its default action should not be taken as it normally would be.\n<p>The event continues to propagate as usual,\nunless one of its event listeners calls\n<a href=\"$MDN_URL$/Web/API/Event/stopPropagation\" ><code>stopPropagation()</code></a>\nor <a href=\"$MDN_URL$/Web/API/Event/stopImmediatePropagation\" ><code>stopImmediatePropagation()</code></a>,\neither of which terminates propagation at once.\n<p>As noted below, calling <strong><code>preventDefault()</code></strong> for a\nnon-cancelable event, such as one dispatched via\n<a href=\"$MDN_URL$/Web/API/EventTarget/dispatchEvent\"><code>EventTarget.dispatchEvent()</code></a>, without specifying\n<code>cancelable: true</code> has no effect."
     },
@@ -3466,7 +3421,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "66",
-        "IE": "6",
         "Opera": "15",
         "Safari": "",
         "SafariIOS": "",
@@ -3485,7 +3439,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "62",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": "",
@@ -3503,11 +3456,11 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "10",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "5",
         "SafariIOS": "5",
-        "Nodejs": "14.5.0"
+        "Nodejs": "14.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>stopImmediatePropagation()</code></strong> method of the\n<a href=\"$MDN_URL$/Web/API/Event\"><code>Event</code></a> interface prevents other listeners of the same event from being called.\n<p>If several listeners are attached to the same element for the same event type, they are called in the order in which they were added. If <code>stopImmediatePropagation()</code> is invoked during one such call, no remaining listeners will be called, either on that element or any other element."
     },
@@ -3521,11 +3474,11 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "7",
         "Safari": "",
         "SafariIOS": "",
-        "Nodejs": "14.5.0"
+        "Nodejs": "14.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>stopPropagation()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Event\"><code>Event</code></a>\ninterface prevents further propagation of the current event in the capturing and\nbubbling phases. It does not, however, prevent any default behaviors from occurring; for\ninstance, clicks on links are still processed. If you want to stop those behaviors, see\nthe <a href=\"$MDN_URL$/Web/API/Event/preventDefault\" ><code>preventDefault()</code></a> method. It also does not\nprevent propagation to other event-handlers of the current element. If you want to stop those,\nsee <a href=\"$MDN_URL$/Web/API/Event/stopImmediatePropagation\" ><code>stopImmediatePropagation()</code></a>.",
       "returns": "None."
@@ -3540,11 +3493,11 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "7",
         "Safari": "",
         "SafariIOS": "",
-        "Nodejs": "14.5.0"
+        "Nodejs": "14.5.0",
+        "Deno": ""
       },
       "doc": "The read-only <strong><code>target</code></strong> property of the\n<a href=\"$MDN_URL$/Web/API/Event\"><code>Event</code></a> interface is a reference to the object onto which the event was\ndispatched. It is different from <a href=\"$MDN_URL$/Web/API/Event/currentTarget\"><code>Event.currentTarget</code></a> when the event\nhandler is called during the bubbling or capturing phase of the event."
     },
@@ -3558,11 +3511,11 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": "",
-        "Nodejs": "14.5.0"
+        "Nodejs": "14.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>timeStamp</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/Event\"><code>Event</code></a> interface returns the time (in milliseconds) at which the event was\ncreated."
     },
@@ -3576,11 +3529,11 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "7",
         "Safari": "",
         "SafariIOS": "",
-        "Nodejs": "14.5.0"
+        "Nodejs": "14.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>type</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/Event\"><code>Event</code></a>\ninterface returns a string containing the event's type. It is set when the event is\nconstructed and is the name commonly used to refer to the specific event, such as\n<code>click</code>, <code>load</code>, or <code>error</code>."
     },
@@ -3709,11 +3662,11 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "6",
         "Opera": "7",
         "Safari": "",
         "SafariIOS": "",
-        "Nodejs": "14.5.0"
+        "Nodejs": "14.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>EventTarget</code></strong> interface is implemented by objects that can receive events and may have listeners for them.\nIn other words, any target of events implements the three methods associated with this interface.\n<p><a href=\"$MDN_URL$/Web/API/Element\"><code>Element</code></a>, and its children, as well as <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a> and <a href=\"$MDN_URL$/Web/API/Window\"><code>Window</code></a>, are the most common event targets,\nbut other objects can be event targets, too.\nFor example <a href=\"$MDN_URL$/Web/API/XMLHttpRequest\"><code>XMLHttpRequest</code></a>, <a href=\"$MDN_URL$/Web/API/AudioNode\"><code>AudioNode</code></a>, and <a href=\"$MDN_URL$/Web/API/AudioContext\"><code>AudioContext</code></a> are also event targets.\n<p>Many event targets (including elements, documents, and windows) also support setting <a href=\"$MDN_URL$/Web/Events/Event_handlers\">event handlers</a> via <code>onevent</code> properties and attributes."
     },
@@ -3727,11 +3680,11 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "7",
         "Safari": "",
         "SafariIOS": "",
-        "Nodejs": "14.5.0"
+        "Nodejs": "14.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>addEventListener()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/EventTarget\"><code>EventTarget</code></a> interface\nsets up a function that will be called whenever the specified event is delivered to the target.\n<p>Common targets are <a href=\"$MDN_URL$/Web/API/Element\"><code>Element</code></a>, or its children, <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a>, and <a href=\"$MDN_URL$/Web/API/Window\"><code>Window</code></a>,\nbut the target may be any object that supports events (such as <a href=\"$MDN_URL$/Web/API/XMLHttpRequest\"><code>XMLHttpRequest</code></a>).\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> The <code>addEventListener()</code> method is the <em>recommended</em> way to register an event listener. The benefits are as follows:\n<ul>\n<li>\nIt allows adding more than one handler for an event. This is particularly\nuseful for libraries, JavaScript modules, or any other kind of\ncode that needs to work well with other libraries or extensions.\n</li>\n<li>In contrast to using an <code>onXYZ</code> property, it gives you finer-grained control of the phase when the listener is activated (capturing vs. bubbling).</li>\n<li>It works on any event target, not just HTML or SVG elements.</li>\n</ul>\n</div>\n<p>The method <code>addEventListener()</code> works by adding a function, or an object that implements\n<a href=\"$MDN_URL$/Web/API/EventTarget/addEventListener\"  aria-current=\"page\"><code>EventListener</code></a>, to the list of event listeners for the specified event type\non the <a href=\"$MDN_URL$/Web/API/EventTarget\"><code>EventTarget</code></a> on which it's called. If the function or object is already in the list of event listeners for this target, the function or object is not added a second time.\n<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> If a particular anonymous function is in the list of event listeners registered for a certain target, and then later in the code, an identical anonymous function is given in an <code>addEventListener</code> call, the second function will <em>also</em> be added to the list of event listeners for that target.\n<p>Indeed, anonymous functions are not identical even if defined using\nthe <em>same</em> unchanging source-code called repeatedly, <strong>even if in a loop</strong>.\n<p>Repeatedly defining the same unnamed function in such cases can be\nproblematic. (See <a href=\"#memory_issues\">Memory issues</a>, below.)\n</div>\n<p>If an event listener is added to an <a href=\"$MDN_URL$/Web/API/EventTarget\"><code>EventTarget</code></a> from inside another listener —\nthat is, during the processing of the event —\nthat event will not trigger the new listener.\nHowever, the new listener may be triggered during a later stage of event flow,\nsuch as during the bubbling phase.",
       "parameters": {
@@ -3753,11 +3706,11 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "2",
-        "IE": "9",
         "Opera": "9",
         "Safari": "3.1",
         "SafariIOS": "3",
-        "Nodejs": "14.5.0"
+        "Nodejs": "14.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>dispatchEvent()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/EventTarget\"><code>EventTarget</code></a> sends an <a href=\"$MDN_URL$/Web/API/Event\"><code>Event</code></a> to the object, (synchronously) invoking the affected\n<a href=\"$MDN_URL$/Web/API/EventTarget/addEventListener\" ><code>EventListener</code></a>s in the appropriate order. The normal event processing\nrules (including the capturing and optional bubbling phase) also apply to events\ndispatched manually with <code>dispatchEvent()</code>.\n<p>Calling <code>dispatchEvent()</code> is the last step to <em>firing an event</em>. The event\nshould have already been created and initialized using an <a href=\"$MDN_URL$/Web/API/Event/Event\" ><code>Event()</code></a> constructor.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> When calling this method, the <a href=\"$MDN_URL$/Web/API/Event/target\"><code>Event.target</code></a> property is initialized to the current <code>EventTarget</code>.\n</div>\n<p>Unlike \"native\" events, which are fired by the browser and invoke event handlers\nasynchronously via the <a href=\"$MDN_URL$/Web/JavaScript/Event_loop\">event loop</a>,\n<code>dispatchEvent()</code> invokes event handlers <em>synchronously</em>. All applicable event\nhandlers are called and return before <code>dispatchEvent()</code> returns.",
       "returns": "<code>false</code> if <code>event</code> is cancelable, and at least one of the event handlers which received <code>event</code> called <a href=\"$MDN_URL$/Web/API/Event/preventDefault\"><code>Event.preventDefault()</code></a>. Otherwise <code>true</code>.",
@@ -3778,7 +3731,8 @@
         "Opera": "51",
         "Safari": "14",
         "SafariIOS": "14",
-        "Nodejs": "15.0.0"
+        "Nodejs": "15.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>EventTarget()</code></strong> constructor creates a new <a href=\"$MDN_URL$/Web/API/EventTarget\"><code>EventTarget</code></a> object instance.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> It is fairly rare to explicitly call this constructor. Most of the time, this constructor is used inside the constructor of an object extending the <a href=\"$MDN_URL$/Web/API/EventTarget\"><code>EventTarget</code></a> interface, using the <a href=\"$MDN_URL$/Web/JavaScript/Reference/Operators/super\"><code>super</code></a> keyword.\n</div>",
       "returns": "A new instance of the <a href=\"$MDN_URL$/Web/API/EventTarget\"><code>EventTarget</code></a> object."
@@ -3793,11 +3747,11 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "7",
         "Safari": "",
         "SafariIOS": "",
-        "Nodejs": "14.5.0"
+        "Nodejs": "14.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>removeEventListener()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/EventTarget\"><code>EventTarget</code></a> interface\nremoves an event listener previously registered with <a href=\"$MDN_URL$/Web/API/EventTarget/addEventListener\"><code>EventTarget.addEventListener()</code></a> from the target.\nThe event listener to be removed is identified using a combination of the event type,\nthe event listener function itself, and various optional options that may affect the matching process;\nsee <a href=\"#matching_event_listeners_for_removal\">Matching event listeners for removal</a>.\n<p>Calling <code>removeEventListener()</code> with arguments that do not identify any\ncurrently registered <a href=\"$MDN_URL$/Web/API/EventTarget/addEventListener#the_event_listener_callback\">event listener</a> on the <code>EventTarget</code> has no\neffect.\n<p>If an <a href=\"$MDN_URL$/Web/API/EventTarget/addEventListener#the_event_listener_callback\">event listener</a> is removed from an <a href=\"$MDN_URL$/Web/API/EventTarget\"><code>EventTarget</code></a> while another listener of the target is processing an event, it will not be triggered by the event. However, it can be reattached.\n<div class=\"notecard warning\" id=\"sect1\">\n<p><strong>Warning:</strong> If a listener is registered twice, one with the <em>capture</em> flag set and one without, you must remove each one separately. Removal of a capturing listener does not affect a non-capturing version of the same listener, and vice versa.\n</div>\n<p>Event listeners can also be removed by passing an <a href=\"$MDN_URL$/Web/API/AbortSignal\"><code>AbortSignal</code></a> to an <a href=\"$MDN_URL$/Web/API/EventTarget/addEventListener\" ><code>addEventListener()</code></a> and then later calling <a href=\"$MDN_URL$/Web/API/AbortController/abort\" ><code>abort()</code></a> on the controller owning the signal.",
       "parameters": {
@@ -4225,7 +4179,8 @@
         "Opera": "29",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "18.0.0"
+        "Nodejs": "18.0.0",
+        "Deno": ""
       },
       "doc": "The global <strong><code>fetch()</code></strong> method starts the process of fetching a\nresource from the network, returning a promise which is fulfilled once the response is\navailable.\n<p>The promise resolves to the <a href=\"$MDN_URL$/Web/API/Response\"><code>Response</code></a> object\nrepresenting the response to your request.\n<p>A <a href=\"$MDN_URL$/Web/API/fetch\" aria-current=\"page\"><code>fetch()</code></a> promise only rejects when a\nnetwork error is encountered (which is usually when there's a permissions issue or\nsimilar). A <a href=\"$MDN_URL$/Web/API/fetch\" aria-current=\"page\"><code>fetch()</code></a> promise <em>does\nnot</em> reject on HTTP errors (<code>404</code>, etc.). Instead, a\n<code>then()</code> handler must check the <a href=\"$MDN_URL$/Web/API/Response/ok\"><code>Response.ok</code></a> and/or\n<a href=\"$MDN_URL$/Web/API/Response/status\"><code>Response.status</code></a> properties.\n<p><code>WindowOrWorkerGlobalScope</code> is implemented by both <a href=\"$MDN_URL$/Web/API/Window\"><code>Window</code></a> and\n<a href=\"$MDN_URL$/Web/API/WorkerGlobalScope\"><code>WorkerGlobalScope</code></a>, which means that the <code>fetch()</code> method is\navailable in pretty much any context in which you might want to fetch resources.\n<p>The <code>fetch()</code> method is controlled by the <code>connect-src</code> directive\nof <a href=\"$MDN_URL$/Web/HTTP/Headers/Content-Security-Policy\">Content Security Policy</a>\nrather than the directive of the resources it's retrieving.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> The <code>fetch()</code> method's parameters are identical to\nthose of the <a href=\"$MDN_URL$/Web/API/Request/Request\" ><code>Request()</code></a> constructor.\n</div>",
       "parameters": {
@@ -4420,10 +4375,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "7",
-        "IE": "10",
         "Opera": "11.5",
         "Safari": "4",
-        "SafariIOS": "3.2"
+        "SafariIOS": "3.2",
+        "Deno": ""
       },
       "doc": "The <strong><code>File</code></strong> interface provides information about files and allows JavaScript in a web page to access their content.\n<p><code>File</code> objects are generally retrieved from a <a href=\"$MDN_URL$/Web/API/FileList\"><code>FileList</code></a> object returned as a result of a user selecting files using the <a href=\"$MDN_URL$/Web/HTML/Element/input\"><code>&lt;input&gt;</code></a> element, or from a drag and drop operation's <a href=\"$MDN_URL$/Web/API/DataTransfer\"><code>DataTransfer</code></a> object.\n<p>A <code>File</code> object is a specific kind of <a href=\"$MDN_URL$/Web/API/Blob\"><code>Blob</code></a>, and can be used in any context that a Blob can. In particular, <a href=\"$MDN_URL$/Web/API/FileReader\"><code>FileReader</code></a>, <a href=\"$MDN_URL$/Web/API/URL/createObjectURL_static\" ><code>URL.createObjectURL()</code></a>, <a href=\"$MDN_URL$/Web/API/createImageBitmap\"><code>createImageBitmap()</code></a>, and <a href=\"$MDN_URL$/Web/API/XMLHttpRequest#send()\"><code>XMLHttpRequest.send()</code></a> accept both <code>Blob</code>s and <code>File</code>s.\n<p>See <a href=\"$MDN_URL$/Web/API/File_API/Using_files_from_web_applications\">Using files from web applications</a> for more information and examples."
     },
@@ -4439,7 +4394,8 @@
         "Firefox": "28",
         "Opera": "25",
         "Safari": "10.1",
-        "SafariIOS": "10.3"
+        "SafariIOS": "10.3",
+        "Deno": ""
       },
       "doc": "The <strong><code>File()</code></strong> constructor creates a new <a href=\"$MDN_URL$/Web/API/File\"><code>File</code></a>\nobject instance.",
       "parameters": {
@@ -4460,7 +4416,8 @@
         "Firefox": "15",
         "Opera": "15",
         "Safari": "10",
-        "SafariIOS": "10"
+        "SafariIOS": "10",
+        "Deno": ""
       },
       "doc": "The <strong><code>File.lastModified</code></strong> read-only property provides the\nlast modified date of the file as the number of milliseconds since the Unix\nepoch (January 1, 1970 at midnight). Files without a known last modified date return the\ncurrent date."
     },
@@ -4473,7 +4430,6 @@
         "Chrome": "13",
         "ChromeAndroid": "",
         "Edge": "",
-        "IE": "10",
         "Opera": "15"
       },
       "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div><div class=\"notecard nonstandard\" id=\"sect2\"><p><strong>Non-standard:</strong> This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</div>\n<p>The <strong><code>File.lastModifiedDate</code></strong> read-only property returns the last modified date of the file. Files without a known last modified date return the current date."
@@ -4488,10 +4444,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.6",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
-        "SafariIOS": "8"
+        "SafariIOS": "8",
+        "Deno": ""
       },
       "doc": "Returns the name of the file represented by a <a href=\"$MDN_URL$/Web/API/File\"><code>File</code></a> object. For security\nreasons, the path is excluded from this property."
     },
@@ -4505,10 +4461,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.6",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
-        "SafariIOS": "8"
+        "SafariIOS": "8",
+        "Deno": ""
       },
       "doc": "Returns the media type (<a href=\"$MDN_URL$/Web/HTTP/Basics_of_HTTP/MIME_types\">MIME</a>) of the file represented by a <a href=\"$MDN_URL$/Web/API/File\"><code>File</code></a> object."
     },
@@ -4546,7 +4502,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "10",
         "Opera": "11.1",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -4563,7 +4518,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -4584,7 +4538,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "10",
         "Opera": "11.1",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -4601,10 +4554,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.6",
-        "IE": "10",
         "Opera": "11",
         "Safari": "6",
-        "SafariIOS": "6"
+        "SafariIOS": "6",
+        "Deno": ""
       },
       "doc": "The <strong><code>FileReader</code></strong> object lets web applications asynchronously read the contents of files (or raw data buffers) stored on the user's computer, using <a href=\"$MDN_URL$/Web/API/File\"><code>File</code></a> or <a href=\"$MDN_URL$/Web/API/Blob\"><code>Blob</code></a> objects to specify the file or data to read.\n<p>File objects may be obtained from a <a href=\"$MDN_URL$/Web/API/FileList\"><code>FileList</code></a> object returned as a result of a user selecting files using the <a href=\"$MDN_URL$/Web/HTML/Element/input\"><code>&lt;input&gt;</code></a> element, or from a drag and drop operation's <a href=\"$MDN_URL$/Web/API/DataTransfer\"><code>DataTransfer</code></a> object.\n<p><code>FileReader</code> can only access the contents of files that the user has explicitly selected, either using an HTML <code>&lt;input type=\"file\"&gt;</code> element or by drag and drop. It cannot be used to read a file by pathname from the user's file system. To read files on the client's file system by pathname, use the <a href=\"$MDN_URL$/Web/API/File_System_Access_API\">File System Access API</a>. To read server-side files, use standard Ajax solutions, with CORS permission if reading cross-domain.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
@@ -4618,10 +4571,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.6",
-        "IE": "10",
         "Opera": "11",
         "Safari": "6",
-        "SafariIOS": "6"
+        "SafariIOS": "6",
+        "Deno": "1.3"
       },
       "doc": "The <strong><code>abort</code></strong> method aborts the read operation. Upon return,\nthe <a href=\"$MDN_URL$/Web/API/FileReader/readyState\" ><code>readyState</code></a> will be <code>DONE</code>.",
       "returns": "None (<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/undefined\"><code>undefined</code></a>)."
@@ -4636,10 +4589,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.6",
-        "IE": "10",
         "Opera": "11",
         "Safari": "6",
-        "SafariIOS": "6"
+        "SafariIOS": "6",
+        "Deno": "1.3"
       },
       "doc": "The <a href=\"$MDN_URL$/Web/API/FileReader\"><code>FileReader</code></a> <strong><code>error</code></strong> property returns the\nerror that occurred while reading the file."
     },
@@ -4653,10 +4606,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.6",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
-        "SafariIOS": "6"
+        "SafariIOS": "6",
+        "Deno": "1.3"
       },
       "doc": "The <strong><code>FileReader()</code></strong> constructor creates a new FileReader.\n<p>For details about how to use <code>FileReader</code>, see <a href=\"$MDN_URL$/Web/API/File_API/Using_files_from_web_applications\">Using files from web applications</a>."
     },
@@ -4670,10 +4623,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.6",
-        "IE": "10",
         "Opera": "12",
         "Safari": "6",
-        "SafariIOS": "6"
+        "SafariIOS": "6",
+        "Deno": "1.3"
       },
       "doc": "The <a href=\"$MDN_URL$/Web/API/FileReader\"><code>FileReader</code></a> interface's\n<strong><code>readAsArrayBuffer()</code></strong> method is used to start reading the\ncontents of a specified <a href=\"$MDN_URL$/Web/API/Blob\"><code>Blob</code></a> or <a href=\"$MDN_URL$/Web/API/File\"><code>File</code></a>. When the read\noperation is finished, the <a href=\"$MDN_URL$/Web/API/FileReader/readyState\" ><code>readyState</code></a> becomes\n<code>DONE</code>, and the <a href=\"$MDN_URL$/Web/API/FileReader/loadend_event\" ><code>loadend</code></a> is\ntriggered. At that time, the <a href=\"$MDN_URL$/Web/API/FileReader/result\" ><code>result</code></a> attribute\ncontains an <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/ArrayBuffer\"><code>ArrayBuffer</code></a> representing the file's data.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> The <a href=\"$MDN_URL$/Web/API/Blob/arrayBuffer\"><code>Blob.arrayBuffer()</code></a> method is a newer promise-based API to read a\nfile as an array buffer.\n</div>",
       "parameters": {
@@ -4693,7 +4646,8 @@
         "Firefox": "3.6",
         "Opera": "11",
         "Safari": "6",
-        "SafariIOS": "6"
+        "SafariIOS": "6",
+        "Deno": "1.3"
       },
       "doc": "The <code>readAsBinaryString</code> method is used to start reading the contents of the\nspecified <a href=\"$MDN_URL$/Web/API/Blob\"><code>Blob</code></a> or <a href=\"$MDN_URL$/Web/API/File\"><code>File</code></a>. When the read operation is\nfinished, the <a href=\"$MDN_URL$/Web/API/FileReader/readyState\" ><code>readyState</code></a> becomes\n<code>DONE</code>, and the <a href=\"$MDN_URL$/Web/API/FileReader/loadend_event\"><code>FileReader.loadend_event</code></a> is triggered. At that time, the\n<a href=\"$MDN_URL$/Web/API/FileReader/result\" ><code>result</code></a> attribute contains the raw binary data from\nthe file.\n<p>Note that this method was once removed from the File API specification, but\nre-introduced for backward compatibility.\nUsing <a href=\"$MDN_URL$/Web/API/FileReader/readAsArrayBuffer\"><code>FileReader.readAsArrayBuffer()</code></a> is recommended.",
       "parameters": {
@@ -4711,10 +4665,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.6",
-        "IE": "10",
         "Opera": "11",
         "Safari": "6",
-        "SafariIOS": "6"
+        "SafariIOS": "6",
+        "Deno": "1.3"
       },
       "doc": "The <code>readAsDataURL</code> method is used to read the contents of the specified\n<a href=\"$MDN_URL$/Web/API/Blob\"><code>Blob</code></a> or <a href=\"$MDN_URL$/Web/API/File\"><code>File</code></a>. When the read operation is finished, the\n<a href=\"$MDN_URL$/Web/API/FileReader/readyState\" ><code>readyState</code></a> becomes <code>DONE</code>, and the\n<a href=\"$MDN_URL$/Web/API/FileReader/loadend_event\" ><code>loadend</code></a> is triggered. At that time, the\n<a href=\"$MDN_URL$/Web/API/FileReader/result\" ><code>result</code></a> attribute contains the data as a <a href=\"$MDN_URL$/Web/HTTP/Basics_of_HTTP/Data_URLs\">data: URL</a> representing the\nfile's data as a base64 encoded string.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> The blob's <a href=\"$MDN_URL$/Web/API/FileReader/result\" ><code>result</code></a> cannot be\ndirectly decoded as Base64 without first removing the Data-URL declaration preceding\nthe Base64-encoded data. To retrieve only the Base64 encoded string, first\nremove <code>data:*/*;base64,</code> from the result.\n</div>",
       "parameters": {
@@ -4732,10 +4686,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.6",
-        "IE": "10",
         "Opera": "11",
         "Safari": "6",
-        "SafariIOS": "6"
+        "SafariIOS": "6",
+        "Deno": "1.3"
       },
       "doc": "The <strong><code>readAsText()</code></strong> method is used to read the contents of the specified <a href=\"$MDN_URL$/Web/API/Blob\"><code>Blob</code></a> or <a href=\"$MDN_URL$/Web/API/File\"><code>File</code></a>.\nWhen the read operation is complete, the <a href=\"$MDN_URL$/Web/API/FileReader/readyState\" ><code>readyState</code></a> is changed to <code>DONE</code>,\nthe <a href=\"$MDN_URL$/Web/API/FileReader/loadend_event\" ><code>loadend</code></a> event is triggered, and the <a href=\"$MDN_URL$/Web/API/FileReader/result\" ><code>result</code></a> property contains the contents of the file as a text string.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> The <a href=\"$MDN_URL$/Web/API/Blob/text\"><code>Blob.text()</code></a> method is a newer promise-based API to read a file as text.\n</div>\n<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> This method loads the entire file's content into memory and is not suitable for large files. Prefer <a href=\"$MDN_URL$/Web/API/FileReader/readAsArrayBuffer\"><code>readAsArrayBuffer()</code></a> for large files.\n</div>",
       "parameters": {
@@ -4754,10 +4708,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.6",
-        "IE": "10",
         "Opera": "11",
         "Safari": "6",
-        "SafariIOS": "6"
+        "SafariIOS": "6",
+        "Deno": "1.3"
       },
       "doc": "The <a href=\"$MDN_URL$/Web/API/FileReader\"><code>FileReader</code></a> <strong><code>readyState</code></strong> property provides the current state of the reading operation a <code>FileReader</code> is in. A <code>FileReader</code> exists in one of the following states:\n<figure class=\"table-container\"><table>\n<thead>\n<tr>\n<th>Value</th>\n<th>State</th>\n<th>Description</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>0</code></td>\n<td><code>EMPTY</code></td>\n<td>Reader has been created. None of the read methods called yet.</td>\n</tr>\n<tr>\n<td><code>1</code></td>\n<td><code>LOADING</code></td>\n<td>A read method has been called.</td>\n</tr>\n<tr>\n<td><code>2</code></td>\n<td><code>DONE</code></td>\n<td>The operation is complete.</td>\n</tr>\n</tbody>\n</table></figure>\n<dl>\n<dt id=\"empty\"><code>EMPTY</code></dt>\n<dd>\n<p>The <code>FileReader</code> has been created, but no readAs method was called yet.\n</dd>\n<dt id=\"loading\"><code>LOADING</code></dt>\n<dd>\n<p>A readAs method was invoked. A <a href=\"$MDN_URL$/Web/API/File\"><code>File</code></a> or <a href=\"$MDN_URL$/Web/API/Blob\"><code>Blob</code></a> is being read, and no error has occurred yet.\n</dd>\n<dt id=\"done\"><code>DONE</code></dt>\n<dd>\n<p>The read operation is complete. This could mean that: the entire <a href=\"$MDN_URL$/Web/API/File\"><code>File</code></a> or <a href=\"$MDN_URL$/Web/API/Blob\"><code>Blob</code></a> has been read into memory, a file read error occurred, or <a href=\"$MDN_URL$/Web/API/FileReader/abort\" ><code>abort()</code></a> was called and the read was cancelled.\n</dd>\n</dl>"
     },
@@ -4771,10 +4725,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.6",
-        "IE": "10",
         "Opera": "11",
         "Safari": "6",
-        "SafariIOS": "6"
+        "SafariIOS": "6",
+        "Deno": "1.3"
       },
       "doc": "The <a href=\"$MDN_URL$/Web/API/FileReader\"><code>FileReader</code></a> <strong><code>result</code></strong> property returns the\nfile's contents. This property is only valid after the read operation is complete, and\nthe format of the data depends on which of the methods was used to initiate the read\noperation."
     },
@@ -4788,7 +4742,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "8",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -4805,7 +4758,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "8",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -4822,7 +4774,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "8",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -4850,7 +4801,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "8",
-        "IE": "11",
         "Opera": "15",
         "Safari": "6",
         "SafariIOS": "6"
@@ -4877,7 +4827,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "8",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -4904,7 +4853,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "8",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -5987,7 +5935,6 @@
         "ChromeAndroid": "26",
         "Edge": "",
         "Firefox": "24",
-        "IE": "9",
         "Opera": "15",
         "Safari": "7",
         "SafariIOS": "7"
@@ -6024,7 +5971,6 @@
         "ChromeAndroid": "26",
         "Edge": "",
         "Firefox": "24",
-        "IE": "9",
         "Opera": "15",
         "Safari": "7",
         "SafariIOS": "7"
@@ -6686,11 +6632,11 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "10",
         "Opera": "12",
         "Safari": "5",
         "SafariIOS": "5",
-        "Nodejs": "18.0.0"
+        "Nodejs": "18.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>FormData</code></strong> interface provides a way to construct a set of key/value pairs representing form fields and their values, which can be sent using the <a href=\"$MDN_URL$/Web/API/fetch\"><code>fetch()</code></a>, <a href=\"$MDN_URL$/Web/API/XMLHttpRequest/send\"><code>XMLHttpRequest.send()</code></a> or <a href=\"$MDN_URL$/Web/API/Navigator/sendBeacon\"><code>navigator.sendBeacon()</code></a> methods. It uses the same format a form would use if the encoding type were set to <code>\"multipart/form-data\"</code>.\n<p>You can also pass it directly to the <a href=\"$MDN_URL$/Web/API/URLSearchParams\"><code>URLSearchParams</code></a> constructor if you want to generate query parameters in the way a <a href=\"$MDN_URL$/Web/HTML/Element/form\"><code>&lt;form&gt;</code></a> would do if it were using simple <code>GET</code> submission.\n<p>An object implementing <code>FormData</code> can directly be used in a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Statements/for...of\"><code>for...of</code></a> structure, instead of <a href=\"$MDN_URL$/Web/API/FormData/entries\" ><code>entries()</code></a>: <code>for (const p of myFormData)</code> is equivalent to <code>for (const p of myFormData.entries())</code>.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.\n</div>"
     },
@@ -6704,10 +6650,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "10",
         "Opera": "12",
         "Safari": "5",
-        "SafariIOS": "5"
+        "SafariIOS": "5",
+        "Deno": ""
       },
       "doc": "The <strong><code>append()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/FormData\"><code>FormData</code></a> interface appends a new value onto an existing key inside a <code>FormData</code> object, or adds the key if it does not already exist.\n<p>The difference between <a href=\"$MDN_URL$/Web/API/FormData/set\" ><code>set()</code></a> and <code>append()</code> is that if the specified key already exists, <code>set()</code> will overwrite all existing values with the new one, whereas <code>append()</code> will append the new value onto the end of the existing set of values.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This method is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.\n</div>",
       "parameters": {
@@ -6729,7 +6675,8 @@
         "Firefox": "39",
         "Opera": "37",
         "Safari": "11.1",
-        "SafariIOS": "11.3"
+        "SafariIOS": "11.3",
+        "Deno": ""
       },
       "doc": "The <strong><code>delete()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/FormData\"><code>FormData</code></a> interface deletes a key and its value(s) from a <code>FormData</code> object.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This method is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.\n</div>",
       "parameters": {
@@ -6749,7 +6696,8 @@
         "Firefox": "44",
         "Opera": "37",
         "Safari": "11.1",
-        "SafariIOS": "11.3"
+        "SafariIOS": "11.3",
+        "Deno": ""
       },
       "doc": "The <strong><code>FormData.entries()</code></strong> method returns an <a href=\"$MDN_URL$/Web/JavaScript/Reference/Iteration_protocols\">iterator</a> which iterates through all key/value pairs contained in the <a href=\"$MDN_URL$/Web/API/FormData\"><code>FormData</code></a>. The key of each pair is a string object, and the value is either a string or a <a href=\"$MDN_URL$/Web/API/Blob\"><code>Blob</code></a>.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This method is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.\n</div>",
       "returns": "An <a href=\"$MDN_URL$/Web/JavaScript/Reference/Iteration_protocols\">iterator</a> of <a href=\"$MDN_URL$/Web/API/FormData\"><code>FormData</code></a>'s key/value pairs."
@@ -6764,10 +6712,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "10",
         "Opera": "12",
         "Safari": "5",
-        "SafariIOS": "5"
+        "SafariIOS": "5",
+        "Deno": ""
       },
       "doc": "The <strong><code>FormData()</code></strong> constructor creates a new <a href=\"$MDN_URL$/Web/API/FormData\"><code>FormData</code></a> object.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.\n</div>",
       "parameters": {
@@ -6791,7 +6739,8 @@
         "Firefox": "39",
         "Opera": "37",
         "Safari": "11.1",
-        "SafariIOS": "11.3"
+        "SafariIOS": "11.3",
+        "Deno": ""
       },
       "doc": "The <strong><code>get()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/FormData\"><code>FormData</code></a> interface\nreturns the first value associated with a given key from within a <code>FormData</code>\nobject. If you expect multiple values and want all of them, use the\n<a href=\"$MDN_URL$/Web/API/FormData/getAll\" ><code>getAll()</code></a> method instead.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This method is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.\n</div>",
       "parameters": {
@@ -6811,7 +6760,8 @@
         "Firefox": "39",
         "Opera": "37",
         "Safari": "11.1",
-        "SafariIOS": "11.3"
+        "SafariIOS": "11.3",
+        "Deno": ""
       },
       "doc": "The <strong><code>getAll()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/FormData\"><code>FormData</code></a> interface returns all the values associated with a given key from within a <code>FormData</code> object.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This method is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.\n</div>",
       "parameters": {
@@ -6831,7 +6781,8 @@
         "Firefox": "39",
         "Opera": "37",
         "Safari": "11.1",
-        "SafariIOS": "11.3"
+        "SafariIOS": "11.3",
+        "Deno": ""
       },
       "doc": "The <strong><code>has()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/FormData\"><code>FormData</code></a> interface returns whether a <code>FormData</code> object contains a certain key.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This method is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.\n</div>",
       "parameters": {
@@ -6851,7 +6802,8 @@
         "Firefox": "44",
         "Opera": "37",
         "Safari": "11.1",
-        "SafariIOS": "11.3"
+        "SafariIOS": "11.3",
+        "Deno": ""
       },
       "doc": "The <strong><code>FormData.keys()</code></strong> method returns an <a href=\"$MDN_URL$/Web/JavaScript/Reference/Iteration_protocols\">iterator</a> which iterates through all keys contained in the <a href=\"$MDN_URL$/Web/API/FormData\"><code>FormData</code></a>. The keys are strings.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This method is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.\n</div>",
       "returns": "An <a href=\"$MDN_URL$/Web/JavaScript/Reference/Iteration_protocols\"><code>iterator</code></a> of <a href=\"$MDN_URL$/Web/API/FormData\"><code>FormData</code></a>'s keys."
@@ -6868,7 +6820,8 @@
         "Firefox": "39",
         "Opera": "37",
         "Safari": "11.1",
-        "SafariIOS": "11.3"
+        "SafariIOS": "11.3",
+        "Deno": ""
       },
       "doc": "The <strong><code>set()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/FormData\"><code>FormData</code></a> interface sets a new value for an existing key inside a <code>FormData</code> object, or adds the key/value if it does not already exist.\n<p>The difference between <code>set()</code> and <a href=\"$MDN_URL$/Web/API/FormData/append\" ><code>append()</code></a> is that if the specified key does already exist, <code>set()</code> will overwrite all existing values with the new one, whereas <code>append()</code> will append the new value onto the end of the existing set of values.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This method is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.\n</div>",
       "parameters": {
@@ -6890,7 +6843,8 @@
         "Firefox": "44",
         "Opera": "37",
         "Safari": "11.1",
-        "SafariIOS": "11.3"
+        "SafariIOS": "11.3",
+        "Deno": ""
       },
       "doc": "The <strong><code>FormData.values()</code></strong> method returns an <a href=\"$MDN_URL$/Web/JavaScript/Reference/Iteration_protocols\">iterator</a> which iterates through all values contained in the <a href=\"$MDN_URL$/Web/API/FormData\"><code>FormData</code></a>. The values are strings or <a href=\"$MDN_URL$/Web/API/Blob\"><code>Blob</code></a> objects.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This method is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.\n</div>",
       "returns": "An <a href=\"$MDN_URL$/Web/JavaScript/Reference/Iteration_protocols\"><code>iterator</code></a> of <a href=\"$MDN_URL$/Web/API/FormData\"><code>FormData</code></a>'s values."
@@ -7468,7 +7422,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "10.6",
         "Safari": "5",
         "SafariIOS": "3"
@@ -7485,7 +7438,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "10.6",
         "Safari": "5",
         "SafariIOS": "3"
@@ -7506,7 +7458,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "10.6",
         "Safari": "5",
         "SafariIOS": "3"
@@ -7529,7 +7480,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "10.6",
         "Safari": "5",
         "SafariIOS": "3"
@@ -7567,7 +7517,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "16",
         "Safari": "5",
         "SafariIOS": "3"
@@ -7584,7 +7533,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "16",
         "Safari": "5",
         "SafariIOS": "3"
@@ -7601,7 +7549,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "16",
         "Safari": "5",
         "SafariIOS": "3"
@@ -7618,7 +7565,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "16",
         "Safari": "5",
         "SafariIOS": "3"
@@ -7635,7 +7581,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "16",
         "Safari": "5",
         "SafariIOS": "3"
@@ -7652,7 +7597,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "16",
         "Safari": "5",
         "SafariIOS": "3"
@@ -7669,7 +7613,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "16",
         "Safari": "5",
         "SafariIOS": "3"
@@ -7701,7 +7644,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "16",
         "Safari": "5",
         "SafariIOS": "3"
@@ -7718,7 +7660,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "16",
         "Safari": "5",
         "SafariIOS": "3"
@@ -7750,7 +7691,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "16",
         "Safari": "5",
         "SafariIOS": "4.2"
@@ -7767,7 +7707,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "16",
         "Safari": "5",
         "SafariIOS": "4.2"
@@ -10602,7 +10541,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.6",
-        "IE": "8",
         "Opera": "10.6",
         "Safari": "5",
         "SafariIOS": "5"
@@ -10675,7 +10613,8 @@
         "Opera": "29",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "18.0.0"
+        "Nodejs": "18.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>Headers</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Fetch_API\">Fetch API</a> allows you to perform various actions on <a href=\"$MDN_URL$/Web/HTTP/Headers\">HTTP request and response headers</a>. These actions include retrieving, setting, adding to, and removing headers from the list of the request's headers.\n<p>A <code>Headers</code> object has an associated header list, which is initially empty and consists of zero or more name and value pairs. You can add to this using methods like <a href=\"$MDN_URL$/Web/API/Headers/append\" ><code>append()</code></a> (see <a href=\"#examples\">Examples</a>.) In all methods of this interface, header names are matched by case-insensitive byte sequence.\n<p>For security reasons, some headers can only be controlled by the user agent. These headers include the <a href=\"$MDN_URL$/Glossary/Forbidden_header_name\">forbidden header names</a> and <a href=\"$MDN_URL$/Glossary/Forbidden_response_header_name\">forbidden response header names</a>.\n<p>A Headers object also has an associated guard, which takes a value of <code>immutable</code>, <code>request</code>, <code>request-no-cors</code>, <code>response</code>, or <code>none</code>. This affects whether the <a href=\"$MDN_URL$/Web/API/Headers/set\" ><code>set()</code></a>, <a href=\"$MDN_URL$/Web/API/Headers/delete\" ><code>delete()</code></a>, and <a href=\"$MDN_URL$/Web/API/Headers/append\" ><code>append()</code></a> methods will mutate the header. For more information see <a href=\"$MDN_URL$/Glossary/Guard\">Guard</a>.\n<p>You can retrieve a <code>Headers</code> object via the <a href=\"$MDN_URL$/Web/API/Request/headers\"><code>Request.headers</code></a> and <a href=\"$MDN_URL$/Web/API/Response/headers\"><code>Response.headers</code></a> properties, and create a new <code>Headers</code> object using the <a href=\"$MDN_URL$/Web/API/Headers/Headers\" ><code>Headers()</code></a> constructor.\n<p>An object implementing <code>Headers</code> can directly be used in a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Statements/for...of\"><code>for...of</code></a> structure, instead of <a href=\"$MDN_URL$/Web/API/Headers/entries\" ><code>entries()</code></a>: <code>for (const p of myHeaders)</code> is equivalent to <code>for (const p of myHeaders.entries())</code>.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> you can find out more about the available headers by reading our <a href=\"$MDN_URL$/Web/HTTP/Headers\">HTTP headers</a> reference.\n</div>"
     },
@@ -10692,7 +10631,8 @@
         "Opera": "29",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "18.0.0"
+        "Nodejs": "18.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>append()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Headers\"><code>Headers</code></a>\ninterface appends a new value onto an existing header inside a <code>Headers</code>\nobject, or adds the header if it does not already exist.\n<p>The difference between <a href=\"$MDN_URL$/Web/API/Headers/set\" ><code>set()</code></a> and <code>append()</code> is\nthat if the specified header already exists and accepts multiple values,\n<code>set()</code> will overwrite the existing value with the new one, whereas\n<code>append()</code> will append the new value onto the end of the set of values.\n<p>For security reasons, some headers can only be controlled by the user agent. These\nheaders include the <a href=\"$MDN_URL$/Glossary/Forbidden_header_name\">forbidden header names</a>\nand <a href=\"$MDN_URL$/Glossary/Forbidden_response_header_name\">forbidden response header names</a>.",
       "parameters": {
@@ -10714,7 +10654,8 @@
         "Opera": "29",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "18.0.0"
+        "Nodejs": "18.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>delete()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Headers\"><code>Headers</code></a>\ninterface deletes a header from the current <code>Headers</code> object.\n<p>This method throws a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/TypeError\"><code>TypeError</code></a> for the following reasons:\n<ul>\n<li>The value of the name parameter is not the name of an HTTP header.</li>\n<li>The value of <a href=\"$MDN_URL$/Glossary/Guard\">Guard</a> is <code>immutable</code>.</li>\n</ul>\n<p>For security reasons, some headers can only be controlled by the user agent. These\nheaders include the <a href=\"$MDN_URL$/Glossary/Forbidden_header_name\">forbidden header names</a>\nand <a href=\"$MDN_URL$/Glossary/Forbidden_response_header_name\">forbidden response header names</a>.",
       "parameters": {
@@ -10735,7 +10676,8 @@
         "Opera": "29",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "18.0.0"
+        "Nodejs": "18.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>Headers.entries()</code></strong> method returns an\n<a href=\"$MDN_URL$/Web/JavaScript/Reference/Iteration_protocols\"><code>iterator</code></a> allowing to go through all key/value pairs\ncontained in this object. Both the key and value of each pair are\n<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/String\"><code>String</code></a> objects.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This method is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.\n</div>",
       "returns": "Returns an <a href=\"$MDN_URL$/Web/JavaScript/Reference/Iteration_protocols\"><code>iterator</code></a>."
@@ -10753,7 +10695,8 @@
         "Opera": "29",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "18.0.0"
+        "Nodejs": "18.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>Headers.forEach()</code></strong> method executes a callback function once per each key/value pair in the <a href=\"$MDN_URL$/Web/API/Headers\"><code>Headers</code></a> object.",
       "parameters": {
@@ -10775,7 +10718,8 @@
         "Opera": "29",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "18.0.0"
+        "Nodejs": "18.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>get()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Headers\"><code>Headers</code></a> interface\nreturns a byte string of all the values of a header within a <code>Headers</code> object\nwith a given name. If the requested header doesn't exist in the <code>Headers</code>\nobject, it returns <code>null</code>.\n<p>For security reasons, some headers can only be controlled by the user agent. These\nheaders include the <a href=\"$MDN_URL$/Glossary/Forbidden_header_name\">forbidden header names</a>\nand <a href=\"$MDN_URL$/Glossary/Forbidden_response_header_name\">forbidden response header names</a>.",
       "parameters": {
@@ -10813,7 +10757,8 @@
         "Opera": "29",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "18.0.0"
+        "Nodejs": "18.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>has()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Headers\"><code>Headers</code></a> interface\nreturns a boolean stating whether a <code>Headers</code> object contains a certain\nheader.\n<p>For security reasons, some headers can only be controlled by the user agent. These\nheaders include the <a href=\"$MDN_URL$/Glossary/Forbidden_header_name\">forbidden header names</a>\nand <a href=\"$MDN_URL$/Glossary/Forbidden_response_header_name\">forbidden response header names</a>.",
       "parameters": {
@@ -10834,7 +10779,8 @@
         "Opera": "29",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "18.0.0"
+        "Nodejs": "18.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>Headers()</code></strong> constructor creates a new\n<a href=\"$MDN_URL$/Web/API/Headers\"><code>Headers</code></a> object.",
       "parameters": {
@@ -10854,7 +10800,8 @@
         "Opera": "29",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "18.0.0"
+        "Nodejs": "18.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>Headers.keys()</code></strong> method returns an\n<a href=\"$MDN_URL$/Web/JavaScript/Reference/Iteration_protocols\"><code>iterator</code></a> allowing to go through all keys contained\nin this object. The keys are <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/String\"><code>String</code></a> objects.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This method is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.\n</div>",
       "returns": "Returns an <a href=\"$MDN_URL$/Web/JavaScript/Reference/Iteration_protocols\"><code>iterator</code></a>."
@@ -10872,7 +10819,8 @@
         "Opera": "29",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "18.0.0"
+        "Nodejs": "18.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>set()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Headers\"><code>Headers</code></a> interface\nsets a new value for an existing header inside a <code>Headers</code> object, or adds\nthe header if it does not already exist.\n<p>The difference between <code>set()</code> and <a href=\"$MDN_URL$/Web/API/Headers/append\"><code>Headers.append</code></a> is that if\nthe specified header already exists and accepts multiple values, <code>set()</code>\noverwrites the existing value with the new one, whereas <a href=\"$MDN_URL$/Web/API/Headers/append\"><code>Headers.append</code></a>\nappends the new value to the end of the set of values.\n<p>For security reasons, some headers can only be controller by the user agent. These\nheaders include the <a href=\"$MDN_URL$/Glossary/Forbidden_header_name\">forbidden header names</a>\nand <a href=\"$MDN_URL$/Glossary/Forbidden_response_header_name\">forbidden response header names</a>.",
       "parameters": {
@@ -10894,7 +10842,8 @@
         "Opera": "29",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "18.0.0"
+        "Nodejs": "18.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>Headers.values()</code></strong> method returns an\n<a href=\"$MDN_URL$/Web/JavaScript/Reference/Iteration_protocols\"><code>iterator</code></a> allowing to go through all values contained\nin this object. The values are <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/String\"><code>String</code></a> objects.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This method is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.\n</div>",
       "returns": "Returns an <a href=\"$MDN_URL$/Web/JavaScript/Reference/Iteration_protocols\"><code>iterator</code></a>."
@@ -11625,7 +11574,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "10",
         "Opera": "3",
         "Safari": "",
         "SafariIOS": ""
@@ -11642,7 +11590,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -11660,7 +11607,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -11678,7 +11624,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -11699,7 +11644,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -11716,7 +11660,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "10",
         "Opera": "11.5",
         "Safari": "5",
         "SafariIOS": "4"
@@ -11739,7 +11682,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "10",
         "Opera": "11.5",
         "Safari": "5",
         "SafariIOS": "4"
@@ -11778,7 +11720,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -11842,7 +11783,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -11875,7 +11815,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "15",
         "Safari": "",
         "SafariIOS": ""
@@ -11892,7 +11831,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "15",
         "Safari": "",
         "SafariIOS": ""
@@ -11909,7 +11847,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "15",
         "Safari": "",
         "SafariIOS": ""
@@ -11926,7 +11863,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -11975,7 +11911,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "15",
         "Safari": "",
         "SafariIOS": ""
@@ -11992,7 +11927,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "15",
         "Safari": "",
         "SafariIOS": ""
@@ -12009,7 +11943,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "15",
         "Safari": "",
         "SafariIOS": ""
@@ -12042,7 +11975,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -12075,7 +12007,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "15",
         "Safari": "",
         "SafariIOS": ""
@@ -12092,7 +12023,6 @@
         "ChromeAndroid": "52",
         "Edge": "",
         "Firefox": "22",
-        "IE": "5.5",
         "Opera": "39",
         "Safari": "3",
         "SafariIOS": ""
@@ -12126,7 +12056,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -12143,7 +12072,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "15",
         "Safari": "",
         "SafariIOS": ""
@@ -12160,7 +12088,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "15",
         "Safari": "",
         "SafariIOS": ""
@@ -12177,7 +12104,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "15",
         "Safari": "",
         "SafariIOS": ""
@@ -12194,7 +12120,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -12243,7 +12168,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "15",
         "Safari": "",
         "SafariIOS": ""
@@ -12260,7 +12184,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "15",
         "Safari": "",
         "SafariIOS": ""
@@ -12277,7 +12200,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "15",
         "Safari": "",
         "SafariIOS": ""
@@ -12310,7 +12232,6 @@
         "ChromeAndroid": "54",
         "Edge": "",
         "Firefox": "30",
-        "IE": "11",
         "Opera": "41",
         "Safari": "9",
         "SafariIOS": "9"
@@ -12343,7 +12264,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "15",
         "Safari": "",
         "SafariIOS": ""
@@ -12360,7 +12280,6 @@
         "ChromeAndroid": "32",
         "Edge": "",
         "Firefox": "22",
-        "IE": "5.5",
         "Opera": "19",
         "Safari": "10.1",
         "SafariIOS": "10.3"
@@ -12394,7 +12313,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "10.5",
         "Safari": "3.1",
         "SafariIOS": "3"
@@ -12411,7 +12329,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3.1",
         "SafariIOS": "3"
@@ -12432,7 +12349,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -12449,7 +12365,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -12466,7 +12381,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -12483,7 +12397,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -12500,7 +12413,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -12561,7 +12473,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "9",
         "Safari": "2",
         "SafariIOS": ""
@@ -12603,7 +12514,6 @@
           "ChromeAndroid": "",
           "Edge": "",
           "Firefox": "1.5",
-          "IE": "9",
           "Opera": "9",
           "Safari": "2",
           "SafariIOS": ""
@@ -12657,7 +12567,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "9",
         "Safari": "3",
         "SafariIOS": ""
@@ -12709,7 +12618,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "2",
-        "IE": "9",
         "Opera": "9",
         "Safari": "4",
         "SafariIOS": "3"
@@ -12751,7 +12659,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "9",
         "Safari": "3",
         "SafariIOS": ""
@@ -12768,7 +12675,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "8",
         "Opera": "8",
         "Safari": "",
         "SafariIOS": ""
@@ -12785,7 +12691,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "8",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -12806,7 +12711,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "8",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -12823,7 +12727,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "8",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -12873,7 +12776,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "12.1",
         "SafariIOS": "12.2"
@@ -13027,7 +12929,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13044,7 +12945,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13061,7 +12961,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -13078,7 +12977,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "8",
         "Safari": "",
         "SafariIOS": ""
@@ -13095,7 +12993,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "5",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -13144,7 +13041,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "5.5",
         "Opera": "8",
         "Safari": "3",
         "SafariIOS": ""
@@ -13162,7 +13058,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "5.5",
         "Opera": "10.5",
         "Safari": "6",
         "SafariIOS": "6"
@@ -13180,7 +13075,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "5.5",
         "Opera": "9",
         "Safari": "3",
         "SafariIOS": ""
@@ -13197,7 +13091,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "6",
-        "IE": "11",
         "Opera": "11",
         "Safari": "5.1",
         "SafariIOS": "5"
@@ -13214,7 +13107,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13247,7 +13139,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "5.5",
         "Opera": "8",
         "Safari": "3",
         "SafariIOS": ""
@@ -13268,7 +13159,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "11.6",
         "Safari": "5.1",
         "SafariIOS": "5"
@@ -13319,7 +13209,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "45",
-        "IE": "5.5",
         "Opera": "9.6",
         "Safari": "",
         "SafariIOS": ""
@@ -13352,7 +13241,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13369,7 +13257,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13400,7 +13287,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "8",
         "Safari": "3",
         "SafariIOS": ""
@@ -13417,7 +13303,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "8",
         "Safari": "3",
         "SafariIOS": ""
@@ -13434,7 +13319,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "8",
         "Safari": "3",
         "SafariIOS": ""
@@ -13451,7 +13335,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "8",
         "Safari": "3",
         "SafariIOS": ""
@@ -13468,7 +13351,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "8",
         "Safari": "3",
         "SafariIOS": ""
@@ -13485,7 +13367,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "98",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "1.3",
         "SafariIOS": ""
@@ -13534,7 +13415,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "8",
         "Safari": "3",
         "SafariIOS": ""
@@ -13567,7 +13447,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13602,7 +13481,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13619,7 +13497,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13637,7 +13514,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13655,7 +13531,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13673,7 +13548,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13691,7 +13565,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13741,7 +13614,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "8",
         "Safari": "3",
         "SafariIOS": ""
@@ -13758,7 +13630,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13775,7 +13646,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13792,7 +13662,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "8",
         "Safari": "3",
         "SafariIOS": ""
@@ -13809,7 +13678,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13826,7 +13694,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "6",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13843,7 +13710,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13860,7 +13726,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13877,7 +13742,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13935,7 +13799,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "8",
         "Safari": "3",
         "SafariIOS": ""
@@ -13953,7 +13816,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13971,7 +13833,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13989,7 +13850,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -14006,7 +13866,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -14023,7 +13882,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -14040,7 +13898,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -14057,7 +13914,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -14075,7 +13931,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "6",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -14092,7 +13947,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -14122,7 +13976,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "8",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -14139,7 +13992,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "8",
         "Safari": "3",
         "SafariIOS": ""
@@ -14204,7 +14056,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -14237,7 +14088,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "8",
         "Safari": "",
         "SafariIOS": ""
@@ -14255,7 +14105,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -14272,7 +14121,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -14290,7 +14138,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -14307,7 +14154,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -14324,7 +14170,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "8",
-        "IE": "11",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -14407,7 +14252,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -14425,7 +14269,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -14442,7 +14285,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "8",
         "Safari": "",
         "SafariIOS": ""
@@ -14463,7 +14305,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -14497,7 +14338,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "6",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -14515,7 +14355,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -14532,7 +14371,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -14549,7 +14387,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -14598,7 +14435,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -14631,7 +14467,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -14649,7 +14484,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -14666,7 +14500,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -14715,7 +14548,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "8",
         "Safari": "",
         "SafariIOS": ""
@@ -14732,7 +14564,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "5.1",
         "SafariIOS": "5"
@@ -14750,7 +14581,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -14799,7 +14629,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.6",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -14861,7 +14690,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -14879,7 +14707,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "5.1",
         "SafariIOS": "5"
@@ -14923,7 +14750,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "8",
         "Safari": "3",
         "SafariIOS": ""
@@ -14967,7 +14793,6 @@
         "Chrome": "5",
         "ChromeAndroid": "",
         "Edge": "",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "5",
         "SafariIOS": "4"
@@ -14987,7 +14812,6 @@
         "Chrome": "5",
         "ChromeAndroid": "",
         "Edge": "",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "5",
         "SafariIOS": "4"
@@ -15040,7 +14864,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -15073,7 +14896,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "6",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -15090,7 +14912,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -15107,7 +14928,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "6",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -15124,7 +14944,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -15141,7 +14960,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -15204,7 +15022,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -15237,7 +15054,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "15",
         "Safari": "",
         "SafariIOS": ""
@@ -15254,7 +15070,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -15272,7 +15087,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "65",
-        "IE": "2",
         "Opera": "7.2",
         "Safari": "1.2",
         "SafariIOS": ""
@@ -15289,7 +15103,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "5.5",
         "Opera": "10.5",
         "Safari": "3.1",
         "SafariIOS": "3"
@@ -15302,7 +15115,6 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "IE": "10",
         "Safari": "7",
         "SafariIOS": "7"
       },
@@ -15318,7 +15130,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3.1",
         "SafariIOS": "3"
@@ -15335,7 +15146,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3.1",
         "SafariIOS": "3"
@@ -15352,7 +15162,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "4",
         "SafariIOS": "3"
@@ -15398,7 +15207,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3.1",
         "SafariIOS": "3"
@@ -15444,7 +15252,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3.1",
         "SafariIOS": "3"
@@ -15461,7 +15268,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3.1",
         "SafariIOS": "3"
@@ -15494,7 +15300,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "20",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3.1",
         "SafariIOS": "3"
@@ -15529,7 +15334,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3.1",
         "SafariIOS": "3"
@@ -15546,7 +15350,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3.1",
         "SafariIOS": "3"
@@ -15563,7 +15366,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3.1",
         "SafariIOS": "3"
@@ -15596,7 +15398,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3.1",
         "SafariIOS": "3"
@@ -15614,7 +15415,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "11",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "4",
         "SafariIOS": "3"
@@ -15658,7 +15458,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3.1",
         "SafariIOS": "3"
@@ -15675,7 +15474,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3.1",
         "SafariIOS": "3"
@@ -15692,7 +15490,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3.1",
         "SafariIOS": "3"
@@ -15710,7 +15507,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3.1",
         "SafariIOS": "3"
@@ -15727,7 +15523,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "10.5",
         "Safari": "3.1",
         "SafariIOS": "3"
@@ -15749,7 +15544,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "20",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3.1",
         "SafariIOS": "3"
@@ -15780,7 +15574,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3.1",
         "SafariIOS": "3"
@@ -15797,7 +15590,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "8",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3.1",
         "SafariIOS": "3"
@@ -15882,7 +15674,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3.1",
         "SafariIOS": "3"
@@ -15910,7 +15701,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "31",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -15938,7 +15728,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3.1"
       },
@@ -15954,7 +15743,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "6",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -15975,7 +15763,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -15992,7 +15779,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -16009,7 +15795,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -16042,7 +15827,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -16060,7 +15844,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "6",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -16109,7 +15892,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "6",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -16126,7 +15908,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -16143,7 +15924,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "5.1",
         "SafariIOS": "5"
@@ -16161,7 +15941,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "8",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -16194,7 +15973,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -16211,7 +15989,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -16228,7 +16005,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -16245,7 +16021,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -16262,7 +16037,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "5.1",
         "SafariIOS": "5"
@@ -16283,7 +16057,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -16300,7 +16073,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "6",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -16317,7 +16089,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "5.1",
         "SafariIOS": "5"
@@ -16334,7 +16105,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "5.1",
         "SafariIOS": "5"
@@ -16351,7 +16121,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -16368,7 +16137,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "5",
         "SafariIOS": "4"
@@ -16385,7 +16153,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -16402,7 +16169,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -16419,7 +16185,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "1.2",
         "SafariIOS": ""
@@ -16436,7 +16201,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "1.2",
         "SafariIOS": ""
@@ -16459,7 +16223,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "6",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -16508,7 +16271,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -16526,7 +16288,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "6",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -16559,7 +16320,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "6",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -16576,7 +16336,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "6",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -16609,7 +16368,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "6",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -16626,7 +16384,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -16679,7 +16436,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "2",
         "Safari": "",
         "SafariIOS": ""
@@ -16696,7 +16452,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -16725,7 +16480,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "10",
         "Opera": "9",
         "Safari": "5",
         "SafariIOS": "4"
@@ -16743,7 +16497,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "9",
         "Safari": "3",
         "SafariIOS": ""
@@ -16760,7 +16513,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -16777,7 +16529,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -16811,7 +16562,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "6",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -16829,7 +16579,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -16846,7 +16595,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -16864,7 +16612,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -16897,7 +16644,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "5",
         "SafariIOS": "4"
@@ -16915,7 +16661,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "2",
         "Safari": "3",
         "SafariIOS": ""
@@ -17024,7 +16769,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3.1",
         "SafariIOS": "2"
@@ -17041,7 +16785,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "15",
         "Safari": "6",
         "SafariIOS": "6"
@@ -17058,7 +16801,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -17075,7 +16817,6 @@
         "ChromeAndroid": "",
         "Edge": "13",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -17092,7 +16833,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -17109,7 +16849,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -17127,7 +16866,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -17144,7 +16882,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -17161,7 +16898,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -17178,7 +16914,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -17195,7 +16930,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -17213,7 +16947,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -17231,7 +16964,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -17249,7 +16981,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -17266,7 +16997,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -17284,7 +17014,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -17302,7 +17031,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -17319,7 +17047,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -17337,7 +17064,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "25",
-        "IE": "9",
         "Opera": "15",
         "Safari": "6",
         "SafariIOS": "6"
@@ -17355,7 +17081,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -17373,7 +17098,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -17391,7 +17115,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -17409,7 +17132,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -17433,7 +17155,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -17451,7 +17172,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -17470,7 +17190,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -17487,7 +17206,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "10",
         "Safari": "4",
         "SafariIOS": "3"
@@ -17511,7 +17229,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -17529,7 +17246,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -17547,7 +17263,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "6",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -17564,7 +17279,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -17581,7 +17295,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -17598,7 +17311,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -17616,7 +17328,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -17633,7 +17344,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -17650,7 +17360,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -17674,7 +17383,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -17691,7 +17399,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -17740,7 +17447,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5",
         "Opera": "8",
         "Safari": "",
         "SafariIOS": ""
@@ -17805,7 +17511,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -17822,7 +17527,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "31",
-        "IE": "10",
         "Opera": "12",
         "Safari": "6",
         "SafariIOS": "6"
@@ -17839,7 +17543,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "31",
-        "IE": "10",
         "Opera": "12",
         "Safari": "6",
         "SafariIOS": "6"
@@ -17856,7 +17559,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -17873,7 +17575,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -17890,7 +17591,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "10.5",
         "Safari": "3.1",
         "SafariIOS": "3"
@@ -17922,7 +17622,6 @@
         "ChromeAndroid": "80",
         "Edge": "",
         "Firefox": "42",
-        "IE": "11",
         "Opera": "67",
         "Safari": "8",
         "SafariIOS": "8"
@@ -17959,7 +17658,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "10.5",
         "Safari": "3.1",
         "SafariIOS": "3"
@@ -17976,7 +17674,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "10.5",
         "Safari": "3.1",
         "SafariIOS": "3"
@@ -17993,7 +17690,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "16",
-        "IE": "10",
         "Opera": "44",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18010,7 +17706,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18036,7 +17731,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18089,7 +17783,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18112,7 +17805,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18129,7 +17821,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18146,7 +17837,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18179,7 +17869,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18196,7 +17885,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18224,7 +17912,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "16",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18241,7 +17928,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18258,7 +17944,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "16",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18275,7 +17960,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18293,7 +17977,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18321,7 +18004,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18347,7 +18029,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18364,7 +18045,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18381,7 +18061,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18410,7 +18089,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18427,7 +18105,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "16",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18444,7 +18121,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18488,7 +18164,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18510,7 +18185,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18535,7 +18209,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "16",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18552,7 +18225,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18578,7 +18250,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18654,7 +18325,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18688,7 +18358,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18713,7 +18382,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18730,7 +18398,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18752,7 +18419,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18769,7 +18435,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18797,7 +18462,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18825,7 +18489,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18842,7 +18505,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "16",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18859,7 +18521,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18909,7 +18570,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18926,7 +18586,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18951,7 +18610,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18968,7 +18626,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -18992,7 +18649,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -19009,7 +18665,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -19034,7 +18689,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -19059,7 +18713,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "16",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -19076,7 +18729,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -19106,7 +18758,6 @@
         "ChromeAndroid": "25",
         "Edge": "79",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -19123,7 +18774,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -19145,7 +18795,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -19171,7 +18820,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -19201,7 +18849,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -19228,7 +18875,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -19254,7 +18900,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -19358,7 +19003,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -19375,7 +19019,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -19392,7 +19035,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -19414,7 +19056,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -19441,7 +19082,6 @@
         "ChromeAndroid": "25",
         "Edge": "79",
         "Firefox": "44",
-        "IE": "10",
         "Opera": "15",
         "Safari": "10.1",
         "SafariIOS": "10.3"
@@ -19468,7 +19108,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -19497,7 +19136,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -19514,7 +19152,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "16",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -19531,7 +19168,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "16",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -19548,7 +19184,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -19565,7 +19200,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -19582,7 +19216,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -19599,7 +19232,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -19616,7 +19248,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -19633,7 +19264,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "16",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -19650,7 +19280,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -19691,7 +19320,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -19723,7 +19351,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -19740,7 +19367,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -19757,7 +19383,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -19798,7 +19423,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "16",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -19836,7 +19460,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -19853,7 +19476,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "10",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -20299,7 +19921,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "9",
         "Safari": "3.1",
         "SafariIOS": "2"
@@ -20331,7 +19952,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "9",
         "Safari": "3.1",
         "SafariIOS": "2"
@@ -20348,7 +19968,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "9",
         "Safari": "3.1",
         "SafariIOS": "2"
@@ -20388,7 +20007,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "9",
         "Safari": "3.1",
         "SafariIOS": "2"
@@ -20701,7 +20319,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "16",
-        "IE": "10",
         "Opera": "15",
         "Safari": "8",
         "SafariIOS": "8"
@@ -21516,7 +21133,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "1.2",
         "SafariIOS": ""
@@ -21533,7 +21149,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "1.2",
         "SafariIOS": ""
@@ -21551,7 +21166,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "1.2",
         "SafariIOS": ""
@@ -21584,7 +21198,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "1.2",
         "SafariIOS": ""
@@ -21601,7 +21214,6 @@
         "ChromeAndroid": "30",
         "Edge": "",
         "Firefox": "15",
-        "IE": "9",
         "Opera": "17",
         "Safari": "10.1",
         "SafariIOS": "10.3"
@@ -21623,7 +21235,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "57",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "1.2",
         "SafariIOS": ""
@@ -21686,7 +21297,6 @@
         "ChromeAndroid": "51",
         "Edge": "",
         "Firefox": "23",
-        "IE": "9",
         "Opera": "38",
         "Safari": "10.1",
         "SafariIOS": "10.3"
@@ -21725,7 +21335,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "1.2",
         "SafariIOS": ""
@@ -21753,7 +21362,6 @@
         "ChromeAndroid": "30",
         "Edge": "",
         "Firefox": "15",
-        "IE": "9",
         "Opera": "17",
         "Safari": "8",
         "SafariIOS": "8"
@@ -21770,7 +21378,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "1.2",
         "SafariIOS": ""
@@ -21787,7 +21394,6 @@
         "ChromeAndroid": "32",
         "Edge": "",
         "Firefox": "28",
-        "IE": "9",
         "Opera": "19",
         "Safari": "10.1",
         "SafariIOS": "10.3"
@@ -21804,7 +21410,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "1.2",
         "SafariIOS": ""

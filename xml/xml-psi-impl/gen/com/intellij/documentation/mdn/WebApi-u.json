@@ -19,7 +19,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -53,7 +52,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -112,7 +110,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -146,11 +143,11 @@
         "ChromeAndroid": "32",
         "Edge": "",
         "Firefox": "19",
-        "IE": "10",
         "Opera": "19",
         "Safari": "7",
         "SafariIOS": "7",
-        "Nodejs": "10.0.0"
+        "Nodejs": "10.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>URL</code></strong> interface is used to parse, construct, normalize, and encode <a href=\"$MDN_URL$/Glossary/URL\">URLs</a>. It works by providing properties which allow you to easily read and modify the components of a URL.\n<p>You normally create a new <code>URL</code> object by specifying the URL as a string when calling its constructor, or by providing a relative URL and a base URL. You can then easily read the parsed components of the URL or make changes to the URL.\n<p>If a browser doesn't yet support the <a href=\"$MDN_URL$/Web/API/URL/URL\" ><code>URL()</code></a> constructor, you can access a URL object using the <a href=\"$MDN_URL$/Web/API/Window\"><code>Window</code></a> interface's <a href=\"$MDN_URL$/Web/API/URL\" aria-current=\"page\"><code>URL</code></a> property. Be sure to check to see if any of your target browsers require this to be prefixed.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
@@ -163,7 +160,8 @@
         "Firefox": "115",
         "Safari": "17",
         "SafariIOS": "17",
-        "Nodejs": "20.0.0"
+        "Nodejs": "20.0.0",
+        "Deno": "1.33"
       },
       "doc": "The <strong><code>URL.canParse()</code></strong> static method of the <a href=\"$MDN_URL$/Web/API/URL\"><code>URL</code></a> interface returns a boolean indicating whether or not an absolute URL, or a relative URL combined with a base URL, are parsable and valid.\n<p>This a fast and easy alternative to constructing a <code>URL</code> within a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Statements/try...catch\">try...catch</a> block.\nIt returns <code>true</code> for the same values for which the <a href=\"$MDN_URL$/Web/API/URL/URL\"><code>URL()</code> constructor</a> would succeed, and <code>false</code> for the values that would cause the constructor to throw.",
       "parameters": {
@@ -182,11 +180,11 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "19",
-        "IE": "10",
         "Opera": "15",
         "Safari": "6",
         "SafariIOS": "6",
-        "Nodejs": "16.7.0"
+        "Nodejs": "16.7.0",
+        "Deno": "1.9"
       },
       "doc": "The <strong><code>URL.createObjectURL()</code></strong> static\nmethod creates a string containing a URL representing the object\ngiven in the parameter.\n<p>The URL lifetime is tied to the <a href=\"$MDN_URL$/Web/API/Document\"><code>document</code></a>\nin the window on which it was created. The new object URL represents the specified\n<a href=\"$MDN_URL$/Web/API/File\"><code>File</code></a> object or <a href=\"$MDN_URL$/Web/API/Blob\"><code>Blob</code></a> object.\n<p>To release an object URL, call <a href=\"$MDN_URL$/Web/API/URL/revokeObjectURL_static\"  ><code>revokeObjectURL()</code></a>.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>\n<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> This feature is <em>not</em> available in <a href=\"$MDN_URL$/Web/API/Service_Worker_API\">Service Workers</a> due to its\npotential to create memory leaks.\n</div>",
       "parameters": {
@@ -207,7 +205,8 @@
         "Opera": "19",
         "Safari": "7",
         "SafariIOS": "7",
-        "Nodejs": "7.0.0"
+        "Nodejs": "7.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>hash</code></strong> property of the\n<a href=\"$MDN_URL$/Web/API/URL\"><code>URL</code></a> interface is a string containing a\n<code>'#'</code> followed by the fragment identifier of the URL.\n<p>The fragment is not <a href=\"https://en.wikipedia.org/wiki/URL_encoding\" class=\"external\" target=\"_blank\">URL decoded</a>. If the URL does not\nhave a fragment identifier, this property contains an empty string — <code>\"\"</code>.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
@@ -224,7 +223,8 @@
         "Opera": "19",
         "Safari": "7",
         "SafariIOS": "7",
-        "Nodejs": "7.0.0"
+        "Nodejs": "7.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>host</code></strong> property of the <a href=\"$MDN_URL$/Web/API/URL\"><code>URL</code></a> interface is\na string containing the host, that is the <a href=\"$MDN_URL$/Web/API/URL/hostname\" ><code>hostname</code></a>, and then, if the <a href=\"$MDN_URL$/Glossary/Port\">port</a> of the URL is nonempty, a\n<code>':'</code>, followed by the <a href=\"$MDN_URL$/Web/API/URL/port\" ><code>port</code></a> of the URL.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
@@ -241,7 +241,8 @@
         "Opera": "19",
         "Safari": "10",
         "SafariIOS": "10",
-        "Nodejs": "7.0.0"
+        "Nodejs": "7.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>hostname</code></strong> property of the <a href=\"$MDN_URL$/Web/API/URL\"><code>URL</code></a> interface\nis a string containing the <a href=\"$MDN_URL$/Glossary/Domain_name\">domain name</a> of the URL.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
@@ -258,7 +259,8 @@
         "Opera": "19",
         "Safari": "10",
         "SafariIOS": "10",
-        "Nodejs": "7.0.0"
+        "Nodejs": "7.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>href</code></strong> property of the <a href=\"$MDN_URL$/Web/API/URL\"><code>URL</code></a> interface is\na string containing the whole URL.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
@@ -275,7 +277,8 @@
         "Opera": "19",
         "Safari": "10",
         "SafariIOS": "10",
-        "Nodejs": "7.0.0"
+        "Nodejs": "7.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>origin</code></strong> read-only property of\nthe <a href=\"$MDN_URL$/Web/API/URL\"><code>URL</code></a> interface returns a string containing the\nUnicode serialization of the origin of the represented URL.\n<p>The exact structure\nvaries depending on the type of URL:\n<ul>\n<li>\nFor <code>http</code> or <code>https</code> URLs, the scheme followed by\n<code>'://'</code>, followed by the domain, followed by <code>':'</code>, followed by\nthe port (if explicitly specified, unless it is the default port - <code>80</code> and <code>443</code> respectively).\n</li>\n<li>For <code>file:</code> URLs, the value is browser dependent.</li>\n<li>\nfor <code>blob:</code> URLs, the origin of the URL following <code>blob:</code> will\nbe used. For example, <code>\"blob:https://mozilla.org\"</code> will be returned as\n<code>\"https://mozilla.org\".</code>\n</li>\n</ul><div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
@@ -292,7 +295,8 @@
         "Opera": "19",
         "Safari": "10",
         "SafariIOS": "10",
-        "Nodejs": "7.0.0"
+        "Nodejs": "7.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>password</code></strong> property of the <a href=\"$MDN_URL$/Web/API/URL\"><code>URL</code></a> interface\nis a string containing the password specified before the domain name.\n<p>If it is set without first setting the <a href=\"$MDN_URL$/Web/API/URL/username\" ><code>username</code></a>\nproperty, it silently fails.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
@@ -309,7 +313,8 @@
         "Opera": "19",
         "Safari": "10",
         "SafariIOS": "10",
-        "Nodejs": "7.0.0"
+        "Nodejs": "7.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>pathname</code></strong> property of the <a href=\"$MDN_URL$/Web/API/URL\"><code>URL</code></a> interface represents a location in a hierarchical structure. It is a string constructed from a list of path segments, each of which is prefixed by a <code>/</code> character. If the URL has no path segments, the value of its <code>pathname</code> property will be the empty string.\n<p>URLs such as <code>https</code> and <code>http</code> URLs that have <a href=\"https://www.rfc-editor.org/rfc/rfc3986#section-1.2.3\" class=\"external\" target=\"_blank\">hierarchical schemes</a> (which the URL standard calls \"<a href=\"https://url.spec.whatwg.org/#special-scheme\" class=\"external\" target=\"_blank\">special schemes</a>\") always have at least one (invisible) path segment: the empty string. Thus the <code>pathname</code> value for such \"special scheme\" URLs can never be the empty string, but will instead always have a least one <code>/</code> character.\n<p>For example, the URL <code>https://developer.mozilla.org</code> has just one path segment: the empty string, so its <code>pathname</code> value is constructed by prefixing a <code>/</code> character to the empty string.\n<p>Some systems define the term <em>slug</em> to mean the final segment of a non-empty path if it identifies a page in human-readable keywords. For example, the URL <code>https://example.org/articles/this-that-other-outre-collection</code> has <code>this-that-other-outre-collection</code> as its slug.\n<p>Some systems use the <code>;</code> and <code>=</code> characters to delimit parameters and parameter values applicable to a path segment. For example, with the URL <code>https://example.org/users;id=42/tasks;state=open?sort=modified</code>, a system might extract and use the path segment parameters <code>id=42</code> and <code>state=open</code> from the path segments <code>users;id=42</code> and <code>tasks;state=open</code>.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
@@ -326,7 +331,8 @@
         "Opera": "19",
         "Safari": "10",
         "SafariIOS": "10",
-        "Nodejs": "7.0.0"
+        "Nodejs": "7.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>port</code></strong> property of the <a href=\"$MDN_URL$/Web/API/URL\"><code>URL</code></a> interface is\na string containing the port number of the URL.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> If an input string passed to the <a href=\"$MDN_URL$/Web/API/URL/URL\"><code>URL()</code></a> constructor doesn't contain an explicit port number (e.g., <code>https://localhost</code>) or contains a port number that's the default port number corresponding to the protocol part of the input string (e.g., <code>https://localhost:443</code>), then in the <a href=\"$MDN_URL$/Web/API/URL\"><code>URL</code></a> object the constructor returns, the value of the port property will be the empty string: <code>''</code>.\n</div><div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
@@ -343,7 +349,8 @@
         "Opera": "19",
         "Safari": "10",
         "SafariIOS": "10",
-        "Nodejs": "7.0.0"
+        "Nodejs": "7.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>protocol</code></strong> property of the <a href=\"$MDN_URL$/Web/API/URL\"><code>URL</code></a> interface\nis a string representing the protocol scheme of the URL, including the\nfinal <code>':'</code>.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
@@ -357,11 +364,11 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "19",
-        "IE": "10",
         "Opera": "15",
         "Safari": "6",
         "SafariIOS": "6",
-        "Nodejs": "16.7.0"
+        "Nodejs": "16.7.0",
+        "Deno": "1.9"
       },
       "doc": "The <strong><code>URL.revokeObjectURL()</code></strong> static\nmethod releases an existing object URL which was previously created by calling\n<a href=\"$MDN_URL$/Web/API/URL/createObjectURL_static\" ><code>URL.createObjectURL()</code></a>.\n<p>Call this method when you've finished\nusing an object URL to let the browser know not to keep the reference to the file any\nlonger.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>\n<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> This method is not available from service workers, due to\nissues with the <a href=\"$MDN_URL$/Web/API/Blob\"><code>Blob</code></a> interface's life cycle and the potential for\nleaks.\n</div>",
       "parameters": {
@@ -382,7 +389,8 @@
         "Opera": "19",
         "Safari": "10",
         "SafariIOS": "10",
-        "Nodejs": "7.0.0"
+        "Nodejs": "7.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>search</code></strong> property of the <a href=\"$MDN_URL$/Web/API/URL\"><code>URL</code></a> interface\nis a search string, also called a <em>query string</em>, that is a\nstring containing a <code>'?'</code> followed by the parameters of the\nURL.\n<p>Modern browsers provide the <a href=\"$MDN_URL$/Web/API/URL/searchParams\"><code>URL.searchParams</code></a> property to make it easy to\nparse out the parameters from the query string.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
@@ -399,7 +407,8 @@
         "Opera": "38",
         "Safari": "10",
         "SafariIOS": "10",
-        "Nodejs": "7.5.0"
+        "Nodejs": "7.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>searchParams</code></strong> readonly property of the\n<a href=\"$MDN_URL$/Web/API/URL\"><code>URL</code></a> interface returns a <a href=\"$MDN_URL$/Web/API/URLSearchParams\"><code>URLSearchParams</code></a> object allowing\naccess to the <a href=\"$MDN_URL$/Web/HTTP/Methods/GET\"><code>GET</code></a> decoded query arguments contained in the URL.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
@@ -416,7 +425,8 @@
         "Opera": "58",
         "Safari": "11",
         "SafariIOS": "11",
-        "Nodejs": "7.7.0"
+        "Nodejs": "7.7.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>toJSON()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/URL\"><code>URL</code></a> interface\nreturns a string containing a serialized version of the URL,\nalthough in practice it seems to have the same effect as\n<a href=\"$MDN_URL$/Web/API/URL/toString\"><code>URL.toString()</code></a>.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>",
       "returns": "A string."
@@ -434,7 +444,8 @@
         "Opera": "15",
         "Safari": "7",
         "SafariIOS": "7",
-        "Nodejs": "7.0.0"
+        "Nodejs": "7.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>URL.toString()</code></strong> <a href=\"$MDN_URL$/Glossary/Stringifier\">stringifier</a> method returns a\nstring containing the whole URL. It is effectively a read-only version\nof <a href=\"$MDN_URL$/Web/API/URL/href\"><code>URL.href</code></a>.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>",
       "returns": "A string."
@@ -452,7 +463,8 @@
         "Opera": "15",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "10.0.0"
+        "Nodejs": "10.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>URL()</code></strong> constructor returns a newly created\n<a href=\"$MDN_URL$/Web/API/URL\"><code>URL</code></a> object representing the URL defined by the parameters.\n<p>If the given base URL or the resulting URL are not valid URLs, the JavaScript\n<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/TypeError\"><code>TypeError</code></a> exception is thrown.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>",
       "parameters": {
@@ -476,7 +488,8 @@
         "Opera": "19",
         "Safari": "10",
         "SafariIOS": "10",
-        "Nodejs": "7.0.0"
+        "Nodejs": "7.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>username</code></strong> property of the <a href=\"$MDN_URL$/Web/API/URL\"><code>URL</code></a> interface\nis a string containing the username specified before the domain name.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
@@ -490,7 +503,8 @@
         "Chrome": "95",
         "ChromeAndroid": "95",
         "Edge": "95",
-        "Opera": "81"
+        "Opera": "81",
+        "Deno": "1.15"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>URLPattern</code></strong> interface matches URLs or parts of URLs against a pattern.\nThe pattern can contain capturing groups that extract parts of the matched URL.\n<p>More information about the syntax of patterns can be found on the API overview\npage: <a href=\"$MDN_URL$/Web/API/URL_Pattern_API\">URL Pattern API</a><div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
@@ -504,7 +518,8 @@
         "Chrome": "95",
         "ChromeAndroid": "95",
         "Edge": "95",
-        "Opera": "81"
+        "Opera": "81",
+        "Deno": "1.15"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>exec()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/URLPattern\"><code>URLPattern</code></a> interface takes a URL or\nobject of URL parts, and returns either an object containing the results of\nmatching the URL to the pattern, or <code>null</code> if the URL does not match the\npattern.<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>",
       "parameters": {
@@ -523,7 +538,8 @@
         "Chrome": "95",
         "ChromeAndroid": "95",
         "Edge": "95",
-        "Opera": "81"
+        "Opera": "81",
+        "Deno": "1.15"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>hash</code></strong> property of the <a href=\"$MDN_URL$/Web/API/URLPattern\"><code>URLPattern</code></a> interface is a\nstring containing the pattern used to match the fragment part\nof a URL. This value may differ from the input to the constructor due to\nnormalization.<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
@@ -537,7 +553,8 @@
         "Chrome": "95",
         "ChromeAndroid": "95",
         "Edge": "95",
-        "Opera": "81"
+        "Opera": "81",
+        "Deno": "1.15"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>hostname</code></strong> property of the <a href=\"$MDN_URL$/Web/API/URLPattern\"><code>URLPattern</code></a> interface is a\nstring containing the pattern used to match the hostname part\nof a URL. This value may differ from the input to the constructor due to\nnormalization.<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
@@ -551,7 +568,8 @@
         "Chrome": "95",
         "ChromeAndroid": "95",
         "Edge": "95",
-        "Opera": "81"
+        "Opera": "81",
+        "Deno": "1.15"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>password</code></strong> property of the <a href=\"$MDN_URL$/Web/API/URLPattern\"><code>URLPattern</code></a> interface is a\nstring containing the pattern used to match the password part\nof a URL. This value may differ from the input to the constructor due to\nnormalization.<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
@@ -565,7 +583,8 @@
         "Chrome": "95",
         "ChromeAndroid": "95",
         "Edge": "95",
-        "Opera": "81"
+        "Opera": "81",
+        "Deno": "1.15"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>pathname</code></strong> property of the <a href=\"$MDN_URL$/Web/API/URLPattern\"><code>URLPattern</code></a> interface is a\nstring containing the pattern used to match the pathname part\nof a URL. This value may differ from the input to the constructor due to\nnormalization.<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
@@ -579,7 +598,8 @@
         "Chrome": "95",
         "ChromeAndroid": "95",
         "Edge": "95",
-        "Opera": "81"
+        "Opera": "81",
+        "Deno": "1.15"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>port</code></strong> property of the <a href=\"$MDN_URL$/Web/API/URLPattern\"><code>URLPattern</code></a> interface is a\nstring containing the pattern used to match the port part of a\nURL. This value may differ from the input to the constructor due to\nnormalization.<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
@@ -593,7 +613,8 @@
         "Chrome": "95",
         "ChromeAndroid": "95",
         "Edge": "95",
-        "Opera": "81"
+        "Opera": "81",
+        "Deno": "1.15"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>protocol</code></strong> property of the <a href=\"$MDN_URL$/Web/API/URLPattern\"><code>URLPattern</code></a> interface is a\nstring containing the pattern used to match the protocol part\nof a URL. This value may differ from the input to the constructor due to\nnormalization.<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
@@ -607,7 +628,8 @@
         "Chrome": "95",
         "ChromeAndroid": "95",
         "Edge": "95",
-        "Opera": "81"
+        "Opera": "81",
+        "Deno": "1.15"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>search</code></strong> property of the <a href=\"$MDN_URL$/Web/API/URLPattern\"><code>URLPattern</code></a> interface is a\nstring containing the pattern used to match the search part of\na URL. This value may differ from the input to the constructor due to\nnormalization.<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
@@ -621,7 +643,8 @@
         "Chrome": "95",
         "ChromeAndroid": "95",
         "Edge": "95",
-        "Opera": "81"
+        "Opera": "81",
+        "Deno": "1.15"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>test()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/URLPattern\"><code>URLPattern</code></a> interface takes a URL or\nobject of URL parts, and returns a boolean indicating if the given input matches\nthe current pattern.<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>",
       "parameters": {
@@ -640,7 +663,8 @@
         "Chrome": "95",
         "ChromeAndroid": "95",
         "Edge": "95",
-        "Opera": "81"
+        "Opera": "81",
+        "Deno": "1.15"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>URLPattern()</code></strong> constructor returns a new <a href=\"$MDN_URL$/Web/API/URLPattern\"><code>URLPattern</code></a>\nobject representing the url pattern defined by the parameters.<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>",
       "parameters": {
@@ -662,7 +686,8 @@
         "Chrome": "95",
         "ChromeAndroid": "95",
         "Edge": "95",
-        "Opera": "81"
+        "Opera": "81",
+        "Deno": "1.15"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>username</code></strong> property of the <a href=\"$MDN_URL$/Web/API/URLPattern\"><code>URLPattern</code></a> interface is a\nstring containing the pattern used to match the username part\nof a URL. This value may differ from the input to the constructor due to\nnormalization.<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
@@ -679,7 +704,8 @@
         "Opera": "36",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "10.0.0"
+        "Nodejs": "10.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>URLSearchParams</code></strong> interface defines utility methods to work with the query string of a URL.\n<p>An object implementing <code>URLSearchParams</code> can directly be used in a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Statements/for...of\"><code>for...of</code></a> structure to iterate over key/value pairs in the same order as they appear in the query string, for example the following two lines are equivalent:\n<div class=\"code-example\"><p class=\"example-header\"><span class=\"language-name\"><pre class=\"brush: js notranslate\"><code>for (const [key, value] of mySearchParams) {\n}\nfor (const [key, value] of mySearchParams.entries()) {\n}\n</code></pre></span></div><div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
@@ -696,7 +722,8 @@
         "Opera": "36",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "7.5.0"
+        "Nodejs": "7.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>append()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/URLSearchParams\"><code>URLSearchParams</code></a>\ninterface appends a specified key/value pair as a new search parameter.\n<p>As shown in the example below, if the same key is appended multiple times it will\nappear in the parameter string multiple times for each value.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>",
       "parameters": {
@@ -718,7 +745,8 @@
         "Opera": "36",
         "Safari": "14",
         "SafariIOS": "14",
-        "Nodejs": "7.5.0"
+        "Nodejs": "7.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>delete()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/URLSearchParams\"><code>URLSearchParams</code></a> interface deletes specified parameters and their associated value(s) from the list of all search parameters.\n<p>A parameter name and optional value are used to match parameters.\nIf only a parameter name is specified, then all search parameters that match the name are deleted, along with their associated values.\nIf both a parameter name and value are specified, then all search parameters that match both the parameter name and value are deleted.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>",
       "parameters": {
@@ -740,7 +768,8 @@
         "Opera": "36",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "7.5.0"
+        "Nodejs": "7.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>entries()</code></strong> method of the\n<a href=\"$MDN_URL$/Web/API/URLSearchParams\"><code>URLSearchParams</code></a> interface returns an\n<a href=\"$MDN_URL$/Web/JavaScript/Reference/Iteration_protocols\"><code>iterator</code></a> allowing iteration through all key/value\npairs contained in this object. The iterator returns key/value pairs in the same order as they appear in the query string. The key and value of each pair are\nstring objects.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>",
       "returns": "Returns an <a href=\"$MDN_URL$/Web/JavaScript/Reference/Iteration_protocols\"><code>iterator</code></a>."
@@ -758,7 +787,8 @@
         "Opera": "36",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "7.5.0"
+        "Nodejs": "7.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>forEach()</code></strong> method of the\n<a href=\"$MDN_URL$/Web/API/URLSearchParams\"><code>URLSearchParams</code></a> interface allows iteration through all values contained\nin this object via a callback function.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>",
       "parameters": {
@@ -780,7 +810,8 @@
         "Opera": "36",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "7.5.0"
+        "Nodejs": "7.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>get()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/URLSearchParams\"><code>URLSearchParams</code></a>\ninterface returns the first value associated to the given search parameter.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>",
       "parameters": {
@@ -801,7 +832,8 @@
         "Opera": "36",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "7.5.0"
+        "Nodejs": "7.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>getAll()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/URLSearchParams\"><code>URLSearchParams</code></a>\ninterface returns all the values associated with a given search parameter as an array.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>",
       "parameters": {
@@ -822,7 +854,8 @@
         "Opera": "36",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "7.5.0"
+        "Nodejs": "7.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>has()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/URLSearchParams\"><code>URLSearchParams</code></a> interface returns a boolean value that indicates whether the specified parameter is in the search parameters.\n<p>A parameter name and optional value are used to match parameters.\nIf only a parameter name is specified, then the method will return <code>true</code> if any parameters in the query string match the name, and <code>false</code> otherwise.\nIf both a parameter name and value are specified, then the method will return <code>true</code> if a parameter matches both the name and value.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>",
       "parameters": {
@@ -844,7 +877,8 @@
         "Opera": "36",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "7.5.0"
+        "Nodejs": "7.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>keys()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/URLSearchParams\"><code>URLSearchParams</code></a>\ninterface returns an <a href=\"$MDN_URL$/Web/JavaScript/Reference/Iteration_protocols\"><code>iterator</code></a> allowing iteration\nthrough all keys contained in this object. The keys are string\nobjects.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This method is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.\n</div>",
       "returns": "Returns an <a href=\"$MDN_URL$/Web/JavaScript/Reference/Iteration_protocols\"><code>iterator</code></a>."
@@ -862,7 +896,8 @@
         "Opera": "36",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "7.5.0"
+        "Nodejs": "7.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>set()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/URLSearchParams\"><code>URLSearchParams</code></a>\ninterface sets the value associated with a given search parameter to the given value.\nIf there were several matching values, this method deletes the others. If the search\nparameter doesn't exist, this method creates it.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>",
       "parameters": {
@@ -883,7 +918,8 @@
         "Firefox": "112",
         "Safari": "17",
         "SafariIOS": "17",
-        "Nodejs": "19.0.0"
+        "Nodejs": "19.0.0",
+        "Deno": "1.32"
       },
       "doc": "The read-only <strong><code>URLSearchParams.size</code></strong> property indicates the total number of search parameter entries."
     },
@@ -900,7 +936,8 @@
         "Opera": "48",
         "Safari": "11",
         "SafariIOS": "11",
-        "Nodejs": "7.7.0"
+        "Nodejs": "7.7.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>URLSearchParams.sort()</code></strong> method sorts all key/value\npairs contained in this object in place and returns <code>undefined</code>. The sort\norder is according to unicode code points of the keys. This method uses a stable sorting\nalgorithm (i.e. the relative order between key/value pairs with equal keys will be\npreserved).<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>",
       "returns": "None (<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/undefined\"><code>undefined</code></a>)."
@@ -918,7 +955,8 @@
         "Opera": "36",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "7.5.0"
+        "Nodejs": "7.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>toString()</code></strong> method of the\n<a href=\"$MDN_URL$/Web/API/URLSearchParams\"><code>URLSearchParams</code></a> interface returns a query string suitable for use in a\nURL.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This method returns the query string without the question\nmark. This is different from <a href=\"$MDN_URL$/Web/API/HTMLAnchorElement/search\">window.location.search</a>,\nwhich includes it.\n</div><div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>",
       "returns": "A string, without the question mark. (Returns an empty string if no\n  search parameters have been set.)"
@@ -936,7 +974,8 @@
         "Opera": "36",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "7.5.0"
+        "Nodejs": "7.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>URLSearchParams()</code></strong> constructor creates and returns a\nnew <a href=\"$MDN_URL$/Web/API/URLSearchParams\"><code>URLSearchParams</code></a> object.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>",
       "parameters": {
@@ -957,7 +996,8 @@
         "Opera": "36",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "7.5.0"
+        "Nodejs": "7.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>values()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/URLSearchParams\"><code>URLsearchParams</code></a>\ninterface returns an <a href=\"$MDN_URL$/Web/JavaScript/Reference/Iteration_protocols\"><code>iterator</code></a> allowing iteration\nthrough all values contained in this object. The values are string\nobjects.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>",
       "returns": "Returns an <a href=\"$MDN_URL$/Web/JavaScript/Reference/Iteration_protocols\"><code>iterator</code></a>."
@@ -1819,7 +1859,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "5",
         "SafariIOS": "5"
@@ -1852,7 +1891,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "5",
         "SafariIOS": "5"
@@ -1869,7 +1907,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "5",
         "SafariIOS": "5"
@@ -1886,7 +1923,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "5",
         "SafariIOS": "5"
@@ -1903,7 +1939,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "5",
         "SafariIOS": "5"
@@ -1920,7 +1955,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "5",
         "SafariIOS": "5"
@@ -1953,7 +1987,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "5",
         "SafariIOS": "5"
@@ -1970,7 +2003,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "5",
         "SafariIOS": "5"
@@ -2724,7 +2756,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "42",
-        "IE": "11",
         "Opera": "15",
         "Safari": "8"
       },
@@ -2740,7 +2771,6 @@
         "Chrome": "80",
         "ChromeAndroid": "80",
         "Edge": "",
-        "IE": "11",
         "Opera": "67",
         "Safari": "8"
       },
@@ -2756,7 +2786,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "42",
-        "IE": "11",
         "Opera": "15",
         "Safari": "8"
       },
@@ -2772,7 +2801,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "42",
-        "IE": "11",
         "Opera": "15",
         "Safari": "8"
       },
@@ -2784,7 +2812,6 @@
         "Deprecated"
       ],
       "compatibility": {
-        "IE": "11",
         "Safari": "8"
       },
       "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div><div class=\"notecard nonstandard\" id=\"sect2\"><p><strong>Non-standard:</strong> This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</div>\n<p>The <strong><code>VideoPlaybackQuality.totalFrameDelay</code></strong> read-only\nproperty returns a <code>double</code> containing the sum of the frame delay since the\ncreation of the associated <a href=\"$MDN_URL$/Web/API/HTMLVideoElement\"><code>HTMLVideoElement</code></a>. The frame delay is the\ndifference between a frame's theoretical presentation time and its effective display\ntime."
@@ -2799,7 +2826,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "42",
-        "IE": "11",
         "Opera": "15",
         "Safari": "8"
       },
@@ -2811,7 +2837,6 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "IE": "10",
         "Safari": "7",
         "SafariIOS": "7"
       },
@@ -2823,7 +2848,6 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "IE": "10",
         "Safari": "7",
         "SafariIOS": "7"
       },
@@ -2835,7 +2859,6 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "IE": "10",
         "Safari": "7",
         "SafariIOS": "7"
       },
@@ -2847,7 +2870,6 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "IE": "10",
         "Safari": "7",
         "SafariIOS": "7"
       },
@@ -2859,7 +2881,6 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "IE": "10",
         "Safari": "7",
         "SafariIOS": "7"
       },
@@ -2871,7 +2892,6 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "IE": "10",
         "Safari": "7",
         "SafariIOS": "7"
       },
@@ -2893,7 +2913,6 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "IE": "10",
         "Safari": "7",
         "SafariIOS": "7"
       },
@@ -2905,7 +2924,6 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "IE": "10",
         "Safari": "7",
         "SafariIOS": "7"
       },
@@ -2921,7 +2939,6 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "IE": "10",
         "Safari": "7",
         "SafariIOS": "7"
       },
@@ -2933,7 +2950,6 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "IE": "10",
         "Safari": "7",
         "SafariIOS": "7"
       },
@@ -3819,7 +3835,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "31",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "8"
@@ -3852,7 +3867,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "31",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "8"
@@ -3970,7 +3984,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "31",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "8"
@@ -4220,7 +4233,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -4241,7 +4253,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -4303,7 +4314,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -4326,7 +4336,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -4394,7 +4403,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -4416,7 +4424,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -4459,7 +4466,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -4522,7 +4528,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -4546,7 +4551,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -4567,7 +4571,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -4589,7 +4592,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -4611,7 +4613,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -4658,7 +4659,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -4684,7 +4684,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -4709,7 +4708,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -4727,7 +4725,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -4748,7 +4745,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -4793,7 +4789,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -4817,7 +4812,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -4838,7 +4832,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -4881,7 +4874,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -4905,7 +4897,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -4927,7 +4918,6 @@
           "ChromeAndroid": "25",
           "Edge": "",
           "Firefox": "4",
-          "IE": "11",
           "Opera": "12",
           "Safari": "5.1",
           "SafariIOS": "8"
@@ -4967,7 +4957,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -5050,7 +5039,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -5078,7 +5066,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -5134,7 +5121,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -5152,7 +5138,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -5170,7 +5155,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -5205,7 +5189,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -5240,7 +5223,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -5261,7 +5243,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -5313,7 +5294,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -5334,7 +5314,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -5355,7 +5334,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -5376,7 +5354,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -5417,7 +5394,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -5458,7 +5434,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -5499,7 +5474,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -5560,7 +5534,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -5581,7 +5554,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -5602,7 +5574,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -5624,7 +5595,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -5645,7 +5615,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -5666,7 +5635,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -5687,7 +5655,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -5753,7 +5720,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -5801,7 +5767,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -5818,7 +5783,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -5860,7 +5824,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -5881,7 +5844,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -5960,7 +5922,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -5978,7 +5939,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -5996,7 +5956,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -6020,7 +5979,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -6069,7 +6027,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -6090,7 +6047,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -6111,7 +6067,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -6133,7 +6088,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -6220,7 +6174,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -6241,7 +6194,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -6263,7 +6215,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -6309,7 +6260,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -6327,7 +6277,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -6345,7 +6294,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -6387,7 +6335,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -6453,7 +6400,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -6474,7 +6420,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -6495,7 +6440,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -6559,7 +6503,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -6602,7 +6545,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -6623,7 +6565,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -6645,7 +6586,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -6667,7 +6607,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -6688,7 +6627,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -6727,7 +6665,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -6770,7 +6707,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -6834,7 +6770,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -6856,7 +6791,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -6878,7 +6812,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -6900,7 +6833,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -6968,7 +6900,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -6989,7 +6920,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -7007,7 +6937,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -7028,7 +6957,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -7049,7 +6977,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -7090,7 +7017,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -7131,7 +7057,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -7172,7 +7097,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -7233,7 +7157,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -7288,7 +7211,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -7310,7 +7232,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -7352,7 +7273,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -7380,7 +7300,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -7445,7 +7364,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -7489,7 +7407,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -7513,7 +7430,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -7535,7 +7451,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -7558,7 +7473,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -7582,7 +7496,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -7603,7 +7516,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -7625,7 +7537,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -7648,7 +7559,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -7672,7 +7582,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -7734,7 +7643,6 @@
           "ChromeAndroid": "25",
           "Edge": "",
           "Firefox": "4",
-          "IE": "11",
           "Opera": "12",
           "Safari": "5.1",
           "SafariIOS": "8"
@@ -7744,7 +7652,6 @@
           "ChromeAndroid": "25",
           "Edge": "",
           "Firefox": "4",
-          "IE": "11",
           "Opera": "12",
           "Safari": "5.1",
           "SafariIOS": "8"
@@ -7817,7 +7724,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -7901,7 +7807,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -7967,7 +7872,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -7988,7 +7892,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8009,7 +7912,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8099,7 +8001,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8125,7 +8026,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8171,7 +8071,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8188,7 +8087,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8205,7 +8103,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8222,7 +8119,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8239,7 +8135,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8256,7 +8151,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "49",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8273,7 +8167,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "49",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8290,7 +8183,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "49",
-        "IE": "11",
         "Opera": "15",
         "Safari": "6",
         "SafariIOS": "8"
@@ -8312,7 +8204,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8333,7 +8224,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8366,7 +8256,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8383,7 +8272,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8400,7 +8288,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8421,7 +8308,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8442,7 +8328,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8465,7 +8350,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8487,7 +8371,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8509,7 +8392,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8531,7 +8413,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8553,7 +8434,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8577,7 +8457,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8598,7 +8477,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8620,7 +8498,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8642,7 +8519,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8666,7 +8542,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8692,7 +8567,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8717,7 +8591,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8735,7 +8608,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8756,7 +8628,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8777,7 +8648,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8801,7 +8671,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8822,7 +8691,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8843,7 +8711,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8867,7 +8734,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8889,7 +8755,6 @@
           "ChromeAndroid": "25",
           "Edge": "",
           "Firefox": "4",
-          "IE": "11",
           "Opera": "12",
           "Safari": "5.1",
           "SafariIOS": "8"
@@ -8929,7 +8794,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8959,7 +8823,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -8987,7 +8850,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9015,7 +8877,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9033,7 +8894,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9051,7 +8911,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9069,7 +8928,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9087,7 +8945,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9108,7 +8965,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9126,7 +8982,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9147,7 +9002,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9168,7 +9022,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9189,7 +9042,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9210,7 +9062,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9231,7 +9082,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9252,7 +9102,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9273,7 +9122,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9294,7 +9142,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9315,7 +9162,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9337,7 +9183,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9358,7 +9203,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9379,7 +9223,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9400,7 +9243,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9423,7 +9265,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9462,7 +9303,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9479,7 +9319,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9496,7 +9335,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9517,7 +9355,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9538,7 +9375,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9556,7 +9392,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9574,7 +9409,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9598,7 +9432,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9623,7 +9456,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9644,7 +9476,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9665,7 +9496,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9687,7 +9517,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9709,7 +9538,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9730,7 +9558,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9752,7 +9579,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9774,7 +9600,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9792,7 +9617,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9810,7 +9634,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9831,7 +9654,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9854,7 +9676,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9875,7 +9696,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9896,7 +9716,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9918,7 +9737,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9940,7 +9758,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9961,7 +9778,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -9983,7 +9799,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10005,7 +9820,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10026,7 +9840,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10044,7 +9857,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10066,7 +9878,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10088,7 +9899,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10110,7 +9920,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10132,7 +9941,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10154,7 +9962,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10176,7 +9983,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10197,7 +10003,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10215,7 +10020,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10236,7 +10040,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10257,7 +10060,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10278,7 +10080,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10299,7 +10100,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10320,7 +10120,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10341,7 +10140,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10362,7 +10160,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10400,7 +10197,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10422,7 +10218,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10444,7 +10239,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10472,7 +10266,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10496,7 +10289,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10518,7 +10310,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10542,7 +10333,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10564,7 +10354,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10587,7 +10376,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10611,7 +10399,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10632,7 +10419,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10654,7 +10440,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10677,7 +10462,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10701,7 +10485,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10732,7 +10515,6 @@
           "ChromeAndroid": "25",
           "Edge": "",
           "Firefox": "4",
-          "IE": "11",
           "Opera": "12",
           "Safari": "5.1",
           "SafariIOS": "8"
@@ -10742,7 +10524,6 @@
           "ChromeAndroid": "25",
           "Edge": "",
           "Firefox": "4",
-          "IE": "11",
           "Opera": "12",
           "Safari": "5.1",
           "SafariIOS": "8"
@@ -10766,7 +10547,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10796,7 +10576,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10818,7 +10597,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10855,7 +10633,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10876,7 +10653,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10897,7 +10673,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10920,7 +10695,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10946,7 +10720,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -10986,7 +10759,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -11003,7 +10775,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -11020,7 +10791,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -11037,7 +10807,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -11054,7 +10823,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -11087,7 +10855,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -11120,7 +10887,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "12",
         "Safari": "5.1",
         "SafariIOS": "8"
@@ -11164,10 +10930,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "11",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "5",
-        "SafariIOS": "4.2"
+        "SafariIOS": "4.2",
+        "Deno": "1.4"
       },
       "doc": "The <code>WebSocket</code> object provides the API for creating and managing a <a href=\"$MDN_URL$/Web/API/WebSockets_API\">WebSocket</a> connection to a server, as well as for sending and receiving data on the connection.\n<p>To construct a <code>WebSocket</code>, use the <a href=\"$MDN_URL$/Web/API/WebSocket/WebSocket\"><code>WebSocket()</code></a> constructor.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
@@ -11181,10 +10947,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "11",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
-        "SafariIOS": "6"
+        "SafariIOS": "6",
+        "Deno": "1.4"
       },
       "doc": "The <strong><code>WebSocket.binaryType</code></strong> property controls the type of\nbinary data being received over the WebSocket connection."
     },
@@ -11198,10 +10964,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "7",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "5",
-        "SafariIOS": "4.2"
+        "SafariIOS": "4.2",
+        "Deno": "1.4"
       },
       "doc": "The <strong><code>WebSocket.bufferedAmount</code></strong> read-only property returns\nthe number of bytes of data that have been queued using calls to <a href=\"$MDN_URL$/Web/API/WebSocket/send\"><code>send()</code></a> but\nnot yet transmitted to the network. This value resets to zero once all queued data has\nbeen sent. This value does not reset to zero when the connection is closed; if you keep\ncalling <a href=\"$MDN_URL$/Web/API/WebSocket/send\"><code>send()</code></a>, this will continue to climb."
     },
@@ -11215,10 +10981,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "7",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "5",
-        "SafariIOS": "4.2"
+        "SafariIOS": "4.2",
+        "Deno": "1.4"
       },
       "doc": "The <strong><code>WebSocket.close()</code></strong> method closes the\n<a href=\"$MDN_URL$/Web/API/WebSocket\"><code>WebSocket</code></a> connection or connection attempt, if any. If the connection is\nalready <code>CLOSED</code>, this method does nothing.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> The process of closing the connection begins with a <a href=\"https://www.rfc-editor.org/rfc/rfc6455.html#section-1.4\" class=\"external\" target=\"_blank\">closing handshake</a>, and the <code>close()</code> method does not discard previously-sent messages before starting that closing handshake; even if the user agent is still busy sending those messages, the handshake will only start after the messages are sent.\n</div>",
       "parameters": {
@@ -11241,10 +11007,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "8",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
-        "SafariIOS": "6"
+        "SafariIOS": "6",
+        "Deno": "1.4"
       },
       "doc": "The <strong><code>WebSocket.extensions</code></strong> read-only property returns the\nextensions selected by the server. This is currently only the empty string or a list of\nextensions as negotiated by the connection."
     },
@@ -11260,7 +11026,8 @@
         "Firefox": "7",
         "Opera": "12.1",
         "Safari": "6",
-        "SafariIOS": "6"
+        "SafariIOS": "6",
+        "Deno": "1.4"
       },
       "doc": "The <strong><code>WebSocket.protocol</code></strong> read-only property returns the\nname of the sub-protocol the server selected; this will be one of the strings specified\nin the <code>protocols</code> parameter when creating the <a href=\"$MDN_URL$/Web/API/WebSocket\"><code>WebSocket</code></a>\nobject, or the empty string if no connection is established."
     },
@@ -11274,10 +11041,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "7",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "5",
-        "SafariIOS": "4.2"
+        "SafariIOS": "4.2",
+        "Deno": "1.4"
       },
       "doc": "The <strong><code>WebSocket.readyState</code></strong> read-only property returns the\ncurrent state of the <a href=\"$MDN_URL$/Web/API/WebSocket\"><code>WebSocket</code></a> connection."
     },
@@ -11291,10 +11058,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "18",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "5",
-        "SafariIOS": "4.2"
+        "SafariIOS": "4.2",
+        "Deno": "1.4"
       },
       "doc": "The <strong><code>WebSocket.send()</code></strong> method enqueues the specified data\nto be transmitted to the server over the WebSocket connection, increasing the value of\n<code>bufferedAmount</code> by the number of bytes needed to contain the data. If the\ndata can't be sent (for example, because it needs to be buffered but the buffer is\nfull), the socket is closed automatically.\nThe browser will throw an exception if you call <code>send()</code> when the connection is in the <code>CONNECTING</code> state. If you call <code>send()</code> when the connection is in the <code>CLOSING</code> or <code>CLOSED</code> states, the browser will silently discard the data.",
       "parameters": {
@@ -11317,7 +11084,8 @@
         "Firefox": "7",
         "Opera": "12.1",
         "Safari": "6",
-        "SafariIOS": "6"
+        "SafariIOS": "6",
+        "Deno": "1.4"
       },
       "doc": "The <strong><code>WebSocket.url</code></strong> read-only property returns the absolute\nURL of the <a href=\"$MDN_URL$/Web/API/WebSocket\"><code>WebSocket</code></a> as resolved by the constructor."
     },
@@ -11331,10 +11099,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "11",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "5",
-        "SafariIOS": "4.2"
+        "SafariIOS": "4.2",
+        "Deno": "1.4"
       },
       "doc": "The <strong><code>WebSocket()</code></strong> constructor returns a new\n<a href=\"$MDN_URL$/Web/API/WebSocket\"><code>WebSocket</code></a> object.",
       "parameters": {
@@ -11799,7 +11567,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "17",
-        "IE": "9",
         "Opera": "15",
         "Safari": "3",
         "SafariIOS": ""
@@ -11816,7 +11583,6 @@
         "ChromeAndroid": "26",
         "Edge": "",
         "Firefox": "17",
-        "IE": "9",
         "Opera": "15",
         "Safari": "7",
         "SafariIOS": "7"
@@ -11833,7 +11599,6 @@
         "ChromeAndroid": "31",
         "Edge": "",
         "Firefox": "17",
-        "IE": "9",
         "Opera": "18",
         "Safari": "8",
         "SafariIOS": "8"
@@ -11850,7 +11615,6 @@
         "ChromeAndroid": "31",
         "Edge": "",
         "Firefox": "17",
-        "IE": "9",
         "Opera": "18",
         "Safari": "8",
         "SafariIOS": "8"
@@ -11867,7 +11631,6 @@
         "ChromeAndroid": "31",
         "Edge": "",
         "Firefox": "17",
-        "IE": "9",
         "Opera": "18",
         "Safari": "8",
         "SafariIOS": "8"
@@ -11905,10 +11668,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "3",
         "Safari": "",
-        "SafariIOS": ""
+        "SafariIOS": "",
+        "Deno": ""
       },
       "doc": "The <strong><code>Window</code></strong> interface represents a window containing a <a href=\"$MDN_URL$/Glossary/DOM\">DOM</a> document; the <code>document</code> property points to the <a href=\"$MDN_URL$/Web/API/Document\">DOM document</a> loaded in that window.\n<p>A window for a given document can be obtained using the <a href=\"$MDN_URL$/Web/API/Document/defaultView\"><code>document.defaultView</code></a> property.\n<p>A global variable, <code>window</code>, representing the window in which the script is running, is exposed to JavaScript code.\n<p>The <code>Window</code> interface is home to a variety of functions, namespaces, objects, and constructors which are not necessarily directly associated with the concept of a user interface window. However, the <code>Window</code> interface is a suitable place to include these items that need to be globally available. Many of these are documented in the <a href=\"$MDN_URL$/Web/JavaScript/Reference\">JavaScript Reference</a> and the <a href=\"$MDN_URL$/Web/API/Document_Object_Model\">DOM Reference</a>.\n<p>In a tabbed browser, each tab is represented by its own <code>Window</code> object; the global <code>window</code> seen by JavaScript code running within a given tab always represents the tab in which the code is running. That said, even in a tabbed browser, some properties and methods still apply to the overall window that contains the tab, such as <a href=\"$MDN_URL$/Web/API/Window/resizeTo\" ><code>resizeTo()</code></a> and <a href=\"$MDN_URL$/Web/API/Window/innerHeight\" ><code>innerHeight</code></a>. Generally, anything that can't reasonably pertain to a tab pertains to the window instead."
     },
@@ -11922,10 +11685,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "3",
         "Safari": "",
-        "SafariIOS": ""
+        "SafariIOS": "",
+        "Deno": "1.5"
       },
       "doc": "<code>window.alert()</code> instructs the browser to display a dialog with an optional message, and to wait until the user dismisses the dialog.\n<p>Under some conditions — for example, when the user switches tabs — the browser may not actually display a dialog, or may not wait for the user to dismiss the dialog.",
       "parameters": {
@@ -11952,10 +11715,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "12.1",
         "Safari": "",
-        "SafariIOS": ""
+        "SafariIOS": "",
+        "Deno": "1.24"
       },
       "doc": "Shifts focus away from the window.",
       "returns": "None (<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/undefined\"><code>undefined</code></a>)."
@@ -11970,7 +11733,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "23",
-        "IE": "10",
         "Opera": "15",
         "Safari": "7",
         "SafariIOS": "7"
@@ -12010,7 +11772,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "11",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -12023,9 +11784,7 @@
       "status": [
         "StandardTrack"
       ],
-      "compatibility": {
-        "IE": "10"
-      },
+      "compatibility": {},
       "doc": "This method clears the action specified by <a href=\"$MDN_URL$/Web/API/Window/setImmediate\"><code>window.setImmediate</code></a>.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This method is not expected to become standard, and is nowadays only implemented\nby Node.js 0.10+. It meets resistance both from <a href=\"https://bugzil.la/686201\" class=\"external\" target=\"_blank\">Gecko</a> (Firefox) and <a href=\"https://crbug.com/146172\" class=\"external\" target=\"_blank\">Chromium/WebKit</a> (Chrome/Safari).\n</div>",
       "parameters": {
         "immediateID": "The ID returned by <a href=\"$MDN_URL$/Web/API/Window/setImmediate\"><code>window.setImmediate</code></a>."
@@ -12042,10 +11801,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "3",
         "Safari": "",
-        "SafariIOS": ""
+        "SafariIOS": "",
+        "Deno": ""
       },
       "doc": "The <strong><code>Window.close()</code></strong> method closes the current window, or\nthe window on which it was called.\n<p>This method can only be called on windows that were opened by a script using the\n<a href=\"$MDN_URL$/Web/API/Window/open\"><code>Window.open()</code></a> method, or on top-level windows that have a single history entry. If the window doesn't match these requirements, an error\nsimilar to this one appears in the console:\n<code>Scripts may not close windows that were not opened by script.</code>\n<p>Note also that <code>close()</code> has no effect when called on <a href=\"$MDN_URL$/Web/API/Window\"><code>Window</code></a>\nobjects returned by\n<a href=\"$MDN_URL$/Web/API/HTMLIFrameElement/contentWindow\"><code>HTMLIFrameElement.contentWindow</code></a>.",
       "returns": "None (<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/undefined\"><code>undefined</code></a>)."
@@ -12060,7 +11819,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -12077,10 +11835,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "3",
         "Safari": "",
-        "SafariIOS": ""
+        "SafariIOS": "",
+        "Deno": "1.5"
       },
       "doc": "<code>window.confirm()</code> instructs the browser to display a dialog with an optional message, and to wait until the user either confirms or cancels the dialog.\n<p>Under some conditions — for example, when the user switches tabs — the browser may not actually display a dialog, or may not wait for the user to confirm or cancel the dialog.",
       "parameters": {
@@ -12135,7 +11893,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "18",
-        "IE": "11",
         "Opera": "11.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -12152,7 +11909,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -12179,7 +11935,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "66",
-        "IE": "4",
         "Opera": "7",
         "Safari": "1.1",
         "SafariIOS": ""
@@ -12197,7 +11952,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "2",
-        "IE": "4",
         "Opera": "15"
       },
       "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <code>external</code> property of the <a href=\"$MDN_URL$/Web/API/Window\"><code>Window</code></a> API returns an instance of the <code>External</code> interface, which was intended to contain functions related to adding external search providers to the browser. However, this is now deprecated, and the contained methods are now dummy functions that do nothing as per spec."
@@ -12234,7 +11988,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -12257,7 +12010,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -12274,7 +12026,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -12298,7 +12049,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "7.2",
         "Safari": "3",
         "SafariIOS": ""
@@ -12332,7 +12082,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "9",
         "Safari": "",
         "SafariIOS": ""
@@ -12350,7 +12099,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "3",
         "Safari": "",
         "SafariIOS": ""
@@ -12367,7 +12115,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "9",
         "Safari": "3",
         "SafariIOS": ""
@@ -12384,7 +12131,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "9",
         "Safari": "3",
         "SafariIOS": ""
@@ -12415,7 +12161,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -12432,10 +12177,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "8",
         "Opera": "10.5",
         "Safari": "4",
-        "SafariIOS": "3.2"
+        "SafariIOS": "3.2",
+        "Deno": "1.16"
       },
       "doc": "The <strong><code>localStorage</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/Window\"><code>window</code></a> interface allows you to access a <a href=\"$MDN_URL$/Web/API/Storage\"><code>Storage</code></a> object for the <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a>'s <a href=\"$MDN_URL$/Glossary/Origin\">origin</a>; the stored data is saved across browser sessions.\n<p><code>localStorage</code> is similar to <a href=\"$MDN_URL$/Web/API/Window/sessionStorage\" ><code>sessionStorage</code></a>, except that while <code>localStorage</code> data has no expiration time, <code>sessionStorage</code> data gets cleared when the page session ends — that is, when the page is closed. (<code>localStorage</code> data for a document loaded in a \"private browsing\" or \"incognito\" session is cleared when the last \"private\" tab is closed.)",
       "throws": {
@@ -12452,7 +12197,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "3",
         "Safari": "",
         "SafariIOS": ""
@@ -12485,7 +12229,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "6",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "5.1",
         "SafariIOS": "5"
@@ -12522,7 +12265,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -12540,7 +12282,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -12572,7 +12313,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -12602,10 +12342,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "3",
         "Safari": "",
-        "SafariIOS": ""
+        "SafariIOS": "",
+        "Deno": "1.8"
       },
       "doc": "The <strong><code>Window.navigator</code></strong> read-only property returns a\nreference to the <a href=\"$MDN_URL$/Web/API/Navigator\"><code>Navigator</code></a> object, which has methods and properties about\nthe application running the script."
     },
@@ -12623,7 +12363,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "3",
         "Safari": "",
         "SafariIOS": ""
@@ -12646,7 +12385,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "3",
         "Safari": "",
         "SafariIOS": ""
@@ -12675,7 +12413,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "9",
         "Safari": "3",
         "SafariIOS": "3"
@@ -12692,7 +12429,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "9",
         "Safari": "3",
         "SafariIOS": "3"
@@ -12709,7 +12445,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "3",
         "Safari": "",
         "SafariIOS": ""
@@ -12726,7 +12461,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "3",
         "Safari": "",
         "SafariIOS": ""
@@ -12743,7 +12477,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "3",
         "Safari": "1.3",
         "SafariIOS": ""
@@ -12776,7 +12509,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "10",
         "Opera": "9.5",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -12799,7 +12531,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5",
         "Opera": "6",
         "Safari": "1.1",
         "SafariIOS": ""
@@ -12817,10 +12548,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "3",
         "Safari": "",
-        "SafariIOS": ""
+        "SafariIOS": "",
+        "Deno": "1.5"
       },
       "doc": "<code>window.prompt()</code> instructs the browser to display a dialog with an optional message prompting the user to input some text, and to wait until the user either submits the text or cancels the dialog.\n<p>Under some conditions — for example, when the user switches tabs — the browser may not actually display a dialog, or may not wait for the user to submit text or to cancel the dialog.",
       "parameters": {
@@ -12860,7 +12591,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "11",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -12881,7 +12611,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "23",
-        "IE": "10",
         "Opera": "15",
         "Safari": "7",
         "SafariIOS": "7"
@@ -12936,7 +12665,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -12954,7 +12682,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -12980,7 +12707,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -12997,7 +12723,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "64",
-        "IE": "5",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -13014,7 +12739,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "64",
-        "IE": "5",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -13031,7 +12755,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -13048,7 +12771,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -13065,7 +12787,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "3",
         "Safari": "",
         "SafariIOS": ""
@@ -13102,7 +12823,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "11",
         "Opera": "3",
         "Safari": "",
         "SafariIOS": ""
@@ -13153,7 +12873,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "4",
         "Safari": "",
         "SafariIOS": ""
@@ -13206,7 +12925,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13223,10 +12941,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "2",
-        "IE": "8",
         "Opera": "10.5",
         "Safari": "4",
-        "SafariIOS": "3.2"
+        "SafariIOS": "3.2",
+        "Deno": "1.10"
       },
       "doc": "The read-only <strong><code>sessionStorage</code></strong>\nproperty accesses a session <a href=\"$MDN_URL$/Web/API/Storage\"><code>Storage</code></a> object for the current\n<a href=\"$MDN_URL$/Glossary/Origin\">origin</a>. <code>sessionStorage</code> is similar to\n<a href=\"$MDN_URL$/Web/API/Window/localStorage\" ><code>localStorage</code></a>; the difference is that while data\nin <code>localStorage</code> doesn't expire, data in <code>sessionStorage</code> is\ncleared when the <em>page session</em> ends.\n<ul>\n<li>\nWhenever a document is loaded in a particular tab in the browser, a unique page\nsession gets created and assigned to that particular tab. That page session is valid\nonly for that particular tab.\n</li>\n<li>\nA page session lasts as long as the tab or the browser is open, and survives over\npage reloads and restores.\n</li>\n<li><strong>Opening a page in a new tab or window creates a new session with the value\nof the top-level browsing context, which differs from how session cookies\nwork.</strong></li>\n<li>\nOpening multiple tabs/windows with the same URL creates <code>sessionStorage</code>\nfor each tab/window.\n</li>\n<li>\nDuplicating a tab copies the tab's <code>sessionStorage</code> into the new\ntab.\n</li>\n<li>\nClosing a tab/window ends the session and clears objects in\n<code>sessionStorage</code>.\n</li>\n</ul>\n<p>Data stored in <code>sessionStorage</code> <strong>is specific to the protocol of the\npage</strong>. In particular, data stored by a script on a site accessed with HTTP\n(e.g., <a href=\"https://example.com\" class=\"external\" target=\"_blank\">http://example.com</a>) is\nput in a different <code>sessionStorage</code> object from the same site accessed with\nHTTPS (e.g., <a href=\"https://example.com\" class=\"external\" target=\"_blank\">https://example.com</a>).\n<p>The keys and the values are <em>always</em> in the UTF-16 string\nformat, which uses two bytes per character. As with objects, integer keys are\nautomatically converted to strings.",
       "throws": {
@@ -13238,9 +12956,7 @@
       "status": [
         "StandardTrack"
       ],
-      "compatibility": {
-        "IE": "10"
-      },
+      "compatibility": {},
       "doc": "This method is used to break up long running operations and run a callback function\nimmediately after the browser has completed other operations such as events and display\nupdates.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This method is not expected to become standard, and is nowadays only implemented\nby Node.js 0.10+. It meets resistance both from <a href=\"https://bugzil.la/686201\" class=\"external\" target=\"_blank\">Gecko</a> (Firefox) and <a href=\"https://crbug.com/146172\" class=\"external\" target=\"_blank\">Chromium/WebKit</a> (Chrome/Safari).\n</div>",
       "parameters": {
         "func": "The function you wish to call.",
@@ -13273,9 +12989,7 @@
       "status": [
         "Deprecated"
       ],
-      "compatibility": {
-        "IE": "4"
-      },
+      "compatibility": {},
       "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div><div class=\"notecard nonstandard\" id=\"sect2\"><p><strong>Non-standard:</strong> This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</div>\n<div class=\"notecard warning\" id=\"sect3\">\n<p><strong>Warning:</strong> This feature has been removed. Please fix your websites and applications.\n<p>This method was removed in Chrome 43 and Firefox 56.\n</div>\n<p>The <strong><code>Window.showModalDialog()</code></strong>\ncreated and displayed a modal dialog box containing a specified HTML document.",
       "parameters": {
         "uri": "Is the URL of the document to display in the dialog.",
@@ -13370,7 +13084,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -13436,7 +13149,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13509,7 +13221,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13710,10 +13421,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "10",
         "Opera": "10.6",
         "Safari": "4",
-        "SafariIOS": "5"
+        "SafariIOS": "5",
+        "Deno": ""
       },
       "doc": "The <strong><code>Worker</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers API</a> represents a background task that can be created via script, which can send messages back to its creator.\n<p>Creating a worker is done by calling the <code>Worker(\"path/to/worker/script\")</code> constructor.\n<p>Workers may themselves spawn new workers, as long as those workers are hosted at the same <a href=\"$MDN_URL$/Web/Security/Same-origin_policy\">origin</a> as the parent page.\n<p><a href=\"$MDN_URL$/Web/API/Web_Workers_API/Functions_and_classes_available_to_workers\">Not all interfaces and functions are available</a> to scripts inside a <code>Worker</code>. Workers may use <a href=\"$MDN_URL$/Web/API/XMLHttpRequest\"><code>XMLHttpRequest</code></a> for network communication, but its <code>responseXML</code> and <code>channel</code> attributes are always <code>null</code>. (<a href=\"$MDN_URL$/Web/API/Fetch_API\"><code>fetch</code></a> is also available, with no such restrictions.)"
     },
@@ -13727,10 +13438,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "10",
         "Opera": "10.6",
         "Safari": "4",
-        "SafariIOS": "5"
+        "SafariIOS": "5",
+        "Deno": "1.14"
       },
       "doc": "The <strong><code>postMessage()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Worker\"><code>Worker</code></a> interface sends a message to the worker. The first parameter is the data to send to the worker. The data may be any JavaScript object that can be handled by the <a href=\"$MDN_URL$/Web/API/Web_Workers_API/Structured_clone_algorithm\">structured clone algorithm</a>.\n<p>The <a href=\"$MDN_URL$/Web/API/Worker\"><code>Worker</code></a> <code>postMessage()</code> method delegates to the <a href=\"$MDN_URL$/Web/API/MessagePort\"><code>MessagePort</code></a> <a href=\"$MDN_URL$/Web/API/MessagePort/postMessage\" ><code>postMessage()</code></a> method, which adds a task on the event loop corresponding to the receiving <a href=\"$MDN_URL$/Web/API/MessagePort\"><code>MessagePort</code></a>.\n<p>The <code>Worker</code> can send back information to the thread that spawned it using the <a href=\"$MDN_URL$/Web/API/DedicatedWorkerGlobalScope/postMessage\"><code>DedicatedWorkerGlobalScope.postMessage</code></a> method.",
       "parameters": {
@@ -13749,10 +13460,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "10",
         "Opera": "10.6",
         "Safari": "4",
-        "SafariIOS": "5"
+        "SafariIOS": "5",
+        "Deno": ""
       },
       "doc": "The <strong><code>terminate()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Worker\"><code>Worker</code></a> interface immediately terminates the <a href=\"$MDN_URL$/Web/API/Worker\"><code>Worker</code></a>. This does not offer the worker an opportunity to finish its operations; it is stopped at once.",
       "returns": "None (<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/undefined\"><code>undefined</code></a>)."
@@ -13767,10 +13478,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "10",
         "Opera": "10.6",
         "Safari": "4",
-        "SafariIOS": "5"
+        "SafariIOS": "5",
+        "Deno": ""
       },
       "doc": "The <strong><code>Worker()</code></strong> constructor creates a <a href=\"$MDN_URL$/Web/API/Worker\"><code>Worker</code></a> object that executes the script at the specified URL. This script must obey the <a href=\"$MDN_URL$/Web/Security/Same-origin_policy\">same-origin policy</a>.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> that there is a disagreement among browser manufacturers about whether a data URL is of the same origin or not. Though Firefox 10 and later accept data URLs, that's not the case in all other browsers.\n</div>",
       "parameters": {
@@ -13793,10 +13504,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "10",
         "Opera": "10.6",
         "Safari": "4",
-        "SafariIOS": "5"
+        "SafariIOS": "5",
+        "Deno": ""
       },
       "doc": "The <strong><code>WorkerGlobalScope</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers API</a> is an interface representing the scope of any worker. Workers have no browsing context; this scope contains the information usually conveyed by <a href=\"$MDN_URL$/Web/API/Window\"><code>Window</code></a> objects — in this case event handlers, the console or the associated <a href=\"$MDN_URL$/Web/API/WorkerNavigator\"><code>WorkerNavigator</code></a> object. Each <code>WorkerGlobalScope</code> has its own event loop.\n<p>This interface is usually specialized by each worker type: <a href=\"$MDN_URL$/Web/API/DedicatedWorkerGlobalScope\"><code>DedicatedWorkerGlobalScope</code></a> for dedicated workers, <a href=\"$MDN_URL$/Web/API/SharedWorkerGlobalScope\"><code>SharedWorkerGlobalScope</code></a> for shared workers, and <a href=\"$MDN_URL$/Web/API/ServiceWorkerGlobalScope\"><code>ServiceWorkerGlobalScope</code></a> for <a href=\"$MDN_URL$/Web/API/Service_Worker_API\">ServiceWorker</a>. The <code>self</code> property returns the specialized scope for each context."
     },
@@ -13842,7 +13553,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "10",
         "Opera": "10.6",
         "Safari": "4",
         "SafariIOS": "5"
@@ -13866,10 +13576,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "10",
         "Opera": "11.5",
         "Safari": "4",
-        "SafariIOS": "5"
+        "SafariIOS": "5",
+        "Deno": "1.7"
       },
       "doc": "The <strong><code>location</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/WorkerGlobalScope\"><code>WorkerGlobalScope</code></a> interface returns the <a href=\"$MDN_URL$/Web/API/WorkerLocation\"><code>WorkerLocation</code></a> associated with the worker. It is a specific location object, mostly a subset of the <a href=\"$MDN_URL$/Web/API/Location\"><code>Location</code></a> for browsing scopes, but adapted to workers."
     },
@@ -13883,10 +13593,10 @@
         "ChromeAndroid": "",
         "Edge": "17",
         "Firefox": "3.5",
-        "IE": "10",
         "Opera": "11.5",
         "Safari": "4",
-        "SafariIOS": "5"
+        "SafariIOS": "5",
+        "Deno": "1.8"
       },
       "doc": "The <strong><code>navigator</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/WorkerGlobalScope\"><code>WorkerGlobalScope</code></a> interface returns the <a href=\"$MDN_URL$/Web/API/WorkerNavigator\"><code>WorkerNavigator</code></a> associated with the worker. It is a specific navigator object, mostly a subset of the <a href=\"$MDN_URL$/Web/API/Navigator\"><code>Navigator</code></a> for browsing scopes, but adapted to workers."
     },
@@ -13900,10 +13610,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "10",
         "Opera": "11.5",
         "Safari": "4",
-        "SafariIOS": "5"
+        "SafariIOS": "5",
+        "Deno": ""
       },
       "doc": "The <strong><code>self</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/WorkerGlobalScope\"><code>WorkerGlobalScope</code></a> interface returns a reference to the <code>WorkerGlobalScope</code> itself. Most of the time it is a specific scope like <a href=\"$MDN_URL$/Web/API/DedicatedWorkerGlobalScope\"><code>DedicatedWorkerGlobalScope</code></a>, <a href=\"$MDN_URL$/Web/API/SharedWorkerGlobalScope\"><code>SharedWorkerGlobalScope</code></a>, or <a href=\"$MDN_URL$/Web/API/ServiceWorkerGlobalScope\"><code>ServiceWorkerGlobalScope</code></a>."
     },
@@ -13917,10 +13627,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "4",
-        "SafariIOS": "5"
+        "SafariIOS": "5",
+        "Deno": "1.7"
       },
       "doc": "The <strong><code>WorkerLocation</code></strong> interface defines the absolute location of the script executed by the <a href=\"$MDN_URL$/Web/API/Worker\"><code>Worker</code></a>. Such an object is initialized for each worker and is available via the <a href=\"$MDN_URL$/Web/API/WorkerGlobalScope/location\"><code>WorkerGlobalScope.location</code></a> property obtained by calling <code>self.location</code>.\n<p>This interface is only visible from inside a JavaScript script executed in the context of a Web worker."
     },
@@ -13934,10 +13644,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "4",
-        "SafariIOS": "5"
+        "SafariIOS": "5",
+        "Deno": "1.7"
       },
       "doc": "The <strong><code>hash</code></strong> property of a <a href=\"$MDN_URL$/Web/API/WorkerLocation\"><code>WorkerLocation</code></a> object returns the <a href=\"$MDN_URL$/Web/API/URL/hash\" ><code>hash</code></a> part of the worker's location."
     },
@@ -13951,10 +13661,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "4",
-        "SafariIOS": "5"
+        "SafariIOS": "5",
+        "Deno": "1.7"
       },
       "doc": "The <strong><code>host</code></strong> property of a <a href=\"$MDN_URL$/Web/API/WorkerLocation\"><code>WorkerLocation</code></a> object returns the <a href=\"$MDN_URL$/Web/API/URL/host\" ><code>host</code></a> part of the worker's location."
     },
@@ -13968,10 +13678,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "4",
-        "SafariIOS": "5"
+        "SafariIOS": "5",
+        "Deno": "1.7"
       },
       "doc": "The <strong><code>hostname</code></strong> property of a <a href=\"$MDN_URL$/Web/API/WorkerLocation\"><code>WorkerLocation</code></a> object returns the <a href=\"$MDN_URL$/Web/API/URL/hostname\" ><code>hostname</code></a> part of the worker's location."
     },
@@ -13985,10 +13695,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "4",
-        "SafariIOS": "5"
+        "SafariIOS": "5",
+        "Deno": "1.7"
       },
       "doc": "The <strong><code>href</code></strong> property of a <a href=\"$MDN_URL$/Web/API/WorkerLocation\"><code>WorkerLocation</code></a> object returns a string containing the serialized <a href=\"$MDN_URL$/Web/API/URL\"><code>URL</code></a> for the worker's location."
     },
@@ -14004,7 +13714,8 @@
         "Firefox": "29",
         "Opera": "25",
         "Safari": "10",
-        "SafariIOS": "10"
+        "SafariIOS": "10",
+        "Deno": "1.7"
       },
       "doc": "The <strong><code>origin</code></strong> property of a <a href=\"$MDN_URL$/Web/API/WorkerLocation\"><code>WorkerLocation</code></a> object returns the worker's <a href=\"$MDN_URL$/Web/API/URL/origin\" ><code>origin</code></a>."
     },
@@ -14018,10 +13729,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "4",
-        "SafariIOS": "5"
+        "SafariIOS": "5",
+        "Deno": "1.7"
       },
       "doc": "The <strong><code>pathname</code></strong> property of a <a href=\"$MDN_URL$/Web/API/WorkerLocation\"><code>WorkerLocation</code></a> object returns the <a href=\"$MDN_URL$/Web/API/URL/pathname\" ><code>pathname</code></a> part of the worker's location."
     },
@@ -14035,10 +13746,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "4",
-        "SafariIOS": "5"
+        "SafariIOS": "5",
+        "Deno": "1.7"
       },
       "doc": "The <strong><code>port</code></strong> property of a <a href=\"$MDN_URL$/Web/API/WorkerLocation\"><code>WorkerLocation</code></a> object returns the <a href=\"$MDN_URL$/Web/API/URL/port\" ><code>port</code></a> part of the worker's location."
     },
@@ -14052,10 +13763,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "4",
-        "SafariIOS": "5"
+        "SafariIOS": "5",
+        "Deno": "1.7"
       },
       "doc": "The <strong><code>protocol</code></strong> property of a <a href=\"$MDN_URL$/Web/API/WorkerLocation\"><code>WorkerLocation</code></a> object returns the <a href=\"$MDN_URL$/Web/API/URL/protocol\" ><code>protocol</code></a> part of the worker's location."
     },
@@ -14069,10 +13780,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "4",
-        "SafariIOS": "5"
+        "SafariIOS": "5",
+        "Deno": "1.7"
       },
       "doc": "The <strong><code>search</code></strong> property of a <a href=\"$MDN_URL$/Web/API/WorkerLocation\"><code>WorkerLocation</code></a> object returns the <a href=\"$MDN_URL$/Web/API/URL/search\" ><code>search</code></a> part of the worker's location."
     },
@@ -14086,10 +13797,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "10",
         "Opera": "15",
         "Safari": "4",
-        "SafariIOS": "5"
+        "SafariIOS": "5",
+        "Deno": "1.7"
       },
       "doc": "The <strong><code>toString()</code></strong> <a href=\"$MDN_URL$/Glossary/Stringifier\">stringifier</a> method of a <a href=\"$MDN_URL$/Web/API/WorkerLocation\"><code>WorkerLocation</code></a> object returns a string containing the serialized <a href=\"$MDN_URL$/Web/API/URL\"><code>URL</code></a> for the worker's location. It is a synonym for <a href=\"$MDN_URL$/Web/API/WorkerLocation/href\"><code>WorkerLocation.href</code></a>.",
       "returns": "None (<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/undefined\"><code>undefined</code></a>)."
@@ -14104,10 +13815,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "4",
-        "SafariIOS": "5"
+        "SafariIOS": "5",
+        "Deno": "1.8"
       },
       "doc": "The <strong><code>WorkerNavigator</code></strong> interface represents a subset of the <a href=\"$MDN_URL$/Web/API/Navigator\"><code>Navigator</code></a> interface allowed to be accessed from a <a href=\"$MDN_URL$/Web/API/Worker\"><code>Worker</code></a>. Such an object is initialized for each worker and is available via the <a href=\"$MDN_URL$/Web/API/WorkerGlobalScope/navigator\" ><code>self.navigator</code></a> property."
     },
@@ -14122,7 +13833,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "10",
         "Opera": "15",
         "Safari": "10",
         "SafariIOS": "10"
@@ -14140,7 +13850,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "4",
         "SafariIOS": "5"
@@ -14158,7 +13867,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "4",
         "SafariIOS": "5"
@@ -14200,7 +13908,8 @@
         "ChromeAndroid": "37",
         "Edge": "15",
         "Firefox": "48",
-        "Opera": "24"
+        "Opera": "24",
+        "Deno": "1.13"
       },
       "doc": "The <strong><code>navigator.hardwareConcurrency</code></strong> read-only property\nreturns the number of logical processors available to run threads on the user's\ncomputer."
     },
@@ -14214,7 +13923,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "11",
         "Opera": "4",
         "Safari": "10",
         "SafariIOS": "10"
@@ -14279,7 +13987,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "10",
         "Opera": "10.6",
         "Safari": "4",
         "SafariIOS": "5"
@@ -14312,7 +14019,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "4",
         "SafariIOS": "5"
@@ -14330,7 +14036,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "11",
         "Opera": "15",
         "Safari": "10",
         "SafariIOS": "10"
@@ -14375,7 +14080,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "4",
         "SafariIOS": "5"
@@ -14466,7 +14170,8 @@
         "Opera": "47",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "18.0.0"
+        "Nodejs": "18.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>WritableStream</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Streams_API\">Streams API</a> provides a standard abstraction for writing streaming data to a destination, known as a sink.\nThis object comes with built-in backpressure and queuing.\n<p><code>WritableStream</code> is a <a href=\"$MDN_URL$/Web/API/Web_Workers_API/Transferable_objects\">transferable object</a>."
     },
@@ -14483,7 +14188,8 @@
         "Opera": "47",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>abort()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/WritableStream\"><code>WritableStream</code></a> interface aborts the stream, signaling that the producer can no longer successfully write to the stream and it is to be immediately moved to an error state, with any queued writes discarded.",
       "parameters": {
@@ -14507,7 +14213,8 @@
         "Opera": "68",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>close()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/WritableStream\"><code>WritableStream</code></a> interface closes the associated stream. All chunks written before this method is called are sent before the returned promise is fulfilled.\n<p>This is equivalent to getting a <a href=\"$MDN_URL$/Web/API/WritableStreamDefaultWriter\"><code>WritableStreamDefaultWriter</code></a> with <a href=\"$MDN_URL$/Web/API/WritableStream/getWriter\" ><code>getWriter()</code></a>, calling <a href=\"$MDN_URL$/Web/API/WritableStreamDefaultWriter/close\" ><code>close()</code></a> on it.",
       "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> which fulfills with the <code>undefined</code> when all\n  remaining chunks were successfully written before the close, or rejects with an error if\n  a problem was encountered during the process.",
@@ -14528,7 +14235,8 @@
         "Opera": "47",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>getWriter()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/WritableStream\"><code>WritableStream</code></a> interface returns a new instance of <a href=\"$MDN_URL$/Web/API/WritableStreamDefaultWriter\"><code>WritableStreamDefaultWriter</code></a> and locks the stream to that instance.\nWhile the stream is locked, no other writer can be acquired until this one is released.",
       "returns": "A <a href=\"$MDN_URL$/Web/API/WritableStreamDefaultWriter\"><code>WritableStreamDefaultWriter</code></a> object instance.",
@@ -14549,7 +14257,8 @@
         "Opera": "47",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>locked</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/WritableStream\"><code>WritableStream</code></a> interface returns a boolean indicating whether the <code>WritableStream</code> is locked to a writer."
     },
@@ -14566,7 +14275,8 @@
         "Opera": "47",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>WritableStream()</code></strong> constructor creates\na new <a href=\"$MDN_URL$/Web/API/WritableStream\"><code>WritableStream</code></a> object instance.",
       "parameters": {
@@ -14588,7 +14298,8 @@
         "Opera": "46",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "18.0.0"
+        "Nodejs": "18.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>WritableStreamDefaultController</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Streams_API\">Streams API</a> represents a controller allowing control of a <a href=\"$MDN_URL$/Web/API/WritableStream\"><code>WritableStream</code></a>'s state. When constructing a <code>WritableStream</code>, the underlying sink is given a corresponding <code>WritableStreamDefaultController</code> instance to manipulate."
     },
@@ -14605,7 +14316,8 @@
         "Opera": "46",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>error()</code></strong> method of the\n<a href=\"$MDN_URL$/Web/API/WritableStreamDefaultController\"><code>WritableStreamDefaultController</code></a> interface causes any future interactions\nwith the associated stream to error.\n<p>This method is rarely used, since usually it suffices to return a rejected promise from\none of the underlying sink's methods. However, it can be useful for suddenly shutting\ndown a stream in response to an event outside the normal lifecycle of interactions with\nthe underlying sink.",
       "parameters": {
@@ -14629,7 +14341,8 @@
         "Opera": "84",
         "Safari": "16.4",
         "SafariIOS": "16.4",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": "1.16"
       },
       "doc": "The read-only <strong><code>signal</code></strong> property of the <a href=\"$MDN_URL$/Web/API/WritableStreamDefaultController\"><code>WritableStreamDefaultController</code></a> interface returns the <a href=\"$MDN_URL$/Web/API/AbortSignal\"><code>AbortSignal</code></a> associated with the controller."
     },
@@ -14646,7 +14359,8 @@
         "Opera": "46",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "18.0.0"
+        "Nodejs": "18.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>WritableStreamDefaultWriter</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Streams_API\">Streams API</a> is the object returned by <a href=\"$MDN_URL$/Web/API/WritableStream/getWriter\"><code>WritableStream.getWriter()</code></a> and once created locks the writer to the <code>WritableStream</code> ensuring that no other streams can write to the underlying sink."
     },
@@ -14663,7 +14377,8 @@
         "Opera": "46",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>abort()</code></strong> method of the\n<a href=\"$MDN_URL$/Web/API/WritableStreamDefaultWriter\"><code>WritableStreamDefaultWriter</code></a> interface aborts the stream, signaling that\nthe producer can no longer successfully write to the stream and it is to be immediately\nmoved to an error state, with any queued writes discarded.\n<p>If the writer is active, the <code>abort()</code> method behaves the same as that for\nthe associated stream (<a href=\"$MDN_URL$/Web/API/WritableStream/abort\"><code>WritableStream.abort()</code></a>). If not, it returns a\nrejected promise.",
       "parameters": {
@@ -14687,7 +14402,8 @@
         "Opera": "46",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>close()</code></strong> method of the\n<a href=\"$MDN_URL$/Web/API/WritableStreamDefaultWriter\"><code>WritableStreamDefaultWriter</code></a> interface closes the associated writable\nstream.\n<p>The underlying sink will finish processing any previously-written chunks, before\ninvoking the close behavior. During this time any further attempts to write will fail\n(without erroring the stream).",
       "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a>, which fulfills with the <code>undefined</code> if all\n  remaining chunks were successfully written before the close, or rejects with an error if\n  a problem was encountered during the process.",
@@ -14708,7 +14424,8 @@
         "Opera": "46",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>closed</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/WritableStreamDefaultWriter\"><code>WritableStreamDefaultWriter</code></a> interface returns a\n<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that fulfills if the stream becomes closed, or rejects if\nthe stream errors or the writer's lock is released."
     },
@@ -14725,7 +14442,8 @@
         "Opera": "46",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>desiredSize</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/WritableStreamDefaultWriter\"><code>WritableStreamDefaultWriter</code></a> interface returns the desired size required\nto fill the stream's internal queue.",
       "throws": {
@@ -14745,7 +14463,8 @@
         "Opera": "46",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>ready</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/WritableStreamDefaultWriter\"><code>WritableStreamDefaultWriter</code></a> interface returns a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a>\nthat resolves when the desired size of the stream's internal queue transitions from\nnon-positive to positive, signaling that it is no longer applying backpressure."
     },
@@ -14762,7 +14481,8 @@
         "Opera": "46",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>releaseLock()</code></strong> method of the\n<a href=\"$MDN_URL$/Web/API/WritableStreamDefaultWriter\"><code>WritableStreamDefaultWriter</code></a> interface releases the writer's lock on the\ncorresponding stream. After the lock is released, the writer is no longer active. If the\nassociated stream is errored when the lock is released, the writer will appear errored\nin the same way from now on; otherwise, the writer will appear closed.",
       "returns": "None (<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/undefined\"><code>undefined</code></a>)."
@@ -14780,7 +14500,8 @@
         "Opera": "65",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>WritableStreamDefaultWriter()</code></strong>\nconstructor creates a new <a href=\"$MDN_URL$/Web/API/WritableStreamDefaultWriter\"><code>WritableStreamDefaultWriter</code></a> object instance.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> You generally wouldn't use this constructor manually; instead,\nyou'd use the <a href=\"$MDN_URL$/Web/API/WritableStream/getWriter\"><code>WritableStream.getWriter()</code></a> method.\n</div>",
       "parameters": {
@@ -14804,7 +14525,8 @@
         "Opera": "46",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>write()</code></strong> method of the\n<a href=\"$MDN_URL$/Web/API/WritableStreamDefaultWriter\"><code>WritableStreamDefaultWriter</code></a> interface writes a passed chunk of data to a\n<a href=\"$MDN_URL$/Web/API/WritableStream\"><code>WritableStream</code></a> and its underlying sink, then returns a\n<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that resolves to indicate the success or failure of the write\noperation.\n<p>Note that what \"success\" means is up to the underlying sink; it might indicate that the\nchunk has been accepted, and not necessarily that it is safely saved to its ultimate\ndestination.",
       "parameters": {
@@ -14825,7 +14547,6 @@
         "ChromeAndroid": "34",
         "Edge": "",
         "Firefox": "",
-        "IE": "11",
         "Opera": "21",
         "Safari": "10",
         "SafariIOS": "10"
@@ -14842,7 +14563,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "7",
         "Opera": "8",
         "Safari": "1.2",
         "SafariIOS": ""
@@ -14859,7 +14579,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5",
         "Opera": "12.1",
         "Safari": "1.2",
         "SafariIOS": ""
@@ -14881,7 +14600,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5",
         "Opera": "12.1",
         "Safari": "1.2",
         "SafariIOS": ""
@@ -14899,7 +14617,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5",
         "Opera": "8",
         "Safari": "1.2",
         "SafariIOS": ""
@@ -14932,7 +14649,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5",
         "Opera": "8",
         "Safari": "1.2",
         "SafariIOS": ""
@@ -14957,7 +14673,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "11",
         "Opera": "12.1",
         "Safari": "1.2",
         "SafariIOS": ""
@@ -14978,7 +14693,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "7",
         "Opera": "8",
         "Safari": "1.2",
         "SafariIOS": ""
@@ -14995,7 +14709,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "6",
-        "IE": "10",
         "Opera": "11.6",
         "Safari": "5.1",
         "SafariIOS": "5"
@@ -15012,7 +14725,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5",
         "Opera": "8",
         "Safari": "1.2",
         "SafariIOS": ""
@@ -15032,7 +14744,6 @@
         "ChromeAndroid": "31",
         "Edge": "",
         "Firefox": "6",
-        "IE": "10",
         "Opera": "18",
         "Safari": "5.1",
         "SafariIOS": "5"
@@ -15068,7 +14779,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "7",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -15088,7 +14798,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5",
         "Opera": "8",
         "Safari": "1.2",
         "SafariIOS": ""
@@ -15113,7 +14822,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5",
         "Opera": "8",
         "Safari": "1.2",
         "SafariIOS": ""
@@ -15135,7 +14843,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "7",
         "Opera": "8",
         "Safari": "1.2",
         "SafariIOS": ""
@@ -15152,7 +14859,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "7",
         "Opera": "12.1",
         "Safari": "1.2",
         "SafariIOS": ""
@@ -15169,7 +14875,6 @@
         "ChromeAndroid": "29",
         "Edge": "",
         "Firefox": "12",
-        "IE": "8",
         "Opera": "17",
         "Safari": "7",
         "SafariIOS": "7"
@@ -15186,7 +14891,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "4",
         "SafariIOS": "3"
@@ -15203,7 +14907,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "10",
         "Opera": "12",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -15220,7 +14923,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "7",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -15238,7 +14940,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "7",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -15255,7 +14956,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "4",
         "SafariIOS": "3"
@@ -15272,7 +14972,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -15289,7 +14988,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -15315,7 +15013,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""

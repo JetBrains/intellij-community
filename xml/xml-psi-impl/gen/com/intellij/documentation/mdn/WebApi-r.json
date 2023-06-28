@@ -19,7 +19,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "33",
-        "IE": "9",
         "Opera": "15",
         "Safari": "7",
         "SafariIOS": "7"
@@ -36,7 +35,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "33",
-        "IE": "9",
         "Opera": "15",
         "Safari": "7",
         "SafariIOS": "7"
@@ -53,7 +51,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "9",
         "Safari": "",
         "SafariIOS": ""
@@ -70,7 +67,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "9",
         "Safari": "",
         "SafariIOS": ""
@@ -88,7 +84,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "9",
         "Safari": "",
         "SafariIOS": ""
@@ -106,7 +101,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "9",
         "Safari": "",
         "SafariIOS": ""
@@ -127,7 +121,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "9",
         "Safari": "",
         "SafariIOS": ""
@@ -144,7 +137,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "9",
         "Safari": "",
         "SafariIOS": ""
@@ -161,7 +153,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "9",
         "Safari": "",
         "SafariIOS": ""
@@ -222,7 +213,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -243,7 +233,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "9",
         "Safari": "",
         "SafariIOS": ""
@@ -260,7 +249,6 @@
         "Chrome": "",
         "ChromeAndroid": "",
         "Edge": "",
-        "IE": "9",
         "Opera": "9",
         "Safari": "",
         "SafariIOS": ""
@@ -278,7 +266,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "9",
         "Safari": "",
         "SafariIOS": ""
@@ -295,7 +282,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "9",
         "Safari": "",
         "SafariIOS": ""
@@ -312,7 +298,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "9",
         "Safari": "",
         "SafariIOS": ""
@@ -330,7 +315,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "5",
         "SafariIOS": "4"
@@ -348,7 +332,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "5",
         "SafariIOS": "4"
@@ -366,7 +349,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "9",
         "Safari": "",
         "SafariIOS": ""
@@ -444,7 +426,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "9",
         "Safari": "",
         "SafariIOS": ""
@@ -465,7 +446,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "9",
         "Safari": "",
         "SafariIOS": ""
@@ -486,7 +466,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "9",
         "Safari": "",
         "SafariIOS": ""
@@ -512,7 +491,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "9",
         "Safari": "",
         "SafariIOS": ""
@@ -533,7 +511,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "9",
         "Safari": "",
         "SafariIOS": ""
@@ -554,7 +531,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "9",
         "Safari": "",
         "SafariIOS": ""
@@ -576,7 +552,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "9",
         "Safari": "",
         "SafariIOS": ""
@@ -597,7 +572,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "9",
         "Safari": "",
         "SafariIOS": ""
@@ -618,7 +592,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "9",
         "Safari": "",
         "SafariIOS": ""
@@ -635,7 +608,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "9",
         "Safari": "",
         "SafariIOS": ""
@@ -652,7 +624,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "9",
         "Safari": "",
         "SafariIOS": ""
@@ -673,7 +644,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "9",
         "Safari": "",
         "SafariIOS": ""
@@ -692,7 +662,8 @@
         "Edge": "89",
         "Firefox": "102",
         "Opera": "75",
-        "Nodejs": "18.0.0"
+        "Nodejs": "18.0.0",
+        "Deno": "1.11"
       },
       "doc": "The <strong><code>ReadableByteStreamController</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Streams_API\">Streams API</a> represents a controller for a <a href=\"$MDN_URL$/Web/API/Streams_API/Using_readable_byte_streams\">readable byte stream</a>.\nIt allows control of the state and internal queue of a <a href=\"$MDN_URL$/Web/API/ReadableStream\"><code>ReadableStream</code></a> with an underlying byte source, and enables efficient zero-copy transfer of data from the underlying source to a consumer when the stream's internal queue is empty.\n<p>An instance of this controller type is created if an <code>underlyingSource</code> object with the property <code>type=\"bytes\"</code> is passed as an argument to the <a href=\"$MDN_URL$/Web/API/ReadableStream/ReadableStream#type\"><code>ReadableStream()</code> constructor</a>.\nThe <code>underlyingSource</code> object may also define <a href=\"$MDN_URL$/Web/API/ReadableStream/ReadableStream#start\"><code>start()</code></a> and <a href=\"$MDN_URL$/Web/API/ReadableStream/ReadableStream#pull\"><code>pull()</code></a> callback functions.\nThese are called with the controller as a parameter, in order to setup the underlying source, and request data when needed.\n<p>The underlying source uses the controller to supply data to the stream via its <a href=\"#readablebytestreamcontroller.byobrequest\"><code>byobRequest</code></a> property or <a href=\"#readablebytestreamcontroller.enqueue\"><code>enqueue()</code></a> method.\n<a href=\"#readablebytestreamcontroller.byobrequest\"><code>byobRequest</code></a> is a <a href=\"$MDN_URL$/Web/API/ReadableStreamBYOBRequest\"><code>ReadableStreamBYOBRequest</code></a> object that represents a pending request from a consumer to make a zero-copy transfer of data direct to a consumer.\n<code>byobRequest</code> must be used to copy data if it exists (do not use <code>enqueue()</code> in this case)!\nIf the underlying source needs to pass data to the stream and <code>byobRequest</code> is <code>null</code> then the source can call <a href=\"#readablebytestreamcontroller.enqueue\"><code>enqueue()</code></a> to add the data to the stream's internal queues.\n<p>Note that the <a href=\"#readablebytestreamcontroller.byobrequest\"><code>byobRequest</code></a> is only created in \"BYOB mode\" when there is a request from a reader and the stream's internal queue is empty.\n\"BYOB mode\" is enabled when using a <a href=\"$MDN_URL$/Web/API/ReadableStreamBYOBReader\"><code>ReadableStreamBYOBReader</code></a> (typically constructed by calling <a href=\"$MDN_URL$/Web/API/ReadableStream/getReader\"><code>ReadableStream.getReader()</code></a> with the argument <code>{ mode: 'byob' }</code>).\nIt is also enabled when using a default reader and <a href=\"$MDN_URL$/Web/API/ReadableStream/ReadableStream#autoallocatechunksize\"><code>autoAllocateChunkSize</code></a> is specified in the <a href=\"$MDN_URL$/Web/API/ReadableStream/ReadableStream#autoallocatechunksize\"><code>ReadableController()</code> constructor</a>.\n<p>An underlying byte source can also use the controller to <a href=\"#readablebytestreamcontroller.close\"><code>close()</code></a> the stream when all the data has been sent and report errors from the underlying source using <a href=\"#readablebytestreamcontroller.error\"><code>error()</code></a>.\nThe controller's <a href=\"#readablebytestreamcontroller.desiredsize\"><code>desiredSize</code></a> property is used to apply \"backpressure\", informing the underlying source of the size of the internal queue (small values indicate that the queue is filling up, hinting to the underlying source that it is be desirable to pause or throttle the inflow).\n<p>Note that even though the controller is primarily used by the underlying byte source, there is no reason it cannot be stored used by other parts of the system to signal the stream."
     },
@@ -707,7 +678,8 @@
         "Edge": "89",
         "Firefox": "102",
         "Opera": "75",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>byobRequest</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/ReadableByteStreamController\"><code>ReadableByteStreamController</code></a> interface returns the current BYOB request, or <code>null</code> if there are no pending requests.\n<p>An underlying byte source should check this property, and use it to write data to the stream if it exists (rather than using <a href=\"$MDN_URL$/Web/API/ReadableByteStreamController/enqueue\"><code>ReadableByteStreamController.enqueue()</code></a>).\nThis will result in an efficient zero-byte transfer of the data to the consumer."
     },
@@ -722,7 +694,8 @@
         "Edge": "89",
         "Firefox": "102",
         "Opera": "75",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>close()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/ReadableByteStreamController\"><code>ReadableByteStreamController</code></a> interface closes the associated stream.\n<p>This might be called by the underlying source when its data source has been exhausted/completed.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> Readers will still be able to read any previously-enqueued chunks from the stream, but once those are read, the stream will become closed.\nHowever if there is an outstanding and partially written <a href=\"$MDN_URL$/Web/API/ReadableByteStreamController/byobRequest\" ><code>byobRequest</code></a> when <code>close()</code> is called, the stream will be errored.\n</div>",
       "returns": "None (<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/undefined\"><code>undefined</code></a>).",
@@ -741,7 +714,8 @@
         "Edge": "89",
         "Firefox": "102",
         "Opera": "75",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>desiredSize</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/ReadableByteStreamController\"><code>ReadableByteStreamController</code></a> interface returns the number of bytes required to fill the stream's internal queue to its \"desired size\".\n<p>The value is used by the stream to indicate a preferred flow rate to the underlying source.\nSources that support throttling or pausing their inflow of data (not all do!) should control the inflow such that <code>desiredSize</code> of the stream buffer is kept positive and as close to zero as possible.\n<p>The <code>desiredSize</code> is used to apply <a href=\"$MDN_URL$/Web/API/Streams_API/Concepts#backpressure\">backpressure</a> from downstream consumers."
     },
@@ -756,7 +730,8 @@
         "Edge": "89",
         "Firefox": "102",
         "Opera": "75",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>enqueue()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/ReadableByteStreamController\"><code>ReadableByteStreamController</code></a> interface enqueues a given chunk on the associated readable byte stream (the chunk is copied into the stream's internal queues).\n<p>This should only be used to transfer data to the queue when <a href=\"$MDN_URL$/Web/API/ReadableByteStreamController/byobRequest\" ><code>byobRequest</code></a> is <code>null</code>.",
       "parameters": {
@@ -778,7 +753,8 @@
         "Edge": "89",
         "Firefox": "102",
         "Opera": "75",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>error()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/ReadableByteStreamController\"><code>ReadableByteStreamController</code></a> interface causes any future interactions with the associated stream to error with the specified reason.\n<p>This is commonly called by an underlying source to surface an error from the interface where it gets its data (such as a file-read or socket error).\nIt can also be called from elsewhere to trigger a stream error, for example if another part of the system that the stream relies on fails.",
       "parameters": {
@@ -802,7 +778,8 @@
         "Opera": "30",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "18.0.0"
+        "Nodejs": "18.0.0",
+        "Deno": ""
       },
       "doc": "The <code>ReadableStream</code> interface of the <a href=\"$MDN_URL$/Web/API/Streams_API\">Streams API</a> represents a readable stream of byte data. The <a href=\"$MDN_URL$/Web/API/Fetch_API\">Fetch API</a> offers a concrete instance of a <code>ReadableStream</code> through the <a href=\"$MDN_URL$/Web/API/Response/body\" ><code>body</code></a> property of a <a href=\"$MDN_URL$/Web/API/Response\"><code>Response</code></a> object.\n<p><code>ReadableStream</code> is a <a href=\"$MDN_URL$/Web/API/Web_Workers_API/Transferable_objects\">transferable object</a>."
     },
@@ -819,7 +796,8 @@
         "Opera": "50",
         "Safari": "11.1",
         "SafariIOS": "11.3",
-        "Nodejs": "10.0.0"
+        "Nodejs": "10.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>Symbol.asyncIterator</code></strong> static data property represents the <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Symbol#well-known_symbols\">well-known symbol</a> <code>@@asyncIterator</code>. The <a href=\"$MDN_URL$/Web/JavaScript/Reference/Iteration_protocols#the_async_iterator_and_async_iterable_protocols\">async iterable protocol</a> looks up this symbol for the method that returns the async iterator for an object. In order for an object to be async iterable, it must have an <code>@@asyncIterator</code> key."
     },
@@ -836,7 +814,8 @@
         "Opera": "30",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>cancel()</code></strong> method of the\n<a href=\"$MDN_URL$/Web/API/ReadableStream\"><code>ReadableStream</code></a> interface returns a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that\nresolves when the stream is canceled.\n<p>Cancel is used when you've completely finished with the stream and don't need any more\ndata from it, even if there are chunks enqueued waiting to be read. That data is lost\nafter cancel is called, and the stream is not readable any more. To read those chunks\nstill and not completely get rid of the stream, you'd use\n<a href=\"$MDN_URL$/Web/API/ReadableStreamDefaultController/close\"><code>ReadableStreamDefaultController.close()</code></a>.",
       "parameters": {
@@ -860,7 +839,8 @@
         "Opera": "30",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>getReader()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/ReadableStream\"><code>ReadableStream</code></a> interface creates a reader and locks the stream to it.\nWhile the stream is locked, no other reader can be acquired until this one is released.",
       "parameters": {
@@ -885,7 +865,8 @@
         "Opera": "39",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>locked</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/ReadableStream\"><code>ReadableStream</code></a> interface returns whether or not the readable stream is locked to a reader.\n<p>A readable stream can have at most one active reader at a time, and is locked to that reader until it is released.\nA reader might be obtained using <a href=\"$MDN_URL$/Web/API/ReadableStream/getReader\"><code>ReadableStream.getReader()</code></a> and released using the reader's <code>releaseLock()</code> method."
     },
@@ -902,7 +883,8 @@
         "Opera": "46",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>pipeThrough()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/ReadableStream\"><code>ReadableStream</code></a> interface provides a chainable way of piping the current stream through a transform stream or any other writable/readable pair.\n<p>Piping a stream will generally lock it for the duration of the pipe, preventing other readers from locking it.",
       "parameters": {
@@ -927,7 +909,8 @@
         "Opera": "46",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>pipeTo()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/ReadableStream\"><code>ReadableStream</code></a> interface pipes the current <code>ReadableStream</code> to a given <a href=\"$MDN_URL$/Web/API/WritableStream\"><code>WritableStream</code></a> and returns a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that fulfills when the piping process completes successfully, or rejects if any errors were encountered.\n<p>Piping a stream will generally <a href=\"$MDN_URL$/Web/API/ReadableStream/locked\">lock</a> it for the duration of the pipe, preventing other readers from locking it.",
       "parameters": {
@@ -952,7 +935,8 @@
         "Opera": "39",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>ReadableStream()</code></strong> constructor creates and returns a readable stream object from the given handlers.\n<p>Note that while all parameters are technically optional, omitting the <code>underlyingSource</code> will result in a stream that has no source, and that can't be read from (readers return a promise that will never be resolved).",
       "parameters": {
@@ -977,7 +961,8 @@
         "Opera": "39",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>tee()</code></strong> method of the\n<a href=\"$MDN_URL$/Web/API/ReadableStream\"><code>ReadableStream</code></a> interface <a href=\"https://streams.spec.whatwg.org/#tee-a-readable-stream\" class=\"external\" target=\"_blank\">tees</a> the current readable stream, returning a\ntwo-element array containing the two resulting branches as\nnew <a href=\"$MDN_URL$/Web/API/ReadableStream\"><code>ReadableStream</code></a> instances.\n<p>This is useful for allowing two readers to read a stream sequentially or simultaneously,\nperhaps at different speeds.\nFor example, you might do this in a ServiceWorker if you want to fetch\na response from the server and stream it to the browser, but also stream it to the\nServiceWorker cache. Since a response body cannot be consumed more than once, you'd need\ntwo copies to do this.\n<p>A teed stream will partially signal backpressure at the rate of the <em>faster</em> consumer\nof the two <code>ReadableStream</code> branches,\nand unread data is enqueued internally on the slower consumed <code>ReadableStream</code>\nwithout any limit or backpressure.\nThat is, when <em>both</em> branches have an unread element in their internal queue,\nthen the original <code>ReadableStream</code>'s controller's internal queue will start to fill up,\nand once its <a href=\"$MDN_URL$/Web/API/ReadableStreamDefaultController/desiredSize\" ><code>desiredSize</code></a> ≤ 0\nor byte stream controller <a href=\"$MDN_URL$/Web/API/ReadableByteStreamController/desiredSize\" ><code>desiredSize</code></a> ≤ 0,\nthen the controller will stop calling <code>pull(controller)</code> on the\nunderlying source passed to <a href=\"$MDN_URL$/Web/API/ReadableStream/ReadableStream\" ><code>new ReadableStream()</code></a>.\nIf only one branch is consumed, then the entire body will be enqueued in memory.\nTherefore, you should not use the built-in <code>tee()</code> to read very large streams\nin parallel at different speeds.\nInstead, search for an implementation that fully backpressures\nto the speed of the <em>slower</em> consumed branch.\n<p>To cancel the stream you then need to cancel both resulting branches. Teeing a stream\nwill generally lock it for the duration, preventing other readers from locking it.",
       "returns": "An <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Array\"><code>Array</code></a> containing two <a href=\"$MDN_URL$/Web/API/ReadableStream\"><code>ReadableStream</code></a> instances.",
@@ -996,7 +981,8 @@
         "Edge": "89",
         "Firefox": "102",
         "Opera": "75",
-        "Nodejs": "18.0.0"
+        "Nodejs": "18.0.0",
+        "Deno": "1.16"
       },
       "doc": "The <code>ReadableStreamBYOBReader</code> interface of the <a href=\"$MDN_URL$/Web/API/Streams_API\">Streams API</a> defines a reader for a <a href=\"$MDN_URL$/Web/API/ReadableStream\"><code>ReadableStream</code></a> that supports zero-copy reading from an underlying byte source.\nIt is used for efficient copying from underlying sources where the data is delivered as an \"anonymous\" sequence of bytes, such as files.\n<p>An instance of this reader type should usually be obtained by calling <a href=\"$MDN_URL$/Web/API/ReadableStream/getReader\"><code>ReadableStream.getReader()</code></a> on the stream, specifying <code>mode: \"byob\"</code> in the options parameter.\nThe readable stream must have an <em>underlying byte source</em>. In other words, it must have been <a href=\"$MDN_URL$/Web/API/ReadableStream/ReadableStream\">constructed</a> specifying an underlying source with <a href=\"$MDN_URL$/Web/API/ReadableStream/ReadableStream#type\"><code>type: \"bytes\"</code></a>).\n<p>Using this kind of reader, a <a href=\"#readablestreambyobreader.read\"><code>read()</code></a> request when the readable stream's internal queues are empty will result in a zero copy transfer from the underlying source (bypassing the stream's internal queues).\nIf the internal queues are not empty, a <code>read()</code> will satisfy the request from the buffered data.\n<p>Note that the methods and properties are similar to those for the default reader (<a href=\"$MDN_URL$/Web/API/ReadableStreamDefaultReader\"><code>ReadableStreamDefaultReader</code></a>).\nThe <code>read()</code> method differs in that it provide a view into which data should be written."
     },
@@ -1011,7 +997,8 @@
         "Edge": "89",
         "Firefox": "102",
         "Opera": "75",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": "1.16"
       },
       "doc": "The <strong><code>cancel()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/ReadableStreamBYOBReader\"><code>ReadableStreamBYOBReader</code></a> interface returns a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that resolves when the stream is canceled.\nCalling this method signals a loss of interest in the stream by a consumer.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> If the reader is active, the <code>cancel()</code> method behaves the same as that for the associated stream (<a href=\"$MDN_URL$/Web/API/ReadableStream/cancel\"><code>ReadableStream.cancel()</code></a>).\n</div>",
       "parameters": {
@@ -1033,7 +1020,8 @@
         "Edge": "89",
         "Firefox": "102",
         "Opera": "75",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": "1.16"
       },
       "doc": "The <strong><code>closed</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/ReadableStreamBYOBReader\"><code>ReadableStreamBYOBReader</code></a> interface returns a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that fulfills when the stream closes, or rejects if the stream throws an error or the reader's lock is released.\n<p>This property enables you to write code that responds to an end to the streaming process."
     },
@@ -1048,7 +1036,8 @@
         "Edge": "89",
         "Firefox": "102",
         "Opera": "75",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": "1.16"
       },
       "doc": "The <strong><code>read()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/ReadableStreamBYOBReader\"><code>ReadableStreamBYOBReader</code></a> interface is used to read data into a view on a user-supplied buffer from an associated <a href=\"$MDN_URL$/Web/API/Streams_API/Using_readable_byte_streams\">readable byte stream</a>.\nA request for data will be satisfied from the stream's internal queues if there is any data present.\nIf the stream queues are empty, the request may be supplied as a zero-copy transfer from the underlying byte source.\n<p>The method takes as an argument a view on a buffer that supplied data is to be read into, and returns a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a>.\nThe promise fulfills with an object that has properties <code>value</code> and <code>done</code> when data comes available, or if the stream is cancelled.\nIf the stream is errored, the promise will be rejected with the relevant error object.\n<p>If a chunk of data is supplied, the <code>value</code> property will contain a new view.\nThis will be a view over the same buffer/backing memory (and of the same type) as the original <code>view</code> passed to the <code>read()</code> method, now populated with the new chunk of data.\nNote that once the promise fulfills, the original <code>view</code> passed to the method will be detached and no longer usable.\nThe promise will fulfill with a <code>value: undefined</code> if the stream has been cancelled.\nIn this case the backing memory region of <code>view</code> is discarded and not returned to the caller (all previously read data in the view's buffer is lost).\n<p>The <code>done</code> property indicates whether or not more data is expected.\nThe value is set <code>true</code> if the stream is closed or cancelled, and <code>false</code> otherwise.",
       "parameters": {
@@ -1070,7 +1059,8 @@
         "Edge": "89",
         "Firefox": "102",
         "Opera": "75",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": "1.16"
       },
       "doc": "The <strong><code>ReadableStreamBYOBReader()</code></strong> constructor creates and returns a <code>ReadableStreamBYOBReader</code> object instance.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> You generally wouldn't use this constructor manually;\ninstead, you'd use the <a href=\"$MDN_URL$/Web/API/ReadableStream/getReader\"><code>ReadableStream.getReader()</code></a> method with the argument <code>\"byob\"</code>.\n</div>",
       "parameters": {
@@ -1092,7 +1082,8 @@
         "Edge": "89",
         "Firefox": "102",
         "Opera": "75",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": "1.16"
       },
       "doc": "The <strong><code>releaseLock()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/ReadableStreamBYOBReader\"><code>ReadableStreamBYOBReader</code></a> interface releases the reader's lock on the stream.\nAfter the lock is released, the reader is no longer active.\n<p>The reader will appear errored if the associated stream is errored when the lock is released; otherwise, the reader will appear closed.\n<p>If the reader's lock is released while it still has pending read requests then the promises returned by the reader's <a href=\"$MDN_URL$/Web/API/ReadableStreamBYOBReader/read\"><code>ReadableStreamBYOBReader.read()</code></a> method are immediately rejected with a <code>TypeError</code>.\nUnread chunks remain in the stream's internal queue and can be read later by acquiring a new reader.",
       "returns": "None (<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/undefined\"><code>undefined</code></a>).",
@@ -1111,7 +1102,8 @@
         "Edge": "89",
         "Firefox": "102",
         "Opera": "75",
-        "Nodejs": "18.0.0"
+        "Nodejs": "18.0.0",
+        "Deno": "1.16"
       },
       "doc": "The <strong><code>ReadableStreamBYOBRequest</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Streams_API\">Streams API</a> represents a \"pull request\" for data from an underlying source that will made as a zero-copy transfer to a consumer (bypassing the stream's internal queues).\n<p><code>ReadableStreamBYOBRequest</code> objects are created in \"BYOB mode\" when a consumer makes a request for data and the stream's internal queue is <em>empty</em>.\n(The stream will resolve the consumer's request directly if it already has buffered data).\nAn underlying byte source can access active BYOB requests through its controller's <a href=\"$MDN_URL$/Web/API/ReadableByteStreamController/byobRequest\"><code>ReadableByteStreamController.byobRequest</code></a> property, which will be set to <code>null</code> if there is no outstanding request.\n<p>An underlying source that supports \"BYOB mode\" should check for <a href=\"$MDN_URL$/Web/API/ReadableByteStreamController/byobRequest\"><code>ReadableByteStreamController.byobRequest</code></a> and must use it for transferring data, if present.\nIf data arrives from the underlying source when <a href=\"$MDN_URL$/Web/API/ReadableByteStreamController/byobRequest\"><code>ReadableByteStreamController.byobRequest</code></a> is <code>null</code>, it can be queued using <a href=\"$MDN_URL$/Web/API/ReadableByteStreamController/enqueue\"><code>ReadableByteStreamController.enqueue()</code></a>.\nThis might happen when an underlying push source receives new data when the stream's internal buffers are not empty.\n<p>An underlying source uses the request by writing data to the BYOB request's <a href=\"#readablestreambyobrequest.view\"><code>view</code></a> and then calling <a href=\"#readablestreambyobrequest.respond\"><code>respond()</code></a>, or by calling <a href=\"#readablestreambyobrequest.respondwithnewview\"><code>respondWithNewView()</code></a> and passing a new view as an argument.\nNote that the \"new view\" must actually be a view over the <em>same</em> buffer as the original <code>view</code>, starting at the same offset.\nThis might be used to return a shorter buffer if the underlying source is unable to fill the entire original view.\n<p>Note that a <a href=\"$MDN_URL$/Web/API/ReadableByteStreamController\"><code>ReadableByteStreamController</code></a> is only created for underlying sources when <code>type=\"bytes\"</code> is specified for the source in the <a href=\"$MDN_URL$/Web/API/ReadableStream/ReadableStream#type\"><code>ReadableStream()</code> constructor</a>.\n\"BYOB mode\" is enabled when either <a href=\"$MDN_URL$/Web/API/ReadableStream/ReadableStream#autoallocatechunksize\"><code>autoAllocateChunkSize</code></a> is specified in the <a href=\"$MDN_URL$/Web/API/ReadableStream/ReadableStream#autoallocatechunksize\"><code>ReadableController()</code> constructor</a> or when using a <a href=\"$MDN_URL$/Web/API/ReadableStreamBYOBReader\"><code>ReadableStreamBYOBReader</code></a> (typically constructed by calling <a href=\"$MDN_URL$/Web/API/ReadableStream/getReader\"><code>ReadableStream.getReader()</code></a> with the argument <code>{ mode: 'byob' }</code>)."
     },
@@ -1126,7 +1118,8 @@
         "Edge": "89",
         "Firefox": "102",
         "Opera": "75",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": "1.16"
       },
       "doc": "The <strong><code>respond()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/ReadableStreamBYOBRequest\"><code>ReadableStreamBYOBRequest</code></a> interface is used to signal to the associated <a href=\"$MDN_URL$/Web/API/Streams_API/Using_readable_byte_streams\">readable byte stream</a> that the specified number of bytes were written into the <a href=\"$MDN_URL$/Web/API/ReadableStreamBYOBRequest/view\"><code>ReadableStreamBYOBRequest.view</code></a>.\n<p>After this method is called, the <a href=\"$MDN_URL$/Web/API/ReadableStreamBYOBRequest/view\" ><code>view</code></a> will be transferred and no longer modifiable.",
       "parameters": {
@@ -1148,7 +1141,8 @@
         "Edge": "89",
         "Firefox": "102",
         "Opera": "75",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": "1.16"
       },
       "doc": "The <strong><code>respondWithNewView()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/ReadableStreamBYOBRequest\"><code>ReadableStreamBYOBRequest</code></a> interface specifies a new view that the consumer of the associated readable byte stream should write to instead of <a href=\"$MDN_URL$/Web/API/ReadableStreamBYOBRequest/view\"><code>ReadableStreamBYOBRequest.view</code></a>.\n<p>The new view must be a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/TypedArray\"><code>TypedArray</code></a> or a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/DataView\"><code>DataView</code></a> that provides a view onto the same backing memory region as <a href=\"$MDN_URL$/Web/API/ReadableStreamBYOBRequest/view\"><code>ReadableStreamBYOBRequest.view</code></a>.\nAfter this method is called, the view that was passed into the method will be transferred and no longer modifiable.\n<p>The method is intended for use cases where an underlying byte source needs to transfer a <code>byobRequest.view</code> internally before finishing its response.\nFor example, the source may transfer the BYOB view to a separate worker thread, and wait for the worker to transfer it back once it has been filled.",
       "parameters": {
@@ -1171,7 +1165,8 @@
         "Edge": "89",
         "Firefox": "102",
         "Opera": "75",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": "1.16"
       },
       "doc": "The <strong><code>view</code></strong> getter property of the <a href=\"$MDN_URL$/Web/API/ReadableStreamBYOBRequest\"><code>ReadableStreamBYOBRequest</code></a> interface returns the current view."
     },
@@ -1188,7 +1183,8 @@
         "Opera": "67",
         "Safari": "13.1",
         "SafariIOS": "13.4",
-        "Nodejs": "18.0.0"
+        "Nodejs": "18.0.0",
+        "Deno": "1.7"
       },
       "doc": "The <strong><code>ReadableStreamDefaultController</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Streams_API\">Streams API</a> represents a controller allowing control of a <a href=\"$MDN_URL$/Web/API/ReadableStream\"><code>ReadableStream</code></a>'s state and internal queue. Default controllers are for streams that are not byte streams."
     },
@@ -1205,7 +1201,8 @@
         "Opera": "67",
         "Safari": "13.1",
         "SafariIOS": "13.4",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>close()</code></strong> method of the\n<a href=\"$MDN_URL$/Web/API/ReadableStreamDefaultController\"><code>ReadableStreamDefaultController</code></a> interface closes the associated stream.\n<p>Readers will still be able to read any previously-enqueued chunks from the stream,\nbut once those are read, the stream will become closed. If you want to completely get\nrid of the stream and discard any enqueued chunks, you'd use\n<a href=\"$MDN_URL$/Web/API/ReadableStream/cancel\"><code>ReadableStream.cancel()</code></a> or\n<a href=\"$MDN_URL$/Web/API/ReadableStreamDefaultReader/cancel\"><code>ReadableStreamDefaultReader.cancel()</code></a>.",
       "returns": "None (<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/undefined\"><code>undefined</code></a>).",
@@ -1226,7 +1223,8 @@
         "Opera": "67",
         "Safari": "13.1",
         "SafariIOS": "13.4",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>desiredSize</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/ReadableStreamDefaultController\"><code>ReadableStreamDefaultController</code></a> interface returns the desired size\nrequired to fill the stream's internal queue."
     },
@@ -1243,7 +1241,8 @@
         "Opera": "67",
         "Safari": "13.1",
         "SafariIOS": "13.4",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>enqueue()</code></strong> method of the\n<a href=\"$MDN_URL$/Web/API/ReadableStreamDefaultController\"><code>ReadableStreamDefaultController</code></a> interface enqueues a given chunk in the\nassociated stream.",
       "parameters": {
@@ -1267,7 +1266,8 @@
         "Opera": "67",
         "Safari": "13.1",
         "SafariIOS": "13.4",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>error()</code></strong> method of the\n<a href=\"$MDN_URL$/Web/API/ReadableStreamDefaultController\"><code>ReadableStreamDefaultController</code></a> interface causes any future interactions\nwith the associated stream to error.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> The <code>error()</code> method can be called\nmore than once, and can be called when the stream is not readable.\n</div>",
       "parameters": {
@@ -1291,7 +1291,8 @@
         "Opera": "65",
         "Safari": "13.1",
         "SafariIOS": "13.4",
-        "Nodejs": "18.0.0"
+        "Nodejs": "18.0.0",
+        "Deno": "1.7"
       },
       "doc": "The <strong><code>ReadableStreamDefaultReader</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Streams_API\">Streams API</a> represents a default reader that can be used to read stream data supplied from a network (such as a fetch request).\n<p>A <code>ReadableStreamDefaultReader</code> can be used to read from a <a href=\"$MDN_URL$/Web/API/ReadableStream\"><code>ReadableStream</code></a> that has an underlying source of any type (unlike a <a href=\"$MDN_URL$/Web/API/ReadableStreamBYOBReader\"><code>ReadableStreamBYOBReader</code></a>, which can only be used with readable streams that have an <em>underlying byte source</em>).\n<p>Note however that zero-copy transfer from an underlying source is only supported for underlying byte sources that autoallocate buffers.\nIn other words, the stream must have been <a href=\"$MDN_URL$/Web/API/ReadableStream/ReadableStream\">constructed</a> specifying both <a href=\"$MDN_URL$/Web/API/ReadableStream/ReadableStream#type\"><code>type=\"bytes\"</code></a> and <a href=\"$MDN_URL$/Web/API/ReadableStream/ReadableStream#autoallocatechunksize\"><code>autoAllocateChunkSize</code></a>.\nFor any other underlying source, the stream will always satisfy read requests with data from internal queues."
     },
@@ -1308,7 +1309,8 @@
         "Opera": "65",
         "Safari": "13.1",
         "SafariIOS": "13.4",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>cancel()</code></strong> method of the\n<a href=\"$MDN_URL$/Web/API/ReadableStreamDefaultReader\"><code>ReadableStreamDefaultReader</code></a> interface returns a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that resolves when the stream is canceled. Calling this method signals a loss of interest in the stream by a consumer.\n<p>Cancel is used when you've completely finished with the stream and don't need any more\ndata from it, even if there are chunks enqueued waiting to be read. That data is lost\nafter cancel is called, and the stream is not readable any more. To read those chunks\nstill and not completely get rid of the stream, you'd use\n<a href=\"$MDN_URL$/Web/API/ReadableStreamDefaultController/close\"><code>ReadableStreamDefaultController.close()</code></a>.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> If the reader is active, the\n<code>cancel()</code> method behaves the same as that for the associated stream\n(<a href=\"$MDN_URL$/Web/API/ReadableStream/cancel\"><code>ReadableStream.cancel()</code></a>).\n</div>",
       "parameters": {
@@ -1332,7 +1334,8 @@
         "Opera": "65",
         "Safari": "13.1",
         "SafariIOS": "13.4",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>closed</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/ReadableStreamDefaultReader\"><code>ReadableStreamDefaultReader</code></a> interface returns a\n<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that fulfills when the stream closes, or rejects if the\nstream throws an error or the reader's lock is released. This property enables you\nto write code that responds to an end to the streaming process."
     },
@@ -1349,7 +1352,8 @@
         "Opera": "65",
         "Safari": "13.1",
         "SafariIOS": "13.4",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>read()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/ReadableStreamDefaultReader\"><code>ReadableStreamDefaultReader</code></a> interface returns a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> providing access to the next chunk in the stream's internal queue.",
       "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a>, which fulfills/rejects with a result depending on the state of the stream.\n  The different possibilities are as follows:\n<ul>\n  <li>If a chunk is available, the promise will be fulfilled with an object of the form <code>{ value: theChunk, done: false }</code>.</li>\n  <li>If the stream becomes closed, the promise will be fulfilled with an object of the form <code>{ value: undefined, done: true }</code>.</li>\n  <li>If the stream becomes errored, the promise will be rejected with the relevant error.</li>\n</ul>",
@@ -1368,7 +1372,8 @@
         "Edge": "79",
         "Firefox": "100",
         "Opera": "65",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>ReadableStreamDefaultReader()</code></strong>\nconstructor creates and returns a <code>ReadableStreamDefaultReader</code> object\ninstance.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> You generally wouldn't use this constructor manually; instead,\nyou'd use the <a href=\"$MDN_URL$/Web/API/ReadableStream/getReader\"><code>ReadableStream.getReader()</code></a> method.\n</div>",
       "parameters": {
@@ -1392,7 +1397,8 @@
         "Opera": "65",
         "Safari": "13.1",
         "SafariIOS": "13.4",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>releaseLock()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/ReadableStreamDefaultReader\"><code>ReadableStreamDefaultReader</code></a> interface releases the reader's lock on the stream.\n<p>If the associated stream is errored when the lock is released, the reader will appear errored in that same way subsequently; otherwise, the reader will appear closed.\n<p>If the reader's lock is released while it still has pending read requests then the promises returned by the reader's <a href=\"$MDN_URL$/Web/API/ReadableStreamDefaultReader/read\"><code>ReadableStreamDefaultReader.read()</code></a> method are immediately rejected with a <code>TypeError</code>.\nUnread chunks remain in the stream's internal queue and can be read later by acquiring a new reader.",
       "returns": "None (<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/undefined\"><code>undefined</code></a>).",
@@ -1740,7 +1746,8 @@
         "Opera": "29",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "18.0.0"
+        "Nodejs": "18.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>Request</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Fetch_API\">Fetch API</a> represents a resource request.\n<p>You can create a new <code>Request</code> object using the <a href=\"$MDN_URL$/Web/API/Request/Request\" ><code>Request()</code></a> constructor, but you are more likely to encounter a <code>Request</code> object being returned as the result of another API operation, such as a service worker <a href=\"$MDN_URL$/Web/API/FetchEvent/request\"><code>FetchEvent.request</code></a>."
     },
@@ -1756,7 +1763,8 @@
         "Firefox": "39",
         "Opera": "29",
         "Safari": "10.1",
-        "SafariIOS": "10.3"
+        "SafariIOS": "10.3",
+        "Deno": ""
       },
       "doc": "The <strong><code>arrayBuffer()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Request\"><code>Request</code></a> interface\nreads the request body and returns it as a promise that resolves with an <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/ArrayBuffer\"><code>ArrayBuffer</code></a>.",
       "returns": "A promise that resolves with an <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/ArrayBuffer\"><code>ArrayBuffer</code></a>."
@@ -1773,7 +1781,8 @@
         "Firefox": "39",
         "Opera": "29",
         "Safari": "10.1",
-        "SafariIOS": "10.3"
+        "SafariIOS": "10.3",
+        "Deno": ""
       },
       "doc": "The <strong><code>blob()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Request\"><code>Request</code></a> interface\nreads the request body and returns it as a promise that resolves with a <a href=\"$MDN_URL$/Web/API/Blob\"><code>Blob</code></a>.",
       "returns": "A promise that resolves with a <a href=\"$MDN_URL$/Web/API/Blob\"><code>Blob</code></a>."
@@ -1789,7 +1798,8 @@
         "Edge": "105",
         "Opera": "91",
         "Safari": "11.1",
-        "SafariIOS": "11.3"
+        "SafariIOS": "11.3",
+        "Deno": ""
       },
       "doc": "The read-only <strong><code>body</code></strong> property of the <a href=\"$MDN_URL$/Web/API/Request\"><code>Request</code></a>\ninterface contains a <a href=\"$MDN_URL$/Web/API/ReadableStream\"><code>ReadableStream</code></a> with the body contents\nthat have been added to the request. Note that a request using the\n<code>GET</code> or <code>HEAD</code> method cannot have a body\nand <code>null</code> is returned in these cases."
     },
@@ -1805,7 +1815,8 @@
         "Firefox": "39",
         "Opera": "29",
         "Safari": "10.1",
-        "SafariIOS": "10.3"
+        "SafariIOS": "10.3",
+        "Deno": ""
       },
       "doc": "The read-only <strong><code>bodyUsed</code></strong> property of the\n<a href=\"$MDN_URL$/Web/API/Request\"><code>Request</code></a> interface is a boolean value that indicates\nwhether the request body has been read yet."
     },
@@ -1837,7 +1848,8 @@
         "Firefox": "39",
         "Opera": "27",
         "Safari": "10.1",
-        "SafariIOS": "10.3"
+        "SafariIOS": "10.3",
+        "Deno": ""
       },
       "doc": "The <strong><code>clone()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Request\"><code>Request</code></a> interface creates a copy of the current <code>Request</code> object.\n<p>Like the underlying <a href=\"$MDN_URL$/Web/API/ReadableStream/tee\"><code>ReadableStream.tee</code></a> api,\nthe <a href=\"$MDN_URL$/Web/API/Request/body\" ><code>body</code></a> of a cloned <code>Response</code>\nwill signal backpressure at the rate of the <em>faster</em> consumer of the two bodies,\nand unread data is enqueued internally on the slower consumed <code>body</code>\nwithout any limit or backpressure.\nBeware when you construct a <code>Request</code> from a stream and then <code>clone</code> it.\n<p><code>clone()</code> throws a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/TypeError\"><code>TypeError</code></a> if the request body has already been used. In fact, the main reason <code>clone()</code> exists is to allow multiple uses of body objects (when they are one-use only.)\n<p>If you intend to modify the request, you may prefer the <a href=\"$MDN_URL$/Web/API/Request\"><code>Request</code></a> constructor.",
       "returns": "A <a href=\"$MDN_URL$/Web/API/Request\"><code>Request</code></a> object, which is an exact copy of the <code>Request</code> that <code>clone()</code> was called on."
@@ -1886,7 +1898,8 @@
         "Firefox": "39",
         "Opera": "47",
         "Safari": "14.1",
-        "SafariIOS": "14.5"
+        "SafariIOS": "14.5",
+        "Deno": ""
       },
       "doc": "The <strong><code>formData()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Request\"><code>Request</code></a> interface\nreads the request body and returns it as a promise that resolves with a <a href=\"$MDN_URL$/Web/API/FormData\"><code>FormData</code></a> object.",
       "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that resolves with a <a href=\"$MDN_URL$/Web/API/FormData\"><code>FormData</code></a> object."
@@ -1903,7 +1916,8 @@
         "Firefox": "39",
         "Opera": "27",
         "Safari": "10.1",
-        "SafariIOS": "10.3"
+        "SafariIOS": "10.3",
+        "Deno": ""
       },
       "doc": "The <strong><code>headers</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/Request\"><code>Request</code></a> interface contains the <a href=\"$MDN_URL$/Web/API/Headers\"><code>Headers</code></a> object associated\nwith the request."
     },
@@ -1935,7 +1949,8 @@
         "Firefox": "39",
         "Opera": "29",
         "Safari": "10.1",
-        "SafariIOS": "10.3"
+        "SafariIOS": "10.3",
+        "Deno": ""
       },
       "doc": "The <strong><code>json()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Request\"><code>Request</code></a> interface\nreads the request body and returns it as a promise that resolves with the result of parsing the body text as <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/JSON\"><code>JSON</code></a>.\n<p>Note that despite the method being named <code>json()</code>, the result is not JSON but is instead the result of taking JSON as input and parsing it to produce a JavaScript object.",
       "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that resolves to a JavaScript object. This object could be\n  anything that can be represented by JSON — an object, an array, a string, a number…"
@@ -1952,7 +1967,8 @@
         "Firefox": "39",
         "Opera": "27",
         "Safari": "10.1",
-        "SafariIOS": "10.3"
+        "SafariIOS": "10.3",
+        "Deno": ""
       },
       "doc": "The <strong><code>method</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/Request\"><code>Request</code></a> interface contains the request's method (<code>GET</code>,\n<code>POST</code>, etc.)"
     },
@@ -1984,7 +2000,8 @@
         "Firefox": "43",
         "Opera": "33",
         "Safari": "10.1",
-        "SafariIOS": "10.3"
+        "SafariIOS": "10.3",
+        "Deno": ""
       },
       "doc": "The <strong><code>redirect</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/Request\"><code>Request</code></a> interface contains the mode for how redirects are handled."
     },
@@ -2000,7 +2017,8 @@
         "Firefox": "39",
         "Opera": "27",
         "Safari": "10.1",
-        "SafariIOS": "10.3"
+        "SafariIOS": "10.3",
+        "Deno": ""
       },
       "doc": "The <strong><code>referrer</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/Request\"><code>Request</code></a> interface is set by the user agent to be the referrer of the\nRequest. (e.g., <code>client</code>, <code>no-referrer</code>, or a URL.)\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> If <code>referrer</code>'s value is <code>no-referrer</code>,\nit returns an empty string.\n</div>"
     },
@@ -2016,7 +2034,8 @@
         "Firefox": "47",
         "Opera": "39",
         "Safari": "10.1",
-        "SafariIOS": "10.3"
+        "SafariIOS": "10.3",
+        "Deno": ""
       },
       "doc": "The <strong><code>referrerPolicy</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/Request\"><code>Request</code></a> interface returns the referrer policy, which governs what\nreferrer information, sent in the <a href=\"$MDN_URL$/Web/HTTP/Headers/Referer\"><code>Referer</code></a> header, should be included\nwith the request."
     },
@@ -2032,7 +2051,8 @@
         "Firefox": "39",
         "Opera": "27",
         "Safari": "10.1",
-        "SafariIOS": "10.3"
+        "SafariIOS": "10.3",
+        "Deno": ""
       },
       "doc": "The <strong><code>Request()</code></strong> constructor creates a new\n<a href=\"$MDN_URL$/Web/API/Request\"><code>Request</code></a> object.",
       "parameters": {
@@ -2052,7 +2072,8 @@
         "Firefox": "57",
         "Opera": "53",
         "Safari": "12.1",
-        "SafariIOS": "12.2"
+        "SafariIOS": "12.2",
+        "Deno": "1.11"
       },
       "doc": "The read-only <strong><code>signal</code></strong> property of the <a href=\"$MDN_URL$/Web/API/Request\"><code>Request</code></a> interface returns the <a href=\"$MDN_URL$/Web/API/AbortSignal\"><code>AbortSignal</code></a> associated with the request."
     },
@@ -2068,7 +2089,8 @@
         "Firefox": "39",
         "Opera": "29",
         "Safari": "10.1",
-        "SafariIOS": "10.3"
+        "SafariIOS": "10.3",
+        "Deno": ""
       },
       "doc": "The <strong><code>text()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Request\"><code>Request</code></a> interface\nreads the request body and returns it as a promise that resolves with a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/String\"><code>String</code></a>.\nThe response is <em>always</em> decoded using UTF-8.",
       "returns": "A Promise that resolves with a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/String\"><code>String</code></a>."
@@ -2085,7 +2107,8 @@
         "Firefox": "39",
         "Opera": "27",
         "Safari": "10.1",
-        "SafariIOS": "10.3"
+        "SafariIOS": "10.3",
+        "Deno": ""
       },
       "doc": "The <strong><code>url</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/Request\"><code>Request</code></a>\ninterface contains the URL of the request."
     },
@@ -2337,7 +2360,8 @@
         "Opera": "29",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "18.0.0"
+        "Nodejs": "18.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>Response</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Fetch_API\">Fetch API</a> represents the response to a request.\n<p>You can create a new <code>Response</code> object using the <a href=\"$MDN_URL$/Web/API/Response/Response\" ><code>Response()</code></a> constructor, but you are more likely to encounter a <code>Response</code> object being returned as the result of another API operation—for example, a service worker <a href=\"$MDN_URL$/Web/API/FetchEvent/respondWith\"><code>FetchEvent.respondWith</code></a>, or a simple <a href=\"$MDN_URL$/Web/API/fetch\"><code>fetch()</code></a>."
     },
@@ -2353,7 +2377,8 @@
         "Firefox": "39",
         "Opera": "29",
         "Safari": "10.1",
-        "SafariIOS": "10.3"
+        "SafariIOS": "10.3",
+        "Deno": ""
       },
       "doc": "The <strong><code>arrayBuffer()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Response\"><code>Response</code></a> interface\ntakes a <a href=\"$MDN_URL$/Web/API/Response\"><code>Response</code></a> stream and reads it to completion. It returns a promise\nthat resolves with an <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/ArrayBuffer\"><code>ArrayBuffer</code></a>.",
       "returns": "A promise that resolves with an <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/ArrayBuffer\"><code>ArrayBuffer</code></a>."
@@ -2370,7 +2395,8 @@
         "Firefox": "39",
         "Opera": "29",
         "Safari": "10.1",
-        "SafariIOS": "10.3"
+        "SafariIOS": "10.3",
+        "Deno": ""
       },
       "doc": "The <strong><code>blob()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Response\"><code>Response</code></a> interface takes\na <a href=\"$MDN_URL$/Web/API/Response\"><code>Response</code></a> stream and reads it to completion. It returns a promise that\nresolves with a <a href=\"$MDN_URL$/Web/API/Blob\"><code>Blob</code></a>.",
       "returns": "A promise that resolves with a <a href=\"$MDN_URL$/Web/API/Blob\"><code>Blob</code></a>."
@@ -2387,7 +2413,8 @@
         "Firefox": "65",
         "Opera": "30",
         "Safari": "10.1",
-        "SafariIOS": "10.3"
+        "SafariIOS": "10.3",
+        "Deno": ""
       },
       "doc": "The <strong><code>body</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/Response\"><code>Response</code></a> interface is a <a href=\"$MDN_URL$/Web/API/ReadableStream\"><code>ReadableStream</code></a> of the body contents."
     },
@@ -2403,7 +2430,8 @@
         "Firefox": "39",
         "Opera": "29",
         "Safari": "10.1",
-        "SafariIOS": "10.3"
+        "SafariIOS": "10.3",
+        "Deno": ""
       },
       "doc": "The <strong><code>bodyUsed</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/Response\"><code>Response</code></a> interface is a boolean value that indicates whether the body has been read yet."
     },
@@ -2419,7 +2447,8 @@
         "Firefox": "39",
         "Opera": "27",
         "Safari": "10.1",
-        "SafariIOS": "10.3"
+        "SafariIOS": "10.3",
+        "Deno": ""
       },
       "doc": "The <strong><code>clone()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Response\"><code>Response</code></a> interface creates a clone of a response object, identical in every way, but stored in a different variable.\n<p>Like the underlying <a href=\"$MDN_URL$/Web/API/ReadableStream/tee\"><code>ReadableStream.tee</code></a> api,\nthe <a href=\"$MDN_URL$/Web/API/Response/body\" ><code>body</code></a> of a cloned <code>Response</code>\nwill signal backpressure at the rate of the <em>faster</em> consumer of the two bodies,\nand unread data is enqueued internally on the slower consumed <code>body</code>\nwithout any limit or backpressure.\nBackpressure refers to the mechanism by which the streaming consumer of data\n(in this case, the code that reads the body)\nslows down the producer of data (such as the TCP server)\nso as not to load large amounts of data in memory\nthat is waiting to be used by the application.\nIf only one cloned branch is consumed, then the entire body will be buffered in memory.\nTherefore, <code>clone()</code> is one way to read a response twice in sequence,\nbut you should not use it to read very large bodies\nin parallel at different speeds.\n<p><code>clone()</code> throws a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/TypeError\"><code>TypeError</code></a> if the response body has already been used.\nIn fact, the main reason <code>clone()</code> exists is to allow multiple uses of body objects (when they are one-use only.)",
       "returns": "A <a href=\"$MDN_URL$/Web/API/Response\"><code>Response</code></a> object."
@@ -2436,7 +2465,8 @@
         "Firefox": "39",
         "Opera": "30",
         "Safari": "10.1",
-        "SafariIOS": "10.3"
+        "SafariIOS": "10.3",
+        "Deno": ""
       },
       "doc": "The <strong><code>error()</code></strong> static method of the <a href=\"$MDN_URL$/Web/API/Response\"><code>Response</code></a> interface returns a new <code>Response</code> object associated with a network error.\n<p>This is mainly useful when writing service workers: it enables a service worker to send a response from a <a href=\"$MDN_URL$/Web/API/ServiceWorkerGlobalScope/fetch_event\" ><code>fetch</code></a> event handler that will cause the <a href=\"$MDN_URL$/Web/API/fetch\"><code>fetch()</code></a> call in the main app code to reject the promise.\n<p>An error response has its <a href=\"$MDN_URL$/Web/API/Response/type\" ><code>type</code></a> set to <code>error</code>.",
       "returns": "A <a href=\"$MDN_URL$/Web/API/Response\"><code>Response</code></a> object."
@@ -2453,7 +2483,8 @@
         "Firefox": "39",
         "Opera": "47",
         "Safari": "14.1",
-        "SafariIOS": "14.5"
+        "SafariIOS": "14.5",
+        "Deno": ""
       },
       "doc": "The <strong><code>formData()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Response\"><code>Response</code></a> interface\ntakes a <a href=\"$MDN_URL$/Web/API/Response\"><code>Response</code></a> stream and reads it to completion. It returns a promise\nthat resolves with a <a href=\"$MDN_URL$/Web/API/FormData\"><code>FormData</code></a> object.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This is mainly relevant to <a href=\"$MDN_URL$/Web/API/Service_Worker_API\">service workers</a>. If a user submits\na form and a service worker intercepts the request, you could for example call\n<code>formData()</code> on it to obtain a key-value map, modify some fields, then send\nthe form onwards to the server (or use it locally).\n</div>",
       "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that resolves with a <a href=\"$MDN_URL$/Web/API/FormData\"><code>FormData</code></a> object."
@@ -2470,7 +2501,8 @@
         "Firefox": "39",
         "Opera": "27",
         "Safari": "10.1",
-        "SafariIOS": "10.3"
+        "SafariIOS": "10.3",
+        "Deno": ""
       },
       "doc": "The <strong><code>headers</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/Response\"><code>Response</code></a> interface contains the <a href=\"$MDN_URL$/Web/API/Headers\"><code>Headers</code></a> object associated\nwith the response."
     },
@@ -2484,7 +2516,8 @@
         "ChromeAndroid": "105",
         "Edge": "105",
         "Firefox": "115",
-        "Opera": "91"
+        "Opera": "91",
+        "Deno": "1.22"
       },
       "doc": "The <strong><code>json()</code></strong> static method of the <a href=\"$MDN_URL$/Web/API/Response\"><code>Response</code></a> interface returns a <code>Response</code> that contains the provided JSON data as body, and a <a href=\"$MDN_URL$/Web/HTTP/Headers/Content-Type\"><code>Content-Type</code></a> header which is set to <code>application/json</code>.\nThe response status, status message, and additional headers can also be set.\n<p>The method makes it easy to create <code>Response</code> objects for returning JSON encoded data.\n<a href=\"$MDN_URL$/Web/API/Service_Worker_API\">Service workers</a>, for example, intercept fetch requests made by a browser, and might use <code>json()</code> to construct a <code>Response</code> from cached JSON data to return to the main thread.\nThe <code>json()</code> method can also be used in server code to return JSON data for <a href=\"$MDN_URL$/Glossary/SPA\">single page applications</a>, and any other applications where a JSON response is expected.",
       "parameters": {
@@ -2508,7 +2541,8 @@
         "Firefox": "39",
         "Opera": "29",
         "Safari": "10.1",
-        "SafariIOS": "10.3"
+        "SafariIOS": "10.3",
+        "Deno": ""
       },
       "doc": "The <strong><code>ok</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/Response\"><code>Response</code></a> interface contains a Boolean stating whether the response was successful (status in the range 200-299) or not."
     },
@@ -2524,7 +2558,8 @@
         "Firefox": "39",
         "Opera": "31",
         "Safari": "10.1",
-        "SafariIOS": "10.3"
+        "SafariIOS": "10.3",
+        "Deno": ""
       },
       "doc": "The <strong><code>redirect()</code></strong> static method of the <a href=\"$MDN_URL$/Web/API/Response\"><code>Response</code></a> interface returns a <code>Response</code> resulting in a redirect to the specified URL.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This is mainly relevant to the <a href=\"$MDN_URL$/Web/API/Service_Worker_API\">ServiceWorker API</a>.\nA controlling service worker could intercept a page's request and redirect it as desired.\nThis will actually lead to a real redirect if a service worker sends it upstream.\n</div>",
       "parameters": {
@@ -2549,7 +2584,8 @@
         "Firefox": "49",
         "Opera": "44",
         "Safari": "10.1",
-        "SafariIOS": "10.3"
+        "SafariIOS": "10.3",
+        "Deno": ""
       },
       "doc": "The read-only <strong><code>redirected</code></strong> property of the <a href=\"$MDN_URL$/Web/API/Response\"><code>Response</code></a> interface indicates whether or not the response is the result of a request you made which was redirected.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> Relying on redirected to filter out redirects makes it easy for a forged redirect to prevent your content from working as expected.\nInstead, you should do the filtering when you call <a href=\"$MDN_URL$/Web/API/fetch\"><code>fetch()</code></a>.\nSee the example <a href=\"#disallowing_redirects\">Disallowing redirects</a>, which shows this being done.\n</div>"
     },
@@ -2565,7 +2601,8 @@
         "Firefox": "39",
         "Opera": "27",
         "Safari": "10.1",
-        "SafariIOS": "10.3"
+        "SafariIOS": "10.3",
+        "Deno": ""
       },
       "doc": "The <strong><code>Response()</code></strong> constructor creates a new <a href=\"$MDN_URL$/Web/API/Response\"><code>Response</code></a> object.",
       "parameters": {
@@ -2585,7 +2622,8 @@
         "Firefox": "39",
         "Opera": "27",
         "Safari": "10.1",
-        "SafariIOS": "10.3"
+        "SafariIOS": "10.3",
+        "Deno": ""
       },
       "doc": "The <strong><code>status</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/Response\"><code>Response</code></a> interface contains the <a href=\"$MDN_URL$/Web/HTTP/Status\">HTTP status codes</a> of the response.\n<p>For example, <code>200</code> for success, <code>404</code> if the resource could not be found."
     },
@@ -2601,7 +2639,8 @@
         "Firefox": "39",
         "Opera": "27",
         "Safari": "10.1",
-        "SafariIOS": "10.3"
+        "SafariIOS": "10.3",
+        "Deno": ""
       },
       "doc": "The <strong><code>statusText</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/Response\"><code>Response</code></a> interface contains the status message corresponding to the HTTP status code in <a href=\"$MDN_URL$/Web/API/Response/status\"><code>Response.status</code></a>.\n<p>For example, this would be <code>OK</code> for a status code <code>200</code>, <code>Continue</code> for <code>100</code>, <code>Not Found</code> for <code>404</code>."
     },
@@ -2617,7 +2656,8 @@
         "Firefox": "39",
         "Opera": "29",
         "Safari": "10.1",
-        "SafariIOS": "10.3"
+        "SafariIOS": "10.3",
+        "Deno": ""
       },
       "doc": "The <strong><code>text()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Response\"><code>Response</code></a> interface takes a <a href=\"$MDN_URL$/Web/API/Response\"><code>Response</code></a> stream and reads it to completion.\nIt returns a promise that resolves with a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/String\"><code>String</code></a>.\nThe response is <em>always</em> decoded using UTF-8.",
       "returns": "A Promise that resolves with a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/String\"><code>String</code></a>."
@@ -2650,7 +2690,8 @@
         "Firefox": "39",
         "Opera": "27",
         "Safari": "10.1",
-        "SafariIOS": "10.3"
+        "SafariIOS": "10.3",
+        "Deno": ""
       },
       "doc": "The <strong><code>url</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/Response\"><code>Response</code></a> interface contains the URL of the response.\nThe value of the <code>url</code> property will be the final URL obtained after any redirects."
     },
@@ -6160,7 +6201,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -6177,7 +6217,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -6220,7 +6259,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -6237,7 +6275,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -6254,7 +6291,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -6323,7 +6359,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -6360,7 +6395,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -6766,7 +6800,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "9",
         "Safari": "1.3",
         "SafariIOS": ""
@@ -6783,7 +6816,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -6804,7 +6836,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "1.3",
         "SafariIOS": ""
@@ -6821,7 +6852,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "1.3",
         "SafariIOS": ""
@@ -6838,7 +6868,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "1.3",
         "SafariIOS": ""
@@ -6860,7 +6889,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "1.3",
         "SafariIOS": ""
@@ -6878,7 +6906,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "1.3",
         "SafariIOS": ""
@@ -6917,7 +6944,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3.1",
         "SafariIOS": "2"
@@ -6961,7 +6987,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "1.3",
         "SafariIOS": ""
@@ -6978,7 +7003,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "1.3",
         "SafariIOS": ""
@@ -6995,7 +7019,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -7016,7 +7039,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "1.3",
         "SafariIOS": ""
@@ -7055,7 +7077,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -7072,7 +7093,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -7090,7 +7110,6 @@
         "ChromeAndroid": "58",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "45",
         "Safari": "17",
         "SafariIOS": "17"
@@ -7111,7 +7130,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3.1",
         "SafariIOS": "2"
@@ -7167,7 +7185,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "1.3",
         "SafariIOS": ""
@@ -8034,10 +8051,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "4",
         "Safari": "",
-        "SafariIOS": ""
+        "SafariIOS": "",
+        "Deno": ""
       },
       "doc": "The <strong><code>setInterval()</code></strong> method,\noffered on the <a href=\"$MDN_URL$/Web/API/Window\"><code>Window</code></a> and <a href=\"$MDN_URL$/Web/API/Worker\"><code>Worker</code></a> interfaces, repeatedly\ncalls a function or executes a code snippet, with a fixed time delay between each\ncall.\n<p>This method returns an interval ID which uniquely identifies the interval, so you\ncan remove it later by calling <a href=\"$MDN_URL$/Web/API/clearInterval\" ><code>clearInterval()</code></a>.",
       "parameters": {
@@ -8058,10 +8075,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "4",
         "Safari": "",
-        "SafariIOS": ""
+        "SafariIOS": "",
+        "Deno": ""
       },
       "doc": "The global <strong><code>setTimeout()</code></strong> method sets a timer which executes a function or specified\npiece of code once the timer expires.",
       "parameters": {
@@ -8393,7 +8410,6 @@
         "ChromeAndroid": "31",
         "Edge": "",
         "Firefox": "42",
-        "IE": "11",
         "Opera": "18",
         "Safari": "8"
       },
@@ -8409,7 +8425,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "42",
-        "IE": "11",
         "Opera": "15",
         "Safari": "8"
       },
@@ -8429,7 +8444,6 @@
         "ChromeAndroid": "33",
         "Edge": "",
         "Firefox": "42",
-        "IE": "11",
         "Opera": "15",
         "Safari": "8"
       },
@@ -8461,7 +8475,6 @@
         "ChromeAndroid": "33",
         "Edge": "",
         "Firefox": "42",
-        "IE": "11",
         "Opera": "15",
         "Safari": "8"
       },
@@ -8481,7 +8494,6 @@
         "ChromeAndroid": "33",
         "Edge": "",
         "Firefox": "42",
-        "IE": "11",
         "Opera": "15",
         "Safari": "8"
       },
@@ -8497,7 +8509,6 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "IE": "11",
         "Safari": "8"
       },
       "doc": "The <strong><code>audioTracks</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/SourceBuffer\"><code>SourceBuffer</code></a> interface returns a list of the audio tracks currently\ncontained inside the <code>SourceBuffer</code>."
@@ -8512,7 +8523,6 @@
         "ChromeAndroid": "33",
         "Edge": "",
         "Firefox": "42",
-        "IE": "11",
         "Opera": "15",
         "Safari": "8"
       },
@@ -8552,7 +8562,6 @@
         "ChromeAndroid": "33",
         "Edge": "",
         "Firefox": "42",
-        "IE": "11",
         "Opera": "15",
         "Safari": "8"
       },
@@ -8572,7 +8581,6 @@
         "ChromeAndroid": "33",
         "Edge": "",
         "Firefox": "42",
-        "IE": "11",
         "Opera": "15",
         "Safari": "8"
       },
@@ -8621,7 +8629,6 @@
         "ChromeAndroid": "33",
         "Edge": "",
         "Firefox": "42",
-        "IE": "11",
         "Opera": "15",
         "Safari": "8"
       },
@@ -8640,7 +8647,6 @@
         "ChromeAndroid": "33",
         "Edge": "",
         "Firefox": "42",
-        "IE": "11",
         "Opera": "15",
         "Safari": "8"
       },
@@ -8652,7 +8658,6 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "IE": "11",
         "Safari": "8"
       },
       "doc": "The <strong><code>videoTracks</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/SourceBuffer\"><code>SourceBuffer</code></a> interface returns a list of the video tracks currently\ncontained inside the <code>SourceBuffer</code>."
@@ -8667,7 +8672,6 @@
         "ChromeAndroid": "31",
         "Edge": "",
         "Firefox": "42",
-        "IE": "11",
         "Opera": "15",
         "Safari": "8"
       },
@@ -8683,7 +8687,6 @@
         "ChromeAndroid": "33",
         "Edge": "",
         "Firefox": "42",
-        "IE": "11",
         "Opera": "15",
         "Safari": "8"
       },
@@ -9941,10 +9944,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "8",
         "Opera": "10.5",
         "Safari": "4",
-        "SafariIOS": "3.2"
+        "SafariIOS": "3.2",
+        "Deno": "1.10"
       },
       "doc": "The <strong><code>Storage</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Web_Storage_API\">Web Storage API</a> provides access to a particular domain's session or local storage. It allows, for example, the addition, modification, or deletion of stored data items.\n<p>To manipulate, for instance, the session storage for a domain, a call to <a href=\"$MDN_URL$/Web/API/Window/sessionStorage\"><code>Window.sessionStorage</code></a> is made; whereas for local storage the call is made to <a href=\"$MDN_URL$/Web/API/Window/localStorage\"><code>Window.localStorage</code></a>."
     },
@@ -9958,10 +9961,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "8",
         "Opera": "10.5",
         "Safari": "4",
-        "SafariIOS": "3.2"
+        "SafariIOS": "3.2",
+        "Deno": "1.10"
       },
       "doc": "The <strong><code>clear()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Storage\"><code>Storage</code></a>\ninterface clears all keys stored in a given <code>Storage</code> object.",
       "returns": "None (<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/undefined\"><code>undefined</code></a>)."
@@ -9976,10 +9979,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "8",
         "Opera": "10.5",
         "Safari": "4",
-        "SafariIOS": "3.2"
+        "SafariIOS": "3.2",
+        "Deno": "1.10"
       },
       "doc": "The <strong><code>getItem()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Storage\"><code>Storage</code></a>\ninterface, when passed a key name, will return that key's value, or <code>null</code> if\nthe key does not exist, in the given <code>Storage</code> object.",
       "parameters": {
@@ -9997,10 +10000,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "8",
         "Opera": "10.5",
         "Safari": "4",
-        "SafariIOS": "3.2"
+        "SafariIOS": "3.2",
+        "Deno": "1.10"
       },
       "doc": "The <strong><code>key()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Storage\"><code>Storage</code></a> interface,\nwhen passed a number n, returns the name of the nth key in a given <code>Storage</code>\nobject. The order of keys is user-agent defined, so you should not rely on it.",
       "parameters": {
@@ -10018,10 +10021,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "8",
         "Opera": "10.5",
         "Safari": "4",
-        "SafariIOS": "3.2"
+        "SafariIOS": "3.2",
+        "Deno": "1.10"
       },
       "doc": "The <strong><code>length</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/Storage\"><code>Storage</code></a> interface returns the number of data items stored in a given\n<code>Storage</code> object."
     },
@@ -10035,10 +10038,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "8",
         "Opera": "10.5",
         "Safari": "4",
-        "SafariIOS": "3.2"
+        "SafariIOS": "3.2",
+        "Deno": "1.10"
       },
       "doc": "The <strong><code>removeItem()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Storage\"><code>Storage</code></a>\ninterface, when passed a key name, will remove that key from the given\n<code>Storage</code> object if it exists.\nThe <strong><code>Storage</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Web_Storage_API\">Web Storage API</a> provides access to a\nparticular domain's session or local storage.\n<p>If there is no item associated with the given key, this method will do nothing.",
       "parameters": {
@@ -10056,10 +10059,10 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "8",
         "Opera": "10.5",
         "Safari": "4",
-        "SafariIOS": "3.2"
+        "SafariIOS": "3.2",
+        "Deno": "1.10"
       },
       "doc": "The <strong><code>setItem()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Storage\"><code>Storage</code></a>\ninterface, when passed a key name and value, will add that key to the given\n<code>Storage</code> object, or update that key's value if it already exists.",
       "parameters": {
@@ -10078,7 +10081,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "13",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "4",
         "SafariIOS": "3"
@@ -10096,7 +10098,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "13",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "4",
         "SafariIOS": "3"
@@ -10213,7 +10214,8 @@
         "Opera": "84",
         "Safari": "15.4",
         "SafariIOS": "15.4",
-        "Nodejs": "17.0.0"
+        "Nodejs": "17.0.0",
+        "Deno": "1.14"
       },
       "doc": "The global <strong><code>structuredClone()</code></strong> method creates a <a href=\"$MDN_URL$/Glossary/Deep_copy\">deep clone</a> of a given value using the <a href=\"$MDN_URL$/Web/API/Web_Workers_API/Structured_clone_algorithm\">structured clone algorithm</a>.\n<p>The method also allows <a href=\"$MDN_URL$/Web/API/Web_Workers_API/Transferable_objects\">transferable objects</a> in the original value to be <em>transferred</em> rather than cloned to the new object.\nTransferred objects are detached from the original object and attached to the new object; they are no longer accessible in the original object.",
       "parameters": {
@@ -10480,7 +10482,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -10497,7 +10498,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -10514,7 +10514,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -10531,7 +10530,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -10548,7 +10546,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -10565,7 +10562,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -10582,7 +10578,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -10599,7 +10594,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -10616,7 +10610,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -10633,7 +10626,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -10654,7 +10646,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "4",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -10724,11 +10715,11 @@
         "ChromeAndroid": "37",
         "Edge": "",
         "Firefox": "34",
-        "IE": "11",
         "Opera": "24",
         "Safari": "11",
         "SafariIOS": "11",
-        "Nodejs": "15.0.0"
+        "Nodejs": "15.0.0",
+        "Deno": "1.11"
       },
       "doc": "<div class=\"notecard secure\" id=\"sect1\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>SubtleCrypto</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Web_Crypto_API\">Web Crypto API</a> provides a number of low-level cryptographic functions. Access to the features of <code>SubtleCrypto</code> is obtained through the <a href=\"$MDN_URL$/Web/API/Crypto/subtle\" ><code>subtle</code></a> property of the <a href=\"$MDN_URL$/Web/API/Crypto\"><code>Crypto</code></a> object you get from the <a href=\"$MDN_URL$/Web/API/crypto_property\" ><code>crypto</code></a> property.\n<div class=\"notecard warning\" id=\"sect2\">\n<p><strong>Warning:</strong> This API provides a number of low-level cryptographic primitives. It's very easy to misuse them, and the pitfalls involved can be very subtle.\n<p>Even assuming you use the basic cryptographic functions correctly, secure key management and overall security system design are extremely hard to get right, and are generally the domain of specialist security experts.\n<p>Errors in security system design and implementation can make the security of the system completely ineffective.\n<p>Please learn and experiment, but don't guarantee or imply the security of your work before an individual knowledgeable in this subject matter thoroughly reviews it. The <a href=\"https://www.crypto101.io/\" class=\"external\" target=\"_blank\">Crypto 101 Course</a> can be a great place to start learning about the design and implementation of secure systems.\n</div>"
     },
@@ -10745,7 +10736,8 @@
         "Opera": "24",
         "Safari": "7",
         "SafariIOS": "7",
-        "Nodejs": "15.0.0"
+        "Nodejs": "15.0.0",
+        "Deno": "1.18"
       },
       "doc": "<div class=\"notecard secure\" id=\"sect1\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>decrypt()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/SubtleCrypto\"><code>SubtleCrypto</code></a> interface decrypts some encrypted data.\nIt takes as arguments a <a href=\"$MDN_URL$/Glossary/Key\">key</a> to decrypt with, some optional extra parameters, and the data to decrypt (also known as \"ciphertext\").\nIt returns a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> which will be fulfilled with the decrypted data (also known as \"plaintext\").",
       "parameters": {
@@ -10772,7 +10764,8 @@
         "Opera": "28",
         "Safari": "11",
         "SafariIOS": "11",
-        "Nodejs": "15.0.0"
+        "Nodejs": "15.0.0",
+        "Deno": "1.15"
       },
       "doc": "<div class=\"notecard secure\" id=\"sect1\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>deriveBits()</code></strong> method of the\n<a href=\"$MDN_URL$/Web/API/SubtleCrypto\"><code>SubtleCrypto</code></a> interface can be used to derive an array of bits from a base\nkey.\n<p>It takes as its arguments the base key, the derivation algorithm to use, and the length\nof the bits to derive. It returns a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a>\nwhich will be fulfilled with an\n<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/ArrayBuffer\"><code>ArrayBuffer</code></a>\ncontaining the derived bits.\n<p>This method is very similar to\n<a href=\"$MDN_URL$/Web/API/SubtleCrypto/deriveKey\"><code>SubtleCrypto.deriveKey()</code></a>,\nexcept that <code>deriveKey()</code> returns a\n<a href=\"$MDN_URL$/Web/API/CryptoKey\"><code>CryptoKey</code></a> object rather than an\n<code>ArrayBuffer</code>. Essentially <code>deriveKey()</code> is composed of\n<code>deriveBits()</code> followed by\n<a href=\"$MDN_URL$/Web/API/SubtleCrypto/importKey\"><code>importKey()</code></a>.\n<p>This function supports the same derivation algorithms as <code>deriveKey()</code>:\nECDH, HKDF, and PBKDF2. See <a href=\"$MDN_URL$/Web/API/SubtleCrypto/deriveKey#supported_algorithms\">Supported algorithms</a>\nfor some more detail on these algorithms.",
       "parameters": {
@@ -10800,7 +10793,8 @@
         "Opera": "28",
         "Safari": "11",
         "SafariIOS": "11",
-        "Nodejs": "15.0.0"
+        "Nodejs": "15.0.0",
+        "Deno": "1.15"
       },
       "doc": "<div class=\"notecard secure\" id=\"sect1\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>deriveKey()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/SubtleCrypto\"><code>SubtleCrypto</code></a>\ninterface can be used to derive a secret key from a master key.\n<p>It takes as arguments some initial key material, the derivation algorithm to use, and\nthe desired properties for the key to derive. It returns a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a>\nwhich will be fulfilled with a <a href=\"$MDN_URL$/Web/API/CryptoKey\"><code>CryptoKey</code></a> object representing the new key.\n<p>It's worth noting that the three key derivation algorithms you can use have quite\ndifferent characteristics and are appropriate in quite different situations. See <a href=\"#supported_algorithms\">Supported algorithms</a> for some more detail on this.",
       "parameters": {
@@ -10830,7 +10824,8 @@
         "Opera": "24",
         "Safari": "7",
         "SafariIOS": "7",
-        "Nodejs": "15.0.0"
+        "Nodejs": "15.0.0",
+        "Deno": "1.11"
       },
       "doc": "<div class=\"notecard secure\" id=\"sect1\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>digest()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/SubtleCrypto\"><code>SubtleCrypto</code></a>\ninterface generates a <a href=\"$MDN_URL$/Glossary/Digest\">digest</a> of the given data. A digest is a short\nfixed-length value derived from some variable-length input. Cryptographic digests should\nexhibit collision-resistance, meaning that it's hard to come up with two different\ninputs that have the same digest value.\n<p>It takes as its arguments an identifier for the digest algorithm to use and the data to\ndigest. It returns a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> which will be fulfilled with the digest.\n<p>Note that this API does not support streaming input: you must read the entire input into memory before passing it into the digest function.",
       "parameters": {
@@ -10852,7 +10847,8 @@
         "Opera": "24",
         "Safari": "7",
         "SafariIOS": "7",
-        "Nodejs": "15.0.0"
+        "Nodejs": "15.0.0",
+        "Deno": "1.18"
       },
       "doc": "<div class=\"notecard secure\" id=\"sect1\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>encrypt()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/SubtleCrypto\"><code>SubtleCrypto</code></a> interface encrypts data.\n<p>It takes as its arguments a <a href=\"$MDN_URL$/Glossary/Key\">key</a> to encrypt with, some algorithm-specific parameters, and the data to encrypt (also known as \"plaintext\").\nIt returns a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> which will be fulfilled with the encrypted data (also known as \"ciphertext\").",
       "parameters": {
@@ -10879,7 +10875,8 @@
         "Opera": "24",
         "Safari": "7",
         "SafariIOS": "7",
-        "Nodejs": "15.0.0"
+        "Nodejs": "15.0.0",
+        "Deno": "1.18"
       },
       "doc": "<div class=\"notecard secure\" id=\"sect1\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>exportKey()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/SubtleCrypto\"><code>SubtleCrypto</code></a>\ninterface exports a key: that is, it takes as input a <a href=\"$MDN_URL$/Web/API/CryptoKey\"><code>CryptoKey</code></a> object\nand gives you the key in an external, portable format.\n<p>To export a key, the key must have <a href=\"$MDN_URL$/Web/API/CryptoKey/extractable\"><code>CryptoKey.extractable</code></a> set to\n<code>true</code>.\n<p>Keys can be exported in several formats: see <a href=\"$MDN_URL$/Web/API/SubtleCrypto/importKey#supported_formats\">Supported formats</a> in the\n<a href=\"$MDN_URL$/Web/API/SubtleCrypto/importKey\"><code>SubtleCrypto.importKey()</code></a>\npage for details.\n<p>Keys are not exported in an encrypted format: to encrypt keys when exporting them use\nthe\n<a href=\"$MDN_URL$/Web/API/SubtleCrypto/wrapKey\"><code>SubtleCrypto.wrapKey()</code></a>\nAPI instead.",
       "parameters": {
@@ -10961,7 +10958,8 @@
         "Opera": "24",
         "Safari": "7",
         "SafariIOS": "7",
-        "Nodejs": "15.0.0"
+        "Nodejs": "15.0.0",
+        "Deno": "1.12"
       },
       "doc": "<div class=\"notecard secure\" id=\"sect1\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>sign()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/SubtleCrypto\"><code>SubtleCrypto</code></a>\ninterface generates a digital <a href=\"$MDN_URL$/Glossary/Signature\">signature</a>.\n<p>It takes as its arguments a <a href=\"$MDN_URL$/Glossary/Key\">key</a> to sign with, some algorithm-specific\nparameters, and the data to sign. It returns a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> which will be\nfulfilled with the signature.\n<p>You can use the corresponding <a href=\"$MDN_URL$/Web/API/SubtleCrypto/verify\"><code>SubtleCrypto.verify()</code></a> method to verify the\nsignature.",
       "parameters": {
@@ -10987,7 +10985,8 @@
         "Opera": "24",
         "Safari": "7",
         "SafariIOS": "7",
-        "Nodejs": "15.0.0"
+        "Nodejs": "15.0.0",
+        "Deno": "1.17"
       },
       "doc": "<div class=\"notecard secure\" id=\"sect1\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>unwrapKey()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/SubtleCrypto\"><code>SubtleCrypto</code></a> interface \"unwraps\" a key.\nThis means that it takes as its input a key that has been exported and then encrypted (also called \"wrapped\").\nIt decrypts the key and then imports it, returning a <a href=\"$MDN_URL$/Web/API/CryptoKey\"><code>CryptoKey</code></a> object that can be used in the <a href=\"$MDN_URL$/Web/API/Web_Crypto_API\">Web Crypto API</a>.\n<p>As with <a href=\"$MDN_URL$/Web/API/SubtleCrypto/importKey\"><code>SubtleCrypto.importKey()</code></a>, you specify the key's <a href=\"$MDN_URL$/Web/API/SubtleCrypto/importKey#supported_formats\">import format</a> and other attributes of the key to import details such as whether it is extractable, and which operations it can be used for.\n<p>But because <code>unwrapKey()</code> also decrypts the key to be imported, you also need to pass in the key that must be used to decrypt it.\nThis is sometimes called the \"unwrapping key\".\n<p>The inverse of <code>unwrapKey()</code> is <a href=\"$MDN_URL$/Web/API/SubtleCrypto/wrapKey\"><code>SubtleCrypto.wrapKey()</code></a>: while <code>unwrapKey</code> is composed of decrypt + import, <code>wrapKey</code> is composed of encrypt + export.",
       "parameters": {
@@ -11020,7 +11019,8 @@
         "Opera": "24",
         "Safari": "7",
         "SafariIOS": "7",
-        "Nodejs": "15.0.0"
+        "Nodejs": "15.0.0",
+        "Deno": "1.14"
       },
       "doc": "<div class=\"notecard secure\" id=\"sect1\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>verify()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/SubtleCrypto\"><code>SubtleCrypto</code></a>\ninterface verifies a digital <a href=\"$MDN_URL$/Glossary/Signature\">signature</a>.\n<p>It takes as its arguments a <a href=\"$MDN_URL$/Glossary/Key\">key</a> to verify the signature with, some\nalgorithm-specific parameters, the signature, and the original signed data. It returns a\n<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> which will be fulfilled with a boolean value\nindicating whether the signature is valid.",
       "parameters": {
@@ -11047,7 +11047,8 @@
         "Opera": "24",
         "Safari": "7",
         "SafariIOS": "7",
-        "Nodejs": "15.0.0"
+        "Nodejs": "15.0.0",
+        "Deno": "1.15"
       },
       "doc": "<div class=\"notecard secure\" id=\"sect1\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>wrapKey()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/SubtleCrypto\"><code>SubtleCrypto</code></a> interface \"wraps\" a key.\nThis means that it exports the key in an external, portable format, then encrypts the exported key.\nWrapping a key helps protect it in untrusted environments, such as inside an otherwise unprotected data store or in transmission over an unprotected network.\n<p>As with <a href=\"$MDN_URL$/Web/API/SubtleCrypto/exportKey\"><code>SubtleCrypto.exportKey()</code></a>, you specify an <a href=\"$MDN_URL$/Web/API/SubtleCrypto/importKey#supported_formats\">export format</a> for the key.\nTo export a key, it must have <a href=\"$MDN_URL$/Web/API/CryptoKey/extractable\"><code>CryptoKey.extractable</code></a> set to <code>true</code>.\n<p>But because <code>wrapKey()</code> also encrypts the key to be exported, you also need to pass in the key that must be used to encrypt it.\nThis is sometimes called the \"wrapping key\".\n<p>The inverse of <code>wrapKey()</code> is <a href=\"$MDN_URL$/Web/API/SubtleCrypto/unwrapKey\"><code>SubtleCrypto.unwrapKey()</code></a>: while <code>wrapKey</code> is composed of export + encrypt, <code>unwrapKey</code> is composed of import + decrypt.",
       "parameters": {
@@ -11073,7 +11074,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -11090,7 +11090,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -11107,7 +11106,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -11136,7 +11134,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -11153,7 +11150,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "5",
         "SafariIOS": "4"
@@ -11170,7 +11166,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -11187,7 +11182,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -11204,7 +11198,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -11221,7 +11214,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "5",
         "SafariIOS": "4"
@@ -11238,7 +11230,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -11255,7 +11246,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -11272,7 +11262,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -11289,7 +11278,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -11306,7 +11294,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -11323,7 +11310,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "5",
         "SafariIOS": "4"
@@ -11340,7 +11326,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "5",
         "SafariIOS": "4"
@@ -11357,7 +11342,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -11374,7 +11358,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "4",
         "SafariIOS": ""
@@ -11391,7 +11374,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "4",
         "SafariIOS": ""
@@ -11408,7 +11390,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "4",
         "SafariIOS": ""
@@ -11425,7 +11406,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "4",
         "SafariIOS": ""
@@ -11522,7 +11502,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "8",
         "Safari": "3",
         "SafariIOS": ""
@@ -11539,7 +11518,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -11556,7 +11534,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -11573,7 +11550,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -11590,7 +11566,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -11607,7 +11582,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -11624,7 +11598,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -11641,7 +11614,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -11670,7 +11642,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -11687,7 +11658,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -11704,7 +11674,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -11721,7 +11690,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -11738,7 +11706,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -11759,7 +11726,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -11776,7 +11742,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -11793,7 +11758,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -11810,7 +11774,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -11827,7 +11790,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -11844,7 +11806,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -11861,7 +11822,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -11878,7 +11838,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -11911,7 +11870,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -11928,7 +11886,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -11945,7 +11902,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -11962,7 +11918,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -11979,7 +11934,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -11996,7 +11950,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -12013,7 +11966,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -12030,7 +11982,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -12047,7 +11998,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -12064,7 +12014,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -12081,7 +12030,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -12098,7 +12046,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -12115,7 +12062,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -12132,7 +12078,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -12149,7 +12094,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -12166,7 +12110,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -12183,7 +12126,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -12200,7 +12142,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -12287,7 +12228,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -12431,7 +12371,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -12464,7 +12403,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -12494,7 +12432,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -12540,7 +12477,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -12557,7 +12493,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -12574,7 +12509,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -12591,7 +12525,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -12608,7 +12541,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -12625,7 +12557,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -12642,7 +12573,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -12659,7 +12589,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -12676,7 +12605,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -12693,7 +12621,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -12710,7 +12637,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -12727,7 +12653,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -12744,7 +12669,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -12761,7 +12685,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -12778,7 +12701,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -12795,7 +12717,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "2",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -12812,7 +12733,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -12829,7 +12749,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -12846,7 +12765,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -12867,7 +12785,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -12885,7 +12802,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "2",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -12902,7 +12818,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -12919,7 +12834,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -12936,7 +12850,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3.1",
         "SafariIOS": "2"
@@ -12953,7 +12866,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3.1",
         "SafariIOS": "2"
@@ -12970,7 +12882,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -12987,7 +12898,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13004,7 +12914,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13021,7 +12930,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "15",
         "Safari": "3",
         "SafariIOS": ""
@@ -13063,7 +12971,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13080,7 +12987,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "5",
         "SafariIOS": "4"
@@ -13097,7 +13003,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13114,7 +13019,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13132,7 +13036,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13149,7 +13052,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13166,7 +13068,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13190,7 +13091,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13211,7 +13111,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13235,7 +13134,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13259,7 +13157,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13300,7 +13197,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13317,7 +13213,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13342,7 +13237,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13368,7 +13262,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13385,7 +13278,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13402,7 +13294,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13419,7 +13310,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13436,7 +13326,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "8",
         "Safari": "3",
         "SafariIOS": ""
@@ -13453,7 +13342,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13482,7 +13370,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13515,7 +13402,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13532,7 +13418,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "12",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13549,7 +13434,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13580,7 +13464,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13597,7 +13480,6 @@
         "ChromeAndroid": "38",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "25",
         "Safari": "16.4",
         "SafariIOS": "16.4"
@@ -13614,7 +13496,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13632,7 +13513,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13649,7 +13529,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13666,7 +13545,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13683,7 +13561,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13700,7 +13577,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13717,7 +13593,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13734,7 +13609,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "2",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3.1",
         "SafariIOS": "2"
@@ -13751,7 +13625,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13768,7 +13641,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13785,7 +13657,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -13802,7 +13673,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13828,7 +13698,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13845,7 +13714,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3.1",
         "SafariIOS": "2"
@@ -13862,7 +13730,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -13879,7 +13746,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "15",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -14216,7 +14082,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -14249,7 +14114,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -14291,7 +14155,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -14311,7 +14174,8 @@
         "Opera": "25",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "11.0.0"
+        "Nodejs": "11.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>TextDecoder</code></strong> interface represents a decoder for a specific text encoding, such as <code>UTF-8</code>, <code>ISO-8859-2</code>, <code>KOI8-R</code>, <code>GBK</code>, etc. A decoder takes a stream of bytes as input and emits a stream of code points.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
@@ -14328,7 +14192,8 @@
         "Opera": "25",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "11.0.0"
+        "Nodejs": "11.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>TextDecoder.decode()</code></strong> method returns a string containing text decoded from the buffer passed as a parameter.\n<p>The decoding method is defined in the current <a href=\"$MDN_URL$/Web/API/TextDecoder\"><code>TextDecoder</code></a> object.\nThis includes the expected encoding of the data, and how decoding errors are handled.",
       "parameters": {
@@ -14353,7 +14218,8 @@
         "Opera": "25",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "8.3.0"
+        "Nodejs": "8.3.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>TextDecoder.encoding</code></strong> read-only property returns a string containing the name of the decoding algorithm used by the specific decoder object.\n<p>The encoding is set by the <a href=\"$MDN_URL$/Web/API/TextDecoder/TextDecoder\">constructor</a> <code>label</code> parameter, and defaults to <code>utf-8</code>."
     },
@@ -14370,7 +14236,8 @@
         "Opera": "25",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "8.3.0"
+        "Nodejs": "8.3.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>fatal</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/TextDecoder\"><code>TextDecoder</code></a> interface is a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Boolean\"><code>Boolean</code></a> indicating whether the error mode is fatal.\n<p>If the property is <code>true</code>, then a decoder will throw a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/TypeError\"><code>TypeError</code></a> if it encounters malformed data while decoding.\nIf <code>false</code>, the decoder will substitute the invalid data with the replacement character <code>U+FFFD</code> (�).\nThe value of the property is set in the <a href=\"$MDN_URL$/Web/API/TextDecoder/TextDecoder\"><code>TextDecoder()</code> constructor</a>."
     },
@@ -14387,7 +14254,8 @@
         "Opera": "25",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "8.3.0"
+        "Nodejs": "8.3.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>ignoreBOM</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/TextDecoder\"><code>TextDecoder</code></a> interface is a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Boolean\"><code>Boolean</code></a> indicating whether the <a href=\"https://www.w3.org/International/questions/qa-byte-order-mark\" class=\"external\" target=\"_blank\">byte order mark</a> is ignored."
     },
@@ -14404,7 +14272,8 @@
         "Opera": "25",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "11.0.0"
+        "Nodejs": "11.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>TextDecoder()</code></strong> constructor returns a newly created <a href=\"$MDN_URL$/Web/API/TextDecoder\"><code>TextDecoder</code></a> object for the encoding specified in parameter.",
       "parameters": {
@@ -14428,7 +14297,8 @@
         "Opera": "58",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "18.0.0"
+        "Nodejs": "18.0.0",
+        "Deno": "1.11"
       },
       "doc": "The <strong><code>TextDecoderStream</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Encoding_API\">Encoding API</a> converts a stream of text in a binary encoding, such as UTF-8 etc., to a stream of strings.\nIt is the streaming equivalent of <a href=\"$MDN_URL$/Web/API/TextDecoder\"><code>TextDecoder</code></a>."
     },
@@ -14445,7 +14315,8 @@
         "Opera": "58",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "16.6.0"
+        "Nodejs": "16.6.0",
+        "Deno": "1.11"
       },
       "doc": "The <strong><code>encoding</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/TextDecoderStream\"><code>TextDecoderStream</code></a> interface returns a string containing the name of the encoding algorithm used by the specific decoder.\n<p>The encoding is set by the <a href=\"$MDN_URL$/Web/API/TextDecoderStream/TextDecoderStream\">constructor</a> <code>label</code> parameter, and defaults to <code>utf-8</code>."
     },
@@ -14462,7 +14333,8 @@
         "Opera": "58",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "16.6.0"
+        "Nodejs": "16.6.0",
+        "Deno": "1.11"
       },
       "doc": "The <strong><code>fatal</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/TextDecoderStream\"><code>TextDecoderStream</code></a> interface is a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Boolean\"><code>boolean</code></a> indicating if the error mode of the <code>TextDecoderStream</code> object is set to <code>fatal</code>.\n<p>If the property is <code>true</code> then a decoder will throw a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/TypeError\"><code>TypeError</code></a> if it encounters malformed data while decoding.\nIf <code>false</code> the decoder will substitute the invalid data with the replacement character <code>U+FFFD</code> (�).\nThe value of the property is set in the <a href=\"$MDN_URL$/Web/API/TextDecoderStream/TextDecoderStream\"><code>TextDecoderStream()</code> constructor</a>."
     },
@@ -14479,7 +14351,8 @@
         "Opera": "58",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "16.6.0"
+        "Nodejs": "16.6.0",
+        "Deno": "1.11"
       },
       "doc": "The <strong><code>ignoreBOM</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/TextDecoderStream\"><code>TextDecoderStream</code></a> interface returns a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Boolean\"><code>boolean</code></a> indicating if the byte order mark (BOM) is to be ignored."
     },
@@ -14496,7 +14369,8 @@
         "Opera": "58",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "16.6.0"
+        "Nodejs": "16.6.0",
+        "Deno": "1.11"
       },
       "doc": "The <strong><code>readable</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/TextDecoderStream\"><code>TextDecoderStream</code></a> interface returns a <a href=\"$MDN_URL$/Web/API/ReadableStream\"><code>ReadableStream</code></a>."
     },
@@ -14513,7 +14387,8 @@
         "Opera": "58",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "16.6.0"
+        "Nodejs": "16.6.0",
+        "Deno": "1.11"
       },
       "doc": "The <strong><code>TextDecoderStream()</code></strong> constructor creates a new <a href=\"$MDN_URL$/Web/API/TextDecoderStream\"><code>TextDecoderStream</code></a> object which is used to convert a stream of text in a binary encoding into strings.",
       "parameters": {
@@ -14537,7 +14412,8 @@
         "Opera": "58",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "16.6.0"
+        "Nodejs": "16.6.0",
+        "Deno": "1.11"
       },
       "doc": "The <strong><code>writable</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/TextDecoderStream\"><code>TextDecoderStream</code></a> interface returns a <a href=\"$MDN_URL$/Web/API/WritableStream\"><code>WritableStream</code></a>."
     },
@@ -14554,7 +14430,8 @@
         "Opera": "25",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "11.0.0"
+        "Nodejs": "11.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>TextEncoder</code></strong> interface takes a stream of code points as input and emits a stream of UTF-8 bytes.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
@@ -14571,7 +14448,8 @@
         "Opera": "25",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "8.3.0"
+        "Nodejs": "8.3.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>TextEncoder.encode()</code></strong> method takes a string as input, and returns a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Uint8Array\"><code>Uint8Array</code></a> containing the text given in parameters encoded with the specific method for that <a href=\"$MDN_URL$/Web/API/TextEncoder\"><code>TextEncoder</code></a> object.",
       "parameters": {
@@ -14592,7 +14470,8 @@
         "Opera": "62",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "12.11.0"
+        "Nodejs": "12.11.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>TextEncoder.encodeInto()</code></strong> method takes a\nstring to encode and a destination <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Uint8Array\"><code>Uint8Array</code></a> to put resulting UTF-8 encoded text into, and returns a dictionary object indicating the\nprogress of the encoding.\nThis is potentially more performant than the older <code>encode()</code> method — especially when the target buffer is a view into a Wasm heap.",
       "parameters": {
@@ -14614,7 +14493,8 @@
         "Opera": "25",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "8.3.0"
+        "Nodejs": "8.3.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>TextEncoder.encoding</code></strong> read-only property returns a string containing the name of the encoding algorithm used by the specific encoder.\n<p>It can only have the following value <code>utf-8</code>."
     },
@@ -14631,7 +14511,8 @@
         "Opera": "25",
         "Safari": "10.1",
         "SafariIOS": "10.3",
-        "Nodejs": "11.0.0"
+        "Nodejs": "11.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>TextEncoder()</code></strong> constructor returns a newly created <a href=\"$MDN_URL$/Web/API/TextEncoder\"><code>TextEncoder</code></a> object that will generate a byte stream with UTF-8 encoding."
     },
@@ -14648,7 +14529,8 @@
         "Opera": "58",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "18.0.0"
+        "Nodejs": "18.0.0",
+        "Deno": "1.11"
       },
       "doc": "The <strong><code>TextEncoderStream</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Encoding_API\">Encoding API</a> converts a stream of strings into bytes in the UTF-8 encoding. It is the streaming equivalent of <a href=\"$MDN_URL$/Web/API/TextEncoder\"><code>TextEncoder</code></a>."
     },
@@ -14665,7 +14547,8 @@
         "Opera": "58",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "16.6.0"
+        "Nodejs": "16.6.0",
+        "Deno": "1.11"
       },
       "doc": "The <strong><code>encoding</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/TextEncoderStream\"><code>TextEncoderStream</code></a> interface returns a\nstring containing the name of the encoding algorithm used by the current <code>TextEncoderStream</code> object."
     },
@@ -14682,7 +14565,8 @@
         "Opera": "58",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "16.6.0"
+        "Nodejs": "16.6.0",
+        "Deno": "1.11"
       },
       "doc": "The <strong><code>readable</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/TextEncoderStream\"><code>TextEncoderStream</code></a> interface returns a <a href=\"$MDN_URL$/Web/API/ReadableStream\"><code>ReadableStream</code></a>."
     },
@@ -14699,7 +14583,8 @@
         "Opera": "58",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "16.6.0"
+        "Nodejs": "16.6.0",
+        "Deno": "1.11"
       },
       "doc": "The <strong><code>TextEncoderStream()</code></strong> constructor creates a new <a href=\"$MDN_URL$/Web/API/TextEncoderStream\"><code>TextEncoderStream</code></a> object which is used to convert a stream of strings into bytes using UTF-8 encoding."
     },
@@ -14716,7 +14601,8 @@
         "Opera": "58",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "16.6.0"
+        "Nodejs": "16.6.0",
+        "Deno": "1.11"
       },
       "doc": "The <strong><code>writable</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/TextEncoderStream\"><code>TextEncoderStream</code></a> interface returns a <a href=\"$MDN_URL$/Web/API/WritableStream\"><code>WritableStream</code></a>."
     },
@@ -14730,7 +14616,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "9",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -14901,7 +14786,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "9",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -14918,7 +14802,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "31",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "7"
@@ -14935,7 +14818,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "31",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "7"
@@ -14952,7 +14834,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "31",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "7"
@@ -14976,7 +14857,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "31",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "7"
@@ -15009,7 +14889,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "31",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "7"
@@ -15026,7 +14905,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "31",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "7"
@@ -15043,7 +14921,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "31",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "7"
@@ -15060,7 +14937,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "31",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "7"
@@ -15077,7 +14953,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "31",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "7"
@@ -15094,7 +14969,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "31",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "7"
@@ -15118,7 +14992,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "31",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "7"
@@ -15135,7 +15008,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "31",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "7"
@@ -15152,7 +15024,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "31",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "7"
@@ -15169,7 +15040,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "31",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "7"
@@ -15186,7 +15056,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "31",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "7"
@@ -15203,7 +15072,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "31",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "7"
@@ -15220,7 +15088,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "31",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -15237,7 +15104,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "31",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -15258,7 +15124,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "31",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -15275,7 +15140,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "31",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "7"
@@ -15312,7 +15176,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "31",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "7"
@@ -15339,7 +15202,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3.1",
         "SafariIOS": "2"
@@ -15356,7 +15218,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3.1",
         "SafariIOS": "2"
@@ -15380,7 +15241,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3.1",
         "SafariIOS": "2"
@@ -15397,7 +15257,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "9",
         "Opera": "12.1",
         "Safari": "3.1",
         "SafariIOS": "2"
@@ -15865,7 +15724,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "27",
-        "IE": "11",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "7"
@@ -15882,7 +15740,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "27",
-        "IE": "11",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "7"
@@ -15923,7 +15780,8 @@
         "Opera": "54",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "18.0.0"
+        "Nodejs": "18.0.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>TransformStream</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Streams_API\">Streams API</a> represents a concrete implementation of the <a href=\"$MDN_URL$/Web/API/Streams_API/Concepts#pipe_chains\">pipe chain</a> <em>transform stream</em> concept.\n<p>It may be passed to the <a href=\"$MDN_URL$/Web/API/ReadableStream/pipeThrough\"><code>ReadableStream.pipeThrough()</code></a> method in order to transform a stream of data from one format into another.\nFor example, it might be used to decode (or encode) video frames, decompress data, or convert the stream from XML to JSON.\n<p>A transformation algorithm may be provided as an optional argument to the object constructor.\nIf not supplied, data is not modified when piped through the stream.\n<p><code>TransformStream</code> is a <a href=\"$MDN_URL$/Web/API/Web_Workers_API/Transferable_objects\">transferable object</a>."
     },
@@ -15940,7 +15798,8 @@
         "Opera": "54",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>readable</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/TransformStream\"><code>TransformStream</code></a> interface returns the <a href=\"$MDN_URL$/Web/API/ReadableStream\"><code>ReadableStream</code></a> instance controlled by this <code>TransformStream</code>."
     },
@@ -15957,7 +15816,8 @@
         "Opera": "54",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>TransformStream()</code></strong> constructor creates a new <a href=\"$MDN_URL$/Web/API/TransformStream\"><code>TransformStream</code></a> object which represents a pair of streams: a <a href=\"$MDN_URL$/Web/API/WritableStream\"><code>WritableStream</code></a> representing the writable side, and a <a href=\"$MDN_URL$/Web/API/ReadableStream\"><code>ReadableStream</code></a> representing the readable side.",
       "parameters": {
@@ -15979,7 +15839,8 @@
         "Opera": "54",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>writable</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/TransformStream\"><code>TransformStream</code></a> interface returns the <a href=\"$MDN_URL$/Web/API/WritableStream\"><code>WritableStream</code></a> instance controlled by this <code>TransformStream</code>."
     },
@@ -15996,7 +15857,8 @@
         "Opera": "54",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": "1.11"
       },
       "doc": "The <strong><code>TransformStreamDefaultController</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Streams_API\">Streams API</a> provides methods to manipulate the associated <a href=\"$MDN_URL$/Web/API/ReadableStream\"><code>ReadableStream</code></a> and <a href=\"$MDN_URL$/Web/API/WritableStream\"><code>WritableStream</code></a>.\n<p>When constructing a <a href=\"$MDN_URL$/Web/API/TransformStream\"><code>TransformStream</code></a>, the <code>TransformStreamDefaultController</code> is created. It therefore has no constructor. The way to get an instance of <code>TransformStreamDefaultController</code> is via the callback methods of <a href=\"$MDN_URL$/Web/API/TransformStream/TransformStream\" ><code>TransformStream()</code></a>."
     },
@@ -16013,7 +15875,8 @@
         "Opera": "54",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>desiredSize</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/TransformStreamDefaultController\"><code>TransformStreamDefaultController</code></a> interface returns the desired size to fill the queue of the associated <a href=\"$MDN_URL$/Web/API/ReadableStream\"><code>ReadableStream</code></a>.\n<p>The internal queue of a <code>ReadableStream</code> contains chunks that have been enqueued, but not yet read. The browser determines the <strong>desired size</strong> to fill the stream, and it is this value returned by the <code>desiredSize</code> property.\n<p>If the <code>desiredSize</code> is <code>0</code> then the queue is full. Therefore you can use this information to <a href=\"$MDN_URL$/Web/API/Streams_API/Concepts#backpressure\">manually apply backpressure</a> to manage the queue."
     },
@@ -16030,7 +15893,8 @@
         "Opera": "54",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>enqueue()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/TransformStreamDefaultController\"><code>TransformStreamDefaultController</code></a> interface enqueues the given chunk in the readable side of the stream.\n<p>For more information on readable streams and chunks see <a href=\"$MDN_URL$/Web/API/Streams_API/Using_readable_streams\">Using Readable Streams</a>.",
       "parameters": {
@@ -16054,7 +15918,8 @@
         "Opera": "54",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>error()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/TransformStreamDefaultController\"><code>TransformStreamDefaultController</code></a> interface errors both sides of the stream. Any further interactions with it will fail with the given error message, and any chunks in the queue will be discarded.",
       "parameters": {
@@ -16075,7 +15940,8 @@
         "Opera": "54",
         "Safari": "14.1",
         "SafariIOS": "14.5",
-        "Nodejs": "16.5.0"
+        "Nodejs": "16.5.0",
+        "Deno": ""
       },
       "doc": "The <strong><code>terminate()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/TransformStreamDefaultController\"><code>TransformStreamDefaultController</code></a> interface closes the readable side and errors the writable side of the stream.",
       "returns": "None (<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/undefined\"><code>undefined</code></a>)."
@@ -16090,7 +15956,6 @@
         "ChromeAndroid": "27",
         "Edge": "",
         "Firefox": "4",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "7",
         "SafariIOS": "7"
@@ -16107,7 +15972,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -16124,7 +15988,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -16178,7 +16041,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "9",
         "Opera": "9",
         "Safari": "3",
         "SafariIOS": "3"
@@ -16195,7 +16057,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "9",
         "Opera": "9",
         "Safari": "3",
         "SafariIOS": "3"
@@ -16212,7 +16073,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "9",
         "Opera": "9",
         "Safari": "3",
         "SafariIOS": "3"
@@ -16229,7 +16089,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "9",
         "Opera": "9",
         "Safari": "3",
         "SafariIOS": "3"
@@ -16247,7 +16106,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "9",
         "Opera": "9",
         "Safari": "3",
         "SafariIOS": "3"
@@ -16265,7 +16123,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "9",
         "Opera": "9",
         "Safari": "3",
         "SafariIOS": "3"
@@ -16283,7 +16140,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "9",
         "Opera": "9",
         "Safari": "3",
         "SafariIOS": "3"
@@ -16301,7 +16157,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "9",
         "Opera": "9",
         "Safari": "3",
         "SafariIOS": "3"
@@ -16319,7 +16174,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "9",
         "Opera": "9",
         "Safari": "3",
         "SafariIOS": "3"
@@ -16337,7 +16191,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "9",
         "Opera": "9",
         "Safari": "3",
         "SafariIOS": "3"
@@ -16355,7 +16208,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "9",
         "Opera": "9",
         "Safari": "3",
         "SafariIOS": "3"
@@ -16372,7 +16224,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "9",
         "Opera": "9",
         "Safari": "3",
         "SafariIOS": "3"
