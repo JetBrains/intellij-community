@@ -138,26 +138,21 @@ suspend fun <T> withBackgroundProgressContext(
   canBeCancelled: Boolean = true,
   project: Project,
   action: suspend ProgressCoroutineScope.() -> T
-): T = withBackgroundProgressContext(title, canBeCancelled, true, project, Lifetime.Eternal, action)
+): T = withBackgroundProgress(project, title, canBeCancelled) {
+  withBackgroundContext {
+    ProgressCoroutineScopeBridge.use(false, action)
+  }
+}
 
 @Deprecated("Use withBackgroundProgress")
 suspend fun <T> withBackgroundProgressContext(
   @Nls(capitalization = Nls.Capitalization.Sentence) title: String,
   canBeCancelled: Boolean = true,
   isIndeterminate: Boolean = true,
-  project: Project? = null,
   lifetime: Lifetime = Lifetime.Eternal,
   action: suspend ProgressCoroutineScope.() -> T
 ): T {
-  if (project != null) {
-    withBackgroundProgress(project, title, canBeCancelled) {
-      withBackgroundContext(lifetime) {
-        ProgressCoroutineScopeBridge.use(false, action)
-      }
-    }
-  }
-
-  val context = CoroutineProgressContext.createBackgroundable(lifetime, title, canBeCancelled, isIndeterminate, project)
+  val context = CoroutineProgressContext.createBackgroundable(lifetime, title, canBeCancelled, isIndeterminate, null)
   return doRunUnderProgress(context, action)
 }
 
@@ -177,15 +172,18 @@ fun Lifetime.launchUnderBackgroundProgress(
   @Nls(capitalization = Nls.Capitalization.Sentence) title: String,
   canBeCancelled: Boolean = true,
   isIndeterminate: Boolean = true,
-  project: Project? = null,
+  project: Project,
   action: suspend ProgressCoroutineScope.() -> Unit
-): Job {
-  if (project != null)
-    return launchBackground { withBackgroundProgressContext(title, canBeCancelled, project, action) }
+): Job = launchBackground { withBackgroundProgressContext(title, canBeCancelled, project, action) }
 
-  return runBackgroundAsync(title, canBeCancelled, isIndeterminate, project) { dispatcher, indicator ->
-    launch(dispatcher) { ProgressCoroutineScopeLegacy.execute(coroutineContext, this@runBackgroundAsync, indicator(), action) }
-  }
+@Deprecated("Use launchWithBackgroundProgress")
+fun Lifetime.launchUnderBackgroundProgress(
+  @Nls(capitalization = Nls.Capitalization.Sentence) title: String,
+  canBeCancelled: Boolean = true,
+  isIndeterminate: Boolean = true,
+  action: suspend ProgressCoroutineScope.() -> Unit
+): Job = runBackgroundAsync(title, canBeCancelled, isIndeterminate, null) { dispatcher, indicator ->
+  launch(dispatcher) { ProgressCoroutineScopeLegacy.execute(coroutineContext, this@runBackgroundAsync, indicator(), action) }
 }
 
 @Deprecated("Use startWithModalProgressAsync")
@@ -204,14 +202,19 @@ fun <T> Lifetime.startUnderBackgroundProgressAsync(
   @Nls(capitalization = Nls.Capitalization.Sentence) title: String,
   canBeCancelled: Boolean = true,
   isIndeterminate: Boolean = true,
-  project: Project? = null,
+  project: Project,
+  action: suspend ProgressCoroutineScope.() -> T
+): Deferred<T> = startBackgroundAsync { withBackgroundProgressContext(title, canBeCancelled, project, action) }
+
+
+@Deprecated("Use startWithBackgroundProgressAsync")
+fun <T> Lifetime.startUnderBackgroundProgressAsync(
+  @Nls(capitalization = Nls.Capitalization.Sentence) title: String,
+  canBeCancelled: Boolean = true,
+  isIndeterminate: Boolean = true,
   action: suspend ProgressCoroutineScope.() -> T
 ): Deferred<T> {
-
-  if (project != null)
-    return startBackgroundAsync { withBackgroundProgressContext(title, canBeCancelled, project, action) }
-
-  return runBackgroundAsync(title, canBeCancelled, isIndeterminate, project) { dispatcher, indicator ->
+  return runBackgroundAsync(title, canBeCancelled, isIndeterminate, null) { dispatcher, indicator ->
     startAsync(dispatcher) { ProgressCoroutineScopeLegacy.execute(coroutineContext, this@runBackgroundAsync, indicator(), action) }
   }
 }
