@@ -56,10 +56,14 @@ private class ExperimentalUIImpl : ExperimentalUI() {
     if (PlatformUtils.isJetBrainsClient()) {
       changeUiWithDelegate(newUI)
     }
-    else if (suggestRestart && !PlatformUtils.isJetBrainsClient()) {
+    else {
       onValueChanged(newUI)
-      shouldApplyOnClose = newUI
-      showRestartDialog()
+      if (suggestRestart) {
+        shouldApplyOnClose = newUI
+        showRestartDialog()
+      } else {
+        saveNewValue(newUI)
+      }
     }
   }
 
