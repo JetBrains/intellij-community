@@ -16,12 +16,10 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.ui.ClientProperty;
-import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.IconManager;
-import com.intellij.ui.InplaceButton;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.docking.DockableContentContainer;
@@ -47,6 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.PopupMenuEvent;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
@@ -179,7 +178,47 @@ public final class WindowTabsComponent extends JBTabsImpl {
       public void setTabActions(ActionGroup group) {
         super.setTabActions(group);
         if (myActionPanel != null) {
+          Container parent = myActionPanel.getParent();
+          parent.remove(myActionPanel);
+          parent.add(new Wrapper(myActionPanel) {
+            @Override
+            public Dimension getPreferredSize() {
+              return myActionPanel.getPreferredSize();
+            }
+          }, BorderLayout.WEST);
+
           myActionPanel.setBorder(JBUI.Borders.emptyLeft(6));
+          myActionPanel.setVisible(false);
+        }
+      }
+
+      @Override
+      protected void setHovered(boolean value) {
+        super.setHovered(value);
+        myActionPanel.setVisible(value || getInfo() == myTabs.getPopupInfo());
+      }
+
+      @Override
+      protected void handlePopup(MouseEvent e) {
+        super.handlePopup(e);
+        JPopupMenu popup = myTabs.getActivePopup();
+        if (popup != null) {
+          popup.addPopupMenuListener(new PopupMenuListenerAdapter() {
+            @Override
+            public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+              handle();
+            }
+
+            @Override
+            public void popupMenuCanceled(PopupMenuEvent e) {
+              handle();
+            }
+
+            private void handle() {
+              popup.removePopupMenuListener(this);
+              myActionPanel.setVisible(isHovered());
+            }
+          });
         }
       }
 
