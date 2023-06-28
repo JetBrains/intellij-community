@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.defUse;
 
 import com.intellij.codeInsight.ExpressionUtil;
@@ -157,7 +157,7 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private static void reportInitializerProblem(PsiVariable psiVariable, ProblemsHolder holder) {
     List<LocalQuickFix> fixes = ContainerUtil.createMaybeSingletonList(
-      isOnTheFlyOrNoSideEffects(holder.isOnTheFly(), psiVariable, psiVariable.getInitializer()) ? new RemoveInitializerFix() : null);
+      isOnTheFlyOrNoSideEffects(holder.isOnTheFly(), psiVariable, psiVariable.getInitializer()) ? new RemoveInitializerFix2() : null);
     holder.registerProblem(ObjectUtils.notNull(psiVariable.getInitializer(), psiVariable),
                            JavaBundle.message("inspection.unused.assignment.problem.descriptor2", psiVariable.getName()),
                            fixes.toArray(LocalQuickFix.EMPTY_ARRAY)

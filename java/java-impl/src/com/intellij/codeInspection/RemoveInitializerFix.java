@@ -27,7 +27,7 @@ public class RemoveInitializerFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return JavaBundle.message("inspection.unused.assignment.remove.quickfix");
+    return JavaBundle.message("inspection.unused.assignment.remove.initializer.quickfix");
   }
 
   @Override
