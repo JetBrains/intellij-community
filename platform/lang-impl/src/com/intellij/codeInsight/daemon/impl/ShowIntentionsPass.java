@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Segment;
@@ -169,6 +170,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
     public final List<HighlightInfo.IntentionActionDescriptor> notificationActionsToShow = ContainerUtil.createLockFreeCopyOnWriteList();
     private int myOffset;
     private HighlightInfoType myHighlightInfoType;
+    private @Nullable @NlsContexts.PopupTitle String myTitle;
 
     public void filterActions(@Nullable PsiFile psiFile) {
       IntentionActionFilter[] filters = IntentionActionFilter.EXTENSION_POINT_NAME.getExtensions();
@@ -176,6 +178,14 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
       filter(errorFixesToShow, psiFile, filters);
       filter(inspectionFixesToShow, psiFile, filters);
       filter(notificationActionsToShow, psiFile, filters);
+    }
+
+    public @Nullable @NlsContexts.PopupTitle String getTitle() {
+      return myTitle;
+    }
+
+    public void setTitle(@Nullable @NlsContexts.PopupTitle String title) {
+      myTitle = title;
     }
 
     public void setOffset(int offset) {

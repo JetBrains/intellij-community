@@ -2,7 +2,10 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.impl.*;
-import com.intellij.codeInsight.intention.*;
+import com.intellij.codeInsight.intention.AdvertisementAction;
+import com.intellij.codeInsight.intention.EmptyIntentionAction;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
@@ -18,6 +21,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -51,14 +55,24 @@ public final class CachedIntentions {
   private final @Nullable Editor myEditor;
   private final @NotNull PsiFile myFile;
   private final @NotNull Project myProject;
+  private final @Nullable @NlsContexts.PopupTitle String myTitle;
 
   private final List<AnAction> myGuttersRaw = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Set<AnAction> myTopLevelActions = new CopyOnWriteArraySet<>();
 
   public CachedIntentions(@NotNull Project project, @NotNull PsiFile file, @Nullable Editor editor) {
+    this(project, file, editor, null);
+  }
+
+  private CachedIntentions(@NotNull Project project, @NotNull PsiFile file, @Nullable Editor editor, @Nullable @NlsContexts.PopupTitle String title) {
     myProject = project;
     myFile = file;
     myEditor = editor;
+    myTitle = title;
+  }
+
+  public @Nullable @NlsContexts.PopupTitle String getTitle() {
+    return myTitle;
   }
 
   public @NotNull Set<IntentionActionWithTextCaching> getIntentions() {
@@ -110,7 +124,7 @@ public final class CachedIntentions {
                                                  @NotNull PsiFile file,
                                                  @Nullable Editor editor,
                                                  @NotNull ShowIntentionsPass.IntentionsInfo intentions) {
-    CachedIntentions res = new CachedIntentions(project, file, editor);
+    CachedIntentions res = new CachedIntentions(project, file, editor, intentions.getTitle());
     res.wrapAndUpdateActions(intentions, false);
     return res;
   }
@@ -119,7 +133,7 @@ public final class CachedIntentions {
                                                                  @NotNull PsiFile file,
                                                                  @Nullable Editor editor,
                                                                  @NotNull ShowIntentionsPass.IntentionsInfo intentions) {
-    CachedIntentions res = new CachedIntentions(project, file, editor);
+    CachedIntentions res = new CachedIntentions(project, file, editor, intentions.getTitle());
     res.wrapAndUpdateActions(intentions, true);
     return res;
   }

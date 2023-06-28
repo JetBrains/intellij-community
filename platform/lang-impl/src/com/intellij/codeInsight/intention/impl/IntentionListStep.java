@@ -60,7 +60,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
 
   @Override
   public String getTitle() {
-    return null;
+    return myCachedIntentions.getTitle();
   }
 
   @Override
@@ -145,14 +145,10 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
       intentions.inspectionFixesToShow.add(
         new HighlightInfo.IntentionActionDescriptor(optionFix, null, null, getIcon(optionFix), null, null, null));
     }
+    intentions.setTitle(title);
 
     return new IntentionListStep(myPopup, myEditor, myFile, myProject,
                                  CachedIntentions.create(myProject, myFile, myEditor, intentions)) {
-      @Override
-      public String getTitle() {
-        return title;
-      }
-
       @Override
       protected void chooseActionAndInvoke(@NotNull IntentionActionWithTextCaching cachedAction,
                                            @NotNull PsiFile file,
