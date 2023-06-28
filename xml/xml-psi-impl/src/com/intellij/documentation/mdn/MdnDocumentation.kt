@@ -330,14 +330,34 @@ data class MdnCssBasicSymbolDocumentation(override val url: String?,
                                           override val status: Set<MdnApiStatus>?,
                                           @JsonDeserialize(using = CompatibilityMapDeserializer::class)
                                           override val compatibility: CompatibilityMap?,
-                                          override val doc: String?) : MdnRawSymbolDocumentation
+                                          override val doc: String?,
+                                          val formalSyntax: String?) : MdnRawSymbolDocumentation{
+  override val sections: Map<String, String>
+    get() {
+      val result = mutableMapOf<String, String>()
+      formalSyntax?.takeIf { it.isNotEmpty() }?.let {
+        result.put(XmlPsiBundle.message("mdn.documentation.section.syntax"), "<pre><code>$it</code></pre>")
+      }
+      return result
+    }
+}
 
 data class MdnCssAtRuleSymbolDocumentation(override val url: String?,
                                            override val status: Set<MdnApiStatus>?,
                                            @JsonDeserialize(using = CompatibilityMapDeserializer::class)
                                            override val compatibility: CompatibilityMap?,
                                            override val doc: String?,
-                                           val properties: Map<String, MdnCssPropertySymbolDocumentation>?) : MdnRawSymbolDocumentation
+                                           val properties: Map<String, MdnCssPropertySymbolDocumentation>?,
+                                           val formalSyntax: String?) : MdnRawSymbolDocumentation{
+  override val sections: Map<String, String>
+    get() {
+      val result = mutableMapOf<String, String>()
+      formalSyntax?.takeIf { it.isNotEmpty() }?.let {
+        result.put(XmlPsiBundle.message("mdn.documentation.section.syntax"), "<pre><code>$it</code></pre>")
+      }
+      return result
+    }
+}
 
 data class MdnCssPropertySymbolDocumentation(override val url: String?,
                                              override val status: Set<MdnApiStatus>?,
