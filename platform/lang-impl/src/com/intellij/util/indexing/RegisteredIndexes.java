@@ -8,7 +8,9 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.util.SmartList;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.HashSet;
 import java.util.List;
@@ -190,5 +192,11 @@ public final class RegisteredIndexes {
   @NotNull
   List<ID<?, ?>> getRequiredIndexes(@NotNull IndexedFile indexedFile) {
     return myRequiredIndexesEvaluator.getRequiredIndexes(indexedFile);
+  }
+
+  @TestOnly
+  @NotNull
+  public Pair<List<ID<?, ?>>, List<ID<?, ?>>> getRequiredIndexesForFileType(@NotNull FileType fileType) {
+    return myRequiredIndexesEvaluator.getRequiredIndexesForFileType(fileType);
   }
 }
