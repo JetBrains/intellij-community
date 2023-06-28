@@ -4,8 +4,8 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.collaboration.api.HttpStatusErrorException
 import com.intellij.collaboration.api.page.SequentialListLoader
-import com.intellij.collaboration.async.channelWithInitial
 import com.intellij.collaboration.async.mapScoped
+import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
@@ -76,7 +76,7 @@ class CachingGitLabProjectMergeRequestsStore(private val project: Project,
     return models.getOrPut(simpleId) {
       reloadMergeRequest
         .filter { requestedId -> requestedId == id }
-        .channelWithInitial(id)
+        .withInitial(id)
         .mapScoped { mrId ->
           runCatching {
             // TODO: create from cached details
