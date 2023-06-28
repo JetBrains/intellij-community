@@ -32,6 +32,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static com.intellij.driver.model.transport.RemoteCall.isPassByValue;
 
@@ -167,6 +168,19 @@ public class Invoker implements InvokerMBean {
   private static Object invokeMethod(CallTarget callTarget, Object instance, Object[] args) throws Exception {
     try {
       return callTarget.targetMethod().invoke(instance, args);
+    }
+    catch (IllegalArgumentException ie) {
+      String types = Arrays.stream(args)
+        .map(a -> {
+          if (a == null) return "null";
+          return a.getClass().getSimpleName();
+        })
+        .collect(Collectors.joining(", "));
+
+      String message = "Argument type mismatch for call " + callTarget.targetMethod() + ", actual types are [" + types + "]";
+      LOG.warn(message, ie);
+
+      throw new IllegalArgumentException(message, ie);
     }
     catch (Throwable e) {
       LOG.warn("Error during remote driver call " + callTarget.targetMethod(), e);

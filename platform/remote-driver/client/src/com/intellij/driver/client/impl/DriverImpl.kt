@@ -70,7 +70,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
       remote.value,
       convertArgsToPass(args)
     )
-    val callResult = invoker.invoke(call)
+    val callResult = makeCall(call)
     return convertResult(callResult, clazz.java, getPluginId(remote)) as T
   }
 
@@ -153,7 +153,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
             convertArgsToPass(args),
             null
           )
-          val callResult = invoker.invoke(call)
+          val callResult = makeCall(call)
           convertResult(callResult, method, getPluginId(remote))
         }
       }
@@ -186,10 +186,19 @@ internal class DriverImpl(host: JmxHost?) : Driver {
             convertArgsToPass(args),
             (project as RefWrapper).getRef()
           )
-          val callResult = invoker.invoke(call)
+          val callResult = makeCall(call)
           convertResult(callResult, method, getPluginId(remote))
         }
       }
+    }
+  }
+
+  private fun makeCall(call: RemoteCall): RemoteCallResult {
+    return try {
+      invoker.invoke(call)
+    }
+    catch (e: Exception) {
+      throw DriverCallException("Error on remote driver call", e)
     }
   }
 
@@ -214,7 +223,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
             method.name,
             convertArgsToPass(args)
           )
-          val callResult = invoker.invoke(call)
+          val callResult = makeCall(call)
           convertResult(callResult, method, getPluginId(remote))
         }
       }
@@ -245,7 +254,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
             convertArgsToPass(args),
             ref
           )
-          val callResult = invoker.invoke(call)
+          val callResult = makeCall(call)
           convertResult(callResult, method, getPluginId(remote))
         }
       }
@@ -318,3 +327,5 @@ internal interface Invoker : AutoCloseable {
 
   fun cleanup(sessionId: Int)
 }
+
+class DriverCallException(message: String, e: Throwable): RuntimeException(message, e)
