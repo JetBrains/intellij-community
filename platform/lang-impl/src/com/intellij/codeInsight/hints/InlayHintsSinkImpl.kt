@@ -6,9 +6,8 @@ import com.intellij.codeInsight.hints.presentation.RecursivelyUpdatingRootPresen
 import com.intellij.codeInsight.hints.presentation.RootInlayPresentation
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.util.SmartList
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap
-import java.util.function.IntFunction
+import com.intellij.util.containers.ConcurrentIntObjectMap
+import com.intellij.util.containers.ContainerUtil
 
 class InlayHintsSinkImpl(val editor: Editor) : InlayHintsSink {
   private val buffer = HintsBuffer()
@@ -47,6 +46,6 @@ class InlayHintsSinkImpl(val editor: Editor) : InlayHintsSink {
   }
 }
 
-private fun <T : Any> addCreatingListIfNeeded(map: Int2ObjectMap<MutableList<ConstrainedPresentation<*, T>>>, offset: Int, value: ConstrainedPresentation<*, T>) {
-  map.computeIfAbsent(offset, IntFunction { SmartList() }).add(value)
+private fun <T : Any> addCreatingListIfNeeded(map: ConcurrentIntObjectMap<MutableList<ConstrainedPresentation<*, T>>>, offset: Int, value: ConstrainedPresentation<*, T>) {
+  map.cacheOrGet(offset, ContainerUtil.createConcurrentList()).add(value)
 }

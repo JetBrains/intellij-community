@@ -22,8 +22,7 @@ import com.intellij.openapi.util.ProperTextRange
 import com.intellij.psi.PsiElement
 import com.intellij.util.CommonProcessors
 import com.intellij.util.Processor
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap
-import it.unimi.dsi.fastutil.ints.Int2ObjectMaps
+import com.intellij.util.containers.ConcurrentIntObjectMap
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.stream.IntStream
@@ -146,15 +145,15 @@ class InlayHintsPass(
 
 
     private fun addInlineHints(hints: HintsBuffer, inlayModel: InlayModel) {
-      for (entry in Int2ObjectMaps.fastIterable(hints.inlineHints)) {
+      for (entry in hints.inlineHints.entrySet()) {
         val renderer = InlineInlayRenderer(entry.value)
 
         val toBePlacedAtTheEndOfLine = entry.value.any { it.constraints?.placedAtTheEndOfLine ?: false }
         val isRelatedToPrecedingText = entry.value.all { it.constraints?.relatesToPrecedingText ?: false }
         val inlay = if (toBePlacedAtTheEndOfLine) {
-          inlayModel.addAfterLineEndElement(entry.intKey, true, renderer)
+          inlayModel.addAfterLineEndElement(entry.key, true, renderer)
         } else {
-          inlayModel.addInlineElement(entry.intKey, isRelatedToPrecedingText, renderer) ?: break
+          inlayModel.addInlineElement(entry.key, isRelatedToPrecedingText, renderer) ?: break
         }
 
         inlay?.let { postprocessInlay(it, false) }
@@ -164,15 +163,15 @@ class InlayHintsPass(
     private fun addBlockHints(
       factory: PresentationFactory,
       inlayModel: InlayModel,
-      map: Int2ObjectMap<MutableList<ConstrainedPresentation<*, BlockConstraints>>>,
+      map: ConcurrentIntObjectMap<MutableList<ConstrainedPresentation<*, BlockConstraints>>>,
       showAbove: Boolean,
       isPlaceholder: Boolean
     ) {
-      for (entry in Int2ObjectMaps.fastIterable(map)) {
+      for (entry in map.entrySet()) {
         val presentations = entry.value
         val constraints = presentations.first().constraints
         val inlay = inlayModel.addBlockElement(
-          entry.intKey,
+          entry.key,
           constraints?.relatesToPrecedingText ?: true,
           showAbove,
           constraints?.priority ?: 0,

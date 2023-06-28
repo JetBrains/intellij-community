@@ -17,7 +17,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.SmartList
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
+import com.intellij.util.containers.ConcurrentIntObjectMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Nls.Capitalization.Title
@@ -116,10 +116,10 @@ class CollectorWithSettings<T : Any>(
   }
 }
 
-internal fun <T : Any> addStrikeout(inlineHints: Int2ObjectOpenHashMap<MutableList<ConstrainedPresentation<*, T>>>,
+internal fun <T : Any> addStrikeout(inlineHints: ConcurrentIntObjectMap<MutableList<ConstrainedPresentation<*, T>>>,
                                     builder: TextAttributesEffectsBuilder,
                                     factory: (RootInlayPresentation<*>, T?) -> ConstrainedPresentation<*, T>) {
-  for (entry in inlineHints) {
+  for (entry in inlineHints.entrySet()) {
     entry.value.replaceAll { presentation ->
       val transformer = AttributesTransformerPresentation(presentation.root) { builder.applyTo(it) }
       val rootPresentation = RecursivelyUpdatingRootPresentation(transformer)
