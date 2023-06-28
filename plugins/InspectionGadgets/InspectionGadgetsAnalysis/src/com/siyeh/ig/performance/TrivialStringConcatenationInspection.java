@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -34,7 +33,6 @@ import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,13 +67,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection impleme
     PsiExpression[] operands = expression.getOperands();
     final PsiExpression lOperand = PsiUtil.skipParenthesizedExprDown(operands[0]);
     final PsiExpression rOperand = PsiUtil.skipParenthesizedExprDown(operands[1]);
-    final PsiExpression replacement;
-    if (ExpressionUtils.isEmptyStringLiteral(lOperand)) {
-      replacement = rOperand;
-    }
-    else {
-      replacement = lOperand;
-    }
+    final PsiExpression replacement = ExpressionUtils.isEmptyStringLiteral(lOperand) ? rOperand : lOperand;
     String newText = replacement == null ? "" : buildReplacement(replacement, false, commentTracker);
     PsiReplacementUtil.replaceExpression(expression, newText, commentTracker);
   }
@@ -343,6 +335,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection impleme
         return;
       }
       final PsiExpression[] operands = expression.getOperands();
+      final boolean constant = PsiUtil.isConstantExpression(expression);
       boolean seenString = false;
       for (int i = 0; i < operands.length; i++) {
         PsiExpression operand = operands[i];
@@ -352,18 +345,14 @@ public class TrivialStringConcatenationInspection extends BaseInspection impleme
         }
         if (i > 0 && !seenString) {
           PsiExpression previous = operands[i - 1];
-          if (isString(previous)) {
+          if (ExpressionUtils.hasStringType(previous)) {
             seenString = true;
           }
         }
         if (!ExpressionUtils.isEmptyStringLiteral(operand)) {
           continue;
         }
-        if (PsiUtil.isConstantExpression(expression) &&
-            ContainerUtil.exists(operands, o -> !TypeUtils.isJavaLangString(o.getType()))) {
-          return;
-        }
-        if (skipIfNecessary && !seenString) {
+        if ((skipIfNecessary || constant) && !seenString) {
           if (i == operands.length - 1) {
             //example (where x is int):
             // ... + x + "";
@@ -371,7 +360,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection impleme
           }
 
           PsiExpression next = operands[i + 1];
-          if (!isString(next)) {
+          if (!ExpressionUtils.hasStringType(next)) {
             if (operands.length == 2) {
               //example (where x is int):
               // "" + x;
@@ -380,7 +369,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection impleme
 
             if (i == 0) {
               PsiExpression nextNext = operands[i + 2];
-              if (!isString(nextNext) || ExpressionUtils.isEmptyStringLiteral(nextNext)) {
+              if (!ExpressionUtils.hasStringType(nextNext) || ExpressionUtils.isEmptyStringLiteral(nextNext)) {
                 //example (where x is int):
                 // "" + x + 1 + ...;
                 continue;
@@ -395,10 +384,6 @@ public class TrivialStringConcatenationInspection extends BaseInspection impleme
         }
         registerError(operand, operand);
       }
-    }
-
-    private static boolean isString(PsiExpression next) {
-      return next != null && TypeUtils.isJavaLangString(next.getType());
     }
   }
 }
