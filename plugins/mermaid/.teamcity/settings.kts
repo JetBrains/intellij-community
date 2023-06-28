@@ -25,4 +25,11 @@ To debug in IntelliJ Idea, open the 'Maven Projects' tool window (View
 version = "2023.05"
 
 project {
+  vcsRoot(Mermaid)
+
+  buildTypes.addAll(
+      listOf(
+          Tests
+      )
+  )
 }
