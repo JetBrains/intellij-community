@@ -72,13 +72,14 @@ final class KeyHashLog<Key> implements Closeable {
 
   @NotNull IntSet getSuitableKeyHashes(@NotNull IdFilter filter, @NotNull Project project) throws StorageException {
     IdFilter.FilterScopeType filteringScopeType = filter.getFilteringScopeType();
-    if (filteringScopeType == IdFilter.FilterScopeType.OTHER) {
-      filteringScopeType = IdFilter.FilterScopeType.PROJECT_AND_LIBRARIES;
-    }
     IntSet hashMaskSet = null;
     long l = System.currentTimeMillis();
 
-    @NotNull Path sessionProjectCacheFile = getSavedProjectFileValueIds(myLastScannedId, filteringScopeType, project);
+    @NotNull Path sessionProjectCacheFile = getSavedProjectFileValueIds(myLastScannedId,
+                                                                        filteringScopeType == IdFilter.FilterScopeType.OTHER
+                                                                        ? IdFilter.FilterScopeType.PROJECT_AND_LIBRARIES
+                                                                        : filteringScopeType,
+                                                                        project);
     int id = myKeyHashToVirtualFileMapping.getCurrentLength();
 
     final boolean useCachedHashIds = ENABLE_CACHED_HASH_IDS;
@@ -107,7 +108,7 @@ final class KeyHashLog<Key> implements Closeable {
 
       hashMaskSet = getSuitableKeyHashes(filter);
 
-      if (useCachedHashIds) {
+      if (useCachedHashIds && filteringScopeType != IdFilter.FilterScopeType.OTHER) {
         saveHashedIds(hashMaskSet, id, filteringScopeType, project);
       }
     }
