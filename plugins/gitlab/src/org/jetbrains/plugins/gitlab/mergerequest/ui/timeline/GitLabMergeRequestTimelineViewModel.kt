@@ -101,7 +101,7 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
   private fun Flow<List<GitLabMergeRequestTimelineItem>>.mapToVms(mr: GitLabMergeRequest) =
     mapCaching(
       GitLabMergeRequestTimelineItem::id,
-      { cs, item -> cs.createItemVm(mr, item) },
+      { item -> createItemVm(mr, item) },
       { if (this is GitLabMergeRequestTimelineItemViewModel.Discussion) destroy() }
     )
 

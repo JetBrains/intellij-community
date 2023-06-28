@@ -68,7 +68,7 @@ class GitLabMergeRequestDiffDiscussionViewModelImpl(
     }
   }.mapCaching(
     GitLabNote::id,
-    { cs, note -> GitLabNoteViewModelImpl(cs, note, discussion.notes.map { it.firstOrNull()?.id == note.id }) },
+    { note -> GitLabNoteViewModelImpl(this, note, discussion.notes.map { it.firstOrNull()?.id == note.id }) },
     GitLabNoteViewModelImpl::destroy
   ).combine(expandRequested) { notes, expanded ->
     if (initialNotesSize!! <= 3 || notes.size <= 3 || expanded) {

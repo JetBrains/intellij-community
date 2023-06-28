@@ -129,7 +129,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       .mapFiltered { !it.notes.first().system }
       .mapCaching(
         GitLabDiscussionDTO::id,
-        { cs, disc -> LoadedGitLabDiscussion(cs, api, project, { discussionEvents.emit(it) }, mr, disc, getDiscussionDraftNotes(disc.id)) },
+        { disc -> LoadedGitLabDiscussion(this, api, project, { discussionEvents.emit(it) }, mr, disc, getDiscussionDraftNotes(disc.id)) },
         LoadedGitLabDiscussion::destroy,
         LoadedGitLabDiscussion::update
       )
@@ -141,7 +141,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       .map { discussions -> discussions.map { it.notes.first() } }
       .mapCaching(
         GitLabNoteDTO::id,
-        { _, note -> GitLabSystemNote(note) },
+        { note -> GitLabSystemNote(note) },
         {}
       )
       .modelFlow(cs, LOG)
@@ -218,7 +218,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
   override val draftNotes: Flow<Collection<GitLabMergeRequestDraftNote>> =
     draftNotesData.mapCaching(
       { it.note.id },
-      { cs, (note, author) -> GitLabMergeRequestDraftNoteImpl(cs, api, project, mr, draftNotesEvents::emit, note, author) },
+      { (note, author) -> GitLabMergeRequestDraftNoteImpl(this, api, project, mr, draftNotesEvents::emit, note, author) },
       GitLabMergeRequestDraftNoteImpl::destroy,
       { update(it.note) }
     ).modelFlow(cs, LOG)

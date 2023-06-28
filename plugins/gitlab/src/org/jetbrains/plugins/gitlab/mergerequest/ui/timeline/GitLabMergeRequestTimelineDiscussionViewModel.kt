@@ -10,9 +10,11 @@ import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.data.*
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDiscussion
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNote
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNote
 import org.jetbrains.plugins.gitlab.ui.comment.*
-import java.util.*
 
 interface GitLabMergeRequestTimelineDiscussionViewModel :
   GitLabMergeRequestTimelineItemViewModel,
@@ -62,7 +64,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
     .map { it.drop(1) }
     .mapCaching(
       GitLabNote::id,
-      { cs, note -> GitLabNoteViewModelImpl(cs, note, flowOf(false)) },
+      { note -> GitLabNoteViewModelImpl(this, note, flowOf(false)) },
       GitLabNoteViewModelImpl::destroy
     )
     .modelFlow(cs, LOG)

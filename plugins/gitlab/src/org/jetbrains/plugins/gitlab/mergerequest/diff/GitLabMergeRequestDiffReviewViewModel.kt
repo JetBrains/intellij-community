@@ -64,7 +64,7 @@ internal class GitLabMergeRequestDiffReviewViewModelImpl(
       .map { it.patchesByChange.asIterable() }
       .associateBy(
         { (change, _) -> change },
-        { cs, (_, diffData) -> GitLabMergeRequestDiffChangeViewModelImpl(cs, currentUser, mergeRequest, diffData, discussionsViewOption) },
+        { (_, diffData) -> GitLabMergeRequestDiffChangeViewModelImpl(this, currentUser, mergeRequest, diffData, discussionsViewOption) },
         { destroy() },
         customHashingStrategy = GitBranchComparisonResult.REVISION_COMPARISON_HASHING_STRATEGY
       )
