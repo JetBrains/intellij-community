@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.*;
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * Utility methods to create commands
@@ -85,5 +87,87 @@ public final class ModCommands {
   public static <E extends PsiElement> @NotNull ModCommand psiUpdate(@NotNull E orig,
                                                                      @NotNull BiConsumer<@NotNull E, @NotNull ModPsiUpdater> updater) {
     return psiUpdate(ModCommandAction.ActionContext.from(null, orig.getContainingFile()), eu -> updater.accept(eu.getWritable(orig), eu));
+  }
+
+  /**
+   * Create an action that depends on a PSI element in current file
+   *
+   * @param element element
+   * @param title action title
+   * @param function factory to create a final command
+   * @param range range to select
+   * @param <T> type of the element
+   * @return an action suitable to store inside {@link ModChooseAction}
+   */
+  public static @NotNull <T extends PsiElement> ModCommandAction psiBasedStep(
+    @NotNull T element,
+    @NotNull @IntentionName final String title,
+    @NotNull Function<@NotNull T, @NotNull ModCommand> function,
+    @NotNull Function<@NotNull T, @NotNull TextRange> range) {
+    return new PsiBasedModCommandAction<T>(element) {
+      @Override
+      protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull T element) {
+        return function.apply(element);
+      }
+
+      @Override
+      protected @NotNull Presentation getPresentation(@NotNull ActionContext context, @NotNull T section) {
+        return Presentation.of(getFamilyName()).withHighlighting(range.apply(section));
+      }
+
+      @Override
+      public @NotNull String getFamilyName() {
+        return title;
+      }
+    };
+  }
+
+  /**
+   * Create an action that depends on a PSI element in current file and performs PSI update
+   *
+   * @param element element
+   * @param title action title
+   * @param action action to perform on non-physical element copy
+   * @param range function to extract a range to select
+   * @param <T> type of the element
+   * @return an action suitable to store inside {@link ModChooseAction}
+   */
+  public static @NotNull <T extends PsiElement> ModCommandAction psiUpdateStep(
+    @NotNull T element,
+    @NotNull @IntentionName final String title,
+    @NotNull BiConsumer<@NotNull T, @NotNull ModPsiUpdater> action,
+    @NotNull Function<@NotNull T, @NotNull TextRange> range) {
+    return new PsiUpdateModCommandAction<T>(element) {
+      @Override
+      protected void invoke(@NotNull ActionContext context, @NotNull T element, @NotNull ModPsiUpdater updater) {
+        action.accept(element, updater);
+      }
+
+      @Override
+      protected @NotNull Presentation getPresentation(@NotNull ActionContext context, @NotNull T section) {
+        return Presentation.of(getFamilyName()).withHighlighting(range.apply(section));
+      }
+
+      @Override
+      public @NotNull String getFamilyName() {
+        return title;
+      }
+    };
+  }
+
+  /**
+   * Create an action that depends on a PSI element in current file and performs PSI update
+   *
+   * @param element element
+   * @param title action title
+   * @param action action to perform on non-physical element copy
+   * @param <T> type of the element
+   * @return an action suitable to store inside {@link ModChooseAction}
+   */
+  public static @NotNull <T extends PsiElement> ModCommandAction psiUpdateStep(
+    @NotNull T element,
+    @NotNull @IntentionName final String title,
+    @NotNull BiConsumer<@NotNull T, @NotNull ModPsiUpdater> action) {
+    return psiUpdateStep(element, title, action, PsiElement::getTextRange);
   }
 }
