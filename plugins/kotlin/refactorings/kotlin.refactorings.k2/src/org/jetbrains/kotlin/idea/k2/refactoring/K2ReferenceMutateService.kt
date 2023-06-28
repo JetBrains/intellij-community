@@ -1,12 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.k2.refactoring.rename
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.k2.refactoring
 
 import com.intellij.psi.PsiElement
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.idea.refactoring.intentions.OperatorToFunctionConverter
 import org.jetbrains.kotlin.idea.refactoring.rename.KtReferenceMutateServiceBase
 import org.jetbrains.kotlin.idea.references.KtDefaultAnnotationArgumentReference
-import org.jetbrains.kotlin.idea.references.KtReferenceMutateService
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.SyntheticPropertyAccessorReference
 import org.jetbrains.kotlin.name.FqName
@@ -16,8 +15,8 @@ import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtValueArgument
 
 /**
- * At the moment, this implementation of [KtReferenceMutateService] is not able to do any of required operations. It is OK and
- * on purpose - this functionality will be added later.
+ * At the moment, this implementation of [org.jetbrains.kotlin.idea.references.KtReferenceMutateService] is not able to do any of required
+ * operations. It is OK and on purpose - this functionality will be added later.
  */
 internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
     override fun bindToFqName(
@@ -38,7 +37,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
     }
 
     override fun replaceWithImplicitInvokeInvocation(newExpression: KtDotQualifiedExpression): KtExpression? =
-        OperatorToFunctionConverter.replaceExplicitInvokeCallWithImplicit(newExpression)
+      OperatorToFunctionConverter.replaceExplicitInvokeCallWithImplicit(newExpression)
 
     private fun operationNotSupportedInK2Error(): Nothing {
         throw IncorrectOperationException("K2 plugin does not yet support this operation")
