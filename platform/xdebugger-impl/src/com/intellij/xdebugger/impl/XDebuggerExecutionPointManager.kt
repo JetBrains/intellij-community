@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
@@ -95,7 +96,7 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
                                                    activeSourceKindState,
                                                    gutterIconRendererState,
                                                    updateRequestFlow).also {
-      coroutineScope.launch {
+      coroutineScope.launch(ClientId.coroutineContext()) {
         it.navigateTo(ExecutionPositionNavigationMode.OPEN, navigationSourceKind)
       }
     }
@@ -120,7 +121,7 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
   }
 
   fun showExecutionPosition() {
-    coroutineScope.launch {
+    coroutineScope.launch(ClientId.coroutineContext()) {
       executionPointVm?.navigateTo(ExecutionPositionNavigationMode.OPEN)
     }
   }
