@@ -21,7 +21,6 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.*
-import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.EmptyRunnable
@@ -36,6 +35,8 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.project.stateStore
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.indexing.EntityIndexingService
@@ -46,8 +47,6 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
 import com.intellij.workspaceModel.core.fileIndex.impl.PlatformInternalWorkspaceFileIndexContributor
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
-import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.workspace.storage.WorkspaceEntity
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
@@ -68,8 +67,6 @@ private val WATCHED_ROOTS_PROVIDER_EP_NAME = ExtensionPointName<WatchedRootsProv
  * ProjectRootManager extended with ability to watch events.
  */
 open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImpl(project), Disposable {
-  private var isStartupActivityPerformed = false
-
   // accessed in EDT only
   private var collectWatchRootsJob = AtomicReference<Job>()
   private var pointerChangesDetected = false
@@ -161,7 +158,6 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
         myFileTypesChanged.rootsChanged()
       }
     })
-    StartupManager.getInstance(myProject).registerStartupActivity { isStartupActivityPerformed = true }
     connection.subscribe(BatchUpdateListener.TOPIC, object : BatchUpdateListener {
       override fun onBatchUpdateStarted() {
         myRootsChanged.levelUp()
@@ -259,9 +255,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
     finally {
       isFiringEvent = false
     }
-    if (isStartupActivityPerformed) {
-      EntityIndexingService.getInstance().indexChanges(myProject, indexingInfos)
-    }
+    EntityIndexingService.getInstance().indexChanges(myProject, indexingInfos)
     addRootsToWatch()
   }
 
