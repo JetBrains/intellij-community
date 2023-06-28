@@ -11,10 +11,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
+import com.intellij.util.ExceptionUtil;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanBuilder;
 import io.opentelemetry.context.Context;
@@ -24,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -35,6 +36,8 @@ import java.util.function.Supplier;
 import static com.intellij.driver.model.transport.RemoteCall.isPassByValue;
 
 public class Invoker implements InvokerMBean {
+  private static final Logger LOG = Logger.getInstance(Invoker.class);
+
   public static final int NO_SESSION_ID = 0;
   static final AtomicInteger REF_SEQUENCE = new AtomicInteger(1);
 
@@ -73,16 +76,23 @@ public class Invoker implements InvokerMBean {
       Class<?> targetClass = getTargetClass(call);
       Constructor<?> constructor = getConstructor(call, targetClass);
 
+      LOG.debug("Creating instance of " + targetClass);
+
       result = withSemantics(call, () -> constructor.newInstance(args));
     }
     else {
       CallTarget callTarget = getCallTarget(call);
 
+      LOG.debug("Calling " + callTarget);
+
       Object instance;
       try {
         instance = findInstance(call, callTarget.clazz());
-      } catch (Exception e) {
-        throw new RuntimeException("Unable to get instance for "+ call, e);
+      }
+      catch (Exception e) {
+        LOG.error("Unable to get instance for " + call);
+
+        throw new RuntimeException("Unable to get instance for " + call, e);
       }
 
       if (call.getDispatcher() == OnDispatcher.EDT) {
@@ -154,10 +164,15 @@ public class Invoker implements InvokerMBean {
     }
   }
 
-  private static Object invokeMethod(CallTarget callTarget, Object instance, Object[] args)
-    throws IllegalAccessException, InvocationTargetException {
+  private static Object invokeMethod(CallTarget callTarget, Object instance, Object[] args) throws Exception {
+    try {
+      return callTarget.targetMethod().invoke(instance, args);
+    }
+    catch (Throwable e) {
+      LOG.warn("Error during remote driver call " + callTarget.targetMethod(), e);
 
-    return callTarget.targetMethod().invoke(instance, args);
+      throw e;
+    }
   }
 
   private @Nullable Object withSemantics(@NotNull RemoteCall call, @NotNull Callable<?> supplier) {
@@ -181,7 +196,8 @@ public class Invoker implements InvokerMBean {
         return supplier.call();
       }
       catch (Exception e) {
-        throw new RuntimeException("Exception during call", e);
+        ExceptionUtil.rethrow(e);
+        throw new IllegalStateException();
       }
     }
     else {
@@ -193,7 +209,8 @@ public class Invoker implements InvokerMBean {
         return supplier.call();
       }
       catch (Exception e) {
-        throw new RuntimeException("Exception during call", e);
+        ExceptionUtil.rethrow(e);
+        throw new IllegalStateException();
       }
       finally {
         span.end();

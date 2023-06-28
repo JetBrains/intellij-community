@@ -8,19 +8,6 @@ import com.intellij.driver.model.ProductVersion
 import org.jetbrains.annotations.Contract
 import kotlin.reflect.KClass
 
-@Retention(AnnotationRetention.RUNTIME)
-@Target(AnnotationTarget.CLASS)
-annotation class Remote(
-  val value: String,
-  val plugin: String = ""
-)
-
-@Retention(AnnotationRetention.RUNTIME)
-@Target(AnnotationTarget.FUNCTION)
-annotation class Timed(
-  val value: String
-)
-
 interface ProjectRef
 
 interface Driver : AutoCloseable {

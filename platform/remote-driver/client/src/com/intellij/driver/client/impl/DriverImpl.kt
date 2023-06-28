@@ -64,14 +64,14 @@ internal class DriverImpl(host: JmxHost?) : Driver {
     val call = NewInstanceCall(
       sessionId,
       null,
-      remote.plugin,
+      getPluginId(remote),
       dispatcher,
       semantics,
       remote.value,
       convertArgsToPass(args)
     )
     val callResult = invoker.invoke(call)
-    return convertResult(callResult, clazz.java, remote.plugin) as T
+    return convertResult(callResult, clazz.java, getPluginId(remote)) as T
   }
 
   private fun convertArgsToPass(args: Array<out Any?>?): Array<Any?> {
@@ -145,7 +145,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
           val call = ServiceCall(
             sessionId,
             findTimedMeta(method)?.value,
-            remote.plugin,
+            getPluginId(remote),
             dispatcher,
             semantics,
             remote.value,
@@ -154,10 +154,14 @@ internal class DriverImpl(host: JmxHost?) : Driver {
             null
           )
           val callResult = invoker.invoke(call)
-          convertResult(callResult, method, remote.plugin)
+          convertResult(callResult, method, getPluginId(remote))
         }
       }
     }
+  }
+
+  private fun getPluginId(remote: Remote): String? {
+    return remote.plugin.takeIf { it.isNotBlank() }
   }
 
   private fun serviceBridge(clazz: Class<*>, project: ProjectRef): Any {
@@ -174,7 +178,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
           val call = ServiceCall(
             sessionId,
             findTimedMeta(method)?.value,
-            remote.plugin,
+            getPluginId(remote),
             dispatcher,
             semantics,
             remote.value,
@@ -183,7 +187,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
             (project as RefWrapper).getRef()
           )
           val callResult = invoker.invoke(call)
-          convertResult(callResult, method, remote.plugin)
+          convertResult(callResult, method, getPluginId(remote))
         }
       }
     }
@@ -203,7 +207,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
           val call = UtilityCall(
             sessionId,
             findTimedMeta(method)?.value,
-            remote.plugin,
+            getPluginId(remote),
             dispatcher,
             semantics,
             remote.value,
@@ -211,7 +215,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
             convertArgsToPass(args)
           )
           val callResult = invoker.invoke(call)
-          convertResult(callResult, method, remote.plugin)
+          convertResult(callResult, method, getPluginId(remote))
         }
       }
     }
@@ -233,7 +237,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
           val call = RefCall(
             sessionId,
             findTimedMeta(method)?.value,
-            pluginId ?: remote.plugin,
+            pluginId ?: getPluginId(remote),
             dispatcher,
             semantics,
             remote.value,
@@ -242,7 +246,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
             ref
           )
           val callResult = invoker.invoke(call)
-          convertResult(callResult, method, remote.plugin)
+          convertResult(callResult, method, getPluginId(remote))
         }
       }
     }
