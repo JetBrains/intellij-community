@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.accessibility.AccessibilityUtils;
@@ -1341,7 +1341,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     if (!firstTime) {
       return;
     }
-    List<AnAction> actions = Utils.expandActionGroupFastTrack(updater, myActionGroup, myHideDisabled, null);
+    List<AnAction> actions = Utils.expandActionGroupFastTrack(updater, myActionGroup, myHideDisabled, null, Utils.getFastTrackTimeout());
     if (actions != null) {
       actionsUpdated(true, actions);
     }
