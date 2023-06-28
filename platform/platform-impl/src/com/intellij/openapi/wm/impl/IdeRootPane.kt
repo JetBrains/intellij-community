@@ -114,7 +114,11 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
       get() = null
 
     override fun init(frame: JFrame, pane: JRootPane, parentDisposable: Disposable) {
-      ToolbarUtil.setCustomTitleBar(frame, pane) { runnable -> Disposer.register(parentDisposable, runnable::run) }
+      ToolbarService.getInstance().setCustomTitleBar(
+        window = frame,
+        rootPane = pane,
+        onDispose = { runnable -> Disposer.register(parentDisposable, Disposable { runnable.run() }) },
+      )
     }
   }
 
@@ -234,13 +238,14 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
 
     border = UIManager.getBorder("Window.border")
 
-    helper.init(frame, rootPane, parentDisposable)
+    helper.init(frame, this, parentDisposable)
     updateMainMenuVisibility()
 
     if (helper.toolbarHolder == null) {
       toolbar = createToolbar(coroutineScope.childScope(), frame)
       northPanel.add(toolbar, 0)
-      toolbar!!.isVisible = isToolbarVisible(mainToolbarActionSupplier = { MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()) })
+      toolbar!!.isVisible = isToolbarVisible(
+        mainToolbarActionSupplier = { MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()) })
     }
 
     if (SystemInfoRt.isMac && JdkEx.isTabbingModeAvailable()) {
@@ -350,8 +355,10 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     else if (SystemInfoRt.isXWindow) {
       if (toolbar != null) {
         val isNewToolbar = ExperimentalUI.isNewUI()
-         toolbar!!.isVisible = !fullScreen && ((!isCompactHeader { MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()) } && isNewToolbar && !isToolbarInHeader()) ||
-                                               (!isNewToolbar && UISettings.getInstance().showMainToolbar))
+        toolbar!!.isVisible = !fullScreen && ((!isCompactHeader {
+          MainToolbar.computeActionGroups(CustomActionsSchema.getInstance())
+        } && isNewToolbar && !isToolbarInHeader()) ||
+                                              (!isNewToolbar && UISettings.getInstance().showMainToolbar))
       }
     }
 
@@ -509,7 +516,9 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
                   || (!IdeFrameDecorator.isCustomDecorationActive()
                       && !(SystemInfoRt.isLinux && GlobalMenuLinux.isPresented())
                       && UISettings.shadowInstance.showMainMenu
-                      && (!isMenuButtonInToolbar || isCompactHeader { MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()) } && ExperimentalUI.isNewUI())
+                      && (!isMenuButtonInToolbar || isCompactHeader {
+      MainToolbar.computeActionGroups(CustomActionsSchema.getInstance())
+    } && ExperimentalUI.isNewUI())
                       && !hideNativeLinuxTitle)
 
     if (menuBar != null && visible != menuBar.isVisible) {

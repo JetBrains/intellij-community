@@ -6,6 +6,9 @@ import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function0;
+import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,14 +19,10 @@ import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeListener;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 public class ToolbarServiceImpl implements ToolbarService {
   @Override
-  public void setCustomTitleBar(@NotNull Window window,
-                                @NotNull JRootPane rootPane,
-                                @NotNull Consumer<? super Runnable> onDispose) {
+  public void setCustomTitleBar(@NotNull Window window, @NotNull JRootPane rootPane, @NotNull Function1<? super Runnable, Unit> onDispose) {
     if (SystemInfoRt.isMac) {
       if (ExperimentalUI.isNewUI()) {
         setCustomTitleForToolbar(window, rootPane, onDispose);
@@ -37,13 +36,13 @@ public class ToolbarServiceImpl implements ToolbarService {
   @Override
   public void setTransparentTitleBar(@NotNull Window window,
                                      @NotNull JRootPane rootPane,
-                                     @Nullable Supplier<? extends FullScreenSupport> handlerProvider,
-                                     Consumer<? super Runnable> onDispose) {
+                                     @Nullable Function0<? extends FullScreenSupport> handlerProvider,
+                                     @NotNull Function1<? super Runnable, Unit> onDispose) {
     if (!SystemInfoRt.isMac) {
       return;
     }
 
-    FullScreenSupport handler = handlerProvider == null ? null : handlerProvider.get();
+    FullScreenSupport handler = handlerProvider == null ? null : handlerProvider.invoke();
     if (handler != null) {
       handler.addListener(window);
     }
@@ -75,9 +74,7 @@ public class ToolbarServiceImpl implements ToolbarService {
                                   LinePainter2D.StrokeType.INSIDE, 1);
             }
           }
-          Color color = window.isActive()
-                        ? JBColor.black
-                        : JBColor.gray;
+          Color color = window.isActive() ? JBColor.black : JBColor.gray;
           graphics.setColor(color);
         }
         finally {
@@ -86,12 +83,13 @@ public class ToolbarServiceImpl implements ToolbarService {
       }
     };
     if (handler != null) {
-      Consumer<? super Runnable> onDisposeOld = onDispose;
+      Function1<? super Runnable, Unit> onDisposeOld = onDispose;
       onDispose = runnable -> {
-        onDisposeOld.accept((Runnable)() -> {
+        onDisposeOld.invoke((Runnable)() -> {
           runnable.run();
           handler.removeListener(window);
         });
+        return Unit.INSTANCE;
       };
     }
     doSetCustomTitleBar(window, rootPane, onDispose, customBorder);
@@ -99,7 +97,7 @@ public class ToolbarServiceImpl implements ToolbarService {
 
   private static void setCustomTitleForToolbar(@NotNull Window window,
                                                @NotNull JRootPane rootPane,
-                                               @NotNull Consumer<? super Runnable> onDispose) {
+                                               Function1<? super Runnable, Unit> onDispose) {
     JBInsets topWindowInset = JBUI.insetsTop(UIUtil.getTransparentTitleBarHeight(rootPane));
     AbstractBorder customBorder = new AbstractBorder() {
       @Override
@@ -127,7 +125,7 @@ public class ToolbarServiceImpl implements ToolbarService {
 
   private static void doSetCustomTitleBar(@NotNull Window window,
                                           @NotNull JRootPane rootPane,
-                                          Consumer<? super Runnable> onDispose,
+                                          Function1<? super Runnable, Unit> onDispose,
                                           @NotNull Border customBorder) {
 
     rootPane.putClientProperty("apple.awt.fullWindowContent", true);
@@ -153,7 +151,7 @@ public class ToolbarServiceImpl implements ToolbarService {
     };
     PropertyChangeListener propertyChangeListener = e -> rootPane.repaint();
     window.addPropertyChangeListener("title", propertyChangeListener);
-    onDispose.accept((Runnable)() -> {
+    onDispose.invoke((Runnable)() -> {
       window.removeWindowListener(windowAdapter);
       window.removePropertyChangeListener("title", propertyChangeListener);
     });

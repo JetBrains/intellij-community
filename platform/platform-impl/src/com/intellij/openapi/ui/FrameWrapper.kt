@@ -40,7 +40,7 @@ import java.awt.event.KeyEvent
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.nio.file.Path
-import java.util.function.Supplier
+import java.util.function.BooleanSupplier
 import javax.swing.*
 
 open class FrameWrapper @JvmOverloads constructor(private var project: Project?,
@@ -51,7 +51,7 @@ open class FrameWrapper @JvmOverloads constructor(private var project: Project?,
   open var preferredFocusedComponent: JComponent? = null
   private var images: List<Image> = emptyList()
   private var isCloseOnEsc = false
-  private var onCloseHandler: BooleanGetter? = null
+  private var onCloseHandler: BooleanSupplier? = null
   private var frame: Window? = null
   private var isDisposing = false
 
@@ -62,6 +62,7 @@ open class FrameWrapper @JvmOverloads constructor(private var project: Project?,
 
   init {
     if (project != null) {
+      @Suppress("LeakingThis")
       ApplicationManager.getApplication().messageBus.connect(this).subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
         override fun projectClosing(project: Project) {
           if (project === this@FrameWrapper.project) {
@@ -97,12 +98,16 @@ open class FrameWrapper @JvmOverloads constructor(private var project: Project?,
       }
     })
 
-    UIUtil.decorateWindowHeader((frame as RootPaneContainer).rootPane)
+    ComponentUtil.decorateWindowHeader((frame as RootPaneContainer).rootPane)
     if (frame is JFrame) {
-      val handlerProvider = Supplier { FullScreenSupport.NEW.apply("com.intellij.ui.mac.MacFullScreenSupport") }
-      ToolbarUtil.setTransparentTitleBar(frame, frame.rootPane, handlerProvider) { runnable ->
-        Disposer.register(this, Disposable { runnable.run() })
-      }
+      ToolbarService.getInstance().setTransparentTitleBar(
+        window = frame,
+        rootPane = frame.rootPane,
+        handlerProvider = { FullScreenSupport.NEW.apply("com.intellij.ui.mac.MacFullScreenSupport") },
+        onDispose = { runnable ->
+          Disposer.register(this, Disposable { runnable.run() })
+        },
+      )
     }
 
     val focusListener = object : WindowAdapter() {
@@ -172,11 +177,11 @@ open class FrameWrapper @JvmOverloads constructor(private var project: Project?,
   }
 
   fun close() {
-    if (isDisposed || (onCloseHandler != null && !onCloseHandler!!.get())) {
+    if (isDisposed || (onCloseHandler != null && !onCloseHandler!!.asBoolean)) {
       return
     }
 
-    // if you remove this line problems will start happen on Mac OS X
+    // if you remove this line, problems will start happen on Mac OS X
     // 2 projects opened, call Cmd+D on the second opened project and then Esc.
     // Weird situation: 2nd IdeFrame will be active, but focus will be somewhere inside the 1st IdeFrame
     // App is unusable until Cmd+Tab, Cmd+tab
@@ -264,7 +269,7 @@ open class FrameWrapper @JvmOverloads constructor(private var project: Project?,
     images = value ?: emptyList()
   }
 
-  fun setOnCloseHandler(value: BooleanGetter?) {
+  fun setOnCloseHandler(value: BooleanSupplier?) {
     onCloseHandler = value
   }
 

@@ -15,12 +15,13 @@ import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarKt;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.ToolbarUtil;
+import com.intellij.ui.ToolbarService;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.Native;
 import com.sun.jna.platform.mac.CoreFoundation;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -129,10 +130,11 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
           // We can get the notification when the frame has been disposed
           JRootPane rootPane = frame.getRootPane();
           if (!ExperimentalUI.isNewUI() || !MainToolbarKt.isToolbarInHeader()) {
-            ToolbarUtil.setCustomTitleBar(frame, rootPane, runnable -> {
+            ToolbarService.Companion.getInstance().setCustomTitleBar(frame, rootPane, runnable -> {
               if (!Disposer.isDisposed(parentDisposable)) {
                 Disposer.register(parentDisposable, runnable::run);
               }
+              return Unit.INSTANCE;
             });
           }
 

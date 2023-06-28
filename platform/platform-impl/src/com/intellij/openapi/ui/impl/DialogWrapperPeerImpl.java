@@ -51,7 +51,7 @@ import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.OwnerOptional;
 import com.intellij.util.ui.UIUtil;
-import com.jetbrains.JBR;
+import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -396,7 +396,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     Window window = getWindow();
     if (window instanceof JDialog && !((JDialog)window).isUndecorated() && rootPane != null && LoadingState.COMPONENTS_LOADED.isOccurred()) {
-      ToolbarUtil.setTransparentTitleBar(window, rootPane, runnable -> Disposer.register(myWrapper.getDisposable(), () -> runnable.run()));
+      ToolbarService.Companion.getInstance().setTransparentTitleBar(window, rootPane, runnable -> {
+        Disposer.register(myWrapper.getDisposable(), () -> runnable.run());
+        return Unit.INSTANCE;
+      });
     }
 
     Container contentPane = getContentPane();

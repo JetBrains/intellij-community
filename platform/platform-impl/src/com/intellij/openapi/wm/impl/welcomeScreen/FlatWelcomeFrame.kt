@@ -161,7 +161,11 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
     MnemonicHelper.init(this)
     Disposer.register(app, this)
     UIUtil.decorateWindowHeader(getRootPane())
-    ToolbarUtil.setTransparentTitleBar(this, getRootPane()) { runnable -> Disposer.register(this) { runnable.run() } }
+    ToolbarService.getInstance().setTransparentTitleBar(
+      window = this,
+      rootPane = getRootPane(),
+      onDispose = { runnable -> Disposer.register(this) { runnable.run() } },
+    )
     app.invokeLater({ (NotificationsManager.getNotificationsManager() as NotificationsManagerImpl).dispatchEarlyNotifications() },
                     ModalityState.nonModal())
   }

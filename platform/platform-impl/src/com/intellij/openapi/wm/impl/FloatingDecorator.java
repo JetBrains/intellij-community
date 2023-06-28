@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -19,6 +19,7 @@ import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.Alarm;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ui.UIUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -116,7 +117,10 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
   @Override
   public void show(){
     UIUtil.decorateWindowHeader(rootPane);
-    ToolbarUtil.setTransparentTitleBar(this, rootPane, runnable -> Disposer.register(myDisposable, () -> runnable.run()));
+    ToolbarService.Companion.getInstance().setTransparentTitleBar(this, rootPane, runnable -> {
+      Disposer.register(myDisposable, () -> runnable.run());
+      return Unit.INSTANCE;
+    });
     boolean isActive = myInfo.isActiveOnStart();
 
     setAutoRequestFocus(isActive);
