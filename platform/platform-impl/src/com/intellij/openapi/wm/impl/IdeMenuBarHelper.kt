@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.mac.screenmenu.MenuBar
+import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -241,13 +242,14 @@ private suspend fun expandMainActionGroup(mainActionGroup: ActionGroup,
       return withContext(CoroutineName("expandMainActionGroup") + Dispatchers.EDT) {
         val targetComponent = WindowManager.getInstance().getFocusedComponent(frame) ?: menuBar
         val dataContext = Utils.wrapToAsyncDataContext(DataManager.getInstance().getDataContext(targetComponent))
+        val fastTrackTimeout = if (isFirstUpdate && !PlatformUtils.isJetBrainsClient()) firstUpdateFastTrackUpdateTimeout else Utils.getFastTrackTimeout()
         Utils.expandActionGroupAsync(/* group = */ mainActionGroup,
                                      /* presentationFactory = */ presentationFactory,
                                      /* context = */ dataContext,
                                      /* place = */ ActionPlaces.MAIN_MENU,
                                      /* isToolbarAction = */ false,
                                      /* fastTrackTimeout = */
-                                     if (isFirstUpdate) firstUpdateFastTrackUpdateTimeout else Utils.getFastTrackTimeout())
+                                     fastTrackTimeout)
       }.await().filterIsInstance<ActionGroup>()
     }
     catch (e: ProcessCanceledException) {
