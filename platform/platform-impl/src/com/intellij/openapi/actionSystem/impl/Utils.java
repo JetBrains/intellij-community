@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.diagnostic.PluginException;
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
@@ -30,6 +29,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ExperimentalUI;
@@ -154,7 +154,7 @@ public final class Utils {
                                                                           @NotNull PresentationFactory presentationFactory,
                                                                           @NotNull DataContext context,
                                                                           @NotNull String place) {
-    return expandActionGroupAsync(group, presentationFactory, context, place, false, false);
+    return expandActionGroupAsync(group, presentationFactory, context, place, false, getFastTrackTimeout());
   }
 
   @ApiStatus.Internal
@@ -163,14 +163,19 @@ public final class Utils {
                                                                           @NotNull DataContext context,
                                                                           @NotNull String place,
                                                                           boolean isToolbarAction,
-                                                                          boolean skipFastTrack) {
+                                                                          long fastTrackTimeout) {
     LOG.assertTrue(isAsyncDataContext(context), "Async data context required in '" + place + "': " + dumpDataContextClass(context));
     ActionUpdater updater = new ActionUpdater(presentationFactory, context, place, ActionPlaces.isPopupPlace(place), isToolbarAction);
-    List<AnAction> actions = skipFastTrack ? null : expandActionGroupFastTrack(updater, group, group instanceof CompactActionGroup, null);
+    List<AnAction> actions = expandActionGroupFastTrack(updater, group, group instanceof CompactActionGroup, null, fastTrackTimeout);
     if (actions != null) {
       return Promises.resolvedCancellablePromise(actions);
     }
     return updater.expandActionGroupAsync(group, group instanceof CompactActionGroup);
+  }
+
+  @ApiStatus.Internal
+  public static long getFastTrackTimeout() {
+    return Registry.intValue("actionSystem.update.actions.async.fast-track.timeout.ms", 50);
   }
 
   @ApiStatus.Internal
@@ -232,7 +237,7 @@ public final class Utils {
       }
       if (expander.allowsFastUpdate(project, place) && !Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt")) {
         Set<String> missedKeys = new HashSet<>();
-        list = expandActionGroupFastTrack(updater, group, group instanceof CompactActionGroup, missedKeys::add);
+        list = expandActionGroupFastTrack(updater, group, group instanceof CompactActionGroup, missedKeys::add, getFastTrackTimeout());
         if (list != null && missedKeys.isEmpty()) {
           if (onProcessed != null) onProcessed.run();
           return list;
@@ -305,8 +310,8 @@ public final class Utils {
   static @Nullable List<AnAction> expandActionGroupFastTrack(@NotNull ActionUpdater updater,
                                                              @NotNull ActionGroup group,
                                                              boolean hideDisabled,
-                                                             @Nullable Consumer<? super String> missedKeys) {
-    int maxTime = Registry.intValue("actionSystem.update.actions.async.fast-track.timeout.ms", 20);
+                                                             @Nullable Consumer<? super String> missedKeys,
+                                                             long maxTime) {
     if (maxTime < 1) return null;
     BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
     ActionUpdater fastUpdater = ActionUpdater.getActionUpdater(updater.asFastUpdateSession(missedKeys, queue::offer));
