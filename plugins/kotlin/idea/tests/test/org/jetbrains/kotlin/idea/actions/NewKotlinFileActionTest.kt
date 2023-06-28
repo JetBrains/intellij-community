@@ -1,56 +1,115 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.actions
 
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import org.junit.internal.runners.JUnit38ClassRunner
-import org.junit.runner.RunWith
+import com.intellij.ide.fileTemplates.impl.CustomFileTemplate
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
-@RunWith(JUnit38ClassRunner::class)
-class NewKotlinFileActionTest : LightJavaCodeInsightFixtureTestCase() {
-    companion object {
-        private const val EMPTY_PARTS_ERROR = "Name can't have empty parts"
-        private const val EMPTY_ERROR = "Name can't be empty"
-    }
+class NewKotlinFileActionTest : BasePlatformTestCase() {
+  private val testTemplate = CustomFileTemplate("test template", "kt").apply {
+    text = """
+        #if (${'$'}{PACKAGE_NAME} && ${'$'}{PACKAGE_NAME} != "")package ${'$'}{PACKAGE_NAME}
+        
+        #end
+        class ${'$'}{NAME}
+    """.trimIndent()
+  }
 
-    fun testEmptyName() {
-        validateName("", EMPTY_ERROR)
-    }
+  fun testClassName() = doTest(
+    "MyClass",
+    "",
+    "MyClass.kt",
+    "",
+    "MyClass"
+  )
 
-    fun testSpaces() {
-        validateName("    ", EMPTY_ERROR)
-    }
+  fun testClassNameAndExtension() = doTest(
+    "Foo.kt",
+    "",
+    "Foo.kt",
+    "",
+    "Foo"
+  )
 
-    fun testEmptyEnd() {
-        validateName("Foo/", EMPTY_PARTS_ERROR)
-    }
+  fun testPackageAndClassName() = doTest(
+    "com.my.MyBar",
+    "/com/my",
+    "MyBar.kt",
+    "com.my",
+    "MyBar"
+  )
 
-    fun testEmptyPartInQualified() {
-        validateName("a..b", EMPTY_PARTS_ERROR)
-    }
+  fun testClassNameAndSuffix() = doTest(
+    "MyClass.suffix",
+    "",
+    "MyClass.suffix.kt",
+    "",
+    "MyClass"
+  )
 
-    fun testFileWithKt() {
-        validateName("test.kt", null)
-    }
+  fun testPackageAndClassNameAndSuffix() = doTest(
+    "com.my.MyClass.suffix",
+    "/com/my",
+    "MyClass.suffix.kt",
+    "com.my",
+    "MyClass"
+  )
 
-    fun testFileWithUnixPathKt() {
-        validateName("a/b/test.kt", null)
-    }
+  fun testPackageAndClassNameAndSuffixAndExtension() = doTest(
+    "com.my.MyClass.suffix.kt",
+    "/com/my",
+    "MyClass.suffix.kt",
+    "com.my",
+    "MyClass"
+  )
 
-    fun testFileWithWinPathKt() {
-        validateName("a\\b\\test.kt", null)
-    }
+  fun testPathAndClassName() = doTest(
+    "com/my/MyClass",
+    "/com/my",
+    "MyClass.kt",
+    "com.my",
+    "MyClass"
+  )
 
-    fun testSimpleFile() {
-        validateName("some", null)
-    }
+  fun testPathAndClassNameAndSuffixAndExtension() = doTest(
+    "com/my/MyClass.suffix.kt",
+    "/com/my",
+    "MyClass.suffix.kt",
+    "com.my",
+    "MyClass"
+  )
 
-    fun testSimpleFileWithPath() {
-        validateName("a/bb\\some", null)
-    }
+  fun testUppercasePackageAndClassNameAndThreeSuffixes() = doTest(
+    "com.my.Pack.foo.MyClass.suffix1.suffix2.suffix3",
+    "/com/my/Pack/foo",
+    "MyClass.suffix1.suffix2.suffix3.kt",
+    "com.my.Pack.foo",
+    "MyClass"
+  )
 
-    private fun validateName(name: String, errorMessage: String?) {
-        val actualError = NewKotlinFileNameValidator.getErrorText(name)
-        assertEquals("Invalid error message", errorMessage, actualError)
-    }
+  private fun doTest(
+    userInput: String,
+    expectedDirPath: String,
+    expectedFileName: String,
+    expectedPackage: String,
+    expectedClassName: String
+  ) {
+    val srcDir = myFixture.psiManager.findDirectory(myFixture.tempDirFixture.findOrCreateDir("."))!!
+    val file = createKotlinFileFromTemplateForTest(userInput, testTemplate, srcDir)!!
+
+    assertEquals(expectedDirPath, file.virtualFile.parent.path.removePrefix(srcDir.virtualFile.path))
+    assertEquals(expectedFileName, file.name)
+
+    val expectedContent =
+      if (expectedPackage.isNotEmpty()) {
+        """
+              package $expectedPackage
+              
+              class $expectedClassName
+        """.trimIndent()
+      }
+      else {
+        "class $expectedClassName"
+      }
+    assertEquals(expectedContent, file.text)
+  }
 }

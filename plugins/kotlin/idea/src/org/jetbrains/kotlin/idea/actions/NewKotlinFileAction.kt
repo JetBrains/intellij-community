@@ -251,6 +251,10 @@ internal fun createFileFromTemplateWithStat(name: String, template: FileTemplate
     return createKotlinFileFromTemplate(name, template, dir)
 }
 
+@TestOnly
+fun createKotlinFileFromTemplateForTest(name: String, template: FileTemplate, dir: PsiDirectory) =
+    createKotlinFileFromTemplate(name, template, dir)
+
 internal fun createKotlinFileFromTemplate(name: String, template: FileTemplate, dir: PsiDirectory): PsiFile? {
     val directorySeparators = when (template.name) {
         "Kotlin File" -> FILE_SEPARATORS
