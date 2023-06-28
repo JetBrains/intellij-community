@@ -2,11 +2,7 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.diagnostic.runActivity
-import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.ui.mac.foundation.NSDefaults
 import com.intellij.ui.mac.screenmenu.MenuBar
 import kotlinx.coroutines.CoroutineScope
@@ -45,12 +41,7 @@ internal class MacMenuBar internal constructor(@JvmField internal val coroutineS
       override fun updateGlobalMenuRoots() {
       }
 
-      override suspend fun getMainMenuActionGroup(): ActionGroup? {
-        val rootPane = this@MacMenuBar.frame.rootPane
-        val group = if (rootPane is IdeRootPane) rootPane.mainMenuActionGroup else null
-        return group ?: ApplicationManager.getApplication().serviceAsync<CustomActionsSchema>().getCorrectedAction(
-          IdeActions.GROUP_MAIN_MENU) as ActionGroup?
-      }
+      override suspend fun getMainMenuActionGroup(): ActionGroup? = getMainMenuActionGroup(frame)
     }
 
     screenMenuPeer = runActivity("ide menu bar init") { createScreeMenuPeer(frame) }

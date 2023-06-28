@@ -4,11 +4,7 @@ package com.intellij.openapi.wm.impl
 import com.intellij.DynamicBundle
 import com.intellij.diagnostic.runActivity
 import com.intellij.ide.ui.UISettings
-import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
@@ -79,7 +75,7 @@ open class IdeMenuBar internal constructor(@JvmField internal val coroutineScope
         this@IdeMenuBar.updateGlobalMenuRoots()
       }
 
-      override suspend fun getMainMenuActionGroup(): ActionGroup? = getMainMenuActionGroupAsync()
+      override suspend fun getMainMenuActionGroup(): ActionGroup? = this@IdeMenuBar.getMainMenuActionGroup()
     }
 
     screenMenuPeer = runActivity("ide menu bar init") { createScreeMenuPeer(frame) }
@@ -236,18 +232,7 @@ open class IdeMenuBar internal constructor(@JvmField internal val coroutineScope
     }
   }
 
-  open suspend fun getMainMenuActionGroupAsync(): ActionGroup? {
-    val rootPane = frame.rootPane
-    val group = if (rootPane is IdeRootPane) rootPane.mainMenuActionGroup else null
-    return group ?:
-    ApplicationManager.getApplication().serviceAsync<CustomActionsSchema>().getCorrectedAction(IdeActions.GROUP_MAIN_MENU) as ActionGroup?
-  }
-
-  protected open fun getMainMenuActionGroup(): ActionGroup? {
-    val rootPane = frame.rootPane
-    val group = if (rootPane is IdeRootPane) rootPane.mainMenuActionGroup else null
-    return group ?: CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_MENU) as ActionGroup?
-  }
+  open suspend fun getMainMenuActionGroup(): ActionGroup? = getMainMenuActionGroup(frame)
 
   override fun getMenuCount(): Int {
     @Suppress("IfThenToElvis", "SENSELESS_COMPARISON")
