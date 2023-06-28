@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.diagnostic.LoadingState;
@@ -10,7 +10,6 @@ import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -46,7 +45,7 @@ public final class CreateDesktopEntryAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(CreateDesktopEntryAction.class);
 
   public static boolean isAvailable() {
-    return SystemInfo.isXWindow && !ExternalUpdateManager.isRoaming() && SystemInfo.hasXdgOpen();
+    return SystemInfo.isXWindow && !ExternalUpdateManager.isCreatingDesktopEntries() && SystemInfo.hasXdgOpen();
   }
 
   @Override
@@ -77,10 +76,9 @@ public final class CreateDesktopEntryAction extends DumbAwareAction {
         try {
           createDesktopEntry(globalEntry);
 
-          String message = ApplicationBundle.message("desktop.entry.success", ApplicationNamesInfo.getInstance().getProductName());
-          Notifications.Bus.notify(
-            new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, IdeBundle.message("notification.title.desktop.entry.created"), message, NotificationType.INFORMATION),
-            getProject());
+          var title = IdeBundle.message("notification.title.desktop.entry.created");
+          var message = ApplicationBundle.message("desktop.entry.success", ApplicationNamesInfo.getInstance().getProductName());
+          new Notification("System Messages", title, message, NotificationType.INFORMATION).notify(getProject());
         }
         catch (Exception e) {
           reportFailure(e, getProject());
@@ -105,12 +103,11 @@ public final class CreateDesktopEntryAction extends DumbAwareAction {
     }
   }
 
-  public static void reportFailure(@NotNull Exception e, @Nullable final Project project) {
+  private static void reportFailure(Exception e, @Nullable Project project) {
     LOG.warn(e);
-    final String message = ExceptionUtil.getNonEmptyMessage(e, IdeBundle.message("notification.content.internal error"));
-    Notifications.Bus.notify(
-      new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, IdeBundle.message("notification.title.desktop.entry.creation.failed"), message, NotificationType.ERROR),
-      project);
+    var title = IdeBundle.message("notification.title.desktop.entry.creation.failed");
+    var message = ExceptionUtil.getNonEmptyMessage(e, IdeBundle.message("notification.content.internal error"));
+    new Notification("System Messages", title, message, NotificationType.ERROR).notify(project);
   }
 
   private static void check() throws ExecutionException, InterruptedException {
