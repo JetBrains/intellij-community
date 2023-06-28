@@ -19,6 +19,9 @@ import java.util.function.Function
 
 internal class ExportedDiagramEditorNotificationProvider: EditorNotificationProvider {
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
+    if (!Registry.`is`("mermaid.export.diagram.action.enable", false)) {
+      return null
+    }
     if (!wasGeneratedByPlugin(file)) {
       return null
     }

@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.readText
 import com.intellij.ui.jcef.JBCefApp
@@ -34,6 +35,10 @@ internal class ExportDiagramAction: AnAction(MermaidBundle.message("action.Merma
   }
 
   override fun update(event: AnActionEvent) {
+    if (!Registry.`is`("mermaid.export.diagram.action.enable", false)) {
+      event.presentation.isEnabledAndVisible = false
+      return
+    }
     val file = event.getData(CommonDataKeys.VIRTUAL_FILE)
     event.presentation.isEnabledAndVisible = file?.isMermaidFile() == true
   }

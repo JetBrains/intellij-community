@@ -115,6 +115,10 @@
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/MermaidDarcula.xml"/>
 
     <editorNotificationProvider implementation="com.intellij.mermaid.preview.ExportedDiagramEditorNotificationProvider"/>
+
+    <registryKey key="mermaid.export.diagram.action.enable"
+                 defaultValue="false"
+                 description="Controls availability of experimental Export Diagram action"/>
   </extensions>
   <actions>
     <action id="Mermaid.ExportDiagram"
