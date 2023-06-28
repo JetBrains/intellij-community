@@ -20,12 +20,13 @@ abstract class AbstractKotlinModificationEventTest<TRACKER : ModificationEventTr
 
     protected fun createProjectLibrary(name: String): Library = ConfigLibraryUtil.addProjectLibraryWithClassesRoot(myProject, name)
 
-    protected fun createScript(name: String): KtFile = createKtFileUnderNewContentRoot(FileWithText("$name.kts", ""))
+    protected fun createScript(name: String, text: String = ""): KtFile =
+        createKtFileUnderNewContentRoot(FileWithText("$name.kts", text))
 
-    protected fun createNotUnderContentRootFile(name: String): KtFile =
+    protected fun createNotUnderContentRootFile(name: String, text: String = ""): KtFile =
         // While the not-under-content-root module is named as it is, it is still decidedly under the project's content root, just not a
         // part of any other kind of `KtModule`.
-        createKtFileUnderNewContentRoot(FileWithText("$name.kt", ""))
+        createKtFileUnderNewContentRoot(FileWithText("$name.kt", text))
 
     protected fun disposeTrackers(vararg trackers: TRACKER) {
         trackers.forEach { Disposer.dispose(it) }

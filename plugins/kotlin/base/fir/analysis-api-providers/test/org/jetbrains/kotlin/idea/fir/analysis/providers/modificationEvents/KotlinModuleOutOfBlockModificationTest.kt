@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.providers.topics.KotlinModuleOutOfBlockModi
 import org.jetbrains.kotlin.analysis.providers.topics.KotlinTopics
 import org.jetbrains.kotlin.idea.util.sourceRoots
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.junit.Assert
 
 class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationEventTest<ModuleOutOfBlockModificationEventTracker>() {
@@ -32,11 +33,13 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
         val trackerC = createTracker(moduleC)
 
         moduleA.configureEditorForFile("main.kt").apply {
-            typeHelloInSingleFunctionBody(textAfterTyping = "fun main() = hello10")
+            modify(textAfterModification = "fun main() = hello10", getSingleFunctionBodyOffset()) {
+                type("hello")
+            }
         }
 
         // We expect two events: One published before and one after the PSI tree modification.
-        trackerA.assertModified("module A with out-of-block change after typing", expectedEventCount = 2)
+        trackerA.assertModified("module A after out-of-block change", expectedEventCount = 2)
         trackerB.assertNotModified("unmodified module B")
         trackerC.assertNotModified("unmodified module C")
 
@@ -268,8 +271,67 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
         disposeTrackers(trackerA, trackerB)
     }
 
+    fun `test that script module out-of-block modification affects a single script module`() {
+        val scriptA = createScript("a", "fun foo() = 10")
+        val scriptB = createScript("b", "fun bar() = 10")
+        val moduleC = createModuleInTmpDir("c")
+        val fileD = createNotUnderContentRootFile("d", "fun baz() = 10")
+
+        val trackerA = createTracker(scriptA)
+        val trackerB = createTracker(scriptB)
+        val trackerC = createTracker(moduleC)
+        val trackerD = createTracker(fileD)
+
+        scriptA.withConfiguredEditor {
+            val singleFunction = (declarations.single() as KtScript).declarations.single() as KtNamedFunction
+            val offset = singleFunction.bodyExpression!!.startOffset
+            modify(textAfterModification = "fun foo() = hello10", offset) {
+                type("hello")
+            }
+        }
+
+        // We expect two events: One published before and one after the PSI tree modification.
+        trackerA.assertModified("script A after out-of-block modification", expectedEventCount = 2)
+        trackerB.assertNotModified("unmodified script B")
+        trackerC.assertNotModified("unmodified module C")
+        trackerD.assertNotModified("unmodified not-under-content-root file D")
+
+        disposeTrackers(trackerA, trackerB, trackerC, trackerD)
+    }
+
+    fun `test that not-under-content-root module out-of-block modification affects a single not-under-content-root module`() {
+        val fileA = createNotUnderContentRootFile("a", "fun foo() = 10")
+        val fileB = createNotUnderContentRootFile("b", "fun bar() = 10")
+        val moduleC = createModuleInTmpDir("c")
+        val scriptD = createScript("d", "fun baz() = 10")
+
+        val trackerA = createTracker(fileA)
+        val trackerB = createTracker(fileB)
+        val trackerC = createTracker(moduleC)
+        val trackerD = createTracker(scriptD)
+
+        fileA.withConfiguredEditor {
+            modify(textAfterModification = "fun foo() = hello10", getSingleFunctionBodyOffset()) {
+                type("hello")
+            }
+        }
+
+        // We expect two events: One published before and one after the PSI tree modification.
+        trackerA.assertModified("not-under-content-root file A after out-of-block modification", expectedEventCount = 2)
+        trackerB.assertNotModified("unmodified not-under-content-root file B")
+        trackerC.assertNotModified("unmodified module C")
+        trackerD.assertNotModified("unmodified script D")
+
+        disposeTrackers(trackerA, trackerB, trackerC, trackerD)
+    }
+
     private fun KtFile.configureEditor() {
         configureByExistingFile(virtualFile)
+    }
+
+    private fun KtFile.withConfiguredEditor(f: KtFile.() -> Unit) {
+        configureEditor()
+        f()
     }
 
     private fun Module.configureEditorForFile(fileName: String): KtFile {
@@ -287,12 +349,6 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
         Assert.assertEquals(textAfterModification, text)
     }
 
-    private fun KtFile.typeHelloInSingleFunctionBody(textAfterTyping: String) {
-        modify(textAfterTyping, getSingleFunctionBodyOffset()) {
-            type("hello")
-        }
-    }
-
     private fun KtFile.getSingleFunctionBodyOffset(): Int {
         val singleFunction = declarations.single() as KtNamedFunction
         return singleFunction.bodyExpression!!.textOffset
@@ -300,7 +356,7 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
 
     private fun KtFile.getSingleMemberInClassOffset(): Int {
         val singleMember = (declarations[0] as KtClass).declarations.single()
-        return singleMember.textRange.startOffset
+        return singleMember.startOffset
     }
 }
 
