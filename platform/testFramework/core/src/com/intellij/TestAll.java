@@ -4,7 +4,6 @@ package com.intellij;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.idea.Bombed;
 import com.intellij.idea.IgnoreJUnit3;
-import com.intellij.idea.RecordExecution;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
@@ -115,7 +114,6 @@ public class TestAll implements Test {
   private final TestCaseLoader myTestCaseLoader;
   private int myRunTests = -1;
   private int myIgnoredTests;
-  private TestRecorder myTestRecorder;
 
   private static final List<Throwable> ourClassLoadingProblems = new ArrayList<>();
   private static JUnit4TestAdapterCache ourUnit4TestAdapterCache;
@@ -256,8 +254,6 @@ public class TestAll implements Test {
 
   @Override
   public void run(TestResult testResult) {
-    loadTestRecorder();
-
     final TestListener testListener = loadDiscoveryListener();
     if (testListener != null) {
       testResult.addListener(testListener);
@@ -277,19 +273,7 @@ public class TestAll implements Test {
 
     int totalTests = classes.size();
     for (Class<?> aClass : classes) {
-      boolean recording = false;
-      if (myTestRecorder != null && shouldRecord(aClass)) {
-        myTestRecorder.beginRecording(aClass, aClass.getAnnotation(RecordExecution.class));
-        recording = true;
-      }
-      try {
-        runNextTest(testResult, totalTests, aClass);
-      }
-      finally {
-        if (recording) {
-          myTestRecorder.endRecording();
-        }
-      }
+      runNextTest(testResult, totalTests, aClass);
       if (testResult.shouldStop()) break;
     }
 
@@ -319,25 +303,8 @@ public class TestAll implements Test {
     return null;
   }
 
-  private static boolean shouldRecord(@NotNull Class<?> aClass) {
-    return aClass.getAnnotation(RecordExecution.class) != null;
-  }
-
   private static boolean shouldAddFirstAndLastTests() {
     return !"true".equals(System.getProperty("intellij.build.test.ignoreFirstAndLastTests"));
-  }
-
-  private void loadTestRecorder() {
-    String recorderClassName = System.getProperty("test.recorder.class");
-    if (recorderClassName != null) {
-      try {
-        Class<?> recorderClass = Class.forName(recorderClassName);
-        myTestRecorder = (TestRecorder)recorderClass.newInstance();
-      }
-      catch (Exception e) {
-        System.out.println("Error loading test recorder class '" + recorderClassName + "': " + e);
-      }
-    }
   }
 
   private void runNextTest(final TestResult testResult, int totalTests, Class<?> testCaseClass) {
