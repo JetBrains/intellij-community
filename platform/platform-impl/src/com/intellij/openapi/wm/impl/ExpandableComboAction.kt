@@ -11,15 +11,15 @@ import java.awt.event.InputEvent
 import javax.swing.JComponent
 
 abstract class ExpandableComboAction : AnAction(), CustomComponentAction {
-
-  override fun createCustomComponent(presentation: Presentation, place: String): JComponent =
-    object : ToolbarComboWidget() {
+  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+    return object : ToolbarComboWidget() {
       override fun doExpand(e: InputEvent?) {
         val dataContext = DataManager.getInstance().getDataContext(this)
         val anActionEvent = AnActionEvent.createFromInputEvent(e, place, presentation, dataContext)
         createPopup(anActionEvent)?.showUnderneathOf(this)
       }
     }
+  }
 
   protected abstract fun createPopup(event: AnActionEvent): JBPopup?
 

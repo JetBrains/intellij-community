@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import org.jetbrains.annotations.Nls
@@ -13,7 +13,6 @@ import kotlin.reflect.KProperty
 
 @Suppress("LeakingThis")
 abstract class ToolbarComboWidget: JComponent() {
-
   val pressListeners: MutableList<ActionListener> = mutableListOf()
 
   var text: @Nls String? by Delegates.observable("", this::fireUpdateEvents)
@@ -28,15 +27,14 @@ abstract class ToolbarComboWidget: JComponent() {
   var isExpandable: Boolean by Delegates.observable(true, this::fireUpdateEvents)
 
   init {
-    updateUI() //set UI for component
+    // set UI for component
+    updateUI()
     isOpaque = false
   }
 
   abstract fun doExpand(e: InputEvent?)
 
-  override fun getUIClassID(): String {
-    return "ToolbarComboWidgetUI"
-  }
+  override fun getUIClassID(): String = "ToolbarComboWidgetUI"
 
   override fun updateUI() {
     setUI(UIManager.getUI(this))

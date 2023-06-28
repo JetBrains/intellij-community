@@ -38,11 +38,10 @@ import java.util.function.Function
 import java.util.function.Predicate
 import javax.swing.*
 
-
 private const val MAX_RECENT_COUNT = 100
 private val projectKey = Key.create<Project>("project-widget-project")
 
-class DefaultOpenProjectSelectionPredicateSupplier : OpenProjectSelectionPredicateSupplier {
+private class DefaultOpenProjectSelectionPredicateSupplier : OpenProjectSelectionPredicateSupplier {
   override fun getPredicate(): Predicate<AnAction> {
     val openProjects = ProjectUtilCore.getOpenProjects()
     val paths = openProjects.map { it.basePath }
@@ -51,14 +50,13 @@ class DefaultOpenProjectSelectionPredicateSupplier : OpenProjectSelectionPredica
 }
 
 class ProjectToolbarWidgetAction : ExpandableComboAction() {
-
   override fun createPopup(event: AnActionEvent): JBPopup? {
     val widget = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? ToolbarComboWidget?
     val step = createStep(createActionGroup(event), event.dataContext, widget)
-    return event.project?.let { createPopup(it, step, widget) }
+    return event.project?.let { createPopup(it = it, step = step) }
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread  = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
     val widget = component as? ToolbarComboWidget ?: return
@@ -91,13 +89,17 @@ class ProjectToolbarWidgetAction : ExpandableComboAction() {
     e.presentation.putClientProperty(projectKey, project)
   }
 
-  private fun createPopup(it: Project, step: ListPopupStep<Any>, widget: ToolbarComboWidget?): ListPopup {
+  private fun createPopup(it: Project, step: ListPopupStep<Any>): ListPopup {
     val widgetRenderer = ProjectWidgetRenderer()
     val renderer = Function<ListCellRenderer<Any>, ListCellRenderer<out Any>> { base ->
       ListCellRenderer<PopupFactoryImpl.ActionItem> { list, value, index, isSelected, cellHasFocus ->
         val action = (value as PopupFactoryImpl.ActionItem).action
         if (action is ReopenProjectAction) {
-          widgetRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+          widgetRenderer.getListCellRendererComponent(list = list,
+                                                      value = value,
+                                                      index = index,
+                                                      isSelected = isSelected,
+                                                      cellHasFocus = cellHasFocus)
         }
         else {
           base.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
@@ -105,32 +107,34 @@ class ProjectToolbarWidgetAction : ExpandableComboAction() {
       }
     }
 
-    val res = JBPopupFactory.getInstance().createListPopup(it, step, renderer)
-    res.setRequestFocus(false)
-    return res
+    val result = JBPopupFactory.getInstance().createListPopup(it, step, renderer)
+    result.setRequestFocus(false)
+    return result
   }
 
   private fun createActionGroup(initEvent: AnActionEvent): ActionGroup {
-    val res = DefaultActionGroup()
+    val result = DefaultActionGroup()
 
     val group = ActionManager.getInstance().getAction("ProjectWidget.Actions") as ActionGroup
-    res.addAll(group.getChildren(initEvent).asList())
+    result.addAll(group.getChildren(initEvent).asList())
     val openProjectsPredicate = OpenProjectSelectionPredicateSupplier.getInstance().getPredicate()
-    val actionsMap: Map<Boolean, List<AnAction>> = RecentProjectListActionProvider.getInstance().getActions().take(MAX_RECENT_COUNT).groupBy { openProjectsPredicate.test(it) }
+    val actionsMap = RecentProjectListActionProvider.getInstance().getActions()
+      .asSequence()
+      .take(MAX_RECENT_COUNT)
+      .groupBy { openProjectsPredicate.test(it) }
 
     actionsMap[true]?.let {
-      res.addSeparator(IdeUICustomization.getInstance().projectMessage("project.widget.open.projects"))
-      res.addAll(it)
+      result.addSeparator(IdeUICustomization.getInstance().projectMessage("project.widget.open.projects"))
+      result.addAll(it)
     }
 
     actionsMap[false]?.let {
-      res.addSeparator(IdeUICustomization.getInstance().projectMessage("project.widget.recent.projects"))
-      res.addAll(it)
+      result.addSeparator(IdeUICustomization.getInstance().projectMessage("project.widget.recent.projects"))
+      result.addAll(it)
     }
 
-    return res
+    return result
   }
-
 
   private fun createStep(actionGroup: ActionGroup, context: DataContext, widget: ToolbarComboWidget?): ListPopupStep<Any> {
     return JBPopupFactory.getInstance().createActionsStep(actionGroup, context, ActionPlaces.PROJECT_WIDGET_POPUP, false, false,
@@ -150,7 +154,9 @@ private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionIt
   private fun getSeparator(list: JList<out PopupFactoryImpl.ActionItem>?, value: PopupFactoryImpl.ActionItem?): ListSeparator? {
     val model = list?.model as? ListPopupModel<*> ?: return null
     val hasSeparator = model.isSeparatorAboveOf(value)
-    if (!hasSeparator) return null
+    if (!hasSeparator) {
+      return null
+    }
     return ListSeparator(model.getCaptionAboveOf(value))
   }
 
@@ -209,18 +215,18 @@ private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionIt
     res.add(result, BorderLayout.CENTER)
     return res
   }
+}
 
-  private fun createSeparator(separator: ListSeparator, hideLine: Boolean): JComponent {
-    val res = GroupHeaderSeparator(JBUI.CurrentTheme.Popup.separatorLabelInsets())
-    res.caption = separator.text
-    res.setHideLine(hideLine)
+private fun createSeparator(separator: ListSeparator, hideLine: Boolean): JComponent {
+  val res = GroupHeaderSeparator(JBUI.CurrentTheme.Popup.separatorLabelInsets())
+  res.caption = separator.text
+  res.setHideLine(hideLine)
 
-    val panel = JPanel(BorderLayout())
-    panel.border = JBUI.Borders.empty()
-    panel.isOpaque = true
-    panel.background = JBUI.CurrentTheme.Popup.BACKGROUND
-    panel.add(res)
+  val panel = JPanel(BorderLayout())
+  panel.border = JBUI.Borders.empty()
+  panel.isOpaque = true
+  panel.background = JBUI.CurrentTheme.Popup.BACKGROUND
+  panel.add(res)
 
-    return panel
-  }
+  return panel
 }

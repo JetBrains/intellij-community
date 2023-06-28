@@ -41,6 +41,7 @@ private val repositoryKey = Key.create<GitRepository>("git-widget-repository")
 private val changesKey = Key.create<MyRepoChanges>("git-widget-changes")
 
 private const val GIT_WIDGET_BRANCH_NAME_MAX_LENGTH: Int = 80
+private const val GIT_WIDGET_PLACEHOLDER_KEY = "git-widget-placeholder"
 
 internal class GitToolbarWidgetAction : ExpandableComboAction() {
   private val widgetIcon = ExpUiIcons.General.Vcs
@@ -54,8 +55,12 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
     val repository = GitBranchUtil.guessWidgetRepository(project, event.dataContext)
 
     val popup: JBPopup = if (repository != null) {
-      if (GitBranchesTreePopup.isEnabled()) GitBranchesTreePopup.create(project, repository)
-      else GitBranchPopup.getInstance(project, repository, event.dataContext).asListPopup()
+      if (GitBranchesTreePopup.isEnabled()) {
+        GitBranchesTreePopup.create(project, repository)
+      }
+      else {
+        GitBranchPopup.getInstance(project, repository, event.dataContext).asListPopup()
+      }
     }
     else {
       updatePlaceholder(project, null)
@@ -68,9 +73,9 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    val comp = super.createCustomComponent(presentation, place)
-    (comp.ui as? ToolbarComboWidgetUI)?.setMaxWidth(Int.MAX_VALUE)
-    return comp
+    val component = super.createCustomComponent(presentation, place)
+    (component.ui as? ToolbarComboWidgetUI)?.setMaxWidth(Int.MAX_VALUE)
+    return component
   }
 
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
@@ -109,7 +114,7 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
     }
     e.presentation.putClientProperty(repositoryKey, gitRepository)
 
-    when(state) {
+    when (state) {
       GitWidgetState.OtherVcs -> {
         e.presentation.isEnabledAndVisible = false
         return
@@ -176,8 +181,6 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
   }
 
   companion object {
-    private const val GIT_WIDGET_PLACEHOLDER_KEY = "git-widget-placeholder"
-
     fun updatePlaceholder(project: Project, newPlaceholder: @NlsSafe String?) {
       PropertiesComponent.getInstance(project).setValue(GIT_WIDGET_PLACEHOLDER_KEY, newPlaceholder)
     }
