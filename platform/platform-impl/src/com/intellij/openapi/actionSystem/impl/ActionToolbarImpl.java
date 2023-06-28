@@ -36,6 +36,7 @@ import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.animation.AlphaAnimated;
 import com.intellij.util.animation.AlphaAnimationContext;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
@@ -1342,7 +1343,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       return;
     }
 
-    long fastTrackTimeout = ExperimentalUI.isNewUI() ? 30_000 : Utils.getFastTrackTimeout();
+    long fastTrackTimeout = ExperimentalUI.isNewUI() && !PlatformUtils.isJetBrainsClient() ? 30_000 : Utils.getFastTrackTimeout();
     List<AnAction> actions = Utils.expandActionGroupFastTrack(updater, myActionGroup, myHideDisabled, null, fastTrackTimeout);
     if (actions != null) {
       actionsUpdated(true, actions);
