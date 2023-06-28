@@ -75,6 +75,8 @@ internal class ProjectCachesWarmup : ModernApplicationStarter() {
 
     setEnvironmentConfiguration(commandArgs)
 
+    configureVcsIndexing(commandArgs)
+
     val buildMode = getBuildMode(commandArgs)
     val builders = System.getenv()["IJ_WARMUP_BUILD_BUILDERS"]?.split(";")?.toHashSet()
 
@@ -131,6 +133,10 @@ internal class ProjectCachesWarmup : ModernApplicationStarter() {
       }
     }
   }
+}
+
+private fun configureVcsIndexing(commandArgs: WarmupProjectArgs) {
+  System.setProperty("vcs.log.index.git", commandArgs.indexGitLog.toString())
 }
 
 private class InvalidWarmupArgumentsException(errorMessage: String) : Exception(errorMessage)

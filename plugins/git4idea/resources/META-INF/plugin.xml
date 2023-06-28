@@ -767,6 +767,8 @@
     <searchEverywhereContributor implementation="git4idea.search.GitSearchEverywhereContributor$Companion$Factory"/>
     <projectOriginInfoProvider implementation="git4idea.repo.GitProjectOriginInfoProvider"/>
 
+    <warmupConfigurator implementation="git4idea.index.GitWarmupConfigurator"/>
+
     <postStartupActivity implementation="git4idea.repo.GitCommitTemplateTracker$GitCommitTemplateTrackerStartupActivity"/>
 
     <vcs.commitMessageProvider implementation="git4idea.commit.GitTemplateCommitMessageProvider" order="first"/>
