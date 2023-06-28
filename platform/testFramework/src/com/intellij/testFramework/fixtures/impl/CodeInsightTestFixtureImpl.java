@@ -62,6 +62,7 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -96,6 +97,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.ProjectRootManagerComponent;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableTracker;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -147,6 +149,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -1336,26 +1339,30 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       myProjectFixture.setUp();
       myTempDirFixture.setUp();
 
-      VirtualFile tempDir = myTempDirFixture.getFile("");
-      assertNotNull(tempDir);
-      HeavyPlatformTestCase.synchronizeTempDirVfs(tempDir);
+      // Application is ready, take explicit WriteIntent lock
+      ApplicationManager.getApplication().runWriteIntentReadAction(() -> {
+        VirtualFile tempDir = myTempDirFixture.getFile("");
+        assertNotNull(tempDir);
+        HeavyPlatformTestCase.synchronizeTempDirVfs(tempDir);
 
-      myPsiManager = (PsiManagerImpl)PsiManager.getInstance(getProject());
-      InspectionsKt.configureInspections(LocalInspectionTool.EMPTY_ARRAY, getProject(), myProjectFixture.getTestRootDisposable());
+        myPsiManager = (PsiManagerImpl)PsiManager.getInstance(getProject());
+        InspectionsKt.configureInspections(LocalInspectionTool.EMPTY_ARRAY, getProject(), myProjectFixture.getTestRootDisposable());
 
-      DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
-      daemonCodeAnalyzer.prepareForTest();
+        DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
+        daemonCodeAnalyzer.prepareForTest();
 
-      DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
-      ensureIndexesUpToDate(getProject());
-      CodeStyle.setTemporarySettings(getProject(), CodeStyle.createTestSettings());
+        DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
+        ensureIndexesUpToDate(getProject());
+        CodeStyle.setTemporarySettings(getProject(), CodeStyle.createTestSettings());
 
-      IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
-      if (policy != null) {
-        policy.setUp(getProject(), getTestRootDisposable(), getTestDataPath());
-      }
-      ActionUtil.performActionDumbAwareWithCallbacks(
-        new EmptyAction(true), AnActionEvent.createFromDataContext("", null, DataContext.EMPTY_CONTEXT));
+        IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
+        if (policy != null) {
+          policy.setUp(getProject(), getTestRootDisposable(), getTestDataPath());
+        }
+        ActionUtil.performActionDumbAwareWithCallbacks(
+          new EmptyAction(true), AnActionEvent.createFromDataContext("", null, DataContext.EMPTY_CONTEXT));
+        return null;
+      });
     });
 
     for (Module module : ModuleManager.getInstance(getProject()).getModules()) {
@@ -1664,9 +1671,20 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     if (editor == null) {
       throw new IllegalStateException("Fixture is not configured. Call something like configureByFile() or configureByText()");
     }
-    ExpectedHighlightingData data = new ExpectedHighlightingData(
-      editor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, ignoreExtraHighlighting);
-    data.init();
+    ExpectedHighlightingData data;
+    if (SwingUtilities.isEventDispatchThread()) {
+      data = WriteIntentReadAction.compute((Computable<ExpectedHighlightingData>)() -> {
+        ExpectedHighlightingData d = new ExpectedHighlightingData(
+          editor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, ignoreExtraHighlighting);
+        d.init();
+        return d;
+      });
+    }
+    else {
+      data = new ExpectedHighlightingData(
+        editor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, ignoreExtraHighlighting);
+      data.init();
+    }
     return collectAndCheckHighlighting(data);
   }
 
