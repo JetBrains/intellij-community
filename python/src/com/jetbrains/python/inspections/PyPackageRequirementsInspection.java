@@ -11,6 +11,8 @@ import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.core.CoreBundle;
 import com.intellij.execution.ExecutionException;
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,6 +21,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.ui.DoNotAskOption;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.NlsSafe;
@@ -495,6 +499,8 @@ public class PyPackageRequirementsInspection extends PyInspection {
   }
 
   public static class InstallPackageQuickFix implements LocalQuickFix {
+    public static final String CONFIRM_PACKAGE_INSTALLATION_PROPERTY = "python.confirm.package.installation";
+    
     protected final @NotNull String myPackageName;
 
     public InstallPackageQuickFix(@NotNull String packageName) {
@@ -508,6 +514,22 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
     @Override
     public final void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      boolean isWellKnownPackage = ApplicationManager.getApplication()
+        .getService(PyPIPackageRanking.class)
+        .getPackageRank().containsKey(myPackageName);
+      boolean confirmationEnabled = PropertiesComponent.getInstance().getBoolean(CONFIRM_PACKAGE_INSTALLATION_PROPERTY, true);
+      if (!isWellKnownPackage && confirmationEnabled) {
+        boolean confirmed = MessageDialogBuilder
+          .yesNo(PyBundle.message("python.packaging.dialog.title.install.package.confirmation"),
+                 PyBundle.message("python.packaging.dialog.message.install.package.confirmation", myPackageName))
+          .icon(AllIcons.General.WarningDialog)
+          .doNotAsk(new ConfirmPackageInstallationDoNotAskOption())
+          .ask(project);
+        if (!confirmed) {
+          return;
+        }
+      }
+      
       PsiElement element = descriptor.getPsiElement();
       if (element == null) return;
       Module module = ModuleUtilCore.findModuleForPsiElement(element);
@@ -545,6 +567,15 @@ public class PyPackageRequirementsInspection extends PyInspection {
     @Override
     public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
       return IntentionPreviewInfo.EMPTY;
+    }
+
+    private static class ConfirmPackageInstallationDoNotAskOption extends DoNotAskOption.Adapter {
+      @Override
+      public void rememberChoice(boolean isSelected, int exitCode) {
+        if (isSelected && exitCode == Messages.OK) {
+          PropertiesComponent.getInstance().setValue(CONFIRM_PACKAGE_INSTALLATION_PROPERTY, false, true);
+        }
+      }
     }
   }
 
