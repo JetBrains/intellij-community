@@ -16,7 +16,6 @@
         "Deprecated"
       ],
       "compatibility": {
-        "IE": "",
         "Safari": ""
       },
       "doc": "<div class=\"notecard deprecated\">\n<h4 id=\"deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div>\n<div class=\"notecard warning\">\n<p>The <strong><code>&lt;applet&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element was removed in <a href=\"https://bugzilla.mozilla.org/show_bug.cgi?id=1279218\" class=\"external\" rel=\" noopener\">Gecko 56</a> and <a href=\"https://bugs.chromium.org/p/chromium/issues/detail?id=470301\" class=\"external\" rel=\" noopener\">Chrome 47</a>.</p>\n<p>Removal is being considered in <a href=\"https://bugs.webkit.org/show_bug.cgi?id=157926\" class=\"external\" rel=\" noopener\">WebKit</a> and <a href=\"https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/11946645/\" class=\"external\" rel=\" noopener\">Edge</a>.</p>\n</div>\n<p><span class=\"seoSummary\">The obsolete <strong>HTML Applet Element</strong> (<strong><code>&lt;applet&gt;</code></strong>) embeds a Java applet into the document; this element has been deprecated in favor of <a href=\"$MDN_URL$/Web/HTML/Element/object\"><code>&lt;object&gt;</code></a>.</span></p>\n<p>Use of Java applets on the Web is deprecated; most browsers no longer support use of plug-ins, including the Java plug-in.</p>",
@@ -34,7 +33,6 @@
             "Deprecated"
           ],
           "compatibility": {
-            "IE": "",
             "Safari": ""
           },
           "doc": "This attribute is used to position the applet on the page relative to content that might flow around it. The HTML 4.01 specification defines values of\n<code>bottom</code>\n,\n<code>left</code>\n,\n<code>middle</code>\n,\n<code>right</code>\n, and\n<code>top</code>\n, whereas Microsoft and Netscape also might support\n<code>absbottom</code>\n,\n<code>absmiddle</code>\n,\n<code>baseline</code>\n,\n<code>center</code>\n, and\n<code>texttop</code>\n."
@@ -45,7 +43,6 @@
             "Deprecated"
           ],
           "compatibility": {
-            "IE": "",
             "Safari": ""
           },
           "doc": "This attribute causes a descriptive text alternate to be displayed on browsers that do not support Java. Page designers should also remember that content enclosed within the\n<code>&lt;applet&gt;</code>\nelement may also be rendered as alternative text."
@@ -56,7 +53,6 @@
             "Deprecated"
           ],
           "compatibility": {
-            "IE": "",
             "Safari": ""
           },
           "doc": "This attribute refers to an archived or compressed version of the applet and its associated class files, which might help reduce download time."
@@ -67,7 +63,6 @@
             "Deprecated"
           ],
           "compatibility": {
-            "IE": "",
             "Safari": ""
           },
           "doc": "This attribute specifies the URL of the applet's class file to be loaded and executed. Applet filenames are identified by a .class filename extension. The URL specified by code might be relative to the\n<code>codebase</code>\nattribute."
@@ -78,7 +73,6 @@
             "Deprecated"
           ],
           "compatibility": {
-            "IE": "",
             "Safari": ""
           },
           "doc": "This attribute gives the absolute or relative URL of the directory where applets' .class files referenced by the code attribute are stored."
@@ -89,7 +83,6 @@
             "Deprecated"
           ],
           "compatibility": {
-            "IE": "",
             "Safari": ""
           },
           "doc": "This attribute, supported by Internet Explorer 4 and higher, specifies the column name from the data source object that supplies the bound data. This attribute might be used to specify the various \n<a href=\"$MDN_URL$/Web/HTML/Element/param\"><code>&lt;param&gt;</code></a>\nelements passed to the Java applet."
@@ -100,7 +93,6 @@
             "Deprecated"
           ],
           "compatibility": {
-            "IE": "",
             "Safari": ""
           },
           "doc": "Like\n<code>datafld</code>\n, this attribute is used for data binding under Internet Explorer 4. It indicates the id of the data source object that supplies the data that is bound to the\n<a href=\"$MDN_URL$/Web/HTML/Element/param\"><code>&lt;param&gt;</code></a>\nelements associated with the applet."
@@ -111,7 +103,6 @@
             "Deprecated"
           ],
           "compatibility": {
-            "IE": "",
             "Safari": ""
           },
           "doc": "This attribute specifies the height, in pixels, that the applet needs."
@@ -122,7 +113,6 @@
             "Deprecated"
           ],
           "compatibility": {
-            "IE": "",
             "Safari": ""
           },
           "doc": "This attribute specifies additional horizontal space, in pixels, to be reserved on either side of the applet."
@@ -133,7 +123,6 @@
             "Deprecated"
           ],
           "compatibility": {
-            "IE": "",
             "Safari": ""
           },
           "doc": "In the Netscape implementation, this attribute allows access to an applet by programs in a scripting language embedded in the document."
@@ -144,7 +133,6 @@
             "Deprecated"
           ],
           "compatibility": {
-            "IE": "",
             "Safari": ""
           },
           "doc": "This attribute assigns a name to the applet so that it can be identified by other resources; particularly scripts."
@@ -155,7 +143,6 @@
             "Deprecated"
           ],
           "compatibility": {
-            "IE": "",
             "Safari": ""
           },
           "doc": "This attribute specifies the URL of a serialized representation of an applet."
@@ -166,7 +153,6 @@
             "Deprecated"
           ],
           "compatibility": {
-            "IE": "",
             "Safari": ""
           },
           "doc": "As defined for Internet Explorer 4 and higher, this attribute specifies a URL for an associated file for the applet. The meaning and use is unclear and not part of the HTML standard."
@@ -177,7 +163,6 @@
             "Deprecated"
           ],
           "compatibility": {
-            "IE": "",
             "Safari": ""
           },
           "doc": "This attribute specifies additional vertical space, in pixels, to be reserved above and below the applet."
@@ -188,7 +173,6 @@
             "Deprecated"
           ],
           "compatibility": {
-            "IE": "",
             "Safari": ""
           },
           "doc": "This attribute specifies in pixels the width that the applet needs."
@@ -201,7 +185,6 @@
         "Deprecated"
       ],
       "compatibility": {
-        "IE": ""
       },
       "doc": "<div><div class=\"notecard deprecated\">\n<h4 id=\"deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div></div>\n<p>The <strong><code>&lt;basefont&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element is deprecated. It sets a default font face, size, and color for the other elements which are descended from its parent element. With this set, the font's size can then be varied relative to the base size using the <a href=\"$MDN_URL$/Web/HTML/Element/font\"><code>&lt;font&gt;</code></a> element.</p>\n<p>You should not use this element; instead, you should use CSS properties such as <a href=\"$MDN_URL$/Web/CSS/font\"><code>font</code></a>, <a href=\"$MDN_URL$/Web/CSS/font-family\"><code>font-family</code></a>, <a href=\"$MDN_URL$/Web/CSS/font-size\"><code>font-size</code></a>, and <a href=\"$MDN_URL$/Web/CSS/color\"><code>color</code></a> to change the font configuration for an element and its contents.</p>",
       "attrs": {
@@ -221,7 +204,6 @@
         "Deprecated"
       ],
       "compatibility": {
-        "IE": ""
       },
       "doc": "<div><div class=\"notecard deprecated\">\n<h4 id=\"deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div><div class=\"notecard warning\">\n<h4 id=\"non-standard\">Non-standard</h4>\n<p>This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</p>\n</div></div>\n<p>The <strong><code>&lt;bgsound&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element is deprecated. It sets up a sound file to play in the background while the page is used; use <a href=\"$MDN_URL$/Web/HTML/Element/audio\"><code>&lt;audio&gt;</code></a> instead.</p>\n<div class=\"note notecard\">\n<p><strong>Do not use this! </strong>In order to embed audio in a Web page, you should be using the <a href=\"$MDN_URL$/Web/HTML/Element/audio\"><code>&lt;audio&gt;</code></a> element.</p>\n</div>",
       "attrs": {

@@ -19,7 +19,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -80,7 +79,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -97,7 +95,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3",
-        "IE": "5.5",
         "Opera": "9",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -138,7 +135,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "2",
-        "IE": "",
         "Opera": "12",
         "Safari": "5",
         "SafariIOS": "4.2"
@@ -187,7 +183,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "11",
         "Opera": "15",
         "Safari": "5.1",
         "SafariIOS": "5"
@@ -204,7 +199,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "32",
-        "IE": "",
         "Opera": "15",
         "Safari": "",
         "SafariIOS": ""
@@ -301,7 +295,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -380,7 +373,6 @@
         "ChromeAndroid": "47",
         "Edge": "",
         "Firefox": "",
-        "IE": "11",
         "Opera": "",
         "Safari": "",
         "SafariIOS": "9.3"
@@ -397,7 +389,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "",
         "SafariIOS": ""
@@ -414,7 +405,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -431,7 +421,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -480,7 +469,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "",
         "SafariIOS": ""
@@ -507,7 +495,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -549,7 +536,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -566,7 +552,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -584,7 +569,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -632,7 +616,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -650,7 +633,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -676,7 +658,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -693,7 +674,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -712,7 +692,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "7",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -739,7 +718,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "",
         "SafariIOS": ""
@@ -756,7 +734,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "",
         "SafariIOS": ""
@@ -782,7 +759,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "",
         "SafariIOS": ""
@@ -809,7 +785,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -825,7 +800,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -842,7 +816,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -859,7 +832,6 @@
             "ChromeAndroid": "54",
             "Edge": "",
             "Firefox": "20",
-            "IE": "",
             "Opera": "41",
             "Safari": "10.1",
             "SafariIOS": "10.3"
@@ -876,7 +848,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -894,7 +865,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -920,7 +890,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -967,7 +936,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "30",
-            "IE": "",
             "Opera": "15",
             "Safari": "5",
             "SafariIOS": "4.2"
@@ -984,7 +952,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -1002,7 +969,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3.1",
             "SafariIOS": "2"
@@ -1018,7 +984,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -1036,7 +1001,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -1055,7 +1019,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "9",
         "Opera": "11.1",
         "Safari": "5",
         "SafariIOS": "4.2"
@@ -1081,7 +1044,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "9",
         "Opera": "11.1",
         "Safari": "5",
         "SafariIOS": "4.2"
@@ -1107,7 +1069,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "10.5",
         "Safari": "3.1",
         "SafariIOS": "3"
@@ -1133,7 +1094,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "3.5",
-            "IE": "9",
             "Opera": "10.5",
             "Safari": "3.1",
             "SafariIOS": "3"
@@ -1150,7 +1110,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "3.5",
-            "IE": "9",
             "Opera": "10.5",
             "Safari": "3.1",
             "SafariIOS": "3"
@@ -1179,7 +1138,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "11",
-            "IE": "9",
             "Opera": "10.5",
             "Safari": "3.1",
             "SafariIOS": "3"
@@ -1212,7 +1170,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "4",
-            "IE": "9",
             "Opera": "15",
             "Safari": "3.1",
             "SafariIOS": "3"
@@ -1229,7 +1186,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "3.5",
-            "IE": "9",
             "Opera": "10.5",
             "Safari": "3.1",
             "SafariIOS": "3"
@@ -1248,7 +1204,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "",
         "SafariIOS": ""
@@ -1274,7 +1229,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "3",
         "SafariIOS": "2"
@@ -1300,7 +1254,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -1317,7 +1270,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -1361,7 +1313,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "10",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -1394,7 +1345,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -1411,7 +1361,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -1437,7 +1386,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -1456,7 +1404,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "",
         "SafariIOS": ""
@@ -1483,7 +1430,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -1501,7 +1447,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -1519,7 +1464,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -1571,7 +1515,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -1678,7 +1621,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -1713,7 +1655,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -1732,7 +1673,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -1759,7 +1699,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -1778,7 +1717,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -1815,7 +1753,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -1848,7 +1785,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "4",
-            "IE": "10",
             "Opera": "15",
             "Safari": "5.1",
             "SafariIOS": "5"
@@ -1865,7 +1801,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "4",
-            "IE": "10",
             "Opera": "10.6",
             "Safari": "5.1",
             "SafariIOS": "5"
@@ -1882,7 +1817,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "4",
-            "IE": "10",
             "Opera": "15",
             "Safari": "5.1",
             "SafariIOS": "5"
@@ -1899,7 +1833,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "4",
-            "IE": "",
             "Opera": "15",
             "Safari": "5.1",
             "SafariIOS": "5"
@@ -1916,7 +1849,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "4",
-            "IE": "",
             "Opera": "15",
             "Safari": "5.1",
             "SafariIOS": "5"
@@ -1933,7 +1865,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -1958,7 +1889,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -1975,7 +1905,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -1994,7 +1923,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "1.5",
-        "IE": "9",
         "Opera": "9",
         "Safari": "2",
         "SafariIOS": ""
@@ -2020,7 +1948,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "1.5",
-            "IE": "9",
             "Opera": "9",
             "Safari": "2",
             "SafariIOS": ""
@@ -2041,7 +1968,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "1.5",
-            "IE": "9",
             "Opera": "9",
             "Safari": "2",
             "SafariIOS": ""
@@ -2060,7 +1986,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -2087,7 +2012,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -2107,7 +2031,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -2124,7 +2047,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -2150,7 +2072,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -2176,7 +2097,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -2202,7 +2122,6 @@
             "Chrome": "",
             "ChromeAndroid": "",
             "Edge": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -2220,7 +2139,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -2237,7 +2155,6 @@
             "Chrome": "",
             "ChromeAndroid": "",
             "Edge": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -2254,7 +2171,6 @@
             "Chrome": "",
             "ChromeAndroid": "",
             "Edge": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -2271,7 +2187,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -2288,7 +2203,6 @@
             "Chrome": "",
             "ChromeAndroid": "",
             "Edge": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -2306,7 +2220,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -2325,7 +2238,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -2351,7 +2263,6 @@
             "Chrome": "",
             "ChromeAndroid": "",
             "Edge": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -2369,7 +2280,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -2386,7 +2296,6 @@
             "Chrome": "",
             "ChromeAndroid": "",
             "Edge": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -2403,7 +2312,6 @@
             "Chrome": "",
             "ChromeAndroid": "",
             "Edge": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -2420,7 +2328,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -2437,7 +2344,6 @@
             "Chrome": "",
             "ChromeAndroid": "",
             "Edge": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -2455,7 +2361,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -2503,7 +2408,6 @@
         "Chrome": "20",
         "ChromeAndroid": "33",
         "Edge": "",
-        "IE": "10",
         "Opera": "9.5",
         "Safari": "12.1",
         "SafariIOS": "12.2"
@@ -2529,7 +2433,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -2555,7 +2458,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -2574,7 +2476,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -2600,7 +2501,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -2617,7 +2517,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -2679,7 +2578,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "6",
         "SafariIOS": "6"
@@ -2749,7 +2647,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "6",
         "Opera": "12.1",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -2767,7 +2664,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "6",
             "Opera": "12.1",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -2786,7 +2682,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "",
         "SafariIOS": ""
@@ -2812,7 +2707,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -2830,7 +2724,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -2856,7 +2749,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -2882,7 +2774,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -2908,7 +2799,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "12.1",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -2950,7 +2840,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "6",
             "Opera": "12.1",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -2968,7 +2857,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "6",
             "Opera": "12.1",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -2984,7 +2872,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "6",
             "Opera": "12.1",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -3017,7 +2904,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "6",
             "Opera": "12.1",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -3036,7 +2922,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -3061,7 +2946,6 @@
             "Chrome": "20",
             "ChromeAndroid": "25",
             "Firefox": "4",
-            "IE": "",
             "Opera": "12",
             "Safari": "6",
             "SafariIOS": "6"
@@ -3078,7 +2962,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -3095,7 +2978,6 @@
             "ChromeAndroid": "25",
             "Edge": "",
             "Firefox": "4",
-            "IE": "",
             "Opera": "15",
             "Safari": "6",
             "SafariIOS": "6"
@@ -3114,7 +2996,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "9",
         "Opera": "11",
         "Safari": "5.1",
         "SafariIOS": "5"
@@ -3140,7 +3021,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "9",
         "Opera": "11",
         "Safari": "5.1",
         "SafariIOS": "5"
@@ -3167,7 +3047,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -3185,7 +3064,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -3203,7 +3081,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -3221,7 +3098,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -3240,7 +3116,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "9",
         "Opera": "11.1",
         "Safari": "5",
         "SafariIOS": "4.2"
@@ -3266,7 +3141,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -3293,7 +3167,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -3314,7 +3187,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -3338,7 +3210,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "4",
-            "IE": "",
             "Opera": "15",
             "Safari": "6",
             "SafariIOS": "6"
@@ -3355,7 +3226,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -3372,7 +3242,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -3389,7 +3258,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -3406,7 +3274,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "4",
-            "IE": "10",
             "Opera": "15",
             "Safari": "10.1",
             "SafariIOS": "10.3"
@@ -3439,7 +3306,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -3459,7 +3325,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "3",
         "SafariIOS": "2"
@@ -3477,7 +3342,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -3495,7 +3359,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -3513,7 +3376,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -3531,7 +3393,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -3549,7 +3410,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -3567,7 +3427,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -3585,7 +3444,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -3605,7 +3463,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "3",
         "SafariIOS": "2"
@@ -3623,7 +3480,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -3641,7 +3497,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -3660,7 +3515,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "",
         "SafariIOS": ""
@@ -3686,7 +3540,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -3705,7 +3558,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "9",
         "Opera": "11.1",
         "Safari": "5",
         "SafariIOS": "4.2"
@@ -3731,7 +3583,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -3757,7 +3608,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "9",
         "Opera": "11.1",
         "Safari": "5",
         "SafariIOS": "4.2"
@@ -3783,7 +3633,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -3809,7 +3658,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "6",
             "Opera": "12.1",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -3826,7 +3674,6 @@
             "ChromeAndroid": "33",
             "Edge": "",
             "Firefox": "",
-            "IE": "6",
             "Opera": "20",
             "Safari": "10.1",
             "SafariIOS": "10.3"
@@ -3843,7 +3690,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "6",
             "Opera": "12.1",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -3860,7 +3706,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "6",
             "Opera": "12.1",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -3877,7 +3722,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "6",
             "Opera": "12.1",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -3896,7 +3740,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -3921,7 +3764,6 @@
             "Chrome": "4",
             "ChromeAndroid": "",
             "Edge": "",
-            "IE": "10",
             "Opera": "10.6",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -3939,7 +3781,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -3956,7 +3797,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -3975,7 +3815,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -4001,7 +3840,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -4028,7 +3866,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -4103,7 +3940,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -4120,7 +3956,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -4153,7 +3988,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -4171,7 +4005,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -4189,7 +4022,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -4206,7 +4038,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -4239,7 +4070,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "17",
-            "IE": "10",
             "Opera": "15",
             "Safari": "5",
             "SafariIOS": "4.2"
@@ -4257,7 +4087,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -4274,7 +4103,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -4306,7 +4134,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -4341,7 +4168,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "",
         "SafariIOS": ""
@@ -4368,7 +4194,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -4385,7 +4210,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -4403,7 +4227,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -4420,7 +4243,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "8",
-            "IE": "",
             "Opera": "15",
             "Safari": "6",
             "SafariIOS": "6"
@@ -4470,7 +4292,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -4488,7 +4309,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -4505,7 +4325,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -4539,7 +4358,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -4557,7 +4375,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -4606,7 +4423,6 @@
             "ChromeAndroid": "38",
             "Edge": "",
             "Firefox": "38",
-            "IE": "",
             "Opera": "25",
             "Safari": "9.1",
             "SafariIOS": "9.3"
@@ -4623,7 +4439,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -4656,7 +4471,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -4674,7 +4488,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -4691,7 +4504,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -4710,7 +4522,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -4736,7 +4547,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "6",
             "Opera": "12.1",
             "Safari": "",
             "SafariIOS": ""
@@ -4753,7 +4563,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "5.5",
             "Opera": "12.1",
             "Safari": "",
             "SafariIOS": ""
@@ -4769,7 +4578,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "5.5",
             "Opera": "12.1",
             "Safari": "",
             "SafariIOS": ""
@@ -4803,7 +4611,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "5.5",
             "Opera": "12.1",
             "Safari": "",
             "SafariIOS": ""
@@ -4834,7 +4641,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "5.5",
             "Opera": "12.1",
             "Safari": "",
             "SafariIOS": ""
@@ -4850,7 +4656,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "5.5",
             "Opera": "12.1",
             "Safari": "",
             "SafariIOS": ""
@@ -4866,7 +4671,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "4",
-            "IE": "10",
             "Opera": "12.1",
             "Safari": "5",
             "SafariIOS": "4.2"
@@ -4882,7 +4686,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "4",
-            "IE": "10",
             "Opera": "12.1",
             "Safari": "5",
             "SafariIOS": "4.2"
@@ -4898,7 +4701,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "4",
-            "IE": "10",
             "Opera": "12.1",
             "Safari": "5",
             "SafariIOS": "4.2"
@@ -4914,7 +4716,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "4",
-            "IE": "10",
             "Opera": "12.1",
             "Safari": "5",
             "SafariIOS": "4"
@@ -4930,7 +4731,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "4",
-            "IE": "10",
             "Opera": "12.1",
             "Safari": "5",
             "SafariIOS": "4.2"
@@ -4950,7 +4750,6 @@
             "ChromeAndroid": "25",
             "Edge": "",
             "Firefox": "4",
-            "IE": "10",
             "Opera": "12.1",
             "Safari": "12.1",
             "SafariIOS": "12.2"
@@ -4966,7 +4765,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "16",
-            "IE": "10",
             "Opera": "12.1",
             "Safari": "5",
             "SafariIOS": "4"
@@ -4982,7 +4780,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "5.5",
             "Opera": "12.1",
             "Safari": "",
             "SafariIOS": ""
@@ -4998,7 +4795,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "16",
-            "IE": "10",
             "Opera": "12.1",
             "Safari": "5",
             "SafariIOS": "4"
@@ -5033,7 +4829,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "3.6",
-            "IE": "10",
             "Opera": "12.1",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -5049,7 +4844,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "5.5",
             "Opera": "12.1",
             "Safari": "",
             "SafariIOS": ""
@@ -5069,7 +4863,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "4",
-            "IE": "10",
             "Opera": "12.1",
             "Safari": "5",
             "SafariIOS": "4"
@@ -5085,7 +4878,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "4",
-            "IE": "10",
             "Opera": "12.1",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -5101,7 +4893,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "5.5",
             "Opera": "12.1",
             "Safari": "",
             "SafariIOS": ""
@@ -5121,7 +4912,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "5.5",
             "Opera": "12.1",
             "Safari": "",
             "SafariIOS": ""
@@ -5137,7 +4927,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "16",
-            "IE": "10",
             "Opera": "12.1",
             "Safari": "5",
             "SafariIOS": "4"
@@ -5154,7 +4943,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "6",
             "Opera": "12.1",
             "Safari": "",
             "SafariIOS": ""
@@ -5176,7 +4964,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -5202,7 +4989,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -5219,7 +5005,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -5238,7 +5023,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -5264,7 +5048,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -5290,7 +5073,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -5309,7 +5091,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "6",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -5336,7 +5117,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "6",
             "Opera": "12.1",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -5354,7 +5134,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -5380,7 +5159,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "6",
             "Opera": "12.1",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -5397,7 +5175,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "6",
             "Opera": "12.1",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -5416,7 +5193,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "12.1",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -5461,7 +5237,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "6",
             "Opera": "12.1",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -5491,7 +5266,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "6",
             "Opera": "12.1",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -5521,7 +5295,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "6",
             "Opera": "12.1",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -5538,7 +5311,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "6",
             "Opera": "12.1",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -5599,7 +5371,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "6",
             "Opera": "12.1",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -5611,9 +5382,7 @@
           "status": [
             "Deprecated"
           ],
-          "compatibility": {
-            "IE": "4"
-          },
+          "compatibility": {},
           "doc": "The value of this attribute provides information about the functions that might be performed on an object.\nThe values generally are given by the HTTP protocol when it is used, but it might (for similar reasons as for the <strong>title</strong> attribute) be useful to include advisory information in advance in the link.\nFor example, the browser might choose a different rendering of a link as a function of the methods specified;\nsomething that is searchable might get a different icon, or an outside link might render with an indication of leaving the current site.\nThis attribute is not well understood nor supported, even by the defining browser, Internet Explorer 4."
         },
         "prefetch": {
@@ -5656,7 +5425,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "9",
             "Safari": "",
             "SafariIOS": ""
@@ -5674,7 +5442,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "6",
             "Opera": "12.1",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -5701,7 +5468,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "6",
             "Opera": "12.1",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -5725,7 +5491,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "6",
             "Opera": "12.1",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -5769,7 +5534,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "",
         "SafariIOS": ""
@@ -5795,7 +5559,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -5814,7 +5577,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "9",
         "Opera": "11",
         "Safari": "5.1",
         "SafariIOS": "5"
@@ -5841,7 +5603,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "65",
-        "IE": "2",
         "Opera": "7.2",
         "Safari": "1.2",
         "SafariIOS": ""
@@ -5862,7 +5623,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "2",
             "Opera": "7.2",
             "Safari": "1.2",
             "SafariIOS": ""
@@ -5880,7 +5640,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "2",
             "Opera": "7.2",
             "Safari": "1.2",
             "SafariIOS": ""
@@ -5898,7 +5657,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "2",
             "Opera": "7.2",
             "Safari": "1.2",
             "SafariIOS": ""
@@ -5916,7 +5674,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "2",
             "Opera": "7.2",
             "Safari": "1.2",
             "SafariIOS": ""
@@ -5934,7 +5691,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "3",
-            "IE": "5.5",
             "Opera": "15",
             "Safari": "1.2",
             "SafariIOS": ""
@@ -5952,7 +5708,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "3",
-            "IE": "5.5",
             "Opera": "15",
             "Safari": "1.2",
             "SafariIOS": ""
@@ -5970,7 +5725,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "2",
             "Opera": "7.2",
             "Safari": "1.2",
             "SafariIOS": ""
@@ -5988,7 +5742,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "2",
             "Opera": "7.2",
             "Safari": "1.2",
             "SafariIOS": ""
@@ -6006,7 +5759,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "3",
-            "IE": "4",
             "Opera": "15",
             "Safari": "1.2",
             "SafariIOS": ""
@@ -6024,7 +5776,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "3",
-            "IE": "5.5",
             "Opera": "15",
             "Safari": "1.2",
             "SafariIOS": ""
@@ -6042,7 +5793,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "2",
             "Opera": "7.2",
             "Safari": "1.2",
             "SafariIOS": ""
@@ -6061,7 +5811,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "6",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": ""
@@ -6096,7 +5845,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -6122,7 +5870,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -6139,7 +5886,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "6",
             "Opera": "12.1",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -6160,7 +5906,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "6",
             "Opera": "12.1",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -6317,7 +6062,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "9",
         "Opera": "11.1",
         "Safari": "5",
         "SafariIOS": "4.2"
@@ -6344,7 +6088,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -6362,7 +6105,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -6380,7 +6122,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "3",
         "SafariIOS": "2"
@@ -6397,7 +6138,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "3",
         "SafariIOS": "2"
@@ -6423,7 +6163,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "3",
         "SafariIOS": "2"
@@ -6450,7 +6189,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -6468,7 +6206,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -6494,7 +6231,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -6512,7 +6248,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -6529,7 +6264,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -6547,7 +6281,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -6564,7 +6297,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -6581,7 +6313,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -6598,7 +6329,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -6616,7 +6346,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -6634,7 +6363,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3.1",
             "SafariIOS": "2"
@@ -6650,7 +6378,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -6667,7 +6394,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -6684,7 +6410,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -6703,7 +6428,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -6729,7 +6453,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -6761,7 +6484,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -6778,7 +6500,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -6797,7 +6518,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "5.5",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -6823,7 +6543,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "8",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -6840,7 +6559,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "5.5",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -6859,7 +6577,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -6885,7 +6602,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -6902,7 +6618,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -6919,7 +6634,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -6936,7 +6650,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -7030,7 +6743,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "",
         "SafariIOS": ""
@@ -7057,7 +6769,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -7084,7 +6795,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -7102,7 +6812,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -7120,7 +6829,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -7138,7 +6846,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -7183,7 +6890,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -7223,7 +6929,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -7257,7 +6962,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -7292,7 +6996,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "6",
-        "IE": "10",
         "Opera": "11",
         "Safari": "6",
         "SafariIOS": "7"
@@ -7318,7 +7021,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "6",
-            "IE": "10",
             "Opera": "11",
             "Safari": "6",
             "SafariIOS": "7"
@@ -7335,7 +7037,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "6",
-            "IE": "10",
             "Opera": "11",
             "Safari": "6",
             "SafariIOS": "7"
@@ -7354,7 +7055,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "3",
         "SafariIOS": "2"
@@ -7383,8 +7083,7 @@
         "Deprecated"
       ],
       "compatibility": {
-        "Firefox": "38",
-        "IE": "5"
+        "Firefox": "38"
       },
       "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>&lt;rb&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element is used to delimit the base text component of a <a href=\"$MDN_URL$/Web/HTML/Element/ruby\"><code>&lt;ruby&gt;</code></a> annotation, i.e. the text that is being annotated. One <code>&lt;rb&gt;</code> element should wrap each separate atomic segment of the base text.",
       "details": {
@@ -7406,7 +7105,6 @@
         "ChromeAndroid": "",
         "Edge": "79",
         "Firefox": "38",
-        "IE": "5",
         "Opera": "15",
         "Safari": "5",
         "SafariIOS": "4.2"
@@ -7432,7 +7130,6 @@
         "ChromeAndroid": "",
         "Edge": "79",
         "Firefox": "38",
-        "IE": "5",
         "Opera": "15",
         "Safari": "5",
         "SafariIOS": "4.2"
@@ -7477,7 +7174,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "38",
-        "IE": "5",
         "Opera": "15",
         "Safari": "5",
         "SafariIOS": "4.2"
@@ -7503,7 +7199,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -7529,7 +7224,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -7555,7 +7249,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "12.1",
         "Safari": "3",
         "SafariIOS": "2"
@@ -7581,7 +7274,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -7632,7 +7324,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "3.5",
-            "IE": "10",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -7678,7 +7369,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -7731,7 +7421,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -7748,7 +7437,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -7764,7 +7452,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -7783,7 +7470,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "4",
-        "IE": "9",
         "Opera": "11.1",
         "Safari": "5",
         "SafariIOS": "4.2"
@@ -7809,7 +7495,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "2",
         "Safari": "",
         "SafariIOS": ""
@@ -7843,7 +7528,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -7860,7 +7544,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -7877,7 +7560,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -7894,7 +7576,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -7911,7 +7592,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "4",
-            "IE": "10",
             "Opera": "15",
             "Safari": "5.1",
             "SafariIOS": "5"
@@ -7928,7 +7608,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -7991,7 +7670,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -8017,7 +7695,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "15",
         "Safari": "3.1",
         "SafariIOS": "2"
@@ -8043,7 +7720,6 @@
             "ChromeAndroid": "90",
             "Edge": "",
             "Firefox": "108",
-            "IE": "9",
             "Opera": "76",
             "Safari": "15",
             "SafariIOS": "15"
@@ -8060,7 +7736,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "15",
-            "IE": "9",
             "Opera": "15",
             "Safari": "3.1",
             "SafariIOS": "2"
@@ -8093,7 +7768,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "3.5",
-            "IE": "9",
             "Opera": "15",
             "Safari": "3.1",
             "SafariIOS": "2"
@@ -8126,7 +7800,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "3.5",
-            "IE": "9",
             "Opera": "15",
             "Safari": "3.1",
             "SafariIOS": "2"
@@ -8143,7 +7816,6 @@
             "ChromeAndroid": "90",
             "Edge": "",
             "Firefox": "108",
-            "IE": "9",
             "Opera": "76",
             "Safari": "15",
             "SafariIOS": "15"
@@ -8162,7 +7834,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "",
         "SafariIOS": ""
@@ -8189,7 +7860,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -8209,7 +7879,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -8235,7 +7904,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "3",
         "Opera": "3.5",
         "Safari": "",
         "SafariIOS": ""
@@ -8275,7 +7943,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "3",
             "Opera": "3.5",
             "Safari": "",
             "SafariIOS": ""
@@ -8296,7 +7963,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "3",
             "Opera": "3.5",
             "Safari": "",
             "SafariIOS": ""
@@ -8314,7 +7980,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "3",
             "Opera": "3.5",
             "Safari": "",
             "SafariIOS": ""
@@ -8333,7 +7998,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -8383,7 +8047,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -8409,7 +8072,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -8436,7 +8098,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "12.1",
             "Safari": "",
             "SafariIOS": ""
@@ -8454,7 +8115,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "12.1",
             "Safari": "",
             "SafariIOS": ""
@@ -8472,7 +8132,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "12.1",
             "Safari": "",
             "SafariIOS": ""
@@ -8490,7 +8149,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "12.1",
             "Safari": "",
             "SafariIOS": ""
@@ -8508,7 +8166,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "12.1",
             "Safari": "",
             "SafariIOS": ""
@@ -8526,7 +8183,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "12.1",
             "Safari": "",
             "SafariIOS": ""
@@ -8544,7 +8200,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "12.1",
             "Safari": "",
             "SafariIOS": ""
@@ -8562,7 +8217,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "12.1",
             "Safari": "",
             "SafariIOS": ""
@@ -8580,7 +8234,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "12.1",
             "Safari": "",
             "SafariIOS": ""
@@ -8599,7 +8252,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -8625,7 +8277,6 @@
             "Chrome": "",
             "ChromeAndroid": "",
             "Edge": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -8643,7 +8294,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -8660,7 +8310,6 @@
             "Chrome": "",
             "ChromeAndroid": "",
             "Edge": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -8677,7 +8326,6 @@
             "Chrome": "",
             "ChromeAndroid": "",
             "Edge": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -8694,7 +8342,6 @@
             "Chrome": "",
             "ChromeAndroid": "",
             "Edge": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -8713,7 +8360,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -8740,7 +8386,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -8757,7 +8402,6 @@
             "Chrome": "",
             "ChromeAndroid": "",
             "Edge": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -8775,7 +8419,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -8793,7 +8436,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -8810,7 +8452,6 @@
             "Chrome": "",
             "ChromeAndroid": "",
             "Edge": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -8827,7 +8468,6 @@
             "Chrome": "",
             "ChromeAndroid": "",
             "Edge": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -8844,7 +8484,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -8861,7 +8500,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -8882,7 +8520,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -8900,7 +8537,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -8917,7 +8553,6 @@
             "Chrome": "",
             "ChromeAndroid": "",
             "Edge": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -8935,7 +8570,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -8995,7 +8629,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "12.1",
         "Safari": "4",
         "SafariIOS": "3"
@@ -9045,7 +8678,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "6",
             "Opera": "12.1",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -9077,7 +8709,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "6",
             "Opera": "12.1",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -9094,7 +8725,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "6",
             "Opera": "12.1",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -9111,7 +8741,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "4",
-            "IE": "10",
             "Opera": "12.1",
             "Safari": "5",
             "SafariIOS": "5"
@@ -9144,7 +8773,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "6",
             "Opera": "12.1",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -9161,7 +8789,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "4",
-            "IE": "10",
             "Opera": "12.1",
             "Safari": "5",
             "SafariIOS": "5"
@@ -9178,7 +8805,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "6",
             "Opera": "12.1",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -9195,7 +8821,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "4",
-            "IE": "10",
             "Opera": "12.1",
             "Safari": "5",
             "SafariIOS": "5"
@@ -9212,7 +8837,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "6",
             "Opera": "12.1",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -9229,7 +8853,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "2",
-            "IE": "",
             "Opera": "15",
             "Safari": "5.1",
             "SafariIOS": "5"
@@ -9246,7 +8869,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "4",
-            "IE": "6",
             "Opera": "12.1",
             "Safari": "6",
             "SafariIOS": "6"
@@ -9265,7 +8887,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -9291,7 +8912,6 @@
             "Chrome": "",
             "ChromeAndroid": "",
             "Edge": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -9309,7 +8929,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -9326,7 +8945,6 @@
             "Chrome": "",
             "ChromeAndroid": "",
             "Edge": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -9343,7 +8961,6 @@
             "Chrome": "",
             "ChromeAndroid": "",
             "Edge": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -9360,7 +8977,6 @@
             "Chrome": "",
             "ChromeAndroid": "",
             "Edge": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -9379,7 +8995,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -9405,7 +9020,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -9422,7 +9036,6 @@
             "Chrome": "",
             "ChromeAndroid": "",
             "Edge": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -9440,7 +9053,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -9458,7 +9070,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -9475,7 +9086,6 @@
             "Chrome": "",
             "ChromeAndroid": "",
             "Edge": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -9492,7 +9102,6 @@
             "Chrome": "",
             "ChromeAndroid": "",
             "Edge": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -9509,7 +9118,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -9526,7 +9134,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -9547,7 +9154,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -9564,7 +9170,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -9581,7 +9186,6 @@
             "Chrome": "",
             "ChromeAndroid": "",
             "Edge": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -9599,7 +9203,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -9618,7 +9221,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -9644,7 +9246,6 @@
             "Chrome": "",
             "ChromeAndroid": "",
             "Edge": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -9662,7 +9263,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -9679,7 +9279,6 @@
             "Chrome": "",
             "ChromeAndroid": "",
             "Edge": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -9696,7 +9295,6 @@
             "Chrome": "",
             "ChromeAndroid": "",
             "Edge": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -9713,7 +9311,6 @@
             "Chrome": "",
             "ChromeAndroid": "",
             "Edge": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -9775,7 +9372,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "",
         "SafariIOS": ""
@@ -9801,7 +9397,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "12.1",
         "Safari": "",
         "SafariIOS": ""
@@ -9827,7 +9422,6 @@
             "Chrome": "",
             "ChromeAndroid": "",
             "Edge": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -9845,7 +9439,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "",
             "SafariIOS": ""
@@ -9862,7 +9455,6 @@
             "Chrome": "",
             "ChromeAndroid": "",
             "Edge": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -9879,7 +9471,6 @@
             "Chrome": "",
             "ChromeAndroid": "",
             "Edge": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -9896,7 +9487,6 @@
             "Chrome": "",
             "ChromeAndroid": "",
             "Edge": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -9915,7 +9505,6 @@
         "ChromeAndroid": "25",
         "Edge": "",
         "Firefox": "31",
-        "IE": "10",
         "Opera": "12.1",
         "Safari": "6",
         "SafariIOS": "6"
@@ -9941,7 +9530,6 @@
             "ChromeAndroid": "25",
             "Edge": "",
             "Firefox": "31",
-            "IE": "10",
             "Opera": "12.1",
             "Safari": "6",
             "SafariIOS": "6"
@@ -9958,7 +9546,6 @@
             "ChromeAndroid": "25",
             "Edge": "",
             "Firefox": "31",
-            "IE": "10",
             "Opera": "12.1",
             "Safari": "6",
             "SafariIOS": "6"
@@ -9975,7 +9562,6 @@
             "ChromeAndroid": "25",
             "Edge": "",
             "Firefox": "31",
-            "IE": "10",
             "Opera": "12.1",
             "Safari": "6",
             "SafariIOS": "6"
@@ -9992,7 +9578,6 @@
             "ChromeAndroid": "25",
             "Edge": "",
             "Firefox": "31",
-            "IE": "10",
             "Opera": "12.1",
             "Safari": "6",
             "SafariIOS": "6"
@@ -10009,7 +9594,6 @@
             "ChromeAndroid": "25",
             "Edge": "",
             "Firefox": "31",
-            "IE": "10",
             "Opera": "12.1",
             "Safari": "6",
             "SafariIOS": "6"
@@ -10029,7 +9613,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -10054,7 +9637,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -10080,7 +9662,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -10106,7 +9687,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "3",
             "SafariIOS": "2"
@@ -10123,7 +9703,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "",
-            "IE": "",
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
@@ -10142,7 +9721,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"
@@ -10168,7 +9746,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "3.5",
-        "IE": "9",
         "Opera": "10.5",
         "Safari": "3.1",
         "SafariIOS": "3"
@@ -10194,7 +9771,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "3.5",
-            "IE": "9",
             "Opera": "10.5",
             "Safari": "3.1",
             "SafariIOS": "10"
@@ -10211,7 +9787,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "3.5",
-            "IE": "9",
             "Opera": "10.5",
             "Safari": "3.1",
             "SafariIOS": "3"
@@ -10256,7 +9831,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "3.5",
-            "IE": "9",
             "Opera": "10.5",
             "Safari": "3.1",
             "SafariIOS": "3"
@@ -10273,7 +9847,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "11",
-            "IE": "9",
             "Opera": "10.5",
             "Safari": "3.1",
             "SafariIOS": "6"
@@ -10290,7 +9863,6 @@
             "ChromeAndroid": "30",
             "Edge": "",
             "Firefox": "11",
-            "IE": "10",
             "Opera": "",
             "Safari": "5"
           },
@@ -10310,7 +9882,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "3.6",
-            "IE": "9",
             "Opera": "10.5",
             "Safari": "3.1",
             "SafariIOS": "3"
@@ -10327,7 +9898,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "4",
-            "IE": "9",
             "Opera": "",
             "Safari": "3.1",
             "SafariIOS": "3"
@@ -10344,7 +9914,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "3.5",
-            "IE": "9",
             "Opera": "10.5",
             "Safari": "3.1",
             "SafariIOS": "3"
@@ -10361,7 +9930,6 @@
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "3.5",
-            "IE": "9",
             "Opera": "10.5",
             "Safari": "3.1",
             "SafariIOS": "3"
@@ -10406,7 +9974,6 @@
         "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "",
-        "IE": "",
         "Opera": "15",
         "Safari": "4",
         "SafariIOS": "3.2"

@@ -400,11 +400,11 @@ enum class MdnJavaScriptRuntime(displayName: String? = null, mdnId: String? = nu
   ChromeAndroid(displayName = "Chrome Android", mdnId = "chrome_android", firstVersion = "18"),
   Edge(firstVersion = "12"),
   Firefox,
-  IE,
   Opera,
   Safari,
   SafariIOS(displayName = "Safari iOS", mdnId = "safari_ios"),
   Nodejs(displayName = "Node.js", firstVersion = "0.10.0"),
+  Deno(firstVersion = "1.0")
   ;
 
   val mdnId: String = mdnId ?: toLowerCase(name)
