@@ -284,7 +284,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     def projectSourceCompatibility = getSourceCompatibility(project)
     def projectTargetCompatibility = getTargetCompatibility(project)
 
-    def result = new LinkedHashMap<String, DefaultExternalSourceSet>();
+    def result = new LinkedHashMap<String, DefaultExternalSourceSet>()
     def sourceSets = JavaPluginUtil.getJavaPluginAccessor(project).sourceSetContainer
     if (sourceSets == null) {
       return result
@@ -316,8 +316,10 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
             try {
               def metadata = compiler.get().metadata
               def configuredInstallationPath = metadata.installationPath.asFile.canonicalPath
-              boolean isFallbackToolchain = is80OrBetter && metadata instanceof JavaToolchain && ((JavaToolchain)metadata).isFallbackToolchain();
-              boolean isJavaHomeCompiler = configuredInstallationPath != null && configuredInstallationPath == System.getProperty("java.home");
+              boolean isFallbackToolchain =
+                is80OrBetter && metadata instanceof JavaToolchain && ((JavaToolchain)metadata).isFallbackToolchain()
+              boolean isJavaHomeCompiler =
+                configuredInstallationPath != null && configuredInstallationPath == System.getProperty("java.home")
               if (!isJavaHomeCompiler && !isFallbackToolchain) {
                 externalSourceSet.jdkInstallationPath = configuredInstallationPath
               }
@@ -756,14 +758,14 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     def project = archiveTask.project
 
     try {
-      final Method mainSpecGetter = AbstractCopyTask.class.getDeclaredMethod("getMainSpec");
-      mainSpecGetter.setAccessible(true);
-      Object mainSpec = mainSpecGetter.invoke(archiveTask);
+      final Method mainSpecGetter = AbstractCopyTask.class.getDeclaredMethod("getMainSpec")
+      mainSpecGetter.setAccessible(true)
+      Object mainSpec = mainSpecGetter.invoke(archiveTask)
 
       final List<MetaMethod> sourcePathGetters =
-        DefaultGroovyMethods.respondsTo(mainSpec, "getSourcePaths", new Object[]{});
+        DefaultGroovyMethods.respondsTo(mainSpec, "getSourcePaths", new Object[]{})
       if (!sourcePathGetters.isEmpty()) {
-        Set<Object> sourcePaths = (Set<Object>)sourcePathGetters.get(0).doMethodInvoke(mainSpec, new Object[]{});
+        Set<Object> sourcePaths = (Set<Object>)sourcePathGetters.get(0).doMethodInvoke(mainSpec, new Object[]{})
         if (sourcePaths != null) {
           for (Object path : sourcePaths) {
             if (isSafeToResolve(path, project)) {
@@ -775,7 +777,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
       }
     }
     catch (Exception e) {
-      throw new RuntimeException(e);
+      throw new RuntimeException(e)
     }
 
     return outputFiles.isEmpty()
@@ -838,10 +840,10 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     for (final SourceSet sourceSet in sourceSets) {
       if (archiveTask.name == sourceSet.jarTaskName) {
         // there is a sourceSet that 'owns' this task
-        return false;
+        return false
       }
     }
     // name of this task is not associated with any source set
-    return true;
+    return true
   }
 }
