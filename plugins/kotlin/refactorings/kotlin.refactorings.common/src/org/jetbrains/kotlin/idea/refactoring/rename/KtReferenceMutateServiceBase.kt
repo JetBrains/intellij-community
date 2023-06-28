@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.refactoring.rename
 
 import com.intellij.psi.PsiElement
 import com.intellij.util.IncorrectOperationException
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
 import org.jetbrains.kotlin.idea.kdoc.KDocElementFactory
@@ -23,6 +24,20 @@ import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 abstract class KtReferenceMutateServiceBase : KtReferenceMutateService {
+    override fun bindToElement(ktReference: KtReference, element: PsiElement): PsiElement = when (ktReference) {
+        is KtSimpleNameReference -> bindToElement(ktReference, element, KtSimpleNameReference.ShorteningMode.DELAYED_SHORTENING)
+        else -> throw IncorrectOperationException()
+    }
+
+    override fun bindToElement(
+        simpleNameReference: KtSimpleNameReference,
+        element: PsiElement,
+        shorteningMode: KtSimpleNameReference.ShorteningMode
+    ): PsiElement {
+        return element.kotlinFqName?.let { fqName -> bindToFqName(simpleNameReference, fqName, shorteningMode, element) }
+            ?: simpleNameReference.expression
+    }
+
     override fun handleElementRename(ktReference: KtReference, newElementName: String): PsiElement? {
         return when (ktReference) {
             is KtArrayAccessReference -> ktReference.renameTo(newElementName)
