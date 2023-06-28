@@ -205,7 +205,7 @@ public final class ActionUtil {
   }
 
   private static boolean isActionLightEditCompatible(@NotNull AnAction action) {
-    if (action instanceof AnActionWrapper wrapper) return isActionLightEditCompatible(wrapper);
+    if (action instanceof AnActionWrapper wrapper) return isActionLightEditCompatible(wrapper.getDelegate());
     return (action instanceof ActionGroup) && action.isDumbAware() || action instanceof LightEditCompatible;
   }
 
