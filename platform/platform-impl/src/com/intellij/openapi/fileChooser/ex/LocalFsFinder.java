@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.execution.wsl.WSLDistribution;
@@ -220,7 +220,7 @@ public class LocalFsFinder implements Finder {
 
     @Override
     public String getAbsolutePath() {
-      return myFile.getParent() == null && myFile.getName().length() == 0 ? "/" : myFile.getPresentableUrl();
+      return myFile.getParent() == null && myFile.getName().isEmpty() ? "/" : myFile.getPresentableUrl();
     }
 
     @Override
