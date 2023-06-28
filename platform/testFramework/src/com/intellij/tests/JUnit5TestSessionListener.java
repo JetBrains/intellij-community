@@ -1,11 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tests;
 
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.IoTestUtil;
@@ -15,7 +12,6 @@ import com.intellij.testFramework.Timings;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.Functions;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.platform.launcher.LauncherSession;
@@ -28,9 +24,14 @@ import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
-@SuppressWarnings("UseOfSystemOutOrSystemErr")
+/**
+ * This class is a replacement for {@linkplain _FirstInSuiteTest} and {@linkplain _LastInSuiteTest} for JUnit5 tests
+ *
+ * @see _FirstInSuiteTest
+ * @see _LastInSuiteTest
+ */
+@SuppressWarnings({"UseOfSystemOutOrSystemErr", "JavadocReference"})
 public class JUnit5TestSessionListener implements LauncherSessionListener {
   boolean includeFirstLast = !"true".equals(System.getProperty("intellij.build.test.ignoreFirstAndLastTests")) && 
                              UsefulTestCase.IS_UNDER_TEAMCITY;
@@ -90,17 +91,7 @@ public class JUnit5TestSessionListener implements LauncherSessionListener {
                              }
                            },
                            () -> {
-                             if (Boolean.getBoolean("idea.test.guimode")) {
-                               Application application = ApplicationManager.getApplication();
-                               application.invokeAndWait(() -> {
-                                 UIUtil.dispatchAllInvocationEvents();
-                                 application.exit(true, true, false);
-                               });
-                               ShutDownTracker.getInstance().waitFor(100, TimeUnit.SECONDS);
-                             }
-                             else {
-                               TestApplicationManager.disposeApplicationAndCheckForLeaks();
-                             }
+                             TestApplicationManager.testProjectLeak();
                            },
                            () -> {
                              Collection<Language> languages = Language.getRegisteredLanguages();
