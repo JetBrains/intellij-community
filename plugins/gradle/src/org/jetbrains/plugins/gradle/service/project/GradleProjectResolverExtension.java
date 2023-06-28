@@ -106,13 +106,16 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
   @NotNull
   Set<Class<?>> getExtraProjectModelClasses();
 
+  @NotNull
+  Set<Class<?>> getExtraBuildModelClasses();
+
   /**
    * Allows to request gradle tooling models after "sync" tasks are run
    *
    * @see BuildActionExecuter.Builder#buildFinished(org.gradle.tooling.BuildAction, IntermediateResultHandler)
    */
   @Nullable
-  default ProjectImportModelProvider getModelProvider() {return null;}
+  default ProjectImportModelProvider getModelProvider() { return null; }
 
   /**
    * Allows to request gradle tooling models after gradle projects are loaded and before "sync" tasks are run.
@@ -121,7 +124,7 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
    * @see BuildActionExecuter.Builder#projectsLoaded(org.gradle.tooling.BuildAction, IntermediateResultHandler)
    */
   @Nullable
-  default ProjectImportModelProvider getProjectsLoadedModelProvider() {return null;}
+  default ProjectImportModelProvider getProjectsLoadedModelProvider() { return null; }
 
   /**
    * add paths containing these classes to classpath of gradle tooling extension
