@@ -4,6 +4,8 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.accessibility.AccessibilityUtils
+import com.intellij.diagnostic.rootTask
+import com.intellij.diagnostic.subtask
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.actions.ToggleDistractionFreeModeAction
 import com.intellij.ide.ui.UISettings
@@ -225,7 +227,18 @@ open class IdeRootPane internal constructor(frame: JFrame,
     @Suppress("LeakingThis")
     contentPane.add(createCenterComponent(frame, parentDisposable), BorderLayout.CENTER)
 
-    if (isLightEdit && ExperimentalUI.isNewUI()) updateToolbar()
+    if (isLightEdit) {
+      if (ExperimentalUI.isNewUI()) {
+        updateToolbar()
+      }
+    }
+    else {
+      // init of toolbar in window header is important to make as fast as possible
+      // https://youtrack.jetbrains.com/issue/IDEA-323474
+      coroutineScope.launch(rootTask() + Dispatchers.EDT) {
+        initToolbar()
+      }
+    }
   }
 
   companion object {
@@ -360,13 +373,16 @@ open class IdeRootPane internal constructor(frame: JFrame,
     }
   }
 
-  fun initToolbar(actionGroups: List<Pair<ActionGroup, String>>) {
+  private suspend fun initToolbar() {
+    val actionGroups = MainToolbar.computeActionGroups()
     val toolbarHolder = helper.toolbarHolder
     if (toolbarHolder != null) {
       toolbarHolder.initToolbar(actionGroups)
     }
     else if (ExperimentalUI.isNewUI()) {
-      (toolbar as MainToolbar).init(actionGroups)
+      subtask("toolbar init", Dispatchers.EDT) {
+        (toolbar as MainToolbar).init(actionGroups)
+      }
     }
   }
 
