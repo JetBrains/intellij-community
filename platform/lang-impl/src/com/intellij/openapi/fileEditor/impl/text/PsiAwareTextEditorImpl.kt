@@ -24,6 +24,8 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader.Companion.isEditorLoaded
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.TextRange
@@ -86,7 +88,7 @@ open class PsiAwareTextEditorImpl : TextEditorImpl {
       }
     }
 
-    state.placeholders = catchingExceptions {
+    state.placeholders = catchingExceptionsAsync {
       CodeVisionInitializer.getInstance(project).getCodeVisionHost().collectPlaceholders(editor, state.psiFile)
     }
 
@@ -158,7 +160,7 @@ private class PsiAwareTextEditorComponent(private val project: Project,
   }
 }
 
-private inline fun <T : Any> catchingExceptions(computable: () -> T?): T? {
+private inline fun <T : Any> catchingExceptionsAsync(computable: () -> T?): T? {
   try {
     return computable()
   }
@@ -166,10 +168,26 @@ private inline fun <T : Any> catchingExceptions(computable: () -> T?): T? {
     throw e
   }
   catch (e: Throwable) {
-    if (e is ControlFlowException) {
-      throw e
-    }
-    LOG.warn("Exception during editor loading", e)
+    LOG.warn("Exception during editor loading", if (e is ControlFlowException) RuntimeException(e) else e)
+    return null
+  }
+}
+
+private inline fun <T : Any> catchingExceptions(computable: () -> T?): T? {
+  try {
+    return computable()
+  }
+  catch (e: CancellationException) {
+    throw e
+  }
+  catch (e: ProcessCanceledException) {
+    // will throw if actually canceled
+    ProgressManager.checkCanceled()
+    // otherwise, this PCE is manual -> threat it like any other exception
+    LOG.warn("Exception during editor loading", RuntimeException(e))
+  }
+  catch (e: Throwable) {
+    LOG.warn("Exception during editor loading", if (e is ControlFlowException) RuntimeException(e) else e)
   }
   return null
 }
