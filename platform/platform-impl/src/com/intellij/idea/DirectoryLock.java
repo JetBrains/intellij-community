@@ -16,6 +16,7 @@ import com.sun.jna.platform.win32.WinDef;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -145,7 +146,13 @@ final class DirectoryLock {
       throw new CannotActivateException(e);
     }
 
+    if (LOG.isDebugEnabled()) LOG.debug("Deleting " + myPortFile);
     Files.deleteIfExists(myPortFile);
+    if (myRedirectedPortFile != null) {
+      if (LOG.isDebugEnabled()) LOG.debug("Deleting " + myRedirectedPortFile);
+      Files.deleteIfExists(myRedirectedPortFile);
+    }
+
     return tryListen();
   }
 
@@ -316,6 +323,11 @@ final class DirectoryLock {
   }
 
   //<editor-fold desc="Helpers">
+  @VisibleForTesting
+  @Nullable Path getRedirectedPortFile() {
+    return myRedirectedPortFile;
+  }
+
   private static void sendLines(SocketChannel socketChannel, List<String> lines) throws IOException {
     var buffer = ByteBuffer.allocate(BUFFER_LENGTH);
     buffer.putInt(MARKER).putShort((short)0);
