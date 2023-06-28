@@ -16,11 +16,13 @@ import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.requests.ClassPrepareRequestor
+import com.intellij.debugger.ui.breakpoints.Breakpoint
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElement
@@ -31,8 +33,10 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.childrenOfType
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.ThreeState
+import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.xdebugger.frame.XStackFrame
+import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.jetbrains.jdi.LocalVariableImpl
 import com.sun.jdi.*
 import com.sun.jdi.request.ClassPrepareRequest
@@ -563,7 +567,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         }
 
         val isInsideProjectWithCompose = position.isInsideProjectWithCompose()
-        return ReadAction.nonBlocking<List<ClassPrepareRequest>> {
+        var nonBlocking = ReadAction.nonBlocking<List<ClassPrepareRequest>> {
             val kotlinRequests = createKotlinClassPrepareRequests(requestor, position)
             if (isInsideProjectWithCompose) {
                 val singletonRequest = getClassPrepareRequestForComposableSingletons(debugProcess, requestor, file)
@@ -574,7 +578,19 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             } else {
                 kotlinRequests
             }
-        }.inSmartMode(debugProcess.project).executeSynchronously()
+        }
+            .inSmartMode(debugProcess.project)
+
+        val xBreakpoint = requestor.safeAs<Breakpoint<*>>()?.xBreakpoint
+        val xSession = debugProcess.asSafely<DebugProcessImpl>()?.xdebugProcess?.session.asSafely<XDebugSessionImpl>()
+        if (xBreakpoint != null && xSession != null) {
+            nonBlocking = nonBlocking.expireWhen { !xSession.isBreakpointActive(xBreakpoint) }
+        }
+        try {
+            return nonBlocking.executeSynchronously()
+        } catch (_: ProcessCanceledException) {
+            return emptyList()
+        }
     }
 
     @RequiresReadLock
