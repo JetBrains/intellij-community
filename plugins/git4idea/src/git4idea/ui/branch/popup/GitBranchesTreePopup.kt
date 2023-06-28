@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.TreePopup
 import com.intellij.openapi.util.*
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.*
 import com.intellij.ui.popup.NextStepHandler
 import com.intellij.ui.popup.PopupFactoryImpl
@@ -412,6 +413,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     rowHeight = treeRowHeight
     isLargeModel = true
     expandsSelectedPaths = true
+    toggleClickCount = if (Registry.`is`("git.branches.tree.popup.expand.node.on.single.click")) 1 else 2
     SmartExpander.installOn(this)
   }
 
