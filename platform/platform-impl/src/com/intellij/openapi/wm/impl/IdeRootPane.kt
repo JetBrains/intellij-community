@@ -727,7 +727,7 @@ private suspend fun createToolbar(coroutineScope: CoroutineScope, frame: JFrame)
   else {
     // don't bother a client to know that old ui doesn't use coroutine scope
     coroutineScope.cancel()
-    val group = CustomActionsSchema.getInstanceAsync().getCorrectedAction(IdeActions.GROUP_MAIN_TOOLBAR) as ActionGroup
+    val group = CustomActionsSchema.getInstanceAsync().getCorrectedActionAsync(IdeActions.GROUP_MAIN_TOOLBAR)!!
     val toolBar = ActionManagerEx.getInstanceEx().createActionToolbar(ActionPlaces.MAIN_TOOLBAR, group, true)
     toolBar.targetComponent = null
     toolBar.layoutPolicy = ActionToolbar.WRAP_LAYOUT_POLICY

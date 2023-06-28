@@ -321,8 +321,14 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
     return element
   }
 
+  @RequiresBlockingContext
   fun getCorrectedAction(id: String): AnAction? {
     val name = idToName.get(id) ?: return ActionManager.getInstance().getAction(id)
+    return getCorrectedAction(id, name)
+  }
+
+  suspend fun getCorrectedActionAsync(id: String): ActionGroup? {
+    val name = idToName.get(id) ?: return serviceAsync<ActionManager>().getAction(id) as? ActionGroup
     return getCorrectedAction(id, name)
   }
 

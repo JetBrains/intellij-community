@@ -35,7 +35,7 @@ internal fun createMacMenuBar(coroutineScope: CoroutineScope, component: JCompon
 
   val screenMenuPeer = runActivity("ide menu bar init") { createScreeMenuPeer(frame) }
   val menuBarHelper = if (screenMenuPeer == null) {
-    IdeMenuBarHelper(flavor = flavor, menuBar = facade)
+    JMenuBasedIdeMenuBarHelper(flavor = flavor, menuBar = facade)
   }
   else {
     PeerBasedIdeMenuBarHelper(screenMenuPeer = screenMenuPeer, flavor = flavor, menuBar = facade)

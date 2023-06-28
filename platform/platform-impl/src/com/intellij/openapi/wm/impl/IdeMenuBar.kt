@@ -80,7 +80,7 @@ open class IdeMenuBar internal constructor(@JvmField internal val coroutineScope
 
     screenMenuPeer = runActivity("ide menu bar init") { createScreeMenuPeer(frame) }
     if (screenMenuPeer == null) {
-      menuBarHelper = IdeMenuBarHelper(flavor = flavor, menuBar = facade)
+      menuBarHelper = JMenuBasedIdeMenuBarHelper(flavor = flavor, menuBar = facade)
     }
     else {
       menuBarHelper = PeerBasedIdeMenuBarHelper(screenMenuPeer = screenMenuPeer, flavor = flavor, menuBar = facade)
