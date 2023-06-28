@@ -62,7 +62,7 @@ abstract class IssueIDPrePushHandler : PrePushHandler {
 
   private fun PushInfo.hasCommitsToEdit(modalityState: ModalityState): Boolean {
     val commitsToWarnAbout = commits.asSequence()
-      .filter(::breaksKotlinPluginMessageRules)
+      .filter(::breaksMessageRules)
       .map { it.id.toShortString() to it.subject }
       .toList()
 
@@ -87,6 +87,6 @@ abstract class IssueIDPrePushHandler : PrePushHandler {
     return !commitAsIs
   }
 
-  private fun breaksKotlinPluginMessageRules(commit: VcsFullCommitDetails) =
+  private fun breaksMessageRules(commit: VcsFullCommitDetails) =
     containSources(commit.changes.mapNotNull { it.virtualFile }) && !commitMessageIsCorrect(commit.fullMessage)
 }
