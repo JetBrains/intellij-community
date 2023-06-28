@@ -54,9 +54,13 @@
     <diff.DiffExtension implementation="org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRViewedStateDiffExtension"/>
     <diff.DiffExtension implementation="org.jetbrains.plugins.github.pullrequest.comment.GHPRReviewThreadsDiffExtension"/>
     <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
-      implementation="org.jetbrains.plugins.github.ui.cloneDialog.GHCloneDialogExtension"/>
+      id="org.jetbrains.plugins.github.ui.cloneDialog.GHCloneDialogExtension"
+      implementation="org.jetbrains.plugins.github.ui.cloneDialog.GHCloneDialogExtension"
+      order="after com.intellij.space.vcs.clone.SpaceCloneExtension"/>
     <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
-      implementation="org.jetbrains.plugins.github.ui.cloneDialog.GHECloneDialogExtension"/>
+      id="org.jetbrains.plugins.github.ui.cloneDialog.GHECloneDialogExtension"
+      implementation="org.jetbrains.plugins.github.ui.cloneDialog.GHECloneDialogExtension"
+      order="after org.jetbrains.plugins.github.ui.cloneDialog.GHCloneDialogExtension"/>
 
     <virtualFileSystem key="ghpr" implementationClass="org.jetbrains.plugins.github.pullrequest.GHPRVirtualFileSystem"/>
     <fileIconProvider implementation="org.jetbrains.plugins.github.pullrequest.GHPRVirtualFileIconProvider" order="first"/>
