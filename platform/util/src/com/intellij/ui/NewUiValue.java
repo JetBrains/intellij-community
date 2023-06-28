@@ -12,10 +12,12 @@ import java.util.function.Supplier;
  * <p>
  * See [ExperimentalUIImpl.setNewUIInternal] for more.
  */
-public final class NewUi {
+public final class NewUiValue {
+  /**
+   * @deprecated You probably should not use this key directly,
+   *             consider using isEnabled method instead.
+   */
   @Deprecated
-  // You probably should not use this key directly,
-  // consider using isEnabled method instead.
   public static final String KEY = "ide.experimental.ui";
   @Nullable
   private static volatile Boolean overrideNewUiForOneRemDevSession = null;

@@ -48,7 +48,7 @@ private class ExperimentalUIImpl : ExperimentalUI() {
    * On app closing, we save new value stored in the [shouldApplyOnClose]
    */
   override fun setNewUIInternal(newUI: Boolean, suggestRestart: Boolean) {
-    if (newUI == NewUi.isEnabled()) {
+    if (newUI == NewUiValue.isEnabled()) {
       logger.warn("Setting the same value $newUI")
       return
     }
@@ -84,7 +84,7 @@ private class ExperimentalUIImpl : ExperimentalUI() {
 
   fun appClosing() {
     val newValue = shouldApplyOnClose
-    if (newValue != null && newValue != NewUi.isEnabled()) {
+    if (newValue != null && newValue != NewUiValue.isEnabled()) {
       saveNewValue(newValue)
     }
   }

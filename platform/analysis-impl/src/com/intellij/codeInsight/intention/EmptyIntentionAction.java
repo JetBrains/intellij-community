@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.NewUi;
+import com.intellij.ui.NewUiValue;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,7 +53,7 @@ public final class EmptyIntentionAction extends AbstractEmptyIntentionAction imp
 
   @Override
   public Icon getIcon(@IconFlags int flags) {
-    return NewUi.isEnabled() ? EmptyIcon.ICON_0 : AllIcons.Actions.RealIntentionBulb;
+    return NewUiValue.isEnabled() ? EmptyIcon.ICON_0 : AllIcons.Actions.RealIntentionBulb;
   }
 
   @Override

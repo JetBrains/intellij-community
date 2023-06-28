@@ -10,9 +10,7 @@ import com.intellij.feedback.new_ui.CancelFeedbackNotification
 import com.intellij.feedback.new_ui.bundle.NewUIFeedbackBundle
 import com.intellij.feedback.new_ui.state.NewUIInfoService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.NewUi
+import com.intellij.ui.NewUiValue
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -44,7 +42,7 @@ class NewUIFeedbackDialog(
 
   override val mySystemInfoData: NewUIFeedbackSystemInfoData by lazy {
     val state = NewUIInfoService.getInstance().state
-    createNewUIFeedbackSystemInfoData(NewUi.isEnabled(), state.enableNewUIDate, state.disableNewUIDate)
+    createNewUIFeedbackSystemInfoData(NewUiValue.isEnabled(), state.enableNewUIDate, state.disableNewUIDate)
   }
   override val myShowFeedbackSystemInfoDialog: () -> Unit = {
     showNewUIFeedbackSystemInfoDialog(myProject, mySystemInfoData)

@@ -40,7 +40,7 @@ import static java.time.temporal.ChronoUnit.DAYS;
  */
 @ApiStatus.Internal
 public abstract class ExperimentalUI {
-  public static final String KEY = NewUi.KEY;
+  public static final String KEY = NewUiValue.KEY;
 
   public static final String NEW_UI_USED_PROPERTY = "experimental.ui.used.once";
   public static final String NEW_UI_FIRST_SWITCH = "experimental.ui.first.switch";
@@ -52,7 +52,7 @@ public abstract class ExperimentalUI {
   private IconPathPatcher iconPathPatcher;
 
   static {
-    NewUi.initialize(() -> EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY));
+    NewUiValue.initialize(() -> EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY));
   }
 
   public static ExperimentalUI getInstance() {
@@ -61,11 +61,11 @@ public abstract class ExperimentalUI {
 
   @Contract(pure = true)
   public static boolean isNewUI() {
-    return NewUi.isEnabled();
+    return NewUiValue.isEnabled();
   }
 
   public static void overrideNewUiForOneRemDevSession(boolean newUi) {
-    NewUi.overrideNewUiForOneRemDevSession(newUi);
+    NewUiValue.overrideNewUiForOneRemDevSession(newUi);
     getInstance().lookAndFeelChanged();
   }
 
