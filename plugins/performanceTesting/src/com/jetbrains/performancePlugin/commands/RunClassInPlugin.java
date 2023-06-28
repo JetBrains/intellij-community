@@ -108,6 +108,9 @@ public class RunClassInPlugin extends AbstractCommand {
     }
     catch (NoSuchMethodException ignored) {
     }
+    catch (InvocationTargetException e) {
+      rethrowInvocationTargetExceptionCauseIfCan(e);
+    }
 
     try {
       Method method = aClass.getMethod(myMethodName);
@@ -116,7 +119,22 @@ public class RunClassInPlugin extends AbstractCommand {
     }
     catch (NoSuchMethodException ignored) {
     }
+    catch (InvocationTargetException e) {
+      rethrowInvocationTargetExceptionCauseIfCan(e);
+    }
 
     throw new RuntimeException("Class " + myClazzName + " does not have " + myMethodName + " with no or Project parameter");
+  }
+
+  private static void rethrowInvocationTargetExceptionCauseIfCan(InvocationTargetException e) throws InvocationTargetException {
+    if (e.getCause() instanceof RuntimeException re) {
+      throw re;
+    }
+    else if (e.getCause() instanceof Error err) {
+      throw err;
+    }
+    else {
+      throw e;
+    }
   }
 }
