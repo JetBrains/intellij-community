@@ -9,9 +9,12 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.canPlaceAfterSimpleNameEntry
+import org.jetbrains.kotlin.resolve.calls.util.getValueArgumentsInParentheses
 
 inline fun <reified T : PsiElement> T.copied(): T {
     return copy() as T
@@ -106,4 +109,41 @@ fun KtParameter.setDefaultValue(newDefaultValue: KtExpression): PsiElement {
     val psiFactory = KtPsiFactory(project)
     val eq = equalsToken ?: add(psiFactory.createEQ())
     return addAfter(newDefaultValue, eq) as KtExpression
+}
+
+fun KtLambdaArgument.moveInsideParenthesesAndReplaceWith(
+    replacement: KtExpression,
+    functionLiteralArgumentName: Name?,
+    withNameCheck: Boolean = true,
+): KtCallExpression {
+    val oldCallExpression = parent as KtCallExpression
+    val newCallExpression = oldCallExpression.copy() as KtCallExpression
+
+    val psiFactory = KtPsiFactory(project)
+
+    val argument =
+        if (withNameCheck && shouldLambdaParameterBeNamed(newCallExpression.getValueArgumentsInParentheses(), oldCallExpression)) {
+            psiFactory.createArgument(replacement, functionLiteralArgumentName)
+        } else {
+            psiFactory.createArgument(replacement)
+        }
+
+    val functionLiteralArgument = newCallExpression.lambdaArguments.firstOrNull()!!
+    val valueArgumentList = newCallExpression.valueArgumentList ?: psiFactory.createCallArguments("()")
+
+    valueArgumentList.addArgument(argument)
+
+    (functionLiteralArgument.prevSibling as? PsiWhiteSpace)?.delete()
+    if (newCallExpression.valueArgumentList != null) {
+        functionLiteralArgument.delete()
+    } else {
+        functionLiteralArgument.replace(valueArgumentList)
+    }
+    return oldCallExpression.replace(newCallExpression) as KtCallExpression
+}
+
+private fun shouldLambdaParameterBeNamed(args: List<ValueArgument>, callExpr: KtCallExpression): Boolean {
+    if (args.any { it.isNamed() }) return true
+    val callee = (callExpr.calleeExpression?.mainReference?.resolve() as? KtFunction) ?: return false
+    return if (callee.valueParameters.any { it.isVarArg }) true else callee.valueParameters.size - 1 > args.size
 }

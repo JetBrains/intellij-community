@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.idea.base.psi.setDefaultValue
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
@@ -43,7 +42,6 @@ import org.jetbrains.kotlin.resolve.OverridingUtil
 import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
 import org.jetbrains.kotlin.resolve.calls.util.getParameterForArgument
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.util.getValueArgumentsInParentheses
 import org.jetbrains.kotlin.resolve.calls.util.isFakeElement
 import org.jetbrains.kotlin.resolve.checkers.ExplicitApiDeclarationChecker
 import org.jetbrains.kotlin.resolve.checkers.explicitApiEnabled
@@ -78,37 +76,6 @@ fun KtLambdaArgument.getLambdaArgumentName(bindingContext: BindingContext): Name
     return (resolvedCall?.getArgumentMapping(this) as? ArgumentMatch)?.valueParameter?.name
 }
 
-fun KtLambdaArgument.moveInsideParenthesesAndReplaceWith(
-    replacement: KtExpression,
-    functionLiteralArgumentName: Name?,
-    withNameCheck: Boolean = true,
-): KtCallExpression {
-    val oldCallExpression = parent as KtCallExpression
-    val newCallExpression = oldCallExpression.copy() as KtCallExpression
-
-    val psiFactory = KtPsiFactory(project)
-
-    val argument =
-        if (withNameCheck && shouldLambdaParameterBeNamed(newCallExpression.getValueArgumentsInParentheses(), oldCallExpression)) {
-            psiFactory.createArgument(replacement, functionLiteralArgumentName)
-        } else {
-            psiFactory.createArgument(replacement)
-        }
-
-    val functionLiteralArgument = newCallExpression.lambdaArguments.firstOrNull()!!
-    val valueArgumentList = newCallExpression.valueArgumentList ?: psiFactory.createCallArguments("()")
-
-    valueArgumentList.addArgument(argument)
-
-    (functionLiteralArgument.prevSibling as? PsiWhiteSpace)?.delete()
-    if (newCallExpression.valueArgumentList != null) {
-        functionLiteralArgument.delete()
-    } else {
-        functionLiteralArgument.replace(valueArgumentList)
-    }
-    return oldCallExpression.replace(newCallExpression) as KtCallExpression
-}
-
 fun KtLambdaExpression.moveFunctionLiteralOutsideParenthesesIfPossible() {
     val valueArgument = parentOfType<KtValueArgument>()?.takeIf {
         KtPsiUtil.deparenthesize(it.getArgumentExpression()) == this
@@ -118,12 +85,6 @@ fun KtLambdaExpression.moveFunctionLiteralOutsideParenthesesIfPossible() {
     if (call.canMoveLambdaOutsideParentheses()) {
         call.moveFunctionLiteralOutsideParentheses()
     }
-}
-
-private fun shouldLambdaParameterBeNamed(args: List<ValueArgument>, callExpr: KtCallExpression): Boolean {
-    if (args.any { it.isNamed() }) return true
-    val callee = (callExpr.calleeExpression?.mainReference?.resolve() as? KtFunction) ?: return false
-    return if (callee.valueParameters.any { it.isVarArg }) true else callee.valueParameters.size - 1 > args.size
 }
 
 fun KtCallExpression.getLastLambdaExpression(): KtLambdaExpression? {
