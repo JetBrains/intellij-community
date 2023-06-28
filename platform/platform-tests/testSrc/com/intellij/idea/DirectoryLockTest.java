@@ -191,8 +191,11 @@ public abstract sealed class DirectoryLockTest {
   @Test
   public void deletingStalePortFile() throws Exception {
     var systemDir = Files.createDirectories(testDir.resolve("s"));
-    Files.createFile(systemDir.resolve(SpecialConfigFiles.PORT_FILE));
     var lock = createLock(testDir.resolve("c"), systemDir);
+    Files.createFile(systemDir.resolve(SpecialConfigFiles.PORT_FILE));
+    if (lock.getRedirectedPortFile() != null) {
+      Files.createFile(lock.getRedirectedPortFile());
+    }
     assertNull(lock.lockOrActivate(currentDir, List.of()));
   }
 
