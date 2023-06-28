@@ -5,7 +5,7 @@ import com.intellij.driver.sdk.ui.remote.SearchContext
 import org.intellij.lang.annotations.Language
 import java.time.Duration
 
-private const val DEFAULT_FIND_TIMEOUT_SECONDS = 5
+private const val DEFAULT_FIND_TIMEOUT_SECONDS = 15
 
 interface ComponentFinder {
   val searchContext: SearchContext

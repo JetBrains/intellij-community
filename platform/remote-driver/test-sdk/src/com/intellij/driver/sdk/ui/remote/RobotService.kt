@@ -16,12 +16,6 @@ interface RemoteComponent : SearchContext {
   fun findAllText(): List<TextData>
 }
 
-@Remote("java.awt.Point")
-interface Point {
-  val x: Int
-  val y: Int
-}
-
 interface SearchContext {
   val robot: Robot
   val context: String

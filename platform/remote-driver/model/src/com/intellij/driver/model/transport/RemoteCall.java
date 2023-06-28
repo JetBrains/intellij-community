@@ -4,6 +4,7 @@ import com.intellij.driver.model.LockSemantics;
 import com.intellij.driver.model.OnDispatcher;
 import org.jetbrains.annotations.Contract;
 
+import java.awt.*;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Duration;
@@ -89,6 +90,7 @@ public abstract class RemoteCall implements Serializable {
            || result instanceof LocalDate
            || result instanceof LocalDateTime
            || result instanceof Duration
+           || result instanceof Point
            || result instanceof PassByValue;
   }
 }

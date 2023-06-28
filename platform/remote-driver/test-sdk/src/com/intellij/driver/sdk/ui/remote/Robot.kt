@@ -1,31 +1,35 @@
 package com.intellij.driver.sdk.ui.remote
 
 import com.intellij.driver.client.Remote
+import com.intellij.driver.model.transport.RemoteMouseButton
+import java.awt.Point
 
-@Remote("org.assertj.swing.core.Robot", plugin = REMOTE_ROBOT_MODULE_ID)
+@Remote("com.jetbrains.performancePlugin.remotedriver.robot.SmoothRobot", plugin = REMOTE_ROBOT_MODULE_ID)
 interface Robot {
   fun moveMouse(component: Component)
   fun moveMouse(component: Component, point: Point)
   fun moveMouse(point: Point)
   fun click(component: Component)
 
-  //fun click(component: Component, mouseButton: MouseButton)
-  //fun click(component: Component, mouseButton: MouseButton, counts: Int)
+  fun click(component: Component, mouseButton: RemoteMouseButton)
+  fun click(component: Component, mouseButton: RemoteMouseButton, counts: Int)
   fun click(component: Component, point: Point)
+  fun click(point: Point, button: RemoteMouseButton, times: Int)
+  fun click(component: Component, point: Point, button: RemoteMouseButton, times: Int)
   fun pressAndReleaseKey(p0: Int, vararg p1: Int)
   fun pressModifiers(p0: Int)
 
-  //fun pressMouse(mouseButton: MouseButton)
+  fun pressMouse(mouseButton: RemoteMouseButton)
   fun pressMouse(component: Component, point: Point)
 
-  //fun pressMouse(component: Component, point: Point, mouseButton: MouseButton)
-  //fun pressMouse(point: Point, mouseButton: MouseButton)
+  fun pressMouse(component: Component, point: Point, mouseButton: RemoteMouseButton)
+  fun pressMouse(point: Point, mouseButton: RemoteMouseButton)
   fun pressKey(p0: Int)
   fun releaseKey(p0: Int)
   fun type(char: Char)
   fun enterText(text: String)
 
-  //fun releaseMouse(mouseButton: MouseButton)
+  fun releaseMouse(mouseButton: RemoteMouseButton)
   fun releaseMouseButtons()
   fun rightClick(component: Component)
   fun focus(component: Component)
