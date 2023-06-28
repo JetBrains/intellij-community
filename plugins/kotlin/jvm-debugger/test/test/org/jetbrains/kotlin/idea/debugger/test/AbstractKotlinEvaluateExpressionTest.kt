@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test
 
@@ -17,6 +17,7 @@ import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.xdebugger.XDebuggerTestUtil
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup
@@ -63,9 +64,25 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
     private var isMultipleBreakpointsTest = false
     private var isFrameTest = false
 
+    private var originalEnableKotlinEvaluatorInJavaContext: Boolean = false
+
     override fun setUp() {
         super.setUp()
+        allowEvaluationInJavaContext()
         atDebuggerTearDown { exceptions.clear() }
+        atDebuggerTearDown { restoreEvaluationInJavaContext() }
+    }
+
+    private fun allowEvaluationInJavaContext() {
+        Registry.get("debugger.enable.kotlin.evaluator.in.java.context").let {
+            originalEnableKotlinEvaluatorInJavaContext = it.asBoolean()
+            it.setValue(true)
+        }
+    }
+
+    private fun restoreEvaluationInJavaContext() {
+        Registry.get("debugger.enable.kotlin.evaluator.in.java.context")
+          .setValue(originalEnableKotlinEvaluatorInJavaContext)
     }
 
     override fun fragmentCompilerBackend() =
