@@ -223,6 +223,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
         val nodeToExpand = when {
           node is GitBranch && isChild() && treeStep.affectedRepositories.any { it.currentBranch == node } -> node
           node is GitBranch && !isChild() && treeStep.affectedRepositories.all { it.currentBranch == node } -> node
+          node is GitBranch && treeStep.affectedRepositories.any { node in it.branches.recentCheckoutBranches } -> node
           node is BranchUnderRepository && node.repository.currentBranch == node.branch -> node
           node is BranchTypeUnderRepository -> node
           else -> null
