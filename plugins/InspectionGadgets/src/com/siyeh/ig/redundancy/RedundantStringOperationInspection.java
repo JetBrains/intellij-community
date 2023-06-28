@@ -518,7 +518,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
                                                           @NotNull @PropertyKey(resourceBundle = BUNDLE) String key) {
       if (argument == null) return null;
       LocalQuickFix fix =
-        new DeleteElementFix(argument, InspectionGadgetsBundle.message("inspection.redundant.string.remove.argument.fix.name"));
+        new DeleteElementFix(argument, InspectionGadgetsBundle.message("inspection.redundant.string.remove.argument.fix.name")).asQuickFix();
       return myManager.createProblemDescriptor(argument,
                                                InspectionGadgetsBundle.message(key),
                                                myIsOnTheFly,
@@ -556,8 +556,8 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
         if (ExpressionUtils.isZero(args[0])) {
           return getProblem(call, "inspection.redundant.string.call.message");
         }
-        DeleteElementFix fix =
-          new DeleteElementFix(args[1], InspectionGadgetsBundle.message("inspection.redundant.string.remove.argument.fix.name"));
+        LocalQuickFix fix =
+          new DeleteElementFix(args[1], InspectionGadgetsBundle.message("inspection.redundant.string.remove.argument.fix.name")).asQuickFix();
         return myManager.createProblemDescriptor(args[1],
                                                  InspectionGadgetsBundle.message("inspection.redundant.string.length.argument.message"),
                                                  fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly);

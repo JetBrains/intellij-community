@@ -1,12 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class DeleteElementFix extends LocalQuickFixAndIntentionActionOnPsiElement implements IntentionActionWithFixAllOption {
+public class DeleteElementFix extends PsiUpdateModCommandAction<PsiElement> {
   private final @Nls String myText;
 
   public DeleteElementFix(@NotNull PsiElement element) {
@@ -33,11 +33,9 @@ public class DeleteElementFix extends LocalQuickFixAndIntentionActionOnPsiElemen
     myText = text;
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getText() {
-    return myText == null ? getFamilyName() : myText;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+    return Presentation.of(myText == null ? getFamilyName() : myText).withFixAllOption(this);
   }
 
   @Nls
@@ -48,12 +46,8 @@ public class DeleteElementFix extends LocalQuickFixAndIntentionActionOnPsiElemen
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
-    new CommentTracker().deleteAndRestoreComments(startElement);
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    new CommentTracker().deleteAndRestoreComments(element);
   }
 
   public static final class DeleteMultiFix implements IntentionAction {

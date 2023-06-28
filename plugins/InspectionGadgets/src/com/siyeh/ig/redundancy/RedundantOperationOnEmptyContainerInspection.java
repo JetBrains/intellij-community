@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
@@ -12,6 +12,7 @@ import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -68,11 +69,11 @@ public class RedundantOperationOnEmptyContainerInspection extends AbstractBaseJa
         if (container != null) {
           String msg = getProblemMessage(container);
           if (msg == null) return;
-          LocalQuickFix fix = null;
+          ModCommandAction fix = null;
           if (ExpressionUtils.isVoidContext(call)) {
             fix = new DeleteElementFix(call, InspectionGadgetsBundle.message("remove.call.fix.family.name"));
           }
-          holder.registerProblem(container, msg, LocalQuickFix.notNullElements(fix, getFindCauseFix(container)));
+          holder.problem(container, msg).maybeFix(fix).fix(getFindCauseFix(container)).register();
         }
       }
 
@@ -82,12 +83,10 @@ public class RedundantOperationOnEmptyContainerInspection extends AbstractBaseJa
         if (value == null) return;
         String msg = getProblemMessage(value);
         if (msg == null) return;
-        holder.registerProblem(value, msg,
-                               new DeleteElementFix(statement, InspectionGadgetsBundle.message("remove.loop.fix.family.name")),
-                               getFindCauseFix(value));
+        holder.problem(value, msg).fix(new DeleteElementFix(statement, InspectionGadgetsBundle.message("remove.loop.fix.family.name"))).fix(getFindCauseFix(value)).register();
       }
 
-      private @NotNull LocalQuickFix getFindCauseFix(@NotNull PsiExpression value) {
+      private static @NotNull LocalQuickFix getFindCauseFix(@NotNull PsiExpression value) {
         PsiType type = value.getType();
         SpecialField field;
         if (type instanceof PsiArrayType) {

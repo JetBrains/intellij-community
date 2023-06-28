@@ -482,10 +482,10 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
             String inlineRegion = region != null && markup.getRegionStart(region) == null ? null : region;
             String inlineRendered = renderText(markup, inlineRegion);
             if (!externalRendered.equals(inlineRendered)) {
-              holder.registerProblem(nameElement, 
-                                     JavaBundle.message("inspection.message.external.snippet.differs.from.inline.snippet"),
-                                     new SynchronizeInlineMarkupFix(externalRendered),
-                                     new DeleteElementFix(body));
+              holder.problem(nameElement, JavaBundle.message("inspection.message.external.snippet.differs.from.inline.snippet"))
+                .fix(new SynchronizeInlineMarkupFix(externalRendered))
+                .fix(new DeleteElementFix(body))
+                .register();
             }
           }
         }

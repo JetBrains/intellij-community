@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -565,14 +565,10 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
         holder.newAnnotation(HighlightSeverity.ERROR, "i hate it")
           .newFix(new DeleteElementFix(element) {
             @Override
-            public boolean isAvailable(@NotNull Project project,
-                                       @NotNull PsiFile file,
-                                       @Nullable Editor editor,
-                                       @NotNull PsiElement startElement,
-                                       @NotNull PsiElement endElement) {
-              return FIX_ENABLED;
+            protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+              return FIX_ENABLED ? super.getPresentation(context, element) : null;
             }
-          }).registerFix().create();
+          }.asIntention()).registerFix().create();
         iDidIt();
       }
     }

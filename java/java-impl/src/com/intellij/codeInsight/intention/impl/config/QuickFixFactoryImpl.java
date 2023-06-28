@@ -775,7 +775,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public LocalQuickFixAndIntentionActionOnPsiElement createDeleteFix(@NotNull PsiElement element) {
-    return new DeleteElementFix(element);
+    return LocalQuickFixAndIntentionActionOnPsiElement.from(new DeleteElementFix(element), element);
   }
 
   @Override
@@ -786,7 +786,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public LocalQuickFixAndIntentionActionOnPsiElement createDeleteFix(@NotNull PsiElement element, @Nls @NotNull String text) {
-    return new DeleteElementFix(element, text);
+    return LocalQuickFixAndIntentionActionOnPsiElement.from(new DeleteElementFix(element, text), element);
   }
 
   @NotNull
