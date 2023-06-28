@@ -885,4 +885,10 @@ object MermaidTokens {
     @JvmField
     val QUADRANT_TEXT = MermaidToken("Quadrant.QUADRANT_TEXT")
   }
+
+
+  object ZenUML {
+    @JvmField
+    val ZEN_UML = MermaidToken("ZenUML.ZEN_UML")
+  }
 }

@@ -25,6 +25,7 @@
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.Mindmap.*'
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.Timeline.*'
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.Quadrant.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.ZenUML.*'
   ]
   generateTokens=false
   implements="com.intellij.mermaid.lang.psi.MermaidPsiElement"
@@ -50,6 +51,7 @@ private diagram ::= pieHeader EOL* [pieBody]
   | mindmapHeader EOL* mindmapBody
   | timelineHeader EOL* [timelineBody]
   | quadrantHeader EOL* [quadrantBody]
+  | ZEN_UML
 
 titleStatement ::= TITLE complexTitleValue
 complexTitleValue ::= TITLE_VALUE+

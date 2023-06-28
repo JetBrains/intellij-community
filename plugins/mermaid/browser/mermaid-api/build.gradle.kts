@@ -11,6 +11,7 @@ dependencies {
   // Use last external mindmap package, so we can maintain its definition in code.
   // This dependency is not actually present in the resulting bundle.
   implementation(npm("@mermaid-js/mermaid-mindmap", version = "9.3.0"))
+  implementation(npm("@mermaid-js/mermaid-zenuml", version = "0.1.0"))
 }
 
 kotlin {

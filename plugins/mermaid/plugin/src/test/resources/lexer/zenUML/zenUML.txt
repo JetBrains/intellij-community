@@ -1,0 +1,1 @@
+ZenUML.ZEN_UML ('zenuml\n  title Demo\n  Alice->John: Hello John, how are you?\n  John->Alice: Great!\n  Alice->John: See you later!')

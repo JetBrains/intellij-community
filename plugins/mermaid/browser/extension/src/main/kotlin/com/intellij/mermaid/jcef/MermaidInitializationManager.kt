@@ -34,8 +34,8 @@ internal object MermaidInitializationManager {
   }
 
   private suspend fun registerExternalDiagrams() {
-    // val externalDiagrams = arrayOf(MindMap.definition)
-    val externalDiagrams = arrayOf<ExternalDiagramDefinition>()
+    val externalDiagrams = arrayOf(ZenUML.definition)
+//    val externalDiagrams = arrayOf<ExternalDiagramDefinition>()
     Mermaid.core.registerExternalDiagrams(externalDiagrams).await()
   }
 }

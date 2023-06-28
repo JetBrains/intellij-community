@@ -107,6 +107,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "mindmap" { yybegin(mindmap); return Mindmap.MINDMAP; }
   "timeline" { yybegin(timeline); return Timeline.TIMELINE; }
   "quadrantChart" { yybegin(quadrant); return Quadrant.QUADRANT_CHART; }
+  "zenuml"(\n|.)* { return ZenUML.ZEN_UML; }
 
   --- { yybegin(frontmatter); return Frontmatter.FRONTMATTER_START; }
 
@@ -937,6 +938,11 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "," { return COMMA; }
   "]" { yybegin(quadrant); return CLOSE_SQUARE; }
 }
+
+//---zen-uml---------------------------------------------------------------------
+//<quadrant> {
+//  [^\s]+ { return Quadrant.QUADRANT_DUMMY; }
+//}
 
 //--------------------------------------------------------------------------------
 <double_quoted_string> {
