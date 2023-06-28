@@ -4,11 +4,9 @@ package org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions
 import com.intellij.psi.PsiComment
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.codeinsight.utils.getArgumentNameIfCanBeUsedForCalls
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -33,30 +31,6 @@ object AddArgumentNamesUtils {
         for ((argument, name) in argumentNames) {
             addArgumentName(argument, name)
         }
-    }
-
-    fun getArgumentNameIfCanBeUsedForCalls(argument: KtValueArgument, resolvedCall: KtFunctionCall<*>): Name? {
-        val valueParameterSymbol = resolvedCall.argumentMapping[argument.getArgumentExpression()]?.symbol ?: return null
-        if (valueParameterSymbol.isVararg) {
-            if (argument.languageVersionSettings.supportsFeature(LanguageFeature.ProhibitAssigningSingleElementsToVarargsInNamedForm) &&
-                !argument.isSpread
-            ) {
-                return null
-            }
-
-            // We can only add the parameter name for an argument for a vararg parameter if it's the ONLY argument for the parameter. E.g.,
-            //
-            //   fun foo(vararg i: Int) {}
-            //
-            //   foo(1, 2) // Can NOT add `i = ` to either argument
-            //   foo(1)    // Can change to `i = 1`
-            val varargArgumentCount = resolvedCall.argumentMapping.values.count { it.symbol == valueParameterSymbol }
-            if (varargArgumentCount != 1) {
-                return null
-            }
-        }
-
-        return valueParameterSymbol.name
     }
 
     /**
