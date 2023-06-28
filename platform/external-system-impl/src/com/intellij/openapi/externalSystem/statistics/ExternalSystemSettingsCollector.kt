@@ -59,6 +59,6 @@ class ExternalSystemSettingsCollector : ProjectUsagesCollector() {
     private val NUMBER_OF_LINKED_PROJECT = GROUP.registerEvent("numberOfLinkedProject", EventFields.Count, EXTERNAL_SYSTEM_ID)
     private val USE_QUALIFIED_MODULE_NAMES = GROUP.registerEvent("useQualifiedModuleNames", EventFields.Enabled, EXTERNAL_SYSTEM_ID)
     private val MODULES_COUNT = GROUP.registerEvent("modules.count", EventFields.RoundedInt("count_rounded"), EXTERNAL_SYSTEM_ID)
-    private val HAS_SHARED_SOURCES = GROUP.registerEvent("hasSharedSources", EventFields.Enabled)
+    private val HAS_SHARED_SOURCES = GROUP.registerEvent("has.shared.sources", EventFields.Enabled)
   }
 }
