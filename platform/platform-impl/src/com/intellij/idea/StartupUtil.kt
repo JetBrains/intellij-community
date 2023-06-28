@@ -334,8 +334,18 @@ fun CoroutineScope.startApplication(args: List<String>,
   }
 }
 
-fun isConfigImportNeeded(configPath: Path): Boolean =
-  !Files.exists(configPath) || Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME))
+fun isConfigImportNeeded(configPath: Path): Boolean {
+  return !Files.exists(configPath) || Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME))
+         || customTargetDirectoryToImportConfig != null
+}
+
+/**
+ * Directory where the configuration files should be imported to.
+ * This property is used to override the default target directory ([PathManager.getConfigPath]) when a custom way to read and write
+ * configuration files is implemented.
+ */
+@get:Internal @set:Internal
+var customTargetDirectoryToImportConfig: Path? = null
 
 @Suppress("SpellCheckingInspection")
 private fun CoroutineScope.loadSystemLibsAndLogInfoAndInitMacApp(logDeferred: Deferred<Logger>,
@@ -430,7 +440,7 @@ private suspend fun importConfig(args: List<String>,
 
   activity = activity.endAndStart("config importing")
   appStarter.beforeImportConfigs()
-  val newConfigDir = PathManager.getConfigDir()
+  val newConfigDir = customTargetDirectoryToImportConfig ?: PathManager.getConfigDir()
 
   withContext(RawSwingDispatcher) {
     UIManager.setLookAndFeel(IntelliJLaf())

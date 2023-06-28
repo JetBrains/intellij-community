@@ -220,7 +220,7 @@ public final class ConfigImportHelper {
     finally {
       if (tempBackup != null) {
         try {
-          moveTempBackupToStandardBackup(tempBackup);
+          moveTempBackupToStandardBackup(newConfigDir, tempBackup);
         }
         catch (IOException e) {
           log.warn(String.format("Couldn't move the backup of current config from temp dir [%s] to backup dir", tempBackup), e);
@@ -296,10 +296,9 @@ public final class ConfigImportHelper {
   }
 
   private static File backupCurrentConfigToTempAndDelete(Path currentConfig, Logger log, boolean smartDelete, @Nullable ConfigImportSettings settings) throws IOException {
-    Path configDir = PathManager.getConfigDir();
-    File tempBackupDir = FileUtil.createTempDirectory(configDir.getFileName().toString(), "-backup-" + UUID.randomUUID());
+    File tempBackupDir = FileUtil.createTempDirectory(currentConfig.getFileName().toString(), "-backup-" + UUID.randomUUID());
     log.info("Backup config from " + currentConfig + " to " + tempBackupDir);
-    FileUtil.copyDir(configDir.toFile(), tempBackupDir, file -> !shouldSkipFileDuringImport(file.toPath(), settings));
+    FileUtil.copyDir(currentConfig.toFile(), tempBackupDir, file -> !shouldSkipFileDuringImport(file.toPath(), settings));
 
     deleteCurrentConfigDir(currentConfig, log, smartDelete);
 
@@ -345,8 +344,8 @@ public final class ConfigImportHelper {
     }
   }
 
-  private static void moveTempBackupToStandardBackup(File backupToMove) throws IOException {
-    new ConfigBackup(PathManager.getConfigDir()).moveToBackup(backupToMove);
+  private static void moveTempBackupToStandardBackup(@NotNull Path newConfigDir, File backupToMove) throws IOException {
+    new ConfigBackup(newConfigDir).moveToBackup(backupToMove);
   }
 
   private static boolean shouldAskForConfig() {
