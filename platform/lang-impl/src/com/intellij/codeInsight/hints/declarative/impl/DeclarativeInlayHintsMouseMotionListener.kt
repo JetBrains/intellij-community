@@ -8,10 +8,11 @@ import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.openapi.util.SystemInfo
 import java.awt.Point
 import java.awt.event.MouseEvent
+import java.lang.ref.WeakReference
 
 class DeclarativeInlayHintsMouseMotionListener : EditorMouseMotionListener {
   private var areaUnderCursor: InlayMouseArea? = null
-  private var inlayUnderCursor: Inlay<*>? = null
+  private var inlayUnderCursor: WeakReference<Inlay<*>>? = null
   private var ctrlDown = false
 
   override fun mouseMoved(e: EditorMouseEvent) {
@@ -35,18 +36,18 @@ class DeclarativeInlayHintsMouseMotionListener : EditorMouseMotionListener {
           entry.isHovered = true
         }
       }
-      inlayUnderCursor?.update()
+      inlayUnderCursor?.get()?.update()
       inlay?.update()
 
       areaUnderCursor = mouseArea
-      inlayUnderCursor = inlay
+      inlayUnderCursor = inlay?.let { WeakReference(it) }
       this.ctrlDown = ctrlDown
     }
   }
 
   private fun isControlDown(e: MouseEvent): Boolean = (SystemInfo.isMac && e.isMetaDown) || e.isControlDown
 
-  private fun getRenderer(inlay: Inlay<*>) : DeclarativeInlayRenderer? {
+  private fun getRenderer(inlay: Inlay<*>): DeclarativeInlayRenderer? {
     val renderer = inlay.renderer
     if (renderer !is DeclarativeInlayRenderer) return null
     return renderer
@@ -58,7 +59,7 @@ class DeclarativeInlayHintsMouseMotionListener : EditorMouseMotionListener {
     return e.inlay
   }
 
-  private fun getMouseAreaUnderCursor(inlay: Inlay<*>, renderer: DeclarativeInlayRenderer, event: MouseEvent) : InlayMouseArea? {
+  private fun getMouseAreaUnderCursor(inlay: Inlay<*>, renderer: DeclarativeInlayRenderer, event: MouseEvent): InlayMouseArea? {
     val bounds = inlay.bounds ?: return null
     val inlayPoint = Point(bounds.x, bounds.y)
     val translated = Point(event.x - inlayPoint.x, event.y - inlayPoint.y)
