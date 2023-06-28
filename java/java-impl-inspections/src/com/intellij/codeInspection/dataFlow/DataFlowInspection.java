@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
-import com.intellij.codeInsight.daemon.impl.quickfix.DeleteSideEffectsAwareFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.UnwrapSwitchLabelFix;
 import com.intellij.codeInsight.options.JavaInspectionButtons;
 import com.intellij.codeInsight.options.JavaInspectionControls;
@@ -85,7 +84,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
     if (assignment == null || assignment.getRExpression() == null || !(assignment.getParent() instanceof PsiExpressionStatement)) {
       return null;
     }
-    return new DeleteSideEffectsAwareFix((PsiStatement)assignment.getParent(), assignment.getRExpression(), true).asQuickFix();
+    return new RemoveAssignmentFix();
   }
 
   @Override

@@ -4,7 +4,6 @@ package com.intellij.codeInspection.defUse;
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
-import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.java.inst.AssignInstruction;
@@ -106,7 +105,7 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
             // x = x = 5; reported by "Variable is assigned to itself"
             continue;
           }
-          reportAssignmentProblem(psiVariable, (PsiAssignmentExpression)context, holder);
+          reportAssignmentProblem((PsiAssignmentExpression)context, holder);
         }
         else if (context instanceof PsiPrefixExpression && REPORT_PREFIX_EXPRESSIONS ||
                  context instanceof PsiPostfixExpression && REPORT_POSTFIX_EXPRESSIONS) {
@@ -149,30 +148,24 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
             // Due to implementation quirk, array initializers are reassigned in CFG, so false warnings appear there
             continue;
           }
-          reportAssignmentProblem(field, (PsiAssignmentExpression)parent, holder);
+          reportAssignmentProblem((PsiAssignmentExpression)parent, holder);
         }
       }
     }
   }
 
   private static void reportInitializerProblem(PsiVariable psiVariable, ProblemsHolder holder) {
-    List<LocalQuickFix> fixes = ContainerUtil.createMaybeSingletonList(
-      isOnTheFlyOrNoSideEffects(holder.isOnTheFly(), psiVariable, psiVariable.getInitializer()) ? new RemoveInitializerFix2() : null);
     holder.registerProblem(ObjectUtils.notNull(psiVariable.getInitializer(), psiVariable),
                            JavaBundle.message("inspection.unused.assignment.problem.descriptor2", psiVariable.getName()),
-                           fixes.toArray(LocalQuickFix.EMPTY_ARRAY)
-    );
+                           new RemoveInitializerFix());
   }
 
-  private static void reportAssignmentProblem(PsiVariable psiVariable,
-                                              PsiAssignmentExpression assignment,
+  private static void reportAssignmentProblem(PsiAssignmentExpression assignment,
                                               ProblemsHolder holder) {
-    List<LocalQuickFix> fixes = ContainerUtil.createMaybeSingletonList(
-      isOnTheFlyOrNoSideEffects(holder.isOnTheFly(), psiVariable, assignment.getRExpression()) ? new RemoveAssignmentFix() : null);
     holder.registerProblem(assignment.getLExpression(),
                            JavaBundle.message("inspection.unused.assignment.problem.descriptor3",
                                               Objects.requireNonNull(assignment.getRExpression()).getText()),
-                           fixes.toArray(LocalQuickFix.EMPTY_ARRAY)
+                           new RemoveAssignmentFix()
     );
   }
 
@@ -230,7 +223,7 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
         }
         else {
           for (PsiAssignmentExpression assignment : fieldWrite.getAssignments()) {
-            reportAssignmentProblem(field, assignment, holder);
+            reportAssignmentProblem(assignment, holder);
           }
         }
       }
@@ -349,12 +342,6 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
       }
     });
     return assignmentExpressions;
-  }
-
-  private static boolean isOnTheFlyOrNoSideEffects(boolean isOnTheFly,
-                                                   PsiVariable psiVariable,
-                                                   PsiExpression initializer) {
-    return isOnTheFly || !RemoveUnusedVariableUtil.checkSideEffects(initializer, psiVariable, new ArrayList<>());
   }
 
   @Override
