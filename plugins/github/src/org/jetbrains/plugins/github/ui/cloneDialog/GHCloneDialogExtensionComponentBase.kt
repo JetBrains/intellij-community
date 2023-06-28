@@ -330,7 +330,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
       selectedUrl = githubGitHelper.getRemoteUrl(githubRepoPath.serverPath,
                                                  githubRepoPath.repositoryPath.owner,
                                                  githubRepoPath.repositoryPath.repository)
-      repositoryList.emptyText.appendText(GithubBundle.message("clone.dialog.text", selectedUrl!!))
+      repositoryList.emptyText.appendText(CollaborationToolsBundle.message("clone.dialog.repository.url.text", selectedUrl!!))
       return
     }
     val selectedValue = repositoryList.selectedValue

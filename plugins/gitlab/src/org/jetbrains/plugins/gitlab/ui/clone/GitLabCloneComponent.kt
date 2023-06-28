@@ -17,17 +17,20 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
+import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.panels.Wrapper
 import git4idea.GitUtil
 import git4idea.remote.GitRememberedInputs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneViewModel.UIState
 import javax.swing.JComponent
+import javax.swing.event.DocumentEvent
 
 internal class GitLabCloneComponent(
   private val project: Project,
@@ -37,7 +40,13 @@ internal class GitLabCloneComponent(
   private val cs: CoroutineScope = disposingMainScope() + modalityState.asContextElement()
   private val cloneVm = GitLabCloneViewModelImpl(project, cs, accountManager)
 
-  private val searchField: SearchTextField = SearchTextField(false)
+  private val searchField: SearchTextField = SearchTextField(false).apply {
+    addDocumentListener(object : DocumentAdapter() {
+      override fun textChanged(e: DocumentEvent) {
+        cloneVm.setSearchValue(text)
+      }
+    })
+  }
   private val directoryField: TextFieldWithBrowseButton = createDirectoryField()
   private val cloneDirectoryChildHandle: FilePathDocumentChildPathHandle = FilePathDocumentChildPathHandle.install(
     directoryField.textField.document,
@@ -60,13 +69,13 @@ internal class GitLabCloneComponent(
 
   init {
     cs.launch(start = CoroutineStart.UNDISPATCHED) {
-      cloneVm.selectedItem.collect { selectedItem ->
-        val cloneUrl = (selectedItem as? GitLabCloneListItem.Repository)?.projectMember?.project?.httpUrlToRepo
-        if (cloneUrl != null) {
-          val path = ClonePathProvider.relativeDirectoryPathForVcsUrl(project, cloneUrl).removeSuffix(GitUtil.DOT_GIT)
+      cloneVm.selectedUrl.collectLatest { selectedUrl ->
+        val isUrlSelected = selectedUrl != null
+        dialogStateListener.onOkActionEnabled(isUrlSelected)
+        if (isUrlSelected) {
+          val path = ClonePathProvider.relativeDirectoryPathForVcsUrl(project, selectedUrl!!).removeSuffix(GitUtil.DOT_GIT)
           cloneDirectoryChildHandle.trySetChildPath(path)
         }
-        dialogStateListener.onOkActionEnabled(cloneUrl != null)
       }
     }
 

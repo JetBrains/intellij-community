@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.ui.clone
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
@@ -22,8 +23,10 @@ import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
+import org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneViewModel.SearchModel
 import org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneViewModel.UIState
-import com.intellij.collaboration.util.SingleCoroutineLauncher
+import java.net.MalformedURLException
+import java.net.URL
 import java.nio.file.Paths
 
 internal interface GitLabCloneViewModel {
@@ -31,12 +34,15 @@ internal interface GitLabCloneViewModel {
   val accountsRefreshRequest: Flow<Set<GitLabAccount>>
   val isLoading: Flow<Boolean>
 
-  val selectedItem: Flow<GitLabCloneListItem?>
   val items: Flow<List<GitLabCloneListItem>>
+  val searchValue: Flow<SearchModel>
+  val selectedUrl: SharedFlow<String?>
 
   val accountDetailsProvider: GitLabAccountsDetailsProvider
 
   fun selectItem(item: GitLabCloneListItem?)
+
+  fun setSearchValue(text: String)
 
   fun switchToLoginPanel(account: GitLabAccount?)
 
@@ -51,6 +57,11 @@ internal interface GitLabCloneViewModel {
   sealed interface UIState {
     class Login(val account: GitLabAccount?) : UIState
     object Repositories : UIState
+  }
+
+  sealed interface SearchModel {
+    class Url(val url: String) : SearchModel
+    object Text : SearchModel
   }
 }
 
@@ -73,10 +84,21 @@ internal class GitLabCloneViewModelImpl(
   override val isLoading: Flow<Boolean> = taskLauncher.busy
 
   private val _selectedItem: MutableStateFlow<GitLabCloneListItem?> = MutableStateFlow(null)
-  override val selectedItem: Flow<GitLabCloneListItem?> = _selectedItem.asSharedFlow()
 
   private val _items: MutableStateFlow<List<GitLabCloneListItem>> = MutableStateFlow(emptyList())
   override val items: Flow<List<GitLabCloneListItem>> = _items.asSharedFlow()
+
+  private val _searchValue: MutableStateFlow<SearchModel> = MutableStateFlow(SearchModel.Text)
+  override val searchValue: Flow<SearchModel> = _searchValue.asSharedFlow()
+
+  private val _selectedUrl: StateFlow<String?> = combine(_searchValue, _selectedItem) { searchValue, selectedItem ->
+    when {
+      searchValue is SearchModel.Url -> searchValue.url
+      selectedItem != null && selectedItem is GitLabCloneListItem.Repository -> selectedItem.projectMember.project.httpUrlToRepo
+      else -> null
+    }
+  }.stateIn(cs, SharingStarted.Eagerly, initialValue = null)
+  override val selectedUrl: SharedFlow<String?> = _selectedUrl
 
   override val accountDetailsProvider = GitLabAccountsDetailsProvider(cs) { account ->
     val token = accountManager.findCredentials(account) ?: return@GitLabAccountsDetailsProvider null
@@ -117,6 +139,17 @@ internal class GitLabCloneViewModelImpl(
     _selectedItem.value = item
   }
 
+  override fun setSearchValue(text: String) {
+    // TODO: implement ssh "git@"
+    _searchValue.value = try {
+      URL(text) // Check URL correctness
+      SearchModel.Url(text)
+    }
+    catch (_: MalformedURLException) {
+      SearchModel.Text
+    }
+  }
+
   override fun switchToLoginPanel(account: GitLabAccount?) {
     _uiState.value = UIState.Login(account)
   }
@@ -126,6 +159,7 @@ internal class GitLabCloneViewModelImpl(
   }
 
   override fun doClone(checkoutListener: CheckoutProvider.Listener, directoryPath: String) {
+    val selectedUrl = _selectedUrl.value ?: error("Clone button is enabled when repository is not selected")
     val parent = Paths.get(directoryPath).toAbsolutePath().parent
     val destinationValidation = CloneDvcsValidationUtils.createDestination(parent.toString())
     if (destinationValidation != null) {
@@ -146,8 +180,6 @@ internal class GitLabCloneViewModelImpl(
     val directoryName = Paths.get(directoryPath).fileName.toString()
     val parentDirectory = parent.toAbsolutePath().toString()
 
-    val selectedRepository = _selectedItem.value!! as GitLabCloneListItem.Repository
-    val selectedUrl = selectedRepository.projectMember.project.httpUrlToRepo
     GitCheckoutProvider.clone(project, Git.getInstance(), checkoutListener, destinationParent, selectedUrl, directoryName, parentDirectory)
   }
 

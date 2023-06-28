@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.ui.clone
 
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.auth.ui.CompactAccountsPanelFactory
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
@@ -18,6 +19,7 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBEmptyBorder
+import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.cloneDialog.AccountMenuItem
 import com.intellij.util.ui.cloneDialog.VcsCloneDialogUiSpec
@@ -26,6 +28,7 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
+import org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneViewModel.SearchModel
 import javax.swing.JSeparator
 import javax.swing.ListCellRenderer
 import javax.swing.ListModel
@@ -97,6 +100,15 @@ internal object GitLabCloneRepositoriesComponentFactory {
       val mouseAdapter = LinkActionMouseAdapter(this)
       addMouseListener(mouseAdapter)
       addMouseMotionListener(mouseAdapter)
+
+      cs.launchNow {
+        cloneVm.searchValue.collectLatest { searchValue ->
+          emptyText.text = when (searchValue) {
+            is SearchModel.Text -> StatusText.getDefaultEmptyText()
+            is SearchModel.Url -> CollaborationToolsBundle.message("clone.dialog.repository.url.text", searchValue.url)
+          }
+        }
+      }
     }
   }
 
@@ -112,14 +124,14 @@ internal object GitLabCloneRepositoriesComponentFactory {
   }
 
   private fun createRepositoriesModel(cs: CoroutineScope, cloneVm: GitLabCloneViewModel): ListModel<GitLabCloneListItem> {
-    val accountsModel = CollectionListModel<GitLabCloneListItem>()
+    val repositoriesModel = CollectionListModel<GitLabCloneListItem>()
     cs.launch(start = CoroutineStart.UNDISPATCHED) {
       cloneVm.items.collectLatest { items ->
-        accountsModel.replaceAll(items)
+        repositoriesModel.replaceAll(items)
       }
     }
 
-    return accountsModel
+    return repositoriesModel
   }
 
   private fun createRepositoryRenderer(
