@@ -1,7 +1,7 @@
 <html>
 <body>
-Reports calls to static methods like <code>String.valueOf()</code> or <code>Integer.toString()</code> when they are used in
- a string concatenation or as an argument of a library method in which the explicit string conversion is not needed.
+Reports unnecessary calls to static methods that convert to string, like <code>String.valueOf()</code> or <code>Integer.toString()</code>.
+Such calls are unnecessary when used, in string concatenations or, as arguments of library methods where explicit string conversion is not needed.
 <p>Example:</p>
 <pre><code>
   System.out.println("Number: " + Integer.toString(count));
@@ -11,7 +11,7 @@ Reports calls to static methods like <code>String.valueOf()</code> or <code>Inte
   System.out.println("Number: " + count);
 </code></pre>
 <!-- tooltip end -->
-<p>Library methods in which explicit string conversion is considered redundant:</p>
+<p>Library methods that don't require explicit string conversion:</p>
 <ul>
   <li>
     Classes <code>java.io.PrintWriter</code>, <code>java.io.PrintStream</code>
@@ -30,7 +30,7 @@ Reports calls to static methods like <code>String.valueOf()</code> or <code>Inte
   </li>
 </ul>
 <p>
-  Use the <b>Report calls, which can be replaced with concatenations with empty string</b>
-  option to additionally report cases when concatenations with empty string can be used instead of <code>String.valueOf()</code>.
+  Use the <b>Report calls that can be replaced with a concatenation with the empty string</b>
+  option to also report cases where concatenations with the empty string can be used instead of a call to <code>String.valueOf()</code>.
 </body>
 </html>
