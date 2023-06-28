@@ -1831,6 +1831,11 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
                 runTest("testData/evaluation/multipleBreakpoints/thisLabels.kt");
             }
 
+            @TestMetadata("typeArguments.kt")
+            public void testTypeArguments() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/typeArguments.kt");
+            }
+
             @TestMetadata("whenEntry.kt")
             public void testWhenEntry() throws Exception {
                 runTest("testData/evaluation/multipleBreakpoints/whenEntry.kt");

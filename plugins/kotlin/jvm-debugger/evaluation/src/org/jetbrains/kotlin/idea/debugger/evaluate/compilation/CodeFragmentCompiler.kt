@@ -192,12 +192,30 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
         fun upperBoundIfTypeParameter(type: KotlinType) =
             TypeUtils.getTypeParameterDescriptorOrNull(type)
                 ?.let { typeParameterUpperBoundEraser.getErasedUpperBound(it, erasureTypeAttributes) }
-                ?: type
+
+        fun eraseTypeArguments(type: KotlinType): KotlinType {
+            val erasedArguments = type.arguments.mapNotNull {
+                val upperBound = upperBoundIfTypeParameter(it.type) ?: return@mapNotNull null
+                it.replaceType(upperBound)
+            }
+            if (erasedArguments.size == type.arguments.size) {
+                return KotlinTypeFactory.simpleTypeWithNonTrivialMemberScope(
+                    type.attributes,
+                    type.constructor,
+                    erasedArguments,
+                    type.isMarkedNullable,
+                    type.memberScope
+                )
+            }
+            return type
+        }
+
+        fun erase(type: KotlinType): KotlinType = upperBoundIfTypeParameter(type) ?: eraseTypeArguments(type)
 
         val parameters = parameterInfo.parameters.mapIndexed { index, parameter ->
             ValueParameterDescriptorImpl(
                 methodDescriptor, null, index, Annotations.EMPTY, Name.identifier("p$index"),
-                upperBoundIfTypeParameter(parameter.targetType),
+                erase(parameter.targetType),
                 declaresDefaultValue = false,
                 isCrossinline = false,
                 isNoinline = false,
@@ -208,7 +226,7 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
 
         methodDescriptor.initialize(
             null, classDescriptor.thisAsReceiverParameter, emptyList(), emptyList(),
-            parameters, upperBoundIfTypeParameter(returnType), Modality.FINAL, DescriptorVisibilities.PUBLIC
+            parameters, erase(returnType), Modality.FINAL, DescriptorVisibilities.PUBLIC
         )
 
         val memberScope = EvaluatorMemberScopeForMethod(methodDescriptor)
