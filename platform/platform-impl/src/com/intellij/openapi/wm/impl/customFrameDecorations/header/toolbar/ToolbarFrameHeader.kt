@@ -266,9 +266,11 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
   private fun createDraggableWindowArea(): JComponent {
     val result = JLabel()
     if (IdeRootPane.hideNativeLinuxTitle) {
-      val windowMoveListener = WindowMoveListener(this)
-      windowMoveListener.installTo(result)
-      windowMoveListener.installTo(this)
+      WindowMoveListener(this).apply {
+        setLeftMouseButtonOnly(true)
+        installTo(result)
+        installTo(this@ToolbarFrameHeader)
+      }
     }
     return result
   }

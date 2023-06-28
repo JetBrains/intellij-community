@@ -504,8 +504,10 @@ open class IdeRootPane internal constructor(frame: JFrame,
 
   fun makeComponentToBeMouseTransparentInTitleBar(component: JComponent) {
     if (hideNativeLinuxTitle) {
-      val windowMoveListener = WindowMoveListener(this)
-      windowMoveListener.installTo(component)
+      WindowMoveListener(this).apply {
+        setLeftMouseButtonOnly(true)
+        installTo(component)
+      }
       return
     }
     val customTitleBar = ((helper as? DecoratedHelper)?.customFrameTitlePane as? CustomHeader)?.customTitleBar ?: return
