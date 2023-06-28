@@ -73,10 +73,7 @@ internal class ProjectCachesWarmup : ModernApplicationStarter() {
       exitProcess(2)
     }
 
-    val pathToConfig = commandArgs.pathToConfigurationFile
-    if (pathToConfig != null) {
-      EnvironmentUtil.setPathToConfigurationFile(pathToConfig.toAbsolutePath())
-    }
+    setEnvironmentConfiguration(commandArgs)
 
     val buildMode = getBuildMode(commandArgs)
     val builders = System.getenv()["IJ_WARMUP_BUILD_BUILDERS"]?.split(";")?.toHashSet()
@@ -176,6 +173,13 @@ private suspend fun waitForCachesSupports(project: Project) {
     WarmupLogger.logError("An exception occurred while awaiting indexes warmup", t)
   }
   WarmupLogger.logInfo("All ProjectIndexesWarmupSupport.waitForCaches completed")
+}
+
+private fun setEnvironmentConfiguration(commandArgs : WarmupProjectArgs) {
+  val pathToConfig = commandArgs.pathToConfigurationFile
+  if (pathToConfig != null) {
+    EnvironmentUtil.setPathToConfigurationFile(pathToConfig.toAbsolutePath())
+  }
 }
 
 private suspend fun waitForBuilders(project: Project, rebuild: BuildMode, builders: Set<String>?) {
