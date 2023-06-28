@@ -41,7 +41,7 @@ internal class MenuFrameHeader(frame: JFrame,
     headerTitle.onBoundsChanged = { windowStateChanged() }
 
     menuHolder = JPanel(MigLayout("filly, ins 0, novisualpadding, hidemode 3", "[pref!]10"))
-    menuHolder.border = JBUI.Borders.empty(0, H - 1, 0, 0)
+    menuHolder.border = JBUI.Borders.emptyLeft(H - 1)
     menuHolder.isOpaque = false
     menuHolder.add(ideMenu, "wmin 0, wmax pref, top, growy")
 
@@ -60,10 +60,6 @@ internal class MenuFrameHeader(frame: JFrame,
     }
 
     menuHolder.isVisible = UISettings.getInstance().showMainMenu
-  }
-
-  override suspend fun updateMenuActions(forceRebuild: Boolean) {
-    ideMenu.updateMenuActions(forceRebuild = forceRebuild)
   }
 
   override fun getComponent(): JComponent = this

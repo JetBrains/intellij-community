@@ -5,7 +5,8 @@ import com.intellij.openapi.Disposable
 import javax.swing.JComponent
 
 interface MainFrameCustomHeader : Disposable {
-  suspend fun updateMenuActions(forceRebuild: Boolean)
+  suspend fun updateMenuActions(forceRebuild: Boolean) {
+  }
 
   fun getComponent(): JComponent
 }

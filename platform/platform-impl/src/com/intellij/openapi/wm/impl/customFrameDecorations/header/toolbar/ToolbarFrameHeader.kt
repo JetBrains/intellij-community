@@ -7,9 +7,9 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.ToolbarHolder
-import com.intellij.openapi.wm.impl.createMenuBar
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.FrameHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameCustomHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.SimpleCustomDecorationPath
@@ -41,11 +41,12 @@ private enum class ShowMode {
   MENU, TOOLBAR
 }
 
-internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) : FrameHeader(frame), UISettingsListener, ToolbarHolder, MainFrameCustomHeader {
+internal class ToolbarFrameHeader(frame: JFrame,
+                                  private val root: IdeRootPane,
+                                  private val ideMenuBar: IdeMenuBar) : FrameHeader(frame), UISettingsListener, ToolbarHolder, MainFrameCustomHeader {
   private val coroutineScope = root.coroutineScope.childScope()
 
-  private val myMenuBar = createMenuBar(coroutineScope.childScope(), frame)
-  private val ideMenuHelper = IdeMenuHelper(myMenuBar, this)
+  private val ideMenuHelper = IdeMenuHelper(ideMenuBar, this)
   private val menuBarHeaderTitle = SimpleCustomDecorationPath(frame, true).apply {
     isOpaque = false
   }
@@ -84,7 +85,7 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
     panel.isOpaque = false
     RowsGridBuilder(panel).defaultVerticalAlign(VerticalAlign.FILL)
       .row(resizable = true)
-      .cell(component = myMenuBar, resizableColumn = true)
+      .cell(component = ideMenuBar, resizableColumn = true)
       .cell(menuBarHeaderTitle, resizableColumn = true)
       .columnsGaps(listOf(UnscaledGapsX.EMPTY, UnscaledGapsX(44)))
     return panel
@@ -191,19 +192,18 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
   override fun installListeners() {
     super.installListeners()
     mainMenuButton.rootPane = frame.rootPane
-    myMenuBar.addComponentListener(contentResizeListener)
+    ideMenuBar.addComponentListener(contentResizeListener)
     ideMenuHelper.installListeners()
   }
 
   override fun uninstallListeners() {
     super.uninstallListeners()
-    myMenuBar.removeComponentListener(contentResizeListener)
+    ideMenuBar.removeComponentListener(contentResizeListener)
     toolbar?.removeComponentListener(contentResizeListener)
     ideMenuHelper.uninstallListeners()
   }
 
   override suspend fun updateMenuActions(forceRebuild: Boolean) {
-    myMenuBar.updateMenuActions(forceRebuild)
     expandableMenu.ideMenu.updateMenuActions(forceRebuild)
   }
 
@@ -224,7 +224,7 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
 
   private fun updateMenuBar() {
     if (IdeRootPane.hideNativeLinuxTitle) {
-      myMenuBar.border = null
+      ideMenuBar.border = null
     }
   }
 

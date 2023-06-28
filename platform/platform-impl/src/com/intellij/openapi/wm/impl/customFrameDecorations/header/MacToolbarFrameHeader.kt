@@ -8,12 +8,12 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.wm.impl.*
+import com.intellij.openapi.wm.impl.IdeRootPane
+import com.intellij.openapi.wm.impl.ToolbarHolder
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.SimpleCustomDecorationPath
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.ui.mac.MacFullScreenControlsManager
 import com.intellij.ui.mac.MacMainFrameDecorator
-import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.util.childScope
 import com.intellij.util.ui.JBUI
 import com.jetbrains.JBR
@@ -31,16 +31,6 @@ private const val DEFAULT_HEADER_HEIGHT = 40
 
 internal class MacToolbarFrameHeader(private val frame: JFrame, private val root: IdeRootPane)
   : CustomHeader(frame), MainFrameCustomHeader, ToolbarHolder, UISettingsListener {
-  private val ideMenu: ActionAwareIdeMenuBar = if (FrameInfoHelper.isFloatingMenuBarSupported || !Menu.isJbScreenMenuEnabled()) {
-    val menuBar = IdeMenuBar(root.coroutineScope.childScope(), frame)
-    // if -DjbScreenMenuBar.enabled=false
-    frame.jMenuBar = menuBar
-    menuBar
-  }
-  else {
-    MacMenuBar(coroutineScope = root.coroutineScope.childScope(), component = this, frame = frame)
-  }
-
   private var toolbar: MainToolbar
 
   init {
@@ -147,10 +137,6 @@ internal class MacToolbarFrameHeader(private val frame: JFrame, private val root
   override fun addNotify() {
     super.addNotify()
     updateBorders()
-  }
-
-  override suspend fun updateMenuActions(forceRebuild: Boolean) {
-    ideMenu.updateMenuActions(forceRebuild = forceRebuild)
   }
 
   override fun getComponent(): JComponent = this

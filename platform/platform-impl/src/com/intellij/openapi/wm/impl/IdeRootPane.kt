@@ -47,6 +47,7 @@ import com.intellij.ui.*
 import com.intellij.ui.components.JBBox
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.mac.MacWinTabsHandler
+import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
@@ -99,12 +100,17 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
   private sealed interface Helper {
     val toolbarHolder: ToolbarHolder?
 
+    val ideMenu: ActionAwareIdeMenuBar?
+
     fun init(frame: JFrame, pane: JRootPane, parentDisposable: Disposable) {
     }
   }
 
   private object UndecoratedHelper : Helper {
     override val toolbarHolder: ToolbarHolder?
+      get() = null
+
+    override val ideMenu: ActionAwareIdeMenuBar?
       get() = null
 
     override fun init(frame: JFrame, pane: JRootPane, parentDisposable: Disposable) {
@@ -115,7 +121,8 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
   private class DecoratedHelper(
     val customFrameTitlePane: MainFrameCustomHeader,
     val selectedEditorFilePath: SelectedEditorFilePath?,
-    val isLightEdit: Boolean
+    val isLightEdit: Boolean,
+    override val ideMenu: ActionAwareIdeMenuBar
   ) : Helper {
     override val toolbarHolder: ToolbarHolder? = (customFrameTitlePane as? ToolbarHolder)
       ?.takeIf { ExperimentalUI.isNewUI() && (isToolbarInHeader() || isLightEdit) }
@@ -152,33 +159,50 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
         CustomHeader.enableCustomHeader(frame)
 
         val selectedEditorFilePath: SelectedEditorFilePath?
+        val ideMenu: ActionAwareIdeMenuBar
         val customFrameTitlePane = if (ExperimentalUI.isNewUI()) {
           selectedEditorFilePath = null
           if (SystemInfoRt.isMac) {
+            ideMenu = if (isFloatingMenuBarSupported || !Menu.isJbScreenMenuEnabled()) {
+              val menuBar = IdeMenuBar(coroutineScope.childScope(), frame)
+              // if -DjbScreenMenuBar.enabled=false
+              frame.jMenuBar = menuBar
+              menuBar
+            }
+            else {
+              MacMenuBar(coroutineScope = coroutineScope.childScope(), component = this, frame = frame)
+            }
+
             MacToolbarFrameHeader(frame = frame, root = this)
           }
           else {
-            ToolbarFrameHeader(frame = frame, root = this)
+            ideMenu = createMenuBar(coroutineScope.childScope(), frame)
+            ToolbarFrameHeader(frame = frame, root = this, ideMenuBar = ideMenu)
           }
         }
         else {
+          ideMenu = createMenuBar(coroutineScope.childScope(), frame)
           selectedEditorFilePath = CustomDecorationPath(frame)
-          MenuFrameHeader(frame = frame, headerTitle = selectedEditorFilePath,
+          MenuFrameHeader(frame = frame,
+                          headerTitle = selectedEditorFilePath,
                           ideMenu = createMenuBar(coroutineScope.childScope(), frame))
         }
         helper = DecoratedHelper(
           customFrameTitlePane = customFrameTitlePane,
           selectedEditorFilePath = selectedEditorFilePath,
-          isLightEdit = isLightEdit
+          isLightEdit = isLightEdit,
+          ideMenu = ideMenu,
         )
         layeredPane.add(customFrameTitlePane.getComponent(), (JLayeredPane.DEFAULT_LAYER - 3) as Any)
       }
       else if (hideNativeLinuxTitle) {
-        val customFrameTitlePane = ToolbarFrameHeader(frame = frame, root = this)
+        val ideMenu = createMenuBar(coroutineScope.childScope(), frame)
+        val customFrameTitlePane = ToolbarFrameHeader(frame = frame, root = this, ideMenuBar = ideMenu)
         helper = DecoratedHelper(
           customFrameTitlePane = customFrameTitlePane,
           selectedEditorFilePath = null,
-          isLightEdit = isLightEdit
+          isLightEdit = isLightEdit,
+          ideMenu = ideMenu,
         )
         layeredPane.add(customFrameTitlePane.getComponent(), (JLayeredPane.DEFAULT_LAYER - 3) as Any)
       }
@@ -229,7 +253,9 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     @Suppress("LeakingThis")
     contentPane.add(createCenterComponent(frame, parentDisposable), BorderLayout.CENTER)
 
-    if (isLightEdit && ExperimentalUI.isNewUI()) updateToolbar()
+    if (isLightEdit && ExperimentalUI.isNewUI()) {
+      updateToolbar()
+    }
   }
 
   companion object {
@@ -425,6 +451,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
       val customFrameTitlePane = helper.customFrameTitlePane
       // The menu bar is decorated, we update it indirectly.
       coroutineScope.launch {
+        helper.ideMenu.updateMenuActions(forceRebuild = false)
         customFrameTitlePane.updateMenuActions(forceRebuild = false)
         withContext(Dispatchers.EDT) {
           customFrameTitlePane.getComponent().repaint()
