@@ -2,6 +2,7 @@
 package com.intellij.ui.mac
 
 import com.intellij.ide.actions.ToggleDistractionFreeModeAction
+import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
@@ -9,6 +10,7 @@ import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
+import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.ui.JBColor
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.MacUtil
@@ -84,6 +86,17 @@ object MacFullScreenControlsManager {
   fun configureForLightEdit(enterFullScreen: Boolean) {
     if (enabled()) {
       configureForDistractionFreeMode(enterFullScreen)
+    }
+  }
+
+  fun configureForEmptyToolbarHeader(enter: Boolean) {
+    if (enter) {
+      if (enabled() && MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()).all { it.first.getChildren(null).isEmpty() }) {
+        configureForDistractionFreeMode(true)
+      }
+    }
+    else {
+      configureForDistractionFreeMode(false)
     }
   }
 
