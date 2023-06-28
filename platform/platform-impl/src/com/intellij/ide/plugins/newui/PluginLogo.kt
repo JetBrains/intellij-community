@@ -239,7 +239,7 @@ private fun loadPluginIconsFromFile(path: Path, idPlugin: String, lazyIcon: Lazy
     }
 
     for (file in files) {
-      if (tryLoadDirIcons(idPlugin = idPlugin, lazyIcon = lazyIcon, path = file)) {
+      if (!file.toString().endsWith(".jar") && tryLoadDirIcons(idPlugin = idPlugin, lazyIcon = lazyIcon, path = file)) {
         return
       }
       if (tryLoadJarIcons(idPlugin = idPlugin, lazyIcon = lazyIcon, path = file, put = false)) {
