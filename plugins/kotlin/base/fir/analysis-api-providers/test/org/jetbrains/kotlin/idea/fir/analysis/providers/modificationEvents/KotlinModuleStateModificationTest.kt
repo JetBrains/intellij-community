@@ -1,35 +1,22 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.fir.analysis.providers.modificationEvents
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.util.messages.MessageBusConnection
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
-import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
-import org.jetbrains.kotlin.analysis.providers.analysisMessageBus
 import org.jetbrains.kotlin.analysis.providers.topics.KotlinModuleStateModificationListener
 import org.jetbrains.kotlin.analysis.providers.topics.KotlinTopics
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
-import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
-import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
-import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.addEmptyClassesRoot
-import org.jetbrains.kotlin.psi.KtFile
-import org.junit.Assert
-import java.io.File
 import org.jetbrains.kotlin.test.util.addDependency
 
-class KotlinModuleStateModificationTest : AbstractMultiModuleTest() {
-    override fun isFirPlugin(): Boolean = true
-
-    override fun getTestDataDirectory(): File = error("Should not be called")
+class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventTest<ModuleStateModificationEventTracker>() {
+    override fun constructTracker(module: KtModule): ModuleStateModificationEventTracker = ModuleStateModificationEventTracker(module)
 
     fun `test source module state modification after adding module dependency`() {
         val moduleA = createModuleInTmpDir("a")
@@ -389,68 +376,16 @@ class KotlinModuleStateModificationTest : AbstractMultiModuleTest() {
 
         disposeTrackers(trackerA, trackerB, trackerC, trackerD)
     }
+}
 
-    private fun createProjectLibrary(name: String): Library = ConfigLibraryUtil.addProjectLibraryWithClassesRoot(myProject, name)
-
-    private fun createScript(name: String): KtFile = createKtFileUnderNewContentRoot(FileWithText("$name.kts", ""))
-
-    private fun createNotUnderContentRootFile(name: String): KtFile =
-        // While the not-under-content-root module is named as it is, it is still decidedly under the project's content root, just not a
-        // part of any other kind of `KtModule`.
-        createKtFileUnderNewContentRoot(FileWithText("$name.kt", ""))
-
-    private fun createTracker(module: KtModule): ModuleStateModificationTracker = ModuleStateModificationTracker(module)
-
-    private fun createTracker(module: Module): ModuleStateModificationTracker = createTracker(module.productionSourceInfo!!.toKtModule())
-
-    private fun createTracker(library: Library): ModuleStateModificationTracker =
-        createTracker(LibraryInfoCache.getInstance(myProject)[library].single().toKtModule())
-
-    private fun createTracker(file: KtFile): ModuleStateModificationTracker =
-        createTracker(ProjectStructureProvider.getModule(myProject, file, contextualModule = null))
-
-    private fun disposeTrackers(vararg trackers: ModuleStateModificationTracker) {
-        trackers.forEach { Disposer.dispose(it) }
-    }
-
-    private class ModuleStateModificationTracker(val module: KtModule) : Disposable {
-        private class ReceivedEvent(val isRemoval: Boolean)
-
-        private val receivedEvents: MutableList<ReceivedEvent> = mutableListOf()
-
-        init {
-            val busConnection = module.project.analysisMessageBus.connect(this)
-            busConnection.subscribe(
-                KotlinTopics.MODULE_STATE_MODIFICATION,
-                KotlinModuleStateModificationListener { eventModule, isRemoval ->
-                    if (eventModule == module) {
-                        receivedEvents.add(ReceivedEvent(isRemoval))
-                    }
-                }
-            )
-        }
-
-        override fun dispose() { }
-
-        fun assertNotModified(label: String) {
-            Assert.assertTrue(
-                "Module state modification events for '$label' should not have been published, but ${receivedEvents.size} events were received.",
-                receivedEvents.isEmpty(),
-            )
-        }
-
-        fun assertModifiedOnce(label: String, shouldBeRemoval: Boolean = false) {
-            Assert.assertTrue(
-                "A single module state modification event for '$label' should have been published, but ${receivedEvents.size} events were received.",
-                receivedEvents.size == 1,
-            )
-
-            val receivedEvent = receivedEvents.single()
-            val shouldOrShouldNot = if (shouldBeRemoval) "should" else "should not"
-            Assert.assertTrue(
-                "The module state modification event for '$label' $shouldOrShouldNot be a removal event.",
-                receivedEvent.isRemoval == shouldBeRemoval,
-            )
-        }
+class ModuleStateModificationEventTracker(module: KtModule) : ModuleModificationEventTracker(
+    module,
+    eventKind = "module state modification",
+) {
+    override fun configureSubscriptions(busConnection: MessageBusConnection) {
+        busConnection.subscribe(
+            KotlinTopics.MODULE_STATE_MODIFICATION,
+            KotlinModuleStateModificationListener(::handleEvent),
+        )
     }
 }
