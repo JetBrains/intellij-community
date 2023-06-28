@@ -95,6 +95,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
       myDispatcher.addListener(new FSAdapter() {
         @Override
         public void windowEnteringFullScreen(FullScreenEvent event) {
+          MacFullScreenControlsManager.INSTANCE.configureForEmptyToolbarHeader(true);
           frame.togglingFullScreenInProgress = true;
           JRootPane rootPane = frame.getRootPane();
           if (rootPane != null && rootPane.getBorder() != null) {
@@ -123,6 +124,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
 
         @Override
         public void windowExitedFullScreen(FullScreenEvent event) {
+          MacFullScreenControlsManager.INSTANCE.configureForEmptyToolbarHeader(false);
           frame.togglingFullScreenInProgress = false;
           // We can get the notification when the frame has been disposed
           JRootPane rootPane = frame.getRootPane();
