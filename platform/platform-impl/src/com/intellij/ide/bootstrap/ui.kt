@@ -30,7 +30,6 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.updateAppWindowIcon
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.StartupUiUtil
-import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.VisibleForTesting
@@ -104,7 +103,7 @@ internal fun CoroutineScope.schedulePreloadingLafClasses() {
     Class.forName(SynchronizedClearableLazy::class.java.name, true, classLoader)
     Class.forName(ScaleContext::class.java.name, true, classLoader)
     Class.forName(GlobalStyleSheetHolder::class.java.name, true, classLoader)
-    Class.forName(UIUtil::class.java.name, true, classLoader)
+    Class.forName(StartupUiUtil::class.java.name, true, classLoader)
   }
 }
 
