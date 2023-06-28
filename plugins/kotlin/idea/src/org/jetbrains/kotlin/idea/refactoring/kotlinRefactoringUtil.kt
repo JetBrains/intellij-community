@@ -62,7 +62,6 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
-import org.jetbrains.kotlin.idea.base.psi.dropCurlyBracketsIfPossible
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.CHECK_SUPER_METHODS_YES_NO_DIALOG
 import org.jetbrains.kotlin.idea.base.util.collapseSpaces
@@ -830,11 +829,6 @@ fun <ListType : KtElement> replaceListPsiAndKeepDelimiters(
     }
 
     return originalList
-}
-
-fun KtExpression.removeTemplateEntryBracesIfPossible(): KtExpression {
-    val parent = parent as? KtBlockStringTemplateEntry ?: return this
-    return parent.dropCurlyBracketsIfPossible().expression!!
 }
 
 fun dropOverrideKeywordIfNecessary(element: KtNamedDeclaration) {

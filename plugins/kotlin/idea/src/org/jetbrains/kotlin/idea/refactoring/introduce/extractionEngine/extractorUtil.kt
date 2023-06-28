@@ -38,7 +38,6 @@ import org.jetbrains.kotlin.idea.refactoring.intentions.OperatorToFunctionConver
 import org.jetbrains.kotlin.idea.refactoring.introduce.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.OutputValue.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.OutputValueBoxer.AsTuple
-import org.jetbrains.kotlin.idea.refactoring.removeTemplateEntryBracesIfPossible
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.getAllAccessibleVariables
