@@ -30,12 +30,12 @@ import java.net.URL
 import java.nio.file.Paths
 
 internal interface GitLabCloneViewModel {
-  val uiState: Flow<UIState>
-  val accountsRefreshRequest: Flow<Set<GitLabAccount>>
+  val uiState: SharedFlow<UIState>
+  val accountsRefreshRequest: SharedFlow<Set<GitLabAccount>>
   val isLoading: Flow<Boolean>
 
-  val items: Flow<List<GitLabCloneListItem>>
-  val searchValue: Flow<SearchModel>
+  val items: SharedFlow<List<GitLabCloneListItem>>
+  val searchValue: SharedFlow<SearchModel>
   val selectedUrl: SharedFlow<String?>
 
   val accountDetailsProvider: GitLabAccountsDetailsProvider
@@ -78,18 +78,20 @@ internal class GitLabCloneViewModelImpl(
   private val accounts: Flow<Set<GitLabAccount>> = accountManager.accountsState
 
   private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(UIState.Login(null))
-  override val uiState: Flow<UIState> = _uiState.asSharedFlow()
+  override val uiState: SharedFlow<UIState> = _uiState.asSharedFlow()
 
-  override val accountsRefreshRequest: MutableSharedFlow<Set<GitLabAccount>> = MutableSharedFlow()
+  private val _accountsRefreshRequest: MutableSharedFlow<Set<GitLabAccount>> = MutableSharedFlow()
+  override val accountsRefreshRequest: SharedFlow<Set<GitLabAccount>> = _accountsRefreshRequest.asSharedFlow()
+
   override val isLoading: Flow<Boolean> = taskLauncher.busy
 
   private val _selectedItem: MutableStateFlow<GitLabCloneListItem?> = MutableStateFlow(null)
 
   private val _items: MutableStateFlow<List<GitLabCloneListItem>> = MutableStateFlow(emptyList())
-  override val items: Flow<List<GitLabCloneListItem>> = _items.asSharedFlow()
+  override val items: SharedFlow<List<GitLabCloneListItem>> = _items.asSharedFlow()
 
   private val _searchValue: MutableStateFlow<SearchModel> = MutableStateFlow(SearchModel.Text)
-  override val searchValue: Flow<SearchModel> = _searchValue.asSharedFlow()
+  override val searchValue: SharedFlow<SearchModel> = _searchValue.asSharedFlow()
 
   private val _selectedUrl: StateFlow<String?> = combine(_searchValue, _selectedItem) { searchValue, selectedItem ->
     when {
@@ -108,7 +110,7 @@ internal class GitLabCloneViewModelImpl(
   init {
     cs.launch(start = CoroutineStart.UNDISPATCHED) {
       accounts.collectLatest { accounts ->
-        accountsRefreshRequest.emit(accounts)
+        _accountsRefreshRequest.emit(accounts)
         if (accounts.isNotEmpty()) {
           switchToRepositoryList()
         }
@@ -116,7 +118,7 @@ internal class GitLabCloneViewModelImpl(
         accounts.forEach { account ->
           launch {
             accountManager.getCredentialsFlow(account).collectLatest {
-              accountsRefreshRequest.emit(accounts)
+              _accountsRefreshRequest.emit(accounts)
             }
           }
         }
@@ -124,7 +126,7 @@ internal class GitLabCloneViewModelImpl(
     }
 
     cs.launch(start = CoroutineStart.UNDISPATCHED) {
-      accountsRefreshRequest.collectLatest { accounts ->
+      _accountsRefreshRequest.collectLatest { accounts ->
         taskLauncher.launch {
           _items.value = accounts.flatMap { account ->
             collectRepositoriesByAccount(account)
