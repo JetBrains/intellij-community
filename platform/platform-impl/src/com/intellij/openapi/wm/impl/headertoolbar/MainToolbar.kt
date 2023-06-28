@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.accessibility.AccessibilityUtils
+import com.intellij.diagnostic.subtask
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.ActionUrl
 import com.intellij.ide.ui.customization.CustomActionsListener
@@ -56,8 +57,8 @@ private sealed interface MainToolbarFlavor {
 }
 
 private class MenuButtonInToolbarMainToolbarFlavor(private val coroutineScope: CoroutineScope,
-                                                    private val headerContent: JComponent,
-                                                    frame: JFrame) : MainToolbarFlavor {
+                                                   private val headerContent: JComponent,
+                                                   frame: JFrame) : MainToolbarFlavor {
   private val mainMenuButton = MainMenuButton()
 
   init {
@@ -94,13 +95,16 @@ internal class MainToolbar(private val coroutineScope: CoroutineScope, frame: JF
   // Separate init because first, as part of IdeRootPane creation, we add bare component to allocate space and then,
   // as part of EDT task scheduled in a start-up activity, do fill it. That's to avoid flickering due to resizing.
   suspend fun init(actionGroups: List<Pair<ActionGroup, String>>, customTitleBar: WindowDecorations.CustomTitleBar? = null) {
+    val schema = CustomActionsSchema.getInstanceAsync()
+    val customizationGroup = schema.getCorrectedActionAsync(MAIN_TOOLBAR_ID)
+    val customizationGroupPopupHandler = customizationGroup?.let {
+      CustomizationUtil.createToolbarCustomizationHandler(it, MAIN_TOOLBAR_ID, this, ActionPlaces.MAIN_TOOLBAR)
+    }
+
     withContext(Dispatchers.EDT) {
       removeAll()
 
       flavor.addWidget()
-
-      val schema = CustomActionsSchema.getInstanceAsync()
-      val customizationGroup = schema.getCorrectedAction(MAIN_TOOLBAR_ID) as? ActionGroup
 
       for ((actionGroup, position) in actionGroups) {
         addWidget(widget = createActionBar(actionGroup, customizationGroup),
@@ -109,12 +113,9 @@ internal class MainToolbar(private val coroutineScope: CoroutineScope, frame: JF
                   position = position)
       }
 
-      customizationGroup
-        ?.let { CustomizationUtil.createToolbarCustomizationHandler(it, MAIN_TOOLBAR_ID, this@MainToolbar, ActionPlaces.MAIN_TOOLBAR) }
-        ?.let { installClickListener(it, customTitleBar) }
-
-      migratePreviousCustomizations(schema)
+      customizationGroupPopupHandler?.let { installClickListener(popupHandler = it, customTitleBar = customTitleBar) }
     }
+    migratePreviousCustomizations(schema)
   }
 
   /*
@@ -124,35 +125,59 @@ internal class MainToolbar(private val coroutineScope: CoroutineScope, frame: JF
   private fun migratePreviousCustomizations(schema: CustomActionsSchema) {
     val mainToolbarName = schema.getDisplayName(MAIN_TOOLBAR_ID) ?: return
     val mainToolbarPath = listOf("root", mainToolbarName)
+    if (!schema.getChildActions(mainToolbarPath).isEmpty()) {
+      return
+    }
+
     val backup = CustomActionsSchema(null)
     backup.copyFrom(schema)
-    val url = ActionUrl().apply { groupPath = ArrayList(mainToolbarPath) }
-    if (!schema.getChildActions(url).isEmpty()) return
 
-    val tmpSchema = CustomActionsSchema(null)
-    tmpSchema.copyFrom(schema)
+    var tmpSchema = migrateToolbar(currentSchema = schema,
+                                   newSchema = null,
+                                   fromPath = listOf("root", "Main Toolbar Left"),
+                                   toPath = mainToolbarPath + "Left")
+    tmpSchema = migrateToolbar(currentSchema = schema,
+                               newSchema = tmpSchema,
+                               fromPath = listOf("root", "Main Toolbar Center"),
+                               toPath = mainToolbarPath + "Center")
+    tmpSchema = migrateToolbar(currentSchema = schema,
+                               newSchema = tmpSchema,
+                               fromPath = listOf("root", "Main Toolbar Right"),
+                               toPath = mainToolbarPath + "Right")
 
-    val leftChanged = migrateToolbar(tmpSchema, listOf("root", "Main Toolbar Left"), mainToolbarPath + "Left")
-    val centerChanged = migrateToolbar(tmpSchema, listOf("root", "Main Toolbar Center"), mainToolbarPath + "Center")
-    val rightChanged = migrateToolbar(tmpSchema, listOf("root", "Main Toolbar Right"), mainToolbarPath + "Right")
-
-      if (leftChanged || centerChanged || rightChanged) {
+    if (tmpSchema != null) {
       schema.copyFrom(tmpSchema)
       schemaChanged()
     }
   }
 
-  private fun migrateToolbar(schema: CustomActionsSchema, fromPath: List<String>, toPath: List<String>): Boolean {
-    val parentURL = ActionUrl().apply { groupPath = ArrayList(fromPath) }
-    val childActions = schema.getChildActions(parentURL)
-    if (childActions.isEmpty()) return false
+  private fun migrateToolbar(currentSchema: CustomActionsSchema,
+                             newSchema: CustomActionsSchema?,
+                             fromPath: List<String>,
+                             toPath: List<String>): CustomActionsSchema? {
+    val childActions = currentSchema.getChildActions(groupPath = fromPath)
+    if (childActions.isEmpty()) {
+      return newSchema
+    }
 
+    var copied = newSchema
+    if (copied == null) {
+      copied = CustomActionsSchema(null)
+      copied.copyFrom(currentSchema)
+    }
+    doMigrateToolbar(schema = copied, childActions = childActions, toPath = toPath, fromPath = fromPath)
+    return copied
+  }
+
+  private fun doMigrateToolbar(schema: CustomActionsSchema,
+                               childActions: List<ActionUrl>,
+                               toPath: List<String>,
+                               fromPath: List<String>) {
     val newUrls = childActions.map { ActionUrl(ArrayList(toPath), it.component, it.actionType, it.absolutePosition) }
     val actions = schema.getActions().toMutableList()
     actions.addAll(newUrls)
-    actions.removeIf { url: ActionUrl -> fromPath == url.groupPath }
+    actions.removeIf { fromPath == it.groupPath }
     schema.setActions(actions)
-    return true
   }
 
   private fun schemaChanged() {
@@ -245,9 +270,12 @@ private fun addWidget(widget: JComponent, parent: JComponent, coroutineScope: Co
 }
 
 internal suspend fun computeMainActionGroups(): List<Pair<ActionGroup, String>> {
-  serviceAsync<ActionManager>()
-  @Suppress("ForbiddenInSuspectContextMethod")
-  return computeMainActionGroups(CustomActionsSchema.getInstanceAsync())
+  return subtask("toolbar action groups computing") {
+    serviceAsync<ActionManager>()
+    val customActionSchema = CustomActionsSchema.getInstanceAsync()
+    @Suppress("ForbiddenInSuspectContextMethod")
+    computeMainActionGroups(customActionSchema)
+  }
 }
 
 @RequiresBlockingContext

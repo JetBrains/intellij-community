@@ -402,9 +402,10 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
     return true
   }
 
-  fun getChildActions(url: ActionUrl): List<ActionUrl> {
+  fun getChildActions(url: ActionUrl): List<ActionUrl> = getChildActions(url.groupPath)
+
+  internal fun getChildActions(groupPath: List<String>): List<ActionUrl> {
     val result = ArrayList<ActionUrl>()
-    val groupPath = url.groupPath
     for (actionUrl in actions) {
       var index = 0
       if (groupPath.size <= actionUrl.groupPath.size) {
