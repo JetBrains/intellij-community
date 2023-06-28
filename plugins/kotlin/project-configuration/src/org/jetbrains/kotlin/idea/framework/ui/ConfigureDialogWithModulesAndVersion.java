@@ -66,7 +66,6 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper {
     private JComboBox<String> kotlinVersionComboBox;
     private JPanel infoPanel;
     private JTextPane deprecatedJvmTargetsUsedWarning;
-    private JTextPane textPaneForLink;
 
     private final AsyncProcessIcon processIcon = new AsyncProcessIcon("loader");
 
@@ -148,16 +147,14 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper {
                                                                                          jvmTargetVersion, modulesEnumeration.toString()));
                              }
                     );
+            message.append(KotlinProjectConfigurationBundle.message("configurator.kotlin.jvm.target.bump.manually.learn.more"));
+            Messages.installHyperlinkSupport(deprecatedJvmTargetsUsedWarning);
             // It's not hardcoded, we take strings from resources
             //noinspection HardCodedStringLiteral
             deprecatedJvmTargetsUsedWarning.setText(message.toString());
 
-            Messages.installHyperlinkSupport(textPaneForLink);
-            textPaneForLink.setText(KotlinProjectConfigurationBundle.message("configurator.kotlin.jvm.target.bump.manually.learn.more"));
-            textPaneForLink.setVisible(true);
             deprecatedJvmTargetsUsedWarning.setVisible(true);
         } else {
-            textPaneForLink.setVisible(false);
             deprecatedJvmTargetsUsedWarning.setVisible(false);
         }
     }
