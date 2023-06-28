@@ -187,7 +187,6 @@ private val removeRedundantElementsProcessingGroup =
 
 private val inspectionLikePostProcessingGroup =
     InspectionLikeProcessingGroup(
-        RemoveRedundantOverrideVisibilityProcessing(),
         MoveLambdaOutsideParenthesesProcessing(),
         intentionBasedProcessing(ConvertToStringTemplateIntention(), writeActionNeeded = false) {
             ConvertToStringTemplateIntention.Holder.shouldSuggestToConvert(it)

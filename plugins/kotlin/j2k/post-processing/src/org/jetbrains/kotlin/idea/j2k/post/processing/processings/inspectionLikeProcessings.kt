@@ -133,21 +133,6 @@ internal class RemoveJavaStreamsCollectCallTypeArgumentsProcessing :
     }
 }
 
-
-internal class RemoveRedundantOverrideVisibilityProcessing :
-    InspectionLikeProcessingForElement<KtCallableDeclaration>(KtCallableDeclaration::class.java) {
-
-    override fun isApplicableTo(element: KtCallableDeclaration, settings: ConverterSettings?): Boolean {
-        if (!element.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return false
-        return element.visibilityModifier() != null
-    }
-
-    override fun apply(element: KtCallableDeclaration) {
-        val modifier = element.visibilityModifierType() ?: return
-        element.setVisibility(modifier)
-    }
-}
-
 internal class ReplaceGetterBodyWithSingleReturnStatementWithExpressionBody :
     InspectionLikeProcessingForElement<KtPropertyAccessor>(KtPropertyAccessor::class.java) {
 
@@ -339,21 +324,11 @@ internal class RemoveRedundantModalityModifierProcessing : InspectionLikeProcess
 
 
 internal class RemoveRedundantVisibilityModifierProcessing : InspectionLikeProcessingForElement<KtDeclaration>(KtDeclaration::class.java) {
-    override fun isApplicableTo(element: KtDeclaration, settings: ConverterSettings?) = when {
-        element.hasModifier(KtTokens.PUBLIC_KEYWORD) && element.hasModifier(KtTokens.OVERRIDE_KEYWORD) ->
-            false
-
-        element.hasModifier(KtTokens.INTERNAL_KEYWORD) && element.containingClassOrObject?.isLocal == true ->
-            true
-
-        element.visibilityModifierType() == element.implicitVisibility() ->
-            true
-
-        else -> false
-    }
+    override fun isApplicableTo(element: KtDeclaration, settings: ConverterSettings?): Boolean =
+        RedundantVisibilityModifierInspection.Holder.getRedundantVisibility(element) != null
 
     override fun apply(element: KtDeclaration) {
-        element.removeModifier(element.visibilityModifierType() ?: return)
+        element.visibilityModifierType()?.let { element.removeModifier(it) }
     }
 }
 
