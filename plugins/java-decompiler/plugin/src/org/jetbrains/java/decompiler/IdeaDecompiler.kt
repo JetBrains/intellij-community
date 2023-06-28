@@ -63,7 +63,6 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
         IFernflowerPreferences.BANNER to BANNER,
         IFernflowerPreferences.MAX_PROCESSING_METHOD to 60,
         IFernflowerPreferences.MAX_BYTES_CLASS_NOT_UNDER_PROGRESS to 20_000, //approximately 2_000 lines
-        IFernflowerPreferences.MAX_BYTES_CLASS to 150_000, //approximately 15_000 lines
         IFernflowerPreferences.INDENT_STRING to indent,
         IFernflowerPreferences.IGNORE_INVALID_BYTECODE to "1",
         IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES to "1",
@@ -133,12 +132,9 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
       }
       else {
         val maxBytesNotUnderProgress = myOptions.value[IFernflowerPreferences.MAX_BYTES_CLASS_NOT_UNDER_PROGRESS]?.toString()?.toIntOrNull() ?: 0
-        val maxBytes = myOptions.value[IFernflowerPreferences.MAX_BYTES_CLASS]?.toString()?.toIntOrNull() ?: 0
         return if (!ApplicationManager.getApplication().isUnitTestMode &&
                    (maxBytesNotUnderProgress > 0 && EDT.isCurrentThreadEdt() &&
-                    file.length > maxBytesNotUnderProgress) ||
-                   (maxBytes > 0 && file.length > maxBytes && !ProgressManager.getInstance().hasProgressIndicator())
-          ) {
+                    file.length > maxBytesNotUnderProgress)) {
           ClsFileImpl.decompile(file)
         }
         else {
