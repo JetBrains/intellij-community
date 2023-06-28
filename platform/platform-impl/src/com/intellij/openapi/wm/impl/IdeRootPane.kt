@@ -175,7 +175,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
               menuBar
             }
             else {
-              MacMenuBar(coroutineScope = coroutineScope.childScope(), component = this, frame = frame)
+              createMacMenuBar(coroutineScope = coroutineScope.childScope(), component = this, frame = frame)
             }
 
             MacToolbarFrameHeader(frame = frame, root = this)

@@ -2,65 +2,50 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.diagnostic.runActivity
-import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.ui.mac.foundation.NSDefaults
-import com.intellij.ui.mac.screenmenu.MenuBar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 import javax.swing.JComponent
 import javax.swing.JFrame
 
-internal class MacMenuBar internal constructor(@JvmField internal val coroutineScope: CoroutineScope,
-                                               private val component: JComponent,
-                                               private val frame: JFrame) : ActionAwareIdeMenuBar {
-  private val menuBarHelper: IdeMenuBarHelper
+internal fun createMacMenuBar(coroutineScope: CoroutineScope, component: JComponent, frame: JFrame): ActionAwareIdeMenuBar {
+  val flavor = object : IdeMenuFlavor {
+    override var state: IdeMenuBarState = IdeMenuBarState.EXPANDED
 
-  @JvmField
-  internal var activated = false
-  private val screenMenuPeer: MenuBar?
-
-  init {
-    val flavor = object : IdeMenuFlavor {
-      override var state: IdeMenuBarState = IdeMenuBarState.EXPANDED
-
-      override fun updateAppMenu() {
-        doUpdateAppMenu()
-      }
-    }
-
-    val facade = object : IdeMenuBarHelper.MenuBarImpl {
-      override val frame: JFrame
-        get() = this@MacMenuBar.frame
-      override val coroutineScope: CoroutineScope
-        get() = this@MacMenuBar.coroutineScope
-      override val isDarkMenu: Boolean
-        get() = NSDefaults.isDarkMenuBar()
-      override val component: JComponent
-        get() = this@MacMenuBar.component
-
-      override fun updateGlobalMenuRoots() {
-      }
-
-      override suspend fun getMainMenuActionGroup(): ActionGroup? = getMainMenuActionGroup(frame)
-    }
-
-    screenMenuPeer = runActivity("ide menu bar init") { createScreeMenuPeer(frame) }
-    if (screenMenuPeer == null) {
-      menuBarHelper = IdeMenuBarHelper(flavor = flavor, menuBar = facade)
-    }
-    else {
-      menuBarHelper = PeerBasedIdeMenuBarHelper(screenMenuPeer = screenMenuPeer, flavor = flavor, menuBar = facade)
-    }
-
-    coroutineScope.coroutineContext.job.invokeOnCompletion {
-      screenMenuPeer?.let {
-        @Suppress("SSBasedInspection")
-        it.dispose()
-      }
+    override fun updateAppMenu() {
+      doUpdateAppMenu()
     }
   }
 
-  override suspend fun updateMenuActions(forceRebuild: Boolean) {
-    menuBarHelper.updateMenuActions(forceRebuild)
+  val facade = object : IdeMenuBarHelper.MenuBarImpl {
+    override val frame: JFrame
+      get() = frame
+    override val coroutineScope: CoroutineScope
+      get() = coroutineScope
+    override val isDarkMenu: Boolean
+      get() = NSDefaults.isDarkMenuBar()
+    override val component: JComponent
+      get() = component
+
+    override fun updateGlobalMenuRoots() {
+    }
+
+    override suspend fun getMainMenuActionGroup() = getMainMenuActionGroup(frame)
   }
+
+  val screenMenuPeer = runActivity("ide menu bar init") { createScreeMenuPeer(frame) }
+  val menuBarHelper = if (screenMenuPeer == null) {
+    IdeMenuBarHelper(flavor = flavor, menuBar = facade)
+  }
+  else {
+    PeerBasedIdeMenuBarHelper(screenMenuPeer = screenMenuPeer, flavor = flavor, menuBar = facade)
+  }
+
+  coroutineScope.coroutineContext.job.invokeOnCompletion {
+    screenMenuPeer?.let {
+      @Suppress("SSBasedInspection")
+      it.dispose()
+    }
+  }
+  return menuBarHelper
 }

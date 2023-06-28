@@ -54,7 +54,8 @@ internal interface IdeMenuFlavor {
   fun suspendAnimator() {}
 }
 
-internal open class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor, @JvmField internal val menuBar: MenuBarImpl) {
+internal open class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
+                                     @JvmField internal val menuBar: MenuBarImpl) : ActionAwareIdeMenuBar {
   interface MenuBarImpl {
     val frame: JFrame
 
@@ -129,7 +130,7 @@ internal open class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor, @JvmFi
     }
   }
 
-  suspend fun updateMenuActions(forceRebuild: Boolean = false) {
+  override suspend fun updateMenuActions(forceRebuild: Boolean) {
     val mainActionGroup = menuBar.getMainMenuActionGroup()
     doUpdateMenuActions(mainActionGroup = mainActionGroup, forceRebuild = forceRebuild)
   }
