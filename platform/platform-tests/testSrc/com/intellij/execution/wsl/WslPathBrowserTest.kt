@@ -1,9 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl
 
 import com.intellij.execution.wsl.ui.createFileChooserDescriptor
 import com.intellij.execution.wsl.ui.getBestWindowsPathFromLinuxPath
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.fixtures.TestFixtureRule
+import org.assertj.core.api.Assertions
 import org.junit.Assert
 import org.junit.ClassRule
 import org.junit.Test
@@ -24,20 +26,21 @@ class WslPathBrowserTest {
 
   @Test
   fun correctPath() {
-    val winPath = getBestWindowsPathFromLinuxPath(wslRule.wsl, "/bin")!!
-    Assert.assertEquals("file:////wsl$/${wslRule.wsl.msId}/bin", winPath.toString())
+    assertWslPath(getBestWindowsPathFromLinuxPath(wslRule.wsl, "/bin")!!, "/bin")
   }
 
   @Test
   fun bestPath() {
-    val winPath = getBestWindowsPathFromLinuxPath(wslRule.wsl, "/bin/foo/bur/buz")!!
-    Assert.assertEquals("file:////wsl$/${wslRule.wsl.msId}/bin", winPath.toString())
+    assertWslPath(getBestWindowsPathFromLinuxPath(wslRule.wsl, "/bin/foo/bur/buz")!!, "/bin")
   }
 
   @Test
   fun wrongPath() {
-    val winPath = getBestWindowsPathFromLinuxPath(wslRule.wsl, "/something_that_simply_doesnt_exist")
-    Assert.assertEquals("file:////wsl$/${wslRule.wsl.msId}/", winPath.toString())
+    assertWslPath(getBestWindowsPathFromLinuxPath(wslRule.wsl, "/something_that_simply_doesnt_exist"), "/")
+  }
+
+  private fun assertWslPath(winPath: VirtualFile?, expected: String) {
+    Assertions.assertThat(winPath.toString()).matches("file:////wsl(\\$|\\.localhost)/${wslRule.wsl.msId}${expected}")
   }
 
   @Test

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl;
 
 import com.google.common.net.InetAddresses;
@@ -583,7 +583,7 @@ public class WSLDistribution implements AbstractWslDistribution {
   }
 
   private @NotNull String getUNCRootPathString() {
-    return WslConstants.UNC_PREFIX + myDescriptor.getMsId();
+    return WSLUtil.getUncPrefix() + myDescriptor.getMsId();
   }
 
   /**

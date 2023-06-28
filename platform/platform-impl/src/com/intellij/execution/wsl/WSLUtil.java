@@ -12,6 +12,7 @@ import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -199,5 +200,9 @@ public final class WSLUtil {
       LOG.warn(e);
       return null;
     }
+  }
+
+  static @NotNull String getUncPrefix() {
+    return SystemInfo.isWin11OrNewer ? "\\\\wsl.localhost\\" : WslConstants.UNC_PREFIX;
   }
 }
