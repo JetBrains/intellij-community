@@ -33,7 +33,7 @@ public class HtmlDocumentationTest extends BasePlatformTestCase {
              </body>
              </html>""",
            "<div class='definition'><pre>body</pre></div>\n<div class='content'>" +
-           "<p>The <strong><code>&lt;body&gt;</code></strong> <a href=\"https://developer.mozilla.org/en-us/docs/Web/HTML\">HTML</a> " +
+           "The <strong><code>&lt;body&gt;</code></strong> <a href=\"https://developer.mozilla.org/en-us/docs/Web/HTML\">HTML</a> " +
            "element represents the content of",
            Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/html/element/body"));
   }
@@ -47,7 +47,7 @@ public class HtmlDocumentationTest extends BasePlatformTestCase {
              </body>
              </html>""",
            "<div class='definition'><pre>dialog</pre></div>\n<div class='content'>" +
-           "<p>The <strong><code>&lt;dialog&gt;</code></strong> <a href=\"https://developer.mozilla.org/en-us/docs/Web/HTML\">HTML</a> " +
+           "The <strong><code>&lt;dialog&gt;</code></strong> <a href=\"https://developer.mozilla.org/en-us/docs/Web/HTML\">HTML</a> " +
            "element represents a dialog box",
            Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/html/element/dialog"));
   }
@@ -60,7 +60,7 @@ public class HtmlDocumentationTest extends BasePlatformTestCase {
              </body>
              </html>""",
            "<div class='definition'><pre>onload</pre></div>\n<div class='content'>Function to call when the document has finished loading.",
-           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/html/element/body#attr-onload"));
+           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/html/element/body#onload"));
   }
 
   public void testQuickDocumentationHtml5Svg() {
@@ -73,7 +73,7 @@ public class HtmlDocumentationTest extends BasePlatformTestCase {
              </body>
              </html>""",
            "<div class='definition'><pre>svg</pre></div>\n<div class='content'>" +
-           "<p>The <code>svg</code> element is a container that defines a new coordinate system and",
+           "The <code>svg</code> element is a container that defines a new coordinate system and",
            Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/svg/element/svg"));
   }
 
@@ -89,7 +89,7 @@ public class HtmlDocumentationTest extends BasePlatformTestCase {
              </body>
              </html>""",
            "<div class='definition'><pre>image</pre></div>\n<div class='content'>" +
-           "<p><span class=\"seoSummary\">The <strong><code>&lt;image&gt;</code></strong> SVG element includes images inside SVG documents.",
+           "The <strong><code>&lt;image&gt;</code></strong> SVG element includes images inside SVG documents.",
            Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/svg/element/image"));
   }
 
@@ -103,7 +103,8 @@ public class HtmlDocumentationTest extends BasePlatformTestCase {
              </body>
              </html>""",
            "<div class='definition'><pre>math</pre></div>\n<div class='content'>" +
-           "<p class=\"summary\">The top-level element in MathML is <code>&lt;math&gt;</code>.",
+           "The <strong><code>&lt;math&gt;</code></strong> <a href=\"https://developer.mozilla.org/en-us/docs/Web/MathML\">MathML</a> " +
+           "element is the top-level MathML element",
            Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/mathml/element/math"));
   }
 
@@ -119,7 +120,8 @@ public class HtmlDocumentationTest extends BasePlatformTestCase {
              </body>
              </html>""",
            "<div class='definition'><pre>mrow</pre></div>\n<div class='content'>" +
-           "<p class=\"summary\">The MathML <code>&lt;mrow&gt;</code> element is used to group sub-expressions",
+           "The <strong><code>&lt;mrow&gt;</code></strong> <a href=\"https://developer.mozilla.org/en-us/docs/Web/MathML\">MathML</a> " +
+           "element is used to group sub-expressions",
            Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/mathml/element/mrow"));
   }
 
@@ -132,8 +134,8 @@ public class HtmlDocumentationTest extends BasePlatformTestCase {
              </body>
              </html>""",
            "<div class='definition'><pre>body</pre></div>\n<div class='content'>" +
-           "<p>The <strong><code>&lt;body&gt;</code></strong> <a href=\"https://developer.mozilla.org/en-us/docs/Web/HTML\">HTML</a> " +
-           "element represents the content of an HTML document.",
+           "The <strong><code>&lt;body&gt;</code></strong> <a href=\"https://developer.mozilla.org/en-us/docs/Web/HTML\">HTML</a> " +
+           "element represents the content of an HTML document.",
            Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/html/element/body"));
   }
 
@@ -146,13 +148,13 @@ public class HtmlDocumentationTest extends BasePlatformTestCase {
              </body>
              </html>""",
            "<div class='definition'><pre>onload</pre></div>\n<div class='content'>Function to call when the document has finished loading.",
-           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/html/element/body#attr-onload"));
+           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/html/element/body#onload"));
   }
 
   public void testQuickDocumentationHtml5Script() {
     doTest("<scr<caret>ipt></script>",
            "<div class='definition'><pre>script</pre></div>\n<div class='content'>" +
-           "<p>The <strong><code>&lt;script&gt;</code></strong> <a href=\"https://developer.mozilla.org/en-us/docs/Web/HTML\">HTML</a> " +
+           "The <strong><code>&lt;script&gt;</code></strong> <a href=\"https://developer.mozilla.org/en-us/docs/Web/HTML\">HTML</a> " +
            "element is used to embed executable",
            Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/html/element/script"));
   }
@@ -160,7 +162,7 @@ public class HtmlDocumentationTest extends BasePlatformTestCase {
 
   public void testQuickDocumentationHtml5MediaEvents() {
     doTest("<video on<caret>stalled=''>",
-           "<div class='definition'><pre>onstalled</pre></div>\n<div class='content'><p><span class=\"seoSummary\">" +
+           "<div class='definition'><pre>onstalled</pre></div>\n<div class='content'>" +
            "The <code>stalled</code> event is fired when the user agent is trying to fetch media data",
            Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/api/htmlmediaelement/stalled_event"));
   }
