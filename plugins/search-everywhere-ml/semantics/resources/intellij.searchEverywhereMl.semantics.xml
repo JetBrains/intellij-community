@@ -10,26 +10,25 @@
       implementation="com.intellij.searchEverywhereMl.semantics.reordering.SearchEverywhereReorderingServiceImpl" />
 
     <postStartupActivity
-      implementation="com.intellij.searchEverywhereMl.semantics.services.LocalSemanticActionsService$SearchServiceInitializer"/>
-
-    <registryKey defaultValue="true"
-                 description="Use remote model for Action candidates retrieval"
-                 key="search.everywhere.ml.semantic.actions.use.server.model"/>
-
-    <registryKey defaultValue="true"
-                 description="Use remote model for Action candidates retrieval"
-                 key="search.everywhere.ml.semantic.actions.use.remote.model"/>
-
-    <registryKey defaultValue="http://localhost:8239/actions/similarity"
-                 description="Local semantic model host for the Actions tab"
-                 key="search.everywhere.ml.semantic.actions.local.host"/>
+      implementation="com.intellij.searchEverywhereMl.semantics.services.ActionSemanticSearchServiceInitializer"/>
 
     <registryKey defaultValue="https://se-semantics.labs.jb.gg/actions/similarity"
-                 description="Remote semantic model host for the Actions tab"
-                 key="search.everywhere.ml.semantic.actions.remote.host"/>
+                 description="Server host with semantic model for the Actions tab"
+                 key="search.everywhere.ml.semantic.actions.server.host"/>
 
-    <registryKey defaultValue="true"
-                 description="Whether to use custom search items reordering to collect dataset for semantic contributors or not"
-                 key="search.everywhere.ml.semantic.actions.use.reordering"/>
+    <registryKey defaultValue="false"
+                 description="Highlight semantic items in Search Everywhere"
+                 key="search.everywhere.ml.semantic.highlight.items"/>
+
+    <applicationConfigurable
+      groupId="tools"
+      instance="com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchConfigurable"
+      id="com.intellij.searchEverywhereMl.SemanticSearchConfigurable"
+      bundle="messages.searchEverywhereMlSemanticsBundle"
+      key="search.everywhere.ml.semantic.settings.configurable.display.name"/>
+
+    <notificationGroup id="Semantic search notification group" displayType="STICKY_BALLOON"
+                       bundle="messages.searchEverywhereMlSemanticsBundle"
+                       key="search.everywhere.ml.semantic.notification.group.name"/>
   </extensions>
 </idea-plugin>

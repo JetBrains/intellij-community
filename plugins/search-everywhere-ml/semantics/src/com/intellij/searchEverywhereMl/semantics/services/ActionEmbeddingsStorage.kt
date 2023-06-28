@@ -3,6 +3,7 @@ package com.intellij.searchEverywhereMl.semantics.services
 import ai.grazie.emb.FloatTextEmbedding
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
@@ -15,8 +16,10 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.util.NlsSafe
-import java.util.concurrent.atomic.AtomicBoolean
+import com.intellij.searchEverywhereMl.semantics.SemanticSearchBundle
+import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettingsManager
+import java.util.*
+import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
@@ -33,14 +36,15 @@ import kotlin.math.sqrt
   storages = [Storage(value = "action-embeddings.xml", roamingType = RoamingType.DISABLED)],
   reportStatistic = false
 )
-class LocalSemanticActionsService : PersistentStateComponent<LocalSemanticActionsService.State> {
+class ActionEmbeddingsStorage : PersistentStateComponent<ActionEmbeddingsStorage.State> {
   data class State(var actionIdToEmbedding: MutableMap<String, FloatTextEmbedding>) {
     constructor() : this(mutableMapOf())
   }
 
-  var myState = State()
+  private var myState = State()
   private val stateLock = ReentrantReadWriteLock()
-  private val isGeneratingEmbeddings = AtomicBoolean(false)
+
+  private val setupTaskIndicator = AtomicReference<ProgressIndicator>(null)
 
   override fun getState(): State {
     return myState
@@ -48,36 +52,33 @@ class LocalSemanticActionsService : PersistentStateComponent<LocalSemanticAction
 
   override fun loadState(state: State) {
     myState = state
-    // If the storage file is changed externally, we make it consistent again:
-    isGeneratingEmbeddings.compareAndSet(true, false)
-    tryGenerateEmbeddings()
-  }
-
-  @Suppress("unused")  // Registered in the plugin's XML file
-  private class SearchServiceInitializer : ProjectActivity {
-    override suspend fun execute(project: Project) {
-      // Instantiate service for the first time with state loading if available.
-      // Whether the state exists or not, we generate the missing embeddings:
-      service<LocalSemanticActionsService>().tryGenerateEmbeddings()
-    }
   }
 
   /* Thread-safe job for updating embeddings. Only the first call will have an effect. */
   fun tryGenerateEmbeddings() {
-    ApplicationManager.getApplication().executeOnPooledThread {
-      val project = ProjectManager.getInstance().openProjects[0]
-      ProgressManager.getInstance().run(EmbeddingStorageSetupTask(project))
+    if (checkSearchEnabled()) {
+      ApplicationManager.getApplication().executeOnPooledThread {
+        val project = ProjectManager.getInstance().openProjects[0]
+        val task = EmbeddingStorageSetupTask(project)
+        ProgressManager.getInstance().run(task)
+      }
     }
+  }
+
+  fun tryStopGeneratingEmbeddings() {
+    setupTaskIndicator.getAndSet(null)?.cancel()
   }
 
   private fun computeEmbedding(text: String): FloatTextEmbedding {
     return runBlockingCancellable {
-      LocalEmbeddingServiceProvider.getService().embed(listOf(text))
+      service<LocalEmbeddingServiceProvider>().getService().embed(listOf(text))
     }.single()
   }
 
   fun searchNeighbours(text: String, topK: Int, similarityThreshold: Double? = null): List<ScoredText> {
-    val computeTask = { computeEmbedding(text) }
+    if (!checkSearchEnabled()) return emptyList()
+
+    val computeTask = { computeEmbedding(text).normalized() }
     val embedding = ProgressManager.getInstance().runProcess(computeTask, EmptyProgressIndicator())
 
     return stateLock.read {
@@ -93,82 +94,80 @@ class LocalSemanticActionsService : PersistentStateComponent<LocalSemanticAction
     }
   }
 
-  private fun shouldGenerateEmbeddings(): Boolean {
-    val indexableActionsCount = getIndexableActionsCount()
+  private fun hasUnreadyEmbeddings(): Boolean {
+    val totalIndexableActionsCount = getTotalIndexableActionsCount()
     return stateLock.read {
       // Do not try to instantiate the local embedding model if all embeddings already present
-      myState.actionIdToEmbedding.size != indexableActionsCount
+      myState.actionIdToEmbedding.size != totalIndexableActionsCount
     }
   }
 
   private inner class EmbeddingStorageSetupTask(project: Project) : Task.Backgroundable(project, SETUP_TITLE) {
     override fun run(indicator: ProgressIndicator) {
-      if (!isGeneratingEmbeddings.compareAndSet(false, true) || !shouldGenerateEmbeddings()) {
+      if (!hasUnreadyEmbeddings()) {
         return
       }
 
+      // Cancel the previous embeddings calculation task if it's not finished
+      setupTaskIndicator.getAndSet(indicator)?.cancel()
+
       indicator.text = SETUP_TITLE
       // There is an inspection that prohibits the usage of `runBlocking` to run coroutines
-      // and suggests to replace it with `runBlockingCancellable`. `runBlockingCancellable` requires
-      // the presence of `ProgressIndicator` in the calling thread; that's another reason we use indicator here
-      val embeddingService = runBlockingCancellable {
-        LocalEmbeddingServiceProvider.getService()
-      }
+      // and suggests replacing it with `runBlockingCancellable` which requires
+      // the presence of `ProgressIndicator` in the calling thread; that's another reason we use the indicator here
+      val embeddingService = runBlockingCancellable { service<LocalEmbeddingServiceProvider>().getService() }
 
-      var indexedActionsCount = 0
-      val indexableActionsCount = getIndexableActionsCount()
+      var indexedActionsCount = stateLock.read { myState.actionIdToEmbedding.size }
+      val totalIndexableActionsCount = getTotalIndexableActionsCount()
 
       val actionManager = ActionManager.getInstance() as ActionManagerImpl
       actionManager.actionIds
         .asSequence()
-        .map { actionId ->
-          actionId to actionManager.getAction(actionId)
-        }.filter {
-          val action = it.second
-          action != null && !(action is ActionGroup && !action.isSearchable) && action.templateText != null
-        }
+        .map { it to actionManager.getAction(it) }
+        .filter { shouldIndexAction(it.second) }
         .filter {
           // Do not calculate the embedding if already present in state
-          stateLock.read {
-            it.first !in myState.actionIdToEmbedding
-          }
-        }.chunked(BATCH_SIZE) {
-          it
-        }.forEach {
+          stateLock.read { it.first !in myState.actionIdToEmbedding }
+        }
+        .chunked(BATCH_SIZE)
+        .forEach {
           ProgressManager.checkCanceled()
           val actionIds = it.map { pair -> pair.first }
           val texts = it.map { pair -> pair.second!!.templateText!! }
-          val embeddings = runBlockingCancellable {
-            embeddingService.embed(texts)
-          }.map { embedding ->
-            embedding.normalized()
-          }
-          stateLock.write {
-            myState.actionIdToEmbedding.putAll(actionIds zip embeddings)
-          }
+          val embeddings = runBlockingCancellable { embeddingService.embed(texts) }
+            .map { embedding -> embedding.normalized() }
+          stateLock.write { myState.actionIdToEmbedding.putAll(actionIds zip embeddings) }
           indexedActionsCount += embeddings.size
-          indicator.fraction = indexedActionsCount.toDouble() / indexableActionsCount
+          indicator.fraction = indexedActionsCount.toDouble() / totalIndexableActionsCount
         }
 
-      indicator.cancel()
+      // If the indicator is already changed, then the current task is already canceled
+      if (setupTaskIndicator.compareAndSet(indicator, null)) {
+        indicator.cancel()
+      }
     }
   }
 
   companion object {
-    private val LOG = Logger.getInstance(LocalSemanticActionsService::class.java)
+    private val LOG = Logger.getInstance(ActionEmbeddingsStorage::class.java)
 
-    @NlsSafe
-    private const val SETUP_TITLE = "Generating actions embeddings..."
+    private val SETUP_TITLE = SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.actions.generation.label")
     private const val BATCH_SIZE = 16
 
-    private fun getIndexableActionsCount(): Int {
+    private fun checkSearchEnabled(): Boolean {
+      return service<SemanticSearchSettingsManager>().getIsEnabledInActionsTab()
+    }
+
+    private fun shouldIndexAction(action: AnAction?): Boolean {
+      return action != null && !(action is ActionGroup && !action.isSearchable) && action.templateText != null
+    }
+
+    private fun getTotalIndexableActionsCount(): Int {
       val actionManager = ActionManager.getInstance() as ActionManagerImpl
       return actionManager.actionIds
-        .map {
-          actionManager.getAction(it)
-        }.filter {
-          it != null && !(it is ActionGroup && !it.isSearchable) && it.templateText != null
-        }.size
+        .map { actionManager.getAction(it) }
+        .filter { shouldIndexAction(it) }
+        .size
     }
   }
 }
@@ -181,4 +180,13 @@ data class ScoredText(
 fun FloatTextEmbedding.normalized(): FloatTextEmbedding {
   val norm = sqrt(this * this)
   return FloatTextEmbedding(this.values.map { it / norm }.toFloatArray())
+}
+
+@Suppress("unused")  // Registered in the plugin's XML file
+class ActionSemanticSearchServiceInitializer : ProjectActivity {
+  override suspend fun execute(project: Project) {
+    // Instantiate service for the first time with state loading if available.
+    // Whether the state exists or not, we generate the missing embeddings:
+    service<ActionEmbeddingsStorage>().tryGenerateEmbeddings()
+  }
 }

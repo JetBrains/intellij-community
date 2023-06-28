@@ -178,7 +178,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     @NotNull final String pattern;
     final int matchingDegree;
 
-    public Double similarityScore = null;
+    @Nullable public Double similarityScore = null;
 
     public MatchedValue(@NotNull Object value, @NotNull String pattern, @NotNull MatchedValueType type) {
       assert value instanceof OptionDescription || value instanceof ActionWrapper;

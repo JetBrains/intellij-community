@@ -12,7 +12,7 @@ private val LOG = logger<SearchEverywhereReorderingService>()
  * Service that allows to customly reorder items in Search Everywhere when a new element is added
  */
 @ApiStatus.Internal
-abstract class SearchEverywhereReorderingService {
+interface SearchEverywhereReorderingService {
   companion object {
     val EP_NAME: ExtensionPointName<SearchEverywhereReorderingService> = ExtensionPointName.create(
       "com.intellij.searchEverywhereReorderingService")
@@ -30,8 +30,8 @@ abstract class SearchEverywhereReorderingService {
   }
 
   /** Indicates whether custom reordering should be used */
-  abstract fun isEnabled(): Boolean
+  fun isEnabled(): Boolean
 
   /** Performs custom reordering */
-  abstract fun reorder(items: MutableList<SearchEverywhereFoundElementInfo>)
+  fun reorder(items: MutableList<SearchEverywhereFoundElementInfo>)
 }

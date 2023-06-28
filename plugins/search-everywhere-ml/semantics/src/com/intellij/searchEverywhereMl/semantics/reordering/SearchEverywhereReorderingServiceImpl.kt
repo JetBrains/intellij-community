@@ -2,12 +2,13 @@ package com.intellij.searchEverywhereMl.semantics.reordering
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereReorderingService
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.components.service
 import com.intellij.searchEverywhereMl.semantics.contributors.SemanticSearchEverywhereContributor
+import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettingsManager
 
-class SearchEverywhereReorderingServiceImpl: SearchEverywhereReorderingService() {
+class SearchEverywhereReorderingServiceImpl: SearchEverywhereReorderingService {
   override fun isEnabled(): Boolean {
-    return Registry.`is`("search.everywhere.ml.semantic.actions.use.reordering")
+    return service<SemanticSearchSettingsManager>().getIsEnabledInActionsTab()
   }
 
   override fun reorder(items: MutableList<SearchEverywhereFoundElementInfo>) {

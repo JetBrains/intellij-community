@@ -38,18 +38,18 @@ class SemanticActionSearchEverywhereContributor(
 
   private val delegateContributor = ActionSearchEverywhereContributor(project, contextComponent, editor)
 
-  private val myModel = GotoActionModel(project, contextComponent, editor)
-
   private val semanticActionsProvider: SemanticActionsProvider
 
   init {
-    myModel.buildGroupMappings()
+    val actionModel = GotoActionModel(project, contextComponent, editor)
+    actionModel.buildGroupMappings()
 
-    semanticActionsProvider = if (Registry.`is`("search.everywhere.ml.semantic.actions.use.server.model")) {
-      ServerSemanticActionsProvider(myModel)
+    val settings = service<SemanticSearchSettingsManager>()
+    semanticActionsProvider = if (settings.getUseRemoteActionsServer()) {
+      ServerSemanticActionsProvider(actionModel)
     }
     else {
-      LocalSemanticActionsProvider(myModel)
+      LocalSemanticActionsProvider(actionModel)
     }
   }
 
@@ -72,7 +72,9 @@ class SemanticActionSearchEverywhereContributor(
     return ListCellRenderer<GotoActionModel.MatchedValue> { list, element, index, isSelected, cellHasFocus ->
       val panel = defaultRenderer.getListCellRendererComponent(list, element, index, isSelected, cellHasFocus)
 
-      panel.background = JBColor.GREEN.darker().darker()
+      if (Registry.`is`("search.everywhere.ml.semantic.highlight.items")) {
+        panel.background = JBColor.GREEN.darker().darker()
+      }
       panel
     }
   }
