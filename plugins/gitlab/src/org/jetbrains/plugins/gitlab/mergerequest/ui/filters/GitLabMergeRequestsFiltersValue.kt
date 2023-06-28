@@ -21,11 +21,16 @@ data class GitLabMergeRequestsFiltersValue(
   @Transient
   override val filterCount: Int = calcFilterCount()
 
-  fun toSearchQuery(): String = filters.asSequence()
-    .filterNotNull()
-    .map { "${it.queryField()}=${URLEncoder.encode(it.queryValue(), Charsets.UTF_8)}" }
-    .let { if (searchQuery != null) it + "search=${URLEncoder.encode(searchQuery, Charsets.UTF_8)}" else it }
-    .joinToString(separator = "&")
+  fun toSearchQuery(): String {
+    val result = mutableListOf("scope=all")
+    if (searchQuery != null) {
+      result.add("search=${URLEncoder.encode(searchQuery, Charsets.UTF_8)}")
+    }
+    return filters.asSequence()
+      .filterNotNull()
+      .mapTo(result) { "${it.queryField()}=${URLEncoder.encode(it.queryValue(), Charsets.UTF_8)}" }
+      .joinToString(separator = "&")
+  }
 
   private fun calcFilterCount(): Int {
     var count = 0
