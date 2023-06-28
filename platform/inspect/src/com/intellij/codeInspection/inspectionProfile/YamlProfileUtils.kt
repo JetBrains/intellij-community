@@ -7,6 +7,16 @@ import com.intellij.codeInspection.ex.InspectionToolsSupplier
 import com.intellij.codeInspection.ex.ToolsImpl
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager
 import org.jdom.Element
+import org.yaml.snakeyaml.DumperOptions
+import org.yaml.snakeyaml.LoaderOptions
+import org.yaml.snakeyaml.Yaml
+import org.yaml.snakeyaml.constructor.CustomClassLoaderConstructor
+import org.yaml.snakeyaml.introspector.BeanAccess
+import org.yaml.snakeyaml.introspector.Property
+import org.yaml.snakeyaml.nodes.NodeTuple
+import org.yaml.snakeyaml.nodes.Tag
+import org.yaml.snakeyaml.representer.Representer
+
 
 object YamlProfileUtils {
 
@@ -50,4 +60,28 @@ object YamlProfileUtils {
       child.setAttribute("value", value)
     }
   }
+
+  fun makeYaml(): Yaml {
+    val constr = CustomClassLoaderConstructor(YamlInspectionProfileRaw::class.java, YamlInspectionProfileRaw::class.java.classLoader,
+                                              LoaderOptions())
+    val yaml = Yaml(constr, representer)
+    yaml.setBeanAccess(BeanAccess.FIELD)
+    return yaml
+  }
+
+  private val representer: Representer = object : Representer(DumperOptions()) {
+    init {
+      propertyUtils.isSkipMissingProperties = true
+    }
+    override fun representJavaBeanProperty(javaBean: Any?, property: Property?, propertyValue: Any?, customTag: Tag?): NodeTuple? {
+      // if value of property is null, ignore it.
+      return if (propertyValue == null) {
+        null
+      }
+      else {
+        super.representJavaBeanProperty(javaBean, property, propertyValue, customTag)
+      }
+    }
+  }
+
 }
