@@ -21,10 +21,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
-import com.intellij.ui.ListActions;
-import com.intellij.ui.MouseMovementTracker;
-import com.intellij.ui.ScrollingUtil;
-import com.intellij.ui.SeparatorWithText;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.ClosableByLeftArrow;
@@ -911,6 +908,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
   @Override
   public void showInBestPositionFor(@NotNull Editor editor) {
+    if (UiInterceptors.tryIntercept(this)) return;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       handleSelect(true);
       if (!Disposer.isDisposed(this)) {
