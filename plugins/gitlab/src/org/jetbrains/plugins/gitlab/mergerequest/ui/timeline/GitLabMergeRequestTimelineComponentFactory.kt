@@ -11,8 +11,6 @@ import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentF
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.collaboration.ui.util.bindEnabledIn
-import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
@@ -32,15 +30,14 @@ import com.intellij.util.ui.StyleSheetUtil
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.*
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineUIUtil.createTitleTextPane
 import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
-import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditingViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditorComponentFactory
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
+import org.jetbrains.plugins.gitlab.ui.comment.submitActionIn
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
 import javax.swing.JScrollPane
@@ -116,14 +113,8 @@ internal object GitLabMergeRequestTimelineComponentFactory {
                                                 iconsProvider: IconsProvider<GitLabUserDTO>,
                                                 editVm: NewGitLabNoteViewModel): JComponent {
     val noteCs = this
-    val submitAction = swingAction(CollaborationToolsBundle.message("review.comments.reply.action")) {
-      editVm.submit()
-    }.apply {
-      bindEnabledIn(noteCs, editVm.state.map { it != GitLabNoteEditingViewModel.SubmissionState.Loading })
-    }
-
     val actions = CommentInputActionsComponentFactory.Config(
-      primaryAction = MutableStateFlow(submitAction),
+      primaryAction = MutableStateFlow(editVm.submitActionIn(noteCs, CollaborationToolsBundle.message("review.comments.reply.action"))),
       submitHint = MutableStateFlow(CollaborationToolsBundle.message("review.comments.reply.hint",
                                                                      CommentInputActionsComponentFactory.submitShortcutText))
     )

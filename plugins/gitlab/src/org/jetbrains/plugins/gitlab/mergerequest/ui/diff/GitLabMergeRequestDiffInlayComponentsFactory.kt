@@ -7,13 +7,11 @@ import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.collaboration.ui.util.bindEnabledIn
 import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.ui.comment.*
 import javax.swing.JComponent
@@ -34,14 +32,8 @@ object GitLabMergeRequestDiffInlayComponentsFactory {
                           avatarIconsProvider: IconsProvider<GitLabUserDTO>,
                           vm: NewGitLabNoteViewModel,
                           onCancel: () -> Unit): JComponent {
-    val submitAction = swingAction(CollaborationToolsBundle.message("review.comment.submit")) {
-      vm.submit()
-    }.apply {
-      bindEnabledIn(cs, vm.state.map { it != GitLabNoteEditingViewModel.SubmissionState.Loading })
-    }
-
     val actions = CommentInputActionsComponentFactory.Config(
-      primaryAction = MutableStateFlow(submitAction),
+      primaryAction = MutableStateFlow(vm.submitActionIn(cs, CollaborationToolsBundle.message("review.comment.submit"))),
       cancelAction = MutableStateFlow(swingAction("") { onCancel() }),
       submitHint = MutableStateFlow(CollaborationToolsBundle.message("review.comment.hint",
                                                                      CommentInputActionsComponentFactory.submitShortcutText))

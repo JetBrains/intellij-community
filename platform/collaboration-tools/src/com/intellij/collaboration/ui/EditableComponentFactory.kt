@@ -9,10 +9,10 @@ import javax.swing.JComponent
 
 object EditableComponentFactory {
   fun <VM : Any> create(cs: CoroutineScope, component: JComponent, editingVm: Flow<VM?>,
-                        editorComponentSupplier: (CoroutineScope, VM) -> JComponent): JComponent {
+                        editorComponentSupplier: CoroutineScope.(VM) -> JComponent): JComponent {
     return Wrapper().apply {
       bindContentIn(cs, editingVm) { vm ->
-        if (vm != null) editorComponentSupplier(this, vm) else component
+        if (vm != null) editorComponentSupplier(vm) else component
       }
     }
   }

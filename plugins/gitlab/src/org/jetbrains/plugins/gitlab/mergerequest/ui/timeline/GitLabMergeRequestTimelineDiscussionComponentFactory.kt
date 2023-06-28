@@ -121,8 +121,8 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
         actionsVm?.editVm?.map { it?.let { actionsVm to it } } ?: flowOf(null)
       }
 
-    val textContentPanel = EditableComponentFactory.create(cs, textPanel, actionAndEditVmsFlow) { editCs, (actionsVm, editVm) ->
-      val editor = GitLabNoteEditorComponentFactory.create(project, editCs, editVm, createEditActionsConfig(actionsVm, editVm))
+    val textContentPanel = EditableComponentFactory.create(cs, textPanel, actionAndEditVmsFlow) { (actionsVm, editVm) ->
+      val editor = GitLabNoteEditorComponentFactory.create(project, this, editVm, createEditActionsConfig(actionsVm, editVm))
       editVm.requestFocus()
       editor
     }.let {

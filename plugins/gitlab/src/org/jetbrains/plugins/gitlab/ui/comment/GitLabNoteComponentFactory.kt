@@ -36,8 +36,8 @@ object GitLabNoteComponentFactory {
 
     val actionsVm = vm.actionsVm
     val contentPanel = if (actionsVm != null) {
-      EditableComponentFactory.create(cs, textPanel, actionsVm.editVm) { editCs, editVm ->
-        val editor = GitLabNoteEditorComponentFactory.create(project, editCs, editVm, createEditActionsConfig(actionsVm, editVm))
+      EditableComponentFactory.create(cs, textPanel, actionsVm.editVm) { editVm ->
+        val editor = GitLabNoteEditorComponentFactory.create(project, this, editVm, createEditActionsConfig(actionsVm, editVm))
         editVm.requestFocus()
         editor
       }
@@ -111,12 +111,10 @@ object GitLabNoteComponentFactory {
       bindTextIn(cs, textFlow)
     }
 
-  fun createEditActionsConfig(actionsVm: GitLabNoteAdminActionsViewModel,
+  fun CoroutineScope.createEditActionsConfig(actionsVm: GitLabNoteAdminActionsViewModel,
                               editVm: GitLabNoteEditingViewModel): CommentInputActionsComponentFactory.Config =
     CommentInputActionsComponentFactory.Config(
-      primaryAction = MutableStateFlow(swingAction(CollaborationToolsBundle.message("review.comment.save")) {
-        editVm.submit()
-      }),
+      primaryAction = MutableStateFlow(editVm.submitActionIn(this, CollaborationToolsBundle.message("review.comment.save"))),
       cancelAction = MutableStateFlow(swingAction(CommonBundle.getCancelButtonText()) {
         actionsVm.stopEditing()
       }),
