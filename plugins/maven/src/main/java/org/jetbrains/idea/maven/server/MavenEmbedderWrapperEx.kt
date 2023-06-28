@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import kotlinx.coroutines.*
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.project.MavenConsole
+import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import java.util.*
 
@@ -39,7 +40,8 @@ abstract class MavenEmbedderWrapperEx(project: Project) : MavenEmbedderWrapper(p
                                                   syncConsole: MavenSyncConsole?,
                                                   console: MavenConsole?,
                                                   task: LongRunningEmbedderTask<R>): R {
-    return coroutineScope {
+    val cs = MavenCoroutineScopeProvider.getCoroutineScope(myProject)
+    val asyncTask = cs.async {
       val progressIndication = launch {
         while (isActive) {
           delay(500)
@@ -68,7 +70,8 @@ abstract class MavenEmbedderWrapperEx(project: Project) : MavenEmbedderWrapper(p
           progressIndication.cancel()
         }
       }
-      return@coroutineScope result.await()
+      return@async result.await()
     }
+    return asyncTask.await()
   }
 }
