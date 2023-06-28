@@ -16,7 +16,7 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileType name="JSON" extensions="har;json"
+    <fileType name="JSON" extensions="har;json;jsonc"
               implementationClass="com.intellij.json.JsonFileType" fieldName="INSTANCE"
               language="JSON"/>
     <fileType name="JSON5" extensions="json5" fileNames="devcontainer.json"
@@ -145,6 +145,7 @@
 
     <psi.referenceContributor language="JSON" implementation="com.intellij.json.JsonWebReferenceContributor"/>
 
+    <json.jsonStandardComplianceProvider implementation="com.intellij.json.jsonc.JsoncComplianceProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="JavaScript">
