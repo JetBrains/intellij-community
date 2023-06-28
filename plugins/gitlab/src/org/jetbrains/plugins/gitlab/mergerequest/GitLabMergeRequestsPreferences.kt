@@ -16,7 +16,10 @@ class GitLabMergeRequestsPreferences(private val project: Project)
   : SerializablePersistentStateComponent<GitLabMergeRequestsPreferences.SettingsState>(SettingsState()) {
 
   @Serializable
-  data class SettingsState(val selectedUrlAndAccountId: Pair<String, String>? = null)
+  data class SettingsState(
+    val selectedUrlAndAccountId: Pair<String, String>? = null,
+    val showEventsInTimeline: Boolean = true
+  )
 
   var selectedRepoAndAccount: Pair<GitLabProjectMapping, GitLabAccount>?
     get() {
@@ -33,6 +36,14 @@ class GitLabMergeRequestsPreferences(private val project: Project)
       updateState {
         val saved = value?.let { (repo, account) -> repo.remote.url to account.id }
         SettingsState(saved)
+      }
+    }
+
+  var showEventsInTimeline: Boolean
+    get() = state.showEventsInTimeline
+    set(value) {
+      updateState {
+        it.copy(showEventsInTimeline = value)
       }
     }
 }

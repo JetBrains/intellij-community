@@ -35,7 +35,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.*
-import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineUIUtil.createTitleTextPane
 import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
@@ -52,7 +51,7 @@ internal object GitLabMergeRequestTimelineComponentFactory {
              timelineVm: GitLabMergeRequestTimelineViewModel,
              avatarIconsProvider: IconsProvider<GitLabUserDTO>
   ): JComponent {
-    val actionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Request.Details.Popup") as ActionGroup
+    val actionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Request.Timeline.Popup") as ActionGroup
 
     val titleComponent = GitLabMergeRequestTimelineTitleComponent.create(cs, timelineVm).let {
       CollaborationToolsUIUtil.wrapWithLimitedSize(it, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
@@ -81,10 +80,20 @@ internal object GitLabMergeRequestTimelineComponentFactory {
         add(newNoteField)
       }
     }
+
+    val timelineController = object : GitLabMergeRequestTimelineController {
+      override var showEvents: Boolean
+        get() = timelineVm.showEvents.value
+        set(value) {
+          timelineVm.setShowEvents(value)
+        }
+    }
+
     PopupHandler.installPopupMenu(timelinePanel, actionGroup, ActionPlaces.POPUP)
     DataManager.registerDataProvider(timelinePanel) { dataId ->
       when {
         GitLabMergeRequestViewModel.DATA_KEY.`is`(dataId) -> timelineVm
+        GitLabMergeRequestTimelineController.DATA_KEY.`is`(dataId) -> timelineController
         else -> null
       }
     }
