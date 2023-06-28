@@ -8,7 +8,6 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
-import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
@@ -21,8 +20,6 @@ import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.inspections.*
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.idea.intentions.RemoveExplicitTypeArgumentsIntention
-import org.jetbrains.kotlin.idea.intentions.RemoveExplicitTypeIntention
-import org.jetbrains.kotlin.idea.intentions.addUseSiteTarget
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.BranchedFoldingUtils
 import org.jetbrains.kotlin.idea.j2k.post.processing.InspectionLikeProcessingForElement
 import org.jetbrains.kotlin.idea.quickfix.AddConstModifierFix
@@ -385,23 +382,13 @@ internal class MayBeConstantInspectionBasedProcessing : InspectionLikeProcessing
     }
 }
 
-internal class RemoveExplicitGetterInspectionBasedProcessing :
+internal class RemoveExplicitAccessorInspectionBasedProcessing :
     InspectionLikeProcessingForElement<KtPropertyAccessor>(KtPropertyAccessor::class.java) {
     override fun isApplicableTo(element: KtPropertyAccessor, settings: ConverterSettings?): Boolean =
-        element.isRedundantGetter()
+        element.isRedundantGetter() || element.isRedundantSetter()
 
     override fun apply(element: KtPropertyAccessor) {
-        removeRedundantGetter(element)
-    }
-}
-
-internal class RemoveExplicitSetterInspectionBasedProcessing :
-    InspectionLikeProcessingForElement<KtPropertyAccessor>(KtPropertyAccessor::class.java) {
-    override fun isApplicableTo(element: KtPropertyAccessor, settings: ConverterSettings?): Boolean =
-        element.isRedundantSetter()
-
-    override fun apply(element: KtPropertyAccessor) {
-        removeRedundantSetter(element)
+        if (element.isGetter) removeRedundantGetter(element) else removeRedundantSetter(element)
     }
 }
 
