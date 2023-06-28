@@ -181,8 +181,7 @@ private val removeRedundantElementsProcessingGroup =
         processings = listOf(
             RemoveExplicitTypeArgumentsProcessing(),
             RemoveJavaStreamsCollectCallTypeArgumentsProcessing(),
-            ExplicitThisInspectionBasedProcessing(),
-            RemoveOpenModifierOnTopLevelDeclarationsProcessing(),
+            ExplicitThisInspectionBasedProcessing()
         )
     )
 

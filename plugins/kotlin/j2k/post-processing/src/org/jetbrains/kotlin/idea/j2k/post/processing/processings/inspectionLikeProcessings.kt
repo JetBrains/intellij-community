@@ -439,15 +439,3 @@ internal class MoveLambdaOutsideParenthesesProcessing :
         element.moveFunctionLiteralOutsideParentheses()
     }
 }
-
-internal class RemoveOpenModifierOnTopLevelDeclarationsProcessing :
-    InspectionLikeProcessingForElement<KtDeclaration>(KtDeclaration::class.java) {
-    override fun isApplicableTo(element: KtDeclaration, settings: ConverterSettings?): Boolean =
-        element.hasModifier(KtTokens.OPEN_KEYWORD)
-                && (element is KtFunction || element is KtProperty)
-                && element.parent is KtFile
-
-    override fun apply(element: KtDeclaration) {
-        element.removeModifier(KtTokens.OPEN_KEYWORD)
-    }
-}
