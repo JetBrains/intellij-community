@@ -136,7 +136,7 @@ suspend fun GitLabApi.GraphQL.createReplyNote(
   }
 }
 
-private class CreateReplyNoteResult(note: GitLabNoteDTO, errors: List<String>?)
+private class CreateReplyNoteResult(note: GitLabNoteDTO?, errors: List<String>?)
   : GitLabGraphQLMutationResultDTO<GitLabNoteDTO>(errors) {
   override val value = note
 }
