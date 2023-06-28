@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nls
 class XmlMdnDocumentationProvider : DocumentationProvider {
 
   override fun getUrlFor(element: PsiElement, originalElement: PsiElement?): List<String>? =
-    getMdnDocumentation(element, originalElement)?.let { listOf(it.url) }
+    getMdnDocumentation(element, originalElement)?.url?.let { listOf(it) }
 
   override fun generateDoc(element: PsiElement, originalElement: PsiElement?): @Nls String? =
     getMdnDocumentation(element, originalElement)?.getDocumentation(true)
