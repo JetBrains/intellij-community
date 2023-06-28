@@ -131,9 +131,12 @@ fun isLearningProject(project: Project, languageId: String): Boolean {
 }
 
 fun getFeedbackLink(langSupport: LangSupport, ownRegistry: Boolean): String? {
-  val suffix = langSupport.primaryLanguage.toLowerCase()
-  val needToShow = Registry.`is`("ift.show.feedback.link" + if (ownRegistry) ".$suffix" else "", false)
-  return if (needToShow) "https://surveys.jetbrains.com/s3/features-trainer-feedback-$suffix" else null
+  return getFeedbackLink(langSupport.primaryLanguage.lowercase(), ownRegistry)
+}
+
+fun getFeedbackLink(langName: String, ownRegistry: Boolean): String? {
+  val needToShow = Registry.`is`("ift.show.feedback.link" + if (ownRegistry) ".$langName" else "", false)
+  return if (needToShow) "https://surveys.jetbrains.com/s3/features-trainer-feedback-$langName" else null
 }
 
 val switchOnExperimentalLessons: Boolean
