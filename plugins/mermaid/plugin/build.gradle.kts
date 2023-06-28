@@ -9,6 +9,9 @@ import org.jetbrains.intellij.tasks.RunIdeTask
 import org.jetbrains.intellij.utils.ArchiveUtils
 import org.jetbrains.intellij.utils.DependenciesDownloader
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.Date
 
 plugins {
   java
@@ -109,6 +112,8 @@ val mermaidExtensionBuildResults by tasks.registering {
   dependsOn(mermaidExtensionBinariesSourceMaps)
 }
 
+val jcefLogPath by lazy { buildDir.toPath().resolve("log").resolve("jcef-log-${Date().time}.txt") }
+
 tasks {
   withType<JavaCompile> {
     sourceCompatibility = "17"
@@ -152,7 +157,26 @@ tasks {
     }
   }
 
+  val createJcefLogDirectory by registering(Task::class) {
+    doLast {
+      Files.createDirectories(jcefLogPath.parent)
+    }
+  }
+
   val previewTests by registering(Test::class) {
+    dependsOn(createJcefLogDirectory)
+    jvmArgs(
+      // "-Dintellij.test.standalone=true",
+      // "-Djava.awt.headless=false",
+      "-Dide.browser.jcef.headless.enabled=true",
+      "-Dide.browser.jcef.log.level=verbose",
+      "-Dide.browser.jcef.log.path=$jcefLogPath",
+      "-Djcef.trace.cefbrowser_n.lifespan=true",
+      "-Dide.browser.jcef.debug.js=true",
+      // https://bugs.chromium.org/p/chromium/issues/detail?id=638180
+      "-Dide.browser.jcef.sandbox.enable=false",
+      "-Dide.browser.jcef.gpu.infinitecrash=false"
+    )
     useJUnitPlatform {
       includeTags("PreviewTest")
     }
@@ -160,7 +184,7 @@ tasks {
 
   withType<Test> {
     testLogging {
-      jvmArgs = commonJvmArgs
+      jvmArgs(commonJvmArgs)
       showStandardStreams = true
       events(
         TestLogEvent.PASSED,
