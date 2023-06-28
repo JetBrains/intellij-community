@@ -66,6 +66,7 @@ public class UnindexedFilesScanner implements FilesScanningTask {
 
   private static final @NotNull Key<Boolean> CONTENT_SCANNED = Key.create("CONTENT_SCANNED");
   private static final @NotNull Key<Boolean> INDEX_UPDATE_IN_PROGRESS = Key.create("INDEX_UPDATE_IN_PROGRESS");
+  private static final @NotNull Key<Boolean> FIRST_SCANNING_REQUESTED = Key.create("FIRST_SCANNING_REQUESTED");
   private final FileBasedIndexImpl myIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
   protected final Project myProject;
   private final boolean myStartSuspended;
@@ -331,6 +332,10 @@ public class UnindexedFilesScanner implements FilesScanningTask {
     return Boolean.TRUE.equals(project.getUserData(CONTENT_SCANNED));
   }
 
+  public static boolean isFirstProjectScanningRequested(@NotNull Project project) {
+    return Boolean.TRUE.equals(project.getUserData(FIRST_SCANNING_REQUESTED));
+  }
+
   @NotNull
   private static Pair<@NotNull List<IndexableFilesIterator>, @Nullable StatusMark> collectProviders(@NotNull Project project,
                                                                                                     FileBasedIndexImpl index) {
@@ -513,6 +518,7 @@ public class UnindexedFilesScanner implements FilesScanningTask {
                                                   boolean startSuspended,
                                                   @Nullable @NonNls String indexingReason) {
     ((FileBasedIndexImpl)FileBasedIndex.getInstance()).loadIndexes();
+    project.putUserData(FIRST_SCANNING_REQUESTED, true);
     if (TestModeFlags.is(INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY)) {
       LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode());
       List<IndexableFilesIterator> iterators = collectProviders(project, (FileBasedIndexImpl)FileBasedIndex.getInstance()).getFirst();

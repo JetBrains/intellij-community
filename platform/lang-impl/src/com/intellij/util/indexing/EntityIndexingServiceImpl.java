@@ -13,6 +13,15 @@ import com.intellij.openapi.roots.SyntheticLibrary;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.jps.entities.LibraryEntity;
+import com.intellij.platform.workspace.jps.entities.LibraryId;
+import com.intellij.platform.workspace.jps.entities.LibraryTableId;
+import com.intellij.platform.workspace.jps.entities.ModuleId;
+import com.intellij.platform.workspace.storage.EntityChange;
+import com.intellij.platform.workspace.storage.EntityReference;
+import com.intellij.platform.workspace.storage.EntityStorage;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService;
@@ -31,15 +40,6 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor;
 import com.intellij.workspaceModel.core.fileIndex.impl.PlatformInternalWorkspaceFileIndexContributor;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl;
-import com.intellij.platform.backend.workspace.WorkspaceModel;
-import com.intellij.platform.workspace.storage.EntityChange;
-import com.intellij.platform.workspace.storage.EntityReference;
-import com.intellij.platform.workspace.storage.EntityStorage;
-import com.intellij.platform.workspace.storage.WorkspaceEntity;
-import com.intellij.platform.workspace.jps.entities.LibraryEntity;
-import com.intellij.platform.workspace.jps.entities.LibraryId;
-import com.intellij.platform.workspace.jps.entities.LibraryTableId;
-import com.intellij.platform.workspace.jps.entities.ModuleId;
 import kotlin.Pair;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NonNls;
@@ -60,6 +60,7 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
   public void indexChanges(@NotNull Project project, @NotNull List<? extends RootsChangeRescanningInfo> changes) {
     if (!(FileBasedIndex.getInstance() instanceof FileBasedIndexImpl)) return;
     if (LightEdit.owns(project)) return;
+    if (!UnindexedFilesScanner.isFirstProjectScanningRequested(project)) return;
     if (changes.isEmpty()) {
       runFullRescan(project, "Project roots have changed");
     }
