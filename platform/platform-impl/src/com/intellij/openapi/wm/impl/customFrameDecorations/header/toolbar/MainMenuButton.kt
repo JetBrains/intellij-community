@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
 import com.intellij.icons.ExpUiIcons
@@ -37,7 +37,6 @@ import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
 internal class MainMenuButton {
-
   var expandableMenu: ExpandableMenu? = null
   private val menuAction = ShowMenuAction()
   private var disposable: Disposable? = null
@@ -45,6 +44,7 @@ internal class MainMenuButton {
   private var registeredKeyStrokes = mutableListOf<KeyStroke>()
 
   val button: ActionButton = createMenuButton(menuAction)
+
   var rootPane: JRootPane? = null
     set(value) {
       if (field !== value) {

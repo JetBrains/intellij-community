@@ -16,7 +16,7 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
-import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
+import com.intellij.openapi.wm.impl.headertoolbar.computeMainActionGroups
 import com.intellij.ui.*
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.scale.JBUIScale
@@ -132,7 +132,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
   override fun updateUI() {
     super.updateUI()
     updateWinControlsTheme()
-    updateSize { MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()) }
+    updateSize { computeMainActionGroups(CustomActionsSchema.getInstance()) }
   }
 
   protected fun updateSize(mainToolbarActionSupplier: () -> List<Pair<ActionGroup, String>>) {

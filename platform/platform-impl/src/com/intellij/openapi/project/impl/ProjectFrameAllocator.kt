@@ -42,7 +42,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.*
-import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
+import com.intellij.openapi.wm.impl.headertoolbar.computeMainActionGroups
 import com.intellij.platform.ProjectSelfieUtil
 import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.psi.PsiManager
@@ -332,7 +332,7 @@ private suspend fun initFrame(rawProjectDeferred: CompletableDeferred<Project>,
                               deferredProjectFrameHelper: Deferred<ProjectFrameHelper>,
                               outOfLoadingScope: CoroutineScope) {
   val deferredToolbarActionGroups = outOfLoadingScope.async(CoroutineName("toolbar action groups computing")) {
-    MainToolbar.computeActionGroups()
+    computeMainActionGroups()
   }
 
   val project = rawProjectDeferred.await()

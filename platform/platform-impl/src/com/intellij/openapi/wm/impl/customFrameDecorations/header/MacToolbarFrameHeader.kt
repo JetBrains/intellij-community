@@ -12,11 +12,13 @@ import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.ToolbarHolder
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.SimpleCustomDecorationPath
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
+import com.intellij.openapi.wm.impl.headertoolbar.computeMainActionGroups
 import com.intellij.ui.mac.MacFullScreenControlsManager
 import com.intellij.ui.mac.MacMainFrameDecorator
 import com.intellij.util.childScope
 import com.intellij.util.ui.JBUI
 import com.jetbrains.JBR
+import kotlinx.coroutines.launch
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Graphics
@@ -84,24 +86,26 @@ internal class MacToolbarFrameHeader(private val frame: JFrame, private val root
     super.updateUI()
 
     if (parent != null) {
-      updateToolbar()
+      root.coroutineScope.launch {
+        updateToolbar()
+      }
       updateBorders()
     }
   }
 
-  override fun initToolbar(toolbarActionGroups: List<Pair<ActionGroup, String>>) {
+  override suspend fun initToolbar(toolbarActionGroups: List<Pair<ActionGroup, String>>) {
     toolbar.init(toolbarActionGroups, customTitleBar)
     val mainToolbarActionSupplier = { toolbarActionGroups }
     updateVisibleCard(mainToolbarActionSupplier)
     updateSize(mainToolbarActionSupplier)
   }
 
-  override fun updateToolbar() {
+  override suspend fun updateToolbar() {
     var toolbar = toolbar
     remove(toolbar)
     toolbar = createToolBar()
     this.toolbar = toolbar
-    val actionGroups = MainToolbar.computeActionGroups(CustomActionsSchema.getInstance())
+    val actionGroups = computeMainActionGroups()
     initToolbar(actionGroups)
 
     revalidate()
@@ -171,6 +175,6 @@ internal class MacToolbarFrameHeader(private val frame: JFrame, private val root
   }
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
-    updateVisibleCard { MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()) }
+    updateVisibleCard { computeMainActionGroups(CustomActionsSchema.getInstance()) }
   }
 }

@@ -14,12 +14,12 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction.ComboBoxButton
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
@@ -30,14 +30,13 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.MainMe
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.mac.touchbar.TouchbarSupport
-import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets
 import com.jetbrains.WindowDecorations
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.*
 import java.awt.*
 import java.awt.event.MouseEvent
 import java.beans.PropertyChangeListener
@@ -47,11 +46,11 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JFrame
 import javax.swing.JPanel
+import kotlin.math.max
 
 private const val MAIN_TOOLBAR_ID = IdeActions.GROUP_MAIN_TOOLBAR_NEW_UI
 
 internal class MainToolbar(private val coroutineScope: CoroutineScope, frame: JFrame) : JPanel(HorizontalLayout(10)) {
-  private val disposable = Disposer.newDisposable()
   private val mainMenuButton: MainMenuButton?
   private val expandableMenu: ExpandableMenu?
 
@@ -72,53 +71,31 @@ internal class MainToolbar(private val coroutineScope: CoroutineScope, frame: JF
     ClientProperty.put(this, IdeBackgroundUtil.NO_BACKGROUND, true)
   }
 
-  companion object {
-    internal suspend fun computeActionGroups(): List<Pair<ActionGroup, String>> {
-      val app = ApplicationManager.getApplication()
-      app.serviceAsync<ActionManager>()
-      val customActionSchema = app.serviceAsync<CustomActionsSchema>()
-      return computeActionGroups(customActionSchema)
-    }
-
-    fun computeActionGroups(customActionSchema: CustomActionsSchema): List<Pair<ActionGroup, String>> {
-      return sequenceOf(
-        GroupInfo("MainToolbarLeft", ActionsTreeUtil.getMainToolbarLeft(), HorizontalLayout.LEFT),
-        GroupInfo("MainToolbarCenter", ActionsTreeUtil.getMainToolbarCenter(), HorizontalLayout.CENTER),
-        GroupInfo("MainToolbarRight", ActionsTreeUtil.getMainToolbarRight(), HorizontalLayout.RIGHT)
-      )
-        .mapNotNull { info ->
-          customActionSchema.getCorrectedAction(info.id, info.name)?.let {
-            it to info.align
-          }
-        }
-        .toList()
-    }
-  }
-
   override fun getComponentGraphics(g: Graphics): Graphics = super.getComponentGraphics(IdeBackgroundUtil.getOriginalGraphics(g))
 
   // Separate init because first, as part of IdeRootPane creation, we add bare component to allocate space and then,
   // as part of EDT task scheduled in a start-up activity, do fill it. That's to avoid flickering due to resizing.
-  @RequiresEdt
-  fun init(actionGroups: List<Pair<ActionGroup, String>>, customTitleBar: WindowDecorations.CustomTitleBar? = null) {
-    removeAll()
+  suspend fun init(actionGroups: List<Pair<ActionGroup, String>>, customTitleBar: WindowDecorations.CustomTitleBar? = null) {
+    withContext(Dispatchers.EDT) {
+      removeAll()
 
-    mainMenuButton?.let {
-      addWidget(it.button, HorizontalLayout.LEFT)
+      mainMenuButton?.let {
+        addWidget(it.button, HorizontalLayout.LEFT)
+      }
+
+      val schema = CustomActionsSchema.getInstanceAsync()
+      val customizationGroup = schema.getCorrectedAction(MAIN_TOOLBAR_ID) as? ActionGroup
+
+      for ((actionGroup, position) in actionGroups) {
+        addWidget(widget = createActionBar(actionGroup, customizationGroup), position = position)
+      }
+
+      customizationGroup
+        ?.let { CustomizationUtil.createToolbarCustomizationHandler(it, MAIN_TOOLBAR_ID, this@MainToolbar, ActionPlaces.MAIN_TOOLBAR) }
+        ?.let { installClickListener(it, customTitleBar) }
+
+      migratePreviousCustomizations(schema)
     }
-
-    val schema = CustomActionsSchema.getInstance()
-    val customizationGroup = schema.getCorrectedAction(MAIN_TOOLBAR_ID) as? ActionGroup
-
-    for ((actionGroup, position) in actionGroups) {
-      addWidget(widget = createActionBar(actionGroup, customizationGroup), position = position)
-    }
-
-    customizationGroup
-      ?.let { CustomizationUtil.createToolbarCustomizationHandler(it, MAIN_TOOLBAR_ID, this, ActionPlaces.MAIN_TOOLBAR) }
-      ?.let { installClickListener(it, customTitleBar) }
-
-    migratePreviousCustomizations(schema)
   }
 
   /*
@@ -162,7 +139,7 @@ internal class MainToolbar(private val coroutineScope: CoroutineScope, frame: JF
   private fun schemaChanged() {
     CustomActionsSchema.getInstance().initActionIcons()
     CustomActionsSchema.setCustomizationSchemaForCurrentProjects()
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       TouchbarSupport.reloadAllActions()
     }
     CustomActionsListener.fireSchemaChanged()
@@ -204,13 +181,20 @@ internal class MainToolbar(private val coroutineScope: CoroutineScope, frame: JF
 
   override fun removeNotify() {
     super.removeNotify()
-    Disposer.dispose(disposable)
     coroutineScope.cancel()
   }
 
   private fun addWidget(widget: JComponent, position: String) {
     add(position, widget)
-    (widget as? Disposable)?.let { Disposer.register(disposable, it) }
+    if (widget is Disposable) {
+      thisLogger().error("Do not implement Disposable: ${widget.javaClass.name}")
+      val handle = coroutineScope.coroutineContext.job.invokeOnCompletion {
+        Disposer.dispose(widget)
+      }
+      Disposer.register(widget, Disposable {
+        handle.dispose()
+      })
+    }
   }
 
   private fun createActionBar(group: ActionGroup, customizationGroup: ActionGroup?): JComponent {
@@ -229,14 +213,15 @@ internal class MainToolbar(private val coroutineScope: CoroutineScope, frame: JF
   }
 
   override fun getAccessibleContext(): AccessibleContext {
-    if (accessibleContext == null) accessibleContext = AccessibleMainToolbar()
-    accessibleContext.accessibleName =
-      if (ExperimentalUI.isNewUI() && UISettings.getInstance().separateMainMenu) {
-        UIBundle.message("main.toolbar.accessible.group.name")
-      }
-      else {
-        ""
-      }
+    if (accessibleContext == null) {
+      accessibleContext = AccessibleMainToolbar()
+    }
+    accessibleContext.accessibleName = if (ExperimentalUI.isNewUI() && UISettings.getInstance().separateMainMenu) {
+      UIBundle.message("main.toolbar.accessible.group.name")
+    }
+    else {
+      ""
+    }
     return accessibleContext
   }
 
@@ -245,9 +230,32 @@ internal class MainToolbar(private val coroutineScope: CoroutineScope, frame: JF
   }
 }
 
-typealias LayoutCallBack = () -> Unit
+internal suspend fun computeMainActionGroups(): List<Pair<ActionGroup, String>> {
+  serviceAsync<ActionManager>()
+  @Suppress("ForbiddenInSuspectContextMethod")
+  return computeMainActionGroups(CustomActionsSchema.getInstanceAsync())
+}
 
-private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: LayoutCallBack?, customizationGroup: ActionGroup?, customizationGroupID: String)
+@RequiresBlockingContext
+internal fun computeMainActionGroups(customActionSchema: CustomActionsSchema): List<Pair<ActionGroup, String>> {
+  return sequenceOf(
+    GroupInfo("MainToolbarLeft", ActionsTreeUtil.getMainToolbarLeft(), HorizontalLayout.LEFT),
+    GroupInfo("MainToolbarCenter", ActionsTreeUtil.getMainToolbarCenter(), HorizontalLayout.CENTER),
+    GroupInfo("MainToolbarRight", ActionsTreeUtil.getMainToolbarRight(), HorizontalLayout.RIGHT)
+  )
+    .mapNotNull { info ->
+      customActionSchema.getCorrectedAction(info.id, info.name)?.let {
+        it to info.align
+      }
+    }
+    .toList()
+}
+
+private typealias LayoutCallBack = () -> Unit
+
+private class MyActionToolbarImpl(group: ActionGroup,
+                                  @JvmField val layoutCallBack: LayoutCallBack?,
+                                  customizationGroup: ActionGroup?, customizationGroupID: String)
   : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true, false, true, customizationGroup, customizationGroupID) {
 
   private val iconUpdater = HeaderIconUpdater()
@@ -274,9 +282,9 @@ private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: Layout
   private fun fitRectangle(prevRect: Rectangle?, currRect: Rectangle, cmp: Component, toolbarHeight: Int) {
     val minSize = ActionToolbar.experimentalToolbarMinimumButtonSize()
     if (!isSeparator(cmp)) {
-      currRect.width = Integer.max(currRect.width, minSize.width)
+      currRect.width = max(currRect.width, minSize.width)
     }
-    currRect.height = Integer.max(currRect.height, minSize.height)
+    currRect.height = max(currRect.height, minSize.height)
     if (prevRect != null && prevRect.maxX > currRect.minX) {
       currRect.x = prevRect.maxX.toInt()
     }
@@ -314,7 +322,9 @@ private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: Layout
   }
 
   private fun findComboButton(c: Container): ComboBoxButton? {
-    if (c is ComboBoxButton) return c
+    if (c is ComboBoxButton) {
+      return c
+    }
 
     for (child in c.components) {
       if (child is ComboBoxButton) {
@@ -373,7 +383,9 @@ private class HeaderIconUpdater {
   private val iconCache = ContainerUtil.createWeakSet<Icon>()
 
   private fun updateIcon(p: Presentation, getter: (Presentation) -> Icon?, setter: (Presentation, Icon) -> Unit) {
-    if (!isDarkHeader()) return
+    if (!isDarkHeader()) {
+      return
+    }
 
     getter(p)?.let { icon ->
       val replaceIcon = adjustIconForHeader(icon)
@@ -385,11 +397,15 @@ private class HeaderIconUpdater {
   fun registerFor(presentation: Presentation, propName: String, getter: (Presentation) -> Icon?, setter: (Presentation, Icon) -> Unit) {
     updateIcon(presentation, getter, setter)
     presentation.addPropertyChangeListener(PropertyChangeListener { evt ->
-      if (evt.propertyName != propName) return@PropertyChangeListener
-      if (evt.newValue != null && evt.newValue in iconCache) return@PropertyChangeListener
+      if (evt.propertyName != propName) {
+        return@PropertyChangeListener
+      }
+      if (evt.newValue != null && evt.newValue in iconCache) {
+        return@PropertyChangeListener
+      }
       updateIcon(presentation, getter, setter)
     })
   }
 }
 
-private data class GroupInfo(val id: String, val name: String, val align: String)
+private data class GroupInfo(@JvmField val id: String, @JvmField val name: String, @JvmField val align: String)

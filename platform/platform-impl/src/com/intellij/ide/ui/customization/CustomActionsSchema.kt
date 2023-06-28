@@ -25,6 +25,7 @@ import com.intellij.serviceContainer.NonInjectable
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.IconUtil
 import com.intellij.util.SmartList
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.ui.EmptyIcon
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentHashMapOf
@@ -127,7 +128,10 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
     }
 
     @JvmStatic
+    @RequiresBlockingContext
     fun getInstance(): CustomActionsSchema = service<CustomActionsSchema>()
+
+    suspend fun getInstanceAsync(): CustomActionsSchema = serviceAsync<CustomActionsSchema>()
 
     @JvmStatic
     fun setCustomizationSchemaForCurrentProjects() {

@@ -10,7 +10,7 @@ import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
-import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
+import com.intellij.openapi.wm.impl.headertoolbar.computeMainActionGroups
 import com.intellij.ui.JBColor
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.MacUtil
@@ -91,7 +91,7 @@ internal object MacFullScreenControlsManager {
 
   fun configureForEmptyToolbarHeader(enter: Boolean) {
     if (enter) {
-      if (enabled() && MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()).all { it.first.getChildren(null).isEmpty() }) {
+      if (enabled() && computeMainActionGroups(CustomActionsSchema.getInstance()).all { it.first.getChildren(null).isEmpty() }) {
         configureForDistractionFreeMode(true)
       }
     }

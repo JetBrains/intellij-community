@@ -37,6 +37,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.Sel
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ToolbarFrameHeader
 import com.intellij.openapi.wm.impl.headertoolbar.HeaderClickTransparentListener
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
+import com.intellij.openapi.wm.impl.headertoolbar.computeMainActionGroups
 import com.intellij.openapi.wm.impl.headertoolbar.isToolbarInHeader
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.toolWindow.ToolWindowButtonManager
@@ -65,6 +66,10 @@ import javax.swing.*
 
 private const val EXTENSION_KEY = "extensionKey"
 
+private inline fun mainToolbarHasNoActions(mainToolbarActionSupplier: () -> List<Pair<ActionGroup, String>>): Boolean {
+  return mainToolbarActionSupplier().all { it.first.getChildren(null).isEmpty() }
+}
+
 @Suppress("LeakingThis")
 @ApiStatus.Internal
 open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
@@ -83,15 +88,11 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
   private val glassPaneInitialized: Boolean
   private var fullScreen = false
 
-  internal fun isCompactHeader(mainToolbarActionSupplier: () -> List<Pair<ActionGroup, String>>): Boolean {
-    fun mainToolbarHasNoActions(): Boolean {
-      return mainToolbarActionSupplier().all { it.first.getChildren(null).isEmpty() }
-    }
-
+  internal inline fun isCompactHeader(mainToolbarActionSupplier: () -> List<Pair<ActionGroup, String>>): Boolean {
     return ToggleDistractionFreeModeAction.shouldMinimizeCustomHeader() ||
            isLightEdit ||
-           (SystemInfoRt.isMac && mainToolbarHasNoActions()) ||
-           (!SystemInfoRt.isMac && !UISettings.shadowInstance.separateMainMenu && mainToolbarHasNoActions())
+           (SystemInfoRt.isMac && mainToolbarHasNoActions(mainToolbarActionSupplier)) ||
+           (!SystemInfoRt.isMac && !UISettings.shadowInstance.separateMainMenu && mainToolbarHasNoActions(mainToolbarActionSupplier))
   }
 
   protected open val isLightEdit: Boolean
@@ -134,7 +135,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
 
   private val helper: Helper
 
-  private fun isToolbarVisible(mainToolbarActionSupplier: () -> List<Pair<ActionGroup, String>>): Boolean {
+  private inline fun isToolbarVisible(mainToolbarActionSupplier: () -> List<Pair<ActionGroup, String>>): Boolean {
     val uiSettings = UISettings.shadowInstance
     val isNewToolbar = ExperimentalUI.isNewUI()
     return !uiSettings.presentationMode &&
@@ -242,10 +243,13 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     updateMainMenuVisibility()
 
     if (helper.toolbarHolder == null) {
-      toolbar = createToolbar(coroutineScope.childScope(), frame)
-      northPanel.add(toolbar, 0)
-      toolbar!!.isVisible = isToolbarVisible(
-        mainToolbarActionSupplier = { MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()) })
+      coroutineScope.launch(Dispatchers.EDT) {
+        toolbar = createToolbar(coroutineScope.childScope(), frame)
+        northPanel.add(toolbar, 0)
+        toolbar!!.isVisible = isToolbarVisible(
+          mainToolbarActionSupplier = { computeMainActionGroups() }
+        )
+      }
     }
 
     if (SystemInfoRt.isMac && JdkEx.isTabbingModeAvailable()) {
@@ -348,7 +352,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     fullScreen = isInFullScreen()
     if (helper is DecoratedHelper) {
       val isCustomFrameHeaderVisible = !fullScreen || (SystemInfoRt.isMac && !isCompactHeader {
-        MainToolbar.computeActionGroups(CustomActionsSchema.getInstance())
+        computeMainActionGroups(CustomActionsSchema.getInstance())
       })
       helper.customFrameTitlePane.getComponent().isVisible = isCustomFrameHeaderVisible
     }
@@ -356,7 +360,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
       if (toolbar != null) {
         val isNewToolbar = ExperimentalUI.isNewUI()
         toolbar!!.isVisible = !fullScreen && ((!isCompactHeader {
-          MainToolbar.computeActionGroups(CustomActionsSchema.getInstance())
+          computeMainActionGroups(CustomActionsSchema.getInstance())
         } && isNewToolbar && !isToolbarInHeader()) ||
                                               (!isNewToolbar && UISettings.getInstance().showMainToolbar))
       }
@@ -411,7 +415,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     }
   }
 
-  fun initToolbar(actionGroups: List<Pair<ActionGroup, String>>) {
+  suspend fun initToolbar(actionGroups: List<Pair<ActionGroup, String>>) {
     val toolbarHolder = helper.toolbarHolder
     if (toolbarHolder != null) {
       toolbarHolder.initToolbar(actionGroups)
@@ -424,7 +428,9 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
   internal fun updateToolbar() {
     val delegate = helper.toolbarHolder
     if (delegate != null) {
-      delegate.updateToolbar()
+      coroutineScope.launch {
+        delegate.updateToolbar()
+      }
       return
     }
 
@@ -432,10 +438,12 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
       disposeIfNeeded(it)
       northPanel.remove(it)
     }
-    toolbar = createToolbar(coroutineScope.childScope(), frame)
-    northPanel.add(toolbar, 0)
-    toolbar!!.isVisible = isToolbarVisible { MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()) }
-    contentPane!!.revalidate()
+    coroutineScope.launch(Dispatchers.EDT) {
+      toolbar = createToolbar(coroutineScope.childScope(), frame)
+      northPanel.add(toolbar, 0)
+      toolbar!!.isVisible = isToolbarVisible { computeMainActionGroups() }
+      contentPane!!.revalidate()
+    }
   }
 
   open fun updateNorthComponents() {
@@ -496,12 +504,14 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     }
 
   private fun updateToolbarVisibility() {
-    if (toolbar == null) {
-      toolbar = createToolbar(coroutineScope.childScope(), frame)
-      northPanel.add(toolbar, 0)
-    }
+    coroutineScope.launch(Dispatchers.EDT) {
+      if (toolbar == null) {
+        toolbar = createToolbar(coroutineScope.childScope(), frame)
+        northPanel.add(toolbar, 0)
+      }
 
-    toolbar!!.isVisible = isToolbarVisible { MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()) }
+      toolbar!!.isVisible = isToolbarVisible { computeMainActionGroups() }
+    }
   }
 
   private fun updateStatusBarVisibility() {
@@ -517,7 +527,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
                       && !(SystemInfoRt.isLinux && GlobalMenuLinux.isPresented())
                       && UISettings.shadowInstance.showMainMenu
                       && (!isMenuButtonInToolbar || isCompactHeader {
-      MainToolbar.computeActionGroups(CustomActionsSchema.getInstance())
+      computeMainActionGroups(CustomActionsSchema.getInstance())
     } && ExperimentalUI.isNewUI())
                       && !hideNativeLinuxTitle)
 
@@ -707,17 +717,17 @@ private val isDecoratedMenu: Boolean
     return osSupported && (isToolbarInHeader() || IdeFrameDecorator.isCustomDecorationActive())
   }
 
-private fun createToolbar(coroutineScope: CoroutineScope, frame: JFrame): JComponent {
+private suspend fun createToolbar(coroutineScope: CoroutineScope, frame: JFrame): JComponent {
   if (ExperimentalUI.isNewUI()) {
     val toolbar = MainToolbar(coroutineScope, frame)
-    toolbar.init(MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()))
+    toolbar.init(computeMainActionGroups())
     toolbar.border = JBUI.Borders.empty(0, 5)
     return toolbar
   }
   else {
     // don't bother a client to know that old ui doesn't use coroutine scope
     coroutineScope.cancel()
-    val group = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_TOOLBAR) as ActionGroup
+    val group = CustomActionsSchema.getInstanceAsync().getCorrectedAction(IdeActions.GROUP_MAIN_TOOLBAR) as ActionGroup
     val toolBar = ActionManagerEx.getInstanceEx().createActionToolbar(ActionPlaces.MAIN_TOOLBAR, group, true)
     toolBar.targetComponent = null
     toolBar.layoutPolicy = ActionToolbar.WRAP_LAYOUT_POLICY
