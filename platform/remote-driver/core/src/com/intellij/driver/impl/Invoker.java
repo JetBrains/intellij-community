@@ -250,16 +250,47 @@ public class Invoker implements InvokerMBean {
     Class<?> clazz = getTargetClass(call);
 
     int argCount = call.getArgs().length;
-    Method targetMethod = Arrays.stream(clazz.getMethods())
+    List<Method> targetMethods = Arrays.stream(clazz.getMethods())
       .filter(m -> m.getName().equals(call.getMethodName()) && argCount == m.getParameterCount())
-      .findFirst()
-      .orElseThrow(() -> new IllegalStateException(
+      .toList();
+
+    if (targetMethods.isEmpty()) {
+      throw new IllegalStateException(
         "No method " + call.getMethodName() +
         " with parameter count " + argCount +
-        " in class " + call.getClassName()));
-    // todo take into account argument types
+        " in class " + call.getClassName());
+    }
 
-    return new CallTarget(clazz, targetMethod);
+    if (targetMethods.size() > 1) {
+      List<@Nullable Class<?>> argumentTypes = Arrays.stream(call.getArgs())
+        .map(a -> {
+          if (a == null) return (Class<?>)null;
+          return a.getClass();
+        })
+        .toList();
+
+      // take into account argument types
+      for (Method method : targetMethods) {
+        if (areTypesCompatible(method, argumentTypes)) {
+          return new CallTarget(clazz, method);
+        }
+      }
+    }
+
+    return new CallTarget(clazz, targetMethods.get(0));
+  }
+
+  private static boolean areTypesCompatible(@NotNull Method method, @NotNull List<@Nullable Class<?>> argumentTypes) {
+    Class<?>[] types = method.getParameterTypes();
+
+    for (int i = 0; i < argumentTypes.size(); i++) {
+      Class<?> argType = argumentTypes.get(i);
+      if (argType == null) continue;
+
+      Class<?> parameterType = types[i];
+      if (!parameterType.isAssignableFrom(argType)) return false;
+    }
+    return true;
   }
 
   private Class<?> getTargetClass(RemoteCall call) {
