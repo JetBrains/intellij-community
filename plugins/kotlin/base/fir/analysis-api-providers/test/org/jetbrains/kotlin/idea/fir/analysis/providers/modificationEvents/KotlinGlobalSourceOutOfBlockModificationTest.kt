@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.fir.analysis.providers.modificationEvents
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
+import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.messages.MessageBusConnection
 import org.jetbrains.kotlin.analysis.providers.topics.KotlinGlobalSourceOutOfBlockModificationListener
 import org.jetbrains.kotlin.analysis.providers.topics.KotlinTopics
@@ -43,6 +44,90 @@ class KotlinGlobalSourceOutOfBlockModificationTest : AbstractKotlinGlobalModific
         move(file, destination)
 
         tracker.assertModifiedOnce("the project after a file from module A is moved to the content root of module B")
+
+        disposeTrackers(tracker)
+    }
+
+    fun `test that global source out-of-block modification occurs after moving a script file to a non-source module content root`() {
+        val scriptA = createScript("a")
+        val moduleB = createModuleInTmpDir("b")
+
+        val destination = getVirtualFile(createTempDirectory())
+        PsiTestUtil.addContentRoot(moduleB, destination)
+
+        val tracker = createTracker()
+
+        move(scriptA.virtualFile, destination)
+
+        tracker.assertModifiedOnce("the project after a script file is moved to a non-source content root of module B")
+
+        disposeTrackers(tracker)
+    }
+
+    fun `test that global source out-of-block modification occurs after moving a script file outside the project content root`() {
+        val scriptA = createScript("a")
+        val destination = getVirtualFile(createTempDirectory())
+
+        val tracker = createTracker()
+
+        move(scriptA.virtualFile, destination)
+
+        tracker.assertModifiedOnce("the project after a script file is moved outside the project content root")
+
+        disposeTrackers(tracker)
+    }
+
+    fun `test that global source out-of-block modification occurs after deleting a script file`() {
+        val scriptA = createScript("a")
+
+        val tracker = createTracker()
+
+        delete(scriptA.virtualFile)
+
+        tracker.assertModified("the project after a script file is deleted", expectedEventCount = 2)
+
+        disposeTrackers(tracker)
+    }
+
+    fun `test that global source out-of-block modification occurs after moving a not-under-content-root file to a non-source module content root`() {
+        val fileA = createNotUnderContentRootFile("a")
+        val moduleB = createModuleInTmpDir("b")
+
+        val destination = getVirtualFile(createTempDirectory())
+        PsiTestUtil.addContentRoot(moduleB, destination)
+
+        val tracker = createTracker()
+
+        move(fileA.virtualFile, destination)
+
+        tracker.assertModifiedOnce("the project after a not-under-content-root file is moved to a non-source content root of module B")
+
+        disposeTrackers(tracker)
+    }
+
+    fun `test that global source out-of-block modification occurs after moving a not-under-content-root file outside the project content root`() {
+        val fileA = createNotUnderContentRootFile("a")
+        val destination = getVirtualFile(createTempDirectory())
+
+        val tracker = createTracker()
+
+        // Note that the "not-under-content-root" file is under the content root of the project, and so moving it outside the content root
+        // of the project does have an effect.
+        move(fileA.virtualFile, destination)
+
+        tracker.assertModifiedOnce("the project after a not-under-content-root file is moved outside the project content root")
+
+        disposeTrackers(tracker)
+    }
+
+    fun `test that global source out-of-block modification occurs after deleting a not-under-content-root file`() {
+        val fileA = createNotUnderContentRootFile("a")
+
+        val tracker = createTracker()
+
+        delete(fileA.virtualFile)
+
+        tracker.assertModified("the project after a not-under-content-root file is deleted", expectedEventCount = 2)
 
         disposeTrackers(tracker)
     }
