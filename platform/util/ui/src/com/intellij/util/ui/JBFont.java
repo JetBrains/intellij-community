@@ -2,7 +2,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ui.NewUi;
+import com.intellij.ui.NewUiValue;
 import com.intellij.ui.components.JBFontScaler;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.ApiStatus;
@@ -177,11 +177,11 @@ public class JBFont extends Font {
    */
   @ApiStatus.Internal
   public static JBFont smallOrNewUiMedium() {
-    return NewUi.isEnabled() ? medium() : small();
+    return NewUiValue.isEnabled() ? medium() : small();
   }
 
   private static boolean mediumAndSmallFontsAsRegular() {
-    return SystemInfo.isWindows && !NewUi.isEnabled();
+    return SystemInfo.isWindows && !NewUiValue.isEnabled();
   }
 
   public static float scaleFontSize(float fontSize, float scale) {

@@ -4,7 +4,6 @@ package com.intellij.util.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.border.NamedBorderKt;
@@ -2225,6 +2224,6 @@ public final class JBUI {
   }
 
   private static boolean isNewUI() {
-    return NewUi.isEnabled();
+    return NewUiValue.isEnabled();
   }
 }
