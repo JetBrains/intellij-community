@@ -5,6 +5,7 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.ui.table.column.Author;
 import com.intellij.vcs.log.ui.table.column.VcsLogColumnManager;
 import com.intellij.vcs.log.util.VcsUserUtil;
@@ -18,10 +19,12 @@ import java.util.Set;
 
 public class MyCommitsHighlighter implements VcsLogHighlighter {
   private final @NotNull VcsLogData myLogData;
+  private final @NotNull VcsLogUi myUi;
   private boolean myShouldHighlightUser = false;
 
-  public MyCommitsHighlighter(@NotNull VcsLogData logData) {
+  public MyCommitsHighlighter(@NotNull VcsLogData logData, @NotNull VcsLogUi logUi) {
     myLogData = logData;
+    myUi = logUi;
   }
 
   @Override
@@ -30,13 +33,18 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
     if (myShouldHighlightUser) {
       VcsUser currentUser = myLogData.getCurrentUser().get(details.getRoot());
       if (currentUser != null && VcsUserUtil.isSamePerson(currentUser, details.getAuthor())) {
-        if (ExperimentalUI.isNewUI() && !isAuthorColumn(column)) {
+        if (ExperimentalUI.isNewUI() && isAuthorColumnVisible() && !isAuthorColumn(column)) {
           return VcsCommitStyle.DEFAULT;
         }
         return VcsCommitStyleFactory.bold();
       }
     }
     return VcsCommitStyle.DEFAULT;
+  }
+
+  private boolean isAuthorColumnVisible() {
+    if (myUi instanceof VcsLogUiEx ui) return ui.getTable().isColumnVisible(Author.INSTANCE);
+    return true;
   }
 
   private static boolean isAuthorColumn(int column) {
@@ -67,7 +75,7 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
 
     @Override
     public @NotNull VcsLogHighlighter createHighlighter(@NotNull VcsLogData logData, @NotNull VcsLogUi logUi) {
-      return new MyCommitsHighlighter(logData);
+      return new MyCommitsHighlighter(logData, logUi);
     }
 
     @Override
