@@ -52,7 +52,7 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
 
   override fun createPopup(event: AnActionEvent): JBPopup? {
     val project = event.project ?: return null
-    val repository = GitBranchUtil.guessWidgetRepository(project, event.dataContext)
+    val repository = event.presentation.getClientProperty(repositoryKey)
 
     val popup: JBPopup = if (repository != null) {
       if (GitBranchesTreePopup.isEnabled()) {
