@@ -35,6 +35,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
+import com.intellij.platform.diagnostic.telemetry.PlatformScopesKt;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.intellij.psi.util.ReadActionCache;
@@ -47,6 +48,8 @@ import com.intellij.util.concurrency.Propagation;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.EDT;
+import io.opentelemetry.api.metrics.BatchCallback;
+import io.opentelemetry.api.metrics.Meter;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.context.Scope;
 import kotlin.coroutines.EmptyCoroutineContext;
@@ -62,6 +65,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import static com.intellij.ide.ShutdownKt.cancelAndJoinBlocking;
@@ -117,6 +121,8 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   }
 
   private static final String WAS_EVER_SHOWN = "was.ever.shown";
+
+  private final OTelReadWriteActionsMonitor otelMonitor = new OTelReadWriteActionsMonitor(TelemetryManager.getMeter(PlatformScopesKt.EDT));
 
   @TestOnly
   public ApplicationImpl(boolean isHeadless, @NotNull RwLockHolder lockHolder) {
@@ -385,6 +391,8 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     else {
       Disposer.dispose(myLastDisposable);
     }
+
+    otelMonitor.close();
   }
 
   @Override
@@ -899,6 +907,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       if (status != null) {
         myLock.endRead(status);
       }
+      otelMonitor.readActionExecuted();
     }
   }
 
@@ -913,6 +922,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       if (status != null) {
         myLock.endRead(status);
       }
+      otelMonitor.readActionExecuted();
     }
   }
 
@@ -927,6 +937,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       if (status != null) {
         myLock.endRead(status);
       }
+      otelMonitor.readActionExecuted();
     }
   }
 
@@ -1137,6 +1148,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       if (status != null) {
         myLock.endRead(status);
       }
+      otelMonitor.readActionExecuted();
     }
     return true;
   }
@@ -1233,6 +1245,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       if (myWriteActionsStack.isEmpty()) {
         fireAfterWriteActionFinished(clazz);
       }
+      otelMonitor.writeActionExecuted();
     }
   }
 
@@ -1309,6 +1322,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     public void finish() {
       myReadActionCacheImpl.clear();
       myLock.endRead(myReader);
+      otelMonitor.readActionExecuted();
     }
   }
 
@@ -1497,6 +1511,46 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     }
     finally {
       myLock.setAllowImplicitRead(oldVal);
+    }
+  }
+
+  /** Count read & write actions executed, and report to OpenTelemetry Metrics */
+  private static class OTelReadWriteActionsMonitor implements AutoCloseable{
+    private final @NotNull BatchCallback batchCallback;
+
+    private final AtomicInteger readActionsExecuted = new AtomicInteger();
+
+    private final AtomicInteger writeActionsExecuted = new AtomicInteger();
+
+    private OTelReadWriteActionsMonitor(@NotNull Meter meter) {
+      var raExecutionsCounter = meter.counterBuilder("ReadAction.executionsCount")
+        .setDescription("Total read actions executed")
+        .buildObserver();
+      var waExecutionsCounter = meter.counterBuilder("WriteAction.executionsCount")
+        .setDescription("Total write actions executed")
+        .buildObserver();
+
+      this.batchCallback = meter.batchCallback(
+        () -> {
+          raExecutionsCounter.record(readActionsExecuted.get());
+          waExecutionsCounter.record(writeActionsExecuted.get());
+        },
+        raExecutionsCounter,
+        waExecutionsCounter
+      );
+    }
+
+    public void readActionExecuted(){
+      readActionsExecuted.incrementAndGet();
+    }
+
+    public void writeActionExecuted(){
+      writeActionsExecuted.incrementAndGet();
+    }
+
+    @Override
+    public void close() {
+      batchCallback.close();
     }
   }
 }

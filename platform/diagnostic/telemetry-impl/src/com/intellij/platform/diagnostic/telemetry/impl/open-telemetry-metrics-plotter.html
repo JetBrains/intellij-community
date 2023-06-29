@@ -823,10 +823,30 @@ as an example
         return
       }
 
+      const writeActionExecutionsCount = extractTimeSeries("WriteAction.executionsCount")
+      const readActionExecutionsCount = extractTimeSeries("ReadAction.executionsCount")
+
       const finalizedExecutionsCount = extractTimeSeries("NonBlockingReadAction.finalizedExecutionsCount")
       const failedExecutionsCount = extractTimeSeries("NonBlockingReadAction.failedExecutionsCount")
       const finalizedExecutionTimeMs = extractTimeSeries("NonBlockingReadAction.finalizedExecutionTimeUs").mulScalar(1e-3)
       const failedExecutionTimeMs = extractTimeSeries("NonBlockingReadAction.failedExecutionTimeUs").mulScalar(1e-3)
+
+      plotTimeSeries(
+        'Read and Write Actions count',
+        'ReadAndWriteActions_CountChart',
+        [{
+          name: 'Write Actions',
+          color: 'red',
+          series: writeActionExecutionsCount
+        }, {
+          name: 'Read Actions',
+          color: 'blue',
+          series: readActionExecutionsCount
+        }],
+        /*yaxis:*/ {
+          title: 'actions'
+        }
+      )
 
       plotTimeSeries(
         'NonBlockingReadActions count: successful/interrupted',
@@ -1280,7 +1300,7 @@ as an example
 
   <div id="AWT_and_Flush_Queues" class="blockOfPlots">
 
-    <div class="caption">EDT: AWT & Flush Queues:</div>
+    <div class="caption">EDT: AWT & Flush Queues</div>
 
     <div id="EDT_awtEventsDispatchedChart" class="plot hideable"></div>
     <div id="EDT_awtEventsTimingsChart" class="plot hideable"></div>
@@ -1292,9 +1312,11 @@ as an example
     <div id="FlushQueue_tasksExecutionTimesChart" class="plot hideable"></div>
   </div>
 
-  <div id="NonBlockingRead" class="blockOfPlots">
+  <div id="Write_Read_Actions" class="blockOfPlots">
 
-    <div class="caption">NonBlockingReadAction:</div>
+    <div class="caption">Actions: Write, Read, and Non-Blocking-Read</div>
+
+    <div id="ReadAndWriteActions_CountChart" class="plot hideable"></div>
 
     <div id="NonBlockingReads_CountChart" class="plot hideable"></div>
     <div id="NonBlockingReads_TimesChart" class="plot hideable"></div>
