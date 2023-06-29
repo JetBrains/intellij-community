@@ -44,7 +44,7 @@ internal object ITNProxy {
 
   private const val DEFAULT_USER = "idea_anonymous"
   private const val DEFAULT_PASS = "guest"
-  private const val DEVELOPERS_LIST_URL = "https://ea-engine.labs.jb.gg/data?category=developers"
+  private const val DEVELOPERS_LIST_URL = "https://ea-report.jetbrains.com/developer/list"
   private const val NEW_THREAD_POST_URL = "https://ea-report.jetbrains.com/trackerRpc/idea/createScr"
   private const val NEW_THREAD_VIEW_URL = "https://ea.jetbrains.com/browser/ea_reports/"
 
