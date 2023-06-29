@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,6 +24,7 @@ import java.util.List;
 
 import static com.intellij.util.PathUtil.toSystemDependentName;
 import static java.util.Arrays.asList;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
   @Test
@@ -74,6 +76,34 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
 
     assertCopied("impl/build/resources/main/dir/file-impl.properties");
     assertNotCopied("impl/build/resources/test/dir/file-impl-test.properties");
+  }
+
+  @Test
+  public void testDelegationBuildsBuildSrc() throws IOException {
+    createProjectSubFile("buildSrc/src/main/java/my/pack/TestPlugin.java",
+                         """
+                           package my.pack;
+                           public class TestPlugin {}
+                           """);
+    importProject("apply plugin: 'java'\n");
+    compileModules("project.buildSrc");
+
+    assertThat(new File(getProjectPath(), "buildSrc/build/classes/main/my/pack/Foo.class")).doesNotExist();
+    assertThat(new File(getProjectPath(), "buildSrc/build/classes/java/main/my/pack/Foo.class")).doesNotExist();
+
+    createProjectSubFile("buildSrc/src/main/java/my/pack/Foo.java",
+                         """
+                           package my.pack;
+                           public class Foo {}
+                           """);
+    compileModules("project.buildSrc");
+
+    if (isGradleOlderThan("4.0")) {
+      assertThat(new File(getProjectPath(), "buildSrc/build/classes/main/my/pack/Foo.class")).exists();
+    }
+    else {
+      assertThat(new File(getProjectPath(), "buildSrc/build/classes/java/main/my/pack/Foo.class")).exists();
+    }
   }
 
   @Test

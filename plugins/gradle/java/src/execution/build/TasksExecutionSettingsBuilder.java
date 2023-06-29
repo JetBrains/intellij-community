@@ -17,6 +17,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
+import kotlin.random.Random;
 import org.gradle.api.internal.jvm.ClassDirectoryBinaryNamingScheme;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.ApiStatus;
@@ -125,6 +126,9 @@ public class TasksExecutionSettingsBuilder {
 
     List<Module> affectedModules = new SmartList<>();
     Map<Module, String> rootPathsMap = FactoryMap.create(module -> notNullize(resolveProjectPath(module)));
+
+    String buildSrcRootProjectPath = null;
+
     for (ProjectTask projectTask : projectTasks) {
       if (!(projectTask instanceof ModuleBuildTask moduleBuildTask)) continue;
 
@@ -149,6 +153,7 @@ public class TasksExecutionSettingsBuilder {
 
       // all buildSrc runtime projects will be built by gradle implicitly
       if (gradleModuleData.isBuildSrcModule()) {
+        buildSrcRootProjectPath = rootProjectPath;
         continue;
       }
 
@@ -203,6 +208,16 @@ public class TasksExecutionSettingsBuilder {
           buildRootTasks.add(taskPathPrefix + assembleTask);
         }
       }
+    }
+
+    if (buildTasksMap.isEmpty() && buildSrcRootProjectPath != null) {
+      var dummyTaskName = "ij_dummy_%d".formatted(Random.Default.nextInt(Integer.MAX_VALUE));
+      initScripts.getModifiable(buildSrcRootProjectPath)
+        .add("""
+               projectsEvaluated {
+                 rootProject.tasks.create("%s")
+               }""".formatted(dummyTaskName));
+      buildTasksMap.getModifiable(buildSrcRootProjectPath).add(":%s".formatted(dummyTaskName));
     }
     return affectedModules;
   }
