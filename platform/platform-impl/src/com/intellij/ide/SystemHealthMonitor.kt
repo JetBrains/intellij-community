@@ -52,6 +52,7 @@ internal suspend fun startSystemHealthMonitor() {
   withContext(Dispatchers.IO) {
     checkSignalBlocking()
     checkTempDirEnvVars()
+    checkAncientOs()
   }
   startDiskSpaceMonitoring()
 }
@@ -277,6 +278,15 @@ private fun checkTempDirEnvVars() {
     catch (e: Exception) {
       LOG.warn(e)
       showNotification("temp.dir.env.invalid", suppressable = false, action = null, name, value)
+    }
+  }
+}
+
+private fun checkAncientOs() {
+  if (SystemInfo.isWindows) {
+    val buildNumber = SystemInfo.getWinBuildNumber()
+    if (buildNumber != null && buildNumber < 10000) {  // 10 1507 = 10240, Server 2016 = 14393
+      showNotification("unsupported.windows", suppressable = true, null)
     }
   }
 }
