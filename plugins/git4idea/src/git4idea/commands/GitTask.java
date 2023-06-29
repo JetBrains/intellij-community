@@ -33,9 +33,9 @@ import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * All Git commands are cancellable when called via {@link GitHandler}. <br/>
@@ -73,41 +73,30 @@ public class GitTask {
    * @param resultHandler Handle the result.
    */
   public void executeInBackground(boolean sync, final GitTaskResultHandler resultHandler) {
-    final Object LOCK = new Object();
-    final AtomicBoolean completed = new AtomicBoolean();
+    final CountDownLatch countDown = new CountDownLatch(0);
 
     final BackgroundableTask task = new BackgroundableTask(myHandler, myTitle) {
       @Override
       public void onSuccess() {
-        GitTaskResult result = !myHandler.errors().isEmpty() ? GitTaskResult.GIT_ERROR : GitTaskResult.OK;
-        resultHandler.run(result);
-        synchronized (LOCK) {
-          LOCK.notifyAll();
-        }
-        completed.set(true);
+        boolean hasErrors = !myHandler.errors().isEmpty();
+        resultHandler.run(hasErrors ? GitTaskResult.GIT_ERROR : GitTaskResult.OK);
+        countDown.countDown();
       }
 
       @Override
       public void onCancel() {
         resultHandler.run(GitTaskResult.CANCELLED);
-        synchronized (LOCK) {
-          LOCK.notifyAll();
-        }
-        completed.set(true);
+        countDown.countDown();
       }
     };
     task.runAlone();
 
     if (sync) {
-      while (!completed.get()) {
-        try {
-          synchronized (LOCK) {
-            LOCK.wait(50);
-          }
-        }
-        catch (InterruptedException e) {
-          LOG.info(e);
-        }
+      try {
+        countDown.await();
+      }
+      catch (InterruptedException e) {
+        LOG.warn(e);
       }
     }
   }
