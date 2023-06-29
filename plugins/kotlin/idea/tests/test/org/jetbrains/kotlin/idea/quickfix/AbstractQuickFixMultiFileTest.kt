@@ -313,7 +313,7 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
         }
 
         private fun findActionByPattern(pattern: Pattern, availableActions: List<IntentionAction>): IntentionAction? =
-            availableActions.firstOrNull { pattern.matcher(it.text).matches() }
+            availableActions.firstOrNull { pattern.matcher(it.text).matches() || pattern.matcher(it.familyName).matches() }
 
         fun doAction(
             mainFile: File,
