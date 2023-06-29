@@ -123,7 +123,7 @@ class ActionEmbeddingsStorage : PersistentStateComponent<ActionEmbeddingsStorage
       val actionManager = ActionManager.getInstance() as ActionManagerImpl
       actionManager.actionIds
         .asSequence()
-        .map { it to actionManager.getAction(it) }
+        .map { it to actionManager.getActionOrStub(it) }
         .filter { shouldIndexAction(it.second) }
         .filter {
           // Do not calculate the embedding if already present in state
@@ -163,11 +163,7 @@ class ActionEmbeddingsStorage : PersistentStateComponent<ActionEmbeddingsStorage
     }
 
     private fun getTotalIndexableActionsCount(): Int {
-      val actionManager = ActionManager.getInstance() as ActionManagerImpl
-      return actionManager.actionIds
-        .map { actionManager.getAction(it) }
-        .filter { shouldIndexAction(it) }
-        .size
+      return (ActionManager.getInstance() as ActionManagerImpl).actionsOrStubs().filter { shouldIndexAction(it) }.count()
     }
   }
 }
