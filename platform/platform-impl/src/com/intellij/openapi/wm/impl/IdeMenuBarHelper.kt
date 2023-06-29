@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.debounce
 import org.jetbrains.concurrency.await
 import java.awt.Component
 import java.awt.Dialog
+import java.awt.Dimension
 import java.awt.KeyboardFocusManager
 import javax.swing.JComponent
 import javax.swing.JFrame
@@ -41,9 +42,13 @@ internal interface ActionAwareIdeMenuBar {
 }
 
 internal interface IdeMenuFlavor {
-  var state: IdeMenuBarState
+  val state: IdeMenuBarState
+    get() = IdeMenuBarState.EXPANDED
 
-  fun getProgress(): Double = 0.0
+  fun jMenuSelectionChanged(isIncluded: Boolean) {
+  }
+
+  fun getPreferredSize(size: Dimension): Dimension = size
 
   fun addClockPanel() {}
 
@@ -53,8 +58,6 @@ internal interface IdeMenuFlavor {
   }
 
   fun correctMenuCount(menuCount: Int): Int = menuCount
-
-  fun restartAnimator() {}
 
   fun suspendAnimator() {}
 }

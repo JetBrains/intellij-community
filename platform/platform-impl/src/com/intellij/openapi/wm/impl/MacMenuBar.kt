@@ -10,8 +10,6 @@ import javax.swing.JFrame
 
 internal fun createMacMenuBar(coroutineScope: CoroutineScope, component: JComponent, frame: JFrame): ActionAwareIdeMenuBar {
   val flavor = object : IdeMenuFlavor {
-    override var state: IdeMenuBarState = IdeMenuBarState.EXPANDED
-
     override fun updateAppMenu() {
       doUpdateAppMenu()
     }

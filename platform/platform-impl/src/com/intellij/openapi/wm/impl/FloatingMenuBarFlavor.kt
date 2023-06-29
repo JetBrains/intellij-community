@@ -20,12 +20,16 @@ import javax.swing.*
 import kotlin.math.cos
 import kotlin.math.sqrt
 
+private const val COLLAPSED_HEIGHT = 2
+
 internal class FloatingMenuBarFlavor(private val menuBar: IdeMenuBar) : IdeMenuFlavor {
   private val clockPanel = ClockPanel()
   private val exitFullScreenButton = FloatingMenuBarExitFullScreenButton(menuBar.frame)
   private val animator = MyAnimator(menuBar = menuBar, flavor = this)
 
   private val activationWatcher = TimerUtil.createNamedTimer("IdeMenuBar", 100, MyActionListener())
+
+  private var activated = false
 
   override var state: IdeMenuBarState = IdeMenuBarState.EXPANDED
     set(value) {
@@ -53,9 +57,44 @@ internal class FloatingMenuBarFlavor(private val menuBar: IdeMenuBar) : IdeMenuF
     }, scope = menuBar.coroutineScope)
   }
 
+  override fun jMenuSelectionChanged(isIncluded: Boolean) {
+    if (!isIncluded && state == IdeMenuBarState.TEMPORARY_EXPANDED) {
+      activated = false
+      state = IdeMenuBarState.COLLAPSING
+      restartAnimator()
+      return
+    }
+
+    if (isIncluded && state == IdeMenuBarState.COLLAPSED) {
+      activated = true
+      state = IdeMenuBarState.TEMPORARY_EXPANDED
+      menuBar.revalidate()
+      menuBar.repaint()
+      SwingUtilities.invokeLater {
+        val menu = menuBar.getMenu(menuBar.selectionModel.selectedIndex)
+        if (menu.isPopupMenuVisible) {
+          menu.isPopupMenuVisible = false
+          menu.isPopupMenuVisible = true
+        }
+      }
+    }
+  }
+
+  override fun getPreferredSize(size: Dimension): Dimension {
+    if (state.isInProgress) {
+      val progress = animator.progress
+      size.height = COLLAPSED_HEIGHT +
+                    ((if (state == IdeMenuBarState.COLLAPSING) 1 - progress else progress) * (size.height - COLLAPSED_HEIGHT)).toInt()
+    }
+    else if (state == IdeMenuBarState.COLLAPSED) {
+      size.height = COLLAPSED_HEIGHT
+    }
+    return size
+  }
+
   private fun considerRestartingAnimator(mouseEvent: MouseEvent) {
-    var mouseInside = menuBar.activated || UIUtil.isDescendingFrom(findActualComponent(mouseEvent), menuBar)
-    if (mouseEvent.id == MouseEvent.MOUSE_EXITED && mouseEvent.source === SwingUtilities.windowForComponent(menuBar) && !menuBar.activated) {
+    var mouseInside = activated || UIUtil.isDescendingFrom(findActualComponent(mouseEvent), menuBar)
+    if (mouseEvent.id == MouseEvent.MOUSE_EXITED && mouseEvent.source === SwingUtilities.windowForComponent(menuBar) && !activated) {
       mouseInside = false
     }
     if (mouseInside && state == IdeMenuBarState.COLLAPSED) {
@@ -87,14 +126,14 @@ internal class FloatingMenuBarFlavor(private val menuBar: IdeMenuBar) : IdeMenuF
         return
       }
 
-      val activated: Boolean = menuBar.isActivated
-      if (menuBar.activated && !activated && state == IdeMenuBarState.TEMPORARY_EXPANDED) {
-        menuBar.activated = false
+      val wasActivated: Boolean = menuBar.isActivated
+      if (activated && !wasActivated && state == IdeMenuBarState.TEMPORARY_EXPANDED) {
+        activated = false
         state = IdeMenuBarState.COLLAPSING
         restartAnimator()
       }
-      if (activated) {
-        menuBar.activated = true
+      if (wasActivated) {
+        activated = true
       }
     }
   }
@@ -131,8 +170,6 @@ internal class FloatingMenuBarFlavor(private val menuBar: IdeMenuBar) : IdeMenuF
     }
   }
 
-  override fun getProgress(): Double = animator.progress
-
   override fun suspendAnimator() {
     animator.suspend()
   }
@@ -151,7 +188,7 @@ internal class FloatingMenuBarFlavor(private val menuBar: IdeMenuBar) : IdeMenuF
     }
   }
 
-  override fun restartAnimator() {
+  private fun restartAnimator() {
     animator.reset()
     animator.resume()
   }

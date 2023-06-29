@@ -42,8 +42,6 @@ open class IdeMenuBar internal constructor(@JvmField internal val coroutineScope
                                            @JvmField internal val frame: JFrame) : JMenuBar(), ActionAwareIdeMenuBar {
   private val menuBarHelper: IdeMenuBarHelper
 
-  @JvmField
-  internal var activated = false
   private val screenMenuPeer: MenuBar?
 
   init {
@@ -52,8 +50,6 @@ open class IdeMenuBar internal constructor(@JvmField internal val coroutineScope
     }
     else {
       object : IdeMenuFlavor {
-        override var state = IdeMenuBarState.EXPANDED
-
         override fun updateAppMenu() {
           doUpdateAppMenu()
         }
@@ -135,26 +131,7 @@ open class IdeMenuBar internal constructor(@JvmField internal val coroutineScope
   }
 
   override fun menuSelectionChanged(isIncluded: Boolean) {
-    if (!isIncluded && menuBarHelper.flavor.state == IdeMenuBarState.TEMPORARY_EXPANDED) {
-      activated = false
-      menuBarHelper.flavor.state = IdeMenuBarState.COLLAPSING
-      menuBarHelper.flavor.restartAnimator()
-      return
-    }
-
-    if (isIncluded && menuBarHelper.flavor.state == IdeMenuBarState.COLLAPSED) {
-      activated = true
-      menuBarHelper.flavor.state = IdeMenuBarState.TEMPORARY_EXPANDED
-      revalidate()
-      repaint()
-      SwingUtilities.invokeLater {
-        val menu = getMenu(selectionModel.selectedIndex)
-        if (menu.isPopupMenuVisible) {
-          menu.isPopupMenuVisible = false
-          menu.isPopupMenuVisible = true
-        }
-      }
-    }
+    menuBarHelper.flavor.jMenuSelectionChanged(isIncluded)
     super.menuSelectionChanged(isIncluded)
   }
 
@@ -165,17 +142,7 @@ open class IdeMenuBar internal constructor(@JvmField internal val coroutineScope
     }
 
   override fun getPreferredSize(): Dimension {
-    val dimension = super.getPreferredSize()
-    val state = menuBarHelper.flavor.state
-    if (state.isInProgress) {
-      val progress = menuBarHelper.flavor.getProgress()
-      dimension.height = COLLAPSED_HEIGHT +
-                         ((if (state == IdeMenuBarState.COLLAPSING) 1 - progress else progress) * (dimension.height - COLLAPSED_HEIGHT)).toInt()
-    }
-    else if (state == IdeMenuBarState.COLLAPSED) {
-      dimension.height = COLLAPSED_HEIGHT
-    }
-    return dimension
+    return menuBarHelper.flavor.getPreferredSize(super.getPreferredSize())
   }
 
   override fun removeNotify() {
@@ -248,8 +215,6 @@ open class IdeMenuBar internal constructor(@JvmField internal val coroutineScope
 
 private val LOG: Logger
   get() = logger<IdeMenuBar>()
-
-private const val COLLAPSED_HEIGHT = 2
 
 // NOTE: for OSX only
 internal fun doUpdateAppMenu() {
