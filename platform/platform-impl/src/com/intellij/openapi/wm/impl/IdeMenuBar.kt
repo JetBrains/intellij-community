@@ -157,7 +157,7 @@ open class IdeMenuBar internal constructor(@JvmField internal val coroutineScope
     super.removeNotify()
   }
 
-  override suspend fun updateMenuActions(forceRebuild: Boolean) {
+  override fun updateMenuActions(forceRebuild: Boolean) {
     menuBarHelper.updateMenuActions(forceRebuild)
   }
 

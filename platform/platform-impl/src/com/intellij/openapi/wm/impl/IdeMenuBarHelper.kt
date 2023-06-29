@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.impl.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -23,7 +24,6 @@ import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import org.jetbrains.concurrency.await
 import java.awt.Component
@@ -38,7 +38,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 internal interface ActionAwareIdeMenuBar {
-  suspend fun updateMenuActions(forceRebuild: Boolean = false)
+  fun updateMenuActions(forceRebuild: Boolean = false)
 }
 
 internal interface IdeMenuFlavor {
@@ -68,7 +68,7 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
   @JvmField
   protected val presentationFactory: PresentationFactory = MenuItemPresentationFactory()
 
-  private val updateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val updateRequests = MutableSharedFlow<Boolean>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   @Suppress("LeakingThis")
   private val timerListener = IdeMenuBarActionTimerListener(this, isWindowActive = {
@@ -93,11 +93,11 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
     @Suppress("IfThenToSafeAccess")
     if (app != null) {
       app.messageBus.connect(coroutineScope).subscribe(UISettingsListener.TOPIC, UISettingsListener {
-        check(updateRequests.tryEmit(Unit))
+        check(updateRequests.tryEmit(true))
       })
     }
 
-    coroutineScope.launch {
+    coroutineScope.launch(ModalityState.any().asContextElement()) {
       withContext(if (StartUpMeasurer.isEnabled()) (rootTask() + CoroutineName("ide menu bar actions init")) else EmptyCoroutineContext) {
         val mainActionGroup = menuBar.getMainMenuActionGroup()
         val actions = updateMenuActions(mainActionGroup = mainActionGroup, forceRebuild = false, isFirstUpdate = true)
@@ -112,15 +112,15 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
 
       updateRequests
         .debounce(50.milliseconds)
-        .collectLatest {
+        .collect { forceRebuild ->
           presentationFactory.reset()
-          updateMenuActions(mainActionGroup = menuBar.getMainMenuActionGroup(), forceRebuild = true)
+          updateMenuActions(mainActionGroup = menuBar.getMainMenuActionGroup(), forceRebuild = forceRebuild)
         }
     }
   }
 
-  final override suspend fun updateMenuActions(forceRebuild: Boolean) {
-    updateMenuActions(mainActionGroup = menuBar.getMainMenuActionGroup(), forceRebuild = forceRebuild)
+  final override fun updateMenuActions(forceRebuild: Boolean) {
+    check(updateRequests.tryEmit(forceRebuild))
   }
 
   protected open suspend fun postInitActions(actions: List<ActionGroup>) {
@@ -237,7 +237,8 @@ private suspend fun expandMainActionGroup(mainActionGroup: ActionGroup,
                                           frame: JFrame,
                                           presentationFactory: PresentationFactory,
                                           isFirstUpdate: Boolean): List<ActionGroup> {
-  repeat(3) {
+  // don't repeat for JetBrains Client - deadlock possible
+  repeat(if (PlatformUtils.isJetBrainsClient()) 1 else 3) {
     try {
       return withContext(CoroutineName("expandMainActionGroup") + Dispatchers.EDT) {
         val targetComponent = WindowManager.getInstance().getFocusedComponent(frame) ?: menuBar
@@ -253,8 +254,7 @@ private suspend fun expandMainActionGroup(mainActionGroup: ActionGroup,
                                      /* context = */ dataContext,
                                      /* place = */ ActionPlaces.MAIN_MENU,
                                      /* isToolbarAction = */ false,
-                                     /* fastTrackTimeout = */
-                                     fastTrackTimeout)
+                                     /* fastTrackTimeout = */ fastTrackTimeout)
       }.await().filterIsInstance<ActionGroup>()
     }
     catch (e: ProcessCanceledException) {
