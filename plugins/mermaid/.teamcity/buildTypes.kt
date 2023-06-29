@@ -11,20 +11,16 @@ private val defaultImage = "registry.jetbrains.team/p/grazi/grazie-automation/me
 object Tests: MermaidBuild(
   name = "Tests",
   script = "./gradlew test --info",
-  block = {
-    triggers {
-      vcs({})
-    }
+  configuration = {
+    withBaseVcsTrigger()
   }
 )
 
 object PluginVerifier: MermaidBuild(
   name = "Plugin Verifier",
   script = "./gradlew runPluginVerifier --info",
-  block = {
-    triggers {
-      vcs({})
-    }
+  configuration = {
+    withBaseVcsTrigger()
   }
 )
 
@@ -32,7 +28,7 @@ open class MermaidBuild(
   name: String,
   dockerImage: String = defaultImage,
   @Language("Shell Script") script: String,
-  block: BuildType.() -> Unit = {}
+  configuration: BuildType.() -> Unit = {}
 ): BuildType({
   this.name = name
 
@@ -46,6 +42,9 @@ open class MermaidBuild(
       dockerImagePlatform = ScriptBuildStep.ImagePlatform.Linux
     }
   }
+
+  configuration()
+
   features {
     dockerSupport {
       loginToRegistry = on {
@@ -62,3 +61,9 @@ open class MermaidBuild(
     }
   }
 })
+
+internal fun BuildType.withBaseVcsTrigger() {
+  triggers {
+    vcs({})
+  }
+}
