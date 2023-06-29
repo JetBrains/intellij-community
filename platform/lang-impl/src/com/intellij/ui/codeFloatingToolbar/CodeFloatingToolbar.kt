@@ -71,7 +71,7 @@ class CodeFloatingToolbar(
     val offsetForHint = when {
       isOneLineSelection -> selectionStart
       isBelow -> getOffsetForLine(editor, getLineByVisualStart(editor, selectionEnd, true))
-      else -> getOffsetForLine(editor, getLineByVisualStart(editor, selectionEnd, false))
+      else -> getOffsetForLine(editor, getLineByVisualStart(editor, selectionStart, false))
     }
     val visualPosition = editor.offsetToVisualPosition(offsetForHint)
     val hintPoint = HintManagerImpl.getHintPosition(hint, editor, visualPosition, HintManager.DEFAULT)
