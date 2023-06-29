@@ -2,16 +2,15 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
 import com.intellij.collaboration.async.combineState
-import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranches
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.progress.withBackgroundProgress
+import com.intellij.openapi.progress.withRawProgressReporter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.util.childScope
@@ -24,10 +23,10 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.ui.branch.GitBranchPopupActions
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
@@ -71,30 +70,48 @@ internal class GitLabMergeRequestBranchesViewModel(
   override val showBranchesRequests: SharedFlow<CodeReviewBranches> = _showBranchesRequests
 
   override fun fetchAndCheckoutRemoteBranch() {
-    object : Task.Backgroundable(
-      project,
-      CollaborationToolsBundle.message("review.details.action.branch.checkout.remote.action.description"),
-      true
-    ) {
-      override fun run(indicator: ProgressIndicator) {
-        val sourceProject = mergeRequest.sourceProject.value ?: return
-        val sourceBranch = mergeRequest.sourceBranch.value
-
-        val headRemote = git.findOrCreateRemote(repository, sourceProject)
-        if (headRemote == null) {
-          notifyRemoteError(vcsNotifier, sourceProject)
-          return
+    cs.launch {
+      val branchToCheckout = withBackgroundProgress(
+        project,
+        CollaborationToolsBundle.message("review.details.action.branch.checkout.remote.action.description")
+      ) {
+        withRawProgressReporter {
+          getBranchToCheckout()
         }
+      } ?: return@launch
 
-        val fetchResult = GitFetchSupport.fetchSupport(project).fetch(repository, headRemote, sourceBranch)
-        if (fetchResult.showNotificationIfFailed(GitBundle.message("branches.update.failed"))) {
-          val branch = "${headRemote.name}/${sourceBranch}"
-          invokeLater {
-            GitBranchPopupActions.RemoteBranchActions.CheckoutRemoteBranchAction.checkoutRemoteBranch(project, listOf(repository), branch)
-          }
-        }
+      withContext(Dispatchers.Main) {
+        GitBranchPopupActions.RemoteBranchActions.CheckoutRemoteBranchAction
+          .checkoutRemoteBranch(project, listOf(repository), branchToCheckout)
       }
-    }.queue()
+    }
+  }
+
+  private suspend fun getBranchToCheckout(): String? {
+    val sourceProject = mergeRequest.sourceProject.value ?: return null
+    val sourceBranch = mergeRequest.sourceBranch.value
+
+    val headRemote = coroutineToIndicator {
+      git.findOrCreateRemote(repository, sourceProject)
+    }
+    if (headRemote == null) {
+      withContext(Dispatchers.Main) {
+        notifyRemoteError(vcsNotifier, sourceProject)
+      }
+      return null
+    }
+    val fetchResult = coroutineToIndicator {
+      GitFetchSupport.fetchSupport(project).fetch(repository, headRemote, sourceBranch)
+    }
+    return withContext(Dispatchers.Main) {
+      val fetchOk = fetchResult.showNotificationIfFailed(GitBundle.message("branches.update.failed"))
+      if (fetchOk) {
+        "${headRemote.name}/${sourceBranch}"
+      }
+      else {
+        null
+      }
+    }
   }
 
   private fun notifyRemoteError(vcsNotifier: VcsNotifier, project: GitLabProjectDTO) {
@@ -115,7 +132,7 @@ internal class GitLabMergeRequestBranchesViewModel(
   }
 
   override fun showBranches() {
-    cs.launchNow {
+    cs.launch {
       val source = sourceBranch.value
       val target = mergeRequest.targetBranch.value
       _showBranchesRequests.emit(CodeReviewBranches(source, target))
