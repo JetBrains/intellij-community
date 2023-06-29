@@ -147,8 +147,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
 
     add(BorderLayout.CENTER, panel);
     add(BorderLayout.EAST, gearWrapper);
-    JBInsets defaultInsets = ExperimentalUI.isNewUI() ? JBInsets.create(9, 16) : JBInsets.create(5, 10);
-    setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.Editor.Notification.borderInsets(defaultInsets)));
+    setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.Editor.Notification.borderInsetsWithoutStatus()));
     setOpaque(true);
 
     myLabel.setForeground(mySchemeSupplier.get().getDefaultForeground());
