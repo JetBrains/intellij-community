@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
+import com.intellij.ide.actions.ToggleDistractionFreeModeAction
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
@@ -153,7 +154,8 @@ class ProjectWindowCustomizerService : Disposable {
     }
   }
 
-  fun isAvailable(): Boolean = PlatformUtils.isRider() || Registry.`is`("ide.colorful.toolbar")
+  fun isAvailable(): Boolean = !ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled()  &&
+                               (PlatformUtils.isRider () || Registry.`is`("ide.colorful.toolbar"))
 
   fun isActive(): Boolean = wasGradientPainted && ourSettingsValue && isAvailable()
 
@@ -215,14 +217,14 @@ class ProjectWindowCustomizerService : Disposable {
    * @return true if method painted something
    */
   fun paint(project: Project, parent: JComponent, g: Graphics2D): Boolean {
+    g.color = parent.background
+    g.fillRect(0, 0, parent.width, parent.height)
+
     if (!isActive() || !getPaintingType().isGradient()) {
       return false
     }
 
     g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
-    g.color = parent.background
-    g.fillRect(0, 0, parent.width, parent.height)
-
     val color = getGradientProjectColor(project)
 
     val length = Registry.intValue("ide.colorful.toolbar.gradient.length", 600)
