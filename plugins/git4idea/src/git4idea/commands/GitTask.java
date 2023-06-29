@@ -17,8 +17,6 @@ package git4idea.commands;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -28,12 +26,12 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import git4idea.GitDisposable;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -47,9 +45,6 @@ import java.util.concurrent.TimeUnit;
  */
 @Deprecated
 public class GitTask {
-
-  private static final Logger LOG = Logger.getInstance(GitTask.class);
-
   private final @NotNull Project myProject;
   private final @NotNull GitLineHandler myHandler;
   private final @NlsContexts.ProgressTitle String myTitle;
@@ -67,72 +62,48 @@ public class GitTask {
     myProgressIndicator = progressIndicator;
     myProgressAnalyzer = progressAnalyzer;
   }
-
-  /**
-   * @param sync          Set to {@code true} to make the calling thread wait for the task execution.
-   * @param resultHandler Handle the result.
-   */
-  public void executeInBackground(boolean sync, final GitTaskResultHandler resultHandler) {
-    BackgroundableTask task = new BackgroundableTask(myHandler, myTitle, resultHandler);
-    task.runAlone(sync);
+  
+  public void executeInCurrentThread(@NotNull GitTaskResultHandler resultHandler) {
+    BackgroundableTask task = new BackgroundableTask(myHandler, myTitle);
+    GitTaskResult result = task.run();
+    resultHandler.run(result);
   }
 
   private class BackgroundableTask implements Disposable {
     private final @NotNull GitLineHandler myHandler;
     private final @NotNull @NlsContexts.ProgressTitle String myTitle;
-    private final @NotNull GitTaskResultHandler myResultHandler;
 
-    private final CountDownLatch myCountDown = new CountDownLatch(0);
     private @Nullable ScheduledFuture<?> myTimer;
 
     BackgroundableTask(@NotNull GitLineHandler handler,
-                       @NotNull @NlsContexts.ProgressTitle String processTitle,
-                       @NotNull GitTaskResultHandler resultHandler) {
+                       @NotNull @NlsContexts.ProgressTitle String processTitle) {
       myHandler = handler;
       myTitle = processTitle;
-      myResultHandler = resultHandler;
 
       Disposer.register(GitDisposable.getInstance(myProject), this);
     }
 
-    public final void runAlone(boolean sync) {
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        ApplicationManager.getApplication().executeOnPooledThread(() -> justRun());
-      }
-      else {
-        justRun();
-      }
-
-      if (sync) {
-        try {
-          myCountDown.await();
-        }
-        catch (InterruptedException e) {
-          LOG.warn(e);
-        }
-      }
-    }
-
-    private void justRun() {
+    @RequiresBackgroundThread
+    public @NotNull GitTaskResult run() {
       String oldTitle = myProgressIndicator.getText();
       myProgressIndicator.setText(myTitle);
+      myProgressIndicator.setText2("");
 
       myTimer = JobScheduler.getScheduler().scheduleWithFixedDelay(this::checkCancellation, 0, 200, TimeUnit.MILLISECONDS);
 
       myProgressIndicator.setIndeterminate(myProgressAnalyzer == null);
       myHandler.addLineListener(new MyGitLineListener());
 
-      GitHandlerUtil.runInCurrentThread(myHandler, myProgressIndicator, false, myTitle);
+      myHandler.runInCurrentThread(null);
 
       myProgressIndicator.setText(oldTitle);
       if (myProgressIndicator.isCanceled()) {
-        myResultHandler.run(GitTaskResult.CANCELLED);
+        return GitTaskResult.CANCELLED;
       }
       else {
         boolean hasErrors = !myHandler.errors().isEmpty();
-        myResultHandler.run(hasErrors ? GitTaskResult.GIT_ERROR : GitTaskResult.OK);
+        return hasErrors ? GitTaskResult.GIT_ERROR : GitTaskResult.OK;
       }
-      myCountDown.countDown();
     }
 
     /**

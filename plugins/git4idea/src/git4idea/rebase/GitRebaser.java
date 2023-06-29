@@ -94,7 +94,7 @@ public class GitRebaser {
     rh.setStdoutSuppressed(false);
     rh.addParameters("--abort");
     GitTask task = new GitTask(myProject, rh, GitBundle.message("rebase.update.project.abort.task.title"), myProgressIndicator, null);
-    task.executeInBackground(false, new GitTaskResultNotificationHandler(
+    task.executeInCurrentThread(new GitTaskResultNotificationHandler(
       myProject,
       REBASE_ABORT,
       GitBundle.message("rebase.update.project.notification.abort.success.message"),
@@ -159,19 +159,25 @@ public class GitRebaser {
     return rebasingRoots;
   }
 
-  private boolean executeRebaseTaskInBackground(VirtualFile root, GitLineHandler h, GitRebaseProblemDetector rebaseConflictDetector, GitTask rebaseTask) {
+  private boolean executeRebaseTaskInBackground(VirtualFile root,
+                                                GitLineHandler h,
+                                                GitRebaseProblemDetector rebaseConflictDetector,
+                                                GitTask rebaseTask) {
     final AtomicBoolean result = new AtomicBoolean();
     final AtomicBoolean failure = new AtomicBoolean();
-    rebaseTask.executeInBackground(true, new GitTaskResultHandlerAdapter() {
-      @Override protected void onSuccess() {
+    rebaseTask.executeInCurrentThread(new GitTaskResultHandlerAdapter() {
+      @Override
+      protected void onSuccess() {
         result.set(true);
       }
 
-      @Override protected void onCancel() {
+      @Override
+      protected void onCancel() {
         result.set(false);
       }
 
-      @Override protected void onFailure() {
+      @Override
+      protected void onFailure() {
         failure.set(true);
       }
     });
@@ -323,11 +329,13 @@ public class GitRebaser {
       myRoot = root;
     }
 
-    @Override protected boolean proceedIfNothingToMerge() {
+    @Override
+    protected boolean proceedIfNothingToMerge() {
       return myRebaser.continueRebase(myRoot);
     }
 
-    @Override protected boolean proceedAfterAllMerged() {
+    @Override
+    protected boolean proceedAfterAllMerged() {
       return myRebaser.continueRebase(myRoot);
     }
   }
