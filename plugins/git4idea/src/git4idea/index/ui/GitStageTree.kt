@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index.ui
 
 import com.intellij.ide.dnd.DnDActionInfo
 import com.intellij.ide.dnd.DnDDragStartBean
 import com.intellij.ide.dnd.DnDEvent
+import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -23,9 +24,11 @@ import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.allUnder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.FontUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.JBIterable
+import com.intellij.util.ui.tree.TreeUtil
 import git4idea.conflicts.GitConflictsUtil.getConflictType
 import git4idea.i18n.GitBundle
 import git4idea.index.GitFileStatus
@@ -41,6 +44,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 import javax.swing.JComponent
 import javax.swing.tree.DefaultTreeModel
+import javax.swing.tree.TreeNode
 
 abstract class GitStageTree(project: Project,
                             private val settings: GitStageUiSettings,
@@ -52,7 +56,7 @@ abstract class GitStageTree(project: Project,
   protected abstract val operations: List<StagingAreaOperation>
 
   init {
-    isKeepTreeState = true
+    treeStateStrategy = GitStageTreeStateStrategy
     isScrollToSelection = false
 
     MyDnDSupport().install(parentDisposable)
@@ -448,4 +452,36 @@ internal fun GitStageTracker.State.hasMatchingRoots(vararg kinds: NodeKind): Boo
 
 internal fun GitFileStatusNode.createConflict(): GitConflict? {
   return GitStagingAreaHolder.createConflict(root, status)
+}
+
+internal data class GitStageTreeState(val treeState: TreeState, val skipExpandForKind: Set<NodeKind>)
+
+internal object GitStageTreeStateStrategy : ChangesTree.TreeStateStrategy<GitStageTreeState> {
+  override fun saveState(tree: ChangesTree): GitStageTreeState {
+    val treeState = TreeState.createOn(tree, true, true)
+    val nonEmptyKinds = NodeKind.values().filter { kind ->
+      val tagNode = VcsTreeModelData.findTagNode(tree, kind)
+      tagNode != null && tagNode.childCount > 0
+    }.toSet()
+    return GitStageTreeState(treeState, nonEmptyKinds)
+  }
+
+  override fun restoreState(tree: ChangesTree, state: GitStageTreeState?, scrollToSelection: Boolean) {
+    if (state == null) return
+
+    state.treeState.setScrollToSelection(scrollToSelection)
+    state.treeState.applyTo(tree)
+
+    TreeUtil.promiseExpand(tree) { path ->
+      if (path.pathCount <= 1) return@promiseExpand TreeVisitor.Action.CONTINUE
+
+      val topLevelNode = path.getPathComponent(1) as? TreeNode ?: return@promiseExpand TreeVisitor.Action.SKIP_CHILDREN
+      if (TreeUtil.hasManyChildren(topLevelNode, ChangesTree.EXPAND_NODES_THRESHOLD)) return@promiseExpand TreeVisitor.Action.SKIP_CHILDREN
+
+      val nodeKind = TreeUtil.getLastUserObject(NodeKind::class.java, path)
+      if (nodeKind == null || state.skipExpandForKind.contains(nodeKind)) return@promiseExpand TreeVisitor.Action.SKIP_CHILDREN
+
+      return@promiseExpand TreeVisitor.Action.CONTINUE
+    }
+  }
 }

@@ -116,7 +116,15 @@ public final class TreeUtil {
   }
 
   public static boolean hasManyNodes(@NotNull Tree tree, int threshold) {
-    return treeTraverser(tree).traverse().take(threshold).size() >= threshold;
+    return hasManyNodes(treeTraverser(tree), threshold);
+  }
+
+  public static boolean hasManyChildren(@NotNull TreeNode node, int threshold) {
+    return hasManyNodes(treeNodeTraverser(node), threshold);
+  }
+
+  private static <T> boolean hasManyNodes(@NotNull JBTreeTraverser<T> traverser, int threshold) {
+    return traverser.traverse().take(threshold).size() >= threshold;
   }
 
   /**

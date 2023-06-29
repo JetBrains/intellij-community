@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.CommonActionsManager;
@@ -69,6 +69,8 @@ import static com.intellij.util.ui.ThreeStateCheckBox.State;
  */
 public abstract class ChangesTree extends Tree implements DataProvider {
   @ApiStatus.Internal @NonNls public static final String LOG_COMMIT_SESSION_EVENTS = "LogCommitSessionEvents";
+
+  public static final int EXPAND_NODES_THRESHOLD = 30000;
 
   @NotNull public static final TreeStateStrategy<?> DO_NOTHING = new DoNothingTreeStateStrategy();
   @NotNull public static final TreeStateStrategy<?> ALWAYS_RESET = new AlwaysResetTreeStateStrategy();
@@ -457,7 +459,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   public void resetTreeState() {
     // expanding lots of nodes is a slow operation (and result is not very useful)
-    if (TreeUtil.hasManyNodes(this, 30000)) {
+    if (TreeUtil.hasManyNodes(this, EXPAND_NODES_THRESHOLD)) {
       TreeUtil.collapseAll(this, 1);
       return;
     }
