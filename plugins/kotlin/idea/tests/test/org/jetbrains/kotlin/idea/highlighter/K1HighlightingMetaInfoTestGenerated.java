@@ -26,6 +26,11 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("classRedeclaration.kt")
+        public void testClassRedeclaration() throws Exception {
+            runTest("testData/highlighterMetaInfo/diagnostics/classRedeclaration.kt");
+        }
+
         @TestMetadata("mppIsNotEnabled.kt")
         public void testMppIsNotEnabled() throws Exception {
             runTest("testData/highlighterMetaInfo/diagnostics/mppIsNotEnabled.kt");
