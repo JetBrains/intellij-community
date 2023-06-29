@@ -289,12 +289,11 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     LinkedHashSet<VirtualFile> roots = new LinkedHashSet<>(indexers.keySet());
 
     VcsLogStorageBackend backend;
-    String logId = calcLogId(project, providers);
     if (storage instanceof VcsLogStorageBackend) {
       backend = (VcsLogStorageBackend)storage;
     }
     else {
-      backend = PhmVcsLogStorageBackend.create(project, storage, roots, logId, errorHandler, disposableParent);
+      backend = PhmVcsLogStorageBackend.create(project, storage, roots, calcLogId(project, providers), errorHandler, disposableParent);
     }
     if (backend == null) return null;
 
