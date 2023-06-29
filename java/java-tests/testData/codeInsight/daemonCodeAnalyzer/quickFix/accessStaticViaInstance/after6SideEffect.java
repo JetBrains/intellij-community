@@ -1,4 +1,4 @@
-// "Access static 'R.rr' via class 'R' reference" "true"
+// "Access static 'R.rr' via class 'R' reference" "true-preview"
 
 class AClass
 {
@@ -11,7 +11,8 @@ class AClass
 }
 class ss {
     void f(AClass d){
-        int i = <caret>AClass.R.rr;
+        d.getR();
+        int i = AClass.R.rr;
     }
 
 }

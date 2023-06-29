@@ -1,4 +1,4 @@
-// "Access static 'R.rr' via class 'R' reference" "true"
+// "Access static 'R.rr' via class 'R' reference" "true-preview"
 
 class AClass
 {

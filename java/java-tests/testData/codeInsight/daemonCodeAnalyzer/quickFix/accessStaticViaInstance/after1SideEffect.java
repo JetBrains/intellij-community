@@ -1,4 +1,4 @@
-// "Access static 'AClass.fff' via class 'AClass' reference" "true"
+// "Access static 'AClass.fff' via class 'AClass' reference" "true-preview"
 
 class AClass
 {
@@ -11,6 +11,7 @@ class AClass
 class acc {
  int f() {
    AClass a = null;
-   return <caret>AClass.fff;
+     a.getA();
+     return AClass.fff;
  }
 }

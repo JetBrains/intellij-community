@@ -917,7 +917,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public LocalQuickFixAndIntentionActionOnPsiElement createAccessStaticViaInstanceFix(@NotNull PsiReferenceExpression methodRef,
                                                                                       @NotNull JavaResolveResult result) {
-    return new AccessStaticViaInstanceFix(methodRef, result, true);
+    return LocalQuickFixAndIntentionActionOnPsiElement.from(new AccessStaticViaInstanceFix(methodRef, result), methodRef);
   }
 
   @NotNull
