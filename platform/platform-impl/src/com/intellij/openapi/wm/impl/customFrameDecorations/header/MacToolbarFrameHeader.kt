@@ -8,6 +8,7 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.ToolbarHolder
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.SimpleCustomDecorationPath
@@ -18,7 +19,9 @@ import com.intellij.ui.mac.MacMainFrameDecorator
 import com.intellij.util.childScope
 import com.intellij.util.ui.JBUI
 import com.jetbrains.JBR
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Graphics
@@ -96,8 +99,10 @@ internal class MacToolbarFrameHeader(private val frame: JFrame, private val root
   override suspend fun initToolbar(toolbarActionGroups: List<Pair<ActionGroup, String>>) {
     toolbar.init(toolbarActionGroups, customTitleBar)
     val mainToolbarActionSupplier = { toolbarActionGroups }
-    updateVisibleCard(mainToolbarActionSupplier)
-    updateSize(mainToolbarActionSupplier)
+    withContext(Dispatchers.EDT) {
+      updateVisibleCard(mainToolbarActionSupplier)
+      updateSize(mainToolbarActionSupplier)
+    }
   }
 
   override suspend fun updateToolbar() {
