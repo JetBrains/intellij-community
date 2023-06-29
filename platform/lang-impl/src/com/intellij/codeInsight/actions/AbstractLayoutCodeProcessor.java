@@ -470,13 +470,11 @@ public abstract class AbstractLayoutCodeProcessor {
 
         ProgressIndicatorProvider.checkCanceled();
 
-        ApplicationManager.getApplication().invokeAndWait(() -> {
-          WriteCommandAction.writeCommandAction(myProject)
-            .withName(myCommandName)
-            .withGroupId(groupId)
-            .shouldRecordActionForActiveDocument(myProcessAllFilesAsSingleUndoStep)
-            .run(() -> writeTask.run());
-        });
+        WriteCommandAction.writeCommandAction(myProject)
+          .withName(myCommandName)
+          .withGroupId(groupId)
+          .shouldRecordActionForActiveDocument(myProcessAllFilesAsSingleUndoStep)
+          .run(() -> writeTask.run());
 
         checkStop(writeTask, file);
       }

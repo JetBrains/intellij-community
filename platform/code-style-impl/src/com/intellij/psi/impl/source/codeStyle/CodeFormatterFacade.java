@@ -14,13 +14,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -31,7 +29,6 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.Stack;
 import com.intellij.util.text.TextRangeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,7 +72,6 @@ public class CodeFormatterFacade {
           .getInstance(file.getProject()).getTopLevelFile(file) : psiElement;
     final PsiFile fileToFormat = elementToFormat.getContainingFile();
 
-    RangeMarker rangeMarker = null;
 
     // Dirty workaround
     // In case we're formatting not the original file, we have to keep the formatting listener
@@ -95,48 +91,56 @@ public class CodeFormatterFacade {
     }
     // End of dirty workaround
 
+
     if (builder != null) {
-      if (document != null && endOffset < document.getTextLength()) {
-        rangeMarker = document.createRangeMarker(startOffset, endOffset);
-      }
+      RangeMarker rangeMarker = null;
+      CodeFormattingData codeFormattingData = CodeFormattingData.getOrCreate(fileToFormat);
 
-      TextRange range = preprocess(element, TextRange.create(startOffset, endOffset));
-      if (document instanceof DocumentWindow documentWindow) {
-        range = documentWindow.injectedToHost(range);
-      }
-
-      //final SmartPsiElementPointer pointer = SmartPointerManager.getInstance(psiElement.getProject()).createSmartPsiElementPointer(psiElement);
-      final FormattingModel model = CoreFormatterUtil.buildModel(builder, elementToFormat, range, mySettings, FormattingMode.REFORMAT);
-      if (file.getTextLength() > 0) {
-        try {
-          final FormatTextRanges ranges = new FormatTextRanges(range, true);
-          setDisabledRanges(fileToFormat,ranges);
-          FormatterEx.getInstanceEx().format(
-            model, mySettings, getIndentOptions(mySettings, file.getProject(), file, document, range), ranges
-          );
+      try {
+        if (document != null && endOffset < document.getTextLength()) {
+          rangeMarker = document.createRangeMarker(startOffset, endOffset);
         }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
+
+        TextRange range = preprocess(codeFormattingData, element, TextRange.create(startOffset, endOffset));
+        if (document instanceof DocumentWindow documentWindow) {
+          range = documentWindow.injectedToHost(range);
+        }
+
+        final FormattingModel model = CoreFormatterUtil.buildModel(builder, elementToFormat, range, mySettings, FormattingMode.REFORMAT);
+        if (file.getTextLength() > 0) {
+          try {
+            final FormatTextRanges ranges = new FormatTextRanges(range, true);
+            setDisabledRanges(fileToFormat, ranges);
+            FormatterEx.getInstanceEx().format(
+              model, mySettings, getIndentOptions(mySettings, file.getProject(), file, document, range), ranges
+            );
+          }
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
+          }
+        }
+
+        if (!psiElement.isValid()) {
+          if (rangeMarker != null) {
+            final PsiElement at = file.findElementAt(rangeMarker.getStartOffset());
+            final PsiElement result = PsiTreeUtil.getParentOfType(at, psiElement.getClass(), false);
+            assert result != null;
+            rangeMarker.dispose();
+            return result.getNode();
+          }
+          else {
+            assert false;
+          }
         }
       }
-
-      if (!psiElement.isValid()) {
+      finally {
         if (rangeMarker != null) {
-          final PsiElement at = file.findElementAt(rangeMarker.getStartOffset());
-          final PsiElement result = PsiTreeUtil.getParentOfType(at, psiElement.getClass(), false);
-          assert result != null;
           rangeMarker.dispose();
-          return result.getNode();
-        } else {
-          assert false;
         }
+        codeFormattingData.dispose();
       }
-//      return SourceTreeToPsiMap.psiElementToTree(pointer.getElement());
     }
 
-    if (rangeMarker != null) {
-      rangeMarker.dispose();
-    }
     return element;
   }
 
@@ -159,11 +163,12 @@ public class CodeFormatterFacade {
         if (ranges.isExtendToContext()) {
           ranges.setExtendedRanges(new ContextFormattingRangesExtender(document, file).getExtendedRanges(ranges.getTextRanges()));
         }
+        CodeFormattingData formattingData = CodeFormattingData.getOrCreate(file);
         try {
           ASTNode containingNode = findContainingNode(file, ranges.getBoundRange());
           if (containingNode != null) {
             for (FormatTextRange range : ranges.getRanges()) {
-              TextRange rangeToUse = preprocess(containingNode, range.getTextRange());
+              TextRange rangeToUse = preprocess(formattingData, containingNode, range.getTextRange());
               range.setTextRange(rangeToUse);
             }
           }
@@ -174,7 +179,7 @@ public class CodeFormatterFacade {
             return;
           }
 
-          TextRange formattingModelRange = ObjectUtils.notNull(ranges.getBoundRange(), file.getTextRange());
+            TextRange formattingModelRange = ObjectUtils.notNull(ranges.getBoundRange(), file.getTextRange());
 
           final FormattingModel originalModel = CoreFormatterUtil.buildModel(builder, file, formattingModelRange, mySettings, FormattingMode.REFORMAT);
           final FormattingModel model = new DocumentBasedFormattingModel(originalModel,
@@ -197,6 +202,9 @@ public class CodeFormatterFacade {
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
+        }
+        finally {
+          formattingData.dispose();
         }
       }
     }
@@ -287,7 +295,7 @@ public class CodeFormatterFacade {
     return node;
   }
 
-  private TextRange preprocess(@NotNull final ASTNode node, @NotNull TextRange range) {
+  private TextRange preprocess(@NotNull CodeFormattingData formattingData, @NotNull final ASTNode node, @NotNull TextRange range) {
     TextRange result = range;
     PsiElement psi = node.getPsi();
     if (!psi.isValid()) {
@@ -296,30 +304,7 @@ public class CodeFormatterFacade {
 
     PsiFile file = psi.getContainingFile();
 
-    // We use a set here because we encountered a situation when more than one PSI leaf points to the same injected fragment
-    // (at least for sql injected into sql).
-    final LinkedHashSet<TextRange> injectedFileRangesSet = new LinkedHashSet<>();
-
-    if (!psi.getProject().isDefault()) {
-      List<DocumentWindow> injectedDocuments = InjectedLanguageManager.getInstance(file.getProject()).getCachedInjectedDocumentsInRange(file, file.getTextRange());
-      if (!injectedDocuments.isEmpty()) {
-        for (DocumentWindow injectedDocument : injectedDocuments) {
-          injectedFileRangesSet.add(TextRange.from(injectedDocument.injectedToHost(0), injectedDocument.getTextLength()));
-        }
-      }
-      else {
-        Collection<PsiLanguageInjectionHost> injectionHosts = collectInjectionHosts(file, range);
-        PsiLanguageInjectionHost.InjectedPsiVisitor visitor = (injectedPsi, places) -> {
-          for (PsiLanguageInjectionHost.Shred place : places) {
-            Segment rangeMarker = place.getHostRangeMarker();
-            injectedFileRangesSet.add(TextRange.create(rangeMarker.getStartOffset(), rangeMarker.getEndOffset()));
-          }
-        };
-        for (PsiLanguageInjectionHost host : injectionHosts) {
-          InjectedLanguageManager.getInstance(file.getProject()).enumerate(host, visitor);
-        }
-      }
-    }
+    final Set<TextRange> injectedFileRangesSet = formattingData.getInjectedRanges(range);
 
     if (!injectedFileRangesSet.isEmpty()) {
       List<TextRange> ranges = new ArrayList<>(injectedFileRangesSet);
@@ -383,38 +368,6 @@ public class CodeFormatterFacade {
     return result;
   }
 
-  @NotNull
-  private static Collection<PsiLanguageInjectionHost> collectInjectionHosts(@NotNull PsiFile file, @NotNull TextRange range) {
-    Stack<PsiElement> toProcess = new Stack<>();
-    for (PsiElement e = file.findElementAt(range.getStartOffset()); e != null; e = e.getNextSibling()) {
-      if (e.getTextRange().getStartOffset() >= range.getEndOffset()) {
-        break;
-      }
-      toProcess.push(e);
-    }
-    if (toProcess.isEmpty()) {
-      return Collections.emptySet();
-    }
-    Set<PsiLanguageInjectionHost> result = null;
-    while (!toProcess.isEmpty()) {
-      PsiElement e = toProcess.pop();
-      if (e instanceof PsiLanguageInjectionHost) {
-        if (result == null) {
-          result = new HashSet<>();
-        }
-        result.add((PsiLanguageInjectionHost)e);
-      }
-      else {
-        for (PsiElement child = e.getFirstChild(); child != null; child = child.getNextSibling()) {
-          if (e.getTextRange().getStartOffset() >= range.getEndOffset()) {
-            break;
-          }
-          toProcess.push(child);
-        }
-      }
-    }
-    return result == null ? Collections.emptySet() : result;
-  }
 
   private static boolean shouldDelegateToTopLevel(@NotNull PsiFile file) {
     for (var provider: InjectedFormattingOptionsProvider.EP_NAME.getExtensions()) {
