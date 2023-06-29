@@ -775,6 +775,9 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       defaults.put(JBUI.CurrentTheme.EditorTabs.tabContentInsetsActionsLeftKey(), cmInsets(0))
       defaults.put(JBUI.CurrentTheme.EditorTabs.tabContentInsetsActionsNoneKey(), cmInsets(0))
       defaults.put(JBUI.CurrentTheme.EditorTabs.fontKey(), Supplier { JBFont.medium().asUIResource() })
+      // banner
+      defaults.put(JBUI.CurrentTheme.Editor.Notification.borderInsetsKey(), cmInsets(6, 12))
+      defaults.put(JBUI.CurrentTheme.Editor.Notification.borderInsetsKeyWithoutStatus(), cmInsets(6, 16))
       // toolwindows
       defaults.put(JBUI.CurrentTheme.ToolWindow.headerHeightKey(), 32)
       defaults.put(JBUI.CurrentTheme.ToolWindow.headerFontKey(), Supplier { JBFont.medium().asUIResource() })
