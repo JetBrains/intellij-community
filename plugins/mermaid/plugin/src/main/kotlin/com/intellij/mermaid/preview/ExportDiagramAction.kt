@@ -39,6 +39,10 @@ internal class ExportDiagramAction: AnAction(MermaidBundle.message("action.Merma
       event.presentation.isEnabledAndVisible = false
       return
     }
+    if (!JBCefApp.isSupported()) {
+      event.presentation.isEnabledAndVisible = false
+      return
+    }
     val file = event.getData(CommonDataKeys.VIRTUAL_FILE)
     event.presentation.isEnabledAndVisible = file?.isMermaidFile() == true
   }
