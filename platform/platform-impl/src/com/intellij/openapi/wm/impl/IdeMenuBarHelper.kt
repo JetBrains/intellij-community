@@ -9,7 +9,11 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.impl.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -70,11 +74,6 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
 
   private val updateRequests = MutableSharedFlow<Boolean>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-  @Suppress("LeakingThis")
-  private val timerListener = IdeMenuBarActionTimerListener(this, isWindowActive = {
-    menuBar.frame.isShowing && menuBar.frame.isActive
-  })
-
   interface MenuBarImpl {
     val frame: JFrame
 
@@ -105,17 +104,40 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
       }
 
       val actionManager = serviceAsync<ActionManager>()
-      actionManager.addTimerListener(timerListener)
-      coroutineScope.coroutineContext.job.invokeOnCompletion {
-        actionManager.removeTimerListener(timerListener)
+      if (actionManager is ActionManagerEx) {
+        coroutineScope.launch {
+          actionManager.timerEvents.collect {
+            updateOnTimer()
+          }
+        }
       }
 
       updateRequests
         .debounce(50.milliseconds)
         .collect { forceRebuild ->
           presentationFactory.reset()
-          updateMenuActions(mainActionGroup = menuBar.getMainMenuActionGroup(), forceRebuild = forceRebuild)
+          updateMenuActions(mainActionGroup = menuBar.getMainMenuActionGroup(), forceRebuild = forceRebuild, isFirstUpdate = false)
         }
+    }
+  }
+
+  private suspend fun updateOnTimer() {
+    withContext(Dispatchers.EDT) {
+      if (!menuBar.frame.isShowing || !menuBar.frame.isActive) {
+        return@withContext
+      }
+
+      // do not update when a popup menu is shown
+      // (if a popup menu contains action which is also in the menu bar, it should not be enabled/disabled)
+      if (MenuSelectionManager.defaultManager().selectedPath.isNotEmpty()) {
+        return@withContext
+      }
+
+      // don't update the toolbar if there is currently active modal dialog
+      val window = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow
+      if (window !is Dialog || !window.isModal) {
+        updateRequests.emit(false)
+      }
     }
   }
 
@@ -126,9 +148,7 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
   protected open suspend fun postInitActions(actions: List<ActionGroup>) {
   }
 
-  abstract suspend fun updateMenuActions(mainActionGroup: ActionGroup?,
-                                         forceRebuild: Boolean,
-                                         isFirstUpdate: Boolean = false): List<ActionGroup>
+  abstract suspend fun updateMenuActions(mainActionGroup: ActionGroup?, forceRebuild: Boolean, isFirstUpdate: Boolean): List<ActionGroup>
 
   protected fun createActionMenuList(newVisibleActions: List<ActionGroup>, consumer: (ActionMenu) -> Unit) {
     if (newVisibleActions.isEmpty()) {
@@ -219,11 +239,15 @@ internal open class PeerBasedIdeMenuBarHelper(private val screenMenuPeer: MenuBa
     withContext(Dispatchers.EDT) {
       visibleActions = newVisibleActions
       screenMenuPeer.beginFill()
-      createActionMenuList(newVisibleActions) {
-        screenMenuPeer.add(it.screenMenuPeer)
+      try {
+        createActionMenuList(newVisibleActions) {
+          screenMenuPeer.add(it.screenMenuPeer)
+        }
       }
-      presentationFactory.resetNeedRebuild()
-      screenMenuPeer.endFill()
+      finally {
+        screenMenuPeer.endFill()
+        presentationFactory.resetNeedRebuild()
+      }
       flavor.updateAppMenu()
     }
     return newVisibleActions
@@ -265,33 +289,6 @@ private suspend fun expandMainActionGroup(mainActionGroup: ActionGroup,
     }
   }
   return emptyList()
-}
-
-internal class IdeMenuBarActionTimerListener(private val menuBarHelper: IdeMenuBarHelper,
-                                             private val isWindowActive: () -> Boolean) : TimerListener {
-  override fun getModalityState() = ModalityState.stateForComponent(menuBarHelper.menuBar.component)
-
-  override fun run() {
-    if (!isWindowActive()) {
-      return
-    }
-
-    // do not update when a popup menu is shown
-    // (if a popup menu contains action which is also in the menu bar, it should not be enabled/disabled)
-    val menuSelectionManager = MenuSelectionManager.defaultManager()
-    val selectedPath = menuSelectionManager.selectedPath
-    if (selectedPath.isNotEmpty()) {
-      return
-    }
-
-    menuBarHelper.menuBar.coroutineScope.launch(Dispatchers.EDT) {
-      // don't update the toolbar if there is currently active modal dialog
-      val window = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow
-      if (window !is Dialog || !window.isModal) {
-        menuBarHelper.updateMenuActions()
-      }
-    }
-  }
 }
 
 internal suspend fun getMainMenuActionGroup(frame: JFrame): ActionGroup? {

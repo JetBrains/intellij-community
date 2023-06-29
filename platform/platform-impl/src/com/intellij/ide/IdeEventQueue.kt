@@ -230,14 +230,14 @@ class IdeEventQueue private constructor() : EventQueue() {
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
-  @Deprecated("Use IdleFlow and coroutines")
+  @Deprecated("Use IdleTracker and coroutines")
   fun addIdleListener(runnable: Runnable, timeoutMillis: Int) {
     @Suppress("DEPRECATION")
     IdleTracker.getInstance().addIdleListener(runnable = runnable, timeoutMillis = timeoutMillis)
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
-  @Deprecated("Use IdleFlow and coroutines")
+  @Deprecated("Use IdleTracker and coroutines")
   fun removeIdleListener(runnable: Runnable) {
     @Suppress("DEPRECATION")
     IdleTracker.getInstance().removeIdleListener(runnable)

@@ -12,6 +12,7 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.extensions.PluginId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -136,4 +137,8 @@ abstract class ActionManagerEx : ActionManager() {
    * Allows receiving notifications when popup menus created from action groups are shown and hidden.
    */
   abstract fun addActionPopupMenuListener(listener: ActionPopupMenuListener, parentDisposable: Disposable)
+
+  @get:ApiStatus.Internal
+  @get:ApiStatus.Experimental
+  abstract val timerEvents: Flow<Unit>
 }

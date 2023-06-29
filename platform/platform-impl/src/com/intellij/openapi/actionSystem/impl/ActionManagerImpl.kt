@@ -31,6 +31,7 @@ import com.intellij.openapi.actionSystem.ex.ActionPopupMenuListener
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
@@ -55,6 +56,7 @@ import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.DefaultBundleService
 import com.intellij.util.ReflectionUtil
+import com.intellij.util.childScope
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.createChildContext
 import com.intellij.util.concurrency.runAsCoroutine
@@ -65,14 +67,17 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.collections.immutable.persistentHashSetOf
-import kotlinx.coroutines.CompletableJob
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.awt.AWTEvent
 import java.awt.Component
-import java.awt.event.ActionEvent
-import java.awt.event.ActionListener
 import java.awt.event.InputEvent
 import java.awt.event.WindowEvent
 import java.util.*
@@ -80,13 +85,17 @@ import java.util.concurrent.CancellationException
 import java.util.function.Consumer
 import java.util.function.Function
 import java.util.function.Supplier
-import javax.swing.*
-import javax.swing.Timer
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.KeyStroke
+import javax.swing.SwingUtilities
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 private val DEFAULT_ACTION_GROUP_CLASS_NAME = DefaultActionGroup::class.java.name
 
-open class ActionManagerImpl protected constructor() : ActionManagerEx(), Disposable {
+open class ActionManagerImpl protected constructor(private val coroutineScope: CoroutineScope) : ActionManagerEx(), Disposable {
   private val lock = Any()
   @Volatile
   private var idToAction = persistentHashMapOf<String, AnAction>()
@@ -152,8 +161,8 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
   }
 
   override fun dispose() {
-    if (timer != null) {
-      timer!!.stop()
+    timer?.let {
+      it.stop()
       timer = null
     }
   }
@@ -164,30 +173,27 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
     }
 
     if (timer == null) {
-      timer = MyTimer()
-      timer!!.start()
+      timer = MyTimer(coroutineScope.childScope())
     }
     val wrappedListener = if (AppExecutorUtil.propagateContextOrCancellation() && listener !is CapturingListener) CapturingListener(listener) else listener
     timer!!.listeners.add(wrappedListener)
   }
 
-
   @Experimental
   @Internal
   fun reinitializeTimer() {
-    if (timer != null) {
-      val oldListeners = timer!!.listeners
-      timer!!.stop()
-      timer = null
-      for (listener in oldListeners) {
-        addTimerListener(listener)
-      }
+    val timer = timer ?: return
+    val oldListeners = timer.listeners
+    timer.stop()
+    this.timer = null
+    for (listener in oldListeners) {
+      addTimerListener(listener)
     }
   }
 
   override fun removeTimerListener(listener: TimerListener) {
     if (listener is CapturingListener) {
-      listener.myJob?.cancel(null)
+      listener.job?.cancel(null)
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode) {
@@ -195,7 +201,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
     }
 
     if (LOG.assertTrue(timer != null)) {
-      timer!!.listeners.removeIf { it == listener || (it is CapturingListener && it.myTimerListener == listener)  }
+      timer!!.listeners.removeIf { it == listener || (it is CapturingListener && it.timerListener == listener)  }
     }
   }
 
@@ -1299,32 +1305,37 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
   }
 
 
-  private class CapturingListener(val myTimerListener: TimerListener) : TimerListener by myTimerListener {
-    private val myContext: CoroutineContext
+  private class CapturingListener(@JvmField val timerListener: TimerListener) : TimerListener by timerListener {
+    private val context: CoroutineContext
 
-    val myJob: CompletableJob?
+    val job: CompletableJob?
 
     init {
       val (context, job) = createChildContext()
-      myContext = context
-      myJob = job
+      this.context = context
+      this.job = job
     }
 
     override fun run() {
-      installThreadContext(myContext).use {
-        if (myJob != null) {
-          // this is a periodic runnable that is invoked on timer, it should not complete parent job
-          runAsCoroutine(myJob, false, myTimerListener::run)
+      installThreadContext(context).use {
+        if (job == null) {
+          timerListener.run()
         }
         else {
-          myTimerListener.run()
+          // this is periodic runnable that is invoked on timer; it should not complete a parent job
+          runAsCoroutine(job = job, completeOnFinish = false, action = timerListener::run)
         }
       }
     }
   }
 
+  private val _timerEvents = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_LATEST)
 
-  private inner class MyTimer : Timer(TIMER_DELAY, null), ActionListener {
+  @Internal
+  @Experimental
+  override val timerEvents: Flow<Unit> = _timerEvents.asSharedFlow()
+
+  private inner class MyTimer(private val coroutineScope: CoroutineScope) {
     @JvmField
     val listeners: MutableList<TimerListener> = ContainerUtil.createLockFreeCopyOnWriteList()
 
@@ -1332,24 +1343,40 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
     private val clientId = ClientId.current
 
     init {
-      addActionListener(this)
-      isRepeats = true
       val connection = ApplicationManager.getApplication().messageBus.simpleConnect()
+
+      val delayFlow = MutableSharedFlow<Duration>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
       connection.subscribe(ApplicationActivationListener.TOPIC, object : ApplicationActivationListener {
         override fun applicationActivated(ideFrame: IdeFrame) {
-          delay = TIMER_DELAY
-          restart()
+          delayFlow.tryEmit(TIMER_DELAY.milliseconds)
         }
 
         override fun applicationDeactivated(ideFrame: IdeFrame) {
-          delay = DEACTIVATED_TIMER_DELAY
+          delayFlow.tryEmit(DEACTIVATED_TIMER_DELAY.milliseconds)
         }
       })
+
+      delayFlow.tryEmit(TIMER_DELAY.milliseconds)
+
+      coroutineScope.launch {
+        delayFlow.collectLatest { delay ->
+          while (true) {
+            delay(delay)
+            // RawSwingDispatcher - as old javax.swing.Timer does
+            withContext(RawSwingDispatcher) {
+              tick()
+            }
+          }
+        }
+      }
     }
 
-    override fun toString(): String = "Action manager timer"
+    fun stop() {
+      coroutineScope.cancel()
+    }
 
-    override fun actionPerformed(e: ActionEvent) {
+    private fun tick() {
       if (lastTimeEditorWasTypedIn + UPDATE_DELAY_AFTER_TYPING > System.currentTimeMillis()) {
         return
       }
@@ -1359,6 +1386,8 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
       if (lastTimePerformed == lastEventCount) {
         return
       }
+
+      _timerEvents.tryEmit(Unit)
 
       withClientId(clientId).use {
         for (listener in listeners) {
@@ -1371,7 +1400,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
 
 private fun runListenerAction(listener: TimerListener) {
   val modalityState = listener.modalityState ?: return
-  LOG.debug("notify ", listener)
+  LOG.debug { "notify $listener" }
   if (!ModalityState.current().dominates(modalityState)) {
     runCatching {
       listener.run()
