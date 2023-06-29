@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -14,7 +13,6 @@ import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.io.URLUtil
-import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.test.*
@@ -37,8 +35,8 @@ class CompiledFilesHighlightingTest: KotlinLightCodeInsightFixtureTestCase() {
         doTestWithLibraryFile(TestKotlinArtifacts.kotlinStdlib)
     }
 
-    @TestMetadata("default/linkdata/package_kotlin/0_kotlin.knm")
-    fun testKotlinNativeLinkdataPackageKotlin0KotlinKnm() {
+    @TestMetadata("default/linkdata/package_kotlin.io/0_io.knm")
+    fun testKotlinNativeLinkdataPackageKotlinIO0ioKnm() {
         doTestWithLibraryFile(TestKotlinArtifacts.kotlinStdlibNative)
     }
 

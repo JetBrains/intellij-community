@@ -1,0 +1,10 @@
+// IntelliJ API Decompiler stub source generated from a class file
+// Implementation of methods is not available
+
+package kotlin.io
+
+<info descr="null">internal</info> <info descr="null">final</info> class <info descr="null">ReadAfterEOFException</info> <info descr="null">public</info> <info descr="null">constructor</info>(<info descr="null">message</info>: kotlin.<info descr="null">String</info>?) : kotlin.<info descr="null">RuntimeException</info> {
+}
+
+<info descr="null">internal</info> interface <info descr="null">Serializable</info> {
+}
