@@ -17,6 +17,7 @@ interface OsRegistryConfig {
   }
 
   fun isTrue(key: String, defaultValue: Boolean): Boolean
+  fun isTrue(key: String): Boolean?
   fun get(key: String): OsRegistrySystemSetting<String>?
 }
 
@@ -36,6 +37,12 @@ private class OsRegistryConfigProvider(private val configName: String) : OsRegis
 
   private val keyRegex = Regex("^\\w+$")
 
+  override fun isTrue(key: String): Boolean? {
+    val osSetting = get(key)
+
+    return osSetting?.value?.lowercase()?.toBooleanStrictOrNull()
+  }
+
   /**
    * Gets value for [key] from system storage and tries to convert it into boolean
    * "true" string (with any casing) will be interpreted as true
@@ -45,8 +52,10 @@ private class OsRegistryConfigProvider(private val configName: String) : OsRegis
   override fun isTrue(key: String, defaultValue: Boolean): Boolean {
     val osSetting = get(key)
     if (osSetting == null) return defaultValue
-    if (osSetting.value.lowercase() == "true") return true
-    if (osSetting.value.lowercase() == "false") return false
+
+    val result = osSetting.value.lowercase().toBooleanStrictOrNull()
+    if (result != null) return result
+
     logger.warn("Unknown value '${osSetting.value}' from ${osSetting.osOriginLocation} (only 'true' or 'false' are recognized). Assume '$defaultValue'")
     return defaultValue
   }
