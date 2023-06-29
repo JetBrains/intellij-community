@@ -29,7 +29,7 @@ class ProjectTaskManagerStatisticsCollector : CounterUsagesCollector() {
     @JvmField
     val BUILD_ACTIVITY: IdeActivityDefinition = GROUP.registerIdeActivity(null,
                                                                           startEventAdditionalFields = arrayOf(TASK_RUNNER, EventFields.PluginInfo, MODULES, INCREMENTAL, BUILD_ORIGINATOR),
-                                                                          finishEventAdditionalFields = arrayOf(HAS_ERRORS))
+                                                                          finishEventAdditionalFields = arrayOf(TASK_RUNNER, MODULES, INCREMENTAL, BUILD_ORIGINATOR, HAS_ERRORS))
   }
 
   override fun getGroup(): EventLogGroup {
