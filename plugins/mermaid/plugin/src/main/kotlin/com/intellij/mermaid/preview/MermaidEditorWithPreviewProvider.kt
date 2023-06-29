@@ -1,11 +1,14 @@
 package com.intellij.mermaid.preview
 
 import com.intellij.mermaid.lang.isMermaidFile
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.jcef.JBCefApp
+import com.intellij.util.application
 
 internal class MermaidEditorWithPreviewProvider: WeighedFileEditorProvider(), AsyncFileEditorProvider {
   override fun accept(project: Project, file: VirtualFile): Boolean {
@@ -15,8 +18,14 @@ internal class MermaidEditorWithPreviewProvider: WeighedFileEditorProvider(), As
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
     val editor = PsiAwareTextEditorProvider().createEditor(project, file)
     check(editor is TextEditor) { "PsiAwareTextEditorProvider created editor which does not implement TextEditor" }
-    val preview = MermaidPreviewEditor(project, file)
-    return MermaidEditorWithPreview(editor, preview)
+    try {
+      val preview = MermaidPreviewEditor(project, file)
+      return MermaidEditorWithPreview(editor, preview)
+    } catch (exception: Exception) {
+      thisLogger().productionWarning("Failed to create preview editor", exception)
+    }
+    thisLogger().warn("Using default text editor as a fallback")
+    return editor
   }
 
   override fun getEditorTypeId(): String {
@@ -32,6 +41,13 @@ internal class MermaidEditorWithPreviewProvider: WeighedFileEditorProvider(), As
       override fun build(): FileEditor {
         return createEditor(project, file)
       }
+    }
+  }
+
+  private fun Logger.productionWarning(message: String, throwable: Throwable) {
+    when {
+      application.isUnitTestMode -> error(message, throwable)
+      else -> warn(message, throwable)
     }
   }
 }
