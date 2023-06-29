@@ -79,13 +79,20 @@ public class GitTask {
     final BackgroundableTask task = new BackgroundableTask(myHandler, myTitle) {
       @Override
       public void onSuccess() {
-        commonOnSuccess(LOCK, resultHandler);
+        GitTaskResult result = !myHandler.errors().isEmpty() ? GitTaskResult.GIT_ERROR : GitTaskResult.OK;
+        resultHandler.run(result);
+        synchronized (LOCK) {
+          LOCK.notifyAll();
+        }
         completed.set(true);
       }
 
       @Override
       public void onCancel() {
-        commonOnCancel(LOCK, resultHandler);
+        resultHandler.run(GitTaskResult.CANCELLED);
+        synchronized (LOCK) {
+          LOCK.notifyAll();
+        }
         completed.set(true);
       }
     };
@@ -102,21 +109,6 @@ public class GitTask {
           LOG.info(e);
         }
       }
-    }
-  }
-
-  private void commonOnSuccess(final Object LOCK, final GitTaskResultHandler resultHandler) {
-    GitTaskResult res = !myHandler.errors().isEmpty() ? GitTaskResult.GIT_ERROR : GitTaskResult.OK;
-    resultHandler.run(res);
-    synchronized (LOCK) {
-      LOCK.notifyAll();
-    }
-  }
-
-  private void commonOnCancel(final Object LOCK, final GitTaskResultHandler resultHandler) {
-    resultHandler.run(GitTaskResult.CANCELLED);
-    synchronized (LOCK) {
-      LOCK.notifyAll();
     }
   }
 
