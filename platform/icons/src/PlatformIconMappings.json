@@ -3,6 +3,7 @@
     "actions": {
       "buildAutoReloadChanges.svg": "actions/buildAutoReloadChanges.svg",
       "deploy.svg": "nodes/deploy.svg",
+      "diagramDiff.svg": "actions/diagramDiff.svg",
       "diffWithClipboard.svg": "actions/diffWithClipboard.svg",
       "filterdups.svg": "toolbar/filterdups.svg",
       "generated.svg": "actions/generatedFolder.svg",
@@ -160,6 +161,8 @@
         "nodes/ppJar.svg"
       ],
       "aspectJ.svg": "fileTypes/aspectj.svg",
+      "changedFile.svg": "scope/changedFiles.svg",
+      "changedFiles.svg": "scope/changedFilesAll.svg",
       "config.svg": "fileTypes/config.svg",
       "css.svg": "fileTypes/css.svg",
       "cucumber.svg": "org/jetbrains/plugins/cucumber/icons/cucumber.svg",
@@ -658,7 +661,10 @@
       "viewBreakpoints.svg": "debugger/viewBreakpoints.svg"
     },
     "runConfigurations": {
-      "application.svg": "runConfigurations/application.svg",
+      "application.svg": [
+        "runConfigurations/application.svg",
+        "runConfigurations/applet.svg"
+      ],
       "applicationRemote.svg": "runConfigurations/remote.svg",
       "compound.svg": "runConfigurations/compound.svg",
       "invalidConfigurationLayer.svg": "runConfigurations/invalidConfigurationLayer.svg",
@@ -747,6 +753,9 @@
       ],
       "update.svg": "actions/checkOut.svg",
       "vcs.svg": "vcs/branchNode.svg"
+    },
+    "webReferences": {
+      "server.svg": "webreferences/server.svg"
     },
     "welcome": {
       "createNewProjectTab.svg": "welcome/createNewProjectTab.svg",
