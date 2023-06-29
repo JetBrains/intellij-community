@@ -296,6 +296,7 @@ open class FloatingToolbar(
 
   private inner class DocumentChangeListener : BulkAwareDocumentListener {
     override fun documentChanged(event: DocumentEvent) {
+      hintWasShownForSelection = false
       if (!shouldSurviveDocumentChange()) {
         scheduleHide()
       }
