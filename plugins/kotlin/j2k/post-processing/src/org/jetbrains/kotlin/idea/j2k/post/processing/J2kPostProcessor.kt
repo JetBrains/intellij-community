@@ -201,7 +201,6 @@ private val inspectionLikePostProcessingGroup =
         JavaObjectEqualsToEqOperatorProcessing(),
         RemoveExplicitPropertyTypeProcessing(),
         RemoveRedundantNullabilityProcessing(),
-        CanBeValInspectionBasedProcessing(),
         inspectionBasedProcessing(FoldInitializerAndIfToElvisInspection(), writeActionNeeded = false),
         inspectionBasedProcessing(JavaMapForEachInspection()),
         intentionBasedProcessing(FoldIfToReturnIntention()) { it.then.isTrivialStatementBody() && it.`else`.isTrivialStatementBody() },
