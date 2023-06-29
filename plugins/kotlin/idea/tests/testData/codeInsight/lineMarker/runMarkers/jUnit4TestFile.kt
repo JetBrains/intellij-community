@@ -13,6 +13,9 @@ class <lineMarker descr="Run Test" icon="runConfigurations/testState/run_run.svg
 
 class <lineMarker descr="Run Test" icon="runConfigurations/testState/run_run.svg">SessionTest</lineMarker> {
     @Test
+    private fun testPrivateFunction() {}
+
+    @Test
     fun <lineMarker descr="Run Test" icon="runConfigurations/testState/run.svg">testSessionCreateDelete</lineMarker>() {
 
     }

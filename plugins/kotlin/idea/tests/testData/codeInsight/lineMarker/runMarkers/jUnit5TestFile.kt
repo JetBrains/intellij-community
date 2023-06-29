@@ -7,6 +7,9 @@ import kotlin.test.*
 
 class <lineMarker descr="Run Test">Simple</lineMarker> {
     @Test
+    private fun testPrivateFunction() {}
+
+    @Test
     fun <lineMarker descr="Run Test">foo</lineMarker>() {}
 }
 
