@@ -5,11 +5,13 @@ package org.jetbrains.kotlin.idea.stubs
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.StdModuleTypes
+import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
@@ -170,6 +172,15 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase() {
                 addRoot(jar, OrderRootType.CLASSES)
             }
         }
+    }
+
+    fun Module.addKotlinStdlib() = runWriteAction {
+        val modifiableModel = rootManager.modifiableModel
+        KotlinWithJdkAndRuntimeLightProjectDescriptor.JDK_AND_RUNTIME_LIGHT_PROJECT_DESCRIPTOR.configureModule(
+            this,
+            modifiableModel,
+        )
+        modifiableModel.commit()
     }
 
     fun Module.findSourceKtFile(fileName: String): KtFile {
