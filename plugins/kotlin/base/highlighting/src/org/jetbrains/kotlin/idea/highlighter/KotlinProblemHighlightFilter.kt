@@ -12,4 +12,9 @@ class KotlinProblemHighlightFilter : ProblemHighlightFilter() {
         is KtFile -> file.shouldHighlightFile()
         else -> true
     }
+
+    override fun shouldProcessInBatch(file: PsiFile) = when (file) {
+        is KtFile -> !file.isCompiled && file.shouldHighlightFile()
+        else -> true
+    }
 }
