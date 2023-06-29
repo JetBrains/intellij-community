@@ -209,9 +209,6 @@ open class FloatingToolbar(
     return false
   }
 
-
-  protected open fun shouldReviveAfterClose(): Boolean = true
-
   protected open fun shouldSurviveDocumentChange(): Boolean = true
 
   protected open fun isEnabled(): Boolean {

@@ -55,8 +55,6 @@ class CodeFloatingToolbar(
 
   override fun disableForDoubleClickSelection(): Boolean = true
 
-  override fun shouldReviveAfterClose(): Boolean = false
-
   override fun shouldSurviveDocumentChange(): Boolean = false
 
   override fun hideByOtherHints(): Boolean = false
