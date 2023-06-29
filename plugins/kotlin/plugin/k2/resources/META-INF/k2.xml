@@ -242,6 +242,7 @@
     <module name="kotlin.refactorings.k2"/>
     <module name="kotlin.refactorings.move.k2"/>
     <module name="kotlin.refactorings.rename.k2"/>
+    <module name="kotlin.refactorings.introduce.k2"/>
 
     <module name="kotlin.navigation"/>
     <module name="kotlin.code-insight.line-markers-k2"/>

@@ -97,6 +97,7 @@
     <orderEntry type="module" module-name="kotlin.highlighting" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.refactorings.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.refactorings.common" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.refactorings.introduce.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.searching.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.searching.base" />
     <orderEntry type="module" module-name="kotlin.bundled-compiler-plugins-support" scope="RUNTIME" />
