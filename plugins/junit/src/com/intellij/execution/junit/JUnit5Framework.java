@@ -55,6 +55,7 @@ public class JUnit5Framework extends JUnitTestFramework {
   @Override
   public boolean isTestClass(PsiClass clazz, boolean canBePotential) {
     if (canBePotential) return isUnderTestSources(clazz);
+    if (!isFrameworkAvailable(clazz)) return false;
     return JUnitUtil.isJUnit5TestClass(clazz, false);
   }
 

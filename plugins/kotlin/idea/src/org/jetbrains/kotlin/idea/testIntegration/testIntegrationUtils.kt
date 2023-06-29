@@ -7,11 +7,14 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.testIntegration.TestFramework
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
 fun findSuitableFrameworks(klass: KtClassOrObject): List<TestFramework> {
     val lightClass = klass.toLightClass() ?: return emptyList()
-    val frameworks = Extensions.getExtensions(TestFramework.EXTENSION_NAME).filter { it.language == JavaLanguage.INSTANCE }
+    val frameworks = Extensions.getExtensions(TestFramework.EXTENSION_NAME).filter {
+        it.language == KotlinLanguage.INSTANCE || it.language == JavaLanguage.INSTANCE
+    }
     return frameworks.firstOrNull { it.isTestClass(lightClass) }?.let { listOf(it) }
         ?: frameworks.filterTo(SmartList()) { it.isPotentialTestClass(lightClass) }
 }

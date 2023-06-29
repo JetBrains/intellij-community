@@ -83,7 +83,7 @@ public abstract class JavaTestFramework implements JvmTestFramework {
 
   @Override
   public boolean isPotentialTestClass(@NotNull PsiElement clazz) {
-    return clazz instanceof PsiClass && isTestClass((PsiClass)clazz, true);
+    return clazz instanceof PsiClass && isFrameworkAvailable(clazz) && isTestClass((PsiClass)clazz, true);
   }
 
   protected abstract boolean isTestClass(PsiClass clazz, boolean canBePotential);

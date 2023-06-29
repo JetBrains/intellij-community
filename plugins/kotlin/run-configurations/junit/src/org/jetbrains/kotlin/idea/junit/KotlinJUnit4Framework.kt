@@ -57,7 +57,7 @@ class KotlinJUnit4Framework: JUnit4Framework(), KotlinPsiBasedTestFramework {
                 false
             } else if (declaration.isTopLevel() && isAnnotated(declaration, JUnitUtil.RUN_WITH)) {
                 true
-            } else if (findAnnotatedFunction(declaration, testMethodAnnotations) != null) {
+            } else if (findAnnotatedFunction(declaration, testableClassMethodAnnotations) != null) {
                 true
             } else if (declaration.hasModifier(KtTokens.OPEN_KEYWORD) || declaration.hasModifier(KtTokens.ABSTRACT_KEYWORD)) {
                 for (subDeclaration in declaration.declarations) {
@@ -66,7 +66,7 @@ class KotlinJUnit4Framework: JUnit4Framework(), KotlinPsiBasedTestFramework {
                     for (superTypeListEntry in superTypeListEntries) {
                         val referencedName =
                             (superTypeListEntry as? KtSuperTypeCallEntry)?.calleeExpression?.constructorReferenceExpression?.getReferencedName()
-                        if (referencedName == declaration.name && findAnnotatedFunction(subClass, testMethodAnnotations) != null) {
+                        if (referencedName == declaration.name && findAnnotatedFunction(subClass, testableClassMethodAnnotations) != null) {
                             return true
                         }
                     }
@@ -118,5 +118,6 @@ class KotlinJUnit4Framework: JUnit4Framework(), KotlinPsiBasedTestFramework {
         private val testMethodAnnotations = setOf(JUnitCommonClassNames.ORG_JUNIT_TEST, KotlinPsiBasedTestFramework.KOTLIN_TEST_TEST)
         private val setUpAnnotations = setOf(JUnitUtil.BEFORE_ANNOTATION_NAME, KotlinPsiBasedTestFramework.KOTLIN_TEST_BEFORE_TEST)
         private val tearDownAnnotations = setOf(JUnitUtil.AFTER_ANNOTATION_NAME, KotlinPsiBasedTestFramework.KOTLIN_TEST_AFTER_TEST)
+        private val testableClassMethodAnnotations = testMethodAnnotations + setUpAnnotations + tearDownAnnotations
     }
 }
