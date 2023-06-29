@@ -242,7 +242,12 @@ private suspend fun expandMainActionGroup(mainActionGroup: ActionGroup,
       return withContext(CoroutineName("expandMainActionGroup") + Dispatchers.EDT) {
         val targetComponent = WindowManager.getInstance().getFocusedComponent(frame) ?: menuBar
         val dataContext = Utils.wrapToAsyncDataContext(DataManager.getInstance().getDataContext(targetComponent))
-        val fastTrackTimeout = if (isFirstUpdate && !PlatformUtils.isJetBrainsClient()) firstUpdateFastTrackUpdateTimeout else Utils.getFastTrackTimeout()
+        val fastTrackTimeout = when {
+          // disable fast track for JetBrains Client - deadlock otherwise
+          PlatformUtils.isJetBrainsClient() -> -1
+          isFirstUpdate -> firstUpdateFastTrackUpdateTimeout
+          else -> Utils.getFastTrackTimeout()
+        }
         Utils.expandActionGroupAsync(/* group = */ mainActionGroup,
                                      /* presentationFactory = */ presentationFactory,
                                      /* context = */ dataContext,

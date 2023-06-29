@@ -1355,9 +1355,16 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       return;
     }
 
-    long fastTrackTimeout = ActionPlaces.MAIN_TOOLBAR.equals(myPlace) && ExperimentalUI.isNewUI() && !PlatformUtils.isJetBrainsClient()
-                            ? 5_000
-                            : Utils.getFastTrackTimeout();
+    long fastTrackTimeout;
+    if (PlatformUtils.isJetBrainsClient()) {
+      fastTrackTimeout = -1;
+    }
+    else if (ActionPlaces.MAIN_TOOLBAR.equals(myPlace) && ExperimentalUI.isNewUI()) {
+      fastTrackTimeout = 5_000;
+    }
+    else {
+      fastTrackTimeout = Utils.getFastTrackTimeout();
+    }
     List<AnAction> actions = Utils.expandActionGroupFastTrack(updater, myActionGroup, myHideDisabled, null, fastTrackTimeout);
     if (actions != null) {
       actionsUpdated(true, actions);
