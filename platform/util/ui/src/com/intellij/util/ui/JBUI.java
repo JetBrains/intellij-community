@@ -707,7 +707,7 @@ public final class JBUI {
       Color BORDER_COLOR = JBColor.namedColor("Editor.Toolbar.borderColor", JBColor.border());
 
       interface SearchField {
-        static @NotNull JBInsets borderInsets() {
+        static @NotNull Insets borderInsets() {
           return insets(borderInsetsKey(),
                         isNewUI() ? insets(7, 10, 7, 8) :
                         insets(SystemInfo.isLinux ? 2 : 1));
@@ -719,7 +719,7 @@ public final class JBUI {
       }
 
       interface SearchToolbar {
-        static @NotNull JBInsets borderInsets() {
+        static @NotNull Insets borderInsets() {
           return insets(borderInsetsKey(),
                         isNewUI() ? insetsTop(3) :
                         emptyInsets());
@@ -731,7 +731,7 @@ public final class JBUI {
       }
 
       interface ReplaceToolbar {
-        static @NotNull JBInsets borderInsets() {
+        static @NotNull Insets borderInsets() {
           return insets(borderInsetsKey(),
                         isNewUI() ? insetsTop(10) :
                         insetsTop(3));
@@ -743,7 +743,7 @@ public final class JBUI {
       }
 
       interface SearchReplaceModePanel {
-        static @NotNull JBInsets borderInsets() {
+        static @NotNull Insets borderInsets() {
           return insets(borderInsetsKey(), insets(7, 3));
         }
 
@@ -1069,14 +1069,14 @@ public final class JBUI {
         return insets("Toolbar.Button.buttonInsets", JBInsets.create(1, 2));
       }
 
-      @Nullable public static JBInsets verticalToolbarInsets() {
+      @Nullable public static Insets verticalToolbarInsets() {
         return isNewUI() ? insets("ToolBar.verticalToolbarInsets", insets(7, 4)) :
-               JBInsets.createOrNull(UIManager.getInsets("ToolBar.verticalToolbarInsets"));
+               UIManager.getInsets("ToolBar.verticalToolbarInsets");
       }
 
-      @Nullable public static JBInsets horizontalToolbarInsets() {
+      @Nullable public static Insets horizontalToolbarInsets() {
         return isNewUI() ? insets("ToolBar.horizontalToolbarInsets", insets(4, 7)) :
-               JBInsets.createOrNull(UIManager.getInsets("ToolBar.horizontalToolbarInsets"));
+               UIManager.getInsets("ToolBar.horizontalToolbarInsets");
       }
 
       public static Insets mainToolbarButtonInsets() {
