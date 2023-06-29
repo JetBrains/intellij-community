@@ -458,7 +458,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createInsertNewFix(@NotNull PsiMethodCallExpression call, @NotNull PsiClass aClass) {
-    return new InsertNewFix(call, aClass);
+    return new InsertNewFix(call, aClass).asIntention();
   }
 
   @NotNull
@@ -482,13 +482,13 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createInsertSuperFix(@NotNull PsiMethod constructor) {
-    return new InsertSuperFix(constructor);
+    return new InsertSuperFix(constructor).asIntention();
   }
 
   @NotNull
   @Override
   public IntentionAction createInsertThisFix(@NotNull PsiMethod constructor) {
-    return new InsertThisFix(constructor);
+    return new InsertThisFix(constructor).asIntention();
   }
 
   @NotNull
@@ -910,7 +910,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createInsertMethodCallFix(@NotNull PsiMethodCallExpression call, @NotNull PsiMethod method) {
-    return new InsertMethodCallFix(call, method);
+    return new InsertMethodCallFix(call, method).asIntention();
   }
 
   @NotNull
