@@ -236,6 +236,7 @@ internal class ToolbarFrameHeader(frame: JFrame,
   override fun uiSettingsChanged(uiSettings: UISettings) {
     coroutineScope.launch(Dispatchers.EDT) {
       updateToolbar()
+      repaint()
     }
   }
 
