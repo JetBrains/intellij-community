@@ -54,6 +54,15 @@ internal class FirIdeOutOfBlockModificationService(val project: Project) : Dispo
         projectOutOfBlockModificationTracker.incModificationCount()
     }
 
+    /**
+     * Publishes out-of-block modification for [module]'s production and test source [KtModule]s and the project itself. Must be called in a
+     * write action.
+     */
+    fun publishModuleAndProjectOutOfBlockModification(module: Module) {
+        publishModuleOutOfBlockModification(module)
+        projectOutOfBlockModificationTracker.incModificationCount()
+    }
+
     fun publishGlobalOutOfBlockModification() {
         projectOutOfBlockModificationTracker.incModificationCount()
 
