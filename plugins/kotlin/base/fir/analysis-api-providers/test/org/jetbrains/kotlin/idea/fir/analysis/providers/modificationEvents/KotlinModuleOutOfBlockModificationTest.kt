@@ -4,14 +4,11 @@ package org.jetbrains.kotlin.idea.fir.analysis.providers.modificationEvents
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiManager
 import com.intellij.util.messages.MessageBusConnection
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.providers.topics.KotlinModuleOutOfBlockModificationListener
 import org.jetbrains.kotlin.analysis.providers.topics.KotlinTopics
-import org.jetbrains.kotlin.idea.util.sourceRoots
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.junit.Assert
@@ -334,13 +331,7 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
         f()
     }
 
-    private fun Module.configureEditorForFile(fileName: String): KtFile {
-        val file = "${sourceRoots.first().url}/$fileName"
-        val virtualFile = VirtualFileManager.getInstance().findFileByUrl(file)!!
-        val ktFile = PsiManager.getInstance(myProject).findFile(virtualFile) as KtFile
-        ktFile.configureEditor()
-        return ktFile
-    }
+    private fun Module.configureEditorForFile(fileName: String): KtFile = findSourceKtFile(fileName).apply { configureEditor() }
 
     private fun KtFile.modify(textAfterModification: String, targetOffset: Int? = null, edit: () -> Unit) {
         targetOffset?.let(editor.caretModel::moveToOffset)

@@ -18,7 +18,9 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.ThrowableRunnable
@@ -32,6 +34,7 @@ import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.allowProjectRootAccess
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.disposeVfsRootAccess
 import org.jetbrains.kotlin.idea.test.util.slashedPath
+import org.jetbrains.kotlin.idea.util.sourceRoots
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtFile
 import org.junit.Assert
@@ -167,6 +170,12 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase() {
                 addRoot(jar, OrderRootType.CLASSES)
             }
         }
+    }
+
+    fun Module.findSourceKtFile(fileName: String): KtFile {
+        val file = "${sourceRoots.first().url}/$fileName"
+        val virtualFile = VirtualFileManager.getInstance().findFileByUrl(file)!!
+        return PsiManager.getInstance(myProject).findFile(virtualFile) as KtFile
     }
 
     fun Module.enableMultiPlatform(additionalCompilerArguments: String = "") {
