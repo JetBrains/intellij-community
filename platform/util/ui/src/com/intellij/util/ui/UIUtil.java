@@ -3367,10 +3367,4 @@ public final class UIUtil {
   public static boolean isMetalRendering() {
     return SystemInfo.isMac && Boolean.getBoolean("sun.java2d.metal");
   }
-
-  @ApiStatus.Internal
-  public static @NotNull Insets unscaleIfJBInsets(@NotNull Insets insets) {
-    if (insets instanceof JBInsets) return ((JBInsets)insets).getUnscaled();
-    return insets;
-  }
 }
