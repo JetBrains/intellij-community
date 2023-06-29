@@ -5,7 +5,7 @@ import com.intellij.internal.ml.DecisionFunction
 import com.intellij.internal.ml.FeaturesInfo
 import com.intellij.internal.ml.ResourcesModelMetadataReader
 import com.intellij.searchEverywhere.model.actions.PredictionModel
-import com.intellij.searchEverywhereMl.common.SearchEverywhereTabWithMlRanking
+import com.intellij.searchEverywhereMl.SearchEverywhereTabWithMlRanking
 
 internal class SearchEverywhereActionsRankingModelLoader : SearchEverywhereMLRankingModelLoader() {
   private val standardResourceDirectory = "actions_features"

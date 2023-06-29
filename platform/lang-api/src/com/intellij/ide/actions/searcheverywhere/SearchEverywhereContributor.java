@@ -109,9 +109,6 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Di
   @Nls
   default String getAdvertisement() { return null; }
 
-  @ApiStatus.Experimental
-  default boolean isSemantic() { return false; }
-
   @NotNull
   default List<AnAction> getActions(@NotNull Runnable onChanged) {
     return Collections.emptyList();

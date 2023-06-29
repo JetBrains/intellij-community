@@ -5,7 +5,7 @@ import com.intellij.internal.ml.DecisionFunction
 import com.intellij.internal.ml.FeaturesInfo
 import com.intellij.internal.ml.catboost.CatBoostResourcesModelMetadataReader
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.searchEverywhereMl.common.SearchEverywhereTabWithMlRanking
+import com.intellij.searchEverywhereMl.SearchEverywhereTabWithMlRanking
 import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMlRankingService
 import com.intellij.searchEverywhereMl.ranking.model.local.LocalRankingModelProviderUtil
 

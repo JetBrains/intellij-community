@@ -1,7 +1,7 @@
 package com.intellij.searchEverywhereMl.ranking.model
 
 import com.intellij.internal.ml.DecisionFunction
-import com.intellij.searchEverywhereMl.common.SearchEverywhereTabWithMlRanking
+import com.intellij.searchEverywhereMl.SearchEverywhereTabWithMlRanking
 
 internal class SearchEverywhereAllRankingModelLoader : SearchEverywhereMLRankingModelLoader() {
   private val expResourceDirectory = "all_features_exp"
