@@ -8,7 +8,10 @@ import com.intellij.util.system.OS
 import com.intellij.util.xml.dom.readXmlAsModel
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.launch
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.OsFamily
@@ -23,8 +26,6 @@ import java.nio.file.Path
 import java.util.function.Predicate
 import kotlin.io.path.copyTo
 import kotlin.time.Duration
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
 
 internal fun span(spanBuilder: SpanBuilder, task: Runnable) {
   spanBuilder.useWithScope {
@@ -62,28 +63,6 @@ fun zip(context: CompilationContext, targetFile: Path, dir: Path) {
     .useWithScope {
       org.jetbrains.intellij.build.io.zip(targetFile = targetFile, dirs = mapOf(dir to ""))
     }
-}
-
-/**
- * Executes a Java class in a forked JVM
- */
-@JvmOverloads
-fun runIdeaBlocking(context: CompilationContext,
-                    mainClass: String,
-                    args: List<String>,
-                    jvmArgs: List<String>,
-                    classPath: List<String>,
-                    timeoutMillis: Long = DEFAULT_TIMEOUT.inWholeMilliseconds,
-                    workingDir: Path? = null) {
-  runBlocking {
-    runJava(mainClass = mainClass,
-            args = args,
-            jvmArgs = getCommandLineArgumentsForOpenPackages(context) + jvmArgs,
-            classPath = classPath,
-            javaExe = context.stableJavaExecutable,
-            timeout = timeoutMillis.toDuration(DurationUnit.MILLISECONDS),
-            workingDir = workingDir)
-  }
 }
 
 suspend fun runIdea(context: CompilationContext,
