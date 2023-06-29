@@ -3,8 +3,8 @@
 
 package kotlin.io
 
-<info descr="null">internal</info> <info descr="null">final</info> class <info descr="null">ReadAfterEOFException</info> <info descr="null">public</info> <info descr="null">constructor</info>(<info descr="null">message</info>: kotlin.<info descr="null">String</info>?) : kotlin.<info descr="null">RuntimeException</info> {
+<info>internal</info> <info>final</info> class <info>ReadAfterEOFException</info> <info>public</info> <info>constructor</info>(<info>message</info>: kotlin.<info>String</info>?) : kotlin.<info>RuntimeException</info> {
 }
 
-<info descr="null">internal</info> interface <info descr="null">Serializable</info> {
+<info>internal</info> interface <info>Serializable</info> {
 }
