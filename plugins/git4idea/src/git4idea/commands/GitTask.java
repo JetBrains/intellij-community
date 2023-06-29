@@ -15,25 +15,19 @@
  */
 package git4idea.commands;
 
-import com.intellij.concurrency.JobScheduler;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import git4idea.GitDisposable;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 /**
  * All Git commands are cancellable when called via {@link GitHandler}. <br/>
@@ -62,108 +56,63 @@ public class GitTask {
     myProgressIndicator = progressIndicator;
     myProgressAnalyzer = progressAnalyzer;
   }
-  
+
   public void executeInCurrentThread(@NotNull GitTaskResultHandler resultHandler) {
-    BackgroundableTask task = new BackgroundableTask(myHandler, myTitle);
-    GitTaskResult result = task.run();
-    resultHandler.run(result);
+    String oldTitle = myProgressIndicator.getText();
+    myProgressIndicator.setText(myTitle);
+    myProgressIndicator.setText2("");
+
+    myProgressIndicator.setIndeterminate(myProgressAnalyzer == null);
+    myHandler.addLineListener(new MyGitLineListener());
+
+    BackgroundTaskUtil.runUnderDisposeAwareIndicator(GitDisposable.getInstance(myProject), () -> {
+      Git.getInstance().runCommand(myHandler);
+    }, myProgressIndicator);
+
+    myProgressIndicator.setText(oldTitle);
+    if (myProgressIndicator.isCanceled()) {
+      resultHandler.run(GitTaskResult.CANCELLED);
+    }
+    else {
+      boolean hasErrors = !myHandler.errors().isEmpty();
+      resultHandler.run(hasErrors ? GitTaskResult.GIT_ERROR : GitTaskResult.OK);
+    }
   }
 
-  private class BackgroundableTask implements Disposable {
-    private final @NotNull GitLineHandler myHandler;
-    private final @NotNull @NlsContexts.ProgressTitle String myTitle;
-
-    private @Nullable ScheduledFuture<?> myTimer;
-
-    BackgroundableTask(@NotNull GitLineHandler handler,
-                       @NotNull @NlsContexts.ProgressTitle String processTitle) {
-      myHandler = handler;
-      myTitle = processTitle;
-
-      Disposer.register(GitDisposable.getInstance(myProject), this);
-    }
-
-    @RequiresBackgroundThread
-    public @NotNull GitTaskResult run() {
-      String oldTitle = myProgressIndicator.getText();
-      myProgressIndicator.setText(myTitle);
-      myProgressIndicator.setText2("");
-
-      myTimer = JobScheduler.getScheduler().scheduleWithFixedDelay(this::checkCancellation, 0, 200, TimeUnit.MILLISECONDS);
-
-      myProgressIndicator.setIndeterminate(myProgressAnalyzer == null);
-      myHandler.addLineListener(new MyGitLineListener());
-
-      myHandler.runInCurrentThread(null);
-
-      myProgressIndicator.setText(oldTitle);
-      if (myProgressIndicator.isCanceled()) {
-        return GitTaskResult.CANCELLED;
-      }
-      else {
-        boolean hasErrors = !myHandler.errors().isEmpty();
-        return hasErrors ? GitTaskResult.GIT_ERROR : GitTaskResult.OK;
-      }
-    }
-
-    /**
-     * Checks if current progress indicator is cancelled in timer.
-     * If yes, kills the GitHandler.
-     */
-    private void checkCancellation() {
-      if (myProgressIndicator.isCanceled()) {
-        try {
-          myHandler.destroyProcess();
-        }
-        finally {
-          Disposer.dispose(this);
+  /**
+   * When receives an error line, adds a VcsException to the GitHandler.
+   */
+  private class MyGitLineListener implements GitLineHandlerListener {
+    @Override
+    public void processTerminated(int exitCode) {
+      if (exitCode != 0) {
+        if (myHandler.errors().isEmpty()) {
+          myHandler.addError(new VcsException(myHandler.getLastOutput()));
         }
       }
     }
 
     @Override
-    public void dispose() {
-      if (myTimer != null) {
-        myTimer.cancel(false);
-      }
+    public void startFailed(@NotNull Throwable exception) {
+      myHandler.addError(new VcsException(GitBundle.message("git.executable.unknown.error.message", exception.getMessage()), exception));
     }
 
-    /**
-     * When receives an error line, adds a VcsException to the GitHandler.
-     */
-    private class MyGitLineListener implements GitLineHandlerListener {
-      @Override
-      public void processTerminated(int exitCode) {
-        if (exitCode != 0) {
-          if (myHandler.errors().isEmpty()) {
-            myHandler.addError(new VcsException(myHandler.getLastOutput()));
-          }
-        }
-        Disposer.dispose(BackgroundableTask.this);
+    @Override
+    public void onLineAvailable(String line, Key outputType) {
+      if (GitHandlerUtil.isErrorLine(line.trim())) {
+        myHandler.addError(new VcsException(line));
       }
-
-      @Override
-      public void startFailed(@NotNull Throwable exception) {
-        myHandler.addError(new VcsException(GitBundle.message("git.executable.unknown.error.message", exception.getMessage()), exception));
-        Disposer.dispose(BackgroundableTask.this);
+      else if (!StringUtil.isEmptyOrSpaces(line)) {
+        myHandler.addLastOutput(line);
       }
-
-      @Override
-      public void onLineAvailable(String line, Key outputType) {
-        if (GitHandlerUtil.isErrorLine(line.trim())) {
-          myHandler.addError(new VcsException(line));
-        }
-        else if (!StringUtil.isEmptyOrSpaces(line)) {
-          myHandler.addLastOutput(line);
-        }
-        myProgressIndicator.setText2(line);
-        if (myProgressAnalyzer != null) {
-          final double fraction = myProgressAnalyzer.analyzeProgress(line);
-          if (fraction >= 0) {
-            myProgressIndicator.setFraction(fraction);
-          }
+      myProgressIndicator.setText2(line);
+      if (myProgressAnalyzer != null) {
+        final double fraction = myProgressAnalyzer.analyzeProgress(line);
+        if (fraction >= 0) {
+          myProgressIndicator.setFraction(fraction);
         }
       }
     }
   }
+
 }
