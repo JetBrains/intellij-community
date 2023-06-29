@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.intentions.*
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.FoldIfToReturnAsymmetricallyIntention
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.FoldIfToReturnIntention
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isTrivialStatementBody
+import org.jetbrains.kotlin.idea.intentions.branchedTransformations.shouldBeTransformed
 import org.jetbrains.kotlin.idea.j2k.post.processing.processings.*
 import org.jetbrains.kotlin.idea.quickfix.*
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
@@ -209,8 +210,12 @@ private val inspectionLikePostProcessingGroup =
                 it
             ) as KtReturnExpression).returnedExpression.isTrivialStatementBody()
         },
-        inspectionBasedProcessing(IfThenToSafeAccessInspection(inlineWithPrompt = false), writeActionNeeded = false),
-        inspectionBasedProcessing(IfThenToElvisInspection(highlightStatement = true, inlineWithPrompt = false), writeActionNeeded = false),
+        inspectionBasedProcessing(IfThenToSafeAccessInspection(inlineWithPrompt = false), writeActionNeeded = false) {
+            it.shouldBeTransformed()
+        },
+        inspectionBasedProcessing(IfThenToElvisInspection(highlightStatement = true, inlineWithPrompt = false), writeActionNeeded = false) {
+            it.shouldBeTransformed()
+        },
         inspectionBasedProcessing(KotlinInspectionFacade.instance.simplifyNegatedBinaryExpression) {
             it.canBeSimplifiedWithoutChangingSemantics()
         },
