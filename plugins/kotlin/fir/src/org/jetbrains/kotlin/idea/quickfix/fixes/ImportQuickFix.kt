@@ -343,7 +343,7 @@ class ImportQuickFix(
             val candidateSymbols = buildList {
                 addAll(collectCallableCandidates(indexProvider, element, unresolvedName, isVisible))
                 if (element.getReceiverExpression() == null) {
-                    addAll(collectTypesCandidates(indexProvider, unresolvedName, isVisible))
+                    addAll(collectTypesCandidates(indexProvider, element, unresolvedName, isVisible))
                 }
             }
 
@@ -361,7 +361,7 @@ class ImportQuickFix(
             val isVisible: (KtClassLikeSymbol) -> Boolean =
                 { it is KtSymbolWithVisibility && isVisible(it, firFile, receiverExpression = null, element) }
 
-            return createImportFix(element, collectTypesCandidates(indexProvider, unresolvedName, isVisible))
+            return createImportFix(element, collectTypesCandidates(indexProvider, element, unresolvedName, isVisible))
         }
 
         context(KtAnalysisSession)
@@ -398,17 +398,31 @@ class ImportQuickFix(
         context(KtAnalysisSession)
         private fun collectTypesCandidates(
             indexProvider: KtSymbolFromIndexProvider,
+            element: KtElement,
             unresolvedName: Name,
             isVisible: (KtClassLikeSymbol) -> Boolean
         ): List<KtClassLikeSymbol> {
-            val classesCandidates =
-                indexProvider.getKotlinClassesByName(unresolvedName) { it.canBeImported() } +
-                        indexProvider.getJavaClassesByName(unresolvedName) { it.canBeImported() }
+            val isAnnotationClassExpected = element.isTypeReferenceInAnnotationEntry()
+
+            val classesCandidates = sequence {
+                yieldAll(indexProvider.getKotlinClassesByName(unresolvedName) { ktClassLikeDeclaration ->
+                    ktClassLikeDeclaration.canBeImported() && (!isAnnotationClassExpected || ktClassLikeDeclaration.isAnnotation())
+                })
+                yieldAll(indexProvider.getJavaClassesByName(unresolvedName) { psiClass ->
+                    psiClass.canBeImported() && (!isAnnotationClassExpected || psiClass.isAnnotationType)
+                })
+            }
 
             return classesCandidates
                 .filter { isVisible(it) && it.classIdIfNonLocal != null }
                 .toList()
         }
+
+        private fun KtElement.isTypeReferenceInAnnotationEntry(): Boolean =
+            ((this as? KtTypeReference)?.parent as? KtConstructorCalleeExpression)?.parent is KtAnnotationEntry
+
+        private fun KtClassLikeDeclaration.isAnnotation(): Boolean =
+            this is KtClassOrObject && isAnnotation()
     }
 }
 
