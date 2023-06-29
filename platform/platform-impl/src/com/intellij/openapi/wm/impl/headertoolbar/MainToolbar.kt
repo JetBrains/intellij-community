@@ -81,7 +81,7 @@ internal class MainToolbar(private val coroutineScope: CoroutineScope, frame: JF
   private val flavor: MainToolbarFlavor
 
   init {
-    background = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(true)
+    updateBackground()
     isOpaque = true
     flavor = if (IdeRootPane.isMenuButtonInToolbar) {
       MenuButtonInToolbarMainToolbarFlavor(headerContent = this, coroutineScope = coroutineScope, frame = frame)
@@ -92,10 +92,12 @@ internal class MainToolbar(private val coroutineScope: CoroutineScope, frame: JF
     ClientProperty.put(this, IdeBackgroundUtil.NO_BACKGROUND, true)
   }
 
+  fun updateBackground() {
+    background = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(true)
+  }
+
   override fun getComponentGraphics(g: Graphics): Graphics = super.getComponentGraphics(IdeBackgroundUtil.getOriginalGraphics(g))
 
-  // Separate init because first, as part of IdeRootPane creation, we add bare component to allocate space and then,
-  // as part of EDT task scheduled in a start-up activity, do fill it. That's to avoid flickering due to resizing.
   suspend fun init(actionGroups: List<Pair<ActionGroup, String>>, customTitleBar: WindowDecorations.CustomTitleBar? = null) {
     val schema = CustomActionsSchema.getInstanceAsync()
     val customizationGroup = schema.getCorrectedActionAsync(MAIN_TOOLBAR_ID)
@@ -112,9 +114,7 @@ internal class MainToolbar(private val coroutineScope: CoroutineScope, frame: JF
         createActionBar(actionGroup, customizationGroup) to position
       }
       for ((widget, position) in widgets) {
-        addWidget(widget = widget.component,
-                  parent = this@MainToolbar,
-                  position = position)
+        addWidget(widget = widget.component, parent = this@MainToolbar, position = position)
       }
 
       customizationGroupPopupHandler?.let { installClickListener(popupHandler = it, customTitleBar = customTitleBar) }
@@ -124,7 +124,7 @@ internal class MainToolbar(private val coroutineScope: CoroutineScope, frame: JF
     for (widget in widgets) {
       // separate EDT action - avoid long-running update
       withContext(Dispatchers.EDT) {
-        widget.first.updateActionsImmediately()
+        widget.first.updateActions()
       }
     }
 
@@ -236,7 +236,9 @@ internal class MainToolbar(private val coroutineScope: CoroutineScope, frame: JF
 
   override fun removeNotify() {
     super.removeNotify()
-    coroutineScope.cancel()
+    if (ScreenUtil.isStandardAddRemoveNotify(this)) {
+      coroutineScope.cancel()
+    }
   }
 
   private fun createActionBar(group: ActionGroup, customizationGroup: ActionGroup?): MyActionToolbarImpl {
@@ -321,6 +323,10 @@ private class MyActionToolbarImpl(group: ActionGroup,
     // do nothing - called explicitly
   }
 
+  fun updateActions() {
+    updateActionsWithoutLoadingIcon(false)
+  }
+
   override fun calculateBounds(size2Fit: Dimension, bounds: MutableList<Rectangle>) {
     super.calculateBounds(size2Fit, bounds)
     for (i in 0 until bounds.size) {
@@ -401,6 +407,7 @@ private class MyActionToolbarImpl(group: ActionGroup,
 
   override fun updateUI() {
     super.updateUI()
+
     updateFont()
   }
 

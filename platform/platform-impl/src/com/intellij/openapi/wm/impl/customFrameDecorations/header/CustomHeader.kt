@@ -6,12 +6,10 @@ import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.JBPopupMenu
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.impl.IdeRootPane
@@ -41,7 +39,7 @@ private const val HEADER_HEIGHT_DFM = 30
 private const val HEADER_HEIGHT_COMPACT = 34
 private const val HEADER_HEIGHT_NORMAL = 40
 
-internal abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
+internal abstract class CustomHeader(private val window: Window) : JPanel() {
   companion object {
     val H: Int
       get() = 12
@@ -96,10 +94,6 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
     background = getHeaderBackground()
     myActive = window.isActive
 
-    fun onClose() {
-      Disposer.dispose(this)
-    }
-
     windowListener = object : WindowAdapter() {
       override fun windowActivated(ev: WindowEvent?) {
         setActive(true)
@@ -107,10 +101,6 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
 
       override fun windowDeactivated(ev: WindowEvent?) {
         setActive(false)
-      }
-
-      override fun windowClosed(e: WindowEvent?) {
-        onClose()
       }
 
       override fun windowStateChanged(e: WindowEvent?) {
@@ -206,12 +196,14 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
       return
     }
 
-    if ((window is JDialog && window.isUndecorated) ||
-        (window is JFrame && window.isUndecorated)) {
+    if ((window is JDialog && window.isUndecorated) || (window is JFrame && window.isUndecorated)) {
       setCustomTitleBar(null)
     }
     else {
-      if (height == 0) return
+      if (height == 0) {
+        return
+      }
+
       customTitleBar.height = (height - insets.bottom).toFloat()
       setCustomTitleBar(customTitleBar)
     }
@@ -247,9 +239,6 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
 
   protected fun close() {
     window.dispatchEvent(WindowEvent(window, WindowEvent.WINDOW_CLOSING))
-  }
-
-  override fun dispose() {
   }
 
   protected class CustomFrameAction(@NlsActions.ActionText name: String, icon: Icon, val action: () -> Unit) : AbstractAction(name, icon) {

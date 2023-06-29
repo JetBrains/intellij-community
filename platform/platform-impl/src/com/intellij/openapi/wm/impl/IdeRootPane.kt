@@ -19,6 +19,8 @@ import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -79,7 +81,7 @@ internal val isFloatingMenuBarSupported: Boolean
 open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
                                             parentDisposable: Disposable,
                                             loadingState: FrameLoadingState?) : JRootPane(), UISettingsListener {
-  internal val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+  private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
   private var toolbar: JComponent? = null
 
@@ -184,11 +186,11 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
               createMacMenuBar(coroutineScope = coroutineScope.childScope(), component = this, frame = frame)
             }
 
-            MacToolbarFrameHeader(frame = frame, root = this)
+            MacToolbarFrameHeader(coroutineScope = coroutineScope.childScope(), frame = frame, root = this)
           }
           else {
             ideMenu = createMenuBar(coroutineScope.childScope(), frame)
-            ToolbarFrameHeader(frame = frame, root = this, ideMenuBar = ideMenu)
+            ToolbarFrameHeader(coroutineScope = coroutineScope.childScope(), frame = frame, root = this, ideMenuBar = ideMenu)
           }
         }
         else {
@@ -209,7 +211,10 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
       }
       else if (hideNativeLinuxTitle) {
         val ideMenu = createMenuBar(coroutineScope.childScope(), frame)
-        val customFrameTitlePane = ToolbarFrameHeader(frame = frame, root = this, ideMenuBar = ideMenu)
+        val customFrameTitlePane = ToolbarFrameHeader(coroutineScope = coroutineScope.childScope(),
+                                                      frame = frame,
+                                                      root = this,
+                                                      ideMenuBar = ideMenu)
         helper = DecoratedHelper(
           isFloatingMenuBarSupported = true,
           customFrameTitlePane = customFrameTitlePane,
@@ -252,12 +257,31 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     updateMainMenuVisibility()
 
     if (helper.toolbarHolder == null) {
-      coroutineScope.launch(Dispatchers.EDT) {
+      coroutineScope.launch(rootTask() + ModalityState.any().asContextElement()) {
         toolbar = createToolbar(coroutineScope.childScope(), frame)
-        northPanel.add(toolbar, 0)
-        toolbar!!.isVisible = isToolbarVisible(
-          mainToolbarActionSupplier = { computeMainActionGroups() }
-        )
+        withContext(Dispatchers.EDT) {
+          northPanel.add(toolbar, 0)
+          toolbar!!.isVisible = isToolbarVisible(
+            mainToolbarActionSupplier = { computeMainActionGroups() }
+          )
+        }
+
+        if (!isLightEdit) {
+          // init of toolbar in window header is important to make as fast as possible
+          // https://youtrack.jetbrains.com/issue/IDEA-323474
+          val toolbarHolder = helper.toolbarHolder
+          if (toolbarHolder == null && ExperimentalUI.isNewUI()) {
+            subtask("toolbar init") {
+              (toolbar as MainToolbar).init(computeMainActionGroups())
+            }
+          }
+        }
+      }
+    }
+
+    if (isLightEdit) {
+      if (ExperimentalUI.isNewUI()) {
+        updateToolbar()
       }
     }
 
@@ -270,19 +294,6 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
 
     @Suppress("LeakingThis")
     contentPane.add(createCenterComponent(frame, parentDisposable), BorderLayout.CENTER)
-
-    if (isLightEdit) {
-      if (ExperimentalUI.isNewUI()) {
-        updateToolbar()
-      }
-    }
-    else {
-      // init of toolbar in window header is important to make as fast as possible
-      // https://youtrack.jetbrains.com/issue/IDEA-323474
-      coroutineScope.launch(rootTask()) {
-        initToolbar()
-      }
-    }
   }
 
   companion object {
@@ -405,9 +416,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
       jMenuBar = null
       if (helper is DecoratedHelper) {
-        val customFrameTitlePane = helper.customFrameTitlePane
-        layeredPane.remove(customFrameTitlePane.getComponent())
-        Disposer.dispose(customFrameTitlePane)
+        layeredPane.remove(helper.customFrameTitlePane.getComponent())
       }
     }
     super.removeNotify()
@@ -433,26 +442,10 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     }
   }
 
-  private suspend fun initToolbar() {
-    val actionGroups = computeMainActionGroups()
-
-    val toolbarHolder = helper.toolbarHolder
-    if (toolbarHolder != null) {
-      toolbarHolder.initToolbar(actionGroups)
-    }
-    else if (ExperimentalUI.isNewUI()) {
-      subtask("toolbar init", Dispatchers.EDT) {
-        (toolbar as MainToolbar).init(actionGroups)
-      }
-    }
-  }
-
   internal fun updateToolbar() {
     val delegate = helper.toolbarHolder
     if (delegate != null) {
-      coroutineScope.launch {
-        delegate.updateToolbar()
-      }
+      delegate.scheduleUpdateToolbar()
       return
     }
 
@@ -460,7 +453,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
       disposeIfNeeded(it)
       northPanel.remove(it)
     }
-    coroutineScope.launch(Dispatchers.EDT) {
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       toolbar = createToolbar(coroutineScope.childScope(), frame)
       northPanel.add(toolbar, 0)
       toolbar!!.isVisible = isToolbarVisible { computeMainActionGroups() }
@@ -487,7 +480,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     if (helper is DecoratedHelper) {
       val customFrameTitlePane = helper.customFrameTitlePane
       // The menu bar is decorated, we update it indirectly.
-      coroutineScope.launch {
+      coroutineScope.launch(ModalityState.any().asContextElement()) {
         helper.ideMenu.updateMenuActions(forceRebuild = false)
         customFrameTitlePane.updateMenuActions(forceRebuild = false)
         withContext(Dispatchers.EDT) {
@@ -497,7 +490,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     }
     else if (menuBar != null) {
       // no decorated menu bar, but there is a regular one, update it directly
-      coroutineScope.launch {
+      coroutineScope.launch(ModalityState.any().asContextElement()) {
         (menuBar as ActionAwareIdeMenuBar).updateMenuActions(forceRebuild = false)
         withContext(Dispatchers.EDT) {
           menuBar.repaint()
@@ -526,7 +519,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     }
 
   private fun updateToolbarVisibility() {
-    coroutineScope.launch(Dispatchers.EDT) {
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       if (toolbar == null) {
         toolbar = createToolbar(coroutineScope.childScope(), frame)
         northPanel.add(toolbar, 0)
@@ -592,7 +585,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
       val flow = extension.component(project = project, isDocked = false, statusBar = statusBar!!)
       val key = extension.key
       if (flow != null) {
-        coroutineScope.launch {
+        coroutineScope.launch(ModalityState.any().asContextElement()) {
           flow.collect(FlowCollector { component ->
             withContext(Dispatchers.EDT) {
               if (component == null) {
@@ -743,9 +736,13 @@ private val isDecoratedMenu: Boolean
 
 private suspend fun createToolbar(coroutineScope: CoroutineScope, frame: JFrame): JComponent {
   if (ExperimentalUI.isNewUI()) {
-    val toolbar = MainToolbar(coroutineScope, frame)
+    val toolbar = withContext(Dispatchers.EDT) {
+      MainToolbar(coroutineScope, frame)
+    }
     toolbar.init(computeMainActionGroups())
-    toolbar.border = JBUI.Borders.empty(0, 5)
+    withContext(Dispatchers.EDT) {
+      toolbar.border = JBUI.Borders.empty(0, 5)
+    }
     return toolbar
   }
   else {

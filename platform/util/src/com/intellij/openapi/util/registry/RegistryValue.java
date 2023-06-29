@@ -9,6 +9,9 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.ColorHexUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.Unit;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -300,6 +303,14 @@ public class RegistryValue {
   public void addListener(@NotNull RegistryValueListener listener, @NotNull Disposable parent) {
     myListeners.add(listener);
     Disposer.register(parent, () -> myListeners.remove(listener));
+  }
+
+  public void addListener(@NotNull RegistryValueListener listener, @NotNull CoroutineScope coroutineScope) {
+    myListeners.add(listener);
+    Objects.requireNonNull(coroutineScope.getCoroutineContext().get(Job.Key)).invokeOnCompletion(__ -> {
+      myListeners.remove(listener);
+      return Unit.INSTANCE;
+    });
   }
 
   @Override

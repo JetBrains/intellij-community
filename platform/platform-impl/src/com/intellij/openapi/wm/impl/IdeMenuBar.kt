@@ -179,11 +179,12 @@ open class IdeMenuBar internal constructor(@JvmField internal val coroutineScope
   }
 
   override fun removeNotify() {
-    screenMenuPeer?.let {
-      @Suppress("SSBasedInspection")
-      it.dispose()
-    }
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
+      screenMenuPeer?.let {
+        @Suppress("SSBasedInspection")
+        it.dispose()
+      }
+
       menuBarHelper.flavor.suspendAnimator()
     }
     super.removeNotify()

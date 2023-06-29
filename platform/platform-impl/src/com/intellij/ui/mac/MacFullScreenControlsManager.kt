@@ -3,7 +3,6 @@ package com.intellij.ui.mac
 
 import com.intellij.ide.actions.ToggleDistractionFreeModeAction
 import com.intellij.ide.ui.customization.CustomActionsSchema
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
@@ -14,6 +13,7 @@ import com.intellij.openapi.wm.impl.headertoolbar.computeMainActionGroups
 import com.intellij.ui.JBColor
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.MacUtil
+import kotlinx.coroutines.CoroutineScope
 import javax.swing.JFrame
 
 /**
@@ -22,7 +22,7 @@ import javax.swing.JFrame
 internal object MacFullScreenControlsManager {
   fun enabled(): Boolean = Registry.`is`("apple.awt.newFullScreeControls", true)
 
-  fun configureEnable(parentDisposable: Disposable, block: () -> Unit) {
+  fun configureEnable(coroutineScope: CoroutineScope, block: () -> Unit) {
     val rKey = Registry.get("apple.awt.newFullScreeControls")
     System.setProperty(rKey.key, java.lang.Boolean.toString(rKey.asBoolean()))
     rKey.addListener(
@@ -31,7 +31,7 @@ internal object MacFullScreenControlsManager {
           System.setProperty(rKey.key, java.lang.Boolean.toString(rKey.asBoolean()))
           block()
         }
-      }, parentDisposable)
+      }, coroutineScope)
 
     if (enabled()) {
       configureColors()

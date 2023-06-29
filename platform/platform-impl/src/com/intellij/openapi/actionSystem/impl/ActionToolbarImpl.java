@@ -1295,6 +1295,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     if (!isTestMode && myCachedImage == null && getComponentCount() == 0 && isShowing()) {
       addLoadingIcon();
     }
+    updateActionsWithoutLoadingIcon(includeInvisible);
+  }
+
+  @ApiStatus.Internal
+  @RequiresEdt
+  protected void updateActionsWithoutLoadingIcon(boolean includeInvisible) {
     myUpdater.updateActions(true, false, includeInvisible);
   }
 

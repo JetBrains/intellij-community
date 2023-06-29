@@ -22,6 +22,8 @@ import com.intellij.ui.JBColor
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.ColorPalette
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.job
 import java.awt.*
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -176,12 +178,12 @@ class ProjectWindowCustomizerService : Disposable {
 
   private fun conditionToEnable() = ProjectManagerEx.getOpenProjects().size > 1 || Registry.`is`("ide.colorful.toolbar.force")
 
-  fun addListener(disposable: Disposable, fireFirstTime: Boolean, listener: (Boolean) -> Unit) {
+  fun addListener(coroutineScope: CoroutineScope, fireFirstTime: Boolean, listener: (Boolean) -> Unit) {
     if (fireFirstTime) {
       listener(isActive())
     }
     listeners.add(listener)
-    Disposer.register(disposable) {
+    coroutineScope.coroutineContext.job.invokeOnCompletion {
       listeners.remove(listener)
     }
   }

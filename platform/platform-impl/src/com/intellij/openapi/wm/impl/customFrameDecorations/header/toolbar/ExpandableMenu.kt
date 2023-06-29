@@ -29,7 +29,7 @@ private const val ALPHA = (255 * 0.6).toInt()
 
 internal class ExpandableMenu(private val headerContent: JComponent, coroutineScope: CoroutineScope, frame: JFrame) {
   val ideMenu: IdeMenuBar = createMenuBar(coroutineScope, frame)
-  private val ideMenuHelper = IdeMenuHelper(ideMenu, null)
+  private val ideMenuHelper = IdeMenuHelper(menu = ideMenu, coroutineScope = null)
   private var expandedMenuBar: JPanel? = null
   private var headerColorfulPanel: HeaderColorfulPanel? = null
   private val shadowComponent = ShadowComponent()
@@ -38,7 +38,7 @@ internal class ExpandableMenu(private val headerContent: JComponent, coroutineSc
   private var hideMenu = false
   private val menuSelectionListener = ChangeListener {
     if (MenuSelectionManager.defaultManager().selectedPath.isNullOrEmpty()) {
-      // After resetting selectedPath another menu can be shown right after that, so don't hide main menu immediately
+      // After resetting selectedPath another menu can be shown right after that, so don't hide the main menu immediately
       hideMenu = true
       ApplicationManager.getApplication().invokeLater {
         if (hideMenu) {
@@ -106,7 +106,7 @@ internal class ExpandableMenu(private val headerContent: JComponent, coroutineSc
     updateColor()
     layeredPane.add(expandedMenuBar!!, (JLayeredPane.DEFAULT_LAYER - 2) as Any)
 
-    // First menu usage has no selection in menu. Fix it by invokeLater
+    // The first menu usage has no selection in the menu. Fix it by invokeLater
     ApplicationManager.getApplication().invokeLater {
       selectMenu(actionToShow)
     }

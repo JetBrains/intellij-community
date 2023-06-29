@@ -5,10 +5,10 @@ import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
-import com.intellij.ide.ui.customization.CustomActionsSchema
-import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.ToolbarHolder
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.SimpleCustomDecorationPath
@@ -19,7 +19,10 @@ import com.intellij.ui.mac.MacMainFrameDecorator
 import com.intellij.util.childScope
 import com.intellij.util.ui.JBUI
 import com.jetbrains.JBR
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
@@ -34,40 +37,60 @@ import javax.swing.JFrame
 private const val GAP_FOR_BUTTONS = 80
 private const val DEFAULT_HEADER_HEIGHT = 40
 
-internal class MacToolbarFrameHeader(private val frame: JFrame, private val root: IdeRootPane)
+internal class MacToolbarFrameHeader(private val coroutineScope: CoroutineScope, private val frame: JFrame, private val root: IdeRootPane)
   : CustomHeader(frame), MainFrameCustomHeader, ToolbarHolder, UISettingsListener {
   private var toolbar: MainToolbar
+
+  private var currentComponent: JComponent
+
+  private val updateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+  private var lastHeight = DEFAULT_HEADER_HEIGHT
 
   init {
     layout = AdjustableSizeCardLayout()
     root.addPropertyChangeListener(MacMainFrameDecorator.FULL_SCREEN, PropertyChangeListener { updateBorders() })
 
-    toolbar = createToolBar()
+    toolbar = createToolBar(coroutineScope.childScope())
+    add(toolbar, BorderLayout.CENTER)
+    currentComponent = toolbar
 
-    MacFullScreenControlsManager.configureEnable(this) {
+    MacFullScreenControlsManager.configureEnable(coroutineScope) {
       updateBorders()
     }
 
-    ApplicationManager.getApplication().messageBus.connect(root.coroutineScope).subscribe(LafManagerListener.TOPIC, LafManagerListener {
+    ApplicationManager.getApplication().messageBus.connect(coroutineScope).subscribe(LafManagerListener.TOPIC, LafManagerListener {
       if (root.getClientProperty(MacMainFrameDecorator.FULL_SCREEN) != null) {
         MacFullScreenControlsManager.updateColors(frame)
       }
     })
 
-    ProjectWindowCustomizerService.getInstance().addListener(disposable = this, fireFirstTime = true) {
+    ProjectWindowCustomizerService.getInstance().addListener(coroutineScope = coroutineScope, fireFirstTime = true) {
       isOpaque = !it
       revalidate()
     }
 
-    JBR.getWindowDecorations()?.let { windowDecorations ->
-      val bar = windowDecorations.createCustomTitleBar()
-      bar.height = DEFAULT_HEADER_HEIGHT.toFloat()
-      windowDecorations.setCustomTitleBar(frame, bar)
+    if (customTitleBar != null) {
+      customTitleBar.height = DEFAULT_HEADER_HEIGHT.toFloat()
+      JBR.getWindowDecorations()!!.setCustomTitleBar(frame, customTitleBar)
+    }
+
+    coroutineScope.launch(ModalityState.any().asContextElement()) {
+      initToolbar()
+
+      updateRequests.collect {
+        initToolbar()
+        withContext(Dispatchers.EDT) {
+          toolbar.updateBackground()
+          updateCustomTitleBar()
+          revalidate()
+        }
+      }
     }
   }
 
-  private fun createToolBar(): MainToolbar {
-    val toolbar = MainToolbar(root.coroutineScope.childScope(), frame)
+  private fun createToolBar(coroutineScope: CoroutineScope): MainToolbar {
+    val toolbar = MainToolbar(coroutineScope, frame)
     toolbar.layoutCallBack = { updateCustomTitleBar() }
     toolbar.isOpaque = false
     toolbar.addComponentListener(object: ComponentAdapter() {
@@ -76,7 +99,6 @@ internal class MacToolbarFrameHeader(private val frame: JFrame, private val root
         super.componentResized(e)
       }
     })
-    add(toolbar, BorderLayout.CENTER)
     return toolbar
   }
 
@@ -89,50 +111,49 @@ internal class MacToolbarFrameHeader(private val frame: JFrame, private val root
     super.updateUI()
 
     if (parent != null) {
-      root.coroutineScope.launch {
-        updateToolbar()
-      }
+      scheduleUpdateToolbar()
       updateBorders()
     }
   }
 
-  override suspend fun initToolbar(toolbarActionGroups: List<Pair<ActionGroup, String>>) {
-    toolbar.init(toolbarActionGroups, customTitleBar)
+  private suspend fun initToolbar() {
+    val toolbarActionGroups = computeMainActionGroups()
     val mainToolbarActionSupplier = { toolbarActionGroups }
+    val isCompactHeader = root.isCompactHeader(mainToolbarActionSupplier)
+    if (!isCompactHeader) {
+      toolbar.init(toolbarActionGroups, customTitleBar)
+    }
+
     withContext(Dispatchers.EDT) {
-      updateVisibleCard(mainToolbarActionSupplier)
+      updateVisibleCard(isCompactHeader)
       updateSize(mainToolbarActionSupplier)
     }
   }
 
-  override suspend fun updateToolbar() {
-    var toolbar = toolbar
-    remove(toolbar)
-    toolbar = createToolBar()
-    this.toolbar = toolbar
-    val actionGroups = computeMainActionGroups()
-    initToolbar(actionGroups)
-
-    revalidate()
-    updateCustomTitleBar()
+  override fun scheduleUpdateToolbar() {
+    updateRequests.tryEmit(Unit)
   }
 
-  private fun updateVisibleCard(mainToolbarActionSupplier: () -> List<Pair<ActionGroup, String>>) {
-    if (root.isCompactHeader(mainToolbarActionSupplier)) {
-      if (componentCount != 0) {
-        remove(toolbar)
-      }
+  private fun updateVisibleCard(isCompactHeader: Boolean) {
+    if (isCompactHeader) {
+      remove(currentComponent)
 
       val headerTitle = SimpleCustomDecorationPath(frame)
       headerTitle.isOpaque = false
       add(headerTitle, BorderLayout.CENTER)
+      currentComponent = headerTitle
       updateBorders()
       revalidate()
       repaint()
     }
-    else if (componentCount != 0 && getComponent(0) != toolbar) {
-      remove(0)
+    else if (componentCount != 0 && currentComponent != toolbar) {
+      remove(currentComponent)
+      val coroutineScope = coroutineScope.childScope()
+      toolbar = createToolBar(coroutineScope)
       add(toolbar)
+      currentComponent = toolbar
+
+      updateRequests.tryEmit(Unit)
       revalidate()
       repaint()
     }
@@ -150,14 +171,17 @@ internal class MacToolbarFrameHeader(private val frame: JFrame, private val root
 
   override fun getComponent(): JComponent = this
 
-  override fun dispose() {}
-
   override fun getHeaderBackground(active: Boolean): Color {
     return JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(active)
   }
 
   override fun updateCustomTitleBar() {
-    super.updateCustomTitleBar()
+    val height = height
+    if (height != 0 && lastHeight != height) {
+      customTitleBar?.let {
+        it.height = height.toFloat()
+      }
+    }
     updateBorders()
   }
 
@@ -180,6 +204,6 @@ internal class MacToolbarFrameHeader(private val frame: JFrame, private val root
   }
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
-    updateVisibleCard { computeMainActionGroups(CustomActionsSchema.getInstance()) }
+    updateRequests.tryEmit(Unit)
   }
 }
