@@ -18,7 +18,7 @@ fun Container.publishingEnvironment(channel: String = PublishChannels.STABLE) {
   }
 }
 
-val defaultJdkImage = "amazoncorretto:17"
+val defaultImage = "registry.jetbrains.team/p/grazi/grazie-automation/mermaid-ci:latest"
 
 job("Mermaid / Build for 232") {
   startOn {
@@ -29,7 +29,7 @@ job("Mermaid / Build for 232") {
       cron("0 6 * * *")
     }
   }
-  container(defaultJdkImage) {
+  container(defaultImage) {
     productionBuild()
     shellScript {
       content = "./gradlew build"
@@ -38,7 +38,7 @@ job("Mermaid / Build for 232") {
 }
 
 job("Mermaid / Plugin Verifier") {
-  container(defaultJdkImage) {
+  container(defaultImage) {
     productionBuild()
     shellScript {
       content = "./gradlew runPluginVerifier"
@@ -58,7 +58,7 @@ job("Mermaid / Release / Stable") {
       enabled = false
     }
   }
-  container(defaultJdkImage) {
+  container(defaultImage) {
     productionBuild()
     publishingEnvironment(channel = PublishChannels.STABLE)
     shellScript {
@@ -73,7 +73,7 @@ job("Mermaid / Release / Nightly") {
       enabled = false
     }
   }
-  container(defaultJdkImage) {
+  container(defaultImage) {
     productionBuild()
     publishingEnvironment(channel = PublishChannels.NIGHTLY)
     shellScript {
