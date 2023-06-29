@@ -148,7 +148,7 @@ class ShadowJava2DPainter(private val uiKeyGroup: String, private val roundedCor
   }
 
   private fun setGradient(g: Graphics2D, sideKey: String, lengthX: Int, lengthY: Int) {
-    g.paint = GradientPaint(0f, 0f, getColor(sideKey, "0"), lengthX.toFloat(), lengthY.toFloat(), getColor(sideKey, "1"))
+    g.paint = GradientPaint(0f, 0f, getColor(sideKey, "0"), lengthX.toFloat(), lengthY.toFloat(), getColor(sideKey, "1"), true)
   }
 
   private fun getColor(sideKey: String, gradientKey: String): Color {
