@@ -20,6 +20,19 @@ import org.junit.runner.RunWith;
 @TestMetadata("testData/highlighterMetaInfo")
 public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1HighlightingMetaInfoTest {
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/highlighterMetaInfo/diagnostics")
+    public static class Diagnostics extends AbstractK1HighlightingMetaInfoTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("mppIsNotEnabled.kt")
+        public void testMppIsNotEnabled() throws Exception {
+            runTest("testData/highlighterMetaInfo/diagnostics/mppIsNotEnabled.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/highlighterMetaInfo/dsl")
     public static class Dsl extends AbstractK1HighlightingMetaInfoTest {
         private void runTest(String testDataFilePath) throws Exception {
