@@ -759,12 +759,27 @@ public final class JBUI {
       }
 
       interface Notification {
-        static @NotNull JBInsets borderInsets(@NotNull JBInsets defaultValue) {
-          return insets("Editor.Notification.borderInsets", defaultValue);
-        }
 
         static @NotNull JBInsets borderInsets() {
-          return borderInsets(insets(10, 12));
+          return insets(borderInsetsKey(), insets(10, 12));
+        }
+
+        static @NotNull String borderInsetsKey() {
+          return "Editor.Notification.borderInsets";
+        }
+
+        static @NotNull JBInsets borderInsetsWithoutStatus() {
+          return insets(
+            borderInsetsKeyWithoutStatus(),
+            insets(
+              borderInsetsKey(), // fall back to the other key first to keep backwards compatibility
+              isNewUI() ? JBInsets.create(9, 16) : JBInsets.create(5, 10)
+            )
+          );
+        }
+
+        static @NotNull String borderInsetsKeyWithoutStatus() {
+          return "Editor.Notification.borderInsetsWithoutStatus";
         }
       }
     }
