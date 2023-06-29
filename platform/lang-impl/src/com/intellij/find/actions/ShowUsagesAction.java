@@ -18,6 +18,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.ModelDiff;
 import com.intellij.ide.util.scopeChooser.ScopeChooserGroup;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
+import com.intellij.internal.statistic.eventLog.events.ObjectEventData;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -412,8 +413,10 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
           PsiManager manager = selectedUsagesElement.getManager();
           eventData.add(UsageViewStatisticsCollector.IS_THE_SAME_FILE.with(
             manager != null && manager.areElementsEquivalent(target.getContainingFile(), containingFile)));
-          eventData.add(UsageViewStatisticsCollector.SELECTED_ELEMENT_DATA.with(
-            UsageViewStatisticsCollector.calculateElementData(selectedUsagesElement)));
+          ObjectEventData usageElementData = UsageViewStatisticsCollector.calculateElementData(selectedUsagesElement);
+          if (usageElementData != null) {
+            eventData.add(UsageViewStatisticsCollector.SELECTED_ELEMENT_DATA.with(usageElementData));
+          }
           eventData.add(UsageViewStatisticsCollector.IS_SELECTED_ELEMENT_AMONG_RECENT_FILES.with(
             ContainerUtil.exists(ContainerUtil.reverse(EditorHistoryManager.getInstance(target.getProject()).getFileList()),
                                  e -> e.equals(containingFile.getVirtualFile()))));
