@@ -112,10 +112,8 @@ public class GitTask {
     }
   }
 
-  private void addListeners(final TaskExecution task, final ProgressIndicator indicator) {
-    if (indicator != null) {
-      indicator.setIndeterminate(myProgressAnalyzer == null);
-    }
+  private void addListeners(final Disposable task, @NotNull ProgressIndicator indicator) {
+    indicator.setIndeterminate(myProgressAnalyzer == null);
     // When receives an error line, adds a VcsException to the GitHandler.
     final GitLineHandlerListener listener = new GitLineHandlerListener() {
       @Override
@@ -140,10 +138,8 @@ public class GitTask {
         else if (!StringUtil.isEmptyOrSpaces(line)) {
           myHandler.addLastOutput(line);
         }
-        if (indicator != null) {
-          indicator.setText2(line);
-        }
-        if (myProgressAnalyzer != null && indicator != null) {
+        indicator.setText2(line);
+        if (myProgressAnalyzer != null) {
           final double fraction = myProgressAnalyzer.analyzeProgress(line);
           if (fraction >= 0) {
             indicator.setFraction(fraction);
@@ -163,38 +159,31 @@ public class GitTask {
     myHandler.addListener(new GitHandlerListener() {
       @Override
       public void processTerminated(int exitCode) {
-        task.dispose();
+        Disposer.dispose(task);
       }
 
       @Override
       public void startFailed(@NotNull Throwable exception) {
-        task.dispose();
+        Disposer.dispose(task);
       }
     });
-  }
-
-  /**
-   * We're using this interface here to work with Task, because standard {@link Task#run(ProgressIndicator)}
-   * is busy with timers.
-   */
-  private interface TaskExecution {
-    void execute(ProgressIndicator indicator);
-
-    void dispose();
   }
 
   // To add to {@link com.intellij.openapi.progress.BackgroundTaskQueue} a task must be {@link Task.Backgroundable},
   // so we can't have a single class representing a task: we have BackgroundableTask and ModalTask.
   // To minimize code duplication we use GitTaskDelegate.
 
-  private abstract class BackgroundableTask implements TaskExecution {
-    private final GitTaskDelegate myDelegate;
+  private abstract class BackgroundableTask implements Disposable {
+    private final GitHandler myHandler;
     private final @NotNull @NlsContexts.ProgressTitle String myTitle;
+
+    private @Nullable ScheduledFuture<?> myTimer;
 
     BackgroundableTask(@NotNull GitHandler handler,
                        @NotNull @NlsContexts.ProgressTitle String processTitle) {
-      myDelegate = new GitTaskDelegate(myProject, handler, this);
+      myHandler = handler;
       myTitle = processTitle;
+      Disposer.register(GitDisposable.getInstance(myProject), this);
     }
 
     public final void runAlone() {
@@ -209,7 +198,12 @@ public class GitTask {
     private void justRun() {
       String oldTitle = myProgressIndicator.getText();
       myProgressIndicator.setText(myTitle);
-      myDelegate.run(myProgressIndicator);
+
+      myTimer = JobScheduler.getScheduler().scheduleWithFixedDelay(this::checkCancellation, 0, 200, TimeUnit.MILLISECONDS);
+      addListeners(this, myProgressIndicator);
+
+      GitHandlerUtil.runInCurrentThread(myHandler, myProgressIndicator, false, myTitle);
+
       myProgressIndicator.setText(oldTitle);
       if (myProgressIndicator.isCanceled()) {
         onCancel();
@@ -219,55 +213,21 @@ public class GitTask {
       }
     }
 
-    @Override
-    public void execute(ProgressIndicator indicator) {
-      addListeners(this, indicator);
-      GitHandlerUtil.runInCurrentThread(myHandler, indicator, false, myTitle);
-    }
-
-    @Override
-    public void dispose() {
-      Disposer.dispose(myDelegate);
-    }
-
-    public abstract void onCancel();
-
-    public abstract void onSuccess();
-  }
-
-  /**
-   * Does the work which is common for BackgroundableTask and ModalTask.
-   * Actually - starts a timer which checks if current progress indicator is cancelled.
-   * If yes, kills the GitHandler.
-   */
-  private static class GitTaskDelegate implements Disposable {
-    private final GitHandler myHandler;
-    private ProgressIndicator myIndicator;
-    private final TaskExecution myTask;
-    private ScheduledFuture<?> myTimer;
-
-    GitTaskDelegate(Project project, GitHandler handler, TaskExecution task) {
-      myHandler = handler;
-      myTask = task;
-      Disposer.register(GitDisposable.getInstance(project), this);
-    }
-
-    public void run(ProgressIndicator indicator) {
-      myIndicator = indicator;
-      myTimer = JobScheduler.getScheduler().scheduleWithFixedDelay(
-        () -> {
-          if (myIndicator != null && myIndicator.isCanceled()) {
-            try {
-              if (myHandler != null) {
-                myHandler.destroyProcess();
-              }
-            }
-            finally {
-              Disposer.dispose(this);
-            }
+    /**
+     * Checks if current progress indicator is cancelled in timer.
+     * If yes, kills the GitHandler.
+     */
+    private void checkCancellation() {
+      if (myProgressIndicator.isCanceled()) {
+        try {
+          if (myHandler != null) {
+            myHandler.destroyProcess();
           }
-        }, 0, 200, TimeUnit.MILLISECONDS);
-      myTask.execute(indicator);
+        }
+        finally {
+          Disposer.dispose(this);
+        }
+      }
     }
 
     @Override
@@ -276,5 +236,9 @@ public class GitTask {
         myTimer.cancel(false);
       }
     }
+
+    public abstract void onCancel();
+
+    public abstract void onSuccess();
   }
 }
