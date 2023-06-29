@@ -31,6 +31,11 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
             runTest("testData/highlighterMetaInfo/diagnostics/classRedeclaration.kt");
         }
 
+        @TestMetadata("javaCodeInKotlinFile1.kt")
+        public void testJavaCodeInKotlinFile1() throws Exception {
+            runTest("testData/highlighterMetaInfo/diagnostics/javaCodeInKotlinFile1.kt");
+        }
+
         @TestMetadata("mppIsNotEnabled.kt")
         public void testMppIsNotEnabled() throws Exception {
             runTest("testData/highlighterMetaInfo/diagnostics/mppIsNotEnabled.kt");
