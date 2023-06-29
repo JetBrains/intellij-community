@@ -51,13 +51,13 @@ public class GitTask {
   private static final Logger LOG = Logger.getInstance(GitTask.class);
 
   private final @NotNull Project myProject;
-  private final @NotNull GitHandler myHandler;
+  private final @NotNull GitLineHandler myHandler;
   private final @NlsContexts.ProgressTitle String myTitle;
   private final @Nullable GitProgressAnalyzer myProgressAnalyzer;
   private final @NotNull ProgressIndicator myProgressIndicator;
 
   public GitTask(@NotNull Project project,
-                 @NotNull GitHandler handler,
+                 @NotNull GitLineHandler handler,
                  @NotNull @NlsContexts.ProgressTitle String title,
                  @NotNull ProgressIndicator progressIndicator,
                  @Nullable GitProgressAnalyzer progressAnalyzer) {
@@ -77,72 +77,15 @@ public class GitTask {
     task.runAlone(sync);
   }
 
-  private void addListeners(final Disposable task, @NotNull ProgressIndicator indicator) {
-    indicator.setIndeterminate(myProgressAnalyzer == null);
-    // When receives an error line, adds a VcsException to the GitHandler.
-    final GitLineHandlerListener listener = new GitLineHandlerListener() {
-      @Override
-      public void processTerminated(int exitCode) {
-        if (exitCode != 0) {
-          if (myHandler.errors().isEmpty()) {
-            myHandler.addError(new VcsException(myHandler.getLastOutput()));
-          }
-        }
-      }
-
-      @Override
-      public void startFailed(@NotNull Throwable exception) {
-        myHandler.addError(new VcsException(GitBundle.message("git.executable.unknown.error.message", exception.getMessage()), exception));
-      }
-
-      @Override
-      public void onLineAvailable(String line, Key outputType) {
-        if (GitHandlerUtil.isErrorLine(line.trim())) {
-          myHandler.addError(new VcsException(line));
-        }
-        else if (!StringUtil.isEmptyOrSpaces(line)) {
-          myHandler.addLastOutput(line);
-        }
-        indicator.setText2(line);
-        if (myProgressAnalyzer != null) {
-          final double fraction = myProgressAnalyzer.analyzeProgress(line);
-          if (fraction >= 0) {
-            indicator.setFraction(fraction);
-          }
-        }
-      }
-    };
-
-    if (myHandler instanceof GitLineHandler) {
-      ((GitLineHandler)myHandler).addLineListener(listener);
-    }
-    else {
-      myHandler.addListener(listener);
-    }
-
-    // disposes the timer
-    myHandler.addListener(new GitHandlerListener() {
-      @Override
-      public void processTerminated(int exitCode) {
-        Disposer.dispose(task);
-      }
-
-      @Override
-      public void startFailed(@NotNull Throwable exception) {
-        Disposer.dispose(task);
-      }
-    });
-  }
-
   private class BackgroundableTask implements Disposable {
-    private final GitHandler myHandler;
+    private final @NotNull GitLineHandler myHandler;
     private final @NotNull @NlsContexts.ProgressTitle String myTitle;
     private final @NotNull GitTaskResultHandler myResultHandler;
 
     private final CountDownLatch myCountDown = new CountDownLatch(0);
     private @Nullable ScheduledFuture<?> myTimer;
 
-    BackgroundableTask(@NotNull GitHandler handler,
+    BackgroundableTask(@NotNull GitLineHandler handler,
                        @NotNull @NlsContexts.ProgressTitle String processTitle,
                        @NotNull GitTaskResultHandler resultHandler) {
       myHandler = handler;
@@ -175,7 +118,9 @@ public class GitTask {
       myProgressIndicator.setText(myTitle);
 
       myTimer = JobScheduler.getScheduler().scheduleWithFixedDelay(this::checkCancellation, 0, 200, TimeUnit.MILLISECONDS);
-      addListeners(this, myProgressIndicator);
+
+      myProgressIndicator.setIndeterminate(myProgressAnalyzer == null);
+      myHandler.addLineListener(new MyGitLineListener());
 
       GitHandlerUtil.runInCurrentThread(myHandler, myProgressIndicator, false, myTitle);
 
@@ -197,9 +142,7 @@ public class GitTask {
     private void checkCancellation() {
       if (myProgressIndicator.isCanceled()) {
         try {
-          if (myHandler != null) {
-            myHandler.destroyProcess();
-          }
+          myHandler.destroyProcess();
         }
         finally {
           Disposer.dispose(this);
@@ -211,6 +154,44 @@ public class GitTask {
     public void dispose() {
       if (myTimer != null) {
         myTimer.cancel(false);
+      }
+    }
+
+    /**
+     * When receives an error line, adds a VcsException to the GitHandler.
+     */
+    private class MyGitLineListener implements GitLineHandlerListener {
+      @Override
+      public void processTerminated(int exitCode) {
+        if (exitCode != 0) {
+          if (myHandler.errors().isEmpty()) {
+            myHandler.addError(new VcsException(myHandler.getLastOutput()));
+          }
+        }
+        Disposer.dispose(BackgroundableTask.this);
+      }
+
+      @Override
+      public void startFailed(@NotNull Throwable exception) {
+        myHandler.addError(new VcsException(GitBundle.message("git.executable.unknown.error.message", exception.getMessage()), exception));
+        Disposer.dispose(BackgroundableTask.this);
+      }
+
+      @Override
+      public void onLineAvailable(String line, Key outputType) {
+        if (GitHandlerUtil.isErrorLine(line.trim())) {
+          myHandler.addError(new VcsException(line));
+        }
+        else if (!StringUtil.isEmptyOrSpaces(line)) {
+          myHandler.addLastOutput(line);
+        }
+        myProgressIndicator.setText2(line);
+        if (myProgressAnalyzer != null) {
+          final double fraction = myProgressAnalyzer.analyzeProgress(line);
+          if (fraction >= 0) {
+            myProgressIndicator.setFraction(fraction);
+          }
+        }
       }
     }
   }
