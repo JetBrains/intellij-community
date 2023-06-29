@@ -365,6 +365,11 @@ class VcsLogChangesBrowser internal constructor(project: Project,
   }
 
   private inner class VcsLogChangesBrowserDiffPreviewController : DiffPreviewControllerBase() {
+
+    init {
+      activePreview // should init combined diff preview (lazy in DiffPreviewControllerBase)
+    }
+
     override val simplePreview: DiffPreview
       get() = VcsLogEditorDiffPreview(myProject, this@VcsLogChangesBrowser)
 

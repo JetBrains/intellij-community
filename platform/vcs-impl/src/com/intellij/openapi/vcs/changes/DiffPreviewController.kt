@@ -3,11 +3,22 @@ package com.intellij.openapi.vcs.changes
 
 import com.intellij.diff.tools.combined.CombinedDiffRegistry
 import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreview
+import com.intellij.openapi.vcs.changes.ui.ChangesTree
 
 interface DiffPreviewController {
+  /**
+   * see [DiffPreviewControllerBase]
+   */
   val activePreview: DiffPreview
 }
 
+/**
+ * Base controller to choose between regular single-file diff preview ("simple") and combined diff preview ("combined").
+ *
+ * Implementors should decide when to create the combined diff preview by calling [activePreview].
+ * [CombinedDiffPreview] should be created together with the corresponding [ChangesTree] creation or customization,
+ * but before its [javax.swing.JTree.TREE_MODEL_PROPERTY] change.
+ */
 abstract class DiffPreviewControllerBase : DiffPreviewController {
 
   protected abstract val simplePreview: DiffPreview
