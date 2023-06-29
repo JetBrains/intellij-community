@@ -18,6 +18,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.PlatformUtils
 import com.intellij.util.application
@@ -111,6 +112,7 @@ private class ExperimentalUIImpl : ExperimentalUI() {
     try {
       logger.info("Saving newUi=$enabled to registry")
       Registry.get(KEY).setValue(enabled)
+      EarlyAccessRegistryManager.syncAndFlush()
     }
     catch (e: Throwable) {
       logger.error(e)
