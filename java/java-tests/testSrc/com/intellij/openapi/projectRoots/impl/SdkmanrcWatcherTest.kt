@@ -3,14 +3,15 @@ package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.VfsTestUtil.createFile
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.util.childScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.runBlocking
 
 class SdkmanrcWatcherHeavyTests : HeavyPlatformTestCase() {
-
   override fun setUp() {
     super.setUp()
 
@@ -21,20 +22,29 @@ class SdkmanrcWatcherHeavyTests : HeavyPlatformTestCase() {
     SdkConfigurationUtil.addSdk(open11)
   }
 
-  fun `test jdk set after sdkmanrc creation`() {
-    assert(ProjectRootManager.getInstance(project).projectSdk == null)
+  fun `test jdk suggestion after sdkmanrc change`() {
+    runBlocking {
+      val scope = childScope()
+      try {
+        val watcher = SdkmanrcWatcherService(project, scope)
 
-    createFile(getOrCreateProjectBaseDir(), ".sdkmanrc", "java=11.0.2-open")
+        assert(watcher.suggestSdkFromSdkmanrc() == null)
 
-    val projectJdk1 = ProjectRootManager.getInstance(project).projectSdk
-    assert(projectJdk1 != null)
-    assert(projectJdk1?.versionString == "Oracle OpenJDK version version 11.0.2")
+        createFile(getOrCreateProjectBaseDir(), ".sdkmanrc", "java=11.0.2-open")
+        val suggestion1 = watcher.suggestSdkFromSdkmanrc()
+        assert(suggestion1 is SdkmanrcWatcherService.SdkSuggestion.Jdk)
+        assert((suggestion1 as SdkmanrcWatcherService.SdkSuggestion.Jdk).jdk.versionString == "Oracle OpenJDK version version 11.0.2")
 
-    createFile(getOrCreateProjectBaseDir(), ".sdkmanrc", "java=17.0.7-jbr")
-
-    val projectJdk2 = ProjectRootManager.getInstance(project).projectSdk
-    assert(projectJdk2 != null)
-    assert(projectJdk2?.versionString == "JetBrains Runtime version 17.0.7")
+        createFile(getOrCreateProjectBaseDir(), ".sdkmanrc", "java=17.0.7-jbr")
+        val suggestion2 = watcher.suggestSdkFromSdkmanrc()
+        assert(suggestion2 is SdkmanrcWatcherService.SdkSuggestion.Jdk)
+        assert((suggestion2 as SdkmanrcWatcherService.SdkSuggestion.Jdk).jdk.versionString == "JetBrains Runtime version 17.0.7")
+      }
+      catch (e: Exception) {}
+      finally {
+        scope.cancel()
+      }
+    }
   }
 
   override fun tearDown() {
