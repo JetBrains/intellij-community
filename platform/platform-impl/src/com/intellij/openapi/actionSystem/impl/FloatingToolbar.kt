@@ -16,7 +16,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.event.*
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiEditorUtil
@@ -31,6 +30,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import org.jetbrains.annotations.ApiStatus
+import java.awt.AWTEvent
 import java.awt.Point
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
@@ -53,7 +53,6 @@ open class FloatingToolbar(
   private var hint: LightweightHint? = null
   private var buttonSize: Int by Delegates.notNull()
   private var lastSelection: String? = null
-  private var showToolbar = true
   private var hintWasShownForSelection = false
 
   private enum class HintRequest {
@@ -88,30 +87,31 @@ open class FloatingToolbar(
 
   @RequiresEdt
   fun isShown(): Boolean {
-    return hint != null
+    return hint?.isVisible == true
   }
 
   @RequiresEdt
   private fun hide() {
     hint?.hide()
+    hint = null
   }
 
   @RequiresEdt
   private suspend fun showIfHidden() {
-    if (hint != null || !shouldReviveAfterClose() && !showToolbar) {
+    if (isShown() || hintWasShownForSelection) {
       return
     }
+    hintWasShownForSelection = true
     val canBeShownAtCurrentSelection = readAction { canBeShownAtCurrentSelection() }
     if (!canBeShownAtCurrentSelection) {
       return
     }
     val hint = createHint()
+    showHint(hint)
     hint.addHintListener {
       this.hint = null
-      showToolbar = false
     }
     this.hint = hint
-    showHint(hint)
   }
 
   private suspend fun createHint(): LightweightHint {
@@ -143,7 +143,6 @@ open class FloatingToolbar(
   override fun dispose() {
     coroutineScope.cancel()
     hide()
-    hint = null
   }
 
   protected open fun createActionGroup(): ActionGroup? {
@@ -242,7 +241,6 @@ open class FloatingToolbar(
 
   private inner class MouseListener : EditorMouseListener {
     override fun mouseReleased(event: EditorMouseEvent) {
-      hintWasShownForSelection = false
       updateOnProbablyChangedSelection {
         if (isShown()) {
           updateLocationIfShown()
@@ -259,7 +257,6 @@ open class FloatingToolbar(
       if (event.source != editor.contentComponent) {
         return
       }
-      hintWasShownForSelection = false
       updateOnProbablyChangedSelection {
         scheduleHide()
       }
@@ -270,13 +267,10 @@ open class FloatingToolbar(
     override fun mouseMoved(event: EditorMouseEvent) {
       val visualPosition = event.visualPosition
       val hoverSelected = editor.caretModel.allCarets.any { visualPosition.isInsideSelection(it) }
-      if (hoverSelected && (hintWasShownForSelection || hint?.isVisible == true)) {
-        hintWasShownForSelection = true
+      if (hoverSelected) {
         scheduleShow()
-      } else {
-        if (!Registry.get("floating.codeToolbar.revive.selectionChangeOnly").asBoolean()) {
-          showToolbar = true
-        }
+      } else if (!isShown()){
+        hintWasShownForSelection = false
       }
     }
 
@@ -289,16 +283,19 @@ open class FloatingToolbar(
 
   private inner class EditorSelectionListener : SelectionListener {
     override fun selectionChanged(event: SelectionEvent) {
-      val event = IdeEventQueue.getInstance().trueCurrentEvent
-      val isDoubleClick = (event as? MouseEvent)?.clickCount == 2
-      showToolbar = !(disableForDoubleClickSelection() && isDoubleClick)
       hintWasShownForSelection = false
+      if (isIgnoredEvent(IdeEventQueue.getInstance().trueCurrentEvent)) {
+        hintWasShownForSelection = true
+      }
+    }
+
+    private fun isIgnoredEvent(event: AWTEvent): Boolean {
+      return disableForDoubleClickSelection() && (event as? MouseEvent)?.clickCount == 2
     }
   }
 
   private inner class DocumentChangeListener : BulkAwareDocumentListener {
     override fun documentChanged(event: DocumentEvent) {
-      hintWasShownForSelection = false
       if (!shouldSurviveDocumentChange()) {
         scheduleHide()
       }
