@@ -103,6 +103,7 @@ class Main {
   int i;
   Main(int i) {
     this.i = i;
+    System.out.println(i);
   }
 
   static int doo() {

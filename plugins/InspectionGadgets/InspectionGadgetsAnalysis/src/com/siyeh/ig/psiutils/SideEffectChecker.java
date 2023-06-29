@@ -306,6 +306,8 @@ public final class SideEffectChecker {
     String qualifiedName = aClass == null ? null : aClass.getQualifiedName();
     if (qualifiedName == null) return false;
     if (ourSideEffectFreeClasses.contains(qualifiedName)) return true;
+    PsiMethod method = newExpression.resolveConstructor();
+    if (method != null && JavaMethodContractUtil.isPure(method)) return true;
 
     PsiFile file = aClass.getContainingFile();
     PsiDirectory directory = file.getContainingDirectory();
@@ -316,6 +318,18 @@ public final class SideEffectChecker {
     if (CommonClassNames.DEFAULT_PACKAGE.equals(packageName) || "java.io".equals(packageName)) {
       PsiClass throwableClass = JavaPsiFacade.getInstance(aClass.getProject()).findClass(CommonClassNames.JAVA_LANG_THROWABLE, aClass.getResolveScope());
       if (throwableClass != null && com.intellij.psi.util.InheritanceUtil.isInheritorOrSelf(aClass, throwableClass, true)) {
+        return true;
+      }
+    }
+    if (method == null) {
+      PsiClass superClass = aClass.getSuperClass();
+      if (superClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
+        for (PsiClassInitializer initializer : aClass.getInitializers()) {
+          if (!initializer.hasModifierProperty(PsiModifier.STATIC)) return false;
+        }
+        for (PsiField field : aClass.getFields()) {
+          if (!field.hasModifierProperty(PsiModifier.STATIC) && field.hasInitializer()) return false;
+        }
         return true;
       }
     }
