@@ -151,6 +151,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
           () -> inlineOccurrences(project, pattern, defToInline, refsToInline));
 
         if (inlineAll && ReferencesSearch.search(pattern).findFirst() == null) {
+          WriteAction.run(() -> PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument()));
           QuickFixFactory.getInstance().createRemoveUnusedVariableFix(pattern).invoke(project, editor, pattern.getContainingFile());
         }
 
@@ -342,6 +343,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
         });
 
         if (inlineAll && ReferencesSearch.search(local).findFirst() == null) {
+          WriteAction.run(() -> PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument()));
           QuickFixFactory.getInstance().createRemoveUnusedVariableFix(local).invoke(project, editor, local.getContainingFile());
         }
 

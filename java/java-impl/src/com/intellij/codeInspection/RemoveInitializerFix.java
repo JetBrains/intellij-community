@@ -5,6 +5,7 @@ import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteSideEffectsAwareFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.project.Project;
@@ -56,27 +57,78 @@ public class RemoveInitializerFix extends ModCommandQuickFix {
 
     @Override
     protected void invoke(@NotNull ActionContext context, @NotNull PsiExpression initializer, @NotNull ModPsiUpdater updater) {
-      CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(initializer);
-      if (surrounder == null) return;
-      CodeBlockSurrounder.SurroundResult result = surrounder.surround();
-      PsiStatement anchor = result.getAnchor();
-      initializer = result.getExpression();
-      List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(initializer);
-      CommentTracker ct = new CommentTracker();
-      sideEffects.forEach(ct::markUnchanged);
-      PsiStatement[] statements = StatementExtractor.generateStatements(sideEffects, initializer);
-      if (statements.length > 0) {
-        BlockUtils.addBefore(anchor, statements);
+      invoke(initializer);
+    }
+
+    private void invoke(@NotNull PsiExpression initializer) {
+      PsiVariable origVar = initializer.getParent() instanceof PsiVariable v ? v:
+                            initializer.getParent() instanceof PsiAssignmentExpression assignment &&
+                            assignment.getLExpression() instanceof PsiReferenceExpression ref && 
+                            ref.resolve() instanceof PsiVariable v ? v : null;
+      List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(
+        initializer, e -> e instanceof PsiUnaryExpression unary && ExpressionUtils.isReferenceTo(unary.getOperand(), origVar) ||
+                          e instanceof PsiAssignmentExpression assignment &&
+                          ExpressionUtils.isReferenceTo(assignment.getLExpression(), origVar));
+      CodeBlockSurrounder.SurroundResult result = null;
+      if (!sideEffects.isEmpty()) {
+        PsiStatement[] statements = StatementExtractor.generateStatements(sideEffects, initializer);
+        CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(initializer);
+        if (surrounder == null) {
+          tryProcessExpressionList(initializer, sideEffects);
+          return;
+        }
+        result = surrounder.surround();
+        PsiStatement anchor = result.getAnchor();
+        initializer = result.getExpression();
+        if (statements.length > 0) {
+          BlockUtils.addBefore(anchor, statements);
+        }
       }
       PsiElement parent = initializer.getParent();
       if (parent instanceof PsiVariable var) {
-        ct.deleteAndRestoreComments(initializer);
+        initializer.delete();
         if (myAction != null) {
           myAction.accept(var);
         }
       } else if (parent instanceof PsiAssignmentExpression) {
-        ct.deleteAndRestoreComments(parent.getParent());
+        RemoveUnusedVariableUtil.deleteWholeStatement(parent);
       }
+      if (result != null) {
+        result.collapse();
+      }
+    }
+
+    private static void tryProcessExpressionList(@NotNull PsiExpression initializer, List<PsiExpression> sideEffects) {
+      if (initializer.getParent() instanceof PsiAssignmentExpression assignment) {
+        if (assignment.getParent() instanceof PsiExpressionList list) {
+          for (PsiExpression effect : sideEffects) {
+            list.addBefore(effect, assignment);
+          }
+          assignment.delete();
+        }
+        if (assignment.getParent() instanceof PsiExpressionStatement statement && statement.getParent() instanceof PsiForStatement) {
+          if (sideEffects.size() == 1) {
+            assignment.replace(sideEffects.get(0));
+          } else {
+            PsiExpressionListStatement listStatement = (PsiExpressionListStatement)JavaPsiFacade.getElementFactory(statement.getProject())
+              .createStatementFromText("a,b", null);
+            PsiExpressionList list = listStatement.getExpressionList();
+            PsiExpression[] mockExpressions = list.getExpressions();
+            PsiExpression first = mockExpressions[0];
+            for (PsiExpression effect : sideEffects) {
+              list.addBefore(effect, first);
+            }
+            for (PsiExpression expression : mockExpressions) {
+              expression.delete();
+            }
+            statement.replace(listStatement);
+          }
+        }
+      }
+    }
+
+    public static void remove(@NotNull PsiExpression expression) {
+      new SideEffectAwareRemove(expression).invoke(expression);
     }
 
     @Override
