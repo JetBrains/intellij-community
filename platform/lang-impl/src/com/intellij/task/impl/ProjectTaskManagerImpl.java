@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.task.impl;
 
 import com.intellij.execution.ExecutionException;
@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectModelBuildableElement;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -55,6 +56,8 @@ import static java.util.stream.Collectors.groupingBy;
  */
 public final class ProjectTaskManagerImpl extends ProjectTaskManager {
   private static final Logger LOG = Logger.getInstance(ProjectTaskManager.class);
+  private static final Key<String> BUILD_ORIGINATOR_KEY = Key.create("project task build originator");
+
   private final ProjectTaskRunner myDummyTaskRunner = new DummyTaskRunner();
   private final ProjectTaskListener myEventPublisher;
   private final List<ProjectTaskManagerListener> myListeners = new CopyOnWriteArrayList<>();
@@ -271,6 +274,11 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     if (modules.get() > 0) {
       fields.add(MODULES.with(modules.get()));
     }
+    String buildOriginator = BUILD_ORIGINATOR_KEY.get(myProject);
+    if (buildOriginator != null) {
+      myProject.putUserData(BUILD_ORIGINATOR_KEY, null);
+      fields.add(BUILD_ORIGINATOR.with(buildOriginator));
+    }
     return BUILD_ACTIVITY.started(myProject, () -> fields);
   }
 
@@ -304,6 +312,12 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
 
   private static void visitTask(@NotNull ProjectTask projectTask, Consumer<? super Collection<? extends ProjectTask>> taskClassifier) {
     visitTasks(projectTask instanceof ProjectTaskList ? (ProjectTaskList)projectTask : Collections.singleton(projectTask), taskClassifier);
+  }
+
+  public static void putBuildOriginator(@Nullable Project project, @NotNull Class<?> clazz) {
+    if (BUILD_ORIGINATOR_KEY.get(project) == null) {
+      BUILD_ORIGINATOR_KEY.set(project, clazz.getName());
+    }
   }
 
   @ApiStatus.Experimental
