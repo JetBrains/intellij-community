@@ -67,6 +67,7 @@ public class GitTask {
 
   /**
    * Executes this task synchronously, with a modal progress dialog.
+   *
    * @return Result of the task execution.
    */
   @SuppressWarnings("unused")
@@ -76,6 +77,7 @@ public class GitTask {
 
   /**
    * Executes this task asynchronously, in background. Calls the resultHandler when finished.
+   *
    * @param resultHandler callback called after the task has finished or was cancelled by user or automatically.
    */
   public void executeAsync(final GitTaskResultHandler resultHandler) {
@@ -101,9 +103,10 @@ public class GitTask {
 
   /**
    * The most general execution method.
-   * @param sync  Set to {@code true} to make the calling thread wait for the task execution.
-   * @param modal If {@code true}, the task will be modal with a modal progress dialog. If false, the task will be executed in
-   * background. {@code modal} implies {@code sync}, i.e. if modal then sync doesn't matter: you'll wait anyway.
+   *
+   * @param sync          Set to {@code true} to make the calling thread wait for the task execution.
+   * @param modal         If {@code true}, the task will be modal with a modal progress dialog. If false, the task will be executed in
+   *                      background. {@code modal} implies {@code sync}, i.e. if modal then sync doesn't matter: you'll wait anyway.
    * @param resultHandler Handle the result.
    * @see #execute(boolean)
    */
@@ -113,35 +116,45 @@ public class GitTask {
 
     if (modal) {
       final ModalTask task = new ModalTask(myProject, myHandler, myTitle) {
-        @Override public void onSuccess() {
+        @Override
+        public void onSuccess() {
           commonOnSuccess(LOCK, resultHandler);
           completed.set(true);
         }
-        @Override public void onCancel() {
+
+        @Override
+        public void onCancel() {
           commonOnCancel(LOCK, resultHandler);
           completed.set(true);
         }
-        @Override public void onThrowable(@NotNull Throwable error) {
+
+        @Override
+        public void onThrowable(@NotNull Throwable error) {
           super.onThrowable(error);
           commonOnCancel(LOCK, resultHandler);
           completed.set(true);
         }
       };
       ApplicationManager.getApplication().invokeAndWait(() -> ProgressManager.getInstance().run(task));
-    } else {
+    }
+    else {
       final BackgroundableTask task = new BackgroundableTask(myProject, myHandler, myTitle) {
-        @Override public void onSuccess() {
+        @Override
+        public void onSuccess() {
           commonOnSuccess(LOCK, resultHandler);
           completed.set(true);
         }
-        @Override public void onCancel() {
+
+        @Override
+        public void onCancel() {
           commonOnCancel(LOCK, resultHandler);
           completed.set(true);
         }
       };
       if (myProgressIndicator == null) {
         GitVcs.runInBackground(task);
-      } else {
+      }
+      else {
         task.runAlone();
       }
     }
@@ -152,7 +165,8 @@ public class GitTask {
           synchronized (LOCK) {
             LOCK.wait(50);
           }
-        } catch (InterruptedException e) {
+        }
+        catch (InterruptedException e) {
           LOG.info(e);
         }
       }
@@ -198,7 +212,8 @@ public class GitTask {
       public void onLineAvailable(String line, Key outputType) {
         if (GitHandlerUtil.isErrorLine(line.trim())) {
           myHandler.addError(new VcsException(line));
-        } else if (!StringUtil.isEmptyOrSpaces(line)) {
+        }
+        else if (!StringUtil.isEmptyOrSpaces(line)) {
           myHandler.addLastOutput(line);
         }
         if (indicator != null) {
@@ -215,7 +230,8 @@ public class GitTask {
 
     if (myHandler instanceof GitLineHandler) {
       ((GitLineHandler)myHandler).addLineListener(listener);
-    } else {
+    }
+    else {
       myHandler.addListener(listener);
     }
 
@@ -247,6 +263,7 @@ public class GitTask {
    */
   private interface TaskExecution {
     void execute(ProgressIndicator indicator);
+
     void dispose();
   }
 
@@ -272,7 +289,8 @@ public class GitTask {
     public final void runAlone() {
       if (ApplicationManager.getApplication().isDispatchThread()) {
         ApplicationManager.getApplication().executeOnPooledThread(() -> justRun());
-      } else {
+      }
+      else {
         justRun();
       }
     }
@@ -284,7 +302,8 @@ public class GitTask {
       myProgressIndicator.setText(oldTitle);
       if (myProgressIndicator.isCanceled()) {
         onCancel();
-      } else {
+      }
+      else {
         onSuccess();
       }
     }
@@ -346,7 +365,7 @@ public class GitTask {
     public void run(ProgressIndicator indicator) {
       myIndicator = indicator;
       myTimer = JobScheduler.getScheduler().scheduleWithFixedDelay(
-        ()-> {
+        () -> {
           if (myIndicator != null && myIndicator.isCanceled()) {
             try {
               if (myHandler != null) {
@@ -357,7 +376,7 @@ public class GitTask {
               Disposer.dispose(this);
             }
           }
-      }, 0, 200, TimeUnit.MILLISECONDS);
+        }, 0, 200, TimeUnit.MILLISECONDS);
       myTask.execute(indicator);
     }
 
@@ -368,5 +387,4 @@ public class GitTask {
       }
     }
   }
-
 }
