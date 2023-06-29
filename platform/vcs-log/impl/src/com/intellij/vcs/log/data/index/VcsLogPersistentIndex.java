@@ -606,7 +606,8 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
                            && (limit > 0 && time >= (Math.max(limit, 1L) * 60 * 1000) && !isBigRoot);
       if (isOvertime || (isBigRoot && !indicator.isCanceled())) {
         mySpan.setAttribute("cancelled", true);
-        LOG.warn("Indexing " + myRoot.getName() + " was cancelled after " + StopWatch.formatTime(time));
+        String cause = isOvertime ? "by timeout (" + limit + " min)" : "externally";
+        LOG.warn("Indexing " + myRoot.getName() + " was cancelled " + cause + " after " + StopWatch.formatTime(time));
         if (!isBigRoot) {
           myBigRepositoriesList.addRepository(myRoot);
         }
