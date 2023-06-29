@@ -38,8 +38,8 @@ class KtPostfixTemplateProvider : PostfixTemplateProvider {
             KtIsNullPostfixTemplate(this),
             KtWhenExpressionPostfixTemplate(this),
             KtTryPostfixTemplate(this), // k2
-            KtIntroduceVariablePostfixTemplate("val", this),
-            KtIntroduceVariablePostfixTemplate("var", this),
+            KtIntroduceVariablePostfixTemplate("val", this), // k2
+            KtIntroduceVariablePostfixTemplate("var", this), // k2
             KtForEachPostfixTemplate("for", this), // k2
             KtForEachPostfixTemplate("iter", this), // k2
             KtForReversedPostfixTemplate("forr", this), // k2
