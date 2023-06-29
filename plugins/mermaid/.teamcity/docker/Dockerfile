@@ -11,7 +11,8 @@ RUN apt-get -y install libx11-dev libnss3 libatk1.0-0 libatk-bridge2.0-0  \
 
 ENV LANG=C.UTF-8
 ENV JAVA_HOME=/usr/lib/jvm/java-17-amazon-corretto
-ENV DISPLAY=:0.0
+# Do not set display variable, so we won't force awt/swing to start headful
+# ENV DISPLAY=:0.0
 
 # Run before preview tests
 # Xvfb -ac :0 -screen 0 1920x1080x16 &
