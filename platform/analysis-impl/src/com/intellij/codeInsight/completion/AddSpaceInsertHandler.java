@@ -20,13 +20,13 @@ public class AddSpaceInsertHandler implements InsertHandler<LookupElement> {
   public final static InsertHandler<LookupElement> INSTANCE = CompositeDeclarativeInsertHandler.Companion
     .withUniversalHandler(VALID_COMPLETION_CHARS,
                           new SingleInsertionDeclarativeInsertHandler(" ",
-                                                                      DeclarativeInsertHandler2.PopupOptions.DoNotShow.INSTANCE)
+                                                                      DeclarativeInsertHandler.PopupOptions.DoNotShow.INSTANCE)
     );
 
   public final static InsertHandler<LookupElement> INSTANCE_WITH_AUTO_POPUP = CompositeDeclarativeInsertHandler.Companion
     .withUniversalHandler(VALID_COMPLETION_CHARS,
                           new SingleInsertionDeclarativeInsertHandler(" ",
-                                                                      DeclarativeInsertHandler2.PopupOptions.MemberLookup.INSTANCE)
+                                                                      DeclarativeInsertHandler.PopupOptions.MemberLookup.INSTANCE)
     );
 
   private final String myIgnoreOnChars;

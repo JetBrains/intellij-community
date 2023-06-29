@@ -8,8 +8,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
-open class CompositeDeclarativeInsertHandler(val handlers: Map<String, Lazy<DeclarativeInsertHandler2>>,
+open class CompositeDeclarativeInsertHandler(val handlers: Map<String, Lazy<DeclarativeInsertHandler>>,
                                              val fallbackInsertHandler: InsertHandler<LookupElement>?)
   : InsertHandler<LookupElement> {
 
@@ -33,14 +32,14 @@ open class CompositeDeclarativeInsertHandler(val handlers: Map<String, Lazy<Decl
 
   companion object {
     private fun withUniversalHandler(completionChars: String,
-                                     handler: Lazy<DeclarativeInsertHandler2>): CompositeDeclarativeInsertHandler {
-      val handlersMap = mapOf(completionChars to handler)
+                                     handler: Lazy<DeclarativeInsertHandler>): CompositeDeclarativeInsertHandler {
+      val handlerMap = mapOf(completionChars to handler)
       // it's important not to provide a fallbackInsertHandler
-      return CompositeDeclarativeInsertHandler(handlersMap, null)
+      return CompositeDeclarativeInsertHandler(handlerMap, null)
     }
 
     fun withUniversalHandler(completionChars: String,
-                             handler: DeclarativeInsertHandler2): CompositeDeclarativeInsertHandler {
+                             handler: DeclarativeInsertHandler): CompositeDeclarativeInsertHandler {
       val lazyHandler = lazy { handler }
       return withUniversalHandler(completionChars, lazyHandler)
     }
@@ -56,10 +55,9 @@ open class CompositeDeclarativeInsertHandler(val handlers: Map<String, Lazy<Decl
  *   before submitting. For example:
  *     operations (0, 1, "A") and (1, 2, "B") should be merged into one operation (0, 2, "AB")
  *
- *  * offsetToPutCaret - should be calculated under assumption that all operations are already applied.
+ *  * offsetToPutCaret - should be calculated under the assumption that all operations are already applied.
  */
-@ApiStatus.Experimental
-open class DeclarativeInsertHandler2 protected constructor(
+open class DeclarativeInsertHandler protected constructor(
   val textOperations: List<RelativeTextEdit>,
   val offsetToPutCaret: Int,
   val addCompletionChar: Boolean?,
@@ -130,7 +128,7 @@ open class DeclarativeInsertHandler2 protected constructor(
    * @param holdReadLock flag whether to run the @param block inside a readAction
    * @param block code block that modifies the provided builder
    */
-  class LazyBuilder(holdReadLock: Boolean, private val block: HandlerProducer) : Lazy<DeclarativeInsertHandler2> {
+  class LazyBuilder(holdReadLock: Boolean, private val block: HandlerProducer) : Lazy<DeclarativeInsertHandler> {
     private val delegate = if (holdReadLock) {
       lazy {
         runReadAction {
@@ -144,7 +142,7 @@ open class DeclarativeInsertHandler2 protected constructor(
       }
     }
 
-    override val value: DeclarativeInsertHandler2
+    override val value: DeclarativeInsertHandler
       get() = delegate.value
 
     override fun isInitialized(): Boolean = delegate.isInitialized()
@@ -187,8 +185,8 @@ open class DeclarativeInsertHandler2 protected constructor(
       return this
     }
 
-    fun build(): DeclarativeInsertHandler2 {
-      return DeclarativeInsertHandler2(textOperations, offsetToPutCaret, addCompletionChar, postInsertHandler, popupOptions)
+    fun build(): DeclarativeInsertHandler {
+      return DeclarativeInsertHandler(textOperations, offsetToPutCaret, addCompletionChar, postInsertHandler, popupOptions)
     }
   }
 }
@@ -196,11 +194,11 @@ open class DeclarativeInsertHandler2 protected constructor(
 @ApiStatus.Experimental
 class SingleInsertionDeclarativeInsertHandler(private val stringToInsert: String,
                                               popupOptions: PopupOptions)
-  : DeclarativeInsertHandler2(listOf(RelativeTextEdit(0, 0, stringToInsert)),
-                              stringToInsert.length,
-                              null,
-                              null,
-                              popupOptions) {
+  : DeclarativeInsertHandler(listOf(RelativeTextEdit(0, 0, stringToInsert)),
+                             stringToInsert.length,
+                             null,
+                             null,
+                             popupOptions) {
 
   override fun handleInsert(context: InsertionContext, item: LookupElement) {
     val applyTextOperations = !isValueAlreadyHere(context.editor)
@@ -216,7 +214,7 @@ class SingleInsertionDeclarativeInsertHandler(private val stringToInsert: String
 }
 
 @ApiStatus.Experimental
-object EmptyDeclarativeInsertHandler : DeclarativeInsertHandler2(
+object EmptyDeclarativeInsertHandler : DeclarativeInsertHandler(
   textOperations = emptyList(),
   offsetToPutCaret = 0,
   addCompletionChar = null,

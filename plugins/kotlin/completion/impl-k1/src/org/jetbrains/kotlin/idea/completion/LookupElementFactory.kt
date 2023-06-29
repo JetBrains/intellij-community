@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.CompositeDeclarativeInsertHandler
-import com.intellij.codeInsight.completion.DeclarativeInsertHandler2
+import com.intellij.codeInsight.completion.DeclarativeInsertHandler
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
@@ -98,11 +98,11 @@ class LookupElementFactory(
             val brackets = "[]"
 
             val insertHandler = CompositeDeclarativeInsertHandler.withUniversalHandler(
-                "\n\t",
-                DeclarativeInsertHandler2.Builder()
+              "\n\t",
+              DeclarativeInsertHandler.Builder()
                     .addOperation(offsetFrom = -1 - brackets.length, offsetTo = -brackets.length, newText = "")
                     .withOffsetToPutCaret(-1)
-                    .withPopupOptions(DeclarativeInsertHandler2.PopupOptions.ParameterInfo)
+                    .withPopupOptions(DeclarativeInsertHandler.PopupOptions.ParameterInfo)
                     .build(),
             )
 
