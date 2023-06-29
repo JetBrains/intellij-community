@@ -484,7 +484,7 @@
     </group>
 
     <!-- Code -->
-    <group id="Floating.CodeToolbar" popup="false">
+    <group id="Floating.CodeToolbar" popup="false" searchable="false">
       <group id="Floating.CodeToolbar.Extract" popup="true" class="com.intellij.ui.codeFloatingToolbar.DropdownActionGroup"
              searchable="false" />
       <group id="Floating.CodeToolbar.Surround" popup="true" class="com.intellij.ui.codeFloatingToolbar.DropdownActionGroup"
