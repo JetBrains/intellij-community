@@ -76,7 +76,7 @@ public class GitTask {
     final Object LOCK = new Object();
     final AtomicBoolean completed = new AtomicBoolean();
 
-    final BackgroundableTask task = new BackgroundableTask(myProject, myHandler, myTitle) {
+    final BackgroundableTask task = new BackgroundableTask(myHandler, myTitle) {
       @Override
       public void onSuccess() {
         commonOnSuccess(LOCK, resultHandler);
@@ -195,19 +195,14 @@ public class GitTask {
   // so we can't have a single class representing a task: we have BackgroundableTask and ModalTask.
   // To minimize code duplication we use GitTaskDelegate.
 
-  private abstract class BackgroundableTask extends Task.Backgroundable implements TaskExecution {
+  private abstract class BackgroundableTask implements TaskExecution {
     private final GitTaskDelegate myDelegate;
+    private final @NotNull @NlsContexts.ProgressTitle String myTitle;
 
-    BackgroundableTask(@Nullable final Project project,
-                       @NotNull GitHandler handler,
+    BackgroundableTask(@NotNull GitHandler handler,
                        @NotNull @NlsContexts.ProgressTitle String processTitle) {
-      super(project, processTitle, true);
       myDelegate = new GitTaskDelegate(myProject, handler, this);
-    }
-
-    @Override
-    public final void run(@NotNull ProgressIndicator indicator) {
-      myDelegate.run(indicator);
+      myTitle = processTitle;
     }
 
     public final void runAlone() {
@@ -221,7 +216,7 @@ public class GitTask {
 
     private void justRun() {
       String oldTitle = myProgressIndicator.getText();
-      myProgressIndicator.setText(getTitle());
+      myProgressIndicator.setText(myTitle);
       myDelegate.run(myProgressIndicator);
       myProgressIndicator.setText(oldTitle);
       if (myProgressIndicator.isCanceled()) {
@@ -235,13 +230,17 @@ public class GitTask {
     @Override
     public void execute(ProgressIndicator indicator) {
       addListeners(this, indicator);
-      GitHandlerUtil.runInCurrentThread(myHandler, indicator, false, getTitle());
+      GitHandlerUtil.runInCurrentThread(myHandler, indicator, false, myTitle);
     }
 
     @Override
     public void dispose() {
       Disposer.dispose(myDelegate);
     }
+
+    public abstract void onCancel();
+
+    public abstract void onSuccess();
   }
 
   /**
