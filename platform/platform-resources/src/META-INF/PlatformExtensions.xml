@@ -639,7 +639,7 @@
     <fileType name="ARCHIVE" implementationClass="com.intellij.ide.highlighter.ArchiveFileType" fieldName="INSTANCE"
               extensions="ane;apk;ear;egg;jar;swc;war;zip"/>
     <fileType name="PLAIN_TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainTextFileType" fieldName="INSTANCE" language="TEXT"
-              extensions="txt"/>
+              extensions="log;txt"/>
     <fileType name="Native" implementationClass="com.intellij.openapi.fileTypes.NativeFileType" fieldName="INSTANCE"
               extensions="doc;docx;hlp;mdb;odt;pdf;ppt;pptx;vsd;xls;xlsx"/>
     <fileType name="UNKNOWN" implementationClass="com.intellij.openapi.fileTypes.UnknownFileType" fieldName="INSTANCE"/>
