@@ -186,7 +186,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     });
 
 
-    StructuredIdeActivity activity = reportBuildStart(projectTask, toRun);
+    Pair<StructuredIdeActivity, List<EventPair<?>>> activity = reportBuildStart(projectTask, toRun);
     myEventPublisher.started(context);
 
     Runnable runnable = () -> {
@@ -196,14 +196,14 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
         }
         catch (ExecutionException e) {
           sendAbortedEmptyResult(context, new ResultConsumer(promiseResult));
-          activity.finished();
+          activity.first.finished(() -> activity.second);
           return;
         }
       }
 
       if (toRun.isEmpty()) {
         sendSuccessEmptyResult(context, new ResultConsumer(promiseResult));
-        activity.finished();
+        activity.first.finished(() -> activity.second);
         return;
       }
 
@@ -242,9 +242,8 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     return promiseResult;
   }
 
-  @NotNull
-  private StructuredIdeActivity reportBuildStart(@NotNull ProjectTask projectTask,
-                                                 List<? extends Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> toRun) {
+  private Pair<StructuredIdeActivity, List<EventPair<?>>> reportBuildStart(@NotNull ProjectTask projectTask,
+                                                                           List<? extends Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> toRun) {
     Ref<Boolean> incremental = new Ref<>(null);
     AtomicInteger modules = new AtomicInteger(0);
     visitTask(projectTask, tasks -> {
@@ -279,7 +278,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
       myProject.putUserData(BUILD_ORIGINATOR_KEY, null);
       fields.add(BUILD_ORIGINATOR.with(buildOriginator));
     }
-    return BUILD_ACTIVITY.started(myProject, () -> fields);
+    return Pair.create(BUILD_ACTIVITY.started(myProject, () -> fields), fields);
   }
 
   private List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> groupByRunner(@NotNull ProjectTask projectTask) {
@@ -442,7 +441,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     private final ProjectTaskContext myContext;
     private final ResultConsumer myResultConsumer;
     private final AtomicInteger myProgressCounter;
-    private final StructuredIdeActivity myActivity;
+    private final Pair<StructuredIdeActivity, List<EventPair<?>>> myActivity;
     private final AtomicBoolean myErrorsFlag;
     private final AtomicBoolean myAbortedFlag;
     private final Map<ProjectTask, ProjectTaskState> myTasksState = new ConcurrentHashMap<>();
@@ -450,7 +449,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     private ProjectTaskResultsAggregator(@NotNull ProjectTaskContext context,
                                          @NotNull ResultConsumer resultConsumer,
                                          int expectedResults,
-                                         @NotNull StructuredIdeActivity activity) {
+                                         Pair<StructuredIdeActivity, List<EventPair<?>>> activity) {
       myContext = context;
       myResultConsumer = resultConsumer;
       myProgressCounter = new AtomicInteger(expectedResults);
@@ -487,7 +486,9 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
           myResultConsumer.accept(new MyResult(myContext, myTasksState, myAbortedFlag.get(), myErrorsFlag.get()));
         }
         finally {
-          myActivity.finished(() -> List.of(HAS_ERRORS.with(myErrorsFlag.get())));
+          List<EventPair<?>> events = new ArrayList<>(myActivity.second);
+          events.add(HAS_ERRORS.with(myErrorsFlag.get()));
+          myActivity.first.finished(() -> events);
         }
       }
     }
