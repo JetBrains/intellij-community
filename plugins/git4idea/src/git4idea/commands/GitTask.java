@@ -73,32 +73,8 @@ public class GitTask {
    * @param resultHandler Handle the result.
    */
   public void executeInBackground(boolean sync, final GitTaskResultHandler resultHandler) {
-    final CountDownLatch countDown = new CountDownLatch(0);
-
-    final BackgroundableTask task = new BackgroundableTask(myHandler, myTitle) {
-      @Override
-      public void onSuccess() {
-        boolean hasErrors = !myHandler.errors().isEmpty();
-        resultHandler.run(hasErrors ? GitTaskResult.GIT_ERROR : GitTaskResult.OK);
-        countDown.countDown();
-      }
-
-      @Override
-      public void onCancel() {
-        resultHandler.run(GitTaskResult.CANCELLED);
-        countDown.countDown();
-      }
-    };
-    task.runAlone();
-
-    if (sync) {
-      try {
-        countDown.await();
-      }
-      catch (InterruptedException e) {
-        LOG.warn(e);
-      }
-    }
+    BackgroundableTask task = new BackgroundableTask(myHandler, myTitle, resultHandler);
+    task.runAlone(sync);
   }
 
   private void addListeners(final Disposable task, @NotNull ProgressIndicator indicator) {
@@ -158,29 +134,39 @@ public class GitTask {
     });
   }
 
-  // To add to {@link com.intellij.openapi.progress.BackgroundTaskQueue} a task must be {@link Task.Backgroundable},
-  // so we can't have a single class representing a task: we have BackgroundableTask and ModalTask.
-  // To minimize code duplication we use GitTaskDelegate.
-
-  private abstract class BackgroundableTask implements Disposable {
+  private class BackgroundableTask implements Disposable {
     private final GitHandler myHandler;
     private final @NotNull @NlsContexts.ProgressTitle String myTitle;
+    private final @NotNull GitTaskResultHandler myResultHandler;
 
+    private final CountDownLatch myCountDown = new CountDownLatch(0);
     private @Nullable ScheduledFuture<?> myTimer;
 
     BackgroundableTask(@NotNull GitHandler handler,
-                       @NotNull @NlsContexts.ProgressTitle String processTitle) {
+                       @NotNull @NlsContexts.ProgressTitle String processTitle,
+                       @NotNull GitTaskResultHandler resultHandler) {
       myHandler = handler;
       myTitle = processTitle;
+      myResultHandler = resultHandler;
+
       Disposer.register(GitDisposable.getInstance(myProject), this);
     }
 
-    public final void runAlone() {
+    public final void runAlone(boolean sync) {
       if (ApplicationManager.getApplication().isDispatchThread()) {
         ApplicationManager.getApplication().executeOnPooledThread(() -> justRun());
       }
       else {
         justRun();
+      }
+
+      if (sync) {
+        try {
+          myCountDown.await();
+        }
+        catch (InterruptedException e) {
+          LOG.warn(e);
+        }
       }
     }
 
@@ -195,11 +181,13 @@ public class GitTask {
 
       myProgressIndicator.setText(oldTitle);
       if (myProgressIndicator.isCanceled()) {
-        onCancel();
+        myResultHandler.run(GitTaskResult.CANCELLED);
       }
       else {
-        onSuccess();
+        boolean hasErrors = !myHandler.errors().isEmpty();
+        myResultHandler.run(hasErrors ? GitTaskResult.GIT_ERROR : GitTaskResult.OK);
       }
+      myCountDown.countDown();
     }
 
     /**
@@ -225,9 +213,5 @@ public class GitTask {
         myTimer.cancel(false);
       }
     }
-
-    public abstract void onCancel();
-
-    public abstract void onSuccess();
   }
 }
