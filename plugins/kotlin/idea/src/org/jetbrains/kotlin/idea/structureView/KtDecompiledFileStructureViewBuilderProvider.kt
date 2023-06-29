@@ -8,12 +8,12 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
-import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
+import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtDecompiledFile
 
 //TODO: workaround for bug in JavaClsStructureViewBuilderProvider, remove when IDEA api is updated
-class KtClsStructureViewBuilderProvider : StructureViewBuilderProvider {
+class KtDecompiledFileStructureViewBuilderProvider : StructureViewBuilderProvider {
     override fun getStructureViewBuilder(fileType: FileType, file: VirtualFile, project: Project): StructureViewBuilder? {
-        val psiFile = PsiManager.getInstance(project).findFile(file) as? KtClsFile ?: return null
+        val psiFile = PsiManager.getInstance(project).findFile(file) as? KtDecompiledFile ?: return null
         return KotlinStructureViewFactory().getStructureViewBuilder(psiFile)
     }
 }

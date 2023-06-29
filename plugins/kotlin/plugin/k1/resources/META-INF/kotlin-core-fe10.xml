@@ -131,7 +131,15 @@
     <structureViewBuilder
             order="first"
             key="CLASS"
-            factoryClass="org.jetbrains.kotlin.idea.structureView.KtClsStructureViewBuilderProvider"/>
+            factoryClass="org.jetbrains.kotlin.idea.structureView.KtDecompiledFileStructureViewBuilderProvider"/>
+    <structureViewBuilder
+            order="first"
+            key="kotlin_builtins"
+            factoryClass="org.jetbrains.kotlin.idea.structureView.KtDecompiledFileStructureViewBuilderProvider"/>
+    <structureViewBuilder
+            order="first"
+            key="KNM"
+            factoryClass="org.jetbrains.kotlin.idea.structureView.KtDecompiledFileStructureViewBuilderProvider"/>
   </extensions>
 
   <!-- Line markers -->
