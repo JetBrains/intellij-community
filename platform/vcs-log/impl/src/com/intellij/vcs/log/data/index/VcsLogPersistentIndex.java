@@ -577,6 +577,11 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
 
           checkShouldCancel(indicator);
         });
+
+        if (LOG.isDebugEnabled()) {
+          int unindexedCommits = myCommits.size() - myNewIndexedCommits.get() - myOldCommits.get();
+          LOG.debug("Processed index batch, " + unindexedCommits + " unindexed commits left");
+        }
       });
     }
 
