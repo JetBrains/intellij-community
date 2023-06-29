@@ -18,6 +18,16 @@ object Tests: MermaidBuild(
   }
 )
 
+object PluginVerifier: MermaidBuild(
+  name = "Plugin Verifier",
+  script = "./gradlew runPluginVerifier --info",
+  block = {
+    triggers {
+      vcs({})
+    }
+  }
+)
+
 open class MermaidBuild(
   name: String,
   dockerImage: String = defaultImage,

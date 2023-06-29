@@ -5,4 +5,5 @@ version = "2023.05"
 project {
   vcsRoot(Mermaid)
   buildType(Tests)
+  buildType(PluginVerifier)
 }
