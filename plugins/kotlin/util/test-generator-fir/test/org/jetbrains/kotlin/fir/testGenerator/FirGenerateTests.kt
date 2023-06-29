@@ -153,6 +153,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("quickfix/addExclExclCall", pattern = pattern)
             model("quickfix/addInitializer", pattern = pattern)
             model("quickfix/addPropertyAccessors", pattern = pattern)
+            model("quickfix/autoImports", pattern = KT_WITHOUT_DOTS, isRecursive = true)
             model("quickfix/checkArguments", pattern = pattern, isRecursive = false)
             model("quickfix/conflictingImports", pattern = pattern)
             model("quickfix/expressions", pattern = pattern)
