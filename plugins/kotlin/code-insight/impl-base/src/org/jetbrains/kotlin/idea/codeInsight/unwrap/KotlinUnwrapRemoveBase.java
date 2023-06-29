@@ -8,7 +8,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
-import org.jetbrains.kotlin.idea.refactoring.ElementSelectionUtilsKt;
+import org.jetbrains.kotlin.idea.refactoring.ElementRenderingUtilsKt;
 import org.jetbrains.kotlin.psi.KtBlockExpression;
 import org.jetbrains.kotlin.psi.KtElement;
 import org.jetbrains.kotlin.psi.KtExpression;
@@ -30,7 +30,7 @@ public abstract class KotlinUnwrapRemoveBase extends AbstractUnwrapper<KotlinUnw
     @Override
     public @NotNull String getDescription(@NotNull PsiElement e) {
         assert e instanceof KtElement;
-        return KotlinBundle.message(key, ElementSelectionUtilsKt.getExpressionShortText((KtElement) e));
+        return KotlinBundle.message(key, ElementRenderingUtilsKt.getExpressionShortText((KtElement) e));
     }
 
     protected boolean canExtractExpression(@NotNull KtExpression expression, @NotNull KtElement parent) {

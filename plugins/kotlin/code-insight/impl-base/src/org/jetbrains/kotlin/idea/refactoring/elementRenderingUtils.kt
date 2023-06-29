@@ -1,13 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.ifEmpty
+import kotlin.math.min
 
 fun KtElement.renderTrimmed(): String {
     class Renderer : KtTreeVisitorVoid() {
@@ -311,4 +313,13 @@ fun KtElement.renderTrimmed(): String {
     }
 
     return Renderer().render(this)
+}
+
+@NlsSafe
+fun getExpressionShortText(element: KtElement): String {
+    val text = element.renderTrimmed().trimStart()
+    val firstNewLinePos = text.indexOf('\n')
+    var trimmedText = text.substring(0, if (firstNewLinePos != -1) firstNewLinePos else min(100, text.length))
+    if (trimmedText.length != text.length) trimmedText += " ..."
+    return trimmedText
 }

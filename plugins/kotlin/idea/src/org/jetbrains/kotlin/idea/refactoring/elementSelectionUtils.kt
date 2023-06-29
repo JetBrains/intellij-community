@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring
 
@@ -7,7 +7,6 @@ import com.intellij.codeInsight.unwrap.ScopeHighlighter
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
@@ -30,7 +29,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.receivers.ClassQualifier
-import kotlin.math.min
 
 fun selectElement(
     editor: Editor,
@@ -222,15 +220,6 @@ private fun smartSelectElement(
         }
         .createPopup(file.project, title)
         .showInBestPositionFor(editor)
-}
-
-@NlsSafe
-fun getExpressionShortText(element: KtElement): String {
-    val text = element.renderTrimmed().trimStart()
-    val firstNewLinePos = text.indexOf('\n')
-    var trimmedText = text.substring(0, if (firstNewLinePos != -1) firstNewLinePos else min(100, text.length))
-    if (trimmedText.length != text.length) trimmedText += " ..."
-    return trimmedText
 }
 
 private fun findElement(
