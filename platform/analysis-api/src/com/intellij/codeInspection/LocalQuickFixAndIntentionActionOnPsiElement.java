@@ -132,6 +132,11 @@ public abstract class LocalQuickFixAndIntentionActionOnPsiElement extends LocalQ
       public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
         return action.generatePreview(ModCommandAction.ActionContext.from(editor, file));
       }
+
+      @Override
+      public String toString() {
+        return "[LocalQuickFixAndIntentionActionOnPsiElement] " + action;
+      }
     };
   }
 }
