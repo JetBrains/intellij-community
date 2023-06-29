@@ -50,8 +50,6 @@ internal interface IdeMenuFlavor {
 
   fun getPreferredSize(size: Dimension): Dimension = size
 
-  fun addClockPanel() {}
-
   fun updateAppMenu()
 
   fun layoutClockPanelAndButton() {
@@ -192,7 +190,6 @@ internal open class JMenuBasedIdeMenuBarHelper(flavor: IdeMenuFlavor, menuBar: M
       presentationFactory.resetNeedRebuild()
       flavor.updateAppMenu()
       menuBar.updateGlobalMenuRoots()
-      flavor.addClockPanel()
       menuBarComponent.validate()
       if (changeBarVisibility) {
         menuBarComponent.invalidate()
