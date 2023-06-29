@@ -20,7 +20,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -30,7 +29,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import git4idea.GitDisposable;
-import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * All Git commands are cancellable when called via {@link GitHandler}. <br/>
@@ -72,98 +69,27 @@ public class GitTask {
   }
 
   /**
-   * Executes this task synchronously, with a modal progress dialog.
-   *
-   * @return Result of the task execution.
-   */
-  @SuppressWarnings("unused")
-  public GitTaskResult executeModal() {
-    return execute(true);
-  }
-
-  /**
-   * Executes this task asynchronously, in background. Calls the resultHandler when finished.
-   *
-   * @param resultHandler callback called after the task has finished or was cancelled by user or automatically.
-   */
-  public void executeAsync(final GitTaskResultHandler resultHandler) {
-    execute(false, false, resultHandler);
-  }
-
-  public void executeInBackground(boolean sync, final GitTaskResultHandler resultHandler) {
-    execute(sync, false, resultHandler);
-  }
-
-  // this is always sync
-  @NotNull
-  public GitTaskResult execute(boolean modal) {
-    final AtomicReference<GitTaskResult> result = new AtomicReference<>(GitTaskResult.INITIAL);
-    execute(true, modal, new GitTaskResultHandlerAdapter() {
-      @Override
-      protected void run(GitTaskResult res) {
-        result.set(res);
-      }
-    });
-    return result.get();
-  }
-
-  /**
-   * The most general execution method.
-   *
    * @param sync          Set to {@code true} to make the calling thread wait for the task execution.
-   * @param modal         If {@code true}, the task will be modal with a modal progress dialog. If false, the task will be executed in
-   *                      background. {@code modal} implies {@code sync}, i.e. if modal then sync doesn't matter: you'll wait anyway.
    * @param resultHandler Handle the result.
-   * @see #execute(boolean)
    */
-  public void execute(boolean sync, boolean modal, final GitTaskResultHandler resultHandler) {
+  public void executeInBackground(boolean sync, final GitTaskResultHandler resultHandler) {
     final Object LOCK = new Object();
     final AtomicBoolean completed = new AtomicBoolean();
 
-    if (modal) {
-      final ModalTask task = new ModalTask(myProject, myHandler, myTitle) {
-        @Override
-        public void onSuccess() {
-          commonOnSuccess(LOCK, resultHandler);
-          completed.set(true);
-        }
-
-        @Override
-        public void onCancel() {
-          commonOnCancel(LOCK, resultHandler);
-          completed.set(true);
-        }
-
-        @Override
-        public void onThrowable(@NotNull Throwable error) {
-          super.onThrowable(error);
-          commonOnCancel(LOCK, resultHandler);
-          completed.set(true);
-        }
-      };
-      ApplicationManager.getApplication().invokeAndWait(() -> ProgressManager.getInstance().run(task));
-    }
-    else {
-      final BackgroundableTask task = new BackgroundableTask(myProject, myHandler, myTitle) {
-        @Override
-        public void onSuccess() {
-          commonOnSuccess(LOCK, resultHandler);
-          completed.set(true);
-        }
-
-        @Override
-        public void onCancel() {
-          commonOnCancel(LOCK, resultHandler);
-          completed.set(true);
-        }
-      };
-      if (myProgressIndicator == null) {
-        GitVcs.runInBackground(task);
+    final BackgroundableTask task = new BackgroundableTask(myProject, myHandler, myTitle) {
+      @Override
+      public void onSuccess() {
+        commonOnSuccess(LOCK, resultHandler);
+        completed.set(true);
       }
-      else {
-        task.runAlone();
+
+      @Override
+      public void onCancel() {
+        commonOnCancel(LOCK, resultHandler);
+        completed.set(true);
       }
-    }
+    };
+    task.runAlone();
 
     if (sync) {
       while (!completed.get()) {
@@ -304,31 +230,6 @@ public class GitTask {
       else {
         onSuccess();
       }
-    }
-
-    @Override
-    public void execute(ProgressIndicator indicator) {
-      addListeners(this, indicator);
-      GitHandlerUtil.runInCurrentThread(myHandler, indicator, false, getTitle());
-    }
-
-    @Override
-    public void dispose() {
-      Disposer.dispose(myDelegate);
-    }
-  }
-
-  private abstract class ModalTask extends Task.Modal implements TaskExecution {
-    private final GitTaskDelegate myDelegate;
-
-    ModalTask(@Nullable final Project project, @NotNull GitHandler handler, @NotNull @NlsContexts.ProgressTitle String processTitle) {
-      super(project, processTitle, true);
-      myDelegate = new GitTaskDelegate(myProject, handler, this);
-    }
-
-    @Override
-    public final void run(@NotNull ProgressIndicator indicator) {
-      myDelegate.run(indicator);
     }
 
     @Override

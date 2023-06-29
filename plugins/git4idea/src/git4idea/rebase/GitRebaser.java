@@ -94,7 +94,7 @@ public class GitRebaser {
     rh.setStdoutSuppressed(false);
     rh.addParameters("--abort");
     GitTask task = new GitTask(myProject, rh, GitBundle.message("rebase.update.project.abort.task.title"), myProgressIndicator, null);
-    task.executeAsync(new GitTaskResultNotificationHandler(
+    task.executeInBackground(false, new GitTaskResultNotificationHandler(
       myProject,
       REBASE_ABORT,
       GitBundle.message("rebase.update.project.notification.abort.success.message"),
