@@ -34,7 +34,6 @@ import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.compareDescriptors
 import org.jetbrains.kotlin.idea.core.moveInsideParenthesesAndReplaceWith
 import org.jetbrains.kotlin.idea.intentions.ConvertToBlockBodyIntention
-import org.jetbrains.kotlin.idea.refactoring.IntroduceRefactoringException
 import org.jetbrains.kotlin.idea.refactoring.addTypeArgumentsIfNeeded
 import org.jetbrains.kotlin.idea.refactoring.chooseContainer.chooseContainerElementIfNecessary
 import org.jetbrains.kotlin.idea.refactoring.getQualifiedTypeArgumentList
