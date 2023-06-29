@@ -128,6 +128,13 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor implement
     return actions.toArray(new Action[0]);
   }
 
+  @Override
+  protected JButton createJButtonForAction(Action action) {
+    JButton button = super.createJButtonForAction(action);
+    button.setVisible(myRunAction != action || getConfigurable().getInitialSelectedConfiguration() != null);
+    return button;
+  }
+
   private void performRunFromConfig(@NotNull BiConsumer<@NotNull RunnerAndConfigurationSettings, @NotNull Executor> onRunnableExecutor,
                                     @NotNull Runnable onFail) {
     SingleConfigurationConfigurable<RunConfiguration> configurable = getConfigurable().getSelectedConfiguration();
