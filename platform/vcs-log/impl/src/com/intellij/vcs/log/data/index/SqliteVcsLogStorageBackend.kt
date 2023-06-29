@@ -115,7 +115,7 @@ private class ProjectLevelConnectionManager private constructor(@JvmField val st
   val selectCommitterForCommitPool = connection.statementPool("select name, email from user where commitId = ? and isCommitter = ?") { IntBinder(2) }
 
   @JvmField
-  val selectCommitsForUserPool = connection.statementPool("select commitId from user where name = ? and email = ?") { ObjectBinder(2) }
+  val selectCommitsForUserPool = connection.statementPool("select commitId from user where isCommitter = 0 and name = ? and email = ?") { ObjectBinder(2) }
 
   @JvmField
   val insertCommitPool = connection.statementPool("insert into commit_hashes(position, hash) values(?, ?) returning rowid") { ObjectBinder(2) }
