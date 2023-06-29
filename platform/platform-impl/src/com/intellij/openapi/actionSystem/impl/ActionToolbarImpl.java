@@ -1830,7 +1830,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       Insets i = myOrientation == SwingConstants.VERTICAL ? JBUI.CurrentTheme.Toolbar.verticalToolbarInsets()
                                                           : JBUI.CurrentTheme.Toolbar.horizontalToolbarInsets();
       if (i != null) {
-        setBorder(JBUI.Borders.empty(i.top, i.left, i.bottom, i.right));
+        setBorder(JBUI.Borders.empty(i));
       } else {
         setBorder(JBUI.Borders.empty(2));
       }

@@ -27,6 +27,10 @@ public class JBEmptyBorder extends EmptyBorder {
   }
 
   public JBEmptyBorder(Insets insets) {
+    this(JBInsets.unwrap(insets), true);
+  }
+
+  private JBEmptyBorder(Insets insets, @SuppressWarnings("unused") boolean unwrapped) {
     this(insets.top, insets.left, insets.bottom, insets.right);
   }
 

@@ -148,4 +148,36 @@ public class JBInsets extends Insets {
     dest.bottom = src.bottom;
     dest.right = src.right;
   }
+
+  /**
+   * Get safely unscaled Insets if the parameter is an instance of JBInsets.
+   *
+   * @param insets the insets to unwrap
+   * @return the unwrapped Insets
+   */
+  @ApiStatus.Internal
+  public static Insets unwrap(@NotNull Insets insets) {
+    if (insets instanceof JBInsets jbInsets) {
+      JBInsets cleanInsets = create(jbInsets.getUnscaled());
+
+      if (insets.equals(cleanInsets)) return jbInsets.getUnscaled();
+      else return unscale(insets);
+    }
+    return insets;
+  }
+
+  /**
+   * Unscale the given Insets by applying JBUI.unscale to each value.
+   *
+   * @param insets the Insets to unscale
+   * @return the unscaled Insets
+   */
+  @ApiStatus.Internal
+  public static Insets unscale(@NotNull Insets insets) {
+    //noinspection UseDPIAwareInsets
+    return new Insets(JBUI.unscale(insets.top),
+                      JBUI.unscale(insets.left),
+                      JBUI.unscale(insets.bottom),
+                      JBUI.unscale(insets.right));
+  }
 }

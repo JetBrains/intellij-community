@@ -259,6 +259,7 @@ public final class JBUI {
     }
 
     public static @NotNull Border empty(@NotNull Insets insets) {
+      insets = JBInsets.unwrap(insets);
       return empty(insets.top, insets.left, insets.bottom, insets.right);
     }
 
