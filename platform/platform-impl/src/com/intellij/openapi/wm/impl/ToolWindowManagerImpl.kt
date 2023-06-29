@@ -73,6 +73,7 @@ import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.*
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.*
@@ -1918,8 +1919,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
     entry.floatingDecorator = floatingDecorator
     val bounds = info.floatingBounds
-    if ((bounds != null && bounds.width > 0 && bounds.height > 0 &&
-         WindowManager.getInstance().isInsideScreenBounds(bounds.x, bounds.y, bounds.width))) {
+    if (bounds != null && isValidBounds(bounds)) {
       floatingDecorator.bounds = Rectangle(bounds)
     }
     else {
@@ -1951,8 +1951,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
     val shouldBeMaximized = info.isMaximized
     val bounds = info.floatingBounds
-    if ((bounds != null && bounds.width > 0 && (bounds.height > 0) &&
-         WindowManager.getInstance().isInsideScreenBounds(bounds.x, bounds.y, bounds.width))) {
+    if (bounds != null && isValidBounds(bounds)) {
       window.bounds = Rectangle(bounds)
     }
     else {
@@ -1989,6 +1988,14 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       window.extendedState = Frame.MAXIMIZED_BOTH
     }
   }
+
+  private fun isValidBounds(bounds: Rectangle) =
+    bounds.width > 0 && bounds.height > 0 &&
+    (ScreenUtil.isVisible(bounds.topLeft) || ScreenUtil.isVisible(bounds.topRight)) && // At least some part of the header must be visible,
+    ScreenUtil.isVisible(bounds) // and that some sensible portion of the window is better be visible too.
+
+  private val Rectangle.topLeft: Point get() = location
+  private val Rectangle.topRight: Point get() = Point(x + width, y)
 
   internal fun toolWindowAvailable(toolWindow: ToolWindowImpl) {
     if (!toolWindow.isShowStripeButton) {
