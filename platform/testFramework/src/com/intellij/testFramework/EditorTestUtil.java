@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -51,6 +51,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableRunnable;
@@ -459,6 +460,10 @@ public final class EditorTestUtil {
   }
 
   public static void verifyCaretAndSelectionState(Editor editor, CaretAndSelectionState caretState, String message) {
+    verifyCaretAndSelectionState(editor, caretState, message, null);
+  }
+
+  public static void verifyCaretAndSelectionState(Editor editor, CaretAndSelectionState caretState, String message, String expectedFilePath) {
     boolean hasChecks = false;
     for (int i = 0; i < caretState.carets.size(); i++) {
       EditorTestUtil.CaretInfo expected = caretState.carets.get(i);
@@ -476,8 +481,15 @@ public final class EditorTestUtil {
     }
     catch (AssertionError e) {
       try {
-        assertEquals(e.getMessage(), CaretAndSelectionMarkup.renderExpectedState(editor, caretState.carets),
-                     CaretAndSelectionMarkup.renderActualState(editor));
+        String expected = CaretAndSelectionMarkup.renderExpectedState(editor, caretState.carets);
+        String actual = CaretAndSelectionMarkup.renderActualState(editor);
+        if (expectedFilePath != null) {
+          if (!expected.equals(actual)) {
+            throw new FileComparisonFailure(e.getMessage(), expected, actual, expectedFilePath);
+          }
+        } else {
+          assertEquals(e.getMessage(), expected, actual);
+        }
       }
       catch (AssertionError exception) {
         exception.addSuppressed(e);
