@@ -562,7 +562,9 @@ public final class ConfigImportHelper {
 
   private static boolean nameMatchesPrefixStrictly(String name, String prefix, boolean dotted) {
     String strictPrefix = dotted ? '.' + prefix : prefix;
-    return StringUtilRt.startsWithIgnoreCase(name, strictPrefix) && !name.equalsIgnoreCase(strictPrefix);
+    return StringUtilRt.startsWithIgnoreCase(name, strictPrefix)
+           && name.length() > strictPrefix.length()
+           && Character.isDigit(name.charAt(strictPrefix.length()));
   }
 
   public static String getNameWithVersion(Path configDir) {

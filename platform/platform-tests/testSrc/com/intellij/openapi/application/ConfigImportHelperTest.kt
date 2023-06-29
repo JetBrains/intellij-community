@@ -529,4 +529,20 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val result = ConfigImportHelper.findConfigDirectories(current)
     assertThat(result.paths).isEmpty()
   }
+
+  @Test fun `non-versioned directories are excluded_Rider`() {
+    createConfigDir(product = "RiderFlow", version = "", modern = true)
+    createConfigDir(product = "RiderRemoteDebugger", version = "", modern = true)
+    val current = createConfigDir(product = "Rider", version = "2023.2")
+    val result = ConfigImportHelper.findConfigDirectories(current)
+    assertThat(result.paths).isEmpty()
+  }
+
+  @Test fun `non-versioned directories are excluded_CLion`() {
+    createConfigDir(product = ".clion-vcpkg", version = "", modern = false) // was created at the user dir by older versions
+    createConfigDir(product = "CLionRadler", version = "2023.2", modern = true)
+    val current = createConfigDir(product = "CLion", version = "2023.2")
+    val result = ConfigImportHelper.findConfigDirectories(current)
+    assertThat(result.paths).isEmpty()
+  }
 }
