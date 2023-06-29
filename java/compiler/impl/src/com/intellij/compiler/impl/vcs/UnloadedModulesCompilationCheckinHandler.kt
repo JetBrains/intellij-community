@@ -1,138 +1,103 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.compiler.impl.vcs;
+package com.intellij.compiler.impl.vcs
 
-import com.intellij.CommonBundle;
-import com.intellij.compiler.CompilerWorkspaceConfiguration;
-import com.intellij.compiler.impl.ModuleCompileScope;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompileStatusNotification;
-import com.intellij.openapi.compiler.CompilerManager;
-import com.intellij.openapi.compiler.JavaCompilerBundle;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.CheckinProjectPanel;
-import com.intellij.openapi.vcs.changes.CommitContext;
-import com.intellij.openapi.vcs.changes.CommitExecutor;
-import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption;
-import com.intellij.openapi.vcs.checkin.CheckinHandler;
-import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
-import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.util.PairConsumer;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.CommonBundle
+import com.intellij.compiler.CompilerWorkspaceConfiguration
+import com.intellij.compiler.impl.ModuleCompileScope
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.compiler.CompilerManager
+import com.intellij.openapi.compiler.JavaCompilerBundle
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.roots.impl.DirectoryIndex
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.vcs.CheckinProjectPanel
+import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.changes.CommitExecutor
+import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption.Companion.create
+import com.intellij.openapi.vcs.checkin.CheckinHandler
+import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
+import com.intellij.openapi.vcs.ui.RefreshableOnComponent
+import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.util.PairConsumer
+import com.intellij.xml.util.XmlStringUtil
+import java.util.concurrent.atomic.AtomicReference
 
-import java.util.LinkedHashSet;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
-
-public class UnloadedModulesCompilationCheckinHandler extends CheckinHandler {
-  private final Project myProject;
-  private final CheckinProjectPanel myCheckinPanel;
-
-  public UnloadedModulesCompilationCheckinHandler(Project project, CheckinProjectPanel checkinPanel) {
-    myProject = project;
-    myCheckinPanel = checkinPanel;
+class UnloadedModulesCompilationCheckinHandler(private val project: Project,
+                                               private val checkinPanel: CheckinProjectPanel) : CheckinHandler() {
+  override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent? {
+    return if (ModuleManager.getInstance(project).unloadedModuleDescriptions.isNotEmpty())
+      create(checkinPanel.getProject(), this, false,
+             JavaCompilerBundle.message("checkbox.text.compile.affected.unloaded.modules"),
+             { settings.COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT },
+             { value: Boolean -> settings.COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT = value }
+      )
+    else {
+      null
+    }
   }
 
-  @Nullable
-  @Override
-  public RefreshableOnComponent getBeforeCheckinConfigurationPanel() {
-    if (ModuleManager.getInstance(myProject).getUnloadedModuleDescriptions().isEmpty()) {
-      return null;
+  override fun beforeCheckin(executor: CommitExecutor?, additionalDataConsumer: PairConsumer<Any, Any>): ReturnResult {
+    if (!settings.COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT ||
+        ModuleManager.getInstance(project).unloadedModuleDescriptions.isEmpty()) {
+      return ReturnResult.COMMIT
     }
-
-    return BooleanCommitOption.create(myCheckinPanel.getProject(), this, false,
-                                      JavaCompilerBundle.message("checkbox.text.compile.affected.unloaded.modules"),
-                                      () -> getSettings().COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT,
-                                      value -> getSettings().COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT = value);
-  }
-
-  @Override
-  public ReturnResult beforeCheckin(@Nullable CommitExecutor executor, PairConsumer<Object, Object> additionalDataConsumer) {
-    if (!getSettings().COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT ||
-        ModuleManager.getInstance(myProject).getUnloadedModuleDescriptions().isEmpty()) {
-      return ReturnResult.COMMIT;
+    val fileIndex = ProjectFileIndex.getInstance(project)
+    val compilerManager = CompilerManager.getInstance(project)
+    val affectedModules = checkinPanel.getVirtualFiles()
+      .filter { compilerManager.isCompilableFileType(it.fileType) }
+      .mapNotNullTo(LinkedHashSet()) { fileIndex.getModuleForFile(it) }
+    val affectedUnloadedModules = affectedModules.flatMapTo(LinkedHashSet()) { 
+      DirectoryIndex.getInstance(project).getDependentUnloadedModules(it) 
     }
-
-    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(myProject);
-    CompilerManager compilerManager = CompilerManager.getInstance(myProject);
-    Set<Module> affectedModules = new LinkedHashSet<>();
-    for (VirtualFile file : myCheckinPanel.getVirtualFiles()) {
-      if (compilerManager.isCompilableFileType(file.getFileType())) {
-        ContainerUtil.addIfNotNull(affectedModules, fileIndex.getModuleForFile(file));
-      }
-    }
-
-    Set<String> affectedUnloadedModules = new LinkedHashSet<>();
-    for (Module module : affectedModules) {
-      affectedUnloadedModules.addAll(DirectoryIndex.getInstance(myProject).getDependentUnloadedModules(module));
-    }
-
     if (affectedUnloadedModules.isEmpty()) {
-      return ReturnResult.COMMIT;
+      return ReturnResult.COMMIT
     }
-
-    AtomicReference<BuildResult> result = new AtomicReference<>();
-    compilerManager.makeWithModalProgress(new ModuleCompileScope(myProject, affectedModules, affectedUnloadedModules, true, false),
-                                          new CompileStatusNotification() {
-                                            @Override
-                                            public void finished(boolean aborted, int errors, int warnings, @NotNull CompileContext compileContext) {
-                                              result.set(
-                                                aborted ? BuildResult.CANCELED : errors > 0 ? BuildResult.FAILED : BuildResult.SUCCESSFUL);
-                                            }
-                                          });
-
+    val result = AtomicReference<BuildResult>()
+    compilerManager.makeWithModalProgress(ModuleCompileScope(project, affectedModules, affectedUnloadedModules, true, false)) { aborted, errors, _, _ ->
+      result.set(when {
+        aborted -> BuildResult.CANCELED
+        errors > 0 -> BuildResult.FAILED
+        else -> BuildResult.SUCCESSFUL
+      })
+    }
     if (result.get() == BuildResult.SUCCESSFUL) {
-      return ReturnResult.COMMIT;
+      return ReturnResult.COMMIT
     }
-    String message = JavaCompilerBundle.message("dialog.message.compilation.of.unloaded.modules.failed");
-    int answer = Messages.showYesNoCancelDialog(myProject, XmlStringUtil.wrapInHtml(message), JavaCompilerBundle
-                                                  .message("dialog.title.compilation.failed"),
+    val message = JavaCompilerBundle.message("dialog.message.compilation.of.unloaded.modules.failed")
+    val answer = Messages.showYesNoCancelDialog(project, XmlStringUtil.wrapInHtml(message), JavaCompilerBundle
+      .message("dialog.title.compilation.failed"),
                                                 JavaCompilerBundle.message("button.text.checkin.handler.commit"),
                                                 JavaCompilerBundle.message("button.text.checkin.handler.show.errors"),
-                                                CommonBundle.getCancelButtonText(), null);
-
-    if (answer == Messages.CANCEL) {
-      return ReturnResult.CANCEL;
-    }
-    else if (answer == Messages.YES) {
-      return ReturnResult.COMMIT;
-    }
-    else {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
-        if (toolWindow != null) {
-          toolWindow.activate(null, false);
-        }
-      }, ModalityState.nonModal());
-      return ReturnResult.CLOSE_WINDOW;
+                                                CommonBundle.getCancelButtonText(), null)
+    return when (answer) {
+      Messages.CANCEL -> ReturnResult.CANCEL
+      Messages.YES -> ReturnResult.COMMIT
+      else -> {
+        ApplicationManager.getApplication().invokeLater({
+          val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MESSAGES_WINDOW)
+          toolWindow?.activate(null, false)
+        }, ModalityState.nonModal())
+        ReturnResult.CLOSE_WINDOW
+      }
     }
   }
 
-  @NotNull
-  private CompilerWorkspaceConfiguration getSettings() {
-    return CompilerWorkspaceConfiguration.getInstance(myProject);
+  private val settings: CompilerWorkspaceConfiguration
+    get() = CompilerWorkspaceConfiguration.getInstance(project)
+
+  private enum class BuildResult {
+    SUCCESSFUL,
+    FAILED,
+    CANCELED
   }
 
-  private enum BuildResult { SUCCESSFUL, FAILED, CANCELED }
-
-  public static class Factory extends CheckinHandlerFactory {
-    @NotNull
-    @Override
-    public CheckinHandler createHandler(@NotNull CheckinProjectPanel panel, @NotNull CommitContext commitContext) {
-      return new UnloadedModulesCompilationCheckinHandler(panel.getProject(), panel);
+  class Factory : CheckinHandlerFactory() {
+    override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
+      return UnloadedModulesCompilationCheckinHandler(panel.getProject(), panel)
     }
   }
 }
