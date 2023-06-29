@@ -230,7 +230,7 @@ internal class UnresolvedVariableReferenceFromInitializerToThisReferenceProcessi
     }
 }
 
-internal class VarToValProcessing : InspectionLikeProcessingForElement<KtProperty>(KtProperty::class.java) {
+internal class PrivateVarToValProcessing : InspectionLikeProcessingForElement<KtProperty>(KtProperty::class.java) {
     companion object {
         private val JPA_COLUMN_ANNOTATIONS: Set<FqName> = setOf(
             FqName("javax.persistence.Column"),
@@ -332,7 +332,7 @@ internal class RemoveRedundantVisibilityModifierProcessing : InspectionLikeProce
     }
 }
 
-internal class CanBeValInspectionBasedProcessing : InspectionLikeProcessingForElement<KtDeclaration>(KtDeclaration::class.java) {
+internal class LocalVarToValInspectionBasedProcessing : InspectionLikeProcessingForElement<KtDeclaration>(KtDeclaration::class.java) {
     override fun isApplicableTo(element: KtDeclaration, settings: ConverterSettings?): Boolean =
         CanBeValInspection.canBeVal(element, ignoreNotUsedVals = false)
 

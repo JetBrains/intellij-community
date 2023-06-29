@@ -250,8 +250,8 @@ private val processings: List<NamedPostProcessingGroup> = listOf(
         listOf(
             InspectionLikeProcessingGroup(
                 processings = listOf(
-                    VarToValProcessing(),
-                    CanBeValInspectionBasedProcessing()
+                    PrivateVarToValProcessing(),
+                    LocalVarToValInspectionBasedProcessing()
                 ),
                 runSingleTime = true
             ),
@@ -263,7 +263,7 @@ private val processings: List<NamedPostProcessingGroup> = listOf(
     NamedPostProcessingGroup(
         KotlinNJ2KServicesBundle.message("processing.step.cleaning.up.code"),
         listOf(
-            InspectionLikeProcessingGroup(VarToValProcessing()),
+            InspectionLikeProcessingGroup(PrivateVarToValProcessing()),
             ConvertGettersAndSettersToPropertyProcessing(),
             InspectionLikeProcessingGroup(RemoveExplicitAccessorInspectionBasedProcessing()),
             MergePropertyWithConstructorParameterProcessing(),
