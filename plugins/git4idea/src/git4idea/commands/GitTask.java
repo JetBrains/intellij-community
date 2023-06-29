@@ -53,16 +53,22 @@ public class GitTask {
 
   private static final Logger LOG = Logger.getInstance(GitTask.class);
 
-  private final Project myProject;
-  private final GitHandler myHandler;
+  private final @NotNull Project myProject;
+  private final @NotNull GitHandler myHandler;
   private final @NlsContexts.ProgressTitle String myTitle;
-  private GitProgressAnalyzer myProgressAnalyzer;
-  private ProgressIndicator myProgressIndicator;
+  private final @Nullable GitProgressAnalyzer myProgressAnalyzer;
+  private final @NotNull ProgressIndicator myProgressIndicator;
 
-  public GitTask(Project project, GitHandler handler, @NotNull @NlsContexts.ProgressTitle String title) {
+  public GitTask(@NotNull Project project,
+                 @NotNull GitHandler handler,
+                 @NotNull @NlsContexts.ProgressTitle String title,
+                 @NotNull ProgressIndicator progressIndicator,
+                 @Nullable GitProgressAnalyzer progressAnalyzer) {
     myProject = project;
     myHandler = handler;
     myTitle = title;
+    myProgressIndicator = progressIndicator;
+    myProgressAnalyzer = progressAnalyzer;
   }
 
   /**
@@ -247,14 +253,6 @@ public class GitTask {
         task.dispose();
       }
     });
-  }
-
-  public void setProgressAnalyzer(GitProgressAnalyzer progressAnalyzer) {
-    myProgressAnalyzer = progressAnalyzer;
-  }
-
-  public void setProgressIndicator(ProgressIndicator progressIndicator) {
-    myProgressIndicator = progressIndicator;
   }
 
   /**

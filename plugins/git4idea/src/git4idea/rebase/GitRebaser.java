@@ -93,8 +93,7 @@ public class GitRebaser {
     final GitLineHandler rh = new GitLineHandler(myProject, root, GitCommand.REBASE);
     rh.setStdoutSuppressed(false);
     rh.addParameters("--abort");
-    GitTask task = new GitTask(myProject, rh, GitBundle.message("rebase.update.project.abort.task.title"));
-    task.setProgressIndicator(myProgressIndicator);
+    GitTask task = new GitTask(myProject, rh, GitBundle.message("rebase.update.project.abort.task.title"), myProgressIndicator, null);
     task.executeAsync(new GitTaskResultNotificationHandler(
       myProject,
       REBASE_ABORT,
@@ -139,9 +138,10 @@ public class GitRebaser {
     // TODO If interactive rebase with commit rewording was invoked, this should take the reworded message
     GitRebaser.TrivialEditor editor = new GitRebaser.TrivialEditor();
     try (GitHandlerRebaseEditorManager ignored = GitHandlerRebaseEditorManager.prepareEditor(rh, editor)) {
-      final GitTask rebaseTask = new GitTask(myProject, rh, GitBundle.message("rebase.progress.indicator.continue.title"));
-      rebaseTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
-      rebaseTask.setProgressIndicator(myProgressIndicator);
+      final GitTask rebaseTask = new GitTask(myProject, rh,
+                                             GitBundle.message("rebase.progress.indicator.continue.title"),
+                                             myProgressIndicator,
+                                             new GitStandardProgressAnalyzer());
       return executeRebaseTaskInBackground(root, rh, rebaseConflictDetector, rebaseTask);
     }
   }
