@@ -13,6 +13,7 @@ object Tests: MermaidBuild(
   script = "./gradlew test --info",
   configuration = {
     withBaseVcsTrigger()
+    withCommitStatusPublisher("Compilation and Tests")
   }
 )
 
@@ -21,6 +22,7 @@ object PluginVerifier: MermaidBuild(
   script = "./gradlew runPluginVerifier --info",
   configuration = {
     withBaseVcsTrigger()
+    withCommitStatusPublisher("Plugin Verifier")
   }
 )
 
@@ -42,21 +44,11 @@ open class MermaidBuild(
       dockerImagePlatform = ScriptBuildStep.ImagePlatform.Linux
     }
   }
-
   configuration()
-
   features {
     dockerSupport {
       loginToRegistry = on {
         dockerRegistryId = "PROJECT_EXT_3495"
-      }
-    }
-    commitStatusPublisher {
-      publisher = space {
-        authType = connection {
-          connectionId = "PROJECT_EXT_2845"
-        }
-        displayName = "Compilation and Tests"
       }
     }
   }
@@ -65,5 +57,18 @@ open class MermaidBuild(
 internal fun BuildType.withBaseVcsTrigger() {
   triggers {
     vcs({})
+  }
+}
+
+internal fun BuildType.withCommitStatusPublisher(name: String) {
+  features {
+    commitStatusPublisher {
+      publisher = space {
+        authType = connection {
+          connectionId = "PROJECT_EXT_2845"
+        }
+        displayName = name
+      }
+    }
   }
 }
