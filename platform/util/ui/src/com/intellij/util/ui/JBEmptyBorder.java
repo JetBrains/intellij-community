@@ -27,26 +27,7 @@ public class JBEmptyBorder extends EmptyBorder {
   }
 
   public JBEmptyBorder(Insets insets) {
-    this(unscaledInsets(insets), true);
-  }
-
-  private JBEmptyBorder(Insets insets, @SuppressWarnings("unused") boolean verified) {
     this(insets.top, insets.left, insets.bottom, insets.right);
-  }
-
-  private static Insets unscaledInsets(Insets insets) {
-    if (insets instanceof JBInsets) {
-      JBInsets cleanInsets = JBInsets.create(((JBInsets)insets).getUnscaled());
-      if (insets.equals(cleanInsets)) insets = cleanInsets.getUnscaled();
-      else {
-        //noinspection UseDPIAwareInsets
-        insets = new Insets(JBUI.unscale(insets.top),
-                            JBUI.unscale(insets.left),
-                            JBUI.unscale(insets.bottom),
-                            JBUI.unscale(insets.right));
-      }
-    }
-    return insets;
   }
 
   public JBEmptyBorder(int offset) {
