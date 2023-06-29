@@ -9,7 +9,6 @@ import com.intellij.psi.PsiReferenceExpression;
 public class AccessStaticViaInstance extends AccessStaticViaInstanceBase {
   @Override
   protected LocalQuickFix createAccessStaticViaInstanceFix(PsiReferenceExpression expr,
-                                                           boolean onTheFly,
                                                            JavaResolveResult result) {
     return new AccessStaticViaInstanceFix(expr, result).asQuickFix();
   }
