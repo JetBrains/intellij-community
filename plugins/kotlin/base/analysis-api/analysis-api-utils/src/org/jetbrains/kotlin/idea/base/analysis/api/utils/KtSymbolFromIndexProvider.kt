@@ -183,13 +183,35 @@ class KtSymbolFromIndexProvider private constructor(private val project: Project
     }
 
     context(KtAnalysisSession)
+    fun getTopLevelExtensionCallableSymbolsByName(
+        name: Name,
+        receiverTypes: List<KtType>,
+        psiFilter: (KtCallableDeclaration) -> Boolean = { true }
+    ): Sequence<KtCallableSymbol> {
+        val receiverTypeNames = receiverTypes.flatMapTo(hashSetOf()) { findAllNamesForType(it) }
+        if (receiverTypeNames.isEmpty()) return emptySequence()
+
+        val keys = receiverTypeNames.map { KotlinTopLevelExtensionsByReceiverTypeIndex.buildKey(receiverTypeName = it, name.asString()) }
+        val valueFilter: (KtCallableDeclaration) -> Boolean = { psiFilter(it) && !it.isKotlinBuiltins() }
+        val values = keys.flatMap { key -> KotlinTopLevelExtensionsByReceiverTypeIndex.getAllElements(key, project, scope, valueFilter) }
+
+        return sequence {
+            for (extension in values) {
+                extension.getSymbolOfTypeSafe<KtCallableSymbol>()?.let { yield(it) }
+            }
+            val extensionScope = getResolveExtensionScopeWithTopLevelDeclarations()
+            yieldAll(extensionScope.getCallableSymbols(name).filterExtensionsByReceiverTypes(receiverTypes))
+        }
+    }
+
+    context(KtAnalysisSession)
     fun getTopLevelExtensionCallableSymbolsByNameFilter(
         nameFilter: (Name) -> Boolean,
         receiverTypes: List<KtType>,
         psiFilter: (KtCallableDeclaration) -> Boolean = { true }
     ): Sequence<KtCallableSymbol> {
         val receiverTypeNames = receiverTypes.flatMapTo(hashSetOf()) { findAllNamesForType(it) }
-        if (receiverTypeNames.isEmpty) return emptySequence()
+        if (receiverTypeNames.isEmpty()) return emptySequence()
 
         val keyFilter: (String) -> Boolean = { key ->
             val receiverTypeName = KotlinTopLevelExtensionsByReceiverTypeIndex.receiverTypeNameFromKey(key)
@@ -203,16 +225,20 @@ class KtSymbolFromIndexProvider private constructor(private val project: Project
             for (extension in values) {
                 extension.getSymbolOfTypeSafe<KtCallableSymbol>()?.let { yield(it) }
             }
+            val extensionScope = getResolveExtensionScopeWithTopLevelDeclarations()
+            yieldAll(extensionScope.getCallableSymbols(nameFilter).filterExtensionsByReceiverTypes(receiverTypes))
+        }
+    }
 
-            val nonNullableReceiverTypes = receiverTypes.map { it.withNullability(KtTypeNullability.NON_NULLABLE) }
-            yieldAll(
-                getResolveExtensionScopeWithTopLevelDeclarations().getCallableSymbols(nameFilter).filter { symbol ->
-                    if (!symbol.isExtension) return@filter false
-                    val symbolReceiverType = symbol.receiverType ?: return@filter false
+    context(KtAnalysisSession)
+    private fun Sequence<KtCallableSymbol>.filterExtensionsByReceiverTypes(receiverTypes: List<KtType>): Sequence<KtCallableSymbol> {
+        val nonNullableReceiverTypes = receiverTypes.map { it.withNullability(KtTypeNullability.NON_NULLABLE) }
 
-                    nonNullableReceiverTypes.any { it isPossiblySubTypeOf symbolReceiverType }
-                }
-            )
+        return filter { symbol ->
+            if (!symbol.isExtension) return@filter false
+            val symbolReceiverType = symbol.receiverType ?: return@filter false
+
+            nonNullableReceiverTypes.any { it isPossiblySubTypeOf symbolReceiverType }
         }
     }
 
