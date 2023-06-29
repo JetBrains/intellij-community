@@ -1,4 +1,5 @@
 import jetbrains.buildServer.configs.kotlin.*
+import jetbrains.buildServer.configs.kotlin.buildFeatures.commitStatusPublisher
 import jetbrains.buildServer.configs.kotlin.buildFeatures.dockerSupport
 import jetbrains.buildServer.configs.kotlin.buildSteps.ScriptBuildStep
 import jetbrains.buildServer.configs.kotlin.buildSteps.script
@@ -32,6 +33,14 @@ open class MermaidBuild(
     dockerSupport {
       loginToRegistry = on {
         dockerRegistryId = "PROJECT_EXT_3495"
+      }
+    }
+    commitStatusPublisher {
+      publisher = space {
+        authType = connection {
+          connectionId = "PROJECT_EXT_2845"
+        }
+        displayName = "Compilation and Tests"
       }
     }
   }
