@@ -728,7 +728,7 @@ private suspend fun createToolbar(coroutineScope: CoroutineScope, frame: JFrame)
   if (ExperimentalUI.isNewUI()) {
     val toolbar = withContext(Dispatchers.EDT) {
       val toolbar = MainToolbar(coroutineScope = coroutineScope, frame = frame, isOpaque = true)
-      toolbar.border = JBUI.Borders.empty(0, 5)
+      toolbar.border = JBUI.Borders.emptyLeft(5)
       toolbar
     }
     toolbar.init(computeMainActionGroups())
