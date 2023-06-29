@@ -5,9 +5,9 @@ import com.intellij.driver.sdk.ui.remote.SearchContext
 import org.intellij.lang.annotations.Language
 import java.time.Duration
 
-private const val DEFAULT_FIND_TIMEOUT_SECONDS = 15
+internal const val DEFAULT_FIND_TIMEOUT_SECONDS = 15
 
-interface ComponentFinder {
+interface Finder {
   val searchContext: SearchContext
 
   fun find(@Language("xpath") xpath: String, timeout: Duration = Duration.ofSeconds(DEFAULT_FIND_TIMEOUT_SECONDS.toLong())): UiComponent {

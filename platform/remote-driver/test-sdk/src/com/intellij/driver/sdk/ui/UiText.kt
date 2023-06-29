@@ -1,6 +1,6 @@
 package com.intellij.driver.sdk.ui
 
-import com.intellij.driver.sdk.ui.remote.TextData
+import com.intellij.driver.model.TextData
 
 class UiText(private val component: UiComponent, private val textData: TextData) {
   fun click() {

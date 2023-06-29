@@ -1,7 +1,7 @@
 package com.jetbrains.performancePlugin.remotedriver
 
+import com.intellij.driver.model.TextData
 import com.intellij.openapi.components.Service
-import com.jetbrains.performancePlugin.remotedriver.dataextractor.TextData
 import com.jetbrains.performancePlugin.remotedriver.dataextractor.TextParser
 import com.jetbrains.performancePlugin.remotedriver.dataextractor.TextToKeyCache
 import com.jetbrains.performancePlugin.remotedriver.robot.SmoothRobot

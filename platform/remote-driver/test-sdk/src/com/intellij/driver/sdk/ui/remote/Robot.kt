@@ -1,7 +1,7 @@
 package com.intellij.driver.sdk.ui.remote
 
 import com.intellij.driver.client.Remote
-import com.intellij.driver.model.transport.RemoteMouseButton
+import com.intellij.driver.model.RemoteMouseButton
 import java.awt.Point
 
 @Remote("com.jetbrains.performancePlugin.remotedriver.robot.SmoothRobot", plugin = REMOTE_ROBOT_MODULE_ID)

@@ -1,7 +1,7 @@
 package com.intellij.driver.sdk.ui
 
 import com.intellij.driver.client.Driver
-import com.intellij.driver.model.transport.RemoteMouseButton
+import com.intellij.driver.model.RemoteMouseButton
 import com.intellij.driver.sdk.ui.keyboard.WithKeyboard
 import com.intellij.driver.sdk.ui.remote.RobotService
 import com.intellij.driver.sdk.ui.remote.SearchContext
@@ -9,7 +9,7 @@ import java.awt.Point
 
 fun Driver.ui(): UiRobot = UiRobot(service(RobotService::class))
 
-class UiRobot(remoteRobotService: RobotService) : WithKeyboard, ComponentFinder {
+class UiRobot(remoteRobotService: RobotService) : WithKeyboard, Finder {
   override val searchContext: SearchContext = remoteRobotService
 
   fun moveMouse(point: Point) {

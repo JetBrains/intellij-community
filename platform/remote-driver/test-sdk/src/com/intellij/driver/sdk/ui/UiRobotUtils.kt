@@ -16,6 +16,8 @@ fun waitFor(
     now = System.currentTimeMillis()
   }
   if (condition().not()) {
-    throw IllegalStateException("Timeout($duration): $errorMessage")
+    throw WaitForException(duration, errorMessage)
   }
 }
+
+class WaitForException(duration: Duration, errorMessage: String) : IllegalStateException("Timeout($duration): $errorMessage")

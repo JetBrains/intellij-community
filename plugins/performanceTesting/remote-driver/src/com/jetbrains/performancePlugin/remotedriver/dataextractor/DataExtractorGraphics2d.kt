@@ -2,6 +2,7 @@
 
 package com.jetbrains.performancePlugin.remotedriver.dataextractor
 
+import com.intellij.driver.model.TextData
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Point

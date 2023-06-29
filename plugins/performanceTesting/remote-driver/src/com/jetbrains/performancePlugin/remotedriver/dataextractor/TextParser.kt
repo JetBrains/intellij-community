@@ -2,16 +2,14 @@
 
 package com.jetbrains.performancePlugin.remotedriver.dataextractor
 
+import com.intellij.driver.model.TextData
 import com.intellij.openapi.diagnostic.thisLogger
 import org.assertj.swing.edt.GuiActionRunner
 import org.assertj.swing.edt.GuiTask
 import java.awt.Component
 import java.awt.Point
 import java.awt.image.BufferedImage
-import java.io.Serializable
 import javax.swing.JViewport
-
-internal data class TextData(val text: String, val point: Point, val bundleKey: String?) : Serializable
 
 internal object TextParser {
   private val graphics = BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB).createGraphics()

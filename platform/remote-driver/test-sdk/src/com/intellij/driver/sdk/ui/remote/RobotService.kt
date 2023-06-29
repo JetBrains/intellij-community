@@ -1,6 +1,7 @@
 package com.intellij.driver.sdk.ui.remote
 
 import com.intellij.driver.client.Remote
+import com.intellij.driver.model.TextData
 import org.intellij.lang.annotations.Language
 
 internal const val REMOTE_ROBOT_MODULE_ID = "com.jetbrains.performancePlugin/intellij.performanceTesting.remoteDriver"

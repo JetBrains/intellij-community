@@ -2,7 +2,7 @@
 
 package com.jetbrains.performancePlugin.remotedriver.robot
 
-import com.intellij.driver.model.transport.RemoteMouseButton
+import com.intellij.driver.model.RemoteMouseButton
 import com.jetbrains.performancePlugin.remotedriver.waitFor
 import org.assertj.swing.awt.AWT.translate
 import org.assertj.swing.awt.AWT.visibleCenterOf
