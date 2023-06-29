@@ -3,6 +3,8 @@ package org.jetbrains.kotlin.idea.k2.refactoring
 
 import com.intellij.lang.refactoring.RefactoringSupportProvider
 import com.intellij.psi.PsiElement
+import com.intellij.refactoring.RefactoringActionHandler
+import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler
 
 class KotlinFirRefactoringSupportProvider : RefactoringSupportProvider() {
     override fun isSafeDeleteAvailable(element: PsiElement) = element.canDeleteElement()
@@ -16,4 +18,9 @@ class KotlinFirRefactoringSupportProvider : RefactoringSupportProvider() {
      * @see org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSupportProvider.isMemberInplaceRenameAvailable
      */
     override fun isMemberInplaceRenameAvailable(element: PsiElement, context: PsiElement?): Boolean = false
+
+    /**
+     * @see org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSupportProvider.getIntroduceVariableHandler
+     */
+    override fun getIntroduceVariableHandler(): RefactoringActionHandler = KotlinIntroduceVariableHandler
 }

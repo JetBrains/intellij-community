@@ -22,7 +22,9 @@ class KotlinFirRefactoringsSettings : PersistentStateComponent<KotlinFirRefactor
     var MOVE_SEARCH_REFERENCES: Boolean = true
     var MOVE_DELETE_EMPTY_SOURCE_FILES: Boolean = true
     var MOVE_MPP_DECLARATIONS: Boolean = true
-    
+    var INTRODUCE_DECLARE_WITH_VAR: Boolean = false
+    var INTRODUCE_SPECIFY_TYPE_EXPLICITLY: Boolean = false
+
     override fun getState() = this
 
     override fun loadState(state: KotlinFirRefactoringsSettings) = XmlSerializerUtil.copyBean(state, this)

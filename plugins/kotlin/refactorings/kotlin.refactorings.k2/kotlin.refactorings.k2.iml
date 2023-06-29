@@ -21,5 +21,6 @@
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="module" module-name="kotlin.refactorings.common" />
     <orderEntry type="module" module-name="kotlin.searching.k2" />
+    <orderEntry type="module" module-name="kotlin.refactorings.introduce.k2" />
   </component>
 </module>

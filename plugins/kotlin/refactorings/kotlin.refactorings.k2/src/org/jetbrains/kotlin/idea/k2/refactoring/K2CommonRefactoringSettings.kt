@@ -46,4 +46,10 @@ internal class K2CommonRefactoringSettings : KotlinCommonRefactoringSettingsBase
 
     override var MOVE_MPP_DECLARATIONS: Boolean
             by delegateTo { it::MOVE_MPP_DECLARATIONS }
+
+    override var INTRODUCE_DECLARE_WITH_VAR: Boolean
+            by delegateTo { it::INTRODUCE_DECLARE_WITH_VAR }
+
+    override var INTRODUCE_SPECIFY_TYPE_EXPLICITLY: Boolean
+            by delegateTo { it::INTRODUCE_SPECIFY_TYPE_EXPLICITLY }
 }
