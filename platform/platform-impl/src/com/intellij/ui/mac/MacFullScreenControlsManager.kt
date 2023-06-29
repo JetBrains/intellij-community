@@ -95,7 +95,7 @@ object MacFullScreenControlsManager {
         configureForDistractionFreeMode(true)
       }
     }
-    else {
+    else if (!ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled()) {
       configureForDistractionFreeMode(false)
     }
   }
