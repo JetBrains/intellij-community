@@ -19,13 +19,9 @@ import javax.swing.JFrame
 
 internal class FrameInfoHelper {
   companion object {
-    @JvmStatic
-    fun isFullScreenSupportedInCurrentOs(): Boolean {
+    internal fun isFullScreenSupportedInCurrentOs(): Boolean {
       return SystemInfoRt.isMac || SystemInfoRt.isWindows || (SystemInfoRt.isXWindow && X11UiUtil.isFullScreenSupported())
     }
-
-    val isFloatingMenuBarSupported: Boolean
-      get() = !SystemInfoRt.isMac && isFullScreenSupportedInCurrentOs()
 
     @JvmStatic
     fun isMaximized(state: Int): Boolean {

@@ -58,7 +58,7 @@ private sealed interface MainToolbarFlavor {
   }
 }
 
-private class MenuButtonInToolbarMainToolbarFlavor(private val coroutineScope: CoroutineScope,
+private class MenuButtonInToolbarMainToolbarFlavor(coroutineScope: CoroutineScope,
                                                    private val headerContent: JComponent,
                                                    frame: JFrame) : MainToolbarFlavor {
   private val mainMenuButton = MainMenuButton()
@@ -351,6 +351,7 @@ private class MyActionToolbarImpl(group: ActionGroup,
     val component = super.createCustomComponent(action, presentation)
 
     if (component.foreground != null) {
+      @Suppress("UnregisteredNamedColor")
       component.foreground = JBColor.namedColor("MainToolbar.foreground", component.foreground)
     }
 
@@ -456,11 +457,11 @@ private class HeaderIconUpdater {
 
   fun registerFor(presentation: Presentation, propName: String, getter: (Presentation) -> Icon?, setter: (Presentation, Icon) -> Unit) {
     updateIcon(presentation, getter, setter)
-    presentation.addPropertyChangeListener(PropertyChangeListener { evt ->
-      if (evt.propertyName != propName) {
+    presentation.addPropertyChangeListener(PropertyChangeListener { event ->
+      if (event.propertyName != propName) {
         return@PropertyChangeListener
       }
-      if (evt.newValue != null && evt.newValue in iconCache) {
+      if (event.newValue != null && event.newValue in iconCache) {
         return@PropertyChangeListener
       }
       updateIcon(presentation, getter, setter)

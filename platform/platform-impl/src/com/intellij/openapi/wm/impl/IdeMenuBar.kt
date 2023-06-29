@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.IdeFrame
-import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFloatingMenuBarSupported
 import com.intellij.ui.Gray
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.mac.foundation.NSDefaults
@@ -40,7 +39,7 @@ internal enum class IdeMenuBarState {
 
 @Suppress("LeakingThis")
 open class IdeMenuBar internal constructor(@JvmField internal val coroutineScope: CoroutineScope,
-                                           private val frame: JFrame) : JMenuBar(), ActionAwareIdeMenuBar {
+                                           @JvmField internal val frame: JFrame) : JMenuBar(), ActionAwareIdeMenuBar {
   private val menuBarHelper: IdeMenuBarHelper
 
   @JvmField

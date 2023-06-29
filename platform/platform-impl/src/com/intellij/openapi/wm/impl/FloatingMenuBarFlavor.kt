@@ -22,7 +22,7 @@ import kotlin.math.sqrt
 
 internal class FloatingMenuBarFlavor(private val menuBar: IdeMenuBar) : IdeMenuFlavor {
   private val clockPanel = ClockPanel()
-  private val button = MyExitFullScreenButton()
+  private val exitFullScreenButton = FloatingMenuBarExitFullScreenButton(menuBar.frame)
   private val animator = MyAnimator(menuBar = menuBar, flavor = this)
 
   private val activationWatcher = TimerUtil.createNamedTimer("IdeMenuBar", 100, MyActionListener())
@@ -40,7 +40,7 @@ internal class FloatingMenuBarFlavor(private val menuBar: IdeMenuBar) : IdeMenuF
 
   init {
     menuBar.add(clockPanel)
-    menuBar.add(button)
+    menuBar.add(exitFullScreenButton)
 
     menuBar.addMouseListener(MyMouseListener())
     menuBar.addPropertyChangeListener(IdeFrameDecorator.FULL_SCREEN) { updateState() }
@@ -69,7 +69,7 @@ internal class FloatingMenuBarFlavor(private val menuBar: IdeMenuBar) : IdeMenuF
   }
 
   private fun findActualComponent(mouseEvent: MouseEvent): Component? {
-    var component: Component? = mouseEvent.component ?: return null
+    val component = mouseEvent.component ?: return null
     val deepestComponent = if (state != IdeMenuBarState.EXPANDED &&
                                !state.isInProgress &&
                                menuBar.contains(SwingUtilities.convertPoint(component, mouseEvent.point, menuBar))) {
@@ -78,10 +78,7 @@ internal class FloatingMenuBarFlavor(private val menuBar: IdeMenuBar) : IdeMenuF
     else {
       SwingUtilities.getDeepestComponentAt(mouseEvent.component, mouseEvent.x, mouseEvent.y)
     }
-    if (deepestComponent != null) {
-      component = deepestComponent
-    }
-    return component
+    return deepestComponent ?: component
   }
 
   private inner class MyActionListener : ActionListener {
@@ -141,7 +138,7 @@ internal class FloatingMenuBarFlavor(private val menuBar: IdeMenuBar) : IdeMenuF
   }
 
   private fun updateState() {
-    val window = (SwingUtilities.getWindowAncestor(menuBar) as? IdeFrame) ?: return
+    val window = menuBar.frame as? IdeFrame ?: return
     if (window.isInFullScreen) {
       state = IdeMenuBarState.COLLAPSING
       restartAnimator()
@@ -150,7 +147,7 @@ internal class FloatingMenuBarFlavor(private val menuBar: IdeMenuBar) : IdeMenuF
       animator.suspend()
       state = IdeMenuBarState.EXPANDED
       clockPanel.isVisible = false
-      button.isVisible = false
+      exitFullScreenButton.isVisible = false
     }
   }
 
@@ -162,7 +159,7 @@ internal class FloatingMenuBarFlavor(private val menuBar: IdeMenuBar) : IdeMenuF
   override fun addClockPanel() {
     // why do we add it if we already add it?
     menuBar.add(clockPanel)
-    menuBar.add(button)
+    menuBar.add(exitFullScreenButton)
   }
 
   override fun updateAppMenu() {
@@ -172,21 +169,19 @@ internal class FloatingMenuBarFlavor(private val menuBar: IdeMenuBar) : IdeMenuF
   override fun layoutClockPanelAndButton() {
     if (state == IdeMenuBarState.EXPANDED) {
       clockPanel.isVisible = false
-      button.isVisible = false
+      exitFullScreenButton.isVisible = false
     }
     else {
       clockPanel.isVisible = true
-      button.isVisible = true
-      var preferredSize = button.preferredSize
-      button.setBounds(menuBar.bounds.width - preferredSize.width, 0, preferredSize.width, preferredSize.height)
+      exitFullScreenButton.isVisible = true
+      var preferredSize = exitFullScreenButton.preferredSize
+      exitFullScreenButton.setBounds(menuBar.bounds.width - preferredSize.width, 0, preferredSize.width, preferredSize.height)
       preferredSize = clockPanel.preferredSize
-      clockPanel.setBounds(menuBar.bounds.width - preferredSize.width - button.width, 0, preferredSize.width, preferredSize.height)
+      clockPanel.setBounds(menuBar.bounds.width - preferredSize.width - exitFullScreenButton.width, 0, preferredSize.width, preferredSize.height)
     }
   }
 
-  override fun correctMenuCount(menuCount: Int): Int {
-    return menuCount - 2
-  }
+  override fun correctMenuCount(menuCount: Int): Int = menuCount - 2
 }
 
 private class MyMouseListener : MouseAdapter() {
@@ -210,11 +205,11 @@ private class MyMouseListener : MouseAdapter() {
   }
 }
 
-private class MyExitFullScreenButton : JButton() {
+private class FloatingMenuBarExitFullScreenButton(private val frame: JFrame) : JButton() {
   init {
     isFocusable = false
     addActionListener {
-      ProjectFrameHelper.getFrameHelper(SwingUtilities.getWindowAncestor(this))?.toggleFullScreen(false)
+      ProjectFrameHelper.getFrameHelper(frame)?.toggleFullScreen(false)
     }
     addMouseListener(object : MouseAdapter() {
       override fun mouseEntered(e: MouseEvent) {
@@ -228,9 +223,8 @@ private class MyExitFullScreenButton : JButton() {
   }
 
   override fun getPreferredSize(): Dimension {
-    val height: Int
     val parent = parent
-    height = if (isVisible && parent != null) {
+    val height = if (isVisible && parent != null) {
       parent.size.height - parent.insets.top - parent.insets.bottom
     }
     else {
@@ -239,7 +233,7 @@ private class MyExitFullScreenButton : JButton() {
     return Dimension(height, height)
   }
 
-  override fun getMaximumSize(): Dimension = preferredSize
+  override fun getMaximumSize() = preferredSize
 
   override fun paint(g: Graphics) {
     val g2d = g.create() as Graphics2D
@@ -251,7 +245,7 @@ private class MyExitFullScreenButton : JButton() {
       g2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY)
       val s = height.toDouble() / 13
       g2d.translate(s, s)
-      val plate: Shape = RoundRectangle2D.Double(0.0, 0.0, s * 11, s * 11, s, s)
+      val plate = RoundRectangle2D.Double(0.0, 0.0, s * 11, s * 11, s, s)
       val color = UIManager.getColor("Label.foreground")
       val hover = model.isRollover || model.isPressed
       g2d.color = ColorUtil.withAlpha(color, if (hover) .25 else .18)

@@ -29,7 +29,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
-import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFloatingMenuBarSupported
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MacToolbarFrameHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameCustomHeader
@@ -72,6 +71,9 @@ private inline fun mainToolbarHasNoActions(mainToolbarActionSupplier: () -> List
   return mainToolbarActionSupplier().all { it.first.getChildren(null).isEmpty() }
 }
 
+internal val isFloatingMenuBarSupported: Boolean
+  get() = !SystemInfoRt.isMac && FrameInfoHelper.isFullScreenSupportedInCurrentOs()
+
 @Suppress("LeakingThis")
 @ApiStatus.Internal
 open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
@@ -102,14 +104,14 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
 
   private sealed interface Helper {
     val toolbarHolder: ToolbarHolder?
-
     val ideMenu: ActionAwareIdeMenuBar?
+    val isFloatingMenuBarSupported: Boolean
 
     fun init(frame: JFrame, pane: JRootPane, parentDisposable: Disposable) {
     }
   }
 
-  private object UndecoratedHelper : Helper {
+  private class UndecoratedHelper(override val isFloatingMenuBarSupported: Boolean) : Helper {
     override val toolbarHolder: ToolbarHolder?
       get() = null
 
@@ -129,7 +131,8 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     val customFrameTitlePane: MainFrameCustomHeader,
     val selectedEditorFilePath: SelectedEditorFilePath?,
     val isLightEdit: Boolean,
-    override val ideMenu: ActionAwareIdeMenuBar
+    override val ideMenu: ActionAwareIdeMenuBar,
+    override val isFloatingMenuBarSupported: Boolean
   ) : Helper {
     override val toolbarHolder: ToolbarHolder? = (customFrameTitlePane as? ToolbarHolder)
       ?.takeIf { ExperimentalUI.isNewUI() && (isToolbarInHeader() || isLightEdit) }
@@ -157,9 +160,10 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     contentPane.addMouseMotionListener(object : MouseMotionAdapter() {})
 
     val isDecoratedMenu = isDecoratedMenu
+    val isFloatingMenuBarSupported = isFloatingMenuBarSupported
     if (!isDecoratedMenu && !isFloatingMenuBarSupported) {
       jMenuBar = createMenuBar(coroutineScope.childScope(), frame)
-      helper = UndecoratedHelper
+      helper = UndecoratedHelper(isFloatingMenuBarSupported = false)
     }
     else {
       if (isDecoratedMenu) {
@@ -199,6 +203,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
           selectedEditorFilePath = selectedEditorFilePath,
           isLightEdit = isLightEdit,
           ideMenu = ideMenu,
+          isFloatingMenuBarSupported = isFloatingMenuBarSupported,
         )
         layeredPane.add(customFrameTitlePane.getComponent(), (JLayeredPane.DEFAULT_LAYER - 3) as Any)
       }
@@ -206,6 +211,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
         val ideMenu = createMenuBar(coroutineScope.childScope(), frame)
         val customFrameTitlePane = ToolbarFrameHeader(frame = frame, root = this, ideMenuBar = ideMenu)
         helper = DecoratedHelper(
+          isFloatingMenuBarSupported = true,
           customFrameTitlePane = customFrameTitlePane,
           selectedEditorFilePath = null,
           isLightEdit = isLightEdit,
@@ -214,10 +220,11 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
         layeredPane.add(customFrameTitlePane.getComponent(), (JLayeredPane.DEFAULT_LAYER - 3) as Any)
       }
       else {
-        helper = UndecoratedHelper
+        helper = UndecoratedHelper(isFloatingMenuBarSupported = true)
       }
 
-      if (isFloatingMenuBarSupported) {
+      assert(isFloatingMenuBarSupported == helper.isFloatingMenuBarSupported)
+      if (helper.isFloatingMenuBarSupported) {
         menuBar = createMenuBar(coroutineScope.childScope(), frame)
         menuBar.isOpaque = true
         layeredPane.add(menuBar, (JLayeredPane.DEFAULT_LAYER - 1) as Any)
@@ -420,7 +427,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
 
   @RequiresEdt
   internal fun preInit(isInFullScreen: () -> Boolean) {
-    if (isDecoratedMenu || isFloatingMenuBarSupported) {
+    if (helper is DecoratedHelper || helper.isFloatingMenuBarSupported) {
       addPropertyChangeListener(IdeFrameDecorator.FULL_SCREEN) { updateScreenState(isInFullScreen) }
       updateScreenState(isInFullScreen)
     }
