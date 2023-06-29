@@ -4,6 +4,7 @@ package com.intellij.execution.wsl;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.testFramework.fixtures.TestFixtureRule;
 import com.intellij.testFramework.rules.TempDirectory;
 import org.assertj.core.api.Assertions;
@@ -24,18 +25,23 @@ public final class WSLUtilTest {
   @Rule public final TempDirectory tempDirectory = new TempDirectory();
 
   @Test
+  public void testUncPrefix() {
+    Assertions.assertThat(WSLUtil.getUncPrefix()).isIn(WslConstants.UNC_PREFIX, "\\\\wsl.localhost\\");
+  }
+
+  @Test
   public void testWslToWinPath() {
     var wsl = wslRule.getWsl();
-    assertWslPath(wsl.getMsId(), "\\mnt\\cd", wsl.getWindowsPath("/mnt/cd"));
-    assertWslPath(wsl.getMsId(), "\\mnt", wsl.getWindowsPath("/mnt"));
-    assertWslPath(wsl.getMsId(), "", wsl.getWindowsPath(""));
-    assertWslPath(wsl.getMsId(), "\\mnt\\test", wsl.getWindowsPath("/mnt//test"));
-    assertWslPath(wsl.getMsId(), "\\mnt\\1\\test", wsl.getWindowsPath("/mnt/1/test"));
+    assertEquals(WSLUtil.getUncPrefix() + wsl.getMsId() + "\\mnt\\cd", wsl.getWindowsPath("/mnt/cd"));
+    assertEquals(WSLUtil.getUncPrefix() + wsl.getMsId()+ "\\mnt", wsl.getWindowsPath("/mnt"));
+    assertEquals(WSLUtil.getUncPrefix() + wsl.getMsId(), wsl.getWindowsPath(""));
+    assertEquals(WSLUtil.getUncPrefix() + wsl.getMsId() + "\\mnt\\test", wsl.getWindowsPath("/mnt//test"));
+    assertEquals(WSLUtil.getUncPrefix() + wsl.getMsId() + "\\mnt\\1\\test", wsl.getWindowsPath("/mnt/1/test"));
 
     assertEquals("C:", wsl.getWindowsPath("/mnt/c"));
-    assertWslPath(wsl.getMsId(), "\\mnt\\", wsl.getWindowsPath("/mnt/"));
-    assertWslPath(wsl.getMsId(), "\\mnt", wsl.getWindowsPath("/mnt"));
-    assertWslPath(wsl.getMsId(), "\\", wsl.getWindowsPath("/"));
+    assertEquals(WSLUtil.getUncPrefix() + wsl.getMsId() + "\\mnt\\", wsl.getWindowsPath("/mnt/"));
+    assertEquals(WSLUtil.getUncPrefix() + wsl.getMsId() + "\\mnt", wsl.getWindowsPath("/mnt"));
+    assertEquals(WSLUtil.getUncPrefix() + wsl.getMsId() + "\\", wsl.getWindowsPath("/"));
     assertEquals("X:\\", wsl.getWindowsPath("/mnt/x/"));
     assertEquals("C:", wsl.getWindowsPath("/mnt/C"));
 
@@ -44,10 +50,6 @@ public final class WSLUtilTest {
     assertEquals("C:\\name with spaces\\another name with spaces", wsl.getWindowsPath("/mnt/c/name with spaces/another name with spaces"));
     //noinspection NonAsciiCharacters
     assertEquals("C:\\юникод", wsl.getWindowsPath("/mnt/c/юникод"));
-  }
-
-  private static void assertWslPath(String distroId, String local, String winPath) {
-    Assertions.assertThat(winPath).matches("\\\\\\\\wsl(\\$|\\.localhost)\\\\" + distroId + local.replace("\\", "\\\\"));
   }
 
   @Test

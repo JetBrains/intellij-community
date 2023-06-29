@@ -3,9 +3,7 @@ package com.intellij.execution.wsl
 
 import com.intellij.execution.wsl.ui.createFileChooserDescriptor
 import com.intellij.execution.wsl.ui.getBestWindowsPathFromLinuxPath
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.fixtures.TestFixtureRule
-import org.assertj.core.api.Assertions
 import org.junit.Assert
 import org.junit.ClassRule
 import org.junit.Test
@@ -26,21 +24,20 @@ class WslPathBrowserTest {
 
   @Test
   fun correctPath() {
-    assertWslPath(getBestWindowsPathFromLinuxPath(wslRule.wsl, "/bin")!!, "/bin")
+    Assert.assertEquals("${WSLUtil.getUncPrefix()}${wslRule.wsl.msId}\\bin",
+                        getBestWindowsPathFromLinuxPath(wslRule.wsl, "/bin")!!.presentableUrl)
   }
 
   @Test
   fun bestPath() {
-    assertWslPath(getBestWindowsPathFromLinuxPath(wslRule.wsl, "/bin/foo/bur/buz")!!, "/bin")
+    Assert.assertEquals("${WSLUtil.getUncPrefix()}${wslRule.wsl.msId}\\bin",
+                        getBestWindowsPathFromLinuxPath(wslRule.wsl, "/bin/foo/bur/buz")!!.presentableUrl)
   }
 
   @Test
   fun wrongPath() {
-    assertWslPath(getBestWindowsPathFromLinuxPath(wslRule.wsl, "/something_that_simply_doesnt_exist"), "/")
-  }
-
-  private fun assertWslPath(winPath: VirtualFile?, expected: String) {
-    Assertions.assertThat(winPath.toString()).matches("file:////wsl(\\$|\\.localhost)/${wslRule.wsl.msId}${expected}")
+    Assert.assertEquals("${WSLUtil.getUncPrefix()}${wslRule.wsl.msId}\\",
+                        getBestWindowsPathFromLinuxPath(wslRule.wsl, "/something_that_simply_doesnt_exist")!!.presentableUrl)
   }
 
   @Test
