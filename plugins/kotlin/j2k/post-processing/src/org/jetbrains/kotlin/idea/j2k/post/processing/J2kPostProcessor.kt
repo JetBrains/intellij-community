@@ -222,7 +222,10 @@ private val inspectionLikePostProcessingGroup =
         inspectionBasedProcessing(ReplaceGetOrSetInspection()),
         intentionBasedProcessing(ObjectLiteralToLambdaIntention(), writeActionNeeded = true),
         intentionBasedProcessing(RemoveUnnecessaryParenthesesIntention()),
-        intentionBasedProcessing(DestructureIntention(), writeActionNeeded = false),
+        intentionBasedProcessing(DestructureIntention(), writeActionNeeded = false) {
+            // Don't destructure regular variables, it will lose the original variable name and may hurt code readability
+            it.parent is KtForExpression
+        },
         inspectionBasedProcessing(SimplifyAssertNotNullInspection()),
         LiftReturnInspectionBasedProcessing(),
         LiftAssignmentInspectionBasedProcessing(),

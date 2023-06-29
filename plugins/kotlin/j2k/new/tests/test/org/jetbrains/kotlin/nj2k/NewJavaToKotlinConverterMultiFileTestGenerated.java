@@ -88,6 +88,11 @@ public class NewJavaToKotlinConverterMultiFileTestGenerated extends AbstractNewJ
         runTest("testData/multiFile/KT11952/");
     }
 
+    @TestMetadata("NoDestructuringForPlainVariables")
+    public void testNoDestructuringForPlainVariables() throws Exception {
+        runTest("testData/multiFile/NoDestructuringForPlainVariables/");
+    }
+
     @TestMetadata("NullabilityByDFa")
     public void testNullabilityByDFa() throws Exception {
         runTest("testData/multiFile/NullabilityByDFa/");
