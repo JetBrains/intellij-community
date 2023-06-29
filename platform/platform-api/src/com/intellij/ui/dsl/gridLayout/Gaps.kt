@@ -3,6 +3,7 @@ package com.intellij.ui.dsl.gridLayout
 
 import com.intellij.ui.dsl.checkNonNegative
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 
@@ -40,4 +41,7 @@ fun JBGaps(top: Int = 0, left: Int = 0, bottom: Int = 0, right: Int = 0): Gaps {
 @Internal
 @Deprecated("Use UnscaledGaps", replaceWith = ReplaceWith("UnscaledGaps()"))
 @ApiStatus.ScheduledForRemoval
-fun Gaps.toUnscaled(): UnscaledGaps = UnscaledGaps(top = top.unscale(), left = left.unscale(), bottom = bottom.unscale(), right = right.unscale())
+fun Gaps.toUnscaled(): UnscaledGaps = UnscaledGaps(top = JBUI.unscale(top),
+                                                   left = JBUI.unscale(left),
+                                                   bottom = JBUI.unscale(bottom),
+                                                   right = JBUI.unscale(right))

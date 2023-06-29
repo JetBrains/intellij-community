@@ -9,7 +9,6 @@ import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
-import com.intellij.ui.dsl.gridLayout.unscale
 import com.intellij.usageView.UsageViewBundle
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.JBUI
@@ -49,7 +48,7 @@ internal class ShowUsagesHeader(pinButton: JComponent, @NlsContexts.PopupTitle t
           val pinCell = cell(pinButton)
 
           if (ExperimentalUI.isNewUI()) {
-            val headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets().unscale()
+            val headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets().unscaled
             titleCell.customize(UnscaledGaps(top = headerInsets.top, bottom = headerInsets.bottom, right = 12))
             statusCell.component.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
             statusCell.customize(UnscaledGaps(right = 8))

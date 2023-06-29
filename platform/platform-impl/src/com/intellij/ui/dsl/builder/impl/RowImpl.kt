@@ -29,12 +29,12 @@ import com.intellij.ui.dsl.builder.components.*
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.ui.dsl.gridLayout.VerticalGaps
-import com.intellij.ui.dsl.gridLayout.unscale
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.Function
 import com.intellij.util.MathUtil
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -433,7 +433,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun customize(customRowGaps: VerticalGaps): Row {
-    return customize(UnscaledGapsY(customRowGaps.top.unscale(), customRowGaps.bottom.unscale()))
+    return customize(UnscaledGapsY(JBUI.unscale(customRowGaps.top), JBUI.unscale(customRowGaps.bottom)))
   }
 
   override fun customize(customRowGaps: UnscaledGapsY): Row {

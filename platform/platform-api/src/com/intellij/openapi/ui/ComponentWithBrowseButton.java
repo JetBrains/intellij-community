@@ -27,6 +27,8 @@ import com.intellij.ui.dsl.builder.DslComponentProperty;
 import com.intellij.ui.dsl.builder.VerticalComponentGap;
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps;
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsKt;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -97,9 +99,9 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     }
     LazyDisposable.installOn(this);
 
-    Insets unscaledInsets = UnscaledGapsKt.unscale(myComponent.getInsets());
+    Insets unscaledInsets = JBInsets.unscale(myComponent.getInsets());
     if (!inlineBrowseButton) {
-      unscaledInsets.right = UnscaledGapsKt.unscale(myBrowseButton.getInsets().right);
+      unscaledInsets.right = JBUI.unscale(myBrowseButton.getInsets().right);
     }
     UnscaledGaps visualPaddings = UnscaledGapsKt.toUnscaledGaps(unscaledInsets);
     putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, component);
