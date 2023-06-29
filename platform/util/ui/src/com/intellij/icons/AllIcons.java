@@ -162,6 +162,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon RealIntentionBulb = load("actions/realIntentionBulb.svg", 516517225, 2);
     /** 16x16 */ public static final @NotNull Icon Redo = load("actions/redo.svg", 1384796752, 2);
     /** 16x16 */ public static final @NotNull Icon RefactoringBulb = load("actions/refactoringBulb.svg", -1341396806, 2);
+    /** 16x16 */ public static final @NotNull Icon ReformatCode = load("actions/reformatCode.svg", 1503774223, 2);
     /** 16x16 */ public static final @NotNull Icon Refresh = load("actions/refresh.svg", 954789704, 2);
     /** 16x16 */ public static final @NotNull Icon Regex = load("actions/regex.svg", -669040651, 0);
     /** 16x16 */ public static final @NotNull Icon RegexHovered = load("actions/regexHovered.svg", -17694115, 0);

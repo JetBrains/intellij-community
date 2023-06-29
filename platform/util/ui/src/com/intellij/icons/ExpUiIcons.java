@@ -29,6 +29,8 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon GroupByTestProduction = load("expui/actions/groupByTestProduction.svg", 673012876, 2);
     /** 16x16 */ public static final @NotNull Icon InSelection = load("expui/actions/inSelection.svg", -672670687, 2);
     /** 16x16 */ public static final @NotNull Icon Install = load("expui/actions/install.svg", 1754913287, 2);
+    /** 16x16 */ public static final @NotNull Icon Lightning = load("expui/actions/lightning.svg", -270648659, 2);
+    /** 16x16 */ public static final @NotNull Icon Minimap = load("expui/actions/minimap.svg", -1838091231, 2);
     /** 16x16 */ public static final @NotNull Icon MoveToBottomLeft = load("expui/actions/moveToBottomLeft.svg", -1880102300, 2);
     /** 16x16 */ public static final @NotNull Icon MoveToBottomRight = load("expui/actions/moveToBottomRight.svg", 742208591, 2);
     /** 16x16 */ public static final @NotNull Icon MoveToButton = load("expui/actions/moveToButton.svg", -483907299, 2);
@@ -43,6 +45,8 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon PlayLast = load("expui/actions/playLast.svg", -236076917, 2);
     /** 16x16 */ public static final @NotNull Icon ProfileCPU = load("expui/actions/profileCPU.svg", -143458575, 2);
     /** 16x16 */ public static final @NotNull Icon ProjectDirectory = load("expui/actions/projectDirectory.svg", 1333538549, 2);
+    /** 16x16 */ public static final @NotNull Icon ReformatCode = load("expui/actions/reformatCode.svg", 1018232520, 2);
+    /** 16x16 */ public static final @NotNull Icon RunAll = load("expui/actions/runAll.svg", 892135407, 2);
     /** 16x16 */ public static final @NotNull Icon ShowImportStatements = load("expui/actions/showImportStatements.svg", 935761482, 2);
     /** 16x16 */ public static final @NotNull Icon ShowReadAccess = load("expui/actions/showReadAccess.svg", 432207500, 2);
     /** 16x16 */ public static final @NotNull Icon ShowWriteAccess = load("expui/actions/showWriteAccess.svg", 799113071, 2);
