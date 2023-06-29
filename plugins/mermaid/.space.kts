@@ -18,7 +18,7 @@ fun Container.publishingEnvironment(channel: String = PublishChannels.STABLE) {
   }
 }
 
-val defaultImage = "registry.jetbrains.team/p/grazi/grazie-automation/mermaid-ci:latest"
+val defaultImage = "registry.jetbrains.team/p/grazi/grazie-automation/mermaid-ci:1.0.0"
 
 job("Mermaid / Build for 232") {
   startOn {
@@ -32,7 +32,12 @@ job("Mermaid / Build for 232") {
   container(defaultImage) {
     productionBuild()
     shellScript {
-      content = "./gradlew build"
+      content = """
+      ./gradlew build || exit
+      export DISPLAY=:0.0
+      Xvfb -ac :0 -screen 0 1920x1080x16 &
+      ./gradlew previewTests || exit
+      """.trimIndent()
     }
   }
 }
