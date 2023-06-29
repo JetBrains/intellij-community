@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.intentions.ImportAllMembersIntention
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.resolveToKotlinType
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
@@ -27,7 +28,6 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
-import org.jetbrains.kotlin.references.fe10.KtFe10SimpleNameReference
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.uast.*
 import org.jetbrains.uast.generate.UParameterInfo
@@ -83,8 +83,7 @@ class KotlinUastCodeGenerationPlugin : UastCodeGenerationPlugin {
     override fun bindToElement(reference: UReferenceExpression, element: PsiElement): PsiElement? {
         val sourcePsi = reference.sourcePsi ?: return null
         if (sourcePsi !is KtSimpleNameExpression) return null
-        return KtFe10SimpleNameReference(sourcePsi)
-            .bindToElement(element, KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING)
+        return sourcePsi.mainReference.bindToElement(element, KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING)
     }
 
     override fun shortenReference(reference: UReferenceExpression): UReferenceExpression? {
