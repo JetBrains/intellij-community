@@ -86,7 +86,7 @@ final class DirectoryLock {
     myFallbackMode = !areUdsSupported(myPortFile);
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug("portFile=" + myPortFile + " lockFile=" + myLockFile + " fallback=" + myFallbackMode);
+      LOG.debug("portFile=" + myPortFile + " lockFile=" + myLockFile + " fallback=" + myFallbackMode + " PID=" + myPid);
     }
 
     if (!myFallbackMode && myPortFile.toString().length() > UDS_PATH_LENGTH_LIMIT) {
@@ -160,6 +160,7 @@ final class DirectoryLock {
     var serverChannel = myServerChannel;
     myServerChannel = null;
     if (serverChannel != null) {
+      if (LOG.isDebugEnabled()) LOG.debug("Cleaning up");
       Suppressions.runSuppressing(
         () -> serverChannel.close(),
         () -> {
