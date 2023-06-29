@@ -134,7 +134,7 @@ open class DistributedTestHost {
               IdeEventQueue.getInstance().flushQueue()
 
               // Execute test method
-              lateinit var result: RdTask<Boolean>
+              lateinit var result: RdTask<String>
               val context = when (session.agentInfo.agentType) {
                 RdAgentType.HOST -> HostAgentContextImpl(session.agentInfo, application, projectOrNull, protocol)
                 RdAgentType.CLIENT -> ClientAgentContextImpl(session.agentInfo, application, projectOrNull, protocol)
