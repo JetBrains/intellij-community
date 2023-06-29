@@ -53,7 +53,7 @@ class DistributedTestModel private constructor(
         
         private val __RdTestSessionNullableSerializer = RdTestSession.nullable()
         
-        const val serializationHash = 8053557124779620539L
+        const val serializationHash = -7455727024583995724L
         
     }
     override val serializersOwner: ISerializersOwner get() = DistributedTestModel
@@ -195,7 +195,7 @@ class RdTestSession private constructor(
     private val _shutdown: RdSignal<Unit>,
     private val _closeProject: RdCall<Unit, Boolean>,
     private val _closeProjectIfOpened: RdCall<Unit, Boolean>,
-    private val _runNextAction: RdCall<Unit, Boolean>,
+    private val _runNextAction: RdCall<Unit, String>,
     private val _makeScreenshot: RdCall<String, Boolean>
 ) : RdBindableBase() {
     //companion
@@ -215,7 +215,7 @@ class RdTestSession private constructor(
             val _shutdown = RdSignal.read(ctx, buffer, FrameworkMarshallers.Void)
             val _closeProject = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _closeProjectIfOpened = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
-            val _runNextAction = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
+            val _runNextAction = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.String)
             val _makeScreenshot = RdCall.read(ctx, buffer, FrameworkMarshallers.String, FrameworkMarshallers.Bool)
             return RdTestSession(agentInfo, testClassName, testMethodName, traceCategories, _ready, _sendException, _shutdown, _closeProject, _closeProjectIfOpened, _runNextAction, _makeScreenshot).withId(_id)
         }
@@ -244,7 +244,7 @@ class RdTestSession private constructor(
     val shutdown: ISignal<Unit> get() = _shutdown
     val closeProject: RdCall<Unit, Boolean> get() = _closeProject
     val closeProjectIfOpened: RdCall<Unit, Boolean> get() = _closeProjectIfOpened
-    val runNextAction: RdCall<Unit, Boolean> get() = _runNextAction
+    val runNextAction: RdCall<Unit, String> get() = _runNextAction
     val makeScreenshot: RdCall<String, Boolean> get() = _makeScreenshot
     //methods
     //initializer
@@ -282,7 +282,7 @@ class RdTestSession private constructor(
         RdSignal<Unit>(FrameworkMarshallers.Void),
         RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
         RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
-        RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
+        RdCall<Unit, String>(FrameworkMarshallers.Void, FrameworkMarshallers.String),
         RdCall<String, Boolean>(FrameworkMarshallers.String, FrameworkMarshallers.Bool)
     )
     
