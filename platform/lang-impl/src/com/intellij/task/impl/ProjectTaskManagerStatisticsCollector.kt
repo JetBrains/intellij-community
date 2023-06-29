@@ -9,7 +9,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 
 class ProjectTaskManagerStatisticsCollector : CounterUsagesCollector() {
   companion object {
-    val GROUP: EventLogGroup = EventLogGroup("build", 6)
+    val GROUP: EventLogGroup = EventLogGroup("build", 7)
 
     @JvmField
     val TASK_RUNNER: StringListEventField = EventFields.StringListValidatedByCustomRule("task_runner_class", ClassNameRuleValidator::class.java)
