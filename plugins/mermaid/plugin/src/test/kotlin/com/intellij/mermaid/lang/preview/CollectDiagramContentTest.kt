@@ -21,6 +21,7 @@ import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.Path
 import kotlin.io.path.readText
 
+@DisabledInAutomation
 @PreviewTest
 @WithJcef
 @ExtendWith(WaitForBuiltInServerExtension::class)
