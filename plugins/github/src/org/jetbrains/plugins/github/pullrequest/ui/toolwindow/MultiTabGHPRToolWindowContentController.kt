@@ -69,7 +69,7 @@ internal class MultiTabGHPRToolWindowContentController(parentDisposable: Disposa
               _contentController = CompletableFuture()
             }
             showSelectorsTab(requestFocus)
-            GHPRStatisticsCollector.logSelectorsOpened()
+            GHPRStatisticsCollector.logSelectorsOpened(project)
           }
           else {
             val controller = showRepositoryContent(conn, requestFocus)

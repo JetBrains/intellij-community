@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details.model.impl
 
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModelBase
+import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -17,6 +18,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRDiffController
 
 internal class GHPRCommitsViewModel(
   scope: CoroutineScope,
+  private val project: Project,
   commitsLoadingModel: GHSimpleLoadingModel<List<GHCommit>>,
   securityService: GHPRSecurityService,
   private val diffBridge: GHPRDiffController
@@ -39,16 +41,16 @@ internal class GHPRCommitsViewModel(
       diffBridge.activeTree = GHPRDiffController.ActiveTree.FILES
     }
     super.selectCommit(index)
-    GHPRStatisticsCollector.logDetailsCommitChosen()
+    GHPRStatisticsCollector.logDetailsCommitChosen(project)
   }
 
   override fun selectNextCommit() {
     super.selectNextCommit()
-    GHPRStatisticsCollector.logDetailsNextCommitChosen()
+    GHPRStatisticsCollector.logDetailsNextCommitChosen(project)
   }
 
   override fun selectPreviousCommit() {
     super.selectPreviousCommit()
-    GHPRStatisticsCollector.logDetailsPrevCommitChosen()
+    GHPRStatisticsCollector.logDetailsPrevCommitChosen(project)
   }
 }

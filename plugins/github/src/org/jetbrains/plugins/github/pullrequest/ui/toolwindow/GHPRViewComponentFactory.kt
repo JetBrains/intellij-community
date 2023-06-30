@@ -182,7 +182,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
       val scope = DisposingScope(disposable, SupervisorJob() + Dispatchers.Main.immediate)
       val reviewDetailsVm = GHPRDetailsViewModelImpl(detailsModel, stateModel)
       val reviewBranchesVm = GHPRBranchesViewModel(scope, project, branchesModel, dataProvider.detailsData)
-      val reviewStatusVm = GHPRStatusViewModelImpl(scope, stateModel)
+      val reviewStatusVm = GHPRStatusViewModelImpl(scope, project, stateModel)
       val reviewFlowVm = GHPRReviewFlowViewModelImpl(scope,
                                                      metadataModel,
                                                      stateModel,
@@ -191,9 +191,10 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
                                                      dataProvider.detailsData,
                                                      dataProvider.reviewData,
                                                      disposable)
-      val commitsVm = GHPRCommitsViewModel(scope, commitsLoadingModel, dataContext.securityService, diffBridge)
+      val commitsVm = GHPRCommitsViewModel(scope, project, commitsLoadingModel, dataContext.securityService, diffBridge)
 
       GHPRDetailsComponentFactory.create(scope,
+                                         project,
                                          reviewDetailsVm, reviewBranchesVm, reviewStatusVm, reviewFlowVm, commitsVm,
                                          dataProvider,
                                          dataContext.securityService, dataContext.avatarIconsProvider,
@@ -275,7 +276,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
 
     tree.addSelectionListener {
       if (tree.isFocusOwner) {
-        GHPRStatisticsCollector.logChangeSelected()
+        GHPRStatisticsCollector.logChangeSelected(project)
       }
     }
 

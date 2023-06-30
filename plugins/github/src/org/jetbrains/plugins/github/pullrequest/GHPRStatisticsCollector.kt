@@ -25,7 +25,7 @@ import org.jetbrains.plugins.github.util.GHEnterpriseServerMetadataLoader
 import java.util.*
 
 internal object GHPRStatisticsCollector {
-  private val COUNTERS_GROUP = EventLogGroup("vcs.github.pullrequest.counters", 4)
+  private val COUNTERS_GROUP = EventLogGroup("vcs.github.pullrequest.counters", 5)
 
   class Counters : CounterUsagesCollector() {
     override fun getGroup() = COUNTERS_GROUP
@@ -34,12 +34,12 @@ internal object GHPRStatisticsCollector {
   private val SELECTORS_OPENED_EVENT = COUNTERS_GROUP.registerEvent("selectors.opened")
   private val LIST_OPENED_EVENT = COUNTERS_GROUP.registerEvent("list.opened")
 
-  private val FILTER_SEARCH_PRESENT = EventFields.Boolean("hasSearch")
-  private val FILTER_STATE_PRESENT = EventFields.Boolean("hasState")
-  private val FILTER_AUTHOR_PRESENT = EventFields.Boolean("hasAuthor")
-  private val FILTER_ASSIGNEE_PRESENT = EventFields.Boolean("hasAssignee")
-  private val FILTER_REVIEW_PRESENT = EventFields.Boolean("hasReviewState")
-  private val FILTER_LABEL_PRESENT = EventFields.Boolean("hasLabel")
+  private val FILTER_SEARCH_PRESENT = EventFields.Boolean("has_search")
+  private val FILTER_STATE_PRESENT = EventFields.Boolean("has_state")
+  private val FILTER_AUTHOR_PRESENT = EventFields.Boolean("has_author")
+  private val FILTER_ASSIGNEE_PRESENT = EventFields.Boolean("has_assignee")
+  private val FILTER_REVIEW_PRESENT = EventFields.Boolean("has_review_state")
+  private val FILTER_LABEL_PRESENT = EventFields.Boolean("has_label")
 
   private val FILTERS_APPLIED_EVENT = COUNTERS_GROUP.registerVarargEvent("list.filters.applied",
                                                                          FILTER_SEARCH_PRESENT,
@@ -80,19 +80,20 @@ internal object GHPRStatisticsCollector {
 
 
   private val DETAILS_ACTION_EVENT = COUNTERS_GROUP.registerEvent("details.additional.actions.invoked",
-                                                                  EventFields.Enum("action", GHPRAction::class.java),
-                                                                  EventFields.Boolean("isDefault"))
+                                                                  EventFields.Enum<GHPRAction>("action"),
+                                                                  EventFields.Boolean("is_default"))
 
-  fun logSelectorsOpened() {
-    SELECTORS_OPENED_EVENT.log()
+  fun logSelectorsOpened(project: Project) {
+    SELECTORS_OPENED_EVENT.log(project)
   }
 
-  fun logListOpened() {
-    LIST_OPENED_EVENT.log()
+  fun logListOpened(project: Project) {
+    LIST_OPENED_EVENT.log(project)
   }
 
-  fun logListFiltersApplied(filters: GHPRListSearchValue): Unit =
+  fun logListFiltersApplied(project: Project, filters: GHPRListSearchValue): Unit =
     FILTERS_APPLIED_EVENT.log(
+      project,
       EventPair(FILTER_SEARCH_PRESENT, filters.searchQuery != null),
       EventPair(FILTER_STATE_PRESENT, filters.state != null),
       EventPair(FILTER_AUTHOR_PRESENT, filters.author != null),
@@ -101,12 +102,12 @@ internal object GHPRStatisticsCollector {
       EventPair(FILTER_LABEL_PRESENT, filters.label != null)
     )
 
-  fun logDetailsOpened() {
-    DETAILS_OPENED_EVENT.log()
+  fun logDetailsOpened(project: Project) {
+    DETAILS_OPENED_EVENT.log(project)
   }
 
-  fun logNewPRViewOpened() {
-    NEW_OPENED_EVENT.log()
+  fun logNewPRViewOpened(project: Project) {
+    NEW_OPENED_EVENT.log(project)
   }
 
   fun logTimelineOpened(project: Project) {
@@ -122,40 +123,40 @@ internal object GHPRStatisticsCollector {
     DIFF_OPENED_EVENT.log(project, count)
   }
 
-  fun logDetailsBranchesOpened() {
-    DETAILS_BRANCHES_EVENT.log()
+  fun logDetailsBranchesOpened(project: Project) {
+    DETAILS_BRANCHES_EVENT.log(project)
   }
 
-  fun logDetailsBranchCheckedOut() {
-    DETAILS_BRANCH_CHECKED_OUT_EVENT.log()
+  fun logDetailsBranchCheckedOut(project: Project) {
+    DETAILS_BRANCH_CHECKED_OUT_EVENT.log(project)
   }
 
-  fun logDetailsCommitChosen() {
-    DETAILS_COMMIT_CHOSEN_EVENT.log()
+  fun logDetailsCommitChosen(project: Project) {
+    DETAILS_COMMIT_CHOSEN_EVENT.log(project)
   }
 
-  fun logDetailsNextCommitChosen() {
-    DETAILS_NEXT_COMMIT_EVENT.log()
+  fun logDetailsNextCommitChosen(project: Project) {
+    DETAILS_NEXT_COMMIT_EVENT.log(project)
   }
 
-  fun logDetailsPrevCommitChosen() {
-    DETAILS_PREV_COMMIT_EVENT.log()
+  fun logDetailsPrevCommitChosen(project: Project) {
+    DETAILS_PREV_COMMIT_EVENT.log(project)
   }
 
-  fun logDetailsChecksOpened() {
-    DETAILS_CHECKS_EVENT.log()
+  fun logDetailsChecksOpened(project: Project) {
+    DETAILS_CHECKS_EVENT.log(project)
   }
 
-  fun logDetailsActionInvoked(action: GHPRAction, isDefault: Boolean) {
-    DETAILS_ACTION_EVENT.log(action, isDefault)
+  fun logDetailsActionInvoked(project: Project, action: GHPRAction, isDefault: Boolean) {
+    DETAILS_ACTION_EVENT.log(project, action, isDefault)
   }
 
-  fun logChangeSelected() {
-    DETAILS_CHANGE_EVENT.log()
+  fun logChangeSelected(project: Project) {
+    DETAILS_CHANGE_EVENT.log(project)
   }
 
-  fun logMergedEvent(method: GithubPullRequestMergeMethod) {
-    MERGED_EVENT.log(method)
+  fun logMergedEvent(project: Project, method: GithubPullRequestMergeMethod) {
+    MERGED_EVENT.log(project, method)
   }
 
   fun logEnterpriseServerMeta(project: Project, server: GithubServerPath, meta: GHEnterpriseServerMeta) {
