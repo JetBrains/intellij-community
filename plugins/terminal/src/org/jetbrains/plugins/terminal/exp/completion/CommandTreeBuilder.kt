@@ -1,6 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp.completion
 
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
+
 internal class CommandTreeBuilder private constructor(
   private val suggestionsProvider: CommandTreeSuggestionsProvider,
   private val arguments: List<String>
@@ -11,10 +14,12 @@ internal class CommandTreeBuilder private constructor(
               commandSpec: ShellSubcommand,
               arguments: List<String>): SubcommandNode {
       val builder = CommandTreeBuilder(suggestionsProvider, arguments)
-      val root = SubcommandNode(command, commandSpec, null)
+      val root = builder.createSubcommandNode(command, commandSpec, null)
       builder.buildSubcommandTree(root)
       return root
     }
+
+    private val LOG: Logger = logger<CommandTreeBuilder>()
   }
 
   private var curIndex = 0
@@ -106,10 +111,27 @@ internal class CommandTreeBuilder private constructor(
 
   private fun createChildNode(name: String, suggestion: BaseSuggestion, parent: CommandPartNode<*>?): CommandPartNode<*> {
     return when (suggestion) {
-      is ShellSubcommand -> SubcommandNode(name, suggestion, parent)
+      is ShellSubcommand -> createSubcommandNode(name, suggestion, parent)
       is ShellOption -> OptionNode(name, suggestion, parent)
       is ShellArgumentSuggestion -> ArgumentNode(name, suggestion.argument, parent)
       else -> throw IllegalArgumentException("Unknown suggestion: $suggestion")
+    }
+  }
+
+  private fun createSubcommandNode(name: String, subcommand: ShellSubcommand, parent: CommandPartNode<*>?): SubcommandNode {
+    val spec = getLoadedCommandSpec(subcommand)
+    return SubcommandNode(name, spec, parent)
+  }
+
+  private fun getLoadedCommandSpec(spec: ShellSubcommand): ShellSubcommand {
+    val specRef = spec.loadSpec ?: return spec
+    val loadedSpec = CommandSpecManager.getInstance().getCommandSpec(specRef)
+    return if (loadedSpec != null) {
+      loadedSpec
+    }
+    else {
+      LOG.warn("Failed to find spec: $specRef")
+      spec
     }
   }
 }

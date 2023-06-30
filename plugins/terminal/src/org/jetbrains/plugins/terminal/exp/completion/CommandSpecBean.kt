@@ -2,17 +2,25 @@
 package org.jetbrains.plugins.terminal.exp.completion
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.PluginAware
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.util.xmlb.annotations.Attribute
 
-class CommandSpecBean {
+class CommandSpecBean : PluginAware {
   @Attribute("command")
   lateinit var command: String
 
   @Attribute("path")
   lateinit var path: String
 
+  lateinit var pluginDesc: PluginDescriptor
+
   override fun toString(): String {
     return "${javaClass.simpleName} { command: $command, path: $path }"
+  }
+
+  override fun setPluginDescriptor(pluginDescriptor: PluginDescriptor) {
+    pluginDesc = pluginDescriptor
   }
 
   companion object {
