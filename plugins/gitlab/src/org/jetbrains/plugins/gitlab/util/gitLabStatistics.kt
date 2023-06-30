@@ -35,7 +35,7 @@ internal object GitLabStatistics {
   //endregion
 
   //region Counters
-  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters",  version = 5)
+  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 6)
 
   /**
    * Server returned 5** error
@@ -146,6 +146,7 @@ internal object GitLabStatistics {
     CLOSE,
     REOPEN,
     SET_REVIEWERS,
+    REVIEWER_REREVIEW,
     ADD_NOTE,
     ADD_DIFF_NOTE,
     ADD_DISCUSSION_NOTE,
@@ -196,7 +197,8 @@ enum class GitLabApiRequestName {
   GQL_MERGE_REQUEST_ACCEPT,
   GQL_MERGE_REQUEST_SET_DRAFT,
   GQL_MERGE_REQUEST_SET_REVIEWERS,
-  GQL_MERGE_REQUEST_UPDATE;
+  GQL_MERGE_REQUEST_UPDATE,
+  GQL_MERGE_REQUEST_REVIEWER_REREVIEW;
 
   companion object {
     fun of(gqlQuery: GitLabGQLQuery): GitLabApiRequestName = when (gqlQuery) {
@@ -214,6 +216,7 @@ enum class GitLabApiRequestName {
       GitLabGQLQuery.MERGE_REQUEST_SET_DRAFT -> GQL_MERGE_REQUEST_SET_DRAFT
       GitLabGQLQuery.MERGE_REQUEST_SET_REVIEWERS -> GQL_MERGE_REQUEST_SET_REVIEWERS
       GitLabGQLQuery.MERGE_REQUEST_UPDATE -> GQL_MERGE_REQUEST_UPDATE
+      GitLabGQLQuery.MERGE_REQUEST_REVIEWER_REREVIEW -> GQL_MERGE_REQUEST_REVIEWER_REREVIEW
     }
   }
 }

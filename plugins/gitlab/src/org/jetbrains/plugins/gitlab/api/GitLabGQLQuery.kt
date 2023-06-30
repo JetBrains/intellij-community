@@ -18,5 +18,6 @@ enum class GitLabGQLQuery(val filePath: String) {
   MERGE_REQUEST_ACCEPT("graphql/query/mergeRequestAccept.graphql"),
   MERGE_REQUEST_SET_DRAFT("graphql/query/mergeRequestSetDraft.graphql"),
   MERGE_REQUEST_SET_REVIEWERS("graphql/query/mergeRequestSetReviewers.graphql"),
-  MERGE_REQUEST_UPDATE("graphql/query/mergeRequestUpdate.graphql")
+  MERGE_REQUEST_UPDATE("graphql/query/mergeRequestUpdate.graphql"),
+  MERGE_REQUEST_REVIEWER_REREVIEW("graphql/query/mergeRequestReviewerRereview.graphql")
 }

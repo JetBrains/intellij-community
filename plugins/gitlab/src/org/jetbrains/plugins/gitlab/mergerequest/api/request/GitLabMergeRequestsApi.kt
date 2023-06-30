@@ -8,6 +8,7 @@ import com.intellij.collaboration.util.resolveRelative
 import com.intellij.collaboration.util.withQuery
 import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabReviewerDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestApprovalRestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
@@ -158,6 +159,22 @@ suspend fun GitLabApi.GraphQL.mergeRequestSetDraft(
   val request = gitLabQuery(project.serverPath, GitLabGQLQuery.MERGE_REQUEST_SET_DRAFT, parameters)
   return withErrorStats(project.serverPath, GitLabGQLQuery.MERGE_REQUEST_SET_DRAFT) {
     loadResponse<GitLabMergeRequestResult>(request, "mergeRequestSetDraft")
+  }
+}
+
+suspend fun GitLabApi.GraphQL.mergeRequestReviewerRereview(
+  project: GitLabProjectCoordinates,
+  mergeRequestId: GitLabMergeRequestId,
+  reviewer: GitLabReviewerDTO
+): HttpResponse<out GitLabGraphQLMutationResultDTO<GitLabMergeRequestDTO>?> {
+  val parameters = mapOf(
+    "projectId" to project.projectPath.fullPath(),
+    "mergeRequestId" to mergeRequestId.iid,
+    "userId" to reviewer.id
+  )
+  val request = gitLabQuery(project.serverPath, GitLabGQLQuery.MERGE_REQUEST_REVIEWER_REREVIEW, parameters)
+  return withErrorStats(project.serverPath, GitLabGQLQuery.MERGE_REQUEST_REVIEWER_REREVIEW) {
+    loadResponse<GitLabMergeRequestResult>(request, "mergeRequestReviewerRereview")
   }
 }
 

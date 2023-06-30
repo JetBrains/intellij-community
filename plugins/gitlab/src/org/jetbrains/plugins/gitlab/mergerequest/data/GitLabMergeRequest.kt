@@ -84,6 +84,8 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
 
   suspend fun setReviewers(reviewers: List<GitLabUserDTO>)
 
+  suspend fun reviewerRereview(reviewers: Collection<GitLabReviewerDTO>)
+
   data class CurrentUserPermissions(
     val canApprove: Boolean,
     val canMerge: Boolean,
@@ -321,6 +323,18 @@ internal class LoadedGitLabMergeRequest(
     }
     discussionsContainer.checkUpdates()
     GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.SET_REVIEWERS)
+  }
+
+  override suspend fun reviewerRereview(reviewers: Collection<GitLabReviewerDTO>) {
+    withContext(cs.coroutineContext + Dispatchers.IO) {
+      reviewers.forEach { reviewer ->
+        val updatedMergeRequest = api.graphQL.mergeRequestReviewerRereview(glProject, mergeRequestDetailsState.value, reviewer)
+          .getResultOrThrow()
+        mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
+      }
+    }
+    discussionsContainer.checkUpdates()
+    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.REVIEWER_REREVIEW)
   }
 
   private val discussionsContainer =
