@@ -27,7 +27,6 @@ internal class GHPRBranchesModelImpl(private val valueModel: SingleValueModel<GH
     VcsProjectLog.runWhenLogIsReady(localRepository.project) {
       if (!Disposer.isDisposed(parentDisposable)) {
         val dataPackListener = DataPackChangeListener {
-          notifyChanged()
           detailsDataProvider.reloadDetails()
         }
 
@@ -61,33 +60,4 @@ internal class GHPRBranchesModelImpl(private val valueModel: SingleValueModel<GH
         }
       }
     }
-
-  override val prRemote: GitRemote?
-    get() = determinePrRemote()
-
-  override val localBranch: String?
-    get() = determineLocalBranch()
-
-  private val headRefName: String
-    get() = valueModel.value.headRefName
-
-  private fun notifyChanged() {
-    changeEventDispatcher.multicaster.eventOccurred()
-  }
-
-  private val url: String?
-    get() = valueModel.value.headRepository?.url
-
-  private val sshUrl: String?
-    get() = valueModel.value.headRepository?.sshUrl
-
-  private val isFork: Boolean
-    get() = valueModel.value.headRepository?.isFork ?: false
-
-  private fun determinePrRemote(): GitRemote? = GithubGitHelper.getInstance().findRemote(localRepository, url, sshUrl)
-
-  private fun determineLocalBranch(): String? {
-    val prRemote = prRemote ?: return null
-    return GithubGitHelper.getInstance().findLocalBranch(localRepository, prRemote, isFork, headRefName)
-  }
 }
