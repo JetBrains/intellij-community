@@ -59,6 +59,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     super(tree, parent, true, value);
     myName = name;
 
+    // todo: should be rewritten, this code passes partially initialized 'this' into a call
     value.computePresentation(this, XValuePlace.TREE);
 
     // add "Collecting" message only if computation is not yet done
