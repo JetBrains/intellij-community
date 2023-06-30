@@ -241,14 +241,7 @@ internal fun doUpdateAppMenu() {
 }
 
 internal fun createScreeMenuPeer(frame: JFrame): MenuBar? {
-  if (Menu.isJbScreenMenuEnabled()) {
-    val screenMenuPeer = MenuBar("MainMenu")
-    screenMenuPeer.setFrame(frame)
-    return screenMenuPeer
-  }
-  else {
-    return null
-  }
+  return if (Menu.isJbScreenMenuEnabled()) MenuBar("MainMenu", frame) else null
 }
 
 internal fun createMenuBar(coroutineScope: CoroutineScope, frame: JFrame): IdeMenuBar {

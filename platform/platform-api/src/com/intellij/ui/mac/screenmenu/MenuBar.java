@@ -1,6 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.screenmenu;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -13,13 +17,16 @@ public final class MenuBar extends Menu {
   private Window myFrame;
   private final WindowListener myListener;
 
-  public MenuBar(String title) {
+  public MenuBar(@Nullable String title, @NotNull JFrame frame) {
     super(title);
+
+    setFrame(frame);
     myListener = new WindowAdapter() {
       @Override
       public void windowActivated(WindowEvent e) {
-        if (Arrays.equals(myCachedPeers, ourLastMenubarPeers))
+        if (Arrays.equals(myCachedPeers, ourLastMenubarPeers)) {
           return;
+        }
         refillImpl(true);
       }
     };
