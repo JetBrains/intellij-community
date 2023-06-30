@@ -262,7 +262,6 @@ private val processings: List<NamedPostProcessingGroup> = listOf(
     NamedPostProcessingGroup(
         KotlinNJ2KServicesBundle.message("processing.step.cleaning.up.code"),
         listOf(
-            InspectionLikeProcessingGroup(PrivateVarToValProcessing()),
             ConvertGettersAndSettersToPropertyProcessing(),
             InspectionLikeProcessingGroup(RemoveExplicitAccessorInspectionBasedProcessing()),
             MergePropertyWithConstructorParameterProcessing(),
