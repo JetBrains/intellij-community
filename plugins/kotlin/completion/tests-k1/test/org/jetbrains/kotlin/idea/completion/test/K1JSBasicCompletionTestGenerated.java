@@ -17,13 +17,13 @@ import org.junit.runner.RunWith;
 @TestRoot("completion/tests-k1")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCompletionTest {
+public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasicCompletionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/basic/common")
-    public abstract static class Common extends AbstractJvmBasicCompletionTest {
+    public abstract static class Common extends AbstractK1JSBasicCompletionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/annotations")
-        public static class Annotations extends AbstractJvmBasicCompletionTest {
+        public static class Annotations extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -236,7 +236,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/autoPopup")
-        public static class AutoPopup extends AbstractJvmBasicCompletionTest {
+        public static class AutoPopup extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -334,7 +334,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/backticked")
-        public static class Backticked extends AbstractJvmBasicCompletionTest {
+        public static class Backticked extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -357,7 +357,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/boldOrGrayed")
-        public static class BoldOrGrayed extends AbstractJvmBasicCompletionTest {
+        public static class BoldOrGrayed extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -465,7 +465,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/callableReference")
-        public static class CallableReference extends AbstractJvmBasicCompletionTest {
+        public static class CallableReference extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -533,7 +533,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/dslMarker")
-        public static class DslMarker extends AbstractJvmBasicCompletionTest {
+        public static class DslMarker extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -576,7 +576,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/extensionDeclarations")
-        public static class ExtensionDeclarations extends AbstractJvmBasicCompletionTest {
+        public static class ExtensionDeclarations extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -639,7 +639,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/extensionFunctionTypeValues")
-        public static class ExtensionFunctionTypeValues extends AbstractJvmBasicCompletionTest {
+        public static class ExtensionFunctionTypeValues extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -672,7 +672,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/extensionMethodInObject")
-        public static class ExtensionMethodInObject extends AbstractJvmBasicCompletionTest {
+        public static class ExtensionMethodInObject extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -765,7 +765,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/extensions")
-        public static class Extensions extends AbstractJvmBasicCompletionTest {
+        public static class Extensions extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -928,7 +928,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/fromSmart")
-        public static class FromSmart extends AbstractJvmBasicCompletionTest {
+        public static class FromSmart extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1001,7 +1001,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/fromUnresolvedNames")
-        public static class FromUnresolvedNames extends AbstractJvmBasicCompletionTest {
+        public static class FromUnresolvedNames extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1079,7 +1079,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/getOperator")
-        public static class GetOperator extends AbstractJvmBasicCompletionTest {
+        public static class GetOperator extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1102,7 +1102,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/highOrderFunctions")
-        public static class HighOrderFunctions extends AbstractJvmBasicCompletionTest {
+        public static class HighOrderFunctions extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1160,7 +1160,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/inInitBlock")
-        public static class InInitBlock extends AbstractJvmBasicCompletionTest {
+        public static class InInitBlock extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1178,7 +1178,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/inStringLiterals")
-        public static class InStringLiterals extends AbstractJvmBasicCompletionTest {
+        public static class InStringLiterals extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1216,7 +1216,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/inSuperTypes")
-        public static class InSuperTypes extends AbstractJvmBasicCompletionTest {
+        public static class InSuperTypes extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1239,7 +1239,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/inTypeAlias")
-        public static class InTypeAlias extends AbstractJvmBasicCompletionTest {
+        public static class InTypeAlias extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1257,7 +1257,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/lambdaAndTypeParams")
-        public static class LambdaAndTypeParams extends AbstractJvmBasicCompletionTest {
+        public static class LambdaAndTypeParams extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1290,7 +1290,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/lambdaSignature")
-        public static class LambdaSignature extends AbstractJvmBasicCompletionTest {
+        public static class LambdaSignature extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1348,7 +1348,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/namedArguments")
-        public static class NamedArguments extends AbstractJvmBasicCompletionTest {
+        public static class NamedArguments extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1476,7 +1476,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/noCompletion")
-        public static class NoCompletion extends AbstractJvmBasicCompletionTest {
+        public static class NoCompletion extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1519,7 +1519,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/objects")
-        public static class Objects extends AbstractJvmBasicCompletionTest {
+        public static class Objects extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1542,7 +1542,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/operatorNames")
-        public static class OperatorNames extends AbstractJvmBasicCompletionTest {
+        public static class OperatorNames extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1565,7 +1565,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/override")
-        public static class Override extends AbstractJvmBasicCompletionTest {
+        public static class Override extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1633,7 +1633,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/parameterNameAndType")
-        public static class ParameterNameAndType extends AbstractJvmBasicCompletionTest {
+        public static class ParameterNameAndType extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1821,7 +1821,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/primaryConstructor")
-        public static class PrimaryConstructor extends AbstractJvmBasicCompletionTest {
+        public static class PrimaryConstructor extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1844,7 +1844,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/primitiveCompletion")
-        public static class PrimitiveCompletion extends AbstractJvmBasicCompletionTest {
+        public static class PrimitiveCompletion extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2032,7 +2032,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/shadowing")
-        public static class Shadowing extends AbstractJvmBasicCompletionTest {
+        public static class Shadowing extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2175,7 +2175,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/smartCast")
-        public static class SmartCast extends AbstractJvmBasicCompletionTest {
+        public static class SmartCast extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2223,7 +2223,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/staticMembers")
-        public static class StaticMembers extends AbstractJvmBasicCompletionTest {
+        public static class StaticMembers extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2276,7 +2276,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/substitutedSignature")
-        public static class SubstitutedSignature extends AbstractJvmBasicCompletionTest {
+        public static class SubstitutedSignature extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2319,7 +2319,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/super")
-        public static class Super extends AbstractJvmBasicCompletionTest {
+        public static class Super extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2377,7 +2377,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/typeAliasTypes")
-        public static class TypeAliasTypes extends AbstractJvmBasicCompletionTest {
+        public static class TypeAliasTypes extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2395,7 +2395,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/typeArgsOrNot")
-        public static class TypeArgsOrNot extends AbstractJvmBasicCompletionTest {
+        public static class TypeArgsOrNot extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2448,7 +2448,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common")
-        public static class Uncategorized extends AbstractJvmBasicCompletionTest {
+        public static class Uncategorized extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -3246,7 +3246,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/variableNameAndType")
-        public static class VariableNameAndType extends AbstractJvmBasicCompletionTest {
+        public static class VariableNameAndType extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -3269,7 +3269,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/visibility")
-        public static class Visibility extends AbstractJvmBasicCompletionTest {
+        public static class Visibility extends AbstractK1JSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -3362,7 +3362,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/when")
-        public static class When extends AbstractJvmBasicCompletionTest {
+        public static class When extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -3385,288 +3385,35 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../testData/basic/java")
-    public abstract static class Java extends AbstractJvmBasicCompletionTest {
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../testData/basic/java/boldOrGrayed")
-        public static class BoldOrGrayed extends AbstractJvmBasicCompletionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("ImmediateMembersForPlatformType.kt")
-            public void testImmediateMembersForPlatformType() throws Exception {
-                runTest("../testData/basic/java/boldOrGrayed/ImmediateMembersForPlatformType.kt");
-            }
-
-            @TestMetadata("NonPredictableSmartCast1.kt")
-            public void testNonPredictableSmartCast1() throws Exception {
-                runTest("../testData/basic/java/boldOrGrayed/NonPredictableSmartCast1.kt");
-            }
-
-            @TestMetadata("NonPredictableSmartCast2.kt")
-            public void testNonPredictableSmartCast2() throws Exception {
-                runTest("../testData/basic/java/boldOrGrayed/NonPredictableSmartCast2.kt");
-            }
-
-            @TestMetadata("SyntheticJavaProperties1.kt")
-            public void testSyntheticJavaProperties1() throws Exception {
-                runTest("../testData/basic/java/boldOrGrayed/SyntheticJavaProperties1.kt");
-            }
-
-            @TestMetadata("SyntheticJavaProperties2.kt")
-            public void testSyntheticJavaProperties2() throws Exception {
-                runTest("../testData/basic/java/boldOrGrayed/SyntheticJavaProperties2.kt");
-            }
+    @TestMetadata("../testData/basic/js")
+    public static class Js extends AbstractK1JSBasicCompletionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../testData/basic/java/importAliases")
-        public static class ImportAliases extends AbstractJvmBasicCompletionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("Class.kt")
-            public void testClass() throws Exception {
-                runTest("../testData/basic/java/importAliases/Class.kt");
-            }
-
-            @TestMetadata("ExtensionFun.kt")
-            public void testExtensionFun() throws Exception {
-                runTest("../testData/basic/java/importAliases/ExtensionFun.kt");
-            }
-
-            @TestMetadata("ExtensionValSmart.kt")
-            public void testExtensionValSmart() throws Exception {
-                runTest("../testData/basic/java/importAliases/ExtensionValSmart.kt");
-            }
-
-            @TestMetadata("KDoc.kt")
-            public void testKDoc() throws Exception {
-                runTest("../testData/basic/java/importAliases/KDoc.kt");
-            }
-
-            @TestMetadata("KDocExtension.kt")
-            public void testKDocExtension() throws Exception {
-                runTest("../testData/basic/java/importAliases/KDocExtension.kt");
-            }
-
-            @TestMetadata("PrefixUsed.kt")
-            public void testPrefixUsed() throws Exception {
-                runTest("../testData/basic/java/importAliases/PrefixUsed.kt");
-            }
-
-            @TestMetadata("TopLevelFun.kt")
-            public void testTopLevelFun() throws Exception {
-                runTest("../testData/basic/java/importAliases/TopLevelFun.kt");
-            }
-
-            @TestMetadata("TopLevelVal.kt")
-            public void testTopLevelVal() throws Exception {
-                runTest("../testData/basic/java/importAliases/TopLevelVal.kt");
-            }
-
-            @TestMetadata("TypeAlias.kt")
-            public void testTypeAlias() throws Exception {
-                runTest("../testData/basic/java/importAliases/TypeAlias.kt");
-            }
+        @TestMetadata("AutoForceCompletion.kt")
+        public void testAutoForceCompletion() throws Exception {
+            runTest("../testData/basic/js/AutoForceCompletion.kt");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../testData/basic/java/syntheticExtensions")
-        public static class SyntheticExtensions extends AbstractJvmBasicCompletionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("AfterSuper.kt")
-            public void testAfterSuper() throws Exception {
-                runTest("../testData/basic/java/syntheticExtensions/AfterSuper.kt");
-            }
-
-            @TestMetadata("DoNotHideGetterWhenExtensionCannotBeUsed.kt")
-            public void testDoNotHideGetterWhenExtensionCannotBeUsed() throws Exception {
-                runTest("../testData/basic/java/syntheticExtensions/DoNotHideGetterWhenExtensionCannotBeUsed.kt");
-            }
-
-            @TestMetadata("InGenericClass.kt")
-            public void testInGenericClass() throws Exception {
-                runTest("../testData/basic/java/syntheticExtensions/InGenericClass.kt");
-            }
-
-            @TestMetadata("NullableReceiver.kt")
-            public void testNullableReceiver() throws Exception {
-                runTest("../testData/basic/java/syntheticExtensions/NullableReceiver.kt");
-            }
-
-            @TestMetadata("SafeCall.kt")
-            public void testSafeCall() throws Exception {
-                runTest("../testData/basic/java/syntheticExtensions/SafeCall.kt");
-            }
-
-            @TestMetadata("ShowGetSetOnSecondCompletion.kt")
-            public void testShowGetSetOnSecondCompletion() throws Exception {
-                runTest("../testData/basic/java/syntheticExtensions/ShowGetSetOnSecondCompletion.kt");
-            }
-
-            @TestMetadata("SmartCast.kt")
-            public void testSmartCast() throws Exception {
-                runTest("../testData/basic/java/syntheticExtensions/SmartCast.kt");
-            }
-
-            @TestMetadata("SmartCast2.kt")
-            public void testSmartCast2() throws Exception {
-                runTest("../testData/basic/java/syntheticExtensions/SmartCast2.kt");
-            }
-
-            @TestMetadata("SuppressedByNotPropertyList.kt")
-            public void testSuppressedByNotPropertyList() throws Exception {
-                runTest("../testData/basic/java/syntheticExtensions/SuppressedByNotPropertyList.kt");
-            }
-
-            @TestMetadata("SyntheticExtensions1.kt")
-            public void testSyntheticExtensions1() throws Exception {
-                runTest("../testData/basic/java/syntheticExtensions/SyntheticExtensions1.kt");
-            }
-
-            @TestMetadata("SyntheticExtensions2.kt")
-            public void testSyntheticExtensions2() throws Exception {
-                runTest("../testData/basic/java/syntheticExtensions/SyntheticExtensions2.kt");
-            }
-
-            @TestMetadata("WithoutReceiver.kt")
-            public void testWithoutReceiver() throws Exception {
-                runTest("../testData/basic/java/syntheticExtensions/WithoutReceiver.kt");
-            }
+        @TestMetadata("DoNotPreferDynamic.kt")
+        public void testDoNotPreferDynamic() throws Exception {
+            runTest("../testData/basic/js/DoNotPreferDynamic.kt");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../testData/basic/java")
-        public static class Uncategorized extends AbstractJvmBasicCompletionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
+        @TestMetadata("DynamicKeyword.kt")
+        public void testDynamicKeyword() throws Exception {
+            runTest("../testData/basic/js/DynamicKeyword.kt");
+        }
 
-            @TestMetadata("AutoForceCompletion.kt")
-            public void testAutoForceCompletion() throws Exception {
-                runTest("../testData/basic/java/AutoForceCompletion.kt");
-            }
+        @TestMetadata("InPackage.kt")
+        public void testInPackage() throws Exception {
+            runTest("../testData/basic/js/InPackage.kt");
+        }
 
-            @TestMetadata("ClassFromDependency.kt")
-            public void testClassFromDependency() throws Exception {
-                runTest("../testData/basic/java/ClassFromDependency.kt");
-            }
-
-            @TestMetadata("CompletionForExcludedWhenInternalUse.kt")
-            public void testCompletionForExcludedWhenInternalUse() throws Exception {
-                runTest("../testData/basic/java/CompletionForExcludedWhenInternalUse.kt");
-            }
-
-            @TestMetadata("ExtensionFromStandardLibrary.kt")
-            public void testExtensionFromStandardLibrary() throws Exception {
-                runTest("../testData/basic/java/ExtensionFromStandardLibrary.kt");
-            }
-
-            @TestMetadata("InPackage.kt")
-            public void testInPackage() throws Exception {
-                runTest("../testData/basic/java/InPackage.kt");
-            }
-
-            @TestMetadata("JavaClassNames.kt")
-            public void testJavaClassNames() throws Exception {
-                runTest("../testData/basic/java/JavaClassNames.kt");
-            }
-
-            @TestMetadata("JavaPackage.kt")
-            public void testJavaPackage() throws Exception {
-                runTest("../testData/basic/java/JavaPackage.kt");
-            }
-
-            @TestMetadata("JavaSyntheticProperty.kt")
-            public void testJavaSyntheticProperty() throws Exception {
-                runTest("../testData/basic/java/JavaSyntheticProperty.kt");
-            }
-
-            @TestMetadata("KProperty.kt")
-            public void testKProperty() throws Exception {
-                runTest("../testData/basic/java/KProperty.kt");
-            }
-
-            @TestMetadata("KT9166.kt")
-            public void testKT9166() throws Exception {
-                runTest("../testData/basic/java/KT9166.kt");
-            }
-
-            @TestMetadata("NoDuplicationForImportedJavaClass.kt")
-            public void testNoDuplicationForImportedJavaClass() throws Exception {
-                runTest("../testData/basic/java/NoDuplicationForImportedJavaClass.kt");
-            }
-
-            @TestMetadata("NoDuplicationForRuntimeClass.kt")
-            public void testNoDuplicationForRuntimeClass() throws Exception {
-                runTest("../testData/basic/java/NoDuplicationForRuntimeClass.kt");
-            }
-
-            @TestMetadata("NoSyntheticClasses.kt")
-            public void testNoSyntheticClasses() throws Exception {
-                runTest("../testData/basic/java/NoSyntheticClasses.kt");
-            }
-
-            @TestMetadata("NonImportedPrefixMatching1.kt")
-            public void testNonImportedPrefixMatching1() throws Exception {
-                runTest("../testData/basic/java/NonImportedPrefixMatching1.kt");
-            }
-
-            @TestMetadata("NonImportedPrefixMatching2.kt")
-            public void testNonImportedPrefixMatching2() throws Exception {
-                runTest("../testData/basic/java/NonImportedPrefixMatching2.kt");
-            }
-
-            @TestMetadata("NullableAnnotation.kt")
-            public void testNullableAnnotation() throws Exception {
-                runTest("../testData/basic/java/NullableAnnotation.kt");
-            }
-
-            @TestMetadata("Number.kt")
-            public void testNumber() throws Exception {
-                runTest("../testData/basic/java/Number.kt");
-            }
-
-            @TestMetadata("PackageDirective.kt")
-            public void testPackageDirective() throws Exception {
-                runTest("../testData/basic/java/PackageDirective.kt");
-            }
-
-            @TestMetadata("ReadlineMethodLowerPriority.kt")
-            public void testReadlineMethodLowerPriority() throws Exception {
-                runTest("../testData/basic/java/ReadlineMethodLowerPriority.kt");
-            }
-
-            @TestMetadata("ReadlineMethodUsualPriorityInInOldVersions.kt")
-            public void testReadlineMethodUsualPriorityInInOldVersions() throws Exception {
-                runTest("../testData/basic/java/ReadlineMethodUsualPriorityInInOldVersions.kt");
-            }
-
-            @TestMetadata("SAMAdaptersStatic.kt")
-            public void testSAMAdaptersStatic() throws Exception {
-                runTest("../testData/basic/java/SAMAdaptersStatic.kt");
-            }
-
-            @TestMetadata("StandardKotlinTypeAliasAfterExplicitlyImported.kt")
-            public void testStandardKotlinTypeAliasAfterExplicitlyImported() throws Exception {
-                runTest("../testData/basic/java/StandardKotlinTypeAliasAfterExplicitlyImported.kt");
-            }
-
-            @TestMetadata("StandardKotlinTypeAliasFirst.kt")
-            public void testStandardKotlinTypeAliasFirst() throws Exception {
-                runTest("../testData/basic/java/StandardKotlinTypeAliasFirst.kt");
-            }
-
-            @TestMetadata("TopLevelFromStandardLibrary.kt")
-            public void testTopLevelFromStandardLibrary() throws Exception {
-                runTest("../testData/basic/java/TopLevelFromStandardLibrary.kt");
-            }
+        @TestMetadata("JSStd.kt")
+        public void testJSStd() throws Exception {
+            runTest("../testData/basic/js/JSStd.kt");
         }
     }
 }

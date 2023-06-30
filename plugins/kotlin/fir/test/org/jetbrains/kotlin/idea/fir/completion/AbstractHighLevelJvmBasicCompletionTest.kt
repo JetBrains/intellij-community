@@ -3,13 +3,13 @@
 package org.jetbrains.kotlin.idea.fir.completion
 
 import com.intellij.testFramework.common.runAll
-import org.jetbrains.kotlin.idea.completion.test.AbstractJvmBasicCompletionTest
+import org.jetbrains.kotlin.idea.completion.test.AbstractJvmBasicCompletionTestBase
 import org.jetbrains.kotlin.idea.completion.test.ExpectedCompletionUtils
 import org.jetbrains.kotlin.idea.completion.test.firFileName
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 
-abstract class AbstractHighLevelJvmBasicCompletionTest : AbstractJvmBasicCompletionTest() {
+abstract class AbstractHighLevelJvmBasicCompletionTest : AbstractJvmBasicCompletionTestBase() {
     override val captureExceptions: Boolean = false
 
     override fun isFirPlugin(): Boolean = true

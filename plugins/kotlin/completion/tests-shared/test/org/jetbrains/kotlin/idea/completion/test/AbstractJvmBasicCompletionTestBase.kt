@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.test.KotlinJdkAndLibraryProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 
-abstract class AbstractJvmBasicCompletionTest : KotlinFixtureCompletionBaseTestCase() {
+abstract class AbstractJvmBasicCompletionTestBase : KotlinFixtureCompletionBaseTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinJdkAndLibraryProjectDescriptorOnJdk8
 
     override fun getPlatform() = JvmPlatforms.jvm8

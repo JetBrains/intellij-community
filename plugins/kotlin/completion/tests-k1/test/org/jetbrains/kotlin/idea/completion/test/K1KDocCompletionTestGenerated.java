@@ -18,7 +18,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../testData/kdoc")
-public class KDocCompletionTestGenerated extends AbstractJvmBasicCompletionTest {
+public class K1KDocCompletionTestGenerated extends AbstractK1JvmBasicCompletionTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }

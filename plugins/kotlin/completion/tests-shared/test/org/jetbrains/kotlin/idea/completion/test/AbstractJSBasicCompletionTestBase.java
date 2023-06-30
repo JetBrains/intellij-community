@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.test.KotlinStdJSProjectDescriptor;
 import org.jetbrains.kotlin.platform.TargetPlatform;
 import org.jetbrains.kotlin.platform.js.JsPlatforms;
 
-public abstract class AbstractJSBasicCompletionTest extends KotlinFixtureCompletionBaseTestCase {
+public abstract class AbstractJSBasicCompletionTestBase extends KotlinFixtureCompletionBaseTestCase {
     @NotNull
     @Override
     protected LightProjectDescriptor getProjectDescriptor() {

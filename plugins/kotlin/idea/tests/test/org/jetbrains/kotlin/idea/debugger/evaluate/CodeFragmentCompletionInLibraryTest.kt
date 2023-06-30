@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.ThrowableRunnable
-import org.jetbrains.kotlin.idea.completion.test.AbstractJvmBasicCompletionTest
+import org.jetbrains.kotlin.idea.completion.test.AbstractJvmBasicCompletionTestBase
 import org.jetbrains.kotlin.idea.completion.test.COMPLETION_TEST_DATA_BASE
 import org.jetbrains.kotlin.idea.completion.test.testCompletion
 import org.jetbrains.kotlin.idea.debugger.core.getContextElement
@@ -22,7 +22,7 @@ import org.junit.runner.RunWith
 
 
 @RunWith(JUnit38ClassRunner::class)
-class CodeFragmentCompletionInLibraryTest : AbstractJvmBasicCompletionTest() {
+class CodeFragmentCompletionInLibraryTest : AbstractJvmBasicCompletionTestBase() {
     companion object {
         private val LIBRARY_SRC = COMPLETION_TEST_DATA_BASE.resolve("codeFragmentInLibrarySource/customLibrary/")
     }
