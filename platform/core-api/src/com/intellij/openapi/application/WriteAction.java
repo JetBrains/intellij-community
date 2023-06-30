@@ -136,7 +136,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
     }
 
     if (SwingUtilities.isEventDispatchThread()) {
-      LOG.error("You can't run blocking actions from EDT in Pure UI mode");
+      return application.runWriteIntentReadAction(() -> application.runWriteAction(action));
     }
 
     if (application.isReadAccessAllowed()) {
