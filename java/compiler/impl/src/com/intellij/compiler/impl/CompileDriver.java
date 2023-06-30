@@ -12,6 +12,7 @@ import com.intellij.ide.nls.NlsMessages;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.compiler.*;
@@ -386,6 +387,7 @@ public final class CompileDriver {
                        final CompileStatusNotification callback,
                        final CompilerMessage message) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    ModalityState modalityState = ModalityState.current();
 
     final boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     final String name = JavaCompilerBundle.message(
@@ -413,7 +415,7 @@ public final class CompileDriver {
       }
 
       // ensure the project model seen by build process is up-to-date
-      CompilerDriverHelperKt.saveSettings(myProject, isUnitTestMode);
+      CompilerDriverHelperKt.saveSettings(myProject, modalityState, isUnitTestMode);
       Tracer.Span compileWorkSpan = Tracer.start("compileWork");
       CompilerCacheManager compilerCacheManager = CompilerCacheManager.getInstance(myProject);
       final BuildManager buildManager = BuildManager.getInstance();
