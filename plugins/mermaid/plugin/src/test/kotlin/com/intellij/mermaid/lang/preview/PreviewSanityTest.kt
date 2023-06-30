@@ -10,12 +10,13 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.ide.BuiltInServerManager
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
 
 @PreviewTest
 @WithJcef
+@ExtendWith(WaitForBuiltInServerExtension::class)
 @TestApplication
 class PreviewSanityTest {
   @JvmField
@@ -30,12 +31,29 @@ class PreviewSanityTest {
 
   @Test
   fun `preview can actually load and dispose`() {
-    BuiltInServerManager.getInstance().waitForStart()
     runBlocking(Dispatchers.EDT) {
       val preview = MermaidDiagramPreviewComponent(project)
       Disposer.register(disposable, preview)
       preview.load()
       preview.update("")
+    }
+  }
+
+  @Test
+  fun `preview can load minimal flowchart`() {
+    // language=Mermaid
+    val diagramContent = """
+    ---
+    title: Node
+    ---
+    flowchart LR
+        id
+    """.trimIndent()
+    runBlocking(Dispatchers.EDT) {
+      val preview = MermaidDiagramPreviewComponent(project)
+      Disposer.register(disposable, preview)
+      preview.load()
+      preview.update(diagramContent)
     }
   }
 }
