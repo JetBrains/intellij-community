@@ -1266,6 +1266,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("classAlias.0.kt")
+            public void testClassAlias() throws Exception {
+                runTest("testData/findUsages/kotlin/findTypeAliasUsages/classAlias.0.kt");
+            }
+
             @TestMetadata("objectAlias.0.kt")
             public void testObjectAlias() throws Exception {
                 runTest("testData/findUsages/kotlin/findTypeAliasUsages/objectAlias.0.kt");

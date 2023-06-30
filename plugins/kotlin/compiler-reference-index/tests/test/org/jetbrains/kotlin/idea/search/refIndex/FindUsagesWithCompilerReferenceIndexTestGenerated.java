@@ -3016,6 +3016,19 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
         public abstract static class FindTypeAliasUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findTypeAliasUsages")
+            public static class TestClassAlias extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("classAlias.0.kt")
+                public void testClassAlias() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/findTypeAliasUsages/classAlias.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findTypeAliasUsages")
             public static class TestObjectAlias extends AbstractFindUsagesWithCompilerReferenceIndexTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
