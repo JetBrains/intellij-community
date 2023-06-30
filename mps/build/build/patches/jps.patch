@@ -29,9 +29,9 @@ IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
-diff --git a/platform/workspaceModel/jps/src/com/intellij/workspaceModel/ide/impl/jps/serialization/JpsExternalStorageMapping.kt b/platform/workspaceModel/jps/src/com/intellij/workspaceModel/ide/impl/jps/serialization/JpsExternalStorageMapping.kt
---- a/platform/workspaceModel/jps/src/com/intellij/workspaceModel/ide/impl/jps/serialization/JpsExternalStorageMapping.kt	(revision d309c49b7f8f453252c0bdfc700ba1a234b14021)
-+++ b/platform/workspaceModel/jps/src/com/intellij/workspaceModel/ide/impl/jps/serialization/JpsExternalStorageMapping.kt	(date 1679351108298)
+diff --git a/platform/workspace/jps/src/com/intellij/platform/workspace/jps/serialization/impl/JpsExternalStorageMapping.kt b/platform/workspace/jps/src/com/intellij/platform/workspace/jps/serialization/impl/JpsExternalStorageMapping.kt
+--- a/platform/workspace/jps/src/com/intellij/platform/workspace/jps/serialization/impl/JpsExternalStorageMapping.kt	(revision d309c49b7f8f453252c0bdfc700ba1a234b14021)
++++ b/platform/workspace/jps/src/com/intellij/platform/workspace/jps/serialization/impl/JpsExternalStorageMapping.kt	(date 1679351108298)
 @@ -20,7 +20,7 @@
        val directoryPath = JpsPathUtil.urlToPath(internalSource.directory.url)
        val directoryName = PathUtilRt.getFileName(directoryPath)
@@ -46,9 +46,9 @@ IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
-diff --git a/platform/workspaceModel/jps/src/com/intellij/workspaceModel/ide/impl/jps/serialization/JpsProjectSerializersImpl.kt b/platform/workspaceModel/jps/src/com/intellij/workspaceModel/ide/impl/jps/serialization/JpsProjectSerializersImpl.kt
---- a/platform/workspaceModel/jps/src/com/intellij/workspaceModel/ide/impl/jps/serialization/JpsProjectSerializersImpl.kt	(revision d309c49b7f8f453252c0bdfc700ba1a234b14021)
-+++ b/platform/workspaceModel/jps/src/com/intellij/workspaceModel/ide/impl/jps/serialization/JpsProjectSerializersImpl.kt	(date 1679351108298)
+diff --git a/platform/workspace/jps/src/com/intellij/platform/workspace/jps/serialization/impl/JpsProjectSerializersImpl.kt b/platform/workspace/jps/src/com/intellij/platform/workspace/jps/serialization/impl/JpsProjectSerializersImpl.kt
+--- a/platform/workspace/jps/src/com/intellij/platform/workspace/jps/serialization/impl/JpsProjectSerializersImpl.kt	(revision d309c49b7f8f453252c0bdfc700ba1a234b14021)
++++ b/platform/workspace/jps/src/com/intellij/platform/workspace/jps/serialization/impl/JpsProjectSerializersImpl.kt	(date 1679351108298)
 @@ -875,7 +875,7 @@
  fun isExternalModuleFile(filePath: String): Boolean {
    val parentPath = PathUtilRt.getParentPath(filePath)
