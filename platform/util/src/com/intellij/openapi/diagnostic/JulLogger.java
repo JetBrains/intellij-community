@@ -180,7 +180,6 @@ public class JulLogger extends Logger {
     }
   }
 
-  @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
   private static boolean delayCleanerUntilIdeShutdownActivitiesFinished() throws Exception {
     Class<?> logManagerCleanerClass = Class.forName("java.util.logging.LogManager$Cleaner");
     Class<?> appShutdownHooks = Class.forName("java.lang.ApplicationShutdownHooks");

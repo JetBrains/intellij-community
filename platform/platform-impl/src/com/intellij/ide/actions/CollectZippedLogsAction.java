@@ -100,16 +100,16 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
     PerformanceWatcher.getInstance().dumpThreads("", false, false);
 
     String productName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.ENGLISH);
-    @SuppressWarnings("SpellCheckingInspection") String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
+    String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
     Path archive = Files.createTempFile(productName + "-logs-" + date, ".zip");
 
-    try (Compressor zip = new Compressor.Zip(archive.toFile())) {
+    try (Compressor zip = new Compressor.Zip(archive)) {
       // packing additional files before logs, to collect any problems happening in the process
       ProgressManager.checkCanceled();
       additionalFiles.accept(zip);
 
       ProgressManager.checkCanceled();
-      Path logs = Path.of(PathManager.getLogPath()), caches = Path.of(PathManager.getSystemPath());
+      Path logs = PathManager.getLogDir(), caches = PathManager.getSystemDir();
       if (Files.isSameFile(logs, caches)) {
         throw new IOException("cannot collect logs, because log directory set to be the same as the 'system' one: " + logs);
       }
