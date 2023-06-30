@@ -1277,7 +1277,6 @@
         <action id="GrayFilterConfig" internal="true" class="com.intellij.internal.GrayFilterConfig"/>
         <action id="TextGrayFilterConfig" internal="true" class="com.intellij.internal.TextGrayFilterConfig"/>
         <action id="ShowSplash" internal="true" class="com.intellij.ui.ShowSplashAction"/>
-        <action id="ShowAboutPopupInDebugModeAction" class="com.intellij.internal.ui.ShowAboutPopupInDebugModeAction"/>
         <action id="ValidationTest" internal="true" class="com.intellij.internal.validation.TestDialogWithValidationAction"/>
         <action id="MacMessagesTest" internal="true" class="com.intellij.internal.validation.TestMacMessagesAction"/>
         <action id="ColorBlindnessTest" internal="true" class="com.intellij.ide.ui.ColorBlindnessInternalAction"/>
