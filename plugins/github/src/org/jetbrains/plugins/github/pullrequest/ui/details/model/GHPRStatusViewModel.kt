@@ -6,6 +6,7 @@ import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJob
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewStatusViewModel
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
@@ -21,7 +22,11 @@ interface GHPRStatusViewModel : CodeReviewStatusViewModel {
   val requiredApprovingReviewsCount: Flow<Int>
 }
 
-class GHPRStatusViewModelImpl(parentCs: CoroutineScope, stateModel: GHPRStateModel) : GHPRStatusViewModel {
+class GHPRStatusViewModelImpl(
+  parentCs: CoroutineScope,
+  private val project: Project,
+  stateModel: GHPRStateModel
+) : GHPRStatusViewModel {
   private val cs = parentCs.childScope()
 
   override val viewerDidAuthor: Boolean = stateModel.viewerDidAuthor
@@ -59,7 +64,7 @@ class GHPRStatusViewModelImpl(parentCs: CoroutineScope, stateModel: GHPRStateMod
     cs.launchNow {
       val jobs = ciJobs.first()
       _showJobsDetailsRequests.emit(jobs)
-      GHPRStatisticsCollector.logDetailsChecksOpened()
+      GHPRStatisticsCollector.logDetailsChecksOpened(project)
     }
   }
 }

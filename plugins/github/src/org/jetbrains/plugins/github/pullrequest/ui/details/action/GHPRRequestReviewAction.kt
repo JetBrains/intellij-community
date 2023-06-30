@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details.action
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.pullrequest.GHPRAction
@@ -12,7 +13,7 @@ import javax.swing.AbstractAction
 import javax.swing.JButton
 import javax.swing.JComponent
 
-internal class GHPRRequestReviewAction(scope: CoroutineScope, private val reviewFlowVm: GHPRReviewFlowViewModel)
+internal class GHPRRequestReviewAction(scope: CoroutineScope, private val project: Project, private val reviewFlowVm: GHPRReviewFlowViewModel)
   : AbstractAction(CollaborationToolsBundle.message("review.details.action.request")) {
 
   init {
@@ -25,7 +26,7 @@ internal class GHPRRequestReviewAction(scope: CoroutineScope, private val review
 
   override fun actionPerformed(event: ActionEvent) {
     val parentComponent = event.source as JComponent
-    GHPRStatisticsCollector.logDetailsActionInvoked(GHPRAction.REQUEST_REVIEW, parentComponent is JButton)
+    GHPRStatisticsCollector.logDetailsActionInvoked(project, GHPRAction.REQUEST_REVIEW, parentComponent is JButton)
     return reviewFlowVm.requestReview(parentComponent)
   }
 }

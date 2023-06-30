@@ -8,6 +8,7 @@ import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.toAnAction
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.project.Project
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.childScope
@@ -28,6 +29,7 @@ import javax.swing.JScrollPane
 internal object GHPRStatusChecksComponentFactory {
   fun create(
     parentScope: CoroutineScope,
+    project: Project,
     reviewStatusVm: GHPRStatusViewModel,
     reviewFlowVm: GHPRReviewFlowViewModel,
     securityService: GHPRSecurityService,
@@ -48,7 +50,9 @@ internal object GHPRStatusChecksComponentFactory {
       add(CodeReviewDetailsStatusComponentFactory.createNeedReviewerComponent(scope, reviewFlowVm.reviewerReviews))
       add(CodeReviewDetailsStatusComponentFactory.createReviewersReviewStateComponent(
         scope, reviewFlowVm.reviewerReviews,
-        reviewerActionProvider = { reviewer -> DefaultActionGroup(GHPRRemoveReviewerAction(scope, reviewFlowVm, reviewer).toAnAction()) },
+        reviewerActionProvider = { reviewer ->
+          DefaultActionGroup(GHPRRemoveReviewerAction(scope, project, reviewFlowVm, reviewer).toAnAction())
+        },
         reviewerNameProvider = { reviewer -> reviewer.getPresentableName() },
         avatarKeyProvider = { reviewer -> reviewer.avatarUrl },
         iconProvider = { iconKey, iconSize -> avatarIconsProvider.getIcon(iconKey, iconSize) }

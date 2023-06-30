@@ -18,6 +18,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.panels.Wrapper
 import kotlinx.coroutines.CoroutineScope
@@ -39,20 +40,21 @@ internal object GHPRDetailsActionsComponentFactory {
 
   fun create(
     scope: CoroutineScope,
+    project: Project,
     reviewRequestState: Flow<ReviewRequestState>,
     reviewFlowVm: GHPRReviewFlowViewModel,
     dataProvider: GHPRDataProvider
   ): JComponent {
     val reviewActions = CodeReviewActions(
-      requestReviewAction = GHPRRequestReviewAction(scope, reviewFlowVm),
-      reRequestReviewAction = GHPRReRequestReviewAction(scope, reviewFlowVm),
-      closeReviewAction = GHPRCloseAction(scope, reviewFlowVm),
-      reopenReviewAction = GHPRReopenAction(scope, reviewFlowVm),
-      setMyselfAsReviewerAction = GHPRSetMyselfAsReviewerAction(scope, reviewFlowVm),
-      postReviewAction = GHPRPostReviewAction(scope, reviewFlowVm),
-      mergeReviewAction = GHPRCommitMergeAction(scope, reviewFlowVm),
-      mergeSquashReviewAction = GHPRSquashMergeAction(scope, reviewFlowVm),
-      rebaseReviewAction = GHPRRebaseMergeAction(scope, reviewFlowVm)
+      requestReviewAction = GHPRRequestReviewAction(scope, project, reviewFlowVm),
+      reRequestReviewAction = GHPRReRequestReviewAction(scope, project, reviewFlowVm),
+      closeReviewAction = GHPRCloseAction(scope, project, reviewFlowVm),
+      reopenReviewAction = GHPRReopenAction(scope, project, reviewFlowVm),
+      setMyselfAsReviewerAction = GHPRSetMyselfAsReviewerAction(scope, project, reviewFlowVm),
+      postReviewAction = GHPRPostReviewAction(scope, project, reviewFlowVm),
+      mergeReviewAction = GHPRCommitMergeAction(scope, project, reviewFlowVm),
+      mergeSquashReviewAction = GHPRSquashMergeAction(scope, project, reviewFlowVm),
+      rebaseReviewAction = GHPRRebaseMergeAction(scope, project, reviewFlowVm)
     )
     val moreActionsGroup = DefaultActionGroup(GithubBundle.message("pull.request.merge.commit.action"), true)
 
