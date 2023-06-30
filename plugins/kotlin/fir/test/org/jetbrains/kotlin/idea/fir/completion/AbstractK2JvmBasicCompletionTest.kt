@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.completion.test.firFileName
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 
-abstract class AbstractHighLevelJvmBasicCompletionTest : AbstractJvmBasicCompletionTestBase() {
+abstract class AbstractK2JvmBasicCompletionTest : AbstractJvmBasicCompletionTestBase() {
     override val captureExceptions: Boolean = false
 
     override fun isFirPlugin(): Boolean = true

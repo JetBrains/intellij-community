@@ -212,13 +212,13 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     }
 
     testGroup("fir", testDataPath = "../completion/testData") {
-        testClass<AbstractHighLevelJvmBasicCompletionTest> {
+        testClass<AbstractK2JvmBasicCompletionTest> {
             model("basic/common", pattern = KT_WITHOUT_FIR_PREFIX)
             model("basic/java", pattern = KT_WITHOUT_FIR_PREFIX)
             model("../../idea-fir/testData/completion/basic/common", testClassName = "CommonFir")
         }
 
-        testClass<AbstractHighLevelJvmBasicCompletionTest>("org.jetbrains.kotlin.idea.fir.completion.HighLevelKDocCompletionTestGenerated") {
+        testClass<AbstractK2JvmBasicCompletionTest>("org.jetbrains.kotlin.idea.fir.completion.K2KDocCompletionTestGenerated") {
             model("kdoc", pattern = KT_WITHOUT_FIR_PREFIX)
         }
 
