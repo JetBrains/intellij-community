@@ -26,3 +26,5 @@ typealias AsyncSupplier<T> = suspend () -> T
 operator fun <V> AtomicReference<V>.getValue(thisRef: Any?, property: KProperty<*>): V = get()
 
 operator fun <V> AtomicReference<V>.setValue(thisRef: Any?, property: KProperty<*>, value: V): Unit = set(value)
+
+fun <T> simpleLazy(initializer: () -> T): Lazy<T> = lazy(LazyThreadSafetyMode.NONE, initializer)
