@@ -172,7 +172,6 @@ private val addOrRemoveModifiersProcessingGroup =
         processings = listOf(
             RemoveRedundantVisibilityModifierProcessing(),
             RemoveRedundantModalityModifierProcessing(),
-            inspectionBasedProcessing(AddOperatorModifierInspection(), writeActionNeeded = false),
         )
     )
 
