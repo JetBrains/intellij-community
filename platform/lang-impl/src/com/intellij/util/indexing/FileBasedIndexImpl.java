@@ -966,9 +966,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                                      @Nullable Project project,
                                      @Nullable GlobalSearchScope filter,
                                      @Nullable VirtualFile restrictedFile) {
-    //if (myUpToDateIndicesForUnsavedOrTransactedDocuments.contains(indexId)) {
-    //  return; // no need to index unsaved docs        // todo: check scope ?
-    //}
+    if (myUpToDateIndicesForUnsavedOrTransactedDocuments.contains(indexId)) {
+      return; // no need to index unsaved docs        // todo: check scope ?
+    }
 
     Document[] unsavedDocuments = myFileDocumentManager.getUnsavedDocuments();
     Set<Document> transactedDocuments = getTransactedDocuments();
@@ -995,7 +995,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           documentsToProcessForProject.size() == documents.size() &&
           !hasActiveTransactions()
       ) {
-        //myUpToDateIndicesForUnsavedOrTransactedDocuments.add(indexId);
+        myUpToDateIndicesForUnsavedOrTransactedDocuments.add(indexId);
       }
     }
   }
