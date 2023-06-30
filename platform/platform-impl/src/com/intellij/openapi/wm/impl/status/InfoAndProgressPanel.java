@@ -5,6 +5,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.PowerSaveMode;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.idea.ActionsBundle;
@@ -220,7 +221,9 @@ public final class InfoAndProgressPanel implements CustomStatusBarWidget, UISett
 
       myMainPanel.get().updateProgress(compact);
 
-      if (myInfos.size() > 1 && Registry.is("ide.windowSystem.autoShowProcessPopup")) {
+      if (myInfos.size() > 1 && Registry.is("ide.windowSystem.autoShowProcessPopup") &&
+          // we don't want popup to activate another project's window or be shown above current project's window
+          myStatusBar.getProject() == ProjectUtil.getActiveProject()) {
         openProcessPopup(false);
       }
 
