@@ -2,7 +2,6 @@
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.AppTopics;
-import com.intellij.ProjectTopics;
 import com.intellij.application.Topics;
 import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.impl.ProjectUtilCore;
@@ -87,7 +86,6 @@ public final class PsiVFSListener implements BulkFileListener {
         }, project);
       }
 
-      connection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyModuleRootListener(project));
       connection.subscribe(AdditionalLibraryRootsListener.TOPIC, new MyAdditionalLibraryRootListener(project));
       connection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
         @Override
@@ -596,14 +594,12 @@ public final class PsiVFSListener implements BulkFileListener {
       name, fileTypeByFileName, "", vFile.getModificationStamp(), true, false);
   }
 
-  private static final class MyModuleRootListener implements ModuleRootListener {
+  public static final class MyModuleRootListener implements ModuleRootListener {
     private int depthCounter; // accessed from within write action only
-    private final PsiManagerImpl psiManager;
-    private final FileManagerImpl fileManager;
+    private final Project myListenerProject;
 
-    private MyModuleRootListener(@NotNull Project project) {
-      psiManager = (PsiManagerImpl)PsiManager.getInstance(project);
-      fileManager = (FileManagerImpl)psiManager.getFileManager();
+    public MyModuleRootListener(@NotNull Project project) {
+      myListenerProject = project;
     }
 
     @Override
@@ -617,6 +613,7 @@ public final class PsiVFSListener implements BulkFileListener {
           if (LOG.isTraceEnabled()) LOG.trace("depthCounter increased " + depthCounter);
           if (depthCounter > 1) return;
 
+          PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(myListenerProject);
           PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(psiManager);
           treeEvent.setPropertyName(PsiTreeChangeEvent.PROP_ROOTS);
           psiManager.beforePropertyChange(treeEvent);
@@ -627,6 +624,8 @@ public final class PsiVFSListener implements BulkFileListener {
     @Override
     public void rootsChanged(@NotNull ModuleRootEvent event) {
       if (LOG.isTraceEnabled()) LOG.trace("rootsChanged call");
+      PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(myListenerProject);
+      FileManagerImpl fileManager = (FileManagerImpl)psiManager.getFileManager();
       fileManager.dispatchPendingEvents();
 
       if (event.isCausedByFileTypesChange()) return;
