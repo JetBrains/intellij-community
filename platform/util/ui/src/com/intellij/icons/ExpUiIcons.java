@@ -50,6 +50,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon ShowImportStatements = load("expui/actions/showImportStatements.svg", 935761482, 2);
     /** 16x16 */ public static final @NotNull Icon ShowReadAccess = load("expui/actions/showReadAccess.svg", 432207500, 2);
     /** 16x16 */ public static final @NotNull Icon ShowWriteAccess = load("expui/actions/showWriteAccess.svg", 799113071, 2);
+    /** 16x16 */ public static final @NotNull Icon Split = load("expui/actions/split.svg", 1102270400, 2);
     /** 16x16 */ public static final @NotNull Icon SwapPanels = load("expui/actions/swapPanels.svg", 2147313806, 2);
     /** 16x16 */ public static final @NotNull Icon SynchronizeScrolling = load("expui/actions/synchronizeScrolling.svg", -731160875, 2);
     /** 16x16 */ public static final @NotNull Icon ToggleVisibility = load("expui/actions/toggleVisibility.svg", 2137980334, 2);
@@ -229,6 +230,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon SourceMap = load("expui/fileTypes/sourceMap.svg", -798309148, 2);
     /** 16x16 */ public static final @NotNull Icon Sql = load("expui/fileTypes/sql.svg", -1496861857, 2);
     /** 16x16 */ public static final @NotNull Icon Text = load("expui/fileTypes/text.svg", 1946633559, 2);
+    /** 16x16 */ public static final @NotNull Icon UiForm = load("expui/fileTypes/uiForm.svg", -397412144, 2);
     /** 16x16 */ public static final @NotNull Icon Unknown = load("expui/fileTypes/unknown.svg", -2043297803, 2);
     /** 16x16 */ public static final @NotNull Icon VueJs = load("expui/fileTypes/vueJs.svg", -1118824585, 0);
     /** 16x16 */ public static final @NotNull Icon Wsdl = load("expui/fileTypes/wsdl.svg", 53700367, 2);
@@ -379,6 +381,11 @@ public final class ExpUiIcons {
     /** 14x14 */ public static final @NotNull Icon SuggestedRefactoringDisabled = load("expui/gutter/suggestedRefactoringDisabled.svg", 735062439, 2);
     /** 9x9 */ public static final @NotNull Icon Unfold = load("expui/gutter/unfold.svg", -33250380, 2);
     /** 14x14 */ public static final @NotNull Icon WriteAccess = load("expui/gutter/writeAccess.svg", -998663344, 2);
+  }
+
+  public static final class Hierarchy {
+    /** 16x16 */ public static final @NotNull Icon Subtypes = load("expui/hierarchy/subtypes.svg", -570232233, 2);
+    /** 16x16 */ public static final @NotNull Icon Supertypes = load("expui/hierarchy/supertypes.svg", 1662070576, 2);
   }
 
   public static final class Ide {

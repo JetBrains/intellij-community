@@ -33,6 +33,7 @@
       "reformatCode.svg": "actions/reformatCode.svg",
       "showReadAccess.svg": "actions/showReadAccess.svg",
       "showWriteAccess.svg": "actions/showWriteAccess.svg",
+      "split.svg": "modules/split.svg",
       "swapPanels.svg": "actions/swapPanels.svg",
       "synchronizeScrolling.svg": "actions/synchronizeScrolling.svg",
       "showImportStatements.svg": "actions/showImportStatements.svg",
@@ -176,7 +177,10 @@
       "ideaModule.svg": "nodes/ideaModule.svg",
       "idl.svg": "fileTypes/idl.svg",
       "ignored.svg": "vcs/ignore_file.svg",
-      "java.svg": "fileTypes/java.svg",
+      "java.svg": [
+        "fileTypes/java.svg",
+        "fileTypes/javaOutsideSource.svg"
+      ],
       "javaScript.svg": "fileTypes/javaScript.svg",
       "jest.svg": "icons/fileTypes/jestSnapshot.svg",
       "jfr.svg": "fileTypes/jfr.svg",
@@ -207,6 +211,7 @@
         "fileTypes/custom.svg",
         "fileTypes/text.svg"
       ],
+      "uiForm.svg": "fileTypes/uiForm.svg",
       "image.svg": "fileTypes/image.svg",
       "unknown.svg": "fileTypes/unknown.svg",
       "vueJs.svg": "icons/vue.svg",
@@ -402,6 +407,10 @@
       "suggestedRefactoringDisabled.svg": "gutter/suggestedRefactoringBulbDisabled.svg",
       "writeAccess.svg": "gutter/writeAccess.svg"
     },
+    "hierarchy": {
+      "subtypes.svg": "hierarchy/subtypes.svg",
+      "supertypes.svg": "hierarchy/supertypes.svg"
+    },
     "ide": {
       "configFile.svg": "ide/configFile.svg",
       "feedbackRating.svg": "ide/feedbackRating.svg",
@@ -512,7 +521,14 @@
       "excludeRoot.svg": "modules/excludeRoot.svg",
       "excludedGenerated.svg": "modules/excludedGeneratedRoot.svg",
       "field.svg": "nodes/field.svg",
-      "folder.svg": "nodes/folder.svg",
+      "folder.svg": [
+        "nodes/folder.svg",
+        "nodes/keymapAnt.svg",
+        "nodes/keymapEditor.svg",
+        "nodes/keymapMainMenu.svg",
+        "nodes/keymapOther.svg",
+        "nodes/keymapTools.svg"
+      ],
       "function.svg": "nodes/function.svg",
       "generated.svg": "modules/generatedFolder.svg",
       "generatedSource.svg": "modules/generatedSourceRoot.svg",
