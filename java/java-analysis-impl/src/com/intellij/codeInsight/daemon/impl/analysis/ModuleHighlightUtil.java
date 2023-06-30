@@ -119,7 +119,7 @@ final class ModuleHighlightUtil {
         .descriptionAndTooltip(message);
       rootModuleInfos.stream().map(f -> PsiManager.getInstance(project).findFile(f)).filter(f -> f != file).findFirst().ifPresent(
         duplicate -> {
-          IntentionAction action = new GoToSymbolFix(duplicate, JavaErrorBundle
+          var action = new GoToSymbolFix(duplicate, JavaErrorBundle
             .message("module.open.duplicate.text"));
           info.registerFix(action, null, null, null, null);
         }

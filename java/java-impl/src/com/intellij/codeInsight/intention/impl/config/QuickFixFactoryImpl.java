@@ -295,7 +295,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createNegationBroadScopeFix(@NotNull PsiPrefixExpression expr) {
-    return new NegationBroadScopeFix(expr);
+    return new NegationBroadScopeFix(expr).asIntention();
   }
 
   @NotNull
