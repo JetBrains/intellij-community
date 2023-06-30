@@ -4,5 +4,4 @@ val x
         <caret>
     }
 
-// OUT_OF_BLOCK: true
-// TODO should not be out of block
+// OUT_OF_BLOCK: false

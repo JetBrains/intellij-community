@@ -1,6 +1,7 @@
 class A {
-    val x: Int = run {
-        <caret>
+  val x
+    get() {
+      <caret>
     }
 }
 
