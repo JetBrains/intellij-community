@@ -21,6 +21,7 @@ class GitLabMergeRequestDTO(
   val targetBranch: String,
   val sourceBranch: String,
   val diffRefs: GitLabDiffRefs,
+  val approved: Boolean,
   val conflicts: Boolean,
   val headPipeline: GitLabPipelineDTO?,
   val mergeStatusEnum: GitLabMergeStatus,
@@ -43,7 +44,7 @@ class GitLabMergeRequestDTO(
 
   val assignees: List<GitLabUserDTO> = assignees.nodes
 
-  val reviewers: List<GitLabUserDTO> = reviewers.nodes
+  val reviewers: List<GitLabReviewerDTO> = reviewers.nodes
 
   val commits: List<GitLabCommitDTO> = commits.nodes
 
@@ -55,8 +56,8 @@ class GitLabMergeRequestDTO(
   class AssigneeConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabUserDTO>)
     : GraphQLConnectionDTO<GitLabUserDTO>(pageInfo, nodes)
 
-  class ReviewerConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabUserDTO>)
-    : GraphQLConnectionDTO<GitLabUserDTO>(pageInfo, nodes)
+  class ReviewerConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabReviewerDTO>)
+    : GraphQLConnectionDTO<GitLabReviewerDTO>(pageInfo, nodes)
 
   class CommitConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabCommitDTO>)
     : GraphQLConnectionDTO<GitLabCommitDTO>(pageInfo, nodes)
