@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea
 
 import com.intellij.diagnostic.runActivity
+import com.intellij.diagnostic.subtask
 import com.intellij.ide.gdpr.ConsentOptions
 import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.ide.gdpr.showDataSharingAgreement
@@ -21,8 +22,8 @@ internal suspend fun loadEuaDocument(appInfoDeferred: Deferred<ApplicationInfoEx
     return null
   }
   else {
-    val document = runActivity("eua getting") { EndUserAgreement.getLatestDocument() }
-    return if (runActivity("eua is accepted checking") { document.isAccepted }) null else document
+    val document = subtask("eua getting") { EndUserAgreement.getLatestDocument() }
+    return if (subtask("eua is accepted checking") { document.isAccepted }) null else document
   }
 }
 

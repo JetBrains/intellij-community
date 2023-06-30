@@ -86,7 +86,7 @@ open class IdeStarter : ModernApplicationStarter() {
                                                  asyncCoroutineScope: CoroutineScope,
                                                  lifecyclePublisher: AppLifecycleListener) {
     val frameInitActivity = startActivity("frame initialization")
-    frameInitActivity.runChild("app frame created callback") {
+    subtask("app frame created callback") {
       lifecyclePublisher.appFrameCreated(args)
     }
 
@@ -216,17 +216,13 @@ private fun CoroutineScope.postOpenUiTasks() {
   }
 
   if (SystemInfoRt.isMac) {
-    launch {
-      runActivity("mac touchbar on app init") {
-        TouchbarSupport.onApplicationLoaded()
-      }
+    launch(CoroutineName("mac touchbar on app init")) {
+      TouchbarSupport.onApplicationLoaded()
     }
   }
   else if (SystemInfoRt.isXWindow && SystemInfo.isJetBrainsJvm) {
-    launch {
-      runActivity("input method disabling on Linux") {
-        disableInputMethodsIfPossible()
-      }
+    launch(CoroutineName("input method disabling on Linux")) {
+      disableInputMethodsIfPossible()
     }
   }
 

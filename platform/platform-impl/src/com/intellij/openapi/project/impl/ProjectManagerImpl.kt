@@ -76,7 +76,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.delete
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
-import io.opentelemetry.api.common.AttributeKey
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -666,9 +665,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         }
 
         projectOpenActivity = if (StartUpMeasurer.isEnabled()) StartUpMeasurer.startActivity("project opening") else null
-        runActivity("project startup") {
-          tracer.spanBuilder("open project")
-            .setAttribute(AttributeKey.stringKey("project"), project.name)
+        subtask("project startup") {
           runInitProjectActivities(project)
         }
       }
@@ -862,7 +859,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     if (options.runConversionBeforeOpen) {
       val conversionService = ConversionService.getInstance()
       if (conversionService != null) {
-        conversionResult = runActivity("project conversion") {
+        conversionResult = subtask("project conversion") {
           conversionService.convert(projectStoreBaseDir)
         }
         if (conversionResult.openingIsCanceled()) {

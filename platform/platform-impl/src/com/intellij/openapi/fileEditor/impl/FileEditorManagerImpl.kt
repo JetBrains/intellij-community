@@ -2071,7 +2071,7 @@ open class FileEditorManagerImpl(
           if (isNewEditor) {
             composite = createComposite(file = file, providers = providerWithBuilderList)
             if (composite != null) {
-              runActivity("beforeFileOpened event executing") {
+              subtask("beforeFileOpened event executing") {
                 beforePublisher!!.beforeFileOpened(this@FileEditorManagerImpl, file)
               }
               openedComposites.add(composite)
