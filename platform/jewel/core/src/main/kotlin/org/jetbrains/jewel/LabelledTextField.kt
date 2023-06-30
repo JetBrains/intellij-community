@@ -10,18 +10,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.offset
+import org.jetbrains.jewel.styling.LabelledTextFieldStyle
 
 @Composable
 fun LabelledTextField(
@@ -41,9 +39,8 @@ fun LabelledTextField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions(),
     onTextLayout: (TextLayoutResult) -> Unit = {},
-    defaults: LabelledTextFieldDefaults = IntelliJTheme.labelledTextFieldDefaults,
-    colors: LabelledTextFieldColors = defaults.colors(),
-    textStyle: TextStyle = defaults.textStyle(),
+    style: LabelledTextFieldStyle = IntelliJTheme.labelledTextFieldStyle,
+    textStyle: TextStyle = IntelliJTheme.defaultTextStyle,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
 ) {
     var textFieldValueState by remember { mutableStateOf(TextFieldValue(text = value)) }
@@ -73,8 +70,7 @@ fun LabelledTextField(
         keyboardOptions = keyboardOptions,
         keyboardActions = keyboardActions,
         onTextLayout = onTextLayout,
-        defaults = defaults,
-        colors = colors,
+        style = style,
         textStyle = textStyle,
         interactionSource = interactionSource
     )
@@ -98,17 +94,16 @@ fun LabelledTextField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions(),
     onTextLayout: (TextLayoutResult) -> Unit = {},
-    defaults: LabelledTextFieldDefaults = IntelliJTheme.labelledTextFieldDefaults,
-    colors: LabelledTextFieldColors = defaults.colors(),
-    textStyle: TextStyle = defaults.textStyle(),
+    style: LabelledTextFieldStyle = IntelliJTheme.labelledTextFieldStyle,
+    textStyle: TextStyle = IntelliJTheme.defaultTextStyle,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
 ) {
     LabelledTextFieldLayout(
         modifier = modifier,
         label = {
             CompositionLocalProvider(
-                LocalTextStyle provides defaults.labelTextStyle(),
-                LocalTextColor provides colors.labelTextColor(),
+                LocalTextStyle provides style.textStyles.label,
+                LocalContentColor provides style.colors.label,
                 content = label
             )
         },
@@ -127,8 +122,7 @@ fun LabelledTextField(
                 keyboardOptions = keyboardOptions,
                 keyboardActions = keyboardActions,
                 onTextLayout = onTextLayout,
-                defaults = defaults,
-                colors = colors,
+                style = style,
                 textStyle = textStyle,
                 interactionSource = interactionSource
             )
@@ -136,64 +130,14 @@ fun LabelledTextField(
         hint = hint?.let {
             {
                 CompositionLocalProvider(
-                    LocalTextStyle provides defaults.hintTextStyle(),
-                    LocalTextColor provides colors.hintTextColor(),
+                    LocalTextStyle provides style.textStyles.hint,
+                    LocalContentColor provides style.colors.hint,
                     content = it
                 )
             }
         },
-        defaults = defaults
+        style = style
     )
-}
-
-interface LabelledTextFieldDefaults : TextFieldDefaults {
-
-    @Composable
-    override fun colors(): LabelledTextFieldColors
-
-    @Composable
-    fun hintTextStyle(): TextStyle
-
-    @Composable
-    fun labelTextStyle(): TextStyle
-
-    @Composable
-    fun labelSpacing(): Dp
-
-    @Composable
-    fun hintSpacing(): Dp
-}
-
-interface LabelledTextFieldColors : TextFieldColors {
-
-    @Composable
-    fun labelTextColor(): Color
-
-    @Composable
-    fun hintTextColor(): Color
-}
-
-fun labelledTextFieldColors(
-    textFieldColors: TextFieldColors,
-    labelTextColor: Color,
-    hintTextColor: Color
-): LabelledTextFieldColors = DefaultLabelledTextFieldColors(
-    textFieldColors = textFieldColors,
-    labelTextColor = labelTextColor,
-    hintTextColor = hintTextColor
-)
-
-private class DefaultLabelledTextFieldColors(
-    textFieldColors: TextFieldColors,
-    val labelTextColor: Color,
-    val hintTextColor: Color
-) : LabelledTextFieldColors, TextFieldColors by textFieldColors {
-
-    @Composable
-    override fun hintTextColor(): Color = hintTextColor
-
-    @Composable
-    override fun labelTextColor(): Color = labelTextColor
 }
 
 @Composable
@@ -202,10 +146,10 @@ private fun LabelledTextFieldLayout(
     label: @Composable () -> Unit,
     textField: @Composable () -> Unit,
     hint: (@Composable () -> Unit)?,
-    defaults: LabelledTextFieldDefaults
+    style: LabelledTextFieldStyle
 ) {
-    val labelSpacing = defaults.labelSpacing()
-    val hintSpacing = defaults.hintSpacing()
+    val labelSpacing = style.metrics.labelSpacing
+    val hintSpacing = style.metrics.hintSpacing
     Layout(
         modifier = modifier,
         content = {
@@ -249,16 +193,16 @@ private fun LabelledTextFieldLayout(
 
         layout(width, height) {
             labelPlaceable.placeRelative(
-                0,
-                Alignment.CenterVertically.align(labelPlaceable.height, textFieldPlaceable.height)
+                x = 0,
+                y = Alignment.CenterVertically.align(labelPlaceable.height, textFieldPlaceable.height)
             )
             textFieldPlaceable.placeRelative(
-                labelPlaceable.width + horizontalSpacing,
-                0
+                x = labelPlaceable.width + horizontalSpacing,
+                y = 0
             )
             hintPlaceable?.placeRelative(
-                labelPlaceable.width + horizontalSpacing,
-                textFieldPlaceable.height + verticalSpacing
+                x = labelPlaceable.width + horizontalSpacing,
+                y = textFieldPlaceable.height + verticalSpacing
             )
         }
     }
@@ -267,7 +211,3 @@ private fun LabelledTextFieldLayout(
 private const val LABEL_ID = "Label"
 private const val TEXT_FIELD_ID = "TextField"
 private const val HINT_ID = "Hint"
-
-internal val LocalLabelledTextFieldDefaults = staticCompositionLocalOf<LabelledTextFieldDefaults> {
-    error("No LabelledTextFieldDefaults provided")
-}

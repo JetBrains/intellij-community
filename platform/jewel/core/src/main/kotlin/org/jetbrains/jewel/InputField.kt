@@ -3,7 +3,7 @@ package org.jetbrains.jewel
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.FocusInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -11,23 +11,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.unit.Dp
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.border
+import org.jetbrains.jewel.styling.InputFieldStyle
+import org.jetbrains.jewel.util.appendIf
 
 @Composable
 internal fun InputField(
@@ -45,8 +42,7 @@ internal fun InputField(
     maxLines: Int,
     onTextLayout: (TextLayoutResult) -> Unit,
     interactionSource: MutableInteractionSource,
-    defaults: InputFieldDefaults,
-    colors: InputFieldColors,
+    style: InputFieldStyle,
     textStyle: TextStyle,
     decorationBox: @Composable (innerTextField: @Composable () -> Unit, state: InputFieldState) -> Unit
 ) {
@@ -66,109 +62,114 @@ internal fun InputField(
         }
     }
 
-    val backgroundModifier = colors.background(inputState).value.takeIf {
-        !undecorated && it.isSpecified
-    }?.let {
-        Modifier.background(it, defaults.shape())
-    } ?: Modifier
+    val colors = style.colors
+    val backgroundColor by colors.backgroundFor(inputState)
+    val shape = RoundedCornerShape(style.metrics.cornerSize)
 
-    val borderModifier = colors.borderStroke(inputState).value.takeIf { !undecorated }?.let {
-        Modifier.border(it, defaults.shape())
-    } ?: Modifier
+    val backgroundModifier = Modifier.appendIf(!undecorated && backgroundColor.isSpecified) {
+        background(backgroundColor, shape)
+    }
+
+    val borderColor by style.colors.borderFor(inputState)
+    val borderModifier = Modifier.appendIf(!undecorated && borderColor.isSpecified) {
+        Modifier.border(
+            alignment = Stroke.Alignment.Outside,
+            width = style.metrics.borderWidth,
+            color = borderColor,
+            shape = shape
+        )
+    }
+
+    val contentColor by colors.contentFor(inputState)
+    val mergedTextStyle = style.textStyle.merge(textStyle).copy(color = contentColor)
+    val cursorBrush by colors.cursorFor(inputState)
 
     BasicTextField(
         value = value,
-        onValueChange = onValueChange,
         modifier = modifier.then(backgroundModifier)
             .then(borderModifier),
+        onValueChange = onValueChange,
         enabled = enabled,
         readOnly = readOnly,
-        textStyle = defaults.textStyle().merge(textStyle).copy(color = colors.foreground(inputState).value),
-        keyboardOptions = keyboardOptions,
-        keyboardActions = keyboardActions,
-        singleLine = singleLine,
-        maxLines = maxLines,
+        textStyle = mergedTextStyle,
+        cursorBrush = cursorBrush,
         visualTransformation = visualTransformation,
         onTextLayout = onTextLayout,
+        keyboardOptions = keyboardOptions,
+        keyboardActions = keyboardActions,
         interactionSource = interactionSource,
-        cursorBrush = colors.cursorBrush(inputState).value,
-        decorationBox = {
-            decorationBox(it, inputState)
+        singleLine = singleLine,
+        maxLines = maxLines,
+        decorationBox = @Composable { innerTextField: @Composable () -> Unit ->
+            decorationBox(innerTextField, inputState)
         }
     )
 }
 
 @Immutable
 @JvmInline
-value class InputFieldState(val state: ULong) {
+value class InputFieldState(val state: ULong) : StateWithOutline {
 
     @Stable
-    val isEnabled: Boolean
-        get() = state and Enabled != 0UL
+    override val isEnabled: Boolean
+        get() = state and CommonStateBitMask.Enabled != 0UL
 
     @Stable
-    val isFocused: Boolean
-        get() = state and Focused != 0UL
+    override val isFocused: Boolean
+        get() = state and CommonStateBitMask.Focused != 0UL
 
     @Stable
-    val isError: Boolean
-        get() = state and Error != 0UL
+    override val isError: Boolean
+        get() = state and CommonStateBitMask.Error != 0UL
 
-    fun copy(enabled: Boolean = isEnabled, focused: Boolean = isFocused, error: Boolean = isError): InputFieldState =
-        of(enabled, focused, error)
+    @Stable
+    override val isWarning: Boolean
+        get() = state and CommonStateBitMask.Warning != 0UL
 
-    override fun toString(): String = "InputFieldState(enabled=$isEnabled, focused=$isFocused, error=$isError)"
+    @Stable
+    override val isHovered: Boolean
+        get() = state and CommonStateBitMask.Hovered != 0UL
+
+    @Stable
+    override val isPressed: Boolean
+        get() = state and CommonStateBitMask.Pressed != 0UL
+
+    fun copy(
+        enabled: Boolean = isEnabled,
+        focused: Boolean = isFocused,
+        error: Boolean = isError,
+        pressed: Boolean = isPressed,
+        hovered: Boolean = isHovered,
+        warning: Boolean = isWarning
+    ) = of(
+        enabled = enabled,
+        focused = focused,
+        error = error,
+        pressed = pressed,
+        hovered = hovered,
+        warning = warning
+    )
+
+    override fun toString() =
+        "${javaClass.simpleName}(isEnabled=$isEnabled, isFocused=$isFocused, isError=$isError, isWarning=$isWarning, " +
+            "isHovered=$isHovered, isPressed=$isPressed)"
 
     companion object {
 
-        private val Enabled = 1UL shl 0
-        private val Focused = 1UL shl 1
-        private val Error = 1UL shl 2
-
-        fun of(enabled: Boolean, focused: Boolean = false, error: Boolean): InputFieldState {
-            var state = 0UL
-            if (enabled) state = state or Enabled
-            if (focused) state = state or Focused
-            if (error) state = state or Error
-            return InputFieldState(state)
-        }
+        fun of(
+            enabled: Boolean = true,
+            focused: Boolean = false,
+            error: Boolean = false,
+            pressed: Boolean = false,
+            hovered: Boolean = false,
+            warning: Boolean = false
+        ) = InputFieldState(
+            state = (if (enabled) CommonStateBitMask.Enabled else 0UL) or
+                (if (focused) CommonStateBitMask.Focused else 0UL) or
+                (if (error) CommonStateBitMask.Error else 0UL) or
+                (if (hovered) CommonStateBitMask.Hovered else 0UL) or
+                (if (pressed) CommonStateBitMask.Pressed else 0UL) or
+                (if (warning) CommonStateBitMask.Warning else 0UL)
+        )
     }
-}
-
-@Stable
-interface InputFieldColors {
-
-    @Composable
-    fun foreground(state: InputFieldState): State<Color>
-
-    @Composable
-    fun background(state: InputFieldState): State<Color>
-
-    @Composable
-    fun borderStroke(state: InputFieldState): State<Stroke>
-
-    @Composable
-    fun cursorBrush(state: InputFieldState): State<Brush>
-}
-
-@Stable
-interface InputFieldDefaults {
-
-    @Composable
-    fun colors(): InputFieldColors
-
-    @Composable
-    fun shape(): Shape
-
-    @Composable
-    fun textStyle(): TextStyle
-
-    @Composable
-    fun contentPadding(): PaddingValues
-
-    @Composable
-    fun minWidth(): Dp
-
-    @Composable
-    fun minHeight(): Dp
 }

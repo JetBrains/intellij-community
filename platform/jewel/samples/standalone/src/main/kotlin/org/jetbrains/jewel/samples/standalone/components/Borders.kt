@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.GroupHeader
+import org.jetbrains.jewel.LocalResourceLoader
 import org.jetbrains.jewel.OutlinedButton
 import org.jetbrains.jewel.RadioButtonRow
 import org.jetbrains.jewel.Text
@@ -24,9 +25,11 @@ import org.jetbrains.jewel.foundation.border
 import org.jetbrains.jewel.themes.intui.standalone.IntUiTheme
 
 @Composable
-fun Borders() {
+internal fun Borders() {
     GroupHeader("Borders")
     var borderAlignment by remember { mutableStateOf(Stroke.Alignment.Center) }
+    val resourceLoader = LocalResourceLoader.current
+
     Row(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -34,16 +37,19 @@ fun Borders() {
         RadioButtonRow(
             text = "Inside",
             selected = borderAlignment == Stroke.Alignment.Inside,
+            resourceLoader = resourceLoader,
             onClick = { borderAlignment = Stroke.Alignment.Inside }
         )
         RadioButtonRow(
             text = "Center",
             selected = borderAlignment == Stroke.Alignment.Center,
+            resourceLoader = resourceLoader,
             onClick = { borderAlignment = Stroke.Alignment.Center }
         )
         RadioButtonRow(
             text = "Outside",
             selected = borderAlignment == Stroke.Alignment.Outside,
+            resourceLoader = resourceLoader,
             onClick = { borderAlignment = Stroke.Alignment.Outside }
         )
     }

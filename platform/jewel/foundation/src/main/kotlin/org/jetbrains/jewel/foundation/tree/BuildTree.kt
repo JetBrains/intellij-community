@@ -127,11 +127,11 @@ interface TreeGeneratorScope<T> {
     fun add(element: TreeBuilder.Element<T>)
 }
 
-class ChildrenGeneratorScope<T>(private val parentNode: Tree.Element.Node<T>) : TreeGeneratorScope<T> {
+class ChildrenGeneratorScope<T>(private val parentElement: Tree.Element.Node<T>) : TreeGeneratorScope<T> {
 
     data class ParentInfo<T>(val data: T, val depth: Int, val index: Int)
 
-    val parent by lazy { ParentInfo(parentNode.data, parentNode.depth, parentNode.childIndex) }
+    val parent by lazy { ParentInfo(parentElement.data, parentElement.depth, parentElement.childIndex) }
 
     internal val elements = mutableListOf<TreeBuilder.Element<T>>()
 

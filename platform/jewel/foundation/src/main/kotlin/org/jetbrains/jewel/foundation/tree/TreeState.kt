@@ -57,10 +57,10 @@ class TreeState(
         refreshFlattenTree()
     }
 
-    fun openNode(node: Tree.Element.Node<*>, reloadChildren: Boolean = false): Boolean {
-        val indexInFlattenTree = flattenedTree.indexOf(node)
+    fun openNode(element: Tree.Element.Node<*>, reloadChildren: Boolean = false): Boolean {
+        val indexInFlattenTree = flattenedTree.indexOf(element)
         if (indexInFlattenTree < 0) return false
-        return doOpenNode(node, reloadChildren)
+        return doOpenNode(element, reloadChildren)
     }
 
     @Suppress("unused")
@@ -70,10 +70,10 @@ class TreeState(
         return doOpenNode(flattenedTree[indexInFlattenTree] as Tree.Element.Node<*>, reloadChildren)
     }
 
-    fun closeNode(node: Tree.Element.Node<*>): Boolean {
-        val indexInFlattenTree = flattenedTree.indexOf(node)
+    fun closeNode(element: Tree.Element.Node<*>): Boolean {
+        val indexInFlattenTree = flattenedTree.indexOf(element)
         if (indexInFlattenTree < 0) return false
-        return doCloseNode(node)
+        return doCloseNode(element)
     }
 
     @Suppress("unused")
@@ -83,11 +83,11 @@ class TreeState(
         return doCloseNode(flattenedTree[indexInFlattenTree] as Tree.Element.Node<*>)
     }
 
-    private fun doCloseNode(node: Tree.Element.Node<*>, skipTreeRefresh: Boolean = false): Boolean {
+    private fun doCloseNode(element: Tree.Element.Node<*>, skipTreeRefresh: Boolean = false): Boolean {
         Log.d("request node close")
-        val nodeIdPath = node.idPath()
+        val nodeIdPath = element.idPath()
         val nodeWasOpen = openNodesMap.remove(nodeIdPath) != null
-        node.close()
+        element.close()
         // close all children too
         openNodes.forEach { if (it.key.containsAll(nodeIdPath)) doCloseNode(it.value, true) }
         if (nodeWasOpen && !skipTreeRefresh) {
@@ -96,11 +96,11 @@ class TreeState(
         return nodeWasOpen
     }
 
-    private fun doOpenNode(node: Tree.Element.Node<*>, reloadChildren: Boolean): Boolean {
+    private fun doOpenNode(element: Tree.Element.Node<*>, reloadChildren: Boolean): Boolean {
         Log.d("request node opening")
-        return if (node in flattenedTree) {
-            openNodesMap[node.idPath()] = node
-            node.open(reloadChildren)
+        return if (element in flattenedTree) {
+            openNodesMap[element.idPath()] = element
+            element.open(reloadChildren)
             refreshFlattenTree()
             true
         } else {
@@ -161,7 +161,7 @@ class TreeState(
         delegate.deselectAll()
     }
 
-    fun isNodeOpen(node: Tree.Element.Node<*>) = node.isOpen
+    fun isNodeOpen(element: Tree.Element.Node<*>) = element.isOpen
 
-    fun toggleNode(node: Tree.Element.Node<*>) = if (node.isOpen) closeNode(node) else openNode(node)
+    fun toggleNode(element: Tree.Element.Node<*>) = if (element.isOpen) closeNode(element) else openNode(element)
 }

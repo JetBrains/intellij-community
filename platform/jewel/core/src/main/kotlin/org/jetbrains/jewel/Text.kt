@@ -81,7 +81,7 @@ fun Text(
 ) {
     val textColor = color.takeOrElse {
         style.color.takeOrElse {
-            LocalTextColor.current.copy(alpha = LocalTextAlpha.current)
+            LocalContentColor.current.copy(alpha = LocalTextAlpha.current)
         }
     }
 
@@ -101,9 +101,10 @@ fun Text(
     BasicText(text, modifier, mergedStyle, onTextLayout, overflow, softWrap, maxLines, inlineContent)
 }
 
+// TODO these should blow up if not defined by the theme
 val LocalTextStyle = compositionLocalOf { TextStyle.Default }
 
-val LocalTextColor = compositionLocalOf { Color.Black }
+val LocalContentColor = compositionLocalOf { Color.Black }
 
 val LocalTextAlpha = compositionLocalOf { 1f }
 

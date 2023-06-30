@@ -11,9 +11,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import org.jetbrains.jewel.BaseChip
+import org.jetbrains.jewel.Chip
 import org.jetbrains.jewel.GroupHeader
-import org.jetbrains.jewel.IntelliJTree
+import org.jetbrains.jewel.LazyTree
+import org.jetbrains.jewel.LocalResourceLoader
 import org.jetbrains.jewel.Text
 import org.jetbrains.jewel.foundation.tree.buildTree
 
@@ -34,13 +35,13 @@ fun ChipsAndTree() {
 @Composable
 fun ChipsRow(modifier: Modifier = Modifier) {
     Row(modifier) {
-        BaseChip(
+        Chip(
             enabled = true,
             onChipClick = {}
         ) {
             Text("Enabled")
         }
-        BaseChip(
+        Chip(
             enabled = false,
             onChipClick = {}
         ) {
@@ -70,11 +71,13 @@ fun TreeSample(modifier: Modifier = Modifier) {
             }
         }
     }
-    IntelliJTree(
-        Modifier.size(200.dp, 200.dp).then(modifier),
+    val resourceLoader = LocalResourceLoader.current
+    LazyTree(
+        modifier = Modifier.size(200.dp, 200.dp).then(modifier),
         onElementClick = {},
         onElementDoubleClick = {},
-        tree = tree
+        tree = tree,
+        resourceLoader = resourceLoader
     ) { element ->
         Text(element.data, modifier.padding(2.dp))
     }

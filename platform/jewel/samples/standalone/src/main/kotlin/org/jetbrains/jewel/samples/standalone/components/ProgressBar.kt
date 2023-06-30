@@ -17,9 +17,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
-import org.jetbrains.jewel.AnimatedDefiniteLinearProgressBar
-import org.jetbrains.jewel.IndeterminateLinearProgressBar
-import org.jetbrains.jewel.LinearProgressBar
+import org.jetbrains.jewel.HorizontalProgressBar
+import org.jetbrains.jewel.IndeterminateHorizontalProgressBar
 import org.jetbrains.jewel.Text
 
 @Composable
@@ -36,42 +35,43 @@ fun ProgressBar() {
             }
         )
     )
-    var intermittentProgression by remember { mutableStateOf(0f) }
+    var intermittentProgress by remember { mutableStateOf(0f) }
     LaunchedEffect(Unit) {
         while (true) {
             delay(800)
-            if (intermittentProgression >= .9) {
-                intermittentProgression = 0f
+            if (intermittentProgress >= .9) {
+                intermittentProgress = 0f
             } else {
-                intermittentProgression += .25f
+                intermittentProgress += .25f
             }
         }
     }
     Column {
-        Text("LinearProgressBar - linear progression")
+        Text("HorizontalProgressBar - linear progress")
         Row(Modifier.width(600.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-            LinearProgressBar(Modifier.width(500.dp), currentOffset)
+            HorizontalProgressBar(modifier = Modifier.width(500.dp), progress = currentOffset)
             Text("${(currentOffset * 100).toInt()} %")
         }
     }
     Column {
-        Text("LinearProgressBar - non linear progression ")
+        Text("HorizontalProgressBar - non linear progress")
         Row(Modifier.width(600.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-            LinearProgressBar(Modifier.width(500.dp), intermittentProgression)
-            Text("${(intermittentProgression * 100).toInt()} %")
+            HorizontalProgressBar(modifier = Modifier.width(500.dp), progress = intermittentProgress)
+            Text("${(intermittentProgress * 100).toInt()} %")
         }
     }
     Column {
-        Text("AnimatedProgressBar - non linear progression")
+        Text("HorizontalProgressBar - smoothed non linear progress")
         Row(Modifier.width(600.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-            AnimatedDefiniteLinearProgressBar(Modifier.width(500.dp), intermittentProgression)
-            Text("${(intermittentProgression * 100).toInt()} %")
+            val smoothedProgress by androidx.compose.animation.core.animateFloatAsState(intermittentProgress)
+            HorizontalProgressBar(modifier = Modifier.width(500.dp), progress = smoothedProgress)
+            Text("${(intermittentProgress * 100).toInt()} %")
         }
     }
     Column {
-        Text("IndeterminateProgressBar")
+        Text("IndeterminateHorizontalProgressBar")
         Row(Modifier.width(600.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-            IndeterminateLinearProgressBar(Modifier.width(500.dp))
+            IndeterminateHorizontalProgressBar(modifier = Modifier.width(500.dp))
             Text("----")
         }
     }

@@ -10,7 +10,6 @@ import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -26,12 +26,10 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
@@ -40,9 +38,6 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.InputModeManager
 import androidx.compose.ui.input.key.Key
@@ -53,20 +48,19 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalInputModeManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.border
 import org.jetbrains.jewel.foundation.onHover
+import org.jetbrains.jewel.styling.MenuStyle
 
 @Composable
 internal fun MenuContent(
     modifier: Modifier = Modifier,
-    defaults: MenuDefaults = IntelliJTheme.menuDefaults,
-    colors: MenuColors = defaults.menuColors(),
+    style: MenuStyle = IntelliJTheme.menuStyle,
     content: MenuScope.() -> Unit
 ) {
     val items by remember(content) {
@@ -77,15 +71,18 @@ internal fun MenuContent(
 
     val localMenuManager = LocalMenuManager.current
     val scrollState = rememberScrollState()
+    val colors = style.colors
+    val menuShape = RoundedCornerShape(style.metrics.cornerSize)
+
     Box(
         modifier = modifier.shadow(
-            defaults.menuShadowSize(),
-            defaults.menuShape(),
-            ambientColor = colors.shadowColor(),
-            spotColor = colors.shadowColor()
+            elevation = style.metrics.shadowSize,
+            shape = menuShape,
+            ambientColor = colors.shadow,
+            spotColor = colors.shadow
         )
-            .border(colors.borderStroke(), defaults.menuShape())
-            .background(colors.background(), defaults.menuShape())
+            .border(Stroke.Alignment.Center, style.metrics.borderWidth, colors.border, menuShape)
+            .background(colors.background, menuShape)
             .width(IntrinsicSize.Max)
             .onHover {
                 localMenuManager.onHoveredChange(it)
@@ -94,7 +91,7 @@ internal fun MenuContent(
         Column(
             modifier = Modifier
                 .verticalScroll(scrollState)
-                .padding(defaults.menuContentPadding())
+                .padding(style.metrics.contentPadding)
         ) {
             items.forEach {
                 when (it) {
@@ -220,13 +217,12 @@ private data class SubmenuItem(
 @Composable
 fun MenuSeparator(
     modifier: Modifier = Modifier,
-    defaults: MenuDefaults = IntelliJTheme.menuDefaults,
-    colors: MenuItemColors = defaults.menuItemColors()
+    style: MenuStyle = IntelliJTheme.menuStyle
 ) {
     Divider(
-        modifier = modifier.padding(defaults.menuSeparatorPadding()),
+        modifier = modifier.padding(style.metrics.itemMetrics.separatorPadding),
         orientation = Orientation.Horizontal,
-        color = colors.separatorColor()
+        color = style.colors.itemColors.separator
     )
 }
 
@@ -237,9 +233,7 @@ fun MenuSelectableItem(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    defaults: MenuDefaults = IntelliJTheme.menuDefaults,
-    colors: MenuItemColors = defaults.menuItemColors(),
-    shape: Shape = defaults.menuItemShape(),
+    style: MenuStyle = IntelliJTheme.menuStyle,
     content: @Composable () -> Unit
 ) {
     var itemState by remember(interactionSource) {
@@ -296,15 +290,19 @@ fun MenuSelectableItem(
             onDispose { }
         }
 
+        val colors = style.colors.itemColors
+        val metrics = style.metrics
+        val shape = RoundedCornerShape(metrics.itemMetrics.cornerSize)
+
         CompositionLocalProvider(
-            LocalTextColor provides colors.foreground(itemState).value
+            LocalContentColor provides colors.contentFor(itemState).value
         ) {
             Row(
                 Modifier
-                    .padding(defaults.menuItemPadding())
-                    .background(colors.background(itemState).value, shape)
+                    .padding(metrics.itemMetrics.padding)
+                    .background(colors.backgroundFor(itemState).value, shape)
                     .fillMaxWidth()
-                    .padding(defaults.menuItemContentPadding()),
+                    .padding(metrics.itemMetrics.contentPadding),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 content()
@@ -318,9 +316,7 @@ fun MenuSubmenuItem(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    defaults: MenuDefaults = IntelliJTheme.menuDefaults,
-    colors: MenuItemColors = defaults.menuItemColors(),
-    shape: Shape = defaults.menuItemShape(),
+    style: MenuStyle = IntelliJTheme.menuStyle,
     submenu: MenuScope.() -> Unit,
     content: @Composable () -> Unit
 ) {
@@ -373,15 +369,19 @@ fun MenuSubmenuItem(
             }
             .fillMaxWidth()
     ) {
+        val colors = style.colors.itemColors
+        val metrics = style.metrics
+        val shape = RoundedCornerShape(metrics.itemMetrics.cornerSize)
+
         CompositionLocalProvider(
-            LocalTextColor provides colors.foreground(itemState).value
+            LocalContentColor provides colors.contentFor(itemState).value
         ) {
             Row(
                 Modifier
-                    .padding(defaults.menuItemPadding())
-                    .background(colors.background(itemState).value, shape)
+                    .padding(metrics.itemMetrics.padding)
+                    .background(colors.backgroundFor(itemState).value, shape)
                     .fillMaxWidth()
-                    .padding(defaults.menuSubmenuItemContentPadding()),
+                    .padding(metrics.submenuMetrics.itemPadding),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(Modifier.weight(1f)) {
@@ -390,8 +390,8 @@ fun MenuSubmenuItem(
 
                 Box(Modifier.width(24.dp), contentAlignment = Alignment.Center) {
                     Icon(
-                        painter = defaults.submenuChevronPainter(),
-                        tint = colors.iconColor(itemState).value
+                        painter = painterResource(style.icons.submenuChevron),
+                        tint = colors.iconTintFor(itemState).value
                     )
                 }
             }
@@ -407,7 +407,7 @@ fun MenuSubmenuItem(
                         true
                     }
                 },
-                defaults = defaults,
+                style = style,
                 content = submenu
             )
         }
@@ -418,17 +418,16 @@ fun MenuSubmenuItem(
 internal fun Submenu(
     onDismissRequest: (InputMode) -> Boolean,
     modifier: Modifier = Modifier,
-    defaults: MenuDefaults = IntelliJTheme.menuDefaults,
-    offset: DpOffset = defaults.submenuOffset(),
+    style: MenuStyle = IntelliJTheme.menuStyle,
     content: MenuScope.() -> Unit
 ) {
     val density = LocalDensity.current
 
     val popupPositionProvider = AnchorHorizontalMenuPositionProvider(
-        offset,
-        defaults.menuMargin(),
-        Alignment.Top,
-        density
+        contentOffset = style.metrics.submenuMetrics.offset,
+        contentMargin = style.metrics.margin,
+        alignment = Alignment.Top,
+        density = density
     )
 
     var focusManager: FocusManager? by mutableStateOf(null)
@@ -451,10 +450,7 @@ internal fun Submenu(
         focusManager = LocalFocusManager.current
         inputModeManager = LocalInputModeManager.current
 
-        CompositionLocalProvider(
-            LocalMenuManager provides menuManager,
-            LocalMenuDefaults provides defaults
-        ) {
+        CompositionLocalProvider(LocalMenuManager provides menuManager) {
             MenuContent(
                 modifier = modifier,
                 content = content
@@ -465,26 +461,26 @@ internal fun Submenu(
 
 @Immutable
 @JvmInline
-value class MenuItemState(val state: ULong) {
+value class MenuItemState(val state: ULong) : InteractiveComponentState {
 
     @Stable
     val isSelected: Boolean
         get() = state and Selected != 0UL
 
     @Stable
-    val isEnabled: Boolean
+    override val isEnabled: Boolean
         get() = state and Enabled != 0UL
 
     @Stable
-    val isFocused: Boolean
+    override val isFocused: Boolean
         get() = state and Focused != 0UL
 
     @Stable
-    val isHovered: Boolean
+    override val isHovered: Boolean
         get() = state and Hovered != 0UL
 
     @Stable
-    val isPressed: Boolean
+    override val isPressed: Boolean
         get() = state and Pressed != 0UL
 
     fun copy(
@@ -496,11 +492,9 @@ value class MenuItemState(val state: ULong) {
     ): MenuItemState =
         of(selected, enabled, focused, hovered, pressed)
 
-    override fun toString(): String = "MenuItemState(selected=$isSelected, " +
-        "enabled=$isEnabled, " +
-        "focused=$isFocused, " +
-        "hovered=$isHovered, " +
-        "pressed=$isPressed)"
+    override fun toString() =
+        "MenuItemState(state=$state, isSelected=$isSelected, isEnabled=$isEnabled, isFocused=$isFocused, " +
+            "isHovered=$isHovered, isPressed=$isPressed)"
 
     companion object {
 
@@ -510,7 +504,13 @@ value class MenuItemState(val state: ULong) {
         private val Pressed = 1UL shl 3
         private val Selected = 1UL shl 4
 
-        fun of(selected: Boolean, enabled: Boolean, focused: Boolean = false, hovered: Boolean = false, pressed: Boolean = false): MenuItemState {
+        fun of(
+            selected: Boolean,
+            enabled: Boolean,
+            focused: Boolean = false,
+            hovered: Boolean = false,
+            pressed: Boolean = false
+        ): MenuItemState {
             var state = 0UL
             if (selected) state = state or Selected
             if (enabled) state = state or Enabled
@@ -522,191 +522,12 @@ value class MenuItemState(val state: ULong) {
     }
 }
 
-@Stable
-interface MenuColors {
-
-    @Composable
-    fun background(): Color
-
-    @Composable
-    fun borderStroke(): Stroke
-
-    @Composable
-    fun shadowColor(): Color
-}
-
-@Stable
-interface MenuItemColors {
-
-    @Composable
-    fun foreground(state: MenuItemState): State<Color>
-
-    @Composable
-    fun background(state: MenuItemState): State<Color>
-
-    @Composable
-    fun iconColor(state: MenuItemState): State<Color>
-
-    @Composable
-    fun separatorColor(): Color
-}
-
-@Stable
-interface MenuDefaults {
-
-    @Composable
-    fun menuColors(): MenuColors
-
-    @Composable
-    fun menuItemColors(): MenuItemColors
-
-    @Composable
-    fun menuShape(): Shape
-
-    @Composable
-    fun menuItemShape(): Shape
-
-    @Composable
-    fun menuShadowSize(): Dp
-
-    /**
-     * The margin between the menu popup and the container(window/screen).
-     */
-    @Composable
-    fun menuMargin(): PaddingValues
-
-    @Composable
-    fun menuOffset(): DpOffset
-
-    @Composable
-    fun submenuOffset(): DpOffset
-
-    /**
-     * The alignment of the menu relative to the anchor component.
-     */
-    @Composable
-    fun menuAlignment(): Alignment.Horizontal
-
-    @Composable
-    fun menuPadding(): PaddingValues
-
-    @Composable
-    fun menuContentPadding(): PaddingValues
-
-    @Composable
-    fun menuItemPadding(): PaddingValues
-
-    @Composable
-    fun menuItemContentPadding(): PaddingValues
-
-    @Composable
-    fun menuSubmenuItemContentPadding(): PaddingValues
-
-    @Composable
-    fun menuSeparatorPadding(): PaddingValues
-
-    @Composable
-    fun submenuChevronPainter(): Painter
-}
-
-fun menuColors(
-    background: Color,
-    borderStroke: Stroke,
-    shadowColor: Color
-): MenuColors = DefaultMenuColor(background, borderStroke, shadowColor)
-
-private data class DefaultMenuColor(
-    private val background: Color,
-    private val borderStroke: Stroke,
-    private val shadowColor: Color
-) : MenuColors {
-
-    @Composable
-    override fun background(): Color = background
-
-    @Composable
-    override fun borderStroke(): Stroke = borderStroke
-
-    @Composable
-    override fun shadowColor(): Color = shadowColor
-}
-
-fun menuItemColors(
-    foreground: Color,
-    background: Color,
-    iconColor: Color,
-    focusedForeground: Color,
-    focusedBackground: Color,
-    focusedIconColor: Color,
-    disabledForeground: Color,
-    disabledBackground: Color,
-    disabledIconColor: Color,
-    separatorColor: Color
-): MenuItemColors = DefaultMenuItemColor(
-    foreground = foreground,
-    background = background,
-    iconColor = iconColor,
-    focusedForeground = focusedForeground,
-    focusedBackground = focusedBackground,
-    focusedIconColor = focusedIconColor,
-    disabledForeground = disabledForeground,
-    disabledBackground = disabledBackground,
-    disabledIconColor = disabledIconColor,
-    separatorColor = separatorColor
-)
-
-private data class DefaultMenuItemColor(
-    private val foreground: Color,
-    private val background: Color,
-    private val iconColor: Color,
-    private val focusedForeground: Color,
-    private val focusedBackground: Color,
-    private val focusedIconColor: Color,
-    private val disabledForeground: Color,
-    private val disabledBackground: Color,
-    private val disabledIconColor: Color,
-    private val separatorColor: Color
-) : MenuItemColors {
-
-    @Composable
-    override fun foreground(state: MenuItemState): State<Color> = rememberUpdatedState(
-        when {
-            !state.isEnabled -> disabledForeground
-            state.isFocused -> focusedForeground
-            else -> foreground
-        }
-    )
-
-    @Composable
-    override fun background(state: MenuItemState): State<Color> = rememberUpdatedState(
-        when {
-            !state.isEnabled -> disabledBackground
-            state.isFocused -> focusedBackground
-            else -> background
-        }
-    )
-
-    @Composable
-    override fun iconColor(state: MenuItemState): State<Color> {
-        return rememberUpdatedState(
-            when {
-                !state.isEnabled -> disabledIconColor
-                state.isFocused -> focusedIconColor
-                else -> iconColor
-            }
-        )
-    }
-
-    @Composable
-    override fun separatorColor(): Color = separatorColor
-}
-
 class MenuManager(
     val onDismissRequest: (InputMode) -> Boolean,
     private val parentMenuManager: MenuManager? = null
 ) {
 
-    private var hovered: Boolean = false
+    private var isHovered: Boolean = false
 
     /**
      * Called when the hovered state of the menu changes.
@@ -716,7 +537,7 @@ class MenuManager(
      * @param hovered true if the menu is hovered, false otherwise.
      */
     internal fun onHoveredChange(hovered: Boolean) {
-        this.hovered = hovered
+        isHovered = hovered
     }
 
     /**
@@ -727,7 +548,7 @@ class MenuManager(
      */
     fun closeAll(mode: InputMode, force: Boolean) {
         // We ignore the pointer event if the menu is hovered in unforced mode.
-        if (!force && mode == InputMode.Touch && hovered) return
+        if (!force && mode == InputMode.Touch && isHovered) return
 
         if (onDismissRequest(mode)) {
             parentMenuManager?.closeAll(mode, force)
@@ -746,8 +567,4 @@ class MenuManager(
 
 val LocalMenuManager = staticCompositionLocalOf<MenuManager> {
     error("No MenuManager provided")
-}
-
-internal val LocalMenuDefaults = staticCompositionLocalOf<MenuDefaults> {
-    error("No MenuDefaults provided")
 }

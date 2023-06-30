@@ -150,7 +150,7 @@ style:
   UnnecessaryLet:
     active: true
   UnnecessaryParentheses:
-    active: true
+    active: false
   UnnecessaryAbstractClass:
     ignoreAnnotated:
       - Module

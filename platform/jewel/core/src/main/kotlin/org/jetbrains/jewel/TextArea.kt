@@ -1,29 +1,21 @@
 package org.jetbrains.jewel
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.layout.layoutId
@@ -35,7 +27,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.offset
-import org.jetbrains.jewel.foundation.Stroke
+import org.jetbrains.jewel.styling.TextAreaStyle
 import kotlin.math.max
 
 @Composable
@@ -54,9 +46,8 @@ fun TextArea(
     keyboardActions: KeyboardActions = KeyboardActions(),
     maxLines: Int = Int.MAX_VALUE,
     onTextLayout: (TextLayoutResult) -> Unit = {},
-    defaults: TextAreaDefaults = IntelliJTheme.textAreaDefaults,
-    colors: TextAreaColors = defaults.colors(),
-    textStyle: TextStyle = defaults.textStyle(),
+    style: TextAreaStyle = IntelliJTheme.textAreaStyle,
+    textStyle: TextStyle = IntelliJTheme.defaultTextStyle,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
 ) {
     var textFieldValueState by remember { mutableStateOf(TextFieldValue(text = value)) }
@@ -87,8 +78,7 @@ fun TextArea(
         keyboardActions = keyboardActions,
         maxLines = maxLines,
         onTextLayout = onTextLayout,
-        defaults = defaults,
-        colors = colors,
+        style = style,
         textStyle = textStyle,
         interactionSource = interactionSource
     )
@@ -110,9 +100,8 @@ fun TextArea(
     keyboardActions: KeyboardActions = KeyboardActions(),
     maxLines: Int = Int.MAX_VALUE,
     onTextLayout: (TextLayoutResult) -> Unit = {},
-    defaults: TextAreaDefaults = IntelliJTheme.textAreaDefaults,
-    colors: TextAreaColors = defaults.colors(),
-    textStyle: TextStyle = defaults.textStyle(),
+    style: TextAreaStyle = IntelliJTheme.textAreaStyle,
+    textStyle: TextStyle = IntelliJTheme.defaultTextStyle,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
 ) {
     InputField(
@@ -129,199 +118,22 @@ fun TextArea(
         singleLine = false,
         maxLines = maxLines,
         onTextLayout = onTextLayout,
-        defaults = defaults,
-        colors = colors,
+        style = style,
         textStyle = textStyle,
         interactionSource = interactionSource
     ) { innerTextField, state ->
+        val minSize = style.metrics.minSize
+
         TextAreaDecorationBox(
             modifier = Modifier
-                .defaultMinSize(minHeight = defaults.minHeight(), minWidth = defaults.minWidth()),
+                .defaultMinSize(minWidth = minSize.width, minHeight = minSize.height),
             innerTextField = innerTextField,
-            contentPadding = defaults.contentPadding(),
-            placeholderTextColor = colors.placeholderForeground(state).value,
+            contentPadding = style.metrics.contentPadding,
+            placeholderTextColor = style.colors.placeholder,
             placeholder = if (value.text.isEmpty()) placeholder else null,
-            hintShape = defaults.hintShape(),
-            hintContentPadding = defaults.hintContentPadding(),
-            hintTextStyle = defaults.hintTextStyle(),
-            hintTextColor = colors.hintForeground(state).value,
-            hintBackground = colors.hintBackground(state).value,
+            hintTextStyle = style.hintTextStyle,
+            hintTextColor = style.colors.hintContentFor(state).value,
             hint = hint
-        )
-    }
-}
-
-interface TextAreaDefaults : InputFieldDefaults {
-
-    @Composable
-    override fun colors(): TextAreaColors
-
-    @Composable
-    fun hintShape(): Shape
-
-    @Composable
-    fun hintContentPadding(): PaddingValues
-
-    @Composable
-    fun hintTextStyle(): TextStyle
-}
-
-interface TextAreaColors : InputFieldColors {
-
-    @Composable
-    fun placeholderForeground(state: InputFieldState): State<Color>
-
-    @Composable
-    fun hintForeground(state: InputFieldState): State<Color>
-
-    @Composable
-    fun hintBackground(state: InputFieldState): State<Color>
-}
-
-fun textAreaColors(
-    foreground: Color,
-    background: Color,
-    cursorBrush: Brush,
-    borderStroke: Stroke,
-    focusedForeground: Color,
-    focusedBackground: Color,
-    focusedCursorBrush: Brush,
-    focusedBorderStroke: Stroke,
-    errorForeground: Color,
-    errorBackground: Color,
-    errorCursorBrush: Brush,
-    errorBorderStroke: Stroke,
-    errorFocusedForeground: Color,
-    errorFocusedBackground: Color,
-    errorFocusedCursorBrush: Brush,
-    errorFocusedBorderStroke: Stroke,
-    disabledForeground: Color,
-    disabledBackground: Color,
-    disabledBorderStroke: Stroke,
-    placeholderForeground: Color,
-    hintForeground: Color,
-    hintBackground: Color,
-    hintDisabledForeground: Color,
-    hintDisabledBackground: Color
-): TextAreaColors = DefaultTextAreaColors(
-    foreground = foreground,
-    background = background,
-    cursorBrush = cursorBrush,
-    borderStroke = borderStroke,
-    focusedForeground = focusedForeground,
-    focusedBackground = focusedBackground,
-    focusedCursorBrush = focusedCursorBrush,
-    focusedBorderStroke = focusedBorderStroke,
-    errorForeground = errorForeground,
-    errorBackground = errorBackground,
-    errorCursorBrush = errorCursorBrush,
-    errorBorderStroke = errorBorderStroke,
-    errorFocusedForeground = errorFocusedForeground,
-    errorFocusedBackground = errorFocusedBackground,
-    errorFocusedCursorBrush = errorFocusedCursorBrush,
-    errorFocusedBorderStroke = errorFocusedBorderStroke,
-    disabledForeground = disabledForeground,
-    disabledBackground = disabledBackground,
-    disabledBorderStroke = disabledBorderStroke,
-    placeholderForeground = placeholderForeground,
-    hintForeground = hintForeground,
-    hintBackground = hintBackground,
-    hintDisabledForeground = hintDisabledForeground,
-    hintDisabledBackground = hintDisabledBackground
-)
-
-internal open class DefaultTextAreaColors(
-    private val foreground: Color,
-    private val background: Color,
-    private val cursorBrush: Brush,
-    private val borderStroke: Stroke,
-    private val focusedForeground: Color,
-    private val focusedBackground: Color,
-    private val focusedCursorBrush: Brush,
-    private val focusedBorderStroke: Stroke,
-    private val errorForeground: Color,
-    private val errorBackground: Color,
-    private val errorCursorBrush: Brush,
-    private val errorBorderStroke: Stroke,
-    private val errorFocusedForeground: Color,
-    private val errorFocusedBackground: Color,
-    private val errorFocusedCursorBrush: Brush,
-    private val errorFocusedBorderStroke: Stroke,
-    private val disabledForeground: Color,
-    private val disabledBackground: Color,
-    private val disabledBorderStroke: Stroke,
-    private val placeholderForeground: Color,
-    private val hintForeground: Color,
-    private val hintBackground: Color,
-    private val hintDisabledForeground: Color,
-    private val hintDisabledBackground: Color
-) : TextAreaColors {
-
-    @Composable
-    override fun foreground(state: InputFieldState): State<Color> = rememberUpdatedState(
-        when {
-            !state.isEnabled -> disabledForeground
-            state.isError && state.isFocused -> errorFocusedForeground
-            state.isError -> errorForeground
-            state.isFocused -> focusedForeground
-            else -> foreground
-        }
-    )
-
-    @Composable
-    override fun background(state: InputFieldState): State<Color> = rememberUpdatedState(
-        when {
-            !state.isEnabled -> disabledBackground
-            state.isError && state.isFocused -> errorFocusedBackground
-            state.isError -> errorBackground
-            state.isFocused -> focusedBackground
-            else -> background
-        }
-    )
-
-    @Composable
-    override fun borderStroke(state: InputFieldState): State<Stroke> = rememberUpdatedState(
-        when {
-            !state.isEnabled -> disabledBorderStroke
-            state.isError && state.isFocused -> errorFocusedBorderStroke
-            state.isError -> errorBorderStroke
-            state.isFocused -> focusedBorderStroke
-            else -> borderStroke
-        }
-    )
-
-    @Composable
-    override fun cursorBrush(state: InputFieldState): State<Brush> = rememberUpdatedState(
-        when {
-            state.isError && state.isFocused -> errorFocusedCursorBrush
-            state.isError -> errorCursorBrush
-            state.isFocused -> focusedCursorBrush
-            else -> cursorBrush
-        }
-    )
-
-    @Composable
-    override fun placeholderForeground(state: InputFieldState): State<Color> = rememberUpdatedState(
-        placeholderForeground
-    )
-
-    @Composable
-    override fun hintForeground(state: InputFieldState): State<Color> {
-        return rememberUpdatedState(
-            when {
-                !state.isEnabled -> hintDisabledForeground
-                else -> hintForeground
-            }
-        )
-    }
-
-    @Composable
-    override fun hintBackground(state: InputFieldState): State<Color> {
-        return rememberUpdatedState(
-            when {
-                !state.isEnabled -> hintDisabledBackground
-                else -> hintBackground
-            }
         )
     }
 }
@@ -333,11 +145,8 @@ private fun TextAreaDecorationBox(
     contentPadding: PaddingValues,
     placeholderTextColor: Color,
     placeholder: @Composable (() -> Unit)?,
-    hintShape: Shape,
-    hintContentPadding: PaddingValues,
     hintTextStyle: TextStyle,
     hintTextColor: Color,
-    hintBackground: Color,
     hint: @Composable (() -> Unit)?
 ) {
     Layout(
@@ -346,7 +155,7 @@ private fun TextAreaDecorationBox(
             if (placeholder != null) {
                 Box(modifier = Modifier.layoutId(PLACEHOLDER_ID), contentAlignment = Alignment.Center) {
                     CompositionLocalProvider(
-                        LocalTextColor provides placeholderTextColor,
+                        LocalContentColor provides placeholderTextColor,
                         content = placeholder
                     )
                 }
@@ -357,25 +166,20 @@ private fun TextAreaDecorationBox(
             }
 
             if (hint != null) {
-                Box(
-                    modifier = Modifier.layoutId(HINT_ID)
-                        .background(hintBackground, hintShape),
-                    contentAlignment = Alignment.CenterStart
-                ) {
-                    Row(Modifier.fillMaxWidth().padding(hintContentPadding)) {
-                        CompositionLocalProvider(
-                            LocalTextStyle provides hintTextStyle,
-                            LocalTextColor provides hintTextColor,
-                            content = hint
-                        )
-                    }
+                Box(Modifier.layoutId(HINT_ID).fillMaxWidth()) {
+                    CompositionLocalProvider(
+                        LocalTextStyle provides hintTextStyle,
+                        LocalContentColor provides hintTextColor,
+                        content = hint
+                    )
                 }
             }
         }
     ) { measurables, incomingConstraints ->
         val horizontalPadding =
             (contentPadding.calculateLeftPadding(layoutDirection) + contentPadding.calculateRightPadding(layoutDirection)).roundToPx()
-        val verticalPadding = (contentPadding.calculateTopPadding() + contentPadding.calculateBottomPadding()).roundToPx()
+        val verticalPadding =
+            (contentPadding.calculateTopPadding() + contentPadding.calculateBottomPadding()).roundToPx()
 
         // measure hint
         val hintConstraints = incomingConstraints.copy(minHeight = 0)
@@ -478,7 +282,3 @@ private fun Placeable.PlacementScope.place(
 private const val PLACEHOLDER_ID = "Placeholder"
 private const val TEXT_FIELD_ID = "TextField"
 private const val HINT_ID = "Hint"
-
-internal val LocalTextAreaDefaults = staticCompositionLocalOf<TextAreaDefaults> {
-    error("No TextFieldDefaults provided")
-}

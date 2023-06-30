@@ -3,19 +3,19 @@ package org.jetbrains.jewel
 import androidx.compose.foundation.HorizontalScrollbar
 import androidx.compose.foundation.LocalScrollbarStyle
 import androidx.compose.foundation.ScrollbarAdapter
-import androidx.compose.foundation.ScrollbarStyle
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.unit.Dp
+import org.jetbrains.jewel.styling.ScrollbarStyle
+import kotlin.time.DurationUnit
+import androidx.compose.foundation.ScrollbarStyle as ComposeScrollbarStyle
 
 @Composable
 fun VerticalScrollbar(
@@ -23,27 +23,30 @@ fun VerticalScrollbar(
     modifier: Modifier = Modifier,
     reverseLayout: Boolean = false,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    defaults: ScrollThumbDefaults = IntelliJTheme.scrollThumbDefaults,
-    colors: ScrollThumbColors = defaults.colors()
-) =
+    style: ScrollbarStyle = IntelliJTheme.scrollbarStyle
+) {
+    val shape by remember { mutableStateOf(RoundedCornerShape(style.metrics.thumbCornerSize)) }
+    val hoverDurationMillis by remember { mutableStateOf(style.hoverDuration.toInt(DurationUnit.MILLISECONDS)) }
+
     CompositionLocalProvider(
-        LocalScrollbarStyle provides ScrollbarStyle(
-            minimalHeight = defaults.minHeight(),
-            thickness = defaults.thickness(),
-            shape = defaults.shape(),
-            hoverDurationMillis = defaults.hoverDurationMillis(),
-            unhoverColor = colors.unHoverColor(),
-            hoverColor = colors.hoverColor()
+        LocalScrollbarStyle provides ComposeScrollbarStyle(
+            minimalHeight = style.metrics.minThumbLength,
+            thickness = style.metrics.thumbThickness,
+            shape = shape,
+            hoverDurationMillis = hoverDurationMillis,
+            unhoverColor = style.colors.thumbBackground,
+            hoverColor = style.colors.thumbBackgroundHovered
         )
     ) {
         VerticalScrollbar(
             adapter = adapter,
-            modifier = modifier,
+            modifier = modifier.padding(style.metrics.trackPadding),
             reverseLayout = reverseLayout,
             style = LocalScrollbarStyle.current,
             interactionSource = interactionSource
         )
     }
+}
 
 @Composable
 fun HorizontalScrollbar(
@@ -51,72 +54,27 @@ fun HorizontalScrollbar(
     modifier: Modifier = Modifier,
     reverseLayout: Boolean = false,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    defaults: ScrollThumbDefaults = IntelliJTheme.scrollThumbDefaults,
-    colors: ScrollThumbColors = defaults.colors()
-) = CompositionLocalProvider(
-    LocalScrollbarStyle provides ScrollbarStyle(
-        defaults.minHeight(),
-        defaults.thickness(),
-        defaults.shape(),
-        defaults.hoverDurationMillis(),
-        colors.unHoverColor(),
-        colors.hoverColor()
-    )
+    style: ScrollbarStyle = IntelliJTheme.scrollbarStyle
 ) {
-    HorizontalScrollbar(
-        adapter = adapter,
-        modifier = modifier,
-        reverseLayout = reverseLayout,
-        style = LocalScrollbarStyle.current,
-        interactionSource = interactionSource
-    )
-}
+    val shape by remember { mutableStateOf(RoundedCornerShape(style.metrics.thumbCornerSize)) }
+    val hoverDurationMillis by remember { mutableStateOf(style.hoverDuration.toInt(DurationUnit.MILLISECONDS)) }
 
-@Stable
-interface ScrollThumbDefaults {
-
-    @Composable
-    fun shape(): Shape
-
-    @Composable
-    fun minHeight(): Dp
-
-    @Composable
-    fun thickness(): Dp
-
-    @Composable
-    fun hoverDurationMillis(): Int
-
-    @Composable
-    fun colors(): ScrollThumbColors
-}
-
-@Stable
-interface ScrollThumbColors {
-    @Composable
-    fun unHoverColor(): Color
-
-    @Composable
-    fun hoverColor(): Color
-}
-
-fun scrollThumbColors(
-    unHoverColor: Color,
-    hoverColor: Color
-): ScrollThumbColors = DefaultScrollThumbColors(unHoverColor, hoverColor)
-
-@Immutable
-private data class DefaultScrollThumbColors(
-    private val unHoverColor: Color,
-    private val hoverColor: Color
-) : ScrollThumbColors {
-    @Composable
-    override fun unHoverColor(): Color = unHoverColor
-
-    @Composable
-    override fun hoverColor(): Color = hoverColor
-}
-
-internal val LocalScrollThumbDefaults = staticCompositionLocalOf<ScrollThumbDefaults> {
-    error("No ScrollThumbDefaults provided")
+    CompositionLocalProvider(
+        LocalScrollbarStyle provides ComposeScrollbarStyle(
+            minimalHeight = style.metrics.minThumbLength,
+            thickness = style.metrics.thumbThickness,
+            shape = shape,
+            hoverDurationMillis = hoverDurationMillis,
+            unhoverColor = style.colors.thumbBackground,
+            hoverColor = style.colors.thumbBackgroundHovered
+        )
+    ) {
+        HorizontalScrollbar(
+            adapter = adapter,
+            modifier = modifier.padding(style.metrics.trackPadding),
+            reverseLayout = reverseLayout,
+            style = LocalScrollbarStyle.current,
+            interactionSource = interactionSource
+        )
+    }
 }

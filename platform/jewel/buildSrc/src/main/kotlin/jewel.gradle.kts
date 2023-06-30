@@ -9,10 +9,9 @@ plugins {
 
 group = "org.jetbrains.jewel"
 
-val GITHUB_REF: String? = System.getenv("GITHUB_REF")
-
+val gitHubRef: String? = System.getenv("GITHUB_REF")
 version = when {
-    GITHUB_REF?.startsWith("refs/tags/") == true -> GITHUB_REF.substringAfter("refs/tags/")
+    gitHubRef?.startsWith("refs/tags/") == true -> gitHubRef.substringAfter("refs/tags/")
     else -> "1.0.0-SNAPSHOT"
 }
 

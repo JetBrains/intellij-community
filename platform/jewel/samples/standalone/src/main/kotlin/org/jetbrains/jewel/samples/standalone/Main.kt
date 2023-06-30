@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.singleWindowApplication
 import org.jetbrains.jewel.CheckboxRow
 import org.jetbrains.jewel.GroupHeader
-import org.jetbrains.jewel.IntelliJTheme
+import org.jetbrains.jewel.LocalResourceLoader
 import org.jetbrains.jewel.VerticalScrollbar
 import org.jetbrains.jewel.samples.standalone.components.Borders
 import org.jetbrains.jewel.samples.standalone.components.Buttons
@@ -35,25 +34,23 @@ import org.jetbrains.jewel.samples.standalone.components.ProgressBar
 import org.jetbrains.jewel.samples.standalone.components.RadioButtons
 import org.jetbrains.jewel.samples.standalone.components.TextAreas
 import org.jetbrains.jewel.samples.standalone.components.TextFields
-import org.jetbrains.jewel.themes.intui.standalone.dark.DarkTheme
-import org.jetbrains.jewel.themes.intui.standalone.light.LightTheme
-
-@Composable
-fun JetBrainsTheme(isDark: Boolean, content: @Composable () -> Unit) =
-    IntelliJTheme(
-        if (isDark) DarkTheme else LightTheme,
-        content
-    )
+import org.jetbrains.jewel.themes.intui.standalone.IntUiTheme
 
 fun main() = singleWindowApplication(
-    title = "TODO: sample app"
+    title = "Jewel sample"
 ) {
     var isDark by remember { mutableStateOf(false) }
+    var swingCompat by remember { mutableStateOf(false) }
+    val theme = if (isDark) IntUiTheme.dark() else IntUiTheme.light()
 
     val verticalScrollState = rememberScrollState(0)
-    JetBrainsTheme(isDark = isDark) {
+    val resourceLoader = LocalResourceLoader.current
+    val palette = IntUiTheme.palette
+
+    IntUiTheme(theme, swingCompat) {
         Box(
-            Modifier.fillMaxSize().background(IntelliJTheme.colors.background),
+            Modifier.fillMaxSize()
+                .background(if (isDark) palette.grey(1) else palette.grey(14)),
             contentAlignment = Alignment.Center
         ) {
             Column(
@@ -66,7 +63,8 @@ fun main() = singleWindowApplication(
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    CheckboxRow("Dark", isDark, { isDark = it })
+                    CheckboxRow("Dark", isDark, resourceLoader, { isDark = it })
+                    CheckboxRow("Swing compat", swingCompat, resourceLoader, { swingCompat = it })
                 }
                 Borders()
                 Buttons()

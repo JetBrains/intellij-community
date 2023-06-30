@@ -28,11 +28,8 @@ include(
     ":core",
     ":foundation",
     ":compose-utils",
-    //":samples:ide-plugin",
+//    ":ide-laf-bridge",
     ":samples:standalone",
-    //":themes:darcula:darcula-standalone",
-    //":themes:darcula:darcula-ide",
+    ":themes:int-ui:int-ui-core",
     ":themes:int-ui:int-ui-standalone",
-    //":themes:int-ui:int-ui-ide",
-    //":themes:int-ui:int-ui-desktop",
 )

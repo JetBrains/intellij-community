@@ -1,6 +1,6 @@
 package org.jetbrains.jewel
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.interaction.FocusInteraction
 import androidx.compose.foundation.interaction.HoverInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -11,78 +11,77 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
-import androidx.compose.ui.draw.paint
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.res.ResourceLoader
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.unit.Dp
-import org.jetbrains.jewel.foundation.Stroke
-import org.jetbrains.jewel.foundation.border
+import org.jetbrains.jewel.CommonStateBitMask.Enabled
+import org.jetbrains.jewel.CommonStateBitMask.Error
+import org.jetbrains.jewel.CommonStateBitMask.Focused
+import org.jetbrains.jewel.CommonStateBitMask.Hovered
+import org.jetbrains.jewel.CommonStateBitMask.Pressed
+import org.jetbrains.jewel.CommonStateBitMask.Warning
+import org.jetbrains.jewel.styling.RadioButtonStyle
 
 @Composable
 fun RadioButton(
     selected: Boolean,
+    resourceLoader: ResourceLoader,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    isError: Boolean = false,
+    outline: Outline = Outline.None,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    defaults: RadioButtonDefaults = IntelliJTheme.radioButtonDefaults,
-    colors: RadioButtonColors = defaults.colors(),
-    shape: Shape = defaults.shape()
+    style: RadioButtonStyle = IntelliJTheme.radioButtonStyle,
+    textStyle: TextStyle = IntelliJTheme.defaultTextStyle
 ) = RadioButtonImpl(
     selected = selected,
     onClick = onClick,
     modifier = modifier,
     enabled = enabled,
-    isError = isError,
+    outline = outline,
+    resourceLoader = resourceLoader,
     interactionSource = interactionSource,
-    defaults = defaults,
-    colors = colors,
-    shape = shape
+    style = style,
+    textStyle = textStyle,
+    content = null
 )
 
 @Composable
 fun RadioButtonRow(
     text: String,
     selected: Boolean,
+    resourceLoader: ResourceLoader,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    isError: Boolean = false,
+    outline: Outline = Outline.None,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    defaults: RadioButtonDefaults = IntelliJTheme.radioButtonDefaults,
-    colors: RadioButtonColors = defaults.colors(),
-    shape: Shape = defaults.shape()
+    style: RadioButtonStyle = IntelliJTheme.radioButtonStyle,
+    textStyle: TextStyle = IntelliJTheme.defaultTextStyle
 ) = RadioButtonImpl(
     selected = selected,
     onClick = onClick,
     modifier = modifier,
     enabled = enabled,
-    isError = isError,
+    outline = outline,
+    resourceLoader = resourceLoader,
     interactionSource = interactionSource,
-    defaults = defaults,
-    colors = colors,
-    shape = shape
+    style = style,
+    textStyle = textStyle
 ) {
     Text(text)
 }
@@ -90,25 +89,25 @@ fun RadioButtonRow(
 @Composable
 fun RadioButtonRow(
     selected: Boolean,
+    resourceLoader: ResourceLoader,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    isError: Boolean = false,
+    outline: Outline = Outline.None,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    defaults: RadioButtonDefaults = IntelliJTheme.radioButtonDefaults,
-    colors: RadioButtonColors = defaults.colors(),
-    shape: Shape = defaults.shape(),
+    style: RadioButtonStyle = IntelliJTheme.radioButtonStyle,
+    textStyle: TextStyle = IntelliJTheme.defaultTextStyle,
     content: @Composable RowScope.() -> Unit
 ) = RadioButtonImpl(
     selected = selected,
     onClick = onClick,
     modifier = modifier,
     enabled = enabled,
-    isError = isError,
+    outline = outline,
     interactionSource = interactionSource,
-    defaults = defaults,
-    colors = colors,
-    shape = shape,
+    style = style,
+    textStyle = textStyle,
+    resourceLoader = resourceLoader,
     content = content
 )
 
@@ -116,27 +115,30 @@ fun RadioButtonRow(
 @Composable
 private fun RadioButtonImpl(
     selected: Boolean,
+    resourceLoader: ResourceLoader,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    isError: Boolean = false,
-    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    defaults: RadioButtonDefaults = IntelliJTheme.radioButtonDefaults,
-    colors: RadioButtonColors = defaults.colors(),
-    shape: Shape = defaults.shape(),
-    content: (@Composable RowScope.() -> Unit)? = null
+    modifier: Modifier,
+    enabled: Boolean,
+    outline: Outline,
+    interactionSource: MutableInteractionSource,
+    style: RadioButtonStyle,
+    textStyle: TextStyle,
+    content: (@Composable RowScope.() -> Unit)?
 ) {
     var radioButtonState by remember(interactionSource) {
         mutableStateOf(RadioButtonState.of(selected = selected, enabled = enabled))
     }
-    remember(selected, isError, enabled) {
-        radioButtonState = radioButtonState.copy(selected = selected, error = isError, enabled = enabled)
+    remember(selected, outline, enabled) {
+        radioButtonState = radioButtonState.copy(selected = selected, outline = outline, enabled = enabled)
     }
     LaunchedEffect(interactionSource) {
         interactionSource.interactions.collect { interaction ->
             when (interaction) {
                 is PressInteraction.Press -> radioButtonState = radioButtonState.copy(pressed = true)
-                is PressInteraction.Cancel, is PressInteraction.Release -> radioButtonState = radioButtonState.copy(pressed = false)
+                is PressInteraction.Cancel, is PressInteraction.Release ->
+                    radioButtonState =
+                        radioButtonState.copy(pressed = false)
+
                 is HoverInteraction.Enter -> radioButtonState = radioButtonState.copy(hovered = true)
                 is HoverInteraction.Exit -> radioButtonState = radioButtonState.copy(hovered = false)
                 is FocusInteraction.Focus -> radioButtonState = radioButtonState.copy(focused = true)
@@ -154,29 +156,25 @@ private fun RadioButtonImpl(
         indication = null
     )
 
-    val radioButtonModifier = Modifier.size(defaults.width(), defaults.height())
-        .background(colors.backgroundColor(radioButtonState).value, shape)
-        .border(colors.borderStroke(radioButtonState).value, shape)
-        .border(colors.haloStroke(radioButtonState).value, shape)
-        .composed {
-            defaults.checkmark(radioButtonState).value?.let {
-                val colorFilter = ColorFilter.tint(colors.checkmarkColor(radioButtonState).value)
-                paint(it, colorFilter = colorFilter)
-            } ?: this
-        }
+    val colors = style.colors
+    val metrics = style.metrics
+    val radioButtonModifier = Modifier.size(metrics.radioButtonSize)
+        .outline(radioButtonState, outlineShape = CircleShape)
+    val radioButtonPainter by style.icons.getPainter(radioButtonState, resourceLoader)
 
     if (content == null) {
-        Box(wrapperModifier.then(radioButtonModifier))
+        RadioButtonImage(wrapperModifier, radioButtonPainter, radioButtonModifier)
     } else {
         Row(
             wrapperModifier,
-            horizontalArrangement = Arrangement.spacedBy(defaults.contentSpacing()),
+            horizontalArrangement = Arrangement.spacedBy(metrics.iconContentGap),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(radioButtonModifier)
+            RadioButtonImage(Modifier, radioButtonPainter, radioButtonModifier)
+
             CompositionLocalProvider(
-                LocalTextStyle provides defaults.textStyle(),
-                LocalTextColor provides colors.contentColor(radioButtonState).value
+                LocalTextStyle provides textStyle,
+                LocalContentColor provides colors.contentFor(radioButtonState).value
             ) {
                 content()
             }
@@ -184,61 +182,106 @@ private fun RadioButtonImpl(
     }
 }
 
+@Composable
+private fun RadioButtonImage(outerModifier: Modifier, radioButtonPainter: Painter, radioButtonModifier: Modifier) {
+    // TODO tint icon painter
+    Box(outerModifier) {
+        Image(radioButtonPainter, contentDescription = null, modifier = radioButtonModifier)
+    }
+}
+
 @Immutable
 @JvmInline
-value class RadioButtonState(val state: ULong) {
+value class RadioButtonState(val state: ULong) : StateWithOutline {
 
     @Stable
     val isSelected: Boolean
         get() = state and Selected != 0UL
 
     @Stable
-    val isEnabled: Boolean
+    override val isEnabled: Boolean
         get() = state and Enabled != 0UL
 
     @Stable
-    val isFocused: Boolean
+    override val isFocused: Boolean
         get() = state and Focused != 0UL
 
     @Stable
-    val isError: Boolean
+    override val isError: Boolean
         get() = state and Error != 0UL
 
     @Stable
-    val isHovered: Boolean
+    override val isWarning: Boolean
+        get() = state and Warning != 0UL
+
+    @Stable
+    override val isHovered: Boolean
         get() = state and Hovered != 0UL
 
     @Stable
-    val isPressed: Boolean
+    override val isPressed: Boolean
         get() = state and Pressed != 0UL
 
     fun copy(
-        selected: Boolean = this.isSelected,
-        enabled: Boolean = this.isEnabled,
-        focused: Boolean = this.isFocused,
-        error: Boolean = this.isError,
-        hovered: Boolean = this.isHovered,
-        pressed: Boolean = this.isPressed
+        selected: Boolean = isSelected,
+        enabled: Boolean = isEnabled,
+        focused: Boolean = isFocused,
+        pressed: Boolean = isPressed,
+        hovered: Boolean = isHovered,
+        outline: Outline = Outline.of(isWarning, isError)
+    ) = of(
+        selected = selected,
+        enabled = enabled,
+        focused = focused,
+        pressed = pressed,
+        hovered = hovered,
+        outline = outline
+    )
+
+    fun copy(
+        selected: Boolean = isSelected,
+        enabled: Boolean = isEnabled,
+        focused: Boolean = isFocused,
+        error: Boolean = isError,
+        pressed: Boolean = isPressed,
+        hovered: Boolean = isHovered,
+        warning: Boolean = isWarning
     ) = of(
         selected = selected,
         enabled = enabled,
         focused = focused,
         error = error,
+        pressed = pressed,
         hovered = hovered,
-        pressed = pressed
+        warning = warning
     )
 
-    override fun toString(): String =
-        "RadioButtonState(selected=$isSelected, enabled=$isEnabled, focused=$isFocused, error=$isError, hovered=$isHovered, pressed=$isPressed)"
+    override fun toString() =
+        "${javaClass.simpleName}(isSelected=$isSelected, isEnabled=$isEnabled, isFocused=$isFocused, " +
+            "isError=$isError, isWarning=$isWarning, isHovered=$isHovered, isPressed=$isPressed)"
 
     companion object {
 
-        private val Enabled = 1UL shl 0
-        private val Focused = 1UL shl 1
-        private val Error = 1UL shl 2
-        private val Hovered = 1UL shl 3
-        private val Pressed = 1UL shl 4
-        private val Selected = 1UL shl 5
+        private const val SELECTED_BIT_OFFSET = CommonStateBitMask.FIRST_AVAILABLE_OFFSET
+
+        private val Selected = 1UL shl SELECTED_BIT_OFFSET
+
+        fun of(
+            selected: Boolean,
+            enabled: Boolean = true,
+            focused: Boolean = false,
+            pressed: Boolean = false,
+            hovered: Boolean = false,
+            outline: Outline = Outline.None
+        ) = of(
+            selected = selected,
+            enabled = enabled,
+            focused = focused,
+            error = outline == Outline.Error,
+            pressed = pressed,
+            hovered = hovered,
+            warning = outline == Outline.Warning
+        )
 
         fun of(
             selected: Boolean,
@@ -246,240 +289,16 @@ value class RadioButtonState(val state: ULong) {
             focused: Boolean = false,
             error: Boolean = false,
             pressed: Boolean = false,
-            hovered: Boolean = false
-        ): RadioButtonState {
-            var state = 0UL
-            if (selected) state = state or Selected
-            if (enabled) state = state or Enabled
-            if (focused) state = state or Focused
-            if (error) state = state or Error
-            if (pressed) state = state or Pressed
-            if (hovered) state = state or Hovered
-            return RadioButtonState(state)
-        }
-    }
-}
-
-@Stable
-interface RadioButtonColors {
-
-    @Composable
-    fun checkmarkColor(state: RadioButtonState): State<Color>
-
-    @Composable
-    fun backgroundColor(state: RadioButtonState): State<Color>
-
-    @Composable
-    fun contentColor(state: RadioButtonState): State<Color>
-
-    @Composable
-    fun borderStroke(state: RadioButtonState): State<Stroke>
-
-    @Composable
-    fun haloStroke(state: RadioButtonState): State<Stroke>
-}
-
-@Stable
-interface RadioButtonDefaults {
-
-    @Composable
-    fun colors(): RadioButtonColors
-
-    @Composable
-    fun shape(): Shape
-
-    @Composable
-    fun width(): Dp
-
-    @Composable
-    fun height(): Dp
-
-    @Composable
-    fun contentSpacing(): Dp
-
-    @Composable
-    fun textStyle(): TextStyle
-
-    @Composable
-    fun checkmark(state: RadioButtonState): State<Painter?>
-}
-
-fun radioButtonColors(
-    checkmarkColor: Color,
-    textColor: Color,
-    unselectedBackground: Color,
-    unselectedStroke: Stroke,
-    unselectedFocusedStroke: Stroke,
-    unselectedFocusHoloStroke: Stroke,
-    unselectedErrorHoloStroke: Stroke,
-    unselectedHoveredBackground: Color,
-    unselectedHoveredStroke: Stroke,
-    unselectedDisabledBackground: Color,
-    unselectedDisabledStroke: Stroke,
-    selectedBackground: Color,
-    selectedStroke: Stroke,
-    selectedFocusedStroke: Stroke,
-    selectedFocusHoloStroke: Stroke,
-    selectedErrorHoloStroke: Stroke,
-    selectedHoveredBackground: Color,
-    selectedHoveredStroke: Stroke,
-    selectedDisabledBackground: Color,
-    selectedDisabledStroke: Stroke,
-    disabledCheckmarkColor: Color,
-    disabledTextColor: Color
-): RadioButtonColors = DefaultRadioButtonColors(
-    checkmarkColor = checkmarkColor,
-    textColor = textColor,
-    unselectedBackground = unselectedBackground,
-    unselectedStroke = unselectedStroke,
-    unselectedFocusedStroke = unselectedFocusedStroke,
-    unselectedFocusHoloStroke = unselectedFocusHoloStroke,
-    unselectedErrorHoloStroke = unselectedErrorHoloStroke,
-    unselectedHoveredBackground = unselectedHoveredBackground,
-    unselectedHoveredStroke = unselectedHoveredStroke,
-    unselectedDisabledBackground = unselectedDisabledBackground,
-    unselectedDisabledStroke = unselectedDisabledStroke,
-    selectedBackground = selectedBackground,
-    selectedStroke = selectedStroke,
-    selectedFocusedStroke = selectedFocusedStroke,
-    selectedFocusHoloStroke = selectedFocusHoloStroke,
-    selectedErrorHoloStroke = selectedErrorHoloStroke,
-    selectedHoveredBackground = selectedHoveredBackground,
-    selectedHoveredStroke = selectedHoveredStroke,
-    selectedDisabledBackground = selectedDisabledBackground,
-    selectedDisabledStroke = selectedDisabledStroke,
-    disabledCheckmarkColor = disabledCheckmarkColor,
-    disabledTextColor = disabledTextColor
-)
-
-@Immutable
-private data class DefaultRadioButtonColors(
-    private val checkmarkColor: Color,
-    private val textColor: Color,
-
-    private val unselectedBackground: Color,
-    private val unselectedStroke: Stroke,
-    private val unselectedFocusedStroke: Stroke,
-    private val unselectedFocusHoloStroke: Stroke,
-    private val unselectedErrorHoloStroke: Stroke,
-    private val unselectedHoveredBackground: Color,
-    private val unselectedHoveredStroke: Stroke,
-    private val unselectedDisabledBackground: Color,
-    private val unselectedDisabledStroke: Stroke,
-
-    private val selectedBackground: Color,
-    private val selectedStroke: Stroke,
-    private val selectedFocusedStroke: Stroke,
-    private val selectedFocusHoloStroke: Stroke,
-    private val selectedErrorHoloStroke: Stroke,
-    private val selectedHoveredBackground: Color,
-    private val selectedHoveredStroke: Stroke,
-    private val selectedDisabledBackground: Color,
-    private val selectedDisabledStroke: Stroke,
-
-    private val disabledCheckmarkColor: Color,
-    private val disabledTextColor: Color
-) : RadioButtonColors {
-
-    @Composable
-    override fun checkmarkColor(state: RadioButtonState): State<Color> {
-        return rememberUpdatedState(
-            when {
-                !state.isEnabled -> disabledCheckmarkColor
-                else -> checkmarkColor
-            }
+            hovered: Boolean = false,
+            warning: Boolean = false
+        ) = RadioButtonState(
+            (if (selected) Selected else 0UL) or
+                (if (enabled) Enabled else 0UL) or
+                (if (focused) Focused else 0UL) or
+                (if (error) Error else 0UL) or
+                (if (warning) Warning else 0UL) or
+                (if (pressed) Pressed else 0UL) or
+                (if (hovered) Hovered else 0UL)
         )
     }
-
-    @Composable
-    override fun borderStroke(state: RadioButtonState): State<Stroke> {
-        return rememberUpdatedState(
-            when {
-                !state.isEnabled -> if (state.isSelected) {
-                    selectedDisabledStroke
-                } else {
-                    unselectedDisabledStroke
-                }
-
-                state.isFocused || state.isError -> if (state.isSelected) {
-                    selectedFocusedStroke
-                } else {
-                    unselectedFocusedStroke
-                }
-
-                state.isHovered -> if (state.isSelected) {
-                    selectedHoveredStroke
-                } else {
-                    unselectedHoveredStroke
-                }
-
-                !state.isSelected -> unselectedStroke
-                else -> selectedStroke
-            }
-        )
-    }
-
-    @Composable
-    override fun haloStroke(state: RadioButtonState): State<Stroke> {
-        return rememberUpdatedState(
-            when {
-                !state.isEnabled -> Stroke.None
-                state.isError -> if (state.isSelected) {
-                    selectedErrorHoloStroke
-                } else {
-                    unselectedErrorHoloStroke
-                }
-
-                state.isFocused -> if (state.isSelected) {
-                    selectedFocusHoloStroke
-                } else {
-                    unselectedFocusHoloStroke
-                }
-
-                else -> Stroke.None
-            }
-        )
-    }
-
-    @Composable
-    override fun backgroundColor(state: RadioButtonState): State<Color> {
-        return rememberUpdatedState(
-            when {
-                !state.isEnabled -> if (state.isSelected) {
-                    selectedDisabledBackground
-                } else {
-                    unselectedDisabledBackground
-                }
-
-                state.isFocused -> if (state.isSelected) {
-                    selectedBackground
-                } else {
-                    unselectedBackground
-                }
-
-                state.isHovered || state.isPressed -> if (state.isSelected) {
-                    selectedHoveredBackground
-                } else {
-                    unselectedHoveredBackground
-                }
-
-                !state.isSelected -> unselectedBackground
-                else -> selectedBackground
-            }
-        )
-    }
-
-    @Composable
-    override fun contentColor(state: RadioButtonState): State<Color> {
-        return rememberUpdatedState(
-            when {
-                !state.isEnabled -> disabledTextColor
-                else -> textColor
-            }
-        )
-    }
-}
-
-internal val LocalRadioButtonDefaults = staticCompositionLocalOf<RadioButtonDefaults> {
-    error("No RadioButtonDefaults provided")
 }

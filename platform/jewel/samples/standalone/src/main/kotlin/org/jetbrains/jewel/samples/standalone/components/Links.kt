@@ -1,7 +1,6 @@
 package org.jetbrains.jewel.samples.standalone.components
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -14,19 +13,22 @@ import org.jetbrains.jewel.DropdownLink
 import org.jetbrains.jewel.ExternalLink
 import org.jetbrains.jewel.GroupHeader
 import org.jetbrains.jewel.Link
+import org.jetbrains.jewel.LocalResourceLoader
 import org.jetbrains.jewel.Text
 import org.jetbrains.jewel.divider
 
 @Composable
-fun ColumnScope.Links() {
+fun Links() {
     GroupHeader("Links")
+
+    val resourceLoader = LocalResourceLoader.current
     Row(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Link("Link", {})
+        Link("Link", resourceLoader, {})
 
-        ExternalLink("ExternalLink", {})
+        ExternalLink("ExternalLink", resourceLoader, {})
 
         val items = remember {
             listOf(
@@ -39,7 +41,7 @@ fun ColumnScope.Links() {
             )
         }
         var selected by remember { mutableStateOf(items.first()) }
-        DropdownLink("DropdownLink") {
+        DropdownLink("DropdownLink", resourceLoader) {
             items.forEach {
                 if (it == "---") {
                     divider()
@@ -57,11 +59,11 @@ fun ColumnScope.Links() {
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Link("Link", {}, enabled = false)
+        Link("Link", resourceLoader, {}, enabled = false)
 
-        ExternalLink("ExternalLink", {}, enabled = false)
+        ExternalLink("ExternalLink", resourceLoader, {}, enabled = false)
 
-        DropdownLink("DropdownLink", enabled = false) {
+        DropdownLink("DropdownLink", resourceLoader, enabled = false) {
         }
     }
 }

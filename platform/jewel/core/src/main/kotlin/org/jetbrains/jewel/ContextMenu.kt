@@ -9,16 +9,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.InputModeManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalInputModeManager
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.rememberCursorPositionProvider
+import org.jetbrains.jewel.styling.MenuStyle
 
 object IntelliJContextMenuRepresentation : ContextMenuRepresentation {
 
@@ -32,7 +31,7 @@ object IntelliJContextMenuRepresentation : ContextMenuRepresentation {
                     state.status = ContextMenuState.Status.Closed
                     true
                 },
-                defaults = IntelliJTheme.contextMenuDefaults
+                style = IntelliJTheme.menuStyle
             ) {
                 contextItems(items)
             }
@@ -45,8 +44,7 @@ internal fun ContextMenu(
     onDismissRequest: (InputMode) -> Boolean,
     focusable: Boolean = true,
     modifier: Modifier = Modifier,
-    defaults: MenuDefaults = IntelliJTheme.menuDefaults,
-    offset: DpOffset = defaults.menuOffset(),
+    style: MenuStyle = IntelliJTheme.menuStyle,
     content: MenuScope.() -> Unit
 ) {
     var focusManager: FocusManager? by mutableStateOf(null)
@@ -62,7 +60,7 @@ internal fun ContextMenu(
         onDismissRequest = {
             onDismissRequest(InputMode.Touch)
         },
-        popupPositionProvider = rememberCursorPositionProvider(offset),
+        popupPositionProvider = rememberCursorPositionProvider(style.metrics.offset),
         onKeyEvent = {
             handlePopupMenuOnKeyEvent(it, focusManager!!, inputModeManager!!, menuManager)
         }
@@ -71,8 +69,7 @@ internal fun ContextMenu(
         inputModeManager = LocalInputModeManager.current
 
         CompositionLocalProvider(
-            LocalMenuManager provides menuManager,
-            LocalMenuDefaults provides defaults
+            LocalMenuManager provides menuManager
         ) {
             MenuContent(
                 modifier = modifier,
@@ -115,7 +112,3 @@ class ContextSubmenu(
     label: String,
     val submenu: () -> List<ContextMenuItem>
 ) : ContextMenuItem(label, {})
-
-internal val LocalContextMenuDefaults = staticCompositionLocalOf<MenuDefaults> {
-    error("No ContextMenuDefaults provided")
-}

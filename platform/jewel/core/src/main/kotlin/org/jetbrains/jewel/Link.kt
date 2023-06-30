@@ -6,27 +6,25 @@ import androidx.compose.foundation.interaction.FocusInteraction
 import androidx.compose.foundation.interaction.HoverInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.State
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.platform.LocalInputModeManager
+import androidx.compose.ui.res.ResourceLoader
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -35,13 +33,25 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
+import org.jetbrains.jewel.CommonStateBitMask.Enabled
+import org.jetbrains.jewel.CommonStateBitMask.Focused
+import org.jetbrains.jewel.CommonStateBitMask.Hovered
+import org.jetbrains.jewel.CommonStateBitMask.Pressed
+import org.jetbrains.jewel.IntelliJTheme.Companion.isSwingCompatMode
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.border
 import org.jetbrains.jewel.foundation.onHover
+import org.jetbrains.jewel.styling.LinkStyle
+import org.jetbrains.jewel.styling.LocalLinkStyle
+import org.jetbrains.jewel.styling.LocalMenuStyle
+import org.jetbrains.jewel.styling.MenuStyle
+import org.jetbrains.jewel.styling.StatefulPainterProvider
+import org.jetbrains.jewel.util.appendIf
 
 @Composable
 fun Link(
     text: String,
+    resourceLoader: ResourceLoader,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -55,8 +65,7 @@ fun Link(
     lineHeight: TextUnit = TextUnit.Unspecified,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     indication: Indication? = null,
-    defaults: LinkDefaults = IntelliJTheme.linkDefaults,
-    colors: LinkColors = defaults.colors()
+    style: LinkStyle = LocalLinkStyle.current
 ) = LinkImpl(
     text = text,
     onClick = onClick,
@@ -72,13 +81,15 @@ fun Link(
     lineHeight = lineHeight,
     interactionSource = interactionSource,
     indication = indication,
-    defaults = defaults,
-    colors = colors
+    style = style,
+    resourceLoader = resourceLoader,
+    icon = null
 )
 
 @Composable
 fun ExternalLink(
     text: String,
+    resourceLoader: ResourceLoader,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -92,8 +103,7 @@ fun ExternalLink(
     lineHeight: TextUnit = TextUnit.Unspecified,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     indication: Indication? = null,
-    defaults: LinkDefaults = IntelliJTheme.linkDefaults,
-    colors: LinkColors = defaults.colors()
+    style: LinkStyle = LocalLinkStyle.current
 ) = LinkImpl(
     text = text,
     onClick = onClick,
@@ -109,18 +119,15 @@ fun ExternalLink(
     lineHeight = lineHeight,
     interactionSource = interactionSource,
     indication = indication,
-    defaults = defaults,
-    colors = colors
-) {
-    Icon(
-        painter = defaults.externalLinkIconPainter(),
-        tint = colors.iconColor(it).value
-    )
-}
+    style = style,
+    resourceLoader = resourceLoader,
+    icon = style.icons.externalLink
+)
 
 @Composable
 fun DropdownLink(
     text: String,
+    resourceLoader: ResourceLoader,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     fontSize: TextUnit = TextUnit.Unspecified,
@@ -133,10 +140,9 @@ fun DropdownLink(
     lineHeight: TextUnit = TextUnit.Unspecified,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     indication: Indication? = null,
-    defaults: LinkDefaults = IntelliJTheme.linkDefaults,
-    colors: LinkColors = defaults.colors(),
+    style: LinkStyle = LocalLinkStyle.current,
     menuModifier: Modifier = Modifier,
-    menuDefaults: MenuDefaults = IntelliJTheme.dropdownDefaults,
+    menuStyle: MenuStyle = LocalMenuStyle.current,
     menuContent: MenuScope.() -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -167,14 +173,10 @@ fun DropdownLink(
             lineHeight = lineHeight,
             interactionSource = interactionSource,
             indication = indication,
-            defaults = defaults,
-            colors = colors
-        ) {
-            Icon(
-                painter = defaults.DropdownLinkIconPainter(),
-                tint = colors.iconColor(it).value
-            )
-        }
+            style = style,
+            icon = style.icons.dropdownChevron,
+            resourceLoader = resourceLoader
+        )
 
         if (expanded) {
             DropdownMenu(
@@ -186,7 +188,8 @@ fun DropdownLink(
                     true
                 },
                 modifier = menuModifier,
-                defaults = menuDefaults,
+                style = menuStyle,
+                horizontalAlignment = Alignment.Start, // TODO no idea what goes here
                 content = menuContent
             )
         }
@@ -196,22 +199,22 @@ fun DropdownLink(
 @Composable
 private fun LinkImpl(
     text: String,
+    style: LinkStyle,
+    resourceLoader: ResourceLoader,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    fontSize: TextUnit = TextUnit.Unspecified,
-    fontStyle: FontStyle? = null,
-    fontWeight: FontWeight? = null,
-    fontFamily: FontFamily? = null,
-    letterSpacing: TextUnit = TextUnit.Unspecified,
-    textAlign: TextAlign? = null,
-    overflow: TextOverflow = TextOverflow.Clip,
-    lineHeight: TextUnit = TextUnit.Unspecified,
-    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    indication: Indication? = null,
-    defaults: LinkDefaults = IntelliJTheme.linkDefaults,
-    colors: LinkColors = defaults.colors(),
-    icon: (@Composable RowScope.(state: LinkState) -> Unit)? = null
+    modifier: Modifier,
+    enabled: Boolean,
+    fontSize: TextUnit,
+    fontStyle: FontStyle?,
+    fontWeight: FontWeight?,
+    fontFamily: FontFamily?,
+    letterSpacing: TextUnit,
+    textAlign: TextAlign?,
+    overflow: TextOverflow,
+    lineHeight: TextUnit,
+    interactionSource: MutableInteractionSource,
+    indication: Indication?,
+    icon: StatefulPainterProvider<LinkState>?
 ) {
     var linkState by remember(interactionSource) {
         mutableStateOf(LinkState.of(enabled = enabled))
@@ -242,20 +245,21 @@ private fun LinkImpl(
         }
     }
 
-    val textColor = colors.textColor(linkState).value
+    val textColor by style.colors.contentFor(linkState)
 
-    val mergedStyle = defaults.textStyle(linkState).value.merge(
-        TextStyle(
-            color = textColor,
-            fontSize = fontSize,
-            fontWeight = fontWeight,
-            textAlign = textAlign,
-            lineHeight = lineHeight,
-            fontFamily = fontFamily,
-            fontStyle = fontStyle,
-            letterSpacing = letterSpacing
+    val mergedStyle = style.textStyles.styleFor(linkState).value
+        .merge(
+            TextStyle(
+                color = textColor,
+                fontSize = fontSize,
+                fontWeight = fontWeight,
+                textAlign = textAlign,
+                lineHeight = lineHeight,
+                fontFamily = fontFamily,
+                fontStyle = fontStyle,
+                letterSpacing = letterSpacing
+            )
         )
-    )
 
     val clickable = Modifier.clickable(
         onClick = {
@@ -268,43 +272,49 @@ private fun LinkImpl(
         indication = indication
     )
 
-    if (icon == null) {
+    val focusHaloModifier = Modifier.border(
+        alignment = Stroke.Alignment.Outside,
+        width = LocalThemeMetrics.current.outlineWidth,
+        color = LocalThemeColors.current.outlines.focused,
+        shape = RoundedCornerShape(style.metrics.focusHaloCornerSize)
+    )
+
+    Row(
+        modifier = modifier.then(clickable)
+            .appendIf(linkState.isFocused) { focusHaloModifier },
+        horizontalArrangement = Arrangement.spacedBy(style.metrics.textIconGap),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         BasicText(
             text = text,
-            modifier = modifier.then(clickable)
-                .border(colors.haloStroke(linkState).value, defaults.haloShape()),
             style = mergedStyle,
             overflow = overflow,
             softWrap = true,
             maxLines = 1
         )
-    } else {
-        Row(
-            modifier = modifier.then(clickable)
-                .border(colors.haloStroke(linkState).value, defaults.haloShape())
-        ) {
-            BasicText(
-                text = text,
-                style = mergedStyle,
-                overflow = overflow,
-                softWrap = true,
-                maxLines = 1
+
+        if (icon != null) {
+            val iconPainter by icon.getPainter(linkState, resourceLoader)
+            Icon(
+                iconPainter,
+                contentDescription = null,
+                modifier = Modifier.size(style.metrics.iconSize),
+                tint = style.colors.iconTint
             )
-            icon(linkState)
         }
     }
 }
 
 @Immutable
 @JvmInline
-value class LinkState(val state: ULong) {
+value class LinkState(val state: ULong) : InteractiveComponentState {
 
     @Stable
-    val isEnabled: Boolean
+    override val isEnabled: Boolean
         get() = state and Enabled != 0UL
 
     @Stable
-    val isFocused: Boolean
+    override val isFocused: Boolean
         get() = state and Focused != 0UL
 
     @Stable
@@ -312,14 +322,15 @@ value class LinkState(val state: ULong) {
         get() = state and Visited != 0UL
 
     @Stable
-    val isPressed: Boolean
+    override val isPressed: Boolean
         get() = state and Pressed != 0UL
 
     @Stable
-    val isHovered: Boolean
+    override val isHovered: Boolean
         get() = state and Hovered != 0UL
 
-    override fun toString(): String = "LinkState(enabled=$isEnabled, focused=$isFocused, visited=$isVisited, pressed=$isPressed, hovered=$isHovered)"
+    override fun toString(): String =
+        "${javaClass.simpleName}(enabled=$isEnabled, focused=$isFocused, visited=$isVisited, pressed=$isPressed, hovered=$isHovered)"
 
     fun copy(
         enabled: Boolean = isEnabled,
@@ -335,13 +346,29 @@ value class LinkState(val state: ULong) {
         hovered = hovered
     )
 
+    @Composable
+    fun <T> chooseValueWithVisited(
+        normal: T,
+        disabled: T,
+        focused: T,
+        pressed: T,
+        hovered: T,
+        visited: T
+    ): T =
+        when {
+            !isEnabled -> disabled
+            isPressed && !isSwingCompatMode -> pressed
+            isHovered && !isSwingCompatMode -> hovered
+            isFocused -> focused
+            isVisited -> visited
+            else -> normal
+        }
+
     companion object {
 
-        private val Enabled = 1UL shl 0
-        private val Focused = 1UL shl 1
-        private val Visited = 1UL shl 2
-        private val Hovered = 1UL shl 3
-        private val Pressed = 1UL shl 4
+        private const val VISITED_BIT_OFFSET = CommonStateBitMask.FIRST_AVAILABLE_OFFSET
+
+        private val Visited = 1UL shl VISITED_BIT_OFFSET
 
         fun of(
             enabled: Boolean = true,
@@ -349,103 +376,12 @@ value class LinkState(val state: ULong) {
             visited: Boolean = false,
             hovered: Boolean = false,
             pressed: Boolean = false
-        ): LinkState {
-            var state = 0UL
-            if (enabled) state = state or Enabled
-            if (focused) state = state or Focused
-            if (visited) state = state or Visited
-            if (hovered) state = state or Hovered
-            if (pressed) state = state or Pressed
-            return LinkState(state)
-        }
+        ) = LinkState(
+            (if (visited) Visited else 0UL) or
+                (if (enabled) Enabled else 0UL) or
+                (if (focused) Focused else 0UL) or
+                (if (pressed) Pressed else 0UL) or
+                (if (hovered) Hovered else 0UL)
+        )
     }
-}
-
-@Stable
-interface LinkColors {
-
-    @Composable
-    fun textColor(state: LinkState): State<Color>
-
-    @Composable
-    fun iconColor(state: LinkState): State<Color>
-
-    @Composable
-    fun haloStroke(state: LinkState): State<Stroke>
-}
-
-@Stable
-interface LinkDefaults {
-
-    @Composable
-    fun haloShape(): Shape
-
-    @Composable
-    fun externalLinkIconPainter(): Painter
-
-    @Composable
-    fun DropdownLinkIconPainter(): Painter
-
-    @Composable
-    fun colors(): LinkColors
-
-    @Composable
-    fun textStyle(state: LinkState): State<TextStyle>
-}
-
-fun linkColors(
-    textColor: Color,
-    visitedTextColor: Color,
-    disabledTextColor: Color,
-    iconColor: Color,
-    disabledIconColor: Color,
-    haloStroke: Stroke
-): LinkColors = DefaultLinkColors(
-    textColor = textColor,
-    visitedTextColor = visitedTextColor,
-    disabledTextColor = disabledTextColor,
-    iconColor = iconColor,
-    disabledIconColor = disabledIconColor,
-    haloStroke = haloStroke
-)
-
-@Immutable
-private data class DefaultLinkColors(
-    val textColor: Color,
-    val visitedTextColor: Color,
-    val disabledTextColor: Color,
-    val iconColor: Color,
-    val disabledIconColor: Color,
-    val haloStroke: Stroke
-) : LinkColors {
-
-    @Composable
-    override fun textColor(state: LinkState): State<Color> = rememberUpdatedState(
-        when {
-            !state.isEnabled -> disabledTextColor
-            state.isVisited -> visitedTextColor
-            else -> textColor
-        }
-    )
-
-    @Composable
-    override fun iconColor(state: LinkState): State<Color> = rememberUpdatedState(
-        when {
-            !state.isEnabled -> disabledIconColor
-            else -> iconColor
-        }
-    )
-
-    @Composable
-    override fun haloStroke(state: LinkState): State<Stroke> = rememberUpdatedState(
-        when {
-            !state.isEnabled -> Stroke.None
-            state.isFocused -> haloStroke
-            else -> Stroke.None
-        }
-    )
-}
-
-internal val LocalLinkDefaults = compositionLocalOf<LinkDefaults> {
-    error("No LinkDefaults provided")
 }

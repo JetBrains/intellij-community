@@ -8,16 +8,12 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Placeable
@@ -29,7 +25,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.offset
-import org.jetbrains.jewel.foundation.Stroke
+import org.jetbrains.jewel.styling.TextFieldStyle
 import kotlin.math.max
 
 @Composable
@@ -47,9 +43,7 @@ fun TextField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions(),
     onTextLayout: (TextLayoutResult) -> Unit = {},
-    defaults: TextFieldDefaults = IntelliJTheme.textFieldDefaults,
-    colors: TextFieldColors = defaults.colors(),
-    textStyle: TextStyle = defaults.textStyle(),
+    style: TextFieldStyle = IntelliJTheme.textFieldStyle,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
 ) {
     var textFieldValueState by remember { mutableStateOf(TextFieldValue(text = value)) }
@@ -79,9 +73,7 @@ fun TextField(
         keyboardOptions = keyboardOptions,
         keyboardActions = keyboardActions,
         onTextLayout = onTextLayout,
-        defaults = defaults,
-        colors = colors,
-        textStyle = textStyle,
+        style = style,
         interactionSource = interactionSource
     )
 }
@@ -101,9 +93,8 @@ fun TextField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions(),
     onTextLayout: (TextLayoutResult) -> Unit = {},
-    defaults: TextFieldDefaults = IntelliJTheme.textFieldDefaults,
-    colors: TextFieldColors = defaults.colors(),
-    textStyle: TextStyle = defaults.textStyle(),
+    style: TextFieldStyle = IntelliJTheme.textFieldStyle,
+    textStyle: TextStyle = IntelliJTheme.defaultTextStyle,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
 ) = InputField(
     value = value,
@@ -119,30 +110,20 @@ fun TextField(
     singleLine = true,
     maxLines = 1,
     onTextLayout = onTextLayout,
-    defaults = defaults,
-    colors = colors,
+    style = style,
     textStyle = textStyle,
     interactionSource = interactionSource
 ) { innerTextField, state ->
+    val minSize = style.metrics.minSize
+
     TextFieldDecorationBox(
-        modifier = Modifier.defaultMinSize(minHeight = defaults.minHeight(), minWidth = defaults.minWidth()).padding(defaults.contentPadding()),
+        modifier = Modifier.defaultMinSize(minHeight = minSize.width, minWidth = minSize.height)
+            .padding(style.metrics.contentPadding),
         innerTextField = innerTextField,
-        placeholderTextColor = colors.placeholderForeground(state).value,
+        placeholderTextColor = style.colors.placeholder,
         placeholder = if (value.text.isEmpty()) placeholder else null,
         trailingIcon = trailingIcon
     )
-}
-
-interface TextFieldDefaults : InputFieldDefaults {
-
-    @Composable
-    override fun colors(): TextFieldColors
-}
-
-interface TextFieldColors : InputFieldColors {
-
-    @Composable
-    fun placeholderForeground(state: InputFieldState): State<Color>
 }
 
 @Composable
@@ -164,7 +145,7 @@ private fun TextFieldDecorationBox(
             if (placeholder != null) {
                 Box(modifier = Modifier.layoutId(PLACEHOLDER_ID), contentAlignment = Alignment.Center) {
                     CompositionLocalProvider(
-                        LocalTextColor provides placeholderTextColor,
+                        LocalContentColor provides placeholderTextColor,
                         content = placeholder
                     )
                 }
@@ -283,123 +264,3 @@ private fun Placeable.PlacementScope.place(
 private const val PLACEHOLDER_ID = "Placeholder"
 private const val TEXT_FIELD_ID = "TextField"
 private const val TRAILING_ID = "Trailing"
-
-fun textFieldColors(
-    foreground: Color,
-    background: Color,
-    cursorBrush: Brush,
-    borderStroke: Stroke,
-    focusedForeground: Color,
-    focusedBackground: Color,
-    focusedCursorBrush: Brush,
-    focusedBorderStroke: Stroke,
-    errorForeground: Color,
-    errorBackground: Color,
-    errorCursorBrush: Brush,
-    errorBorderStroke: Stroke,
-    errorFocusedForeground: Color,
-    errorFocusedBackground: Color,
-    errorFocusedCursorBrush: Brush,
-    errorFocusedBorderStroke: Stroke,
-    disabledForeground: Color,
-    disabledBackground: Color,
-    disabledBorderStroke: Stroke,
-    placeholderForeground: Color
-): TextFieldColors = DefaultTextFieldColors(
-    foreground = foreground,
-    background = background,
-    cursorBrush = cursorBrush,
-    borderStroke = borderStroke,
-    focusedForeground = focusedForeground,
-    focusedBackground = focusedBackground,
-    focusedCursorBrush = focusedCursorBrush,
-    focusedBorderStroke = focusedBorderStroke,
-    errorForeground = errorForeground,
-    errorBackground = errorBackground,
-    errorCursorBrush = errorCursorBrush,
-    errorBorderStroke = errorBorderStroke,
-    errorFocusedForeground = errorFocusedForeground,
-    errorFocusedBackground = errorFocusedBackground,
-    errorFocusedCursorBrush = errorFocusedCursorBrush,
-    errorFocusedBorderStroke = errorFocusedBorderStroke,
-    disabledForeground = disabledForeground,
-    disabledBackground = disabledBackground,
-    disabledBorderStroke = disabledBorderStroke,
-    placeholderForeground = placeholderForeground
-)
-
-internal open class DefaultTextFieldColors(
-    private val foreground: Color,
-    private val background: Color,
-    private val cursorBrush: Brush,
-    private val borderStroke: Stroke,
-    private val focusedForeground: Color,
-    private val focusedBackground: Color,
-    private val focusedCursorBrush: Brush,
-    private val focusedBorderStroke: Stroke,
-    private val errorForeground: Color,
-    private val errorBackground: Color,
-    private val errorCursorBrush: Brush,
-    private val errorBorderStroke: Stroke,
-    private val errorFocusedForeground: Color,
-    private val errorFocusedBackground: Color,
-    private val errorFocusedCursorBrush: Brush,
-    private val errorFocusedBorderStroke: Stroke,
-    private val disabledForeground: Color,
-    private val disabledBackground: Color,
-    private val disabledBorderStroke: Stroke,
-    private val placeholderForeground: Color
-) : TextFieldColors {
-
-    @Composable
-    override fun foreground(state: InputFieldState): State<Color> = rememberUpdatedState(
-        when {
-            !state.isEnabled -> disabledForeground
-            state.isError && state.isFocused -> errorFocusedForeground
-            state.isError -> errorForeground
-            state.isFocused -> focusedForeground
-            else -> foreground
-        }
-    )
-
-    @Composable
-    override fun background(state: InputFieldState): State<Color> = rememberUpdatedState(
-        when {
-            !state.isEnabled -> disabledBackground
-            state.isError && state.isFocused -> errorFocusedBackground
-            state.isError -> errorBackground
-            state.isFocused -> focusedBackground
-            else -> background
-        }
-    )
-
-    @Composable
-    override fun borderStroke(state: InputFieldState): State<Stroke> = rememberUpdatedState(
-        when {
-            !state.isEnabled -> disabledBorderStroke
-            state.isError && state.isFocused -> errorFocusedBorderStroke
-            state.isError -> errorBorderStroke
-            state.isFocused -> focusedBorderStroke
-            else -> borderStroke
-        }
-    )
-
-    @Composable
-    override fun cursorBrush(state: InputFieldState): State<Brush> = rememberUpdatedState(
-        when {
-            state.isError && state.isFocused -> errorFocusedCursorBrush
-            state.isError -> errorCursorBrush
-            state.isFocused -> focusedCursorBrush
-            else -> cursorBrush
-        }
-    )
-
-    @Composable
-    override fun placeholderForeground(state: InputFieldState): State<Color> = rememberUpdatedState(
-        placeholderForeground
-    )
-}
-
-internal val LocalTextFieldDefaults = staticCompositionLocalOf<TextFieldDefaults> {
-    error("No TextFieldDefaults provided")
-}
