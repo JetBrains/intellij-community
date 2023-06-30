@@ -203,13 +203,13 @@ public class PropertiesUtil {
   @NotNull
   public static @Nls String getPresentableLocale(@NotNull Locale locale) {
     List<String> names = new ArrayList<>();
-    if (locale.getDisplayLanguage() != null) {
+    if (StringUtil.isNotEmpty(locale.getDisplayLanguage())) {
       names.add(locale.getDisplayLanguage());
     }
-    if (locale.getDisplayCountry() != null) {
+    if (StringUtil.isNotEmpty(locale.getDisplayCountry())) {
       names.add(locale.getDisplayCountry());
     }
-    if (locale.getDisplayVariant() != null) {
+    if (StringUtil.isNotEmpty(locale.getDisplayVariant())) {
       names.add(locale.getDisplayVariant());
     }
     return names.isEmpty() ? "" : " (" + StringUtil.join(names, "/") + ")";
