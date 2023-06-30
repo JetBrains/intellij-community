@@ -1,6 +1,16 @@
 package org.jetbrains.jewel
 
+/**
+ * Class to define possible directions.
+ */
 enum class Orientation {
-    Horizontal,
-    Vertical
+    /**
+     * Vertical orientation representing Y axis
+     */
+    Vertical,
+
+    /**
+     * Horizontal orientation representing X axis.
+     */
+    Horizontal
 }

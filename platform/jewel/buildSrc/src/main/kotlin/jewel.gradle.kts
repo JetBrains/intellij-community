@@ -1,4 +1,5 @@
 import io.gitlab.arturbosch.detekt.Detekt
+import org.jmailen.gradle.kotlinter.tasks.LintTask
 
 plugins {
     id("io.gitlab.arturbosch.detekt")
@@ -53,5 +54,15 @@ tasks {
             sarif.required.set(true)
             sarif.outputLocation.set(file(rootDir.resolve("build/reports/detekt-${project.name}.sarif")))
         }
+    }
+    tasks.withType<LintTask> {
+        exclude { it.file.absolutePath.startsWith(buildDir.absolutePath) }
+        reports.set(
+            mapOf(
+                "plain" to rootDir.resolve("build/reports/ktlint-${project.name}.txt"),
+                "html" to rootDir.resolve("build/reports/ktlint-${project.name}.html"),
+                "sarif" to rootDir.resolve("build/reports/ktlint-${project.name}.sarif")
+            )
+        )
     }
 }

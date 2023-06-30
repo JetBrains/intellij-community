@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -65,18 +65,19 @@ fun <T> TreeView(
     selectionBackgroundColor: Color,
     platformDoubleClickDelay: Long = 500L,
     keyActions: KeyBindingScopedActions = DefaultTreeViewKeyActions(treeState),
-    pointerEventScopedActions: PointerEventScopedActions = DefaultTreeViewPointerEventAction(
-        treeState,
-        platformDoubleClickDelay,
-        onElementClick,
-        onElementDoubleClick
-    ),
+    pointerEventScopedActions: PointerEventScopedActions = remember {
+        DefaultTreeViewPointerEventAction(
+            treeState,
+            platformDoubleClickDelay,
+            onElementClick,
+            onElementDoubleClick
+        )
+    },
     arrowContent: @Composable (isOpen: Boolean) -> Unit,
     elementContent: @Composable SelectableLazyItemScope.(Tree.Element<T>) -> Unit
 ) {
-    DisposableEffect(tree) {
+    LaunchedEffect(tree) {
         treeState.attachTree(tree)
-        onDispose { }
     }
 
     Log.w("selected: ${treeState.delegate.selectedItemIndexes}")
@@ -130,12 +131,12 @@ fun <T> TreeView(
                         Box(modifier = Modifier.alpha(0f).width((element.depth * deepIndentDP.value).dp))
                         Box(
                             modifier = Modifier.alpha(if (element.children?.isEmpty() == true) 0f else 1f)
-                                .pointerInput(element.id) {
+                                .pointerInput(Unit) {
                                     while (true) {
                                         awaitPointerEventScope {
                                             awaitFirstDown(false)
                                             scope.launch {
-                                                treeState.openNode(element)
+                                                treeState.toggleNode(element)
                                                 onElementDoubleClick(element as Tree.Element<T>)
                                             }
                                         }

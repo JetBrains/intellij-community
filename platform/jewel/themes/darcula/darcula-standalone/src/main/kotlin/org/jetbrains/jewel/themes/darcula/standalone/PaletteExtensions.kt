@@ -157,7 +157,8 @@ val IntelliJPalette.Companion.light
         scrollbar = IntelliJPalette.Scrollbar.light,
         treeView = IntelliJPalette.TreeView.Companion.light,
         slider = IntelliJPalette.Slider.Companion.light,
-        tab = IntelliJPalette.Tab.light
+        tab = IntelliJPalette.Tab.light,
+        progressBar = IntelliJPalette.ProgressBar.light
     )
 
 val IntelliJPalette.Companion.darcula
@@ -182,7 +183,8 @@ val IntelliJPalette.Companion.darcula
         scrollbar = IntelliJPalette.Scrollbar.darcula,
         treeView = IntelliJPalette.TreeView.darcula,
         slider = IntelliJPalette.Slider.darcula,
-        tab = IntelliJPalette.Tab.darcula
+        tab = IntelliJPalette.Tab.darcula,
+        progressBar = IntelliJPalette.ProgressBar.darcula
     )
 
 val IntelliJPalette.TreeView.Companion.light
@@ -207,4 +209,16 @@ val IntelliJPalette.Slider.Companion.darcula
     get() = IntelliJPalette.Slider(
         foreground = Color(0xFFBBBBBB),
         background = Color.IntelliJGrey
+    )
+
+val IntelliJPalette.ProgressBar.Companion.light
+    get() = IntelliJPalette.ProgressBar(
+        foreground = Color(0xFF1E82E6),
+        background = Color(0xFFD5D5D5)
+    )
+
+val IntelliJPalette.ProgressBar.Companion.darcula
+    get() = IntelliJPalette.ProgressBar(
+        foreground = Color(0xFFA0A0A0),
+        background = Color(0xFF555555)
     )

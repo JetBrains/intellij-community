@@ -9,7 +9,8 @@ jna = "5.10.0"
 kotlin = "1.8.0"
 dokka = "1.8.20"
 kotlinterGradlePlugin = "3.12.0"
-kotlinxSerialization = "1.4.1"
+kotlinxSerialization = "1.5.1"
+kotlinpoet = "1.14.2"
 
 [libraries]
 compose-components-splitpane = { module = "org.jetbrains.compose.components:components-splitpane", version.ref = "composeDesktop" }
@@ -26,6 +27,8 @@ detekt-gradlePlugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plug
 kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlinter-gradlePlugin = { module = "org.jmailen.gradle:kotlinter-gradle", version.ref = "kotlinterGradlePlugin" }
 dokka-gradlePlugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka" }
+
+kotlinpoet = { module = "com.squareup:kotlinpoet", version.ref = "kotlinpoet" }
 
 [bundles]
 idea = ["ij-platform-ide-core", "ij-platform-ide-impl", "ij-platform-core-ui"]

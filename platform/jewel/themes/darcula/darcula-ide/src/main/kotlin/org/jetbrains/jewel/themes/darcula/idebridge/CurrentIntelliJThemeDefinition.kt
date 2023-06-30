@@ -91,6 +91,10 @@ suspend fun CurrentIntelliJThemeDefinition(): IntelliJThemeDefinition {
         slider = IntelliJPalette.Slider(
             background = retrieveColorOrUnspecified("Slider.background"),
             foreground = retrieveColorOrUnspecified("Slider.foreground")
+        ),
+        progressBar = IntelliJPalette.ProgressBar(
+            background = retrieveColorOrUnspecified("ProgressBar.background"),
+            foreground = retrieveColorOrUnspecified("ProgressBar.progressColor")
         )
     )
 

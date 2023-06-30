@@ -15,11 +15,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.awt.SwingPanel
 import androidx.compose.ui.unit.dp
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
+import com.intellij.util.ui.JBDimension
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.jetbrains.jewel.IntelliJTheme
 import org.jetbrains.jewel.Orientation
@@ -36,6 +38,7 @@ import org.jetbrains.jewel.components.TextField
 import org.jetbrains.jewel.components.rememberTabContainerState
 import org.jetbrains.jewel.themes.darcula.idebridge.IntelliJTheme
 import org.jetbrains.jewel.themes.darcula.idebridge.addComposePanel
+import javax.swing.JProgressBar
 
 @ExperimentalCoroutinesApi
 internal class JewelDemoToolWindow : ToolWindowFactory, DumbAware {
@@ -156,6 +159,17 @@ internal class JewelDemoToolWindow : ToolWindowFactory, DumbAware {
                             checked = checked,
                             onCheckedChange = { checked = it }
                         )
+
+                        IndeterminateProgressBar(
+                            modifier = Modifier.width(100.dp)
+                        )
+
+                        SwingPanel(factory = {
+                            JProgressBar().apply {
+                                isIndeterminate = true
+                                preferredSize = JBDimension(100, 4)
+                            }
+                        })
                     }
                 }
             }

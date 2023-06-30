@@ -1,81 +1,174 @@
 package org.jetbrains.jewel
 
-import androidx.compose.foundation.LocalIndication
-import androidx.compose.foundation.LocalScrollbarStyle
+import androidx.compose.foundation.LocalContextMenuRepresentation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.compositionLocalOf
-import org.jetbrains.jewel.styles.ButtonStyle
-import org.jetbrains.jewel.styles.CheckboxStyle
-import org.jetbrains.jewel.styles.FrameStyle
-import org.jetbrains.jewel.styles.LocalButtonStyle
-import org.jetbrains.jewel.styles.LocalCheckboxStyle
-import org.jetbrains.jewel.styles.LocalFrameStyle
-import org.jetbrains.jewel.styles.LocalIconButtonStyle
-import org.jetbrains.jewel.styles.LocalRadioButtonStyle
-import org.jetbrains.jewel.styles.LocalSeparatorStyle
-import org.jetbrains.jewel.styles.LocalSliderStyle
-import org.jetbrains.jewel.styles.LocalTabStyle
-import org.jetbrains.jewel.styles.LocalTextAreaStyle
-import org.jetbrains.jewel.styles.LocalTextFieldStyle
-import org.jetbrains.jewel.styles.LocalTextStyle
-import org.jetbrains.jewel.styles.RadioButtonStyle
-import org.jetbrains.jewel.styles.ScrollbarStyle
-import org.jetbrains.jewel.styles.SeparatorStyle
-import org.jetbrains.jewel.styles.SliderStyle
-import org.jetbrains.jewel.styles.TabStyle
-import org.jetbrains.jewel.styles.TextAreaStyle
-import org.jetbrains.jewel.styles.TextFieldStyle
-import org.jetbrains.jewel.styles.localNotProvided
+import androidx.compose.runtime.ProvidedValue
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.text.TextStyle
 
-val LocalTypography = compositionLocalOf<IntelliJTypography> { localNotProvided() }
-val LocalMetrics = compositionLocalOf<IntelliJMetrics> { localNotProvided() }
-val LocalPainters = compositionLocalOf<IntelliJPainters> { localNotProvided() }
-val LocalPalette = compositionLocalOf<IntelliJPalette> { localNotProvided() }
+@ExperimentalJewelApi
+interface IntelliJTheme {
 
+    val colors: IntelliJColors
+
+    val buttonDefaults: ButtonDefaults
+
+    val checkboxDefaults: CheckboxDefaults
+
+    val groupHeaderDefaults: GroupHeaderDefaults
+
+    val linkDefaults: LinkDefaults
+
+    val textFieldDefaults: TextFieldDefaults
+
+    val labelledTextFieldDefaults: LabelledTextFieldDefaults
+
+    val textAreaDefaults: TextAreaDefaults
+
+    val radioButtonDefaults: RadioButtonDefaults
+
+    val dropdownDefaults: DropdownDefaults
+
+    val contextMenuDefaults: MenuDefaults
+
+    val defaultTextStyle: TextStyle
+
+    val treeDefaults: TreeDefaults
+
+    val chipDefaults: ChipDefaults
+
+    val scrollThumbDefaults: ScrollThumbDefaults
+
+    val progressBarDefaults: ProgressBarDefaults
+
+    val isLight: Boolean
+
+    fun providedCompositionLocalValues(): Array<ProvidedValue<*>>
+
+    companion object {
+
+        val buttonDefaults: ButtonDefaults
+            @Composable
+            @ReadOnlyComposable
+            get() = LocalButtonDefaults.current
+
+        val checkboxDefaults: CheckboxDefaults
+            @Composable
+            @ReadOnlyComposable
+            get() = LocalCheckboxDefaults.current
+
+        val groupHeaderDefaults: GroupHeaderDefaults
+            @Composable
+            @ReadOnlyComposable
+            get() = LocalGroupHeaderDefaults.current
+
+        val linkDefaults: LinkDefaults
+            @Composable
+            @ReadOnlyComposable
+            get() = LocalLinkDefaults.current
+
+        val textFieldDefaults: TextFieldDefaults
+            @Composable
+            @ReadOnlyComposable
+            get() = LocalTextFieldDefaults.current
+
+        val labelledTextFieldDefaults: LabelledTextFieldDefaults
+            @Composable
+            @ReadOnlyComposable
+            get() = LocalLabelledTextFieldDefaults.current
+
+        val textAreaDefaults: TextAreaDefaults
+            @Composable
+            @ReadOnlyComposable
+            get() = LocalTextAreaDefaults.current
+
+        val radioButtonDefaults: RadioButtonDefaults
+            @Composable
+            @ReadOnlyComposable
+            get() = LocalRadioButtonDefaults.current
+
+        val treeDefaults: TreeDefaults
+            @Composable
+            @ReadOnlyComposable
+            get() = LocalTreeDefaults.current
+
+        val chipDefaults: ChipDefaults
+            @Composable
+            @ReadOnlyComposable
+            get() = LocalChipDefaults.current
+
+        val dropdownDefaults: DropdownDefaults
+            @Composable
+            @ReadOnlyComposable
+            get() = LocalDropdownDefaults.current
+
+        val contextMenuDefaults: MenuDefaults
+            @Composable
+            @ReadOnlyComposable
+            get() = LocalContextMenuDefaults.current
+
+        val menuDefaults: MenuDefaults
+            @Composable
+            @ReadOnlyComposable
+            get() = LocalMenuDefaults.current
+
+        val colors: IntelliJColors
+            @Composable
+            @ReadOnlyComposable
+            get() = LocalIntelliJColors.current
+
+        val defaultTextStyle: TextStyle
+            @Composable
+            @ReadOnlyComposable
+            get() = LocalTextStyle.current
+
+        val scrollThumbDefaults: ScrollThumbDefaults
+            @Composable
+            @ReadOnlyComposable
+            get() = LocalScrollThumbDefaults.current
+
+        val progressBarDefaults: ProgressBarDefaults
+            @Composable
+            @ReadOnlyComposable
+            get() = LocalProgressBarDefaults.current
+
+        val isLight: Boolean
+            @Composable
+            @ReadOnlyComposable
+            get() = LocalInLightTheme.current
+    }
+}
+
+@ExperimentalJewelApi
 @Composable
-fun IntelliJTheme(
-    palette: IntelliJPalette,
-    metrics: IntelliJMetrics,
-    painters: IntelliJPainters,
-    typography: IntelliJTypography,
-    content: @Composable () -> Unit
-) = CompositionLocalProvider(
-    LocalFrameStyle provides FrameStyle(palette),
-    LocalTextStyle provides typography.default,
-    LocalButtonStyle provides ButtonStyle(palette, metrics, typography.button),
-    LocalIconButtonStyle provides ButtonStyle(palette, metrics, typography.button),
-    LocalCheckboxStyle provides CheckboxStyle(palette, painters, typography.checkBox),
-    LocalTextAreaStyle provides TextAreaStyle(palette, metrics, typography.textField),
-    LocalTextFieldStyle provides TextFieldStyle(palette, metrics, typography.textField),
-    LocalRadioButtonStyle provides RadioButtonStyle(palette, painters, typography.radioButton),
-    LocalSeparatorStyle provides SeparatorStyle(palette, metrics),
-    LocalScrollbarStyle provides ScrollbarStyle(palette, metrics),
-    LocalSliderStyle provides SliderStyle(palette, typography),
-    LocalIndication provides NoIndication,
-    LocalTabStyle provides TabStyle(palette, typography.default),
-    LocalTypography provides typography,
-    LocalMetrics provides metrics,
-    LocalPainters provides painters,
-    LocalPalette provides palette,
-    content = content
-)
+fun IntelliJTheme(theme: IntelliJTheme, content: @Composable () -> Unit) {
+    CompositionLocalProvider(
+        LocalIntelliJColors provides theme.colors,
+        LocalButtonDefaults provides theme.buttonDefaults,
+        LocalCheckboxDefaults provides theme.checkboxDefaults,
+        LocalGroupHeaderDefaults provides theme.groupHeaderDefaults,
+        LocalLinkDefaults provides theme.linkDefaults,
+        LocalTextFieldDefaults provides theme.textFieldDefaults,
+        LocalLabelledTextFieldDefaults provides theme.labelledTextFieldDefaults,
+        LocalTextAreaDefaults provides theme.textAreaDefaults,
+        LocalRadioButtonDefaults provides theme.radioButtonDefaults,
+        LocalDropdownDefaults provides theme.dropdownDefaults,
+        LocalContextMenuDefaults provides theme.contextMenuDefaults,
+        LocalTreeDefaults provides theme.treeDefaults,
+        LocalChipDefaults provides theme.chipDefaults,
+        LocalScrollThumbDefaults provides theme.scrollThumbDefaults,
+        LocalProgressBarDefaults provides theme.progressBarDefaults,
+        LocalTextStyle provides theme.defaultTextStyle,
+        LocalTextColor provides theme.colors.foreground,
+        LocalInLightTheme provides theme.isLight,
+        LocalContextMenuRepresentation provides IntelliJContextMenuRepresentation,
+        *theme.providedCompositionLocalValues(),
+        content = content
+    )
+}
 
-object IntelliJTheme {
-
-    val typography
-        @Composable
-        get() = LocalTypography.current
-
-    val metrics
-        @Composable
-        get() = LocalMetrics.current
-
-    val painters
-        @Composable
-        get() = LocalPainters.current
-
-    val palette
-        @Composable
-        get() = LocalPalette.current
+internal val LocalInLightTheme = staticCompositionLocalOf<Boolean> {
+    error("No IntelliJTheme provided")
 }

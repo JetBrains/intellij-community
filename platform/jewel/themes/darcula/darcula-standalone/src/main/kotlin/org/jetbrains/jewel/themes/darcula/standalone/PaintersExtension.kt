@@ -1,6 +1,7 @@
 package org.jetbrains.jewel.themes.darcula.standalone
 
 import androidx.compose.ui.res.painterResource
+import org.jetbrains.jewel.DarkIconResourceLoader
 import org.jetbrains.jewel.IntelliJPainters
 
 val IntelliJPainters.Companion.light
@@ -14,7 +15,8 @@ val IntelliJPainters.Companion.darcula
     get() = IntelliJPainters(
         checkbox = IntelliJPainters.CheckboxPainters.darcula,
         radioButton = IntelliJPainters.RadioButtonPainters.darcula,
-        treeView = IntelliJPainters.TreeViewPainters.darcula
+        treeView = IntelliJPainters.TreeViewPainters.darcula,
+        painterResourceLoader = DarkIconResourceLoader
     )
 
 val IntelliJPainters.CheckboxPainters.Companion.light
