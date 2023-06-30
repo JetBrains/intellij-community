@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
@@ -8,6 +8,7 @@ import com.intellij.ide.troubleshooting.CompositeGeneralTroubleInfoCollector;
 import com.intellij.ide.troubleshooting.DimensionServiceTroubleInfoCollectorKt;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.idea.LoggerFactory;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -111,6 +112,9 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
       Path logs = Path.of(PathManager.getLogPath()), caches = Path.of(PathManager.getSystemPath());
       if (Files.isSameFile(logs, caches)) {
         throw new IOException("cannot collect logs, because log directory set to be the same as the 'system' one: " + logs);
+      }
+      if (Logger.getFactory() instanceof LoggerFactory lf) {
+        lf.flushHandlers();
       }
       zip.addDirectory(logs);
 
