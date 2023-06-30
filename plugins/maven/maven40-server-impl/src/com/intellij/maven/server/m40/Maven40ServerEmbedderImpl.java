@@ -442,6 +442,9 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     MavenExecutionRequest result = new DefaultMavenExecutionRequest();
 
     try {
+      injectDefaultRepositories(result);
+      injectDefaultPluginRepositories(result);
+
       getComponent(MavenExecutionRequestPopulator.class).populateFromSettings(result, myMavenSettings);
 
       result.setPom(file);
@@ -473,6 +476,32 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     }
     catch (MavenExecutionRequestPopulationException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  private void injectDefaultRepositories(MavenExecutionRequest request)
+    throws MavenExecutionRequestPopulationException {
+    Set<String> definedRepositories = myRepositorySystem.getRepoIds(request.getRemoteRepositories());
+
+    if (!definedRepositories.contains(MavenRepositorySystem.DEFAULT_REMOTE_REPO_ID)) {
+      try {
+        request.addRemoteRepository(myRepositorySystem.createDefaultRemoteRepository(request));
+      } catch (Exception e) {
+        throw new MavenExecutionRequestPopulationException("Cannot create default remote repository.", e);
+      }
+    }
+  }
+
+  private void injectDefaultPluginRepositories(MavenExecutionRequest request)
+    throws MavenExecutionRequestPopulationException {
+    Set<String> definedRepositories = myRepositorySystem.getRepoIds(request.getPluginArtifactRepositories());
+
+    if (!definedRepositories.contains(MavenRepositorySystem.DEFAULT_REMOTE_REPO_ID)) {
+      try {
+        request.addPluginArtifactRepository(myRepositorySystem.createDefaultRemoteRepository(request));
+      } catch (Exception e) {
+        throw new MavenExecutionRequestPopulationException("Cannot create default remote repository.", e);
+      }
     }
   }
 
