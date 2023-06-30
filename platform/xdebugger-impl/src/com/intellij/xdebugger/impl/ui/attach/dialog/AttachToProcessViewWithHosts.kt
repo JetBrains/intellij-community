@@ -39,6 +39,7 @@ abstract class AttachToProcessViewWithHosts(
   abstract fun isAddingConnectionEnabled(): Boolean
   abstract fun saveSelectedHost(host: AttachHostItem?)
   abstract fun getSavedHost(allHosts: Set<AttachHostItem>): AttachHostItem?
+  protected open fun getHostFromSet(allHosts: Set<AttachHostItem>) = allHosts.firstOrNull()
   abstract fun getHostActions(hosts: Set<AttachHostItem>, selectHost: (host: AttachHostItem) -> Unit): List<AnAction>
   abstract suspend fun getHosts(): List<AttachHostItem>
 
@@ -136,14 +137,14 @@ abstract class AttachToProcessViewWithHosts(
 
       val newSelectedHost =
         if (selectedHost == null) {
-          getSavedHost(newHostsAsSet) ?: newHostsAsSet.firstOrNull()
+          getSavedHost(newHostsAsSet) ?: getHostFromSet(newHostsAsSet)
         }
         else if (addedHosts.size == 1 && removedHosts.size <= 1) { //new connection was added (or modified)
           addedHosts.single()
         }
         else {
           if (newHostsAsSet.contains(selectedHost)) selectedHost
-          else newHostsAsSet.firstOrNull()
+          else getHostFromSet(newHostsAsSet)
         }
 
       hosts = newHostsAsSet
