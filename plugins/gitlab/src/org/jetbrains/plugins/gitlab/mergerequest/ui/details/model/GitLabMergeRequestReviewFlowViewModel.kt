@@ -77,6 +77,8 @@ internal interface GitLabMergeRequestReviewFlowViewModel : CodeReviewFlowViewMod
 
   fun removeReviewer(reviewer: GitLabUserDTO)
 
+  fun reviewerRereview()
+
   //TODO: extract reviewers update VM
   suspend fun getPotentialReviewers(): List<GitLabUserDTO>
 }
@@ -229,6 +231,11 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
     mergeRequest.setReviewers(newReviewers) // TODO: implement via CollectionDelta
   }
 
+  override fun reviewerRereview() = runAction {
+    val requestedReviewers = reviewerReviews.first().filterValues { it == ReviewState.WAIT_FOR_UPDATES }.keys
+    mergeRequest.reviewerRereview(requestedReviewers)
+  }
+
   private fun runAction(action: suspend () -> Unit) {
     taskLauncher.launch {
       try {
@@ -243,12 +250,14 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
 
   override suspend fun getPotentialReviewers(): List<GitLabUserDTO> = projectData.getMembers()
 
-  private fun GitLabReviewerDTO.MergeRequestInteraction?.toReviewState(): ReviewState {
-    if (this == null) return ReviewState.NEED_REVIEW
-    return when {
-      approved -> ReviewState.ACCEPTED
-      reviewed -> ReviewState.WAIT_FOR_UPDATES
-      else -> ReviewState.NEED_REVIEW
+  companion object {
+    fun GitLabReviewerDTO.MergeRequestInteraction?.toReviewState(): ReviewState {
+      if (this == null) return ReviewState.NEED_REVIEW
+      return when {
+        approved -> ReviewState.ACCEPTED
+        reviewed -> ReviewState.WAIT_FOR_UPDATES
+        else -> ReviewState.NEED_REVIEW
+      }
     }
   }
 }
