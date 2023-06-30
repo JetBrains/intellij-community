@@ -12,11 +12,11 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.readText
 import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.jcef.JBCefBrowser
-import com.intellij.ui.jcef.JBCefClient
 import com.intellij.util.io.writeChild
 
 internal class ExportDiagramAction: AnAction(MermaidBundle.message("action.Mermaid.ExportDiagram.text")), DumbAware {
@@ -52,19 +52,6 @@ internal class ExportDiagramAction: AnAction(MermaidBundle.message("action.Merma
   }
 }
 
-private fun createBrowser(disposable: Disposable): JBCefBrowser {
-  val client = JBCefApp.getInstance().createClient()
-  Disposer.register(disposable, client)
-  client.setProperty(JBCefClient.Properties.JS_QUERY_POOL_SIZE, 20)
-  val browser = JBCefBrowser.createBuilder()
-    .setClient(client)
-    .setOffScreenRendering(true)
-    .setCreateImmediately(true)
-    .build()
-  Disposer.register(disposable, browser)
-  return browser
-}
-
 private suspend fun loadDiagram(browser: JBCefBrowser, diagramSource: String) {
   val url = MermaidPreviewStaticServer.obtainStaticIndexUrl()
   browser.waitForPageLoad(url)
@@ -81,10 +68,10 @@ private suspend fun collectDiagramContent(browser: JBCefBrowser): String {
 }
 
 private suspend fun performConversion(diagramSource: String): String {
-  val disposable = Disposer.newCheckedDisposable()
-  val browser = createBrowser(disposable)
-  loadDiagram(browser, diagramSource)
-  val content = collectDiagramContent(browser)
-  Disposer.dispose(disposable)
-  return content
+  return Disposer.newCheckedDisposable().use { disposable ->
+    val browser = createBrowser()
+    Disposer.register(disposable, browser)
+    loadDiagram(browser, diagramSource)
+    return@use collectDiagramContent(browser)
+  }
 }
