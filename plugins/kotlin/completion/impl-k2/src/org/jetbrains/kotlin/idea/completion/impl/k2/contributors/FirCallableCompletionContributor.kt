@@ -251,7 +251,7 @@ internal open class FirCallableCompletionContributor(
     ): Sequence<CallableWithMetadataForCompletion> {
         explicitReceiver as KtExpression
 
-        val symbol = explicitReceiver.reference()?.resolveToSymbol()
+        val symbol = explicitReceiver.reference()?.resolveToExpandedSymbol()
         return when {
             symbol is KtPackageSymbol -> collectDotCompletionForPackageReceiver(symbol, visibilityChecker, sessionParameters)
 
@@ -649,7 +649,7 @@ internal class FirCallableReferenceCompletionContributor(
     ): Sequence<CallableWithMetadataForCompletion> {
         explicitReceiver as KtExpression
 
-        return when (val symbol = explicitReceiver.reference()?.resolveToSymbol()) {
+        return when (val symbol = explicitReceiver.reference()?.resolveToExpandedSymbol()) {
             is KtPackageSymbol -> emptySequence()
             is KtNamedClassOrObjectSymbol -> sequence {
                 val type = symbol.buildSelfClassType()

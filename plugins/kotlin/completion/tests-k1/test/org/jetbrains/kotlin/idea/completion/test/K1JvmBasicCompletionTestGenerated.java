@@ -3118,6 +3118,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/RecieverMembersFromExtFun.kt");
             }
 
+            @TestMetadata("ReferenceThroughChainedTypeAlias.kt")
+            public void testReferenceThroughChainedTypeAlias() throws Exception {
+                runTest("../testData/basic/common/ReferenceThroughChainedTypeAlias.kt");
+            }
+
             @TestMetadata("SecondTypeArg.kt")
             public void testSecondTypeArg() throws Exception {
                 runTest("../testData/basic/common/SecondTypeArg.kt");
