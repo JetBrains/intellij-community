@@ -240,6 +240,21 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     showPopup(null);
   }
 
+  private void showPopupFromToolbar(CodeFloatingToolbar toolbar) {
+    RelativePoint position = findPositionForToolbarButton(toolbar);
+    adjustVerticalOverlapping(position);
+    showPopup(position);
+  }
+
+  private void adjustVerticalOverlapping(@Nullable RelativePoint position) {
+    if (position == null) return;
+    if (myPopup.myListPopup == null) {
+      myPopup.myHint = this;
+      IntentionPopup.recreateMyPopup(myPopup, new IntentionListStep(myPopup, myPopup.myEditor, myPopup.myFile, myPopup.myProject, myPopup.myCachedIntentions));
+    }
+    ActionButton.adjustVerticalOverlapping(myPopup.myListPopup, position.getOriginalComponent());
+  }
+
   private void showPopup(@Nullable RelativePoint positionHint) {
     myPopup.show(this, positionHint);
   }
@@ -272,22 +287,17 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     return new RelativePoint(swCorner.getComponent(), popup);
   }
 
-  private void showPopupFromToolbar(@NotNull CodeFloatingToolbar toolbar){
+  private static @Nullable RelativePoint findPositionForToolbarButton(@NotNull CodeFloatingToolbar toolbar){
     JComponent component = toolbar.getHintComponent();
-    if (component == null) return;
+    if (component == null) return null;
     List<ActionButton> buttons = UIUtil.findComponentsOfType(component, ActionButton.class);
     ActionButton intentionButton = ContainerUtil.find(buttons, (button) -> button.getAction() instanceof ShowIntentionActionsAction);
-    if (intentionButton == null) return;
+    if (intentionButton == null) return null;
     RelativePoint buttonPoint = RelativePoint.getSouthWestOf(intentionButton);
     RelativePoint toolbarPoint = RelativePoint.getSouthWestOf(component);
     int horizontalOffset = toolbarPoint.getScreenPoint().x - buttonPoint.getScreenPoint().x;
     buttonPoint.getPoint().translate(horizontalOffset, 0);
-    if (myPopup.myListPopup == null) {
-      myPopup.myHint = this;
-      IntentionPopup.recreateMyPopup(myPopup, new IntentionListStep(myPopup, myPopup.myEditor, myPopup.myFile, myPopup.myProject, myPopup.myCachedIntentions));
-    }
-    ActionButton.adjustVerticalOverlapping(myPopup.myListPopup, intentionButton);
-    showPopup(buttonPoint);
+    return buttonPoint;
   }
 
   private static final class MyComponentHint extends LightweightHint {
