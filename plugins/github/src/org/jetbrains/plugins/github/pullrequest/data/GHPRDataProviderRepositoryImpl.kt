@@ -32,6 +32,10 @@ internal class GHPRDataProviderRepositoryImpl(private val detailsService: GHPRDe
   private val cache = mutableMapOf<GHPRIdentifier, DisposalCountingHolder<GHPRDataProvider>>()
   private val providerDetailsLoadedEventDispatcher = EventDispatcher.create(DetailsLoadedListener::class.java)
 
+  init {
+    Disposer.register(this, changesService)
+  }
+
   @RequiresEdt
   override fun getDataProvider(id: GHPRIdentifier, disposable: Disposable): GHPRDataProvider {
     if (isDisposed) throw IllegalStateException("Already disposed")
