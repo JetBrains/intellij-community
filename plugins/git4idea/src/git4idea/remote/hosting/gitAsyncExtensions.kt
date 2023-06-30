@@ -15,6 +15,18 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 
+fun GitRepository.currentBranchNameFlow(): Flow<String?> = channelFlow {
+  send(currentBranchName)
+  project.messageBus
+    .connect(this)
+    .subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener {
+      if(it == this@currentBranchNameFlow) {
+        trySend(it.currentBranchName)
+      }
+    })
+  awaitClose()
+}.distinctUntilChanged()
+
 fun gitRemotesFlow(project: Project): Flow<Set<GitRemoteUrlCoordinates>> =
   callbackFlow {
     val disposable = Disposer.newDisposable()

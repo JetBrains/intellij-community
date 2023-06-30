@@ -171,7 +171,6 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
       null, GithubBundle.message("cannot.load.details"),
       detailsLoadingErrorHandler
     ).createWithUpdatesStripe(uiDisposable) { _, model ->
-      val branchesModel = GHPRBranchesModelImpl(model, repository, disposable)
       val detailsModel = GHPRDetailsModelImpl(model)
       val metadataModel = GHPRMetadataModelImpl(model,
                                                 dataContext.securityService,
@@ -181,7 +180,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
 
       val scope = DisposingScope(disposable, SupervisorJob() + Dispatchers.Main.immediate)
       val reviewDetailsVm = GHPRDetailsViewModelImpl(detailsModel, stateModel)
-      val reviewBranchesVm = GHPRBranchesViewModel(scope, project, branchesModel, dataProvider.detailsData)
+      val reviewBranchesVm = GHPRBranchesViewModel(scope, project, repository, model)
       val reviewStatusVm = GHPRStatusViewModelImpl(scope, project, stateModel)
       val reviewFlowVm = GHPRReviewFlowViewModelImpl(scope,
                                                      metadataModel,
