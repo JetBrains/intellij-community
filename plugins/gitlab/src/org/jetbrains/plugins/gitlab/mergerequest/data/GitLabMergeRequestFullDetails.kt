@@ -8,16 +8,16 @@ import java.util.*
 
 data class GitLabMergeRequestFullDetails(
   override val iid: String,
-  override val title: @NlsSafe String,
-  override val createdAt: Date,
-  override val author: GitLabUserDTO,
-  override val mergeStatus: GitLabMergeStatus,
-  override val isMergeable: Boolean,
-  override val state: GitLabMergeRequestState,
-  override val draft: Boolean,
-  override val assignees: List<GitLabUserDTO>,
-  override val reviewers: List<GitLabUserDTO>,
-  override val webUrl: @NlsSafe String,
+  val title: @NlsSafe String,
+  val createdAt: Date,
+  val author: GitLabUserDTO,
+  val mergeStatus: GitLabMergeStatus,
+  val isMergeable: Boolean,
+  val state: GitLabMergeRequestState,
+  val draft: Boolean,
+  val assignees: List<GitLabUserDTO>,
+  val reviewers: List<GitLabUserDTO>,
+  val webUrl: @NlsSafe String,
   val detailedLabels: List<GitLabLabelDTO>,
   val targetProject: GitLabProjectDTO,
   val sourceProject: GitLabProjectDTO?,
@@ -32,8 +32,7 @@ data class GitLabMergeRequestFullDetails(
   val userPermissions: GitLabMergeRequestPermissionsDTO,
   val shouldBeRebased: Boolean,
   val rebaseInProgress: Boolean
-) : GitLabMergeRequestDetails(iid, title, createdAt, author, mergeStatus, isMergeable, state, draft, assignees, reviewers, webUrl,
-                              detailedLabels.map { it.title }) {
+) : GitLabMergeRequestId {
 
   companion object {
     fun fromGraphQL(dto: GitLabMergeRequestDTO) = GitLabMergeRequestFullDetails(
