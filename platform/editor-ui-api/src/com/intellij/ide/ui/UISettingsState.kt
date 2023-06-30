@@ -23,10 +23,6 @@ class UISettingsState : BaseState() {
   @Deprecated("", replaceWith = ReplaceWith("NotRoamableUiOptions.fontScale"))
   var fontScale: Float by property(0f)
 
-  @get:OptionTag("OVERRIDE_NONIDEA_LAF_FONTS")
-  @Deprecated("", replaceWith = ReplaceWith("NotRoamableUiOptions.overrideLafFonts"))
-  var overrideLafFonts: Boolean by property(false)
-
   @get:ReportValue
   @get:OptionTag("RECENT_FILES_LIMIT")
   var recentFilesLimit: Int by property(50)
@@ -169,8 +165,7 @@ class UISettingsState : BaseState() {
   var defaultAutoScrollToSource: Boolean by property(false)
   @get:Transient
   var presentationMode: Boolean = false
-  @get:OptionTag("PRESENTATION_MODE_FONT_SIZE")
-  var presentationModeFontSize: Int by property(24)
+
   @get:OptionTag("MARK_MODIFIED_TABS_WITH_ASTERISK")
   var markModifiedTabsWithAsterisk: Boolean by property(false)
   @get:OptionTag("SHOW_TABS_TOOLTIPS")

@@ -82,33 +82,6 @@ class NotRoamableUiSettings : SerializablePersistentStateComponent<NotRoamableUi
     fixFontSettings()
   }
 
-  internal fun migratePresentationModeFontSize(presentationModeFontSize: Int) {
-    if (state.presentationModeIdeScale != 0f) {
-      return
-    }
-
-    if (presentationModeFontSize == 24) {
-      updateState {
-        it.copy(presentationModeIdeScale = UISettingsUtils.defaultScale(true))
-      }
-    }
-    else {
-      updateState {
-        it.copy(presentationModeIdeScale = presentationModeFontSize.toFloat() / it.fontSize)
-      }
-    }
-  }
-
-  internal fun migrateOverrideLafFonts(overrideLafFonts: Boolean) {
-    if (state.overrideLafFontsWasMigrated) {
-      return
-    }
-
-    updateState {
-      it.copy(overrideLafFontsWasMigrated = true, overrideLafFonts = overrideLafFonts)
-    }
-  }
-
   internal fun fixFontSettings() {
     val state = state
 

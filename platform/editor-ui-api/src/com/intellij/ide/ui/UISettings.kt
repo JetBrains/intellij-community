@@ -5,9 +5,9 @@ import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
@@ -676,17 +676,11 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
 
     IconLoader.setFilter(ColorBlindnessSupport.get(state.colorBlindness)?.filter)
 
-    // if this is the main UISettings instance (and not on first call to getInstance) push event to bus and to all current components
+    // if this is the main UISettings instance (and not on first call to getInstance), push event to bus and to all current components
     if (this === cachedInstance) {
-      try {
+      runCatching {
         treeDispatcher.multicaster.uiSettingsChanged(this)
-      }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
-      catch (e: Exception) {
-        LOG.error(e)
-      }
+      }.getOrLogException(LOG)
 
       ApplicationManager.getApplication().messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(this)
     }
@@ -699,11 +693,6 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
 
   override fun getState(): UISettingsState = state
 
-  override fun noStateLoaded() {
-    super.noStateLoaded()
-    migrateFontParameters()
-  }
-
   override fun loadState(state: UISettingsState) {
     this.state = state
     updateDeprecatedProperties()
@@ -712,7 +701,6 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     if (migrateOldFontSettings()) {
       notRoamableOptions.fixFontSettings()
     }
-    migrateFontParameters()
 
     // Check tab placement in editor
     val editorTabPlacement = state.editorTabPlacement
@@ -774,11 +762,6 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       migrated = true
     }
     return migrated
-  }
-
-  private fun migrateFontParameters() {
-    notRoamableOptions.migratePresentationModeFontSize(state.presentationModeFontSize)
-    notRoamableOptions.migrateOverrideLafFonts(state.overrideLafFonts)
   }
 
   //<editor-fold desc="Deprecated stuff.">
