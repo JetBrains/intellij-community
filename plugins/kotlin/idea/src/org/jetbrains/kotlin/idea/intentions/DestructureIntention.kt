@@ -54,92 +54,101 @@ class DestructureIntention : SelfTargetingRangeIntention<KtDeclaration>(
     KotlinBundle.lazyMessage("use.destructuring.declaration")
 ) {
     override fun applyTo(element: KtDeclaration, editor: Editor?) {
-        val (usagesToRemove, removeSelectorInLoopRange) = collectUsagesToRemove(element) ?: return
-        val psiFactory = KtPsiFactory(element.project)
-        val parent = element.parent
-        val (container, anchor) = if (parent is KtParameterList) parent.parent to null else parent to element
-        val validator = Fe10KotlinNewDeclarationNameValidator(
-            container = container, anchor = anchor, target = KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
-            excludedDeclarations = usagesToRemove.map {
-                (it.declarationToDrop as? KtDestructuringDeclaration)?.entries ?: listOfNotNull(it.declarationToDrop)
-            }.flatten()
-        )
-
-        val names = ArrayList<String>()
-        val underscoreSupported = element.languageVersionSettings.supportsFeature(LanguageFeature.SingleUnderscoreForParameterName)
-        // For all unused we generate normal names, not underscores
-        val allUnused = usagesToRemove.all { (_, usagesToReplace, variableToDrop) ->
-            usagesToReplace.isEmpty() && variableToDrop == null
-        }
-
-        usagesToRemove.forEach { (descriptor, usagesToReplace, variableToDrop, name) ->
-            val suggestedName =
-                if (usagesToReplace.isEmpty() && variableToDrop == null && underscoreSupported && !allUnused) {
-                    "_"
-                } else {
-                    Fe10KotlinNameSuggester.suggestNameByName(name ?: descriptor.name.asString(), validator)
-                }
-
-            runWriteActionIfPhysical(element) {
-                variableToDrop?.delete()
-                usagesToReplace.forEach {
-                    it.replace(psiFactory.createExpression(suggestedName))
-                }
-            }
-            names.add(suggestedName)
-        }
-
-        val joinedNames = names.joinToString()
-        when (element) {
-            is KtParameter -> {
-                val loopRange = (element.parent as? KtForExpression)?.loopRange
-                runWriteActionIfPhysical(element) {
-                    val type = element.typeReference?.let { ": ${it.text}" } ?: ""
-                    element.replace(psiFactory.createDestructuringParameter("($joinedNames)$type"))
-                    if (removeSelectorInLoopRange && loopRange is KtDotQualifiedExpression) {
-                        loopRange.replace(loopRange.receiverExpression)
-                    }
-                }
-            }
-
-            is KtFunctionLiteral -> {
-                val lambda = element.parent as KtLambdaExpression
-                SpecifyExplicitLambdaSignatureIntention().applyTo(lambda, editor)
-                runWriteActionIfPhysical(element) {
-                    lambda.functionLiteral.valueParameters.singleOrNull()?.replace(
-                        psiFactory.createDestructuringParameter("($joinedNames)")
-                    )
-                }
-            }
-
-            is KtVariableDeclaration -> {
-                val rangeAfterEq = PsiChildRange(element.initializer, element.lastChild)
-                val modifierList = element.modifierList?.copied()
-                runWriteActionIfPhysical(element) {
-                    val result = element.replace(
-                        psiFactory.createDestructuringDeclarationByPattern(
-                            "val ($joinedNames) = $0", rangeAfterEq
-                        )
-                    ) as KtModifierListOwner
-
-                    if (modifierList != null) {
-                        result.setModifierList(modifierList)
-                    }
-                }
-            }
-        }
+        Holder.applyTo(element, editor)
     }
 
-    override fun applicabilityRange(element: KtDeclaration): TextRange? {
-        if (!element.isSuitableDeclaration()) return null
+    override fun applicabilityRange(element: KtDeclaration): TextRange? =
+        Holder.applicabilityRange(element)
 
-        val usagesToRemove = collectUsagesToRemove(element)?.data ?: return null
-        if (usagesToRemove.isEmpty()) return null
+    object Holder {
+        fun applicabilityRange(element: KtDeclaration): TextRange? {
+            if (!element.isSuitableDeclaration()) return null
 
-        return when (element) {
-            is KtFunctionLiteral -> element.lBrace.textRange
-            is KtNamedDeclaration -> element.nameIdentifier?.textRange
-            else -> null
+            val usagesToRemove = collectUsagesToRemove(element)?.data ?: return null
+            if (usagesToRemove.isEmpty()) return null
+
+            return when (element) {
+                is KtFunctionLiteral -> element.lBrace.textRange
+                is KtNamedDeclaration -> element.nameIdentifier?.textRange
+                else -> null
+            }
+        }
+
+        fun applyTo(element: KtDeclaration, editor: Editor? = null) {
+            val (usagesToRemove, removeSelectorInLoopRange) = collectUsagesToRemove(element) ?: return
+            val psiFactory = KtPsiFactory(element.project)
+            val parent = element.parent
+            val (container, anchor) = if (parent is KtParameterList) parent.parent to null else parent to element
+            val validator = Fe10KotlinNewDeclarationNameValidator(
+                container = container, anchor = anchor, target = KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
+                excludedDeclarations = usagesToRemove.map {
+                    (it.declarationToDrop as? KtDestructuringDeclaration)?.entries ?: listOfNotNull(it.declarationToDrop)
+                }.flatten()
+            )
+
+            val names = ArrayList<String>()
+            val underscoreSupported = element.languageVersionSettings.supportsFeature(LanguageFeature.SingleUnderscoreForParameterName)
+            // For all unused we generate normal names, not underscores
+            val allUnused = usagesToRemove.all { (_, usagesToReplace, variableToDrop) ->
+                usagesToReplace.isEmpty() && variableToDrop == null
+            }
+
+            usagesToRemove.forEach { (descriptor, usagesToReplace, variableToDrop, name) ->
+                val suggestedName =
+                    if (usagesToReplace.isEmpty() && variableToDrop == null && underscoreSupported && !allUnused) {
+                        "_"
+                    } else {
+                        Fe10KotlinNameSuggester.suggestNameByName(name ?: descriptor.name.asString(), validator)
+                    }
+
+                runWriteActionIfPhysical(element) {
+                    variableToDrop?.delete()
+                    usagesToReplace.forEach {
+                        it.replace(psiFactory.createExpression(suggestedName))
+                    }
+                }
+                names.add(suggestedName)
+            }
+
+            val joinedNames = names.joinToString()
+            when (element) {
+                is KtParameter -> {
+                    val loopRange = (element.parent as? KtForExpression)?.loopRange
+                    runWriteActionIfPhysical(element) {
+                        val type = element.typeReference?.let { ": ${it.text}" } ?: ""
+                        element.replace(psiFactory.createDestructuringParameter("($joinedNames)$type"))
+                        if (removeSelectorInLoopRange && loopRange is KtDotQualifiedExpression) {
+                            loopRange.replace(loopRange.receiverExpression)
+                        }
+                    }
+                }
+
+                is KtFunctionLiteral -> {
+                    val lambda = element.parent as KtLambdaExpression
+                    SpecifyExplicitLambdaSignatureIntention().applyTo(lambda, editor)
+                    runWriteActionIfPhysical(element) {
+                        lambda.functionLiteral.valueParameters.singleOrNull()?.replace(
+                            psiFactory.createDestructuringParameter("($joinedNames)")
+                        )
+                    }
+                }
+
+                is KtVariableDeclaration -> {
+                    val rangeAfterEq = PsiChildRange(element.initializer, element.lastChild)
+                    val modifierList = element.modifierList?.copied()
+                    runWriteActionIfPhysical(element) {
+                        val result = element.replace(
+                            psiFactory.createDestructuringDeclarationByPattern(
+                                "val ($joinedNames) = $0", rangeAfterEq
+                            )
+                        ) as KtModifierListOwner
+
+                        if (modifierList != null) {
+                            result.setModifierList(modifierList)
+                        }
+                    }
+                }
+            }
         }
     }
 }

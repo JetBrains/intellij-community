@@ -12,13 +12,11 @@ import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantGetter
-import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantSetter
-import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantGetter
-import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantSetter
+import org.jetbrains.kotlin.idea.codeinsight.utils.*
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.inspections.*
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
+import org.jetbrains.kotlin.idea.intentions.DestructureIntention
 import org.jetbrains.kotlin.idea.intentions.RemoveExplicitTypeArgumentsIntention
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.BranchedFoldingUtils
 import org.jetbrains.kotlin.idea.j2k.post.processing.InspectionLikeProcessingForElement
@@ -412,5 +410,15 @@ internal class MoveLambdaOutsideParenthesesProcessing :
 
     override fun apply(element: KtCallExpression) {
         element.moveFunctionLiteralOutsideParentheses()
+    }
+}
+
+// Don't destructure regular variables, it will lose the original variable name and may hurt code readability
+internal class DestructureForLoopParameterProcessing : InspectionLikeProcessingForElement<KtParameter>(KtParameter::class.java) {
+    override fun isApplicableTo(element: KtParameter, settings: ConverterSettings?): Boolean =
+        element.parent is KtForExpression && DestructureIntention.Holder.applicabilityRange(element) != null
+
+    override fun apply(element: KtParameter) {
+        DestructureIntention.Holder.applyTo(element)
     }
 }
