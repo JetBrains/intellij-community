@@ -12,14 +12,26 @@ import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.codeinsight.utils.*
-import org.jetbrains.kotlin.idea.core.*
+import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantGetter
+import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantSetter
+import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantGetter
+import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantSetter
+import org.jetbrains.kotlin.idea.core.canMoveLambdaOutsideParentheses
+import org.jetbrains.kotlin.idea.core.implicitModality
+import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.inspections.*
+import org.jetbrains.kotlin.idea.inspections.ExplicitThisInspection.Companion.thisAsReceiverOrNull
+import org.jetbrains.kotlin.idea.inspections.LiftReturnOrAssignmentInspection.Companion.LiftType.LIFT_ASSIGNMENT_OUT
+import org.jetbrains.kotlin.idea.inspections.LiftReturnOrAssignmentInspection.Companion.LiftType.LIFT_RETURN_OUT
+import org.jetbrains.kotlin.idea.inspections.MayBeConstantInspection.Companion.getStatus
+import org.jetbrains.kotlin.idea.inspections.MayBeConstantInspection.Status.JVM_FIELD_MIGHT_BE_CONST
+import org.jetbrains.kotlin.idea.inspections.MayBeConstantInspection.Status.MIGHT_BE_CONST
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.idea.intentions.DestructureIntention
 import org.jetbrains.kotlin.idea.intentions.RemoveExplicitTypeArgumentsIntention
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.BranchedFoldingUtils
 import org.jetbrains.kotlin.idea.j2k.post.processing.InspectionLikeProcessingForElement
+import org.jetbrains.kotlin.idea.j2k.post.processing.isInspectionEnabledInCurrentProfile
 import org.jetbrains.kotlin.idea.quickfix.AddConstModifierFix
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -37,7 +49,6 @@ import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.types.isFlexible
 import org.jetbrains.kotlin.types.isNullable
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-
 
 internal class RemoveExplicitPropertyTypeProcessing : InspectionLikeProcessingForElement<KtProperty>(KtProperty::class.java) {
     override fun isApplicableTo(element: KtProperty, settings: ConverterSettings?): Boolean {
@@ -174,12 +185,14 @@ internal class RemoveRedundantCastToNullableProcessing :
     }
 }
 
-internal class RemoveRedundantSamAdaptersProcessing :
-    InspectionLikeProcessingForElement<KtCallExpression>(KtCallExpression::class.java) {
+internal class RemoveRedundantSamAdaptersProcessing : InspectionLikeProcessingForElement<KtCallExpression>(KtCallExpression::class.java) {
+    private val inspection = RedundantSamConstructorInspection()
+
     override val writeActionNeeded = false
 
     override fun isApplicableTo(element: KtCallExpression, settings: ConverterSettings?): Boolean =
-        RedundantSamConstructorInspection.samConstructorCallsToBeConverted(element).isNotEmpty()
+        isInspectionEnabledInCurrentProfile(inspection, element.project) &&
+                RedundantSamConstructorInspection.samConstructorCallsToBeConverted(element).isNotEmpty()
 
     override fun apply(element: KtCallExpression) {
         val callsToBeConverted = RedundantSamConstructorInspection.samConstructorCallsToBeConverted(element)
@@ -291,7 +304,6 @@ internal class JavaObjectEqualsToEqOperatorProcessing : InspectionLikeProcessing
     }
 }
 
-
 internal class RemoveForExpressionLoopParameterTypeProcessing :
     InspectionLikeProcessingForElement<KtForExpression>(KtForExpression::class.java) {
     override fun isApplicableTo(element: KtForExpression, settings: ConverterSettings?): Boolean {
@@ -320,10 +332,12 @@ internal class RemoveRedundantModalityModifierProcessing : InspectionLikeProcess
     }
 }
 
-
 internal class RemoveRedundantVisibilityModifierProcessing : InspectionLikeProcessingForElement<KtDeclaration>(KtDeclaration::class.java) {
+    private val inspection = RedundantVisibilityModifierInspection()
+
     override fun isApplicableTo(element: KtDeclaration, settings: ConverterSettings?): Boolean =
-        RedundantVisibilityModifierInspection.Holder.getRedundantVisibility(element) != null
+        isInspectionEnabledInCurrentProfile(inspection, element.project) &&
+                RedundantVisibilityModifierInspection.Holder.getRedundantVisibility(element) != null
 
     override fun apply(element: KtDeclaration) {
         element.visibilityModifierType()?.let { element.removeModifier(it) }
@@ -331,8 +345,11 @@ internal class RemoveRedundantVisibilityModifierProcessing : InspectionLikeProce
 }
 
 internal class LocalVarToValInspectionBasedProcessing : InspectionLikeProcessingForElement<KtDeclaration>(KtDeclaration::class.java) {
+    private val inspection = CanBeValInspection()
+
     override fun isApplicableTo(element: KtDeclaration, settings: ConverterSettings?): Boolean =
-        CanBeValInspection.canBeVal(element, ignoreNotUsedVals = false)
+        isInspectionEnabledInCurrentProfile(inspection, element.project) &&
+                CanBeValInspection.canBeVal(element, ignoreNotUsedVals = false)
 
     override fun apply(element: KtDeclaration) {
         val project = element.project
@@ -341,14 +358,14 @@ internal class LocalVarToValInspectionBasedProcessing : InspectionLikeProcessing
     }
 }
 
-
 internal class MayBeConstantInspectionBasedProcessing : InspectionLikeProcessingForElement<KtProperty>(KtProperty::class.java) {
-    override fun isApplicableTo(element: KtProperty, settings: ConverterSettings?): Boolean =
-        with(MayBeConstantInspection) {
-            val status = element.getStatus()
-            status == MayBeConstantInspection.Status.MIGHT_BE_CONST
-                    || status == MayBeConstantInspection.Status.JVM_FIELD_MIGHT_BE_CONST
-        }
+    private val inspection = MayBeConstantInspection()
+
+    override fun isApplicableTo(element: KtProperty, settings: ConverterSettings?): Boolean {
+        if (!isInspectionEnabledInCurrentProfile(inspection, element.project)) return false
+        val status = element.getStatus()
+        return status == MIGHT_BE_CONST || status == JVM_FIELD_MIGHT_BE_CONST
+    }
 
     override fun apply(element: KtProperty) {
         AddConstModifierFix.addConstModifier(element)
@@ -365,48 +382,53 @@ internal class RemoveExplicitAccessorInspectionBasedProcessing :
     }
 }
 
-internal class ExplicitThisInspectionBasedProcessing :
-    InspectionLikeProcessingForElement<KtExpression>(KtExpression::class.java) {
+internal class ExplicitThisInspectionBasedProcessing : InspectionLikeProcessingForElement<KtExpression>(KtExpression::class.java) {
+    private val inspection = ExplicitThisInspection()
+
     override fun isApplicableTo(element: KtExpression, settings: ConverterSettings?): Boolean =
-        ExplicitThisInspection.hasExplicitThis(element)
+        isInspectionEnabledInCurrentProfile(inspection, element.project) &&
+                ExplicitThisInspection.hasExplicitThis(element)
 
     override fun apply(element: KtExpression) {
-        ExplicitThisExpressionFix.removeExplicitThisExpression(
-            with(ExplicitThisInspection) {
-                element.thisAsReceiverOrNull() ?: return
-            }
-        )
+        val thisExpression = element.thisAsReceiverOrNull() ?: return
+        ExplicitThisExpressionFix.removeExplicitThisExpression(thisExpression)
     }
 }
 
-internal class LiftReturnInspectionBasedProcessing :
-    InspectionLikeProcessingForElement<KtExpression>(KtExpression::class.java) {
-    override fun isApplicableTo(element: KtExpression, settings: ConverterSettings?): Boolean =
-        LiftReturnOrAssignmentInspection.getState(element, false)?.any {
-            it.liftType == LiftReturnOrAssignmentInspection.Companion.LiftType.LIFT_RETURN_OUT
-        } ?: false
+internal class LiftReturnInspectionBasedProcessing : InspectionLikeProcessingForElement<KtExpression>(KtExpression::class.java) {
+    private val inspection = LiftReturnOrAssignmentInspection()
+
+    override fun isApplicableTo(element: KtExpression, settings: ConverterSettings?): Boolean {
+        if (!isInspectionEnabledInCurrentProfile(inspection, element.project)) return false
+        val state = LiftReturnOrAssignmentInspection.getState(element, skipLongExpressions = false) ?: return false
+        return state.any { it.liftType == LIFT_RETURN_OUT }
+    }
 
     override fun apply(element: KtExpression) {
         BranchedFoldingUtils.foldToReturn(element)
     }
 }
 
-internal class LiftAssignmentInspectionBasedProcessing :
-    InspectionLikeProcessingForElement<KtExpression>(KtExpression::class.java) {
-    override fun isApplicableTo(element: KtExpression, settings: ConverterSettings?): Boolean =
-        LiftReturnOrAssignmentInspection.getState(element, false)?.any {
-            it.liftType == LiftReturnOrAssignmentInspection.Companion.LiftType.LIFT_ASSIGNMENT_OUT
-        } ?: false
+internal class LiftAssignmentInspectionBasedProcessing : InspectionLikeProcessingForElement<KtExpression>(KtExpression::class.java) {
+    private val inspection = LiftReturnOrAssignmentInspection()
+
+    override fun isApplicableTo(element: KtExpression, settings: ConverterSettings?): Boolean {
+        if (!isInspectionEnabledInCurrentProfile(inspection, element.project)) return false
+        val state = LiftReturnOrAssignmentInspection.getState(element, skipLongExpressions = false) ?: return false
+        return state.any { it.liftType == LIFT_ASSIGNMENT_OUT }
+    }
 
     override fun apply(element: KtExpression) {
         BranchedFoldingUtils.tryFoldToAssignment(element)
     }
 }
 
-internal class MoveLambdaOutsideParenthesesProcessing :
-    InspectionLikeProcessingForElement<KtCallExpression>(KtCallExpression::class.java) {
+internal class MoveLambdaOutsideParenthesesProcessing : InspectionLikeProcessingForElement<KtCallExpression>(KtCallExpression::class.java) {
+    private val inspection = MoveLambdaOutsideParenthesesInspection()
+
     override fun isApplicableTo(element: KtCallExpression, settings: ConverterSettings?): Boolean =
-        element.canMoveLambdaOutsideParentheses()
+        isInspectionEnabledInCurrentProfile(inspection, element.project) &&
+                element.canMoveLambdaOutsideParentheses()
 
     override fun apply(element: KtCallExpression) {
         element.moveFunctionLiteralOutsideParentheses()
