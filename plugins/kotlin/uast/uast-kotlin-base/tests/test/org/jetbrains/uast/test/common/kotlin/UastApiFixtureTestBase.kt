@@ -689,4 +689,22 @@ interface UastApiFixtureTestBase : UastPluginSelection {
         val identifier = extensionReceiver.uastAnchor as? UIdentifier
         TestCase.assertNotNull(identifier)
     }
+
+    fun checkReceiverTypeOfExtensionFunction(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                class Foo
+                class Bar {
+                  fun Foo.ext() {}
+                  
+                  fun test(f: Foo) {
+                    f.ex<caret>t()
+                  }
+                }
+            """.trimIndent()
+        )
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        TestCase.assertEquals("Foo", uCallExpression.receiverType?.canonicalText)
+    }
 }
