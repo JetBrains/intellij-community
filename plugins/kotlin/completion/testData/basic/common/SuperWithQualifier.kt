@@ -1,3 +1,4 @@
+// IGNORE_FE10
 // FIR_IDENTICAL
 // FIR_COMPARISON
 class X: List<Int>, Comparable<Int> {

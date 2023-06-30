@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// IGNORE_FE10
 sealed class SEALED {
     class AAAA: SEALED()
     object BBBB: SEALED()

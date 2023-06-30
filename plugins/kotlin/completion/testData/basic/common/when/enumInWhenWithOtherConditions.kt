@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// IGNORE_FE10
 enum class ENUM {
     AAAA, BBBB, CCCC
 }

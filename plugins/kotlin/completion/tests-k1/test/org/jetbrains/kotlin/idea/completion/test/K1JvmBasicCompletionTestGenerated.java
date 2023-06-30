@@ -3168,6 +3168,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/SuperMembers4.kt");
             }
 
+            @TestMetadata("SuperWithQualifier.kt")
+            public void testSuperWithQualifier() throws Exception {
+                runTest("../testData/basic/common/SuperWithQualifier.kt");
+            }
+
             @TestMetadata("SuspendCanBePrefixSelectedInParameterTypeCompletion.kt")
             public void testSuspendCanBePrefixSelectedInParameterTypeCompletion() throws Exception {
                 runTest("../testData/basic/common/SuspendCanBePrefixSelectedInParameterTypeCompletion.kt");
@@ -3362,9 +3367,84 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/when")
-        public static class When extends AbstractJvmBasicCompletionTest {
+        public static class When extends AbstractK1JvmBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("enumInEmptyWhen.kt")
+            public void testEnumInEmptyWhen() throws Exception {
+                runTest("../testData/basic/common/when/enumInEmptyWhen.kt");
+            }
+
+            @TestMetadata("enumInWhen.kt")
+            public void testEnumInWhen() throws Exception {
+                runTest("../testData/basic/common/when/enumInWhen.kt");
+            }
+
+            @TestMetadata("enumInWhenWithOtherConditions.kt")
+            public void testEnumInWhenWithOtherConditions() throws Exception {
+                runTest("../testData/basic/common/when/enumInWhenWithOtherConditions.kt");
+            }
+
+            @TestMetadata("enumInWhenWithPackage.kt")
+            public void testEnumInWhenWithPackage() throws Exception {
+                runTest("../testData/basic/common/when/enumInWhenWithPackage.kt");
+            }
+
+            @TestMetadata("nestedSealedClassInWhen.kt")
+            public void testNestedSealedClassInWhen() throws Exception {
+                runTest("../testData/basic/common/when/nestedSealedClassInWhen.kt");
+            }
+
+            @TestMetadata("nestedSealedClassInWhenWithPackage.kt")
+            public void testNestedSealedClassInWhenWithPackage() throws Exception {
+                runTest("../testData/basic/common/when/nestedSealedClassInWhenWithPackage.kt");
+            }
+
+            @TestMetadata("nonSealedClassInWhen.kt")
+            public void testNonSealedClassInWhen() throws Exception {
+                runTest("../testData/basic/common/when/nonSealedClassInWhen.kt");
+            }
+
+            @TestMetadata("nonSealedClassWithTypeArgs.kt")
+            public void testNonSealedClassWithTypeArgs() throws Exception {
+                runTest("../testData/basic/common/when/nonSealedClassWithTypeArgs.kt");
+            }
+
+            @TestMetadata("nullableEnumInWhen.kt")
+            public void testNullableEnumInWhen() throws Exception {
+                runTest("../testData/basic/common/when/nullableEnumInWhen.kt");
+            }
+
+            @TestMetadata("nullableSealedClassInWhen.kt")
+            public void testNullableSealedClassInWhen() throws Exception {
+                runTest("../testData/basic/common/when/nullableSealedClassInWhen.kt");
+            }
+
+            @TestMetadata("sealedClassInWhen.kt")
+            public void testSealedClassInWhen() throws Exception {
+                runTest("../testData/basic/common/when/sealedClassInWhen.kt");
+            }
+
+            @TestMetadata("sealedClassInWhenWithOtherConditions.kt")
+            public void testSealedClassInWhenWithOtherConditions() throws Exception {
+                runTest("../testData/basic/common/when/sealedClassInWhenWithOtherConditions.kt");
+            }
+
+            @TestMetadata("sealedClassWithAbstractInheritorsInWhen.kt")
+            public void testSealedClassWithAbstractInheritorsInWhen() throws Exception {
+                runTest("../testData/basic/common/when/sealedClassWithAbstractInheritorsInWhen.kt");
+            }
+
+            @TestMetadata("sealedClassWithTypeArgs.kt")
+            public void testSealedClassWithTypeArgs() throws Exception {
+                runTest("../testData/basic/common/when/sealedClassWithTypeArgs.kt");
+            }
+
+            @TestMetadata("sealedInterfaceInWhen.kt")
+            public void testSealedInterfaceInWhen() throws Exception {
+                runTest("../testData/basic/common/when/sealedInterfaceInWhen.kt");
             }
 
             @TestMetadata("smartCast.kt")
@@ -3380,6 +3460,29 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
             @TestMetadata("smartCast3.kt")
             public void testSmartCast3() throws Exception {
                 runTest("../testData/basic/common/when/smartCast3.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/basic/common/where")
+        public static class Where extends AbstractK1JvmBasicCompletionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("noCompletionAfterDotInWhen.kt")
+            public void testNoCompletionAfterDotInWhen() throws Exception {
+                runTest("../testData/basic/common/where/noCompletionAfterDotInWhen.kt");
+            }
+
+            @TestMetadata("whereInClass.kt")
+            public void testWhereInClass() throws Exception {
+                runTest("../testData/basic/common/where/whereInClass.kt");
+            }
+
+            @TestMetadata("whereInFunction.kt")
+            public void testWhereInFunction() throws Exception {
+                runTest("../testData/basic/common/where/whereInFunction.kt");
             }
         }
     }

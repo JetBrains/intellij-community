@@ -1,8 +1,10 @@
+// FIR_IDENTICAL
+// IGNORE_FE10
 enum class ENUM {
     AAAA, BBBB, CCCC
 }
 
-fun foo(e: ENUM?) {
+fun foo(e: ENUM) {
     when (e) {
         <caret>
     }
@@ -12,6 +14,5 @@ fun foo(e: ENUM?) {
 // EXIST: ENUM.BBBB
 // EXIST: ENUM.CCCC
 // EXIST: { lookupString: "else -> "}
-// EXIST: null
 // NOTHING_ELSE
 // FIR_COMPARISON

@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// IGNORE_FE10
 package a.b.c
 
 sealed class SEALED {

@@ -1,3 +1,7 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
+// IGNORE_FE10
+
 abstract class SEALED
 class AAAA: SEALED()
 object BBBB: SEALED()

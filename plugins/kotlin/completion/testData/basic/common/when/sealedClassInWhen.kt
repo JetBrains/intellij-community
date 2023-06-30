@@ -1,9 +1,11 @@
+// FIR_IDENTICAL
+// IGNORE_FE10
 sealed class SEALED
 class AAAA: SEALED()
 object BBBB: SEALED()
 class CCCC: SEALED()
 
-fun foo(e: SEALED?) {
+fun foo(e: SEALED) {
     when (e) {
         <caret>
     }
@@ -12,7 +14,6 @@ fun foo(e: SEALED?) {
 // EXIST: is AAAA
 // EXIST: BBBB
 // EXIST: is CCCC
-// EXIST: null
 // EXIST: { lookupString: "else -> "}
 // NOTHING_ELSE
 // FIR_COMPARISON

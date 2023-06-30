@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// IGNORE_FE10
 fun <T, K>foo() where <caret>
 
 
