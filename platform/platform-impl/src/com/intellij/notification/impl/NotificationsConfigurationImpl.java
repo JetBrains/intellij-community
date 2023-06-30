@@ -118,9 +118,18 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
                        @NotNull NotificationDisplayType displayType,
                        boolean shouldLog,
                        boolean shouldReadAloud) {
+    register(groupDisplayName, displayType, shouldLog, shouldReadAloud, null);
+  }
+
+  @Override
+  public void register(@NotNull String groupDisplayName,
+                       @NotNull NotificationDisplayType displayType,
+                       boolean shouldLog,
+                       boolean shouldReadAloud,
+                       @Nullable String toolWindowId) {
     if (!isRegistered(groupDisplayName)) {
       // register a new group and remember these settings as default
-      new NotificationGroup(groupDisplayName, displayType, shouldLog);
+      new NotificationGroup(groupDisplayName, displayType, shouldLog, toolWindowId);
       // and decide whether to save them explicitly (in case of non-default shouldReadAloud)
       changeSettings(groupDisplayName, displayType, shouldLog, shouldReadAloud);
     }

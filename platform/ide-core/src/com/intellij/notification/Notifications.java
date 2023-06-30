@@ -42,6 +42,12 @@ public interface Notifications {
                         boolean shouldLog,
                         boolean shouldReadAloud) { }
 
+  default void register(@NotNull String groupDisplayName,
+                        @NotNull NotificationDisplayType defaultDisplayType,
+                        boolean shouldLog,
+                        boolean shouldReadAloud,
+                        @Nullable String toolWindowId) { }
+
   final class Bus {
     private Bus() { }
 
