@@ -66,6 +66,8 @@ internal interface IdeMenuFlavor {
 
 internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
                                        @JvmField internal val menuBar: MenuBarImpl) : ActionAwareIdeMenuBar {
+  protected abstract fun isUpdateForbidden(): Boolean
+
   @JvmField
   protected var visibleActions = emptyList<ActionGroup>()
 
@@ -129,7 +131,7 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
 
       // do not update when a popup menu is shown
       // (if a popup menu contains action which is also in the menu bar, it should not be enabled/disabled)
-      if (MenuSelectionManager.defaultManager().selectedPath.isNotEmpty()) {
+      if (isUpdateForbidden()) {
         return@withContext
       }
 
@@ -169,6 +171,8 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
 }
 
 internal open class JMenuBasedIdeMenuBarHelper(flavor: IdeMenuFlavor, menuBar: MenuBarImpl) : IdeMenuBarHelper(flavor, menuBar) {
+  override fun isUpdateForbidden() = MenuSelectionManager.defaultManager().selectedPath.isNotEmpty()
+
   override suspend fun postInitActions(actions: List<ActionGroup>) {
     withContext(Dispatchers.EDT) {
       for (action in actions) {
@@ -223,6 +227,8 @@ internal open class JMenuBasedIdeMenuBarHelper(flavor: IdeMenuFlavor, menuBar: M
 internal open class PeerBasedIdeMenuBarHelper(private val screenMenuPeer: MenuBar,
                                               flavor: IdeMenuFlavor,
                                               menuBar: MenuBarImpl) : IdeMenuBarHelper(flavor, menuBar) {
+  override fun isUpdateForbidden() = screenMenuPeer.isAnyChildOpened
+
   override suspend fun updateMenuActions(mainActionGroup: ActionGroup?, forceRebuild: Boolean, isFirstUpdate: Boolean): List<ActionGroup> {
     val newVisibleActions = mainActionGroup?.let {
       expandMainActionGroup(mainActionGroup = it,
@@ -263,10 +269,12 @@ private suspend fun expandMainActionGroup(mainActionGroup: ActionGroup,
                                           isFirstUpdate: Boolean): List<ActionGroup> {
   // don't repeat for JetBrains Client - deadlock possible
   repeat(if (PlatformUtils.isJetBrainsClient()) 1 else 3) {
+    presentationFactory.resetNeedRebuild()
     try {
       return withContext(CoroutineName("expandMainActionGroup") + Dispatchers.EDT) {
         val targetComponent = WindowManager.getInstance().getFocusedComponent(frame) ?: menuBar
         val dataContext = Utils.wrapToAsyncDataContext(DataManager.getInstance().getDataContext(targetComponent))
+        // disable fast track for JetBrains Client - deadlock otherwise
         val fastTrackTimeout = when {
           // disable fast track for JetBrains Client - deadlock otherwise
           PlatformUtils.isJetBrainsClient() -> -1

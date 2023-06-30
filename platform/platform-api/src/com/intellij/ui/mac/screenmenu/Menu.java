@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.screenmenu;
 
 import com.intellij.DynamicBundle;
@@ -40,6 +40,15 @@ public class Menu extends MenuItem {
 
   public Menu(String title) {
     setTitle(title);
+  }
+
+  public final boolean isAnyChildOpened() {
+    for (MenuItem item : myItems) {
+      if (item instanceof Menu && ((Menu)item).myIsOpened) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private Menu() { }
