@@ -27,13 +27,13 @@ data class GitLabMergeRequestDetails(
         dto.iid,
         dto.title,
         dto.createdAt,
-        dto.author,
+        GitLabUserDTO.fromRestDTO(dto.author),
         dto.mergeStatusEnum,
         dto.mergeable,
         dto.stateEnum,
         dto.draft,
-        dto.assignees,
-        dto.reviewers,
+        dto.assignees.map(GitLabUserDTO::fromRestDTO),
+        dto.reviewers.map(GitLabUserDTO::fromRestDTO),
         dto.webUrl,
         dto.labels
       )
