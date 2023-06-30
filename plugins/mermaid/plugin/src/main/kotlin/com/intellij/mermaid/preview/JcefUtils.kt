@@ -29,10 +29,15 @@ internal class LoadErrorException(
   url: String
 ): IllegalStateException("Failed to load $url:\n$code: $text")
 
+/**
+ * Needed only for testing purposes.
+ */
+internal abstract class WaitForLoadHandlerAdapter: CefLoadHandlerAdapter()
+
 internal suspend fun JBCefBrowser.waitForLoad(content: JBCefBrowser.() -> Unit) {
   var handlerReference: CefLoadHandler? = null
   suspendCancellableCoroutine { continuation ->
-    val handler = object: CefLoadHandlerAdapter() {
+    val handler = object: WaitForLoadHandlerAdapter() {
       @Volatile
       private var handlerWasCalled = false
 
