@@ -6,18 +6,18 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortRestDTO
 import java.util.*
 
-open class GitLabMergeRequestDetails(
+data class GitLabMergeRequestDetails(
   override val iid: String,
-  open val title: @NlsSafe String,
-  open val createdAt: Date,
-  open val author: GitLabUserDTO,
-  open val mergeStatus: GitLabMergeStatus,
-  open val isMergeable: Boolean,
-  open val state: GitLabMergeRequestState,
-  open val draft: Boolean,
-  open val assignees: List<GitLabUserDTO>,
-  open val reviewers: List<GitLabUserDTO>,
-  open val webUrl: @NlsSafe String,
+  val title: @NlsSafe String,
+  val createdAt: Date,
+  val author: GitLabUserDTO,
+  val mergeStatus: GitLabMergeStatus,
+  val isMergeable: Boolean,
+  val state: GitLabMergeRequestState,
+  val draft: Boolean,
+  val assignees: List<GitLabUserDTO>,
+  val reviewers: List<GitLabUserDTO>,
+  val webUrl: @NlsSafe String,
   val labels: List<String>
 ) : GitLabMergeRequestId {
 
