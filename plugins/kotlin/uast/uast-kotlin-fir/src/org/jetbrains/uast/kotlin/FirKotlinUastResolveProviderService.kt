@@ -267,7 +267,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun isResolvedToExtension(ktCallElement: KtCallElement): Boolean {
         analyzeForUast(ktCallElement) {
             val ktCall = ktCallElement.resolveCall()?.singleFunctionCallOrNull() ?: return false
-            return isExtension(ktCall)
+            return ktCall.symbol.isExtension
         }
     }
 
