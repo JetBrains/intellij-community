@@ -1,666 +1,612 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.actionSystem.impl;
+package com.intellij.openapi.actionSystem.impl
 
-import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.ui.UISettings;
-import com.intellij.internal.inspector.UiInspectorUtil;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.MainMenuPresentationAware;
-import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
-import com.intellij.openapi.actionSystem.impl.actionholder.ActionRefKt;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.ui.JBPopupMenu;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.JBMenu;
-import com.intellij.ui.icons.IconUtilKt;
-import com.intellij.ui.mac.foundation.NSDefaults;
-import com.intellij.ui.mac.screenmenu.Menu;
-import com.intellij.ui.plaf.beg.BegMenuItemUI;
-import com.intellij.ui.plaf.beg.IdeaMenuUI;
-import com.intellij.util.*;
-import com.intellij.util.concurrency.EdtScheduledExecutorService;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.DataManager
+import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.IdeEventQueue.Companion.getInstance
+import com.intellij.ide.ui.UISettings.Companion.instanceOrNull
+import com.intellij.internal.inspector.UiInspectorContextProvider
+import com.intellij.internal.inspector.UiInspectorUtil
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.MainMenuPresentationAware
+import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef
+import com.intellij.openapi.actionSystem.impl.actionholder.createActionRef
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.ui.JBPopupMenu
+import com.intellij.openapi.util.*
+import com.intellij.openapi.util.IconLoader.getDarkIcon
+import com.intellij.openapi.util.IconLoader.getDisabledIcon
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.StatusBar
+import com.intellij.ui.ColorUtil
+import com.intellij.ui.ComponentUtil
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.JBColor
+import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.components.JBMenu
+import com.intellij.ui.icons.getMenuBarIcon
+import com.intellij.ui.mac.foundation.NSDefaults
+import com.intellij.ui.mac.screenmenu.Menu
+import com.intellij.ui.plaf.beg.BegMenuItemUI
+import com.intellij.ui.plaf.beg.IdeaMenuUI
+import com.intellij.util.*
+import com.intellij.util.concurrency.EdtScheduledExecutorService
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import java.awt.*
+import java.awt.event.AWTEventListener
+import java.awt.event.ComponentEvent
+import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
+import javax.swing.*
+import javax.swing.event.ChangeEvent
+import javax.swing.event.ChangeListener
+import javax.swing.event.MenuEvent
+import javax.swing.event.MenuListener
 
-import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.MenuEvent;
-import javax.swing.event.MenuListener;
-import java.awt.*;
-import java.awt.event.AWTEventListener;
-import java.awt.event.ComponentEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.util.Arrays;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+class ActionMenu @JvmOverloads constructor(private val myContext: DataContext?,
+                                           place: String,
+                                           group: ActionGroup,
+                                           presentationFactory: PresentationFactory,
+                                           enableMnemonics: Boolean,
+                                           useDarkIcons: Boolean,
+                                           headerMenuItem: Boolean = false) : JBMenu() {
+  private val myPlace: String?
+  private val myGroup: ActionRef<ActionGroup>
+  private val myPresentationFactory: PresentationFactory
+  private val myPresentation: Presentation
+  private var myMnemonicEnabled: Boolean
+  private var myStubItem: StubItem? = null // A PATCH!!! Do not remove this code, otherwise you will lose all keyboard navigation in JMenuBar.
+  private val myUseDarkIcons: Boolean
+  private var myDisposable: Disposable? = null
+  var screenMenuPeer: Menu? = null
+  private val mySubElementSelector: SubElementSelector?
+  val isHeaderMenuItem: Boolean
+  val anAction: AnAction
+    get() = myGroup.getAction()
 
-public final class ActionMenu extends JBMenu {
-  /**
-   * By default, a "performable" non-empty popup action group menu item still shows a submenu.
-   * Use this key to disable the submenu and avoid children expansion on update as follows:
-   * <p>
-   * {@code presentation.putClientProperty(ActionMenu.SUPPRESS_SUBMENU, true)}.
-   * <p>
-   * Both ordinary and template presentations are supported.
-   *
-   * @see Presentation#setPerformGroup(boolean)
-   */
-  public static final Key<Boolean> SUPPRESS_SUBMENU = Key.create("SUPPRESS_SUBMENU");
-
-  private final String myPlace;
-  private final DataContext myContext;
-  private final ActionRef<ActionGroup> myGroup;
-  private final PresentationFactory myPresentationFactory;
-  private final Presentation myPresentation;
-  private boolean myMnemonicEnabled;
-  private StubItem myStubItem;  // A PATCH!!! Do not remove this code, otherwise you will lose all keyboard navigation in JMenuBar.
-  private final boolean myUseDarkIcons;
-  private Disposable myDisposable;
-  private final @Nullable Menu myScreenMenuPeer;
-  private final @Nullable SubElementSelector mySubElementSelector;
-  private final boolean myHeaderMenuItem;
-
-  public ActionMenu(@Nullable DataContext context,
-                    @NotNull String place,
-                    @NotNull ActionGroup group,
-                    @NotNull PresentationFactory presentationFactory,
-                    boolean enableMnemonics,
-                    boolean useDarkIcons) {
-    this(context, place, group, presentationFactory, enableMnemonics, useDarkIcons, false);
+  override fun removeNotify() {
+    super.removeNotify()
+    if (myDisposable != null) {
+      Disposer.dispose(myDisposable!!)
+      myDisposable = null
+    }
   }
 
-  public ActionMenu(@Nullable DataContext context,
-                    @NotNull String place,
-                    @NotNull ActionGroup group,
-                    @NotNull PresentationFactory presentationFactory,
-                    boolean enableMnemonics,
-                    boolean useDarkIcons,
-                    boolean headerMenuItem) {
-    myContext = context;
-    myPlace = place;
-    myGroup = ActionRefKt.createActionRef(group);
-    myPresentationFactory = presentationFactory;
-    myPresentation = myPresentationFactory.getPresentation(group);
-    myMnemonicEnabled = enableMnemonics;
-    myUseDarkIcons = useDarkIcons;
-    myHeaderMenuItem = headerMenuItem;
-    mySubElementSelector = SubElementSelector.isForceDisabled ? null : new SubElementSelector(this);
+  private var specialMenu: JPopupMenu? = null
 
-    if (Menu.isJbScreenMenuEnabled() && ActionPlaces.MAIN_MENU.equals(myPlace)) {
-      myScreenMenuPeer = new Menu(myPresentation.getText(enableMnemonics));
-      myScreenMenuPeer.setOnOpen(() -> {
+  init {
+    myPlace = place
+    myGroup = createActionRef(group)
+    myPresentationFactory = presentationFactory
+    myPresentation = myPresentationFactory.getPresentation(group)
+    myMnemonicEnabled = enableMnemonics
+    myUseDarkIcons = useDarkIcons
+    isHeaderMenuItem = headerMenuItem
+    mySubElementSelector = if (SubElementSelector.isForceDisabled) null else SubElementSelector(this)
+    if (Menu.isJbScreenMenuEnabled() && ActionPlaces.MAIN_MENU == myPlace) {
+      val screenMenuPeer = Menu(myPresentation.getText(enableMnemonics))
+      this.screenMenuPeer = screenMenuPeer
+      screenMenuPeer.setOnOpen(Runnable {
         // NOTE: setSelected(true) calls fillMenu internally
-        setSelected(true);
-      }, this);
-      myScreenMenuPeer.setOnClose(() -> setSelected(false), this);
-      myScreenMenuPeer.listenPresentationChanges(myPresentation);
+        setSelected(true)
+      }, this)
+      screenMenuPeer.setOnClose(Runnable { setSelected(false) }, this)
+      screenMenuPeer.listenPresentationChanges(myPresentation)
     }
     else {
-      myScreenMenuPeer = null;
-      updateUI();
+      screenMenuPeer = null
+      updateUI()
     }
-
-    init();
-
-    if (myScreenMenuPeer == null) {
+    init()
+    if (screenMenuPeer == null) {
       // also triggering initialization of private field "popupMenu" from JMenu with our own JBPopupMenu
-      BegMenuItemUI.registerMultiChoiceSupport(getPopupMenu(), popupMenu -> {
-        Utils.updateMenuItems(popupMenu, getDataContext(), myPlace, myPresentationFactory);
-      });
+      BegMenuItemUI.registerMultiChoiceSupport(getPopupMenu()) { popupMenu: JPopupMenu? ->
+        Utils.updateMenuItems(
+          popupMenu!!, dataContext, myPlace, myPresentationFactory)
+      }
     }
   }
 
-  public @NotNull AnAction getAnAction() { return myGroup.getAction(); }
+  companion object {
+    /**
+     * By default, a "performable" non-empty popup action group menu item still shows a submenu.
+     * Use this key to disable the submenu and avoid children expansion on update as follows:
+     *
+     *
+     * `presentation.putClientProperty(ActionMenu.SUPPRESS_SUBMENU, true)`.
+     *
+     *
+     * Both ordinary and template presentations are supported.
+     *
+     * @see Presentation.setPerformGroup
+     */
+    @JvmField
+    val SUPPRESS_SUBMENU: Key<Boolean> = Key.create("SUPPRESS_SUBMENU")
 
-  @Override
-  public void removeNotify() {
-    super.removeNotify();
-    if (myDisposable != null) {
-      Disposer.dispose(myDisposable);
-      myDisposable = null;
+    @JvmStatic
+    fun shouldConvertIconToDarkVariant(): Boolean {
+      return JBColor.isBright() && ColorUtil.isDark(JBColor.namedColor("MenuItem.background", 0xffffff))
+    }
+
+    @JvmStatic
+    val isShowNoIcons: Boolean
+      get() {
+        return SystemInfoRt.isMac && (Registry.get("ide.macos.main.menu.alignment.options").isOptionEnabled("No icons") || ExperimentalUI.isNewUI())
+      }
+
+    @JvmStatic
+    fun isShowNoIcons(action: AnAction?): Boolean {
+      if (action == null) {
+        return false
+      }
+      return if (action is MainMenuPresentationAware && (action as MainMenuPresentationAware).alwaysShowIconInMainMenu()) {
+        false
+      }
+      else isShowNoIcons
+    }
+
+    @JvmStatic
+    val isAligned: Boolean
+      get() = SystemInfoRt.isMac && Registry.get("ide.macos.main.menu.alignment.options").isOptionEnabled("Aligned")
+    @JvmStatic
+    val isAlignedInGroup: Boolean
+      get() = SystemInfoRt.isMac && Registry.get("ide.macos.main.menu.alignment.options").isOptionEnabled("Aligned in group")
+
+    @JvmStatic
+    fun showDescriptionInStatusBar(isIncluded: Boolean, component: Component?, description: @NlsContexts.StatusBarText String?) {
+      val frame = (if (component is IdeFrame) component else SwingUtilities.getAncestorOfClass(IdeFrame::class.java, component)) as? IdeFrame
+      var statusBar: StatusBar? = null
+      if (frame != null && frame.getStatusBar().also { statusBar = it!! } != null) {
+        statusBar!!.setInfo(if (isIncluded) description else null)
+      }
     }
   }
 
-  private JPopupMenu mySpecialMenu;
-
-  @Override
-  public JPopupMenu getPopupMenu() {
-    if (mySpecialMenu == null) {
-      mySpecialMenu = new JBPopupMenu();
-      mySpecialMenu.setInvoker(this);
-      popupListener = createWinListener(mySpecialMenu);
-      ReflectionUtil.setField(JMenu.class, this, JPopupMenu.class, "popupMenu", mySpecialMenu);
-      UiInspectorUtil.registerProvider(mySpecialMenu, () -> UiInspectorUtil.collectActionGroupInfo("Menu", myGroup.getAction(), myPlace));
+  override fun getPopupMenu(): JPopupMenu {
+    var specialMenu = specialMenu
+    if (specialMenu == null) {
+      specialMenu = JBPopupMenu()
+      this.specialMenu = specialMenu
+      specialMenu.setInvoker(this)
+      popupListener = createWinListener(specialMenu)
+      ReflectionUtil.setField(JMenu::class.java, this, JPopupMenu::class.java, "popupMenu", specialMenu)
+      UiInspectorUtil.registerProvider(specialMenu, UiInspectorContextProvider {
+        UiInspectorUtil.collectActionGroupInfo("Menu", myGroup.getAction(), myPlace)
+      })
     }
-    return super.getPopupMenu();
+    return super.getPopupMenu()
   }
 
-  @Override
-  public void updateUI() {
+  override fun updateUI() {
     // null myPlace means that Swing calls updateUI before our constructor
-    if (myScreenMenuPeer != null || myPlace == null) {
-      return;
+    if (screenMenuPeer != null || myPlace == null) {
+      return
     }
-
-    setUI(IdeaMenuUI.createUI(this));
-    setFont(FontUtil.getMenuFont());
-
-    JPopupMenu popupMenu = getPopupMenu();
+    setUI(IdeaMenuUI.createUI(this))
+    setFont(FontUtil.getMenuFont())
+    val popupMenu = getPopupMenu()
     if (popupMenu != null) {
-      popupMenu.updateUI();
+      popupMenu.updateUI()
     }
   }
 
-  public @Nullable Menu getScreenMenuPeer() {
-    return myScreenMenuPeer;
+  private fun init() {
+    val macSystemMenu = SystemInfo.isMacSystemMenu && isMainMenuPlace
+    myStubItem = if (macSystemMenu) null else StubItem()
+    addStubItem()
+    setBorderPainted(false)
+    val menuListener = MenuListenerImpl()
+    addMenuListener(menuListener)
+    getModel().addChangeListener(menuListener)
+    updateFromPresentation(myMnemonicEnabled)
   }
 
-  public boolean isHeaderMenuItem() {
-    return myHeaderMenuItem;
+  val isMainMenuPlace: Boolean
+    get() = myPlace == ActionPlaces.MAIN_MENU
+
+  fun updateFromPresentation(enableMnemonics: Boolean) {
+    myMnemonicEnabled = enableMnemonics
+    isVisible = myPresentation.isVisible
+    setEnabled(myPresentation.isEnabled)
+    setText(myPresentation.getText(myMnemonicEnabled))
+    mnemonic = myPresentation.getMnemonic()
+    displayedMnemonicIndex = myPresentation.getDisplayedMnemonicIndex()
+    updateIcon()
   }
 
-  private void init() {
-    boolean macSystemMenu = SystemInfo.isMacSystemMenu && isMainMenuPlace();
-
-    myStubItem = macSystemMenu ? null : new StubItem();
-    addStubItem();
-    setBorderPainted(false);
-
-    MenuListenerImpl menuListener = new MenuListenerImpl();
-    addMenuListener(menuListener);
-    getModel().addChangeListener(menuListener);
-
-    updateFromPresentation(myMnemonicEnabled);
-  }
-
-  public boolean isMainMenuPlace() {
-    return myPlace.equals(ActionPlaces.MAIN_MENU);
-  }
-
-  public void updateFromPresentation(boolean enableMnemonics) {
-    myMnemonicEnabled = enableMnemonics;
-    setVisible(myPresentation.isVisible());
-    setEnabled(myPresentation.isEnabled());
-
-    setText(myPresentation.getText(myMnemonicEnabled));
-    setMnemonic(myPresentation.getMnemonic());
-    setDisplayedMnemonicIndex(myPresentation.getDisplayedMnemonicIndex());
-    updateIcon();
-  }
-
-  private void addStubItem() {
+  private fun addStubItem() {
     if (myStubItem != null) {
-      add(myStubItem);
+      add(myStubItem)
     }
   }
 
-  @Override
-  public void setDisplayedMnemonicIndex(int index) throws IllegalArgumentException {
-    super.setDisplayedMnemonicIndex(myMnemonicEnabled ? index : -1);
+  @Throws(IllegalArgumentException::class)
+  override fun setDisplayedMnemonicIndex(index: Int) {
+    super.setDisplayedMnemonicIndex(if (myMnemonicEnabled) index else -1)
   }
 
-  @Override
-  public void setMnemonic(int mnemonic) {
-    super.setMnemonic(myMnemonicEnabled ? mnemonic : 0);
+  override fun setMnemonic(mnemonic: Int) {
+    super.setMnemonic(if (myMnemonicEnabled) mnemonic else 0)
   }
 
-  private void updateIcon() {
-    UISettings settings = UISettings.getInstanceOrNull();
-    Icon icon = myPresentation.getIcon();
-    if (icon != null && settings != null && settings.getShowIconsInMenus()) {
-      if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
+  private fun updateIcon() {
+    val settings = instanceOrNull
+    var icon = myPresentation.icon
+    if (icon != null && settings != null && settings.showIconsInMenus) {
+      if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU == myPlace) {
         // JDK can't paint correctly our HiDPI icons at the system menu bar
-        icon = IconUtilKt.getMenuBarIcon(icon, myUseDarkIcons);
+        icon = getMenuBarIcon(icon, myUseDarkIcons)
       }
       else if (shouldConvertIconToDarkVariant()) {
-        icon = IconLoader.getDarkIcon(icon, true);
+        icon = getDarkIcon(icon, true)
       }
-      if (isShowNoIcons()) {
-        setIcon(null);
-        setDisabledIcon(null);
+      if (isShowNoIcons) {
+        setIcon(null)
+        setDisabledIcon(null)
       }
       else {
-        setIcon(icon);
-        Icon presentationDisabledIcon = myPresentation.getDisabledIcon();
-        setDisabledIcon(presentationDisabledIcon == null ? IconLoader.getDisabledIcon(icon) : presentationDisabledIcon);
-        if (myScreenMenuPeer != null) {
-          myScreenMenuPeer.setIcon(icon);
-        }
+        setIcon(icon)
+        val presentationDisabledIcon = myPresentation.disabledIcon
+        setDisabledIcon(presentationDisabledIcon ?: getDisabledIcon(icon))
+        screenMenuPeer?.setIcon(icon)
       }
     }
   }
 
-  static boolean shouldConvertIconToDarkVariant() {
-    return JBColor.isBright() && ColorUtil.isDark(JBColor.namedColor("MenuItem.background", 0xffffff));
+  override fun menuSelectionChanged(isIncluded: Boolean) {
+    super.menuSelectionChanged(isIncluded)
+    showDescriptionInStatusBar(isIncluded, this, myPresentation.description)
   }
 
-  static boolean isShowNoIcons() {
-    return SystemInfoRt.isMac && (Registry.get("ide.macos.main.menu.alignment.options").isOptionEnabled("No icons") || ExperimentalUI.isNewUI());
-  }
-
-  static boolean isShowNoIcons(AnAction action) {
-    if (action == null) {
-      return false;
-    }
-    if (action instanceof MainMenuPresentationAware && ((MainMenuPresentationAware)action).alwaysShowIconInMainMenu()) {
-      return false;
-    }
-    return isShowNoIcons();
-  }
-
-  static boolean isAligned() {
-    return SystemInfoRt.isMac && Registry.get("ide.macos.main.menu.alignment.options").isOptionEnabled("Aligned");
-  }
-
-  static boolean isAlignedInGroup() {
-    return SystemInfoRt.isMac && Registry.get("ide.macos.main.menu.alignment.options").isOptionEnabled("Aligned in group");
-  }
-
-  @Override
-  public void menuSelectionChanged(boolean isIncluded) {
-    super.menuSelectionChanged(isIncluded);
-    showDescriptionInStatusBar(isIncluded, this, myPresentation.getDescription());
-  }
-
-  public static void showDescriptionInStatusBar(boolean isIncluded, Component component, @NlsContexts.StatusBarText String description) {
-    IdeFrame frame = (IdeFrame)(component instanceof IdeFrame ? component : SwingUtilities.getAncestorOfClass(IdeFrame.class, component));
-    StatusBar statusBar;
-    if (frame != null && (statusBar = frame.getStatusBar()) != null) {
-      statusBar.setInfo(isIncluded ? description : null);
-    }
-  }
-
-  @Override
-  protected void processMouseEvent(MouseEvent e) {
-    boolean shouldCancelIgnoringOfNextSelectionRequest = false;
-
+  override fun processMouseEvent(e: MouseEvent) {
+    var shouldCancelIgnoringOfNextSelectionRequest = false
     if (mySubElementSelector != null) {
-      switch (e.getID()) {
-        case MouseEvent.MOUSE_PRESSED -> {
-          mySubElementSelector.ignoreNextSelectionRequest();
-          shouldCancelIgnoringOfNextSelectionRequest = true;
+      when (e.id) {
+        MouseEvent.MOUSE_PRESSED -> {
+          mySubElementSelector.ignoreNextSelectionRequest()
+          shouldCancelIgnoringOfNextSelectionRequest = true
         }
-        case MouseEvent.MOUSE_ENTERED -> mySubElementSelector.ignoreNextSelectionRequest(getDelay() * 2);
+        MouseEvent.MOUSE_ENTERED -> mySubElementSelector.ignoreNextSelectionRequest(delay * 2)
       }
     }
-
     try {
-      super.processMouseEvent(e);
+      super.processMouseEvent(e)
     }
     finally {
       if (shouldCancelIgnoringOfNextSelectionRequest) {
-        mySubElementSelector.cancelIgnoringOfNextSelectionRequest();
+        mySubElementSelector!!.cancelIgnoringOfNextSelectionRequest()
       }
     }
   }
 
-  private class MenuListenerImpl implements ChangeListener, MenuListener {
-    ScheduledFuture<?> myDelayedClear;
-    boolean isSelected = false;
-
-    @Override
-    public void stateChanged(ChangeEvent e) {
+  private inner class MenuListenerImpl : ChangeListener, MenuListener {
+    var myDelayedClear: ScheduledFuture<*>? = null
+    var isSelected: Boolean = false
+    override fun stateChanged(e: ChangeEvent) {
       // Re-implement javax.swing.JMenu.MenuChangeListener to avoid recursive event notifications
       // if 'menuSelected' fires unrelated 'stateChanged' event, without changing 'model.isSelected()' value.
-      ButtonModel model = (ButtonModel)e.getSource();
-      boolean modelSelected = model.isSelected();
-
+      val model = e.source as ButtonModel
+      val modelSelected = model.isSelected
       if (modelSelected != isSelected) {
-        isSelected = modelSelected;
-
+        isSelected = modelSelected
         if (modelSelected) {
-          menuSelected();
+          menuSelected()
         }
         else {
-          menuDeselected();
+          menuDeselected()
         }
       }
     }
 
-    @Override
-    public void menuCanceled(MenuEvent e) {
-      onMenuHidden();
+    override fun menuCanceled(e: MenuEvent) {
+      onMenuHidden()
     }
 
-    @Override
-    public void menuDeselected(MenuEvent e) {
+    override fun menuDeselected(e: MenuEvent) {
       // Use ChangeListener instead to guard against recursive calls
     }
 
-    @Override
-    public void menuSelected(MenuEvent e) {
+    override fun menuSelected(e: MenuEvent) {
       // Use ChangeListener instead to guard against recursive calls
     }
 
-    private void menuDeselected() {
+    private fun menuDeselected() {
       if (myDisposable != null) {
-        Disposer.dispose(myDisposable);
-        myDisposable = null;
+        Disposer.dispose(myDisposable!!)
+        myDisposable = null
       }
-      onMenuHidden();
-
-      if (mySubElementSelector != null) mySubElementSelector.cancelNextSelection();
+      onMenuHidden()
+      mySubElementSelector?.cancelNextSelection()
     }
 
-    private void onMenuHidden() {
-      Runnable clearSelf = () -> {
-        clearItems();
-        addStubItem();
-      };
-
-      if (SystemInfo.isMacSystemMenu && isMainMenuPlace()) {
+    private fun onMenuHidden() {
+      val clearSelf = Runnable {
+        clearItems()
+        addStubItem()
+      }
+      if (SystemInfo.isMacSystemMenu && isMainMenuPlace) {
         // Menu items may contain mnemonic, and they can affect key-event dispatching (when Alt pressed)
         // To avoid the influence of mnemonic it's necessary to clear items when a menu was hidden.
         // When a user selects item of a system menu (under macOS), AppKit generates such sequence: CloseParentMenu -> PerformItemAction
         // So we can destroy menu-item before item's action performed, and because of that action will not be executed.
         // Defer clearing to avoid this problem.
-        myDelayedClear = EdtScheduledExecutorService.getInstance().schedule(clearSelf, 1000, TimeUnit.MILLISECONDS);
+        myDelayedClear = EdtScheduledExecutorService.getInstance().schedule(clearSelf, 1000, TimeUnit.MILLISECONDS)
       }
       else {
-        clearSelf.run();
+        clearSelf.run()
       }
     }
 
-    private void menuSelected() {
-      UsabilityHelper helper = new UsabilityHelper(ActionMenu.this);
+    private fun menuSelected() {
+      val helper = UsabilityHelper(this@ActionMenu)
       if (myDisposable == null) {
-        myDisposable = Disposer.newDisposable();
+        myDisposable = Disposer.newDisposable()
       }
-      Disposer.register(myDisposable, helper);
+      Disposer.register(myDisposable!!, helper)
       if (myDelayedClear != null) {
-        myDelayedClear.cancel(false);
-        myDelayedClear = null;
-        clearItems();
+        myDelayedClear!!.cancel(false)
+        myDelayedClear = null
+        clearItems()
       }
-      if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
-        fillMenu();
+      if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU == myPlace) {
+        fillMenu()
       }
     }
   }
 
-  @Override
-  public void setPopupMenuVisible(boolean b) {
-    if (b && !(SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace))) {
-      fillMenu();
-      if (!isSelected()) {
-        return;
+  override fun setPopupMenuVisible(b: Boolean) {
+    if (b && !(SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU == myPlace)) {
+      fillMenu()
+      if (!isSelected) {
+        return
       }
     }
-
-    super.setPopupMenuVisible(b);
-
-    if (b && (mySubElementSelector != null)) {
-      mySubElementSelector.selectSubElementIfNecessary();
+    super.setPopupMenuVisible(b)
+    if (b && mySubElementSelector != null) {
+      mySubElementSelector.selectSubElementIfNecessary()
     }
   }
 
-  public void clearItems() {
-    if (SystemInfo.isMacSystemMenu && isMainMenuPlace()) {
-      for (Component menuComponent : getMenuComponents()) {
-        if (menuComponent instanceof ActionMenu) {
-          ((ActionMenu)menuComponent).clearItems();
+  fun clearItems() {
+    if (SystemInfo.isMacSystemMenu && isMainMenuPlace) {
+      for (menuComponent in getMenuComponents()) {
+        if (menuComponent is ActionMenu) {
+          menuComponent.clearItems()
         }
-        else if (menuComponent instanceof ActionMenuItem) {
+        else if (menuComponent is ActionMenuItem) {
           // Looks like an old-fashioned ugly workaround
           // JDK 1.7 on Mac works wrong with such functional keys
           if (!SystemInfo.isMac) {
-            ((ActionMenuItem)menuComponent).setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F24, 0));
+            menuComponent.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F24, 0))
           }
         }
       }
     }
-
-    removeAll();
-    validate();
+    removeAll()
+    validate()
   }
 
-  private @NotNull DataContext getDataContext() {
-    DataContext context;
-
-    if (myContext != null) {
-      context = myContext;
-    }
-    else {
-      DataManager dataManager = DataManager.getInstance();
-      @SuppressWarnings("deprecation") DataContext contextFromFocus = dataManager.getDataContext();
-      context = contextFromFocus;
-      if (PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context) == null) {
-        IdeFrame frame = ComponentUtil.getParentOfType((Class<? extends IdeFrame>)IdeFrame.class, (Component)this);
-        context = dataManager.getDataContext(IdeFocusManager.getGlobalInstance().getLastFocusedFor((Window)frame));
+  private val dataContext: DataContext
+    private get() {
+      var context: DataContext
+      if (myContext != null) {
+        context = myContext
       }
-      context = Utils.wrapDataContext(context);
-    }
-    return context;
-  }
-
-  public void fillMenu() {
-    DataContext context = getDataContext();
-    boolean isDarkMenu = SystemInfo.isMacSystemMenu && NSDefaults.isDarkMenuBar();
-    Utils.fillMenu(myGroup.getAction(), this, myMnemonicEnabled, myPresentationFactory, context, myPlace, true, isDarkMenu,
-                   RelativePoint.getNorthEastOf(this), () -> !isSelected());
-  }
-
-  private static final class UsabilityHelper implements IdeEventQueue.EventDispatcher, AWTEventListener, Disposable {
-    private Component myComponent;
-    private Point myStartMousePoint;
-    private Point myUpperTargetPoint;
-    private Point myLowerTargetPoint;
-    private SingleAlarm myCallbackAlarm;
-    private MouseEvent myEventToRedispatch;
-
-    private UsabilityHelper(Component component) {
-      myCallbackAlarm = new SingleAlarm(() -> {
-        Disposer.dispose(myCallbackAlarm);
-        myCallbackAlarm = null;
-        if (myEventToRedispatch != null) {
-          IdeEventQueue.getInstance().dispatchEvent(myEventToRedispatch);
+      else {
+        val dataManager = DataManager.getInstance()
+        @Suppress("deprecation") val contextFromFocus = dataManager.getDataContext()
+        context = contextFromFocus
+        if (PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context) == null) {
+          val frame = ComponentUtil.getParentOfType(IdeFrame::class.java as Class<out IdeFrame?>, this as Component)
+          context = dataManager.getDataContext(IdeFocusManager.getGlobalInstance().getLastFocusedFor(frame as Window?))
         }
-      }, 50, this, Alarm.ThreadToUse.SWING_THREAD, ModalityState.any());
-      myComponent = component;
-      PointerInfo info = MouseInfo.getPointerInfo();
-      myStartMousePoint = info != null ? info.getLocation() : null;
+        context = Utils.wrapDataContext(context)
+      }
+      return context
+    }
+
+  fun fillMenu() {
+    val context = dataContext
+    val isDarkMenu = SystemInfo.isMacSystemMenu && NSDefaults.isDarkMenuBar()
+    Utils.fillMenu(myGroup.getAction(), this, myMnemonicEnabled, myPresentationFactory, context, myPlace!!, true, isDarkMenu,
+                   RelativePoint.getNorthEastOf(this)) { !isSelected }
+  }
+
+  private class UsabilityHelper(component: Component) : IdeEventQueue.EventDispatcher, AWTEventListener, Disposable {
+    private var myComponent: Component?
+    private var myStartMousePoint: Point?
+    private var myUpperTargetPoint: Point? = null
+    private var myLowerTargetPoint: Point? = null
+    private var callbackAlarm: SingleAlarm?
+    private var myEventToRedispatch: MouseEvent? = null
+
+    init {
+      callbackAlarm = SingleAlarm({
+                                      //Disposer.dispose(callbackAlarm!!)
+                                      callbackAlarm = null
+                                      if (myEventToRedispatch != null) {
+                                        getInstance().dispatchEvent(myEventToRedispatch!!)
+                                      }
+                                    }, 50, this, Alarm.ThreadToUse.SWING_THREAD, ModalityState.any())
+      myComponent = component
+      val info = MouseInfo.getPointerInfo()
+      myStartMousePoint = info?.location
       if (myStartMousePoint != null) {
-        Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.COMPONENT_EVENT_MASK);
-        IdeEventQueue.getInstance().addDispatcher(this, this);
+        Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.COMPONENT_EVENT_MASK)
+        getInstance().addDispatcher(this, this)
       }
     }
 
-    @Override
-    public void eventDispatched(AWTEvent event) {
-      if (event instanceof ComponentEvent componentEvent) {
-        Component component = componentEvent.getComponent();
-        JPopupMenu popup = ComponentUtil.getParentOfType((Class<? extends JPopupMenu>)JPopupMenu.class, component);
-        if (popup != null && popup.getInvoker() == myComponent && popup.isShowing()) {
-          Rectangle bounds = popup.getBounds();
-          if (bounds.isEmpty()) return;
-          bounds.setLocation(popup.getLocationOnScreen());
-          if (myStartMousePoint.x < bounds.x) {
-            myUpperTargetPoint = new Point(bounds.x, bounds.y);
-            myLowerTargetPoint = new Point(bounds.x, bounds.y + bounds.height);
+    override fun eventDispatched(event: AWTEvent) {
+      if (event is ComponentEvent) {
+        val component: Component = event.component
+        val popup = ComponentUtil.getParentOfType(JPopupMenu::class.java as Class<out JPopupMenu?>, component)
+        if (popup != null && popup.invoker === myComponent && popup.isShowing()) {
+          val bounds = popup.bounds
+          if (bounds.isEmpty) return
+          bounds.location = popup.locationOnScreen
+          if (myStartMousePoint!!.x < bounds.x) {
+            myUpperTargetPoint = Point(bounds.x, bounds.y)
+            myLowerTargetPoint = Point(bounds.x, bounds.y + bounds.height)
           }
-          if (myStartMousePoint.x > bounds.x + bounds.width) {
-            myUpperTargetPoint = new Point(bounds.x + bounds.width, bounds.y);
-            myLowerTargetPoint = new Point(bounds.x + bounds.width, bounds.y + bounds.height);
+          if (myStartMousePoint!!.x > bounds.x + bounds.width) {
+            myUpperTargetPoint = Point(bounds.x + bounds.width, bounds.y)
+            myLowerTargetPoint = Point(bounds.x + bounds.width, bounds.y + bounds.height)
           }
         }
       }
     }
 
-    @Override
-    public boolean dispatch(@NotNull AWTEvent e) {
-      if (e instanceof MouseEvent && myUpperTargetPoint != null && myLowerTargetPoint != null && myCallbackAlarm != null) {
+    override fun dispatch(e: AWTEvent): Boolean {
+      if (e is MouseEvent && myUpperTargetPoint != null && myLowerTargetPoint != null && callbackAlarm != null) {
         if (e.getID() == MouseEvent.MOUSE_PRESSED || e.getID() == MouseEvent.MOUSE_RELEASED || e.getID() == MouseEvent.MOUSE_CLICKED) {
-          return false;
+          return false
         }
-        Point point = ((MouseEvent)e).getLocationOnScreen();
-        Rectangle bounds = myComponent.getBounds();
-        bounds.setLocation(myComponent.getLocationOnScreen());
-        boolean isMouseMovingTowardsSubmenu = bounds.contains(point) || new Polygon(
-          new int[]{myStartMousePoint.x, myUpperTargetPoint.x, myLowerTargetPoint.x},
-          new int[]{myStartMousePoint.y, myUpperTargetPoint.y, myLowerTargetPoint.y},
-          3).contains(point);
-
-        myEventToRedispatch = (MouseEvent)e;
-
+        val point = e.locationOnScreen
+        val bounds = myComponent!!.bounds
+        bounds.location = myComponent!!.locationOnScreen
+        val isMouseMovingTowardsSubmenu = bounds.contains(point) || Polygon(intArrayOf(
+          myStartMousePoint!!.x, myUpperTargetPoint!!.x, myLowerTargetPoint!!.x), intArrayOf(myStartMousePoint!!.y, myUpperTargetPoint!!.y,
+                                                                                             myLowerTargetPoint!!.y),
+                                                                            3).contains(point)
+        myEventToRedispatch = e
         if (!isMouseMovingTowardsSubmenu) {
-          myCallbackAlarm.request();
+          callbackAlarm!!.request()
         }
         else {
-          myCallbackAlarm.cancel();
+          callbackAlarm!!.cancel()
         }
-        return true;
+        return true
       }
-      return false;
+      return false
     }
 
-    @Override
-    public void dispose() {
-      myComponent = null;
-      myEventToRedispatch = null;
-      myStartMousePoint = myUpperTargetPoint = myLowerTargetPoint = null;
-      Toolkit.getDefaultToolkit().removeAWTEventListener(this);
+    override fun dispose() {
+      myComponent = null
+      myEventToRedispatch = null
+      myLowerTargetPoint = null
+      myUpperTargetPoint = myLowerTargetPoint
+      myStartMousePoint = myUpperTargetPoint
+      Toolkit.getDefaultToolkit().removeAWTEventListener(this)
     }
   }
 
-  private static final class SubElementSelector {
-    static final boolean isForceDisabled =
-      SystemInfo.isMacSystemMenu ||
-      !Registry.is("ide.popup.menu.navigation.keyboard.selectFirstEnabledSubItem", false);
-
-
-    SubElementSelector(@NotNull ActionMenu owner) {
-      if (isForceDisabled) {
-        throw new IllegalStateException("Attempt to create an instance of ActionMenu.SubElementSelector class when it is force disabled");
-      }
-
-      myOwner = owner;
-      myShouldIgnoreNextSelectionRequest = false;
-      myShouldIgnoreNextSelectionRequestSinceTimestamp = -1;
-      myShouldIgnoreNextSelectionRequestTimeoutMs = -1;
-      myCurrentRequestId = -1;
-    }
-
+  private class SubElementSelector(owner: ActionMenu) {
     @RequiresEdt
-    void ignoreNextSelectionRequest(int timeoutMs) {
-      myShouldIgnoreNextSelectionRequest = true;
-      myShouldIgnoreNextSelectionRequestTimeoutMs = timeoutMs;
-      if (timeoutMs >= 0) {
-        myShouldIgnoreNextSelectionRequestSinceTimestamp = System.currentTimeMillis();
+    fun ignoreNextSelectionRequest(timeoutMs: Int) {
+      myShouldIgnoreNextSelectionRequest = true
+      myShouldIgnoreNextSelectionRequestTimeoutMs = timeoutMs
+      myShouldIgnoreNextSelectionRequestSinceTimestamp = if (timeoutMs >= 0) {
+        System.currentTimeMillis()
       }
       else {
-        myShouldIgnoreNextSelectionRequestSinceTimestamp = -1;
+        -1
       }
     }
 
     @RequiresEdt
-    void ignoreNextSelectionRequest() {
-      ignoreNextSelectionRequest(-1);
+    fun ignoreNextSelectionRequest() {
+      ignoreNextSelectionRequest(-1)
     }
 
     @RequiresEdt
-    void cancelIgnoringOfNextSelectionRequest() {
-      myShouldIgnoreNextSelectionRequest = false;
-      myShouldIgnoreNextSelectionRequestSinceTimestamp = -1;
-      myShouldIgnoreNextSelectionRequestTimeoutMs = -1;
+    fun cancelIgnoringOfNextSelectionRequest() {
+      myShouldIgnoreNextSelectionRequest = false
+      myShouldIgnoreNextSelectionRequestSinceTimestamp = -1
+      myShouldIgnoreNextSelectionRequestTimeoutMs = -1
     }
 
     @RequiresEdt
-    void selectSubElementIfNecessary() {
-      final boolean shouldIgnoreThisSelectionRequest;
-      if (myShouldIgnoreNextSelectionRequest) {
+    fun selectSubElementIfNecessary() {
+      val shouldIgnoreThisSelectionRequest: Boolean
+      shouldIgnoreThisSelectionRequest = if (myShouldIgnoreNextSelectionRequest) {
         if (myShouldIgnoreNextSelectionRequestTimeoutMs >= 0) {
-          shouldIgnoreThisSelectionRequest =
-            ( (System.currentTimeMillis() - myShouldIgnoreNextSelectionRequestSinceTimestamp) <= myShouldIgnoreNextSelectionRequestTimeoutMs );
+          System.currentTimeMillis() - myShouldIgnoreNextSelectionRequestSinceTimestamp <= myShouldIgnoreNextSelectionRequestTimeoutMs
         }
         else {
-          shouldIgnoreThisSelectionRequest = true;
+          true
         }
       }
       else {
-        shouldIgnoreThisSelectionRequest = false;
+        false
       }
-
-      cancelIgnoringOfNextSelectionRequest();
-
+      cancelIgnoringOfNextSelectionRequest()
       if (shouldIgnoreThisSelectionRequest) {
-        return;
+        return
       }
-
-      final int thisRequestId = ++myCurrentRequestId;
-      SwingUtilities.invokeLater(() -> selectFirstEnabledElement(thisRequestId));
+      val thisRequestId = ++myCurrentRequestId
+      SwingUtilities.invokeLater { selectFirstEnabledElement(thisRequestId) }
     }
 
     @RequiresEdt
-    void cancelNextSelection() {
-      ++myCurrentRequestId;
+    fun cancelNextSelection() {
+      ++myCurrentRequestId
     }
 
+    private val myOwner: ActionMenu
+    private var myShouldIgnoreNextSelectionRequest: Boolean
+    private var myShouldIgnoreNextSelectionRequestSinceTimestamp: Long
+    private var myShouldIgnoreNextSelectionRequestTimeoutMs: Int
+    private var myCurrentRequestId: Int
 
-    private final @NotNull ActionMenu myOwner;
-    private boolean myShouldIgnoreNextSelectionRequest;
-    private long myShouldIgnoreNextSelectionRequestSinceTimestamp;
-    private int myShouldIgnoreNextSelectionRequestTimeoutMs;
-    private int myCurrentRequestId;
-
+    init {
+      if (isForceDisabled) {
+        throw IllegalStateException("Attempt to create an instance of ActionMenu.SubElementSelector class when it is force disabled")
+      }
+      myOwner = owner
+      myShouldIgnoreNextSelectionRequest = false
+      myShouldIgnoreNextSelectionRequestSinceTimestamp = -1
+      myShouldIgnoreNextSelectionRequestTimeoutMs = -1
+      myCurrentRequestId = -1
+    }
 
     @RequiresEdt
-    private void selectFirstEnabledElement(final int requestId) {
+    private fun selectFirstEnabledElement(requestId: Int) {
       if (requestId != myCurrentRequestId) {
         // the request was cancelled or a newer request was created
-        return;
+        return
       }
-
-      if (!myOwner.isSelected()) {
-        return;
+      if (!myOwner.isSelected) {
+        return
       }
-
-      final var menuSelectionManager = MenuSelectionManager.defaultManager();
-
-      final var currentSelectedPath = menuSelectionManager.getSelectedPath();
-      if (currentSelectedPath.length < 2) {
-        return;
+      val menuSelectionManager = MenuSelectionManager.defaultManager()
+      val currentSelectedPath = menuSelectionManager.getSelectedPath()
+      if (currentSelectedPath.size < 2) {
+        return
       }
-
-      final var lastElementInCurrentPath = currentSelectedPath[currentSelectedPath.length - 1];
-
-      final MenuElement[] newSelectionPath;
-      if (lastElementInCurrentPath == myOwner.myStubItem) {
-        newSelectionPath = currentSelectedPath.clone();
+      val lastElementInCurrentPath = currentSelectedPath[currentSelectedPath.size - 1]
+      val newSelectionPath: Array<MenuElement?>
+      newSelectionPath = if (lastElementInCurrentPath === myOwner.myStubItem) {
+        currentSelectedPath.clone()
       }
-      else if (lastElementInCurrentPath == myOwner.getPopupMenu()) {
-        newSelectionPath = Arrays.copyOf(currentSelectedPath, currentSelectedPath.length + 1);
+      else if (lastElementInCurrentPath === myOwner.getPopupMenu()) {
+        currentSelectedPath.copyOf(currentSelectedPath.size + 1)
       }
-      else if ( (currentSelectedPath[currentSelectedPath.length - 2] == myOwner.getPopupMenu()) &&
-                !ArrayUtil.contains(lastElementInCurrentPath.getComponent(), myOwner.getMenuComponents()) ) {
-        newSelectionPath = currentSelectedPath.clone();
+      else if (currentSelectedPath[currentSelectedPath.size - 2] === myOwner.getPopupMenu() &&
+               !ArrayUtil.contains(lastElementInCurrentPath!!.component, *myOwner.getMenuComponents())) {
+        currentSelectedPath.clone()
       }
       else {
-        return;
+        return
       }
-
-      final var menuComponents = myOwner.getMenuComponents();
-      for (final var component : menuComponents) {
-        if ((component != myOwner.myStubItem) && component.isEnabled() && (component instanceof JMenuItem)) {
-          newSelectionPath[newSelectionPath.length - 1] = (MenuElement)component;
-          menuSelectionManager.setSelectedPath(newSelectionPath);
-
-          return;
+      val menuComponents = myOwner.getMenuComponents()
+      for (component in menuComponents) {
+        if (component !== myOwner.myStubItem && component.isEnabled && component is JMenuItem) {
+          newSelectionPath[newSelectionPath.size - 1] = component as MenuElement
+          menuSelectionManager.setSelectedPath(newSelectionPath)
+          return
         }
       }
+    }
+
+    companion object {
+      val isForceDisabled: Boolean = SystemInfo.isMacSystemMenu ||
+                                     !Registry.`is`("ide.popup.menu.navigation.keyboard.selectFirstEnabledSubItem", false)
     }
   }
 }
