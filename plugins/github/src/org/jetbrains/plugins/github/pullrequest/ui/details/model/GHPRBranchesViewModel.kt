@@ -69,8 +69,17 @@ internal class GHPRBranchesViewModel(
   override fun fetchAndCheckoutRemoteBranch() {
     val pullRequest = detailsState.value
     val headBranch = pullRequest.headRefName
-    val httpForkUrl = pullRequest.headRepository?.url
-    val sshForkUrl = pullRequest.headRepository?.sshUrl
+    val headRepository = pullRequest.headRepository
+    if (headRepository == null) {
+      vcsNotifier.notifyError(
+        GithubNotificationIdsHolder.PULL_REQUEST_CANNOT_SET_TRACKING_BRANCH,
+        GithubBundle.message("pull.request.branch.checkout.remote.cannot.find"),
+        GithubBundle.message("pull.request.branch.checkout.resolve.head.failed")
+      )
+      return
+    }
+    val httpForkUrl = headRepository.url
+    val sshForkUrl = headRepository.sshUrl
     val pullRequestAuthor = pullRequest.author
     if (pullRequestAuthor == null) {
       vcsNotifier.notifyError(
@@ -116,24 +125,17 @@ internal class GHPRBranchesViewModel(
     )
   }
 
-  private fun Git.findOrCreateRemote(repository: GitRepository, remoteName: String, httpUrl: String?, sshUrl: String?): GitRemote? {
+  private fun Git.findOrCreateRemote(repository: GitRepository, remoteName: String, httpUrl: String, sshUrl: String): GitRemote? {
     val existingRemote = GithubGitHelper.getInstance().findRemote(repository, httpUrl, sshUrl)
     if (existingRemote != null) return existingRemote
 
     val useSshUrl = GithubSettings.getInstance().isCloneGitUsingSsh
-    val sshOrHttpUrl = if (useSshUrl) sshUrl else httpUrl
+    val remoteUrl = if (useSshUrl) sshUrl else httpUrl
 
-    if (sshOrHttpUrl != null && repository.remotes.any { it.name == remoteName }) {
-      return createRemote(repository, "pull_$remoteName", sshOrHttpUrl)
+    if (repository.remotes.any { it.name == remoteName }) {
+      return createRemote(repository, "pull_$remoteName", remoteUrl)
     }
-
-    return when {
-      useSshUrl && sshUrl != null -> createRemote(repository, remoteName, sshUrl)
-      !useSshUrl && httpUrl != null -> createRemote(repository, remoteName, httpUrl)
-      sshUrl != null -> createRemote(repository, remoteName, sshUrl)
-      httpUrl != null -> createRemote(repository, remoteName, httpUrl)
-      else -> null
-    }
+    return createRemote(repository, remoteName, remoteUrl)
   }
 
   private fun Git.createRemote(repository: GitRepository, remoteName: String, url: String): GitRemote? =
