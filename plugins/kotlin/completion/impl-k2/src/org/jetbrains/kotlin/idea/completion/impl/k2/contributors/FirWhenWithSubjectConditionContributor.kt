@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierPr
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.addTypeArguments
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.createStarTypeArgumentsList
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertString
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.resolveToExpandedSymbol
 import org.jetbrains.kotlin.idea.completion.createKeywordElement
 import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
@@ -181,7 +182,7 @@ internal class FirWhenWithSubjectConditionContributor(
                 is KtWhenConditionIsPattern -> (condition.typeReference?.typeElement as? KtUserType)?.referenceExpression?.reference()
                 else -> null
             }
-            val resolvesTo = reference?.resolveToSymbol() as? KtNamedClassOrObjectSymbol
+            val resolvesTo = reference?.resolveToExpandedSymbol() as? KtNamedClassOrObjectSymbol
             resolvesTo?.classIdIfNonLocal
         }
 

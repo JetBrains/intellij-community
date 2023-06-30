@@ -3466,6 +3466,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
             public void testSmartCast3() throws Exception {
                 runTest("../testData/basic/common/when/smartCast3.kt");
             }
+
+            @TestMetadata("typealias.kt")
+            public void testTypealias() throws Exception {
+                runTest("../testData/basic/common/when/typealias.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
