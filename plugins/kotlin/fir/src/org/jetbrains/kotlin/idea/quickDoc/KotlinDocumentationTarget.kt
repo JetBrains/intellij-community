@@ -216,8 +216,13 @@ private fun @receiver:Nls StringBuilder.renderEnumSpecialFunction(
                 val containingClass = symbol.getContainingSymbol() as? KtClassOrObjectSymbol
                 val superClasses = containingClass?.superTypes?.mapNotNull { t -> t.expandedClassSymbol }
                 val kdoc = superClasses?.firstNotNullOfOrNull { superClass ->
-                    superClass.psi?.navigationElement?.findDescendantOfType<KDoc> { doc ->
-                        doc.getChildrenOfType<KDocSection>().any { it.findTagByName(name) != null }
+                    val navigationElement = superClass.psi?.navigationElement
+                    if (navigationElement is KtElement && navigationElement.containingKtFile.isCompiled) {
+                        null //no need to search documentation in decompiled code
+                    } else {
+                        navigationElement?.findDescendantOfType<KDoc> { doc ->
+                            doc.getChildrenOfType<KDocSection>().any { it.findTagByName(name) != null }
+                        }
                     }
                 }
 

@@ -17,7 +17,7 @@ abstract class AbstractFirQuickDocTest : AbstractQuickDocProviderTest() {
     }
 
     override fun getProjectDescriptor(): KotlinLightProjectDescriptor {
-        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
+        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceNoSources()
     }
 
     override fun isFirPlugin(): Boolean {
