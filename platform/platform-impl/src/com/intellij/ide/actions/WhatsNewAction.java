@@ -77,11 +77,6 @@ public class WhatsNewAction extends AnAction implements DumbAware {
   }
 
   @ApiStatus.Internal
-  public static boolean isAvailable() {
-    return ApplicationInfoEx.getInstanceEx().isShowWhatsNewOnUpdate() && !AppMode.isRemoteDevHost();
-  }
-
-  @ApiStatus.Internal
   public static void openWhatsNewPage(@NotNull Project project, @NotNull String url) {
     if (!JBCefApp.isSupported()) {
       var name = ApplicationNamesInfo.getInstance().getFullProductName();

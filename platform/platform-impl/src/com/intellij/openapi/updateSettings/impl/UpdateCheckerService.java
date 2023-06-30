@@ -6,6 +6,7 @@ import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.WhatsNewAction;
+import com.intellij.ide.actions.WhatsNewUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.InstalledPluginsState;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
@@ -187,7 +188,7 @@ final class UpdateCheckerService {
 
   private static void showWhatsNew(Project project, BuildNumber current) {
     String url = ApplicationInfoEx.getInstanceEx().getWhatsNewUrl();
-    if (url != null && WhatsNewAction.isAvailable() && shouldShowWhatsNew(current, ApplicationInfoEx.getInstanceEx().isMajorEAP())) {
+    if (url != null && WhatsNewUtil.isWhatsNewAvailable() && shouldShowWhatsNew(current, ApplicationInfoEx.getInstanceEx().isMajorEAP())) {
       if (UpdateSettings.getInstance().isShowWhatsNewEditor()) {
         ApplicationManager.getApplication().invokeLater(() -> WhatsNewAction.openWhatsNewPage(project, url));
         IdeUpdateUsageTriggerCollector.majorUpdateHappened(true);
