@@ -18,6 +18,7 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.repository.ArtifactRepository;
+import org.apache.maven.bridge.MavenRepositorySystem;
 import org.apache.maven.cli.MavenCli;
 import org.apache.maven.cli.internal.extension.model.CoreExtension;
 import org.apache.maven.execution.*;
@@ -35,7 +36,6 @@ import org.apache.maven.plugin.LegacySupport;
 import org.apache.maven.plugin.internal.PluginDependenciesResolver;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuildingException;
-import org.apache.maven.repository.RepositorySystem;
 import org.apache.maven.session.scope.internal.SessionScope;
 import org.apache.maven.settings.Settings;
 import org.apache.maven.settings.building.DefaultSettingsBuilderFactory;
@@ -83,7 +83,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
   private final boolean myAlwaysUpdateSnapshots;
 
-  @NotNull private final RepositorySystem myRepositorySystem;
+  @NotNull private final MavenRepositorySystem myRepositorySystem;
 
   @NotNull private final Maven40ImporterSpy myImporterSpy;
 
@@ -194,7 +194,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       ReflectionUtilRt.getField(cliRequestClass, cliRequest, Properties.class, "userProperties")
     );
 
-    myRepositorySystem = getComponent(RepositorySystem.class);
+    myRepositorySystem = getComponent(MavenRepositorySystem.class);
 
     Maven40ImporterSpy importerSpy = getComponentIfExists(Maven40ImporterSpy.class);
 
@@ -926,8 +926,8 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     List<ArtifactRepository> result = map2ArtifactRepositories(repositories);
     if (getComponent(LegacySupport.class).getRepositorySession() == null) {
       myRepositorySystem.injectMirror(result, myMavenSettings.getMirrors());
-      myRepositorySystem.injectProxy(result, myMavenSettings.getProxies());
-      myRepositorySystem.injectAuthentication(result, myMavenSettings.getServers());
+      //myRepositorySystem.injectProxy(result, myMavenSettings.getProxies());
+      //myRepositorySystem.injectAuthentication(result, myMavenSettings.getServers());
     }
     return result;
   }
@@ -946,7 +946,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
   private ArtifactRepository buildArtifactRepository(Repository repo) throws InvalidRepositoryException {
-    RepositorySystem repositorySystem = myRepositorySystem;
+    MavenRepositorySystem repositorySystem = myRepositorySystem;
     RepositorySystemSession session = getComponent(LegacySupport.class).getRepositorySession();
 
     ArtifactRepository repository = repositorySystem.buildArtifactRepository(repo);
