@@ -229,7 +229,6 @@ private val inspectionLikePostProcessingGroup =
         intentionBasedProcessing(RemoveEmptyPrimaryConstructorIntention()),
         MayBeConstantInspectionBasedProcessing(),
         RemoveForExpressionLoopParameterTypeProcessing(),
-        intentionBasedProcessing(ReplaceMapGetOrDefaultIntention()),
         inspectionBasedProcessing(ReplaceGuardClauseWithFunctionCallInspection()),
         inspectionBasedProcessing(KotlinInspectionFacade.instance.sortModifiers),
         intentionBasedProcessing(ConvertToRawStringTemplateIntention(), additionalChecker = ::shouldConvertToRawString),
