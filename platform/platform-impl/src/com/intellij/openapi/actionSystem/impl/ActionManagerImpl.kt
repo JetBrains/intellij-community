@@ -462,9 +462,14 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
     synchronized(lock) {
       if (element.attributes.get(OVERRIDES_ATTR_NAME).toBoolean()) {
-        if (getActionOrStub(id) == null) {
-          LOG.error("$element '$id' doesn't override anything")
+        val actionOrStub = getActionOrStub(id)
+        if (actionOrStub == null) {
+          LOG.error("'$id' action group in '${plugin.name}' does not override anything")
           return
+        }
+        if (action is ActionGroup && actionOrStub is ActionGroup &&
+            action.isPopup != actionOrStub.isPopup) {
+          LOG.info("'$id' action group in '${plugin.name}' sets isPopup=$action.isPopup")
         }
 
         val prev = replaceAction(actionId = id, newAction = action, pluginId = plugin.pluginId)
@@ -542,6 +547,14 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
       @Suppress("NAME_SHADOWING")
       val id = id ?: "<anonymous-group-${anonymousGroupIdCounter++}>"
+      val popup = element.attributes.get("popup")
+      if (popup != null) {
+        group.isPopup = popup.toBoolean()
+        if (group is ActionGroupStub) {
+          group.popupDefinedInXml = true
+        }
+      }
+
       registerOrReplaceActionInner(element = element, id = id, action = group, plugin = module)
 
       val presentation = group.templatePresentation
@@ -586,14 +599,6 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
         presentation.icon = loadIcon(module = module, iconPath = iconPath, requestor = className)
       }
 
-      // popup
-      val popup = element.attributes.get("popup")
-      if (popup != null) {
-        group.isPopup = popup.toBoolean()
-        if (group is ActionGroupStub) {
-          group.popupDefinedInXml = true
-        }
-      }
       val searchable = element.attributes.get("searchable")
       if (searchable != null) {
         group.isSearchable = searchable.toBoolean()
