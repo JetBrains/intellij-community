@@ -42,13 +42,14 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
   val descriptionHtml: Flow<String>
   val targetBranch: StateFlow<String>
   val sourceBranch: StateFlow<String>
+  val isApproved: Flow<Boolean>
   val hasConflicts: Flow<Boolean>
   val isDraft: Flow<Boolean>
   val reviewRequestState: Flow<ReviewRequestState>
   val isMergeable: Flow<Boolean>
   val shouldBeRebased: Flow<Boolean>
   val approvedBy: Flow<List<GitLabUserDTO>>
-  val reviewers: Flow<List<GitLabUserDTO>>
+  val reviewers: Flow<List<GitLabReviewerDTO>>
   val pipeline: Flow<GitLabPipelineDTO?>
   val changes: Flow<GitLabMergeRequestChanges>
 
@@ -122,6 +123,7 @@ internal class LoadedGitLabMergeRequest(
   override val descriptionHtml: Flow<String> = description.map { if (it.isNotBlank()) GitLabUIUtil.convertToHtml(it) else it }
   override val targetBranch: StateFlow<String> = mergeRequestDetailsState.mapState(cs) { it.targetBranch }
   override val sourceBranch: StateFlow<String> = mergeRequestDetailsState.mapState(cs) { it.sourceBranch }
+  override val isApproved: Flow<Boolean> = mergeRequestDetailsState.map { it.isApproved }
   override val hasConflicts: Flow<Boolean> = mergeRequestDetailsState.map { it.conflicts }
   override val isDraft: Flow<Boolean> = mergeRequestDetailsState.map { it.draft }
   override val reviewRequestState: Flow<ReviewRequestState> =
@@ -137,7 +139,7 @@ internal class LoadedGitLabMergeRequest(
   override val isMergeable: Flow<Boolean> = mergeRequestDetailsState.map { it.isMergeable }
   override val shouldBeRebased: Flow<Boolean> = mergeRequestDetailsState.map { it.shouldBeRebased }
   override val approvedBy: Flow<List<GitLabUserDTO>> = mergeRequestDetailsState.map { it.approvedBy }
-  override val reviewers: Flow<List<GitLabUserDTO>> = mergeRequestDetailsState.map { it.reviewers }
+  override val reviewers: Flow<List<GitLabReviewerDTO>> = mergeRequestDetailsState.map { it.reviewers }
   override val pipeline: Flow<GitLabPipelineDTO?> = mergeRequestDetailsState.map { it.headPipeline }
   override val changes: Flow<GitLabMergeRequestChanges> = mergeRequestDetailsState
     .distinctUntilChangedBy(GitLabMergeRequestFullDetails::diffRefs).map {
