@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.base.fir.analysisApiProviders
 
@@ -8,8 +8,8 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.PsiModificationTrackerImpl
 import com.intellij.psi.impl.PsiTreeChangeEventImpl
 import com.intellij.psi.impl.PsiTreeChangePreprocessor
-import org.jetbrains.kotlin.analysis.low.level.api.fir.element.builder.getNonLocalContainingInBodyDeclarationWith
-import org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.isReanalyzableContainer
+import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
+import org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.getNonLocalReanalyzableContainingDeclaration
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.util.module
 
@@ -64,6 +64,7 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
 
     }
 
+    @OptIn(LLFirInternals::class)
     private fun isOutOfBlockChange(psi: PsiElement): Boolean {
         if (!psi.isValid) {
             /**
@@ -76,8 +77,7 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
             return false
         }
 
-        val container = psi.getNonLocalContainingInBodyDeclarationWith() ?: return true
-        return !isReanalyzableContainer(container)
+        return psi.getNonLocalReanalyzableContainingDeclaration() != null
     }
 
     // Copy logic from PsiModificationTrackerImpl.treeChanged(). Some out-of-code-block events are written to language modification
