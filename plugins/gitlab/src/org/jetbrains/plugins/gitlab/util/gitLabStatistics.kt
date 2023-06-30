@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.gitlab.api.GitLabGQLQuery
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue
@@ -34,14 +35,14 @@ internal object GitLabStatistics {
   //endregion
 
   //region Counters
-  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters",  version = 4)
+  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters",  version = 5)
 
   /**
    * Server returned 5** error
    */
   private val SERVER_ERROR_EVENT = COUNTERS_GROUP.registerEvent("api.server.error.occurred",
-                                                                EventFields.Enum("requestName", GitLabApiRequestName::class.java),
-                                                                EventFields.Boolean("isDefaultServer"),
+                                                                EventFields.Enum("request_name", GitLabApiRequestName::class.java),
+                                                                EventFields.Boolean("is_default_server"),
                                                                 EventFields.Version)
 
   fun logServerError(request: GitLabApiRequestName, isDefaultServer: Boolean, serverVersion: String?): Unit =
@@ -73,12 +74,12 @@ internal object GitLabStatistics {
     override fun getGroup(): EventLogGroup = COUNTERS_GROUP
   }
 
-  private val FILTER_SEARCH_PRESENT = EventFields.Boolean("hasSearch")
-  private val FILTER_STATE_PRESENT = EventFields.Boolean("hasState")
-  private val FILTER_AUTHOR_PRESENT = EventFields.Boolean("hasAuthor")
-  private val FILTER_ASSIGNEE_PRESENT = EventFields.Boolean("hasAssignee")
-  private val FILTER_REVIEWER_PRESENT = EventFields.Boolean("hasReviewer")
-  private val FILTER_LABEL_PRESENT = EventFields.Boolean("hasLabel")
+  private val FILTER_SEARCH_PRESENT = EventFields.Boolean("has_search")
+  private val FILTER_STATE_PRESENT = EventFields.Boolean("has_state")
+  private val FILTER_AUTHOR_PRESENT = EventFields.Boolean("has_author")
+  private val FILTER_ASSIGNEE_PRESENT = EventFields.Boolean("has_assignee")
+  private val FILTER_REVIEWER_PRESENT = EventFields.Boolean("has_reviewer")
+  private val FILTER_LABEL_PRESENT = EventFields.Boolean("has_label")
 
   /**
    * Merge requests list filters applied
@@ -91,8 +92,9 @@ internal object GitLabStatistics {
                                                                          FILTER_REVIEWER_PRESENT,
                                                                          FILTER_LABEL_PRESENT)
 
-  fun logMrFiltersApplied(filters: GitLabMergeRequestsFiltersValue): Unit =
+  fun logMrFiltersApplied(project: Project?, filters: GitLabMergeRequestsFiltersValue): Unit =
     FILTERS_APPLIED_EVENT.log(
+      project,
       EventPair(FILTER_SEARCH_PRESENT, filters.searchQuery != null),
       EventPair(FILTER_STATE_PRESENT, filters.state != null),
       EventPair(FILTER_AUTHOR_PRESENT, filters.author != null),
@@ -107,33 +109,33 @@ internal object GitLabStatistics {
    */
   private val MR_TW_LOGIN_OPENED_EVENT = COUNTERS_GROUP.registerEvent("mergerequests.toolwindow.login.opened")
 
-  fun logMrTwLoginOpened(): Unit = MR_TW_LOGIN_OPENED_EVENT.log()
+  fun logMrTwLoginOpened(project: Project): Unit = MR_TW_LOGIN_OPENED_EVENT.log(project)
 
   /**
    * Merge requests toolwindow was opened
    */
   private val MR_LIST_OPENED_EVENT = COUNTERS_GROUP.registerEvent("mergerequests.list.opened")
 
-  fun logMrListOpened(): Unit = MR_LIST_OPENED_EVENT.log()
+  fun logMrListOpened(project: Project): Unit = MR_LIST_OPENED_EVENT.log(project)
 
   /**
    * Merge request details were opened
    */
   private val MR_DETAILS_OPENED_EVENT = COUNTERS_GROUP.registerEvent("mergerequests.details.opened")
 
-  fun logMrDetailsOpened(): Unit = MR_DETAILS_OPENED_EVENT.log()
+  fun logMrDetailsOpened(project: Project): Unit = MR_DETAILS_OPENED_EVENT.log(project)
 
   /**
    * Merge request diff was opened
    */
-  private val MR_DIFF_OPENED_EVENT = COUNTERS_GROUP.registerEvent("mergerequests.diff.opened", EventFields.Boolean("isCumulative"))
+  private val MR_DIFF_OPENED_EVENT = COUNTERS_GROUP.registerEvent("mergerequests.diff.opened", EventFields.Boolean("is_cumulative"))
 
-  fun logMrDiffOpened(isCumulative: Boolean): Unit = MR_DIFF_OPENED_EVENT.log(isCumulative)
+  fun logMrDiffOpened(project: Project, isCumulative: Boolean): Unit = MR_DIFF_OPENED_EVENT.log(project, isCumulative)
 
   /**
    * Merge request action was executed
    */
-  private val MR_ACTION_FIELD = EventFields.Enum("action", MergeRequestAction::class.java)
+  private val MR_ACTION_FIELD = EventFields.Enum<MergeRequestAction>("action")
 
   enum class MergeRequestAction {
     MERGE,
@@ -159,7 +161,7 @@ internal object GitLabStatistics {
    */
   private val MR_ACTION_EVENT = COUNTERS_GROUP.registerEvent("mergerequests.action.performed", MR_ACTION_FIELD)
 
-  fun logMrActionExecuted(action: MergeRequestAction): Unit = MR_ACTION_EVENT.log(action)
+  fun logMrActionExecuted(project: Project, action: MergeRequestAction): Unit = MR_ACTION_EVENT.log(project, action)
   //endregion
 }
 

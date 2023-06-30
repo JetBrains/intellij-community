@@ -38,6 +38,7 @@ internal class GitLabReviewListTabComponentDescriptor(
   private val accountVm = GitLabAccountViewModelImpl(project, cs, ctx.account, accountManager)
   private val filterVm: GitLabMergeRequestsFiltersViewModel = GitLabMergeRequestsFiltersViewModelImpl(
     cs,
+    project,
     currentUser = ctx.currentUser,
     historyModel = GitLabMergeRequestsFiltersHistoryModel(project.service<GitLabMergeRequestsPersistentFiltersHistory>()),
     avatarIconsProvider = avatarIconsProvider,
