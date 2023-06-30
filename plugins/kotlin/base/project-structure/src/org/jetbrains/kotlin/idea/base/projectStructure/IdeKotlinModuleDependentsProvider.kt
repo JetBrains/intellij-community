@@ -1,11 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.projectStructure
 
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
+import com.intellij.psi.util.CachedValue
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import org.jetbrains.kotlin.analysis.project.structure.KtBuiltinsModule
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
@@ -68,4 +74,30 @@ internal class IdeKotlinModuleDependentsProvider(private val project: Project) :
                 addIfNotNull(moduleEntity.findModule(snapshot)?.productionOrTestSourceModuleInfo?.toKtModule())
             }
     }
+
+    /**
+     * Caching transitive dependents is crucial. [getTransitiveDependents] will frequently be called by session invalidation when typing in
+     * a Kotlin file. Large projects might have core modules with over a hundred or even a thousand transitive dependents. At the same time,
+     * we can keep the size of this cache small, because transitive dependents will usually only be requested for a single module (e.g. the
+     * module to be invalidated after an out-of-block modification).
+     *
+     * The timing of invalidation is important, since the [IdeKotlinModuleDependentsProvider] may be used in workspace model listeners when
+     * project structure changes. Using a *before change* workspace model listener is not an option, because we'd have to guarantee that
+     * this listener is placed after all other listeners which might use `IdeKotlinModuleDependentsProvider`. It's not entirely impossible
+     * due to the existence of `Fe10/FirOrderedWorkspaceModelChangeListener`, but a simpler solution such as the project root modification
+     * tracker, which is incremented after *before change* events have been handled, seems preferable.
+     */
+    private val transitiveDependentsCache: CachedValue<Cache<KtModule, Set<KtModule>>> = CachedValuesManager.getManager(project).createCachedValue {
+        CachedValueProvider.Result.create(
+            Caffeine.newBuilder().maximumSize(100).build(),
+            ProjectRootModificationTracker.getInstance(project),
+        )
+    }
+
+    override fun getTransitiveDependents(module: KtModule): Set<KtModule> =
+        transitiveDependentsCache.value.get(module) {
+            // The computation does not reuse sub-results that may already have been cached because transitive dependents are usually only
+            // computed for select modules, so the performance impact of this computation is expected to be negligible.
+            computeTransitiveDependents(it)
+        }
 }
