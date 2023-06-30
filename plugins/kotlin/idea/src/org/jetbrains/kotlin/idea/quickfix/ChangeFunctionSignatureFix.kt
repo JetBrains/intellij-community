@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor.Kind.SYNTHESIZED
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
@@ -69,7 +70,7 @@ abstract class ChangeFunctionSignatureFix(
     }
 
     private fun isSpecialName(name: String): Boolean {
-        return name == "it" || name == "field"
+        return name == StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier || name == "field"
     }
 
     companion object : KotlinSingleIntentionActionFactoryWithDelegate<KtCallElement, CallableDescriptor>() {

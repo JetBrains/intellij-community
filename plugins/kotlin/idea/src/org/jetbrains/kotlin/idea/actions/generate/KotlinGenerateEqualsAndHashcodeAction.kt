@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -267,7 +268,7 @@ class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<Kot
                 KotlinBuiltIns.isArrayOrPrimitiveArray(type) -> {
                     val canUseArrayContentFunctions = targetClass.canUseArrayContentFunctions()
                     val shouldWrapInLet = isNullable && !canUseArrayContentFunctions
-                    val hashCodeArg = if (shouldWrapInLet) "it" else ref
+                    val hashCodeArg = if (shouldWrapInLet) StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier else ref
                     val hashCodeCall = generateArrayHashCodeCall(this, canUseArrayContentFunctions, hashCodeArg)
                     if (shouldWrapInLet) "$ref?.let { $hashCodeCall }" else hashCodeCall
                 }

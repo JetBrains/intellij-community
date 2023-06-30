@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -185,7 +186,7 @@ internal fun collectUsagesToRemove(declaration: KtDeclaration): UsagesToRemove? 
     val nameToSearch = when (declaration) {
         is KtParameter -> declaration.nameAsName
         is KtVariableDeclaration -> declaration.nameAsName
-        else -> Name.identifier("it")
+        else -> StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME
     } ?: return null
 
     // Note: list should contain properties in order to create destructuring declaration

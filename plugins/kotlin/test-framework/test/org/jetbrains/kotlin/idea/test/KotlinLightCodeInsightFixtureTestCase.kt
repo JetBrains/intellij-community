@@ -316,7 +316,6 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
     }
 
     protected open fun getDefaultProjectDescriptor(): KotlinLightProjectDescriptor = KotlinLightProjectDescriptor.INSTANCE
-
     protected fun performNotWriteEditorAction(actionId: String): Boolean {
         val dataContext = (myFixture.editor as EditorEx).dataContext
 

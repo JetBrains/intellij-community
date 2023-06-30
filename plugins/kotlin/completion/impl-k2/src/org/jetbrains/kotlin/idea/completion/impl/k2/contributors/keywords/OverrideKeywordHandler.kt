@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.completion.contributors.keywords
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.ui.RowIcon
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
@@ -14,19 +13,22 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererModifierFilter
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtVariableSymbol
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.KtIconProvider.getBaseIcon
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
-import org.jetbrains.kotlin.idea.completion.*
+import org.jetbrains.kotlin.idea.completion.OverridesCompletionLookupElementDecorator
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandler
-import org.jetbrains.kotlin.idea.core.overrideImplement.*
+import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType
+import org.jetbrains.kotlin.idea.core.overrideImplement.KtClassMember
+import org.jetbrains.kotlin.idea.core.overrideImplement.KtOverrideMembersHandler
+import org.jetbrains.kotlin.idea.core.overrideImplement.MemberGenerateMode
 import org.jetbrains.kotlin.idea.core.overrideImplement.generateMember
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -52,7 +54,8 @@ internal class OverrideKeywordHandler(
         val result = mutableListOf<LookupElement>()
         val position = parameters.position
         val isConstructorParameter = position.getNonStrictParentOfType<KtPrimaryConstructor>() != null
-        val classOrObject = position.getNonStrictParentOfType<KtClassOrObject>() ?: return result
+        val parent = position.getNonStrictParentOfType<KtClassOrObject>() ?: return result
+        val classOrObject = parent.getOriginalDeclaration() as? KtClassOrObject ?: parent
         val members = collectMembers(classOrObject, isConstructorParameter)
 
         for (member in members) {
@@ -180,7 +183,7 @@ internal class OverrideKeywordHandler(
                     annotationFilter = KtRendererAnnotationsFilter.NONE
                 }
                 modifiersRenderer = modifiersRenderer.with {
-                    modifierFilter = KtRendererModifierFilter.onlyWith(KtTokens.TYPE_MODIFIER_KEYWORDS)
+                    keywordsRenderer = keywordsRenderer.with { keywordFilter = KtRendererKeywordFilter.onlyWith(KtTokens.TYPE_MODIFIER_KEYWORDS) }
                 }
             }
     }

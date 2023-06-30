@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
+import org.jetbrains.kotlin.builtins.StandardNames
 import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -145,7 +146,7 @@ class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention
         } else {
             psiFactory.createExpressionByPattern(
                 "${loopLabel}for($0 in $1){ $2 }",
-                parameters.singleOrNull() ?: "it",
+                parameters.singleOrNull() ?: StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier,
                 loopRange,
                 body.allChildren
             )

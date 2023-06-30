@@ -390,6 +390,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/functionImport.before.Main.kt");
             }
 
+            @TestMetadata("functionPreferNotDeprecated.test")
+            public void testFunctionPreferNotDeprecated() throws Exception {
+                runTest("testData/quickfix/autoImports/functionPreferNotDeprecated.test");
+            }
+
             @TestMetadata("importAliasClassAlreadyExists.before.Main.kt")
             public void testImportAliasClassAlreadyExists() throws Exception {
                 runTest("testData/quickfix/autoImports/importAliasClassAlreadyExists.before.Main.kt");

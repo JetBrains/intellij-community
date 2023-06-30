@@ -10,17 +10,17 @@ public final class BrokenMethodKt {
             public fun hashCode() : int = UastEmptyExpression
             public fun equals(@org.jetbrains.annotations.Nullable other: java.lang.Object) : boolean = UastEmptyExpression
             public static final class Used {
-                @null public static final var Companion: TestUsed.Used.Companion
+                @null public static final var Companion: Companion
                 @org.jetbrains.annotations.NotNull private final var parameter: java.lang.Object
                 public final fun getParameter() : java.lang.Object = UastEmptyExpression
                 public fun Used(@org.jetbrains.annotations.NotNull parameter: java.lang.Object) = UastEmptyExpression
                 public final fun component1() : java.lang.Object = UastEmptyExpression
-                public final fun copy(@org.jetbrains.annotations.NotNull parameter: java.lang.Object) : TestUsed.Used = UastEmptyExpression
+                public final fun copy(@org.jetbrains.annotations.NotNull parameter: java.lang.Object) : Used = UastEmptyExpression
                 public fun toString() : java.lang.String = UastEmptyExpression
                 public fun hashCode() : int = UastEmptyExpression
                 public fun equals(@org.jetbrains.annotations.Nullable other: java.lang.Object) : boolean = UastEmptyExpression
                 public static final class Companion {
-                    public final fun doStuff1(@org.jetbrains.annotations.NotNull $this$doStuff1: java.lang.Object) : TestUsed.Used {
+                    public final fun doStuff1(@org.jetbrains.annotations.NotNull $this$doStuff1: java.lang.Object) : Used {
                         return <init>(this)
                     }
                     private fun Companion() = UastEmptyExpression

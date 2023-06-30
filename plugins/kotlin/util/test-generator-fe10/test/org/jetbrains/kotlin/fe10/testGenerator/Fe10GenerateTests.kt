@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.idea.AbstractExpressionSelectionTest
 import org.jetbrains.kotlin.idea.AbstractSmartSelectionTest
 import org.jetbrains.kotlin.idea.AbstractWorkSelectionTest
 import org.jetbrains.kotlin.idea.actions.AbstractGotoTestOrCodeActionTest
-import org.jetbrains.kotlin.idea.actions.AbstractKotlinAddImportActionTest
+import org.jetbrains.kotlin.idea.actions.AbstractK1AddImportActionTest
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.caches.resolve.AbstractMultiModuleLineMarkerTest
 import org.jetbrains.kotlin.idea.caches.resolve.AbstractMultiPlatformHighlightingTest
@@ -826,7 +826,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("addImportAlias", pattern = KT_WITHOUT_DOTS)
         }
 
-        testClass<AbstractKotlinAddImportActionTest> {
+        testClass<AbstractK1AddImportActionTest> {
             model("idea/actions/kotlinAddImportAction", pattern = KT_WITHOUT_DOTS)
         }
 

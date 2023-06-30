@@ -9,7 +9,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.CodeStyleManager
-import com.intellij.psi.stubs.StubElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.core.insertMembersAfter
@@ -19,7 +18,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererModifierFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -342,7 +341,7 @@ abstract class KtGenerateMembersHandler(
                 annotationFilter = KtRendererAnnotationsFilter.NONE
             }
             modifiersRenderer = modifiersRenderer.with {
-                modifierFilter = KtRendererModifierFilter.onlyWith(KtTokens.OVERRIDE_KEYWORD)
+                keywordsRenderer = keywordsRenderer.with { keywordFilter = KtRendererKeywordFilter.onlyWith(KtTokens.OVERRIDE_KEYWORD) }
             }
         }
     }

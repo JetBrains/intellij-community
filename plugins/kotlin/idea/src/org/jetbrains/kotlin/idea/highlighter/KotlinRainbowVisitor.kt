@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors.*
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.ideaExtensions.FE10KotlinTargetElementEvaluator
@@ -47,7 +48,7 @@ class KotlinRainbowVisitor : RainbowVisitor() {
                     if (targetElement.isRainbowDeclaration()) {
                         addRainbowHighlight(targetElement, element)
                     }
-                } else if (element.getReferencedName() == "it") {
+                } else if (element.getReferencedNameAsName() == StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME) {
                     val itTargetElement =
                         KOTLIN_TARGET_ELEMENT_EVALUATOR.getElementByReference(reference, TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED)
 

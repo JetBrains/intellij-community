@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererModifierFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererOtherModifiersProvider
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
@@ -119,7 +119,7 @@ fun KtAnalysisSession.generateMember(
         }
 
         modifiersRenderer = modifiersRenderer.with {
-            modifierFilter = KtRendererModifierFilter.without(KtTokens.OPERATOR_KEYWORD)
+            keywordsRenderer = keywordsRenderer.with { keywordFilter = KtRendererKeywordFilter.without(KtTokens.OPERATOR_KEYWORD) }
 
             modalityProvider = modalityProvider.onlyIf { s -> s != symbol }
 
@@ -298,21 +298,22 @@ private object RenderOptions {
             annotationFilter = KtRendererAnnotationsFilter.NONE
         }
         modifiersRenderer = modifiersRenderer.with {
-            modifierFilter = KtRendererModifierFilter.onlyWith(KtTokens.OVERRIDE_KEYWORD)
+            keywordsRenderer = keywordsRenderer.with { keywordFilter = KtRendererKeywordFilter.onlyWith(KtTokens.OVERRIDE_KEYWORD) }
         }
     }
 
     val actualRenderOptions = overrideRenderOptions.with {
         modifiersRenderer = modifiersRenderer.with {
-            modifierFilter = modifierFilter or
-                    KtRendererModifierFilter.onlyWith(KtTokens.INNER_KEYWORD) or
-                    KtRendererModifierFilter.onlyWith(KtTokens.VISIBILITY_MODIFIERS)
-            KtRendererModifierFilter.onlyWith(KtTokens.MODALITY_MODIFIERS)
+            keywordsRenderer = keywordsRenderer.with {
+                keywordFilter =
+                    keywordFilter or KtRendererKeywordFilter.onlyWith(KtTokens.INNER_KEYWORD) or KtRendererKeywordFilter.onlyWith(KtTokens.VISIBILITY_MODIFIERS)
+                KtRendererKeywordFilter.onlyWith(KtTokens.MODALITY_MODIFIERS)
+            }
         }
     }
     val expectRenderOptions = actualRenderOptions.with {
         modifiersRenderer = modifiersRenderer.with {
-            modifierFilter = modifierFilter or KtRendererModifierFilter.onlyWith(KtTokens.ACTUAL_KEYWORD)
+            keywordsRenderer = keywordsRenderer.with { keywordFilter = keywordFilter or KtRendererKeywordFilter.onlyWith(KtTokens.ACTUAL_KEYWORD) }
         }
     }
 }

@@ -23,6 +23,11 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("abstractFunction/abstractFunction.test")
+    public void testAbstractFunction_AbstractFunction() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/abstractFunction/abstractFunction.test");
+    }
+
     @TestMetadata("ambiguousClassFunImportRenameClass/ambiguousClassFunImportRenameClass.test")
     public void testAmbiguousClassFunImportRenameClass_AmbiguousClassFunImportRenameClass() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/ambiguousClassFunImportRenameClass/ambiguousClassFunImportRenameClass.test");

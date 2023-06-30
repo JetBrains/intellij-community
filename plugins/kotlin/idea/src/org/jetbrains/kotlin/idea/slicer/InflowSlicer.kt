@@ -9,6 +9,7 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.slicer.SliceUsage
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.functions.FunctionInvokeDescriptor
 import org.jetbrains.kotlin.cfg.pseudocode.instructions.Instruction
 import org.jetbrains.kotlin.cfg.pseudocode.instructions.eval.*
@@ -231,7 +232,7 @@ class InflowSlicer(
                     is ValueParameterDescriptor -> {
                         if (accessedDeclaration == null) {
                             val anonymousFunction = accessedDescriptor.containingDeclaration as? AnonymousFunctionDescriptor
-                            if (anonymousFunction != null && accessedDescriptor.name.asString() == "it") {
+                            if (anonymousFunction != null && accessedDescriptor.name == StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME) {
                                 val functionLiteral = anonymousFunction.source.getPsi() as KtFunctionLiteral
                                 val parameterDescriptor = anonymousFunction.valueParameters.first()
                                 processCalls(functionLiteral, false, ArgumentSliceProducer(parameterDescriptor))
@@ -379,7 +380,7 @@ class InflowSlicer(
 
     private fun KtFunctionLiteral.implicitItUsages(): Collection<KtSimpleNameExpression> {
         return collectDescendantsOfType(fun(expression: KtSimpleNameExpression): Boolean {
-            if (expression.getQualifiedExpressionForSelector() != null || expression.getReferencedName() != "it") return false
+            if (expression.getQualifiedExpressionForSelector() != null || expression.getReferencedNameAsName() != StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME) return false
             val lBrace = FE10KotlinTargetElementEvaluator.findLambdaOpenLBraceForGeneratedIt(expression.mainReference) ?: return false
             return lBrace == this.lBrace.node.treeNext.psi
         })

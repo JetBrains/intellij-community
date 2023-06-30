@@ -18,11 +18,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.packageDependencies.DependencyValidationManager
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiErrorElement
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiModifier
-import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.*
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.elementType
 import com.intellij.util.Processors
@@ -57,7 +53,6 @@ import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.name.parentOrNull
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.KtPsiUtil.isSelectorInQualified
@@ -81,7 +76,6 @@ import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import java.util.*
 
 /**
  * Check possibility and perform fix for unresolved references.
@@ -145,19 +139,19 @@ abstract class ImportFixBase<T : KtExpression> protected constructor(
             suggestionDescriptors.mapTo(hashSetOf()) { it.original }.takeIf { it.isNotEmpty() } ?: return ""
 
         val ktFile = element?.containingKtFile ?: return KotlinBundle.message("fix.import")
-        val languageVersionSettings = ktFile.languageVersionSettings
-        val prioritizer = Prioritizer(ktFile, element)
+        val prioritizer = createPrioritizerForFile(ktFile)
+        val expressionWeigher = ExpressionWeigher.createWeigher(element)
 
-        val kindNameGroupedByKind = descriptors.mapNotNull { descriptor ->
+        val importInfos = descriptors.mapNotNull { descriptor ->
             val kind = when {
-                descriptor.isExtensionProperty -> ImportKind.EXTENSION_PROPERTY
-                descriptor is PropertyDescriptor -> ImportKind.PROPERTY
-                descriptor is ClassConstructorDescriptor -> ImportKind.CLASS
-                descriptor is FunctionDescriptor && descriptor.isOperator -> ImportKind.OPERATOR
-                descriptor is FunctionDescriptor && descriptor.isExtension -> ImportKind.EXTENSION_FUNCTION
-                descriptor is FunctionDescriptor -> ImportKind.FUNCTION
-                DescriptorUtils.isObject(descriptor) -> ImportKind.OBJECT
-                descriptor is ClassDescriptor -> ImportKind.CLASS
+                descriptor.isExtensionProperty -> ImportFixHelper.ImportKind.EXTENSION_PROPERTY
+                descriptor is PropertyDescriptor -> ImportFixHelper.ImportKind.PROPERTY
+                descriptor is ClassConstructorDescriptor -> ImportFixHelper.ImportKind.CLASS
+                descriptor is FunctionDescriptor && descriptor.isOperator -> ImportFixHelper.ImportKind.OPERATOR
+                descriptor is FunctionDescriptor && descriptor.isExtension -> ImportFixHelper.ImportKind.EXTENSION_FUNCTION
+                descriptor is FunctionDescriptor -> ImportFixHelper.ImportKind.FUNCTION
+                DescriptorUtils.isObject(descriptor) -> ImportFixHelper.ImportKind.OBJECT
+                descriptor is ClassDescriptor -> ImportFixHelper.ImportKind.CLASS
                 else -> null
             } ?: return@mapNotNull null
 
@@ -180,54 +174,11 @@ abstract class ImportFixBase<T : KtExpression> protected constructor(
                     append(it.asString())
                 }
             }
-            ImportName(kind, name, prioritizer.priority(descriptor, languageVersionSettings))
-        }.groupBy(keySelector = { it.kind }) { it }
+            val priority = createDescriptorPriority(prioritizer, expressionWeigher, descriptor)
 
-        return if (kindNameGroupedByKind.size == 1) {
-            val (kind, names) = kindNameGroupedByKind.entries.first()
-            val sortedImportNames = TreeSet<ImportName>(compareBy({ it.priority }, { it.name }))
-            sortedImportNames.addAll(names)
-            val firstName = sortedImportNames.first().name
-            val singlePackage = suggestions.groupBy { it.parentOrNull() ?: FqName.ROOT }.size == 1
-
-            if (singlePackage) {
-                val sortedByName = sortedImportNames.toSortedSet(compareBy { it.name })
-                val size = sortedByName.size
-                if (size == 2) {
-                    KotlinBundle.message("fix.import.kind.0.name.1.and.name.2", kind.toText(size), sortedByName.first().name, sortedByName.last().name)
-                } else {
-                    KotlinBundle.message("fix.import.kind.0.name.1.2", kind.toText(size), firstName, size - 1)
-                }
-            } else if (kind.groupedByPackage) {
-                KotlinBundle.message("fix.import.kind.0.name.1.2", kind.toText(1), firstName, 0)
-            } else {
-                val groupBy = sortedImportNames.map { it.name }.toSortedSet().groupBy { it.substringBefore('.') }
-                val value = groupBy.entries.first().value
-                val first = value.first()
-                val multiple = if (value.size == 1) 0 else 1
-                when {
-                    groupBy.size != 1 -> KotlinBundle.message("fix.import.kind.0.name.1.2", kind.toText(1), first.substringAfter('.'), multiple)
-                    value.size == 2 -> KotlinBundle.message("fix.import.kind.0.name.1.and.name.2", kind.toText(value.size), first, value.last())
-                    else -> KotlinBundle.message("fix.import.kind.0.name.1.2", kind.toText(1), first, multiple)
-                }
-            }
-        } else {
-            KotlinBundle.message("fix.import")
+            ImportFixHelper.ImportInfo(kind, name, priority)
         }
-    }
-
-    private class ImportName(val kind: ImportKind, val name: String, val priority: ComparablePriority)
-
-    private enum class ImportKind(private val key: String, val groupedByPackage: Boolean = false) {
-        CLASS("text.class.0", true),
-        PROPERTY("text.property.0"),
-        OBJECT("text.object.0", true),
-        FUNCTION("text.function.0"),
-        EXTENSION_PROPERTY("text.extension.property.0"),
-        EXTENSION_FUNCTION("text.extension.function.0"),
-        OPERATOR("text.operator.0");
-
-        fun toText(number: Int) = KotlinBundle.message(key, if (number == 1) 1 else 2)
+        return ImportFixHelper.calculateTextForFix(importInfos, suggestions)
     }
 
     override fun getText(): String = text

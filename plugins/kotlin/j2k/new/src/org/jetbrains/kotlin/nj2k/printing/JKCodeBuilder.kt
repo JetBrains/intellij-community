@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.nj2k.printing
 
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.printing.JKPrinterBase.ParenthesisKind
 import org.jetbrains.kotlin.nj2k.symbols.getDisplayFqName
@@ -579,7 +580,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         override fun visitKtItExpressionRaw(ktItExpression: JKKtItExpression) {
-            printer.print("it")
+            printer.print(StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier)
         }
 
         override fun visitClassBodyRaw(classBody: JKClassBody) {

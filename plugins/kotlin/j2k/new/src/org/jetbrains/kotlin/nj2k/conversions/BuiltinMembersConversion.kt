@@ -553,7 +553,7 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
                     JKExpressionStatement(
                         JKBinaryExpression(
                             //TODO replace with `it` parameter
-                            JKFieldAccessExpression(JKUnresolvedField("it", typeFactory)),
+                            JKFieldAccessExpression(JKUnresolvedField(StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier, typeFactory)),
                             JKLiteralExpression("' '", JKLiteralExpression.LiteralType.CHAR),
                             JKKtOperatorImpl(JKOperatorToken.LTEQ, typeFactory.types.boolean)
                         )
