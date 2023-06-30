@@ -1,19 +1,19 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest
 
-import com.intellij.collaboration.async.disposingScope
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.util.childScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.GithubServerPath
@@ -176,10 +176,13 @@ enum class GHPRAction {
   REBASE_MERGE
 }
 
-@Service
-private class GHServerVersionsCollector(private val project: Project) : Disposable {
+@Service(Service.Level.PROJECT)
+private class GHServerVersionsCollector(
+  private val project: Project,
+  parentCs: CoroutineScope
+) {
 
-  private val scope = disposingScope()
+  private val scope = parentCs.childScope()
 
   init {
     val accountsFlow = project.service<GHAccountManager>().accountsState
@@ -207,6 +210,4 @@ private class GHServerVersionsCollector(private val project: Project) : Disposab
       project.service<GHServerVersionsCollector>()
     }
   }
-
-  override fun dispose() = Unit
 }
