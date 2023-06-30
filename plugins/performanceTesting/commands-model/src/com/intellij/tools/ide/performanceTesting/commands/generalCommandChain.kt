@@ -667,6 +667,16 @@ fun <T : CommandChain> T.startInlineRename(): T {
   return this
 }
 
+fun <T : CommandChain> T.setRegistry(registry: String, value: Boolean): T {
+  addCommand("${CMD_PREFIX}set $registry=$value")
+  return this
+}
+
+fun <T : CommandChain> T.collectNameSuggestionContext(file: String, offset: Int): T {
+  addCommand("${CMD_PREFIX}collectNameSuggestionContext $file $offset")
+  return this
+}
+
 fun <T : CommandChain> T.waitForLlmNameSuggestions(file: String, offset: Int): T {
   addCommand("${CMD_PREFIX}waitForLlmNameSuggestions $file $offset")
   return this
