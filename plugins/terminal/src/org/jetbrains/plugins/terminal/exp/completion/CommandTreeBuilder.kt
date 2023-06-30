@@ -6,14 +6,16 @@ import com.intellij.openapi.diagnostic.logger
 
 internal class CommandTreeBuilder private constructor(
   private val suggestionsProvider: CommandTreeSuggestionsProvider,
+  private val commandSpecManager: CommandSpecManager,
   private val arguments: List<String>
 ) {
   companion object {
     fun build(suggestionsProvider: CommandTreeSuggestionsProvider,
+              commandSpecManager: CommandSpecManager,
               command: String,
               commandSpec: ShellSubcommand,
               arguments: List<String>): SubcommandNode {
-      val builder = CommandTreeBuilder(suggestionsProvider, arguments)
+      val builder = CommandTreeBuilder(suggestionsProvider, commandSpecManager, arguments)
       val root = builder.createSubcommandNode(command, commandSpec, null)
       builder.buildSubcommandTree(root)
       return root
@@ -125,7 +127,7 @@ internal class CommandTreeBuilder private constructor(
 
   private fun getLoadedCommandSpec(spec: ShellSubcommand): ShellSubcommand {
     val specRef = spec.loadSpec ?: return spec
-    val loadedSpec = CommandSpecManager.getInstance().getCommandSpec(specRef)
+    val loadedSpec = commandSpecManager.getCommandSpec(specRef)
     return if (loadedSpec != null) {
       loadedSpec
     }

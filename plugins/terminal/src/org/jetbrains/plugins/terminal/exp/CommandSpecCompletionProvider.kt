@@ -46,7 +46,7 @@ class CommandSpecCompletionProvider : CompletionProvider<CompletionParameters>()
   }
 
   private fun computeCompletionElements(command: String, arguments: List<String>): List<LookupElement>? {
-    val commandSpec: ShellSubcommand = CommandSpecManager.getInstance().getCommandSpec(command)
+    val commandSpec: ShellSubcommand = IJCommandSpecManager.getInstance().getCommandSpec(command)
                                        ?: return null
     return computeCompletionElements(commandSpec, command, arguments)
   }
@@ -54,7 +54,8 @@ class CommandSpecCompletionProvider : CompletionProvider<CompletionParameters>()
   private fun computeCompletionElements(spec: ShellSubcommand, command: String, arguments: List<String>): List<LookupElement> {
     val completeArguments = arguments.subList(0, arguments.size - 1)
     val suggestionsProvider = CommandTreeSuggestionsProvider()
-    val rootNode: SubcommandNode = CommandTreeBuilder.build(suggestionsProvider, command, spec, completeArguments)
+    val rootNode: SubcommandNode = CommandTreeBuilder.build(suggestionsProvider, IJCommandSpecManager.getInstance(),
+                                                            command, spec, completeArguments)
     val suggestions = computeSuggestions(suggestionsProvider, rootNode)
     return suggestions.flatMap { it.toLookupElements() }
   }

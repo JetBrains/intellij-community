@@ -6,7 +6,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.jetbrains.plugins.terminal.exp.completion.CommandSpecBean
-import org.jetbrains.plugins.terminal.exp.completion.CommandSpecManager
+import org.jetbrains.plugins.terminal.exp.completion.IJCommandSpecManager
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -27,10 +27,10 @@ class CommandSpecLoadingTest : BasePlatformTestCase() {
 
   @Test
   fun `load command spec for subcommand from separate file`() {
-    val spec = CommandSpecManager.getInstance().getCommandSpec(commandName) ?: error("Not found command with name: '$commandName'")
+    val spec = IJCommandSpecManager.getInstance().getCommandSpec(commandName) ?: error("Not found command with name: '$commandName'")
     val subcommand = spec.subcommands.firstOrNull() ?: error("Not found subcommands in spec: $spec")
     val specReference = subcommand.loadSpec ?: error("'loadSpec' property is null in subcommand: $subcommand")
-    val loadedSubcommand = CommandSpecManager.getInstance().getCommandSpec(specReference)
+    val loadedSubcommand = IJCommandSpecManager.getInstance().getCommandSpec(specReference)
     assertNotNull(loadedSubcommand)
   }
 }

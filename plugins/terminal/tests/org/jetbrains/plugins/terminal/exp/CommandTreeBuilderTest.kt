@@ -5,6 +5,7 @@ import com.intellij.util.containers.JBIterable
 import com.intellij.util.containers.TreeTraversal
 import junit.framework.TestCase.assertTrue
 import org.jetbrains.plugins.terminal.exp.completion.*
+import org.jetbrains.plugins.terminal.exp.util.FakeCommandSpecManager
 import org.jetbrains.plugins.terminal.exp.util.commandSpec
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -188,7 +189,8 @@ class CommandTreeBuilderTest {
 
   private fun doTest(vararg arguments: String, assertions: CommandTreeAssertions.() -> Unit) {
     val suggestionsProvider = CommandTreeSuggestionsProvider()
-    val root = CommandTreeBuilder.build(suggestionsProvider, commandName, spec, arguments.asList())
+    val root = CommandTreeBuilder.build(suggestionsProvider, FakeCommandSpecManager(),
+                                        commandName, spec, arguments.asList())
     assertions(CommandTreeAssertions(root))
   }
 
