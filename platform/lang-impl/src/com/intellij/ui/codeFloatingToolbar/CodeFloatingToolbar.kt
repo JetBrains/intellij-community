@@ -7,6 +7,7 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.impl.FloatingToolbar
 import com.intellij.openapi.actionSystem.impl.MoreActionGroup
 import com.intellij.openapi.editor.Editor
@@ -21,6 +22,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.ui.LightweightHint
 import kotlinx.coroutines.CoroutineScope
 import java.awt.Point
+import javax.swing.JComponent
 
 /**
  * Represents floating toolbar which is shown for selected text inside editor.
@@ -58,6 +60,9 @@ class CodeFloatingToolbar(
   override fun shouldSurviveDocumentChange(): Boolean = false
 
   override fun hideByOtherHints(): Boolean = false
+
+  val hintComponent: JComponent?
+    get() = hint?.component
 
   override fun getHintPosition(hint: LightweightHint): Point {
     val selectionEnd = editor.selectionModel.selectionEnd
@@ -116,8 +121,9 @@ class CodeFloatingToolbar(
   override fun createActionGroup(): ActionGroup? {
     val contextAwareActionGroupId = getContextAwareGroupId()
     val mainActionGroup = CustomActionsSchema.getInstance().getCorrectedAction(contextAwareActionGroupId) as? ActionGroup ?: return super.createActionGroup()
+    val showIntentionsAction = CustomActionsSchema.getInstance().getCorrectedAction("ShowIntentionActions") ?: error("Can't find ShowIntentionActions action")
     val configurationGroup = createConfigureGroup(contextAwareActionGroupId)
-    return DefaultActionGroup(mainActionGroup, configurationGroup)
+    return DefaultActionGroup(showIntentionsAction, Separator.create(), mainActionGroup, Separator.create(), configurationGroup)
   }
 
   private fun getContextAwareGroupId(): String {

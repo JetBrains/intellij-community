@@ -50,7 +50,7 @@ open class FloatingToolbar(
   private val coroutineScope: CoroutineScope,
   protected val defaultActionGroupId: String
 ): Disposable {
-  private var hint: LightweightHint? = null
+  protected var hint: LightweightHint? = null
   private var buttonSize: Int by Delegates.notNull()
   private var lastSelection: String? = null
   private var hintWasShownForSelection = false
@@ -98,10 +98,10 @@ open class FloatingToolbar(
 
   @RequiresEdt
   private suspend fun showIfHidden() {
-    if (isShown() || hintWasShownForSelection) {
+    hintWasShownForSelection = true
+    if (isShown() || !isEnabled()) {
       return
     }
-    hintWasShownForSelection = true
     val canBeShownAtCurrentSelection = readAction { canBeShownAtCurrentSelection() }
     if (!canBeShownAtCurrentSelection) {
       return
@@ -112,6 +112,15 @@ open class FloatingToolbar(
       this.hint = null
     }
     this.hint = hint
+  }
+
+  fun show(callback: Runnable){
+    coroutineScope.launch {
+      withContext(Dispatchers.EDT) {
+        showIfHidden()
+        callback.run()
+      }
+    }
   }
 
   private suspend fun createHint(): LightweightHint {
@@ -126,7 +135,7 @@ open class FloatingToolbar(
   }
 
   fun scheduleShow() {
-    if (isEnabled()) {
+    if (isEnabled() && !hintWasShownForSelection) {
       check(hintRequests.tryEmit(HintRequest.Show))
     }
   }

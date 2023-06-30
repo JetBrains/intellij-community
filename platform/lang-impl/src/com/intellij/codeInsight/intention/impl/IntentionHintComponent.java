@@ -6,6 +6,7 @@ import com.intellij.codeInsight.hint.*;
 import com.intellij.codeInsight.intention.CustomizableIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInsight.intention.actions.ShowIntentionActionsAction;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
@@ -18,6 +19,7 @@ import com.intellij.internal.statistic.IntentionFUSCollector;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -43,6 +45,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.refactoring.BaseRefactoringIntentionAction;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
@@ -221,35 +224,70 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
   @RequiresEdt
   private void showPopup(boolean mouseClick) {
-    RelativePoint positionHint = null;
     if (mouseClick && myLightBulbPanel.isShowing()) {
-      RelativePoint swCorner = RelativePoint.getSouthWestOf(myLightBulbPanel);
-      Point popup = swCorner.getPoint();
-
-      Point panel = SwingUtilities.convertPoint(myLightBulbPanel, new Point(), myEditor.getContentComponent());
-      Point caretLine = myEditor.offsetToXY(myEditor.getCaretModel().getOffset());
-      if (panel.y + myLightBulbPanel.getHeight() <= caretLine.y) {
-        // The light bulb panel is shown above the caret line.
-        // The caret line should be completely visible, as it contains the interesting code.
-        // The popup menu is shown below the caret line.
-        popup.y += 1; // Step outside the light bulb panel.
-        popup.y += myEditor.getLineHeight();
-      }
-      else {
-        // Let the top border pixel of the popup menu overlap the bottom border pixel of the light bulb panel.
-      }
-
-      // XXX: This formula is only guessed.
-      int adjust = (int)(UISettingsUtils.getInstance().getCurrentIdeScale() - 0.5);
-      // Align the left border of the popup menu with the light bulb panel.
-      // XXX: Where does the 1 come from?
-      popup.x += 1 + adjust;
-      // Align the top border of the menu bar.
-      popup.y += adjust;
-
-      positionHint = new RelativePoint(swCorner.getComponent(), popup);
+      showPopup(findPositionForBulbButton());
+      return;
     }
+    CodeFloatingToolbar toolbar = CodeFloatingToolbar.getToolbar(myEditor);
+    if (toolbar != null) {
+      if (toolbar.isShown()) {
+        showPopupFromToolbar(toolbar);
+      } else {
+        toolbar.show(() -> showPopupFromToolbar(toolbar));
+      }
+      return;
+    }
+    showPopup(null);
+  }
+
+  private void showPopup(@Nullable RelativePoint positionHint) {
     myPopup.show(this, positionHint);
+  }
+
+  private @NotNull RelativePoint findPositionForBulbButton() {
+    RelativePoint swCorner = RelativePoint.getSouthWestOf(myLightBulbPanel);
+    Point popup = swCorner.getPoint();
+
+    Point panel = SwingUtilities.convertPoint(myLightBulbPanel, new Point(), myEditor.getContentComponent());
+    Point caretLine = myEditor.offsetToXY(myEditor.getCaretModel().getOffset());
+    if (panel.y + myLightBulbPanel.getHeight() <= caretLine.y) {
+      // The light bulb panel is shown above the caret line.
+      // The caret line should be completely visible, as it contains the interesting code.
+      // The popup menu is shown below the caret line.
+      popup.y += 1; // Step outside the light bulb panel.
+      popup.y += myEditor.getLineHeight();
+    }
+    else {
+      // Let the top border pixel of the popup menu overlap the bottom border pixel of the light bulb panel.
+    }
+
+    // XXX: This formula is only guessed.
+    int adjust = (int)(UISettingsUtils.getInstance().getCurrentIdeScale() - 0.5);
+    // Align the left border of the popup menu with the light bulb panel.
+    // XXX: Where does the 1 come from?
+    popup.x += 1 + adjust;
+    // Align the top border of the menu bar.
+    popup.y += adjust;
+
+    return new RelativePoint(swCorner.getComponent(), popup);
+  }
+
+  private void showPopupFromToolbar(@NotNull CodeFloatingToolbar toolbar){
+    JComponent component = toolbar.getHintComponent();
+    if (component == null) return;
+    List<ActionButton> buttons = UIUtil.findComponentsOfType(component, ActionButton.class);
+    ActionButton intentionButton = ContainerUtil.find(buttons, (button) -> button.getAction() instanceof ShowIntentionActionsAction);
+    if (intentionButton == null) return;
+    RelativePoint buttonPoint = RelativePoint.getSouthWestOf(intentionButton);
+    RelativePoint toolbarPoint = RelativePoint.getSouthWestOf(component);
+    int horizontalOffset = toolbarPoint.getScreenPoint().x - buttonPoint.getScreenPoint().x;
+    buttonPoint.getPoint().translate(horizontalOffset, 0);
+    if (myPopup.myListPopup == null) {
+      myPopup.myHint = this;
+      IntentionPopup.recreateMyPopup(myPopup, new IntentionListStep(myPopup, myPopup.myEditor, myPopup.myFile, myPopup.myProject, myPopup.myCachedIntentions));
+    }
+    ActionButton.adjustVerticalOverlapping(myPopup.myListPopup, intentionButton);
+    showPopup(buttonPoint);
   }
 
   private static final class MyComponentHint extends LightweightHint {
