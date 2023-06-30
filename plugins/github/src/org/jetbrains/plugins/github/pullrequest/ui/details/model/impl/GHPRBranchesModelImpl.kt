@@ -17,26 +17,12 @@ import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesMod
 import org.jetbrains.plugins.github.util.GithubGitHelper
 
 internal class GHPRBranchesModelImpl(private val valueModel: SingleValueModel<GHPullRequest>,
-                                     detailsDataProvider: GHPRDetailsDataProvider,
                                      override val localRepository: GitRepository,
                                      private val parentDisposable: Disposable) : GHPRBranchesModel {
 
   private val changeEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
   init {
-    VcsProjectLog.runWhenLogIsReady(localRepository.project) {
-      if (!Disposer.isDisposed(parentDisposable)) {
-        val dataPackListener = DataPackChangeListener {
-          detailsDataProvider.reloadDetails()
-        }
-
-        it.dataManager.addDataPackChangeListener(dataPackListener)
-        Disposer.register(parentDisposable, Disposable {
-          it.dataManager.removeDataPackChangeListener(dataPackListener)
-        })
-      }
-    }
-
     valueModel.addAndInvokeListener {
       changeEventDispatcher.multicaster.eventOccurred()
     }

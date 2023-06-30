@@ -134,7 +134,12 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
     val listLoader = GHPRListLoader(ProgressManager.getInstance(), requestExecutor, apiRepositoryCoordinates)
     val listUpdatesChecker = GHPRListETagUpdateChecker(ProgressManager.getInstance(), requestExecutor, account.server, apiRepositoryPath)
 
-    val dataProviderRepository = GHPRDataProviderRepositoryImpl(detailsService, stateService, reviewService, filesService, commentService,
+    val dataProviderRepository = GHPRDataProviderRepositoryImpl(project,
+                                                                detailsService,
+                                                                stateService,
+                                                                reviewService,
+                                                                filesService,
+                                                                commentService,
                                                                 changesService) { id ->
       GHGQLPagedListLoader(ProgressManager.getInstance(),
                            SimpleGHGQLPagesLoader(requestExecutor, { p ->

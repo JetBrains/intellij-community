@@ -2,12 +2,17 @@
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.messages.MessageBusFactory
 import com.intellij.util.messages.MessageBusOwner
+import com.intellij.vcs.log.data.DataPackChangeListener
+import com.intellij.vcs.log.impl.VcsProjectLog
+import git4idea.remote.GitRemoteUrlCoordinates
 import org.jetbrains.plugins.github.api.data.GHIssueComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
@@ -18,7 +23,8 @@ import org.jetbrains.plugins.github.pullrequest.data.service.*
 import org.jetbrains.plugins.github.util.DisposalCountingHolder
 import java.util.*
 
-internal class GHPRDataProviderRepositoryImpl(private val detailsService: GHPRDetailsService,
+internal class GHPRDataProviderRepositoryImpl(private val project: Project,
+                                              private val detailsService: GHPRDetailsService,
                                               private val stateService: GHPRStateService,
                                               private val reviewService: GHPRReviewService,
                                               private val filesService: GHPRFilesService,
@@ -57,9 +63,9 @@ internal class GHPRDataProviderRepositoryImpl(private val detailsService: GHPRDe
     cache.values.toList().forEach(Disposer::dispose)
   }
 
-  private fun createDataProvider(parentDisposable: Disposable, id: GHPRIdentifier): GHPRDataProvider {
+  private fun createDataProvider(parentDisposable: CheckedDisposable, id: GHPRIdentifier): GHPRDataProvider {
     val messageBus = MessageBusFactory.newMessageBus(object : MessageBusOwner {
-      override fun isDisposed() = Disposer.isDisposed(parentDisposable)
+      override fun isDisposed() = parentDisposable.isDisposed
 
       override fun createListener(descriptor: ListenerDescriptor) =
         throw UnsupportedOperationException()
@@ -72,6 +78,19 @@ internal class GHPRDataProviderRepositoryImpl(private val detailsService: GHPRDe
       }
     }.also {
       Disposer.register(parentDisposable, it)
+    }
+
+    VcsProjectLog.runWhenLogIsReady(project) {
+      if (!parentDisposable.isDisposed) {
+        val dataPackListener = DataPackChangeListener {
+          detailsData.reloadDetails()
+        }
+
+        it.dataManager.addDataPackChangeListener(dataPackListener)
+        Disposer.register(parentDisposable, Disposable {
+          it.dataManager.removeDataPackChangeListener(dataPackListener)
+        })
+      }
     }
 
     val stateData = GHPRStateDataProviderImpl(stateService, id, messageBus, detailsData).also {

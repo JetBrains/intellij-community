@@ -171,7 +171,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
       null, GithubBundle.message("cannot.load.details"),
       detailsLoadingErrorHandler
     ).createWithUpdatesStripe(uiDisposable) { _, model ->
-      val branchesModel = GHPRBranchesModelImpl(model, dataProvider.detailsData, repository, disposable)
+      val branchesModel = GHPRBranchesModelImpl(model, repository, disposable)
       val detailsModel = GHPRDetailsModelImpl(model)
       val metadataModel = GHPRMetadataModelImpl(model,
                                                 dataContext.securityService,
