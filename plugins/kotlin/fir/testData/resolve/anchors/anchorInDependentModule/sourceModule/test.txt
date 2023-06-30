@@ -1,0 +1,3 @@
+// module: dependencyModule
+// file: psi/Element.java
+// expected class: Element

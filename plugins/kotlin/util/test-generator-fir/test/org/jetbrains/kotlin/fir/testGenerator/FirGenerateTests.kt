@@ -42,6 +42,7 @@ import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOT_AND_FIR_
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_FIR_PREFIX
 import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_OR_KTS
+import org.jetbrains.kotlin.testGenerator.model.Patterns.forRegex
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     generateK2Tests()
@@ -281,6 +282,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractFirQuickDocTest> {
             model("quickDoc", pattern = Patterns.forRegex("""^([^_]+)\.(kt|java)$"""))
+        }
+
+        testClass<AbstractK2MultiModuleHighlightingTest> {
+            model("resolve/anchors", isRecursive = false, pattern = forRegex("^([^\\._]+)$"))
         }
 
         testClass<AbstractK2ReferenceResolveWithResolveExtensionTest> {
