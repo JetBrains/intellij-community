@@ -12,7 +12,7 @@ import com.intellij.internal.statistic.libraryUsage.LibraryUsageDescriptors
  * <br/>
  * See 'library-jar-statistics.xml' and 'library-usage-statistics.xml' files.
  */
-internal class LibraryNameValidationRule : CustomValidationRule() {
+class LibraryNameValidationRule : CustomValidationRule() {
   override fun getRuleId(): String = "used_library_name"
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
