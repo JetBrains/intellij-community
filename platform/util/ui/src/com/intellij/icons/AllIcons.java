@@ -1248,11 +1248,11 @@ public class AllIcons {
     /** 24x24 */ public static final @NotNull Icon Open = load("welcome/open.svg", -1167853047, 2);
     /** 24x24 */ public static final @NotNull Icon OpenSelected = load("welcome/openSelected.svg", 297876432, 0);
 
-    public static final class Project {
-      /** 10x10 */ public static final @NotNull Icon RemoveHover = load("welcome/project/remove-hover.svg", -1138969467, 2);
-      /** 10x10 */ public static final @NotNull Icon Remove = load("welcome/project/remove.svg", -1344345313, 2);
-      /** 10x10 */ public static final @NotNull Icon RemoveDisabledHover = load("welcome/project/removeDisabled-hover.svg", 225648199, 2);
-      /** 10x10 */ public static final @NotNull Icon RemoveDisabled = load("welcome/project/removeDisabled.svg", 693821036, 2);
+    public static final class RecentProjects {
+      /** 10x10 */ public static final @NotNull Icon RemoveHover = load("welcome/recentProjects/remove-hover.svg", -1138969467, 2);
+      /** 10x10 */ public static final @NotNull Icon Remove = load("welcome/recentProjects/remove.svg", -1344345313, 2);
+      /** 10x10 */ public static final @NotNull Icon RemoveDisabledHover = load("welcome/recentProjects/removeDisabled-hover.svg", 225648199, 2);
+      /** 10x10 */ public static final @NotNull Icon RemoveDisabled = load("welcome/recentProjects/removeDisabled.svg", 693821036, 2);
     }
 
     /** @deprecated to be removed */
