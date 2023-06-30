@@ -20,7 +20,6 @@ import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
-import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion;
@@ -43,7 +42,7 @@ import java.util.stream.Collectors;
 
 import static org.jetbrains.kotlin.idea.configuration.ConfigureKotlinInProjectUtilsKt.*;
 
-public class ConfigureDialogWithModulesAndVersion extends DialogWrapper {
+public class ConfigureDialogWithModulesAndVersion extends DialogWrapper implements ModulesChangedObserver {
     private static final String VERSIONS_LIST_URL =
             "https://search.maven.org/solrsearch/select?q=g:%22org.jetbrains.kotlin%22+AND+a:%22kotlin-stdlib%22&core=gav&rows=20&wt=json";
 
@@ -54,6 +53,8 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper {
     @NotNull private final String minimumVersion;
 
     private final Map<String, Map<String, Module>> kotlinVersionsAndModules;
+    @Nullable private final String rootNoduleVersion;
+    @Nullable private final Module rootModule;
 
     private final Map<String, List<String>> jvmModulesTargetingUnsupportedJvm;
     private final Map<String, String> modulesAndJvmTargets;
@@ -79,7 +80,9 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper {
 
         KotlinJ2KOnboardingFUSCollector.Companion.logShowConfigureKtWindow(project);
 
-        kotlinVersionsAndModules = getKotlinVersionsAndModules(project, configurator);
+        var kotlinVersions = getKotlinVersionsAndModules(project, configurator);
+        kotlinVersionsAndModules = kotlinVersions.getFirst();
+        rootNoduleVersion = kotlinVersions.getSecond();
 
         setTitle(KotlinProjectConfigurationBundle.message("configure.kotlin.title", configurator.getPresentableText()));
 
@@ -106,15 +109,24 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper {
         chooseModulePanel = new ChooseModulePanel(project, configurator, excludeModules);
         chooseModulesPanelPlace.add(chooseModulePanel.getContentPane(), BorderLayout.CENTER);
 
-        Pair<Map<String, List<String>>, Map<String, String>> pair =
+        var jvmTargets =
                 getModulesTargetingUnsupportedJvmAndTargetsForAllModules(chooseModulePanel.getModules(),
                                                                          IdeKotlinVersion.get(DEFAULT_KOTLIN_VERSION));
-        jvmModulesTargetingUnsupportedJvm = pair.getFirst();
-        modulesAndJvmTargets = pair.getSecond();
+        jvmModulesTargetingUnsupportedJvm = jvmTargets.getFirst();
+        modulesAndJvmTargets = jvmTargets.getSecond();
+
+        rootModule = getRootModule(project);
+
+        chooseModulePanel.setActionListeners(this);
 
         kotlinVersionComboBox.addItemListener(e -> showWarningIfThereAreDifferentKotlinVersions());
         showUnsupportedJvmTargetWarning();
         updateComponents();
+    }
+
+    @Override
+    public void onModulesChangedNotified() {
+        showWarningIfThereAreDifferentKotlinVersions();
     }
 
     private static final int MODULES_TO_DISPLAY_SIZE = 2;
@@ -122,44 +134,69 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper {
 
     private void showWarningIfThereAreDifferentKotlinVersions() {
         String currentSelectedKotlinVersion = getKotlinVersion();
-        if (!kotlinVersionsAndModules.isEmpty() &&
-            !(kotlinVersionsAndModules.size() == 1 && kotlinVersionsAndModules.containsKey(currentSelectedKotlinVersion))) {
+        List<Module> modulesToConfigure = chooseModulePanel.getModulesToConfigure();
+        if (!kotlinVersionsAndModules.isEmpty() && currentSelectedKotlinVersion != null && !modulesToConfigure.isEmpty()) {
             listOfKotlinVersionsAndModules.setText("");
-            final StringBuilder message = new StringBuilder();
-            message.append(KotlinProjectConfigurationBundle.message("configure.kotlin.modules.fix.version.manually"));
-            kotlinVersionsAndModules.keySet().stream().filter(it -> !it.equals(currentSelectedKotlinVersion)).sorted()
-                    .forEach(it -> {
-                                 Map<String, Module> modules = kotlinVersionsAndModules.get(it);
-                                 Set<String> modulesNames = modules.keySet();
-                                 StringBuilder modulesEnumeration = new StringBuilder();
-                                 if (modulesNames.size() > MODULES_TO_DISPLAY_SIZE) {
-                                     modulesEnumeration.append(
-                                             modulesNames.stream().limit(MODULES_TO_DISPLAY_SIZE).sorted()
-                                                     .collect(Collectors.joining(DELIMITER)));
-                                     modulesEnumeration.append(
-                                             KotlinProjectConfigurationBundle.message("configure.kotlin.version.and.modules.and.more",
-                                                                                      modulesNames.size() -
-                                                                                      MODULES_TO_DISPLAY_SIZE));
-                                 } else {
-                                     modulesEnumeration.append(modulesNames.stream().sorted().collect(Collectors.joining(DELIMITER)));
-                                 }
-                                 message.append(KotlinProjectConfigurationBundle
-                                                        .message("configure.kotlin.version.and.modules", it,
-                                                                 modulesEnumeration.toString()));
-                             }
-                    );
-            // It's not hardcoded, we take strings from resources
-            //noinspection HardCodedStringLiteral
-            listOfKotlinVersionsAndModules.setText(message.toString());
-            listOfKotlinVersionsAndModules.setVisible(true);
+
+            if (modulesToConfigure.contains(rootModule) &&
+                !(kotlinVersionsAndModules.size() == 1 && kotlinVersionsAndModules.containsKey(currentSelectedKotlinVersion))) {
+                createMessageAboutDifferentKotlinVersions(currentSelectedKotlinVersion);
+            } else if (rootNoduleVersion != null &&
+                       !IdeKotlinVersion.get(rootNoduleVersion).equals(IdeKotlinVersion.get(currentSelectedKotlinVersion))) {
+                createMessageThatTopLevelAndModulesShouldHaveSameVersion();
+            } else {
+                listOfKotlinVersionsAndModules.setVisible(false);
+            }
         } else {
             listOfKotlinVersionsAndModules.setVisible(false);
         }
     }
 
+    private void createMessageThatTopLevelAndModulesShouldHaveSameVersion() {
+        String message = KotlinProjectConfigurationBundle.message("configure.kotlin.root.contains.another.kotlin", rootNoduleVersion) +
+                         KotlinProjectConfigurationBundle.message("configure.kotlin.root.should.contain.same.version") +
+                         KotlinProjectConfigurationBundle.message("configure.kotlin.choose.the.same.kotlin.version", rootNoduleVersion);
+        Messages.installHyperlinkSupport(listOfKotlinVersionsAndModules);
+        listOfKotlinVersionsAndModules.setText(message);
+        listOfKotlinVersionsAndModules.setVisible(true);
+    }
+
+    private void createMessageAboutDifferentKotlinVersions(String currentSelectedKotlinVersion) {
+        final StringBuilder message = new StringBuilder();
+        message.append(KotlinProjectConfigurationBundle.message("configure.kotlin.root.should.contain.same.version"));
+        message.append(KotlinProjectConfigurationBundle.message("configure.kotlin.currently.there.are.versions"));
+
+        kotlinVersionsAndModules.keySet().stream().filter(it -> !it.equals(currentSelectedKotlinVersion)).sorted()
+                .forEach(it -> {
+                             Map<String, Module> modules = kotlinVersionsAndModules.get(it);
+                             Set<String> modulesNames = modules.keySet();
+                             StringBuilder modulesEnumeration = new StringBuilder();
+                             if (modulesNames.size() > MODULES_TO_DISPLAY_SIZE) {
+                                 modulesEnumeration.append(
+                                         modulesNames.stream().limit(MODULES_TO_DISPLAY_SIZE).sorted()
+                                                 .collect(Collectors.joining(DELIMITER)));
+                                 modulesEnumeration.append(
+                                         KotlinProjectConfigurationBundle.message("configure.kotlin.version.and.modules.and.more",
+                                                                                  modulesNames.size() -
+                                                                                  MODULES_TO_DISPLAY_SIZE));
+                             } else {
+                                 modulesEnumeration.append(modulesNames.stream().sorted().collect(Collectors.joining(DELIMITER)));
+                             }
+                             message.append(KotlinProjectConfigurationBundle
+                                                    .message("configure.kotlin.version.and.modules", it,
+                                                             modulesEnumeration.toString()));
+                         }
+                );
+
+        message.append(KotlinProjectConfigurationBundle.message("configure.kotlin.choose.another.kotlin.version"));
+        Messages.installHyperlinkSupport(listOfKotlinVersionsAndModules);
+        // It's not hardcoded, we take strings from resources
+        //noinspection HardCodedStringLiteral
+        listOfKotlinVersionsAndModules.setText(message.toString());
+        listOfKotlinVersionsAndModules.setVisible(true);
+    }
+
     private void showUnsupportedJvmTargetWarning() {
-        //warningsSplitter.setEnabled(true);
-        //warningsSplitter.setVisible(true);
         if (!jvmModulesTargetingUnsupportedJvm.isEmpty()) {
             final StringBuilder message = new StringBuilder();
             message.append(KotlinProjectConfigurationBundle.message("configurator.kotlin.jvm.targets.unsupported", "1.8"));

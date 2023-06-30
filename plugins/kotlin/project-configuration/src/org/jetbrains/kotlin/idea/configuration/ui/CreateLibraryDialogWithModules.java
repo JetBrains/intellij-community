@@ -9,12 +9,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator;
 import org.jetbrains.kotlin.idea.framework.ui.ChooseModulePanel;
+import org.jetbrains.kotlin.idea.framework.ui.ModulesChangedObserver;
 
 import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 
-public class CreateLibraryDialogWithModules extends DialogWrapper {
+public class CreateLibraryDialogWithModules extends DialogWrapper implements ModulesChangedObserver {
     private final ChooseModulePanel chooseModulePanel;
 
     public CreateLibraryDialogWithModules(
@@ -37,4 +38,7 @@ public class CreateLibraryDialogWithModules extends DialogWrapper {
     protected @Nullable JComponent createCenterPanel() {
         return chooseModulePanel.getContentPane();
     }
+
+    @Override
+    public void onModulesChangedNotified() {}
 }

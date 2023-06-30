@@ -62,15 +62,6 @@ public class ChooseModulePanel {
         }
 
         singleModuleComboBox.setModel(comboBoxModel);
-        ActionListener listener = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                updateComponents();
-            }
-        };
-        singleModuleRadioButton.addActionListener(listener);
-        allModulesWithKtRadioButton.addActionListener(listener);
-        allModulesRadioButton.addActionListener(listener);
 
         if (modulesWithKtFiles.size() > 2) {
             String firstName = modulesWithKtFiles.get(0).getName();
@@ -110,6 +101,27 @@ public class ChooseModulePanel {
         updateComponents();
     }
 
+    public void setActionListeners(ModulesChangedObserver modulesChangedObserver) {
+        ActionListener listener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                updateComponents();
+                modulesChangedObserver.onModulesChangedNotified();
+            }
+        };
+        singleModuleRadioButton.addActionListener(listener);
+        allModulesWithKtRadioButton.addActionListener(listener);
+        allModulesRadioButton.addActionListener(listener);
+
+        ActionListener singleModulesListener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                modulesChangedObserver.onModulesChangedNotified();
+            }
+        };
+        singleModuleComboBox.addActionListener(singleModulesListener);
+    }
+
     public JComponent getContentPane() {
         return contentPane;
     }
@@ -128,7 +140,7 @@ public class ChooseModulePanel {
         return Collections.singletonList(ModuleManager.getInstance(project).findModuleByName(selectedItem));
     }
 
-    public List<Module> getModules() {
+    public @NotNull List<Module> getModules() {
         return modules;
     }
 }
