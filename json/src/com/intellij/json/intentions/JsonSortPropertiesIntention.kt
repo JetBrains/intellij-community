@@ -1,10 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.json.intentions
 
+import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction
 import com.intellij.codeInsight.intention.LowPriorityAction
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.json.JsonBundle
+import com.intellij.json.psi.JsonFile
 import com.intellij.json.psi.JsonObject
 import com.intellij.json.psi.JsonProperty
 import com.intellij.json.psi.impl.JsonRecursiveElementVisitor
@@ -19,7 +20,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.annotations.Nls
 
-open class JsonSortPropertiesIntention : PsiElementBaseIntentionAction(), LowPriorityAction, LightEditCompatible, DumbAware {
+open class JsonSortPropertiesIntention : BaseElementAtCaretIntentionAction(), LowPriorityAction, LightEditCompatible, DumbAware {
   override fun getText(): @Nls(capitalization = Nls.Capitalization.Sentence) String = JsonBundle.message("json.intention.sort.properties")
 
   override fun getFamilyName(): @Nls(capitalization = Nls.Capitalization.Sentence) String =
@@ -65,9 +66,9 @@ open class JsonSortPropertiesIntention : PsiElementBaseIntentionAction(), LowPri
     }
 
     private fun collectObjects(rootObj: JsonObject): Set<JsonObject> {
-      val result : MutableSet<JsonObject> = LinkedHashSet()
+      val result: MutableSet<JsonObject> = LinkedHashSet()
       if (selectionModel.hasSelection()) {
-        object: JsonRecursiveElementVisitor() {
+        object : JsonRecursiveElementVisitor() {
           override fun visitObject(o: JsonObject) {
             super.visitObject(o)
             if (o.textRange?.intersects(selectionModel.selectionStart, selectionModel.selectionEnd) == true) {
@@ -81,7 +82,10 @@ open class JsonSortPropertiesIntention : PsiElementBaseIntentionAction(), LowPri
     }
 
     private fun findRootObject(): JsonObject? {
-      val initObj = PsiTreeUtil.getParentOfType(contextElement, JsonObject::class.java)
+      val initObj: JsonObject? = PsiTreeUtil.getParentOfType(contextElement, JsonObject::class.java) ?: run {
+        val jsonFile = contextElement.containingFile as? JsonFile ?: return@run null
+        return jsonFile.allTopLevelValues.filterIsInstance<JsonObject>().firstOrNull()
+      }
       if (initObj == null || !selectionModel.hasSelection()) {
         return initObj
       }
@@ -92,7 +96,7 @@ open class JsonSortPropertiesIntention : PsiElementBaseIntentionAction(), LowPri
       return obj
     }
 
-    fun hasUnsortedObjects() : Boolean = objects.any { !isSorted(it) }
+    fun hasUnsortedObjects(): Boolean = objects.any { !isSorted(it) }
 
     fun sort() {
       objects.forEach {
@@ -101,9 +105,7 @@ open class JsonSortPropertiesIntention : PsiElementBaseIntentionAction(), LowPri
         }
       }
     }
-  }
 
-  companion object {
     private fun isSorted(obj: JsonObject): Boolean {
       return obj.propertyList.asSequence()
         .map { it.name }
