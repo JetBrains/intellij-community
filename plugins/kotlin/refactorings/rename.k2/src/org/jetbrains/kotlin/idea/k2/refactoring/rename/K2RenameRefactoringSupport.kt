@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.parameterInfo.getJvmName
 import org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameRefactoringSupport
+import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.NameUtils
@@ -75,10 +76,6 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
         }
     }
 
-    override fun getModuleNameSuffixForMangledName(mangledName: String): String? {
-        notImplementedInK2()
-    }
-
     override fun mangleInternalName(name: String, moduleName: String): String {
         return name + "$" + NameUtils.sanitizeAsJavaIdentifier(moduleName)
     }
@@ -105,7 +102,12 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
     }
 
     override fun isCompanionObjectClassReference(psiReference: PsiReference): Boolean {
-        notImplementedInK2()
+        if (psiReference !is KtSimpleNameReference) {
+            return false
+        }
+        return analyze(psiReference.element) {
+            psiReference.isImplicitReferenceToCompanion()
+        }
     }
 
     override fun shortenReferencesLater(element: KtElement) {

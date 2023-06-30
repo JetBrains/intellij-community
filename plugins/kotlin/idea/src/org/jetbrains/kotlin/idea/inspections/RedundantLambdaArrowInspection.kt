@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
+import org.jetbrains.kotlin.builtins.StandardNames
 
 class RedundantLambdaArrowInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
@@ -32,7 +33,7 @@ class RedundantLambdaArrowInspection : AbstractKotlinInspection() {
             val parameters = functionLiteral.valueParameters
             val singleParameter = parameters.singleOrNull()
             if (singleParameter?.typeReference != null) return
-            if (parameters.isNotEmpty() && singleParameter?.name != "it") {
+            if (parameters.isNotEmpty() && singleParameter?.nameAsName != StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME) {
                 return
             }
 
@@ -42,7 +43,7 @@ class RedundantLambdaArrowInspection : AbstractKotlinInspection() {
             val callExpression = lambdaExpression.parent?.parent as? KtCallExpression
             if (callExpression != null) {
                 val callee = callExpression.calleeExpression as? KtNameReferenceExpression
-                if (callee != null && callee.getReferencedName() == "forEach" && singleParameter?.name != "it") return
+                if (callee != null && callee.getReferencedName() == "forEach" && singleParameter?.nameAsName != StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME) return
             }
 
             val lambdaContext = lambdaExpression.analyze()
@@ -55,7 +56,7 @@ class RedundantLambdaArrowInspection : AbstractKotlinInspection() {
             val functionLiteralDescriptor = functionLiteral.descriptor
             if (functionLiteralDescriptor != null) {
                 if (functionLiteral.anyDescendantOfType<KtNameReferenceExpression> {
-                        it.text == "it" && it.resolveToCall()?.resultingDescriptor?.containingDeclaration != functionLiteralDescriptor
+                        it.text == StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier && it.resolveToCall()?.resultingDescriptor?.containingDeclaration != functionLiteralDescriptor
                     }) return
             }
 

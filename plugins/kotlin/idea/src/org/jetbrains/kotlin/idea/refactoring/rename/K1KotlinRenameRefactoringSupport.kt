@@ -71,10 +71,6 @@ internal class K1RenameRefactoringSupport : KotlinRenameRefactoringSupport {
         return descriptor.overriddenDescriptors.mapNotNull { it.source.getPsi() }
     }
 
-    override fun getModuleNameSuffixForMangledName(mangledName: String): String? {
-        return KotlinTypeMapper.InternalNameMapper.getModuleNameSuffix(mangledName)
-    }
-
     override fun mangleInternalName(name: String, moduleName: String): String {
         return KotlinTypeMapper.InternalNameMapper.mangleInternalName(name, moduleName)
     }

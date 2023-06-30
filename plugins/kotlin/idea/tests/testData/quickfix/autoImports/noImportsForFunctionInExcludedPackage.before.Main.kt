@@ -6,4 +6,3 @@
 // ERROR: Unresolved reference: someFunction
 
 val x = <caret>someFunction()
-/* IGNORE_FIR */

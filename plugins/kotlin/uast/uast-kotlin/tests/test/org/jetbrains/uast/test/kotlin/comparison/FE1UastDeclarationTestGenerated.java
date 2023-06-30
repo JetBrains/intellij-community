@@ -98,6 +98,11 @@ public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationT
         runTest("../../uast-kotlin-fir/tests/testData/declaration/mangling.kt");
     }
 
+    @TestMetadata("missingNames.kt")
+    public void testMissingNames() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/missingNames.kt");
+    }
+
     @TestMetadata("nullabilityOfTypeParameter.kt")
     public void testNullabilityOfTypeParameter() throws Exception {
         runTest("../../uast-kotlin-fir/tests/testData/declaration/nullabilityOfTypeParameter.kt");

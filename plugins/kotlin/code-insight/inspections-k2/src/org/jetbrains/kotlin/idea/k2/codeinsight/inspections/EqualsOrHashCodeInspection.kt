@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.Modality
@@ -286,7 +287,7 @@ class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
                     type.isArrayOrPrimitiveArray() -> {
                         val canUseArrayContentFunctions = targetClass.canUseArrayContentFunctions()
                         val shouldWrapInLet = isNullable && !canUseArrayContentFunctions
-                        val hashCodeArg = if (shouldWrapInLet) "it" else ref
+                        val hashCodeArg = if (shouldWrapInLet) StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier else ref
                         val hashCodeCall = generateArrayHashCodeCall(type, canUseArrayContentFunctions, hashCodeArg)
                         if (shouldWrapInLet) "$ref?.let { $hashCodeCall }" else hashCodeCall
                     }

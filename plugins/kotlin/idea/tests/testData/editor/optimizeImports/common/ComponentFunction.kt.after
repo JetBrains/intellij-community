@@ -6,3 +6,4 @@ import test1.component2
 fun foo() {
     val (a, b) = MyClass()
 }
+// FIR_COMPARISON

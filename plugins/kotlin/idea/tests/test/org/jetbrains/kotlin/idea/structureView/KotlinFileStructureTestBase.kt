@@ -39,7 +39,7 @@ abstract class KotlinFileStructureTestBase : KotlinLightCodeInsightFixtureTestCa
         )
     }
 
-    protected fun getFileName(ext: String): String {
+    protected open fun getFileName(ext: String): String {
         return getTestName(false) + if (StringUtil.isEmpty(ext)) "" else ".$ext"
     }
 

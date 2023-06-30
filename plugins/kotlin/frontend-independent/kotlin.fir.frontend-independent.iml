@@ -30,5 +30,6 @@
     <orderEntry type="module" module-name="kotlin.base.resources" />
     <orderEntry type="module" module-name="kotlin.code-insight.impl-base" />
     <orderEntry type="module" module-name="kotlin.code-insight.utils" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
   </component>
 </module>

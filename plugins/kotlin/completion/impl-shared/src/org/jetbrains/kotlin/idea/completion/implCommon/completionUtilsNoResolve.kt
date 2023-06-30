@@ -10,11 +10,8 @@ import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.PsiElement
 import com.intellij.ui.JBColor
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.load.java.javaToKotlinNameMap
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
@@ -169,9 +166,6 @@ fun referenceScope(declaration: KtNamedDeclaration): KtElement? = when (val pare
     is KtBlockExpression -> parent
     else -> null
 }
-
-fun FqName.isJavaClassNotToBeUsedInKotlin(): Boolean =
-    JavaToKotlinClassMap.isJavaPlatformClass(this) || javaToKotlinNameMap[this] != null
 
 fun findValueArgument(expression: KtExpression): KtValueArgument? {
     // Search for value argument among parent and grandparent to avoid parsing errors like KTIJ-18231

@@ -30,7 +30,7 @@ internal object CompletionShortNamesRenderer {
     private fun KtAnalysisSession.renderFunctionParameter(parameter: KtVariableLikeSignature<KtValueParameterSymbol>): String =
         "${if (parameter.symbol.isVararg) "vararg " else ""}${parameter.name.asString()}: ${
             parameter.returnType.renderNonErrorOrUnsubstituted(parameter.symbol.returnType)
-        }"
+        }${if (parameter.symbol.hasDefaultValue) " = ..." else ""}"
 
     val renderer = KtTypeRendererForSource.WITH_SHORT_NAMES
     val rendererVerbose = renderer.with {

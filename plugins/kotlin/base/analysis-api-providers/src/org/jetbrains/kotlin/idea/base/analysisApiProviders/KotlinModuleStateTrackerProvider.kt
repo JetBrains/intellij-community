@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.base.analysisApiProviders
 
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -44,9 +43,8 @@ import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
-@Service(Service.Level.PROJECT)
 @OptIn(Frontend10ApiUsage::class)
-class KotlinModuleStateTrackerProvider(val project: Project) : Disposable {
+open class KotlinModuleStateTrackerProvider(val project: Project) : Disposable {
     init {
         val busConnection = project.messageBus.connect(this)
         busConnection.subscribe(WorkspaceModelTopics.CHANGED, ModelChangeListener())
@@ -55,11 +53,14 @@ class KotlinModuleStateTrackerProvider(val project: Project) : Disposable {
         busConnection.subscribe(VirtualFileManager.VFS_CHANGES, LibraryUpdatesListener())
     }
 
+    private val builtinTracker = ModuleStateTrackerImpl()
     private val libraryCache = ConcurrentHashMap<Library, ModuleStateTrackerImpl>()
     private val sourceModuleCache = ConcurrentHashMap<Module, ModuleStateTrackerImpl>()
     private val sdkCache = ConcurrentHashMap<Sdk, ModuleStateTrackerImpl>()
     private val scriptCache = ConcurrentHashMap<VirtualFile, ModuleStateTrackerImpl>()
 
+    protected open fun shouldInvalidateBuiltinSession(events: List<VFileEvent>): Boolean { return false }
+    
     fun getModuleStateTrackerFor(module: KtModule): KtModuleStateTracker {
         return when (module) {
             is KtScriptDependencyModule -> ModuleStateTrackerImpl()
@@ -85,7 +86,7 @@ class KotlinModuleStateTrackerProvider(val project: Project) : Disposable {
 
             is KtLibrarySourceModule -> getModuleStateTrackerFor(module.binaryLibrary)
 
-            is KtBuiltinsModule -> ModuleStateTrackerImpl()
+            is KtBuiltinsModule -> builtinTracker
 
             is KtScriptModule -> {
                 val virtualFile = module.file.virtualFile ?: error("Script ${module.file} does not have a backing 'VirtualFile'")
@@ -115,6 +116,14 @@ class KotlinModuleStateTrackerProvider(val project: Project) : Disposable {
     private inner class LibraryUpdatesListener : BulkFileListener {
         val index = ProjectRootManager.getInstance(project).fileIndex
         override fun after(events: List<VFileEvent>) {
+            if (shouldInvalidateBuiltinSession(events)) {
+                builtinTracker.incModificationCount()
+                libraryCache.values.forEach { it.incModificationCount() }
+                sourceModuleCache.values.forEach { it.incModificationCount() }
+                sdkCache.values.forEach { it.incModificationCount() }
+                scriptCache.values.forEach { it.incModificationCount() }
+                return
+            }
             events.mapNotNull { event ->
                 val file = when (event) {
                     //for all other events workspace model should do the job 
@@ -246,7 +255,7 @@ class KotlinModuleStateTrackerProvider(val project: Project) : Disposable {
 
 }
 
-private class ModuleStateTrackerImpl : KtModuleStateTracker {
+class ModuleStateTrackerImpl : KtModuleStateTracker {
     private val modificationCount = AtomicLong()
 
     @Volatile
