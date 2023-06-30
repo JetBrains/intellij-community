@@ -857,7 +857,7 @@ void PrintUsage()
 
 bool IsSupportedVersion() {
   if (IsWindows8OrGreater()) return true;
-  const char *text = "The IDE cannot run on this OS.\nPlease use Windows 10 1809 or newer.";
+  const char *text = "The IDE cannot run on this OS version.\nPlease use Windows 10 1809 or newer.";
   MessageBoxA(NULL, text, "Startup Error", MB_OK | MB_ICONSTOP);
   return false;
 }
