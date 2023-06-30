@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.Extensions
+import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
@@ -58,7 +59,6 @@ import org.jetbrains.kotlin.platform.isJs
 import org.jetbrains.kotlin.platform.isWasm
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.isNative
-import org.jetbrains.plugins.gradle.util.GradleUtil
 
 private val LOG = Logger.getInstance("#org.jetbrains.kotlin.idea.configuration.ConfigureKotlinInProjectUtils")
 
@@ -486,7 +486,9 @@ fun getTargetBytecodeVersionFromModule(
     module: Module,
     kotlinVersion: IdeKotlinVersion
 ): String? {
-    return GradleUtil.findGradleModuleData(module)?.let { moduleDataNode ->
+    val projectPath = ExternalSystemApiUtil.getExternalProjectPath(module) ?: return null
+    val project = module.project
+    return ExternalSystemApiUtil.findModuleNode(project, ProjectSystemId("GRADLE"), projectPath)?.let { moduleDataNode ->
         val javaModuleData = ExternalSystemApiUtil.find(moduleDataNode, JavaModuleData.KEY)
         javaModuleData?.let {
             javaModuleData.data.targetBytecodeVersion

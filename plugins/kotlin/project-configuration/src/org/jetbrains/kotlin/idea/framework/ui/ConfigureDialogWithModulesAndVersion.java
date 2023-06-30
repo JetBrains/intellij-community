@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator;
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle;
 import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription;
 import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector;
-import org.jetbrains.kotlin.tools.projectWizard.Versions;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,6 +46,10 @@ import static org.jetbrains.kotlin.idea.configuration.ConfigureKotlinInProjectUt
 public class ConfigureDialogWithModulesAndVersion extends DialogWrapper {
     private static final String VERSIONS_LIST_URL =
             "https://search.maven.org/solrsearch/select?q=g:%22org.jetbrains.kotlin%22+AND+a:%22kotlin-stdlib%22&core=gav&rows=20&wt=json";
+
+    /* We define the version here because we cannot properly use such a constant from org.jetbrains.kotlin.tools.projectWizard Versions
+    because the current package is not a plugin and there are dependency issues if trying to make it a plugin */
+    private static final String DEFAULT_KOTLIN_VERSION = "1.8.21";
 
     @NotNull private final String minimumVersion;
 
@@ -105,7 +108,7 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper {
 
         Pair<Map<String, List<String>>, Map<String, String>> pair =
                 getModulesTargetingUnsupportedJvmAndTargetsForAllModules(chooseModulePanel.getModules(),
-                                                                         IdeKotlinVersion.get(Versions.INSTANCE.getKOTLIN().toString()));
+                                                                         IdeKotlinVersion.get(DEFAULT_KOTLIN_VERSION));
         jvmModulesTargetingUnsupportedJvm = pair.getFirst();
         modulesAndJvmTargets = pair.getSecond();
 
