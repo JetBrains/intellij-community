@@ -3,14 +3,16 @@ package com.intellij.mermaid.preview
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.serviceContainer.AlreadyDisposedException
+import com.intellij.ui.jcef.JBCefBrowser
 import com.intellij.ui.jcef.JBCefBrowserBase
 import com.intellij.ui.jcef.JBCefJSQuery
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener
 
 class MermaidDiagramPreviewComponent(private val project: Project): BorderLayoutPanel(), Disposable {
-  internal val browser = createBrowser()
-  private val openLinkQuery = JBCefJSQuery.create(browser as JBCefBrowserBase)
+  internal val browser: JBCefBrowser by disposableHolder(createBrowser())
+  private val openLinkQuery by disposableHolder(JBCefJSQuery.create(browser as JBCefBrowserBase))
 
   init {
     Disposer.register(this, openLinkQuery)
@@ -42,7 +44,9 @@ class MermaidDiagramPreviewComponent(private val project: Project): BorderLayout
     }
   }
 
-  override fun dispose() = Unit
+  override fun dispose() {
+    removeAll()
+  }
 
   private suspend fun injectLinkOpener() {
     // language=JavaScript
