@@ -5,31 +5,26 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.rootTask
+import com.intellij.diagnostic.subtask
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.mac.screenmenu.MenuBar
-import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
-import org.jetbrains.concurrency.await
 import java.awt.Component
 import java.awt.Dialog
 import java.awt.Dimension
@@ -260,43 +255,69 @@ internal open class PeerBasedIdeMenuBarHelper(private val screenMenuPeer: MenuBa
   }
 }
 
+@Suppress("unused")
 private val firstUpdateFastTrackUpdateTimeout = 30.seconds.inWholeMilliseconds
 
 private suspend fun expandMainActionGroup(mainActionGroup: ActionGroup,
                                           menuBar: Component,
                                           frame: JFrame,
                                           presentationFactory: PresentationFactory,
-                                          isFirstUpdate: Boolean): List<ActionGroup> {
-  // don't repeat for JetBrains Client - deadlock possible
-  repeat(if (PlatformUtils.isJetBrainsClient()) 1 else 3) {
-    presentationFactory.resetNeedRebuild()
-    try {
-      return withContext(CoroutineName("expandMainActionGroup") + Dispatchers.EDT) {
-        val targetComponent = WindowManager.getInstance().getFocusedComponent(frame) ?: menuBar
-        val dataContext = Utils.wrapToAsyncDataContext(DataManager.getInstance().getDataContext(targetComponent))
-        // disable fast track for JetBrains Client - deadlock otherwise
-        val fastTrackTimeout = when {
-          // disable fast track for JetBrains Client - deadlock otherwise
-          PlatformUtils.isJetBrainsClient() -> -1
-          isFirstUpdate -> firstUpdateFastTrackUpdateTimeout
-          else -> Utils.getFastTrackTimeout()
-        }
-        Utils.expandActionGroupAsync(/* group = */ mainActionGroup,
-                                     /* presentationFactory = */ presentationFactory,
-                                     /* context = */ dataContext,
-                                     /* place = */ ActionPlaces.MAIN_MENU,
-                                     /* isToolbarAction = */ false,
-                                     /* fastTrackTimeout = */ fastTrackTimeout)
-      }.await().filterIsInstance<ActionGroup>()
+                                          @Suppress("UNUSED_PARAMETER") isFirstUpdate: Boolean): List<ActionGroup> {
+  val actionManager = serviceAsync<ActionManager>()
+  return subtask("expandMainActionGroup", Dispatchers.EDT) {
+    val children = mainActionGroup.getChildren(null, actionManager)
+    if (children.isEmpty()) {
+      return@subtask emptyList()
     }
-    catch (e: ProcessCanceledException) {
-      if (isFirstUpdate) {
-        logger<IdeMenuBarHelper>().warn("Cannot expand action group", e)
-        return emptyList()
+
+    val targetComponent = WindowManager.getInstance().getFocusedComponent(frame) ?: menuBar
+    val dataContext = Utils.wrapToAsyncDataContext(DataManager.getInstance().getDataContext(targetComponent))
+    val list = mutableListOf<ActionGroup>()
+    for (action in children) {
+      if (action !is ActionGroup) {
+        continue
+      }
+
+      val presentation = presentationFactory.getPresentation(action)
+      val e = AnActionEvent(null, dataContext, ActionPlaces.MAIN_MENU, presentation, actionManager, 0)
+      ActionUtil.performDumbAwareUpdate(action, e, false)
+      if (presentation.isVisible) {
+        list.add(action)
       }
     }
+    list
   }
-  return emptyList()
+
+  // don't repeat for JetBrains Client - deadlock possible
+  //repeat(if (PlatformUtils.isJetBrainsClient()) 1 else 3) {
+  //  presentationFactory.resetNeedRebuild()
+  //  try {
+  //    return withContext(CoroutineName("expandMainActionGroup") + Dispatchers.EDT) {
+  //      val targetComponent = WindowManager.getInstance().getFocusedComponent(frame) ?: menuBar
+  //      val dataContext = Utils.wrapToAsyncDataContext(DataManager.getInstance().getDataContext(targetComponent))
+  //      // disable fast track for JetBrains Client - deadlock otherwise
+  //      val fastTrackTimeout = when {
+  //        // disable fast track for JetBrains Client - deadlock otherwise
+  //        PlatformUtils.isJetBrainsClient() -> -1
+  //        isFirstUpdate -> firstUpdateFastTrackUpdateTimeout
+  //        else -> Utils.getFastTrackTimeout()
+  //      }
+  //      Utils.expandActionGroupAsync(/* group = */ mainActionGroup,
+  //                                   /* presentationFactory = */ presentationFactory,
+  //                                   /* context = */ dataContext,
+  //                                   /* place = */ ActionPlaces.MAIN_MENU,
+  //                                   /* isToolbarAction = */ false,
+  //                                   /* fastTrackTimeout = */ fastTrackTimeout)
+  //    }.await().filterIsInstance<ActionGroup>()
+  //  }
+  //  catch (e: ProcessCanceledException) {
+  //    if (isFirstUpdate) {
+  //      logger<IdeMenuBarHelper>().warn("Cannot expand action group", e)
+  //      return emptyList()
+  //    }
+  //  }
+  //}
+  //return emptyList()
 }
 
 internal suspend fun getMainMenuActionGroup(frame: JFrame): ActionGroup? {
