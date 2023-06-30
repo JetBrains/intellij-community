@@ -257,7 +257,7 @@ internal fun ElementAndTextList.convertCodeToKotlin(project: Project, targetModu
             ThrowableComputable {
                 runReadAction { converter.elementsToKotlin(inputElements) }
             },
-            JavaToKotlinAction.title,
+            JavaToKotlinAction.Handler.title,
             true,
             project
         )
