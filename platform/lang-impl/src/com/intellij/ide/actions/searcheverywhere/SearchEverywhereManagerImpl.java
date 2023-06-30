@@ -6,6 +6,7 @@ import com.intellij.ide.actions.BigPopupUI;
 import com.intellij.ide.actions.OpenInRightSplitAction;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -26,6 +27,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -375,9 +377,9 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
   }
 
   private static Map<String, String> createShortcutsMap() {
-    Map<String, String> res = new HashMap<>();
+    Map<String, @Nls String> res = new HashMap<>();
 
-    res.put(ALL_CONTRIBUTORS_GROUP_ID, "Double Shift");
+    res.put(ALL_CONTRIBUTORS_GROUP_ID, LangBundle.message("double.shift"));
     addShortcut(res, "ClassSearchEverywhereContributor", "GotoClass");
     addShortcut(res, "FileSearchEverywhereContributor", "GotoFile");
     addShortcut(res, "SymbolSearchEverywhereContributor", "GotoSymbol");
@@ -388,7 +390,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     return res;
   }
 
-  private static void addShortcut(Map<String, String> map, String contributorID, String actionID) {
+  private static void addShortcut(Map<String, @Nls String> map, String contributorID, String actionID) {
     KeyboardShortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(actionID);
     if (shortcut != null) map.put(contributorID, KeymapUtil.getShortcutText(shortcut));
   }
