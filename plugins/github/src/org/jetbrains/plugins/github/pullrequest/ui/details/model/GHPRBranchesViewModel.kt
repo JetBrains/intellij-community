@@ -13,7 +13,6 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.util.childScope
 import git4idea.commands.Git
@@ -78,23 +77,19 @@ internal class GHPRBranchesViewModel(
       )
       return
     }
+    val remoteName = headRepository.owner.login
     val httpForkUrl = headRepository.url
     val sshForkUrl = headRepository.sshUrl
-    val pullRequestAuthor = pullRequest.author
-    if (pullRequestAuthor == null) {
-      vcsNotifier.notifyError(
-        GithubNotificationIdsHolder.PULL_REQUEST_CANNOT_SET_TRACKING_BRANCH,
-        GithubBundle.message("pull.request.branch.checkout.remote.cannot.find"),
-        GithubBundle.message("pull.request.branch.checkout.resolve.author.failed")
-      )
-      return
-    }
 
     object : Task.Backgroundable(project, GithubBundle.message("pull.request.branch.checkout.task.indicator"), true) {
       override fun run(indicator: ProgressIndicator) {
-        val headRemote = git.findOrCreateRemote(repository, pullRequestAuthor.login, httpForkUrl, sshForkUrl)
+        val headRemote = git.findOrCreateRemote(repository, remoteName, httpForkUrl, sshForkUrl)
         if (headRemote == null) {
-          notifyRemoteError(vcsNotifier, httpForkUrl, sshForkUrl)
+          vcsNotifier.notifyError(
+            GithubNotificationIdsHolder.PULL_REQUEST_CANNOT_SET_TRACKING_BRANCH,
+            GithubBundle.message("pull.request.branch.checkout.remote.cannot.find"),
+            GithubBundle.message("pull.request.branch.checkout.resolve.remote.failed") + "\n$httpForkUrl" + "\n$sshForkUrl"
+          )
           return
         }
 
@@ -108,21 +103,6 @@ internal class GHPRBranchesViewModel(
         }
       }
     }.queue()
-  }
-
-  private fun notifyRemoteError(vcsNotifier: VcsNotifier, httpForkUrl: @NlsSafe String?, sshForkUrl: @NlsSafe String?) {
-    var failedMessage = GithubBundle.message("pull.request.branch.checkout.resolve.remote.failed")
-    if (httpForkUrl != null) {
-      failedMessage += "\n$httpForkUrl"
-    }
-    if (sshForkUrl != null) {
-      failedMessage += "\n$sshForkUrl"
-    }
-    vcsNotifier.notifyError(
-      GithubNotificationIdsHolder.PULL_REQUEST_CANNOT_SET_TRACKING_BRANCH,
-      GithubBundle.message("pull.request.branch.checkout.remote.cannot.find"),
-      failedMessage
-    )
   }
 
   private fun Git.findOrCreateRemote(repository: GitRepository, remoteName: String, httpUrl: String, sshUrl: String): GitRemote? {
