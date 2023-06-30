@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.fir.testGenerator
 
 import org.jetbrains.kotlin.idea.k2.highlighting.AbstractK2BundledCompilerPluginsHighlightingMetaInfoTest
 import org.jetbrains.kotlin.idea.k2.highlighting.AbstractK2HighlightingMetaInfoTest
+import org.jetbrains.kotlin.idea.k2.highlighting.AbstractK2HighlightingMetaInfoWithExtensionTest
 import org.jetbrains.kotlin.idea.k2.highlighting.AbstractOutsiderHighlightingTest
 import org.jetbrains.kotlin.testGenerator.model.*
 
@@ -14,6 +15,10 @@ internal fun MutableTWorkspace.generateK2HighlighterTests() {
 
         testClass<AbstractK2BundledCompilerPluginsHighlightingMetaInfoTest> {
             model("highlighterMetaInfoWithBundledCompilerPlugins")
+        }
+
+        testClass<AbstractK2HighlightingMetaInfoWithExtensionTest> {
+            model("highlighterMetaInfoWithExtension")
         }
     }
 

@@ -1,4 +1,11 @@
 <idea-plugin>
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.callHighlighterExtension"
+            interface="org.jetbrains.kotlin.idea.highlighting.KotlinCallHighlighterExtension"
+            dynamic="true"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <problemHighlightFilter implementation="org.jetbrains.kotlin.idea.highlighter.KotlinProblemHighlightFilter"/>
     <problemFileHighlightFilter implementation="org.jetbrains.kotlin.idea.highlighting.KotlinProblemFileHighlightFilter"/>
