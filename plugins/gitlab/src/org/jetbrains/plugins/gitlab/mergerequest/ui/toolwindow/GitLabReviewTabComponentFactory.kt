@@ -49,7 +49,7 @@ internal class GitLabReviewTabComponentFactory(
     cs: CoroutineScope,
     projectContext: GitLabProjectUIContext
   ): ReviewListTabComponentDescriptor {
-    GitLabStatistics.logMrListOpened()
+    GitLabStatistics.logMrListOpened(project)
     return GitLabReviewListTabComponentDescriptor(project, cs, toolwindowViewModel.accountManager, projectContext)
   }
 
@@ -58,14 +58,14 @@ internal class GitLabReviewTabComponentFactory(
                                   reviewTabType: GitLabReviewTab): JComponent {
     return when (reviewTabType) {
       is GitLabReviewTab.ReviewSelected -> {
-        GitLabStatistics.logMrDetailsOpened()
+        GitLabStatistics.logMrDetailsOpened(project)
         createReviewDetailsComponent(cs, projectContext, reviewTabType.reviewId)
       }
     }
   }
 
   override fun createEmptyTabContent(cs: CoroutineScope): JComponent {
-    GitLabStatistics.logMrTwLoginOpened()
+    GitLabStatistics.logMrTwLoginOpened(project)
     return createSelectorsComponent(cs)
   }
 

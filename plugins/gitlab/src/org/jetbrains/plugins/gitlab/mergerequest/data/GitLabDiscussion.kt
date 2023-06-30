@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 import com.intellij.collaboration.async.mapCaching
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -47,8 +48,9 @@ private val LOG = logger<GitLabDiscussion>()
 @OptIn(ExperimentalCoroutinesApi::class)
 class LoadedGitLabDiscussion(
   parentCs: CoroutineScope,
+  private val project: Project,
   private val api: GitLabApi,
-  private val project: GitLabProjectCoordinates,
+  private val glProject: GitLabProjectCoordinates,
   private val eventSink: suspend (GitLabDiscussionEvent) -> Unit,
   private val mr: GitLabMergeRequest,
   discussionData: GitLabDiscussionDTO,
@@ -101,7 +103,7 @@ class LoadedGitLabDiscussion(
     loadedNotes
       .mapCaching(
         GitLabNoteDTO::id,
-        { note -> MutableGitLabMergeRequestNote(this, api, project, mr, noteEvents::emit, note) },
+        { note -> MutableGitLabMergeRequestNote(this, project, api, glProject, mr, noteEvents::emit, note) },
         MutableGitLabMergeRequestNote::destroy,
         MutableGitLabMergeRequestNote::update
       ).combine(draftNotes) { notes, draftNotes ->
@@ -123,25 +125,25 @@ class LoadedGitLabDiscussion(
       operationsGuard.withLock {
         val resolved = resolved.first()
         val result = withContext(Dispatchers.IO) {
-          api.graphQL.changeMergeRequestDiscussionResolve(project, apiId, !resolved).getResultOrThrow()
+          api.graphQL.changeMergeRequestDiscussionResolve(glProject, apiId, !resolved).getResultOrThrow()
         }
         noteEvents.emit(GitLabNoteEvent.Changed(result.notes))
       }
     }
-    GitLabStatistics.logMrActionExecuted(GitLabStatistics.MergeRequestAction.CHANGE_DISCUSSION_RESOLVE)
+    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.CHANGE_DISCUSSION_RESOLVE)
   }
 
   override suspend fun addNote(body: String) {
     withContext(cs.coroutineContext) {
       withContext(Dispatchers.IO) {
-        api.graphQL.createReplyNote(project, mr.gid, id, body).getResultOrThrow()
+        api.graphQL.createReplyNote(glProject, mr.gid, id, body).getResultOrThrow()
       }.also {
         withContext(NonCancellable) {
           noteEvents.emit(GitLabNoteEvent.Added(it))
         }
       }
     }
-    GitLabStatistics.logMrActionExecuted(GitLabStatistics.MergeRequestAction.ADD_DISCUSSION_NOTE)
+    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.ADD_DISCUSSION_NOTE)
   }
 
   fun update(data: GitLabDiscussionDTO) {

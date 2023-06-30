@@ -5,6 +5,7 @@ import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelViewModel
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelViewModelBase
 import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,6 +38,7 @@ internal interface GitLabMergeRequestsFiltersViewModel : ReviewListSearchPanelVi
 @OptIn(FlowPreview::class)
 internal class GitLabMergeRequestsFiltersViewModelImpl(
   scope: CoroutineScope,
+  private val project: Project?, // only for statistics
   historyModel: GitLabMergeRequestsFiltersHistoryModel,
   override val currentUser: GitLabUserDTO,
   override val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
@@ -85,7 +87,7 @@ internal class GitLabMergeRequestsFiltersViewModelImpl(
       // with debounce to avoid collecting intermediate state
       searchState.drop(1).debounce(5000).collect {
         if (it.filterCount > 0) {
-          GitLabStatistics.logMrFiltersApplied(it)
+          GitLabStatistics.logMrFiltersApplied(project, it)
         }
       }
     }

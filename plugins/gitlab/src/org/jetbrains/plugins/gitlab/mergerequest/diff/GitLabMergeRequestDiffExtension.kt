@@ -61,7 +61,7 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
 
     cs.launch {
       val isCumulative = changeVmFlow.first().isCumulativeChange
-      GitLabStatistics.logMrDiffOpened(isCumulative)
+      GitLabStatistics.logMrDiffOpened(project, isCumulative)
     }
 
     val discussions = changeVmFlow.flatMapLatest { it.discussions }
