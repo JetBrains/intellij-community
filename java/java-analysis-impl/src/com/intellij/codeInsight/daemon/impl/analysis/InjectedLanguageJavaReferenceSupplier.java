@@ -4,8 +4,10 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Experimental
 public final class InjectedLanguageJavaReferenceSupplier {
   public static final ExtensionPointName<InjectedLanguageJavaReferenceSupplier> EP_NAME =
     ExtensionPointName.create("com.intellij.injectedLanguageJavaReferenceSupplier");
@@ -17,7 +19,7 @@ public final class InjectedLanguageJavaReferenceSupplier {
   @RequiredElement
   public String language;
 
-  public static boolean doRegisterReferences(@NotNull String languageId) {
+  public static boolean containsPsiMemberReferences(@NotNull String languageId) {
     for (InjectedLanguageJavaReferenceSupplier handler : EP_NAME.getExtensionList()) {
       if (languageId.equals(handler.language)) return true;
     }
