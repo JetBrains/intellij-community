@@ -11,6 +11,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -873,7 +874,10 @@ public class HighlightInfo implements Segment {
     @Override
     public String toString() {
       ModCommandAction modCommandAction = ModCommandAction.unwrap(getAction());
-      CommonIntentionAction action = modCommandAction == null ? IntentionActionDelegate.unwrap(getAction()) : modCommandAction;
+      LocalQuickFix fix = QuickFixWrapper.unwrap(getAction());
+      Object action = fix != null ? fix : 
+                      modCommandAction != null ? modCommandAction : 
+                      IntentionActionDelegate.unwrap(getAction());
       return "IntentionActionDescriptor: " + action.getClass();
     }
 
