@@ -1,5 +1,6 @@
 package com.intellij.driver.sdk.ui
 
+import com.intellij.driver.client.Driver
 import com.intellij.driver.model.RemoteMouseButton
 import com.intellij.driver.model.TextData
 import com.intellij.driver.sdk.ui.keyboard.WithKeyboard
@@ -8,7 +9,7 @@ import java.awt.Point
 
 
 @Suppress("MemberVisibilityCanBePrivate")
-open class UiComponent(private val remoteComponent: RemoteComponent) : WithKeyboard, Finder {
+open class UiComponent(override val driver: Driver, val remoteComponent: RemoteComponent) : WithKeyboard, Finder {
   override val searchContext: SearchContext = remoteComponent
 
   // Search Text Locations
