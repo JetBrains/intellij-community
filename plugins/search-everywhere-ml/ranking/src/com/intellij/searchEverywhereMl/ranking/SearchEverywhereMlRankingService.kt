@@ -73,7 +73,13 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
 
     val elementId = session.itemIdProvider.getId(element)
     val mlElementInfo = state.getElementFeatures(elementId, element, contributor, priority, session.mixedListInfo, session.cachedContextInfo)
-    val mlWeight = if (state.orderByMl) state.getMLWeight(session.cachedContextInfo, mlElementInfo) else null
+
+    // Don't calculate ML weight for typo fix, as otherwise it will affect the ranking priority, which is meant to be Int.MAX_VALUE
+    val mlWeight = if (state.orderByMl && contributor !is SearchEverywhereSpellingCorrectorContributor) {
+      state.getMLWeight(session.cachedContextInfo, mlElementInfo)
+    } else {
+      null
+    }
 
     return if (isShowDiff()) {
       SearchEverywhereFoundElementInfoBeforeDiff(element, priority, contributor, mlWeight, mlElementInfo.features)
