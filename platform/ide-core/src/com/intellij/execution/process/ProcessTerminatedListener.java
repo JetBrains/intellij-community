@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.util.system.OS;
 import org.jetbrains.annotations.NotNull;
 
 public final class ProcessTerminatedListener extends ProcessAdapter {
@@ -60,14 +61,14 @@ public final class ProcessTerminatedListener extends ProcessAdapter {
   }
 
   public static @NotNull String stringifyExitCode(int exitCode) {
-    return stringifyExitCode(Platform.current(), exitCode);
+    return stringifyExitCode(OS.CURRENT, exitCode);
   }
 
-  public static @NotNull String stringifyExitCode(@NotNull Platform platform, int exitCode) {
+  public static @NotNull String stringifyExitCode(@NotNull OS os, int exitCode) {
     StringBuilder result = new StringBuilder();
     result.append(exitCode);
 
-    if (platform == Platform.WINDOWS && exitCode >= 0xC0000000 && exitCode < 0xD0000000) {
+    if (os.getPlatform() == Platform.WINDOWS && exitCode >= 0xC0000000 && exitCode < 0xD0000000) {
       // Quote from http://support.microsoft.com/kb/308558:
       //   If the result code has the "C0000XXX" format, the task did not complete successfully (the "C" indicates an error condition).
       //   The most common "C" error code is "0xC000013A: The application terminated as a result of a CTRL+C".
@@ -77,13 +78,12 @@ public final class ProcessTerminatedListener extends ProcessAdapter {
       }
       result.append(')');
     }
-    else if (platform == Platform.UNIX && exitCode >= 129 && exitCode <= 159) {
-      // "Exit Codes With Special Meanings" (http://www.tldp.org/LDP/abs/html/exitcodes.html)
-      @SuppressWarnings("SpellCheckingInspection") String[] signals = {
-        "HUP", "INT", "QUIT", "ILL", "TRAP", "ABRT", "EMT", "FPE", "KILL", "BUS", "SEGV", "SYS", "PIPE", "ALRM", "TERM", "URG",
-        "STOP", "TSTP", "CONT", "CHLD", "TTIN", "TTOU", "IO", "XCPU", "XFSZ", "VTALRM", "PROF", "WINCH", "INFO", "USR1", "USR2"};
-      int signal = exitCode - 128;
-      result.append(" (interrupted by signal ").append(signal).append(": SIG").append(signals[signal - 1]).append(')');
+    else if (os.getPlatform() == Platform.UNIX) {
+      boolean isDarwin = os == OS.macOS;
+      var signal = UnixSignal.fromExitCode(isDarwin, exitCode);
+      if (signal != null) {
+        result.append(" (interrupted by signal ").append(signal.getSignalNumber(isDarwin)).append(":").append(signal.name()).append(')');
+      }
     }
 
     return result.toString();
