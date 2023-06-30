@@ -15,15 +15,12 @@ import com.intellij.testFramework.utils.io.createDirectory
 import com.intellij.testFramework.utils.io.createFile
 import com.jediterm.core.util.TermSize
 import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner
-import org.jetbrains.plugins.terminal.ShellStartupOptions
+import org.jetbrains.plugins.terminal.exp.util.TerminalSessionTestUtil
 import org.jetbrains.plugins.terminal.util.SHELL_TYPE_KEY
 import org.junit.Assume
 import org.junit.Test
 import java.io.File
 import java.nio.file.Path
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 import kotlin.io.path.createTempDirectory
 
 abstract class BaseShCompletionTest : BasePlatformTestCase() {
@@ -39,7 +36,7 @@ abstract class BaseShCompletionTest : BasePlatformTestCase() {
     super.setUp()
 
     Registry.get(LocalTerminalDirectRunner.BLOCK_TERMINAL_REGISTRY).setValue(true, testRootDisposable)
-    session = startTerminalSession(TermSize(200, 20))
+    session = TerminalSessionTestUtil.startTerminalSession(project, shellPath, testRootDisposable)
     val completionManager = createCompletionManager(session)
     val model = session.model
 
@@ -270,53 +267,6 @@ abstract class BaseShCompletionTest : BasePlatformTestCase() {
       fail("Failed to acquire command execution lock, seems that prompt is broken, text buffer:\n" +
            model.withContentLock { model.getAllText() })
     }
-  }
-
-  private fun startTerminalSession(size: TermSize): TerminalSession {
-    val runner = LocalTerminalDirectRunner.createTerminalRunner(project)
-    val baseOptions = ShellStartupOptions.Builder().shellCommand(listOf(shellPath, "-i")).build()
-    val configuredOptions = runner.configureStartupOptions(baseOptions)
-    val process = runner.createProcess(configuredOptions)
-    val ttyConnector = runner.createTtyConnector(process)
-
-    val session = TerminalSession(runner.settingsProvider)
-    session.shellIntegration = configuredOptions.shellIntegration
-    val model: TerminalModel = session.model
-
-    val promptShownFuture = CompletableFuture<Boolean>()
-    val resizedFuture = CompletableFuture<Boolean>()
-    val listenersDisposable = Disposer.newDisposable()
-    session.addCommandListener(object : ShellCommandListener {
-      override fun promptShown() {
-        promptShownFuture.complete(true)
-      }
-    }, listenersDisposable)
-
-    model.addTerminalListener(object : TerminalModel.TerminalListener {
-      override fun onSizeChanged(width: Int, height: Int) {
-        if (size.columns == width && size.rows == height) {
-          resizedFuture.complete(true)
-        }
-      }
-    }, listenersDisposable)
-
-    session.start(ttyConnector)
-    session.postResize(size)
-
-    try {
-      promptShownFuture.get(5000, TimeUnit.MILLISECONDS)
-      resizedFuture.get(5000, TimeUnit.MILLISECONDS)
-    }
-    catch (ex: TimeoutException) {
-      fail("Session failed to initialize, size: ${model.height}x${model.width}, text buffer:\n${model.withContentLock { model.getAllText() }}")
-    }
-    finally {
-      Disposer.dispose(listenersDisposable)
-    }
-    // Remove all welcome messages
-    model.withContentLock { model.clearAllExceptPrompt(1) }
-
-    return session
   }
 
   private fun assertSingleItemCompleted(elements: Array<LookupElement>?, expectedItem: String) {

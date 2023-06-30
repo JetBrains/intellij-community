@@ -27,7 +27,7 @@ class CommandSpecCompletionProvider : CompletionProvider<CompletionParameters>()
       return // command itself is incomplete
     }
 
-    val elements = computeCompletionElements(commandName, arguments)
+    val elements = computeCompletionElements(session, commandName, arguments)
     if (elements == null) {
       return // failed to find completion spec for command
     }
@@ -45,25 +45,32 @@ class CommandSpecCompletionProvider : CompletionProvider<CompletionParameters>()
       .map { it.text.replace(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED, "") }
   }
 
-  private fun computeCompletionElements(command: String, arguments: List<String>): List<LookupElement>? {
+  private fun computeCompletionElements(session: TerminalSession, command: String, arguments: List<String>): List<LookupElement>? {
     val commandSpec: ShellSubcommand = IJCommandSpecManager.getInstance().getCommandSpec(command)
                                        ?: return null
-    return computeCompletionElements(commandSpec, command, arguments)
+    return computeCompletionElements(session, commandSpec, command, arguments)
   }
 
-  private fun computeCompletionElements(spec: ShellSubcommand, command: String, arguments: List<String>): List<LookupElement> {
+  private fun computeCompletionElements(session: TerminalSession,
+                                        spec: ShellSubcommand,
+                                        command: String,
+                                        arguments: List<String>): List<LookupElement> {
     val completeArguments = arguments.subList(0, arguments.size - 1)
-    val suggestionsProvider = CommandTreeSuggestionsProvider()
+    val lastArgument = arguments.last()
+    val runtimeDataProvider = IJShellRuntimeDataProvider(session)
+    val suggestionsProvider = CommandTreeSuggestionsProvider(runtimeDataProvider)
     val rootNode: SubcommandNode = CommandTreeBuilder.build(suggestionsProvider, IJCommandSpecManager.getInstance(),
                                                             command, spec, completeArguments)
-    val suggestions = computeSuggestions(suggestionsProvider, rootNode)
+    val suggestions = computeSuggestions(suggestionsProvider, rootNode, lastArgument)
     return suggestions.flatMap { it.toLookupElements() }
   }
 
-  private fun computeSuggestions(suggestionsProvider: CommandTreeSuggestionsProvider, root: SubcommandNode): List<BaseSuggestion> {
+  private fun computeSuggestions(suggestionsProvider: CommandTreeSuggestionsProvider,
+                                 root: SubcommandNode,
+                                 lastArgument: String): List<BaseSuggestion> {
     val allChildren = TreeTraversal.PRE_ORDER_DFS.traversal(root as CommandPartNode<*>) { node -> node.children }
     val lastNode = allChildren.last() ?: root
-    return suggestionsProvider.getSuggestionsOfNext(lastNode)
+    return suggestionsProvider.getSuggestionsOfNext(lastNode, lastArgument)
   }
 
   private fun BaseSuggestion.toLookupElements(): List<LookupElement> {

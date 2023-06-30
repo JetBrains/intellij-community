@@ -25,6 +25,7 @@ class ShellCommandManager(terminal: Terminal) {
         "command_started" -> processCommandStartedEvent(it)
         "command_finished" -> processCommandFinishedEvent(it)
         "command_history" -> processCommandHistoryEvent(it)
+        "generator_finished" -> processGeneratorFinishedEvent(it)
       }
     })
   }
@@ -68,6 +69,16 @@ class ShellCommandManager(terminal: Terminal) {
     val history = event.getOrNull(1)
     if (history != null && history.startsWith("history_string=")) {
       fireCommandHistoryReceived(decodeHex(history.removePrefix("history_string=")))
+    }
+  }
+
+  private fun processGeneratorFinishedEvent(event: List<String>) {
+    val requestId = event.getOrNull(1)
+    val result = event.getOrNull(2)
+    if (requestId != null && requestId.startsWith("request_id=") &&
+        result != null && result.startsWith("result=")) {
+      val requestIdInt = requestId.removePrefix("request_id=").toIntOrNull() ?: return
+      fireGeneratorFinished(requestIdInt, decodeHex(result.removePrefix("result=")))
     }
   }
 
@@ -125,6 +136,15 @@ class ShellCommandManager(terminal: Terminal) {
     }
   }
 
+  private fun fireGeneratorFinished(requestId: Int, result: String) {
+    if (LOG.isDebugEnabled) {
+      LOG.debug("Shell event: generator_finished with requestId $requestId and result of ${result.length} size")
+    }
+    for (listener in listeners) {
+      listener.generatorFinished(requestId, result)
+    }
+  }
+
   fun addListener(listener: ShellCommandListener, parentDisposable: Disposable? = null) {
     listeners.add(listener)
     if (parentDisposable != null) {
@@ -163,6 +183,8 @@ interface ShellCommandListener {
   fun directoryChanged(newDirectory: String) {}
 
   fun commandHistoryReceived(history: String) {}
+
+  fun generatorFinished(requestId: Int, result: String) {}
 }
 
 private class CommandRun(val commandStartedNano: Long, val workingDirectory: String, val command: String) {

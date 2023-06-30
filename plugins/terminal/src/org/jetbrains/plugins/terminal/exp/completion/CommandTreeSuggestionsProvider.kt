@@ -1,20 +1,19 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp.completion
 
-internal class CommandTreeSuggestionsProvider {
-  fun getSuggestionsOfNext(node: CommandPartNode<*>): List<BaseSuggestion> {
+internal class CommandTreeSuggestionsProvider(private val runtimeDataProvider: ShellRuntimeDataProvider) {
+  fun getSuggestionsOfNext(node: CommandPartNode<*>, nextNodeText: String): List<BaseSuggestion> {
     return when (node) {
-      is SubcommandNode -> getSuggestionsForSubcommand(node)
-      is OptionNode -> getSuggestionsForOption(node)
-      is ArgumentNode -> node.parent?.let { getSuggestionsOfNext(it) } ?: emptyList()
+      is SubcommandNode -> getSuggestionsForSubcommand(node, nextNodeText)
+      is OptionNode -> getSuggestionsForOption(node, nextNodeText)
+      is ArgumentNode -> node.parent?.let { getSuggestionsOfNext(it, nextNodeText) } ?: emptyList()
       else -> emptyList()
     }
   }
 
-  fun getDirectSuggestionsOfNext(option: OptionNode): List<BaseSuggestion> {
+  fun getDirectSuggestionsOfNext(option: OptionNode, nextNodeText: String): List<BaseSuggestion> {
     val availableArgs = getAvailableArguments(option)
-    //   TODO: here should be also file suggestions if there are corresponding argument
-    return availableArgs.flatMap { it.getArgumentSuggestions() }
+    return availableArgs.flatMap { getArgumentSuggestions(it, nextNodeText) }
   }
 
   fun getAvailableArguments(node: OptionNode): List<ShellArgument> {
@@ -36,7 +35,7 @@ internal class CommandTreeSuggestionsProvider {
     return allArgs.subList(lastExistingArgIndex + if (includeLast) 0 else 1, firstRequiredArgIndex + 1)
   }
 
-  private fun getSuggestionsForSubcommand(node: SubcommandNode): List<BaseSuggestion> {
+  private fun getSuggestionsForSubcommand(node: SubcommandNode, nextNodeText: String): List<BaseSuggestion> {
     val spec = node.spec
     val suggestions = mutableListOf<BaseSuggestion>()
     if (node.children.isEmpty()) {
@@ -55,8 +54,7 @@ internal class CommandTreeSuggestionsProvider {
     }
 
     val availableArgs = getAvailableArguments(node)
-    //   TODO: here should be also file suggestions if there are corresponding argument
-    suggestions.addAll(availableArgs.flatMap { it.getArgumentSuggestions() })
+    suggestions.addAll(availableArgs.flatMap { getArgumentSuggestions(it, nextNodeText) })
     return suggestions
   }
 
@@ -81,9 +79,9 @@ internal class CommandTreeSuggestionsProvider {
     return options
   }
 
-  private fun getSuggestionsForOption(node: OptionNode): List<BaseSuggestion> {
+  private fun getSuggestionsForOption(node: OptionNode, nextNodeText: String): List<BaseSuggestion> {
     val suggestions = mutableListOf<BaseSuggestion>()
-    val directSuggestions = getDirectSuggestionsOfNext(node)
+    val directSuggestions = getDirectSuggestionsOfNext(node, nextNodeText)
     suggestions.addAll(directSuggestions)
 
     val availableArgs = getAvailableArguments(node)
@@ -91,13 +89,37 @@ internal class CommandTreeSuggestionsProvider {
     // suggest parent options and args if there is no required args or last arg is required, but variadic
     val args = if (lastArg?.isVariadic == true && lastArg.optionsCanBreakVariadicArg) availableArgs - lastArg else availableArgs
     if (node.parent is SubcommandNode && args.all { it.isOptional }) {
-      val parentSuggestions = getSuggestionsForSubcommand(node.parent)
+      val parentSuggestions = getSuggestionsForSubcommand(node.parent, nextNodeText)
       suggestions.addAll(parentSuggestions)
     }
     return suggestions
   }
 
-  private fun ShellArgument.getArgumentSuggestions(): List<ShellArgumentSuggestion> {
-    return suggestions.map { ShellArgumentSuggestion(it, this) }
+  private fun getArgumentSuggestions(arg: ShellArgument, nextNodeText: String): List<ShellArgumentSuggestion> {
+    val suggestions = mutableListOf<ShellArgumentSuggestion>()
+    suggestions.addAll(arg.suggestions.map { ShellArgumentSuggestion(it, arg) })
+
+    val templates = mutableSetOf<String>()
+    templates.addAll(arg.templates)
+    templates.addAll(arg.generators.flatMap { it.templates })
+    val suggestAllFiles = templates.contains("filepaths")
+    val suggestFolders = templates.contains("folders")
+    if (suggestAllFiles || suggestFolders) {
+      val fileSuggestions = getFileSuggestions(arg, nextNodeText, onlyDirectories = suggestFolders && !suggestAllFiles)
+      suggestions.addAll(fileSuggestions)
+    }
+    return suggestions
+  }
+
+  private fun getFileSuggestions(arg: ShellArgument, nextNodeText: String, onlyDirectories: Boolean): List<ShellArgumentSuggestion> {
+    val basePath = if (nextNodeText.contains('/')) {
+      nextNodeText.substringBeforeLast('/') + "/"
+    }
+    else "."
+    val files = runtimeDataProvider.getFilesFromDirectory(basePath)
+    return files.asSequence()
+      .filter { !onlyDirectories || it.endsWith('/') }
+      .map { ShellArgumentSuggestion(ShellSuggestion(names = listOf(it)), arg) }
+      .toList()
   }
 }

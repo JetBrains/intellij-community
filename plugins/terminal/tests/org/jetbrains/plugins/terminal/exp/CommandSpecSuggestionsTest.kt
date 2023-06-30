@@ -5,6 +5,7 @@ import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.util.containers.TreeTraversal
 import org.jetbrains.plugins.terminal.exp.completion.*
 import org.jetbrains.plugins.terminal.exp.util.FakeCommandSpecManager
+import org.jetbrains.plugins.terminal.exp.util.FakeShellRuntimeDataProvider
 import org.jetbrains.plugins.terminal.exp.util.commandSpec
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -251,12 +252,12 @@ class CommandSpecSuggestionsTest {
   }
 
   private fun doTest(vararg arguments: String, expected: List<String>) {
-    val suggestionsProvider = CommandTreeSuggestionsProvider()
+    val suggestionsProvider = CommandTreeSuggestionsProvider(FakeShellRuntimeDataProvider())
     val rootNode: SubcommandNode = CommandTreeBuilder.build(suggestionsProvider, FakeCommandSpecManager(),
                                                             commandName, spec, arguments.asList())
     val allChildren = TreeTraversal.PRE_ORDER_DFS.traversal(rootNode as CommandPartNode<*>) { node -> node.children }
     val lastNode = allChildren.last() ?: rootNode
-    val actual = suggestionsProvider.getSuggestionsOfNext(lastNode).flatMap { it.names }
+    val actual = suggestionsProvider.getSuggestionsOfNext(lastNode, "").flatMap { it.names }
 
     assertSameElements(actual, expected)
   }

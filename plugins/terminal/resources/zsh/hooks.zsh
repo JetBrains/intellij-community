@@ -24,6 +24,21 @@ __jetbrains_intellij_encode_large() {
   fi
 }
 
+__jetbrains_intellij_is_generator_command() {
+  [[ "$1" == *"__jetbrains_intellij_get_directory_files"* ]]
+}
+
+__jetbrains_intellij_get_directory_files() {
+  __JETBRAINS_INTELLIJ_GENERATOR_COMMAND=1
+  builtin local request_id="$1"
+  builtin local result="$(ls -1ap "$2")"
+  builtin printf '\e]1341;generator_finished;request_id=%s;result=%s\a' "$request_id" "$(__jetbrains_intellij_encode_large "${result}")"
+}
+
+__jetbrains_intellij_zshaddhistory() {
+	! __jetbrains_intellij_is_generator_command "$1"
+}
+
 __jetbrains_intellij_prompt_shown() {
   builtin printf '\e]1341;prompt_shown\a'
 }
@@ -38,7 +53,10 @@ __jetbrains_intellij_configure_prompt() {
 }
 
 __jetbrains_intellij_command_preexec() {
-  builtin local entered_command="$1"
+  if __jetbrains_intellij_is_generator_command "$1"
+  then
+    return 0
+  fi
   builtin local current_directory="$PWD"
   builtin printf '\e]1341;command_started;command=%s;current_directory=%s\a' \
     "$(__jetbrains_intellij_encode "${entered_command}")" \
@@ -46,6 +64,11 @@ __jetbrains_intellij_command_preexec() {
 }
 
 __jetbrains_intellij_command_precmd() {
+  if [ ! -z $__JETBRAINS_INTELLIJ_GENERATOR_COMMAND ]
+  then
+    unset __JETBRAINS_INTELLIJ_GENERATOR_COMMAND
+    return 0
+  fi
   builtin local LAST_EXIT_CODE="$?"
   builtin local current_directory="$PWD"
   builtin printf '\e]1341;command_finished;exit_code=%s;current_directory=%s\a' \
@@ -55,6 +78,7 @@ __jetbrains_intellij_command_precmd() {
 
 add-zsh-hook preexec __jetbrains_intellij_command_preexec
 add-zsh-hook precmd __jetbrains_intellij_command_precmd
+add-zsh-hook zshaddhistory __jetbrains_intellij_zshaddhistory
 
 # Do not show "zsh: do you wish to see all <N> possibilities (<M> lines)?" question
 # when there are big number of completion items

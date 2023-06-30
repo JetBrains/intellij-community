@@ -29,7 +29,7 @@ internal class CommandTreeBuilder private constructor(
   private fun buildSubcommandTree(root: SubcommandNode) {
     while (curIndex < arguments.size) {
       val name = arguments[curIndex]
-      val suggestions = suggestionsProvider.getSuggestionsOfNext(root)
+      val suggestions = suggestionsProvider.getSuggestionsOfNext(root, name)
       val suggestion = suggestions.find { it.names.contains(name) }
       if (suggestion == null
           && !root.getMergedParserDirectives().flagsArePosixNoncompliant
@@ -57,7 +57,7 @@ internal class CommandTreeBuilder private constructor(
   private fun buildOptionTree(root: OptionNode) {
     while (curIndex < arguments.size) {
       val name = arguments[curIndex]
-      val suggestions = suggestionsProvider.getDirectSuggestionsOfNext(root)
+      val suggestions = suggestionsProvider.getDirectSuggestionsOfNext(root, name)
       val suggestion = suggestions.find { it.names.contains(name) }
       val node = if (suggestion == null) {
         // option requires an argument, then probably provided name is this argument
