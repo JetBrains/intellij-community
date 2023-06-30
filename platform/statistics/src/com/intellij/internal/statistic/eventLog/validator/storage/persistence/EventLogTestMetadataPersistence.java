@@ -65,7 +65,7 @@ public final class EventLogTestMetadataPersistence extends BaseEventLogMetadataP
       "{\"id\":\"" + groupId + "\"," +
       "\"versions\":[ {\"from\" : \"1\"}]," +
       "\"rules\":" + rules + "}";
-    return SerializationHelper.Companion.deserialize(content, EventGroupRemoteDescriptor.class);
+    return SerializationHelper.INSTANCE.deserialize(content, EventGroupRemoteDescriptor.class);
   }
 
   public static void addTestGroup(@NotNull String recorderId, @NotNull GroupValidationTestRule group) throws IOException {
@@ -98,7 +98,7 @@ public final class EventLogTestMetadataPersistence extends BaseEventLogMetadataP
     approvedGroups.groups.add(group);
     Files.createDirectories(file.getParent());
     try (BufferedWriter writer = Files.newBufferedWriter(file)) {
-      SerializationHelper.Companion.serialize(writer, approvedGroups);
+      SerializationHelper.INSTANCE.serialize(writer, approvedGroups);
     }
   }
 
@@ -154,7 +154,7 @@ public final class EventLogTestMetadataPersistence extends BaseEventLogMetadataP
     Path file = getEventsTestSchemeFile();
     Files.createDirectories(file.getParent());
     try (BufferedWriter writer = Files.newBufferedWriter(file)) {
-      SerializationHelper.Companion.serialize(writer, approvedGroups);
+      SerializationHelper.INSTANCE.serialize(writer, approvedGroups);
     }
   }
 }

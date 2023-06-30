@@ -27,7 +27,7 @@ public class EventLogExternalSettings {
   public static EventLogExternalSendSettings parseSendSettings(@NotNull Reader reader, @NotNull String version)
     throws EventLogConfigParserException {
     try {
-      final EventLogExternalSettings parsed = SerializationHelper.Companion.deserialize(reader, EventLogExternalSettings.class);
+      final EventLogExternalSettings parsed = SerializationHelper.INSTANCE.deserialize(reader, EventLogExternalSettings.class);
       if (parsed != null) {
         return parsed.toSendSettings(version);
       }

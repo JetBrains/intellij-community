@@ -15,114 +15,112 @@ import java.io.IOException
 import java.io.Reader
 import java.io.Writer
 
-class SerializationHelper {
-  companion object {
-    private val SERIALIZATION_TO_WRITER_MAPPER: JsonMapper by lazy {
-      val printer: DefaultPrettyPrinter = CustomPrettyPrinter()
-      printer.indentArraysWith(DefaultIndenter())
+object SerializationHelper {
+  private val SERIALIZATION_TO_WRITER_MAPPER: JsonMapper by lazy {
+    val printer: DefaultPrettyPrinter = CustomPrettyPrinter()
+    printer.indentArraysWith(DefaultIndenter())
 
-      JsonMapper
-        .builder()
-        .enable(MapperFeature.REQUIRE_SETTERS_FOR_GETTERS)
-        .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
-        .serializationInclusion(JsonInclude.Include.NON_NULL)
-        .defaultPrettyPrinter(printer)
-        .build()
-    }
+    JsonMapper
+      .builder()
+      .enable(MapperFeature.REQUIRE_SETTERS_FOR_GETTERS)
+      .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
+      .serializationInclusion(JsonInclude.Include.NON_NULL)
+      .defaultPrettyPrinter(printer)
+      .build()
+  }
 
-    private val SERIALIZATION_MAPPER: JsonMapper by lazy {
-      val printer: DefaultPrettyPrinter = CustomPrettyPrinter()
-      printer.indentArraysWith(DefaultIndenter())
+  private val SERIALIZATION_MAPPER: JsonMapper by lazy {
+    val printer: DefaultPrettyPrinter = CustomPrettyPrinter()
+    printer.indentArraysWith(DefaultIndenter())
 
-      JsonMapper
-        .builder()
-        .addModule(kotlinModule())
-        .enable(MapperFeature.REQUIRE_SETTERS_FOR_GETTERS)
-        .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
-        .serializationInclusion(JsonInclude.Include.NON_NULL)
-        .defaultPrettyPrinter(printer)
-        .build()
-    }
+    JsonMapper
+      .builder()
+      .addModule(kotlinModule())
+      .enable(MapperFeature.REQUIRE_SETTERS_FOR_GETTERS)
+      .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
+      .serializationInclusion(JsonInclude.Include.NON_NULL)
+      .defaultPrettyPrinter(printer)
+      .build()
+  }
 
-    private val SERIALIZATION_TO_SINGLE_LINE_MAPPER: JsonMapper by lazy {
-      JsonMapper
-        .builder()
-        .addModule(kotlinModule())
-        .enable(MapperFeature.REQUIRE_SETTERS_FOR_GETTERS)
-        .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
-        .serializationInclusion(JsonInclude.Include.NON_NULL)
-        .build()
-    }
+  private val SERIALIZATION_TO_SINGLE_LINE_MAPPER: JsonMapper by lazy {
+    JsonMapper
+      .builder()
+      .addModule(kotlinModule())
+      .enable(MapperFeature.REQUIRE_SETTERS_FOR_GETTERS)
+      .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
+      .serializationInclusion(JsonInclude.Include.NON_NULL)
+      .build()
+  }
 
-    private val DESERIALIZATION_MAPPER: JsonMapper by lazy {
-      JsonMapper
-        .builder()
-        .enable(DeserializationFeature.USE_LONG_FOR_INTS)
-        .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
-        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-        .build()
-    }
+  private val DESERIALIZATION_MAPPER: JsonMapper by lazy {
+    JsonMapper
+      .builder()
+      .enable(DeserializationFeature.USE_LONG_FOR_INTS)
+      .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
+      .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+      .build()
+  }
 
-    private val DESERIALIZATION_WITH_KOTLIN_MAPPER: JsonMapper by lazy {
-      JsonMapper
-        .builder()
-        .addModule(kotlinModule())
-        .enable(DeserializationFeature.USE_LONG_FOR_INTS)
-        .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
-        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-        .build()
-    }
+  private val DESERIALIZATION_WITH_KOTLIN_MAPPER: JsonMapper by lazy {
+    JsonMapper
+      .builder()
+      .addModule(kotlinModule())
+      .enable(DeserializationFeature.USE_LONG_FOR_INTS)
+      .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
+      .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+      .build()
+  }
 
-    /**
-     * Method that can be used to serialize any Java value as JSON output, using Writer provided.
-     */
-    fun serialize(w: Writer, value: Any) {
-      SERIALIZATION_TO_WRITER_MAPPER.writerWithDefaultPrettyPrinter().writeValue(w, value)
-    }
+  /**
+   * Method that can be used to serialize any Java value as JSON output, using Writer provided.
+   */
+  fun serialize(w: Writer, value: Any) {
+    SERIALIZATION_TO_WRITER_MAPPER.writerWithDefaultPrettyPrinter().writeValue(w, value)
+  }
 
-    /**
-     * Method that can be used to serialize any Java value as a String.
-     *
-     * @throws JsonProcessingException
-     */
-    @Throws(JsonProcessingException::class)
-    fun serialize(value: Any?): String {
-      return SERIALIZATION_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(value)
-    }
+  /**
+   * Method that can be used to serialize any Java value as a String.
+   *
+   * @throws JsonProcessingException
+   */
+  @Throws(JsonProcessingException::class)
+  fun serialize(value: Any?): String {
+    return SERIALIZATION_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(value)
+  }
 
-    /**
-     * Method that can be used to serialize any Java value as a String to single line.
-     *
-     * @throws JsonProcessingException
-     */
-    @Throws(JsonProcessingException::class)
-    fun serializeToSingleLine(value: Any?): String {
-      return SERIALIZATION_TO_SINGLE_LINE_MAPPER.writeValueAsString(value)
-    }
+  /**
+   * Method that can be used to serialize any Java value as a String to single line.
+   *
+   * @throws JsonProcessingException
+   */
+  @Throws(JsonProcessingException::class)
+  fun serializeToSingleLine(value: Any?): String {
+    return SERIALIZATION_TO_SINGLE_LINE_MAPPER.writeValueAsString(value)
+  }
 
-    /**
-     * Method that can be used to deserialize any Java value, using Reader provided.
-     *
-     * @throws IOException
-     * @throws StreamReadException
-     * @throws DatabindException
-     */
-    fun <T> deserialize(src: Reader, valueType: Class<T>): T{
-      return DESERIALIZATION_MAPPER.readValue(src, valueType)
-    }
+  /**
+   * Method that can be used to deserialize any Java value, using Reader provided.
+   *
+   * @throws IOException
+   * @throws StreamReadException
+   * @throws DatabindException
+   */
+  fun <T> deserialize(src: Reader, valueType: Class<T>): T {
+    return DESERIALIZATION_MAPPER.readValue(src, valueType)
+  }
 
-    /**
-     * Method to deserialize JSON content from given JSON content String to given class.
-     *
-     * @throws StreamReadException if underlying input contains invalid content
-     *    of type {@link JsonParser} supports (JSON for default case)
-     * @throws DatabindException if the input JSON structure does not match structure
-     *   expected for result type (or has other mismatch issues)
-     */
-    @kotlin.jvm.Throws(StreamReadException::class, DatabindException::class)
-    fun <T> deserialize(json: String, clazz: Class<T>): T {
-      return DESERIALIZATION_WITH_KOTLIN_MAPPER.readValue(json, clazz)
-    }
+  /**
+   * Method to deserialize JSON content from given JSON content String to given class.
+   *
+   * @throws StreamReadException if underlying input contains invalid content
+   *    of type {@link JsonParser} supports (JSON for default case)
+   * @throws DatabindException if the input JSON structure does not match structure
+   *   expected for result type (or has other mismatch issues)
+   */
+  @kotlin.jvm.Throws(StreamReadException::class, DatabindException::class)
+  fun <T> deserialize(json: String, clazz: Class<T>): T {
+    return DESERIALIZATION_WITH_KOTLIN_MAPPER.readValue(json, clazz)
   }
 }
 
