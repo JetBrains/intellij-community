@@ -37,8 +37,8 @@ class CodeFloatingToolbar(
     private val FLOATING_TOOLBAR = Key<CodeFloatingToolbar>("floating.codeToolbar")
     
     @JvmStatic
-    fun getToolbar(editor: Editor): CodeFloatingToolbar? {
-      return editor.getUserData(FLOATING_TOOLBAR)
+    fun getToolbar(editor: Editor?): CodeFloatingToolbar? {
+      return editor?.getUserData(FLOATING_TOOLBAR)
     }
   }
 

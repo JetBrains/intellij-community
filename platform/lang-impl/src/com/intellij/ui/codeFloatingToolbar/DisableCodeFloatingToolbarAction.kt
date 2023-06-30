@@ -3,10 +3,13 @@ package com.intellij.ui.codeFloatingToolbar
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.options.advanced.AdvancedSettings
 
 class DisableCodeFloatingToolbarAction: AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     AdvancedSettings.setBoolean("floating.codeToolbar.hide", true)
+    val editor = e.dataContext.getData(CommonDataKeys.EDITOR)
+    CodeFloatingToolbar.getToolbar(editor)?.scheduleHide()
   }
 }
