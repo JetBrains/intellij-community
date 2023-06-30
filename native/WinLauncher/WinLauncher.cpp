@@ -903,9 +903,6 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 
   if (!IsSupportedVersion()) return 1;
 
-  int exitCode = CheckSingleInstance();
-  if (exitCode != -1) return exitCode;
-
   std::string homeDir = GetHomeDir();
   if (!LocateJVM(homeDir)) return 1;
 
@@ -922,6 +919,10 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
   // ensures path variables are defined
   SetPathVariable(L"APPDATA", FOLDERID_RoamingAppData);
   SetPathVariable(L"LOCALAPPDATA", FOLDERID_LocalAppData);
+
+  //it's OK to return 0 here, because the control is transferred to the first instance
+  int exitCode = CheckSingleInstance();
+  if (exitCode != -1) return exitCode;
 
   // Read current directory and pass it to JVM through environment variable. The real current directory will be changed
   // in LoadJVMLibrary.
