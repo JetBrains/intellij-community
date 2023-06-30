@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.highlighting.HighlightingFactory
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
+import org.jetbrains.kotlin.idea.highlighting.KotlinCallHighlighterExtension
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
@@ -38,8 +39,8 @@ internal class FunctionCallHighlighter(
         if (operationReference.isAssignment()) return emptyList()
         val call = expression.resolveCall()?.successfulCallOrNull<KtCall>() ?: return emptyList()
         if (call is KtSimpleFunctionCall && (call.symbol as? KtFunctionSymbol)?.isOperator == true) return emptyList()
-        val h = getTextAttributesForCall(call)?.let { attributes ->
-            HighlightingFactory.highlightName(operationReference, attributes)
+        val h = getDefaultHighlightInfoTypeForCall(call)?.let { highlightInfoType ->
+            HighlightingFactory.highlightName(operationReference, highlightInfoType)
         }
         return listOfNotNull(h)
     }
@@ -49,20 +50,21 @@ internal class FunctionCallHighlighter(
 
     context(KtAnalysisSession)
     private fun highlightCallExpression(expression: KtCallExpression): List<HighlightInfo.Builder> {
-        return listOfNotNull(expression.calleeExpression
-            ?.takeUnless { it is KtLambdaExpression }
-            ?.takeUnless { it is KtCallExpression /* KT-16159 */ }
-            ?.let { callee ->
-                expression.resolveCall()?.singleCallOrNull<KtCall>()?.let { call ->
-                    getTextAttributesForCall(call)?.let { attributes ->
-                        HighlightingFactory.highlightName (callee, attributes)
-                    }
-                }
-            })
+        val callee = expression.calleeExpression ?: return emptyList()
+        val call = expression.resolveCall()?.singleCallOrNull<KtCall>() ?: return emptyList()
+        if (callee is KtLambdaExpression || callee is KtCallExpression /* KT-16159 */) return emptyList()
+        val highlightInfoType = getHighlightInfoTypeForCallFromExtension(callee, call)
+            ?: getDefaultHighlightInfoTypeForCall(call)
+            ?: return emptyList()
+        return listOfNotNull(HighlightingFactory.highlightName(callee, highlightInfoType))
     }
 
     context(KtAnalysisSession)
-    private fun getTextAttributesForCall(call: KtCall): HighlightInfoType? {
+    private fun getHighlightInfoTypeForCallFromExtension(callee: KtExpression, call: KtCall): HighlightInfoType? =
+        KotlinCallHighlighterExtension.EP_NAME.getExtensions(project).firstNotNullOfOrNull { it.highlightCall(callee, call) }
+
+    context(KtAnalysisSession)
+    private fun getDefaultHighlightInfoTypeForCall(call: KtCall): HighlightInfoType? {
         if (call !is KtSimpleFunctionCall) return null
         return when (val function = call.symbol) {
             is KtConstructorSymbol -> KotlinHighlightInfoTypeSemanticNames.CONSTRUCTOR_CALL
