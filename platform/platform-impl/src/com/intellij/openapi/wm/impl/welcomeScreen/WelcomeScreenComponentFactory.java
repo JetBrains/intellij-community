@@ -6,7 +6,7 @@ import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.diagnostic.MessagePool;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.actions.AboutPopup;
+import com.intellij.ide.actions.AboutDialog;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.widget.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
@@ -147,7 +147,7 @@ public final class WelcomeScreenComponentFactory {
 
   private static AnAction createCopyAboutAction() {
     return DumbAwareAction.create(e -> {
-      CopyPasteManager.getInstance().setContents(new StringSelection(AboutPopup.getAboutText()));
+      CopyPasteManager.getInstance().setContents(new StringSelection(new AboutDialog(null).getExtendedAboutText()));
     });
   }
 

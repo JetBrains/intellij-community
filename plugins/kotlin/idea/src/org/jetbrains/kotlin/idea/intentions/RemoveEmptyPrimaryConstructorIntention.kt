@@ -22,15 +22,20 @@ class RemoveEmptyPrimaryConstructorIntention : SelfTargetingOffsetIndependentInt
     KotlinBundle.lazyMessage("remove.empty.primary.constructor")
 ) {
 
-    override fun applyTo(element: KtPrimaryConstructor, editor: Editor?) = element.delete()
+    override fun applyTo(element: KtPrimaryConstructor, editor: Editor?) {
+        element.delete()
+    }
 
-    override fun isApplicableTo(element: KtPrimaryConstructor) = when {
-        element.containingClass()?.mustHaveNonEmptyPrimaryConstructor() == true -> false
-        element.valueParameters.isNotEmpty() -> false
-        element.annotations.isNotEmpty() -> false
-        element.modifierList?.text?.isBlank() == false -> false
-        element.containingClass()?.secondaryConstructors?.isNotEmpty() == true -> false
-        element.isExpectDeclaration() -> false
-        else -> true
+    override fun isApplicableTo(element: KtPrimaryConstructor): Boolean {
+        val containingClass = element.containingClass() ?: return false
+        return when {
+            element.valueParameters.isNotEmpty() -> false
+            element.annotations.isNotEmpty() -> false
+            element.modifierList?.text?.isBlank() == false -> false
+            element.isExpectDeclaration() -> false
+            containingClass.mustHaveNonEmptyPrimaryConstructor() -> false
+            containingClass.secondaryConstructors.isNotEmpty() -> false
+            else -> true
+        }
     }
 }
