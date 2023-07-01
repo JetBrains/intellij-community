@@ -63,8 +63,7 @@ internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowToolbar,
   }
 
   override fun isAvailable(project: Project): Boolean {
-    return super.isAvailable(project) && ToolWindowManagerEx.getInstanceEx(
-      project).getMoreButtonSide() == side
+    return super.isAvailable(project) && ToolWindowManagerEx.getInstanceEx(project).getMoreButtonSide() == side
   }
 
   override fun checkSkipPressForEvent(e: MouseEvent) = e.button != MouseEvent.BUTTON1
@@ -109,11 +108,7 @@ internal abstract class AbstractMoreSquareStripeButton(action: AnAction) : Abstr
   override fun update() {
     super.update()
     val project = dataContext.getData(CommonDataKeys.PROJECT)
-    if (project == null) {
-      return
-    }
-
-    val available = isAvailable(project)
+    val available = project != null && isAvailable(project)
 
     myPresentation.isEnabledAndVisible = available
     isEnabled = available

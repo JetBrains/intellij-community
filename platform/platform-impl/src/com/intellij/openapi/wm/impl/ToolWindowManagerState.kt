@@ -82,7 +82,7 @@ class ToolWindowManagerStateImpl : ToolWindowManagerState {
       }
       element.addContent(recentState)
     }
-    if (moreButton !== ToolWindowAnchor.LEFT) {
+    if (moreButton != ToolWindowAnchor.LEFT) {
       element.addContent(Element(MORE_BUTTON_TAG).setAttribute("side", moreButton.toString()))
     }
     return element
