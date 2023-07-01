@@ -124,9 +124,9 @@ public class ModCommandServiceImpl implements ModCommandService {
     if (command instanceof ModChooseAction chooser) {
       return executeChoose(context, chooser, onTheFly);
     }
-    if (command instanceof ModDisplayError error) {
+    if (command instanceof ModDisplayMessage message) {
       if (!onTheFly) return true; // TODO: gather all errors and display them together?
-      return executeError(project, error);
+      return executeMessage(project, message);
     }
     if (command instanceof ModRenameSymbol rename) {
       if (!onTheFly) return true;
@@ -147,7 +147,7 @@ public class ModCommandServiceImpl implements ModCommandService {
       return true;
     }
     catch (IOException e) {
-      executeError(project, new ModDisplayError(e.getMessage()));
+      executeMessage(project, new ModDisplayMessage(e.getMessage(), ModDisplayMessage.MessageKind.ERROR));
       return false;
     }
   }
@@ -167,7 +167,7 @@ public class ModCommandServiceImpl implements ModCommandService {
       });
     }
     catch (IOException e) {
-      executeError(project, new ModDisplayError(e.getMessage()));
+      executeMessage(project, new ModDisplayMessage(e.getMessage(), ModDisplayMessage.MessageKind.ERROR));
       return false;
     }
   }
@@ -256,10 +256,13 @@ public class ModCommandServiceImpl implements ModCommandService {
     }
   }
 
-  private static boolean executeError(@NotNull Project project, @NotNull ModDisplayError error) {
+  private static boolean executeMessage(@NotNull Project project, @NotNull ModDisplayMessage message) {
     Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
     if (editor == null) return false;
-    HintManager.getInstance().showErrorHint(editor, error.errorMessage());
+    switch (message.kind()) {
+      case INFORMATION -> HintManager.getInstance().showInformationHint(editor, message.messageText());
+      case ERROR -> HintManager.getInstance().showErrorHint(editor, message.messageText());
+    }
     return true;
   }
 

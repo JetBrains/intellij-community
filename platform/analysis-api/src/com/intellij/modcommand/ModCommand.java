@@ -15,7 +15,7 @@ import java.util.Set;
  * All inheritors are records, so the whole state is declarative and readable.
  */
 public sealed interface ModCommand
-  permits ModChooseAction, ModCompositeCommand, ModCreateFile, ModDeleteFile, ModDisplayError, ModHighlight, ModNavigate,
+  permits ModChooseAction, ModCompositeCommand, ModCreateFile, ModDeleteFile, ModDisplayMessage, ModHighlight, ModNavigate,
           ModNothing, ModRenameSymbol, ModUpdateFileText {
 
   /**
