@@ -1,4 +1,7 @@
 fragment project on Project {
+  name
+  nameWithNamespace
+  path
+  fullPath
   httpUrlToRepo
-  webUrl
 }
