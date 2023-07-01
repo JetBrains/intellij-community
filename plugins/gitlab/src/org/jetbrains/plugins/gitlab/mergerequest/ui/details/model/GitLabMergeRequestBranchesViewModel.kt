@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
+import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
@@ -12,7 +13,6 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.util.childScope
 import git4idea.GitUtil
@@ -24,7 +24,10 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.ui.branch.GitBranchPopupActions
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.callbackFlow
 import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
@@ -40,16 +43,14 @@ internal class GitLabMergeRequestBranchesViewModel(
 
   private val cs: CoroutineScope = parentCs.childScope()
 
-  private val targetProject: StateFlow<GitLabProjectDTO> = mergeRequest.targetProject
-  private val sourceProject: StateFlow<GitLabProjectDTO?> = mergeRequest.sourceProject
-
-  override val sourceBranch: StateFlow<String> =
-    combine(targetProject, sourceProject, mergeRequest.sourceBranch) { targetProject, sourceProject, sourceBranch ->
-      if (sourceProject == null) return@combine ""
-      if (targetProject == sourceProject) return@combine sourceBranch
-      val sourceProjectOwner = sourceProject.fullPath.split("/").dropLast(1).joinToString("/")
-      return@combine "$sourceProjectOwner:$sourceBranch"
-    }.stateIn(cs, SharingStarted.Lazily, mergeRequest.sourceBranch.value)
+  override val sourceBranch: StateFlow<String> = with(mergeRequest) {
+    combineState(cs, targetProject, sourceProject, sourceBranch) { targetProject, sourceProject, sourceBranch ->
+      if (sourceProject == null) return@combineState ""
+      if (targetProject == sourceProject) return@combineState sourceBranch
+      val sourceProjectOwner = sourceProject.ownerPath
+      return@combineState "$sourceProjectOwner:$sourceBranch"
+    }
+  }
 
   override val isCheckedOut: SharedFlow<Boolean> = callbackFlow {
     val cs = this
@@ -76,14 +77,12 @@ internal class GitLabMergeRequestBranchesViewModel(
       true
     ) {
       override fun run(indicator: ProgressIndicator) {
-        val sourceBranch = sourceBranch.value
-        val sourceProject = sourceProject.value ?: return
-        val httpForkUrl = sourceProject.httpUrlToRepo ?: return
-        val pullRequestAuthor = mergeRequest.author
+        val sourceProject = mergeRequest.sourceProject.value ?: return
+        val sourceBranch = mergeRequest.sourceBranch.value
 
-        val headRemote = git.findOrCreateRemote(repository, pullRequestAuthor.username, httpForkUrl)
+        val headRemote = git.findOrCreateRemote(repository, sourceProject)
         if (headRemote == null) {
-          notifyRemoteError(vcsNotifier, httpForkUrl)
+          notifyRemoteError(vcsNotifier, sourceProject)
           return
         }
 
@@ -98,10 +97,15 @@ internal class GitLabMergeRequestBranchesViewModel(
     }.queue()
   }
 
-  private fun notifyRemoteError(vcsNotifier: VcsNotifier, httpForkUrl: @NlsSafe String?) {
+  private fun notifyRemoteError(vcsNotifier: VcsNotifier, project: GitLabProjectDTO) {
     var failedMessage = GitLabBundle.message("merge.request.branch.checkout.resolve.remote.failed")
-    if (httpForkUrl != null) {
-      failedMessage += "\n$httpForkUrl"
+    val httpUrl = project.httpUrlToRepo
+    val sshUrl = project.sshUrlToRepo
+    if (httpUrl != null) {
+      failedMessage += "\n$httpUrl"
+    }
+    if (sshUrl != null) {
+      failedMessage += "\n$sshUrl"
     }
     vcsNotifier.notifyError(
       MERGE_REQUEST_CANNOT_SET_TRACKING_BRANCH,
@@ -109,39 +113,6 @@ internal class GitLabMergeRequestBranchesViewModel(
       failedMessage
     )
   }
-
-  private fun isBranchCheckedOut(repository: GitRepository, sourceBranch: String): Boolean {
-    val currentBranchName = repository.currentBranchName
-    return currentBranchName == sourceBranch
-  }
-
-  private fun findRemote(repository: GitRepository, httpUrl: String?): GitRemote? =
-    repository.remotes.find {
-      it.firstUrl != null && (it.firstUrl == httpUrl ||
-                              it.firstUrl == httpUrl + GitUtil.DOT_GIT)
-    }
-
-  // TODO: implement logic use sshUrlToRepo
-  private fun Git.findOrCreateRemote(repository: GitRepository, remoteName: String, httpUrl: String?): GitRemote? {
-    val existingRemote = findRemote(repository, httpUrl)
-    if (existingRemote != null) return existingRemote
-
-    if (httpUrl != null && repository.remotes.any { it.name == remoteName }) {
-      return createRemote(repository, "pull_$remoteName", httpUrl)
-    }
-
-    return when {
-      httpUrl != null -> createRemote(repository, remoteName, httpUrl)
-      else -> null
-    }
-  }
-
-  private fun Git.createRemote(repository: GitRepository, remoteName: String, url: String): GitRemote? =
-    with(repository) {
-      addRemote(this, remoteName, url)
-      update()
-      remotes.find { it.name == remoteName }
-    }
 
   override fun showBranches() {
     cs.launchNow {
@@ -153,5 +124,69 @@ internal class GitLabMergeRequestBranchesViewModel(
 
   companion object {
     private const val MERGE_REQUEST_CANNOT_SET_TRACKING_BRANCH = "gitlab.merge.request.cannot.set.tracking.branch"
+  }
+}
+
+private fun isBranchCheckedOut(repository: GitRepository, sourceBranch: String): Boolean {
+  val currentBranchName = repository.currentBranchName
+  return currentBranchName == sourceBranch
+}
+
+private fun Git.findOrCreateRemote(repository: GitRepository, project: GitLabProjectDTO): GitRemote? {
+  val existingRemote = findRemote(repository, project)
+  if (existingRemote != null) return existingRemote
+
+  val httpUrl = project.httpUrlToRepo
+  val sshUrl = project.sshUrlToRepo
+  val preferHttp = shouldAddHttpRemote(repository)
+  return if (preferHttp && httpUrl != null) {
+    createRemote(repository, project.ownerPath, httpUrl)
+  }
+  else if (sshUrl != null) {
+    createRemote(repository, project.ownerPath, sshUrl)
+  }
+  else {
+    null
+  }
+}
+
+private fun findRemote(repository: GitRepository, project: GitLabProjectDTO): GitRemote? =
+  repository.remotes.find {
+    val url = it.firstUrl
+    url != null && (url.removeSuffix("/").removeSuffix(GitUtil.DOT_GIT).endsWith(project.fullPath))
+  }
+
+private fun shouldAddHttpRemote(repository: GitRepository): Boolean {
+  val preferredRemoteUrl = repository.remotes.find { it.name == "origin" }?.firstUrl
+                           ?: repository.remotes.firstNotNullOfOrNull { it.firstUrl }
+  if (preferredRemoteUrl != null) {
+    return preferredRemoteUrl.startsWith("http")
+  }
+  return true
+}
+
+private fun Git.createRemote(repository: GitRepository, remoteName: String, url: String): GitRemote? {
+  val actualName = findNameForRemote(repository, remoteName) ?: return null
+  return with(repository) {
+    addRemote(this, actualName, url)
+    update()
+    remotes.find { it.name == actualName }
+  }
+}
+
+/**
+ * Returns the [preferredName] if it is not taken or adds a numerical index to it
+ */
+private fun findNameForRemote(repository: GitRepository, preferredName: String): String? {
+  val exitingNames = repository.remotes.mapTo(mutableSetOf(), GitRemote::getName)
+  if (!exitingNames.contains(preferredName)) {
+    return preferredName
+  }
+  else {
+    return sequenceOf(1..Int.MAX_VALUE).map {
+      "${preferredName}_$it"
+    }.find {
+      exitingNames.contains(it)
+    }
   }
 }

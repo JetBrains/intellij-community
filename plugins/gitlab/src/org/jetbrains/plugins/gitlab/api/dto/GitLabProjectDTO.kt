@@ -12,5 +12,8 @@ data class GitLabProjectDTO(
   val nameWithNamespace: @Nls String,
   val path: @NlsSafe String,
   val fullPath: @NlsSafe String,
-  val httpUrlToRepo: String?,
-)
+  val httpUrlToRepo: @NlsSafe String?,
+  val sshUrlToRepo: @NlsSafe String?
+) {
+  val ownerPath: @NlsSafe String = fullPath.split("/").dropLast(1).joinToString("/")
+}
