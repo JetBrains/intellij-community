@@ -619,7 +619,8 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
     if (dirty.compareAndSet(true, false)) {
       setIntHeaderField(HEADER_RECORDS_ALLOCATED, allocatedRecordsCount.get());
       setIntHeaderField(HEADER_GLOBAL_MOD_COUNT_OFFSET, globalModCount.get());
-      //TODO RC: should we do fsync() here, or we could trust OS will flush mmapped pages to disk?
+      //MAYBE RC: should we do fsync() here, or we could trust OS will flush mmapped pages to disk?
+      storage.fsync();
     }
   }
 
@@ -937,6 +938,12 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
           }
           pages.set(i, null);//give GC a chance to unmap buffers
         }
+      }
+    }
+
+    public void fsync() throws IOException {
+      if (channel.isOpen()) {
+        channel.force(true);
       }
     }
 

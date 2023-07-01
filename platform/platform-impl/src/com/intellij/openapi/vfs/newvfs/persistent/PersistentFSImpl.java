@@ -1967,6 +1967,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     int childId = FSRecords.createRecord();
     int nameId = writeAttributesToRecord(childId, parentId, name, parentFile.isCaseSensitive(), attributes, true);
+    if(nameId < 0){
+      throw new AssertionError("writeAttributesToRecord(" + childId + ", " + parentId + ", '" + name + "',...) returns -1");
+    }
 
     assert childId > 0 : childId;
     if (attributes.isDirectory()) {
