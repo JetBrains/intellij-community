@@ -783,6 +783,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/destructuringInLambda.kt");
         }
 
+        @TestMetadata("destructuringInLoopParameter.kt")
+        public void testDestructuringInLoopParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/destructuringInLoopParameter.kt");
+        }
+
         @TestMetadata("enumType.kt")
         public void testEnumType() throws Exception {
             runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/enumType.kt");
