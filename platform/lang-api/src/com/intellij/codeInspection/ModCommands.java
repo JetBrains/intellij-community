@@ -152,6 +152,11 @@ public final class ModCommands {
       public @NotNull String getFamilyName() {
         return title;
       }
+
+      @Override
+      public String toString() {
+        return "Step: [" + title + "] " + element.getText();
+      }
     };
   }
 

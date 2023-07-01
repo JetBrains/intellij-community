@@ -1,17 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.expression.eliminate;
 
-import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pass;
+import com.intellij.codeInspection.ModCommands;
+import com.intellij.modcommand.ModChooseAction;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.IntroduceTargetChooser;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.IntentionPowerPackBundle;
@@ -24,54 +21,33 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class EliminateParenthesesIntention extends BaseElementAtCaretIntentionAction {
-  private static final Pass<PsiParenthesizedExpression> ELIMINATE_CALLBACK = new Pass<>() {
-    @Override
-    public void pass(@NotNull PsiParenthesizedExpression expression) {
-      WriteCommandAction.writeCommandAction(expression.getProject(), expression.getContainingFile())
-        .withName(getName())
-        .run(() -> replaceExpression(expression));
-    }
-  };
+public final class EliminateParenthesesIntention extends PsiBasedModCommandAction<PsiJavaToken> {
+  public EliminateParenthesesIntention() {
+    super(PsiJavaToken.class);
+  }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   @Override
   public String getFamilyName() {
-    return getName();
-  }
-
-  @NotNull
-  @Override
-  public String getText() {
-    return getName();
-  }
-
-  private static @NlsContexts.Command String getName() {
     return IntentionPowerPackBundle.message("eliminate.parentheses.intention.name");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    List<PsiParenthesizedExpression> possibleInnerExpressions = getPossibleInnerExpressions(element);
-    return possibleInnerExpressions != null && !possibleInnerExpressions.isEmpty();
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiJavaToken leaf) {
+    List<PsiParenthesizedExpression> possibleInnerExpressions = getPossibleInnerExpressions(leaf);
+    return possibleInnerExpressions != null && !possibleInnerExpressions.isEmpty() ? Presentation.of(
+      IntentionPowerPackBundle.message("eliminate.parentheses.intention.name")) : null;
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    List<PsiParenthesizedExpression> possibleInnerExpressions = getPossibleInnerExpressions(element);
-    if (possibleInnerExpressions == null) return;
-    processInnerExpression(editor, possibleInnerExpressions);
-  }
-
-  private static void processInnerExpression(@Nullable Editor editor, @NotNull List<PsiParenthesizedExpression> expressions) {
-    PsiParenthesizedExpression firstItem = ContainerUtil.getFirstItem(expressions);
-    if (expressions.size() == 1 || firstItem != null && !firstItem.isPhysical()) {
-      replaceExpression(expressions.get(0));
-      return;
-    }
-    if (expressions.isEmpty() || editor == null) return;
-    IntroduceTargetChooser.showChooser(editor, expressions, ELIMINATE_CALLBACK, new PsiExpressionTrimRenderer.RenderFunction());
+  protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiJavaToken leaf) {
+    List<PsiParenthesizedExpression> possibleInnerExpressions = getPossibleInnerExpressions(leaf);
+    if (possibleInnerExpressions == null) return ModCommands.nop();
+    List<ModCommandAction> actions = ContainerUtil.map(
+      possibleInnerExpressions,
+      expr -> ModCommands.psiUpdateStep(expr, PsiExpressionTrimRenderer.render(expr), (e, u) -> replaceExpression(e)));
+    return new ModChooseAction(IntentionPowerPackBundle.message("eliminate.parentheses.intention.title"), actions);
   }
 
   private static void replaceExpression(@NotNull PsiParenthesizedExpression parenthesized) {

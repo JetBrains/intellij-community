@@ -1,9 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.expression;
 
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModCommandService;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.CaretModel;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.IPPTestCase;
+import com.siyeh.ipp.expression.eliminate.EliminateParenthesesIntention;
 import org.jetbrains.annotations.NotNull;
 
 public class EliminateParenthesesIntentionTest extends IPPTestCase {
@@ -25,9 +31,16 @@ public class EliminateParenthesesIntentionTest extends IPPTestCase {
     String testName = getTestName(false);
     myFixture.configureByFile(testName + ".java");
     CaretModel model = myFixture.getEditor().getCaretModel();
+    EliminateParenthesesIntention intention = new EliminateParenthesesIntention();
     model.runForEachCaret(caret -> {
-      model.moveToOffset(caret.getOffset());
-      myFixture.launchAction(myFixture.findSingleIntention(intentionName));
+      ModCommandAction.ActionContext context = ModCommandAction.ActionContext.from(getEditor(), getFile());
+      assertNotNull(intention.getPresentation(context));
+      ModCommand command = intention.perform(context);
+      CommandProcessor.getInstance().executeCommand(
+        getProject(),
+        () -> ModCommandService.getInstance().executeInBatch(context, command),
+        "", null);
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     });
     myFixture.checkResultByFile(testName + "_after.java", false);
   }
