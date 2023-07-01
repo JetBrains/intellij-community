@@ -277,7 +277,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createDeleteCatchFix(@NotNull PsiParameter parameter) {
-    return new DeleteCatchFix(parameter);
+    return new DeleteCatchFix(parameter).asIntention();
   }
 
   @NotNull
@@ -780,7 +780,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @Override
   public @NotNull IntentionAction createDeleteFix(@NotNull PsiElement @NotNull ... elements) {
-    return new DeleteElementFix.DeleteMultiFix(elements);
+    return new DeleteElementFix.DeleteMultiFix(elements).asIntention();
   }
 
   @NotNull
@@ -1202,6 +1202,6 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @Override
   public @NotNull IntentionAction createDeleteFix(@NotNull PsiElement @NotNull [] elements, @NotNull @Nls String text) {
-    return new DeleteElementFix.DeleteMultiFix(elements, text);
+    return new DeleteElementFix.DeleteMultiFix(elements, text).asIntention();
   }
 }

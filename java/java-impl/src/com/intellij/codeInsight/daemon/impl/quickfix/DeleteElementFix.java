@@ -1,19 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.ModCommands;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
-import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.JavaElementKind;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
@@ -50,7 +45,7 @@ public class DeleteElementFix extends PsiUpdateModCommandAction<PsiElement> {
     new CommentTracker().deleteAndRestoreComments(element);
   }
 
-  public static final class DeleteMultiFix implements IntentionAction {
+  public static final class DeleteMultiFix implements ModCommandAction {
     private final @NotNull PsiElement @NotNull [] myElements;
     private @NotNull final @Nls String myMessage;
 
@@ -65,8 +60,8 @@ public class DeleteElementFix extends PsiUpdateModCommandAction<PsiElement> {
     }
 
     @Override
-    public @IntentionName @NotNull String getText() {
-      return myMessage;
+    public @NotNull Presentation getPresentation(@NotNull ActionContext context) {
+      return Presentation.of(myMessage);
     }
 
     @Override
@@ -75,25 +70,12 @@ public class DeleteElementFix extends PsiUpdateModCommandAction<PsiElement> {
     }
 
     @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      return true;
-    }
-
-    @Override
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      for (PsiElement element : myElements) {
-        new CommentTracker().deleteAndRestoreComments(element);
-      }
-    }
-
-    @Override
-    public boolean startInWriteAction() {
-      return true;
-    }
-
-    @Override
-    public @NotNull FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-      return new DeleteMultiFix(ContainerUtil.map2Array(myElements, PsiElement.class, e -> PsiTreeUtil.findSameElementInCopy(e, target)));
+    public @NotNull ModCommand perform(@NotNull ActionContext context) {
+      return ModCommands.psiUpdate(context, updater -> {
+        for (PsiElement element : ContainerUtil.map(myElements, updater::getWritable)) {
+          new CommentTracker().deleteAndRestoreComments(element);
+        }
+      });
     }
   }
 }
