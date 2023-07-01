@@ -270,7 +270,7 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
                   if (childrenOfParent.indexOf(fileId) < 0) {
                     inconsistentParentChildRelationships++ //MAYBE RC: dedicated counter?
                     log.info("file[#$fileId]{$fileName}: record is orphan, " +
-                             ".parent.children(first 64: ${childrenOfParent.take(64)}...) doesn't contain it!")
+                             ".parent[#$parentId].children(first 64 of ${childrenOfParent.size}: ${childrenOfParent.take(64)}...) doesn't contain it!")
                   }
                 }
                 catch (e: Throwable) {
