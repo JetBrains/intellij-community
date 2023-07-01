@@ -17521,6 +17521,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/specifyTypeExplicitly/destructuringInLambda.kt");
         }
 
+        @TestMetadata("destructuringInLoopParameter.kt")
+        public void testDestructuringInLoopParameter() throws Exception {
+            runTest("testData/intentions/specifyTypeExplicitly/destructuringInLoopParameter.kt");
+        }
+
         @TestMetadata("enumType.kt")
         public void testEnumType() throws Exception {
             runTest("testData/intentions/specifyTypeExplicitly/enumType.kt");
