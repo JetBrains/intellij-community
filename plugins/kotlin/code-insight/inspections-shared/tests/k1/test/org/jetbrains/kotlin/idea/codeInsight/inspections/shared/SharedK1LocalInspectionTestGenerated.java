@@ -912,6 +912,11 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/removeEmptyParenthesesFromLambdaCall/nextLine.kt");
         }
 
+        @TestMetadata("noValueForParameter.kt")
+        public void testNoValueForParameter() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyParenthesesFromLambdaCall/noValueForParameter.kt");
+        }
+
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("../testData/inspectionsLocal/removeEmptyParenthesesFromLambdaCall/simple.kt");
