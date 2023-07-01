@@ -319,7 +319,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createMoveCatchUpFix(@NotNull PsiCatchSection section, @NotNull PsiCatchSection section1) {
-    return new MoveCatchUpFix(section, section1);
+    return new MoveCatchUpFix(section, section1).asIntention();
   }
 
   @NotNull
@@ -1061,7 +1061,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @Override
   public @NotNull IntentionAction createMoveMemberIntoClassFix(@NotNull PsiErrorElement errorElement) {
-    return new MoveMemberIntoClassFix(errorElement);
+    return new MoveMemberIntoClassFix(errorElement).asIntention();
   }
 
   @Override
