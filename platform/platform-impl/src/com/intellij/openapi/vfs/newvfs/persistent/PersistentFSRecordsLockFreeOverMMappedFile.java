@@ -164,6 +164,7 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
     try (final Page page = storage.pageByOffset(0)) {
       if (updater.updateHeader(headerAccessor)) {
         globalModCount.incrementAndGet();
+        dirty.compareAndSet(true, false);
       }
     }
   }
@@ -194,7 +195,6 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
     public int getAttributeRecordId() {
       return getIntField(ATTR_REF_OFFSET);
     }
-
 
     @Override
     public int getParent() {
@@ -984,6 +984,7 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
   }
 
   /** Opens records.dat file given as args[0], prints header fields, and first records (up to 1024) */
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void main(String[] args) throws IOException {
     if (args.length < 1) {
       System.err.println("Args: <path-to-records.dat>");

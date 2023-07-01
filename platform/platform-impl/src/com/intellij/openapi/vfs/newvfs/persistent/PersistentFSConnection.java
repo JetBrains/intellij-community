@@ -4,7 +4,6 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.core.CoreBundle;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -97,7 +96,7 @@ public final class PersistentFSConnection {
 
   private volatile boolean myDirty;
 
-  private final Closeable flushingTask;
+  private final @Nullable Closeable flushingTask;
 
   /** accessed under {@link #r}/{@link #w} */
   private final AtomicInteger corruptionsDetected = new AtomicInteger();
@@ -230,19 +229,16 @@ public final class PersistentFSConnection {
   }
 
   void doForce() throws IOException {
-    // avoid NPE when close has already taken place
-    if (myNames != null && flushingTask != null) {
-      if (myNames instanceof Forceable) {
-        ((Forceable)myNames).force();
-      }
-      myAttributesStorage.force();
-      myContents.force();
-      if (myContentHashesEnumerator != null) {
-        myContentHashesEnumerator.force();
-      }
-      writeConnectionState();
-      myRecords.force();
+    if (myNames instanceof Forceable) {
+      ((Forceable)myNames).force();
     }
+    myAttributesStorage.force();
+    myContents.force();
+    if (myContentHashesEnumerator != null) {
+      myContentHashesEnumerator.force();
+    }
+    writeConnectionState();
+    myRecords.force();
   }
 
   public boolean isDirty() {
@@ -273,8 +269,11 @@ public final class PersistentFSConnection {
     return myPersistentFSPaths;
   }
 
-  //TODO RC: we use it to mark file record modified there something derived is modified -- i.e. children attribute
-  //         or content. This looks suspicious to me: why we need to update _file_ record version in those cases?
+  /**
+   * Method used to mark file record modified if something _derived_ is modified -- i.e. children attribute
+   * or content. If file record _fields_ are mutated directly -- record marked as modified automatically, no
+   * need to call this method.
+   */
   public void markRecordAsModified(int fileId) throws IOException {
     getRecords().markRecordAsModified(fileId);
     markDirty();

@@ -28,7 +28,6 @@ import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.*;
-import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.*;
@@ -246,16 +245,20 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   // return actual children
-  private static @NotNull List<? extends ChildInfo> persistAllChildren(VirtualFile dir, int id) {
+  private static @NotNull List<? extends ChildInfo> persistAllChildren(VirtualFile dir, int dirId) {
     NewVirtualFileSystem fs = getFileSystem(dir);
 
+    //FIXME RC: this method is not thread-safe: it creates new file records from children names outside
+    //          of lock, hence it is possible >1 child to be created for the same name, and only
+    //          last children list remains written, while children created during invocations that
+    //          lost the race are remains orphan
     try {
       String[] fsNames = VfsUtil.filterNames(
         fs instanceof LocalFileSystemImpl ? ((LocalFileSystemImpl)fs).listWithCaching(dir) : fs.list(dir)
       );
 
       Map<String, ChildInfo> justCreated = new HashMap<>();
-      ListResult saved = FSRecords.update(dir, id, current -> {
+      ListResult saved = FSRecords.update(dir, dirId, current -> {
         List<? extends ChildInfo> currentChildren = current.children;
         if (fsNames.length == 0 && !currentChildren.isEmpty()) {
           return current;
@@ -277,7 +280,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
             FileAttributes attrs = entry.getValue();
             String target = attrs.isSymLink() ? fs.resolveSymLink(new FakeVirtualFile(dir, newName)) : null;
             Pair<@NotNull FileAttributes, String> childData = getChildData(fs, dir, newName, attrs, target);
-            ChildInfo newChild = justCreated.computeIfAbsent(newName, name -> makeChildRecord(dir, id, name, childData, fs, null));
+            ChildInfo newChild = justCreated.computeIfAbsent(newName, name -> makeChildRecord(dir, dirId, name, childData, fs, null));
             toAddChildren.add(newChild);
           }
         }
@@ -285,7 +288,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           for (String newName : toAddNames) {
             Pair<@NotNull FileAttributes, String> childData = getChildData(fs, dir, newName, null, null);
             if (childData != null) {
-              ChildInfo newChild = justCreated.computeIfAbsent(newName, name -> makeChildRecord(dir, id, name, childData, fs, null));
+              ChildInfo newChild = justCreated.computeIfAbsent(newName, name -> makeChildRecord(dir, dirId, name, childData, fs, null));
               toAddChildren.add(newChild);
             }
           }
@@ -296,7 +299,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         return current.merge(toAddChildren, caseSensitive);
       });
 
-      setChildrenCached(id);
+      setChildrenCached(dirId);
 
       return saved.children;
     }
@@ -391,6 +394,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                              boolean overwriteMissed) {
     assert id > 0 : id;
     assert parentId >= 0 : parentId; // 0 means there's no parent
+    //RC: why we reject the changes in those 2 cases -- what is special with loaded children or
+    //    same-name?
     if (!name.isEmpty()) {
       if (Comparing.equal(name, FSRecords.getNameSequence(id), cs)) return -1; // TODO: Handle root attributes change.
     }
@@ -1971,7 +1976,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       throw new AssertionError("writeAttributesToRecord(" + childId + ", " + parentId + ", '" + name + "',...) returns -1");
     }
 
-    assert childId > 0 : childId;
     if (attributes.isDirectory()) {
       FSRecords.loadDirectoryData(childId, parentFile, name, fs);
     }
