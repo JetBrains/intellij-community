@@ -89,7 +89,7 @@ private fun createAction(toolWindowToolbar: ToolWindowToolbar): DumbAwareAction 
     override fun actionPerformed(e: AnActionEvent) {
       val actions = ToolWindowsGroup.getToolWindowActions(e.project ?: return, true)
       val popup = JBPopupFactory.getInstance().createActionGroupPopup(null, DefaultActionGroup(actions), e.dataContext, null, true)
-      val minimumPopupWidth = 300
+      val minimumPopupWidth = JBUI.scale(300)
       popup.setMinimumSize(Dimension(minimumPopupWidth, -1))
       val moreSquareStripeButton = toolWindowToolbar.moreButton
       val x = if (toolWindowToolbar is ToolWindowLeftToolbar) {
