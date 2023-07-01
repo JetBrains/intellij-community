@@ -16,12 +16,12 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.renderer.render
 
 open class AddAnnotationFix(
-    element: KtModifierListOwner,
+    element: KtElement,
     private val annotationFqName: FqName,
     private val kind: Kind = Kind.Self,
     private val argumentClassFqName: FqName? = null,
     private val existingAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>? = null
-) : KotlinQuickFixAction<KtModifierListOwner>(element) {
+) : KotlinQuickFixAction<KtElement>(element) {
     override fun getText(): String {
         val annotationArguments = (argumentClassFqName?.shortName()?.let { "($it::class)" } ?: "")
         val annotationCall = annotationFqName.shortName().asString() + annotationArguments
@@ -36,7 +36,7 @@ open class AddAnnotationFix(
     override fun getFamilyName(): String = KotlinBundle.message("fix.add.annotation.family")
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        val declaration = element ?: return
+        val element = element ?: return
         val annotationEntry = existingAnnotationEntry?.element
         val annotationInnerText = argumentClassFqName?.let { "${it.render()}::class" }
         if (annotationEntry != null) {
@@ -46,7 +46,7 @@ open class AddAnnotationFix(
                 ?: annotationEntry.addAfter(psiFactory.createCallArguments("($annotationInnerText)"), annotationEntry.lastChild)
             ShortenReferences.DEFAULT.process(annotationEntry)
         } else {
-            declaration.addAnnotation(annotationFqName, annotationInnerText, searchForExistingEntry = false)
+            element.addAnnotation(annotationFqName, annotationInnerText, searchForExistingEntry = false)
         }
     }
 
