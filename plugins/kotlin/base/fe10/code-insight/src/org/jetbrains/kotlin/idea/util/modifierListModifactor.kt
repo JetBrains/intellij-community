@@ -4,11 +4,9 @@ package org.jetbrains.kotlin.idea.util
 
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
@@ -65,38 +63,18 @@ fun KtModifierListOwner.addAnnotation(
     whiteSpaceText: String = "\n",
     addToExistingAnnotation: ((KtAnnotationEntry) -> Boolean)? = null
 ): Boolean {
-    val useSiteTargetPrefix = useSiteTarget?.let { "${it.renderName}:" } ?: ""
-    val annotationText = when (annotationInnerText) {
-        null -> "@${useSiteTargetPrefix}${annotationFqName.render()}"
-        else -> "@${useSiteTargetPrefix}${annotationFqName.render()}($annotationInnerText)"
-    }
+    val searchForExistingEntryFn: (KtAnnotated) -> KtAnnotationEntry? =
+        { annotated -> if (searchForExistingEntry) annotated.findAnnotation(annotationFqName) else null }
 
-    val psiFactory = KtPsiFactory(project)
-    val modifierList = modifierList
-
-    if (modifierList == null) {
-        val addedAnnotation = addAnnotationEntry(psiFactory.createAnnotationEntry(annotationText))
-        ShortenReferences.DEFAULT.process(addedAnnotation)
-        return true
-    }
-
-    val entry = if (searchForExistingEntry) findAnnotation(annotationFqName) else null
-    if (entry == null) {
-        // no annotation
-        val newAnnotation = psiFactory.createAnnotationEntry(annotationText)
-        val addedAnnotation = modifierList.addBefore(newAnnotation, modifierList.firstChild) as KtElement
-        val whiteSpace = psiFactory.createWhiteSpace(whiteSpaceText)
-        modifierList.addAfter(whiteSpace, addedAnnotation)
-
-        ShortenReferences.DEFAULT.process(addedAnnotation)
-        return true
-    }
-
-    if (addToExistingAnnotation != null) {
-        return addToExistingAnnotation(entry)
-    }
-
-    return false
+    return AnnotationModificationHelper.addAnnotation(
+        this,
+        annotationFqName,
+        annotationInnerText,
+        useSiteTarget,
+        searchForExistingEntryFn,
+        whiteSpaceText,
+        addToExistingAnnotation
+    )
 }
 
 fun KtAnnotated.findAnnotation(annotationFqName: FqName): KtAnnotationEntry? {
