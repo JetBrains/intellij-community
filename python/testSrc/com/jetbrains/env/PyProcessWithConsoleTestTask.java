@@ -132,7 +132,7 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
     processStartedSemaphore.acquire();
     final StringBuilder stdOut = new StringBuilder();
     final StringBuilder stdErr = new StringBuilder();
-    final StringBuilder stdAll = new StringBuilder();
+    final var stdAll = new StringBuffer();
     final Ref<Boolean> failed = new Ref<>(false);
     final Ref<ProcessHandler> processHandlerRef = new Ref<>();
 
