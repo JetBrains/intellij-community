@@ -47,8 +47,7 @@ internal class GitLabMergeRequestBranchesViewModel(
     combine(targetProject, sourceProject, mergeRequest.sourceBranch) { targetProject, sourceProject, sourceBranch ->
       if (sourceProject == null) return@combine ""
       if (targetProject == sourceProject) return@combine sourceBranch
-      val sourceUrl = sourceProject.webUrl
-      val sourceProjectOwner = sourceUrl.split("/").dropLast(1).last()
+      val sourceProjectOwner = sourceProject.fullPath.split("/").dropLast(1).joinToString("/")
       return@combine "$sourceProjectOwner:$sourceBranch"
     }.stateIn(cs, SharingStarted.Lazily, mergeRequest.sourceBranch.value)
 
@@ -78,7 +77,8 @@ internal class GitLabMergeRequestBranchesViewModel(
     ) {
       override fun run(indicator: ProgressIndicator) {
         val sourceBranch = sourceBranch.value
-        val httpForkUrl = sourceProject.value?.httpUrlToRepo ?: return
+        val sourceProject = sourceProject.value ?: return
+        val httpForkUrl = sourceProject.httpUrlToRepo ?: return
         val pullRequestAuthor = mergeRequest.author
 
         val headRemote = git.findOrCreateRemote(repository, pullRequestAuthor.username, httpForkUrl)
