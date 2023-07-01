@@ -260,6 +260,7 @@ public final class PersistentFSConnection {
     }
 
     writeConnectionState();
+    myRecords.force();
     closeStorages(myRecords,
                   myNames,
                   myAttributesStorage,
