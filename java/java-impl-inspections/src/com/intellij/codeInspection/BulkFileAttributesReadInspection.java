@@ -14,6 +14,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.ObjectUtils;
@@ -249,7 +250,19 @@ public class BulkFileAttributesReadInspection extends AbstractBaseJavaLocalInspe
                                                                    @NotNull PsiType type,
                                                                    @Nullable PsiExpression initializer) {
       PsiElementFactory elementFactory = PsiElementFactory.getInstance(parent.getProject());
-      PsiDeclarationStatement declaration = elementFactory.createVariableDeclarationStatement(varName, type, initializer);
+      PsiType displayType;
+      if (
+        initializer != null
+        && parent.getContext() != null
+        && PsiUtil.isLanguageLevel10OrHigher(parent.getContainingFile())
+        && JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE
+      ) {
+        displayType = TypeUtils.getType(PsiKeyword.VAR, parent.getContext());
+      } else {
+        displayType = type;
+      }
+      PsiDeclarationStatement declaration = elementFactory
+        .createVariableDeclarationStatement(varName, displayType, initializer);
       declaration = (PsiDeclarationStatement)parent.addBefore(declaration, anchor);
       JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(parent.getProject());
       return (PsiDeclarationStatement)codeStyleManager.shortenClassReferences(declaration);
