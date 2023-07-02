@@ -1,6 +1,4 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:OptIn(FlowPreview::class)
-
 package com.intellij.ide.menu
 
 import com.intellij.diagnostic.StartUpMeasurer
@@ -31,16 +29,15 @@ import com.intellij.openapi.wm.impl.IdeRootPane
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.debounce
 import org.jetbrains.concurrency.await
 import java.awt.Component
 import java.awt.Dialog
 import java.awt.Dimension
 import java.awt.KeyboardFocusManager
+import java.util.concurrent.atomic.AtomicLong
 import javax.swing.JComponent
 import javax.swing.JFrame
 import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 internal interface ActionAwareIdeMenuBar {
@@ -102,8 +99,7 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
 
     coroutineScope.launch(ModalityState.any().asContextElement()) {
       withContext(if (StartUpMeasurer.isEnabled()) (rootTask() + CoroutineName("ide menu bar actions init")) else EmptyCoroutineContext) {
-        val mainActionGroup = menuBar.getMainMenuActionGroup()
-        val actions = updateMenuActions(mainActionGroup = mainActionGroup, forceRebuild = false, isFirstUpdate = true)
+        val actions = updateMenuActions(mainActionGroup = menuBar.getMainMenuActionGroup(), forceRebuild = false, isFirstUpdate = true)
         postInitActions(actions)
       }
 
@@ -116,14 +112,39 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
         }
       }
 
+      val lastUpdate = AtomicLong(System.currentTimeMillis())
       updateRequests
-        // as ActionManagerImpl TIMER_DELAY
-        .debounce(500.milliseconds)
         .collect { forceRebuild ->
+          // as ActionManagerImpl TIMER_DELAY
+          if ((System.currentTimeMillis() - lastUpdate.get()) < 500) {
+            return@collect
+          }
+
+          if (!withContext(Dispatchers.EDT) { filterUpdate() }) {
+            return@collect
+          }
+
           presentationFactory.reset()
           updateMenuActions(mainActionGroup = menuBar.getMainMenuActionGroup(), forceRebuild = forceRebuild, isFirstUpdate = false)
+          lastUpdate.set(System.currentTimeMillis())
         }
     }
+  }
+
+  private fun filterUpdate(): Boolean {
+    if (!menuBar.frame.isShowing || !menuBar.frame.isActive) {
+      return false
+    }
+
+    // do not update when a popup menu is shown
+    // (if a popup menu contains action which is also in the menu bar, it should not be enabled/disabled)
+    if (isUpdateForbidden()) {
+      return false
+    }
+
+    // don't update the toolbar if there is currently active modal dialog
+    val window = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow
+    return window !is Dialog || !window.isModal
   }
 
   private suspend fun updateOnTimer() {
@@ -172,14 +193,13 @@ internal suspend fun expandMainActionGroup(mainActionGroup: ActionGroup,
                                            frame: JFrame,
                                            presentationFactory: PresentationFactory,
                                            isFirstUpdate: Boolean): List<ActionGroup> {
-  val actionManager = serviceAsync<ActionManager>()
   if (!useAsyncExpand) {
-    return syncExpandMainActionGroup(mainActionGroup, actionManager, frame, menuBar, presentationFactory)
+    return syncExpandMainActionGroup(mainActionGroup, serviceAsync<ActionManager>(), frame, menuBar, presentationFactory)
   }
 
   try {
     return withContext(CoroutineName("expandMainActionGroup") + Dispatchers.EDT) {
-      val targetComponent = WindowManager.getInstance().getFocusedComponent(frame) ?: menuBar
+      val targetComponent = serviceAsync<WindowManager>().getFocusedComponent(frame) ?: menuBar
       val dataContext = Utils.wrapToAsyncDataContext(DataManager.getInstance().getDataContext(targetComponent))
       val fastTrackTimeout = if (isFirstUpdate) firstUpdateFastTrackUpdateTimeout else Utils.getFastTrackTimeout()
       Utils.expandActionGroupAsync(/* group = */ mainActionGroup,
@@ -212,7 +232,7 @@ private suspend fun syncExpandMainActionGroup(mainActionGroup: ActionGroup,
     }
 
     val targetComponent = WindowManager.getInstance().getFocusedComponent(frame) ?: menuBar
-    val dataContext = Utils.wrapToAsyncDataContext(DataManager.getInstance().getDataContext(targetComponent))
+    val dataContext = DataManager.getInstance().getDataContext(targetComponent)
     val list = mutableListOf<ActionGroup>()
     for (action in children) {
       if (action !is ActionGroup) {
