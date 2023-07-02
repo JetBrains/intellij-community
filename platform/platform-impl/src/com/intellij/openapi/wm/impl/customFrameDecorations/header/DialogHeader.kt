@@ -16,7 +16,7 @@ import java.beans.PropertyChangeListener
 import javax.swing.JLabel
 import javax.swing.UIManager
 
-internal class DialogHeader(val window: Window) : CustomHeader(window) {
+internal class DialogHeader(window: Window) : CustomHeader(window) {
   private val titleLabel = JLabel().apply {
     border = LABEL_BORDER
   }
