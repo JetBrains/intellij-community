@@ -16,7 +16,6 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.IdeRootPane
-import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
 import com.intellij.openapi.wm.impl.headertoolbar.computeMainActionGroups
 import com.intellij.ui.*
 import com.intellij.ui.paint.LinePainter2D
@@ -113,10 +112,6 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
     createProductIcon()
   }
 
-  protected val buttonPanes: CustomFrameTitleButtons? by lazy {
-    createButtonsPane()
-  }
-
   init {
     isOpaque = true
     background = getHeaderBackground()
@@ -138,21 +133,22 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
       return
     }
 
-    preferredSize = preferredSize.apply {
-      height = JBUI.scale(
-        when {
-          (rootPane as? IdeRootPane)?.isCompactHeader(mainToolbarActionSupplier) == true -> HEADER_HEIGHT_DFM
-          UISettings.getInstance().compactMode -> HEADER_HEIGHT_COMPACT
-          else -> HEADER_HEIGHT_NORMAL
-        }
-      )
-    }
+    val size = preferredSize
+    size.height = JBUI.scale(
+      when {
+        (rootPane as? IdeRootPane)?.isCompactHeader(mainToolbarActionSupplier) == true -> HEADER_HEIGHT_DFM
+        UISettings.getInstance().compactMode -> HEADER_HEIGHT_COMPACT
+        else -> HEADER_HEIGHT_NORMAL
+      }
+    )
+    preferredSize = size
   }
 
   private fun updateWinControlsTheme() {
-    customTitleBar?.putProperty("controls.dark", ColorUtil.isDark(background))
-    customTitleBar?.putProperty("controls.foreground.normal", UIManager.getColor("WindowControls.foreground"))
-    customTitleBar?.putProperty("controls.foreground.inactive", UIManager.getColor("WindowControls.inactiveForeground"))
+    val customTitleBar = customTitleBar ?: return
+    customTitleBar.putProperty("controls.dark", ColorUtil.isDark(background))
+    customTitleBar.putProperty("controls.foreground.normal", UIManager.getColor("WindowControls.foreground"))
+    customTitleBar.putProperty("controls.foreground.inactive", UIManager.getColor("WindowControls.inactiveForeground"))
   }
 
   protected open fun getHeaderBackground(active: Boolean = true) = JBUI.CurrentTheme.CustomFrameDecorations.titlePaneBackground(active)
@@ -161,8 +157,6 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
     customFrameTopBorder = CustomFrameTopBorder(isTopNeeded = isTopNeeded, isBottomNeeded = isBottomNeeded, header = this)
     border = customFrameTopBorder
   }
-
-  open fun createButtonsPane(): CustomFrameTitleButtons? = null
 
   open fun windowStateChanged() {
     updateCustomTitleBar()

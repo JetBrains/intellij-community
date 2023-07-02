@@ -33,7 +33,7 @@ internal class DialogHeader(window: Window) : CustomHeader(window) {
     val gb = GridBag().setDefaultFill(GridBagConstraints.VERTICAL).setDefaultAnchor(GridBagConstraints.WEST)
     add(productIcon, gb.next())
     add(titleLabel, gb.next().fillCell().weightx(1.0))
-    buttonPanes?.let { add(it.getView(), gb.next().anchor(GridBagConstraints.EAST)) }
+    createButtonsPane()?.let { add(it.getView(), gb.next().anchor(GridBagConstraints.EAST)) }
   }
 
   private val dragListener = object : MouseAdapter() { //passing events to OS handler to make it draggable
@@ -87,10 +87,7 @@ internal class DialogHeader(window: Window) : CustomHeader(window) {
     }
   }
 
-  override fun createButtonsPane(): CustomFrameTitleButtons? {
-    if (IdeRootPane.hideNativeLinuxTitle) {
-      CustomFrameTitleButtons.create(createCloseAction(this))
-    }
-    return null
+  private fun createButtonsPane(): CustomFrameTitleButtons? {
+    return if (IdeRootPane.hideNativeLinuxTitle) CustomFrameTitleButtons.create(createCloseAction(this)) else null
   }
 }

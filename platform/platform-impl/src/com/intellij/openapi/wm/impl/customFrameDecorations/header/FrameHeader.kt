@@ -33,6 +33,10 @@ internal open class FrameHeader(protected val frame: JFrame) : CustomHeader(fram
   @Suppress("LeakingThis")
   private val closeAction = createCloseAction(this)
 
+  protected val buttonPanes: CustomFrameTitleButtons? by lazy {
+    createButtonsPane()
+  }
+
   init {
     windowStateListener = object : WindowAdapter() {
       override fun windowStateChanged(e: java.awt.event.WindowEvent?) {
@@ -104,10 +108,10 @@ internal open class FrameHeader(protected val frame: JFrame) : CustomHeader(fram
     closeMenuItem.font = JBFont.label().deriveFont(Font.BOLD)
   }
 
-  override fun createButtonsPane(): CustomFrameTitleButtons? {
-    if (IdeRootPane.hideNativeLinuxTitle)
+  private fun createButtonsPane(): CustomFrameTitleButtons? {
+    if (IdeRootPane.hideNativeLinuxTitle) {
       return ResizableCustomFrameTitleButtons.create(closeAction, restoreAction, iconifyAction, maximizeAction)
-
+    }
     return null
   }
 }
