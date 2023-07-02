@@ -1,159 +1,119 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui;
+package com.intellij.ui
 
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.ui.paint.LinePainter2D;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
-import kotlin.Unit;
-import kotlin.jvm.functions.Function0;
-import kotlin.jvm.functions.Function1;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.ui.paint.LinePainter2D
+import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
+import java.awt.*
+import java.beans.PropertyChangeListener
+import javax.swing.JRootPane
+import javax.swing.RootPaneContainer
+import javax.swing.UIManager
+import javax.swing.border.AbstractBorder
+import javax.swing.border.Border
 
-import javax.swing.*;
-import javax.swing.border.AbstractBorder;
-import javax.swing.border.Border;
-import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.beans.PropertyChangeListener;
-
-public class ToolbarServiceImpl implements ToolbarService {
-  @Override
-  public void setCustomTitleBar(@NotNull Window window, @NotNull JRootPane rootPane, @NotNull Function1<? super Runnable, Unit> onDispose) {
-    if (SystemInfoRt.isMac) {
-      if (ExperimentalUI.isNewUI()) {
-        setCustomTitleForToolbar(window, rootPane, onDispose);
-      }
-      else {
-        setTransparentTitleBar(window, rootPane, onDispose);
-      }
+open class ToolbarServiceImpl : ToolbarService {
+  override fun setCustomTitleBar(window: Window, rootPane: JRootPane, onDispose: (Runnable) -> Unit) {
+    if (!SystemInfoRt.isMac) {
+      return
+    }
+    else if (ExperimentalUI.isNewUI()) {
+      setCustomTitleForToolbar(window = window, rootPane = rootPane, onDispose = onDispose)
+    }
+    else {
+      setTransparentTitleBar(window = window, rootPane = rootPane, onDispose = onDispose)
     }
   }
 
-  @Override
-  public void setTransparentTitleBar(@NotNull Window window,
-                                     @NotNull JRootPane rootPane,
-                                     @Nullable Function0<? extends FullScreenSupport> handlerProvider,
-                                     @NotNull Function1<? super Runnable, Unit> onDispose) {
+  override fun setTransparentTitleBar(window: Window,
+                                      rootPane: JRootPane,
+                                      handlerProvider: (() -> FullScreenSupport)?,
+                                      onDispose: (Runnable) -> Unit) {
+    @Suppress("NAME_SHADOWING")
+    var onDispose = onDispose
     if (!SystemInfoRt.isMac) {
-      return;
+      return
     }
 
-    FullScreenSupport handler = handlerProvider == null ? null : handlerProvider.invoke();
-    if (handler != null) {
-      handler.addListener(window);
-    }
-    JBInsets topWindowInset = JBUI.insetsTop(UIUtil.getTransparentTitleBarHeight(rootPane));
-    AbstractBorder customBorder = new AbstractBorder() {
-      @Override
-      public Insets getBorderInsets(Component c) {
-        if (handler != null && handler.isFullScreen()) {
-          return JBInsets.emptyInsets();
-        }
-        return topWindowInset;
+    val handler = handlerProvider?.invoke()
+    handler?.addListener(window)
+
+    val topWindowInset = JBUI.insetsTop(UIUtil.getTransparentTitleBarHeight(rootPane))
+    val customBorder: AbstractBorder = object : AbstractBorder() {
+      override fun getBorderInsets(c: Component): Insets {
+        return if (handler != null && handler.isFullScreen()) JBInsets.emptyInsets() else topWindowInset
       }
 
-      @Override
-      public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+      override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
         if (handler != null && handler.isFullScreen()) {
-          return;
+          return
         }
-        Graphics2D graphics = (Graphics2D)g.create();
+
+        val graphics = g.create() as Graphics2D
         try {
-          Rectangle headerRectangle = new Rectangle(0, 0, c.getWidth(), topWindowInset.top);
-          graphics.setColor(UIUtil.getPanelBackground());
-          graphics.fill(headerRectangle);
-          if (window instanceof RootPaneContainer) {
-            JRootPane pane = ((RootPaneContainer)window).getRootPane();
-            if (pane == null || pane.getClientProperty(UIUtil.NO_BORDER_UNDER_WINDOW_TITLE_KEY) == Boolean.FALSE) {
-              graphics.setColor(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground());
-              LinePainter2D.paint(graphics, 0, topWindowInset.top - 1, c.getWidth(), topWindowInset.top - 1,
-                                  LinePainter2D.StrokeType.INSIDE, 1);
+          val headerRectangle = Rectangle(0, 0, c.width, topWindowInset.top)
+          graphics.color = JBColor.PanelBackground
+          graphics.fill(headerRectangle)
+          if (window is RootPaneContainer) {
+            val pane = (window as RootPaneContainer).rootPane
+            if (pane == null || pane.getClientProperty(UIUtil.NO_BORDER_UNDER_WINDOW_TITLE_KEY) == false) {
+              graphics.color = JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()
+              LinePainter2D.paint(graphics, 0.0, (topWindowInset.top - 1).toDouble(), c.width.toDouble(),
+                                  (topWindowInset.top - 1).toDouble(),
+                                  LinePainter2D.StrokeType.INSIDE, 1.0)
             }
           }
-          Color color = window.isActive() ? JBColor.black : JBColor.gray;
-          graphics.setColor(color);
+          val color = if (window.isActive) JBColor.black else JBColor.gray
+          graphics.color = color
         }
         finally {
-          graphics.dispose();
+          graphics.dispose()
         }
       }
-    };
-    if (handler != null) {
-      Function1<? super Runnable, Unit> onDisposeOld = onDispose;
-      onDispose = runnable -> {
-        onDisposeOld.invoke((Runnable)() -> {
-          runnable.run();
-          handler.removeListener(window);
-        });
-        return Unit.INSTANCE;
-      };
     }
-    doSetCustomTitleBar(window, rootPane, onDispose, customBorder);
-  }
-
-  private static void setCustomTitleForToolbar(@NotNull Window window,
-                                               @NotNull JRootPane rootPane,
-                                               Function1<? super Runnable, Unit> onDispose) {
-    JBInsets topWindowInset = JBUI.insetsTop(UIUtil.getTransparentTitleBarHeight(rootPane));
-    AbstractBorder customBorder = new AbstractBorder() {
-      @Override
-      public Insets getBorderInsets(Component c) {
-        return topWindowInset;
-      }
-
-      @Override
-      public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-        Graphics2D graphics = (Graphics2D)g.create();
-        try {
-          Rectangle headerRectangle = new Rectangle(0, 0, c.getWidth(), topWindowInset.top);
-          Color color = UIManager.getColor("MainToolbar.background");
-          graphics.setColor(color != null ? color : UIUtil.getPanelBackground());
-          graphics.fill(headerRectangle);
-        }
-        finally {
-          graphics.dispose();
+    if (handler != null) {
+      val onDisposeOld = onDispose
+      onDispose = { runnable ->
+        onDisposeOld {
+          runnable.run()
+          handler.removeListener(window)
         }
       }
-    };
-    rootPane.putClientProperty("apple.awt.windowTitleVisible", false);
-    doSetCustomTitleBar(window, rootPane, onDispose, customBorder);
+    }
+    doSetCustomTitleBar(window = window, rootPane = rootPane, onDispose = onDispose, customBorder = customBorder)
   }
+}
 
-  private static void doSetCustomTitleBar(@NotNull Window window,
-                                          @NotNull JRootPane rootPane,
-                                          Function1<? super Runnable, Unit> onDispose,
-                                          @NotNull Border customBorder) {
+private fun setCustomTitleForToolbar(window: Window, rootPane: JRootPane, onDispose: (Runnable) -> Unit) {
+  val topWindowInset = JBUI.insetsTop(UIUtil.getTransparentTitleBarHeight(rootPane))
+  val customBorder = object : AbstractBorder() {
+    override fun getBorderInsets(c: Component): Insets = topWindowInset
 
-    rootPane.putClientProperty("apple.awt.fullWindowContent", true);
-    rootPane.putClientProperty("apple.awt.transparentTitleBar", true);
-
-    // Use standard properties starting jdk 17
-    //if (Runtime.version().feature() >= 17) {
-    //rootPane.putClientProperty("apple.awt.windowTitleVisible", false);
-    //}
-
-    rootPane.setBorder(customBorder);
-
-    WindowAdapter windowAdapter = new WindowAdapter() {
-      @Override
-      public void windowActivated(WindowEvent e) {
-        rootPane.repaint();
+    override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
+      val graphics = g.create() as Graphics2D
+      try {
+        val headerRectangle = Rectangle(0, 0, c.width, topWindowInset.top)
+        val color = UIManager.getColor("MainToolbar.background")
+        graphics.color = color ?: UIUtil.getPanelBackground()
+        graphics.fill(headerRectangle)
       }
-
-      @Override
-      public void windowDeactivated(WindowEvent e) {
-        rootPane.repaint();
+      finally {
+        graphics.dispose()
       }
-    };
-    PropertyChangeListener propertyChangeListener = e -> rootPane.repaint();
-    window.addPropertyChangeListener("title", propertyChangeListener);
-    onDispose.invoke((Runnable)() -> {
-      window.removeWindowListener(windowAdapter);
-      window.removePropertyChangeListener("title", propertyChangeListener);
-    });
+    }
   }
+  rootPane.putClientProperty("apple.awt.windowTitleVisible", false)
+  doSetCustomTitleBar(window = window, rootPane = rootPane, onDispose = onDispose, customBorder = customBorder)
+}
+
+private fun doSetCustomTitleBar(window: Window, rootPane: JRootPane, onDispose: (Runnable) -> Unit, customBorder: Border) {
+  rootPane.putClientProperty("apple.awt.fullWindowContent", true)
+  rootPane.putClientProperty("apple.awt.transparentTitleBar", true)
+
+  rootPane.setBorder(customBorder)
+  val propertyChangeListener = PropertyChangeListener { rootPane.repaint() }
+  window.addPropertyChangeListener("title", propertyChangeListener)
+  onDispose { window.removePropertyChangeListener("title", propertyChangeListener) }
 }
