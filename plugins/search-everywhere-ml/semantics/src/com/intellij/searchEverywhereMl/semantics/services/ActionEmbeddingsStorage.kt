@@ -6,8 +6,8 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.*
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -17,7 +17,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.searchEverywhereMl.semantics.SemanticSearchBundle
+import com.intellij.searchEverywhereMl.semantics.indices.LocalEmbeddingIndexManager
 import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettingsManager
+import com.intellij.util.containers.CollectionFactory
+import java.io.File
+import java.nio.file.Files
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -27,36 +31,27 @@ import kotlin.math.sqrt
 
 /**
  * Thread-safe service for semantic actions search.
- * Holds a state with embeddings for each available action and persists it on disk at the IDE close event.
- * Generates the embeddings for actions not present in the loaded state at the IDE startup event.
+ * Holds a state with embeddings for each available action and persists it on disk after calculation.
+ * Generates the embeddings for actions not present in the loaded state at the IDE startup event if semantic action search is enabled
  */
 @Service(Service.Level.APP)
-@State(
-  name = "ActionEmbeddingsStorage",
-  storages = [Storage(value = "action-embeddings.xml", roamingType = RoamingType.DISABLED)],
-  reportStatistic = false
-)
-class ActionEmbeddingsStorage : PersistentStateComponent<ActionEmbeddingsStorage.State> {
+class ActionEmbeddingsStorage {
   data class State(var actionIdToEmbedding: MutableMap<String, FloatTextEmbedding>) {
-    constructor() : this(mutableMapOf())
+    constructor() : this(CollectionFactory.createSmallMemoryFootprintMap<String, FloatTextEmbedding>())
   }
 
   private var myState = State()
   private val stateLock = ReentrantReadWriteLock()
 
+  private val root = File(PathManager.getSystemPath()).resolve("semantic-search").also { Files.createDirectories(it.toPath()) }
+  private val embeddingIndexManager = LocalEmbeddingIndexManager(root.resolve("actions").toPath())
+
   private val setupTaskIndicator = AtomicReference<ProgressIndicator>(null)
-
-  override fun getState(): State {
-    return myState
-  }
-
-  override fun loadState(state: State) {
-    myState = state
-  }
 
   fun prepareForSearch() {
     ApplicationManager.getApplication().executeOnPooledThread {
       service<LocalArtifactsManager>().tryPrepareArtifacts()
+      myState = stateLock.write { State(embeddingIndexManager.loadIndex()) }
       service<ActionEmbeddingsStorage>().tryGenerateEmbeddings()
     }
   }
@@ -144,11 +139,13 @@ class ActionEmbeddingsStorage : PersistentStateComponent<ActionEmbeddingsStorage
         indicator.cancel()
       }
     }
+
+    override fun onCancel() {
+      embeddingIndexManager.saveIndex(stateLock.read { myState.actionIdToEmbedding })
+    }
   }
 
   companion object {
-    private val LOG = Logger.getInstance(ActionEmbeddingsStorage::class.java)
-
     private val SETUP_TITLE = SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.actions.generation.label")
     private const val BATCH_SIZE = 16
 

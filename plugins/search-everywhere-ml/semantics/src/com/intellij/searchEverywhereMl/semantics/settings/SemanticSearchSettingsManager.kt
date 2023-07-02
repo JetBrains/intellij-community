@@ -45,8 +45,8 @@ class SemanticSearchSettingsManager : PersistentStateComponent<SemanticSearchSet
   }
 
   companion object {
-    const val SEMANTIC_SEARCH = "SEMANTIC_SEARCH"
-    const val ACTIONS_API_TOKEN = "ACTIONS_API_TOKEN"
+    private const val SEMANTIC_SEARCH = "SEMANTIC_SEARCH"
+    private const val ACTIONS_API_TOKEN = "ACTIONS_API_TOKEN"
 
     private val actionsAPITokenAttributes = CredentialAttributes(generateServiceName(SEMANTIC_SEARCH, ACTIONS_API_TOKEN))
   }

@@ -17,11 +17,10 @@ import kotlin.io.path.listDirectoryEntries
 /* Service that manages the artifacts for local semantic models */
 @Service
 class LocalArtifactsManager {
-  private val root = File(PathManager.getSystemPath()).resolve("semantic-text-search").also { Files.createDirectories(it.toPath()) }
+  private val root = File(PathManager.getSystemPath()).resolve("semantic-search")
+  private val modelArtifactsRoot = root.resolve("models")
 
-  private val artifactRoot = root.resolve("models")
-
-  fun getCustomRootDataLoader() = CustomRootDataLoader(artifactRoot.toPath())
+  fun getCustomRootDataLoader() = CustomRootDataLoader(modelArtifactsRoot.toPath())
 
   fun tryPrepareArtifacts() {
     if (!checkArtifactsPresent()) {
@@ -30,10 +29,11 @@ class LocalArtifactsManager {
   }
 
   fun checkArtifactsPresent(): Boolean {
-    return Files.isDirectory(artifactRoot.toPath()) && artifactRoot.toPath().listDirectoryEntries().isNotEmpty()
+    return Files.isDirectory(modelArtifactsRoot.toPath()) && modelArtifactsRoot.toPath().listDirectoryEntries().isNotEmpty()
   }
 
   private fun prepareArtifacts() {
+    Files.createDirectories(root.toPath())
     try {
       service<DownloadableFileService>().run {
         createDownloader(
@@ -42,7 +42,8 @@ class LocalArtifactsManager {
         )
       }.download(root)
 
-      unpackArtifactsArchive(root.resolve(ARCHIVE_NAME), artifactRoot)
+      modelArtifactsRoot.deleteRecursively()
+      unpackArtifactsArchive(root.resolve(ARCHIVE_NAME), root)
     }
     catch (e: IOException) {
       showDownloadErrorNotification()
@@ -50,9 +51,7 @@ class LocalArtifactsManager {
   }
 
   private fun unpackArtifactsArchive(archiveFile: File, destination: File) {
-    destination.deleteRecursively()
-    Decompressor.Zip(archiveFile).extract(destination)
-    check(destination.isDirectory)
+    Decompressor.Zip(archiveFile).overwrite(false).extract(destination)
     archiveFile.delete()
   }
 
