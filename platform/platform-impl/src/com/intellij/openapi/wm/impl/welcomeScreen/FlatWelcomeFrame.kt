@@ -9,10 +9,10 @@ import com.intellij.ide.RecentProjectListActionProvider
 import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.LightEditServiceListener
+import com.intellij.ide.menu.createMacMenuBar
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.notification.NotificationsManager
 import com.intellij.notification.impl.NotificationsManagerImpl
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
@@ -41,6 +41,7 @@ import com.intellij.ui.components.labels.ActionLink
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.mac.touchbar.Touchbar
 import com.intellij.ui.mac.touchbar.TouchbarActionCustomizations
 import com.intellij.ui.scale.JBUIScale
@@ -52,7 +53,7 @@ import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor
 import com.intellij.util.ui.update.UiNotifyConnector
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import net.miginfocom.swing.MigLayout
 import java.awt.*
 import java.awt.dnd.*
@@ -68,17 +69,20 @@ import javax.swing.event.ListDataListener
 @Suppress("LeakingThis")
 open class FlatWelcomeFrame @JvmOverloads constructor(
   suggestedScreen: AbstractWelcomeScreen? = if (USE_TABBED_WELCOME_SCREEN) TabbedWelcomeScreen() else null
-) : JFrame(), IdeFrame, Disposable, AccessibleContextAccessor {
+) : JFrame(), IdeFrame, AccessibleContextAccessor {
   val screen: AbstractWelcomeScreen
   private val content: Wrapper
   private var balloonLayout: WelcomeBalloonLayoutImpl?
   private var isDisposed = false
   private var header: DefaultFrameHeader? = null
 
+  private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
   companion object {
     @JvmField
     var USE_TABBED_WELCOME_SCREEN: Boolean = java.lang.Boolean.parseBoolean(System.getProperty("use.tabbed.welcome.screen", "true"))
     const val BOTTOM_PANEL: String = "BOTTOM_PANEL"
+
     @JvmField
     val DEFAULT_HEIGHT: Int = if (USE_TABBED_WELCOME_SCREEN) 650 else 460
     const val MAX_DEFAULT_WIDTH: Int = 800
@@ -113,9 +117,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
       content.setContent(getCustomContentHolder(this, screen.welcomePanel, header!!))
     }
     else {
-      if (USE_TABBED_WELCOME_SCREEN && SystemInfoRt.isMac) {
-        rootPane.jMenuBar = WelcomeFrameMenuBar(this)
-      }
+      createWelcomeMenuBar(this, coroutineScope)
       content.setContent(screen.welcomePanel)
     }
     val glassPane = IdeGlassPaneImpl(rootPane)
@@ -126,16 +128,16 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
     // at this point, window insets may be unavailable, so we need to resize the window when it is shown
     UiNotifyConnector.doWhenFirstShown(this, ::pack)
     val app = ApplicationManager.getApplication()
-    val connection = app.messageBus.connect(this)
+    val connection = app.messageBus.connect(coroutineScope)
     connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
       @Suppress("OVERRIDE_DEPRECATION")
       override fun projectOpened(project: Project) {
-        Disposer.dispose(this@FlatWelcomeFrame)
+        dispose()
       }
     })
     connection.subscribe(LightEditServiceListener.TOPIC, object : LightEditServiceListener {
       override fun lightEditWindowOpened(project: Project) {
-        Disposer.dispose(this@FlatWelcomeFrame)
+        dispose()
       }
     })
     connection.subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
@@ -159,15 +161,24 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
 
     setupCloseAction()
     MnemonicHelper.init(this)
-    Disposer.register(app, this)
     ComponentUtil.decorateWindowHeader(getRootPane())
     ToolbarService.getInstance().setTransparentTitleBar(
       window = this,
       rootPane = getRootPane(),
-      onDispose = { runnable -> Disposer.register(this) { runnable.run() } },
+      onDispose = { runnable ->
+        coroutineScope.coroutineContext.job.invokeOnCompletion {
+          runnable.run()
+        }
+      },
     )
     app.invokeLater({ (NotificationsManager.getNotificationsManager() as NotificationsManagerImpl).dispatchEarlyNotifications() },
                     ModalityState.nonModal())
+  }
+
+  override fun removeNotify() {
+    super.removeNotify()
+
+    coroutineScope.cancel()
   }
 
   protected open fun setupCloseAction() {
@@ -183,9 +194,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
       }
     }
     else {
-      if (USE_TABBED_WELCOME_SCREEN && SystemInfoRt.isMac) {
-        rootPane.jMenuBar = WelcomeFrameMenuBar(this)
-      }
+      createWelcomeMenuBar(this, coroutineScope)
       content.setContent(screen.welcomePanel)
     }
     if (USE_TABBED_WELCOME_SCREEN) {
@@ -226,6 +235,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
   }
 
   override fun dispose() {
+    coroutineScope.cancel()
     if (isDisposed) {
       return
     }
@@ -380,12 +390,13 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
       return panel
     }
 
-    private fun createSettingsAndDocsPanel(frame: JFrame): JComponent {
+    private fun createSettingsAndDocsPanel(frame: FlatWelcomeFrame): JComponent {
       val panel: JPanel = NonOpaquePanel(BorderLayout())
       val toolbar = NonOpaquePanel()
       toolbar.layout = BoxLayout(toolbar, BoxLayout.X_AXIS)
       toolbar.add(WelcomeScreenComponentFactory.createErrorsLink(this))
-      toolbar.add(createEventsLink())
+      toolbar.add(WelcomeScreenComponentFactory.createEventLink(IdeBundle.message("action.Events"),
+                                                                ApplicationManager.getApplication().messageBus.connect(frame.coroutineScope)))
       toolbar.add(WelcomeScreenComponentFactory.createActionLink(
         frame,
         IdeBundle.message("action.Anonymous.text.configure"),
@@ -393,14 +404,12 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
         AllIcons.General.GearPlain,
         UIUtil.findComponentOfType(frame.rootPane, JList::class.java))
       )
-      toolbar.add(WelcomeScreenComponentFactory.createActionLink(frame, IdeBundle.message("action.GetHelp"), IdeActions.GROUP_WELCOME_SCREEN_DOC, null, null))
+      toolbar.add(
+        WelcomeScreenComponentFactory.createActionLink(frame, IdeBundle.message("action.GetHelp"), IdeActions.GROUP_WELCOME_SCREEN_DOC,
+                                                       null, null))
       panel.add(toolbar, BorderLayout.EAST)
       panel.border = JBUI.Borders.empty(0, 0, 8, 11)
       return panel
-    }
-
-    private fun createEventsLink(): Component {
-      return WelcomeScreenComponentFactory.createEventLink(IdeBundle.message("action.Events"), frame)
     }
 
     private fun createQuickStartActionPanel(): ActionPanel {
@@ -474,10 +483,25 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
   }
 }
 
-@Suppress("DEPRECATION")
-private class WelcomeFrameMenuBar(frame: JFrame) : IdeMenuBar(ApplicationManager.getApplication().coroutineScope.childScope(), frame) {
-  override suspend fun getMainMenuActionGroup(): ActionGroup {
+private fun createWelcomeMenuBar(frame: JFrame, parentCoroutineScope: CoroutineScope) {
+  if (!FlatWelcomeFrame.USE_TABBED_WELCOME_SCREEN || !SystemInfoRt.isMac) {
+    return
+  }
+
+  val mainMenuActionGroupProvider: suspend () -> ActionGroup = {
     val manager = serviceAsync<ActionManager>()
-    return DefaultActionGroup(manager.getAction(IdeActions.GROUP_FILE), manager.getAction(IdeActions.GROUP_HELP_MENU))
+    DefaultActionGroup(manager.getAction(IdeActions.GROUP_FILE), manager.getAction(IdeActions.GROUP_HELP_MENU))
+  }
+
+  if (Menu.isJbScreenMenuEnabled()) {
+    createMacMenuBar(coroutineScope = parentCoroutineScope.childScope(),
+                     component = frame.rootPane,
+                     frame = frame,
+                     mainMenuActionGroupProvider = mainMenuActionGroupProvider)
+  }
+  else {
+    frame.rootPane.jMenuBar = object : IdeMenuBar(parentCoroutineScope.childScope(), frame) {
+      override suspend fun getMainMenuActionGroup(): ActionGroup = mainMenuActionGroupProvider()
+    }
   }
 }

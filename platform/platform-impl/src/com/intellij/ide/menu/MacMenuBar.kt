@@ -2,6 +2,7 @@
 package com.intellij.ide.menu
 
 import com.intellij.diagnostic.runActivity
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.impl.doUpdateAppMenu
 import com.intellij.ui.mac.foundation.NSDefaults
@@ -11,7 +12,12 @@ import kotlinx.coroutines.job
 import javax.swing.JComponent
 import javax.swing.JFrame
 
-internal fun createMacMenuBar(coroutineScope: CoroutineScope, component: JComponent, frame: JFrame): ActionAwareIdeMenuBar {
+internal fun createMacMenuBar(
+  coroutineScope: CoroutineScope,
+  component: JComponent,
+  frame: JFrame,
+  mainMenuActionGroupProvider: suspend () -> ActionGroup? = { getMainMenuActionGroup(frame) },
+): ActionAwareIdeMenuBar {
   val flavor = object : IdeMenuFlavor {
     override fun updateAppMenu() {
       doUpdateAppMenu()
@@ -31,7 +37,7 @@ internal fun createMacMenuBar(coroutineScope: CoroutineScope, component: JCompon
     override fun updateGlobalMenuRoots() {
     }
 
-    override suspend fun getMainMenuActionGroup() = getMainMenuActionGroup(frame)
+    override suspend fun getMainMenuActionGroup() = mainMenuActionGroupProvider()
   }
 
   val screenMenuPeer = runActivity("ide menu bar init") { MenuBar("MainMenu", frame) }

@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
-import com.intellij.application.Topics;
 import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.diagnostic.MessagePool;
 import com.intellij.icons.AllIcons;
@@ -14,6 +13,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -33,6 +33,7 @@ import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IconUtil;
+import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import org.jetbrains.annotations.Nls;
@@ -280,7 +281,7 @@ public final class WelcomeScreenComponentFactory {
    * @deprecated use {@link NotificationEventAction} instead
    */
   @Deprecated
-  public static @NotNull JComponent createEventLink(@NotNull @Nls String linkText, @NotNull Disposable parentDisposable) {
+  public static @NotNull JComponent createEventLink(@NotNull @Nls String linkText, @NotNull SimpleMessageBusConnection busConnection) {
     SelectablePanel selectablePanel = new SelectablePanel();
     ActionLink actionLink = new ActionLink(linkText, getNotificationIcon(Collections.emptyList(), null), new DumbAwareAction() {
       private boolean hideListenerInstalled = false;
@@ -299,7 +300,6 @@ public final class WelcomeScreenComponentFactory {
       }
     });
 
-
     JComponent panel = wrapActionLink(actionLink);
     selectablePanel.setLayout(new BorderLayout());
     selectablePanel.add(panel);
@@ -309,7 +309,7 @@ public final class WelcomeScreenComponentFactory {
     panel.setBorder(null);
     selectablePanel.setVisible(false);
 
-    Topics.subscribe(WelcomeBalloonLayoutImpl.BALLOON_NOTIFICATION_TOPIC, parentDisposable, types -> {
+    busConnection.subscribe(WelcomeBalloonLayoutImpl.BALLOON_NOTIFICATION_TOPIC, types -> {
       BalloonLayout balloonLayout = WelcomeFrame.getInstance().getBalloonLayout();
       if (balloonLayout instanceof WelcomeBalloonLayoutImpl welcomeBalloonLayout) {
         if (welcomeBalloonLayout.getLocationComponent() == null) {
@@ -385,7 +385,7 @@ public final class WelcomeScreenComponentFactory {
   @Deprecated
   public static @NotNull JPanel createNotificationPanel(@NotNull Disposable parentDisposable) {
     JComponent errorsLink = createErrorsLink(parentDisposable);
-    JComponent eventLink = createEventLink("", parentDisposable);
+    JComponent eventLink = createEventLink("", ApplicationManager.getApplication().getMessageBus().connect(parentDisposable));
     JPanel panel = new NonOpaquePanel();
     if (ExperimentalUI.isNewUI()) {
       panel.setLayout(new FlowLayout(FlowLayout.RIGHT, 0, 0));

@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
@@ -91,11 +90,8 @@ internal data class RecentProjectItem(
     }
 
     if (event.place == ActionPlaces.WELCOME_SCREEN) {
-      val welcomeFrame = SwingUtilities.getAncestorOfClass(FlatWelcomeFrame::class.java,
-                                                           event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)) as FlatWelcomeFrame?
-      if (welcomeFrame != null) {
-        Disposer.dispose(welcomeFrame)
-      }
+      (SwingUtilities.getAncestorOfClass(FlatWelcomeFrame::class.java,
+                                         event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)) as FlatWelcomeFrame?)?.dispose()
     }
 
     val forceOpenInNewFrame = BitUtil.isSet(event.modifiers, ActionEvent.CTRL_MASK) ||
