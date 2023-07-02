@@ -45,7 +45,6 @@ import org.picocontainer.ComponentAdapter
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
-import java.lang.reflect.Constructor
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Modifier
 import java.util.*
@@ -58,14 +57,23 @@ internal val LOG: Logger
   get() = logger<ComponentManagerImpl>()
 
 private val methodLookup = MethodHandles.lookup()
-private val emptyConstructorMethodType = MethodType.methodType(Void.TYPE)
-private val coroutineScopeMethodType = emptyConstructorMethodType.appendParameterTypes(CoroutineScope::class.java)
+@JvmField
+@Internal
+val emptyConstructorMethodType: MethodType = MethodType.methodType(Void.TYPE)
+@JvmField
+@Internal
+val coroutineScopeMethodType: MethodType = MethodType.methodType(Void.TYPE, CoroutineScope::class.java)
+private val applicationMethodType = MethodType.methodType(Void.TYPE, Application::class.java)
 
-private fun MethodHandles.Lookup.findConstructorOrNull(clazz: Class<*>, type: MethodType): MethodHandle? {
+@Internal
+fun MethodHandles.Lookup.findConstructorOrNull(clazz: Class<*>, type: MethodType): MethodHandle? {
   return try {
     findConstructor(clazz, type)
   }
   catch (e: NoSuchMethodException) {
+    return null
+  }
+  catch (e: IllegalAccessException) {
     return null
   }
 }
@@ -915,56 +923,26 @@ abstract class ComponentManagerImpl(
     }
   }
 
+  protected open fun <T : Any> findConstrictorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
+    @Suppress("UNCHECKED_CAST")
+    return (lookup.findConstructorOrNull(aClass, emptyConstructorMethodType)?.invoke()
+            ?: lookup.findConstructorOrNull(aClass, coroutineScopeMethodType)?.invoke(instanceCoroutineScope(aClass))
+            ?: lookup.findConstructorOrNull(aClass, applicationMethodType)?.invoke(this)
+            ?: throw RuntimeException("Cannot find suitable constructor, " +
+                                      "expected (), (CoroutineScope), (Application), or (Application, CoroutineScope)")) as T
+  }
+
   private fun <T : Any> doInstantiateClass(aClass: Class<T>, pluginId: PluginId): T {
     try {
-      val lookup = MethodHandles.privateLookupIn(aClass, methodLookup)
-      if (parent == null) {
-        val instance = lookup.findConstructorOrNull(aClass, emptyConstructorMethodType)?.invoke()
-                       ?: lookup.findConstructor(aClass, coroutineScopeMethodType).invoke(instanceCoroutineScope(aClass))
-        @Suppress("UNCHECKED_CAST")
-        return instance as T
-      }
-      else {
-        val constructors: Array<Constructor<*>> = aClass.declaredConstructors
-        val instance =
-          constructors.firstOrNull {
-            // see ConfigurableEP - prefer constructor that accepts our instance
-            it.parameterCount == 1
-            && it.parameterTypes[0].isAssignableFrom(javaClass)
-          }?.run {
-            isAccessible = true
-            newInstance(getActualContainerInstance())
-          }
-          ?: constructors.firstOrNull {
-            it.parameterCount == 2
-            && it.parameterTypes[1] == CoroutineScope::class.java
-            && it.parameterTypes[0].isAssignableFrom(javaClass)
-          }?.run {
-            isAccessible = true
-            newInstance(getActualContainerInstance(), instanceCoroutineScope(aClass))
-          }
-          ?: lookup.findConstructorOrNull(aClass, emptyConstructorMethodType)?.invoke()
-          ?: lookup.findConstructor(aClass, coroutineScopeMethodType).invoke(instanceCoroutineScope(aClass))
-        @Suppress("UNCHECKED_CAST")
-        return instance as T
-      }
+      return findConstrictorAndInstantiateClass(MethodHandles.privateLookupIn(aClass, methodLookup), aClass)
     }
     catch (e: Throwable) {
-      if (e is InvocationTargetException) {
-        val targetException = e.targetException
-        if (targetException is ControlFlowException) {
-          throw targetException
-        }
-      }
-      else if (e is ControlFlowException) {
+      if (e is ControlFlowException || e is PluginException) {
         throw e
       }
-
       throw PluginException("Cannot create class ${aClass.name} (classloader=${aClass.classLoader})", e, pluginId)
     }
   }
-
-  protected open fun getActualContainerInstance(): ComponentManager = this
 
   final override fun <T : Any> instantiateClassWithConstructorInjection(aClass: Class<T>, key: Any, pluginId: PluginId): T {
     return resetThreadContext().use {

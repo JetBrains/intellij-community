@@ -31,10 +31,16 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.serviceContainer.emptyConstructorMethodType
+import com.intellij.serviceContainer.findConstructorOrNull
 import com.intellij.util.xmlb.annotations.MapAnnotation
 import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.annotations.ApiStatus
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 import java.nio.file.Path
+
+private val moduleMethodType = MethodType.methodType(Void.TYPE, Module::class.java)
 
 private val LOG: Logger
   get() = logger<ModuleImpl>()
@@ -78,6 +84,13 @@ open class ModuleImpl @ApiStatus.Internal constructor(name: String, project: Pro
     @Suppress("LeakingThis")
     moduleScopeProvider = ModuleScopeProviderImpl(this)
     this.name = name
+  }
+
+  final override fun <T : Any> findConstrictorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
+    @Suppress("UNCHECKED_CAST")
+    return (lookup.findConstructorOrNull(aClass, moduleMethodType)?.invoke(this)
+            ?: lookup.findConstructorOrNull(aClass, emptyConstructorMethodType)?.invoke()
+            ?: RuntimeException("Cannot find suitable constructor, expected (Module) or ()")) as T
   }
 
   override fun init(beforeComponentCreation: Runnable?) {

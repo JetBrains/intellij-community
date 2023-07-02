@@ -32,8 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.FrameTitleBuilder
 import com.intellij.project.ProjectStoreOwner
-import com.intellij.serviceContainer.AlreadyDisposedException
-import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.serviceContainer.*
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.TimedReference
 import com.intellij.util.childScope
@@ -48,9 +47,14 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 import java.nio.file.ClosedFileSystemException
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
+
+internal val projectMethodType: MethodType = MethodType.methodType(Void.TYPE, Project::class.java)
+internal val projectAndScopeMethodType: MethodType = MethodType.methodType(Void.TYPE, Project::class.java, CoroutineScope::class.java)
 
 @Internal
 open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName: String?)
@@ -124,6 +128,17 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     // light project may be changed later during test, so we need to remember its initial state
     @Suppress("TestOnlyProblems")
     isLight = ApplicationManager.getApplication().isUnitTestMode && filePath.toString().contains(LIGHT_PROJECT_NAME)
+  }
+
+  final override fun <T : Any> findConstrictorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
+    @Suppress("UNCHECKED_CAST")
+    // see ConfigurableEP - prefer constructor that accepts our instance
+    return (lookup.findConstructorOrNull(aClass, projectMethodType)?.invoke(this)
+            ?: lookup.findConstructorOrNull(aClass, projectAndScopeMethodType)?.invoke(this, instanceCoroutineScope(aClass))
+            ?: lookup.findConstructorOrNull(aClass, coroutineScopeMethodType)?.invoke(instanceCoroutineScope(aClass))
+            ?: lookup.findConstructorOrNull(aClass, emptyConstructorMethodType)?.invoke()
+            ?: throw RuntimeException("Cannot find suitable constructor, " +
+                                      "expected (Project), (Project, CoroutineScope), (CoroutineScope), or ()")) as T
   }
 
   override fun isInitialized(): Boolean {

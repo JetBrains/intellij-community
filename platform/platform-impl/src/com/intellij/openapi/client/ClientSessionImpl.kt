@@ -15,13 +15,17 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.impl.ProjectImpl
+import com.intellij.openapi.project.impl.projectMethodType
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.executeRegisterTaskForOldContent
+import com.intellij.serviceContainer.findConstructorOrNull
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.namedChildScope
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 
 private val LOG = logger<ClientSessionImpl>()
 
@@ -44,6 +48,12 @@ abstract class ClientSessionImpl(
   init {
     @Suppress("LeakingThis")
     registerServiceInstance(ClientSession::class.java, this, fakeCorePluginDescriptor)
+  }
+
+  override fun <T : Any> findConstrictorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
+    @Suppress("UNCHECKED_CAST")
+    return (lookup.findConstructorOrNull(aClass, sessionConstructorMethodType)?.invoke(this) as T?)
+           ?: super.findConstrictorAndInstantiateClass(lookup, aClass)
   }
 
   fun registerServices() {
@@ -162,6 +172,9 @@ open class ClientAppSessionImpl(
   }
 }
 
+private val sessionConstructorMethodType: MethodType = MethodType.methodType(Void.TYPE, ClientAppSession::class.java)
+private val projectSessionConstructorMethodType: MethodType = MethodType.methodType(Void.TYPE, ClientProjectSession::class.java)
+
 @ApiStatus.Internal
 open class ClientProjectSessionImpl(
   clientId: ClientId,
@@ -169,8 +182,18 @@ open class ClientProjectSessionImpl(
   componentManager: ClientAwareComponentManager,
   final override val project: Project,
 ) : ClientSessionImpl(clientId, clientType, componentManager), ClientProjectSession {
+  constructor(clientId: ClientId, clientType: ClientType, project: ProjectImpl) : this(clientId = clientId,
+                                                                                       clientType = clientType,
+                                                                                       componentManager = project,
+                                                                                       project = project)
 
-  constructor(clientId: ClientId, clientType: ClientType, project: ProjectImpl) : this(clientId, clientType, project, project)
+  override fun <T : Any> findConstrictorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
+    @Suppress("UNCHECKED_CAST")
+    return ((lookup.findConstructorOrNull(aClass, projectMethodType)?.invoke(project)
+            ?: lookup.findConstructorOrNull(aClass, projectSessionConstructorMethodType)?.invoke(this) ) as T?)
+           ?: super.findConstrictorAndInstantiateClass(lookup, aClass)
+  }
+
 
   override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor {
     return pluginDescriptor.projectContainerDescriptor

@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.serviceContainer.coroutineScopeMethodType
 import com.intellij.serviceContainer.emptyConstructorMethodType
 import com.intellij.serviceContainer.findConstructorOrNull
 import com.intellij.util.messages.MessageBus
@@ -36,11 +37,15 @@ import kotlin.coroutines.EmptyCoroutineContext
 private val LOG = logger<DefaultProject>()
 
 internal class DefaultProject : UserDataHolderBase(), Project {
-  private val myDelegate = object : DefaultProjectTimed(this) {
+  private val timedProject = object : DefaultProjectTimed(this) {
     public override fun compute(): Project {
-      LOG.assertTrue(!ApplicationManager.getApplication().isDisposed(), "Application is being disposed!")
-      val project = DefaultProjectImpl(actualContainerInstance = this@DefaultProject)
-      val componentStoreFactory = ApplicationManager.getApplication().service<ProjectStoreFactory>()
+      val app = ApplicationManager.getApplication()
+      LOG.assertTrue(!app.isDisposed(), "Application is being disposed!")
+      @Suppress("DEPRECATION")
+      val coroutineScope = app.getCoroutineScope()
+        .namedChildScope(name = "DefaultProjectImpl", context = EmptyCoroutineContext, supervisor = true)
+      val project = DefaultProjectImpl(actualContainerInstance = this@DefaultProject, coroutineScope = coroutineScope)
+      val componentStoreFactory = app.service<ProjectStoreFactory>()
       project.registerServiceInstance(serviceInterface = IComponentStore::class.java,
                                       instance = componentStoreFactory.createDefaultProjectStore(project),
                                       pluginDescriptor = ComponentManagerImpl.fakeCorePluginDescriptor)
@@ -86,13 +91,9 @@ internal class DefaultProject : UserDataHolderBase(), Project {
     delegate.logError(error, pluginId)
   }
 
-  override fun createError(error: Throwable, pluginId: PluginId): RuntimeException {
-    return delegate.createError(error, pluginId)
-  }
+  override fun createError(error: Throwable, pluginId: PluginId) = delegate.createError(error, pluginId)
 
-  override fun hasComponent(interfaceClass: Class<*>): Boolean {
-    return delegate.hasComponent(interfaceClass)
-  }
+  override fun hasComponent(interfaceClass: Class<*>): Boolean = delegate.hasComponent(interfaceClass)
 
   // make default project facade equal to any other default project facade to enable Map<Project, T>
   override fun equals(other: Any?): Boolean = other is Project && other.isDefault
@@ -105,19 +106,19 @@ internal class DefaultProject : UserDataHolderBase(), Project {
     if (!ApplicationManager.getApplication().isDisposed()) {
       throw IllegalStateException("Must not dispose default project")
     }
-    Disposer.dispose(myDelegate)
+    Disposer.dispose(timedProject)
   }
 
   @TestOnly
   fun disposeDefaultProjectAndCleanupComponentsForDynamicPluginTests() {
-    ApplicationManager.getApplication().runWriteAction(Runnable { Disposer.dispose(myDelegate) })
+    ApplicationManager.getApplication().runWriteAction(Runnable { Disposer.dispose(timedProject) })
   }
 
   private val delegate: Project
-    get() = myDelegate.get()
+    get() = timedProject.get()
 
   val isCached: Boolean
-    get() = myDelegate.isCached
+    get() = timedProject.isCached
 
   // delegates
   override fun getName() = TEMPLATE_PROJECT_NAME
@@ -181,10 +182,10 @@ private const val TEMPLATE_PROJECT_NAME = "Default (Template) Project"
 // chosen by fair dice roll. guaranteed to be random. see https://xkcd.com/221/ for details.
 private const val DEFAULT_HASH_CODE = 4
 
-private class DefaultProjectImpl(private val actualContainerInstance: Project) : ClientAwareComponentManager(
+private class DefaultProjectImpl(private val actualContainerInstance: Project,
+                                 coroutineScope: CoroutineScope) : ClientAwareComponentManager(
   parent = ApplicationManager.getApplication() as ComponentManagerImpl,
-  coroutineScope = (ApplicationManager.getApplication() as ComponentManagerImpl).getCoroutineScope()
-    .namedChildScope(name = "DefaultProjectImpl", context = EmptyCoroutineContext, supervisor = true),
+  coroutineScope = coroutineScope,
   setExtensionsRootArea = false,
 ), Project {
   override fun <T : Any> findConstrictorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
@@ -192,6 +193,8 @@ private class DefaultProjectImpl(private val actualContainerInstance: Project) :
     // see ConfigurableEP - prefer constructor that accepts our instance
     return (lookup.findConstructorOrNull(aClass, projectMethodType)?.invoke(actualContainerInstance)
             ?: lookup.findConstructorOrNull(aClass, emptyConstructorMethodType)?.invoke()
+            ?: lookup.findConstructorOrNull(aClass, projectAndScopeMethodType)?.invoke(this, instanceCoroutineScope(aClass))
+            ?: lookup.findConstructorOrNull(aClass, coroutineScopeMethodType)?.invoke(instanceCoroutineScope(aClass))
             ?: throw RuntimeException("Cannot find suitable constructor, expected (Project) or ()")) as T
   }
 

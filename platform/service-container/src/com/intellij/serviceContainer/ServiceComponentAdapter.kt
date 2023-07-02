@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serviceContainer
 
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceDescriptor
@@ -41,7 +42,13 @@ internal class ServiceComponentAdapter(
       }
     }
 
-    val instance = componentManager.instantiateClassWithConstructorInjection(implementationClass, componentKey, pluginId)
+    val instance = if (pluginId == PluginManagerCore.CORE_ID) {
+      componentManager.instantiateClass(implementationClass, pluginId)
+    }
+    else {
+      componentManager.instantiateClassWithConstructorInjection(implementationClass, componentKey, pluginId)
+    }
+
     if (instance is Disposable) {
       Disposer.register(componentManager.serviceParentDisposable, instance)
     }
