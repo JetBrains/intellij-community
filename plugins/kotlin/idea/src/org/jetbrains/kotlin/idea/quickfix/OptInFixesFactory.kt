@@ -4,17 +4,13 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInsight.intention.LowPriorityAction
-import com.intellij.openapi.module.Module
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.resolveClassByFqName
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors.*
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.toDescriptor
@@ -31,11 +27,9 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypesAndPredicate
 import org.jetbrains.kotlin.resolve.AnnotationChecker
-import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
 import org.jetbrains.kotlin.resolve.constants.KClassValue
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object OptInFixesFactory : KotlinIntentionActionsFactory() {
@@ -109,14 +103,14 @@ object OptInFixesFactory : KotlinIntentionActionsFactory() {
         val containingFile = containingDeclaration.containingKtFile
         val module = containingFile.module
         if (module != null) {
-            result.add(LowPriorityMakeModuleOptInFix(containingFile, module, annotationFqName))
+            result.add(OptInFileLevelFixesFactory.LowPriorityMakeModuleOptInFix(containingFile, module, annotationFqName))
         }
 
         // Add the file-level annotation `@file:OptIn(...)`
         result.add(
-            UseOptInFileAnnotationFix(
+            OptInFileLevelFixesFactory.UseOptInFileAnnotationFix(
                 containingFile, optInFqName, annotationFqName,
-                findFileAnnotation(containingFile, optInFqName)?.createSmartPointer()
+                OptInFileLevelFixesFactory.findFileAnnotation(containingFile, optInFqName)?.createSmartPointer()
             )
         )
         return result
@@ -137,14 +131,6 @@ object OptInFixesFactory : KotlinIntentionActionsFactory() {
             val apiFqName = superClassAnnotation.allValueArguments[OptInNames.OPT_IN_ANNOTATION_CLASS]?.safeAs<KClassValue>()
                 ?.getArgumentType(superClassDescriptor.module)?.fqName
             apiFqName == annotationFqName
-        }
-    }
-
-    // Find the existing file-level annotation of the specified class if it exists
-    private fun findFileAnnotation(file: KtFile, annotationFqName: FqName): KtAnnotationEntry? {
-        val context = file.analyze(BodyResolveMode.PARTIAL)
-        return file.fileAnnotationList?.annotationEntries?.firstOrNull { entry ->
-            context.get(BindingContext.ANNOTATION, entry)?.fqName == annotationFqName
         }
     }
 
@@ -193,33 +179,6 @@ object OptInFixesFactory : KotlinIntentionActionsFactory() {
         existingAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>? = null
     ) : UseOptInAnnotationFix(element, optInFqName, kind, argumentClassFqName, existingAnnotationEntry),
         HighPriorityAction
-
-    /**
-     * A specialized version of [AddFileAnnotationFix] that adds @OptIn(...) annotations to the containing file.
-     *
-     * This class reuses the parent's [invoke] method, but overrides the [getText] method to provide
-     * more descriptive opt-in related messages.
-     *
-     * @param file the file there the annotation should be added
-     * @param optInFqName name of OptIn annotation
-     * @param argumentClassFqName the fully qualified name of the annotation to opt-in
-     * @param existingAnnotationEntry the already existing annotation entry (if any)
-     */
-    private open class UseOptInFileAnnotationFix(
-        file: KtFile,
-        optInFqName: FqName,
-        private val argumentClassFqName: FqName,
-        existingAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>?
-    ) : AddFileAnnotationFix(file, optInFqName, argumentClassFqName, existingAnnotationEntry) {
-        private val fileName = file.name
-
-        override fun getText(): String {
-            val argumentText = argumentClassFqName.shortName().asString()
-            return KotlinBundle.message("fix.opt_in.text.use.containing.file", argumentText, fileName)
-        }
-
-        override fun getFamilyName(): String = KotlinBundle.message("fix.opt_in.annotation.family")
-    }
 
     /**
      * A specialized subclass of [AddAnnotationFix] that adds propagating opted-in annotations
@@ -277,10 +236,4 @@ object OptInFixesFactory : KotlinIntentionActionsFactory() {
         existingAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>? = null
     ) : PropagateOptInAnnotationFix(element, annotationFqName, kind, null, existingAnnotationEntry),
         HighPriorityAction
-
-    private class LowPriorityMakeModuleOptInFix(
-        file: KtFile,
-        module: Module,
-        annotationFqName: FqName
-    ) : MakeModuleOptInFix(file, module, annotationFqName), LowPriorityAction
 }
