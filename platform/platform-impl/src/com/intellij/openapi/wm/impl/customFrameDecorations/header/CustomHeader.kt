@@ -39,7 +39,7 @@ import kotlin.math.roundToInt
 
 private const val HEADER_HEIGHT_DFM = 30
 private const val HEADER_HEIGHT_COMPACT = 34
-private const val HEADER_HEIGHT_NORMAL = 40
+internal const val HEADER_HEIGHT_NORMAL = 40
 
 private val windowBorderThicknessInPhysicalPx: Int = run {
   // Windows 10 (tested on 1809) determines the window border size by the main display scaling, rounded down. This value is
@@ -125,7 +125,7 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
   override fun updateUI() {
     super.updateUI()
     updateWinControlsTheme()
-    updateSize { computeMainActionGroups(CustomActionsSchema.getInstance()) }
+    updateSize(mainToolbarActionSupplier = { computeMainActionGroups(CustomActionsSchema.getInstance()) })
   }
 
   protected fun updateSize(mainToolbarActionSupplier: () -> List<Pair<ActionGroup, String>>) {
@@ -133,15 +133,20 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
       return
     }
 
+    updatePreferredSize(isCompactHeader = { (rootPane as? IdeRootPane)?.isCompactHeader(mainToolbarActionSupplier) == true })
+  }
+
+  protected fun updatePreferredSize(isCompactHeader: () -> Boolean): Dimension {
     val size = preferredSize
     size.height = JBUI.scale(
       when {
-        (rootPane as? IdeRootPane)?.isCompactHeader(mainToolbarActionSupplier) == true -> HEADER_HEIGHT_DFM
+        isCompactHeader() -> HEADER_HEIGHT_DFM
         UISettings.getInstance().compactMode -> HEADER_HEIGHT_COMPACT
         else -> HEADER_HEIGHT_NORMAL
       }
     )
     preferredSize = size
+    return size
   }
 
   private fun updateWinControlsTheme() {
