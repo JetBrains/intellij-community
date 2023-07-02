@@ -80,6 +80,10 @@ internal enum class MainToolbarCustomizationType {
 
 private const val TOOLBAR_BACKGROUND_KEY = "PROJECT_TOOLBAR_COLOR"
 
+private fun isForceColorfulToolbar() = Registry.`is`("ide.colorful.toolbar.force", true)
+
+private fun conditionToEnable() = isForceColorfulToolbar() || ProjectManagerEx.getOpenProjects().size > 1
+
 @Service
 class ProjectWindowCustomizerService : Disposable {
   companion object {
@@ -102,7 +106,8 @@ class ProjectWindowCustomizerService : Disposable {
 
   private data class ProjectColors(@JvmField val gradient: Color, @JvmField val background: Color)
 
-  private var wasGradientPainted = false
+  private var wasGradientPainted = isForceColorfulToolbar()
+
   private var ourSettingsValue = UISettings.getInstance().differentiateProjects
   private val colorCache = mutableMapOf<String, ProjectColors>()
   private val listeners = mutableListOf<(Boolean) -> Unit>()
@@ -193,8 +198,6 @@ class ProjectWindowCustomizerService : Disposable {
       fireUpdate()
     }
   }
-
-  private fun conditionToEnable() = ProjectManagerEx.getOpenProjects().size > 1 || Registry.`is`("ide.colorful.toolbar.force")
 
   fun addListener(coroutineScope: CoroutineScope, fireFirstTime: Boolean, listener: (Boolean) -> Unit) {
     if (fireFirstTime) {
