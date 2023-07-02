@@ -27,6 +27,7 @@ import com.intellij.openapi.wm.impl.LinuxIdeMenuBar.Companion.doBindAppMenuOfPar
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader
 import com.intellij.ui.*
+import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.util.childScope
 import com.intellij.util.ui.ImageUtil
@@ -299,10 +300,9 @@ open class FrameWrapper @JvmOverloads constructor(private var project: Project?,
     init {
       FrameState.setFrameStateListener(this)
       glassPane = IdeGlassPaneImpl(rootPane = getRootPane(), installPainters = true)
-      if (SystemInfoRt.isMac && !(SystemInfo.isMacSystemMenu && java.lang.Boolean.getBoolean("mac.system.menu.singleton"))) {
+      if (SystemInfoRt.isMac && !Menu.isJbScreenMenuEnabled()) {
         @Suppress("DEPRECATION")
         jMenuBar = createMenuBar(coroutineScope = ApplicationManager.getApplication().coroutineScope.childScope(), this)
-
       }
       MouseGestureManager.getInstance().add(this)
       focusTraversalPolicy = IdeFocusTraversalPolicy()
