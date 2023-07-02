@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package de.plushnikov.intellij.plugin.inspection;
 
+import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -18,36 +19,36 @@ import java.util.List;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class LombokGetterMayBeUsedInspection extends LombokGetterOrSetterMayBeUsedInspection {
+public class LombokSetterMayBeUsedInspection extends LombokGetterOrSetterMayBeUsedInspection {
   @Override
   @NotNull
   protected String getTagName() {
-    return "return";
+    return "param";
   }
 
   @Override
   @NotNull
   protected String getJavaDocMethodMarkup() {
-    return "GETTER";
+    return "SETTER";
   }
 
   @Override
   @NotNull
   protected @NonNls String getAnnotationName() {
-    return LombokClassNames.GETTER;
+    return LombokClassNames.SETTER;
   }
 
   @Override
   @NotNull
   protected @Nls String getFieldErrorMessage(String fieldName) {
-    return LombokBundle.message("inspection.lombok.getter.may.be.used.display.field.message",
+    return LombokBundle.message("inspection.lombok.setter.may.be.used.display.field.message",
                                 fieldName);
   }
 
   @Override
   @NotNull
   protected @Nls String getClassErrorMessage(String className) {
-    return LombokBundle.message("inspection.lombok.getter.may.be.used.display.class.message",
+    return LombokBundle.message("inspection.lombok.setter.may.be.used.display.class.message",
                                 className);
   }
 
@@ -57,26 +58,37 @@ public class LombokGetterMayBeUsedInspection extends LombokGetterOrSetterMayBeUs
     @NotNull List<Pair<PsiField, PsiMethod>> instanceCandidates,
     @NotNull List<Pair<PsiField, PsiMethod>> staticCandidates
   ) {
-    final PsiType returnType = method.getReturnType();
     if (!method.hasModifierProperty(PsiModifier.PUBLIC)
         || method.isConstructor()
-        || method.hasParameters()
-        || method.getThrowsTypes().length != 0
+        || !method.hasParameters()
+        || method.getParameterList().getParameters().length != 1
+        || 0 < method.getThrowsTypes().length
         || method.hasModifierProperty(PsiModifier.FINAL)
         || method.hasModifierProperty(PsiModifier.ABSTRACT)
         || method.hasModifierProperty(PsiModifier.SYNCHRONIZED)
         || method.hasModifierProperty(PsiModifier.NATIVE)
         || method.hasModifierProperty(PsiModifier.STRICTFP)
-        || method.getAnnotations().length != 0
-        || PsiTypes.voidType().equals(returnType)
-        || returnType == null
-        || returnType.getAnnotations().length != 0
+        || 0 < method.getAnnotations().length
+        || !PsiTypes.voidType().equals(method.getReturnType())
         || !method.isWritable()) {
       return false;
     }
+    final PsiParameter parameter = method.getParameterList().getParameters()[0];
+    if (
+      parameter.isVarArgs()
+      || (
+        parameter.getModifierList() != null
+        && 0 < parameter.getModifierList().getChildren().length
+        && (parameter.getModifierList().getChildren().length != 1 || !parameter.hasModifier(JvmModifier.FINAL))
+      )
+      || 0 < parameter.getAnnotations().length
+    ) {
+      return false;
+    }
+    final PsiType parameterType = parameter.getType();
+
     final String methodName = method.getName();
-    final boolean isBooleanType = PsiTypes.booleanType().equals(returnType);
-    if (isBooleanType ? !methodName.startsWith("is") : !methodName.startsWith("get")) {
+    if (!methodName.startsWith("set")) {
       return false;
     }
 
@@ -92,12 +104,26 @@ public class LombokGetterMayBeUsedInspection extends LombokGetterOrSetterMayBeUs
     if (methodStatements.length != 1) {
       return false;
     }
-    final PsiReturnStatement returnStatement = tryCast(methodStatements[0], PsiReturnStatement.class);
-    if (returnStatement == null) {
+    final PsiExpressionStatement assignmentStatement = tryCast(methodStatements[0], PsiExpressionStatement.class);
+    if (assignmentStatement == null) {
       return false;
     }
-    final PsiReferenceExpression targetRef = tryCast(
-      PsiUtil.skipParenthesizedExprDown(returnStatement.getReturnValue()), PsiReferenceExpression.class);
+    final PsiAssignmentExpression assignment = tryCast(assignmentStatement.getExpression(), PsiAssignmentExpression.class);
+    if (assignment == null || assignment.getOperationTokenType() != JavaTokenType.EQ) {
+      return false;
+    }
+    final PsiReferenceExpression sourceRef = tryCast(PsiUtil.skipParenthesizedExprDown(assignment.getRExpression()), PsiReferenceExpression.class);
+    if (sourceRef == null || sourceRef.getQualifierExpression() != null) {
+      return false;
+    }
+    final @Nullable String paramIdentifier = sourceRef.getReferenceName();
+    if (paramIdentifier == null) {
+      return false;
+    }
+    if (!paramIdentifier.equals(parameter.getName())) {
+      return false;
+    }
+    final PsiReferenceExpression targetRef = tryCast(assignment.getLExpression(), PsiReferenceExpression.class);
     if (targetRef == null) {
       return false;
     }
@@ -117,7 +143,14 @@ public class LombokGetterMayBeUsedInspection extends LombokGetterOrSetterMayBeUs
       }
     }
     final @Nullable String fieldIdentifier = targetRef.getReferenceName();
+    if (fieldIdentifier == null) {
+      return false;
+    }
     if (!fieldName.equals(fieldIdentifier) && !StringUtil.capitalize(fieldName).equals(fieldIdentifier)) {
+      return false;
+    }
+    if (qualifier == null
+        && paramIdentifier.equals(fieldIdentifier)) {
       return false;
     }
 
@@ -126,7 +159,7 @@ public class LombokGetterMayBeUsedInspection extends LombokGetterOrSetterMayBeUs
     if (field == null
         || !field.isWritable()
         || isMethodStatic != field.hasModifierProperty(PsiModifier.STATIC)
-        || !field.getType().equals(returnType)) {
+        || !field.getType().equals(parameterType)) {
       return false;
     }
     if (isMethodStatic) {
@@ -140,12 +173,12 @@ public class LombokGetterMayBeUsedInspection extends LombokGetterOrSetterMayBeUs
   @Override
   @NotNull
   protected @Nls String getFixName(String text) {
-    return LombokBundle.message("inspection.lombok.getter.may.be.used.display.fix.name", text);
+    return LombokBundle.message("inspection.lombok.setter.may.be.used.display.fix.name", text);
   }
 
   @Override
   @NotNull
   protected @Nls String getFixFamilyName() {
-    return LombokBundle.message("inspection.lombok.getter.may.be.used.display.fix.family.name");
+    return LombokBundle.message("inspection.lombok.setter.may.be.used.display.fix.family.name");
   }
 }

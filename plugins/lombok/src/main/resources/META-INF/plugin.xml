@@ -185,6 +185,11 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
                      implementationClass="de.plushnikov.intellij.plugin.inspection.LombokGetterMayBeUsedInspection" cleanupTool="true"/>
 
+    <localInspection groupPath="Java" language="JAVA" shortName="LombokSetterMayBeUsed" enabledByDefault="true" level="WARNING"
+                     bundle="messages.LombokBundle" key="inspection.lombok.setter.may.be.used.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
+                     implementationClass="de.plushnikov.intellij.plugin.inspection.LombokSetterMayBeUsedInspection" cleanupTool="true"/>
+
     <localInspection
       language="JAVA"
       groupPath="Java"
