@@ -506,8 +506,12 @@ public final class JBUI {
 
       public static @NotNull Color mainToolbarBackground(boolean active) {
         JBColor activeBG = JBColor.namedColor("MainToolbar.background", titlePaneBackground());
-        JBColor inactiveBG = JBColor.namedColor("MainToolbar.inactiveBackground", activeBG);
-        return active ? activeBG : inactiveBG;
+        if (active) {
+          return activeBG;
+        }
+        else {
+          return JBColor.namedColor("MainToolbar.inactiveBackground", activeBG);
+        }
       }
 
       public static @NotNull Color titlePaneInfoForeground() {

@@ -24,21 +24,20 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleContextCache
 import com.intellij.util.ui.*
 import com.jetbrains.JBR
-import com.jetbrains.WindowDecorations
+import com.jetbrains.WindowDecorations.CustomTitleBar
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.*
 import java.beans.PropertyChangeListener
 import javax.accessibility.AccessibleContext
-import javax.accessibility.AccessibleRole
 import javax.swing.*
 import javax.swing.border.Border
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.roundToInt
 
-private const val HEADER_HEIGHT_DFM = 30
-private const val HEADER_HEIGHT_COMPACT = 34
+internal const val HEADER_HEIGHT_DFM = 30
+internal const val HEADER_HEIGHT_COMPACT = 34
 internal const val HEADER_HEIGHT_NORMAL = 40
 
 private val windowBorderThicknessInPhysicalPx: Int = run {
@@ -46,6 +45,12 @@ private val windowBorderThicknessInPhysicalPx: Int = run {
   // calculated once on desktop session start, so it should be okay to store once per IDE session.
   val scale = GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice.defaultConfiguration.defaultTransform.scaleY
   floor(scale).toInt()
+}
+
+internal fun updateWinControlsTheme(panel: JPanel, customTitleBar: CustomTitleBar) {
+  customTitleBar.putProperty("controls.dark", ColorUtil.isDark(panel.background))
+  customTitleBar.putProperty("controls.foreground.normal", UIManager.getColor("WindowControls.foreground"))
+  customTitleBar.putProperty("controls.foreground.inactive", UIManager.getColor("WindowControls.inactiveForeground"))
 }
 
 internal sealed class CustomHeader(@JvmField internal val window: Window) : JPanel() {
@@ -106,7 +111,7 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
   private var customFrameTopBorder: CustomFrameTopBorder? = null
 
   @ApiStatus.Internal
-  val customTitleBar: WindowDecorations.CustomTitleBar?
+  val customTitleBar: CustomTitleBar?
 
   protected val productIcon: JComponent by lazy {
     createProductIcon()
@@ -124,7 +129,9 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
 
   override fun updateUI() {
     super.updateUI()
-    updateWinControlsTheme()
+    customTitleBar?.let {
+      updateWinControlsTheme(panel = this, customTitleBar = it)
+    }
     updateSize(mainToolbarActionSupplier = { computeMainActionGroups(CustomActionsSchema.getInstance()) })
   }
 
@@ -147,13 +154,6 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
     )
     preferredSize = size
     return size
-  }
-
-  private fun updateWinControlsTheme() {
-    val customTitleBar = customTitleBar ?: return
-    customTitleBar.putProperty("controls.dark", ColorUtil.isDark(background))
-    customTitleBar.putProperty("controls.foreground.normal", UIManager.getColor("WindowControls.foreground"))
-    customTitleBar.putProperty("controls.foreground.inactive", UIManager.getColor("WindowControls.inactiveForeground"))
   }
 
   protected open fun getHeaderBackground(active: Boolean = true) = JBUI.CurrentTheme.CustomFrameDecorations.titlePaneBackground(active)
@@ -214,11 +214,9 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
       customTitleBar.height = (height - insets.bottom).toFloat()
       setCustomTitleBar(customTitleBar)
     }
-
-    //border = JBUI.Borders.empty(0, customTitleBar.leftInset.toInt(), 0, customTitleBar.rightInset.toInt())
   }
 
-  private fun setCustomTitleBar(titleBar: WindowDecorations.CustomTitleBar?) {
+  private fun setCustomTitleBar(titleBar: CustomTitleBar?) {
     JBR.getWindowDecorations()?.let {
       if (window is Dialog) {
         it.setCustomTitleBar(window, titleBar)
@@ -239,7 +237,9 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
     customFrameTopBorder?.repaintBorder()
 
     background = getHeaderBackground(isActive)
-    updateWinControlsTheme()
+    customTitleBar?.let {
+      updateWinControlsTheme(panel = this, customTitleBar = it)
+    }
   }
 
   protected fun close() {
@@ -286,15 +286,13 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
   }
 
   private inner class AccessibleCustomHeader: AccessibleJPanel() {
-    override fun getAccessibleRole(): AccessibleRole {
-      return AccessibilityUtils.GROUPED_ELEMENTS
-    }
+    override fun getAccessibleRole() = AccessibilityUtils.GROUPED_ELEMENTS
   }
 }
 
-private class CustomFrameTopBorder(@JvmField val isTopNeeded: () -> Boolean = { true },
-                                   @JvmField val isBottomNeeded: () -> Boolean = { false },
-                                   @JvmField val header: CustomHeader) : Border {
+internal class CustomFrameTopBorder(@JvmField val isTopNeeded: () -> Boolean = { true },
+                                    @JvmField val isBottomNeeded: () -> Boolean = { false },
+                                    @JvmField val header: CustomHeader) : Border {
   // The bottom border is a line between a window title/main menu area and the frame content.
   private val bottomBorderWidthLogicalPx = JBUI.scale(1)
 
