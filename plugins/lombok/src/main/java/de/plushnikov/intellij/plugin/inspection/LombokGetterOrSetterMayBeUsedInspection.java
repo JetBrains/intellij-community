@@ -59,12 +59,12 @@ public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJava
         if (annotation != null) {
           if (!annotation.getAttributes().isEmpty()) {
             isLombokAnnotationAtClassLevel = false;
-          } else {
+          }
+          else {
             annotatedFields.add(field);
           }
-          break;
         }
-        if (!field.hasModifierProperty(PsiModifier.STATIC)) {
+        else if (!field.hasModifierProperty(PsiModifier.STATIC)) {
           boolean found = false;
           for (Pair<PsiField, PsiMethod> instanceCandidate : instanceCandidates) {
             if (field.equals(instanceCandidate.getFirst())) {
@@ -72,13 +72,18 @@ public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJava
               break;
             }
           }
-          isLombokAnnotationAtClassLevel &= found;
+          isLombokAnnotationAtClassLevel = found;
+        }
+
+        if (!isLombokAnnotationAtClassLevel) {
+          break;
         }
       }
       List<Pair<PsiField, PsiMethod>> allCandidates = new ArrayList<>(staticCandidates);
-      if (isLombokAnnotationAtClassLevel && (!instanceCandidates.isEmpty() || !annotatedFields.isEmpty()) ) {
+      if (isLombokAnnotationAtClassLevel && (!instanceCandidates.isEmpty() || !annotatedFields.isEmpty())) {
         warnOrFix(psiClass, instanceCandidates, annotatedFields);
-      } else {
+      }
+      else {
         allCandidates.addAll(instanceCandidates);
       }
       for (Pair<PsiField, PsiMethod> candidate : allCandidates) {
@@ -109,7 +114,8 @@ public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJava
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                  psiClassNameIdentifier != null ? psiClassNameIdentifier.getTextRangeInParent() : psiClass.getTextRange(),
                                  fix);
-      } else if (myLombokGetterOrSetterMayBeUsedFix != null) {
+      }
+      else if (myLombokGetterOrSetterMayBeUsedFix != null) {
         myLombokGetterOrSetterMayBeUsedFix.effectivelyDoFix(psiClass, fieldsAndMethods, annotatedFields);
       }
     }
@@ -120,7 +126,8 @@ public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJava
         final LocalQuickFix fix = new LombokGetterOrSetterMayBeUsedFix(fieldName);
         myHolder.registerProblem(method,
                                  getFieldErrorMessage(fieldName), fix);
-      } else if (myLombokGetterOrSetterMayBeUsedFix != null) {
+      }
+      else if (myLombokGetterOrSetterMayBeUsedFix != null) {
         myLombokGetterOrSetterMayBeUsedFix.effectivelyDoFix(field, method);
       }
     }
@@ -154,7 +161,8 @@ public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJava
       final PsiElement element = descriptor.getPsiElement();
       if (element instanceof PsiMethod) {
         new LombokGetterOrSetterMayBeUsedVisitor(null, this).visitMethodForFix((PsiMethod)element);
-      } else if (element instanceof PsiClass) {
+      }
+      else if (element instanceof PsiClass) {
         new LombokGetterOrSetterMayBeUsedVisitor(null, this).visitClass((PsiClass)element);
       }
     }
@@ -186,7 +194,7 @@ public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJava
         return false;
       }
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      final PsiAnnotation annotation = factory.createAnnotationFromText("@"+getAnnotationName(), fieldOrClass);
+      final PsiAnnotation annotation = factory.createAnnotationFromText("@" + getAnnotationName(), fieldOrClass);
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(annotation);
       modifierList.addAfter(annotation, null);
       return true;
@@ -210,19 +218,23 @@ public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJava
         if (fieldJavaDoc == null) {
           if (javaDocMethodText.isEmpty()) {
             fieldJavaDoc = factory.createDocCommentFromText("/**\n*/");
-          } else {
-            fieldJavaDoc = factory.createDocCommentFromText("/**\n* -- " + getJavaDocMethodMarkup() + " --\n* " + javaDocMethodText + "\n*/");
+          }
+          else {
+            fieldJavaDoc =
+              factory.createDocCommentFromText("/**\n* -- " + getJavaDocMethodMarkup() + " --\n* " + javaDocMethodText + "\n*/");
           }
           for (PsiDocTag methodTag : methodTags) {
             fieldJavaDoc.add(methodTag);
           }
           field.getParent().addBefore(fieldJavaDoc, field);
-        } else {
+        }
+        else {
           @NotNull PsiElement @NotNull [] fieldJavaDocChildren = Arrays.stream(fieldJavaDoc.getChildren())
             .filter(e -> e instanceof PsiDocToken)
             .toArray(PsiElement[]::new);
           @NotNull PsiElement fieldJavaDocChild = fieldJavaDocChildren[fieldJavaDocChildren.length - 2];
-          PsiDocComment newMethodJavaDoc = factory.createDocCommentFromText("/**\n* -- " + getJavaDocMethodMarkup() + " --\n* " + javaDocMethodText + "\n*/");
+          PsiDocComment newMethodJavaDoc =
+            factory.createDocCommentFromText("/**\n* -- " + getJavaDocMethodMarkup() + " --\n* " + javaDocMethodText + "\n*/");
           PsiElement[] tokens = newMethodJavaDoc.getChildren();
           for (int i = tokens.length - 2; 0 < i; i--) {
             fieldJavaDoc.addAfter(tokens[i], fieldJavaDocChild);
