@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.resolve.constants.KClassValue
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-object OptInFixesFactory : KotlinIntentionActionsFactory() {
+internal object OptInFixesFactory : KotlinIntentionActionsFactory() {
     override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
         val element = diagnostic.psiElement
         val containingDeclaration: KtDeclaration = element.getParentOfTypesAndPredicate(
@@ -45,11 +45,10 @@ object OptInFixesFactory : KotlinIntentionActionsFactory() {
             !KtPsiUtil.isLocal(it)
         } ?: return emptyList()
 
-        val annotationFqName =  OptInFixesUtils.annotationFqName(diagnostic)?: return emptyList()
+        val annotationFqName = OptInFixesUtils.annotationFqName(diagnostic) ?: return emptyList()
         val moduleDescriptor = containingDeclaration.resolveToDescriptorIfAny()?.module ?: return emptyList()
-        val annotationClassDescriptor = moduleDescriptor.resolveClassByFqName(
-            annotationFqName, NoLookupLocation.FROM_IDE
-        ) ?: return emptyList()
+        val annotationClassDescriptor =
+            moduleDescriptor.resolveClassByFqName(annotationFqName, NoLookupLocation.FROM_IDE) ?: return emptyList()
 
         val applicableTargets = AnnotationChecker.applicableTargetSet(annotationClassDescriptor)
         val context = when (element) {
@@ -62,42 +61,55 @@ object OptInFixesFactory : KotlinIntentionActionsFactory() {
 
         val result = mutableListOf<IntentionAction>()
 
-        fun collectQuickFixes(declaration: KtDeclaration, kind: AddAnnotationFix.Kind) {
-            val actualTargetList = AnnotationChecker.getDeclarationSiteActualTargetList(
-                declaration, declaration.toDescriptor() as? ClassDescriptor, context
-            )
-            if (actualTargetList.any { it in applicableTargets }) {
+        fun collectPropagateOptInAnnotationFix(targetElement: KtDeclaration, kind: AddAnnotationFix.Kind) {
+            val elementDescriptor = targetElement.toDescriptor() as? ClassDescriptor
+            val actualTargetList = AnnotationChecker.getDeclarationSiteActualTargetList(targetElement, elementDescriptor, context)
+            if (actualTargetList.none { it in applicableTargets }) return
+
+            val quickFix = when {
                 // When we are fixing a missing annotation on an overridden function, we should
                 // propose to add a propagating annotation first, and in all other cases
                 // the non-propagating opt-in annotation should be default.
                 // The same logic applies to the similar conditional expressions onward.
-                result.add(
-                    when {
-                        isOverrideError -> HighPriorityPropagateOptInAnnotationFix(declaration, annotationFqName, kind)
-                        declaration.isSubclassOptPropagateApplicable(annotationFqName) -> PropagateOptInAnnotationFix(
-                            declaration, OptInNames.SUBCLASS_OPT_IN_REQUIRED_FQ_NAME, kind, annotationFqName
-                        )
+                isOverrideError -> HighPriorityPropagateOptInAnnotationFix(targetElement, annotationFqName, kind)
 
-                        else -> PropagateOptInAnnotationFix(declaration, annotationFqName, kind)
-                    }
+                targetElement.isSubclassOptPropagateApplicable(annotationFqName) -> PropagateOptInAnnotationFix(
+                    targetElement, OptInNames.SUBCLASS_OPT_IN_REQUIRED_FQ_NAME, kind, annotationFqName
                 )
-            }
 
-            val existingAnnotationEntry = declaration.findAnnotation(optInFqName)?.createSmartPointer()
-            result.add(
-                if (isOverrideError) UseOptInAnnotationFix(declaration, optInFqName, kind, annotationFqName, existingAnnotationEntry)
-                else HighPriorityUseOptInAnnotationFix(declaration, optInFqName, kind, annotationFqName, existingAnnotationEntry)
-            )
+                else -> PropagateOptInAnnotationFix(targetElement, annotationFqName, kind)
+            }
+            result.add(quickFix)
+        }
+
+        fun collectUseOptInAnnotationFix(targetElement: KtDeclaration, kind: AddAnnotationFix.Kind) {
+            val existingAnnotationEntry = targetElement.findAnnotation(optInFqName)?.createSmartPointer()
+
+            val quickFix =
+                if (isOverrideError) UseOptInAnnotationFix(
+                    targetElement,
+                    optInFqName,
+                    kind,
+                    annotationFqName,
+                    existingAnnotationEntry
+                )
+                else HighPriorityUseOptInAnnotationFix(targetElement, optInFqName, kind, annotationFqName, existingAnnotationEntry)
+
+            result.add(quickFix)
         }
 
         val kind = if (containingDeclaration is KtConstructor<*>) AddAnnotationFix.Kind.Constructor
         else AddAnnotationFix.Kind.Declaration(containingDeclaration.name)
 
-        collectQuickFixes(containingDeclaration, kind)
+        collectPropagateOptInAnnotationFix(containingDeclaration, kind)
+        collectUseOptInAnnotationFix(containingDeclaration, kind)
 
         val containingClassOrObject = containingDeclaration.containingClassOrObject
-        if (containingDeclaration is KtCallableDeclaration && containingClassOrObject != null)
-            collectQuickFixes(containingClassOrObject, AddAnnotationFix.Kind.ContainingClass(containingClassOrObject.name))
+        if (containingDeclaration is KtCallableDeclaration && containingClassOrObject != null) {
+            val kind1 = AddAnnotationFix.Kind.ContainingClass(containingClassOrObject.name)
+            collectPropagateOptInAnnotationFix(containingClassOrObject, kind1)
+            collectUseOptInAnnotationFix(containingClassOrObject, kind1)
+        }
 
 
         val containingFile = containingDeclaration.containingKtFile
@@ -133,6 +145,7 @@ object OptInFixesFactory : KotlinIntentionActionsFactory() {
             apiFqName == annotationFqName
         }
     }
+
 
     /**
      * A specialized subclass of [AddAnnotationFix] that adds @OptIn(...) annotations to declarations,
@@ -177,8 +190,8 @@ object OptInFixesFactory : KotlinIntentionActionsFactory() {
         kind: Kind,
         argumentClassFqName: FqName,
         existingAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>? = null
-    ) : UseOptInAnnotationFix(element, optInFqName, kind, argumentClassFqName, existingAnnotationEntry),
-        HighPriorityAction
+    ) : UseOptInAnnotationFix(element, optInFqName, kind, argumentClassFqName, existingAnnotationEntry), HighPriorityAction
+
 
     /**
      * A specialized subclass of [AddAnnotationFix] that adds propagating opted-in annotations
@@ -211,9 +224,7 @@ object OptInFixesFactory : KotlinIntentionActionsFactory() {
                 Kind.Constructor -> KotlinBundle.message("fix.opt_in.text.propagate.constructor", argumentText)
                 is Kind.Declaration -> KotlinBundle.message("fix.opt_in.text.propagate.declaration", argumentText, kind.name ?: "?")
                 is Kind.ContainingClass -> KotlinBundle.message(
-                    "fix.opt_in.text.propagate.containing.class",
-                    argumentText,
-                    kind.name ?: "?"
+                    "fix.opt_in.text.propagate.containing.class", argumentText, kind.name ?: "?"
                 )
             }
         }
@@ -234,6 +245,6 @@ object OptInFixesFactory : KotlinIntentionActionsFactory() {
         annotationFqName: FqName,
         kind: Kind,
         existingAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>? = null
-    ) : PropagateOptInAnnotationFix(element, annotationFqName, kind, null, existingAnnotationEntry),
-        HighPriorityAction
+    ) : PropagateOptInAnnotationFix(element, annotationFqName, kind, null, existingAnnotationEntry), HighPriorityAction
+
 }
