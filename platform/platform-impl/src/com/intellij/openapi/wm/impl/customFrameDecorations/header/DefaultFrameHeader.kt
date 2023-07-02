@@ -25,7 +25,7 @@ internal class DefaultFrameHeader(frame: JFrame, isForDockContainerProvider: Boo
     add(customDecorationTitle.view, gb.next().fillCell().weightx(1.0))
     buttonPanes?.let { add(it.getView(), gb.next().anchor(GridBagConstraints.EAST)) }
 
-    setCustomFrameTopBorder(isTopNeeded = { myState != Frame.MAXIMIZED_VERT && myState != Frame.MAXIMIZED_BOTH })
+    setCustomFrameTopBorder(isTopNeeded = { state != Frame.MAXIMIZED_VERT && state != Frame.MAXIMIZED_BOTH })
   }
 
   override fun updateActive() {

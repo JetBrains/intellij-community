@@ -41,7 +41,7 @@ open class ToolbarServiceImpl : ToolbarService {
     handler?.addListener(window)
 
     val topWindowInset = JBUI.insetsTop(UIUtil.getTransparentTitleBarHeight(rootPane))
-    val customBorder: AbstractBorder = object : AbstractBorder() {
+    val customBorder = object : AbstractBorder() {
       override fun getBorderInsets(c: Component): Insets {
         return if (handler != null && handler.isFullScreen()) JBInsets.emptyInsets() else topWindowInset
       }
