@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.BuildSystemType
 import org.jetbrains.kotlin.idea.configuration.buildSystemType
 import org.jetbrains.kotlin.idea.facet.getOrCreateConfiguredFacet
-import org.jetbrains.kotlin.idea.quickfix.OptInFixesFactory.annotationExists
 import org.jetbrains.kotlin.idea.util.projectStructure.module
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
@@ -40,7 +39,7 @@ open class MakeModuleOptInFix(
     // `-Xuse-experimental` (before Kotlin 1.3.70), a fallback if `RequireOptIn` annotation does not exist
 
     private val experimentalPrefix = when {
-        module.toDescriptor()?.annotationExists(OptInNames.REQUIRES_OPT_IN_FQ_NAME) == false -> "-Xuse-experimental"
+        module.toDescriptor()?.let { OptInFixesUtils.annotationExists(it, OptInNames.REQUIRES_OPT_IN_FQ_NAME) } == false -> "-Xuse-experimental"
         KotlinPluginLayout.standaloneCompilerVersion.kotlinVersion.isAtLeast(1, 6, 0) -> "-opt-in"
         else -> "-Xopt-in"
     }
@@ -79,11 +78,12 @@ open class MakeModuleOptInFix(
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {
             val containingKtFile = diagnostic.psiElement.containingFile as? KtFile ?: return null
             val module = containingKtFile.module ?: return null
+            val moduleDescriptor = module.toDescriptor()
             return MakeModuleOptInFix(
                 containingKtFile,
                 module,
                 OptInNames.REQUIRES_OPT_IN_FQ_NAME.takeIf {
-                    module.toDescriptor()?.annotationExists(it) == true
+                    moduleDescriptor != null && OptInFixesUtils.annotationExists(moduleDescriptor, it)
                 } ?: FqNames.OptInFqNames.OLD_EXPERIMENTAL_FQ_NAME
             )
         }

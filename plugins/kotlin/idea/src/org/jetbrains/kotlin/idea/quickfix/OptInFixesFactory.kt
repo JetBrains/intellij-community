@@ -51,13 +51,7 @@ object OptInFixesFactory : KotlinIntentionActionsFactory() {
             !KtPsiUtil.isLocal(it)
         } ?: return emptyList()
 
-        val annotationFqName = when (diagnostic.factory) {
-            OPT_IN_USAGE -> OPT_IN_USAGE.cast(diagnostic).a
-            OPT_IN_USAGE_ERROR -> OPT_IN_USAGE_ERROR.cast(diagnostic).a
-            OPT_IN_OVERRIDE -> OPT_IN_OVERRIDE.cast(diagnostic).a
-            OPT_IN_OVERRIDE_ERROR -> OPT_IN_OVERRIDE_ERROR.cast(diagnostic).a
-            else -> null
-        } ?: return emptyList()
+        val annotationFqName =  OptInFixesUtils.annotationFqName(diagnostic)?: return emptyList()
         val moduleDescriptor = containingDeclaration.resolveToDescriptorIfAny()?.module ?: return emptyList()
         val annotationClassDescriptor = moduleDescriptor.resolveClassByFqName(
             annotationFqName, NoLookupLocation.FROM_IDE
@@ -70,8 +64,7 @@ object OptInFixesFactory : KotlinIntentionActionsFactory() {
         }
 
         val isOverrideError = diagnostic.factory == OPT_IN_OVERRIDE_ERROR || diagnostic.factory == OPT_IN_OVERRIDE
-        val optInFqName = OptInNames.OPT_IN_FQ_NAME.takeIf { moduleDescriptor.annotationExists(it) }
-            ?: FqNames.OptInFqNames.OLD_USE_EXPERIMENTAL_FQ_NAME
+        val optInFqName = OptInFixesUtils.optInFqName(moduleDescriptor)
 
         val result = mutableListOf<IntentionAction>()
 
@@ -154,9 +147,6 @@ object OptInFixesFactory : KotlinIntentionActionsFactory() {
             context.get(BindingContext.ANNOTATION, entry)?.fqName == annotationFqName
         }
     }
-
-    fun ModuleDescriptor.annotationExists(fqName: FqName): Boolean =
-        resolveClassByFqName(fqName, NoLookupLocation.FROM_IDE) != null
 
     /**
      * A specialized subclass of [AddAnnotationFix] that adds @OptIn(...) annotations to declarations,
