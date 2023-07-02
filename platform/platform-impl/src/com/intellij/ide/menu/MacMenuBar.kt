@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl
+package com.intellij.ide.menu
 
 import com.intellij.diagnostic.runActivity
+import com.intellij.openapi.wm.impl.createScreeMenuPeer
+import com.intellij.openapi.wm.impl.doUpdateAppMenu
 import com.intellij.ui.mac.foundation.NSDefaults
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job

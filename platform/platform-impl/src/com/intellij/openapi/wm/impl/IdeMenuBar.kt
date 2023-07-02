@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.DynamicBundle
 import com.intellij.diagnostic.runActivity
+import com.intellij.ide.menu.*
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.diagnostic.Logger

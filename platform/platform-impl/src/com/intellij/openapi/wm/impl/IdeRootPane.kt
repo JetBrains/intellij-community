@@ -8,6 +8,8 @@ import com.intellij.diagnostic.rootTask
 import com.intellij.diagnostic.subtask
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.actions.ToggleDistractionFreeModeAction
+import com.intellij.ide.menu.ActionAwareIdeMenuBar
+import com.intellij.ide.menu.createMacMenuBar
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema

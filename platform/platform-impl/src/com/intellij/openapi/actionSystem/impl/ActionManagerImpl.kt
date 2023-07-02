@@ -1334,7 +1334,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     }
   }
 
-  private val _timerEvents = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_LATEST)
+  private val _timerEvents = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_LATEST)
 
   @Internal
   @Experimental
