@@ -336,6 +336,10 @@ fun CoroutineScope.startApplication(args: List<String>,
 }
 
 fun isConfigImportNeeded(configPath: Path): Boolean {
+  // switch off import dialog for UI tests
+  if (java.lang.Boolean.getBoolean("idea.is.force.import.config.switched.off")) {
+    return false
+  }
   return !Files.exists(configPath)
          || Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME))
          || customTargetDirectoryToImportConfig != null
