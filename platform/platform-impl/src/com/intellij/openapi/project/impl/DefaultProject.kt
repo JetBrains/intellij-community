@@ -1,388 +1,325 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.project.impl;
+package com.intellij.openapi.project.impl
 
-import com.intellij.configurationStore.StoreUtil;
-import com.intellij.diagnostic.ActivityCategory;
-import com.intellij.ide.plugins.ContainerDescriptor;
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.client.ClientAwareComponentManager;
-import com.intellij.openapi.components.BaseComponent;
-import com.intellij.openapi.components.ComponentConfig;
-import com.intellij.openapi.components.ComponentManager;
-import com.intellij.openapi.components.impl.stores.IComponentStore;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionsArea;
-import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.serviceContainer.ComponentManagerImpl;
-import com.intellij.util.CoroutineScopeKt;
-import com.intellij.util.messages.MessageBus;
-import kotlin.coroutines.EmptyCoroutineContext;
-import kotlinx.coroutines.CoroutineScope;
-import org.jetbrains.annotations.*;
+import com.intellij.configurationStore.StoreUtil.saveSettings
+import com.intellij.diagnostic.ActivityCategory
+import com.intellij.ide.plugins.ContainerDescriptor
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.client.ClientAwareComponentManager
+import com.intellij.openapi.components.BaseComponent
+import com.intellij.openapi.components.ComponentConfig
+import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.ExtensionsArea
+import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.impl.DefaultProjectImpl
+import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.util.messages.MessageBus
+import com.intellij.util.namedChildScope
+import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.SystemIndependent
+import org.jetbrains.annotations.TestOnly
+import kotlin.coroutines.EmptyCoroutineContext
 
-import java.util.Map;
-
-final class DefaultProject extends UserDataHolderBase implements Project {
-  private static final Logger LOG = Logger.getInstance(DefaultProject.class);
-
-  private final DefaultProjectTimed myDelegate = new DefaultProjectTimed(this) {
-    @Override
-    @NotNull Project compute() {
-      LOG.assertTrue(!ApplicationManager.getApplication().isDisposed(), "Application is being disposed!");
-      DefaultProjectImpl project = new DefaultProjectImpl(DefaultProject.this);
-      ProjectStoreFactory componentStoreFactory = ApplicationManager.getApplication().getService(ProjectStoreFactory.class);
-      project.registerServiceInstance(IComponentStore.class, componentStoreFactory.createDefaultProjectStore(project), ComponentManagerImpl.fakeCorePluginDescriptor);
+internal class DefaultProject : UserDataHolderBase(), Project {
+  private val myDelegate: DefaultProjectTimed = object : DefaultProjectTimed(this) {
+    public override fun compute(): Project {
+      LOG.assertTrue(!ApplicationManager.getApplication().isDisposed(), "Application is being disposed!")
+      val project = DefaultProjectImpl(this@DefaultProject)
+      val componentStoreFactory = ApplicationManager.getApplication().getService(
+        ProjectStoreFactory::class.java)
+      project.registerServiceInstance(IComponentStore::class.java, componentStoreFactory.createDefaultProjectStore(project),
+                                      ComponentManagerImpl.fakeCorePluginDescriptor)
 
       // mark myDelegate as not disposed if someone cluelessly did Disposer.dispose(getDefaultProject())
-      Disposer.register(DefaultProject.this,this);
-      return project;
+      Disposer.register(this@DefaultProject, this)
+      return project
     }
 
-    @Override
-    void init(@NotNull Project project) {
-      ((DefaultProjectImpl)project).init();
+    public override fun init(project: Project) {
+      (project as DefaultProjectImpl).init()
     }
-  };
-
-  @Override
-  public ComponentManager getActualComponentManager() {
-    return getDelegate();
   }
 
-  @Override
-  public <T> T instantiateClass(@NotNull Class<T> aClass, @NotNull PluginId pluginId) {
-    return getDelegate().instantiateClass(aClass, pluginId);
+  override fun getActualComponentManager(): ComponentManager {
+    return delegate
   }
 
-  @Override
-  public <T> @NotNull T instantiateClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) {
-    return getDelegate().instantiateClass(className, pluginDescriptor);
+  override fun <T> instantiateClass(aClass: Class<T>, pluginId: PluginId): T {
+    return delegate.instantiateClass(aClass, pluginId)
   }
 
-  @Override
-  public <T> T instantiateClassWithConstructorInjection(@NotNull Class<T> aClass, @NotNull Object key, @NotNull PluginId pluginId) {
-    return getDelegate().instantiateClassWithConstructorInjection(aClass, key, pluginId);
+  override fun <T> instantiateClass(className: String, pluginDescriptor: PluginDescriptor): T {
+    return delegate.instantiateClass(className, pluginDescriptor)
   }
 
-  @Override
-  public @NotNull RuntimeException createError(@NotNull String message, @NotNull PluginId pluginId) {
-    return getDelegate().createError(message, pluginId);
+  override fun <T> instantiateClassWithConstructorInjection(aClass: Class<T>, key: Any, pluginId: PluginId): T {
+    return delegate.instantiateClassWithConstructorInjection(aClass, key, pluginId)
   }
 
-  @Override
-  public @NotNull RuntimeException createError(@NotNull @NonNls String message,
-                                               @Nullable Throwable error,
-                                               @NotNull PluginId pluginId,
-                                               @Nullable Map<String, String> attachments) {
-    return getDelegate().createError(message, null, pluginId, attachments);
+  override fun createError(message: String, pluginId: PluginId): RuntimeException {
+    return delegate.createError(message, pluginId)
   }
 
-  @Override
-  public <T> @NotNull Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) throws ClassNotFoundException {
-    return getDelegate().loadClass(className, pluginDescriptor);
+  override fun createError(message: @NonNls String,
+                           error: Throwable?,
+                           pluginId: PluginId,
+                           attachments: Map<String, String>?): RuntimeException {
+    return delegate.createError(message, null, pluginId, attachments)
   }
 
-  @Override
-  public void logError(@NotNull Throwable error, @NotNull PluginId pluginId) {
-    getDelegate().logError(error, pluginId);
+  @Throws(ClassNotFoundException::class)
+  override fun <T> loadClass(className: String, pluginDescriptor: PluginDescriptor): Class<T> {
+    return delegate.loadClass(className, pluginDescriptor)
   }
 
-  @Override
-  public @NotNull RuntimeException createError(@NotNull Throwable error, @NotNull PluginId pluginId) {
-    return getDelegate().createError(error, pluginId);
+  override fun logError(error: Throwable, pluginId: PluginId) {
+    delegate.logError(error, pluginId)
   }
 
-  @Override
-  public boolean hasComponent(@NotNull Class<?> interfaceClass) {
-    return getDelegate().hasComponent(interfaceClass);
+  override fun createError(error: Throwable, pluginId: PluginId): RuntimeException {
+    return delegate.createError(error, pluginId)
+  }
+
+  override fun hasComponent(interfaceClass: Class<*>): Boolean {
+    return delegate.hasComponent(interfaceClass)
   }
 
   // make default project facade equal to any other default project facade
   // to enable Map<Project, T>
-  @Override
-  public boolean equals(Object o) {
-    return o instanceof Project && ((Project)o).isDefault();
+  override fun equals(o: Any?): Boolean {
+    return o is Project && o.isDefault
   }
 
-  @Override
-  public int hashCode() {
-    return DefaultProjectImpl.DEFAULT_HASH_CODE;
+  override fun hashCode(): Int {
+    return DefaultProjectImpl.DEFAULT_HASH_CODE
   }
 
-  @Override
-  public String toString() {
-    return "Project" + (isDisposed() ? " (Disposed)" : "") + DefaultProjectImpl.TEMPLATE_PROJECT_NAME;
+  override fun toString(): String {
+    return "Project" + (if (isDisposed) " (Disposed)" else "") + DefaultProjectImpl.TEMPLATE_PROJECT_NAME
   }
 
-  @Override
-  public void dispose() {
+  override fun dispose() {
     if (!ApplicationManager.getApplication().isDisposed()) {
-      throw new IllegalStateException("Must not dispose default project");
+      throw IllegalStateException("Must not dispose default project")
     }
-    Disposer.dispose(myDelegate);
+    Disposer.dispose(myDelegate)
   }
 
   @TestOnly
-  void disposeDefaultProjectAndCleanupComponentsForDynamicPluginTests() {
-    ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(myDelegate));
+  fun disposeDefaultProjectAndCleanupComponentsForDynamicPluginTests() {
+    ApplicationManager.getApplication().runWriteAction(
+      Runnable { Disposer.dispose(myDelegate) })
   }
 
-  private @NotNull Project getDelegate() {
-    return myDelegate.get();
-  }
-
-  public boolean isCached() {
-    return myDelegate.isCached();
-  }
+  private val delegate: Project
+    private get() = myDelegate.get()
+  val isCached: Boolean
+    get() = myDelegate.isCached
 
   // delegates
-  @Override
-  public @NotNull String getName() {
-    return DefaultProjectImpl.TEMPLATE_PROJECT_NAME;
+  override fun getName(): String {
+    return DefaultProjectImpl.TEMPLATE_PROJECT_NAME
   }
 
-  @Override
-  @Deprecated
-  public VirtualFile getBaseDir() {
-    return null;
+  @Deprecated("")
+  override fun getBaseDir(): VirtualFile {
+    return null
   }
 
-  @Override
-  public @Nullable @SystemIndependent String getBasePath() {
-    return null;
+  override fun getBasePath(): @SystemIndependent String? {
+    return null
   }
 
-  @Override
-  public @Nullable VirtualFile getProjectFile() {
-    return null;
+  override fun getProjectFile(): VirtualFile? {
+    return null
   }
 
-  @Override
-  public @Nullable @SystemIndependent String getProjectFilePath() {
-    return null;
+  override fun getProjectFilePath(): @SystemIndependent String? {
+    return null
   }
 
-  @Override
-  public @Nullable VirtualFile getWorkspaceFile() {
-    return null;
+  override fun getWorkspaceFile(): VirtualFile? {
+    return null
   }
 
-  @Override
-  public @NotNull String getLocationHash() {
-    return getName();
+  override fun getLocationHash(): String {
+    return name
   }
 
-  @Override
-  public void save() {
-    getDelegate().save();
+  override fun save() {
+    delegate.save()
   }
 
-  @Override
-  public boolean isOpen() {
-    return false;
+  override fun isOpen(): Boolean {
+    return false
   }
 
-  @Override
-  public boolean isInitialized() {
-    return true;
+  override fun isInitialized(): Boolean {
+    return true
   }
 
-  @Override
-  public boolean isDefault() {
-    return true;
+  override fun isDefault(): Boolean {
+    return true
   }
 
-  @Override
-  public CoroutineScope getCoroutineScope() {
-    return ApplicationManager.getApplication().getCoroutineScope();
+  override fun getCoroutineScope(): CoroutineScope {
+    return ApplicationManager.getApplication().getCoroutineScope()
   }
 
-  @Override
-  @Deprecated
-  public BaseComponent getComponent(@NotNull String name) {
-    return getDelegate().getComponent(name);
+  @Deprecated("")
+  override fun getComponent(name: String): BaseComponent? {
+    return delegate.getComponent(name)
   }
 
-  @Override
-  public @NotNull ActivityCategory getActivityCategory(boolean isExtension) {
-    return isExtension ? ActivityCategory.PROJECT_EXTENSION : ActivityCategory.PROJECT_SERVICE;
+  override fun getActivityCategory(isExtension: Boolean): ActivityCategory {
+    return if (isExtension) ActivityCategory.PROJECT_EXTENSION else ActivityCategory.PROJECT_SERVICE
   }
 
-  @Override
-  public <T> T getService(@NotNull Class<T> serviceClass) {
-    return getDelegate().getService(serviceClass);
+  override fun <T> getService(serviceClass: Class<T>): T {
+    return delegate.getService(serviceClass)
   }
 
-  @Override
-  public @Nullable <T> T getServiceIfCreated(@NotNull Class<T> serviceClass) {
-    return getDelegate().getServiceIfCreated(serviceClass);
+  override fun <T> getServiceIfCreated(serviceClass: Class<T>): T? {
+    return delegate.getServiceIfCreated(serviceClass)
   }
 
-  @Override
-  public <T> T getComponent(@NotNull Class<T> interfaceClass) {
-    return getDelegate().getComponent(interfaceClass);
+  override fun <T> getComponent(interfaceClass: Class<T>): T {
+    return delegate.getComponent(interfaceClass)
   }
 
-  @Override
-  public boolean isInjectionForExtensionSupported() {
-    return true;
+  override fun isInjectionForExtensionSupported(): Boolean {
+    return true
   }
 
-  @Override
-  public @NotNull ExtensionsArea getExtensionArea() {
-    return getDelegate().getExtensionArea();
+  override fun getExtensionArea(): ExtensionsArea {
+    return delegate.getExtensionArea()
   }
 
-  @Override
-  public @NotNull MessageBus getMessageBus() {
-    return getDelegate().getMessageBus();
+  override fun getMessageBus(): MessageBus {
+    return delegate.getMessageBus()
   }
 
-  @Override
-  public boolean isDisposed() {
-    return ApplicationManager.getApplication().isDisposed();
+  override fun isDisposed(): Boolean {
+    return ApplicationManager.getApplication().isDisposed()
   }
 
-  @Override
-  public @NotNull Condition<?> getDisposed() {
-    return ApplicationManager.getApplication().getDisposed();
+  override fun getDisposed(): Condition<*> {
+    return ApplicationManager.getApplication().getDisposed()
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance(DefaultProject::class.java)
   }
 }
 
-final class DefaultProjectImpl extends ClientAwareComponentManager implements Project {
-  private static final Logger LOG = Logger.getInstance(DefaultProjectImpl.class);
-  static final String TEMPLATE_PROJECT_NAME = "Default (Template) Project";
-
-  // chosen by fair dice roll. guaranteed to be random. see https://xkcd.com/221/ for details.
-  static final int DEFAULT_HASH_CODE = 4;
-
-  private final Project actualContainerInstance;
-
-  DefaultProjectImpl(@NotNull Project actualContainerInstance) {
-    super((ComponentManagerImpl)ApplicationManager.getApplication(),
-          CoroutineScopeKt.namedChildScope(((ComponentManagerImpl)ApplicationManager.getApplication()).getCoroutineScope(), "DefaultProjectImpl",
-                                           EmptyCoroutineContext.INSTANCE, true),
-          false);
-
-    this.actualContainerInstance = actualContainerInstance;
+internal class DefaultProjectImpl(private val actualContainerInstance: Project) : ClientAwareComponentManager(
+  ApplicationManager.getApplication() as ComponentManagerImpl,
+  (ApplicationManager.getApplication() as ComponentManagerImpl).getCoroutineScope().namedChildScope("DefaultProjectImpl",
+                                                                                                    EmptyCoroutineContext, true),
+  false), Project {
+  override fun isParentLazyListenersIgnored(): Boolean {
+    return true
   }
 
-  @Override
-  public boolean isParentLazyListenersIgnored() {
-    return true;
+  override fun isDefault(): Boolean {
+    return true
   }
 
-  @Override
-  public boolean isDefault() {
-    return true;
+  override fun isInitialized(): Boolean {
+    return true // no startup activities, never opened
   }
 
-  @Override
-  public boolean isInitialized() {
-    return true; // no startup activities, never opened
-  }
-
-  @Override
-  protected @NotNull ComponentManager getActualContainerInstance() {
-    return actualContainerInstance;
-  }
-
-  @Override
-  public @Nullable String activityNamePrefix() {
+  override fun activityNamePrefix(): String? {
     // exclude from measurement because default project initialization is not a sequential activity
     // (so, complicates timeline because not applicable)
     // for now we don't measure default project initialization at all, because it takes only ~10 ms
-    return null;
+    return null
   }
 
-  @Override
-  protected boolean isComponentSuitable(@NotNull ComponentConfig componentConfig) {
-    return componentConfig.loadForDefaultProject && super.isComponentSuitable(componentConfig);
+  override fun isComponentSuitable(componentConfig: ComponentConfig): Boolean {
+    return componentConfig.loadForDefaultProject && super.isComponentSuitable(componentConfig)
   }
 
-  public void init() {
+  fun init() {
     // do not leak internal delegate, use DefaultProject everywhere instead
-    registerServiceInstance(Project.class, actualContainerInstance, ComponentManagerImpl.fakeCorePluginDescriptor);
-    registerComponents();
-    createComponents();
-    Disposer.register(actualContainerInstance, this);
+    registerServiceInstance(Project::class.java, actualContainerInstance, fakeCorePluginDescriptor)
+    registerComponents()
+    createComponents()
+    Disposer.register(actualContainerInstance, this)
   }
 
-  @Override
-  public String toString() {
-    return "Project" + (isDisposed() ? " (Disposed)" : "") + TEMPLATE_PROJECT_NAME;
+  override fun toString(): String {
+    return "Project" + (if (isDisposed()) " (Disposed)" else "") + TEMPLATE_PROJECT_NAME
   }
 
-  @Override
-  public boolean equals(Object o) {
-    return o instanceof Project && ((Project)o).isDefault();
+  override fun equals(o: Any?): Boolean {
+    return o is Project && o.isDefault
   }
 
-  @Override
-  public int hashCode() {
-    return DEFAULT_HASH_CODE;
+  override fun hashCode(): Int {
+    return DEFAULT_HASH_CODE
   }
 
-  @NotNull
-  @Override
-  protected ContainerDescriptor getContainerDescriptor(@NotNull IdeaPluginDescriptorImpl pluginDescriptor) {
-    return pluginDescriptor.projectContainerDescriptor;
+  override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor {
+    return pluginDescriptor.projectContainerDescriptor
   }
 
-  @Override
-  public @NotNull String getName() {
-    return TEMPLATE_PROJECT_NAME;
+  override fun getName(): String {
+    return TEMPLATE_PROJECT_NAME
   }
 
-  @Override
-  public VirtualFile getBaseDir() {
-    return null;
+  override fun getBaseDir(): VirtualFile {
+    return null
   }
 
-  @Override
-  public @Nullable @SystemIndependent String getBasePath() {
-    return null;
+  override fun getBasePath(): @SystemIndependent String? {
+    return null
   }
 
-  @Override
-  public @Nullable VirtualFile getProjectFile() {
-    return null;
+  override fun getProjectFile(): VirtualFile? {
+    return null
   }
 
-  @Override
-  public @Nullable @SystemIndependent String getProjectFilePath() {
-    return null;
+  override fun getProjectFilePath(): @SystemIndependent String? {
+    return null
   }
 
-  @Override
-  public @Nullable VirtualFile getWorkspaceFile() {
-    return null;
+  override fun getWorkspaceFile(): VirtualFile? {
+    return null
   }
 
-  @Override
-  public @NotNull String getLocationHash() {
-    return Integer.toHexString(TEMPLATE_PROJECT_NAME.hashCode());
+  override fun getLocationHash(): String {
+    return Integer.toHexString(TEMPLATE_PROJECT_NAME.hashCode())
   }
 
-  @Override
-  public void save() {
-    LOG.error("Do not call save for default project");
+  override fun save() {
+    LOG.error("Do not call save for default project")
     if (ApplicationManagerEx.getApplicationEx().isSaveAllowed()) {
       // no need to save
-      StoreUtil.saveSettings(this, false);
+      saveSettings(this, false)
     }
   }
 
-  @Override
-  public boolean isOpen() {
-    return false;
+  override fun isOpen(): Boolean {
+    return false
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance(DefaultProjectImpl::class.java)
+    const val TEMPLATE_PROJECT_NAME: String = "Default (Template) Project"
+
+    // chosen by fair dice roll. guaranteed to be random. see https://xkcd.com/221/ for details.
+    const val DEFAULT_HASH_CODE: Int = 4
   }
 }
