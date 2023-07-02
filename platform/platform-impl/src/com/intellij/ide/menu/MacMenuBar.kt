@@ -2,9 +2,10 @@
 package com.intellij.ide.menu
 
 import com.intellij.diagnostic.runActivity
-import com.intellij.openapi.wm.impl.createScreeMenuPeer
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.impl.doUpdateAppMenu
 import com.intellij.ui.mac.foundation.NSDefaults
+import com.intellij.ui.mac.screenmenu.MenuBar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 import javax.swing.JComponent
@@ -33,19 +34,11 @@ internal fun createMacMenuBar(coroutineScope: CoroutineScope, component: JCompon
     override suspend fun getMainMenuActionGroup() = getMainMenuActionGroup(frame)
   }
 
-  val screenMenuPeer = runActivity("ide menu bar init") { createScreeMenuPeer(frame) }
-  val menuBarHelper = if (screenMenuPeer == null) {
-    JMenuBasedIdeMenuBarHelper(flavor = flavor, menuBar = facade)
-  }
-  else {
-    PeerBasedIdeMenuBarHelper(screenMenuPeer = screenMenuPeer, flavor = flavor, menuBar = facade)
-  }
+  val screenMenuPeer = runActivity("ide menu bar init") { MenuBar("MainMenu", frame) }
+  val menuBarHelper = PeerBasedIdeMenuBarHelper(screenMenuPeer = screenMenuPeer, flavor = flavor, menuBar = facade)
 
   coroutineScope.coroutineContext.job.invokeOnCompletion {
-    screenMenuPeer?.let {
-      @Suppress("SSBasedInspection")
-      it.dispose()
-    }
+    Disposer.dispose(screenMenuPeer)
   }
   return menuBarHelper
 }

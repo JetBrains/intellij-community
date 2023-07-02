@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations
 
 import com.intellij.icons.AllIcons
@@ -6,10 +6,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.ComponentStyle
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.ComponentStyleState
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.StyleManager
-import com.intellij.ui.icons.overrideIconScale
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.ui.scale.ScaleType
-import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI.Borders
 import com.intellij.util.ui.JBUI.CurrentTheme
@@ -22,12 +19,8 @@ import javax.swing.plaf.basic.BasicButtonUI
 
 internal open class CustomFrameTitleButtons(myCloseAction: Action) {
   companion object {
-    private val closeIcon = AllIcons.Windows.CloseActive
-    private val closeHoverIcon = AllIcons.Windows.CloseHover
-    private val closeInactive = AllIcons.Windows.CloseInactive
-
-    fun create(myCloseAction: Action): CustomFrameTitleButtons {
-      val darculaTitleButtons = CustomFrameTitleButtons(myCloseAction)
+    fun create(closeAction: Action): CustomFrameTitleButtons {
+      val darculaTitleButtons = CustomFrameTitleButtons(closeAction)
       darculaTitleButtons.createChildren()
       return darculaTitleButtons
     }
@@ -67,24 +60,24 @@ internal open class CustomFrameTitleButtons(myCloseAction: Action) {
   val closeStyleBuilder: ComponentStyle.ComponentStyleBuilder<JButton> = ComponentStyle.ComponentStyleBuilder<JButton> {
     isOpaque = false
     border = Borders.empty()
-    icon = closeIcon
+    icon = AllIcons.Windows.CloseActive
   }.apply {
     style(ComponentStyleState.HOVERED) {
       isOpaque = true
       background = Color(0xe81123)
-      icon = closeHoverIcon
+      icon = AllIcons.Windows.CloseHover
     }
     style(ComponentStyleState.PRESSED) {
       isOpaque = true
       background = Color(0xf1707a)
-      icon = closeHoverIcon
+      icon = AllIcons.Windows.CloseHover
     }
   }
   private val activeCloseStyle = closeStyleBuilder.build()
 
   private val inactiveCloseStyle = closeStyleBuilder
     .updateDefault {
-      icon = closeInactive
+      icon = AllIcons.Windows.CloseInactive
     }.build()
 
   private val panel = TitleButtonsPanel()
@@ -165,41 +158,42 @@ internal open class CustomFrameTitleButtons(myCloseAction: Action) {
     button.text = null
     return button
   }
+}
 
-  private class TitleButtonsPanel : JPanel(FlowLayout(FlowLayout.LEADING, 0, 0)) {
-    var isCompactMode = false
-      set(value) {
-        field = value
-        updateScaledPreferredSize()
-      }
-
-    init {
-      isOpaque = false
+private class TitleButtonsPanel : JPanel(FlowLayout(FlowLayout.LEADING, 0, 0)) {
+  var isCompactMode = false
+    set(value) {
+      field = value
+      updateScaledPreferredSize()
     }
 
-    fun addComponent(component: JComponent) {
-      component.setScaledPreferredSize()
-      add(component, "top")
-    }
+  init {
+    isOpaque = false
+  }
 
-    private fun updateScaledPreferredSize() {
-      components.forEach { (it as? JComponent)?.setScaledPreferredSize() }
-    }
+  fun addComponent(component: JComponent) {
+    component.setScaledPreferredSize()
+    add(component, "top")
+  }
 
-    private fun JComponent.setScaledPreferredSize() {
-      val size = CurrentTheme.TitlePane.buttonPreferredSize().clone() as Dimension
-      if (isCompactMode) size.height = JBUIScale.scale(30)
-      preferredSize = Dimension((size.width * UISettings.defFontScale).toInt(), (size.height * UISettings.defFontScale).toInt())
-    }
+  private fun updateScaledPreferredSize() {
+    components.forEach { (it as? JComponent)?.setScaledPreferredSize() }
+  }
 
-    override fun updateUI() {
-      super.updateUI()
-      components?.forEach { component ->
-        if (component is JComponent) {
-          component.setScaledPreferredSize()
-        }
+  private fun JComponent.setScaledPreferredSize() {
+    val size = CurrentTheme.TitlePane.buttonPreferredSize().clone() as Dimension
+    if (isCompactMode) {
+      size.height = JBUIScale.scale(30)
+    }
+    preferredSize = Dimension((size.width * UISettings.defFontScale).toInt(), (size.height * UISettings.defFontScale).toInt())
+  }
+
+  override fun updateUI() {
+    super.updateUI()
+    components?.forEach { component ->
+      if (component is JComponent) {
+        component.setScaledPreferredSize()
       }
     }
   }
-
 }

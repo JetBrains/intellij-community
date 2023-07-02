@@ -663,7 +663,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     @Override
     public void addNotify() {
       if (IdeFrameDecorator.isCustomDecorationActive()) {
-        CustomHeader.enableCustomHeader(this);
+        CustomHeader.Companion.enableCustomHeader(this);
       }
       super.addNotify();
       if (SystemInfo.isMacOSVentura && Registry.is("ide.mac.stage.manager.support", false)) {

@@ -43,7 +43,7 @@ internal class MacToolbarFrameHeader(private val coroutineScope: CoroutineScope,
 
   private var currentComponent: JComponent
 
-  private val updateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val updateRequests = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private var lastHeight = DEFAULT_HEADER_HEIGHT
 
@@ -200,7 +200,7 @@ internal class MacToolbarFrameHeader(private val coroutineScope: CoroutineScope,
 
   override fun updateActive() {
     super.updateActive()
-    toolbar.background = getHeaderBackground(myActive)
+    toolbar.background = getHeaderBackground(isActive)
   }
 
   override fun uiSettingsChanged(uiSettings: UISettings) {

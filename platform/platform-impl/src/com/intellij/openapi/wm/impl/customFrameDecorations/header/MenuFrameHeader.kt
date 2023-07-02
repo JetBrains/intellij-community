@@ -66,7 +66,7 @@ internal class MenuFrameHeader(frame: JFrame,
 
   override fun updateActive() {
     super.updateActive()
-    headerTitle.setActive(myActive)
+    headerTitle.setActive(isActive)
   }
 
   override fun installListeners() {

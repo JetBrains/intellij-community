@@ -178,20 +178,19 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
         val customFrameTitlePane = if (ExperimentalUI.isNewUI()) {
           selectedEditorFilePath = null
           if (SystemInfoRt.isMac) {
-            ideMenu = if (isFloatingMenuBarSupported || !Menu.isJbScreenMenuEnabled()) {
-              val menuBar = IdeMenuBar(coroutineScope.childScope(), frame)
+            ideMenu = if (Menu.isJbScreenMenuEnabled()) {
+              createMacMenuBar(coroutineScope = coroutineScope.childScope(), component = this, frame = frame)
+            }
+            else {
+              val menuBar = IdeMenuBar(coroutineScope = coroutineScope.childScope(), frame = frame)
               // if -DjbScreenMenuBar.enabled=false
               frame.jMenuBar = menuBar
               menuBar
             }
-            else {
-              createMacMenuBar(coroutineScope = coroutineScope.childScope(), component = this, frame = frame)
-            }
-
             MacToolbarFrameHeader(coroutineScope = coroutineScope.childScope(), frame = frame, root = this)
           }
           else {
-            ideMenu = createMenuBar(coroutineScope.childScope(), frame)
+            ideMenu = createMenuBar(coroutineScope = coroutineScope.childScope(), frame = frame)
             ToolbarFrameHeader(coroutineScope = coroutineScope.childScope(), frame = frame, root = this, ideMenuBar = ideMenu)
           }
         }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.CommonBundle
@@ -29,6 +29,9 @@ internal open class FrameHeader(protected val frame: JFrame) : CustomHeader(fram
 
   private var windowStateListener: WindowStateListener
   protected var myState = 0
+
+  @Suppress("LeakingThis")
+  private val closeAction = createCloseAction(this)
 
   init {
     windowStateListener = object : WindowAdapter() {
@@ -82,7 +85,7 @@ internal open class FrameHeader(protected val frame: JFrame) : CustomHeader(fram
       restoreAction.isEnabled = false
     }
     iconifyAction.isEnabled = true
-    myCloseAction.isEnabled = true
+    closeAction.isEnabled = true
 
     buttonPanes?.updateVisibility()
     updateCustomTitleBar()
@@ -97,13 +100,13 @@ internal open class FrameHeader(protected val frame: JFrame) : CustomHeader(fram
 
     menu.add(JSeparator())
 
-    val closeMenuItem = menu.add(myCloseAction)
+    val closeMenuItem = menu.add(closeAction)
     closeMenuItem.font = JBFont.label().deriveFont(Font.BOLD)
   }
 
   override fun createButtonsPane(): CustomFrameTitleButtons? {
     if (IdeRootPane.hideNativeLinuxTitle)
-      return ResizableCustomFrameTitleButtons.create(myCloseAction, restoreAction, iconifyAction, maximizeAction)
+      return ResizableCustomFrameTitleButtons.create(closeAction, restoreAction, iconifyAction, maximizeAction)
 
     return null
   }

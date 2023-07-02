@@ -39,7 +39,7 @@ private const val HEADER_HEIGHT_DFM = 30
 private const val HEADER_HEIGHT_COMPACT = 34
 private const val HEADER_HEIGHT_NORMAL = 40
 
-internal abstract class CustomHeader(private val window: Window) : JPanel() {
+internal sealed class CustomHeader(private val window: Window) : JPanel() {
   companion object {
     val H: Int
       get() = 12
@@ -49,6 +49,10 @@ internal abstract class CustomHeader(private val window: Window) : JPanel() {
     val LABEL_BORDER: JBEmptyBorder
       get() = JBUI.Borders.empty(V, 0)
 
+    internal fun createCloseAction(header: CustomHeader): Action {
+      return CustomFrameAction(name = CommonBundle.getCloseButtonText(), icon = AllIcons.Windows.CloseSmall, action = header::close)
+    }
+
     private val windowBorderThicknessInPhysicalPx: Int = run {
       // Windows 10 (tested on 1809) determines the window border size by the main display scaling, rounded down. This value is
       // calculated once on desktop session start, so it should be okay to store once per IDE session.
@@ -56,13 +60,16 @@ internal abstract class CustomHeader(private val window: Window) : JPanel() {
       floor(scale).toInt()
     }
 
-    @JvmStatic
     fun enableCustomHeader(w: Window) {
       JBR.getWindowDecorations()?.let {
         val bar = it.createCustomTitleBar()
         bar.height = 1f
-        if (w is Dialog) it.setCustomTitleBar(w, bar)
-        else if (w is Frame) it.setCustomTitleBar(w, bar)
+        if (w is Dialog) {
+          it.setCustomTitleBar(w, bar)
+        }
+        else if (w is Frame) {
+          it.setCustomTitleBar(w, bar)
+        }
       }
     }
   }
@@ -74,7 +81,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel() {
     AppUIUtil.loadSmallApplicationIcon(it)
   }
 
-  protected var myActive = false
+  protected var isActive = false
 
   private var customFrameTopBorder: CustomFrameTopBorder? = null
 
@@ -92,7 +99,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel() {
   init {
     isOpaque = true
     background = getHeaderBackground()
-    myActive = window.isActive
+    isActive = window.isActive
 
     windowListener = object : WindowAdapter() {
       override fun windowActivated(ev: WindowEvent?) {
@@ -223,7 +230,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel() {
   }
 
   private fun setActive(value: Boolean) {
-    myActive = value
+    isActive = value
     updateActive()
     updateCustomTitleBar()
   }
@@ -231,11 +238,9 @@ internal abstract class CustomHeader(private val window: Window) : JPanel() {
   protected open fun updateActive() {
     customFrameTopBorder?.repaintBorder()
 
-    background = getHeaderBackground(myActive)
+    background = getHeaderBackground(isActive)
     updateWinControlsTheme()
   }
-
-  protected val myCloseAction: Action = CustomFrameAction(CommonBundle.getCloseButtonText(), AllIcons.Windows.CloseSmall) { close() }
 
   protected fun close() {
     window.dispatchEvent(WindowEvent(window, WindowEvent.WINDOW_CLOSING))
@@ -268,7 +273,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel() {
   }
 
   open fun addMenuItems(menu: JPopupMenu) {
-    val closeMenuItem = menu.add(myCloseAction)
+    val closeMenuItem = menu.add(createCloseAction(this))
     closeMenuItem.font = JBFont.label().deriveFont(Font.BOLD)
   }
 
@@ -400,15 +405,15 @@ internal abstract class CustomHeader(private val window: Window) : JPanel() {
 
     private val shouldDrawTopBorder: Boolean
       get() {
-        val drawTopBorderActive = myActive && (colorizationAffectsBorders || UIUtil.isUnderIntelliJLaF()) // omit in Darcula with colorization disabled
-        val drawTopBorderInactive = !myActive && UIUtil.isUnderIntelliJLaF()
+        val drawTopBorderActive = isActive && (colorizationAffectsBorders || UIUtil.isUnderIntelliJLaF()) // omit in Darcula with colorization disabled
+        val drawTopBorderInactive = !isActive && UIUtil.isUnderIntelliJLaF()
         return drawTopBorderActive || drawTopBorderInactive
       }
 
     override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
       val thickness = calculateWindowBorderThicknessInLogicalPx()
       if (isTopNeeded() && shouldDrawTopBorder) {
-        g.color = if (myActive) activeColor else inactiveColor
+        g.color = if (isActive) activeColor else inactiveColor
         LinePainter2D.paint(g as Graphics2D, x.toDouble(), y.toDouble(), width.toDouble(), y.toDouble(), LinePainter2D.StrokeType.INSIDE,
                             thickness)
       }
