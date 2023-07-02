@@ -358,10 +358,10 @@ public final class PersistentFSConnection {
     if (errorCause == null) {
       //Without 'errorCause' it is not an error, but, likely, an explicit 'invalidateCache' call:
       // no need to print stacktrace then, also no need for a WARN
-      LOG.info("VFS is corrupted; Creating VFS corruption marker: " + message);
+      LOG.info("VFS rebuild is requested: creating VFS rebuild marker. Message: " + message);
     }
     else {
-      LOG.warn("VFS is corrupted; Creating VFS corruption marker", corruptedException);
+      LOG.warn("VFS is corrupted: creating VFS rebuild marker.", corruptedException);
     }
 
     try {
