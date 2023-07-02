@@ -7,6 +7,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -21,6 +22,7 @@ import com.intellij.ui.GotItTooltip
 import com.intellij.ui.JBColor
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.SynchronizedClearableLazy
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.ui.ColorPalette
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
@@ -81,7 +83,21 @@ private const val TOOLBAR_BACKGROUND_KEY = "PROJECT_TOOLBAR_COLOR"
 @Service
 class ProjectWindowCustomizerService : Disposable {
   companion object {
-    fun getInstance(): ProjectWindowCustomizerService = service<ProjectWindowCustomizerService>()
+    private var instance: ProjectWindowCustomizerService? = null
+
+    init {
+      ApplicationManager.registerCleaner { instance = null }
+    }
+
+    @RequiresBlockingContext
+    fun getInstance(): ProjectWindowCustomizerService {
+      var result = instance
+      if (result == null) {
+        result = service<ProjectWindowCustomizerService>()
+        instance = result
+      }
+      return result
+    }
   }
 
   private data class ProjectColors(@JvmField val gradient: Color, @JvmField val background: Color)
