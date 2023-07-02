@@ -925,6 +925,21 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/lambda2.kt");
         }
 
+        @TestMetadata("multiStatement.kt")
+        public void testMultiStatement() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/multiStatement.kt");
+        }
+
+        @TestMetadata("multiStatement2.kt")
+        public void testMultiStatement2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/multiStatement2.kt");
+        }
+
+        @TestMetadata("multiStatement3.kt")
+        public void testMultiStatement3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/multiStatement3.kt");
+        }
+
         @TestMetadata("multipleAssignments.kt")
         public void testMultipleAssignments() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/multipleAssignments.kt");
@@ -1212,6 +1227,21 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("innerIfTransformed.kt")
         public void testInnerIfTransformed() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToReturn/innerIfTransformed.kt");
+        }
+
+        @TestMetadata("multiStatement.kt")
+        public void testMultiStatement() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToReturn/multiStatement.kt");
+        }
+
+        @TestMetadata("multiStatement2.kt")
+        public void testMultiStatement2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToReturn/multiStatement2.kt");
+        }
+
+        @TestMetadata("multiStatement3.kt")
+        public void testMultiStatement3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToReturn/multiStatement3.kt");
         }
 
         @TestMetadata("onReturn.kt")
