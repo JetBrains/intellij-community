@@ -3,10 +3,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.move
 
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.refactoring.BaseRefactoringProcessor
-import com.intellij.ui.dsl.builder.AlignX
-import com.intellij.ui.dsl.builder.AlignY
-import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.*
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import javax.swing.JComponent
@@ -46,7 +43,7 @@ sealed class K2MoveDescriptor {
         fun createComboBox() {
             row {
                 checkBox(text).bindSelected(setting)
-            }
+            }.layout(RowLayout.PARENT_GRID)
         }
     }
 
@@ -57,10 +54,10 @@ sealed class K2MoveDescriptor {
         row {
             panel {
                 settings.firstOrNull()?.forEach { settings -> settings.createComboBox() }
-            }.align(AlignX.LEFT).align(AlignY.TOP)
+            }.align(AlignY.TOP + AlignX.LEFT)
             panel {
                 settings.lastOrNull()?.forEach { settings -> settings.createComboBox() }
-            }.align(AlignX.RIGHT).align(AlignY.TOP)
+            }.align(AlignY.TOP + AlignX.RIGHT)
         }
     }
 
