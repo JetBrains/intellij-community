@@ -76,13 +76,20 @@ private class MenuButtonInToolbarMainToolbarFlavor(coroutineScope: CoroutineScop
 
 private object DefaultMainToolbarFlavor : MainToolbarFlavor
 
-internal class MainToolbar(private val coroutineScope: CoroutineScope, frame: JFrame) : JPanel(HorizontalLayout(10)) {
-  var layoutCallBack: LayoutCallBack? = null
+internal class MainToolbar constructor(
+  private val coroutineScope: CoroutineScope,
+  frame: JFrame,
+  isOpaque: Boolean = false,
+  background: Color? = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(true),
+  val layoutCallBack: LayoutCallBack? = null,
+) : JPanel(HorizontalLayout(10)) {
   private val flavor: MainToolbarFlavor
 
   init {
-    updateBackground()
-    isOpaque = true
+    background?.let {
+      this.background = it
+    }
+    this.isOpaque = isOpaque
     flavor = if (IdeRootPane.isMenuButtonInToolbar) {
       MenuButtonInToolbarMainToolbarFlavor(headerContent = this, coroutineScope = coroutineScope, frame = frame)
     }
@@ -90,10 +97,6 @@ internal class MainToolbar(private val coroutineScope: CoroutineScope, frame: JF
       DefaultMainToolbarFlavor
     }
     ClientProperty.put(this, IdeBackgroundUtil.NO_BACKGROUND, true)
-  }
-
-  fun updateBackground() {
-    background = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(true)
   }
 
   override fun getComponentGraphics(g: Graphics): Graphics = super.getComponentGraphics(IdeBackgroundUtil.getOriginalGraphics(g))

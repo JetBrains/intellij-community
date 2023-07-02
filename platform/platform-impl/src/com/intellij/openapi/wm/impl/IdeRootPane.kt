@@ -736,12 +736,11 @@ private val isDecoratedMenu: Boolean
 private suspend fun createToolbar(coroutineScope: CoroutineScope, frame: JFrame): JComponent {
   if (ExperimentalUI.isNewUI()) {
     val toolbar = withContext(Dispatchers.EDT) {
-      MainToolbar(coroutineScope, frame)
+      val toolbar = MainToolbar(coroutineScope = coroutineScope, frame = frame, isOpaque = true)
+      toolbar.border = JBUI.Borders.empty(0, 5)
+      toolbar
     }
     toolbar.init(computeMainActionGroups())
-    withContext(Dispatchers.EDT) {
-      toolbar.border = JBUI.Borders.empty(0, 5)
-    }
     return toolbar
   }
   else {

@@ -28,8 +28,6 @@ import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Graphics
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 import javax.swing.JFrame
@@ -106,16 +104,7 @@ internal class MacToolbarFrameHeader(private val coroutineScope: CoroutineScope,
   }
 
   private fun createToolBar(coroutineScope: CoroutineScope): MainToolbar {
-    val toolbar = MainToolbar(coroutineScope, frame)
-    toolbar.layoutCallBack = { updateCustomTitleBar() }
-    toolbar.isOpaque = false
-    toolbar.addComponentListener(object: ComponentAdapter() {
-      override fun componentResized(e: ComponentEvent?) {
-        updateCustomTitleBar()
-        super.componentResized(e)
-      }
-    })
-    return toolbar
+    return MainToolbar(coroutineScope = coroutineScope, frame = frame)
   }
 
   override fun paint(g: Graphics) {
@@ -206,11 +195,6 @@ internal class MacToolbarFrameHeader(private val coroutineScope: CoroutineScope,
       ((if (componentCount == 0) null else getComponent(0)) as? SimpleCustomDecorationPath)?.updateBorders(GAP_FOR_BUTTONS)
     }
     toolbar?.border = JBUI.Borders.empty()
-  }
-
-  override fun updateActive() {
-    super.updateActive()
-    toolbar?.background = getHeaderBackground(isActive)
   }
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
