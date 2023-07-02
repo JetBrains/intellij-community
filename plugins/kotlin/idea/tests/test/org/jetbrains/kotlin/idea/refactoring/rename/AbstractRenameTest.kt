@@ -32,8 +32,9 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.asJava.finder.KtLightPackage
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.findClassAcrossModuleDependencies
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
@@ -363,6 +364,7 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
         return DescriptorToSourceUtils.descriptorToDeclaration(descriptor)!!
     }
 
+    @OptIn(KtAllowAnalysisOnEdt::class)
     private fun renameWithAutoDetection(renameParamsObject: JsonObject, context: TestContext) {
         val mainFilePath = renameParamsObject.getString("mainFile")
         val newName = renameParamsObject.getString("newName")
