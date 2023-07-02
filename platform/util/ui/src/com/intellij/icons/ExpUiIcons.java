@@ -543,7 +543,7 @@ public final class ExpUiIcons {
   }
 
   public static final class Run {
-    /** 16x16 */ public static final @NotNull Icon AttachToProcess = load("expui/run/attachToProcess.svg", -1557990976, 2);
+    /** 16x16 */ public static final @NotNull Icon AttachToProcess = load("expui/run/attachToProcess.svg", 1612859511, 2);
     /** 16x16 */ public static final @NotNull Icon Debug = load("expui/run/debug.svg", 1409937178, 10);
     /** 16x16 */ public static final @NotNull Icon DumpThreads = load("expui/run/dumpThreads.svg", -887924950, 2);
     /** 16x16 */ public static final @NotNull Icon EvaluateExpression = load("expui/run/evaluateExpression.svg", -1931888328, 2);
@@ -593,7 +593,7 @@ public final class ExpUiIcons {
 
   public static final class RunConfigurations {
     /** 16x16 */ public static final @NotNull Icon Application = load("expui/runConfigurations/application.svg", 326858300, 2);
-    /** 16x16 */ public static final @NotNull Icon ApplicationRemote = load("expui/runConfigurations/applicationRemote.svg", 1461896360, 2);
+    /** 16x16 */ public static final @NotNull Icon ApplicationRemote = load("expui/runConfigurations/applicationRemote.svg", -111652439, 2);
     /** 16x16 */ public static final @NotNull Icon Compound = load("expui/runConfigurations/compound.svg", 1035092097, 2);
     /** 16x16 */ public static final @NotNull Icon InvalidConfigurationLayer = load("expui/runConfigurations/invalidConfigurationLayer.svg", 3963890, 2);
     /** 16x16 */ public static final @NotNull Icon Junit = load("expui/runConfigurations/junit.svg", 884878395, 2);
