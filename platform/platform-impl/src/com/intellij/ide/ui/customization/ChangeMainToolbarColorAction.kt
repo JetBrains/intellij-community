@@ -14,19 +14,21 @@ import java.awt.Point
 /**
  * @author Konstantin Bulenkov
  */
-class ChangeMainToolbarColorAction : DumbAwareAction() {
+private class ChangeMainToolbarColorAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project!!
     val ideFrame = IdeFocusManager.getInstance(project).lastFocusedFrame
-    var relativePoint:RelativePoint? = null
+    var relativePoint: RelativePoint? = null
     if (ideFrame != null) {
       relativePoint = RelativePoint(ideFrame.component, Point(200, 30))
     }
 
-    ColorChooserService.instance.showPopup(project,
-                                           ProjectWindowCustomizerService.getInstance().getToolbarBackground(project),
-                                           { color, _ -> ProjectWindowCustomizerService.getInstance().setToolbarColor(color, project) },
-                                           relativePoint)
+    ColorChooserService.instance.showPopup(project = project,
+                                           currentColor = ProjectWindowCustomizerService.getInstance().getToolbarBackground(project),
+                                           listener = { color, _ ->
+                                             ProjectWindowCustomizerService.getInstance().setToolbarColor(color, project)
+                                           },
+                                           location = relativePoint)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {

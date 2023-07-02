@@ -62,7 +62,7 @@ private class ProjectWindowCustomizerIconCache(private val project: Project) {
   }
 }
 
-enum class MainToolbarCustomizationType {
+internal enum class MainToolbarCustomizationType {
   JUST_ICON,
   LINEAR_GRAD_WITH_ICON,
   CIRCULAR_GRADIENT_WITH_ICON,
@@ -84,7 +84,7 @@ class ProjectWindowCustomizerService : Disposable {
     fun getInstance(): ProjectWindowCustomizerService = service<ProjectWindowCustomizerService>()
   }
 
-  private data class ProjectColors(val gradient: Color, val background: Color)
+  private data class ProjectColors(@JvmField val gradient: Color, @JvmField val background: Color)
 
   private var wasGradientPainted = false
   private var ourSettingsValue = UISettings.getInstance().differentiateProjects
@@ -139,13 +139,15 @@ class ProjectWindowCustomizerService : Disposable {
     }
   }
 
-  fun getPaintingType() = when (Registry.get("ide.colorful.toolbar.gradient.type").selectedOption) {
+  internal fun getPaintingType(): MainToolbarCustomizationType {
+    return when (Registry.get("ide.colorful.toolbar.gradient.type").selectedOption) {
       "Just Icon"                    -> MainToolbarCustomizationType.JUST_ICON
       "Linear Gradient and Icon"     -> MainToolbarCustomizationType.LINEAR_GRAD_WITH_ICON
       "Circular Gradient and Icon"   -> MainToolbarCustomizationType.CIRCULAR_GRADIENT_WITH_ICON
       "Dropdown Background and Icon" -> MainToolbarCustomizationType.DROPDOWN_WITH_ICON
       "Just Dropdown"                -> MainToolbarCustomizationType.JUST_DROPDOWN
       else                           -> MainToolbarCustomizationType.LINEAR_GRAD_WITH_ICON
+    }
   }
 
   internal fun update(newValue: Boolean) {
@@ -219,12 +221,12 @@ class ProjectWindowCustomizerService : Disposable {
    * @return true if method painted something
    */
   fun paint(project: Project, parent: JComponent, g: Graphics2D): Boolean {
-    g.color = parent.background
-    g.fillRect(0, 0, parent.width, parent.height)
-
     if (!isActive() || !getPaintingType().isGradient()) {
       return false
     }
+
+    g.color = parent.background
+    g.fillRect(0, 0, parent.width, parent.height)
 
     g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
     val color = getGradientProjectColor(project)
@@ -245,7 +247,9 @@ class ProjectWindowCustomizerService : Disposable {
   }
 
   fun getToolbarBackground(project: Project?):Color? {
-    if (project == null) return null
+    if (project == null) {
+      return null
+    }
     return getBackgroundProjectColor(project)
   }
 
