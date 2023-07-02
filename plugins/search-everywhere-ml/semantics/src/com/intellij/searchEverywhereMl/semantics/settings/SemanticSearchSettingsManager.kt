@@ -28,7 +28,7 @@ class SemanticSearchSettingsManager : PersistentStateComponent<SemanticSearchSet
   fun setIsEnabledInActionsTab(newValue: Boolean) {
     state.isEnabledInActionsTab = newValue
     if (newValue) {
-      service<ActionEmbeddingsStorage>().tryGenerateEmbeddings()
+      service<ActionEmbeddingsStorage>().prepareForSearch()
     } else {
       service<ActionEmbeddingsStorage>().tryStopGeneratingEmbeddings()
     }

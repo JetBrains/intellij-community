@@ -20,6 +20,10 @@
                  description="Highlight semantic items in Search Everywhere"
                  key="search.everywhere.ml.semantic.highlight.items"/>
 
+    <registryKey defaultValue="0.0.1"
+                 description="Semantic text search model version"
+                 key="search.everywhere.ml.semantic.model.version"/>
+
     <applicationConfigurable
       groupId="tools"
       instance="com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchConfigurable"
@@ -27,7 +31,7 @@
       bundle="messages.searchEverywhereMlSemanticsBundle"
       key="search.everywhere.ml.semantic.settings.configurable.display.name"/>
 
-    <notificationGroup id="Semantic search notification group" displayType="STICKY_BALLOON"
+    <notificationGroup id="Semantic search notifications" displayType="STICKY_BALLOON"
                        bundle="messages.searchEverywhereMlSemanticsBundle"
                        key="search.everywhere.ml.semantic.notification.group.name"/>
   </extensions>

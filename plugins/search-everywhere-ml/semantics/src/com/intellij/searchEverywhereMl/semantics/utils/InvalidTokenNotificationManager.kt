@@ -24,9 +24,8 @@ class InvalidTokenNotificationManager {
   private fun createNotification(): Notification {
     val notification = NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP_ID)
       .createNotification(
-        SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.notification.group.name"),
         SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.actions.api.authentication.failed"),
-        NotificationType.WARNING
+        "", NotificationType.WARNING
       )
 
     notification.addAction(NotificationAction.createSimple(
@@ -45,6 +44,6 @@ class InvalidTokenNotificationManager {
   }
 
   companion object {
-    private const val NOTIFICATION_GROUP_ID = "Semantic search notification group"
+    private const val NOTIFICATION_GROUP_ID = "Semantic search notifications"
   }
 }

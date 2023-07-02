@@ -20,13 +20,15 @@ class SemanticSearchConfigurable : BoundConfigurable(
           SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.settings.configurable.actions.enable")
         ).bindSelected(settings::getIsEnabledInActionsTab, settings::setIsEnabledInActionsTab)
       }
-      row {
-        checkBox(
-          SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.settings.configurable.actions.use.remote")
-        ).bindSelected(settings.state::actionsUseRemoteServer)
-      }
-      row(SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.settings.configurable.actions.remote.apikey.label")) {
-        passwordField().bindText(settings::getActionsAPIToken, settings::setActionsAPIToken)
+      indent {
+        row {
+          checkBox(
+            SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.settings.configurable.actions.use.remote")
+          ).bindSelected(settings.state::actionsUseRemoteServer)
+        }
+        row(SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.settings.configurable.actions.remote.apikey.label")) {
+          passwordField().bindText(settings::getActionsAPIToken, settings::setActionsAPIToken)
+        }
       }
     }
   }

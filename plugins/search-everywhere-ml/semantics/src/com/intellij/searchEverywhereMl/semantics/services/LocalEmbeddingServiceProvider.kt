@@ -2,8 +2,8 @@ package com.intellij.searchEverywhereMl.semantics.services
 
 import ai.grazie.emb.local.LocalEmbeddingService
 import ai.grazie.emb.local.LocalEmbeddingServiceLoader
-import ai.grazie.utils.mpp.FromResourcesDataLoader
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.lang.ref.SoftReference
@@ -18,11 +18,14 @@ class LocalEmbeddingServiceProvider {
   private var localServiceRef: SoftReference<LocalEmbeddingService>? = null
   private val mutex = Mutex()
 
-  suspend fun getService(): LocalEmbeddingService {
+  suspend fun getService(): LocalEmbeddingService? {
     return mutex.withLock {
       var service = localServiceRef?.get()
       if (service == null) {
-        service = LocalEmbeddingServiceLoader().load(FromResourcesDataLoader)
+        if (!service<LocalArtifactsManager>().checkArtifactsPresent()) {
+          return null
+        }
+        service = LocalEmbeddingServiceLoader().load(service<LocalArtifactsManager>().getCustomRootDataLoader())
         localServiceRef = SoftReference(service)
       }
       service
