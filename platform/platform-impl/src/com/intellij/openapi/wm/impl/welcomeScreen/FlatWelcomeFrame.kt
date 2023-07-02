@@ -160,7 +160,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
     setupCloseAction()
     MnemonicHelper.init(this)
     Disposer.register(app, this)
-    UIUtil.decorateWindowHeader(getRootPane())
+    ComponentUtil.decorateWindowHeader(getRootPane())
     ToolbarService.getInstance().setTransparentTitleBar(
       window = this,
       rootPane = getRootPane(),
@@ -212,7 +212,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
       size.width,
       size.height
     )
-    UIUtil.decorateWindowHeader(getRootPane())
+    ComponentUtil.decorateWindowHeader(getRootPane())
     title = ""
     title = welcomeFrameTitle
     updateAppWindowIcon(this)

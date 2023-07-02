@@ -97,10 +97,6 @@ public final class UIUtil {
     return Logger.getInstance(UIUtil.class);
   }
 
-  public static void decorateWindowHeader(JRootPane pane) {
-    ComponentUtil.decorateWindowHeader(pane);
-  }
-
   public static int getTransparentTitleBarHeight(JRootPane rootPane) {
     Object property = rootPane.getClientProperty("Window.transparentTitleBarHeight");
     if (property instanceof Integer) {
