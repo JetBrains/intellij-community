@@ -4,8 +4,10 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 import com.intellij.codeInspection.ProblemHighlightType.INFORMATION
+import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -15,10 +17,12 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.branchedTransformations.BranchedFoldingUtils
+import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.branchedTransformations.BranchedFoldingUtils.getFoldableAssignmentsFromBranches
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.branchedTransformations.BranchedFoldingUtils.getFoldableReturnsFromBranches
-import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.branchedTransformations.BranchedFoldingUtils.getNumberOfFoldableAssignmentsOrNull
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 /**
@@ -62,13 +66,32 @@ private const val LINES_LIMIT = 15
 class LiftReturnOrAssignmentInspection @JvmOverloads constructor(private val skipLongExpressions: Boolean = true) :
     AbstractKotlinInspection() {
 
+    @JvmField
+    var reportOnlyIfSingleStatement = true
+
+    override fun getOptionsPane(): OptPane {
+        return OptPane.pane(
+            OptPane.checkbox(
+                "reportOnlyIfSingleStatement",
+                KotlinBundle.message("inspection.lift.return.or.assignment.option.only.single.statement")
+            )
+        )
+    }
+
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession) =
         object : KtVisitorVoid() {
             override fun visitExpression(expression: KtExpression) {
+                if (isUnitTestMode()) {
+                    reportOnlyIfSingleStatement = expression.containingKtFile
+                        .findDescendantOfType<PsiComment> { it.text.startsWith("// ONLY_SINGLE_STATEMENT:") }
+                        ?.let { it.text.removePrefix("// ONLY_SINGLE_STATEMENT:").trim().toBoolean() }
+                        ?: reportOnlyIfSingleStatement
+                }
+
                 // Note that we'd better run the following line first instead of running
                 // `if (analyze(expression) { expression.isUsedAsExpression() }) return`
                 // because `getState(expression)` will filter many expressions after checking only PSI.
-                val states = getState(expression) ?: return
+                val states = getState(expression, reportOnlyIfSingleStatement) ?: return
 
                 // This inspection targets only return and assignment within expressions with branches.
                 // Their values must not be used by other expressions.
@@ -138,7 +161,11 @@ class LiftReturnOrAssignmentInspection @JvmOverloads constructor(private val ski
         }
     }
 
-    private fun KtAnalysisSession.getStateForWhenOrTry(expression: KtExpression, keyword: PsiElement): List<LiftState>? {
+    private fun KtAnalysisSession.getStateForWhenOrTry(
+        expression: KtExpression,
+        keyword: PsiElement,
+        reportOnlyIfSingleStatement: Boolean
+    ): List<LiftState>? {
         if (skipLongExpressions && expression.getLineCount() > LINES_LIMIT) return null
         if (expression.parent.node.elementType == KtNodeTypes.ELSE) return null
 
@@ -146,26 +173,30 @@ class LiftReturnOrAssignmentInspection @JvmOverloads constructor(private val ski
         if (foldableReturns.isNotEmpty()) {
             val returns = foldableReturns.returnExpressions
             val hasOtherReturns = expression.anyDescendantOfType<KtReturnExpression> { it !in returns }
-            val isSerious = !hasOtherReturns && returns.size > 1
-            return returns.map {
-                LiftState(keyword, isSerious, LiftType.LIFT_RETURN_OUT, it, INFORMATION)
-            } + LiftState(keyword, isSerious, LiftType.LIFT_RETURN_OUT)
+            val allBranchesAreSingleStatement = foldableReturns.returnExpressions.none { it.hasSiblings() }
+            val isSerious = !hasOtherReturns && returns.size > 1 && (allBranchesAreSingleStatement || !reportOnlyIfSingleStatement)
+            return returns.map { LiftState(keyword, isSerious, LiftType.LIFT_RETURN_OUT, it, INFORMATION) } +
+                    LiftState(keyword, isSerious, LiftType.LIFT_RETURN_OUT)
         }
 
-        val assignmentNumber = getNumberOfFoldableAssignmentsOrNull(expression) ?: return null
+        val assignments = getFoldableAssignmentsFromBranches(expression)
+        val assignmentNumber = assignments.size
         if (assignmentNumber > 0) {
-            val isSerious = assignmentNumber > 1
+            val allBranchesAreSingleStatement = assignments.none { it.hasSiblings() }
+            val isSerious = assignmentNumber > 1 && (allBranchesAreSingleStatement || !reportOnlyIfSingleStatement)
             return listOf(LiftState(keyword, isSerious, LiftType.LIFT_ASSIGNMENT_OUT))
         }
         return null
     }
 
-    private fun getState(expression: KtExpression) = analyze(expression) {
+    private fun KtExpression.hasSiblings() = (parent as? KtBlockExpression)?.statements.orEmpty().size > 1
+
+    private fun getState(expression: KtExpression, reportOnlyIfSingleStatement: Boolean) = analyze(expression) {
         when (expression) {
-            is KtWhenExpression -> getStateForWhenOrTry(expression, expression.whenKeyword)
-            is KtIfExpression -> getStateForWhenOrTry(expression, expression.ifKeyword)
+            is KtWhenExpression -> getStateForWhenOrTry(expression, expression.whenKeyword, reportOnlyIfSingleStatement)
+            is KtIfExpression -> getStateForWhenOrTry(expression, expression.ifKeyword, reportOnlyIfSingleStatement)
             is KtTryExpression -> expression.tryKeyword?.let {
-                getStateForWhenOrTry(expression, it)
+                getStateForWhenOrTry(expression, it, reportOnlyIfSingleStatement)
             }
 
             else -> null
