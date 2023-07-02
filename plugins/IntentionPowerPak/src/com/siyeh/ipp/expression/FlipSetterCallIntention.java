@@ -1,17 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.expression;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ipp.base.Intention;
-import com.siyeh.ipp.base.PsiElementEditorPredicate;
+import com.siyeh.ipp.base.MCIntention;
+import com.siyeh.ipp.base.PsiElementContextPredicate;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.PsiSelectionSearcher;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +20,11 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class FlipSetterCallIntention extends Intention {
+public class FlipSetterCallIntention extends MCIntention {
+  @Override
+  protected @Nullable String getTextForElement(@NotNull PsiElement element) {
+    return getFamilyName();
+  }
 
   @Override
   public @NotNull String getFamilyName() {
@@ -30,27 +32,23 @@ public class FlipSetterCallIntention extends Intention {
   }
 
   @Override
-  public @NotNull String getText() {
-    return IntentionPowerPackBundle.message("flip.setter.call.intention.name");
-  }
-
-  @Override
-  protected void processIntention(@NotNull PsiElement element) {
-    final Project project = element.getProject();
-    final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-    if (editor != null) {
+  protected void processIntention(@NotNull ActionContext context, @NotNull ModPsiUpdater updater, @NotNull PsiElement element) {
+    if (!context.selection().isEmpty()) {
       final List<PsiMethodCallExpression> methodCalls =
-        PsiSelectionSearcher.searchElementsInSelection(editor, project, PsiMethodCallExpression.class, false);
+        PsiSelectionSearcher.searchElementsInSelection(element.getContainingFile(), context.selection(), PsiMethodCallExpression.class, false);
       if (!methodCalls.isEmpty()) {
         for (PsiMethodCallExpression call : methodCalls) {
-          flipCall(call);
+          PsiMethodCallExpression flipped = flipCall(call);
+          if (flipped != null) {
+            updater.highlight(flipped);
+            updater.moveTo(flipped);
+          }
         }
-        editor.getSelectionModel().removeSelection();
         return;
       }
     }
-    if (element instanceof PsiMethodCallExpression) {
-      flipCall((PsiMethodCallExpression)element);
+    if (element instanceof PsiMethodCallExpression call) {
+      flipCall(call);
     }
   }
 
@@ -60,24 +58,24 @@ public class FlipSetterCallIntention extends Intention {
     return new SetterCallPredicate();
   }
 
-  private static void flipCall(PsiMethodCallExpression call) {
+  private static PsiMethodCallExpression flipCall(PsiMethodCallExpression call) {
     final PsiExpression[] arguments = call.getArgumentList().getExpressions();
-    if (arguments.length != 1) return;
+    if (arguments.length != 1) return null;
     final PsiExpression argument = PsiUtil.skipParenthesizedExprDown(arguments[0]);
-    if (!(argument instanceof PsiMethodCallExpression call2)) return;
+    if (!(argument instanceof PsiMethodCallExpression call2)) return null;
 
     final PsiExpression qualifierExpression1 = ExpressionUtils.getEffectiveQualifier(call.getMethodExpression());
     final PsiExpression qualifierExpression2 = ExpressionUtils.getEffectiveQualifier(call2.getMethodExpression());
-    if (qualifierExpression1 == null || qualifierExpression2 == null) return;
+    if (qualifierExpression1 == null || qualifierExpression2 == null) return null;
     final PsiMethod setter = call.resolveMethod();
     final PsiMethod getter = call2.resolveMethod();
     final PsiMethod get = PropertyUtil.getReversePropertyMethod(setter);
     final PsiMethod set = PropertyUtil.getReversePropertyMethod(getter);
-    if (get == null || set == null) return;
+    if (get == null || set == null) return null;
     CommentTracker ct = new CommentTracker();
     final String text =
       ct.text(qualifierExpression2) + "." + set.getName() + "(" + ct.text(qualifierExpression1) + "." + get.getName() + "())";
-    ct.replaceAndRestoreComments(call, text);
+    return (PsiMethodCallExpression)ct.replaceAndRestoreComments(call, text);
   }
 
   private static boolean isSetGetMethodCall(PsiElement element) {
@@ -109,12 +107,12 @@ public class FlipSetterCallIntention extends Intention {
     return parameter.getType().equals(getter.getReturnType());
   }
 
-  private static class SetterCallPredicate extends PsiElementEditorPredicate {
+  private static class SetterCallPredicate extends PsiElementContextPredicate {
     @Override
-    public boolean satisfiedBy(PsiElement element, @Nullable Editor editor) {
-      if (editor != null && editor.getSelectionModel().hasSelection()) {
+    public boolean satisfiedBy(PsiElement element, @NotNull ActionContext context) {
+      if (!context.selection().isEmpty()) {
         final List<PsiMethodCallExpression> list =
-          PsiSelectionSearcher.searchElementsInSelection(editor, element.getProject(), PsiMethodCallExpression.class, false);
+          PsiSelectionSearcher.searchElementsInSelection(context.file(), context.selection(), PsiMethodCallExpression.class, false);
         for (PsiMethodCallExpression methodCallExpression : list) {
           if (isSetGetMethodCall(methodCallExpression)) {
             return true;

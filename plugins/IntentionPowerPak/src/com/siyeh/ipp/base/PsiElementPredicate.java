@@ -19,7 +19,8 @@ import com.intellij.psi.PsiElement;
 
 public interface PsiElementPredicate {
   /**
-   * Use {@link PsiElementEditorPredicate} when editor selection should be checked
+   * Check if element satisfies the predicate. All parent elements are supplied here until the satisfying element is found.
+   * Use {@link PsiElementContextPredicate} if you need caret position and/or selection.
    */
   boolean satisfiedBy(PsiElement element);
 }

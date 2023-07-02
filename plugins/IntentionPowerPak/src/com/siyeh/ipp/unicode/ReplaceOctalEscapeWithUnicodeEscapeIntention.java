@@ -1,17 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.unicode;
 
-import com.intellij.openapi.editor.CaretModel;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ipp.base.Intention;
-import com.siyeh.ipp.base.PsiElementEditorPredicate;
+import com.siyeh.ipp.base.MCIntention;
+import com.siyeh.ipp.base.PsiElementContextPredicate;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class ReplaceOctalEscapeWithUnicodeEscapeIntention extends Intention {
+public class ReplaceOctalEscapeWithUnicodeEscapeIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -28,23 +26,18 @@ public class ReplaceOctalEscapeWithUnicodeEscapeIntention extends Intention {
   }
 
   @Override
-  public @NotNull String getText() {
+  protected @Nullable String getTextForElement(@NotNull PsiElement element) {
     return IntentionPowerPackBundle.message("replace.octal.escape.with.unicode.escape.intention.name");
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {}
-
-  @Override
-  protected void processIntention(Editor editor, @NotNull PsiElement element) {
-    final SelectionModel selectionModel = editor.getSelectionModel();
-    if (selectionModel.hasSelection()) {
+  protected void processIntention(@NotNull ActionContext context, @NotNull ModPsiUpdater updater, @NotNull PsiElement element) {
+    TextRange selection = context.selection();
+    if (!selection.isEmpty()) {
       // does not check if octal escape is inside char or string literal (garbage in, garbage out)
-      final Document document = editor.getDocument();
-      final int start = selectionModel.getSelectionStart();
-      final int end = selectionModel.getSelectionEnd();
-      final String text = document.getText(new TextRange(start, end));
-      final int textLength = end - start;
+      final Document document = element.getContainingFile().getViewProvider().getDocument();
+      final String text = document.getText(selection);
+      final int textLength = selection.getLength();
       final StringBuilder replacement = new StringBuilder(textLength);
       int anchor = 0;
       while (true) {
@@ -56,12 +49,13 @@ public class ReplaceOctalEscapeWithUnicodeEscapeIntention extends Intention {
         anchor = appendUnicodeEscape(text, index, replacement);
       }
       replacement.append(text, anchor, textLength);
+      final int start = selection.getStartOffset();
+      final int end = selection.getEndOffset();
       document.replaceString(start, end, replacement);
     }
     else if (element instanceof PsiLiteralExpression literalExpression) {
       final String text = literalExpression.getText();
-      final CaretModel model = editor.getCaretModel();
-      final int offset = model.getOffset() - literalExpression.getTextOffset();
+      final int offset = context.offset() - literalExpression.getTextOffset();
       final StringBuilder newLiteralText = new StringBuilder();
       final int index1 = indexOfOctalEscape(text, offset);
       final int index2 = indexOfOctalEscape(text, offset + 1);
@@ -139,27 +133,20 @@ public class ReplaceOctalEscapeWithUnicodeEscapeIntention extends Intention {
     return new OctalEscapePredicate();
   }
 
-  private static class OctalEscapePredicate extends PsiElementEditorPredicate {
+  private static class OctalEscapePredicate extends PsiElementContextPredicate {
     @Override
-    public boolean satisfiedBy(PsiElement element, @Nullable Editor editor) {
-      if (editor == null) {
-        return false;
-      }
-      final SelectionModel selectionModel = editor.getSelectionModel();
-      if (selectionModel.hasSelection()) {
-        final int start = selectionModel.getSelectionStart();
-        final int end = selectionModel.getSelectionEnd();
-        if (start < 0 || end < 0 || start > end) {
-          // shouldn't happen but http://ea.jetbrains.com/browser/ea_problems/51155
-          return false;
-        }
-        final String text = editor.getDocument().getCharsSequence().subSequence(start, end).toString();
+    public boolean satisfiedBy(PsiElement element, @NotNull ActionContext context) {
+      TextRange selection = context.selection();
+      if (!selection.isEmpty()) {
+        final int start = selection.getStartOffset();
+        final int end = selection.getEndOffset();
+        final String text = element.getContainingFile().getViewProvider().getDocument()
+          .getCharsSequence().subSequence(start, end).toString();
         return indexOfOctalEscape(text, 1) >= 0;
       }
       else if (element instanceof PsiLiteralExpression literalExpression) {
         final String text = literalExpression.getText();
-        final CaretModel model = editor.getCaretModel();
-        final int offset = model.getOffset() - literalExpression.getTextOffset();
+        final int offset = context.offset() - literalExpression.getTextOffset();
         final int index = indexOfOctalEscape(text, offset);
         return index >= 0 && offset >= index;
       }

@@ -15,12 +15,12 @@
  */
 package com.siyeh.ipp.base;
 
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.ModCommands;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
@@ -57,19 +57,19 @@ public abstract class MCIntention implements ModCommandAction {
 
 
   @Nullable
-  PsiElement findMatchingElement(@Nullable PsiElement element) {
+  PsiElement findMatchingElement(@Nullable PsiElement element, ActionContext context) {
     if (element == null || !JavaLanguage.INSTANCE.equals(element.getLanguage())) return null;
 
     PsiElementPredicate predicate = myPredicate.get();
-    if (predicate instanceof PsiElementEditorPredicate) {
-      throw new UnsupportedOperationException("Editor predicate is not supported");
-    }
 
     while (element != null) {
       if (!JavaLanguage.INSTANCE.equals(element.getLanguage())) {
         break;
       }
-      if (predicate.satisfiedBy(element)) {
+      boolean satisfied = predicate instanceof PsiElementContextPredicate contextPredicate ?
+                          contextPredicate.satisfiedBy(element, context) :
+                          predicate.satisfiedBy(element);
+      if (satisfied) {
         return element;
       }
       element = element.getParent();
@@ -91,10 +91,10 @@ public abstract class MCIntention implements ModCommandAction {
   @Nullable
   protected PsiElement findMatchingElement(@NotNull ActionContext context) {
     PsiElement leaf = context.findLeaf();
-    PsiElement element = findMatchingElement(leaf);
+    PsiElement element = findMatchingElement(leaf, context);
     if (element != null) return element;
     PsiElement leftLeaf = context.findLeafOnTheLeft();
-    if (leftLeaf != leaf) return findMatchingElement(leftLeaf);
+    if (leftLeaf != leaf) return findMatchingElement(leftLeaf, context);
     return null;
   }
 

@@ -15,15 +15,15 @@
  */
 package com.siyeh.ipp.base;
 
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
-public abstract class PsiElementEditorPredicate implements PsiElementPredicate {
-  public abstract boolean satisfiedBy(PsiElement element, @Nullable Editor editor);
+public abstract class PsiElementContextPredicate implements PsiElementPredicate {
+  public abstract boolean satisfiedBy(PsiElement element, @NotNull ModCommandAction.ActionContext context);
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    return satisfiedBy(element, null);
+    throw new UnsupportedOperationException("Context must be provided");
   }
 }

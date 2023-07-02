@@ -1845,7 +1845,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       throw new FileComparisonFailure(expectedFile, expectedText, actualText, loader.filePath);
     }
 
-    EditorTestUtil.verifyCaretAndSelectionState(editor, loader.caretState, expectedFile);
+    EditorTestUtil.verifyCaretAndSelectionState(editor, loader.caretState, expectedFile, loader.filePath);
   }
 
   @NotNull
