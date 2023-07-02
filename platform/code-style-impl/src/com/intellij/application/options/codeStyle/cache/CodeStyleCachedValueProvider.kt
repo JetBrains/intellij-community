@@ -28,7 +28,7 @@ import java.util.concurrent.locks.ReentrantLock
 private val LOG = logger<CodeStyleCachedValueProvider>()
 
 @Service(Service.Level.PROJECT)
-private class CodeStyleCachedValueProviderService(val coroutineScope: CoroutineScope) {
+private class CodeStyleCachedValueProviderService(@JvmField val coroutineScope: CoroutineScope) {
 }
 
 internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewProvider,
