@@ -396,6 +396,9 @@ final class ActionUpdater {
     Set<CancellablePromise<?>> targetPromises = myToolbarAction ? ourToolbarPromises : ourPromises;
     targetPromises.add(promise);
     boolean isFastTrack = myLaterInvocator != null && SlowOperations.isInSection(SlowOperations.FAST_TRACK);
+    if (!isFastTrack && myLaterInvocator != null) {
+      throw new AssertionError("Fast-track EDT invocator must be employed in a FAST_TRACK section");
+    }
     Executor executor = isFastTrack ? ourFastTrackExecutor : ourCommonExecutor;
     executor.execute(Context.current().wrap(() -> {
       Ref<Computable<Void>> applyRunnableRef = Ref.create();
