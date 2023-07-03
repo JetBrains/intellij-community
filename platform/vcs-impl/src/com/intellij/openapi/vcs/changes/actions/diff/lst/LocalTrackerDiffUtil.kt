@@ -486,12 +486,22 @@ object LocalTrackerDiffUtil {
       }
 
       val affectedRanges = getAffectedRanges(selectedLines)
-      val isPartialBlockSelection = affectedRanges.isEmpty() || affectedRanges.any { isPartiallySelected(it, selectedLines) }
+      val isPartialBlockSelection = affectedRanges.any { isPartiallySelected(it, selectedLines) }
 
-      if (isPartialBlockSelection) {
+      if (affectedRanges.isEmpty()) {
         e.presentation.text = when {
           isExclude -> ActionsBundle.message("action.Vcs.Diff.ExcludeChangedLinesFromCommit.text")
           else -> ActionsBundle.message("action.Vcs.Diff.IncludeChangedLinesIntoCommit.text")
+        }
+        e.presentation.isEnabled = false
+      }
+      else if (isPartialBlockSelection) {
+        val willSplit = affectedRanges.any { it.exclusionState !is RangeExclusionState.Partial }
+        val rangesCount = if (willSplit) affectedRanges.size else 0
+        val selectionSize = (selectedLines.localLines?.cardinality() ?: 0) + (selectedLines.vcsLines?.cardinality() ?: 0)
+        e.presentation.text = when {
+          isExclude -> ActionsBundle.message("action.Vcs.Diff.ExcludeChangedLinesFromCommit.template.text", rangesCount, selectionSize)
+          else -> ActionsBundle.message("action.Vcs.Diff.IncludeChangedLinesIntoCommit.template.text", rangesCount, selectionSize)
         }
 
         e.presentation.isEnabled = affectedRanges.any {
