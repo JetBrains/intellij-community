@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.progress.DumbProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
@@ -280,7 +281,7 @@ public class ModCommandServiceImpl implements ModCommandService {
       .nonNullValues().mapKeyValue(ActionAndPresentation::new).toList();
     if (actions.isEmpty()) return true;
     
-    String name = CommandProcessor.getInstance().getCurrentCommandName();
+    String name = chooser.title();
     if (actions.size() == 1 || !onTheFly) {
       ModCommandAction action = actions.get(0).action();
       executeNextStep(context, name, editor, onTheFly, () -> {
@@ -308,18 +309,13 @@ public class ModCommandServiceImpl implements ModCommandService {
     return true;
   }
 
-  private void executeNextStep(@NotNull ActionContext context, @Nullable @NlsContexts.Command String name, @Nullable Editor editor, boolean onTheFly,
-                               Callable<? extends ModCommand> supplier) {
-    ReadAction.nonBlocking(supplier)
-      .finishOnUiThread(ModalityState.defaultModalityState(), next -> {
-        if (next == null) return;
-        if (name != null) {
-          CommandProcessor.getInstance().executeCommand(context.project(), () -> doExecute(context, next, editor, true), name, onTheFly);
-        } else {
-          doExecute(context, next, editor, onTheFly);
-        }
-      })
-      .submit(AppExecutorUtil.getAppExecutorService());
+  private void executeNextStep(@NotNull ActionContext context, @NotNull @NlsContexts.Command String name, @Nullable Editor editor, 
+                               boolean onTheFly, Callable<? extends ModCommand> supplier) {
+    ModCommand next = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+        return ReadAction.nonBlocking(supplier).expireWhen(context.project()::isDisposed).executeSynchronously();
+      }, name, true, context.project());
+    if (next == null) return;
+    CommandProcessor.getInstance().executeCommand(context.project(), () -> executeInteractively(context, next, editor), name, onTheFly);
   }
 
   private static VirtualFile actualize(@NotNull VirtualFile file) {
