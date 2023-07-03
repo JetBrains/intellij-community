@@ -139,3 +139,5 @@ class DependencyUnavailable(
 ) : DependencyState()
 
 object DependencyAvailable : DependencyState()
+
+object DefaultDependencyAvailable : DependencyState()
