@@ -39,7 +39,7 @@ import kotlin.time.toDuration
 object VFSHealthCheckerConstants {
   @JvmStatic
   val HEALTH_CHECKING_ENABLED = getBooleanProperty("vfs.health-check.enabled",
-                                                   ApplicationManager.getApplication().isEAP)
+                                                   ApplicationManager.getApplication().isEAP && !ApplicationManager.getApplication().isUnitTestMode)
 
   @JvmStatic
   val HEALTH_CHECKING_PERIOD_MS = getIntProperty("vfs.health-check.checking-period-ms",
@@ -53,7 +53,10 @@ object VFSHealthCheckerConstants {
                                                       10.minutes.inWholeMilliseconds.toInt())
 
 
-  /** May take quite a time, hence disabled by default */
+  /**
+   * May slow down scanning significantly, hence dedicated property to control.
+   * Default: false, since orphan records appear to be quite common so far.
+   */
   @JvmStatic
   val CHECK_ORPHAN_RECORDS = getBooleanProperty("vfs.health-check.check-orphan-records", false)
 
@@ -265,12 +268,17 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
             if (checkForOrphanRecords) {
               if (BitUtil.isSet(parentFlags, CHILDREN_CACHED)) {
                 try {
-                  //MAYBE RC: use .listIdsUnchecked() method -- to not force VFS rebuild?
+                  //MAYBE RC: use .listIdsUnchecked() method -- to not trigger VFS rebuild?
                   val childrenOfParent = impl.listIds(parentId)
                   if (childrenOfParent.indexOf(fileId) < 0) {
                     inconsistentParentChildRelationships++ //MAYBE RC: dedicated counter?
+                    val maxChildrenToLog = 32
+                    val childrenPrefix = if (childrenOfParent.size > maxChildrenToLog)
+                      "first $maxChildrenToLog of ${childrenOfParent.size}: "
+                    else 
+                      ""
                     log.info("file[#$fileId]{$fileName}: record is orphan, " +
-                             ".parent[#$parentId].children(first 64 of ${childrenOfParent.size}: ${childrenOfParent.take(64)}...) doesn't contain it!")
+                             ".parent[#$parentId].children($childrenPrefix${childrenOfParent.joinToString(limit = maxChildrenToLog)}) doesn't contain it!")
                   }
                 }
                 catch (e: Throwable) {
