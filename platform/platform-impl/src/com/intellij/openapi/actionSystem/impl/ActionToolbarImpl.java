@@ -1881,7 +1881,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     void update(@NotNull AnActionEvent e);
   }
 
-  private class ActionButtonBorder extends JBEmptyBorder {
+  private final class ActionButtonBorder extends JBEmptyBorder {
     private final int myDirectionalGap;
     private final int myOrthogonalGap;
 
@@ -1925,7 +1925,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     return accessibleContext;
   }
 
-  private class AccessibleActionToolbar extends AccessibleJPanel {
+  private final class AccessibleActionToolbar extends AccessibleJPanel {
     @Override
     public AccessibleRole getAccessibleRole() {
       return AccessibilityUtils.GROUPED_ELEMENTS;
