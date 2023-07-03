@@ -186,7 +186,7 @@ public class SplitButtonAction extends ActionGroup implements CustomComponentAct
         }
       }
 
-      x = baseRect.x + (x -  actionIcon.getIconWidth()) / 2;
+      x = baseRect.x + (x - baseRect.x -  actionIcon.getIconWidth()) / 2;
       y = baseRect.y + (baseRect.height - actionIcon.getIconHeight()) / 2;
       look.paintIcon(g, this, actionIcon, x, y);
     }
