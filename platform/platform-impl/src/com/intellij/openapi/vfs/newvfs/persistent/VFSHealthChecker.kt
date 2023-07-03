@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckerConstants.HEAL
 import com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckerConstants.HEALTH_CHECKING_PERIOD_MS
 import com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckerConstants.HEALTH_CHECKING_START_DELAY_MS
 import com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckerConstants.LOG
+import com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckerConstants.MAX_CHILDREN_TO_LOG
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.BitUtil
 import com.intellij.util.SystemProperties.getBooleanProperty
@@ -59,6 +60,10 @@ object VFSHealthCheckerConstants {
    */
   @JvmStatic
   val CHECK_ORPHAN_RECORDS = getBooleanProperty("vfs.health-check.check-orphan-records", false)
+
+  /** How many children to log at max with orphan records reporting */
+  @JvmStatic
+  val MAX_CHILDREN_TO_LOG = getIntProperty("vfs.health-check.max-children-to-log", 16)
 
   @JvmStatic
   val LOG: Logger = FSRecords.LOG
@@ -266,26 +271,7 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
             }
 
             if (checkForOrphanRecords) {
-              if (BitUtil.isSet(parentFlags, CHILDREN_CACHED)) {
-                try {
-                  //MAYBE RC: use .listIdsUnchecked() method -- to not trigger VFS rebuild?
-                  val childrenOfParent = impl.listIds(parentId)
-                  if (childrenOfParent.indexOf(fileId) < 0) {
-                    inconsistentParentChildRelationships++ //MAYBE RC: dedicated counter?
-                    val maxChildrenToLog = 32
-                    val childrenPrefix = if (childrenOfParent.size > maxChildrenToLog)
-                      "first $maxChildrenToLog of ${childrenOfParent.size}: "
-                    else 
-                      ""
-                    log.info("file[#$fileId]{$fileName}: record is orphan, " +
-                             ".parent[#$parentId].children($childrenPrefix${childrenOfParent.joinToString(limit = maxChildrenToLog)}) doesn't contain it!")
-                  }
-                }
-                catch (e: Throwable) {
-                  generalErrors++
-                  log.info("file[#$fileId]{$fileName}.parent[#$parentId]: error accessing children", e)
-                }
-              }
+              checkRecordIsOrphan(fileRecords, fileId, parentId, parentFlags, fileName)
             }
           }
 
@@ -341,6 +327,44 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
         }
       }
       log.info("${fileRecords.recordsCount()} file records checked: ${childrenChecked} children, ${notNullContentIds} contents")
+    }
+  }
+
+  private fun VFSHealthCheckReport.FileRecordsReport.checkRecordIsOrphan(fileRecords: PersistentFSRecordsStorage,
+                                                                         fileId: Int,
+                                                                         parentId: Int,
+                                                                         parentFlags: Int,
+                                                                         fileName: String?) {
+    if (BitUtil.isSet(parentFlags, CHILDREN_CACHED)) {
+      try {
+        //MAYBE RC: use .listIdsUnchecked() method -- to not trigger VFS rebuild?
+        val childrenOfParent = impl.listIds(parentId)
+        if (childrenOfParent.indexOf(fileId) < 0) {
+          inconsistentParentChildRelationships++ //MAYBE RC: dedicated counter?
+
+          //Check: is it an orphan _duplicate_ -- is there a non-orphan child with the same name?
+          val fileNameId = fileRecords.getNameId(fileId)
+          val hasChildWithSameName = childrenOfParent
+            .any { childId -> fileRecords.getNameId(childId) == fileNameId }
+
+
+          val childrenPrefix = if (childrenOfParent.size > MAX_CHILDREN_TO_LOG)
+            "first ${MAX_CHILDREN_TO_LOG} of ${childrenOfParent.size}: "
+          else
+            ""
+
+          log.info("file[#$fileId]{$fileName}: record is orphan, " +
+                   ".parent[#$parentId].children($childrenPrefix${childrenOfParent.joinToString(limit = MAX_CHILDREN_TO_LOG)}) " +
+                   "doesn't contain it, " +
+                   if (hasChildWithSameName) "but there is non-orphan child with same name."
+                   else "and there are NO non-orphan children with the same name."
+          )
+        }
+      }
+      catch (e: Throwable) {
+        generalErrors++
+        log.info("file[#$fileId]{$fileName}.parent[#$parentId]: error accessing children", e)
+      }
     }
   }
 
