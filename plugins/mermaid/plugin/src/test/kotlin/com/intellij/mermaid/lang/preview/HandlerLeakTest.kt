@@ -10,7 +10,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
-import com.intellij.ui.jcef.JBCefBrowser
 import com.intellij.ui.jcef.JBCefJSQuery
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -51,11 +50,17 @@ class HandlerLeakTest {
       checkNotNull(result)
       Assertions.assertEquals(4, result.toInt())
     }
-    LeakHunter.checkLeak(browser, JBCefJSQuery::class.java)
+    ensureJsQueryHandlerIsNotLeaked(browser)
     ensureLoadHandlerIsNotLeaked(browser)
   }
 
-  private fun ensureLoadHandlerIsNotLeaked(browser: JBCefBrowser) {
-    LeakHunter.checkLeak(browser, CefLoadHandler::class.java) { it is WaitForLoadHandlerAdapter }
+  companion object {
+    fun ensureJsQueryHandlerIsNotLeaked(root: Any) {
+      LeakHunter.checkLeak(root, JBCefJSQuery::class.java)
+    }
+
+    fun ensureLoadHandlerIsNotLeaked(root: Any) {
+      LeakHunter.checkLeak(root, CefLoadHandler::class.java) { it is WaitForLoadHandlerAdapter }
+    }
   }
 }
