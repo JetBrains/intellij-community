@@ -122,7 +122,11 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
             analyze(this) {
                 val declarationSymbol = declaration.getSymbol() as? KtCallableSymbol ?: return false
 
-                return declarationSymbol.getDirectlyOverriddenSymbols().isEmpty()
+                val callableSymbol = when (declarationSymbol) {
+                    is KtValueParameterSymbol -> declarationSymbol.generatedPrimaryConstructorProperty ?: return false
+                    else -> declarationSymbol
+                }
+                return callableSymbol.getDirectlyOverriddenSymbols().isEmpty()
             }
         }
 
