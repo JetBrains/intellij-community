@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.*;
@@ -188,14 +189,14 @@ public final class WindowTabsComponent extends JBTabsImpl {
           }, BorderLayout.WEST);
 
           myActionPanel.setBorder(JBUI.Borders.emptyLeft(6));
-          myActionPanel.setVisible(false);
+          myActionPanel.setVisible(!showCloseActionOnHover());
         }
       }
 
       @Override
       protected void setHovered(boolean value) {
         super.setHovered(value);
-        myActionPanel.setVisible(value || getInfo() == myTabs.getPopupInfo());
+        myActionPanel.setVisible(!showCloseActionOnHover() || value || getInfo() == myTabs.getPopupInfo());
       }
 
       @Override
@@ -216,7 +217,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
 
             private void handle() {
               popup.removePopupMenuListener(this);
-              myActionPanel.setVisible(isHovered());
+              myActionPanel.setVisible(!showCloseActionOnHover() || isHovered());
             }
           });
         }
@@ -232,6 +233,10 @@ public final class WindowTabsComponent extends JBTabsImpl {
         return false;
       }
     };
+  }
+
+  private static boolean showCloseActionOnHover() {
+    return Registry.is("ide.mac.os.wintabs.show.closeaction.on.hover", true);
   }
 
   @Override
