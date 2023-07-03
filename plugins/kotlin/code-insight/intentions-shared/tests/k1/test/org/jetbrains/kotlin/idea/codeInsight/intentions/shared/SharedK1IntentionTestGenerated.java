@@ -621,6 +621,93 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/intentions/folding")
+    public abstract static class Folding extends AbstractSharedK1IntentionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/intentions/folding/ifToFunctionCall")
+        public static class IfToFunctionCall extends AbstractSharedK1IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("block.kt")
+            public void testBlock() throws Exception {
+                runTest("../testData/intentions/folding/ifToFunctionCall/block.kt");
+            }
+
+            @TestMetadata("differentArguments.kt")
+            public void testDifferentArguments() throws Exception {
+                runTest("../testData/intentions/folding/ifToFunctionCall/differentArguments.kt");
+            }
+
+            @TestMetadata("differentArguments2.kt")
+            public void testDifferentArguments2() throws Exception {
+                runTest("../testData/intentions/folding/ifToFunctionCall/differentArguments2.kt");
+            }
+
+            @TestMetadata("differentFunctionCall.kt")
+            public void testDifferentFunctionCall() throws Exception {
+                runTest("../testData/intentions/folding/ifToFunctionCall/differentFunctionCall.kt");
+            }
+
+            @TestMetadata("differentReceiver.kt")
+            public void testDifferentReceiver() throws Exception {
+                runTest("../testData/intentions/folding/ifToFunctionCall/differentReceiver.kt");
+            }
+
+            @TestMetadata("elseIf.kt")
+            public void testElseIf() throws Exception {
+                runTest("../testData/intentions/folding/ifToFunctionCall/elseIf.kt");
+            }
+
+            @TestMetadata("multiArguments.kt")
+            public void testMultiArguments() throws Exception {
+                runTest("../testData/intentions/folding/ifToFunctionCall/multiArguments.kt");
+            }
+
+            @TestMetadata("multiArguments2.kt")
+            public void testMultiArguments2() throws Exception {
+                runTest("../testData/intentions/folding/ifToFunctionCall/multiArguments2.kt");
+            }
+
+            @TestMetadata("multiArguments3.kt")
+            public void testMultiArguments3() throws Exception {
+                runTest("../testData/intentions/folding/ifToFunctionCall/multiArguments3.kt");
+            }
+
+            @TestMetadata("multiArguments4.kt")
+            public void testMultiArguments4() throws Exception {
+                runTest("../testData/intentions/folding/ifToFunctionCall/multiArguments4.kt");
+            }
+
+            @TestMetadata("multiStatements.kt")
+            public void testMultiStatements() throws Exception {
+                runTest("../testData/intentions/folding/ifToFunctionCall/multiStatements.kt");
+            }
+
+            @TestMetadata("namedArgument.kt")
+            public void testNamedArgument() throws Exception {
+                runTest("../testData/intentions/folding/ifToFunctionCall/namedArgument.kt");
+            }
+
+            @TestMetadata("notFunctionCall.kt")
+            public void testNotFunctionCall() throws Exception {
+                runTest("../testData/intentions/folding/ifToFunctionCall/notFunctionCall.kt");
+            }
+
+            @TestMetadata("qualifiedExpression.kt")
+            public void testQualifiedExpression() throws Exception {
+                runTest("../testData/intentions/folding/ifToFunctionCall/qualifiedExpression.kt");
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("../testData/intentions/folding/ifToFunctionCall/simple.kt");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/intentions/operatorToFunction")
     public static class OperatorToFunction extends AbstractSharedK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -1957,6 +2044,68 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
             @TestMetadata("noUnderscores.kt")
             public void testNoUnderscores() throws Exception {
                 runTest("../testData/intentions/underscoresInNumericLiteral/removeUnderscores/noUnderscores.kt");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/intentions/unfolding")
+    public abstract static class Unfolding extends AbstractSharedK1IntentionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/intentions/unfolding/functionCallToIf")
+        public static class FunctionCallToIf extends AbstractSharedK1IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("block.kt")
+            public void testBlock() throws Exception {
+                runTest("../testData/intentions/unfolding/functionCallToIf/block.kt");
+            }
+
+            @TestMetadata("elseIf.kt")
+            public void testElseIf() throws Exception {
+                runTest("../testData/intentions/unfolding/functionCallToIf/elseIf.kt");
+            }
+
+            @TestMetadata("multiArguments.kt")
+            public void testMultiArguments() throws Exception {
+                runTest("../testData/intentions/unfolding/functionCallToIf/multiArguments.kt");
+            }
+
+            @TestMetadata("multiArguments2.kt")
+            public void testMultiArguments2() throws Exception {
+                runTest("../testData/intentions/unfolding/functionCallToIf/multiArguments2.kt");
+            }
+
+            @TestMetadata("multiArguments3.kt")
+            public void testMultiArguments3() throws Exception {
+                runTest("../testData/intentions/unfolding/functionCallToIf/multiArguments3.kt");
+            }
+
+            @TestMetadata("multiArguments4.kt")
+            public void testMultiArguments4() throws Exception {
+                runTest("../testData/intentions/unfolding/functionCallToIf/multiArguments4.kt");
+            }
+
+            @TestMetadata("multiStatements.kt")
+            public void testMultiStatements() throws Exception {
+                runTest("../testData/intentions/unfolding/functionCallToIf/multiStatements.kt");
+            }
+
+            @TestMetadata("namedArgument.kt")
+            public void testNamedArgument() throws Exception {
+                runTest("../testData/intentions/unfolding/functionCallToIf/namedArgument.kt");
+            }
+
+            @TestMetadata("qualifiedExpression.kt")
+            public void testQualifiedExpression() throws Exception {
+                runTest("../testData/intentions/unfolding/functionCallToIf/qualifiedExpression.kt");
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("../testData/intentions/unfolding/functionCallToIf/simple.kt");
             }
         }
     }
