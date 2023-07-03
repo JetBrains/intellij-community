@@ -36,6 +36,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UpdateScaleHelper;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcs.commit.CommitSessionCollector;
 import com.intellij.vcsUtil.VcsUtil;
@@ -105,6 +106,8 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   private boolean myModelUpdateInProgress;
   private AWTEvent myEventProcessingInProgress;
 
+  private final UpdateScaleHelper scaleHelper = new UpdateScaleHelper();
+
   public ChangesTree(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems) {
     this(project, showCheckboxes, highlightProblems, true);
   }
@@ -161,6 +164,9 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
     ChangesBrowserNode<?> sampleNode = new FixedHeightSampleChangesBrowserNode();
     Component component = renderer.getTreeCellRendererComponent(this, sampleNode, true, true, true, 0, true);
+    scaleHelper.saveScaleAndRunIfChanged(() -> {
+      if (component instanceof JComponent) scaleHelper.updateUIForAll((JComponent)component);
+    });
     int rendererHeight = component.getPreferredSize().height;
     if (rendererHeight <= 0) return;
 
