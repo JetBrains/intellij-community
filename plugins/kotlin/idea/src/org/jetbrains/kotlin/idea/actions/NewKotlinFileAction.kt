@@ -186,13 +186,12 @@ private fun findOrCreateTarget(dir: PsiDirectory, name: String, directorySeparat
 
             var fileNameParts = 1
             if (splitChar == '.') {
-                // "aaa.bbb.Ccc.ddd.ee" ->
-                // dirs: "aaa/bbb"
-                // file name: "Ccc.ddd.ee"
-                // class name: "Ccc"
-                val classNameIndex = names.indexOfLast { it.isNotBlank() && Character.isUpperCase(it.first()) }
+                val classNameIndex = names
+                    .cutExistentPath(targetDir)
+                    .reversed()
+                    .indexOfFirst { it.isNotBlank() && Character.isUpperCase(it.first()) }
                 if (classNameIndex != -1) {
-                    fileNameParts = names.size - classNameIndex
+                    fileNameParts = classNameIndex + 1
                 }
             }
 
@@ -207,6 +206,16 @@ private fun findOrCreateTarget(dir: PsiDirectory, name: String, directorySeparat
         }
     }
     return Pair(fileName, targetDir)
+}
+
+private fun List<String>.cutExistentPath(targetDir: PsiDirectory): List<String> {
+    var i = 0
+    var dir = targetDir
+    for (name in this) {
+        dir = dir.findSubdirectory(name) ?: break
+        i++
+    }
+    return takeLast(size - i)
 }
 
 const val KOTLIN_WORKSHEET_EXTENSION: String = "ws.kts"
