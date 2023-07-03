@@ -2,6 +2,8 @@
 package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
+import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.io.FileUtil
@@ -30,23 +32,23 @@ import java.io.File
 class CompiledFilesHighlightingTest: KotlinLightCodeInsightFixtureTestCase() {
     @TestMetadata("kotlin/collections/CollectionsKt.kotlin_metadata")
     fun testKotlinCollectionsCollectionsKtKotlinMetadata() {
-        doTestWithLibraryFile(TestKotlinArtifacts.kotlinStdlibCommon)
+        doTestWithLibraryFile(TestKotlinArtifacts.kotlinStdlibCommon, FileHighlightingSetting.SKIP_INSPECTION)
     }
 
     @TestMetadata("kotlin/time/TimeSource.class")
     fun testKotlinTimeTimeSourceClass() {
-        doTestWithLibraryFile(TestKotlinArtifacts.kotlinStdlib)
+        doTestWithLibraryFile(TestKotlinArtifacts.kotlinStdlib, FileHighlightingSetting.SKIP_INSPECTION)
     }
 
     @TestMetadata("default/linkdata/package_kotlin.io/0_io.knm")
     fun testKotlinNativeLinkdataPackageKotlinIO0ioKnm() {
-        doTestWithLibraryFile(TestKotlinArtifacts.kotlinStdlibNative)
+        doTestWithLibraryFile(TestKotlinArtifacts.kotlinStdlibNative, FileHighlightingSetting.SKIP_INSPECTION)
     }
 
     @TestMetadata("kotlin/annotations/OptIn.kt")
     fun testDecompiledCodeKotlinAnnotationsOptInKt() {
         withLibrary(TestKotlinArtifacts.kotlinStdlib) {
-            doTestWithLibraryFile(TestKotlinArtifacts.kotlinStdlibCommonSources) {
+            doTestWithLibraryFile(TestKotlinArtifacts.kotlinStdlibCommonSources, FileHighlightingSetting.SKIP_HIGHLIGHTING) {
                 val file = PsiManager.getInstance(project).findFile(it) ?: error("unable to locate PSI for $it")
                 val ktFile = file as? KtFile ?: error("file expected to be KtFile")
                 KotlinBytecodeDecompilerTask(ktFile).generateDecompiledVirtualFile() ?: error("unable to generate decompiled file")
@@ -54,7 +56,11 @@ class CompiledFilesHighlightingTest: KotlinLightCodeInsightFixtureTestCase() {
         }
     }
 
-    private fun doTestWithLibraryFile(libraryFile: File, openFileAction: (VirtualFile) -> VirtualFile = { it }) {
+    private fun doTestWithLibraryFile(
+        libraryFile: File,
+        expectedHighlightingSetting: FileHighlightingSetting,
+        openFileAction: (VirtualFile) -> VirtualFile = { it }
+    ) {
         val libraryVirtualFile =
             if (libraryFile.extension == "jar") {
                 StandardFileSystems.jar().findFileByPath(libraryFile.absolutePath + URLUtil.JAR_SEPARATOR)
@@ -67,6 +73,9 @@ class CompiledFilesHighlightingTest: KotlinLightCodeInsightFixtureTestCase() {
         }
         withLibrary(libraryFile) {
             val fileToOpen = openFileAction(virtualFile)
+            val openedPsiFile = PsiManager.getInstance(project).findFile(fileToOpen) ?: error("unable to locate PSI for $virtualFile")
+            val highlightingSetting = HighlightingSettingsPerFile.getInstance(project).getHighlightingSettingForRoot(openedPsiFile)
+            assertEquals(expectedHighlightingSetting, highlightingSetting)
             myFixture.openFileInEditor(fileToOpen)
             doTest()
         }
