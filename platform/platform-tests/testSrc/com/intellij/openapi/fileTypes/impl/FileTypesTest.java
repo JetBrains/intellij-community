@@ -216,9 +216,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     assertEquals(DetectedByContentFileType.INSTANCE, getFileType(virtualFile));
     int modificationCount = ManagingFS.getInstance().getModificationCount();
     virtualFile.set(KeyFMap.EMPTY_MAP);
-    WriteAction.run(() -> {
-      CachedFileType.clearCache();
-    });
+    clearFileTypeCache();
     assertEquals(DetectedByContentFileType.INSTANCE, getFileType(virtualFile));
     int modificationCountAfterRedetection = ManagingFS.getInstance().getModificationCount();
     assertEquals(modificationCount, modificationCountAfterRedetection);
