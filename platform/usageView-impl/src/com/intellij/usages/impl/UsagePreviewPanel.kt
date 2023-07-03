@@ -144,15 +144,17 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
         validate()
       }
 
-      if (infos != myCachedSelectedUsageInfos // avoid moving viewport
-          || !UsageViewPresentation.arePatternsEqual(myCachedSearchPattern, myPresentation.searchPattern)
-          || myCachedReplaceString != myPresentation.replaceString || myCachedCaseSensitive != myPresentation.isCaseSensitive) {
-        highlight(infos, myEditor!!, myProject, true, HighlighterLayer.ADDITIONAL_SYNTAX)
-        myCachedSelectedUsageInfos = infos
-        myCachedSearchPattern = myPresentation.searchPattern
-        myCachedCaseSensitive = myPresentation.isCaseSensitive
-        myCachedReplaceString = myPresentation.replaceString
-      }
+      PsiDocumentManager.getInstance(myProject).performForCommittedDocument(document, Runnable {
+        if (infos != myCachedSelectedUsageInfos // avoid moving viewport
+            || !UsageViewPresentation.arePatternsEqual(myCachedSearchPattern, myPresentation.searchPattern)
+            || myCachedReplaceString != myPresentation.replaceString || myCachedCaseSensitive != myPresentation.isCaseSensitive) {
+          highlight(infos, myEditor!!, myProject, true, HighlighterLayer.ADDITIONAL_SYNTAX)
+          myCachedSelectedUsageInfos = infos
+          myCachedSearchPattern = myPresentation.searchPattern
+          myCachedCaseSensitive = myPresentation.isCaseSensitive
+          myCachedReplaceString = myPresentation.replaceString
+        }
+      })
     }
   }
 
