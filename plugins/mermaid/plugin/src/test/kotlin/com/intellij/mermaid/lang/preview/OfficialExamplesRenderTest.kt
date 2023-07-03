@@ -8,14 +8,13 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
-import com.intellij.util.io.readText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.DynamicNode
-import org.junit.jupiter.api.TestFactory
+import org.junit.jupiter.api.TestTemplate
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.Path
+import kotlin.io.path.readText
 
 @PreviewTest
 @WithJcef
@@ -32,16 +31,9 @@ class OfficialExamplesRenderTest {
   private val project: Project
     get() = projectModel.project
 
-  @TestFactory
-  fun generateExampleTests(): List<DynamicNode> {
-    OfficialExamplesTestData.assumeAvailable()
-    return OfficialExamplesTestData.generateDynamicTests(
-      testDataPath = OfficialExamplesTestData.testDataPath,
-      test = ::testDiagram
-    )
-  }
-
-  private fun testDiagram(path: Path) {
+  @TestTemplate
+  @ExtendWith(OfficialDocumentationExamplesContext::class)
+  fun testDiagram(path: Path) {
     val diagramContent = path.readText()
     runBlocking(Dispatchers.EDT) {
       val preview = MermaidDiagramPreviewComponent(project)
