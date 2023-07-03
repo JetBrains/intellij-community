@@ -225,10 +225,6 @@ internal fun doUpdateAppMenu() {
   //}
 }
 
-internal fun createMenuBar(coroutineScope: CoroutineScope, frame: JFrame): IdeMenuBar {
-  return if (SystemInfoRt.isLinux) LinuxIdeMenuBar(coroutineScope, frame) else IdeMenuBar(coroutineScope, frame)
-}
-
 internal fun installAppMenuIfNeeded(frame: JFrame) {
   if (!SystemInfoRt.isLinux) {
     return
