@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.GenericListComponentUpdater;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
@@ -179,6 +180,11 @@ public abstract class ShowRelatedElementsActionBase extends DumbAwareAction impl
         public void updatePopup(Object lookupItemObject) {
           updateElementImplementations(lookupItemObject, session);
         }
+
+        @Override
+        public void onClosed(@NotNull LightweightWindowEvent event) {
+          component.cleanup();
+        }
       };
 
       ComponentPopupBuilder popupBuilder = JBPopupFactory.getInstance()
@@ -195,13 +201,14 @@ public abstract class ShowRelatedElementsActionBase extends DumbAwareAction impl
           if (task != null) {
             task.cancelTask();
           }
-          Disposer.dispose(session);
           return Boolean.TRUE;
         });
       WindowMoveListener listener = new WindowMoveListener();
       listener.installTo(component);
-      Disposer.register(session, () -> listener.uninstallFrom(component));
+
       popup = popupBuilder.createPopup();
+      Disposer.register(popup, session);
+      Disposer.register(popup, () -> listener.uninstallFrom(component));
 
       updateInBackground(session, component, (AbstractPopup)popup, usageView);
 

@@ -517,7 +517,13 @@ public class ImplementationViewComponent extends JPanel {
   @Override
   public void removeNotify() {
     super.removeNotify();
-    if (ScreenUtil.isStandardAddRemoveNotify(this) && !myEditorReleased) {
+    if (ScreenUtil.isStandardAddRemoveNotify(this)) {
+      cleanup();
+    }
+  }
+
+  public void cleanup() {
+    if (!myEditorReleased) {
       myEditorReleased = true; // remove notify can be called several times for popup windows
       EditorFactory.getInstance().releaseEditor(myEditor);
       disposeNonTextEditor();

@@ -15,9 +15,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.PanelWithText;
-import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.rt.coverage.data.LineCoverage;
@@ -85,7 +83,13 @@ public class ShowCoveringTestsAction extends AnAction {
         Consumer<ImplementationViewComponent> processor = viewComponent -> viewComponent.showInUsageView();
         component = new ImplementationViewComponent(ContainerUtil.map(elements, PsiImplementationViewElement::new), 0, processor);
         popupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component.getPreferredFocusableComponent())
-          .setDimensionServiceKey(project, "ShowTestsPopup", false);
+          .setDimensionServiceKey(project, "ShowTestsPopup", false)
+          .addListener(new JBPopupListener() {
+            @Override
+            public void onClosed(@NotNull LightweightWindowEvent event) {
+              component.cleanup();
+            }
+          });
       } else {
         component = null;
         @NonNls String testsPresentation = StringUtil.join(testNames, "<br/>").replace("_", ".");
