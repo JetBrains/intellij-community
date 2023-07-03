@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.nj2k
 
+import org.jetbrains.kotlin.j2k.ConverterSettings
 import org.jetbrains.kotlin.nj2k.conversions.*
 import org.jetbrains.kotlin.nj2k.tree.JKLambdaExpression
 import org.jetbrains.kotlin.nj2k.tree.JKParameter
@@ -10,7 +11,10 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.*
 
 object ConversionsRunner {
-    private fun createConversions(context: NewJ2kConverterContext) = listOf(
+    private fun createConversions(
+        settings: ConverterSettings,
+        context: NewJ2kConverterContext
+    ) = listOf(
         ParenthesizeBinaryExpressionIfNeededConversion(context),
         NonCodeElementsConversion(context),
         JavaModifiersConversion(context),
@@ -26,7 +30,7 @@ object ConversionsRunner {
         ArrayInitializerConversion(context),
         JavaStatementConversion(context),
         EnumFieldAccessConversion(context),
-        NullabilityAnnotationsConversion(context),
+        NullabilityAnnotationsConversion(settings, context),
         DefaultArgumentsConversion(context),
         ConstructorConversion(context),
         MoveConstructorsAfterFieldsConversion(context),
@@ -69,11 +73,12 @@ object ConversionsRunner {
 
     fun doApply(
         trees: List<JKTreeRoot>,
+        settings: ConverterSettings,
         context: NewJ2kConverterContext,
         updateProgress: (conversionIndex: Int, conversionCount: Int, fileIndex: Int, String) -> Unit
     ) {
 
-        val conversions = createConversions(context)
+        val conversions = createConversions(settings, context)
         for ((conversionIndex, conversion) in conversions.withIndex()) {
 
             val treeSequence = trees.asSequence().onEachIndexed { index, _ ->

@@ -152,7 +152,7 @@ internal class JKPrinter(
                     && owner?.safeAs<JKLambdaExpression>()?.functionalType?.type != type
                     || type.nullability == Nullability.Nullable)
         ) {
-            this.print("?")
+            //this.print("?")
         }
     }
 
