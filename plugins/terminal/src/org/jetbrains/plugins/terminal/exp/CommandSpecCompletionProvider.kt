@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
+import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
@@ -17,6 +18,8 @@ class CommandSpecCompletionProvider : CompletionProvider<CompletionParameters>()
       return
     }
 
+    val resultSet = result.withPrefixMatcher(PlainPrefixMatcher(result.prefixMatcher.prefix, true))
+
     val tokens = getCurCommandTokens(parameters)
     if (tokens.isEmpty()) {
       return
@@ -32,8 +35,8 @@ class CommandSpecCompletionProvider : CompletionProvider<CompletionParameters>()
       return // failed to find completion spec for command
     }
 
-    result.addAllElements(elements)
-    result.stopHere()
+    resultSet.addAllElements(elements)
+    resultSet.stopHere()
   }
 
   private fun getCurCommandTokens(parameters: CompletionParameters): List<String> {
@@ -75,9 +78,22 @@ class CommandSpecCompletionProvider : CompletionProvider<CompletionParameters>()
 
   private fun BaseSuggestion.toLookupElements(): List<LookupElement> {
     return names.map { name ->
-      LookupElementBuilder.create(insertValue ?: name)
+      val cursorOffset = insertValue?.indexOf("{cursor}")
+      val realInsertValue = insertValue?.replace("{cursor}", "")
+      LookupElementBuilder.create(realInsertValue ?: name)
         .withPresentableText(displayName ?: name)
         .withTypeText(description)
+        .withInsertHandler { context, item ->
+          val editor = context.editor
+          if (cursorOffset != null && cursorOffset != -1) {
+            editor.caretModel.moveToOffset(context.startOffset + cursorOffset)
+          }
+          else {
+            editor.document.insertString(context.tailOffset, " ")
+            editor.caretModel.moveToOffset(context.tailOffset + 1)
+            AutoPopupController.getInstance(context.project).scheduleAutoPopup(editor)
+          }
+        }
     }
   }
 }
