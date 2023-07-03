@@ -18,7 +18,7 @@ class HtmlDefaultEmbeddedContentSupport : HtmlEmbeddedContentSupport {
 
 }
 
-class HtmlRawTextTagContentProvider(lexer: BaseHtmlLexer) : HtmlTagEmbeddedContentProvider(lexer) {
+open class HtmlRawTextTagContentProvider(lexer: BaseHtmlLexer) : HtmlTagEmbeddedContentProvider(lexer) {
   override fun isInterestedInTag(tagName: CharSequence): Boolean =
     (namesEqual(tagName, HtmlUtil.TITLE_TAG_NAME)
      || namesEqual(tagName, HtmlUtil.TEXTAREA_TAG_NAME))
