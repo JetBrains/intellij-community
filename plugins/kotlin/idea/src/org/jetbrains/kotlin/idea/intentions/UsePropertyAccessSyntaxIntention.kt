@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.*
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
+import org.jetbrains.kotlin.idea.codeinsight.utils.getBooleanTestOption
 import org.jetbrains.kotlin.idea.core.NotPropertiesService
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
@@ -110,15 +111,16 @@ class UsePropertyAccessSyntaxInspection : IntentionBasedInspection<KtExpression>
     }
 
     override fun inspectionTarget(element: KtExpression): PsiElement? {
+        initOptionsInUnitTestMode(element.containingKtFile)
+        return element.callOrReferenceOrNull(KtCallExpression::getCalleeExpression, KtCallableReferenceExpression::getCallableReference)
+    }
+
+    private fun initOptionsInUnitTestMode(testDataFile: KtFile) {
         if (isUnitTestMode()) {
-            val reportNonTrivialAccessors = element.containingKtFile
-                .findDescendantOfType<PsiComment> { it.text.startsWith("// REPORT_NON_TRIVIAL_ACCESSORS") }
-                ?.let { it.text.removePrefix("// REPORT_NON_TRIVIAL_ACCESSORS:").trim().toBoolean() }
-            if (reportNonTrivialAccessors != null) {
-                this.reportNonTrivialAccessors = reportNonTrivialAccessors
+            testDataFile.getBooleanTestOption("REPORT_NON_TRIVIAL_ACCESSORS")?.let {
+                reportNonTrivialAccessors = it
             }
         }
-        return element.callOrReferenceOrNull(KtCallExpression::getCalleeExpression, KtCallableReferenceExpression::getCallableReference)
     }
 
     override fun inspectionProblemText(element: KtExpression): String? =

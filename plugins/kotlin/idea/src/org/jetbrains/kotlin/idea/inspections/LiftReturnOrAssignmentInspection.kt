@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
+import org.jetbrains.kotlin.idea.codeinsight.utils.getBooleanTestOption
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.BranchedFoldingUtils
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isElseIf
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -41,12 +42,7 @@ class LiftReturnOrAssignmentInspection @JvmOverloads constructor(private val ski
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession) =
         object : KtVisitorVoid() {
             override fun visitExpression(expression: KtExpression) {
-                if (isUnitTestMode()) {
-                    reportOnlyIfSingleStatement = expression.containingKtFile
-                        .findDescendantOfType<PsiComment> { it.text.startsWith("// ONLY_SINGLE_STATEMENT:") }
-                        ?.let { it.text.removePrefix("// ONLY_SINGLE_STATEMENT:").trim().toBoolean() }
-                        ?: reportOnlyIfSingleStatement
-                }
+                initOptionsInUnitTestMode(expression.containingKtFile)
 
                 val states = getState(expression, skipLongExpressions, reportOnlyIfSingleStatement) ?: return
                 if (expression.isUsedAsExpression(expression.analyze(BodyResolveMode.PARTIAL_WITH_CFA))) return
@@ -85,6 +81,14 @@ class LiftReturnOrAssignmentInspection @JvmOverloads constructor(private val ski
             }
 
         }
+
+    private fun initOptionsInUnitTestMode(testDataFile: KtFile) {
+        if (isUnitTestMode()) {
+            testDataFile.getBooleanTestOption("ONLY_SINGLE_STATEMENT")?.let {
+                reportOnlyIfSingleStatement = it
+            }
+        }
+    }
 
     private class LiftReturnOutFix(private val keyword: String) : LocalQuickFix {
         override fun getName() = KotlinBundle.message("lift.return.out.fix.text.0", keyword)

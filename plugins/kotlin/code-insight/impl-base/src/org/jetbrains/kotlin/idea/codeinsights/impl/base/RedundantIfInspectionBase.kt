@@ -14,6 +14,7 @@ import com.intellij.psi.*
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.utils.getBooleanTestOption
 import org.jetbrains.kotlin.idea.codeinsight.utils.negate
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -53,12 +54,7 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
             val (redundancyType, branchType, returnAfterIf) = RedundancyType.of(expression)
             if (redundancyType == RedundancyType.NONE) return@ifExpressionVisitor
 
-            if (isUnitTestMode()) {
-                ignoreChainedIf = expression.containingKtFile
-                    .findDescendantOfType<PsiComment> { it.text.startsWith("// IGNORE_CHAINED_IF:") }
-                    ?.let { it.text.removePrefix("// IGNORE_CHAINED_IF:").trim().toBoolean() }
-                    ?: false
-            }
+            initOptionsInUnitTestMode(expression.containingKtFile)
 
             val isChainedIf = expression.getPrevSiblingIgnoringWhitespaceAndComments() is KtIfExpression ||
                     expression.parent.let { it is KtContainerNodeForControlStructureBody && it.expression == expression }
@@ -77,6 +73,14 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
                 expression.ifKeyword.textRangeInParent,
                 RemoveRedundantIf(redundancyType, branchType, returnAfterIf, hasConditionWithFloatingPointType)
             )
+        }
+    }
+
+    private fun initOptionsInUnitTestMode(testDataFile: KtFile) {
+        if (isUnitTestMode()) {
+            testDataFile.getBooleanTestOption("IGNORE_CHAINED_IF")?.let {
+                ignoreChainedIf = it
+            }
         }
     }
 
