@@ -8,9 +8,6 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.trustedProjects.TrustedProjectsListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
@@ -30,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenDisposable;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
-import org.jetbrains.idea.maven.execution.RunnerBundle;
 import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.indices.MavenIndices;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
@@ -58,43 +54,12 @@ final class MavenServerManagerImpl implements MavenServerManager {
 
   private File eventListenerJar;
 
-  @Override
-  public Collection<MavenServerConnector> getAllConnectors() {
-    Set<MavenServerConnector> set = Collections.newSetFromMap(new IdentityHashMap<>());
-    synchronized (myMultimoduleDirToConnectorMap) {
-      set.addAll(myMultimoduleDirToConnectorMap.values());
-      if (myIndexingConnector != null) {
-        set.add(myIndexingConnector);
-      }
-    }
-    return set;
-  }
-
-  @Override
-  public void restartMavenConnectors(Project project, boolean wait, Predicate<MavenServerConnector> condition) {
-    List<MavenServerConnector> connectorsToShutDown = new ArrayList<>();
-    synchronized (myMultimoduleDirToConnectorMap) {
-      getAllConnectors().forEach(it -> {
-        if (project.equals(it.getProject()) && condition.test(it)) {
-          connectorsToShutDown.add(removeConnector(it));
-        }
-      });
-    }
-    MavenProjectsManager.getInstance(project).getEmbeddersManager().reset();
-    MavenServerManagerEx.stopConnectors(project, wait, connectorsToShutDown);
-  }
-
   MavenServerManagerImpl() {
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
     connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appWillBeClosed(boolean isRestart) {
-        ProgressManager.getInstance().run(new Task.Modal(null, RunnerBundle.message("maven.server.shutdown"), false) {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            shutdown(true);
-          }
-        });
+        shutdown(false);
       }
     });
 
@@ -102,12 +67,7 @@ final class MavenServerManagerImpl implements MavenServerManager {
       @Override
       public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
         if (MavenUtil.INTELLIJ_PLUGIN_ID.equals(pluginDescriptor.getPluginId().getIdString())) {
-          ProgressManager.getInstance().run(new Task.Modal(null, RunnerBundle.message("maven.server.shutdown"), false) {
-            @Override
-            public void run(@NotNull ProgressIndicator indicator) {
-              shutdown(true);
-            }
-          });
+          shutdown(false);
         }
       }
     });
@@ -137,6 +97,32 @@ final class MavenServerManagerImpl implements MavenServerManager {
         }
       }
     });
+  }
+
+  @Override
+  public Collection<MavenServerConnector> getAllConnectors() {
+    Set<MavenServerConnector> set = Collections.newSetFromMap(new IdentityHashMap<>());
+    synchronized (myMultimoduleDirToConnectorMap) {
+      set.addAll(myMultimoduleDirToConnectorMap.values());
+      if (myIndexingConnector != null) {
+        set.add(myIndexingConnector);
+      }
+    }
+    return set;
+  }
+
+  @Override
+  public void restartMavenConnectors(Project project, boolean wait, Predicate<MavenServerConnector> condition) {
+    List<MavenServerConnector> connectorsToShutDown = new ArrayList<>();
+    synchronized (myMultimoduleDirToConnectorMap) {
+      getAllConnectors().forEach(it -> {
+        if (project.equals(it.getProject()) && condition.test(it)) {
+          connectorsToShutDown.add(removeConnector(it));
+        }
+      });
+    }
+    MavenProjectsManager.getInstance(project).getEmbeddersManager().reset();
+    MavenServerManagerEx.stopConnectors(project, wait, connectorsToShutDown);
   }
 
   private MavenServerConnector doGetConnector(@NotNull Project project, @NotNull String workingDirectory) {
@@ -233,58 +219,10 @@ final class MavenServerManagerImpl implements MavenServerManager {
     });
   }
 
-
-  private static Integer getFreeDebugPort() {
-    if (Registry.is("maven.server.debug")) {
-      try {
-        return NetUtils.findAvailableSocketPort();
-      }
-      catch (IOException e) {
-        MavenLog.LOG.warn(e);
-      }
-    }
-    return null;
-  }
-
-  @NotNull
-  private static Sdk getJdk(Project project, MavenWorkspaceSettings settings) {
-    String jdkForImporterName = settings.getImportingSettings().getJdkForImporter();
-    Sdk jdk;
-    try {
-      jdk = MavenUtil.getJdk(project, jdkForImporterName);
-    }
-    catch (ExternalSystemJdkException e) {
-      jdk = MavenUtil.getJdk(project, MavenRunnerSettings.USE_PROJECT_JDK);
-      MavenProjectsManager.getInstance(project).getSyncConsole().addWarning(SyncBundle.message("importing.jdk.changed"),
-                                                                            SyncBundle.message("importing.jdk.changed.description",
-                                                                                               jdkForImporterName, jdk.getName())
-      );
-    }
-    if (JavaSdkVersionUtil.isAtLeast(jdk, JavaSdkVersion.JDK_1_8)) {
-      return jdk;
-    }
-    else {
-      MavenLog.LOG.info("Selected jdk [" + jdk.getName() + "] is not JDK1.8+ Will use internal jdk instead");
-      return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
-    }
-  }
-
-  private static boolean compatibleParameters(Project project,
-                                              MavenServerConnector connector,
-                                              Sdk jdk,
-                                              String multimoduleDirectory) {
-    if (Registry.is("maven.server.per.idea.project")) return true;
-    MavenDistributionsCache cache = MavenDistributionsCache.getInstance(project);
-    MavenDistribution distribution = cache.getMavenDistribution(multimoduleDirectory);
-    String vmOptions = cache.getVmOptions(multimoduleDirectory);
-    return connector.isCompatibleWith(jdk, vmOptions, distribution);
-  }
-
   @Override
   public void dispose() {
     shutdown(false);
   }
-
 
   @Override
   public boolean shutdownConnector(MavenServerConnector connector, boolean wait) {
@@ -295,7 +233,7 @@ final class MavenServerManagerImpl implements MavenServerManager {
   }
 
   private MavenServerConnector removeConnector(@Nullable MavenServerConnector connector) {
-    if(connector == null) return null;
+    if (connector == null) return null;
     synchronized (myMultimoduleDirToConnectorMap) {
       if (myIndexingConnector == connector) {
         myIndexingConnector = null;
@@ -353,43 +291,6 @@ final class MavenServerManagerImpl implements MavenServerManager {
     }
     return eventListenerJar;
   }
-
-  private static File getEventSpyPathForLocalBuild() {
-    final File root = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
-    return new File(root.getParent(), "intellij.maven.server.eventListener");
-  }
-
-  private static MavenServerSettings convertSettings(@NotNull Project project, @Nullable MavenGeneralSettings settings) {
-    if (settings == null) {
-      settings = MavenWorkspaceSettingsComponent.getInstance(project).getSettings().getGeneralSettings();
-    }
-    RemotePathTransformerFactory.Transformer transformer = RemotePathTransformerFactory.createForProject(project);
-    MavenServerSettings result = new MavenServerSettings();
-    result.setLoggingLevel(settings.getOutputLevel().getLevel());
-    result.setOffline(settings.isWorkOffline());
-    result.setUpdateSnapshots(settings.isAlwaysUpdateSnapshots());
-    File mavenHome = settings.getEffectiveMavenHome();
-    if (mavenHome != null) {
-      String remotePath = transformer.toRemotePath(mavenHome.toPath().toAbsolutePath().toString());
-      result.setMavenHomePath(remotePath);
-    }
-
-
-    File userSettings = MavenWslUtil.getUserSettings(project, settings.getUserSettingsFile(), settings.getMavenConfig());
-    String userSettingsPath = userSettings.toPath().toAbsolutePath().toString();
-    result.setUserSettingsPath(transformer.toRemotePath(userSettingsPath));
-
-    File globalSettings = MavenWslUtil.getGlobalSettings(project, settings.getMavenHome(), settings.getMavenConfig());
-    if (globalSettings != null) {
-      result.setGlobalSettingsPath(transformer.toRemotePath(globalSettings.toPath().toAbsolutePath().toString()));
-    }
-
-    String localRepository = settings.getEffectiveLocalRepository().toPath().toAbsolutePath().toString();
-
-    result.setLocalRepositoryPath(transformer.toRemotePath(localRepository));
-    return result;
-  }
-
 
   @Override
   @NotNull
@@ -480,17 +381,6 @@ final class MavenServerManagerImpl implements MavenServerManager {
             }
           }
 
-          private static boolean waitIfNotIdeaShutdown() {
-            try {
-              Thread.sleep(100);
-              return true;
-            }
-            catch (InterruptedException ex) {
-              Thread.currentThread().interrupt();
-            }
-            return false;
-          }
-
           private MavenServerConnector getIndexingConnector() {
             if (myIndexingConnector != null) return myIndexingConnector;
             synchronized (myMultimoduleDirToConnectorMap) {
@@ -503,6 +393,17 @@ final class MavenServerManagerImpl implements MavenServerManager {
               myIndexingConnector.connect();
             }
             return myIndexingConnector;
+          }
+
+          private static boolean waitIfNotIdeaShutdown() {
+            try {
+              Thread.sleep(100);
+              return true;
+            }
+            catch (InterruptedException ex) {
+              Thread.currentThread().interrupt();
+            }
+            return false;
           }
         };
     }
@@ -556,5 +457,87 @@ final class MavenServerManagerImpl implements MavenServerManager {
         return MavenServerManagerImpl.this.getConnector(project, workingDirectory).createIndexer();
       }
     };
+  }
+
+  private static Integer getFreeDebugPort() {
+    if (Registry.is("maven.server.debug")) {
+      try {
+        return NetUtils.findAvailableSocketPort();
+      }
+      catch (IOException e) {
+        MavenLog.LOG.warn(e);
+      }
+    }
+    return null;
+  }
+
+  @NotNull
+  private static Sdk getJdk(Project project, MavenWorkspaceSettings settings) {
+    String jdkForImporterName = settings.getImportingSettings().getJdkForImporter();
+    Sdk jdk;
+    try {
+      jdk = MavenUtil.getJdk(project, jdkForImporterName);
+    }
+    catch (ExternalSystemJdkException e) {
+      jdk = MavenUtil.getJdk(project, MavenRunnerSettings.USE_PROJECT_JDK);
+      MavenProjectsManager.getInstance(project).getSyncConsole().addWarning(SyncBundle.message("importing.jdk.changed"),
+                                                                            SyncBundle.message("importing.jdk.changed.description",
+                                                                                               jdkForImporterName, jdk.getName())
+      );
+    }
+    if (JavaSdkVersionUtil.isAtLeast(jdk, JavaSdkVersion.JDK_1_8)) {
+      return jdk;
+    }
+    else {
+      MavenLog.LOG.info("Selected jdk [" + jdk.getName() + "] is not JDK1.8+ Will use internal jdk instead");
+      return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+    }
+  }
+
+  private static boolean compatibleParameters(Project project,
+                                              MavenServerConnector connector,
+                                              Sdk jdk,
+                                              String multimoduleDirectory) {
+    if (Registry.is("maven.server.per.idea.project")) return true;
+    MavenDistributionsCache cache = MavenDistributionsCache.getInstance(project);
+    MavenDistribution distribution = cache.getMavenDistribution(multimoduleDirectory);
+    String vmOptions = cache.getVmOptions(multimoduleDirectory);
+    return connector.isCompatibleWith(jdk, vmOptions, distribution);
+  }
+
+  private static File getEventSpyPathForLocalBuild() {
+    final File root = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
+    return new File(root.getParent(), "intellij.maven.server.eventListener");
+  }
+
+  private static MavenServerSettings convertSettings(@NotNull Project project, @Nullable MavenGeneralSettings settings) {
+    if (settings == null) {
+      settings = MavenWorkspaceSettingsComponent.getInstance(project).getSettings().getGeneralSettings();
+    }
+    RemotePathTransformerFactory.Transformer transformer = RemotePathTransformerFactory.createForProject(project);
+    MavenServerSettings result = new MavenServerSettings();
+    result.setLoggingLevel(settings.getOutputLevel().getLevel());
+    result.setOffline(settings.isWorkOffline());
+    result.setUpdateSnapshots(settings.isAlwaysUpdateSnapshots());
+    File mavenHome = settings.getEffectiveMavenHome();
+    if (mavenHome != null) {
+      String remotePath = transformer.toRemotePath(mavenHome.toPath().toAbsolutePath().toString());
+      result.setMavenHomePath(remotePath);
+    }
+
+
+    File userSettings = MavenWslUtil.getUserSettings(project, settings.getUserSettingsFile(), settings.getMavenConfig());
+    String userSettingsPath = userSettings.toPath().toAbsolutePath().toString();
+    result.setUserSettingsPath(transformer.toRemotePath(userSettingsPath));
+
+    File globalSettings = MavenWslUtil.getGlobalSettings(project, settings.getMavenHome(), settings.getMavenConfig());
+    if (globalSettings != null) {
+      result.setGlobalSettingsPath(transformer.toRemotePath(globalSettings.toPath().toAbsolutePath().toString()));
+    }
+
+    String localRepository = settings.getEffectiveLocalRepository().toPath().toAbsolutePath().toString();
+
+    result.setLocalRepositoryPath(transformer.toRemotePath(localRepository));
+    return result;
   }
 }
