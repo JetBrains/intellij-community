@@ -1294,6 +1294,11 @@ public abstract class FindUsagesFirTestGenerated extends AbstractFindUsagesFirTe
                 runTest("../idea/tests/testData/findUsages/kotlin/findTypeParameterUsages/kotlinFunctionTypeParameterUsages.0.kt");
             }
 
+            @TestMetadata("kotlinReifiedTypeParameterUsages.0.kt")
+            public void testKotlinReifiedTypeParameterUsages() throws Exception {
+                runTest("../idea/tests/testData/findUsages/kotlin/findTypeParameterUsages/kotlinReifiedTypeParameterUsages.0.kt");
+            }
+
             @TestMetadata("propertyWithTypeParameter.0.kt")
             public void testPropertyWithTypeParameter() throws Exception {
                 runTest("../idea/tests/testData/findUsages/kotlin/findTypeParameterUsages/propertyWithTypeParameter.0.kt");
