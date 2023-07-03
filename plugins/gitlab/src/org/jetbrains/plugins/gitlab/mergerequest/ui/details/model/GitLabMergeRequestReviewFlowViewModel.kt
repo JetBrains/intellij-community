@@ -126,7 +126,7 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
   override val shouldBeRebased: Flow<Boolean> = mergeRequest.shouldBeRebased
 
   override val userCanApprove: Flow<Boolean> = mergeRequest.userPermissions.map { it.canApprove }
-  override val userCanManage: Flow<Boolean> = mergeRequest.userPermissions.map { it.canMerge }
+  override val userCanManage: Flow<Boolean> = mergeRequest.userPermissions.map { it.canUpdate }
   override val userCanMerge: Flow<Boolean> = mergeRequest.userPermissions.map { it.canMerge }
 
   override val submittableReview: Flow<SubmittableReview?> = mergeRequest.getSubmittableReview(currentUser).modelFlow(scope, LOG)
