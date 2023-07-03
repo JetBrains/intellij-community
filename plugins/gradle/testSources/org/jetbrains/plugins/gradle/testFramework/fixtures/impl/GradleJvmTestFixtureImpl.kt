@@ -12,6 +12,7 @@ import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.impl.AbstractSdkTestFixture
+import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
@@ -25,7 +26,8 @@ internal class GradleJvmTestFixtureImpl(private val gradleVersion: GradleVersion
     get() = JavaSdk.getInstance()
 
   override fun isSdkSupported(versionString: String): Boolean {
-    return GradleJvmSupportMatrix.isSupported(gradleVersion, versionString)
+    val javaVersion = JavaVersion.tryParse(versionString) ?: return false
+    return GradleJvmSupportMatrix.isSupported(gradleVersion, javaVersion)
   }
 
   override fun findOrCreateSdk(): Sdk {

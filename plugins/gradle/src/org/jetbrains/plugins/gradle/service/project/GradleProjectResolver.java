@@ -68,6 +68,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
+import static org.jetbrains.plugins.gradle.issue.UnsupportedGradleJvmIssueChecker.Util.isJavaHomeUnsupportedByIdea;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getDefaultModuleTypeId;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getModuleId;
 
@@ -224,7 +225,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         throw new IllegalStateException("Unsupported Gradle version");
       }
       var javaHome = buildEnvironment.getJava().getJavaHome();
-      if (!GradleJvmSupportMatrix.isJavaHomeSupportedByIdea(javaHome.getPath())) {
+      if (isJavaHomeUnsupportedByIdea(javaHome.getPath())) {
         throw new IllegalStateException("Unsupported Gradle JVM version");
       }
     }
