@@ -179,7 +179,7 @@ tasks {
       // "-Dintellij.test.standalone=true",
       // "-Djava.awt.headless=false",
       "-Dide.browser.jcef.headless.enabled=true",
-      "-Dide.browser.jcef.log.level=verbose",
+      "-Dide.browser.jcef.log.level=info",
       "-Dide.browser.jcef.log.path=$jcefLogPath",
       "-Djcef.trace.cefbrowser_n.lifespan=true",
       "-Dide.browser.jcef.debug.js=true",
