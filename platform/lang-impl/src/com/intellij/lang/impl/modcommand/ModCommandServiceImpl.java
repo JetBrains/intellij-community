@@ -14,6 +14,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupFocusDegree;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.diff.comparison.ComparisonManager;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.fragments.DiffFragment;
@@ -63,6 +64,12 @@ public class ModCommandServiceImpl implements ModCommandService {
   }
 
   @Override
+  public @NotNull LocalQuickFixAndIntentionActionOnPsiElement wrapToLocalQuickFixAndIntentionActionOnPsiElement(@NotNull ModCommandAction action,
+                                                                                                                @NotNull PsiElement psiElement) {
+    return new ModCommandActionQuickFixUberWrapper(action, psiElement);
+  }
+
+  @Override
   public @NotNull LocalQuickFix wrapToQuickFix(@NotNull ModCommandAction action) {
     return new ModCommandActionQuickFixWrapper(action);
   }
@@ -81,7 +88,8 @@ public class ModCommandServiceImpl implements ModCommandService {
     while (action instanceof IntentionActionDelegate delegate) {
       action = delegate.getDelegate();
     }
-    return action instanceof ModCommandActionWrapper wrapper ? wrapper.action() : null;
+    return action instanceof ModCommandActionWrapper wrapper ? wrapper.action() : 
+           action instanceof ModCommandActionQuickFixUberWrapper wrapper ? wrapper.action() : null;
   }
 
   @RequiresEdt

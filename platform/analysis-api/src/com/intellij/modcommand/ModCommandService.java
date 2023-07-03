@@ -3,9 +3,11 @@ package com.intellij.modcommand;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.modcommand.ModCommandAction.ActionContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,6 +24,14 @@ public interface ModCommandService {
    * @see ModCommandAction#asIntention() 
    */
   @NotNull IntentionAction wrap(@NotNull ModCommandAction action);
+
+  /**
+   * @param action     action
+   * @param psiElement context PsiElement
+   * @return an {@link IntentionAction} wrapper that adapts this action to the old code which requires {@code LocalQuickFixAndIntentionActionOnPsiElement}.
+   */
+  @NotNull LocalQuickFixAndIntentionActionOnPsiElement wrapToLocalQuickFixAndIntentionActionOnPsiElement(@NotNull ModCommandAction action,
+                                                                                                         @NotNull PsiElement psiElement);
 
   /**
    * @param action action to wrap
