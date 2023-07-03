@@ -908,7 +908,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("completion-ranking-kotlin"),
     jetbrainsLibrary("completion-ranking-kotlin-exp"),
     jetbrainsLibrary("completion-ranking-php-exp"),
-    jetbrainsLibrary("completion-ranking-python"),
+    jetbrainsLibrary("completion-ranking-python-with-full-line"),
     jetbrainsLibrary("completion-ranking-python-exp"),
     jetbrainsLibrary("completion-ranking-ruby-exp"),
     jetbrainsLibrary("completion-ranking-rust-exp"),

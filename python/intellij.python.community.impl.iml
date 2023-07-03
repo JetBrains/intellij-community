@@ -40,18 +40,6 @@
     <orderEntry type="library" scope="PROVIDED" name="Ant" level="project" />
     <orderEntry type="module" module-name="intellij.python.psi.impl" exported="" />
     <orderEntry type="module" module-name="intellij.python.sdk" exported="" />
-    <orderEntry type="module-library">
-      <library name="completion-ranking-python" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-python:0.2.3" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python/0.2.3/completion-ranking-python-0.2.3.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python/0.2.3/completion-ranking-python-0.2.3-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module-library">
@@ -123,5 +111,7 @@
     <orderEntry type="module" module-name="intellij.python.psi" />
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
+    <orderEntry type="library" name="completion-ranking-python–with-full-line" level="project" />
+    <orderEntry type="module" module-name="intellij.completionMlRankingModels" />
   </component>
 </module>
