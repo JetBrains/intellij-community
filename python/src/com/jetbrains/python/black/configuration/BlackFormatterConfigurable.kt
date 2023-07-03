@@ -93,14 +93,14 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
   })
 
   var mainPanel: DialogPanel = panel {
-    row {
-      label(PyBundle.message("black.execution.mode.label"))
-        .applyToComponent { toolTipText = PyBundle.message("black.execution.mode.tooltip.text") }
-        .applyToComponent { icon = AllIcons.General.ContextHelp }
+    row(PyBundle.message("black.execution.mode.label")) {
       executionModeComboBox = comboBox(EnumComboBoxModel(
         BlackFormatterConfiguration.ExecutionMode::class.java))
         .applyToComponent { renderer = executionModeComboBoxRenderer }
+        .gap(RightGap.SMALL)
         .component
+      icon(AllIcons.General.ContextHelp)
+        .applyToComponent { toolTipText = PyBundle.message("black.execution.mode.tooltip.text") }
       layout(RowLayout.LABEL_ALIGNED)
     }
     row {
