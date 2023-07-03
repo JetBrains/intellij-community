@@ -15,6 +15,7 @@ import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
+import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Rectangle
 import java.awt.image.RGBImageFilter
@@ -63,7 +64,12 @@ internal class HeaderToolbarButtonLook(
 
   override fun paintIcon(g: Graphics?, actionButton: ActionButtonComponent?, icon: Icon, x: Int, y: Int) {
     val scaledIcon = scaleIcon(adjustIconForHeader(icon))
-    paintIconImpl(g, actionButton, scaledIcon, x, y)
+    val originalSize = Dimension(icon.iconWidth, icon.iconHeight)
+    val scaledSize = Dimension(scaledIcon.iconWidth, scaledIcon.iconHeight)
+    val scaledX = x - (scaledSize.width - originalSize.width) / 2
+    val scaledY = y - (scaledSize.height - originalSize.height) / 2
+
+    paintIconImpl(g, actionButton, scaledIcon, scaledX, scaledY)
   }
 
   override fun paintDownArrow(g: Graphics?, actionButton: ActionButtonComponent?, originalIcon: Icon, arrowIcon: Icon) {

@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction.ComboBoxButton
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceAsync
@@ -292,6 +293,8 @@ private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: Layout
     }
 
     adjustIcons(presentation)
+
+    (component as? ActionButton)?.let { button -> button.setMinimumButtonSize(ActionToolbar.experimentalToolbarMinimumButtonSize()) }
 
     if (action is ComboBoxAction) {
       findComboButton(component)?.apply {
