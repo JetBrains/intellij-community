@@ -2,7 +2,9 @@
 package org.jetbrains.plugins.gradle.execution.test.runner.events
 
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
@@ -59,13 +61,9 @@ internal class GradleTestEventConverter(
   }
 
   private val isEnabledGroovyPlugin: Boolean by lazy {
-    try {
-      Class.forName("org.jetbrains.plugins.groovy.ext.spock.SpecificationKt")
-      true
-    }
-    catch (ex: Throwable) {
-      false
-    }
+    val groovyPluginId = PluginId.findId("org.intellij.groovy")
+    val groovyPlugin = PluginManagerCore.getPluginSet()
+    groovyPluginId != null && groovyPlugin.isPluginEnabled(groovyPluginId)
   }
 
   private val isSpockTestMethod: Boolean by lazy {
