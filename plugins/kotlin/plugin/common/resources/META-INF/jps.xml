@@ -39,6 +39,11 @@
     />
   </extensions>
 
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.jps.KotlinGlobalSettingsChangeListener"
+              topic="org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener"/>
+  </projectListeners>
+
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind"/>
     <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.JsIdePlatformKind"/>
