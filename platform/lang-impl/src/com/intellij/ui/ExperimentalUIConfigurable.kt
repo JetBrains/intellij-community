@@ -127,11 +127,19 @@ open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.me
   }
 
   final override fun apply() {
-    getFirstEnabledConfigurable()?.onApply()
-    val uiSettingsChanged = isModified
-    super.apply()
-    if (uiSettingsChanged) {
-      LafManager.getInstance().applyDensity()
+    if (PlatformUtils.isJetBrainsClient()) {
+      ExperimentalUI.getInstance().setNewUIInternal(
+        /* newUI = */ !ExperimentalUI.isNewUI(),
+        /* suggestRestart = */ false
+      )
+    }
+    else {
+      getFirstEnabledConfigurable()?.onApply()
+      val uiSettingsChanged = isModified
+      super.apply()
+      if (uiSettingsChanged) {
+        LafManager.getInstance().applyDensity()
+      }
     }
   }
 }
