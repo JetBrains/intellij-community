@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -22,7 +23,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -164,9 +164,9 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
     }
   }
 
-  private record FileMarkupInfo(@NotNull VirtualFile virtualFile, int contentHash, @NotNull List<HighlighterState> highlighters) {
+  private record FileMarkupInfo(@NotNull VirtualFile virtualFile, int contentHash, @NotNull List<HighlighterState> highlighters, @NotNull String colorSchemeName) {
     private FileMarkupInfo(@NotNull Project project, @NotNull VirtualFile virtualFile, @NotNull Document document, @NotNull EditorColorsScheme colorsScheme) {
-      this(virtualFile, document.getText().hashCode(), HighlighterState.allHighlightersFromMarkup(project, document, colorsScheme));
+      this(virtualFile, document.getText().hashCode(), HighlighterState.allHighlightersFromMarkup(project, document, colorsScheme), colorsScheme.getName());
     }
 
     static FileMarkupInfo exhume(@NotNull Element element) {
@@ -175,9 +175,10 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
       if (virtualFile == null) {
         return null;
       }
+      String colorSchemeName = element.getAttributeValue("colorScheme", "");
       int contentHash = Integer.parseInt(element.getAttributeValue("contentHash", ""));
       List<HighlighterState> highlighters = ContainerUtil.map(element.getChildren("highlighter"), e -> HighlighterState.exhume(e));
-      return new FileMarkupInfo(virtualFile, contentHash, highlighters);
+      return new FileMarkupInfo(virtualFile, contentHash, highlighters, colorSchemeName);
     }
     @NotNull
     Element bury() {
@@ -299,15 +300,16 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
   @Override
   public Element getState() {
     if (!isEnabled()) return null;
-    Map<VirtualFile, FileMarkupInfo> markup =
-    Arrays.stream(FileEditorManager.getInstance(myProject).getAllEditors())
-      .filter(fe -> fe instanceof TextEditor)
-      .filter(fe -> fe.getFile() != null)
-      .map(fe -> Trinity.create(fe.getFile(), ((TextEditor)fe).getEditor().getDocument(), ((TextEditor)fe).getEditor().getColorsScheme()))
-      .distinct()
-      .map(t -> new FileMarkupInfo(myProject, t.getFirst(), t.getSecond(), t.getThird()))
-      .filter(m->!m.highlighters().isEmpty())
-      .collect(Collectors.toMap(m->m.virtualFile(), m->m));
+    Map<VirtualFile, FileMarkupInfo> markup = new HashMap<>();
+    for (FileEditor fileEditor : FileEditorManager.getInstance(myProject).getAllEditors()) {
+      if (fileEditor instanceof TextEditor && fileEditor.getFile() != null) {
+        Editor editor = ((TextEditor)fileEditor).getEditor();
+        VirtualFile file = fileEditor.getFile();
+        Document document = editor.getDocument();
+        EditorColorsScheme colorScheme = getOriginalColorScheme(editor.getColorsScheme());
+        markup.computeIfAbsent(file, __ -> new FileMarkupInfo(myProject, file, document, colorScheme));
+      }
+    }
 
     List<Element> markupElements = markup.entrySet().stream()
       .sorted(Comparator.comparing(e -> e.getKey().getUrl()))
@@ -347,4 +349,9 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
     highlighter.putUserData(IS_ZOMBIE, null);
   }
 
+  private static @NotNull EditorColorsScheme getOriginalColorScheme(@NotNull EditorColorsScheme colorsScheme) {
+    return colorsScheme instanceof DelegateColorScheme
+           ? getOriginalColorScheme(((DelegateColorScheme)colorsScheme).getDelegate())
+           : colorsScheme;
+  }
 }
