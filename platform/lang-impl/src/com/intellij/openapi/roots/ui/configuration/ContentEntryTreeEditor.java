@@ -186,7 +186,7 @@ public class ContentEntryTreeEditor {
     myFileSystemTree.registerMouseListener(mousePopupGroup);
   }
 
-  public ContentEntryEditor getContentEntryEditor() {
+  public @Nullable ContentEntryEditor getContentEntryEditor() {
     return myContentEntryEditor;
   }
 
