@@ -158,6 +158,7 @@ public class JBInsets extends Insets {
   @ApiStatus.Internal
   public static Insets unwrap(@NotNull Insets insets) {
     if (insets instanceof JBInsets jbInsets) {
+      // Check that scaled values consistent with unscaled ones
       JBInsets cleanInsets = create(jbInsets.getUnscaled());
 
       if (insets.equals(cleanInsets)) return jbInsets.getUnscaled();
