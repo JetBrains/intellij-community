@@ -245,7 +245,7 @@ class StructureViewWrapperImpl(private val myProject: Project,
 
     // structure view is outdated
     val structureView = myStructureView ?: return
-    if (structureView is StructureViewComposite && structureView.isOutdated) {
+    if (structureView is StructureViewComposite && readAction { structureView.isOutdated }) {
       setFileAndRebuild()
       return
     }
