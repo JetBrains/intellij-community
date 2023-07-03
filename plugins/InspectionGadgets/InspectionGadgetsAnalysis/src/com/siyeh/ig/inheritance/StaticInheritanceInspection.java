@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.inheritance;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
@@ -22,7 +23,6 @@ import com.intellij.psi.PsiReferenceList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -38,8 +38,8 @@ public class StaticInheritanceInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
-    return new InspectionGadgetsFix[]{new StaticInheritanceFix(false), new StaticInheritanceFix(true)};
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
+    return new LocalQuickFix[]{new StaticInheritanceFix(false), new StaticInheritanceFix(true)};
   }
 
 

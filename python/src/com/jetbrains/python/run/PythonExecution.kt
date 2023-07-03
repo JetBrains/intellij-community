@@ -5,6 +5,7 @@ import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.target.value.constant
 import com.intellij.openapi.vfs.encoding.EncodingManager
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.io.File
 import java.nio.charset.Charset
 
@@ -15,7 +16,7 @@ import java.nio.charset.Charset
 sealed class PythonExecution {
   var workingDir: TargetEnvironmentFunction<out String?>? = null
 
-  /** Parameters that return [REMOVE_ARGUMENT] are removed from the resulting argument list. */
+  /** Parameters that return [SKIP_ARGUMENT] are removed from the resulting argument list. */
   val parameters: MutableList<TargetEnvironmentFunction<String>> = mutableListOf()
 
   val envs: MutableMap<String, TargetEnvironmentFunction<String>> = mutableMapOf()
@@ -28,7 +29,7 @@ sealed class PythonExecution {
     addParameter(constant(value))
   }
 
-  /** If the function returns [REMOVE_ARGUMENT], the parameter will be removed from the resulting argument list. */
+  /** If the function returns [SKIP_ARGUMENT], the parameter will be removed from the resulting argument list. */
   fun addParameter(value: TargetEnvironmentFunction<String>) {
     parameters.add(value)
   }
@@ -67,7 +68,7 @@ sealed class PythonExecution {
   companion object {
     /** See docs for [parameters]. */
     // python -c 'print(repr(__import__("random").randbytes(16))[2:-1])'
-    const val REMOVE_ARGUMENT = """\xdc'S>\x02\x03%\x14\xee\xc0\xa1`\xcb\r\xf0\x95"""
+    const val SKIP_ARGUMENT = """\xdc'S>\x02\x03%\x14\xee\xc0\xa1`\xcb\r\xf0\x95"""
   }
 }
 

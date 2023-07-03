@@ -7,7 +7,6 @@ import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import java.io.File
 import java.net.InetAddress
 import java.net.ServerSocket
-import java.nio.file.Files
 import java.util.logging.Logger
 
 object Launcher {
@@ -33,7 +32,6 @@ object Launcher {
     val cmd = mutableListOf(
       paths.javaExecutable.canonicalPath,
       "-ea",
-      "-Dapple.laf.useScreenMenuBar=true",
       "-Dfus.internal.test.mode=true",
       "-Djb.privacy.policy.text=\"<!--999.999-->\"",
       "-Djb.consents.confirmation.enabled=false",

@@ -35,7 +35,8 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
   @Test
   fun `check initial default filter search state`() = runTest(UnconfinedTestDispatcher()) {
     val cs = childScope()
-    val filterVm = GitLabMergeRequestsFiltersViewModelImpl(scope = cs, historyModel = emptyHistoryModel, currentUser = mockedUser,
+    val filterVm = GitLabMergeRequestsFiltersViewModelImpl(scope = cs, project = null,
+                                                           historyModel = emptyHistoryModel, currentUser = mockedUser,
                                                            avatarIconsProvider = mock(), projectData = mock())
     val loaderSupplierMock = mockLoaderSupplier()
 
@@ -79,7 +80,8 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
   @Test
   fun `check changed filter search state`() = runTest(UnconfinedTestDispatcher()) {
     val cs = childScope()
-    val filterVm = GitLabMergeRequestsFiltersViewModelImpl(scope = cs, historyModel = emptyHistoryModel, currentUser = mockedUser,
+    val filterVm = GitLabMergeRequestsFiltersViewModelImpl(scope = cs, project = null,
+                                                           historyModel = emptyHistoryModel, currentUser = mockedUser,
                                                            avatarIconsProvider = mock(), projectData = mock())
     val loaderSupplierMock = mockLoaderSupplier()
 
@@ -109,7 +111,8 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
   @Test
   fun `check participant filters`() = runTest(UnconfinedTestDispatcher()) {
     val cs = childScope()
-    val filterVm = GitLabMergeRequestsFiltersViewModelImpl(scope = cs, historyModel = emptyHistoryModel, currentUser = mockedUser,
+    val filterVm = GitLabMergeRequestsFiltersViewModelImpl(scope = cs, project = null,
+                                                           historyModel = emptyHistoryModel, currentUser = mockedUser,
                                                            avatarIconsProvider = mock(), projectData = mock())
     val loaderSupplierMock = mockLoaderSupplier()
 
@@ -145,7 +148,8 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
   @Test
   fun `check default filter`() = runTest(UnconfinedTestDispatcher()) {
     val cs = childScope()
-    val filterVm = GitLabMergeRequestsFiltersViewModelImpl(scope = cs, historyModel = emptyHistoryModel, currentUser = mockedUser,
+    val filterVm = GitLabMergeRequestsFiltersViewModelImpl(scope = cs, project = null,
+                                                           historyModel = emptyHistoryModel, currentUser = mockedUser,
                                                            avatarIconsProvider = mock(), projectData = mock())
     assertEquals(filterVm.searchState.value, defaultFilter)
 
@@ -155,7 +159,8 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
   @Test
   fun `select empty state filter`() = runTest(UnconfinedTestDispatcher()) {
     val cs = childScope()
-    val filterVm = GitLabMergeRequestsFiltersViewModelImpl(scope = cs, historyModel = emptyHistoryModel, currentUser = mockedUser,
+    val filterVm = GitLabMergeRequestsFiltersViewModelImpl(scope = cs, project = null,
+                                                           historyModel = emptyHistoryModel, currentUser = mockedUser,
                                                            avatarIconsProvider = mock(), projectData = mock())
     assertEquals(filterVm.searchState.value, defaultFilter)
 
@@ -186,7 +191,8 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
 
   private fun checkSelectedFilter(selectedFilter: GitLabMergeRequestsFiltersValue) = runTest(UnconfinedTestDispatcher()) {
     val cs = childScope()
-    val filterVm = GitLabMergeRequestsFiltersViewModelImpl(scope = cs, historyModel = emptyHistoryModel, currentUser = mockedUser,
+    val filterVm = GitLabMergeRequestsFiltersViewModelImpl(scope = cs, project = null,
+                                                           historyModel = emptyHistoryModel, currentUser = mockedUser,
                                                            avatarIconsProvider = mock(), projectData = mock())
     assertEquals(filterVm.searchState.value, defaultFilter)
 

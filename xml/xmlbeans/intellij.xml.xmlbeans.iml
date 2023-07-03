@@ -11,7 +11,13 @@
     <orderEntry type="module" module-name="intellij.xml.impl" />
     <orderEntry type="module-library">
       <library name="XmlBeans" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.apache.xmlbeans:xmlbeans:5.1.1" />
+        <properties include-transitive-deps="false" maven-id="org.apache.xmlbeans:xmlbeans:5.1.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/xmlbeans/xmlbeans/5.1.1/xmlbeans-5.1.1.jar">
+              <sha256sum>5f484a78bed71cbffe3709678b6bdd3463781a7c61c6d9872330aecbf150762a</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlbeans/xmlbeans/5.1.1/xmlbeans-5.1.1.jar!/" />
         </CLASSES>
@@ -24,6 +30,14 @@
     <orderEntry type="module-library">
       <library name="apache.logging.log4j.to.slf4j" type="repository">
         <properties maven-id="org.apache.logging.log4j:log4j-to-slf4j:2.20.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/logging/log4j/log4j-to-slf4j/2.20.0/log4j-to-slf4j-2.20.0.jar">
+              <sha256sum>88e731d7f455da59dfa08769527f87d6c496053a712637df7b999f6977933a2c</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/logging/log4j/log4j-api/2.20.0/log4j-api-2.20.0.jar">
+              <sha256sum>2f43eea679ea66f14ca0f13fec2a8600ac124f5a5231dcb4df8393eddcb97550</sha256sum>
+            </artifact>
+          </verification>
           <exclude>
             <dependency maven-id="org.slf4j:slf4j-api" />
           </exclude>

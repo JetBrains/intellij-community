@@ -267,7 +267,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun isResolvedToExtension(ktCallElement: KtCallElement): Boolean {
         analyzeForUast(ktCallElement) {
             val ktCall = ktCallElement.resolveCall()?.singleFunctionCallOrNull() ?: return false
-            return isExtension(ktCall)
+            return ktCall.symbol.isExtension
         }
     }
 
@@ -395,12 +395,15 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         fun resolveToPsiClassOrEnumEntry(classOrObject: KtClassOrObject): PsiElement? {
             analyzeForUast(ktExpression) {
                 val ktType = when (classOrObject) {
-                    is KtEnumEntry ->
-                        classOrObject.getEnumEntrySymbol().callableIdIfNonLocal?.classId?.let { enumClassId ->
-                            buildClassType(enumClassId)
-                        }
-                    else ->
-                        classOrObject.getClassOrObjectSymbol()?.let(::buildClassType)
+                    is KtEnumEntry -> {
+                        classOrObject.getEnumEntrySymbol().callableIdIfNonLocal?.classId?.let(::buildClassType)
+                    }
+                    else -> {
+                        // NB: Avoid symbol creation/retrieval
+                        classOrObject.getClassId()?.let(::buildClassType)
+                            // Fallback option for local class
+                            ?: classOrObject.getClassOrObjectSymbol()?.let(::buildClassType)
+                    }
                 } ?: return null
                 val psiClass = toPsiClass(ktType, source = null, classOrObject, classOrObject.typeOwnerKind)
                 return when (classOrObject) {

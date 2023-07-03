@@ -33,37 +33,31 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element){
-    final PsiElement matchingElement = findMatchingElement(element, editor);
+    final PsiElement matchingElement = findMatchingElement(element);
     if (matchingElement == null) {
       return;
     }
-    processIntention(editor, matchingElement);
+    processIntention(matchingElement);
   }
 
   protected abstract void processIntention(@NotNull PsiElement element);
-
-  protected void processIntention(Editor editor, @NotNull PsiElement element) {
-    processIntention(element);
-  }
 
   @NotNull
   protected abstract PsiElementPredicate getElementPredicate();
 
 
   @Nullable
-  PsiElement findMatchingElement(@Nullable PsiElement element, Editor editor) {
+  PsiElement findMatchingElement(@Nullable PsiElement element) {
     if (element == null || !JavaLanguage.INSTANCE.equals(element.getLanguage())) return null;
 
     PsiElementPredicate predicate = myPredicate.get();
+    if (predicate instanceof PsiElementContextPredicate) {
+      throw new UnsupportedOperationException("Context predicate must be used with MCIntention");
+    }
 
     while (element != null) {
       if (!JavaLanguage.INSTANCE.equals(element.getLanguage())) {
         break;
-      }
-      if (predicate instanceof PsiElementEditorPredicate) {
-        if (((PsiElementEditorPredicate)predicate).satisfiedBy(element, editor)) {
-          return element;
-        }
       }
       else if (predicate.satisfiedBy(element)) {
         return element;
@@ -78,6 +72,6 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    return findMatchingElement(element, editor) != null;
+    return findMatchingElement(element) != null;
   }
 }

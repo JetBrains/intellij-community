@@ -7,7 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.playback.PlaybackContext
-import com.intellij.openapi.vfs.findFileOrDirectory
+import com.intellij.openapi.vfs.findDirectory
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.impl.file.PsiDirectoryImpl
@@ -43,8 +43,8 @@ class CreateKotlinFileCommand(text: String, line: Int) : PerformanceCommandCorou
         val (fileName, filePath, fileType) = extractCommandArgument(PREFIX).replace("\\s","").split(",")
         val directory = PsiDirectoryImpl(
             PsiManagerImpl(context.project),
-            (context.project.guessProjectDir() ?: throw RuntimeException("'guessProjectDir' dir returned 'null'"))
-                .findFileOrDirectory(filePath) ?: throw RuntimeException("Can't find file $filePath")
+            (context.project.guessProjectDir() ?: throw RuntimeException("Root of the project was not found "))
+                .findDirectory(filePath) ?: throw RuntimeException("Can't find file $filePath")
         )
 
         val templateName = POSSIBLE_FILE_TYPES[fileType.lowercase()]
@@ -58,7 +58,9 @@ class CreateKotlinFileCommand(text: String, line: Int) : PerformanceCommandCorou
             PerformanceTestSpan.TRACER.spanBuilder(NAME).useWithScope {
                 val createdFile = CreateFileFromTemplateAction
                     .createFileFromTemplate(fileName, template, directory, null, true)
-                createdFile?.let { LOG.info("Created kotlin file\n${createdFile.text}") }
+                createdFile?.let {
+                    LOG.info("Created kotlin file\n${createdFile.text}")
+                }
             }
         }))
 

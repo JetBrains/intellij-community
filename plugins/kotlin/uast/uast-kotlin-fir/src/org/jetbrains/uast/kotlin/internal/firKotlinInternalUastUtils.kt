@@ -8,7 +8,6 @@ import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.getModule
 import org.jetbrains.kotlin.analysis.api.lifetime.KtAlwaysAccessibleLifetimeTokenFactory
@@ -227,25 +226,14 @@ internal fun KtAnalysisSession.toPsiType(
     ) ?: UastErrorType
 }
 
-internal fun KtAnalysisSession.isExtension(
-    ktCall: KtCallableMemberCall<*, *>
-): Boolean {
-    return ktCall.symbol.isExtension
-}
-
 internal fun KtAnalysisSession.receiverType(
     ktCall: KtCallableMemberCall<*, *>,
     source: UElement,
     context: KtElement,
 ): PsiType? {
-    var ktType = ktCall.partiallyAppliedSymbol.signature.receiverType
-    if (ktType == null) {
-        ktType =
-            if (isExtension(ktCall))
-                ktCall.partiallyAppliedSymbol.extensionReceiver?.type
-            else
-                ktCall.partiallyAppliedSymbol.dispatchReceiver?.type
-    }
+    val ktType = ktCall.partiallyAppliedSymbol.signature.receiverType
+        ?: ktCall.partiallyAppliedSymbol.extensionReceiver?.type
+        ?: ktCall.partiallyAppliedSymbol.dispatchReceiver?.type
     if (ktType == null || ktType is KtErrorType) return null
     return toPsiType(
         ktType,

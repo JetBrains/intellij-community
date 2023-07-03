@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction.ComboBoxButton
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.serviceAsync
@@ -76,13 +77,20 @@ private class MenuButtonInToolbarMainToolbarFlavor(coroutineScope: CoroutineScop
 
 private object DefaultMainToolbarFlavor : MainToolbarFlavor
 
-internal class MainToolbar(private val coroutineScope: CoroutineScope, frame: JFrame) : JPanel(HorizontalLayout(10)) {
-  var layoutCallBack: LayoutCallBack? = null
+internal class MainToolbar constructor(
+  private val coroutineScope: CoroutineScope,
+  frame: JFrame,
+  isOpaque: Boolean = false,
+  background: Color? = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(true),
+  val layoutCallBack: LayoutCallBack? = null,
+) : JPanel(HorizontalLayout(10)) {
   private val flavor: MainToolbarFlavor
 
   init {
-    updateBackground()
-    isOpaque = true
+    background?.let {
+      this.background = it
+    }
+    this.isOpaque = isOpaque
     flavor = if (IdeRootPane.isMenuButtonInToolbar) {
       MenuButtonInToolbarMainToolbarFlavor(headerContent = this, coroutineScope = coroutineScope, frame = frame)
     }
@@ -90,10 +98,6 @@ internal class MainToolbar(private val coroutineScope: CoroutineScope, frame: JF
       DefaultMainToolbarFlavor
     }
     ClientProperty.put(this, IdeBackgroundUtil.NO_BACKGROUND, true)
-  }
-
-  fun updateBackground() {
-    background = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(true)
   }
 
   override fun getComponentGraphics(g: Graphics): Graphics = super.getComponentGraphics(IdeBackgroundUtil.getOriginalGraphics(g))
@@ -244,7 +248,7 @@ internal class MainToolbar(private val coroutineScope: CoroutineScope, frame: JF
   private fun createActionBar(group: ActionGroup, customizationGroup: ActionGroup?): MyActionToolbarImpl {
     val toolbar = MyActionToolbarImpl(group, layoutCallBack, customizationGroup)
     toolbar.setActionButtonBorder(JBUI.Borders.empty(mainToolbarButtonInsets()))
-    toolbar.setActionButtonBorder(2, 5)
+    toolbar.setActionButtonBorder(5, 5)
     toolbar.setCustomButtonLook(HeaderToolbarButtonLook())
 
     toolbar.setMinimumButtonSize { ActionToolbar.experimentalToolbarMinimumButtonSize() }
@@ -362,6 +366,8 @@ private class MyActionToolbarImpl(group: ActionGroup,
     }
 
     adjustIcons(presentation)
+
+    (component as? ActionButton)?.let { button -> button.setMinimumButtonSize(ActionToolbar.experimentalToolbarMinimumButtonSize()) }
 
     if (action is ComboBoxAction) {
       findComboButton(component)?.apply {

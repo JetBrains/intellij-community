@@ -2,9 +2,9 @@
 package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.inline.completion.InlineState.Companion.resetInlineCompletionState
+import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionKeyListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -19,13 +19,6 @@ class InlineCompletionContext private constructor(val editor: Editor) : Disposab
 
   private var completions = emptyList<InlineCompletionElement>()
   private var selectedIndex = -1
-
-  init {
-    editor.caretModel.addCaretListener(InlineCompletionCaretListener())
-    if (editor is EditorEx) {
-      editor.addFocusListener(InlineCompletionFocusListener())
-    }
-  }
 
   val isCurrentlyDisplayingInlays: Boolean
     get() = !inlay.isEmpty
@@ -87,6 +80,7 @@ class InlineCompletionContext private constructor(val editor: Editor) : Disposab
         putUserData(INLINE_COMPLETION_CONTEXT, it)
       }
     }
+
     fun Editor.getInlineCompletionContextOrNull(): InlineCompletionContext? = getUserData(INLINE_COMPLETION_CONTEXT)
     fun Editor.removeInlineCompletionContext(): Unit = putUserData(INLINE_COMPLETION_CONTEXT, null)
     fun Editor.resetInlineCompletionContext(): Unit? = getInlineCompletionContextOrNull()?.let {

@@ -316,8 +316,9 @@
     <xs:attribute type="xs:boolean" name="show">
       <xs:annotation>
         <xs:documentation>
-          If 'true' information about licensee will be shown on the splash screen.
+          Deprecated: information about licensee is never shown on the splash screen (for faster loading)
         </xs:documentation>
+        <xs:documentation>deprecated</xs:documentation>
       </xs:annotation>
     </xs:attribute>
   </xs:complexType>

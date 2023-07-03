@@ -42,13 +42,14 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
   val descriptionHtml: Flow<String>
   val targetBranch: StateFlow<String>
   val sourceBranch: StateFlow<String>
+  val isApproved: Flow<Boolean>
   val hasConflicts: Flow<Boolean>
   val isDraft: Flow<Boolean>
   val reviewRequestState: Flow<ReviewRequestState>
   val isMergeable: Flow<Boolean>
   val shouldBeRebased: Flow<Boolean>
   val approvedBy: Flow<List<GitLabUserDTO>>
-  val reviewers: Flow<List<GitLabUserDTO>>
+  val reviewers: Flow<List<GitLabReviewerDTO>>
   val pipeline: Flow<GitLabPipelineDTO?>
   val changes: Flow<GitLabMergeRequestChanges>
 
@@ -82,6 +83,8 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
   suspend fun postReview()
 
   suspend fun setReviewers(reviewers: List<GitLabUserDTO>)
+
+  suspend fun reviewerRereview(reviewers: Collection<GitLabReviewerDTO>)
 
   data class CurrentUserPermissions(
     val canApprove: Boolean,
@@ -122,6 +125,7 @@ internal class LoadedGitLabMergeRequest(
   override val descriptionHtml: Flow<String> = description.map { if (it.isNotBlank()) GitLabUIUtil.convertToHtml(it) else it }
   override val targetBranch: StateFlow<String> = mergeRequestDetailsState.mapState(cs) { it.targetBranch }
   override val sourceBranch: StateFlow<String> = mergeRequestDetailsState.mapState(cs) { it.sourceBranch }
+  override val isApproved: Flow<Boolean> = mergeRequestDetailsState.map { it.isApproved }
   override val hasConflicts: Flow<Boolean> = mergeRequestDetailsState.map { it.conflicts }
   override val isDraft: Flow<Boolean> = mergeRequestDetailsState.map { it.draft }
   override val reviewRequestState: Flow<ReviewRequestState> =
@@ -137,7 +141,7 @@ internal class LoadedGitLabMergeRequest(
   override val isMergeable: Flow<Boolean> = mergeRequestDetailsState.map { it.isMergeable }
   override val shouldBeRebased: Flow<Boolean> = mergeRequestDetailsState.map { it.shouldBeRebased }
   override val approvedBy: Flow<List<GitLabUserDTO>> = mergeRequestDetailsState.map { it.approvedBy }
-  override val reviewers: Flow<List<GitLabUserDTO>> = mergeRequestDetailsState.map { it.reviewers }
+  override val reviewers: Flow<List<GitLabReviewerDTO>> = mergeRequestDetailsState.map { it.reviewers }
   override val pipeline: Flow<GitLabPipelineDTO?> = mergeRequestDetailsState.map { it.headPipeline }
   override val changes: Flow<GitLabMergeRequestChanges> = mergeRequestDetailsState
     .distinctUntilChangedBy(GitLabMergeRequestFullDetails::diffRefs).map {
@@ -218,7 +222,7 @@ internal class LoadedGitLabMergeRequest(
       mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
     }
     discussionsContainer.checkUpdates()
-    GitLabStatistics.logMrActionExecuted(GitLabStatistics.MergeRequestAction.MERGE)
+    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.MERGE)
   }
 
   override suspend fun squashAndMerge(commitMessage: String) {
@@ -232,7 +236,7 @@ internal class LoadedGitLabMergeRequest(
       mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
     }
     discussionsContainer.checkUpdates()
-    GitLabStatistics.logMrActionExecuted(GitLabStatistics.MergeRequestAction.SQUASH_MERGE)
+    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.SQUASH_MERGE)
   }
 
   override suspend fun rebase() {
@@ -246,7 +250,7 @@ internal class LoadedGitLabMergeRequest(
       while (updatedMergeRequest.rebaseInProgress)
     }
     discussionsContainer.checkUpdates()
-    GitLabStatistics.logMrActionExecuted(GitLabStatistics.MergeRequestAction.REBASE)
+    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.REBASE)
   }
 
   override suspend fun approve() {
@@ -264,7 +268,7 @@ internal class LoadedGitLabMergeRequest(
       }
     }
     discussionsContainer.checkUpdates()
-    GitLabStatistics.logMrActionExecuted(GitLabStatistics.MergeRequestAction.APPROVE)
+    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.APPROVE)
   }
 
   override suspend fun unApprove() {
@@ -282,7 +286,7 @@ internal class LoadedGitLabMergeRequest(
       }
     }
     discussionsContainer.checkUpdates()
-    GitLabStatistics.logMrActionExecuted(GitLabStatistics.MergeRequestAction.UNAPPROVE)
+    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.UNAPPROVE)
   }
 
   override suspend fun close() {
@@ -292,7 +296,7 @@ internal class LoadedGitLabMergeRequest(
       mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
       stateEventsLoader.checkForUpdates()
     }
-    GitLabStatistics.logMrActionExecuted(GitLabStatistics.MergeRequestAction.CLOSE)
+    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.CLOSE)
   }
 
   override suspend fun reopen() {
@@ -302,7 +306,7 @@ internal class LoadedGitLabMergeRequest(
       mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
       stateEventsLoader.checkForUpdates()
     }
-    GitLabStatistics.logMrActionExecuted(GitLabStatistics.MergeRequestAction.REOPEN)
+    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.REOPEN)
   }
 
   override suspend fun postReview() {
@@ -312,7 +316,7 @@ internal class LoadedGitLabMergeRequest(
       mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
     }
     discussionsContainer.checkUpdates()
-    GitLabStatistics.logMrActionExecuted(GitLabStatistics.MergeRequestAction.POST_REVIEW)
+    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.POST_REVIEW)
   }
 
   override suspend fun setReviewers(reviewers: List<GitLabUserDTO>) {
@@ -322,10 +326,23 @@ internal class LoadedGitLabMergeRequest(
       mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
     }
     discussionsContainer.checkUpdates()
-    GitLabStatistics.logMrActionExecuted(GitLabStatistics.MergeRequestAction.SET_REVIEWERS)
+    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.SET_REVIEWERS)
   }
 
-  private val discussionsContainer = GitLabMergeRequestDiscussionsContainerImpl(parentCs, api, projectMapping.repository, this)
+  override suspend fun reviewerRereview(reviewers: Collection<GitLabReviewerDTO>) {
+    withContext(cs.coroutineContext + Dispatchers.IO) {
+      reviewers.forEach { reviewer ->
+        val updatedMergeRequest = api.graphQL.mergeRequestReviewerRereview(glProject, mergeRequestDetailsState.value, reviewer)
+          .getResultOrThrow()
+        mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
+      }
+    }
+    discussionsContainer.checkUpdates()
+    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.REVIEWER_REREVIEW)
+  }
+
+  private val discussionsContainer =
+    GitLabMergeRequestDiscussionsContainerImpl(parentCs, project, api, projectMapping.repository, this)
 
   override val discussions: Flow<Collection<GitLabMergeRequestDiscussion>> = discussionsContainer.discussions
   override val systemNotes: Flow<Collection<GitLabNote>> = discussionsContainer.systemNotes

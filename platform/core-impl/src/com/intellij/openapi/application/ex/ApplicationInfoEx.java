@@ -20,8 +20,6 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getSplashImageUrl();
 
-  public abstract String getAboutImageUrl();
-
   /** @deprecated please use {@link #getSmallApplicationSvgIconUrl()} instead */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
@@ -46,8 +44,6 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   public abstract @Nullable String getWelcomeScreenLogoUrl();
-
-  public abstract boolean showLicenseeInfo();
 
   public abstract String getCopyrightStart();
 
@@ -96,10 +92,6 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getMacKeymapUrl();
 
-  public abstract long getAboutForeground();
-
-  public abstract long getAboutLinkColor();
-
   public interface UpdateUrls {
     String getCheckingUrl();
     String getPatchesUrl();
@@ -113,8 +105,6 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   public abstract boolean isEssentialPlugin(@NotNull PluginId pluginId);
 
   public abstract @Nullable String getWelcomeWizardDialog();
-
-  public abstract int @Nullable [] getAboutLogoRect();
 
   public abstract String getSubscriptionFormId();
 
@@ -134,8 +124,6 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   public final boolean isVendorJetBrains() {
     return "JetBrains".equals(getShortCompanyName());
   }
-
-  public abstract long getCopyrightForeground();
 
   public abstract @NotNull BuildNumber getApiVersionAsNumber();
 

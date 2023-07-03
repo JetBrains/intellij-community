@@ -54,13 +54,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myCopyrightStart = "2000";
   private String myShortCompanyName;
   private String myCompanyUrl = "https://www.jetbrains.com/";
-  private long myCopyrightForeground = -1;
-  private long myAboutForeground = -1;
-  private long myAboutLinkColor = -1;
-  private int[] myAboutLogoRect;  // don't use Rectangle to avoid dependency on AWT
   private String mySplashImageUrl;
   private String myEapSplashImageUrl;
-  private String myAboutImageUrl;
   private String mySmallIconUrl = "/icon_small.png";
   private String mySvgIconUrl;
   private String mySvgEapIconUrl;
@@ -71,7 +66,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   private Calendar myBuildDate;
   private Calendar myMajorReleaseBuildDate;
-  private boolean myShowLicensee = true;
   private String myWelcomeScreenDialog;
   private UpdateUrls myUpdateUrls;
   private String myDocumentationUrl;
@@ -157,37 +151,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
         }
         break;
 
-        case "about": {
-          myAboutImageUrl = child.getAttributeValue("url");
-
-          String v = child.getAttributeValue("foreground");
-          if (v != null) {
-            myAboutForeground = parseColor(v);
-          }
-          v = child.getAttributeValue("copyrightForeground");
-          if (v != null) {
-            myCopyrightForeground = parseColor(v);
-          }
-
-          String c = child.getAttributeValue("linkColor");
-          if (c != null) {
-            myAboutLinkColor = parseColor(c);
-          }
-
-          String logoX = child.getAttributeValue("logoX");
-          String logoY = child.getAttributeValue("logoY");
-          String logoW = child.getAttributeValue("logoW");
-          String logoH = child.getAttributeValue("logoH");
-          if (logoX != null && logoY != null && logoW != null && logoH != null) {
-            try {
-              myAboutLogoRect = new int[]{Integer.parseInt(logoX), Integer.parseInt(logoY), Integer.parseInt(logoW), Integer.parseInt(logoH)};
-            }
-            catch (NumberFormatException ignored) {
-            }
-          }
-        }
-        break;
-
         case "icon": {
           mySmallIconUrl = child.getAttributeValue("size16", mySmallIconUrl);
           String toolWindowIcon = getAttributeValue(child, "size12");
@@ -202,11 +165,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
         case "icon-eap": {
           mySvgEapIconUrl = child.getAttributeValue("svg");
           mySmallSvgEapIconUrl = child.getAttributeValue("svg-small");
-        }
-        break;
-
-        case "licensee": {
-          myShowLicensee = Boolean.parseBoolean(child.getAttributeValue("show"));
         }
         break;
 
@@ -502,16 +460,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public String getAboutImageUrl() {
-    return myAboutImageUrl;
-  }
-
-  @Override
-  public long getCopyrightForeground() {
-    return myCopyrightForeground;
-  }
-
-  @Override
   public @NotNull String getSmallIconUrl() {
     return mySmallIconUrl;
   }
@@ -649,23 +597,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public long getAboutForeground() {
-    return myAboutForeground;
-  }
-
-  @Override
-  public long getAboutLinkColor() {
-    return myAboutLinkColor;
-  }
-
-  @Override
   public String getFullApplicationName() {
     return getVersionName() + " " + getFullVersion();
-  }
-
-  @Override
-  public boolean showLicenseeInfo() {
-    return myShowLicensee;
   }
 
   @Override
@@ -685,11 +618,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public String getKeyConversionUrl() {
     return myKeyConversionUrl;
-  }
-
-  @Override
-  public int @Nullable [] getAboutLogoRect() {
-    return myAboutLogoRect;
   }
 
   @Override
@@ -834,10 +762,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return calendar;
   }
 
-  private static long parseColor(String colorString) {
-    return Long.parseLong(colorString, 16);
-  }
-
   @ReviseWhenPortedToJDK("9")
   private static String requireNonNullElse(String s) {
     return s != null ? s : "0";
@@ -861,37 +785,25 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public @Nullable String getDefaultLightLaf() {
     String override = System.getProperty(IDEA_APPLICATION_INFO_DEFAULT_LIGHT_LAF);
-    if (override != null) {
-      return override;
-    }
-    return myDefaultLightLaf;
+    return override != null ? override : myDefaultLightLaf;
   }
 
   @Override
   public @Nullable String getDefaultClassicLightLaf() {
     String override = System.getProperty(IDEA_APPLICATION_INFO_DEFAULT_CLASSIC_LIGHT_LAF);
-    if (override != null) {
-      return override;
-    }
-    return myDefaultClassicLightLaf;
+    return override != null ? override : myDefaultClassicLightLaf;
   }
 
   @Override
   public @Nullable String getDefaultDarkLaf() {
     String override = System.getProperty(IDEA_APPLICATION_INFO_DEFAULT_DARK_LAF);
-    if (override != null) {
-      return override;
-    }
-    return myDefaultDarkLaf;
+    return override != null ? override : myDefaultDarkLaf;
   }
 
   @Override
   public @Nullable String getDefaultClassicDarkLaf() {
     String override = System.getProperty(IDEA_APPLICATION_INFO_DEFAULT_CLASSIC_DARK_LAF);
-    if (override != null) {
-      return override;
-    }
-    return myDefaultClassicDarkLaf;
+    return override != null ? override : myDefaultClassicDarkLaf;
   }
 
   public @Nullable ZenDeskForm getFeedbackForm() {

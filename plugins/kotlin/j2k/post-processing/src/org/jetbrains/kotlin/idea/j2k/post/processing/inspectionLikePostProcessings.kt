@@ -11,6 +11,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.j2k.ConverterSettings
@@ -166,21 +167,21 @@ internal inline fun <reified E : PsiElement, I : AbstractApplicabilityBasedInspe
     noinline additionalChecker: (E) -> Boolean = { true }
 ) = object : InspectionLikeProcessingForElement<E>(E::class.java) {
     override fun isApplicableTo(element: E, settings: ConverterSettings?): Boolean =
-        isInspectionEnabledInCurrentProfile(element.project) && inspection.isApplicable(element) && additionalChecker(element)
-
-    private fun isInspectionEnabledInCurrentProfile(project: Project): Boolean {
-        if (isUnitTestMode()) {
-            // there is no real inspection profile in J2K tests, consider all inspections to be enabled in tests
-            return true
-        }
-        val inspectionProfile = InspectionProfileManager.getInstance(project).getCurrentProfile()
-        val highlightDisplayKey = HighlightDisplayKey.findById(inspection.getID())
-        return inspectionProfile.isToolEnabled(highlightDisplayKey)
-    }
+        isInspectionEnabledInCurrentProfile(inspection, element.project) && inspection.isApplicable(element) && additionalChecker(element)
 
     override fun apply(element: E) {
         inspection.applyTo(element)
     }
 
     override val writeActionNeeded = writeActionNeeded
+}
+
+internal fun isInspectionEnabledInCurrentProfile(inspection: AbstractKotlinInspection, project: Project): Boolean {
+    if (isUnitTestMode()) {
+        // there is no real inspection profile in J2K tests, consider all inspections to be enabled in tests
+        return true
+    }
+    val inspectionProfile = InspectionProfileManager.getInstance(project).getCurrentProfile()
+    val highlightDisplayKey = HighlightDisplayKey.findById(inspection.getID())
+    return inspectionProfile.isToolEnabled(highlightDisplayKey)
 }

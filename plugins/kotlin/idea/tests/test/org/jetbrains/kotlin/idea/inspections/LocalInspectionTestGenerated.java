@@ -6554,6 +6554,21 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/liftOut/ifToAssignment/lambda2.kt");
             }
 
+            @TestMetadata("multiStatement.kt")
+            public void testMultiStatement() throws Exception {
+                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/multiStatement.kt");
+            }
+
+            @TestMetadata("multiStatement2.kt")
+            public void testMultiStatement2() throws Exception {
+                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/multiStatement2.kt");
+            }
+
+            @TestMetadata("multiStatement3.kt")
+            public void testMultiStatement3() throws Exception {
+                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/multiStatement3.kt");
+            }
+
             @TestMetadata("multipleAssignments.kt")
             public void testMultipleAssignments() throws Exception {
                 runTest("testData/inspectionsLocal/liftOut/ifToAssignment/multipleAssignments.kt");
@@ -6685,6 +6700,21 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("innerIfTransformed.kt")
             public void testInnerIfTransformed() throws Exception {
                 runTest("testData/inspectionsLocal/liftOut/ifToReturn/innerIfTransformed.kt");
+            }
+
+            @TestMetadata("multiStatement.kt")
+            public void testMultiStatement() throws Exception {
+                runTest("testData/inspectionsLocal/liftOut/ifToReturn/multiStatement.kt");
+            }
+
+            @TestMetadata("multiStatement2.kt")
+            public void testMultiStatement2() throws Exception {
+                runTest("testData/inspectionsLocal/liftOut/ifToReturn/multiStatement2.kt");
+            }
+
+            @TestMetadata("multiStatement3.kt")
+            public void testMultiStatement3() throws Exception {
+                runTest("testData/inspectionsLocal/liftOut/ifToReturn/multiStatement3.kt");
             }
 
             @TestMetadata("onReturn.kt")

@@ -164,6 +164,7 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
     try (final Page page = storage.pageByOffset(0)) {
       if (updater.updateHeader(headerAccessor)) {
         globalModCount.incrementAndGet();
+        dirty.compareAndSet(true, false);
       }
     }
   }
@@ -194,7 +195,6 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
     public int getAttributeRecordId() {
       return getIntField(ATTR_REF_OFFSET);
     }
-
 
     @Override
     public int getParent() {
@@ -619,7 +619,8 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
     if (dirty.compareAndSet(true, false)) {
       setIntHeaderField(HEADER_RECORDS_ALLOCATED, allocatedRecordsCount.get());
       setIntHeaderField(HEADER_GLOBAL_MOD_COUNT_OFFSET, globalModCount.get());
-      //TODO RC: should we do fsync() here, or we could trust OS will flush mmapped pages to disk?
+      //MAYBE RC: should we do fsync() here, or we could trust OS will flush mmapped pages to disk?
+      storage.fsync();
     }
   }
 
@@ -940,6 +941,12 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
       }
     }
 
+    public void fsync() throws IOException {
+      if (channel.isOpen()) {
+        channel.force(true);
+      }
+    }
+
     public static class Page implements AutoCloseable {
       private final int pageIndex;
       private final long offsetInFile;
@@ -977,6 +984,7 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
   }
 
   /** Opens records.dat file given as args[0], prints header fields, and first records (up to 1024) */
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void main(String[] args) throws IOException {
     if (args.length < 1) {
       System.err.println("Args: <path-to-records.dat>");

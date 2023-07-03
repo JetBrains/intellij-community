@@ -345,7 +345,7 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
 
     override fun getReceiverType(ktCallElement: KtCallElement, source: UElement): PsiType? {
         val resolvedCall = ktCallElement.getResolvedCall(ktCallElement.analyze()) ?: return null
-        val receiver = resolvedCall.dispatchReceiver ?: resolvedCall.extensionReceiver ?: return null
+        val receiver = resolvedCall.extensionReceiver ?: resolvedCall.dispatchReceiver ?: return null
         return receiver.type.toPsiType(source, ktCallElement, PsiTypeConversionConfiguration.create(ktCallElement, isBoxed = true))
     }
 

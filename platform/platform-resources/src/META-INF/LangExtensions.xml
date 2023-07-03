@@ -1556,7 +1556,7 @@
       id="inline.completion.escape" action="EditorEscape"
       implementationClass="com.intellij.codeInsight.inline.completion.EscapeInlineCompletionHandler"
       order="before hide-hints"/>
-    <editorFactoryListener implementation="com.intellij.codeInsight.inline.completion.InlineCompletionEditorListener"/>
+    <editorFactoryListener implementation="com.intellij.codeInsight.inline.completion.listeners.InlineCompletionEditorListener"/>
 
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.GeneralHighlightingPassFactory"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.ChameleonSyntaxHighlightingPass$Factory"/>
@@ -1702,7 +1702,7 @@
     <advancedSetting id="editor.maximize.in.splits.on.double.click" default="false" groupKey="group.advanced.settings.editor.tabs"/>
     <advancedSetting id="editor.normalize.splits" default="false" groupKey="group.advanced.settings.editor.tabs"/>
     <advancedSetting id="editor.keep.pinned.tabs.on.left" default="true" groupKey="group.advanced.settings.editor.tabs"/>
-    <advancedSetting id="floating.codeToolbar.hide" default="true" groupKey="group.advanced.settings.editor"/>
+    <advancedSetting id="floating.codeToolbar.hide" default="false" groupKey="group.advanced.settings.editor"/>
 
     <actionOnSaveInfoProvider id="FormatOnSaveInfoProvider"
                               implementation="com.intellij.codeInsight.actions.onSave.FormatOnSaveInfoProvider"
@@ -1746,5 +1746,9 @@
               topic="com.intellij.ide.SaveAndSyncHandlerListener"/>
     <listener class="com.intellij.codeInsight.daemon.impl.DaemonFusReporter"
               topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
+    <listener class="com.intellij.codeInsight.inline.completion.InlineCompletionLookupManagerListener"
+              topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
+    <listener class="com.intellij.psi.impl.file.impl.PsiVFSListener$MyModuleRootListener"
+              topic="com.intellij.openapi.roots.ModuleRootListener"/>
   </projectListeners>
 </idea-plugin>

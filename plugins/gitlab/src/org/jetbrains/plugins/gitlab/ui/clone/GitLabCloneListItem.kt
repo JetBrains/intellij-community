@@ -20,6 +20,4 @@ internal sealed interface GitLabCloneListItem {
   ) : GitLabCloneListItem
 }
 
-internal fun GitLabCloneListItem.Repository.presentation(): @NlsSafe String {
-  return "${projectMember.createdBy.username}/${projectMember.project.name}"
-}
+internal fun GitLabCloneListItem.Repository.presentation(): @NlsSafe String = projectMember.project.nameWithNamespace

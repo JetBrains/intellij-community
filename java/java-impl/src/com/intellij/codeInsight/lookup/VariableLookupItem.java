@@ -247,7 +247,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
       if (fix != null) {
         ModCommandAction.ActionContext actionContext = ModCommandAction.ActionContext.from(context.getEditor(), context.getFile());
         if (fix.getPresentation(actionContext) != null) {
-          ModCommandService.getInstance().executeInteractively(actionContext, fix.perform(actionContext));
+          ModCommandService.getInstance().executeInteractively(actionContext, fix.perform(actionContext), context.getEditor());
         }
       }
     }

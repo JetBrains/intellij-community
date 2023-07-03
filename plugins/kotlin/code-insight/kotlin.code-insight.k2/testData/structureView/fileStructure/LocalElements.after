@@ -1,7 +1,0 @@
--LocalElements.kt
- -fun foo()
-  -class X
-   -<class initializer>
-    fun quux()
-   fun xyzzy()
-  fun bar()

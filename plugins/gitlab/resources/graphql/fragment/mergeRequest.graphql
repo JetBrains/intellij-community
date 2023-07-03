@@ -25,6 +25,7 @@ fragment mergeRequest on MergeRequest {
     headSha
   }
 
+  approved
   conflicts
   headPipeline {
     ...pipeline
@@ -73,7 +74,7 @@ fragment mergeRequest on MergeRequest {
     }
 
     nodes {
-      ...user
+      ...userReviewer
     }
   }
 

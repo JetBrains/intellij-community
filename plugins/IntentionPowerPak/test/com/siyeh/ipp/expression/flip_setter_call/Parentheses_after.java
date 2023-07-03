@@ -11,6 +11,6 @@ class X {
 
   void test(X a, X b) {
       /*comment*/
-      b.setName(a.getName(<caret>));
+      b.se<caret>tName(a.getName());
   }
 }

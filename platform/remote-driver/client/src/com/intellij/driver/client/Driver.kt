@@ -15,6 +15,11 @@ interface Driver : AutoCloseable {
 
   fun getProductVersion(): ProductVersion
 
+  /**
+   * Forcefully exits the application
+   */
+  fun exitApplication()
+
   @Contract(pure = true)
   fun <T : Any> service(clazz: KClass<T>): T
 

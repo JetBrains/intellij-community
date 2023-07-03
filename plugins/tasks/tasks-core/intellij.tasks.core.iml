@@ -40,7 +40,13 @@
     <orderEntry type="module" module-name="intellij.tasks.compatibility" />
     <orderEntry type="module-library">
       <library name="commons-discovery" type="repository">
-        <properties include-transitive-deps="false" maven-id="commons-discovery:commons-discovery:0.4" />
+        <properties include-transitive-deps="false" maven-id="commons-discovery:commons-discovery:0.4">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/commons-discovery/commons-discovery/0.4/commons-discovery-0.4.jar">
+              <sha256sum>97d264e2f98821c4cd39eacfd597b4dc7c19d4232cf1f335fc2eab389b2d92fd</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/commons-discovery/commons-discovery/0.4/commons-discovery-0.4.jar!/" />
         </CLASSES>

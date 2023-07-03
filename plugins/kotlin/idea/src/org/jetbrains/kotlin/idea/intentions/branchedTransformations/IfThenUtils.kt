@@ -9,6 +9,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.functions.FunctionInvokeDescriptor
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
@@ -287,7 +288,7 @@ data class IfThenToSelectData(
         receiver: KtExpression,
         factory: KtPsiFactory
     ): KtExpression {
-        val needExplicitParameter = valueArguments.any { it.getArgumentExpression()?.text == "it" }
+        val needExplicitParameter = valueArguments.any { it.getArgumentExpression()?.text == StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier }
         val parameterName = if (needExplicitParameter) {
             val scope = getResolutionScope()
             Fe10KotlinNameSuggester.suggestNameByName("it") { scope.findVariable(Name.identifier(it), NoLookupLocation.FROM_IDE) == null }
@@ -352,7 +353,7 @@ internal fun KtIfExpression.buildSelectTransformationData(): IfThenToSelectData?
 internal fun KtExpression?.isClauseTransformableToLetOnly(receiver: KtExpression?) =
     this is KtCallExpression && (resolveToCall()?.getImplicitReceiverValue() == null || receiver !is KtThisExpression)
 
-internal fun KtIfExpression.shouldBeTransformed(): Boolean = when (val condition = condition) {
+fun KtIfExpression.shouldBeTransformed(): Boolean = when (val condition = condition) {
     is KtBinaryExpression -> {
         val baseClause = (if (condition.operationToken == KtTokens.EQEQ) `else` else then)?.unwrapBlockOrParenthesis()
         !baseClause.isClauseTransformableToLetOnly(condition.checkedExpression())

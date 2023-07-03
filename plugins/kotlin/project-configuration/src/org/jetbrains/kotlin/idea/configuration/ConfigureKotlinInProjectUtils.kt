@@ -7,11 +7,14 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.Extensions
+import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.LibraryOrderEntry
@@ -20,12 +23,16 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 import com.intellij.psi.search.DelegatingGlobalSearchScope
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.indexing.DumbModeAccessType
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
@@ -58,7 +65,9 @@ import org.jetbrains.kotlin.platform.isJs
 import org.jetbrains.kotlin.platform.isWasm
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.isNative
-import org.jetbrains.plugins.gradle.util.GradleUtil
+import java.nio.file.Path
+import kotlin.io.path.Path
+import kotlin.io.path.exists
 
 private val LOG = Logger.getInstance("#org.jetbrains.kotlin.idea.configuration.ConfigureKotlinInProjectUtils")
 
@@ -440,9 +449,11 @@ typealias KotlinVersionsAndModules = Map<String, ModulesNamesAndFirstSourceRootM
 fun getKotlinVersionsAndModules(
     project: Project,
     configurator: KotlinProjectConfigurator
-): KotlinVersionsAndModules {
+): Pair<KotlinVersionsAndModules, String?> {
     val configuredModules = getConfiguredModules(project, configurator)
     val kotlinVersionsAndModules: MutableMap<String, MutableMap<String, Module>> = mutableMapOf()
+    val rootModule = getRootModule(project)
+    var rootModuleVersion: String? = null
     for (moduleEntity in configuredModules) {
         val module = moduleEntity.value
         getKotlinCompilerArguments(module)?.pluginClasspaths?.let { pluginsClasspaths ->
@@ -452,11 +463,40 @@ fun getKotlinVersionsAndModules(
                     val modulesForThisVersion = kotlinVersionsAndModules.getOrDefault(version, mutableMapOf())
                     modulesForThisVersion[moduleEntity.key] = module
                     kotlinVersionsAndModules[version] = modulesForThisVersion
+
+                    rootModule?.let {
+                        if (rootModule.name == moduleEntity.key) {
+                            rootModuleVersion = version
+                        }
+                    }
                 }
             }
         }
     }
-    return kotlinVersionsAndModules
+    return Pair(kotlinVersionsAndModules, rootModuleVersion)
+}
+
+fun getRootModule(project: Project): Module? {
+    val topLevelBuildScript = project.getTopLevelBuildScriptFile()
+    return topLevelBuildScript?.let { ModuleUtilCore.findModuleForPsiElement(it) }
+}
+
+@NonNls
+private const val DEFAULT_SCRIPT_NAME = "build.gradle"
+
+@NonNls
+private const val KOTLIN_BUILD_SCRIPT_NAME = "build.gradle.kts"
+
+private fun Project.getTopLevelBuildScriptFile(): PsiFile? {
+    val projectDir = this.guessProjectDir() ?: return null
+    val filePath = listOf(DEFAULT_SCRIPT_NAME, KOTLIN_BUILD_SCRIPT_NAME).asSequence()
+        .map { Path("${projectDir.path}/$it") }
+        .firstOrNull(Path::exists)
+    return filePath?.let { path ->
+        VfsUtil.findFile(path, true)?.let {
+            PsiManager.getInstance(this).findFile(it)
+        }
+    }
 }
 
 typealias ModuleName = String
@@ -486,7 +526,9 @@ fun getTargetBytecodeVersionFromModule(
     module: Module,
     kotlinVersion: IdeKotlinVersion
 ): String? {
-    return GradleUtil.findGradleModuleData(module)?.let { moduleDataNode ->
+    val projectPath = ExternalSystemApiUtil.getExternalProjectPath(module) ?: return null
+    val project = module.project
+    return ExternalSystemApiUtil.findModuleNode(project, ProjectSystemId("GRADLE"), projectPath)?.let { moduleDataNode ->
         val javaModuleData = ExternalSystemApiUtil.find(moduleDataNode, JavaModuleData.KEY)
         javaModuleData?.let {
             javaModuleData.data.targetBytecodeVersion

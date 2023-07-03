@@ -2676,13 +2676,13 @@ public final class HighlightUtil {
         }
 
         HighlightInfo.Builder builder = createMemberReferencedError(resolvedName, expression.getTextRange());
-        if (expression instanceof PsiReferenceExpression && PsiUtil.isInnerClass(parentClass)) {
-          String referenceName = ((PsiReferenceExpression)expression).getReferenceName();
+        if (expression instanceof PsiReferenceExpression ref && PsiUtil.isInnerClass(parentClass)) {
+          String referenceName = ref.getReferenceName();
           PsiClass containingClass = parentClass.getContainingClass();
           LOG.assertTrue(containingClass != null);
           PsiField fieldInContainingClass = containingClass.findFieldByName(referenceName, true);
-          if (fieldInContainingClass != null && ((PsiReferenceExpression)expression).getQualifierExpression() == null) {
-            builder.registerFix(new QualifyWithThisFix(containingClass, expression), null, null, null, null);
+          if (fieldInContainingClass != null && ref.getQualifierExpression() == null) {
+            builder.registerFix(new QualifyWithThisFix(containingClass, ref), null, null, null, null);
           }
         }
 

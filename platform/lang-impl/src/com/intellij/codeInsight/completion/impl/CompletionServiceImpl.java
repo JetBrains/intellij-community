@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.completion.*;
@@ -6,8 +6,6 @@ import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.ClassifierFactory;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeWithMe.ClientId;
-import com.intellij.platform.diagnostic.telemetry.IJTracer;
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
@@ -22,6 +20,8 @@ import com.intellij.openapi.project.ProjectCloseListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.platform.diagnostic.telemetry.IJTracer;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.psi.Weigher;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.intellij.codeInsight.util.CodeCompletionKt.*;
+import static com.intellij.codeInsight.util.CodeCompletionKt.CodeCompletion;
 import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runWithSpan;
 
 /**
@@ -44,18 +44,16 @@ public final class CompletionServiceImpl extends BaseCompletionService {
   private final IJTracer myCompletionTracer = TelemetryManager.getInstance().getTracer(CodeCompletion);
 
   private static class ClientCompletionService implements Disposable {
-    @Nullable
-    public static ClientCompletionService tryGetInstance(@Nullable ClientAppSession session) {
-      if (session == null)
+    public static @Nullable ClientCompletionService tryGetInstance(@Nullable ClientAppSession session) {
+      if (session == null) {
         return null;
+      }
       return session.getService(ClientCompletionService.class);
     }
 
-    @NotNull
-    private final ClientAppSession myAppSession;
+    private final @NotNull ClientAppSession myAppSession;
 
-    @NotNull
-    private volatile CompletionPhaseHolder myPhaseHolder = DEFAULT_PHASE_HOLDER;
+    private volatile @NotNull CompletionPhaseHolder myPhaseHolder = DEFAULT_PHASE_HOLDER;
 
     ClientCompletionService(@NotNull ClientAppSession appSession) {
       myAppSession = appSession;
@@ -155,7 +153,7 @@ public final class CompletionServiceImpl extends BaseCompletionService {
   }
 
   @Override
-  public void setAdvertisementText(@NlsContexts.PopupAdvertisement @Nullable final String text) {
+  public void setAdvertisementText(final @NlsContexts.PopupAdvertisement @Nullable String text) {
     if (text == null) return;
     final CompletionProgressIndicator completion = getCurrentCompletionProgressIndicator();
     if (completion != null) {
@@ -182,8 +180,7 @@ public final class CompletionServiceImpl extends BaseCompletionService {
     return ClientId.isCurrentlyUnderLocalId() ? myApiCompletionProcess : null;
   }
 
-  @Nullable
-  public static CompletionProgressIndicator getCurrentCompletionProgressIndicator() {
+  public static @Nullable CompletionProgressIndicator getCurrentCompletionProgressIndicator() {
     ClientCompletionService clientCompletionService = ClientCompletionService.tryGetInstance(ClientSessionsManager.getAppSession());
     if (clientCompletionService == null)
       return null;
@@ -212,8 +209,7 @@ public final class CompletionServiceImpl extends BaseCompletionService {
     }
 
     @Override
-    @NotNull
-    public CompletionResultSet withPrefixMatcher(@NotNull final PrefixMatcher matcher) {
+    public @NotNull CompletionResultSet withPrefixMatcher(final @NotNull PrefixMatcher matcher) {
       if (matcher.equals(getPrefixMatcher())) {
         return this;
       }
@@ -221,9 +217,8 @@ public final class CompletionServiceImpl extends BaseCompletionService {
       return new CompletionResultSetImpl(getConsumer(), matcher, myContributor, myParameters, mySorter, this);
     }
 
-    @NotNull
     @Override
-    public CompletionResultSet withRelevanceSorter(@NotNull CompletionSorter sorter) {
+    public @NotNull CompletionResultSet withRelevanceSorter(@NotNull CompletionSorter sorter) {
       return new CompletionResultSetImpl(getConsumer(), getPrefixMatcher(), myContributor, myParameters, sorter, this);
     }
 
@@ -306,18 +301,16 @@ public final class CompletionServiceImpl extends BaseCompletionService {
     return clientCompletionService.getCompletionPhase();
   }
 
-  @NotNull
   @Override
-  protected CompletionSorterImpl addWeighersBefore(@NotNull CompletionSorterImpl sorter) {
+  protected @NotNull CompletionSorterImpl addWeighersBefore(@NotNull CompletionSorterImpl sorter) {
     CompletionSorterImpl processed = super.addWeighersBefore(sorter);
     return processed.withClassifier(CompletionSorterImpl.weighingFactory(new LiveTemplateWeigher()));
   }
 
-  @NotNull
   @Override
-  protected CompletionSorterImpl processStatsWeigher(@NotNull CompletionSorterImpl sorter,
-                                                     @NotNull Weigher weigher,
-                                                     @NotNull CompletionLocation location) {
+  protected @NotNull CompletionSorterImpl processStatsWeigher(@NotNull CompletionSorterImpl sorter,
+                                                              @NotNull Weigher weigher,
+                                                              @NotNull CompletionLocation location) {
     CompletionSorterImpl processedSorter = super.processStatsWeigher(sorter, weigher, location);
     return processedSorter.withClassifier(new ClassifierFactory<>("stats") {
       @Override

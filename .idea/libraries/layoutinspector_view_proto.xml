@@ -1,6 +1,21 @@
 <component name="libraryTable">
   <library name="layoutinspector-view-proto" type="repository">
-    <properties maven-id="org.jetbrains.intellij.deps.android.tools.base:layoutinspector-view-proto:223.0.1.0" />
+    <properties maven-id="org.jetbrains.intellij.deps.android.tools.base:layoutinspector-view-proto:223.0.1.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/layoutinspector-view-proto/223.0.1.0/layoutinspector-view-proto-223.0.1.0.jar">
+          <sha256sum>646ec119025d94f8f154caaca82433dfdd67f411e1dbac64e791c8221454c9a1</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/layout_inspector_compose_java_proto/223.0.1.0/layout_inspector_compose_java_proto-223.0.1.0.jar">
+          <sha256sum>e919843d85b1b7d8252fbefd8ef1bb2a838fe112136ae5d23dc56be17a65216b</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/layout_inspector_snapshot_java_proto/223.0.1.0/layout_inspector_snapshot_java_proto-223.0.1.0.jar">
+          <sha256sum>b5acbacd2efe23a13e523e982a4af48ea0e789da9cac4612192edaac80ce3aa7</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/layout_inspector_view_java_proto/223.0.1.0/layout_inspector_view_java_proto-223.0.1.0.jar">
+          <sha256sum>124d5d061c4f4e20b2f45e9315f3e2700a4849b25456c4a446ec4432c0be0251</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/layoutinspector-view-proto/223.0.1.0/layoutinspector-view-proto-223.0.1.0.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/layout_inspector_compose_java_proto/223.0.1.0/layout_inspector_compose_java_proto-223.0.1.0.jar!/" />

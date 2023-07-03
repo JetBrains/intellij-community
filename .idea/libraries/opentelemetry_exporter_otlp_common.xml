@@ -1,6 +1,14 @@
 <component name="libraryTable">
   <library name="opentelemetry-exporter-otlp-common" type="repository">
     <properties maven-id="io.opentelemetry:opentelemetry-exporter-otlp-common:1.26.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-otlp-common/1.26.0/opentelemetry-exporter-otlp-common-1.26.0.jar">
+          <sha256sum>bf4cfd6c368ee3837a1431430a67e6a9657df99e74ab3a475cd257f5625f5b00</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-common/1.26.0/opentelemetry-exporter-common-1.26.0.jar">
+          <sha256sum>330fa4f1ff7a59506ae53b649a8085cca8f9d50f3279857545e871287e17f080</sha256sum>
+        </artifact>
+      </verification>
       <exclude>
         <dependency maven-id="io.opentelemetry:opentelemetry-api" />
         <dependency maven-id="io.opentelemetry:opentelemetry-sdk-extension-autoconfigure-spi" />

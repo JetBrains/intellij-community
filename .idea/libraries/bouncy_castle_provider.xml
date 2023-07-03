@@ -1,6 +1,18 @@
 <component name="libraryTable">
   <library name="bouncy-castle-provider" type="repository">
-    <properties maven-id="org.bouncycastle:bcpkix-jdk18on:1.73" />
+    <properties maven-id="org.bouncycastle:bcpkix-jdk18on:1.73">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/bouncycastle/bcpkix-jdk18on/1.73/bcpkix-jdk18on-1.73.jar">
+          <sha256sum>9487164ba018f2211fcc0f989d6f4ea25b7d48fc6031501c3c7e3a17b164d860</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/bouncycastle/bcprov-jdk18on/1.73/bcprov-jdk18on-1.73.jar">
+          <sha256sum>ad3ae628f4459a8fecb5c1a142b5525ce5118817414f97efd92f5448a69180ff</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/bouncycastle/bcutil-jdk18on/1.73/bcutil-jdk18on-1.73.jar">
+          <sha256sum>0b70292c36cfe08ac00a71f5cc5af4c412ceedbc8c0f0a22995dbacfaf25dd42</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcpkix-jdk18on/1.73/bcpkix-jdk18on-1.73.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcprov-jdk18on/1.73/bcprov-jdk18on-1.73.jar!/" />

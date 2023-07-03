@@ -2,7 +2,7 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.DynamicBundle
-import com.intellij.diagnostic.runActivity
+import com.intellij.ide.menu.*
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.diagnostic.Logger
@@ -14,7 +14,6 @@ import com.intellij.ui.Gray
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.mac.foundation.NSDefaults
 import com.intellij.ui.mac.screenmenu.Menu
-import com.intellij.ui.mac.screenmenu.MenuBar
 import com.intellij.ui.plaf.beg.IdeaMenuUI
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
@@ -41,8 +40,6 @@ internal enum class IdeMenuBarState {
 open class IdeMenuBar internal constructor(@JvmField internal val coroutineScope: CoroutineScope,
                                            @JvmField internal val frame: JFrame) : JMenuBar(), ActionAwareIdeMenuBar {
   private val menuBarHelper: IdeMenuBarHelper
-
-  private val screenMenuPeer: MenuBar?
 
   init {
     val flavor = if (isFloatingMenuBarSupported) {
@@ -73,14 +70,7 @@ open class IdeMenuBar internal constructor(@JvmField internal val coroutineScope
       override suspend fun getMainMenuActionGroup(): ActionGroup? = this@IdeMenuBar.getMainMenuActionGroup()
     }
 
-    screenMenuPeer = runActivity("ide menu bar init") { createScreeMenuPeer(frame) }
-    if (screenMenuPeer == null) {
-      menuBarHelper = JMenuBasedIdeMenuBarHelper(flavor = flavor, menuBar = facade)
-    }
-    else {
-      menuBarHelper = PeerBasedIdeMenuBarHelper(screenMenuPeer = screenMenuPeer, flavor = flavor, menuBar = facade)
-    }
-
+    menuBarHelper = JMenuBasedIdeMenuBarHelper(flavor = flavor, menuBar = facade)
     if (IdeFrameDecorator.isCustomDecorationActive()) {
       isOpaque = false
     }
@@ -147,11 +137,6 @@ open class IdeMenuBar internal constructor(@JvmField internal val coroutineScope
 
   override fun removeNotify() {
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
-      screenMenuPeer?.let {
-        @Suppress("SSBasedInspection")
-        it.dispose()
-      }
-
       menuBarHelper.flavor.suspendAnimator()
     }
     super.removeNotify()
@@ -238,14 +223,6 @@ internal fun doUpdateAppMenu() {
   //  mi.setActionDelegate(() -> System.err.println("NewCustomItem executes"));
   //  appMenu.add(mi, pos, true);
   //}
-}
-
-internal fun createScreeMenuPeer(frame: JFrame): MenuBar? {
-  return if (Menu.isJbScreenMenuEnabled()) MenuBar("MainMenu", frame) else null
-}
-
-internal fun createMenuBar(coroutineScope: CoroutineScope, frame: JFrame): IdeMenuBar {
-  return if (SystemInfoRt.isLinux) LinuxIdeMenuBar(coroutineScope, frame) else IdeMenuBar(coroutineScope, frame)
 }
 
 internal fun installAppMenuIfNeeded(frame: JFrame) {

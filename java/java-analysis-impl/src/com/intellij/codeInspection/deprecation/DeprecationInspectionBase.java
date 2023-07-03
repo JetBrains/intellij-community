@@ -100,7 +100,7 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
     if (deprecatedElement instanceof PsiMethod method && methodCall != null) {
       PsiMethod replacement = findReplacementInJavaDoc(method, methodCall);
       if (replacement != null) {
-        return new ReplaceMethodCallFix((PsiMethodCallExpression)elementToHighlight.getParent().getParent(), replacement);
+        return new ReplaceMethodCallFix((PsiMethodCallExpression)elementToHighlight.getParent().getParent(), replacement).asQuickFix();
       }
     }
     if (deprecatedElement instanceof PsiField field) {
@@ -108,7 +108,7 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
       if (referenceExpression != null) {
         PsiMember replacement = findReplacementInJavaDoc(field, referenceExpression);
         if (replacement != null) {
-          return new ReplaceFieldReferenceFix(referenceExpression, replacement);
+          return new ReplaceFieldReferenceFix(referenceExpression, replacement).asQuickFix();
         }
       }
     }

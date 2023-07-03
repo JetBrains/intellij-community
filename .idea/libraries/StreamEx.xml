@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="StreamEx" type="repository">
-    <properties maven-id="one.util:streamex:0.8.1" />
+    <properties maven-id="one.util:streamex:0.8.1">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/one/util/streamex/0.8.1/streamex-0.8.1.jar">
+          <sha256sum>84dbfa4730565134504d65cdd823341c8b2ee655e2d1c5f004cf95bff0180655</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/one/util/streamex/0.8.1/streamex-0.8.1.jar!/" />
     </CLASSES>

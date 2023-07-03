@@ -29,7 +29,7 @@ import static com.intellij.openapi.ui.impl.DialogWrapperPeerImpl.isDisableAutoRe
 import static com.intellij.openapi.wm.impl.WindowManagerImplKt.IDE_FRAME_EVENT_LOG;
 
 public abstract class IdeFrameDecorator {
-  static final String FULL_SCREEN = "ide.frame.full.screen";
+  public static final String FULL_SCREEN = "ide.frame.full.screen";
 
   protected final IdeFrameImpl frame;
 
@@ -152,8 +152,9 @@ public abstract class IdeFrameDecorator {
 
           if (toFocus != null && !(toFocus instanceof JRootPane)) {
             // Window 'forgets' last focused component on disposal, so we need to restore it explicitly.
-            // Special case is toggling fullscreen mode from menu. In this case menu UI moves focus to the root pane before performing
-            // the action. We shouldn't explicitly request focus in this case - menu UI will restore the focus without our help.
+            // Special case is toggling fullscreen mode from a menu.
+            // In this case menu UI moves focus to the root pane before performing the action.
+            // We shouldn't explicitly request focus in this case - menu UI will restore the focus without our help.
             toFocus.requestFocusInWindow();
           }
         }
@@ -234,7 +235,7 @@ public abstract class IdeFrameDecorator {
   public static boolean isCustomDecorationActive() {
     UISettings settings = UISettings.getInstanceOrNull();
     if (settings == null) {
-      // true by default if no settings is available (e.g. during the initial IDE setup wizard) and not overridden (only for Windows)
+      // true by default if no settings are available (e.g., during the initial IDE setup wizard) and not overridden (only for Windows)
       return isCustomDecorationAvailable() && getDefaultCustomDecorationState();
     }
 

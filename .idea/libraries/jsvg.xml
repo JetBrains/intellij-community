@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="jsvg" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.github.weisj:jsvg:0.1.0-jb.17" />
+    <properties include-transitive-deps="false" maven-id="com.github.weisj:jsvg:0.1.0-jb.17">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/github/weisj/jsvg/0.1.0-jb.17/jsvg-0.1.0-jb.17.jar">
+          <sha256sum>0c10b4ccca2c0a9aa6a82ffa12324d587de7e277a619239566bbdb7413558ce6</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/com/github/weisj/jsvg/0.1.0-jb.17/jsvg-0.1.0-jb.17.jar!/" />
     </CLASSES>

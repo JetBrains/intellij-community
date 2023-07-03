@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.testGenerator.model.*
 internal fun MutableTWorkspace.generateK2StructureViewTests() {
     testGroup("code-insight/kotlin.code-insight.k2") {
          testClass<AbstractKotlinFirFileStructureTest> {
-            model("structureView/fileStructure", pattern = Patterns.KT_OR_KTS_WITHOUT_DOTS)
+            model("../../../idea/tests/testData/structureView/fileStructure", pattern = Patterns.KT_OR_KTS_WITHOUT_DOTS)
         }
     }
 }

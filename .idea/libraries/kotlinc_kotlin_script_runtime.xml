@@ -1,12 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-script-runtime" type="repository">
-    <properties maven-id="org.jetbrains.kotlin:kotlin-script-runtime:1.9.20-dev-4794" />
+    <properties maven-id="org.jetbrains.kotlin:kotlin-script-runtime:1.9.20-dev-5455">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/1.9.20-dev-5455/kotlin-script-runtime-1.9.20-dev-5455.jar">
+          <sha256sum>46937a2a278340912a93b7929a644225460dc23f2a4724bb076dfe3d1f544659</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/1.9.20-dev-4794/kotlin-script-runtime-1.9.20-dev-4794.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/1.9.20-dev-5455/kotlin-script-runtime-1.9.20-dev-5455.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/1.9.20-dev-4794/kotlin-script-runtime-1.9.20-dev-4794-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/1.9.20-dev-5455/kotlin-script-runtime-1.9.20-dev-5455-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

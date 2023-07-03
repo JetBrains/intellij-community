@@ -1,6 +1,14 @@
 <component name="libraryTable">
   <library name="proxy-vole" type="repository">
     <properties maven-id="org.bidib.com.github.markusbernhardt:proxy-vole:1.0.18">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/bidib/com/github/markusbernhardt/proxy-vole/1.0.18/proxy-vole-1.0.18.jar">
+          <sha256sum>4a5cc62f3430f53cc79596fcd3b81561c3899ae5fbeda1fcd3a7af595aaa8b99</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/javadelight/delight-rhino-sandbox/0.0.15/delight-rhino-sandbox-0.0.15.jar">
+          <sha256sum>e287824b39907a21ee8dfc5a0c738be110fb256374d5dd87dbd8c0ad6d8ac44d</sha256sum>
+        </artifact>
+      </verification>
       <exclude>
         <dependency maven-id="net.java.dev.jna:jna" />
         <dependency maven-id="net.java.dev.jna:jna-platform" />

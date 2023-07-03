@@ -506,8 +506,12 @@ public final class JBUI {
 
       public static @NotNull Color mainToolbarBackground(boolean active) {
         JBColor activeBG = JBColor.namedColor("MainToolbar.background", titlePaneBackground());
-        JBColor inactiveBG = JBColor.namedColor("MainToolbar.inactiveBackground", activeBG);
-        return active ? activeBG : inactiveBG;
+        if (active) {
+          return activeBG;
+        }
+        else {
+          return JBColor.namedColor("MainToolbar.inactiveBackground", activeBG);
+        }
       }
 
       public static @NotNull Color titlePaneInfoForeground() {
@@ -1170,7 +1174,7 @@ public final class JBUI {
       public static final class Dropdown {
 
         @NotNull public static Insets borderInsets() {
-          return insets("MainToolbar.Dropdown.borderInsets", isNewUI() ? insets(5, 12, 5, 6) : insets(3, 5));
+          return insets("MainToolbar.Dropdown.borderInsets", isNewUI() ? insets(5, 10, 5, 6) : insets(3, 5));
         }
       }
 

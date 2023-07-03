@@ -1,24 +1,24 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInsight.CodeInsightUtilCore;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.AllowedApiFilterExtension;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.HighlightUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 
@@ -29,7 +29,7 @@ public class DynamicRegexReplaceableByCompiledPatternInspection extends BaseInsp
   );
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new DynamicRegexReplaceableByCompiledPatternFix();
   }
 
@@ -41,16 +41,11 @@ public class DynamicRegexReplaceableByCompiledPatternInspection extends BaseInsp
   }
 
   @Override
-  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-    return true;
-  }
-
-  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new DynamicRegexReplaceableByCompiledPatternVisitor();
   }
 
-  private static class DynamicRegexReplaceableByCompiledPatternFix extends InspectionGadgetsFix {
+  private static class DynamicRegexReplaceableByCompiledPatternFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -60,8 +55,7 @@ public class DynamicRegexReplaceableByCompiledPatternInspection extends BaseInsp
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       final PsiClass aClass = ClassUtils.getContainingStaticClass(element);
       if (aClass == null) {
         return;
@@ -76,21 +70,33 @@ public class DynamicRegexReplaceableByCompiledPatternInspection extends BaseInsp
       }
       final PsiExpressionList list = methodCallExpression.getArgumentList();
       final PsiExpression[] expressions = list.getExpressions();
+      if (expressions.length == 0) return;
       CommentTracker commentTracker = new CommentTracker();
-      @NonNls final StringBuilder fieldText =
-        new StringBuilder("private static final java.util.regex.Pattern PATTERN = java.util.regex.Pattern.compile(");
-      final int expressionsLength = expressions.length;
-      if (expressionsLength > 0) {
-        fieldText.append(commentTracker.text(expressions[0]));
-      }
-      @NonNls final String methodName = methodExpression.getReferenceName();
+      final String methodName = methodExpression.getReferenceName();
       final boolean literalReplacement = "replace".equals(methodName);
-      if (literalReplacement) {
-        fieldText.append(", java.util.regex.Pattern.LITERAL");
+      String regexpText = commentTracker.text(expressions[0]);
+      String initializer = "java.util.regex.Pattern.compile(" + regexpText +
+                           (literalReplacement ? ", java.util.regex.Pattern.LITERAL" : "") + ")";
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      List<String> names = new VariableNameGenerator(aClass, VariableKind.STATIC_FINAL_FIELD)
+        .byExpression(factory.createExpressionFromText("__(" + regexpText + ")", null))
+        .byName("PATTERN", "REGEX", "REGEXP").generateAll(true);
+      String name = names.get(0);
+      String fieldText = "private static final java.util.regex.Pattern " + name + " = "+ initializer + ";";
+      final int expressionsLength = expressions.length;
+      PsiField fieldTemplate = factory.createFieldFromText(fieldText, element);
+      for (PsiField classField : aClass.getFields()) {
+        if (classField.hasModifierProperty(PsiModifier.STATIC) && classField.hasModifierProperty(PsiModifier.FINAL) &&
+            fieldTemplate.getType().equals(classField.getType()) &&
+            EquivalenceChecker.getCanonicalPsiEquivalence()
+              .expressionsAreEquivalent(fieldTemplate.getInitializer(), classField.getInitializer())) {
+          name = classField.getName();
+          fieldTemplate = null;
+          break;
+        }
       }
-      fieldText.append(");");
 
-      @NonNls final StringBuilder expressionText = new StringBuilder("PATTERN.");
+      @NonNls final StringBuilder expressionText = new StringBuilder(name + ".");
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
       @NonNls final String qualifierText = (qualifier == null) ? "this" : commentTracker.text(qualifier);
       if ("split".equals(methodName)) {
@@ -130,32 +136,20 @@ public class DynamicRegexReplaceableByCompiledPatternInspection extends BaseInsp
         expressionText.append(')');
       }
 
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      final PsiElement field = aClass.add(factory.createFieldFromText(fieldText.toString(), element));
-      PsiMethodCallExpression newMethodCallExpression =
-        (PsiMethodCallExpression)commentTracker.replaceAndRestoreComments(methodCallExpression, expressionText.toString());
-      newMethodCallExpression = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(newMethodCallExpression);
-      if (newMethodCallExpression == null) return;
-      final PsiReferenceExpression reference = getReference(newMethodCallExpression);
-      HighlightUtils.showRenameTemplate(aClass, (PsiNameIdentifierOwner)field, reference);
+      JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
+      if (fieldTemplate != null) {
+        PsiField field = (PsiField)aClass.add(fieldTemplate);
+        field = (PsiField)javaCodeStyleManager.shortenClassReferences(field);
+        updater.rename(field, names);
+      }
+      javaCodeStyleManager.shortenClassReferences(
+        commentTracker.replaceAndRestoreComments(methodCallExpression, expressionText.toString()));
     }
 
     private static boolean needsQuote(PsiExpression expr) {
       Object constExprValue = ExpressionUtils.computeConstantExpression(expr);
-      return !(constExprValue instanceof String) ||
-             Matcher.quoteReplacement((String) constExprValue) != constExprValue;
-    }
-
-    private static PsiReferenceExpression getReference(PsiMethodCallExpression newMethodCallExpression) {
-      final PsiReferenceExpression methodExpression = newMethodCallExpression.getMethodExpression();
-      final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
-      if (qualifierExpression instanceof PsiMethodCallExpression methodCallExpression) {
-        return getReference(methodCallExpression);
-      }
-      if (!(qualifierExpression instanceof PsiReferenceExpression)) {
-        return null;
-      }
-      return (PsiReferenceExpression)qualifierExpression;
+      return !(constExprValue instanceof String value) ||
+             Matcher.quoteReplacement(value) != constExprValue;
     }
   }
 

@@ -1,337 +1,151 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package de.plushnikov.intellij.plugin.inspection;
 
-import com.intellij.codeInspection.*;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.psiutils.CommentTracker;
+import com.intellij.psi.util.PsiUtil;
 import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class LombokGetterMayBeUsedInspection extends LombokJavaInspectionBase implements CleanupLocalInspectionTool {
-
-  @NotNull
+public class LombokGetterMayBeUsedInspection extends LombokGetterOrSetterMayBeUsedInspection {
   @Override
-  protected PsiElementVisitor createVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    return new LombokGetterMayBeUsedVisitor(holder, false);
+  @NotNull
+  protected String getTagName() {
+    return "return";
   }
 
-  private static class LombokGetterMayBeUsedVisitor extends JavaElementVisitor {
-    private final @Nullable ProblemsHolder myHolder;
-    private final boolean myApplyFix;
+  @Override
+  @NotNull
+  protected String getJavaDocMethodMarkup() {
+    return "GETTER";
+  }
 
-    private LombokGetterMayBeUsedVisitor(@Nullable ProblemsHolder holder, boolean applyFix) {
-      this.myHolder = holder;
-      myApplyFix = applyFix;
+  @Override
+  @NotNull
+  protected @NonNls String getAnnotationName() {
+    return LombokClassNames.GETTER;
+  }
+
+  @Override
+  @NotNull
+  protected @Nls String getFieldErrorMessage(String fieldName) {
+    return LombokBundle.message("inspection.lombok.getter.may.be.used.display.field.message",
+                                fieldName);
+  }
+
+  @Override
+  @NotNull
+  protected @Nls String getClassErrorMessage(String className) {
+    return LombokBundle.message("inspection.lombok.getter.may.be.used.display.class.message",
+                                className);
+  }
+
+  @Override
+  protected boolean processMethod(
+    @NotNull PsiMethod method,
+    @NotNull List<Pair<PsiField, PsiMethod>> instanceCandidates,
+    @NotNull List<Pair<PsiField, PsiMethod>> staticCandidates
+  ) {
+    final PsiType returnType = method.getReturnType();
+    if (!method.hasModifierProperty(PsiModifier.PUBLIC)
+        || method.isConstructor()
+        || method.hasParameters()
+        || method.getThrowsTypes().length != 0
+        || method.hasModifierProperty(PsiModifier.FINAL)
+        || method.hasModifierProperty(PsiModifier.ABSTRACT)
+        || method.hasModifierProperty(PsiModifier.SYNCHRONIZED)
+        || method.hasModifierProperty(PsiModifier.NATIVE)
+        || method.hasModifierProperty(PsiModifier.STRICTFP)
+        || method.getAnnotations().length != 0
+        || PsiTypes.voidType().equals(returnType)
+        || returnType == null
+        || returnType.getAnnotations().length != 0
+        || !method.isWritable()) {
+      return false;
+    }
+    final String methodName = method.getName();
+    final boolean isBooleanType = PsiTypes.booleanType().equals(returnType);
+    if (isBooleanType ? !methodName.startsWith("is") : !methodName.startsWith("get")) {
+      return false;
     }
 
-    @Override
-    public void visitJavaFile(@NotNull PsiJavaFile psiJavaFile) {
+    final String fieldName = StringUtil.getPropertyName(methodName);
+    if (StringUtil.isEmpty(fieldName)) {
+      return false;
     }
 
-    @Override
-    public void visitClass(@NotNull PsiClass psiClass) {
-      List<PsiField> annotatedFields = new ArrayList<>();
-      List<Pair<PsiField, PsiMethod>> instanceCandidates = new ArrayList<>();
-      List<Pair<PsiField, PsiMethod>> staticCandidates = new ArrayList<>();
-      for (PsiMethod method : psiClass.getMethods()) {
-        processMethod(method, instanceCandidates, staticCandidates);
-      }
-      boolean isGetterAtClassLevel = true;
-      for (PsiField field : psiClass.getFields()) {
-        PsiAnnotation annotation = field.getAnnotation(LombokClassNames.GETTER);
-        if (annotation != null) {
-          if (!annotation.getAttributes().isEmpty()) {
-            isGetterAtClassLevel = false;
-          }
-          else {
-            annotatedFields.add(field);
-          }
-          break;
-        }
-        if (!field.hasModifierProperty(PsiModifier.STATIC)) {
-          boolean found = false;
-          for (Pair<PsiField, PsiMethod> instanceCandidate : instanceCandidates) {
-            if (field.equals(instanceCandidate.getFirst())) {
-              found = true;
-              break;
-            }
-          }
-          isGetterAtClassLevel &= found;
-        }
-      }
-      List<Pair<PsiField, PsiMethod>> allCandidates = new ArrayList<>(staticCandidates);
-      if (isGetterAtClassLevel && (!instanceCandidates.isEmpty() || !annotatedFields.isEmpty())) {
-        warnOrFix(psiClass, instanceCandidates, annotatedFields);
-      }
-      else {
-        allCandidates.addAll(instanceCandidates);
-      }
-      for (Pair<PsiField, PsiMethod> candidate : allCandidates) {
-        warnOrFix(candidate.getFirst(), candidate.getSecond());
-      }
+    if (method.getBody() == null) {
+      return false;
     }
-
-    public void visitMethodForFix(@NotNull PsiMethod psiMethod) {
-      List<Pair<PsiField, PsiMethod>> fieldsAndMethods = new ArrayList<>();
-      if (!processMethod(psiMethod, fieldsAndMethods, fieldsAndMethods)) return;
-      if (!fieldsAndMethods.isEmpty()) {
-        final Pair<PsiField, PsiMethod> psiFieldPsiMethodPair = fieldsAndMethods.get(0);
-        warnOrFix(psiFieldPsiMethodPair.getFirst(), psiFieldPsiMethodPair.getSecond());
-      }
+    final PsiStatement @NotNull [] methodStatements = Arrays.stream(method.getBody().getStatements()).filter(e -> !(e instanceof PsiEmptyStatement)).toArray(PsiStatement[]::new);
+    if (methodStatements.length != 1) {
+      return false;
     }
-
-    private static boolean processMethod(
-      @NotNull PsiMethod method,
-      @NotNull List<Pair<PsiField, PsiMethod>> instanceCandidates,
-      @NotNull List<Pair<PsiField, PsiMethod>> staticCandidates
-    ) {
-      final PsiType returnType = method.getReturnType();
-      if (!method.hasModifierProperty(PsiModifier.PUBLIC)
-          || method.isConstructor()
-          || method.hasParameters()
-          || method.getThrowsTypes().length != 0
-          || method.hasModifierProperty(PsiModifier.FINAL)
-          || method.hasModifierProperty(PsiModifier.ABSTRACT)
-          || method.hasModifierProperty(PsiModifier.SYNCHRONIZED)
-          || method.hasModifierProperty(PsiModifier.NATIVE)
-          || method.hasModifierProperty(PsiModifier.STRICTFP)
-          || method.getAnnotations().length != 0
-          || PsiTypes.voidType().equals(returnType)
-          || returnType == null
-          || returnType.getAnnotations().length != 0
-          || !method.isWritable()) {
+    final PsiReturnStatement returnStatement = tryCast(methodStatements[0], PsiReturnStatement.class);
+    if (returnStatement == null) {
+      return false;
+    }
+    final PsiReferenceExpression targetRef = tryCast(
+      PsiUtil.skipParenthesizedExprDown(returnStatement.getReturnValue()), PsiReferenceExpression.class);
+    if (targetRef == null) {
+      return false;
+    }
+    final @Nullable PsiExpression qualifier = targetRef.getQualifierExpression();
+    final @Nullable PsiThisExpression thisExpression = tryCast(qualifier, PsiThisExpression.class);
+    final PsiClass psiClass = PsiTreeUtil.getParentOfType(method, PsiClass.class);
+    if (psiClass == null) {
+      return false;
+    }
+    if (qualifier != null) {
+      if (thisExpression == null) {
         return false;
-      }
-
-      final String methodName = method.getName();
-      final boolean isBooleanType = PsiTypes.booleanType().equals(returnType);
-      if (isBooleanType ? !methodName.startsWith("is") : !methodName.startsWith("get")) {
-        return false;
-      }
-
-      final String fieldName = StringUtil.getPropertyName(methodName);
-      if (StringUtil.isEmpty(fieldName)) {
-        return false;
-      }
-
-      if (method.getBody() == null) {
-        return false;
-      }
-      final PsiStatement @NotNull [] methodStatements = method.getBody().getStatements();
-      if (methodStatements.length != 1) {
-        return false;
-      }
-      final PsiReturnStatement returnStatement = tryCast(methodStatements[0], PsiReturnStatement.class);
-      if (returnStatement == null) {
-        return false;
-      }
-      final PsiReferenceExpression fieldRef = tryCast(returnStatement.getReturnValue(), PsiReferenceExpression.class);
-      if (fieldRef == null) {
-        return false;
-      }
-      final @Nullable PsiExpression qualifier = fieldRef.getQualifierExpression();
-      final @Nullable PsiThisExpression thisExpression = tryCast(qualifier, PsiThisExpression.class);
-      final PsiClass psiClass = PsiTreeUtil.getParentOfType(method, PsiClass.class);
-      if (psiClass == null) {
-        return false;
-      }
-      if (qualifier != null) {
-        if (thisExpression == null) {
+      } else if (thisExpression.getQualifier() != null) {
+        if (!thisExpression.getQualifier().isReferenceTo(psiClass)) {
           return false;
         }
-        else if (thisExpression.getQualifier() != null) {
-          if (!thisExpression.getQualifier().isReferenceTo(psiClass)) {
-            return false;
-          }
-        }
-      }
-      final @Nullable String identifier = fieldRef.getReferenceName();
-      if (!fieldName.equals(identifier) && !StringUtil.capitalize(fieldName).equals(identifier)) {
-        return false;
-      }
-
-      final boolean isMethodStatic = method.hasModifierProperty(PsiModifier.STATIC);
-      final PsiField field = psiClass.findFieldByName(identifier, false);
-      if (field == null
-          || !field.isWritable()
-          || isMethodStatic != field.hasModifierProperty(PsiModifier.STATIC)
-          || !field.getType().equals(returnType)) {
-        return false;
-      }
-      if (isMethodStatic) {
-        staticCandidates.add(Pair.pair(field, method));
-      }
-      else {
-        instanceCandidates.add(Pair.pair(field, method));
-      }
-      return true;
-    }
-
-    private void warnOrFix(
-      @NotNull PsiClass psiClass,
-      @NotNull List<Pair<PsiField, PsiMethod>> fieldsAndMethods,
-      @NotNull List<PsiField> annotatedFields
-    ) {
-      if (myHolder != null) {
-        final LocalQuickFix fix = new LombokGetterMayBeUsedFix(Objects.requireNonNull(psiClass.getName()));
-        final PsiIdentifier psiClassNameIdentifier = psiClass.getNameIdentifier();
-        myHolder.registerProblem(psiClass,
-                                 LombokBundle.message("inspection.lombok.getter.may.be.used.display.class.message",
-                                                      psiClass.getName()),
-                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                 psiClassNameIdentifier != null ? psiClassNameIdentifier.getTextRangeInParent() : psiClass.getTextRange(),
-                                 fix);
-      }
-      else if (myApplyFix) {
-        LombokGetterMayBeUsedFix.effectivelyDoFix(psiClass, fieldsAndMethods, annotatedFields);
       }
     }
-
-    private void warnOrFix(@NotNull PsiField field, @NotNull PsiMethod method) {
-      if (myHolder != null) {
-        final LocalQuickFix fix = new LombokGetterMayBeUsedFix(field.getName());
-        myHolder.registerProblem(method,
-                                 LombokBundle.message("inspection.lombok.getter.may.be.used.display.field.message",
-                                                      field.getName()), fix);
-      }
-      else if (myApplyFix) {
-        LombokGetterMayBeUsedFix.effectivelyDoFix(field, method);
-      }
+    final @Nullable String fieldIdentifier = targetRef.getReferenceName();
+    if (!fieldName.equals(fieldIdentifier) && !StringUtil.capitalize(fieldName).equals(fieldIdentifier)) {
+      return false;
     }
+
+    final boolean isMethodStatic = method.hasModifierProperty(PsiModifier.STATIC);
+    final PsiField field = psiClass.findFieldByName(fieldIdentifier, false);
+    if (field == null
+        || !field.isWritable()
+        || isMethodStatic != field.hasModifierProperty(PsiModifier.STATIC)
+        || !field.getType().equals(returnType)) {
+      return false;
+    }
+    if (isMethodStatic) {
+      staticCandidates.add(Pair.pair(field, method));
+    } else {
+      instanceCandidates.add(Pair.pair(field, method));
+    }
+    return true;
   }
 
-  private static class LombokGetterMayBeUsedFix implements LocalQuickFix {
-    private final @NotNull String myText;
+  @Override
+  @NotNull
+  protected @Nls String getFixName(String text) {
+    return LombokBundle.message("inspection.lombok.getter.may.be.used.display.fix.name", text);
+  }
 
-    private LombokGetterMayBeUsedFix(@NotNull String text) {
-      myText = text;
-    }
-
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
-    @Override
-    public String getName() {
-      return LombokBundle.message("inspection.lombok.getter.may.be.used.display.fix.name", myText);
-    }
-
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return LombokBundle.message("inspection.lombok.getter.may.be.used.display.fix.family.name");
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
-      if (element instanceof PsiMethod) {
-        new LombokGetterMayBeUsedVisitor(null, true).visitMethodForFix((PsiMethod)element);
-      }
-      else if (element instanceof PsiClass) {
-        new LombokGetterMayBeUsedVisitor(null, true).visitClass((PsiClass)element);
-      }
-    }
-
-    private static void effectivelyDoFix(@NotNull PsiField field, @NotNull PsiMethod method) {
-      final PsiModifierList modifierList = field.getModifierList();
-      if (modifierList == null) {
-        return;
-      }
-      Project project = field.getProject();
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      final PsiAnnotation annotation = factory.createAnnotationFromText("@" + LombokClassNames.GETTER, field);
-      JavaCodeStyleManager.getInstance(project).shortenClassReferences(annotation);
-      modifierList.addAfter(annotation, null);
-      removeMethodAndMoveJavaDoc(field, method);
-    }
-
-    public static void effectivelyDoFix(@NotNull PsiClass aClass, @NotNull List<Pair<PsiField, PsiMethod>> fieldsAndMethods,
-                                        @NotNull List<PsiField> annotatedFields) {
-      Project project = aClass.getProject();
-      for (Pair<PsiField, PsiMethod> fieldAndMethod : fieldsAndMethods) {
-        PsiField field = fieldAndMethod.getFirst();
-        PsiMethod method = fieldAndMethod.getSecond();
-        removeMethodAndMoveJavaDoc(field, method);
-      }
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      final PsiAnnotation newAnnotation = factory.createAnnotationFromText("@" + LombokClassNames.GETTER, aClass);
-      JavaCodeStyleManager.getInstance(project).shortenClassReferences(newAnnotation);
-      final PsiModifierList modifierList = aClass.getModifierList();
-      if (modifierList == null) {
-        return;
-      }
-      modifierList.addAfter(newAnnotation, null);
-      for (PsiField annotatedField : annotatedFields) {
-        PsiAnnotation oldAnnotation = annotatedField.getAnnotation(LombokClassNames.GETTER);
-        if (oldAnnotation != null) {
-          new CommentTracker().deleteAndRestoreComments(oldAnnotation);
-        }
-      }
-    }
-
-    private static void removeMethodAndMoveJavaDoc(@NotNull PsiField field, @NotNull PsiMethod method) {
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(field.getProject());
-      CommentTracker tracker = new CommentTracker();
-      PsiDocComment methodJavaDoc = method.getDocComment();
-      if (methodJavaDoc != null) {
-        tracker.text(methodJavaDoc);
-        PsiDocComment fieldJavaDoc = field.getDocComment();
-        List<String> methodJavaDocTokens = Arrays.stream(methodJavaDoc.getChildren())
-          .filter(e -> e instanceof PsiDocToken)
-          .map(PsiElement::getText)
-          .filter(text -> !text.matches("\\s*\\*\\s*"))
-          .toList();
-        methodJavaDocTokens = methodJavaDocTokens.subList(1, methodJavaDocTokens.size() - 1);
-        String javaDocGetterText = String.join("\n* ", methodJavaDocTokens);
-        PsiDocTag[] returnTags = methodJavaDoc.findTagsByName("return");
-        if (fieldJavaDoc == null) {
-          if (javaDocGetterText.isEmpty()) {
-            fieldJavaDoc = factory.createDocCommentFromText("/**\n*/");
-          }
-          else {
-            fieldJavaDoc = factory.createDocCommentFromText("/**\n* -- GETTER --\n* " + javaDocGetterText + "\n*/");
-          }
-          for (PsiDocTag returnTag : returnTags) {
-            fieldJavaDoc.add(returnTag);
-          }
-          field.getParent().addBefore(fieldJavaDoc, field);
-        }
-        else {
-          @NotNull PsiElement @NotNull [] fieldJavaDocChildren = Arrays.stream(fieldJavaDoc.getChildren())
-            .filter(e -> e instanceof PsiDocToken)
-            .toArray(PsiElement[]::new);
-          @NotNull PsiElement fieldJavaDocChild = fieldJavaDocChildren[fieldJavaDocChildren.length - 2];
-          PsiDocComment newMethodJavaDoc = factory.createDocCommentFromText("/**\n* -- GETTER --\n* " + javaDocGetterText + "\n*/");
-          PsiElement[] tokens = newMethodJavaDoc.getChildren();
-          for (int i = tokens.length - 2; 0 < i; i--) {
-            fieldJavaDoc.addAfter(tokens[i], fieldJavaDocChild);
-          }
-          for (PsiDocTag returnTag : returnTags) {
-            fieldJavaDoc.add(returnTag);
-          }
-        }
-        methodJavaDoc.delete();
-      }
-      tracker.delete(method);
-      tracker.insertCommentsBefore(field);
-    }
+  @Override
+  @NotNull
+  protected @Nls String getFixFamilyName() {
+    return LombokBundle.message("inspection.lombok.getter.may.be.used.display.fix.family.name");
   }
 }

@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.performancePlugin;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,6 +10,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Ref;
 import com.intellij.task.ModuleBuildTask;
 import com.intellij.task.ProjectTaskManager;
+import com.intellij.task.impl.ProjectTaskManagerImpl;
 import com.intellij.util.messages.MessageBusConnection;
 import com.jetbrains.performancePlugin.PerformanceTestSpan;
 import com.jetbrains.performancePlugin.PerformanceTestingBundle;
@@ -71,6 +73,7 @@ public class BuildCommand extends AbstractCommand {
       });
 
     ApplicationManager.getApplication().invokeLater(() -> {
+      ProjectTaskManagerImpl.putBuildOriginator(project, this.getClass());
       ProjectTaskManager instance = ProjectTaskManager.getInstance(project);
       Promise<ProjectTaskManager.Result> promise = null;
       spanRef.set(span.startSpan());

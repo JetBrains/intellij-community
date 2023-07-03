@@ -103,7 +103,7 @@ internal class GHPRBranchesViewModel(
           val branch = "${headRemote.name}/${headBranch}"
           invokeLater {
             GitBranchPopupActions.RemoteBranchActions.CheckoutRemoteBranchAction.checkoutRemoteBranch(project, listOf(repository), branch)
-            GHPRStatisticsCollector.logDetailsBranchCheckedOut()
+            GHPRStatisticsCollector.logDetailsBranchCheckedOut(project)
           }
         }
       }
@@ -162,7 +162,7 @@ internal class GHPRBranchesViewModel(
       val source = _sourceBranch.value
       val target = _targetBranch.value
       _showBranchesRequests.emit(CodeReviewBranches(source, target))
-      GHPRStatisticsCollector.logDetailsBranchesOpened()
+      GHPRStatisticsCollector.logDetailsBranchesOpened(project)
     }
   }
 }

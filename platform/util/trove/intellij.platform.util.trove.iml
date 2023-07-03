@@ -9,7 +9,13 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="trove" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps:trove4j:1.0.20221201" />
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps:trove4j:1.0.20221201">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/trove4j/1.0.20221201/trove4j-1.0.20221201.jar">
+              <sha256sum>3d1ce86790d123de204215c4b2b8896afaed63abfdece24393e2183df5394c32</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/trove4j/1.0.20221201/trove4j-1.0.20221201.jar!/" />
         </CLASSES>

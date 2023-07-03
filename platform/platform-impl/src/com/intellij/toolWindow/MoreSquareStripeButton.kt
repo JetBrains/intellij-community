@@ -63,8 +63,7 @@ internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowToolbar,
   }
 
   override fun isAvailable(project: Project): Boolean {
-    return super.isAvailable(project) && ToolWindowManagerEx.getInstanceEx(
-      project).getMoreButtonSide() == side
+    return super.isAvailable(project) && ToolWindowManagerEx.getInstanceEx(project).getMoreButtonSide() == side
   }
 
   override fun checkSkipPressForEvent(e: MouseEvent) = e.button != MouseEvent.BUTTON1
@@ -89,11 +88,16 @@ private fun createAction(toolWindowToolbar: ToolWindowToolbar): DumbAwareAction 
     override fun actionPerformed(e: AnActionEvent) {
       val actions = ToolWindowsGroup.getToolWindowActions(e.project ?: return, true)
       val popup = JBPopupFactory.getInstance().createActionGroupPopup(null, DefaultActionGroup(actions), e.dataContext, null, true)
-      popup.setMinimumSize(Dimension(300, -1))
-
-
+      val minimumPopupWidth = JBUI.scale(300)
+      popup.setMinimumSize(Dimension(minimumPopupWidth, -1))
       val moreSquareStripeButton = toolWindowToolbar.moreButton
-      popup.show(RelativePoint(toolWindowToolbar, Point(toolWindowToolbar.width, moreSquareStripeButton.y)))
+      val x = if (toolWindowToolbar is ToolWindowLeftToolbar) {
+        toolWindowToolbar.width
+      }
+      else {
+        -minimumPopupWidth
+      }
+      popup.show(RelativePoint(toolWindowToolbar, Point(x, moreSquareStripeButton.y)))
     }
 
     override fun getActionUpdateThread() = ActionUpdateThread.EDT
@@ -104,11 +108,7 @@ internal abstract class AbstractMoreSquareStripeButton(action: AnAction) : Abstr
   override fun update() {
     super.update()
     val project = dataContext.getData(CommonDataKeys.PROJECT)
-    if (project == null) {
-      return
-    }
-
-    val available = isAvailable(project)
+    val available = project != null && isAvailable(project)
 
     myPresentation.isEnabledAndVisible = available
     isEnabled = available

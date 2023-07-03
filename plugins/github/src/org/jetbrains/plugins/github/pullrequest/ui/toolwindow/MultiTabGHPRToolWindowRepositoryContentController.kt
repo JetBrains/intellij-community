@@ -56,7 +56,7 @@ internal class MultiTabGHPRToolWindowRepositoryContentController(
       it.type == TabType.New
     } ?: createAndAddNewPRContent()
     contentManager.setSelectedContent(content, requestFocus)
-    GHPRStatisticsCollector.logNewPRViewOpened()
+    GHPRStatisticsCollector.logNewPRViewOpened(project)
   }
 
   private fun createAndAddNewPRContent(): Content {
@@ -90,7 +90,7 @@ internal class MultiTabGHPRToolWindowRepositoryContentController(
       it.type == TabType.List
     } ?: createAndAddListContent()
     contentManager.setSelectedContent(content, requestFocus)
-    GHPRStatisticsCollector.logListOpened()
+    GHPRStatisticsCollector.logListOpened(project)
   }
 
   private fun createAndAddListContent(): Content {
@@ -143,7 +143,7 @@ internal class MultiTabGHPRToolWindowRepositoryContentController(
       (it.type as? TabType.PR)?.id == id
     } ?: createAndAddPRContent(id)
     contentManager.setSelectedContent(content, requestFocus)
-    GHPRStatisticsCollector.logDetailsOpened()
+    GHPRStatisticsCollector.logDetailsOpened(project)
 
     return UIUtil.findComponentOfType(content.component, ChangesTree::class.java)?.let {
       ClientProperty.get(it, GHPRCommitBrowserComponentController.KEY)

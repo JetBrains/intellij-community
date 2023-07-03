@@ -56,14 +56,12 @@ internal class GitLabCloneComponent(
   init {
     cs.launch(start = CoroutineStart.UNDISPATCHED) {
       cloneVm.selectedItem.collect { selectedItem ->
-        val isRepositorySelected = selectedItem != null && selectedItem is GitLabCloneListItem.Repository
-        dialogStateListener.onOkActionEnabled(isRepositorySelected)
-        if (isRepositorySelected) {
-          val repository = selectedItem as GitLabCloneListItem.Repository
-          val selectedUrl = repository.projectMember.project.httpUrlToRepo
-          val path = ClonePathProvider.relativeDirectoryPathForVcsUrl(project, selectedUrl).removeSuffix(GitUtil.DOT_GIT)
+        val cloneUrl = (selectedItem as? GitLabCloneListItem.Repository)?.projectMember?.project?.httpUrlToRepo
+        if (cloneUrl != null) {
+          val path = ClonePathProvider.relativeDirectoryPathForVcsUrl(project, cloneUrl).removeSuffix(GitUtil.DOT_GIT)
           cloneDirectoryChildHandle.trySetChildPath(path)
         }
+        dialogStateListener.onOkActionEnabled(cloneUrl != null)
       }
     }
 

@@ -22,7 +22,7 @@ import org.jetbrains.annotations.ApiStatus
 class CheckVFSHealthService(val coroutineScope: CoroutineScope)
 
 
-internal class CheckVFSHealthAction : AnAction() {
+internal class CheckVFSHealthAction : AnAction(ActionsBundle.message("action.CheckVfsSanity.text")) {
   override fun actionPerformed(e: AnActionEvent) {
 
     service<CheckVFSHealthService>().coroutineScope.launch(Dispatchers.IO) {
@@ -31,7 +31,7 @@ internal class CheckVFSHealthAction : AnAction() {
                         ActionsBundle.message("action.CheckVfsSanity.progress"),
                         TaskCancellation.nonCancellable()) {
         val checker = VFSHealthChecker(FSRecords.implOrFail(), FSRecords.LOG)
-        checker.checkHealth()
+        checker.checkHealth(checkForOrphanRecords = true)
       }
     }
   }

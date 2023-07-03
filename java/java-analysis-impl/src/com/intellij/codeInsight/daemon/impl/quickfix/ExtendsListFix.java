@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -97,7 +96,6 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
                      @NotNull PsiElement endElement) {
     final PsiClass myClass = (PsiClass)startElement;
     invokeImpl(myClass);
-    UndoUtil.markPsiFileForUndo(file);
   }
 
   protected void invokeImpl(PsiClass myClass) {

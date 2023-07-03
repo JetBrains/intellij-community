@@ -1,6 +1,11 @@
 <component name="libraryTable">
   <library name="blockmap" type="repository">
     <properties maven-id="org.jetbrains.intellij:blockmap:1.0.6">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/blockmap/1.0.6/blockmap-1.0.6.jar">
+          <sha256sum>ea4e6f77856806c2c79916c194e85c558d23623fac661ca307da2e8775676a9c</sha256sum>
+        </artifact>
+      </verification>
       <exclude>
         <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
         <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk7" />

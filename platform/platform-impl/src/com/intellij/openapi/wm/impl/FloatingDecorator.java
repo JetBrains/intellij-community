@@ -18,7 +18,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.Alarm;
 import com.intellij.util.MathUtil;
-import com.intellij.util.ui.UIUtil;
 import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -116,7 +115,7 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
 
   @Override
   public void show(){
-    UIUtil.decorateWindowHeader(rootPane);
+    ComponentUtil.decorateWindowHeader(rootPane);
     ToolbarService.Companion.getInstance().setTransparentTitleBar(this, rootPane, runnable -> {
       Disposer.register(myDisposable, () -> runnable.run());
       return Unit.INSTANCE;

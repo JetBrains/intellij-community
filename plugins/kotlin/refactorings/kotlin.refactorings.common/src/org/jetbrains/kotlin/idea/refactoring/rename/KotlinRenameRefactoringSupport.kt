@@ -54,7 +54,10 @@ interface KotlinRenameRefactoringSupport {
 
     fun getAllOverridenFunctions(function: KtNamedFunction): List<PsiElement>
 
-    fun getModuleNameSuffixForMangledName(mangledName: String): String?
+    fun getModuleNameSuffixForMangledName(mangledName: String): String? {
+        val indexOfDollar = mangledName.indexOf('$')
+        return if (indexOfDollar >= 0) mangledName.substring(indexOfDollar + 1) else null
+    }
 
     fun mangleInternalName(name: String, moduleName: String): String
 

@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
 import com.intellij.ide.ProjectWindowCustomizerService
+import com.intellij.ide.menu.ActionAwareIdeMenuBar
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
@@ -187,14 +188,10 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
     val toolbar = withContext(Dispatchers.EDT) {
       toolbar?.removeComponentListener(contentResizeListener)
       toolbarPlaceholder.removeAll()
-
-      val toolbar = MainToolbar(coroutineScope.childScope(), frame)
-      toolbar.layoutCallBack = { updateCustomTitleBar() }
-      toolbar
+      MainToolbar(coroutineScope = coroutineScope.childScope(), frame = frame, layoutCallBack = { updateCustomTitleBar() })
     }
     toolbar.init(toolbarActionGroups, customTitleBar)
     withContext(Dispatchers.EDT) {
-      toolbar.isOpaque = false
       toolbar.addComponentListener(contentResizeListener)
       this@ToolbarFrameHeader.toolbar = toolbar
       toolbarHeaderTitle.updateBorders(0)

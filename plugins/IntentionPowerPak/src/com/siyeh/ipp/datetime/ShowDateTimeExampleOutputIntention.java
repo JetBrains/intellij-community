@@ -1,19 +1,18 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.datetime;
 
-import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.codeInsight.intention.PriorityAction;
+import com.intellij.codeInspection.ModCommands;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
-import com.siyeh.ipp.base.Intention;
-import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
@@ -25,7 +24,11 @@ import static com.siyeh.ig.callMatcher.CallMatcher.*;
 /**
  * @author Bas Leijdekkers
  */
-public class ShowDateTimeExampleOutputIntention extends Intention implements HighPriorityAction {
+public class ShowDateTimeExampleOutputIntention extends PsiBasedModCommandAction<PsiExpression> {
+  
+  public ShowDateTimeExampleOutputIntention() {
+    super(PsiExpression.class);
+  }
 
   private static final CallMatcher DATE_TIME_FORMATTER_METHODS = anyOf(
     staticCall("java.time.format.DateTimeFormatter", "ofPattern"),
@@ -33,107 +36,87 @@ public class ShowDateTimeExampleOutputIntention extends Intention implements Hig
   );
   private static final CallMatcher SIMPLE_DATE_FORMAT_METHODS =
     instanceCall("java.text.SimpleDateFormat", "applyPattern", "applyLocalizedPattern").parameterTypes(CommonClassNames.JAVA_LANG_STRING);
-  Boolean dateTimeFormatter = null;
 
   @Override
   public @NotNull String getFamilyName() {
     return IntentionPowerPackBundle.message("show.example.date.time.output.intention.family.name");
   }
 
+  enum Formatter {
+    NONE, DATE_TIME_FORMATTER, SIMPLE_DATE_FORMAT
+  }
+
+  private static @NotNull Formatter getFormatter(@NotNull PsiExpression expression) {
+    if (!(expression.getParent() instanceof PsiExpressionList parent)) return Formatter.NONE;
+    final PsiType type = expression.getType();
+    if (!TypeUtils.isJavaLangString(type)) return Formatter.NONE;
+    final PsiElement grandParent = parent.getParent();
+    if (grandParent instanceof PsiMethodCallExpression call) {
+      if (SIMPLE_DATE_FORMAT_METHODS.test(call)) {
+        return Formatter.SIMPLE_DATE_FORMAT;
+      }
+      if (DATE_TIME_FORMATTER_METHODS.test(call)) {
+        return Formatter.DATE_TIME_FORMATTER;
+      }
+      return Formatter.NONE;
+    }
+    if (grandParent instanceof PsiNewExpression newExpression) {
+      final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
+      if (classReference == null || !"SimpleDateFormat".equals(classReference.getReferenceName())) {
+        return Formatter.NONE;
+      }
+      final PsiElement target = classReference.resolve();
+      if (!(target instanceof PsiClass aClass)) {
+        return Formatter.NONE;
+      }
+      if (!InheritanceUtil.isInheritor(aClass, "java.text.SimpleDateFormat")) {
+        return Formatter.NONE;
+      }
+      return Formatter.SIMPLE_DATE_FORMAT;
+    }
+    return Formatter.NONE;
+  }
+  
   @Override
-  public @NotNull String getText() {
-    return getFamilyName();
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiExpression expression) {
+    while (expression.getParent() instanceof PsiExpression parent) {
+      expression = parent;
+    }
+    Formatter formatter = getFormatter(expression);
+    if (formatter == Formatter.NONE) return null;
+    final Object value = ExpressionUtils.computeConstantExpression(expression);
+    return value instanceof String ? Presentation.of(getFamilyName()).withPriority(PriorityAction.Priority.HIGH) : null;
   }
 
   @Override
-  public boolean startInWriteAction() {
-    return false;
-  }
-
-  @Override
-  protected @NotNull PsiElementPredicate getElementPredicate() {
-    return new PsiElementPredicate() {
-      @Override
-      public boolean satisfiedBy(PsiElement element) {
-        if (!(element instanceof PsiExpression expression)) {
-          return false;
+  protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiExpression expression) {
+    while (expression.getParent() instanceof PsiExpression parent) {
+      expression = parent;
+    }
+    Formatter formatter = getFormatter(expression);
+    final Object value = ExpressionUtils.computeConstantExpression(expression);
+    if (!(value instanceof String)) return ModCommands.nop();
+    return switch (formatter) {
+      case NONE -> ModCommands.nop();
+      case DATE_TIME_FORMATTER -> {
+        try {
+          final DateTimeFormatter fmt = DateTimeFormatter.ofPattern((String)value);
+          //noinspection HardCodedStringLiteral
+          yield ModCommands.info(LocalDateTime.now().format(fmt));
         }
-        final PsiType type = expression.getType();
-        if (!TypeUtils.isJavaLangString(type)) {
-          return false;
+        catch (IllegalArgumentException e) {
+          yield ModCommands.error(IntentionPowerPackBundle.message("invalid.pattern.hint.text"));
         }
-        PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression).getParent();
-        if (parent == null) return false;
-        final PsiElement grandParent = parent.getParent();
-        if (grandParent instanceof PsiMethodCallExpression) {
-          if (SIMPLE_DATE_FORMAT_METHODS.test((PsiMethodCallExpression)grandParent)) {
-            dateTimeFormatter = false;
-          }
-          else if (DATE_TIME_FORMATTER_METHODS.test((PsiMethodCallExpression)grandParent)) {
-            dateTimeFormatter = true;
-          }
-          else {
-            return false;
-          }
+      }
+      case SIMPLE_DATE_FORMAT -> {
+        try {
+          final SimpleDateFormat format = new SimpleDateFormat((String)value);
+          yield ModCommands.info(format.format(new Date()));
         }
-        else if (grandParent instanceof PsiNewExpression newExpression) {
-          final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
-          if (classReference == null || !"SimpleDateFormat".equals(classReference.getReferenceName())) {
-            return false;
-          }
-          final PsiElement target = classReference.resolve();
-          if (!(target instanceof PsiClass aClass)) {
-            return false;
-          }
-          if (!InheritanceUtil.isInheritor(aClass, "java.text.SimpleDateFormat")) {
-            return false;
-          }
-          dateTimeFormatter = false;
-          return true;
+        catch (IllegalArgumentException e) {
+          yield ModCommands.error(IntentionPowerPackBundle.message("invalid.pattern.hint.text"));
         }
-        else {
-          return false;
-        }
-        final Object value = ExpressionUtils.computeConstantExpression(expression);
-        return value instanceof String;
       }
     };
-  }
-
-  @Override
-  protected void processIntention(Editor editor, @NotNull PsiElement element) {
-    if (!(element instanceof PsiExpression expression) || dateTimeFormatter == null) {
-      return;
-    }
-    final Object value = ExpressionUtils.computeConstantExpression(expression);
-    if (!(value instanceof String)) {
-      return;
-    }
-    String example;
-    if (dateTimeFormatter) {
-      try {
-        final DateTimeFormatter formatter = DateTimeFormatter.ofPattern((String)value);
-        //noinspection HardCodedStringLiteral
-        example = LocalDateTime.now().format(formatter);
-      }
-      catch (IllegalArgumentException e) {
-        example = IntentionPowerPackBundle.message("invalid.pattern.hint.text");
-      }
-    }
-    else {
-      try {
-        final SimpleDateFormat format = new SimpleDateFormat((String)value);
-        example = format.format(new Date());
-      }
-      catch (IllegalArgumentException e) {
-        example = IntentionPowerPackBundle.message("invalid.pattern.hint.text");
-      }
-    }
-    HintManager.getInstance().showInformationHint(editor, example);
-  }
-
-  @Override
-  protected void processIntention(@NotNull PsiElement element) {
-    assert false;
   }
 }

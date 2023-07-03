@@ -84,4 +84,8 @@ class FirUastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
     fun testIdentifierOfNullableExtensionReceiver() {
         checkIdentifierOfNullableExtensionReceiver(myFixture)
     }
+
+    fun testReceiverTypeOfExtensionFunction() {
+        checkReceiverTypeOfExtensionFunction(myFixture)
+    }
 }

@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.intentions.*
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.FoldIfToReturnAsymmetricallyIntention
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.FoldIfToReturnIntention
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isTrivialStatementBody
+import org.jetbrains.kotlin.idea.intentions.branchedTransformations.shouldBeTransformed
 import org.jetbrains.kotlin.idea.j2k.post.processing.processings.*
 import org.jetbrains.kotlin.idea.quickfix.*
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
@@ -171,7 +172,6 @@ private val addOrRemoveModifiersProcessingGroup =
         processings = listOf(
             RemoveRedundantVisibilityModifierProcessing(),
             RemoveRedundantModalityModifierProcessing(),
-            inspectionBasedProcessing(AddOperatorModifierInspection(), writeActionNeeded = false),
         )
     )
 
@@ -201,7 +201,6 @@ private val inspectionLikePostProcessingGroup =
         JavaObjectEqualsToEqOperatorProcessing(),
         RemoveExplicitPropertyTypeProcessing(),
         RemoveRedundantNullabilityProcessing(),
-        CanBeValInspectionBasedProcessing(),
         inspectionBasedProcessing(FoldInitializerAndIfToElvisInspection(), writeActionNeeded = false),
         inspectionBasedProcessing(JavaMapForEachInspection()),
         intentionBasedProcessing(FoldIfToReturnIntention()) { it.then.isTrivialStatementBody() && it.`else`.isTrivialStatementBody() },
@@ -210,22 +209,25 @@ private val inspectionLikePostProcessingGroup =
                 it
             ) as KtReturnExpression).returnedExpression.isTrivialStatementBody()
         },
-        inspectionBasedProcessing(IfThenToSafeAccessInspection(inlineWithPrompt = false), writeActionNeeded = false),
-        inspectionBasedProcessing(IfThenToElvisInspection(highlightStatement = true, inlineWithPrompt = false), writeActionNeeded = false),
+        inspectionBasedProcessing(IfThenToSafeAccessInspection(inlineWithPrompt = false), writeActionNeeded = false) {
+            it.shouldBeTransformed()
+        },
+        inspectionBasedProcessing(IfThenToElvisInspection(highlightStatement = true, inlineWithPrompt = false), writeActionNeeded = false) {
+            it.shouldBeTransformed()
+        },
         inspectionBasedProcessing(KotlinInspectionFacade.instance.simplifyNegatedBinaryExpression) {
             it.canBeSimplifiedWithoutChangingSemantics()
         },
         inspectionBasedProcessing(ReplaceGetOrSetInspection()),
         intentionBasedProcessing(ObjectLiteralToLambdaIntention(), writeActionNeeded = true),
         intentionBasedProcessing(RemoveUnnecessaryParenthesesIntention()),
-        intentionBasedProcessing(DestructureIntention(), writeActionNeeded = false),
+        DestructureForLoopParameterProcessing(),
         inspectionBasedProcessing(SimplifyAssertNotNullInspection()),
         LiftReturnInspectionBasedProcessing(),
         LiftAssignmentInspectionBasedProcessing(),
         intentionBasedProcessing(RemoveEmptyPrimaryConstructorIntention()),
         MayBeConstantInspectionBasedProcessing(),
         RemoveForExpressionLoopParameterTypeProcessing(),
-        intentionBasedProcessing(ReplaceMapGetOrDefaultIntention()),
         inspectionBasedProcessing(ReplaceGuardClauseWithFunctionCallInspection()),
         inspectionBasedProcessing(KotlinInspectionFacade.instance.sortModifiers),
         intentionBasedProcessing(ConvertToRawStringTemplateIntention(), additionalChecker = ::shouldConvertToRawString),
@@ -246,8 +248,8 @@ private val processings: List<NamedPostProcessingGroup> = listOf(
         listOf(
             InspectionLikeProcessingGroup(
                 processings = listOf(
-                    VarToValProcessing(),
-                    CanBeValInspectionBasedProcessing()
+                    PrivateVarToValProcessing(),
+                    LocalVarToValInspectionBasedProcessing()
                 ),
                 runSingleTime = true
             ),
@@ -259,7 +261,6 @@ private val processings: List<NamedPostProcessingGroup> = listOf(
     NamedPostProcessingGroup(
         KotlinNJ2KServicesBundle.message("processing.step.cleaning.up.code"),
         listOf(
-            InspectionLikeProcessingGroup(VarToValProcessing()),
             ConvertGettersAndSettersToPropertyProcessing(),
             InspectionLikeProcessingGroup(RemoveExplicitAccessorInspectionBasedProcessing()),
             MergePropertyWithConstructorParameterProcessing(),

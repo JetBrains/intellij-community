@@ -58,7 +58,7 @@ fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironmen
   }
   for (parameter in parameters) {
     val resolvedParameter = parameter.apply(targetEnvironment)
-    if (resolvedParameter != PythonExecution.REMOVE_ARGUMENT) {
+    if (resolvedParameter != PythonExecution.SKIP_ARGUMENT) {
       commandLineBuilder.addParameter(resolvedParameter)
     }
   }

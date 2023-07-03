@@ -39,6 +39,7 @@ import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.psi.PsiBinaryFile;
@@ -53,6 +54,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.keyFMap.KeyFMap;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
 import org.jdom.Element;
@@ -204,6 +206,22 @@ public class FileTypesTest extends HeavyPlatformTestCase {
 
   private void checkIgnored(String fileName) {
     assertTrue(myFileTypeManager.isFileIgnored(fileName));
+  }
+
+  public void testRedetectionDoesntRewriteAttributes() throws IOException {
+    File dir = createTempDirectory();
+    File file = FileUtil.createTempFile(dir, "x", "xxx_xx_xx", true);
+    VirtualFile virtualFile = getVirtualFile(file);
+    assertNotNull(virtualFile);
+    assertEquals(DetectedByContentFileType.INSTANCE, getFileType(virtualFile));
+    int modificationCount = ManagingFS.getInstance().getModificationCount();
+    virtualFile.set(KeyFMap.EMPTY_MAP);
+    WriteAction.run(() -> {
+      CachedFileType.clearCache();
+    });
+    assertEquals(DetectedByContentFileType.INSTANCE, getFileType(virtualFile));
+    int modificationCountAfterRedetection = ManagingFS.getInstance().getModificationCount();
+    assertEquals(modificationCount, modificationCountAfterRedetection);
   }
 
   public void testAutoDetected() throws IOException {

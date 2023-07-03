@@ -4,6 +4,6 @@ package com.intellij.collaboration.ui.codereview.details.model
 import com.intellij.collaboration.ui.codereview.details.data.ReviewState
 import kotlinx.coroutines.flow.Flow
 
-interface CodeReviewFlowViewModel<UserDTO> {
-  val reviewerReviews: Flow<Map<UserDTO, ReviewState>>
+interface CodeReviewFlowViewModel<ReviewerDTO> {
+  val reviewerReviews: Flow<Map<ReviewerDTO, ReviewState>>
 }

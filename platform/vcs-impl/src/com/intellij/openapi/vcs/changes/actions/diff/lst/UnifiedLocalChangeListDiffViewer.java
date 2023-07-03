@@ -10,6 +10,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -18,6 +20,8 @@ import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.Li
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.SelectedTrackerLine;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.ToggleableLineRange;
 import com.intellij.openapi.vcs.ex.RangeExclusionState;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import one.util.streamex.StreamEx;
@@ -26,6 +30,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
@@ -38,6 +44,7 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
 
   private final LocalTrackerDiffUtil.LocalTrackerActionProvider myTrackerActionProvider;
   private final LocalTrackerDiffUtil.ExcludeAllCheckboxPanel myExcludeAllCheckboxPanel;
+  private final GutterCheckboxMouseMotionListener myGutterCheckboxMouseMotionListener;
 
   private final @NotNull List<RangeHighlighter> myToggleExclusionsHighlighters = new ArrayList<>();
 
@@ -52,6 +59,9 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
     myExcludeAllCheckboxPanel.init(myLocalRequest, myAllowExcludeChangesFromCommit);
 
     LocalTrackerDiffUtil.installTrackerListener(this, myLocalRequest);
+
+    myGutterCheckboxMouseMotionListener = new GutterCheckboxMouseMotionListener();
+    myGutterCheckboxMouseMotionListener.install();
   }
 
   @Nullable
@@ -212,6 +222,8 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
       operation.dispose();
     }
     myToggleExclusionsHighlighters.clear();
+
+    myGutterCheckboxMouseMotionListener.destroyHoverHighlighter();
   }
 
   private @NotNull Runnable applyGutterOperations(@NotNull UnifiedFragmentBuilder builder,
@@ -425,6 +437,94 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
       });
 
       return new SelectedTrackerLine(deletions, additions);
+    }
+  }
+
+  private class GutterCheckboxMouseMotionListener {
+    private @Nullable RangeHighlighter myHighlighter;
+
+    public void install() {
+      MyGutterMouseListener listener = new MyGutterMouseListener();
+      myEditor.getGutterComponentEx().addMouseListener(listener);
+      myEditor.getGutterComponentEx().addMouseMotionListener(listener);
+    }
+
+    public void destroyHoverHighlighter() {
+      if (myHighlighter != null) {
+        myHighlighter.dispose();
+        myHighlighter = null;
+      }
+    }
+
+    private void updateHoverHighlighter(int editorLine) {
+      List<UnifiedDiffChange> changes = getDiffChanges();
+      if (changes == null) {
+        destroyHoverHighlighter();
+        return;
+      }
+
+      MyUnifiedDiffChange change = ObjectUtils.tryCast(ContainerUtil.find(changes, it -> it.getLine1() <= editorLine &&
+                                                                                         it.getLine2() > editorLine),
+                                                       MyUnifiedDiffChange.class);
+      if (change == null ||
+          change.isPartiallyExcluded() ||
+          !myLocalRequest.getChangelistId().equals(change.getChangelistId())) {
+        destroyHoverHighlighter();
+        return;
+      }
+
+      int rightLine = transferLineFromOnesideStrict(Side.RIGHT, editorLine);
+      int leftLine = transferLineFromOnesideStrict(Side.LEFT, editorLine);
+
+      int line;
+      Side side;
+      if (rightLine != -1) {
+        line = rightLine;
+        side = Side.RIGHT;
+      }
+      else if (leftLine != -1) {
+        line = leftLine;
+        side = Side.LEFT;
+      }
+      else {
+        destroyHoverHighlighter();
+        return;
+      }
+
+      if (LocalTrackerDiffUtil.hasIconHighlighters(myProject, myEditor, editorLine)) {
+        if (myHighlighter != null && myEditor.getDocument().getLineNumber(myHighlighter.getStartOffset()) != editorLine) {
+          destroyHoverHighlighter();
+        }
+        return;
+      }
+
+      destroyHoverHighlighter();
+
+      boolean isExcludedFromCommit = change.getExclusionState() instanceof RangeExclusionState.Excluded;
+      myHighlighter = LocalTrackerDiffUtil.createCheckboxToggle(myEditor, editorLine, isExcludedFromCommit, () -> {
+        LocalTrackerDiffUtil.toggleLinePartialExclusion(myTrackerActionProvider, line, side, isExcludedFromCommit);
+        destroyHoverHighlighter();
+      });
+    }
+
+    private class MyGutterMouseListener extends MouseAdapter {
+      @Override
+      public void mouseMoved(MouseEvent e) {
+        EditorGutterComponentEx gutter = myEditor.getGutterComponentEx();
+        int xOffset = DiffUtil.isMirrored(myEditor) ? gutter.getWidth() - e.getX() : e.getX();
+        if (xOffset < gutter.getIconAreaOffset() || xOffset > gutter.getIconAreaOffset() + gutter.getIconsAreaWidth()) {
+          destroyHoverHighlighter();
+          return;
+        }
+
+        LogicalPosition position = myEditor.xyToLogicalPosition(e.getPoint());
+        updateHoverHighlighter(position.line);
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+        destroyHoverHighlighter();
+      }
     }
   }
 }

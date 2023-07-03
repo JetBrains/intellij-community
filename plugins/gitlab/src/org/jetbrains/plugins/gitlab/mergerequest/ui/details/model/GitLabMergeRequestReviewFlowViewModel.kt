@@ -16,7 +16,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import org.jetbrains.plugins.gitlab.api.data.GitLabAccessLevel
+import org.jetbrains.plugins.gitlab.api.dto.GitLabReviewerDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
@@ -27,21 +27,21 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.getSubmittableReview
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.SingleCoroutineLauncher
 
-internal interface GitLabMergeRequestReviewFlowViewModel : CodeReviewFlowViewModel<GitLabUserDTO> {
-  val isBusy: StateFlow<Boolean>
+internal interface GitLabMergeRequestReviewFlowViewModel : CodeReviewFlowViewModel<GitLabReviewerDTO> {
+  val isBusy: Flow<Boolean>
 
   val currentUser: GitLabUserDTO
   val author: GitLabUserDTO
 
-  val approvedBy: Flow<List<GitLabUserDTO>>
-  val reviewers: StateFlow<List<GitLabUserDTO>>
-  val role: Flow<ReviewRole>
   val reviewRequestState: Flow<ReviewRequestState>
+  val reviewers: StateFlow<List<GitLabReviewerDTO>>
+  val reviewState: Flow<ReviewState>
+  val role: Flow<ReviewRole>
+
   val isMergeable: Flow<Boolean>
   val isApproved: StateFlow<Boolean>
-  val shouldBeRebased: Flow<Boolean>
 
-  val reviewState: Flow<ReviewState>
+  val shouldBeRebased: Flow<Boolean>
 
   val userCanApprove: Flow<Boolean>
   val userCanManage: Flow<Boolean>
@@ -77,6 +77,8 @@ internal interface GitLabMergeRequestReviewFlowViewModel : CodeReviewFlowViewMod
 
   fun removeReviewer(reviewer: GitLabUserDTO)
 
+  fun reviewerRereview()
+
   //TODO: extract reviewers update VM
   suspend fun getPotentialReviewers(): List<GitLabUserDTO>
 }
@@ -93,38 +95,35 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
   private val scope = parentScope.childScope()
   private val taskLauncher = SingleCoroutineLauncher(scope)
 
-  override val isBusy: StateFlow<Boolean> = taskLauncher.busy.stateIn(scope, SharingStarted.Lazily, false)
+  override val isBusy: Flow<Boolean> = taskLauncher.busy
 
   override val author: GitLabUserDTO = mergeRequest.author
-  override val approvedBy: Flow<List<GitLabUserDTO>> = mergeRequest.approvedBy
-  override val reviewers: StateFlow<List<GitLabUserDTO>> = mergeRequest.reviewers.stateIn(scope, SharingStarted.Lazily, emptyList())
+
+  override val isApproved: StateFlow<Boolean> = mergeRequest.isApproved.stateIn(scope, SharingStarted.Lazily, false)
+
+  override val reviewRequestState: Flow<ReviewRequestState> = mergeRequest.reviewRequestState
+  override val reviewers: StateFlow<List<GitLabReviewerDTO>> = mergeRequest.reviewers.stateIn(scope, SharingStarted.Lazily, emptyList())
+  override val reviewerReviews: Flow<Map<GitLabReviewerDTO, ReviewState>> = reviewers.map { reviewers ->
+    reviewers.associateWith { it.mergeRequestInteraction.toReviewState() }
+  }
+  override val reviewState: Flow<ReviewState> = combine(reviewerReviews, isApproved) { reviewerReviews, isApproved ->
+    val reviewStates = reviewerReviews.values
+    when {
+      isApproved -> ReviewState.ACCEPTED
+      reviewStates.any { it == ReviewState.WAIT_FOR_UPDATES } -> ReviewState.WAIT_FOR_UPDATES
+      else -> ReviewState.NEED_REVIEW
+    }
+  }
   override val role: Flow<ReviewRole> = reviewers.map { reviewers ->
     when {
-      author == currentUser -> ReviewRole.AUTHOR
-      currentUser in reviewers -> ReviewRole.REVIEWER
+      author.username == currentUser.username -> ReviewRole.AUTHOR
+      reviewers.any { it.username == currentUser.username } -> ReviewRole.REVIEWER
       else -> ReviewRole.GUEST
     }
   }
 
-  override val reviewRequestState: Flow<ReviewRequestState> = mergeRequest.reviewRequestState
   override val isMergeable: Flow<Boolean> = mergeRequest.isMergeable
-  override val isApproved: StateFlow<Boolean> = approvedBy
-    .map { it.isNotEmpty() }
-    .stateIn(scope, SharingStarted.Lazily, false)
   override val shouldBeRebased: Flow<Boolean> = mergeRequest.shouldBeRebased
-
-  override val reviewState: Flow<ReviewState> = isApproved.map { isApproved ->
-    // TODO: add ReviewState.WAIT_FOR_UPDATES state
-    if (isApproved) ReviewState.ACCEPTED else ReviewState.NEED_REVIEW
-  }
-
-  override val reviewerReviews: Flow<Map<GitLabUserDTO, ReviewState>> = combine(reviewers, approvedBy) { reviewers, approvedBy ->
-    mutableMapOf<GitLabUserDTO, ReviewState>().apply {
-      reviewers.forEach { reviewer -> put(reviewer, ReviewState.NEED_REVIEW) }
-      approvedBy.forEach { reviewer -> put(reviewer, ReviewState.ACCEPTED) }
-      // TODO: implement ReviewState.WAIT_FOR_UPDATES
-    }
-  }
 
   override val userCanApprove: Flow<Boolean> = mergeRequest.userPermissions.map { it.canApprove }
   override val userCanManage: Flow<Boolean> = mergeRequest.userPermissions.map { it.canMerge }
@@ -232,6 +231,11 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
     mergeRequest.setReviewers(newReviewers) // TODO: implement via CollectionDelta
   }
 
+  override fun reviewerRereview() = runAction {
+    val requestedReviewers = reviewerReviews.first().filterValues { it == ReviewState.WAIT_FOR_UPDATES }.keys
+    mergeRequest.reviewerRereview(requestedReviewers)
+  }
+
   private fun runAction(action: suspend () -> Unit) {
     taskLauncher.launch {
       try {
@@ -245,4 +249,15 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
   }
 
   override suspend fun getPotentialReviewers(): List<GitLabUserDTO> = projectData.getMembers()
+
+  companion object {
+    fun GitLabReviewerDTO.MergeRequestInteraction?.toReviewState(): ReviewState {
+      if (this == null) return ReviewState.NEED_REVIEW
+      return when {
+        approved -> ReviewState.ACCEPTED
+        reviewed -> ReviewState.WAIT_FOR_UPDATES
+        else -> ReviewState.NEED_REVIEW
+      }
+    }
+  }
 }

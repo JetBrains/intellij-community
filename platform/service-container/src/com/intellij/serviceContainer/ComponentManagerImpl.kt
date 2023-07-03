@@ -634,7 +634,11 @@ abstract class ComponentManagerImpl(
   }
 
   final override suspend fun <T : Any> getServiceAsync(keyClass: Class<T>): T {
-    return getServiceAsyncIfDefined(keyClass) ?: throw RuntimeException("service is not defined for $keyClass")
+    val result = getServiceAsyncIfDefined(keyClass)
+    if (result == null && isLightServiceSupported && isLightService(keyClass)) {
+      return getOrCreateLightServiceAdapater(keyClass).getInstanceAsync(componentManager = this, keyClass = keyClass)
+    }
+    return result ?: throw RuntimeException("service is not defined for $keyClass")
   }
 
   suspend fun <T : Any> getServiceAsyncIfDefined(keyClass: Class<T>): T? {
@@ -677,7 +681,13 @@ abstract class ComponentManagerImpl(
     }
 
     if (isLightServiceSupported && isLightService(serviceClass)) {
-      return if (createIfNeeded) getOrCreateLightService(serviceClass) else null
+      if (createIfNeeded) {
+        return getOrCreateLightServiceAdapater(serviceClass)
+          .getInstance(componentManager = this, keyClass = serviceClass, createIfNeeded = true)!!
+      }
+      else {
+        return null
+      }
     }
 
     checkCanceledIfNotInClassInit()
@@ -712,7 +722,7 @@ abstract class ComponentManagerImpl(
     return result
   }
 
-  private fun <T : Any> getOrCreateLightService(serviceClass: Class<T>): T {
+  private fun <T : Any> getOrCreateLightServiceAdapater(serviceClass: Class<T>): BaseComponentAdapter {
     val adapter = componentKeyToAdapter.computeIfAbsent(serviceClass.name) {
       val classLoader = serviceClass.classLoader
       LightServiceComponentAdapter(
@@ -721,7 +731,7 @@ abstract class ComponentManagerImpl(
         componentManager = this,
       )
     } as BaseComponentAdapter
-    return adapter.getInstance(componentManager = this, keyClass = serviceClass, createIfNeeded = true)!!
+    return adapter
   }
 
   @Synchronized

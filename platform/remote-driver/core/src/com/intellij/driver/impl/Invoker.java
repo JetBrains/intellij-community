@@ -68,6 +68,11 @@ public class Invoker implements InvokerMBean {
   }
 
   @Override
+  public void exit() {
+    ApplicationManager.getApplication().exit(true, true, false);
+  }
+
+  @Override
   public @NotNull RemoteCallResult invoke(@NotNull RemoteCall call) {
     Object[] transformedArgs = transformArgs(call);
 
@@ -75,11 +80,11 @@ public class Invoker implements InvokerMBean {
 
     if (call instanceof NewInstanceCall) {
       Class<?> targetClass = getTargetClass(call);
-      Constructor<?> constructor = getConstructor(call, targetClass);
+      Constructor<?> constructor = getConstructor(call, targetClass, transformedArgs);
 
       LOG.debug("Creating instance of " + targetClass);
 
-      result = withSemantics(call, () -> constructor.newInstance(transformedArgs));
+      result = withSemantics(call, () -> invokeConstructor(constructor, transformedArgs));
     }
     else {
       CallTarget callTarget = getCallTarget(call, transformedArgs);
@@ -165,19 +170,40 @@ public class Invoker implements InvokerMBean {
     }
   }
 
+  private static @NotNull Object invokeConstructor(Constructor<?> constructor, Object[] transformedArgs) throws Exception {
+    try {
+      return constructor.newInstance(transformedArgs);
+    }
+    catch (IllegalArgumentException ie) {
+      String message = "Argument type mismatch for constructor " + constructor + " , actual types are [" +
+                       getExpectedTypesMessage(transformedArgs) + "]";
+      LOG.warn(message, ie);
+
+      throw new IllegalArgumentException(message, ie);
+    }
+    catch (Throwable e) {
+      LOG.warn("Error during remote driver call " + constructor, e);
+
+      throw e;
+    }
+  }
+
+  private static @NotNull String getExpectedTypesMessage(Object[] transformedArgs) {
+    return Arrays.stream(transformedArgs)
+      .map(a -> {
+        if (a == null) return "null";
+        return a.getClass().getSimpleName();
+      })
+      .collect(Collectors.joining(", "));
+  }
+
   private static Object invokeMethod(CallTarget callTarget, Object instance, Object[] args) throws Exception {
     try {
       return callTarget.targetMethod().invoke(instance, args);
     }
     catch (IllegalArgumentException ie) {
-      String types = Arrays.stream(args)
-        .map(a -> {
-          if (a == null) return "null";
-          return a.getClass().getSimpleName();
-        })
-        .collect(Collectors.joining(", "));
-
-      String message = "Argument type mismatch for call " + callTarget.targetMethod() + ", actual types are [" + types + "]";
+      String message = "Argument type mismatch for call " + callTarget.targetMethod() + ", actual types are [" +
+                       getExpectedTypesMessage(args) + "]";
       LOG.warn(message, ie);
 
       throw new IllegalArgumentException(message, ie);
@@ -238,12 +264,29 @@ public class Invoker implements InvokerMBean {
     return RefProducer.makeRef(itemId, item);
   }
 
-  private static Constructor<?> getConstructor(@NotNull RemoteCall call, @NotNull Class<?> targetClass) {
+  private static Constructor<?> getConstructor(@NotNull RemoteCall call, @NotNull Class<?> targetClass, Object[] transformedArgs) {
     int argCount = call.getArgs().length;
-    return Arrays.stream(targetClass.getConstructors())
+    List<Constructor<?>> constructors = Arrays.stream(targetClass.getConstructors())
       .filter(x -> x.getParameterCount() == argCount)
-      .findFirst()
-      .orElseThrow(() -> new IllegalStateException("No such constructor found in " + targetClass));
+      .toList();
+
+    if (constructors.isEmpty()) {
+      throw new IllegalStateException(
+        "No constructor with parameter count " + argCount +
+        " in class " + call.getClassName());
+    }
+
+    if (constructors.size() > 1) {
+      List<@Nullable Class<?>> argumentTypes = getArgumentTypes(transformedArgs);
+      // take into account argument types
+      for (Constructor<?> constructor : constructors) {
+        if (areTypesCompatible(constructor.getParameterTypes(), argumentTypes)) {
+          return constructor;
+        }
+      }
+    }
+
+    return constructors.get(0);
   }
 
   private @NotNull CallTarget getCallTarget(@NotNull RemoteCall call, Object[] transformedArgs) {
@@ -262,16 +305,10 @@ public class Invoker implements InvokerMBean {
     }
 
     if (targetMethods.size() > 1) {
-      List<@Nullable Class<?>> argumentTypes = Arrays.stream(transformedArgs)
-        .map(a -> {
-          if (a == null) return (Class<?>)null;
-          return a.getClass();
-        })
-        .toList();
-
+      List<@Nullable Class<?>> argumentTypes = getArgumentTypes(transformedArgs);
       // take into account argument types
       for (Method method : targetMethods) {
-        if (areTypesCompatible(method, argumentTypes)) {
+        if (areTypesCompatible(method.getParameterTypes(), argumentTypes)) {
           return new CallTarget(clazz, method);
         }
       }
@@ -280,20 +317,27 @@ public class Invoker implements InvokerMBean {
     return new CallTarget(clazz, targetMethods.get(0));
   }
 
-  private static boolean areTypesCompatible(@NotNull Method method, @NotNull List<@Nullable Class<?>> argumentTypes) {
-    Class<?>[] types = method.getParameterTypes();
+  private static @NotNull List<@Nullable Class<?>> getArgumentTypes(Object[] transformedArgs) {
+    return Arrays.stream(transformedArgs)
+      .map(a -> {
+        if (a == null) return (Class<?>)null;
+        return a.getClass();
+      })
+      .toList();
+  }
 
+  private static boolean areTypesCompatible(Class<?> @NotNull [] parameterTypes, @NotNull List<@Nullable Class<?>> argumentTypes) {
     for (int i = 0; i < argumentTypes.size(); i++) {
       Class<?> argType = argumentTypes.get(i);
       if (argType == null) continue;
 
-      Class<?> parameterType = types[i];
+      Class<?> parameterType = parameterTypes[i];
       if (!parameterType.isAssignableFrom(argType)) return false;
     }
     return true;
   }
 
-  private Class<?> getTargetClass(RemoteCall call) {
+  private @NotNull Class<?> getTargetClass(RemoteCall call) {
     Class<?> clazz;
     try {
       clazz = getClassLoader(call).loadClass(call.getClassName());
@@ -304,7 +348,7 @@ public class Invoker implements InvokerMBean {
     return clazz;
   }
 
-  private ClassLoader getClassLoader(RemoteCall call) {
+  private @NotNull ClassLoader getClassLoader(RemoteCall call) {
     String pluginId = call.getPluginId();
     if (pluginId == null || pluginId.isEmpty()) return getClass().getClassLoader();
 
@@ -331,7 +375,7 @@ public class Invoker implements InvokerMBean {
     return plugin.getClassLoader();
   }
 
-  private Object findInstance(RemoteCall call, Class<?> clazz) {
+  private @Nullable Object findInstance(RemoteCall call, Class<?> clazz) {
     if (call instanceof ServiceCall) {
       Object projectInstance = null;
       Ref projectRef = ((ServiceCall)call).getProjectRef();

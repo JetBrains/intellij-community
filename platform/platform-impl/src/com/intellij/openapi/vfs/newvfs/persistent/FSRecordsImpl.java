@@ -93,6 +93,9 @@ public final class FSRecordsImpl {
    */
   public static final ErrorHandler ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD = (records, error) -> {
     records.connection.markAsCorruptedAndScheduleRebuild(error);
+    if (error instanceof IOException) {
+      throw new UncheckedIOException((IOException)error);
+    }
     ExceptionUtil.rethrow(error);
   };
 

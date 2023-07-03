@@ -162,6 +162,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon RealIntentionBulb = load("actions/realIntentionBulb.svg", 516517225, 2);
     /** 16x16 */ public static final @NotNull Icon Redo = load("actions/redo.svg", 1384796752, 2);
     /** 16x16 */ public static final @NotNull Icon RefactoringBulb = load("actions/refactoringBulb.svg", -1341396806, 2);
+    /** 16x16 */ public static final @NotNull Icon ReformatCode = load("actions/reformatCode.svg", 1503774223, 2);
     /** 16x16 */ public static final @NotNull Icon Refresh = load("actions/refresh.svg", 954789704, 2);
     /** 16x16 */ public static final @NotNull Icon Regex = load("actions/regex.svg", -669040651, 0);
     /** 16x16 */ public static final @NotNull Icon RegexHovered = load("actions/regexHovered.svg", -17694115, 0);
@@ -1248,11 +1249,11 @@ public class AllIcons {
     /** 24x24 */ public static final @NotNull Icon Open = load("welcome/open.svg", -1167853047, 2);
     /** 24x24 */ public static final @NotNull Icon OpenSelected = load("welcome/openSelected.svg", 297876432, 0);
 
-    public static final class Project {
-      /** 10x10 */ public static final @NotNull Icon RemoveHover = load("welcome/project/remove-hover.svg", -1138969467, 2);
-      /** 10x10 */ public static final @NotNull Icon Remove = load("welcome/project/remove.svg", -1344345313, 2);
-      /** 10x10 */ public static final @NotNull Icon RemoveDisabledHover = load("welcome/project/removeDisabled-hover.svg", 225648199, 2);
-      /** 10x10 */ public static final @NotNull Icon RemoveDisabled = load("welcome/project/removeDisabled.svg", 693821036, 2);
+    public static final class RecentProjects {
+      /** 10x10 */ public static final @NotNull Icon RemoveHover = load("welcome/recentProjects/remove-hover.svg", -1138969467, 2);
+      /** 10x10 */ public static final @NotNull Icon Remove = load("welcome/recentProjects/remove.svg", -1344345313, 2);
+      /** 10x10 */ public static final @NotNull Icon RemoveDisabledHover = load("welcome/recentProjects/removeDisabled-hover.svg", 225648199, 2);
+      /** 10x10 */ public static final @NotNull Icon RemoveDisabled = load("welcome/recentProjects/removeDisabled.svg", 693821036, 2);
     }
 
     /** @deprecated to be removed */

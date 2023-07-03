@@ -2,11 +2,18 @@
 package org.jetbrains.plugins.gitlab.api.dto
 
 import com.intellij.collaboration.api.dto.GraphQLFragment
+import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.Nls
 
+// namespace can be null for some reason, so we need to parse paths manually
 @GraphQLFragment("/graphql/fragment/project.graphql")
 data class GitLabProjectDTO(
   val name: @Nls String,
-  val httpUrlToRepo: String,
-  val webUrl: String
-)
+  val nameWithNamespace: @Nls String,
+  val path: @NlsSafe String,
+  val fullPath: @NlsSafe String,
+  val httpUrlToRepo: @NlsSafe String?,
+  val sshUrlToRepo: @NlsSafe String?
+) {
+  val ownerPath: @NlsSafe String = fullPath.split("/").dropLast(1).joinToString("/")
+}

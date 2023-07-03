@@ -359,7 +359,7 @@ public class RecentProjectPanel extends JPanel {
 
     private Icon detectActionIcon(int rowIndex, boolean hovered) {
       if (isProjectInvalid(rowIndex)) {
-        return hovered ? AllIcons.Welcome.Project.RemoveHover : AllIcons.Welcome.Project.Remove;
+        return hovered ? AllIcons.Welcome.RecentProjects.RemoveHover : AllIcons.Welcome.RecentProjects.Remove;
       }
       return hovered ? AllIcons.Ide.Notification.GearHover : AllIcons.Ide.Notification.Gear;
     }

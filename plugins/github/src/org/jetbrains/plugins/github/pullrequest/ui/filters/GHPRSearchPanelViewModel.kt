@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.filters
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListQuickFilter
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelViewModelBase
+import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
@@ -18,6 +19,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRListQuickFilter.*
 @OptIn(FlowPreview::class)
 internal class GHPRSearchPanelViewModel(
   scope: CoroutineScope,
+  private val project: Project,
   private val repositoryDataService: GHPRRepositoryDataService,
   historyViewModel: GHPRSearchHistoryModel,
   currentUser: GHUser
@@ -62,7 +64,7 @@ internal class GHPRSearchPanelViewModel(
     scope.launchNow {
       // with debounce to avoid collecting intermediate state
       searchState.drop(1).debounce(5000).collect {
-        GHPRStatisticsCollector.logListFiltersApplied(it)
+        GHPRStatisticsCollector.logListFiltersApplied(project, it)
       }
     }
   }

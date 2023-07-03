@@ -406,10 +406,6 @@
 
     "Ide.Shadow": {
       "borderInsets": "6,10,14,10",
-      "topLeftSize": "18,14",
-      "topRightSize": "18,14",
-      "bottomLeftSize": "18,22",
-      "bottomRightSize": "18,22",
       "top0Color": "#FCFCFC92",
       "top1Color": "#F4F4F492",
       "bottom0Color": "#F0F0F092",
@@ -429,10 +425,6 @@
     },
     "Notification.Shadow": {
       "borderInsets": "6,10,6,10",
-      "topLeftSize": "18,14",
-      "topRightSize": "18,14",
-      "bottomLeftSize": "18,22",
-      "bottomRightSize": "18,22",
       "top0Color": "#FCFCFC32",
       "top1Color": "#F4F4F432",
       "bottom0Color": "#F0F0F032",

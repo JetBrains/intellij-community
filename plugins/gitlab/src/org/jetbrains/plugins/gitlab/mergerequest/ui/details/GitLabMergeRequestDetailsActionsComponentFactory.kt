@@ -25,6 +25,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.action.*
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitReviewPopup
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestReviewFlowViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestReviewFlowViewModelImpl.Companion.toReviewState
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JButton
 import javax.swing.JComponent
@@ -39,7 +40,7 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
   ): JComponent {
     val reviewActions = CodeReviewActions(
       requestReviewAction = GitLabMergeRequestRequestReviewAction(scope, reviewFlowVm, avatarIconsProvider),
-      reRequestReviewAction = GitLabMergeRequestReRequestReviewAction(),
+      reRequestReviewAction = GitLabMergeRequestReRequestReviewAction(scope, reviewFlowVm),
       closeReviewAction = GitLabMergeRequestCloseAction(scope, reviewFlowVm),
       reopenReviewAction = GitLabMergeRequestReopenAction(scope, reviewFlowVm),
       setMyselfAsReviewerAction = GitLabMergeRequestSetMyselfAsReviewerAction(scope, reviewFlowVm),
@@ -53,7 +54,12 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
     return Wrapper().apply {
       bindContentIn(scope, reviewFlowVm.role) { role ->
         val mainPanel = when (role) {
-          ReviewRole.AUTHOR -> createActionsForAuthor(reviewFlowVm.reviewState, reviewFlowVm.reviewers, reviewActions, moreActionsGroup)
+          ReviewRole.AUTHOR -> {
+            val requestedReviewers = reviewFlowVm.reviewers.map { reviewers ->
+              reviewers.filter { it.mergeRequestInteraction.toReviewState() == ReviewState.NEED_REVIEW }
+            }
+            createActionsForAuthor(reviewFlowVm.reviewState, requestedReviewers, reviewActions, moreActionsGroup)
+          }
           ReviewRole.REVIEWER -> createActionsForReviewer(reviewFlowVm, reviewActions, moreActionsGroup)
           ReviewRole.GUEST -> CodeReviewDetailsActionsComponentFactory.createActionsForGuest(reviewActions, moreActionsGroup,
                                                                                              ::createMergeActionGroup)

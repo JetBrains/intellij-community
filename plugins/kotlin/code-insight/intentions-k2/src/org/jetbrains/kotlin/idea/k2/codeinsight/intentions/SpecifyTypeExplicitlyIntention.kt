@@ -28,6 +28,7 @@ internal class SpecifyTypeExplicitlyIntention :
 
     override fun isApplicableByPsi(element: KtCallableDeclaration): Boolean {
         if (element is KtConstructor<*> || element is KtFunctionLiteral) return false
+        if (element is KtParameter && element.isLoopParameter && element.destructuringDeclaration != null) return false
         return element.typeReference == null && (element as? KtNamedFunction)?.hasBlockBody() != true
     }
 

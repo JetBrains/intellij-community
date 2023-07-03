@@ -1,16 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.unicode;
 
-import com.intellij.openapi.editor.CaretModel;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.base.Intention;
-import com.siyeh.ipp.base.PsiElementEditorPredicate;
+import com.siyeh.ipp.base.MCIntention;
+import com.siyeh.ipp.base.PsiElementContextPredicate;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class UnicodeUnescapeIntention extends Intention {
+public class UnicodeUnescapeIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -26,23 +25,18 @@ public class UnicodeUnescapeIntention extends Intention {
   }
 
   @Override
-  public @NotNull String getText() {
+  protected @Nullable String getTextForElement(@NotNull PsiElement element) {
     return IntentionPowerPackBundle.message("unicode.unescape.intention.name");
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {}
-
-  @Override
-  protected void processIntention(Editor editor, @NotNull PsiElement element) {
-    final SelectionModel selectionModel = editor.getSelectionModel();
-    if (selectionModel.hasSelection()) {
+  protected void processIntention(@NotNull ActionContext context, @NotNull ModPsiUpdater updater, @NotNull PsiElement element) {
+    TextRange selection = context.selection();
+    final Document document = element.getContainingFile().getViewProvider().getDocument();
+    if (!selection.isEmpty()) {
       // does not check if Unicode escape is inside char or string literal (garbage in, garbage out)
-      final Document document = editor.getDocument();
-      final int start = selectionModel.getSelectionStart();
-      final int end = selectionModel.getSelectionEnd();
-      final String text = document.getText(new TextRange(start, end));
-      final int textLength = end - start;
+      final String text = document.getText(selection);
+      final int textLength = selection.getLength();
       final StringBuilder replacement = new StringBuilder(textLength);
       int anchor = 0;
       while (true) {
@@ -60,15 +54,15 @@ public class UnicodeUnescapeIntention extends Intention {
         replacement.appendCodePoint(c);
       }
       replacement.append(text, anchor, textLength);
+      final int start = selection.getStartOffset();
+      final int end = selection.getEndOffset();
       document.replaceString(start, end, replacement);
     }
     else {
-      final CaretModel caretModel = editor.getCaretModel();
-      final Document document = editor.getDocument();
-      final int lineNumber = document.getLineNumber(caretModel.getOffset());
+      final int lineNumber = document.getLineNumber(context.offset());
       final int lineStartOffset = document.getLineStartOffset(lineNumber);
       final String line = document.getText(new TextRange(lineStartOffset, document.getLineEndOffset(lineNumber)));
-      final int column = caretModel.getLogicalPosition().column;
+      final int column = context.offset() - lineStartOffset;
       final int index1 = indexOfUnicodeEscape(line, column);
       final int index2 = indexOfUnicodeEscape(line, column + 1);
       // if the caret is between two unicode escapes, replace the one to the right
@@ -155,17 +149,14 @@ public class UnicodeUnescapeIntention extends Intention {
     return new UnicodeEscapePredicate();
   }
 
-  private static class UnicodeEscapePredicate extends PsiElementEditorPredicate {
+  private static class UnicodeEscapePredicate extends PsiElementContextPredicate {
     @Override
-    public boolean satisfiedBy(PsiElement element, @Nullable Editor editor) {
-      if (editor == null) {
-        return false;
-      }
-      final SelectionModel selectionModel = editor.getSelectionModel();
-      final Document document = editor.getDocument();
-      if (selectionModel.hasSelection()) {
-        final int start = selectionModel.getSelectionStart();
-        final int end = selectionModel.getSelectionEnd();
+    public boolean satisfiedBy(PsiElement element, @NotNull ModCommandAction.ActionContext context) {
+      TextRange selection = context.selection();
+      Document document = element.getContainingFile().getViewProvider().getDocument();
+      if (!selection.isEmpty()) {
+        final int start = selection.getStartOffset();
+        final int end = selection.getEndOffset();
         if (start < 0 || end < 0 || start > end) {
           // shouldn't happen but http://ea.jetbrains.com/browser/ea_problems/50192
           return false;
@@ -174,10 +165,10 @@ public class UnicodeUnescapeIntention extends Intention {
         return indexOfUnicodeEscape(text, 1) >= 0;
       }
       else {
-        final CaretModel caretModel = editor.getCaretModel();
-        final int lineNumber = document.getLineNumber(caretModel.getOffset());
-        final String line = document.getText(new TextRange(document.getLineStartOffset(lineNumber), document.getLineEndOffset(lineNumber)));
-        final int column = caretModel.getLogicalPosition().column;
+        final int lineNumber = document.getLineNumber(context.offset());
+        int lineStart = document.getLineStartOffset(lineNumber);
+        final String line = document.getText(new TextRange(lineStart, document.getLineEndOffset(lineNumber)));
+        final int column = context.offset() - lineStart;
         final int index = indexOfUnicodeEscape(line, column);
         return index >= 0 && column >= index;
       }

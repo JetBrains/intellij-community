@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.codeInliner
 
 import com.intellij.psi.util.elementType
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.isExtensionFunctionType
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.diagnostics.Errors
@@ -225,7 +226,7 @@ class CodeToInlineBuilder(
                     last = KtFunctionLiteral::class
                 )
             val hasUnresolvedItOrThis = factory == Errors.UNRESOLVED_REFERENCE &&
-                    element.text == "it" &&
+                    element.text == StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier &&
                     element.getStrictParentOfType<KtFunctionLiteral>() == functionLiteral
 
             hasCantInferParameter || hasUnresolvedItOrThis

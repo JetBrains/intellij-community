@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.kdoc.*
@@ -83,7 +84,7 @@ internal class KotlinDocumentationTarget(val element: PsiElement, private val or
 private fun computeLocalDocumentation(element: PsiElement, originalElement: PsiElement?, quickNavigation: Boolean): String? {
     when {
       element is KtFunctionLiteral -> {
-          val itElement = findElementWithText(originalElement, "it")
+          val itElement = findElementWithText(originalElement, StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier)
           val itReference = itElement?.getParentOfType<KtNameReferenceExpression>(false)
           if (itReference != null) {
               return buildString {
@@ -215,8 +216,13 @@ private fun @receiver:Nls StringBuilder.renderEnumSpecialFunction(
                 val containingClass = symbol.getContainingSymbol() as? KtClassOrObjectSymbol
                 val superClasses = containingClass?.superTypes?.mapNotNull { t -> t.expandedClassSymbol }
                 val kdoc = superClasses?.firstNotNullOfOrNull { superClass ->
-                    superClass.psi?.navigationElement?.findDescendantOfType<KDoc> { doc ->
-                        doc.getChildrenOfType<KDocSection>().any { it.findTagByName(name) != null }
+                    val navigationElement = superClass.psi?.navigationElement
+                    if (navigationElement is KtElement && navigationElement.containingKtFile.isCompiled) {
+                        null //no need to search documentation in decompiled code
+                    } else {
+                        navigationElement?.findDescendantOfType<KDoc> { doc ->
+                            doc.getChildrenOfType<KDocSection>().any { it.findTagByName(name) != null }
+                        }
                     }
                 }
 

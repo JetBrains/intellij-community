@@ -68,6 +68,11 @@ public class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
         runTest("testData/quickDoc/ConstructorVarParameter.kt");
     }
 
+    @TestMetadata("DecompiledSuper.kt")
+    public void testDecompiledSuper() throws Exception {
+        runTest("testData/quickDoc/DecompiledSuper.kt");
+    }
+
     @TestMetadata("DefinitelyNonNullType.kt")
     public void testDefinitelyNonNullType() throws Exception {
         runTest("testData/quickDoc/DefinitelyNonNullType.kt");

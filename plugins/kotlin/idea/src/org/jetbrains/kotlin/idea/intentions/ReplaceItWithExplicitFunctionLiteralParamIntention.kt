@@ -3,27 +3,35 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInsight.FileModificationService
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
-import org.jetbrains.kotlin.idea.refactoring.rename.KotlinVariableInplaceRenameHandler
-import org.jetbrains.kotlin.idea.refactoring.rename.RenameKotlinImplicitLambdaParameter.Companion.convertImplicitItToExplicit
-import org.jetbrains.kotlin.idea.refactoring.rename.RenameKotlinImplicitLambdaParameter.Companion.isAutoCreatedItUsage
+import org.jetbrains.kotlin.idea.codeinsight.utils.isReferenceToImplicitLambdaParameter
+import org.jetbrains.kotlin.idea.refactoring.rename.handlers.RenameKotlinImplicitLambdaParameter
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 
 class ReplaceItWithExplicitFunctionLiteralParamIntention : SelfTargetingOffsetIndependentIntention<KtNameReferenceExpression>(
     KtNameReferenceExpression::class.java, KotlinBundle.lazyMessage("replace.it.with.explicit.parameter")
 ) {
-    override fun isApplicableTo(element: KtNameReferenceExpression) = isAutoCreatedItUsage(element)
+    override fun isApplicableTo(element: KtNameReferenceExpression) = element.isReferenceToImplicitLambdaParameter()
 
     override fun startInWriteAction(): Boolean = false
 
     override fun applyTo(element: KtNameReferenceExpression, editor: Editor?) {
         if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return
         if (editor == null) throw IllegalArgumentException("This intention requires an editor")
-        val paramToRename = convertImplicitItToExplicit(element, editor) ?: return
 
         editor.caretModel.moveToOffset(element.textOffset)
-        KotlinVariableInplaceRenameHandler().doRename(paramToRename, editor, null)
+        val ktFile = element.containingKtFile
+
+        val dataContext = DataContext { id ->
+            when {
+                CommonDataKeys.PSI_ELEMENT.`is`(id) -> element
+                else -> null
+            }
+        }
+        RenameKotlinImplicitLambdaParameter().invoke(ktFile.project, editor, ktFile, dataContext)
     }
 }

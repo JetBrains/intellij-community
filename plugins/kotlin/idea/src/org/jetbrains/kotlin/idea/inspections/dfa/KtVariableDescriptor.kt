@@ -8,6 +8,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.getReceiverTypeFromFunctionType
 import org.jetbrains.kotlin.builtins.getValueParameterTypesFromFunctionType
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
@@ -151,7 +152,7 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : JvmVariableDes
                         }
                     }
                 }
-                if (expr.textMatches("it")) {
+                if (expr.textMatches(StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier)) {
                     val descriptor = expr.resolveMainReferenceToDescriptors().singleOrNull()
                     if (descriptor is ValueParameterDescriptor) {
                         val fn = (descriptor.containingDeclaration.toSourceElement as? KotlinSourceElement)?.psi

@@ -5,8 +5,9 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
@@ -47,4 +48,11 @@ fun KtValueArgument.getValueArgumentName(): Name? {
             getArgumentNameIfCanBeUsedForCalls(this@getValueArgumentName, resolvedCall)
         }
     }
+}
+context(KtAnalysisSession)
+fun KtSymbol.getFqNameIfPackageOrNonLocal(): FqName? = when (this) {
+    is KtPackageSymbol -> fqName
+    is KtCallableSymbol -> callableIdIfNonLocal?.asSingleFqName()
+    is KtClassLikeSymbol -> classIdIfNonLocal?.asSingleFqName()
+    else -> null
 }

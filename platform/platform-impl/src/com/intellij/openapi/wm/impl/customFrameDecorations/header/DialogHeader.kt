@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.openapi.util.NlsContexts
@@ -16,71 +16,78 @@ import java.beans.PropertyChangeListener
 import javax.swing.JLabel
 import javax.swing.UIManager
 
-internal class DialogHeader(val window: Window) : CustomHeader(window) {
-    private val titleLabel = JLabel().apply {
-        border = LABEL_BORDER
-    }
-    private val titleChangeListener = PropertyChangeListener{
-        titleLabel.text = getTitle()
-    }
+internal class DialogHeader(window: Window) : CustomHeader(window) {
+  private val titleLabel = JLabel().apply {
+    border = LABEL_BORDER
+  }
+  private val titleChangeListener = PropertyChangeListener {
+    titleLabel.text = getTitle()
+  }
 
-    init {
-        layout = GridBagLayout()
-        titleLabel.text = getTitle()
+  init {
+    layout = GridBagLayout()
+    titleLabel.text = getTitle()
 
-        productIcon.border = JBUI.Borders.empty(0, H, 0, H)
+    productIcon.border = JBUI.Borders.empty(0, H, 0, H)
 
-        val gb = GridBag().setDefaultFill(GridBagConstraints.VERTICAL).setDefaultAnchor(GridBagConstraints.WEST)
-        add(productIcon, gb.next())
-        add(titleLabel, gb.next().fillCell().weightx(1.0))
-        buttonPanes?.let { add(it.getView(), gb.next().anchor(GridBagConstraints.EAST)) }
-    }
+    val gb = GridBag().setDefaultFill(GridBagConstraints.VERTICAL).setDefaultAnchor(GridBagConstraints.WEST)
+    add(productIcon, gb.next())
+    add(titleLabel, gb.next().fillCell().weightx(1.0))
+    createButtonsPane()?.let { add(it.getView(), gb.next().anchor(GridBagConstraints.EAST)) }
+  }
 
-    private val dragListener = object : MouseAdapter() { //passing events to OS handler to make it draggable
-      override fun mouseDragged(e: MouseEvent?) { customTitleBar?.forceHitTest(false) }
-      override fun mouseClicked(e: MouseEvent?) { customTitleBar?.forceHitTest(false) }
-      override fun mouseMoved(e: MouseEvent?) { customTitleBar?.forceHitTest(false) }
-    }
-
-    override fun installListeners() {
-        super.installListeners()
-        window.addPropertyChangeListener("title", titleChangeListener)
-        addMouseListener(dragListener)
-        addMouseMotionListener(dragListener)
+  private val dragListener = object : MouseAdapter() { //passing events to OS handler to make it draggable
+    override fun mouseDragged(e: MouseEvent?) {
+      customTitleBar?.forceHitTest(false)
     }
 
-    override fun uninstallListeners() {
-        super.uninstallListeners()
-        window.removePropertyChangeListener(titleChangeListener)
-        removeMouseListener(dragListener)
-        removeMouseMotionListener(dragListener)
+    override fun mouseClicked(e: MouseEvent?) {
+      customTitleBar?.forceHitTest(false)
     }
 
-    override fun updateActive() {
-        titleLabel.foreground = if (myActive) UIManager.getColor("Panel.foreground") else UIManager.getColor("Label.disabledForeground")
-        super.updateActive()
+    override fun mouseMoved(e: MouseEvent?) {
+      customTitleBar?.forceHitTest(false)
     }
+  }
 
-    override fun windowStateChanged() {
-        super.windowStateChanged()
-        titleLabel.text = getTitle()
+  override fun installListeners() {
+    super.installListeners()
+    window.addPropertyChangeListener("title", titleChangeListener)
+    addMouseListener(dragListener)
+    addMouseMotionListener(dragListener)
+  }
+
+  override fun uninstallListeners() {
+    super.uninstallListeners()
+    window.removePropertyChangeListener(titleChangeListener)
+    removeMouseListener(dragListener)
+    removeMouseMotionListener(dragListener)
+  }
+
+  override fun updateActive() {
+    titleLabel.foreground = if (isActive) UIManager.getColor("Panel.foreground") else UIManager.getColor("Label.disabledForeground")
+    super.updateActive()
+  }
+
+  override fun windowStateChanged() {
+    super.windowStateChanged()
+    titleLabel.text = getTitle()
+  }
+
+  override fun addNotify() {
+    super.addNotify()
+    titleLabel.text = getTitle()
+  }
+
+  @NlsContexts.DialogTitle
+  private fun getTitle(): String? {
+    when (window) {
+      is Dialog -> return window.title
+      else -> return ""
     }
+  }
 
-    override fun addNotify() {
-        super.addNotify()
-        titleLabel.text = getTitle()
-    }
-
-    @NlsContexts.DialogTitle
-    private fun getTitle(): String? {
-        when (window) {
-            is Dialog -> return window.title
-            else -> return ""
-        }
-    }
-
-  override fun createButtonsPane(): CustomFrameTitleButtons? {
-    if (IdeRootPane.hideNativeLinuxTitle) CustomFrameTitleButtons.create(myCloseAction)
-    return null
+  private fun createButtonsPane(): CustomFrameTitleButtons? {
+    return if (IdeRootPane.hideNativeLinuxTitle) CustomFrameTitleButtons.create(createCloseAction(this)) else null
   }
 }

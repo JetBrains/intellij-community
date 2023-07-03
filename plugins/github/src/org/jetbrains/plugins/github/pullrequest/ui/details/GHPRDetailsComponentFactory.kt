@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.project.Project
 import com.intellij.ui.PopupHandler
 import kotlinx.coroutines.CoroutineScope
 import net.miginfocom.layout.AC
@@ -35,6 +36,7 @@ internal object GHPRDetailsComponentFactory {
 
   fun create(
     scope: CoroutineScope,
+    project: Project,
     reviewDetailsVm: CodeReviewDetailsViewModel,
     branchesVm: CodeReviewBranchesViewModel,
     reviewStatusVm: GHPRStatusViewModel,
@@ -57,8 +59,10 @@ internal object GHPRDetailsComponentFactory {
           .add(GHPRActionKeys.REVIEW_BRANCH_VM, branchesVm)
           .build()))
     }
-    val statusChecks = GHPRStatusChecksComponentFactory.create(scope, reviewStatusVm, reviewFlowVm, securityService, avatarIconsProvider)
-    val actionsComponent = GHPRDetailsActionsComponentFactory.create(scope, reviewDetailsVm.reviewRequestState, reviewFlowVm, dataProvider)
+    val statusChecks = GHPRStatusChecksComponentFactory.create(scope, project, reviewStatusVm, reviewFlowVm, securityService,
+                                                               avatarIconsProvider)
+    val actionsComponent = GHPRDetailsActionsComponentFactory.create(scope, project, reviewDetailsVm.reviewRequestState, reviewFlowVm,
+                                                                     dataProvider)
     val actionGroup = ActionManager.getInstance().getAction("Github.PullRequest.Details.Popup") as ActionGroup
 
     return JPanel(MigLayout(

@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -54,8 +55,9 @@ private val LOG = logger<GitLabDiscussion>()
 
 class MutableGitLabMergeRequestNote(
   parentCs: CoroutineScope,
+  private val project: Project,
   private val api: GitLabApi,
-  private val project: GitLabProjectCoordinates,
+  private val glProject: GitLabProjectCoordinates,
   mr: GitLabMergeRequest,
   private val eventSink: suspend (GitLabNoteEvent<GitLabNoteDTO>) -> Unit,
   private val noteData: GitLabNoteDTO
@@ -82,24 +84,24 @@ class MutableGitLabMergeRequestNote(
     withContext(cs.coroutineContext) {
       operationsGuard.withLock {
         withContext(Dispatchers.IO) {
-          api.graphQL.updateNote(project, noteData.id, newText).getResultOrThrow()
+          api.graphQL.updateNote(glProject, noteData.id, newText).getResultOrThrow()
         }
       }
       data.update { it.copy(body = newText) }
     }
-    GitLabStatistics.logMrActionExecuted(GitLabStatistics.MergeRequestAction.UPDATE_NOTE)
+    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.UPDATE_NOTE)
   }
 
   override suspend fun delete() {
     withContext(cs.coroutineContext) {
       operationsGuard.withLock {
         withContext(Dispatchers.IO) {
-          api.graphQL.deleteNote(project, noteData.id).getResultOrThrow()
+          api.graphQL.deleteNote(glProject, noteData.id).getResultOrThrow()
         }
       }
       eventSink(GitLabNoteEvent.Deleted(noteData.id))
     }
-    GitLabStatistics.logMrActionExecuted(GitLabStatistics.MergeRequestAction.DELETE_NOTE)
+    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.DELETE_NOTE)
   }
 
   fun update(item: GitLabNoteDTO) {

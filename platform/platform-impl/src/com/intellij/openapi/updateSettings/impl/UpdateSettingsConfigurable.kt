@@ -4,7 +4,7 @@ package com.intellij.openapi.updateSettings.impl
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.WhatsNewAction
+import com.intellij.ide.actions.WhatsNewUtil
 import com.intellij.ide.nls.NlsMessages
 import com.intellij.ide.plugins.newui.reloadPluginIcon
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -92,7 +92,7 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
       }.topGap(TopGap.SMALL)
         .bottomGap(BottomGap.SMALL)
 
-      if (WhatsNewAction.isAvailable()) {
+      if (WhatsNewUtil.isWhatsNewAvailable()) {
         row {
           checkBox(IdeBundle.message("updates.settings.show.editor"))
             .bindSelected(settings.state::isShowWhatsNewEditor)

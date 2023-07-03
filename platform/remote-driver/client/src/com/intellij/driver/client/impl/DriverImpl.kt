@@ -39,6 +39,10 @@ internal class DriverImpl(host: JmxHost?) : Driver {
     return invoker.getProductVersion()
   }
 
+  override fun exitApplication() {
+    invoker.exit()
+  }
+
   @Suppress("UNCHECKED_CAST")
   override fun <T : Any> service(clazz: KClass<T>): T {
     return appServices.computeIfAbsent(clazz.java, ::serviceBridge) as T
@@ -320,6 +324,8 @@ private val NO_SESSION: Session = Session(0, OnDispatcher.DEFAULT, LockSemantics
 @JmxName("com.intellij.driver:type=Invoker")
 internal interface Invoker : AutoCloseable {
   fun getProductVersion(): ProductVersion
+
+  fun exit()
 
   fun invoke(call: RemoteCall): RemoteCallResult
 

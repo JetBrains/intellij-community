@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="lucene-highlighter" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-highlighter:9.6.0" />
+    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-highlighter:9.6.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-highlighter/9.6.0/lucene-highlighter-9.6.0.jar">
+          <sha256sum>dd9ddcb93ba9e5c19d4de5b9b77530a0d4eceb5e2e8f31ac17e905e314a349ce</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-highlighter/9.6.0/lucene-highlighter-9.6.0.jar!/" />
     </CLASSES>

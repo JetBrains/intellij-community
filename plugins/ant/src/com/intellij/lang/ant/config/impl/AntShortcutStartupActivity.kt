@@ -10,6 +10,8 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.keymap.Keymap
+import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -23,19 +25,32 @@ private class AntShortcutStartupActivity : ProjectActivity {
   }
 
   override suspend fun execute(project: Project) {
-    val prefix = AntConfiguration.getActionIdPrefix(project)
-    val actionManager = ApplicationManager.getApplication().serviceAsync<ActionManager>()
-    for (keymap in KeymapManagerEx.getInstanceEx().allKeymaps) {
-      for (id in keymap.actionIdList) {
-        if (id.startsWith(prefix) && actionManager.getAction(id) == null) {
-          actionManager.registerAction(id, TargetActionStub(id, project))
-        }
-      }
-    }
+    val listenerDisposable = Disposer.newDisposable()
+    Disposer.register(AntDisposable.getInstance(project), listenerDisposable)
+    val actionManager: ActionManager = ApplicationManager.getApplication().serviceAsync<ActionManager>()
+    registerActionForKeymap(project, actionManager, KeymapManagerEx.getInstanceEx().activeKeymap)
+    ApplicationManager.getApplication().getMessageBus().connect(listenerDisposable)
+      .subscribe<KeymapManagerListener>(KeymapManagerListener.TOPIC,
+                                        object : KeymapManagerListener {
+                                          override fun activeKeymapChanged(keymap: Keymap?) {
+                                            if (keymap == null)
+                                              return
+                                            registerActionForKeymap(project, actionManager, keymap)
+                                          }
+                                        })
 
     Disposer.register(AntDisposable.getInstance(project), Disposable {
       unregisterAction(project)
     })
+  }
+}
+
+private fun registerActionForKeymap(project: Project, actionManager: ActionManager, keymap: Keymap) {
+  val prefix: String = AntConfiguration.getActionIdPrefix(project)
+  for (id in keymap.actionIdList) {
+    if (id.startsWith(prefix) && actionManager.getAction(id) == null) {
+      actionManager.registerAction(id, TargetActionStub(id, project))
+    }
   }
 }
 

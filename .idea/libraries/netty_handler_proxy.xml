@@ -1,6 +1,14 @@
 <component name="libraryTable">
   <library name="netty-handler-proxy" type="repository">
     <properties maven-id="io.netty:netty-handler-proxy:4.1.91.Final">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-handler-proxy/4.1.91.Final/netty-handler-proxy-4.1.91.Final.jar">
+          <sha256sum>60c736bec98087bc97fcd0097640966c57398d152f9aaa19e1a4618bbf74dbb9</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-codec-socks/4.1.91.Final/netty-codec-socks-4.1.91.Final.jar">
+          <sha256sum>cdd0feff044cbf0f76b6925cb3e5a103f01e3577438538c8c640f069bf8c47e6</sha256sum>
+        </artifact>
+      </verification>
       <exclude>
         <dependency maven-id="io.netty:netty-common" />
         <dependency maven-id="io.netty:netty-buffer" />

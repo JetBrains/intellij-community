@@ -43,6 +43,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.system.measureTimeMillis
 
 /**
  * Holder for [ScriptClassRootsCache].
@@ -58,7 +59,7 @@ import java.util.concurrent.atomic.AtomicReference
  * Also analysis cache will be cleared and changed opened script files will be reanalyzed.
  */
 
-private const val INIT_TIMEOUT_REGISTRY_KEY = "kotlin.scripting.wait-init.timeout.sec"
+private const val INIT_WAIT_ATTEMPTS_REGISTRY_KEY = "kotlin.scripting.wait-init.attempts.num"
 
 abstract class ScriptClassRootsUpdater(
     val project: Project,
@@ -103,11 +104,21 @@ abstract class ScriptClassRootsUpdater(
 
     val classpathRoots: ScriptClassRootsCache
         get() {
-            val timeoutSec = Registry.intValue(INIT_TIMEOUT_REGISTRY_KEY, 5).toLong()
-            if (!cacheNotEmptyLatch.await(timeoutSec, TimeUnit.SECONDS)) {
-                scriptingWarnLog("Script configurations init timeout elapsed. " +
-                                         "Try increasing the value of registry key '${INIT_TIMEOUT_REGISTRY_KEY}'")
+            val timeoutMs = 500L
+            var attemptsLeft = Registry.intValue(INIT_WAIT_ATTEMPTS_REGISTRY_KEY, 10)
+
+            val ms = measureTimeMillis {
+                while (!cacheNotEmptyLatch.await(timeoutMs, TimeUnit.MILLISECONDS) && attemptsLeft > 0) {
+                    attemptsLeft--
+                    ProgressManager.checkCanceled()
+                }
             }
+
+            if (attemptsLeft == 0) {
+                scriptingWarnLog("Couldn't load initial script cache state after $ms ms. In most cases we can cope with it. " +
+                                         "For others see registry key kotlin.scripting.wait-init.attempts.num.")
+            }
+
             return cache.get()
         }
 

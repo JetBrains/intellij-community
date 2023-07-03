@@ -4,4 +4,3 @@ import somePackage.NotExcludedClass
 // ERROR: Unresolved reference: NotExcludedClass
 
 val x = <caret>NotExcludedClass()
-/* IGNORE_FIR */

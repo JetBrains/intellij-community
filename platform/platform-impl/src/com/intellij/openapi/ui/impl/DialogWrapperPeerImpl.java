@@ -392,7 +392,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     AnCancelAction anCancelAction = new AnCancelAction();
     JRootPane rootPane = getRootPane();
-    UIUtil.decorateWindowHeader(rootPane);
+    ComponentUtil.decorateWindowHeader(rootPane);
 
     Window window = getWindow();
     if (window instanceof JDialog && !((JDialog)window).isUndecorated() && rootPane != null && LoadingState.COMPONENTS_LOADED.isOccurred()) {
@@ -663,7 +663,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     @Override
     public void addNotify() {
       if (IdeFrameDecorator.isCustomDecorationActive()) {
-        CustomHeader.enableCustomHeader(this);
+        CustomHeader.Companion.enableCustomHeader(this);
       }
       super.addNotify();
       if (SystemInfo.isMacOSVentura && Registry.is("ide.mac.stage.manager.support", false)) {

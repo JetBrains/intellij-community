@@ -4,6 +4,7 @@ package com.jetbrains.python.testing.autoDetectTests
 import com.intellij.execution.Executor
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.BeanBinding
@@ -19,7 +20,9 @@ class PyAutoDetectTestConfiguration(project: Project, factory: PyAutoDetectionCo
   override val useFrameworkNameInConfiguration: Boolean = false
 
   override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? {
-    val conf = detectedConfiguration() ?: return null
+    val runProfile = environment.runProfile
+    val module = (runProfile as? PyAbstractTestConfiguration)?.module
+    val conf = detectedConfiguration(module) ?: return null
 
     copyTo(getProperties(conf))
     for (accessor in BeanBinding.getAccessors(PyAbstractTestConfiguration::class.java)) {
@@ -32,10 +35,12 @@ class PyAutoDetectTestConfiguration(project: Project, factory: PyAutoDetectionCo
     return conf.getState(executor, environment)
   }
 
-  fun detectedConfiguration(): PyAbstractTestConfiguration? {
+  fun detectedConfiguration(module: Module?): PyAbstractTestConfiguration? {
     return PyAutoDetectionConfigurationFactory.factoriesExcludingThis
       .asSequence().map {
-        it.createTemplateConfiguration(project)
+        it.createTemplateConfiguration(project).apply {
+          this.module = module
+        }
       }.filter {
         it.isFrameworkInstalled()
       }.firstOrNull()

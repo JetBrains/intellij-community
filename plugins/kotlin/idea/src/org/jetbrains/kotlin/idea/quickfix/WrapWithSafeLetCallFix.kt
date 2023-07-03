@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -51,7 +52,7 @@ class WrapWithSafeLetCallFix(
             nullableExpression,
             KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER
         )
-        val name = Fe10KotlinNameSuggester.suggestNameByName("it", validator)
+        val name = Fe10KotlinNameSuggester.suggestNameByName(StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier, validator)
 
         nullableExpression.replace(psiFactory.createExpression(name))
         val underLetExpression = when {

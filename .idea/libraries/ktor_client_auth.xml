@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="ktor-client-auth" type="repository">
-    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-auth-jvm:2.3.0" />
+    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-auth-jvm:2.3.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-auth-jvm/2.3.0/ktor-client-auth-jvm-2.3.0.jar">
+          <sha256sum>a33acc9111d4299d2d89ad7a43f5fbfaad1bc5bdade31e10989241c9f97df854</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-auth-jvm/2.3.0/ktor-client-auth-jvm-2.3.0.jar!/" />
     </CLASSES>

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen
 
 import com.intellij.openapi.Disposable
@@ -31,7 +31,7 @@ import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.*
 import kotlin.collections.ArrayDeque
 
-class TreeWelcomeScreenLeftPanel : WelcomeScreenLeftPanel {
+internal class TreeWelcomeScreenLeftPanel : WelcomeScreenLeftPanel {
   private val root = DefaultMutableTreeNode()
   private val treeModel = DefaultTreeModel(root)
   private val tree: JTree = Tree(treeModel)

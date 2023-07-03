@@ -395,6 +395,7 @@ public final class FSRecords {
     return implOrFail().readAttributeRawWithLock(fileId, attribute, reader);
   }
 
+  @ApiStatus.Internal
   public static void writeAttributeRaw(int fileId,
                                        FileAttribute attribute,
                                        ByteBufferWriter writer) {
@@ -445,7 +446,7 @@ public final class FSRecords {
 
   //========== aux: ========================================================
 
-  /** With method create 'VFS corruption marker', which forces VFS to rebuild on the next startup */
+  /** Method creates 'VFS corruption marker', which forces VFS to rebuild on the next startup */
   public static void invalidateCaches(@NotNull String diagnosticMessage,
                                       @NotNull Throwable errorCause) {
     implOrFail().invalidateCaches(diagnosticMessage, errorCause);

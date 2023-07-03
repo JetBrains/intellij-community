@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="jackson-dataformat-yaml" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.15.0" />
+    <properties include-transitive-deps="false" maven-id="com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.15.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.15.0/jackson-dataformat-yaml-2.15.0.jar">
+          <sha256sum>691a0a605de15ea610180317331957fe6f7e91f45471ee45cbf9832d74291c31</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.15.0/jackson-dataformat-yaml-2.15.0.jar!/" />
     </CLASSES>

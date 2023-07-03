@@ -37,41 +37,39 @@ abstract class AbstractFirRenameTest : AbstractRenameTest() {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
 
+    @OptIn(KtAllowAnalysisOnEdt::class)
     override fun doTest(path: String) {
         val renameObject = loadTestConfiguration(dataFile())
         val testIsEnabledInK2 = renameObject.get("enabledInK2")?.asBoolean == true
 
         if (!testIsEnabledInK2 && onlyRunEnabledTests) return
 
-        val result = runCatching { super.doTest(path) }
+        val result = allowAnalysisOnEdt { runCatching { super.doTest(path) } }
         result.fold(
             onSuccess = { require(testIsEnabledInK2) { "This test passes and should be enabled!" } },
             onFailure = { exception -> if (testIsEnabledInK2) throw exception }
         )
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
-    override fun findPsiDeclarationToRename(contextFile: KtFile, target: KotlinTarget): PsiElement = allowAnalysisOnEdt {
-        analyze(contextFile) {
-            when (target) {
-                is KotlinTarget.Classifier -> getClassOrObjectSymbolByClassId(target.classId)?.psi!!
-                is KotlinTarget.Callable -> {
-                    val callableId = target.callableId
+    override fun findPsiDeclarationToRename(contextFile: KtFile, target: KotlinTarget): PsiElement = analyze(contextFile) {
+        when (target) {
+            is KotlinTarget.Classifier -> getClassOrObjectSymbolByClassId(target.classId)?.psi!!
+            is KotlinTarget.Callable -> {
+                val callableId = target.callableId
 
-                    val scope = callableId.classId
-                        ?.let { classId -> getClassOrObjectSymbolByClassId(classId)!!.getMemberScope() }
-                        ?: getPackageSymbolIfPackageExists(callableId.packageName)!!.getPackageScope()
+                val scope = callableId.classId
+                    ?.let { classId -> getClassOrObjectSymbolByClassId(classId)!!.getMemberScope() }
+                    ?: getPackageSymbolIfPackageExists(callableId.packageName)!!.getPackageScope()
 
-                    val callablesOfProperType = scope.getCallableSymbols(callableId.callableName)
-                        .mapNotNull {
-                            when (target.type) {
-                                KotlinTarget.CallableType.FUNCTION -> it as? KtFunctionSymbol
-                                KotlinTarget.CallableType.PROPERTY -> it as? KtPropertySymbol
-                            }
+                val callablesOfProperType = scope.getCallableSymbols(callableId.callableName)
+                    .mapNotNull {
+                        when (target.type) {
+                            KotlinTarget.CallableType.FUNCTION -> it as? KtFunctionSymbol
+                            KotlinTarget.CallableType.PROPERTY -> it as? KtPropertySymbol
                         }
+                    }
 
-                    callablesOfProperType.first().psi!!
-                }
+                callablesOfProperType.first().psi!!
             }
         }
     }

@@ -11,7 +11,34 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library">
       <library name="JaCoCo" type="repository">
-        <properties maven-id="org.jacoco:org.jacoco.ant:0.8.8" />
+        <properties maven-id="org.jacoco:org.jacoco.ant:0.8.8">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.ant/0.8.8/org.jacoco.ant-0.8.8.jar">
+              <sha256sum>02e33bd2c48dc0be67c2fea84d43beececfd400da6797c58153253d4c30aca15</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.core/0.8.8/org.jacoco.core-0.8.8.jar">
+              <sha256sum>474c782f809d88924713dfdbf0acb79d330f904be576484803463d0465611643</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.2/asm-9.2.jar">
+              <sha256sum>b9d4fe4d71938df38839f0eca42aaaa64cf8b313d678da036f0cb3ca199b47f5</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/ow2/asm/asm-commons/9.2/asm-commons-9.2.jar">
+              <sha256sum>be4ce53138a238bb522cd781cf91f3ba5ce2f6ca93ec62d46a162a127225e0a6</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/ow2/asm/asm-analysis/9.2/asm-analysis-9.2.jar">
+              <sha256sum>878fbe521731c072d14d2d65b983b1beae6ad06fda0007b6a8bae81f73f433c4</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.2/asm-tree-9.2.jar">
+              <sha256sum>aabf9bd23091a4ebfc109c1f3ee7cf3e4b89f6ba2d3f51c5243f16b3cffae011</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.report/0.8.8/org.jacoco.report-0.8.8.jar">
+              <sha256sum>2c129110f3e3fcaa1f8179578ea3894586199cb0826be5c7790278084c9622a9</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.agent/0.8.8/org.jacoco.agent-0.8.8.jar">
+              <sha256sum>072ecbd496896623899a696fff12c01c1615f737616d2792e6d0e10cdf8a610d</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.ant/0.8.8/org.jacoco.ant-0.8.8.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.core/0.8.8/org.jacoco.core-0.8.8.jar!/" />
@@ -57,6 +84,14 @@
     <orderEntry type="module-library">
       <library name="coverage-report" type="repository">
         <properties maven-id="org.jetbrains.intellij.deps:coverage-report:1.0.20">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/coverage-report/1.0.20/coverage-report-1.0.20.jar">
+              <sha256sum>5959f0aa7f33c74c8cde6babb2d9b92638f0e143461d2c37f6859f731c275c59</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/freemarker/freemarker/2.3.32/freemarker-2.3.32.jar">
+              <sha256sum>04d65ec1bde6cea20e3495d5e78ef96ab774d9936434861d3254bd88e7e94f92</sha256sum>
+            </artifact>
+          </verification>
           <exclude>
             <dependency maven-id="org.jetbrains:annotations" />
           </exclude>

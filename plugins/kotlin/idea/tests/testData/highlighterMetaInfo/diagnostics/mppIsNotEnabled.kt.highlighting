@@ -1,0 +1,8 @@
+// KTIJ-24132
+// ALLOW_ERRORS
+
+<!HIGHLIGHTING("textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>public<!> <!HIGHLIGHTING("severity='ERROR'; descr='[UNSUPPORTED_FEATURE] The feature "multi platform projects" is experimental and should be enabled explicitly'; textAttributesKey='ERRORS_ATTRIBUTES'"), HIGHLIGHTING("textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>expect<!> interface <!HIGHLIGHTING("textAttributesKey='KOTLIN_TRAIT'")!>CompletionHandler<!> {
+    <!HIGHLIGHTING("textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>public<!> <!HIGHLIGHTING("textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>operator<!> fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>invoke<!>(<!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>cause<!>: <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Throwable<!>?)
+}
+
+<!HIGHLIGHTING("severity='ERROR'; descr='[ACTUAL_TYPE_ALIAS_TO_CLASS_WITH_DECLARATION_SITE_VARIANCE] Aliased class should not have type parameters with declaration-site variance'; textAttributesKey='ERRORS_ATTRIBUTES'")!><!HIGHLIGHTING("textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>public<!> <!HIGHLIGHTING("severity='ERROR'; descr='[UNSUPPORTED_FEATURE] The feature "multi platform projects" is experimental and should be enabled explicitly'; textAttributesKey='ERRORS_ATTRIBUTES'"), HIGHLIGHTING("textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>actual<!> typealias CompletionHandler = (cause: Throwable?) -> Unit<!>

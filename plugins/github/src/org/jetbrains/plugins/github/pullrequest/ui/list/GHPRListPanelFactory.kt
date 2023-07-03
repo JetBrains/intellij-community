@@ -57,7 +57,7 @@ internal class GHPRListPanelFactory(private val project: Project,
     val actionManager = ActionManager.getInstance()
 
     val historyModel = GHPRSearchHistoryModel(project.service<GHPRListPersistentSearchHistory>())
-    val searchVm = GHPRSearchPanelViewModel(scope, repositoryDataService, historyModel, securityService.currentUser)
+    val searchVm = GHPRSearchPanelViewModel(scope, project, repositoryDataService, historyModel, securityService.currentUser)
     scope.launch {
       searchVm.searchState.collectLatest {
         listLoader.searchQuery = it.toQuery()

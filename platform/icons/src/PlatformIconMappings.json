@@ -3,6 +3,7 @@
     "actions": {
       "buildAutoReloadChanges.svg": "actions/buildAutoReloadChanges.svg",
       "deploy.svg": "nodes/deploy.svg",
+      "diagramDiff.svg": "actions/diagramDiff.svg",
       "diffWithClipboard.svg": "actions/diffWithClipboard.svg",
       "filterdups.svg": "toolbar/filterdups.svg",
       "generated.svg": "actions/generatedFolder.svg",
@@ -13,6 +14,7 @@
       "inSelection.svg": "actions/inSelection.svg",
       "install.svg": "actions/install.svg",
       "lightning.svg": "actions/lightning.svg",
+      "minimap.svg": "actions/minimap.svg",
       "moveToBottomLeft.svg": "actions/moveToBottomLeft.svg",
       "moveToBottomRight.svg": "actions/moveToBottomRight.svg",
       "moveToButton.svg": "actions/move-to-button.svg",
@@ -28,8 +30,10 @@
       "profileCPU.svg": "actions/profileCPU.svg",
       "projectDirectory.svg": "actions/projectDirectory.svg",
       "runAll.svg": "actions/runAll.svg",
+      "reformatCode.svg": "actions/reformatCode.svg",
       "showReadAccess.svg": "actions/showReadAccess.svg",
       "showWriteAccess.svg": "actions/showWriteAccess.svg",
+      "split.svg": "modules/split.svg",
       "swapPanels.svg": "actions/swapPanels.svg",
       "synchronizeScrolling.svg": "actions/synchronizeScrolling.svg",
       "showImportStatements.svg": "actions/showImportStatements.svg",
@@ -160,6 +164,8 @@
         "nodes/ppJar.svg"
       ],
       "aspectJ.svg": "fileTypes/aspectj.svg",
+      "changedFile.svg": "scope/changedFiles.svg",
+      "changedFiles.svg": "scope/changedFilesAll.svg",
       "config.svg": "fileTypes/config.svg",
       "css.svg": "fileTypes/css.svg",
       "cucumber.svg": "org/jetbrains/plugins/cucumber/icons/cucumber.svg",
@@ -171,7 +177,10 @@
       "ideaModule.svg": "nodes/ideaModule.svg",
       "idl.svg": "fileTypes/idl.svg",
       "ignored.svg": "vcs/ignore_file.svg",
-      "java.svg": "fileTypes/java.svg",
+      "java.svg": [
+        "fileTypes/java.svg",
+        "fileTypes/javaOutsideSource.svg"
+      ],
       "javaScript.svg": "fileTypes/javaScript.svg",
       "jest.svg": "icons/fileTypes/jestSnapshot.svg",
       "jfr.svg": "fileTypes/jfr.svg",
@@ -202,6 +211,7 @@
         "fileTypes/custom.svg",
         "fileTypes/text.svg"
       ],
+      "uiForm.svg": "fileTypes/uiForm.svg",
       "image.svg": "fileTypes/image.svg",
       "unknown.svg": "fileTypes/unknown.svg",
       "vueJs.svg": "icons/vue.svg",
@@ -397,6 +407,10 @@
       "suggestedRefactoringDisabled.svg": "gutter/suggestedRefactoringBulbDisabled.svg",
       "writeAccess.svg": "gutter/writeAccess.svg"
     },
+    "hierarchy": {
+      "subtypes.svg": "hierarchy/subtypes.svg",
+      "supertypes.svg": "hierarchy/supertypes.svg"
+    },
     "ide": {
       "configFile.svg": "ide/configFile.svg",
       "externalLink.svg": "ide/external_link_arrow.svg",
@@ -508,7 +522,14 @@
       "excludeRoot.svg": "modules/excludeRoot.svg",
       "excludedGenerated.svg": "modules/excludedGeneratedRoot.svg",
       "field.svg": "nodes/field.svg",
-      "folder.svg": "nodes/folder.svg",
+      "folder.svg": [
+        "nodes/folder.svg",
+        "nodes/keymapAnt.svg",
+        "nodes/keymapEditor.svg",
+        "nodes/keymapMainMenu.svg",
+        "nodes/keymapOther.svg",
+        "nodes/keymapTools.svg"
+      ],
       "function.svg": "nodes/function.svg",
       "generated.svg": "modules/generatedFolder.svg",
       "generatedSource.svg": "modules/generatedSourceRoot.svg",
@@ -658,7 +679,10 @@
       "viewBreakpoints.svg": "debugger/viewBreakpoints.svg"
     },
     "runConfigurations": {
-      "application.svg": "runConfigurations/application.svg",
+      "application.svg": [
+        "runConfigurations/application.svg",
+        "runConfigurations/applet.svg"
+      ],
       "applicationRemote.svg": "runConfigurations/remote.svg",
       "compound.svg": "runConfigurations/compound.svg",
       "invalidConfigurationLayer.svg": "runConfigurations/invalidConfigurationLayer.svg",
@@ -712,6 +736,7 @@
       "settingSync.svg": "toolwindows/settingSync.svg",
       "structure.svg": "toolwindows/toolWindowStructure.svg",
       "todo.svg": "toolwindows/toolWindowTodo.svg",
+      "toolWindowJsonPath.svg": "toolwindows/toolWindowJsonPath.svg",
       "toolWindowVariableView.svg": "toolwindows/toolWindowVariableView.svg",
       "vcs.svg": "toolwindows/toolWindowChanges.svg",
       "web.svg": [
@@ -747,6 +772,9 @@
       ],
       "update.svg": "actions/checkOut.svg",
       "vcs.svg": "vcs/branchNode.svg"
+    },
+    "webReferences": {
+      "server.svg": "webreferences/server.svg"
     },
     "welcome": {
       "createNewProjectTab.svg": "welcome/createNewProjectTab.svg",

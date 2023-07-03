@@ -277,7 +277,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createDeleteCatchFix(@NotNull PsiParameter parameter) {
-    return new DeleteCatchFix(parameter);
+    return new DeleteCatchFix(parameter).asIntention();
   }
 
   @NotNull
@@ -295,7 +295,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createNegationBroadScopeFix(@NotNull PsiPrefixExpression expr) {
-    return new NegationBroadScopeFix(expr);
+    return new NegationBroadScopeFix(expr).asIntention();
   }
 
   @NotNull
@@ -319,7 +319,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createMoveCatchUpFix(@NotNull PsiCatchSection section, @NotNull PsiCatchSection section1) {
-    return new MoveCatchUpFix(section, section1);
+    return new MoveCatchUpFix(section, section1).asIntention();
   }
 
   @NotNull
@@ -780,7 +780,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @Override
   public @NotNull IntentionAction createDeleteFix(@NotNull PsiElement @NotNull ... elements) {
-    return new DeleteElementFix.DeleteMultiFix(elements);
+    return new DeleteElementFix.DeleteMultiFix(elements).asIntention();
   }
 
   @NotNull
@@ -1001,7 +1001,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createWrapSwitchRuleStatementsIntoBlockFix(@NotNull PsiSwitchLabeledRuleStatement rule) {
-    return new WrapSwitchRuleStatementsIntoBlockFix(rule);
+    return new WrapSwitchRuleStatementsIntoBlockFix(rule).asIntention();
   }
 
   @NotNull
@@ -1061,7 +1061,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @Override
   public @NotNull IntentionAction createMoveMemberIntoClassFix(@NotNull PsiErrorElement errorElement) {
-    return new MoveMemberIntoClassFix(errorElement);
+    return new MoveMemberIntoClassFix(errorElement).asIntention();
   }
 
   @Override
@@ -1192,7 +1192,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @Override
   public @NotNull IntentionAction createSplitSwitchBranchWithSeveralCaseValuesAction() {
-    return new SplitSwitchBranchWithSeveralCaseValuesAction();
+    return new SplitSwitchBranchWithSeveralCaseValuesAction().asIntention();
   }
 
   @Override
@@ -1202,6 +1202,6 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @Override
   public @NotNull IntentionAction createDeleteFix(@NotNull PsiElement @NotNull [] elements, @NotNull @Nls String text) {
-    return new DeleteElementFix.DeleteMultiFix(elements, text);
+    return new DeleteElementFix.DeleteMultiFix(elements, text).asIntention();
   }
 }

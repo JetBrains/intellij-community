@@ -16,3 +16,5 @@ open class Z : A() {
 class U : Z() {
 
 }
+
+class InheritTypeAlias : TA()

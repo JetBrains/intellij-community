@@ -3056,8 +3056,9 @@ public class StringUtil extends StringUtilRt {
 
   /**
    * Finds the next position in the supplied CharSequence which is neither a space nor a tab.
+   *
    * @param text text
-   * @param pos starting position
+   * @param pos  starting position
    * @return position of the first non-whitespace character after or equal to pos; or the length of the CharSequence
    * if no non-whitespace character found
    */
@@ -3070,9 +3071,26 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Finds the previous position in the supplied CharSequence which is neither a space nor a tab.
+   * Finds the next position in the supplied CharSequence which is neither a space, a new line nor a tab.
+   *
    * @param text text
-   * @param pos starting position
+   * @param pos  starting position
+   * @return position of the first non-whitespace character after or equal to pos; or the length of the CharSequence
+   * if no non-whitespace character found
+   */
+  public static int skipWhitespaceOrNewLineForward(@NotNull CharSequence text, int pos) {
+    int length = text.length();
+    while (pos < length && isWhitespaceTabOrNewLine(text.charAt(pos))) {
+      pos++;
+    }
+    return pos;
+  }
+
+  /**
+   * Finds the previous position in the supplied CharSequence which is neither a space nor a tab.
+   *
+   * @param text text
+   * @param pos  starting position
    * @return position of the character before or equal to pos which has no space or tab before;
    * or zero if no non-whitespace character found
    */
@@ -3083,8 +3101,27 @@ public class StringUtil extends StringUtilRt {
     return pos;
   }
 
+  /**
+   * Finds the previous position in the supplied CharSequence which is neither a space, a new line nor a tab.
+   *
+   * @param text text
+   * @param pos  starting position
+   * @return position of the character before or equal to pos which has no space or tab before;
+   * or zero if no non-whitespace character found
+   */
+  public static int skipWhitespaceOrNewLineBackward(@NotNull CharSequence text, int pos) {
+    while (pos > 0 && isWhitespaceTabOrNewLine(text.charAt(pos - 1))) {
+      pos--;
+    }
+    return pos;
+  }
+
   private static boolean isWhitespaceOrTab(char c) {
     return c == ' ' || c == '\t';
+  }
+
+  private static boolean isWhitespaceTabOrNewLine(char c) {
+    return c == ' ' || c == '\t' || c == '\n';
   }
 
   /**

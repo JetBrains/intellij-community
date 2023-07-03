@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.details.action
 
+import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -11,7 +12,7 @@ import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.JButton
 
-internal class GHPRReopenAction(scope: CoroutineScope, private val reviewFlowVm: GHPRReviewFlowViewModel)
+internal class GHPRReopenAction(scope: CoroutineScope, private val project: Project, private val reviewFlowVm: GHPRReviewFlowViewModel)
   : AbstractAction(GithubBundle.message("pull.request.reopen.action")) {
 
   init {
@@ -23,7 +24,7 @@ internal class GHPRReopenAction(scope: CoroutineScope, private val reviewFlowVm:
   }
 
   override fun actionPerformed(e: ActionEvent?) {
-    GHPRStatisticsCollector.logDetailsActionInvoked(GHPRAction.REOPEN, e?.source is JButton)
+    GHPRStatisticsCollector.logDetailsActionInvoked(project, GHPRAction.REOPEN, e?.source is JButton)
     reviewFlowVm.reopenReview()
   }
 }

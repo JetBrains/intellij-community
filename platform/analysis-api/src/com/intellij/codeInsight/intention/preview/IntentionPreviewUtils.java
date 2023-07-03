@@ -181,9 +181,11 @@ public final class IntentionPreviewUtils {
       else if (command instanceof ModChooseAction target) {
         return getChoosePreview(context, target);
       }
-      else if (command instanceof ModDisplayError error) {
-        return new IntentionPreviewInfo.Html(new HtmlBuilder().append(
-          AnalysisBundle.message("preview.cannot.perform.action")).br().append(error.errorMessage()).toFragment());
+      else if (command instanceof ModDisplayMessage message) {
+        if (message.kind() == ModDisplayMessage.MessageKind.ERROR) {
+          return new IntentionPreviewInfo.Html(new HtmlBuilder().append(
+            AnalysisBundle.message("preview.cannot.perform.action")).br().append(message.messageText()).toFragment());
+        }
       }
     }
     return customDiffList.isEmpty() ? navigateInfo :

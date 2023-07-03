@@ -14,7 +14,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -28,7 +27,6 @@ import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -182,25 +180,23 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
         KeptLineFeedsCollector.setup(fileToProcess);
       }
       try {
-        SlowOperations.allowSlowOperations(() -> {
-          if (document != null) {
-            // In languages that are supported by a non-commit typing assistant (such as C++ and Kotlin),
-            // the `document` here can be in an uncommitted state. In the case of an external formatter,
-            // this may be the cause of formatting artifacts
-            PsiDocumentManager.getInstance(myProject).commitDocument(document);
+        if (document != null) {
+          // In languages that are supported by a non-commit typing assistant (such as C++ and Kotlin),
+          // the `document` here can be in an uncommitted state. In the case of an external formatter,
+          // this may be the cause of formatting artifacts
+          PsiDocumentManager.getInstance(myProject).commitDocument(document);
+        }
+        if (processChangedTextOnly) {
+          ChangedRangesInfo info = VcsFacade.getInstance().getChangedRangesInfo(fileToProcess);
+          if (info != null) {
+            assertFileIsValid(fileToProcess);
+            CodeStyleManager.getInstance(myProject).reformatChanges(fileToProcess, info);
           }
-          if (processChangedTextOnly) {
-            ChangedRangesInfo info = VcsFacade.getInstance().getChangedRangesInfo(fileToProcess);
-            if (info != null) {
-              assertFileIsValid(fileToProcess);
-              CodeStyleManager.getInstance(myProject).reformatChanges(fileToProcess, info);
-            }
-          }
-          else {
-            Collection<TextRange> ranges = getRangesToFormat(fileToProcess);
-            CodeStyleManager.getInstance(myProject).reformatText(fileToProcess, ranges);
-          }
-        });
+        }
+        else {
+          Collection<TextRange> ranges = getRangesToFormat(fileToProcess);
+          CodeStyleManager.getInstance(myProject).reformatText(fileToProcess, ranges);
+        }
       }
       catch (ProcessCanceledException pce) {
         if (before != null) {

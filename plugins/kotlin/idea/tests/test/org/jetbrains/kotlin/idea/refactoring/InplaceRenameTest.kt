@@ -13,8 +13,8 @@ import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.refactoring.rename.KotlinMemberInplaceRenameHandler
 import org.jetbrains.kotlin.idea.refactoring.rename.KotlinVariableInplaceRenameHandler
-import org.jetbrains.kotlin.idea.refactoring.rename.RenameKotlinImplicitLambdaParameter
 import org.jetbrains.kotlin.idea.refactoring.rename.findElementForRename
+import org.jetbrains.kotlin.idea.refactoring.rename.handlers.RenameKotlinImplicitLambdaParameter
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression

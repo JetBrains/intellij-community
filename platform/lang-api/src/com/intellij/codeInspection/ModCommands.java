@@ -37,7 +37,15 @@ public final class ModCommands {
    * @return a command that displays the specified error message in the editor
    */
   public static @NotNull ModCommand error(@NotNull @NlsContexts.Tooltip String message) {
-    return new ModDisplayError(message);
+    return new ModDisplayMessage(message, ModDisplayMessage.MessageKind.ERROR);
+  }
+
+  /**
+   * @param message informational message to display
+   * @return a command that displays the specified informational message in the editor
+   */
+  public static @NotNull ModCommand info(@NotNull @NlsContexts.Tooltip String message) {
+    return new ModDisplayMessage(message, ModDisplayMessage.MessageKind.INFORMATION);
   }
   
   /**
@@ -151,6 +159,11 @@ public final class ModCommands {
       @Override
       public @NotNull String getFamilyName() {
         return title;
+      }
+
+      @Override
+      public String toString() {
+        return "Step: [" + title + "] " + element.getText();
       }
     };
   }

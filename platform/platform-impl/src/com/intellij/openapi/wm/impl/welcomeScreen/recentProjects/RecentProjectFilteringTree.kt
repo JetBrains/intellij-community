@@ -415,8 +415,8 @@ internal class RecentProjectFilteringTree(
                                                AllIcons.Ide.Notification.GearHover)
         }
         else {
-          buttonViewModel.prepareActionsButton(projectActions, rowHovered, AllIcons.Welcome.Project.Remove,
-                                               AllIcons.Welcome.Project.RemoveHover)
+          buttonViewModel.prepareActionsButton(projectActions, rowHovered, AllIcons.Welcome.RecentProjects.Remove,
+                                               AllIcons.Welcome.RecentProjects.RemoveHover)
         }
 
         val toolTipPath = PathUtil.toSystemDependentName(item.projectPath)
@@ -537,8 +537,8 @@ internal class RecentProjectFilteringTree(
             projectActionButton.isVisible = true // always visible
           }
           false -> {
-            buttonViewModel.prepareActionsButton(projectActionButton, rowHovered, AllIcons.Welcome.Project.Remove,
-                                                 AllIcons.Welcome.Project.RemoveHover)
+            buttonViewModel.prepareActionsButton(projectActionButton, rowHovered, AllIcons.Welcome.RecentProjects.Remove,
+                                                 AllIcons.Welcome.RecentProjects.RemoveHover)
           }
           else -> {}
         }

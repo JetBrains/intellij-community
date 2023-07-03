@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="ktor-client-encoding" type="repository">
-    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-encoding-jvm:2.3.0" />
+    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-encoding-jvm:2.3.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-encoding-jvm/2.3.0/ktor-client-encoding-jvm-2.3.0.jar">
+          <sha256sum>d1dce069a7cea7a2aee8c2f3a852aedb6f2b693784819e19b95ae41c2fa6c3cc</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-encoding-jvm/2.3.0/ktor-client-encoding-jvm-2.3.0.jar!/" />
     </CLASSES>
