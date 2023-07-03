@@ -27,7 +27,7 @@ final class ListResult {
     this(FSRecords.getModCount(parentId), children, parentId);
   }
 
-  private ListResult(int modStamp, @NotNull List<? extends ChildInfo> children, int parentId) {
+  ListResult(int modStamp, @NotNull List<? extends ChildInfo> children, int parentId) {
     this.modStamp = modStamp;
     this.children = children;
     myParentId = parentId;

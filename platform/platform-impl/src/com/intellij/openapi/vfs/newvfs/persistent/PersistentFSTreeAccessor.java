@@ -100,6 +100,7 @@ class PersistentFSTreeAccessor {
     }
 
     final PersistentFSRecordsStorage records = connection.getRecords();
+    final int parentModCount = records.getModCount(parentId);
     int maxAllocatedID = records.maxAllocatedID();
     try (DataInputStream input = myAttributeAccessor.readAttribute(parentId, CHILDREN_ATTR)) {
       final int count = (input == null) ? 0 : DataInputOutputUtil.readINT(input);
@@ -114,7 +115,8 @@ class PersistentFSTreeAccessor {
         final ChildInfo child = new ChildInfoImpl(childId, nameId, null, null, null);
         children.add(child);
       }
-      return new ListResult(children, parentId);
+
+      return new ListResult(parentModCount, children, parentId);
     }
   }
 
