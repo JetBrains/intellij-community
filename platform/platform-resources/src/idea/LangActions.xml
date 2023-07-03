@@ -1747,7 +1747,6 @@
 
     <action id="InsertInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.InsertInlineCompletionAction">
       <keyboard-shortcut first-keystroke="TAB" keymap="$default"/>
-      <keyboard-shortcut first-keystroke="alt TAB" keymap="$default"/>
     </action>
     <action id="CallInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.CallInlineCompletionAction" />
 
