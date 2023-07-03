@@ -7,8 +7,8 @@ import com.fasterxml.jackson.core.exc.StreamReadException
 import com.fasterxml.jackson.databind.*
 import com.fasterxml.jackson.databind.json.JsonMapper
 import com.fasterxml.jackson.databind.module.SimpleModule
-import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.fasterxml.jackson.databind.node.*
+import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import com.jetbrains.fus.reporting.model.lion3.LogEventAction
 import com.jetbrains.fus.reporting.model.lion3.LogEventGroup
@@ -52,7 +52,7 @@ object LogEventSerializer {
   /**
    * Serialize events manually, so it won't be changed by scrambling
    */
-  fun toJson(event: LogEvent): ObjectNode {
+  private fun toJson(event: LogEvent): ObjectNode {
     val mapper = ObjectMapper()
 
     val obj = mapper.createObjectNode()
@@ -119,62 +119,61 @@ class LogEventRecordRequestJsonDeserializer : JsonDeserializer<LogEventRecordReq
   }
 }
 
-class SerializationHelper {
-  companion object {
-    private val LOG_EVENT_MAPPER: JsonMapper by lazy {
-      val module = SimpleModule()
-      module.addDeserializer(LogEvent::class.java, LogEventJsonDeserializer())
+object SerializationHelper {
 
-      JsonMapper
-        .builder()
-        .addModule(kotlinModule())
-        .addModule(module)
-        .enable(DeserializationFeature.USE_LONG_FOR_INTS)
-        .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
-        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-        .build()
-    }
+  private val LOG_EVENT_MAPPER: JsonMapper by lazy {
+    val module = SimpleModule()
+    module.addDeserializer(LogEvent::class.java, LogEventJsonDeserializer())
 
-    private val LOG_EVENT_RECORD_REQUEST_MAPPER: JsonMapper by lazy {
-      val module = SimpleModule()
-      module.addDeserializer(LogEventRecordRequest::class.java, LogEventRecordRequestJsonDeserializer())
+    JsonMapper
+      .builder()
+      .addModule(kotlinModule())
+      .addModule(module)
+      .enable(DeserializationFeature.USE_LONG_FOR_INTS)
+      .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
+      .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+      .build()
+  }
 
-      JsonMapper
-        .builder()
-        .addModule(kotlinModule())
-        .addModule(module)
-        .enable(DeserializationFeature.USE_LONG_FOR_INTS)
-        .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
-        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-        .build()
-    }
+  private val LOG_EVENT_RECORD_REQUEST_MAPPER: JsonMapper by lazy {
+    val module = SimpleModule()
+    module.addDeserializer(LogEventRecordRequest::class.java, LogEventRecordRequestJsonDeserializer())
 
-    /**
-     * Method to deserialize JSON content from given JSON content String to LogEvent class using LogEventJsonDeserializer.
-     *
-     * @throws StreamReadException if underlying input contains invalid content
-     *    of type {@link JsonParser} supports (JSON for default case)
-     * @throws DatabindException if the input JSON structure does not match structure
-     *   expected for result type (or has other mismatch issues)
-     */
-    @kotlin.jvm.Throws(StreamReadException::class, DatabindException::class)
-    fun deserializeLogEvent(json: String): LogEvent {
-      return LOG_EVENT_MAPPER.readValue(json, LogEvent::class.java)
-    }
+    JsonMapper
+      .builder()
+      .addModule(kotlinModule())
+      .addModule(module)
+      .enable(DeserializationFeature.USE_LONG_FOR_INTS)
+      .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
+      .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+      .build()
+  }
 
-    /**
-     * Method to deserialize JSON content from given JSON content String to LogEventRecordRequest class
-     * using LogEventRecordRequestJsonDeserializer.
-     *
-     * @throws StreamReadException if underlying input contains invalid content
-     *    of type {@link JsonParser} supports (JSON for default case)
-     * @throws DatabindException if the input JSON structure does not match structure
-     *   expected for result type (or has other mismatch issues)
-     */
-    @kotlin.jvm.Throws(StreamReadException::class, DatabindException::class)
-    fun deserializeLogEventRecordRequest(json: String): LogEventRecordRequest {
-      return LOG_EVENT_RECORD_REQUEST_MAPPER.readValue(json, LogEventRecordRequest::class.java)
-    }
+  /**
+   * Method to deserialize JSON content from given JSON content String to LogEvent class using LogEventJsonDeserializer.
+   *
+   * @throws StreamReadException if underlying input contains invalid content
+   *    of type {@link JsonParser} supports (JSON for default case)
+   * @throws DatabindException if the input JSON structure does not match structure
+   *   expected for result type (or has other mismatch issues)
+   */
+  @kotlin.jvm.Throws(StreamReadException::class, DatabindException::class)
+  fun deserializeLogEvent(json: String): LogEvent {
+    return LOG_EVENT_MAPPER.readValue(json, LogEvent::class.java)
+  }
+
+  /**
+   * Method to deserialize JSON content from given JSON content String to LogEventRecordRequest class
+   * using LogEventRecordRequestJsonDeserializer.
+   *
+   * @throws StreamReadException if underlying input contains invalid content
+   *    of type {@link JsonParser} supports (JSON for default case)
+   * @throws DatabindException if the input JSON structure does not match structure
+   *   expected for result type (or has other mismatch issues)
+   */
+  @kotlin.jvm.Throws(StreamReadException::class, DatabindException::class)
+  fun deserializeLogEventRecordRequest(json: String): LogEventRecordRequest {
+    return LOG_EVENT_RECORD_REQUEST_MAPPER.readValue(json, LogEventRecordRequest::class.java)
   }
 }
 
