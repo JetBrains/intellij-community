@@ -48,6 +48,7 @@ object MermaidTokenTypeSets {
     MermaidElements.BOX_BLOCK,
     MermaidElements.CLASS_BODY,
     MermaidElements.CLASS_BLOCK,
+    MermaidElements.NAMESPACE_BLOCK,
     MermaidElements.STATE_BODY,
     MermaidElements.STATE_BLOCK,
     MermaidElements.COMPLEX_NOTE_CONTENT,
