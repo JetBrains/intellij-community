@@ -174,6 +174,14 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     public void onCurrentSchemeSwitched(@Nullable EditorColorsScheme oldScheme,
                                         @Nullable EditorColorsScheme newScheme,
                                         boolean processChangeSynchronously) {
+      if (oldScheme != null) {
+        LafManager lafManager = LafManager.getInstance();
+        UIManager.LookAndFeelInfo currentLaf = lafManager.getCurrentLookAndFeel();
+        if (currentLaf != null) {
+          lafManager.rememberSchemeForLaf(lafManager.getCurrentLookAndFeel(), oldScheme);
+        }
+      }
+
       if (processChangeSynchronously) {
         handleCurrentSchemeSwitched(newScheme);
       }
