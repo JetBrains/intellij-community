@@ -13,7 +13,7 @@ import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.io.path.exists
 
-class LocalEmbeddingIndexManager(
+class LocalEmbeddingIndexFileManager(
   private val root: Path,
   private val dimensions: Int = DEFAULT_DIMENSIONS
 ) {

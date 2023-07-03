@@ -17,8 +17,8 @@ import kotlin.io.path.listDirectoryEntries
 /* Service that manages the artifacts for local semantic models */
 @Service
 class LocalArtifactsManager {
-  private val root = File(PathManager.getSystemPath()).resolve("semantic-search")
-  private val modelArtifactsRoot = root.resolve("models")
+  private val root = File(PathManager.getSystemPath()).resolve(SEMANTIC_SEARCH_RESOURCES_DIR)
+  private val modelArtifactsRoot = root.resolve(MODEL_ARTIFACTS_DIR)
 
   fun getCustomRootDataLoader() = CustomRootDataLoader(modelArtifactsRoot.toPath())
 
@@ -56,11 +56,14 @@ class LocalArtifactsManager {
   }
 
   companion object {
+    const val SEMANTIC_SEARCH_RESOURCES_DIR = "semantic-search"
+
     private val MODEL_VERSION = Registry.stringValue("search.everywhere.ml.semantic.model.version")
     private val MAVEN_ROOT = "https://packages.jetbrains.team/maven/p/ml-search-everywhere/local-models/org/jetbrains/intellij/" +
                              "searcheverywhereMl/semantics/semantic-text-search/$MODEL_VERSION/semantic-text-search-$MODEL_VERSION.jar"
-    const val ARCHIVE_NAME = "semantic-text-search.jar"
 
+    private const val MODEL_ARTIFACTS_DIR = "models"
+    private const val ARCHIVE_NAME = "semantic-text-search.jar"
     private const val NOTIFICATION_GROUP_ID = "Semantic search notifications"
 
     private fun showDownloadErrorNotification() {
