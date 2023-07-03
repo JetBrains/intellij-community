@@ -401,7 +401,7 @@ internal class LiftReturnInspectionBasedProcessing : InspectionLikeProcessingFor
     override fun isApplicableTo(element: KtExpression, settings: ConverterSettings?): Boolean {
         if (!isInspectionEnabledInCurrentProfile(inspection, element.project)) return false
         val state = LiftReturnOrAssignmentInspection.getState(element, skipLongExpressions = false) ?: return false
-        return state.any { it.liftType == LIFT_RETURN_OUT }
+        return state.any { it.liftType == LIFT_RETURN_OUT && it.isSerious }
     }
 
     override fun apply(element: KtExpression) {
@@ -415,7 +415,7 @@ internal class LiftAssignmentInspectionBasedProcessing : InspectionLikeProcessin
     override fun isApplicableTo(element: KtExpression, settings: ConverterSettings?): Boolean {
         if (!isInspectionEnabledInCurrentProfile(inspection, element.project)) return false
         val state = LiftReturnOrAssignmentInspection.getState(element, skipLongExpressions = false) ?: return false
-        return state.any { it.liftType == LIFT_ASSIGNMENT_OUT }
+        return state.any { it.liftType == LIFT_ASSIGNMENT_OUT && it.isSerious }
     }
 
     override fun apply(element: KtExpression) {

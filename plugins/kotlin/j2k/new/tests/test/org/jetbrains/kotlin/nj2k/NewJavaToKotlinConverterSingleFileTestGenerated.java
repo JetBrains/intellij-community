@@ -3539,11 +3539,6 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/issues/kt-871.java");
         }
 
-        @TestMetadata("kt-879.java")
-        public void testKt_879() throws Exception {
-            runTest("testData/newJ2k/issues/kt-879.java");
-        }
-
         @TestMetadata("kt-893.java")
         public void testKt_893() throws Exception {
             runTest("testData/newJ2k/issues/kt-893.java");
@@ -4939,6 +4934,26 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("java8MapForEachWithFullJdk.java")
         public void testJava8MapForEachWithFullJdk() throws Exception {
             runTest("testData/newJ2k/postProcessing/java8MapForEachWithFullJdk.java");
+        }
+
+        @TestMetadata("LiftAssignmentComplex.java")
+        public void testLiftAssignmentComplex() throws Exception {
+            runTest("testData/newJ2k/postProcessing/LiftAssignmentComplex.java");
+        }
+
+        @TestMetadata("LiftAssignmentSingleStatement.java")
+        public void testLiftAssignmentSingleStatement() throws Exception {
+            runTest("testData/newJ2k/postProcessing/LiftAssignmentSingleStatement.java");
+        }
+
+        @TestMetadata("LiftReturnComplex.java")
+        public void testLiftReturnComplex() throws Exception {
+            runTest("testData/newJ2k/postProcessing/LiftReturnComplex.java");
+        }
+
+        @TestMetadata("LiftReturnSingleStatement.java")
+        public void testLiftReturnSingleStatement() throws Exception {
+            runTest("testData/newJ2k/postProcessing/LiftReturnSingleStatement.java");
         }
 
         @TestMetadata("MapGetOrDefault.java")

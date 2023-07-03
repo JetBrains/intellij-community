@@ -1,6 +1,6 @@
-return if (1 > 0) {
+if (1 > 0) {
     val n = 1
-    n
+    return n
 } else {
-    0
+    return 0
 }
