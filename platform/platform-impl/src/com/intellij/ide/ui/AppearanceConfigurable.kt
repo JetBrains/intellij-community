@@ -39,13 +39,11 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.IdeRootPane
-import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.FontComboBox
-import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.ui.UIBundle
+import com.intellij.ui.*
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.layout.not
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.GraphicsUtil
@@ -328,6 +326,12 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                       }
                     }
                   })
+          }
+          if (SystemInfo.isMac && MacCustomAppIcon.available()) {
+            yield {
+              checkBox(message("checkbox.ide.mac.app.icon")).comment(message("ide.restart.required.comment"))
+                .bindSelected({ MacCustomAppIcon.isCustom() }, { MacCustomAppIcon.setCustom(it) })
+            }
           }
         }
         val rightColumnControls = sequence<Row.() -> Unit> {
