@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.safeDelete
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.parentOfType
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import java.nio.file.Path
 
 abstract class AbstractK2BindToElementTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun isFirPlugin() = true
@@ -24,6 +26,7 @@ abstract class AbstractK2BindToElementTest : KotlinLightCodeInsightFixtureTestCa
     @OptIn(KtAllowAnalysisOnEdt::class)
     protected fun doTest(path: String) {
         val file = myFixture.configureByFile(path)
+        addAllFilesToProject(Path.of(path).parent)
         val elem = file.findElementAt(myFixture.caretOffset) ?: error("Couldn't find element at caret")
         val nameReference = elem.parentOfType<KtSimpleNameExpression>(withSelf = true)
             ?: error("Element at caret isn't of type 'KtSimpleNameExpression'")
@@ -34,6 +37,13 @@ abstract class AbstractK2BindToElementTest : KotlinLightCodeInsightFixtureTestCa
             }
         }
         myFixture.checkResultByFile("${myFixture.file.name}.after")
+    }
+
+    private fun addAllFilesToProject(rootDir: Path) {
+        rootDir.toFile().listFiles()?.forEach {
+            if (it.isDirectory) myFixture.copyDirectoryToProject(it.name, it.name)
+        }
+        PsiDocumentManager.getInstance(myFixture.project).commitAllDocuments()
     }
 
     private fun findElementToBind(): PsiElement? {

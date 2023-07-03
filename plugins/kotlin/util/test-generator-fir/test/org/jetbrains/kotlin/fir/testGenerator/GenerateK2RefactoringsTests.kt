@@ -34,6 +34,7 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
             model("refactoring/bindToElement/call")
             model("refactoring/bindToElement/callableReference")
             model("refactoring/bindToElement/type")
+            model("refactoring/bindToElement/import", isRecursive = false)
         }
     }
 

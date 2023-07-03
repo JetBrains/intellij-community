@@ -29,6 +29,12 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         if (targetElement !is KtElement) operationNotSupportedInK2Error() // TODO fix reference shortener for non-Kotlin target elements
         val expression = simpleNameReference.expression
         if (fqName.isRoot) return expression
+
+        val containingFile = expression.containingKtFile
+        val unusedImportsBeforeChange = analyze(containingFile) { // TODO improve this
+            analyseImports(containingFile)
+        }.unusedImports
+
         val anchorElement = expression.parentOfTypes(KtTypeReference::class) ?: expression.topMostQualified()
         val newElement = when (anchorElement) {
             is KtTypeReference -> anchorElement.replaceWith(fqName)
@@ -36,6 +42,16 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
             is KtDotQualifiedExpression -> anchorElement.replaceWith(fqName)
             else -> return expression
         } ?: return expression
+
+
+        val unusedImportsAfterChange = analyze(containingFile) {
+            analyseImports(containingFile)
+        }.unusedImports
+        val importsToRemove = unusedImportsAfterChange - unusedImportsBeforeChange
+        importsToRemove.forEach {
+            it.delete()
+        }
+
         val newShortenings = analyze(newElement) { collectPossibleReferenceShorteningsInElement(newElement) }
         return newShortenings.invokeShortening().firstOrNull() ?: newElement
     }

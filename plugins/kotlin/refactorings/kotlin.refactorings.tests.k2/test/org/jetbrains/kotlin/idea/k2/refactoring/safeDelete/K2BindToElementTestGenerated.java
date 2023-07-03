@@ -91,4 +91,17 @@ public abstract class K2BindToElementTestGenerated extends AbstractK2BindToEleme
             runTest("../../idea/tests/testData/refactoring/bindToElement/type/UnQualified.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/import")
+    public static class Import extends AbstractK2BindToElementTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("ChangeImports.kt")
+        public void testChangeImports() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/import/ChangeImports.kt");
+        }
+    }
 }
