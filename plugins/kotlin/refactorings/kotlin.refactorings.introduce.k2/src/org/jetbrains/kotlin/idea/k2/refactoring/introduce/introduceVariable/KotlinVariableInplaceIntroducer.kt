@@ -162,7 +162,8 @@ class KotlinVariableInplaceIntroducer(
             currentVariableRange.endOffset,
             presentation,
             popupComponent as JPanel,
-            templateElement
+            templateElement,
+            isPopupAbove = true
         ) { }
     }
 
