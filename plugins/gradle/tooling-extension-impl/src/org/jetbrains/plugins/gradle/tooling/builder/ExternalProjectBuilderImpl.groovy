@@ -777,7 +777,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
         Set<Object> sourcePaths = (Set<Object>)sourcePathGetters.get(0).doMethodInvoke(mainSpec, new Object[]{});
         if (sourcePaths != null) {
           for (Object path : sourcePaths) {
-            if (isSafeToResolve(path)) {
+            if (isSafeToResolve(path, project)) {
               def files = project.files(path).files
               outputFiles.removeAll(files)
             }
@@ -797,10 +797,10 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
    *
    * @param object
    * @return true if object is safe to resolve using {@link Project#files(java.lang.Object...)}
-   * @see org.jetbrains.plugins.gradle.tooling.builder.ExternalProjectBuilderImpl#unpackPresentProvider
+   * @see org.jetbrains.plugins.gradle.tooling.builder.ExternalProjectBuilderImpl#tryUnpackPresentProvider
    */
-  private static boolean isSafeToResolve(Object param) {
-    Object object = unpackPresentProvider(param)
+  private static boolean isSafeToResolve(Object param, Project project) {
+    Object object = tryUnpackPresentProvider(param, project)
     boolean isDirectoryOrRegularFile = dynamicCheckInstanceOf(object,
                                                               "org.gradle.api.file.Directory",
                                                               "org.gradle.api.file.RegularFile")
@@ -813,12 +813,13 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
 
   /**
    * Some Gradle {@link org.gradle.api.provider.Provider} implementations can not be resolved during sync,
-   * causing {@link org.gradle.api.InvalidUserCodeException}
-   * and {@link org.gradle.api.InvalidUserDataException}.
+   * causing {@link org.gradle.api.InvalidUserCodeException} and {@link org.gradle.api.InvalidUserDataException}.
+   * Also some {@link org.gradle.api.provider.Provider} attempts to resolve dynamic
+   * configurations, witch results in resolving a configuration without write lock on the project.
    *
    * @return provided value or current if value isn't present or cannot be evaluated
    */
-  private static Object unpackPresentProvider(Object object) {
+  private static Object tryUnpackPresentProvider(Object object, Project project) {
     if (!dynamicCheckInstanceOf(object, "org.gradle.api.provider.Provider")) {
       return object
     }
@@ -838,7 +839,8 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
       if (isCodeException || isDataException) {
         return object
       }
-      throw exception
+      project.getLogger().info("Unable to resolve task source path: ${targetException?.message} (${targetException?.class?.canonicalName})")
+      return object
     }
   }
 
