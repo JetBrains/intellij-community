@@ -118,6 +118,11 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/automaticVariableRenamerWithQuotation/automaticVariableRenamerWithQuotation.test");
     }
 
+    @TestMetadata("backingField/backingField.test")
+    public void testBackingField_BackingField() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/backingField/backingField.test");
+    }
+
     @TestMetadata("clashOfNestedWithOuterClass/clashOfNestedWithOuterClass.test")
     public void testClashOfNestedWithOuterClass_ClashOfNestedWithOuterClass() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/clashOfNestedWithOuterClass/clashOfNestedWithOuterClass.test");

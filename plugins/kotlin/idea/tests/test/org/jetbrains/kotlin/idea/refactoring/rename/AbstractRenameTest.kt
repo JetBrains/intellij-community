@@ -388,7 +388,7 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
                 handler = handler.getRenameHandler(dataContext)!!
             }
 
-            if (handler is VariableInplaceRenameHandler) {
+            if (handler is VariableInplaceRenameHandler && renameParamsObject.get("forceInlineRename")?.asBoolean != false) {
                 val elementToRename = psiFile.findElementAt(currentCaret.offset)!!.getNonStrictParentOfType<PsiNamedElement>()!!
                 CodeInsightTestUtil.doInlineRename(handler, newName, editor, elementToRename)
             } else {
