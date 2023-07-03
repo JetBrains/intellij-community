@@ -6,21 +6,17 @@ import java.awt.Container
 import java.awt.Dimension
 
 // todo is it needed
-internal class AdjustableSizeCardLayout : BorderLayout() {
+internal class AdjustableSizeCardLayout(private val heightProvider: () -> Int) : BorderLayout() {
   override fun preferredLayoutSize(parent: Container): Dimension {
-    val current = parent.getComponent(0) ?: return super.preferredLayoutSize(parent)
+    val current = parent.getComponent(0)
     val insets = parent.insets
-    val pref = current.preferredSize
-
-    if (pref.height < current.minimumSize.height) {
-      pref.height = current.minimumSize.height
-    }
-    if (pref.width < current.minimumSize.width) {
-      pref.width = current.minimumSize.width
+    val size = current.preferredSize
+    if (size.width < current.minimumSize.width) {
+      size.width = current.minimumSize.width
     }
 
-    pref.width += insets.left + insets.right
-    pref.height += insets.top + insets.bottom
-    return pref
+    size.width += insets.left + insets.right
+    size.height = heightProvider()
+    return size
   }
 }

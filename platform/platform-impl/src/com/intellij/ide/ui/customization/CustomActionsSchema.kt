@@ -41,7 +41,6 @@ import java.io.FileNotFoundException
 import java.net.URL
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import java.util.function.Consumer
 import javax.swing.Icon
 import javax.swing.tree.DefaultMutableTreeNode
 
@@ -201,8 +200,10 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
   }
 
   fun addAction(url: ActionUrl) {
-    if (!actions.contains(url) && !actions.remove(url.inverted)) {
-      actions.add(url)
+    synchronized(lock) {
+      if (!actions.contains(url) && !actions.remove(url.inverted)) {
+        actions.add(url)
+      }
     }
   }
 
@@ -212,24 +213,28 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
   fun getActions(): List<ActionUrl> = actions
 
   fun setActions(newActions: List<ActionUrl>) {
-    assert(actions !== newActions)
-    actions.clear()
-    actions.addAll(newActions)
-    actions.sortWith(ActionUrlComparator)
+    synchronized(lock) {
+      assert(actions !== newActions)
+      actions.clear()
+      actions.addAll(newActions)
+      actions.sortWith(ActionUrlComparator)
+    }
   }
 
   fun copyFrom(result: CustomActionsSchema) {
     synchronized(lock) {
       idToActionGroup = idToActionGroup.clear()
       actions.clear()
-      val ids = HashSet(iconCustomizations.keys)
+      val ids = java.util.List.copyOf(iconCustomizations.keys)
       iconCustomizations.clear()
       for (actionUrl in result.actions) {
         addAction(actionUrl.copy())
       }
       actions.sortWith(ActionUrlComparator)
       iconCustomizations.putAll(result.iconCustomizations)
-      ids.forEach(Consumer { id -> iconCustomizations.putIfAbsent(id, null) })
+      for (id in ids) {
+        iconCustomizations.putIfAbsent(id, null)
+      }
     }
   }
 
@@ -505,7 +510,7 @@ private fun fillExtGroups(idToName: MutableMap<String, String>, extGroupIds: Mut
 }
 
 private object ActionUrlComparator : Comparator<ActionUrl> {
-  var DELETED: Int = 1
+  const val DELETED: Int = 1
 
   private fun getEquivalenceClass(url: ActionUrl): Int {
     return when (url.actionType) {

@@ -171,8 +171,6 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     }
     else {
       if (isDecoratedMenu) {
-        CustomHeader.enableCustomHeader(frame)
-
         val selectedEditorFilePath: SelectedEditorFilePath?
         val ideMenu: ActionAwareIdeMenuBar
         val customFrameTitlePane = if (ExperimentalUI.isNewUI()) {
@@ -186,6 +184,8 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
           }
         }
         else {
+          CustomHeader.enableCustomHeader(frame)
+
           ideMenu = createMenuBar(coroutineScope.childScope(), frame)
           selectedEditorFilePath = CustomDecorationPath(frame)
           MenuFrameHeader(frame = frame,
@@ -264,7 +264,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
           val toolbarHolder = helper.toolbarHolder
           if (toolbarHolder == null && ExperimentalUI.isNewUI()) {
             subtask("toolbar init") {
-              (toolbar as MainToolbar).init(computeMainActionGroups())
+              (toolbar as MainToolbar).init()
             }
           }
         }
@@ -731,7 +731,7 @@ private suspend fun createToolbar(coroutineScope: CoroutineScope, frame: JFrame)
       toolbar.border = JBUI.Borders.emptyLeft(5)
       toolbar
     }
-    toolbar.init(computeMainActionGroups())
+    toolbar.init()
     return toolbar
   }
   else {

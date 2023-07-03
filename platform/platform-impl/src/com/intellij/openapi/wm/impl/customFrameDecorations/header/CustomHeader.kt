@@ -47,8 +47,8 @@ private val windowBorderThicknessInPhysicalPx: Int = run {
   floor(scale).toInt()
 }
 
-internal fun updateWinControlsTheme(panel: JPanel, customTitleBar: CustomTitleBar) {
-  customTitleBar.putProperty("controls.dark", ColorUtil.isDark(panel.background))
+internal fun updateWinControlsTheme(background: Color, customTitleBar: CustomTitleBar) {
+  customTitleBar.putProperty("controls.dark", ColorUtil.isDark(background))
   customTitleBar.putProperty("controls.foreground.normal", UIManager.getColor("WindowControls.foreground"))
   customTitleBar.putProperty("controls.foreground.inactive", UIManager.getColor("WindowControls.inactiveForeground"))
 }
@@ -130,7 +130,7 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
   override fun updateUI() {
     super.updateUI()
     customTitleBar?.let {
-      updateWinControlsTheme(panel = this, customTitleBar = it)
+      updateWinControlsTheme(background = background, customTitleBar = it)
     }
     updateSize(mainToolbarActionSupplier = { computeMainActionGroups(CustomActionsSchema.getInstance()) })
   }
@@ -236,9 +236,10 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
   protected open fun updateActive() {
     customFrameTopBorder?.repaintBorder()
 
-    background = getHeaderBackground(isActive)
+    val headerBackground = getHeaderBackground(isActive)
+    background = headerBackground
     customTitleBar?.let {
-      updateWinControlsTheme(panel = this, customTitleBar = it)
+      updateWinControlsTheme(background = headerBackground, customTitleBar = it)
     }
   }
 

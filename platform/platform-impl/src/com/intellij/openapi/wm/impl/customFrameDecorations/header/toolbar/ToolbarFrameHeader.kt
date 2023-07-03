@@ -2,11 +2,9 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
 import com.intellij.ide.ProjectWindowCustomizerService
-import com.intellij.ide.menu.ActionAwareIdeMenuBar
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
-import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -55,7 +53,6 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
                                   frame: JFrame,
                                   private val root: IdeRootPane,
                                   private val ideMenuBar: IdeMenuBar) : FrameHeader(frame), UISettingsListener, ToolbarHolder, MainFrameCustomHeader {
-
   private val ideMenuHelper = IdeMenuHelper(menu = ideMenuBar, coroutineScope = coroutineScope)
   private val menuBarHeaderTitle = SimpleCustomDecorationPath(frame, true).apply {
     isOpaque = false
@@ -85,13 +82,10 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
             updateLayout()
           }
 
-          var actions: List<Pair<ActionGroup, String>>? = null
+          val isCompactHeader = root.isCompactHeader { computeMainActionGroups(CustomActionsSchema.getInstanceAsync()) }
 
           when (mode) {
-            ShowMode.TOOLBAR -> {
-              actions = computeMainActionGroups()
-              doUpdateToolbar(actions)
-            }
+            ShowMode.TOOLBAR -> doUpdateToolbar(isCompactHeader)
             ShowMode.MENU -> {
               withContext(Dispatchers.EDT) {
                 toolbar?.removeComponentListener(contentResizeListener)
@@ -102,8 +96,18 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
           }
 
           withContext(Dispatchers.EDT) {
-            updateToolbarAppearanceFromMode()
-            updateSize { actions ?: computeMainActionGroups(CustomActionsSchema.getInstance()) }
+            buttonPanes?.isCompactMode = isCompactHeader
+            val size = if (isCompactHeader) {
+              JBDimension(toolbarHeaderTitle.expectedHeight, toolbarHeaderTitle.expectedHeight, true)
+            }
+            else {
+              ActionToolbar.experimentalToolbarMinimumButtonSize()
+            }
+            mainMenuButton.button.setMinimumButtonSize(size)
+            if (mode == ShowMode.MENU) {
+              menuBarHeaderTitle.isVisible = isCompactHeader
+            }
+            updatePreferredSize(isCompactHeader = { isCompactHeader })
             repaint()
           }
         }
@@ -145,9 +149,6 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
   private val mode: ShowMode
     get() = if (isToolbarInHeader()) ShowMode.TOOLBAR else ShowMode.MENU
 
-  private val isCompact: Boolean
-    get() = (root as? IdeRootPane)?.isCompactHeader { computeMainActionGroups(CustomActionsSchema.getInstance()) } == true
-
   init {
     mainMenuButton.expandableMenu = expandableMenu
     layout = GridBagLayout()
@@ -184,19 +185,19 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
     super.paint(g)
   }
 
-  private suspend fun doUpdateToolbar(toolbarActionGroups: List<Pair<ActionGroup, String>>) {
+  private suspend fun doUpdateToolbar(isCompactHeader: Boolean) {
     val toolbar = withContext(Dispatchers.EDT) {
       toolbar?.removeComponentListener(contentResizeListener)
       toolbarPlaceholder.removeAll()
       MainToolbar(coroutineScope = coroutineScope.childScope(), frame = frame, layoutCallBack = { updateCustomTitleBar() })
     }
-    toolbar.init(toolbarActionGroups, customTitleBar)
+    toolbar.init(customTitleBar)
     withContext(Dispatchers.EDT) {
       toolbar.addComponentListener(contentResizeListener)
       this@ToolbarFrameHeader.toolbar = toolbar
       toolbarHeaderTitle.updateBorders(0)
 
-      if (isCompact) {
+      if (isCompactHeader) {
         toolbarPlaceholder.add(toolbarHeaderTitle, BorderLayout.CENTER)
       }
       else {
@@ -205,10 +206,6 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
 
       toolbarPlaceholder.revalidate()
     }
-  }
-
-  private fun updateMenuBarAppearance() {
-    menuBarHeaderTitle.isVisible = (isCompact && mode == ShowMode.MENU)
   }
 
   override fun installListeners() {
@@ -247,21 +244,6 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
   private fun updateMenuBar() {
     if (IdeRootPane.hideNativeLinuxTitle) {
       ideMenuBar.border = null
-    }
-  }
-
-  private fun updateToolbarAppearanceFromMode() {
-    val isCompact = isCompact
-    buttonPanes?.isCompactMode = isCompact
-    val size = if (isCompact) {
-      JBDimension(toolbarHeaderTitle.expectedHeight, toolbarHeaderTitle.expectedHeight, true)
-    }
-    else {
-      ActionToolbar.experimentalToolbarMinimumButtonSize()
-    }
-    mainMenuButton.button.setMinimumButtonSize(size)
-    if (mode == ShowMode.MENU) {
-      updateMenuBarAppearance()
     }
   }
 

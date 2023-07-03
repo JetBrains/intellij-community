@@ -31,7 +31,6 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.MainMe
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.mac.touchbar.TouchbarSupport
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -77,7 +76,7 @@ private class MenuButtonInToolbarMainToolbarFlavor(coroutineScope: CoroutineScop
 
 private object DefaultMainToolbarFlavor : MainToolbarFlavor
 
-internal class MainToolbar constructor(
+internal class MainToolbar(
   private val coroutineScope: CoroutineScope,
   frame: JFrame,
   isOpaque: Boolean = false,
@@ -102,8 +101,9 @@ internal class MainToolbar constructor(
 
   override fun getComponentGraphics(g: Graphics): Graphics = super.getComponentGraphics(IdeBackgroundUtil.getOriginalGraphics(g))
 
-  suspend fun init(actionGroups: List<Pair<ActionGroup, String>>, customTitleBar: WindowDecorations.CustomTitleBar? = null) {
+  suspend fun init(customTitleBar: WindowDecorations.CustomTitleBar? = null) {
     val schema = CustomActionsSchema.getInstanceAsync()
+    val actionGroups = computeMainActionGroups(schema)
     val customizationGroup = schema.getCorrectedActionAsync(MAIN_TOOLBAR_ID)
     val customizationGroupPopupHandler = customizationGroup?.let {
       CustomizationUtil.createToolbarCustomizationHandler(it, MAIN_TOOLBAR_ID, this, ActionPlaces.MAIN_TOOLBAR)
@@ -115,7 +115,7 @@ internal class MainToolbar constructor(
       flavor.addWidget()
 
       val widgets = actionGroups.map { (actionGroup, position) ->
-        createActionBar(actionGroup, customizationGroup) to position
+        createActionBar(actionGroup, customizationGroup, layoutCallBack) to position
       }
       for ((widget, position) in widgets) {
         addWidget(widget = widget.component, parent = this@MainToolbar, position = position)
@@ -245,21 +245,6 @@ internal class MainToolbar constructor(
     }
   }
 
-  private fun createActionBar(group: ActionGroup, customizationGroup: ActionGroup?): MyActionToolbarImpl {
-    val toolbar = MyActionToolbarImpl(group, layoutCallBack, customizationGroup)
-    toolbar.setActionButtonBorder(JBUI.Borders.empty(mainToolbarButtonInsets()))
-    toolbar.setActionButtonBorder(5, 5)
-    toolbar.setCustomButtonLook(HeaderToolbarButtonLook())
-
-    toolbar.setMinimumButtonSize { ActionToolbar.experimentalToolbarMinimumButtonSize() }
-    toolbar.targetComponent = null
-    toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
-    val component = toolbar.component
-    component.border = JBUI.Borders.empty()
-    component.isOpaque = false
-    return toolbar
-  }
-
   override fun getAccessibleContext(): AccessibleContext {
     if (accessibleContext == null) {
       accessibleContext = AccessibleMainToolbar()
@@ -278,6 +263,21 @@ internal class MainToolbar constructor(
   }
 }
 
+private fun createActionBar(group: ActionGroup, customizationGroup: ActionGroup?, layoutCallBack: LayoutCallBack?): MyActionToolbarImpl {
+  val toolbar = MyActionToolbarImpl(group = group, layoutCallBack = layoutCallBack, customizationGroup = customizationGroup)
+  toolbar.setActionButtonBorder(JBUI.Borders.empty(mainToolbarButtonInsets()))
+    toolbar.setActionButtonBorder(5, 5)
+  toolbar.setCustomButtonLook(HeaderToolbarButtonLook())
+
+  toolbar.setMinimumButtonSize { ActionToolbar.experimentalToolbarMinimumButtonSize() }
+  toolbar.targetComponent = null
+  toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+  val component = toolbar.component
+  component.border = JBUI.Borders.empty()
+  component.isOpaque = false
+  return toolbar
+}
+
 private fun addWidget(widget: JComponent, parent: JComponent, position: String) {
   parent.add(position, widget)
   if (widget is Disposable) {
@@ -289,12 +289,10 @@ internal suspend fun computeMainActionGroups(): List<Pair<ActionGroup, String>> 
   return subtask("toolbar action groups computing") {
     serviceAsync<ActionManager>()
     val customActionSchema = CustomActionsSchema.getInstanceAsync()
-    @Suppress("ForbiddenInSuspectContextMethod")
     computeMainActionGroups(customActionSchema)
   }
 }
 
-@RequiresBlockingContext
 internal fun computeMainActionGroups(customActionSchema: CustomActionsSchema): List<Pair<ActionGroup, String>> {
   return sequenceOf(
     GroupInfo("MainToolbarLeft", ActionsTreeUtil.getMainToolbarLeft(), HorizontalLayout.LEFT),
@@ -315,7 +313,6 @@ private class MyActionToolbarImpl(group: ActionGroup,
                                   @JvmField val layoutCallBack: LayoutCallBack?,
                                   customizationGroup: ActionGroup?)
   : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true, false, true, customizationGroup, MAIN_TOOLBAR_ID) {
-
   private val iconUpdater = HeaderIconUpdater()
 
   init {
