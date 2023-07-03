@@ -25,6 +25,11 @@ internal data class ProductConfiguration(@JvmField val modules: List<String>, @J
 
 private const val PRODUCTS_PROPERTIES_PATH = "build/dev-build.json"
 
+/**
+ * Custom path for product properties
+ */
+private const val CUSTOM_PRODUCT_PROPERTIES_PATH = "idea.product.properties.path"
+
 @Suppress("SpellCheckingInspection")
 fun getIdeSystemProperties(runDir: Path): Map<String, String> {
   // see BuildContextImpl.getAdditionalJvmArguments - we should somehow deduplicate code
@@ -60,15 +65,28 @@ suspend fun buildProductInProcess(request: BuildRequest) {
 private fun createConfiguration(productionClassOutput: Path, homePath: Path): Configuration {
   // for compatibility with local runs and runs on CI
   System.setProperty(BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY, productionClassOutput.parent.toString())
-  var projectPropertiesPath = homePath.resolve(PRODUCTS_PROPERTIES_PATH)
+  val projectPropertiesPath = getProductPropertiesPath(homePath)
+  return Json.decodeFromString(Configuration.serializer(), Files.readString(projectPropertiesPath))
+}
+
+private fun getProductPropertiesPath(homePath: Path): Path {
+  // Handle custom product properties path
+  val customPath = System.getProperty(CUSTOM_PRODUCT_PROPERTIES_PATH)?.let { homePath.resolve(it) }
+  if (customPath != null && customPath.exists()) {
+    return customPath
+  }
+
+  val projectPropertiesPath = homePath.resolve(PRODUCTS_PROPERTIES_PATH)
+
   // Handle Rider repository layout
   if (!projectPropertiesPath.exists() && homePath.parent?.parent?.resolve(".dotnet-products.root.marker")?.exists() == true) {
     val riderSpecificProjectPropertiesPath = homePath.parent.resolve("ultimate").resolve(PRODUCTS_PROPERTIES_PATH)
     if (riderSpecificProjectPropertiesPath.exists()) {
-      projectPropertiesPath = riderSpecificProjectPropertiesPath
+      return riderSpecificProjectPropertiesPath
     }
   }
-  return Json.decodeFromString(Configuration.serializer(), Files.readString(projectPropertiesPath))
+
+  return projectPropertiesPath
 }
 
 private fun getProductConfiguration(configuration: Configuration, platformPrefix: String): ProductConfiguration {
