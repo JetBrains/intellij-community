@@ -10,4 +10,6 @@ class FlowchartTest : MermaidParserTestCase("flowchart") {
   fun `test click statements`() = doTest(true)
 
   fun `test frontmatter`() = doTest(true)
+
+  fun `test multiple vertices with style`() = doTest(true)
 }

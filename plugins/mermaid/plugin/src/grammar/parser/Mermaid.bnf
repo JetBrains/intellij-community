@@ -118,7 +118,8 @@ flowchartStatement ::= vertexStatement (SEMICOLON vertexStatement)*
 private separator ::= EOL | SEMICOLON
 vertexStatement ::= nodeStatement [flowchartLinkStatement vertexStatement]
 flowchartLinkStatement ::= START_ARROW complexLinkText ARROW | ARROW [SEP complexLinkText SEP]
-nodeStatement ::= vertex STYLE_SEPARATOR STYLE_TARGET | vertex [AMPERSAND nodeStatement]
+nodeStatement ::= (styledVertex | vertex)  [AMPERSAND nodeStatement]
+styledVertex ::= vertex STYLE_SEPARATOR STYLE_TARGET
 vertex ::= complexIdentifier [vertexText]
 vertexText ::= OPEN_SQUARE nodeText CLOSE_SQUARE
   | OPEN_ROUND nodeText CLOSE_ROUND
