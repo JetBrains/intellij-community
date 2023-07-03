@@ -11,13 +11,18 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.virtualFile
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.storage.EntityReference
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.containers.MultiMap
-import com.intellij.util.indexing.CustomizingIndexingContributor
+import com.intellij.util.indexing.CustomizingIndexingPresentationContributor
 import com.intellij.util.indexing.ReincludedRootsUtil
-import com.intellij.util.indexing.customizingIteration.GenericContentEntityIterator
-import com.intellij.util.indexing.customizingIteration.ModuleAwareContentEntityIterator
 import com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods.createGenericContentEntityIterators
+import com.intellij.util.indexing.roots.IndexableEntityProviderMethods.createModuleAwareContentEntityIterators
 import com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl.Companion.createIterator
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forExternalEntity
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forGenericContentEntity
@@ -35,12 +40,6 @@ import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.platform.backend.workspace.virtualFile
-import com.intellij.platform.workspace.storage.EntityReference
-import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.jps.entities.LibraryEntity
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.*
 import java.util.function.Consumer
@@ -62,68 +61,40 @@ internal data class LibraryRootsDescription(val library: LibraryEntity,
   }
 }
 
-internal data class IndexingContributorCustomization<E : WorkspaceEntity, D>(val customizingContributor: CustomizingIndexingContributor<E, D>,
-                                                                             val value: D?) {
-  companion object {
-    fun <E : WorkspaceEntity, D> create(customizingContributor: CustomizingIndexingContributor<E, D>,
-                                     entity: E): IndexingContributorCustomization<E, D> {
-      return IndexingContributorCustomization(customizingContributor, customizingContributor.getCustomizationData(entity))
-    }
-  }
-
-  fun createModuleAwareContentIterators(module: Module,
-                                        entityReference: EntityReference<E>,
-                                        roots: IndexingRootHolder): Collection<ModuleAwareContentEntityIterator> {
-    return customizingContributor.createModuleAwareContentIterators(module, entityReference, roots.roots, value)
-  }
-
-  fun createGenericContentIterators(entityReference: EntityReference<E>,
-                                    roots: IndexingRootHolder): Collection<GenericContentEntityIterator> {
-    return customizingContributor.createGenericContentIterators(entityReference, roots.roots, value)
-  }
-
-  fun createExternalEntityIterators(entityReference: EntityReference<E>,
-                                    roots: IndexingSourceRootHolder): Collection<IndexableFilesIterator> {
-    return customizingContributor.createExternalEntityIterators(entityReference, roots.roots, roots.sourceRoots, value)
-  }
-}
-
 internal data class EntityContentRootsCustomizedModuleAwareDescription<E : WorkspaceEntity>(val module: Module,
                                                                                             val entityReference: EntityReference<E>,
                                                                                             val roots: IndexingRootHolder,
-                                                                                            val customization: IndexingContributorCustomization<E, *>) : IndexingRootsDescription {
+                                                                                            val presentation: IndexableIteratorPresentation?) : IndexingRootsDescription {
   override fun createBuilders(): Collection<IndexableIteratorBuilder> {
-    return forModuleAwareCustomizedContentEntity((module as ModuleBridge).moduleEntityId, entityReference, roots, customization)
+    return forModuleAwareCustomizedContentEntity((module as ModuleBridge).moduleEntityId, entityReference, roots, presentation)
   }
 
   fun createIterators(): Collection<IndexableFilesIterator> {
-    return customization.createModuleAwareContentIterators(module, entityReference, roots)
+    return createModuleAwareContentEntityIterators(module, entityReference, roots, presentation)
   }
 }
 
 internal data class EntityGenericContentRootsDescription<E : WorkspaceEntity>(val entityReference: EntityReference<E>,
                                                                               val roots: IndexingRootHolder,
-                                                                              val customization: IndexingContributorCustomization<E, *>?) : IndexingRootsDescription {
+                                                                              val presentation: IndexableIteratorPresentation?) : IndexingRootsDescription {
   override fun createBuilders(): Collection<IndexableIteratorBuilder> {
-    return forGenericContentEntity(entityReference, roots, customization)
+    return forGenericContentEntity(entityReference, roots, presentation)
   }
 
   fun createIterators(): Collection<IndexableFilesIterator> {
-    return customization?.createGenericContentIterators(entityReference, roots) ?: createGenericContentEntityIterators(entityReference,
-                                                                                                                       roots)
+    return createGenericContentEntityIterators(entityReference, roots, presentation)
   }
 }
 
 internal data class EntityExternalRootsDescription<E : WorkspaceEntity>(val entityReference: EntityReference<E>,
                                                                         val roots: IndexingSourceRootHolder,
-                                                                        val customization: IndexingContributorCustomization<E, *>?) : IndexingRootsDescription {
+                                                                        val presentation: IndexableIteratorPresentation?) : IndexingRootsDescription {
   override fun createBuilders(): Collection<IndexableIteratorBuilder> {
-    return forExternalEntity(entityReference, roots, customization)
+    return forExternalEntity(entityReference, roots, presentation)
   }
 
   fun createIterators(): Collection<IndexableFilesIterator> {
-    return customization?.createExternalEntityIterators(entityReference, roots)
-           ?: IndexableEntityProviderMethods.createExternalEntityIterators(entityReference, roots)
+    return IndexableEntityProviderMethods.createExternalEntityIterators(entityReference, roots, presentation)
   }
 }
 
@@ -235,27 +206,17 @@ internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Bool
       moduleRoots.getOrPut(entry.key) { MutableIndexingRootHolder() }.addRoots(entry.value)
     }
 
-    val customization: Function<EntityReference<E>, IndexingContributorCustomization<E, *>?> = if (rootData.contributor is CustomizingIndexingContributor<E, *>) {
-      Function { reference ->
-        IndexingContributorCustomization(rootData.contributor as CustomizingIndexingContributor<E, Any>,
-                                         rootData.customizationValues[reference])
-      }
-    }
-    else {
-      Function { null }
-    }
-
     for ((module, entityReferences) in rootData.customizedModuleContentEntities.entrySet()) {
       for (entityReference in entityReferences) {
         val roots = rootData.customizedModuleContentRoots[entityReference]
         if (roots?.isEmpty() != false) continue
         descriptions.add(
-          EntityContentRootsCustomizedModuleAwareDescription(module, entityReference, roots, customization.apply(entityReference)!!))
+          EntityContentRootsCustomizedModuleAwareDescription(module, entityReference, roots, rootData.customizationValues[entityReference]))
       }
     }
 
     for (entry in rootData.contentRoots.entries) {
-      descriptions.add(EntityGenericContentRootsDescription(entry.key, entry.value, customization.apply(entry.key)))
+      descriptions.add(EntityGenericContentRootsDescription(entry.key, entry.value, rootData.customizationValues[entry.key]))
     }
 
     for ((libraryEntity, roots) in rootData.libraryRoots.entries) {
@@ -263,7 +224,7 @@ internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Bool
     }
 
     for ((entityReference, roots) in rootData.externalRoots.entries) {
-      descriptions.add(EntityExternalRootsDescription(entityReference, roots, customization.apply(entityReference)))
+      descriptions.add(EntityExternalRootsDescription(entityReference, roots, rootData.customizationValues[entityReference]))
     }
 
     reincludedRoots.addAll(rootData.excludedRoots)
@@ -382,12 +343,12 @@ private class RootData<E : WorkspaceEntity>(val contributor: WorkspaceFileIndexC
   val externalRoots = mutableMapOf<EntityReference<E>, MutableIndexingSourceRootHolder>()
   val excludedRoots = mutableListOf<VirtualFile>()
 
-  val customizationValues = mutableMapOf<EntityReference<*>, Any>()
+  val customizationValues = mutableMapOf<EntityReference<*>, IndexableIteratorPresentation>()
 
-  private fun fillCustomizationValues(entity: WorkspaceEntity, entityReference: EntityReference<E>) {
+  private fun fillCustomizationValues(entity: E, entityReference: EntityReference<E>) {
     if (contributor.entityClass.isAssignableFrom(entity.getEntityInterface())) {
-      if (contributor is CustomizingIndexingContributor<E, *>) {
-        contributor.getCustomizationData(entity as E)?.let { customizationValues[entityReference] = it }
+      if (contributor is CustomizingIndexingPresentationContributor<E>) {
+        contributor.customizeIteratorPresentation(entity)?.let { customizationValues[entityReference] = it }
       }
     }
     else {
@@ -397,7 +358,7 @@ private class RootData<E : WorkspaceEntity>(val contributor: WorkspaceFileIndexC
 
   fun registerFileSet(root: VirtualFile,
                       kind: WorkspaceFileKind,
-                      entity: WorkspaceEntity,
+                      entity: E,
                       customData: WorkspaceFileSetData?,
                       recursive: Boolean) {
     val entityReference = entity.createReference<E>()
@@ -420,7 +381,7 @@ private class RootData<E : WorkspaceEntity>(val contributor: WorkspaceFileIndexC
 
     if (customData is ModuleRelatedRootData) {
       if (!ignoreModuleRoots) {
-        if (contributor is CustomizingIndexingContributor<E, *>) {
+        if (contributor is CustomizingIndexingPresentationContributor<E>) {
           customizedModuleContentEntities.putValue(customData.module, entityReference)
           addRoot(customizedModuleContentRoots, entityReference)
         }
@@ -445,7 +406,7 @@ private class RootData<E : WorkspaceEntity>(val contributor: WorkspaceFileIndexC
                       entity: WorkspaceEntity,
                       customData: WorkspaceFileSetData?,
                       recursive: Boolean) {
-    root.virtualFile?.let { registerFileSet(it, kind, entity, customData, recursive) }
+    root.virtualFile?.let { registerFileSet(it, kind, entity as E, customData, recursive) }
   }
 
   fun registerExcludedRoot(root: VirtualFile) {
@@ -480,7 +441,7 @@ private class MyWorkspaceFileSetRegistrar<E : WorkspaceEntity>(contributor: Work
   }
 
   override fun registerFileSet(root: VirtualFile, kind: WorkspaceFileKind, entity: WorkspaceEntity, customData: WorkspaceFileSetData?) {
-    rootData.registerFileSet(root, kind, entity, customData, true)
+    rootData.registerFileSet(root, kind, entity as E, customData, true)
   }
 
   override fun registerExcludedRoot(excludedRoot: VirtualFileUrl, entity: WorkspaceEntity) {

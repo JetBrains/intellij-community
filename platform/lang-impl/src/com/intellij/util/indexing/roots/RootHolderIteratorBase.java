@@ -7,9 +7,7 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.platform.workspace.storage.EntityReference;
 import com.intellij.util.indexing.roots.origin.IndexingRootHolder;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
 import java.util.Set;
 
 public abstract class RootHolderIteratorBase implements IndexableFilesIterator {
@@ -19,10 +17,10 @@ public abstract class RootHolderIteratorBase implements IndexableFilesIterator {
 
   protected RootHolderIteratorBase(@NotNull EntityReference<?> entityReference,
                                    @NotNull IndexingRootHolder roots,
-                                   @Nullable IndexableIteratorPresentation presentation) {
+                                   @NotNull IndexableIteratorPresentation presentation) {
     this.entityReference = entityReference;
     this.roots = roots.immutableCopyOf();
-    this.presentation = Objects.requireNonNullElseGet(presentation, () -> createDefaultPresentation(roots));
+    this.presentation = presentation;
   }
 
   @Override
@@ -49,7 +47,4 @@ public abstract class RootHolderIteratorBase implements IndexableFilesIterator {
   public final @NotNull Set<String> getRootUrls(@NotNull Project project) {
     return roots.getRootUrls();
   }
-
-  @NotNull
-  protected abstract IndexableIteratorPresentation createDefaultPresentation(@NotNull IndexingRootHolder roots);
 }

@@ -7,18 +7,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.SyntheticLibrary
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.indexing.IndexableSetContributor
-import com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder
-import com.intellij.util.indexing.roots.IndexableFilesIterator
-import com.intellij.util.indexing.roots.IndexingContributorCustomization
-import com.intellij.util.indexing.roots.origin.IndexingSourceRootHolder
-import com.intellij.util.indexing.roots.origin.IndexingRootHolder
+import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.EntityReference
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.jps.entities.LibraryId
-import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.util.indexing.IndexableSetContributor
+import com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder
+import com.intellij.util.indexing.roots.IndexableFilesIterator
+import com.intellij.util.indexing.roots.IndexableIteratorPresentation
+import com.intellij.util.indexing.roots.origin.IndexingRootHolder
+import com.intellij.util.indexing.roots.origin.IndexingSourceRootHolder
 
 internal object IndexableIteratorBuilders {
   private val logger = thisLogger()
@@ -61,20 +61,20 @@ internal object IndexableIteratorBuilders {
   fun <E : WorkspaceEntity> forModuleAwareCustomizedContentEntity(moduleId: ModuleId,
                                                                   entityReference: EntityReference<E>,
                                                                   files: IndexingRootHolder,
-                                                                  customization: IndexingContributorCustomization<E, *>): Collection<IndexableIteratorBuilder> =
-    if (files.isEmpty()) emptyList() else listOf(ModuleAwareCustomizedContentEntityBuilder(moduleId, entityReference, files, customization))
+                                                                  presentation: IndexableIteratorPresentation?): Collection<IndexableIteratorBuilder> =
+    if (files.isEmpty()) emptyList() else listOf(ModuleAwareCustomizedContentEntityBuilder(moduleId, entityReference, files, presentation))
 
   fun <E : WorkspaceEntity> forGenericContentEntity(entityReference: EntityReference<E>,
                                                     roots: IndexingRootHolder,
-                                                    customization: IndexingContributorCustomization<E, *>?): Collection<IndexableIteratorBuilder> =
+                                                    presentation: IndexableIteratorPresentation?): Collection<IndexableIteratorBuilder> =
     if (roots.isEmpty()) emptyList()
-    else listOf(GenericContentEntityBuilder(entityReference, roots, customization))
+    else listOf(GenericContentEntityBuilder(entityReference, roots, presentation))
 
-  fun <E : WorkspaceEntity, D> forExternalEntity(entityReference: EntityReference<E>,
-                                                 roots: IndexingSourceRootHolder,
-                                                 customization: IndexingContributorCustomization<E, D>?): Collection<IndexableIteratorBuilder> =
+  fun <E : WorkspaceEntity> forExternalEntity(entityReference: EntityReference<E>,
+                                              roots: IndexingSourceRootHolder,
+                                              presentation: IndexableIteratorPresentation?): Collection<IndexableIteratorBuilder> =
     if (roots.isEmpty()) emptyList()
-    else listOf(ExternalEntityIteratorBuilder(entityReference, roots, customization))
+    else listOf(ExternalEntityIteratorBuilder(entityReference, roots, presentation))
 
   fun instantiateBuilders(builders: Collection<IndexableIteratorBuilder>,
                           project: Project,
@@ -133,12 +133,12 @@ internal data class IndexableSetContributorFilesIteratorBuilder(val name: String
 internal data class ModuleAwareCustomizedContentEntityBuilder<E : WorkspaceEntity>(val moduleId: ModuleId,
                                                                                    val entityReference: EntityReference<E>,
                                                                                    val roots: IndexingRootHolder,
-                                                                                   val customization: IndexingContributorCustomization<E, *>) : IndexableIteratorBuilder
+                                                                                   val presentation: IndexableIteratorPresentation?) : IndexableIteratorBuilder
 
 internal data class GenericContentEntityBuilder<E : WorkspaceEntity>(val entityReference: EntityReference<E>,
                                                                      val roots: IndexingRootHolder,
-                                                                     val customization: IndexingContributorCustomization<E, *>?) : IndexableIteratorBuilder
+                                                                     val presentation: IndexableIteratorPresentation?) : IndexableIteratorBuilder
 
 internal data class ExternalEntityIteratorBuilder<E : WorkspaceEntity>(val entityReference: EntityReference<E>,
                                                                        val roots: IndexingSourceRootHolder,
-                                                                       val customization: IndexingContributorCustomization<E, *>?) : IndexableIteratorBuilder
+                                                                       val presentation: IndexableIteratorPresentation?) : IndexableIteratorBuilder

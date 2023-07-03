@@ -91,22 +91,25 @@ object IndexableEntityProviderMethods {
   }
 
   fun createExternalEntityIterators(reference: EntityReference<*>,
-                                    roots: IndexingSourceRootHolder): Collection<IndexableFilesIterator> {
+                                    roots: IndexingSourceRootHolder,
+                                    presentation: IndexableIteratorPresentation?): Collection<IndexableFilesIterator> {
     if (roots.isEmpty()) return emptyList()
-    return listOf(ExternalEntityIndexableIteratorImpl(reference, roots, null))
+    return listOf(ExternalEntityIndexableIteratorImpl(reference, roots, presentation))
   }
 
   fun createGenericContentEntityIterators(reference: EntityReference<*>,
-                                          rootHolder: IndexingRootHolder): Collection<IndexableFilesIterator> {
+                                          rootHolder: IndexingRootHolder,
+                                          presentation: IndexableIteratorPresentation?): Collection<IndexableFilesIterator> {
     if (rootHolder.isEmpty()) return emptyList()
-    return listOf(GenericContentEntityIteratorImpl(reference, rootHolder, null))
+    return listOf(GenericContentEntityIteratorImpl(reference, rootHolder, presentation))
   }
 
   fun createModuleAwareContentEntityIterators(module: Module,
                                               reference: EntityReference<*>,
-                                              rootHolder: IndexingRootHolder): Collection<IndexableFilesIterator> {
-    if (rootHolder.isEmpty()) return emptyList()
-    return listOf(ModuleAwareContentEntityIteratorImpl(module, reference, rootHolder, null))
+                                              roots: IndexingRootHolder,
+                                              presentation: IndexableIteratorPresentation?): Collection<IndexableFilesIterator> {
+    if (roots.isEmpty()) return emptyList()
+    return listOf(ModuleAwareContentEntityIteratorImpl(module, reference, roots, presentation))
   }
 
   fun createForIndexableSetContributor(contributor: IndexableSetContributor,

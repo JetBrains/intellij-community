@@ -60,7 +60,8 @@ class ModuleRootsIndexableIteratorHandler : IndexableIteratorBuilderHandler {
 
     fun <E : WorkspaceEntity> registerIterators(builder: ModuleAwareCustomizedContentEntityBuilder<E>, entityStorage: EntityStorage) {
       entityStorage.resolve(builder.moduleId)?.findModule(entityStorage)?.also { module ->
-        result.addAll(builder.customization.createModuleAwareContentIterators(module, builder.entityReference, builder.roots))
+        result.addAll(
+          IndexableEntityProviderMethods.createModuleAwareContentEntityIterators(module, builder.entityReference, builder.roots, builder.presentation))
       }
     }
 

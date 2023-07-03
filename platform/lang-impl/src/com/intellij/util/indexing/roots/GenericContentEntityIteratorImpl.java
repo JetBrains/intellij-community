@@ -2,7 +2,7 @@
 package com.intellij.util.indexing.roots;
 
 import com.intellij.platform.workspace.storage.EntityReference;
-import com.intellij.util.indexing.customizingIteration.GenericContentEntityIterator;
+import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.indexing.roots.origin.GenericContentEntityOrigin;
 import com.intellij.util.indexing.roots.origin.GenericContentEntityOriginImpl;
 import com.intellij.util.indexing.roots.origin.IndexingRootHolder;
@@ -10,20 +10,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public class GenericContentEntityIteratorImpl extends RootHolderIteratorBase implements GenericContentEntityIterator {
+public class GenericContentEntityIteratorImpl extends RootHolderIteratorBase {
 
   public GenericContentEntityIteratorImpl(@NotNull EntityReference<?> entityReference,
                                           @NotNull IndexingRootHolder roots,
                                           @Nullable IndexableIteratorPresentation presentation) {
-    super(entityReference, roots, presentation);
-  }
-
-
-  @Override
-  protected @NotNull IndexableIteratorPresentation createDefaultPresentation(@NotNull IndexingRootHolder roots) {
-    return IndexableIteratorPresentation.create("Module unaware content roots from entity (" + roots.getRootsDebugStr() + ")",
-                                                GenericContentEntityIterator.super.getIndexingProgressText(),
-                                                GenericContentEntityIterator.super.getRootsScanningProgressText());
+    super(entityReference, roots, presentation != null
+                                  ? presentation
+                                  : IndexableIteratorPresentation.create(
+                                    "Module unaware content roots from entity (" + roots.getRootsDebugStr() + ")",
+                                    IndexingBundle.message("indexable.files.provider.indexing.content"),
+                                    IndexingBundle.message("indexable.files.provider.scanning.content")));
   }
 
   @NotNull
