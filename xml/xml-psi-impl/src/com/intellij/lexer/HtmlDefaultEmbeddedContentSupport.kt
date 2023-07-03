@@ -22,7 +22,7 @@ open class HtmlRawTextTagContentProvider(lexer: BaseHtmlLexer) : HtmlTagEmbedded
   override fun isInterestedInTag(tagName: CharSequence): Boolean =
     (namesEqual(tagName, HtmlUtil.TITLE_TAG_NAME)
      || namesEqual(tagName, HtmlUtil.TEXTAREA_TAG_NAME))
-    && !lexer.isPossiblyComponentTag(tagName)
+    && !lexer.isPossiblyCustomTagName(tagName)
 
 
   override fun isInterestedInAttribute(attributeName: CharSequence): Boolean = false

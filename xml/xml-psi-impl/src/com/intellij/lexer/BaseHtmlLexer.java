@@ -214,7 +214,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer implements Restartable
     return true;
   }
 
-  public boolean isPossiblyComponentTag(@NotNull CharSequence tagName) {
+  public boolean isPossiblyCustomTagName(@NotNull CharSequence tagName) {
     return false;
   }
 
