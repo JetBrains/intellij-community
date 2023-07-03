@@ -54,6 +54,7 @@ public class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor {
     //  return new ListResult(children, parentId);
     //}
 
+    final int parentModCount = records.getModCount(parentId);
     final ListResult result = myAttributeAccessor.readAttributeRaw(parentId, CHILDREN_ATTR, buffer -> {
       final int count = DataInputOutputUtil.readINT(buffer);
       final List<ChildInfo> children = (count == 0) ? Collections.emptyList() : new ArrayList<>(count);
@@ -65,10 +66,10 @@ public class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor {
         final ChildInfo child = new ChildInfoImpl(childId, nameId, null, null, null);
         children.add(child);
       }
-      return new ListResult(children, parentId);
+      return new ListResult(parentModCount, children, parentId);
     });
     if (result == null) {
-      return new ListResult(Collections.emptyList(), parentId);
+      return new ListResult(parentModCount, Collections.emptyList(), parentId);
     }
     return result;
   }
