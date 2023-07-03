@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.issue
 
 import com.intellij.build.issue.BuildIssue
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.pom.Navigatable
@@ -22,7 +23,11 @@ class UnsupportedGradleJvmIssueChecker : GradleIssueChecker {
       val description = DescriptionBuilder()
       val oldestSupportedJavaVersion = GradleJvmSupportMatrix.getOldestSupportedJavaVersionByIdea()
       description.addDescription(
-        GradleBundle.message("gradle.build.issue.gradle.jvm.unsupported.description", oldestSupportedJavaVersion.feature)
+        GradleBundle.message(
+          "gradle.build.issue.gradle.jvm.unsupported.description",
+          ApplicationNamesInfo.getInstance().fullProductName,
+          oldestSupportedJavaVersion.feature
+        )
       )
       val gradleSettingsFix = GradleSettingsQuickFix(
         issueData.projectPath, true,

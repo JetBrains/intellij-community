@@ -250,7 +250,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
       withDialog = withDialog,
       message = GradleBundle.message(
         "gradle.settings.wizard.java.unsupported.message",
-        ApplicationNamesInfo.getInstance().productName,
+        ApplicationNamesInfo.getInstance().fullProductName,
         oldestSupportedJavaVersion.toFeatureString()
       ),
       dialogTitle = GradleBundle.message(
@@ -258,7 +258,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
       ),
       dialogMessage = GradleBundle.message(
         "gradle.settings.wizard.java.unsupported.message",
-        ApplicationNamesInfo.getInstance().productName,
+        ApplicationNamesInfo.getInstance().fullProductName,
         oldestSupportedJavaVersion.toFeatureString(),
       )
     )
@@ -276,7 +276,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
       withDialog = withDialog,
       message = GradleBundle.message(
         "gradle.settings.wizard.gradle.unsupported.message",
-        ApplicationNamesInfo.getInstance().productName,
+        ApplicationNamesInfo.getInstance().fullProductName,
         oldestSupportedGradleVersion.version
       ),
       dialogTitle = GradleBundle.message(
@@ -284,7 +284,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
       ),
       dialogMessage = GradleBundle.message(
         "gradle.settings.wizard.gradle.unsupported.message",
-        ApplicationNamesInfo.getInstance().productName,
+        ApplicationNamesInfo.getInstance().fullProductName,
         oldestSupportedGradleVersion.version,
       )
     )
