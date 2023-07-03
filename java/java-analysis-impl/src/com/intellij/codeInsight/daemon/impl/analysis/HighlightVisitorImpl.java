@@ -1811,8 +1811,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       PsiElement context = PsiTreeUtil.getParentOfType(variable,
                                                        PsiInstanceOfExpression.class,
                                                        PsiCaseLabelElementList.class,
-                                                       PsiForeachStatement.class);
-      if (!(context instanceof PsiForeachStatement)) {
+                                                       PsiForeachPatternStatement.class);
+      if (!(context instanceof PsiForeachPatternStatement)) {
         HighlightingFeature feature = context instanceof PsiInstanceOfExpression ?
                                       HighlightingFeature.PATTERNS :
                                       HighlightingFeature.PATTERNS_IN_SWITCH;
@@ -2002,8 +2002,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitDeconstructionPattern(@NotNull PsiDeconstructionPattern deconstructionPattern) {
     super.visitDeconstructionPattern(deconstructionPattern);
-    add(checkFeature(deconstructionPattern, HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS));
-    if (myHolder.hasErrorResults()) return;
     PsiElement parent = deconstructionPattern.getParent();
     if (parent instanceof PsiForeachPatternStatement forEach) {
       add(checkFeature(deconstructionPattern, HighlightingFeature.RECORD_PATTERNS_IN_FOR_EACH));
@@ -2025,6 +2023,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       else {
         add(createPatternIsNotExhaustiveError(deconstructionPattern, patternType, itemType));
       }
+    }
+    else {
+      add(checkFeature(deconstructionPattern, HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS));
     }
   }
 

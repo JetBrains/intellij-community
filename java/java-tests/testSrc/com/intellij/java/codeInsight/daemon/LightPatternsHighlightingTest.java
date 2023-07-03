@@ -2,12 +2,15 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class LightPatternsHighlightingTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
@@ -72,6 +75,14 @@ public class LightPatternsHighlightingTest extends LightJavaCodeInsightFixtureTe
 
   public void testRecordPatternsInForEachJava20() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_20_PREVIEW, this::doTest);
+  }
+
+  public void testRecordPatternsInForEachJava21() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
+      doTest();
+      List<IntentionAction> intentions = myFixture.getAllQuickFixes();
+      assertEmpty(intentions);
+    });
   }
 
   public void testDeconstructionInstanceOf20() {

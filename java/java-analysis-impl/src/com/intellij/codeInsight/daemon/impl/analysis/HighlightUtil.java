@@ -3612,6 +3612,7 @@ public final class HighlightUtil {
                                                         @NotNull HighlightingFeature feature,
                                                         @NotNull List<? super IntentionAction> registrar) {
     if (feature.isAvailable(element)) return;
+    if (feature.isLimited()) return; //no reason for applying it because it can be outdated
     LanguageLevel applicableLevel = getApplicableLevel(element.getContainingFile(), feature);
     registrar.add(getFixFactory().createIncreaseLanguageLevelFix(applicableLevel));
     registrar.add(getFixFactory().createUpgradeSdkFor(applicableLevel));
