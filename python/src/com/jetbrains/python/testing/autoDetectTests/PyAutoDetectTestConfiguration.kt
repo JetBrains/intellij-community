@@ -21,12 +21,7 @@ class PyAutoDetectTestConfiguration(project: Project, factory: PyAutoDetectionCo
 
   override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? {
     val runProfile = environment.runProfile
-    val module = if (runProfile is PyAbstractTestConfiguration) {
-      runProfile.module
-    }
-    else {
-      null
-    }
+    val module = (runProfile as? PyAbstractTestConfiguration)?.module
     val conf = detectedConfiguration(module) ?: return null
 
     copyTo(getProperties(conf))
@@ -43,9 +38,9 @@ class PyAutoDetectTestConfiguration(project: Project, factory: PyAutoDetectionCo
   fun detectedConfiguration(module: Module?): PyAbstractTestConfiguration? {
     return PyAutoDetectionConfigurationFactory.factoriesExcludingThis
       .asSequence().map {
-        val tempConfig = it.createTemplateConfiguration(project)
-        tempConfig.module = module
-        tempConfig
+        it.createTemplateConfiguration(project).apply {
+          this.module = module
+        }
       }.filter {
         it.isFrameworkInstalled()
       }.firstOrNull()
