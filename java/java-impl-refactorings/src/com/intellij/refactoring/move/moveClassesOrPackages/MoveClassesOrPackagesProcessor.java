@@ -491,16 +491,6 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected boolean canPerformRefactoringInBranch() {
-    return true;
-  }
-
-  @Override
-  protected void performRefactoringInBranch(UsageInfo @NotNull [] usages, ModelBranch branch) {
-    performMove(usages, branch);
-  }
-
-  @Override
   protected void performRefactoring(UsageInfo @NotNull [] usages) {
     performMove(usages, null);
   }

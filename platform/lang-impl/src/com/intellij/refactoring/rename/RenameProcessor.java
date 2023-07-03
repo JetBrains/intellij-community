@@ -44,7 +44,6 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -370,21 +369,6 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   @Override
   public void performRefactoring(UsageInfo @NotNull [] usages) {
     doPerformRefactoring(usages, null);
-  }
-
-  @Override
-  protected boolean canPerformRefactoringInBranch() {
-    return true;
-  }
-
-  @Override
-  protected void performRefactoringInBranch(UsageInfo @NotNull [] usages, @NotNull ModelBranch branch) {
-    Class<?> syncDefinition = ReflectionUtil.getMethodDeclaringClass(getClass(), "performRefactoring", UsageInfo[].class);
-    Class<?> asyncDefinition = ReflectionUtil.getMethodDeclaringClass(getClass(), "performRefactoringInBranch", UsageInfo[].class, ModelBranch.class);
-    if (asyncDefinition != RenameProcessor.class && syncDefinition != asyncDefinition) {
-      throw new UnsupportedOperationException("performRefactoringInBranch should be implemented in " + syncDefinition);
-    }
-    doPerformRefactoring(usages, branch);
   }
 
   private void doPerformRefactoring(UsageInfo @NotNull [] usages, @Nullable ModelBranch branch) {
