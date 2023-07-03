@@ -18,7 +18,8 @@ class CommandSpecCompletionProvider : CompletionProvider<CompletionParameters>()
       return
     }
 
-    val resultSet = result.withPrefixMatcher(PlainPrefixMatcher(result.prefixMatcher.prefix, true))
+    val prefix = result.prefixMatcher.prefix.substringAfterLast('/') // take last part if it is a file path
+    val resultSet = result.withPrefixMatcher(PlainPrefixMatcher(prefix, true))
 
     val tokens = getCurCommandTokens(parameters)
     if (tokens.isEmpty()) {
@@ -73,7 +74,7 @@ class CommandSpecCompletionProvider : CompletionProvider<CompletionParameters>()
                                  lastArgument: String): List<BaseSuggestion> {
     val allChildren = TreeTraversal.PRE_ORDER_DFS.traversal(root as CommandPartNode<*>) { node -> node.children }
     val lastNode = allChildren.last() ?: root
-    return suggestionsProvider.getSuggestionsOfNext(lastNode, lastArgument)
+    return suggestionsProvider.getSuggestionsOfNext(lastNode, lastArgument).filter { s -> s.names.all { it.isNotEmpty() } }
   }
 
   private fun BaseSuggestion.toLookupElements(): List<LookupElement> {
@@ -89,8 +90,11 @@ class CommandSpecCompletionProvider : CompletionProvider<CompletionParameters>()
             editor.caretModel.moveToOffset(context.startOffset + cursorOffset)
           }
           else {
-            editor.document.insertString(context.tailOffset, " ")
-            editor.caretModel.moveToOffset(context.tailOffset + 1)
+            if (!item.lookupString.endsWith('/')) {
+              // insert space only if not a filepath was completed
+              editor.document.insertString(context.tailOffset, " ")
+              editor.caretModel.moveToOffset(context.tailOffset + 1)
+            }
             AutoPopupController.getInstance(context.project).scheduleAutoPopup(editor)
           }
         }

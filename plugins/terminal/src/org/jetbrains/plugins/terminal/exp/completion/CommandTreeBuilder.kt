@@ -30,7 +30,12 @@ internal class CommandTreeBuilder private constructor(
     while (curIndex < arguments.size) {
       val name = arguments[curIndex]
       val suggestions = suggestionsProvider.getSuggestionsOfNext(root, name)
-      val suggestion = suggestions.find { it.names.contains(name) }
+      var suggestion = suggestions.find { it.names.contains(name) }
+      if (suggestion == null && name.contains('/')) {
+        // most probably it is a file path
+        val fileName = name.substringAfterLast('/')
+        suggestion = suggestions.find { s -> s.names.find { it == fileName || it == "$fileName/" } != null }
+      }
       if (suggestion == null
           && !root.getMergedParserDirectives().flagsArePosixNoncompliant
           && name.startsWith("-") && !name.startsWith("--") && name.length > 2) {

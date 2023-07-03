@@ -3,8 +3,8 @@ package org.jetbrains.plugins.terminal.exp.util
 
 import org.jetbrains.plugins.terminal.exp.completion.ShellRuntimeDataProvider
 
-class FakeShellRuntimeDataProvider : ShellRuntimeDataProvider {
+class FakeShellRuntimeDataProvider(private val filesToReturn: List<String> = emptyList()) : ShellRuntimeDataProvider {
   override fun getFilesFromDirectory(path: String): List<String> {
-    return emptyList()
+    return filesToReturn
   }
 }

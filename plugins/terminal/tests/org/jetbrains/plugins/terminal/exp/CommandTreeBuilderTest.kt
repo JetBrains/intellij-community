@@ -15,6 +15,7 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class CommandTreeBuilderTest {
   private val commandName = "command"
+  private var filePathSuggestions: List<String> = emptyList()
 
   private val spec = commandSpec(commandName) {
     option("-a", "--asd")
@@ -72,6 +73,17 @@ class CommandTreeBuilderTest {
       option("--withSeparator") {
         separator = "="
         argument("arg")
+      }
+    }
+
+    subcommand("withFiles") {
+      option("-o") {
+        argument("file") {
+          templates("filepaths")
+        }
+      }
+      argument("folder") {
+        generator(ShellSuggestionsGenerator(templates = listOf("folders")))
       }
     }
   }
@@ -188,11 +200,53 @@ class CommandTreeBuilderTest {
     }
   }
 
+  @Test
+  fun `option with file argument`() {
+    mockFilePathsSuggestions("file.txt", "folder/", "file")
+    doTest("withFiles", "-o", "file.txt") {
+      assertSubcommandOf("withFiles", commandName)
+      assertOptionOf("-o", "withFiles")
+      assertArgumentOfOption("file.txt", "-o")
+    }
+  }
+
+  @Test
+  fun `option with file argument prefixed with directory name`() {
+    mockFilePathsSuggestions("file.txt", "folder/", "file")
+    doTest("withFiles", "-o", "someDir/file") {
+      assertSubcommandOf("withFiles", commandName)
+      assertOptionOf("-o", "withFiles")
+      assertArgumentOfOption("someDir/file", "-o")
+    }
+  }
+
+  @Test
+  fun `subcommand with directory argument`() {
+    mockFilePathsSuggestions("file.txt", "folder/", "dir/")
+    doTest("withFiles", "dir/") {
+      assertSubcommandOf("withFiles", commandName)
+      assertArgumentOfSubcommand("dir/", "withFiles")
+    }
+  }
+
+  @Test
+  fun `subcommand with directory without ending slash`() {
+    mockFilePathsSuggestions("file.txt", "folder/", "dir/")
+    doTest("withFiles", "someDir/folder") {
+      assertSubcommandOf("withFiles", commandName)
+      assertArgumentOfSubcommand("someDir/folder", "withFiles")
+    }
+  }
+
   private fun doTest(vararg arguments: String, assertions: CommandTreeAssertions.() -> Unit) {
-    val suggestionsProvider = CommandTreeSuggestionsProvider(FakeShellRuntimeDataProvider())
+    val suggestionsProvider = CommandTreeSuggestionsProvider(FakeShellRuntimeDataProvider(filePathSuggestions))
     val root = CommandTreeBuilder.build(suggestionsProvider, FakeCommandSpecManager(),
                                         commandName, spec, arguments.asList())
     assertions(CommandTreeAssertions(root))
+  }
+
+  private fun mockFilePathsSuggestions(vararg files: String) {
+    filePathSuggestions = files.asList()
   }
 
   private class CommandTreeAssertions(root: CommandPartNode<*>) {

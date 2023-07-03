@@ -36,21 +36,25 @@ internal class CommandTreeSuggestionsProvider(private val runtimeDataProvider: S
   }
 
   private fun getSuggestionsForSubcommand(node: SubcommandNode, nextNodeText: String): List<BaseSuggestion> {
-    val spec = node.spec
     val suggestions = mutableListOf<BaseSuggestion>()
-    if (node.children.isEmpty()) {
-      suggestions.addAll(spec.subcommands)
-    }
 
-    if (spec.requiresSubcommand) {
-      return suggestions
-    }
+    // suggest subcommands and options only if the provided value is not a file path
+    if (!nextNodeText.contains('/')) {
+      val spec = node.spec
+      if (node.children.isEmpty()) {
+        suggestions.addAll(spec.subcommands)
+      }
 
-    val lastArg = (node.children.lastOrNull() as? ArgumentNode)?.spec
-    if ((!node.getMergedParserDirectives().optionsMustPrecedeArguments || node.children.filterIsInstance<ArgumentNode>().isEmpty())
-        && (lastArg?.isVariadic != true || lastArg.optionsCanBreakVariadicArg)) {
-      val options = getAvailableOptions(node)
-      suggestions.addAll(options)
+      if (spec.requiresSubcommand) {
+        return suggestions
+      }
+
+      val lastArg = (node.children.lastOrNull() as? ArgumentNode)?.spec
+      if ((!node.getMergedParserDirectives().optionsMustPrecedeArguments || node.children.filterIsInstance<ArgumentNode>().isEmpty())
+          && (lastArg?.isVariadic != true || lastArg.optionsCanBreakVariadicArg)) {
+        val options = getAvailableOptions(node)
+        suggestions.addAll(options)
+      }
     }
 
     val availableArgs = getAvailableArguments(node)
@@ -119,7 +123,11 @@ internal class CommandTreeSuggestionsProvider(private val runtimeDataProvider: S
     val files = runtimeDataProvider.getFilesFromDirectory(basePath)
     return files.asSequence()
       .filter { !onlyDirectories || it.endsWith('/') }
+      // do not suggest './' and '../' directories if the user already typed some path
+      .filter { basePath == "." || (it != "./" && it != "../") }
       .map { ShellArgumentSuggestion(ShellSuggestion(names = listOf(it)), arg) }
+      // add an empty choice to be able to handle the case when the folder is chosen
+      .let { if (basePath != ".") it.plus(ShellArgumentSuggestion(ShellSuggestion(names = listOf("")), arg)) else it }
       .toList()
   }
 }
