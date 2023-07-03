@@ -149,8 +149,8 @@ class KotlinFragmentDataService : AbstractProjectDataService<KotlinFragmentData,
             ideModule.hasExternalSdkConfiguration = sourceSetNode.data.sdkName != null
             ideModule.isKpmModule = true
             ideModule.refinesFragmentIds = fragmentDataNode.data.refinesFragmentIds.toList()
-            applyCompilerArgumentsToFacet(compilerArguments, kotlinFacet, modelsProvider)
-            kotlinFacet.noVersionAutoAdvance()
+            applyCompilerArgumentsToFacetSettings(compilerArguments, kotlinFacet.configuration.settings, kotlinFacet.module, modelsProvider)
+            kotlinFacet.configuration.settings.noVersionAutoAdvance()
             return kotlinFacet
         }
     }
