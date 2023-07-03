@@ -69,10 +69,6 @@ sealed class PythonExecution {
     /** See docs for [parameters]. */
     // python -c 'print(repr(__import__("random").randbytes(16))[2:-1])'
     const val SKIP_ARGUMENT = """\xdc'S>\x02\x03%\x14\xee\xc0\xa1`\xcb\r\xf0\x95"""
-
-    @Deprecated("Temporarily kept to ease resolvation of possible merge conflicts")
-    @ScheduledForRemoval
-    const val REMOVE_ARGUMENT = SKIP_ARGUMENT
   }
 }
 
