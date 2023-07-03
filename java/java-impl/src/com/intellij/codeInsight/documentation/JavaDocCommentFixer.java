@@ -206,6 +206,7 @@ public class JavaDocCommentFixer implements DocCommentFixer {
         endOffset = i;
       }
       toDelete.add(new TextRange(startOffset, endOffset));
+      rangeMarker.dispose();
     }
 
     toDelete.sort(COMPARATOR);
