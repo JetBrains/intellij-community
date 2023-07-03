@@ -61,14 +61,22 @@ class InlayHintsProviderExtensionBean : CustomLoadingExtensionPointBean<InlayHin
   @get:XCollection(elementName = "option")
   var options: List<InlayProviderOption> = ArrayList()
 
-  @RequiredElement
   @Attribute
+    /**
+     * Bundle for name and description. If not specified, default for plugin will be used
+     */
   var bundle: String? = null
 
+  /**
+   * Name will be displayed in settings and in some other actions (e.g., to enable/disable)
+   */
   @RequiredElement
   @Attribute
   var nameKey: String? = null
 
+  /**
+   * Description, which will be seen in the settings
+   */
   @Attribute
   var descriptionKey: String? = null
 
@@ -105,10 +113,13 @@ class InlayHintsProviderExtensionBean : CustomLoadingExtensionPointBean<InlayHin
     val descriptor = pluginDescriptor
     val baseName = bundleName ?: descriptor.resourceBundleBaseName
     if (baseName == null || key == null) {
-      if (bundleName != null) {
-        LOG.warn(implementationClass)
+      val pluginBundle = DynamicBundle.getPluginBundle(pluginDescriptor)
+      if (pluginBundle == null) {
+        LOG.warn("$implementationClass doesn't specify bundle and has no default one")
+        return null
       }
-      return null
+      if (key == null) return null
+      return AbstractBundle.message(pluginBundle, key)
     }
     val resourceBundle = DynamicBundle.getResourceBundle(descriptor.classLoader, baseName)
     return AbstractBundle.message(resourceBundle, key)
