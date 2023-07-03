@@ -236,7 +236,7 @@ private suspend fun createProductProperties(productConfiguration: ProductConfigu
 
     MethodHandles.lookup()
       .findConstructor(productPropertiesClass, MethodType.methodType(Void.TYPE, Path::class.java))
-      .invoke(request.homePath) as ProductProperties
+      .invoke(if (request.platformPrefix == "Idea") getCommunityHomePath(request.homePath).communityRoot else request.homePath) as ProductProperties
   }
   return productProperties
 }
