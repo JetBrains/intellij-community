@@ -60,7 +60,7 @@ private class ProjectWindowCustomizerIconCache(private val project: Project) {
   private fun getIconRaw(): Icon {
     val recentProjectsManager = RecentProjectsManagerBase.getInstanceEx()
     val path = getProjectPath(project, recentProjectsManager)
-    return recentProjectsManager.getProjectIcon(path = path, isProjectValid = true)
+    return recentProjectsManager.getProjectIcon(path = path, isProjectValid = true, iconSize = 16)
   }
 }
 

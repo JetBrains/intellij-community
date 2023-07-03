@@ -226,6 +226,10 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     return projectIconHelper.getProjectIcon(path, isProjectValid)
   }
 
+  fun getProjectIcon(path: String, isProjectValid: Boolean, iconSize: Int): Icon {
+    return projectIconHelper.getProjectIcon(path, isProjectValid, iconSize)
+  }
+
   @Suppress("OVERRIDE_DEPRECATION")
   override fun getRecentProjectsActions(addClearListItem: Boolean): Array<AnAction> {
     return RecentProjectListActionProvider.getInstance().getActions(addClearListItem = addClearListItem).toTypedArray()
