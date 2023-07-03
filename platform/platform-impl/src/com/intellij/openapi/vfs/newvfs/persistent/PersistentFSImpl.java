@@ -94,9 +94,22 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
               : ConcurrentCollectionFactory.createConcurrentMap(10, 0.4f, JobSchedulerImpl.getCPUCoresCount(),
                                                                 HashingStrategy.caseInsensitive());
 
-    //PersistentFSImpl is an application service, and generally disposed as such, via .dispose().
-    // But to be on the safe side -- add a shutdown task also:
-    ShutDownTracker.getInstance().registerCacheShutdownTask(this::disconnect);
+    if(!app.isUnitTestMode()) {
+      //PersistentFSImpl is an application service, and generally disposed as such, via .dispose(), but to
+      // be on the safe side -- add a shutdown task also.
+      //
+      //...Such a safety net makes sense for a real application, but in tests it makes more harm than good:
+      // if a test is killed (e.g. by timeout), VFS is closed _eagerly_ by ShutDownTracker, which leads to
+      // 'Already disposed' exception afterwards, because other services are still disposing, and some of
+      // them use VFS on dispose.
+      // Such 'Already disposed' exception shadows the real reason of test failure, and it is painfully
+      // confusing and frustrating for people, and confused people blame VFS for nothing, which is painfully
+      // unfair for VFS team.
+      // Sigh.
+      // To reduce pain, suffering and frustration, I decided to abandon the safety net for tests:
+      ShutDownTracker.getInstance().registerCacheShutdownTask(this::disconnect);
+    }
+
     LowMemoryWatcher.register(this::clearIdCache, this);
 
     AsyncEventSupport.startListening();
