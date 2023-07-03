@@ -5,7 +5,6 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.util.Ranges
@@ -135,31 +134,12 @@ class GradleJvmSupportMatrix : IdeVersionedDataStorage<GradleCompatibilityState>
       return getInstance().isSupportedImpl(gradleVersion, javaVersion)
     }
 
-    @JvmStatic
-    fun isSupported(gradleVersion: GradleVersion, javaVersionString: String): Boolean {
-      val javaVersion = JavaVersion.tryParse(javaVersionString) ?: return false
-      return isSupported(gradleVersion, javaVersion)
-    }
-
     /**
      * Checks that current Idea supports integration with any Gradle which executes on Java [javaVersion].
      */
     @JvmStatic
     fun isJavaSupportedByIdea(javaVersion: JavaVersion): Boolean {
       return getInstance().isJavaSupportedByIdeaImpl(javaVersion)
-    }
-
-    @JvmStatic
-    fun isJavaSupportedByIdea(javaVersionString: String): Boolean {
-      val javaVersion = JavaVersion.tryParse(javaVersionString) ?: return false
-      return getInstance().isJavaSupportedByIdeaImpl(javaVersion)
-    }
-
-    @JvmStatic
-    fun isJavaHomeSupportedByIdea(javaHome: String): Boolean {
-      val javaSdkType = ExternalSystemJdkUtil.getJavaSdkType()
-      val javaVersionString = javaSdkType.getVersionString(javaHome) ?: return false
-      return isJavaSupportedByIdea(javaVersionString)
     }
 
     /**

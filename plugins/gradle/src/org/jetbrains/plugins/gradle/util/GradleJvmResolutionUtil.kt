@@ -11,6 +11,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.Id
+import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
@@ -40,8 +41,10 @@ fun setupGradleJvm(project: Project, projectSettings: GradleProjectSettings, gra
     else -> getGradleJvmLookupProvider(project, projectSettings)
       .newLookupBuilder()
       .withVersionFilter {
-        GradleJvmSupportMatrix.isJavaSupportedByIdea(it) &&
-        GradleJvmSupportMatrix.isSupported(gradleVersion, it)
+        val javaVersion = JavaVersion.tryParse(it)
+        javaVersion != null &&
+        GradleJvmSupportMatrix.isJavaSupportedByIdea(javaVersion) &&
+        GradleJvmSupportMatrix.isSupported(gradleVersion, javaVersion)
       }
       .withSdkType(ExternalSystemJdkUtil.getJavaSdkType())
       .withSdkHomeFilter { ExternalSystemJdkUtil.isValidJdk(it) }

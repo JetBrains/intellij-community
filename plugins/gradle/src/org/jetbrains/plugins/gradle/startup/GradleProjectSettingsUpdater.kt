@@ -19,6 +19,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.SdkListPresenter
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.lang.JavaVersion
 import org.jetbrains.plugins.gradle.GradleManager
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.service.project.GradleNotification.NOTIFICATION_GROUP
@@ -60,8 +61,10 @@ class GradleProjectSettingsUpdater : ExternalSystemSettingsListenerEx {
         .newLookupBuilder()
         .withSdkName(gradleJvm)
         .withVersionFilter {
-          GradleJvmSupportMatrix.isJavaSupportedByIdea(it) &&
-          GradleJvmSupportMatrix.isSupported(gradleVersion, it)
+          val javaVersion = JavaVersion.tryParse(it)
+          javaVersion != null &&
+          GradleJvmSupportMatrix.isJavaSupportedByIdea(javaVersion) &&
+          GradleJvmSupportMatrix.isSupported(gradleVersion, javaVersion)
         }
         .withSdkType(ExternalSystemJdkUtil.getJavaSdkType())
         .withSdkHomeFilter { ExternalSystemJdkUtil.isValidJdk(it) }
