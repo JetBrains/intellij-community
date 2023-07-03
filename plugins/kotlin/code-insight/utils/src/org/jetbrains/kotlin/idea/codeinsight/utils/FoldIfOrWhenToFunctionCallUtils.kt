@@ -64,13 +64,13 @@ object FoldIfOrWhenToFunctionCallUtils {
 
         val argumentIndex = context.targetArgumentIndex
 
-        val copiedIf = element.copy() as KtIfExpression
-        copiedIf.branches.forEach { branch ->
+        val copied = element.copy() as KtExpression
+        branches(copied).orEmpty().forEach { branch ->
             val call = branch.callExpression() ?: return
             val argument = call.valueArguments[argumentIndex].getArgumentExpression() ?: return
             call.getQualifiedExpressionForSelectorOrThis().replace(argument)
         }
-        headCall.valueArguments[argumentIndex].getArgumentExpression()?.replace(copiedIf)
+        headCall.valueArguments[argumentIndex].getArgumentExpression()?.replace(copied)
         if (hasNamedArgument) {
             headCall.valueArguments.forEachIndexed { index, arg ->
                 if (arg.getArgumentName() == null) {

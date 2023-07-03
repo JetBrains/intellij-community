@@ -1,7 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.idea.codeinsight.utils.FoldIfOrWhenToFunctionCallUtils.branches
 import org.jetbrains.kotlin.psi.KtBlockExpression
@@ -25,11 +26,14 @@ object UnfoldFunctionCallToIfOrWhenUtils {
         branches.forEach {
             val branchExpression = it.singleExpression() ?: return@forEach
             val copied = qualifiedOrCall.copy()
-            val valueArguments = when (copied) {
-                is KtCallExpression -> copied.valueArguments
-                is KtQualifiedExpression -> copied.callExpression?.valueArguments
+            val valueArgumentList = when (copied) {
+                is KtCallExpression -> copied.valueArgumentList
+                is KtQualifiedExpression -> copied.callExpression?.valueArgumentList
                 else -> null
             } ?: return@forEach
+            valueArgumentList.leftParenthesis?.nextSibling?.takeIf(::isLineBreak)?.delete()
+            valueArgumentList.rightParenthesis?.prevSibling?.takeIf(::isLineBreak)?.delete()
+            val valueArguments = valueArgumentList.arguments
             valueArguments[argumentIndex]?.getArgumentExpression()?.replace(branchExpression)
             branchExpression.replace(copied)
         }
@@ -44,4 +48,6 @@ object UnfoldFunctionCallToIfOrWhenUtils {
 
     fun KtExpression?.singleExpression(): KtExpression? =
         if (this is KtBlockExpression) this.statements.singleOrNull() else this
+
+    fun isLineBreak(element: PsiElement): Boolean = element is PsiWhiteSpace && element.textContains('\n')
 }

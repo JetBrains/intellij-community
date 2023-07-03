@@ -3,13 +3,9 @@
 // AFTER-WARNING: Parameter 'z' is never used
 fun test(b: Boolean) {
     if (b) {
-        println(
-            1, 2, 3
-        )
+        println(1, 2, 3)
     } else {
-        println(
-            1, 4, 3
-        )
+        println(1, 4, 3)
     }
 }
 

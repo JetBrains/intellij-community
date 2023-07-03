@@ -705,6 +705,24 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
                 runTest("../testData/intentions/folding/ifToFunctionCall/simple.kt");
             }
         }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/intentions/folding/whenToFunctionCall")
+        public static class WhenToFunctionCall extends AbstractSharedK1IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("../testData/intentions/folding/whenToFunctionCall/simple.kt");
+            }
+
+            @TestMetadata("simple2.kt")
+            public void testSimple2() throws Exception {
+                runTest("../testData/intentions/folding/whenToFunctionCall/simple2.kt");
+            }
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -2106,6 +2124,24 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
             @TestMetadata("simple.kt")
             public void testSimple() throws Exception {
                 runTest("../testData/intentions/unfolding/functionCallToIf/simple.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/intentions/unfolding/functionCallToWhen")
+        public static class FunctionCallToWhen extends AbstractSharedK1IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("../testData/intentions/unfolding/functionCallToWhen/simple.kt");
+            }
+
+            @TestMetadata("simple2.kt")
+            public void testSimple2() throws Exception {
+                runTest("../testData/intentions/unfolding/functionCallToWhen/simple2.kt");
             }
         }
     }
