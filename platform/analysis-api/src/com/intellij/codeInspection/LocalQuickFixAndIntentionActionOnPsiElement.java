@@ -120,7 +120,7 @@ public abstract class LocalQuickFixAndIntentionActionOnPsiElement extends LocalQ
                          @NotNull PsiElement endElement) {
         ModCommandAction.ActionContext context = ModCommandAction.ActionContext.from(editor, file).withElement(startElement);
         ModCommand command = action.perform(context);
-        ModCommandService.getInstance().executeInteractively(context, command);
+        ModCommandService.getInstance().executeInteractively(context, command, editor);
       }
 
       @Override

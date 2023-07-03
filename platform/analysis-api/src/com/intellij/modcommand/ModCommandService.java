@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.modcommand.ModCommandAction.ActionContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,9 +52,10 @@ public interface ModCommandService {
    *
    * @param context current context
    * @param command a command to execute
+   * @param editor context editor, if known
    */
   @RequiresEdt
-  void executeInteractively(@NotNull ActionContext context, @NotNull ModCommand command);
+  void executeInteractively(@NotNull ActionContext context, @NotNull ModCommand command, @Nullable Editor editor);
 
   /**
    * Executes given {@link ModCommand} in batch (applies default options, do not navigate)

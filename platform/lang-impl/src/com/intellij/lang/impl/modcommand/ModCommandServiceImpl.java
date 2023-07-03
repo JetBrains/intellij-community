@@ -86,9 +86,9 @@ public class ModCommandServiceImpl implements ModCommandService {
 
   @RequiresEdt
   @Override
-  public void executeInteractively(@NotNull ActionContext context, @NotNull ModCommand command) {
+  public void executeInteractively(@NotNull ActionContext context, @NotNull ModCommand command, @Nullable Editor editor) {
     if (!ensureWritable(context.project(), command)) return;
-    doExecute(context, command, true);
+    doExecute(context, command, editor, true);
   }
 
   private static boolean ensureWritable(@NotNull Project project, @NotNull ModCommand command) {
@@ -99,16 +99,16 @@ public class ModCommandServiceImpl implements ModCommandService {
   @Override
   public void executeInBatch(@NotNull ActionContext context, @NotNull ModCommand command) {
     if (!ensureWritable(context.project(), command)) return;
-    doExecute(context, command, false);
+    doExecute(context, command, null, false);
   }
 
-  private boolean doExecute(@NotNull ActionContext context, @NotNull ModCommand command, boolean onTheFly) {
+  private boolean doExecute(@NotNull ActionContext context, @NotNull ModCommand command, @Nullable Editor editor, boolean onTheFly) {
     Project project = context.project();
     if (command instanceof ModUpdateFileText upd) {
       return executeUpdate(project, upd);
     }
     if (command instanceof ModCompositeCommand cmp) {
-      return executeComposite(context, cmp, onTheFly);
+      return executeComposite(context, cmp, editor, onTheFly);
     }
     if (command instanceof ModNavigate nav) {
       if (!onTheFly) return true;
@@ -122,7 +122,7 @@ public class ModCommandServiceImpl implements ModCommandService {
       return true;
     }
     if (command instanceof ModChooseAction chooser) {
-      return executeChoose(context, chooser, onTheFly);
+      return executeChoose(context, chooser, onTheFly, editor);
     }
     if (command instanceof ModDisplayMessage message) {
       if (!onTheFly) return true; // TODO: gather all errors and display them together?
@@ -266,7 +266,7 @@ public class ModCommandServiceImpl implements ModCommandService {
     return true;
   }
 
-  private boolean executeChoose(@NotNull ActionContext context, ModChooseAction chooser, boolean onTheFly) {
+  private boolean executeChoose(@NotNull ActionContext context, ModChooseAction chooser, boolean onTheFly, @Nullable Editor editor) {
     record ActionAndPresentation(@NotNull ModCommandAction action, @NotNull ModCommandAction.Presentation presentation) {}
     List<ActionAndPresentation> actions = StreamEx.of(chooser.actions()).mapToEntry(action -> action.getPresentation(context))
       .nonNullValues().mapKeyValue(ActionAndPresentation::new).toList();
@@ -275,7 +275,7 @@ public class ModCommandServiceImpl implements ModCommandService {
     String name = CommandProcessor.getInstance().getCurrentCommandName();
     if (actions.size() == 1 || !onTheFly) {
       ModCommandAction action = actions.get(0).action();
-      executeNextStep(context, name, onTheFly, () -> {
+      executeNextStep(context, name, editor, onTheFly, () -> {
         if (action.getPresentation(context) == null) return null;
         return action.perform(context);
       });
@@ -283,14 +283,14 @@ public class ModCommandServiceImpl implements ModCommandService {
     }
     VirtualFile file = context.file().getVirtualFile();
     if (file == null) return false;
-    Editor editor = getEditor(context.project(), file);
+    Editor finalEditor = editor == null ? getEditor(context.project(), file) : editor;
     if (editor == null) return false;
     ShowIntentionsPass.IntentionsInfo info = new ShowIntentionsPass.IntentionsInfo();
     List<HighlightInfo.IntentionActionDescriptor> descriptors = ContainerUtil.map(
       actions, (actionAndPresentation) -> {
         ModCommandAction.Presentation presentation = actionAndPresentation.presentation();
         IntentionAction intention = actionAndPresentation.action().asIntention();
-        intention.isAvailable(context.project(), editor, context.file()); // cache text
+        intention.isAvailable(context.project(), finalEditor, context.file()); // cache text
         return new HighlightInfo.IntentionActionDescriptor(intention, List.of(), presentation.name(), presentation.icon(), null, null, null);
       });
     info.intentionsToShow.addAll(descriptors);
@@ -300,15 +300,15 @@ public class ModCommandServiceImpl implements ModCommandService {
     return true;
   }
 
-  private void executeNextStep(@NotNull ActionContext context, @Nullable @NlsContexts.Command String name, boolean onTheFly,
+  private void executeNextStep(@NotNull ActionContext context, @Nullable @NlsContexts.Command String name, @Nullable Editor editor, boolean onTheFly,
                                Callable<? extends ModCommand> supplier) {
     ReadAction.nonBlocking(supplier)
       .finishOnUiThread(ModalityState.defaultModalityState(), next -> {
         if (next == null) return;
         if (name != null) {
-          CommandProcessor.getInstance().executeCommand(context.project(), () -> doExecute(context, next, true), name, onTheFly);
+          CommandProcessor.getInstance().executeCommand(context.project(), () -> doExecute(context, next, editor, true), name, onTheFly);
         } else {
-          doExecute(context, next, onTheFly);
+          doExecute(context, next, editor, onTheFly);
         }
       })
       .submit(AppExecutorUtil.getAppExecutorService());
@@ -355,9 +355,9 @@ public class ModCommandServiceImpl implements ModCommandService {
     return FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file), true);
   }
 
-  private boolean executeComposite(@NotNull ActionContext context, ModCompositeCommand cmp, boolean onTheFly) {
+  private boolean executeComposite(@NotNull ActionContext context, ModCompositeCommand cmp, @Nullable Editor editor, boolean onTheFly) {
     for (ModCommand command : cmp.commands()) {
-      boolean status = doExecute(context, command, onTheFly);
+      boolean status = doExecute(context, command, editor, onTheFly);
       if (!status) {
         return false;
       }
