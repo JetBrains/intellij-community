@@ -20,6 +20,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.PsiTestUtil
@@ -70,6 +71,21 @@ class CopyReferenceActionFilesTest {
       assertEquals("dir", CopyReferenceAction.elementToFqn(psiManager.findDirectory(dir)))
       assertEquals("dir_subfile.txt", CopyReferenceAction.elementToFqn(psiManager.findFile(dirSubFile)))
       assertEquals("file.txt", CopyReferenceAction.elementToFqn(psiManager.findFile(file)))
+    }
+  }
+  
+  @Test
+  fun `reference to file under non-java source root must include path from content root`() = runBlocking {
+    lateinit var file: VirtualFile
+    writeAction {
+      module.setModuleType(ModuleTypeId.WEB_MODULE)
+      val sourceRoot = rootDir.createChildDirectory(this, "src")
+      PsiTestUtil.addContentRoot(module, rootDir)
+      PsiTestUtil.addSourceRoot(module, sourceRoot)
+      file = sourceRoot.createChildData(this, "file.txt")
+    }
+    readAction {
+      assertEquals("src/file.txt", CopyReferenceAction.elementToFqn(psiManager.findFile(file)))
     }
   }
 
