@@ -52,11 +52,10 @@ import kotlin.io.path.name
 
 private val LOG = logger<UpdateIdeFromSourcesAction>()
 
-fun updateFromSources(project: Project, beforeRestart: () -> Unit, error: (@DialogMessage String) -> Unit) {
+fun updateFromSources(project: Project, beforeRestart: () -> Unit, error: (@DialogMessage String) -> Unit, restartAutomatically: Boolean) {
   val state = UpdateFromSourcesSettings.getState()
   val devIdeaHome = project.basePath ?: return
   val workIdeHome = state.actualIdePath
-  val restartAutomatically = state.restartAutomatically
   if (!ApplicationManager.getApplication().isRestartCapable && FileUtil.pathsEqual(workIdeHome, PathManager.getHomePath())) {
     return error(DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.ide.cannot.restart"))
   }

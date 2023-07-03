@@ -23,7 +23,7 @@ class UpdateFromSourcesStep: SmartUpdateStep {
       onSuccess()
       return
     }
-    updateFromSources(project, ::beforeRestart) { Notification("Update from Sources", it, NotificationType.ERROR) }
+    updateFromSources(project, ::beforeRestart, { Notification("Update from Sources", it, NotificationType.ERROR) }, true)
   }
 
   override fun isAvailable(project: Project) = ExternalUpdateManager.ACTUAL == null && PsiUtil.isIdeaProject(project)
