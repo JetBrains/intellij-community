@@ -233,7 +233,7 @@ final class AdaptExpressionTypeFixUtil {
       info.registerFix(action3, null, null, null, null);
       IntentionAction action2 = QUICK_FIX_FACTORY.createWrapWithOptionalFix(expectedType, expression);
       info.registerFix(action2, null, null, null, null);
-      IntentionAction action1 = new WrapExpressionFix(expectedType, expression, role);
+      var action1 = new WrapExpressionFix(expectedType, expression, role);
       info.registerFix(action1, null, null, null, null);
       PsiType castToType = suggestCastTo(expectedType, actualType);
       if (castToType != null) {

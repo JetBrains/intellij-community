@@ -1001,7 +1001,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createWrapSwitchRuleStatementsIntoBlockFix(@NotNull PsiSwitchLabeledRuleStatement rule) {
-    return new WrapSwitchRuleStatementsIntoBlockFix(rule);
+    return new WrapSwitchRuleStatementsIntoBlockFix(rule).asIntention();
   }
 
   @NotNull
@@ -1192,7 +1192,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @Override
   public @NotNull IntentionAction createSplitSwitchBranchWithSeveralCaseValuesAction() {
-    return new SplitSwitchBranchWithSeveralCaseValuesAction();
+    return new SplitSwitchBranchWithSeveralCaseValuesAction().asIntention();
   }
 
   @Override
