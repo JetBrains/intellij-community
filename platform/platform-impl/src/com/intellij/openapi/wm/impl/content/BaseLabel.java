@@ -136,7 +136,11 @@ public class BaseLabel extends JLabel {
           setIcon(icon);
         }
         else {
-          setIcon(icon != null ? new WatermarkIcon(icon, .5f) : null);
+          var userValueIsTransparent = content.getUserData(ToolWindowContentUi.NOT_SELECTED_TAB_ICON_TRANSPARENT);
+          var isTransparent = userValueIsTransparent != null ? userValueIsTransparent : true;
+
+          var labelIcon = icon != null ? (isTransparent ? new WatermarkIcon(icon, .5f) : icon) : null;
+          setIcon(labelIcon);
         }
       }
       else {
