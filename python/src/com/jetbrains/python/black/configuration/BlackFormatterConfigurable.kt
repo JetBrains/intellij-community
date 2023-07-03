@@ -117,7 +117,7 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
         .align(AlignX.FILL)
       bottomGap(BottomGap.SMALL)
     }
-    sdkSelectionRow = row(PyBundle.message("black.sdk.selection.combobox.label")) {
+    sdkSelectionRow = row(PyBundle.message("black.interpreter.selection.combobox.label")) {
       layout(RowLayout.LABEL_ALIGNED)
       cell(sdkSelectionComboBox)
         .resizableColumn()
