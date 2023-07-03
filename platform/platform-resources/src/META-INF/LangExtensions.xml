@@ -211,6 +211,10 @@
                         serviceImplementation="com.intellij.find.impl.LangFindSettingsImpl"/>
     <projectService serviceInterface="com.intellij.find.FindInProjectSettings"
                     serviceImplementation="com.intellij.find.impl.FindInProjectRecents"/>
+
+    <projectService serviceInterface="com.intellij.ide.util.FileStructurePopupLoadingStateUpdater"
+                    serviceImplementation="com.intellij.ide.util.FileStructureLoadingStateUpdaterImpl"/>
+
     <pathMacroFilter implementation="com.intellij.find.impl.FindInProjectSettingsBase$FindInProjectPathMacroFilter"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable"

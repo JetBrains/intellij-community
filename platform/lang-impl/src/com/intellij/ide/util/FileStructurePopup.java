@@ -287,7 +287,9 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
       .setCancelKeyEnabled(false)
       .setDimensionServiceKey(myProject, getDimensionServiceKey(), true)
       .setCancelCallback(() -> {
-        myProject.getMessageBus().syncPublisher(FileStructurePopupListener.TOPIC).stateChanged(false);
+        FileStructurePopupListener listener = myProject.getMessageBus().syncPublisher(FileStructurePopupListener.TOPIC);
+        listener.stateChanged(false);
+        listener.isLoading(false);
         return myCanClose;
       })
       .setAdvertiser(new SpeedSearchAdvertiser().addSpeedSearchAdvertisement())
@@ -295,6 +297,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     Disposer.register(myPopup, this);
     myTree.getEmptyText().setText(CommonBundle.getLoadingTreeNodeText());
+    myProject.getMessageBus().syncPublisher(FileStructurePopupListener.TOPIC).isLoading(true);
     myPopup.showCenteredInCurrentWindow(myProject);
 
     ((AbstractPopup)myPopup).setShowHints(true);
@@ -303,12 +306,13 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     return rebuildAndSelect(false, myInitialElement, null).onProcessed(path -> UIUtil.invokeLaterIfNeeded(() -> {
       TreeUtil.ensureSelection(myTree);
-      installUpdater();
+      myProject.getService(FileStructurePopupLoadingStateUpdater.class).installUpdater(this::installUpdater, myProject, myTreeModel);
       showTime = System.nanoTime();
     }));
   }
 
-  private void installUpdater() {
+
+  private void installUpdater(final int delayMillis) {
     if (ApplicationManager.getApplication().isUnitTestMode() || myPopup.isDisposed()) {
       return;
     }
@@ -348,10 +352,10 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
           }));
         }
         if (!alarm.isDisposed()) {
-          alarm.addRequest(this, 300);
+          alarm.addRequest(this, delayMillis);
         }
       }
-    }, 300);
+    }, delayMillis);
   }
 
   private boolean handleBackspace(String filter) {
