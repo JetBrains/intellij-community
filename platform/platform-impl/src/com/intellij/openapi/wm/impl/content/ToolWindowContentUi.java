@@ -69,6 +69,8 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   public static final DataKey<BaseLabel> SELECTED_CONTENT_TAB_LABEL = DataKey.create("SELECTED_CONTENT_TAB_LABEL");
   @ApiStatus.Internal public static final Key<Boolean> SHOW_BETA_LABEL = Key.create("ShowBetaLabel");
 
+  @ApiStatus.Internal public static final Key<Boolean> NOT_SELECTED_TAB_ICON_TRANSPARENT = Key.create("NotSelectedIconTransparent");
+
   private final @NotNull ContentManager contentManager;
   int dropOverIndex = -1;
   int dropOverWidth = 0;
