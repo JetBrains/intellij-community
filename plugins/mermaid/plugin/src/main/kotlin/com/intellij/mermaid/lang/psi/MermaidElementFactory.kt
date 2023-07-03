@@ -79,6 +79,16 @@ class MermaidElementFactory {
       return file.firstChild
     }
 
+    fun createMarkdownValue(project: Project, value: String): MermaidMarkdownValue? {
+      val text = """
+        flowchart
+          markdown["`$value`"]
+      """.trimIndent()
+      val file = createFile(project, text)
+
+      return file.findElementAt("flowchart\n  markdown[\"`".length)?.parent as? MermaidMarkdownValue
+    }
+
     private fun createFile(project: Project?, text: String): MermaidFile {
       val name = "dummy.mermaid"
       return PsiFileFactory.getInstance(project).createFileFromText(name, MermaidLanguage, text) as MermaidFile

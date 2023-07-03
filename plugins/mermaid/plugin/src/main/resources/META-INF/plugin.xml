@@ -119,6 +119,11 @@
     <registryKey key="mermaid.export.diagram.action.enable"
                  defaultValue="false"
                  description="Controls availability of experimental Export Diagram action"/>
+
+    <languageInjectionContributor implementationClass="com.intellij.mermaid.lang.injection.MarkdownInjector" language="Mermaid"/>
+    <lang.elementManipulator forClass="com.intellij.mermaid.lang.psi.MermaidLanguageInjectionHost"
+                             implementationClass="com.intellij.mermaid.lang.psi.MarkdownElementManipulator"/>
+
   </extensions>
   <actions>
     <action id="Mermaid.ExportDiagram"
