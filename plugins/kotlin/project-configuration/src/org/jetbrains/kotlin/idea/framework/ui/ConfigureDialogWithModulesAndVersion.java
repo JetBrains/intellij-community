@@ -104,11 +104,11 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper {
         chooseModulePanel = new ChooseModulePanel(project, configurator, excludeModules);
         chooseModulesPanelPlace.add(chooseModulePanel.getContentPane(), BorderLayout.CENTER);
 
-        Pair<Map<String, List<String>>, Map<String, String>> pair =
+        var jvmTargets =
                 getModulesTargetingUnsupportedJvmAndTargetsForAllModules(chooseModulePanel.getModules(),
                                                                          IdeKotlinVersion.get(DEFAULT_KOTLIN_VERSION));
-        jvmModulesTargetingUnsupportedJvm = pair.getFirst();
-        modulesAndJvmTargets = pair.getSecond();
+        jvmModulesTargetingUnsupportedJvm = jvmTargets.getFirst();
+        modulesAndJvmTargets = jvmTargets.getSecond();
 
         showUnsupportedJvmTargetWarning();
         updateComponents();
@@ -118,8 +118,6 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper {
     private static final String DELIMITER = ", ";
 
     private void showUnsupportedJvmTargetWarning() {
-        //warningsSplitter.setEnabled(true);
-        //warningsSplitter.setVisible(true);
         if (!jvmModulesTargetingUnsupportedJvm.isEmpty()) {
             final StringBuilder message = new StringBuilder();
             message.append(KotlinProjectConfigurationBundle.message("configurator.kotlin.jvm.targets.unsupported", "1.8"));
