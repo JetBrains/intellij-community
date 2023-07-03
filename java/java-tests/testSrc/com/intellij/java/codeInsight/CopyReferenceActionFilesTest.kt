@@ -21,135 +21,120 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.psi.PsiManager
 import com.intellij.testFramework.PsiTestUtil
-import groovy.transform.CompileStatic
+import junit.framework.TestCase
 
-@CompileStatic
-class CopyReferenceActionFilesTest extends JavaCodeInsightTestCase {
-  VirtualFile additionalRoot
-
-  @Override
-  protected void setUp() throws Exception {
+internal class CopyReferenceActionFilesTest : JavaCodeInsightTestCase() {
+  lateinit var additionalRoot: VirtualFile
+  @Throws(Exception::class)
+  override fun setUp() {
     super.setUp()
-    getModule().setModuleType(JavaModuleType.getModuleType().getId())
-    ApplicationManager.application.runWriteAction(new Runnable() {
-      @Override
-      void run() {
-        additionalRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///").createChildDirectory(this, "newRoot")
+    module.setModuleType(JavaModuleType.getModuleType().id)
+    ApplicationManager.getApplication().runWriteAction(object : Runnable {
+      override fun run() {
+        additionalRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///")!!.createChildDirectory(this, "newRoot")
       }
     })
   }
 
-  @Override
-  protected void tearDown() throws Exception {
+  @Throws(Exception::class)
+  override fun tearDown() {
     try {
-      ApplicationManager.application.runWriteAction(new Runnable() {
-        @Override
-        void run() {
-          additionalRoot.delete(this)
-        }
-      })
+      ApplicationManager.getApplication().runWriteAction(
+        Runnable { additionalRoot.delete(this) })
     }
     finally {
       super.tearDown()
     }
   }
 
-  void testCopyFile_RegisteredAsSourceRoots_ShouldContainItsName() throws Exception {
+  @Throws(Exception::class)
+  fun testCopyFile_RegisteredAsSourceRoots_ShouldContainItsName() {
     // CPP-4315 "Edit | Copy Reference" result doesn't contain the file name
-    
-    VirtualFile dir
-    VirtualFile dir_subfile
-    VirtualFile file
-
-    ApplicationManager.application.runWriteAction(new Runnable() {
-      @Override
-      void run() {
+    lateinit var dir: VirtualFile
+    lateinit var dir_subfile: VirtualFile
+    lateinit var file: VirtualFile
+    ApplicationManager.getApplication().runWriteAction(object : Runnable {
+      override fun run() {
         dir = additionalRoot.createChildDirectory(this, "dir")
         dir_subfile = dir.createChildData(this, "dir_subfile.txt")
         file = additionalRoot.createChildData(this, "file.txt")
-
         PsiTestUtil.addContentRoot(getModule(), additionalRoot)
         PsiTestUtil.addSourceRoot(getModule(), dir)
         PsiTestUtil.addSourceRoot(getModule(), file)
       }
     })
-
-    assertEquals("dir", CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findDirectory(dir)))
-    assertEquals("dir_subfile.txt", CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findFile(dir_subfile)))
-    assertEquals("file.txt", CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findFile(file)))
+    TestCase.assertEquals("dir", CopyReferenceAction.elementToFqn(com.intellij.psi.PsiManager.getInstance(project).findDirectory(dir)))
+    TestCase.assertEquals("dir_subfile.txt",
+                          CopyReferenceAction.elementToFqn(com.intellij.psi.PsiManager.getInstance(project).findFile(dir_subfile)))
+    TestCase.assertEquals("file.txt", CopyReferenceAction.elementToFqn(com.intellij.psi.PsiManager.getInstance(project).findFile(file)))
   }
 
-  void testCopyFile_RegisteredAsContentRoot_ShouldContainItsFullPath() throws Exception {
+  @Throws(Exception::class)
+  fun testCopyFile_RegisteredAsContentRoot_ShouldContainItsFullPath() {
     // IDEA-144300 Copy Reference for source folder/content root copies empty string
-    
-    VirtualFile dir
-    VirtualFile dir_subfile
-    VirtualFile file
-
-    ApplicationManager.application.runWriteAction(new Runnable() {
-      @Override
-      void run() {
+    lateinit var dir: VirtualFile
+    lateinit var dir_subfile: VirtualFile
+    lateinit var file: VirtualFile
+    ApplicationManager.getApplication().runWriteAction(object : Runnable {
+      override fun run() {
         dir = additionalRoot.createChildDirectory(this, "dir")
         dir_subfile = dir.createChildData(this, "dir_subfile.txt")
         file = additionalRoot.createChildData(this, "file.txt")
-
         PsiTestUtil.addContentRoot(getModule(), dir)
         PsiTestUtil.addContentRoot(getModule(), file)
       }
     })
-
-    assertEquals(dir.getPath(), CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findDirectory(dir)))
-    assertEquals("dir_subfile.txt", CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findFile(dir_subfile)))
-    assertEquals(file.getPath(), CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findFile(file)))
+    TestCase.assertEquals(dir.getPath(),
+                          CopyReferenceAction.elementToFqn(com.intellij.psi.PsiManager.getInstance(project).findDirectory(dir)))
+    TestCase.assertEquals("dir_subfile.txt",
+                          CopyReferenceAction.elementToFqn(com.intellij.psi.PsiManager.getInstance(project).findFile(dir_subfile)))
+    TestCase.assertEquals(file.getPath(), CopyReferenceAction.elementToFqn(com.intellij.psi.PsiManager.getInstance(project).findFile(file)))
   }
 
-  void testCopyFile_RegisteredAsNestedContentRoot_ShouldContainPathFromOuterMostRoot() throws Exception {
+  @Throws(Exception::class)
+  fun testCopyFile_RegisteredAsNestedContentRoot_ShouldContainPathFromOuterMostRoot() {
     // IDEA-144300 Copy Reference for source folder/content root copies empty string
-    
-    VirtualFile dir
-    VirtualFile dir_dir
-    VirtualFile dir_dir_file
-
-    ApplicationManager.application.runWriteAction(new Runnable() {
-      @Override
-      void run() {
+    lateinit var dir: VirtualFile
+    lateinit var dir_dir: VirtualFile
+    lateinit var dir_dir_file: VirtualFile
+    ApplicationManager.getApplication().runWriteAction(object : Runnable {
+      override fun run() {
         dir = additionalRoot.createChildDirectory(this, "dir")
         dir_dir = dir.createChildDirectory(this, "dir_dir")
         dir_dir_file = dir_dir.createChildData(this, "file.txt")
-
         PsiTestUtil.addContentRoot(getModule(), dir)
         PsiTestUtil.addContentRoot(getModule(), dir_dir)
       }
     })
-
-    assertEquals(dir.getPath(), CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findDirectory(dir)))
-    assertEquals("dir_dir", CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findDirectory(dir_dir)))
-    assertEquals("dir_dir/file.txt", CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findFile(dir_dir_file)))
+    TestCase.assertEquals(dir.getPath(),
+                          CopyReferenceAction.elementToFqn(com.intellij.psi.PsiManager.getInstance(project).findDirectory(dir)))
+    TestCase.assertEquals("dir_dir",
+                          CopyReferenceAction.elementToFqn(com.intellij.psi.PsiManager.getInstance(project).findDirectory(dir_dir)))
+    TestCase.assertEquals("dir_dir/file.txt",
+                          CopyReferenceAction.elementToFqn(com.intellij.psi.PsiManager.getInstance(project).findFile(dir_dir_file)))
   }
 
-  void testCopyFile_UnderExcludeRoot_ShouldContainPathFromTheCorrespondingContentRoot() throws Exception {
+  @Throws(Exception::class)
+  fun testCopyFile_UnderExcludeRoot_ShouldContainPathFromTheCorrespondingContentRoot() {
     // IDEA-144316 Copy Reference should work for excluded subfolders same way as it works for regular project subdirs
-    
-    VirtualFile dir
-    VirtualFile dir_dir
-    VirtualFile dir_dir_file
-
-    ApplicationManager.application.runWriteAction(new Runnable() {
-      @Override
-      void run() {
+    lateinit var dir: VirtualFile
+    lateinit var dir_dir: VirtualFile
+    lateinit var dir_dir_file: VirtualFile
+    ApplicationManager.getApplication().runWriteAction(object : Runnable {
+      override fun run() {
         dir = additionalRoot.createChildDirectory(this, "dir")
         dir_dir = dir.createChildDirectory(this, "dir_dir")
         dir_dir_file = dir_dir.createChildData(this, "file.txt")
-
         PsiTestUtil.addContentRoot(getModule(), dir)
         PsiTestUtil.addExcludedRoot(getModule(), dir_dir)
       }
     })
-
-    assertEquals(dir.getPath(), CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findDirectory(dir)))
-    assertEquals("dir_dir", CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findDirectory(dir_dir)))
-    assertEquals("dir_dir/file.txt", CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findFile(dir_dir_file)))
+    TestCase.assertEquals(dir.getPath(),
+                          CopyReferenceAction.elementToFqn(com.intellij.psi.PsiManager.getInstance(project).findDirectory(dir)))
+    TestCase.assertEquals("dir_dir",
+                          CopyReferenceAction.elementToFqn(com.intellij.psi.PsiManager.getInstance(project).findDirectory(dir_dir)))
+    TestCase.assertEquals("dir_dir/file.txt",
+                          CopyReferenceAction.elementToFqn(com.intellij.psi.PsiManager.getInstance(project).findFile(dir_dir_file)))
   }
 }
