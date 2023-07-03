@@ -29,16 +29,19 @@ public class UnsupportedChronoFieldUnitCallInspection extends AbstractBaseJavaLo
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
-        PsiMethod method = call.resolveMethod();
-        if (method == null) return;
-        String methodName = method.getName();
+        String methodName = call.getMethodExpression().getReferenceName();
         if (!"get".equals(methodName) && !"getLong".equals(methodName) && !"with".equals(methodName) &&
             !"plus".equals(methodName) && !"minus".equals(methodName)) {
           return;
         }
+
         if (!myMatcher.test(call)) {
           return;
         }
+
+        PsiMethod method = call.resolveMethod();
+        if (method == null) return;
+
         int fieldArgumentIndex = 1;
         if ("get".equals(methodName) || "getLong".equals(methodName) || "with".equals(methodName)) {
           fieldArgumentIndex = 0;
