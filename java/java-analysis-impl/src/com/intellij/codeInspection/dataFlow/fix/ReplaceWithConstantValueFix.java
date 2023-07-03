@@ -1,30 +1,57 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.fix;
 
+import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.codeInspection.ModCommands;
+import com.intellij.java.JavaBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ModChooseAction;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.refactoring.extractMethod.ExtractMethodUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThreeState;
+import com.siyeh.ig.psiutils.CodeBlockSurrounder;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.SideEffectChecker;
+import com.siyeh.ig.psiutils.StatementExtractor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class ReplaceWithConstantValueFix extends PsiUpdateModCommandQuickFix {
-  private final String myPresentableName;
-  private final String myReplacementText;
+import java.util.List;
+import java.util.Objects;
 
-  public ReplaceWithConstantValueFix(String presentableName, String replacementText) {
+public class ReplaceWithConstantValueFix extends PsiBasedModCommandAction<PsiExpression> {
+  private final @NotNull String myPresentableName;
+  private final @NotNull String myReplacementText;
+  private final @NotNull ThreeState myExtractSideEffects;
+
+  public ReplaceWithConstantValueFix(@NotNull PsiExpression expression, @NotNull String presentableName, @NotNull String replacementText) {
+    super(expression);
     myPresentableName = presentableName;
     myReplacementText = replacementText;
+    myExtractSideEffects = ThreeState.UNSURE;
   }
 
-  @NotNull
+  private ReplaceWithConstantValueFix(@NotNull PsiExpression expression,
+                                      @NotNull String presentableName,
+                                      @NotNull String replacementText,
+                                      boolean extractSideEffects) {
+    super(expression);
+    myPresentableName = presentableName;
+    myReplacementText = replacementText;
+    myExtractSideEffects = ThreeState.fromBoolean(extractSideEffects);
+  }
+
   @Override
-  public String getName() {
-    return CommonQuickFixBundle.message("fix.replace.with.x", myPresentableName);
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiExpression element) {
+    return switch (myExtractSideEffects) {
+      case YES -> Presentation.of(JavaBundle.message("intention.family.name.extract.possible.side.effects"));
+      case NO -> Presentation.of(JavaBundle.message("intention.family.name.delete.possible.side.effects"));
+      case UNSURE -> Presentation.of(CommonQuickFixBundle.message("fix.replace.with.x", myPresentableName));
+    };
   }
 
   @NotNull
@@ -34,11 +61,36 @@ public class ReplaceWithConstantValueFix extends PsiUpdateModCommandQuickFix {
   }
 
   @Override
-  protected void applyFix(@NotNull Project project, @NotNull PsiElement problemElement, @NotNull ModPsiUpdater updater) {
-    PsiMethodCallExpression call = problemElement.getParent() instanceof PsiExpressionList &&
-                                   problemElement.getParent().getParent() instanceof PsiMethodCallExpression ?
-                                   (PsiMethodCallExpression)problemElement.getParent().getParent() :
-                                   null;
+  protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiExpression expression) {
+    List<PsiExpression> sideEffects =
+      myExtractSideEffects == ThreeState.NO ? List.of() : SideEffectChecker.extractSideEffectExpressions(expression);
+    CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(expression);
+    if (surrounder == null) {
+      sideEffects = List.of();
+    }
+    if (sideEffects.isEmpty()) {
+      return ModCommands.psiUpdate(expression, expr -> applyFix(expr, PsiStatement.EMPTY_ARRAY));
+    }
+    if (myExtractSideEffects == ThreeState.UNSURE) {
+      return new ModChooseAction(JavaAnalysisBundle.message("replace.with.constant.value.title"),
+                                 List.of(
+                                   new ReplaceWithConstantValueFix(expression, myPresentableName, myReplacementText, true),
+                                   new ReplaceWithConstantValueFix(expression, myPresentableName, myReplacementText, false)
+                                 ));
+    }
+    PsiStatement[] statements = StatementExtractor.generateStatements(sideEffects, expression);
+    return ModCommands.psiUpdate(expression, (expr, updater) -> applyFix(expr, statements));
+  }
+  
+  private void applyFix(@NotNull PsiExpression expression, @NotNull PsiStatement @NotNull [] sideEffects) {
+    if (sideEffects.length > 0) {
+      CodeBlockSurrounder surrounder = Objects.requireNonNull(CodeBlockSurrounder.forExpression(expression));
+      CodeBlockSurrounder.SurroundResult result = surrounder.surround();
+      expression = result.getExpression();
+      BlockUtils.addBefore(result.getAnchor(), sideEffects);
+    }
+    PsiMethodCallExpression call = expression.getParent() instanceof PsiExpressionList list &&
+                                   list.getParent() instanceof PsiMethodCallExpression grandParent ? grandParent : null;
     PsiMethod targetMethod = null;
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     if (call != null) {
@@ -47,7 +99,7 @@ public class ReplaceWithConstantValueFix extends PsiUpdateModCommandQuickFix {
       targetMethod = ObjectUtils.tryCast(result.getElement(), PsiMethod.class);
     }
 
-    new CommentTracker().replaceAndRestoreComments(problemElement, myReplacementText);
+    new CommentTracker().replaceAndRestoreComments(expression, myReplacementText);
 
     if (targetMethod != null) {
       ExtractMethodUtil.addCastsToEnsureResolveTarget(targetMethod, substitutor, call);

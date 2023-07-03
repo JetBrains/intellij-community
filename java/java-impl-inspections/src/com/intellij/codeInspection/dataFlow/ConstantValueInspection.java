@@ -203,7 +203,7 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
     if (constant.value() instanceof Boolean) {
       fixes.add(createSimplifyBooleanExpressionFix(ref, (Boolean)constant.value()));
     } else {
-      fixes.add(new ReplaceWithConstantValueFix(presentableName, presentableName));
+      fixes.add(new ReplaceWithConstantValueFix(ref, presentableName, presentableName).asQuickFix());
     }
     Object value = constant.value();
     boolean isAssertion = isAssertionEffectively(ref, constant);
