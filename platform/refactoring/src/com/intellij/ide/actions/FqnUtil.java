@@ -10,7 +10,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -18,7 +17,6 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,14 +65,6 @@ public class FqnUtil {
       String qualifiedName = provider.getQualifiedName(project, virtualFile);
       if (qualifiedName != null) {
         return qualifiedName;
-      }
-    }
-
-    VirtualFile root = WorkspaceFileIndex.getInstance(project).getContentFileSetRoot(virtualFile, false);
-    if (root != null) {
-      String relativePath = VfsUtilCore.getRelativePath(virtualFile, root);
-      if (Strings.isNotEmpty(relativePath)) {
-        return relativePath;
       }
     }
 
