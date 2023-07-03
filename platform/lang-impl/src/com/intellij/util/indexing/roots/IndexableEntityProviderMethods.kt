@@ -9,20 +9,20 @@ import com.intellij.openapi.roots.SyntheticLibrary
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.indexing.IndexableFilesIndex
-import com.intellij.util.indexing.IndexableSetContributor
-import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
-import com.intellij.util.indexing.roots.origin.IndexingSourceRootHolder
-import com.intellij.util.indexing.roots.origin.IndexingRootHolder
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.platform.backend.workspace.virtualFile
-import com.intellij.platform.workspace.storage.EntityReference
-import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.storage.EntityReference
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.util.indexing.IndexableFilesIndex
+import com.intellij.util.indexing.IndexableSetContributor
+import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
+import com.intellij.util.indexing.roots.origin.IndexingRootHolder
+import com.intellij.util.indexing.roots.origin.IndexingSourceRootHolder
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 
 object IndexableEntityProviderMethods {
   fun createIterators(entity: ModuleEntity,
@@ -93,20 +93,20 @@ object IndexableEntityProviderMethods {
   fun createExternalEntityIterators(reference: EntityReference<*>,
                                     roots: IndexingSourceRootHolder): Collection<IndexableFilesIterator> {
     if (roots.isEmpty()) return emptyList()
-    return listOf(ExternalEntityIndexableIteratorImpl(reference, roots))
+    return listOf(ExternalEntityIndexableIteratorImpl(reference, roots, null))
   }
 
   fun createGenericContentEntityIterators(reference: EntityReference<*>,
                                           rootHolder: IndexingRootHolder): Collection<IndexableFilesIterator> {
     if (rootHolder.isEmpty()) return emptyList()
-    return listOf(GenericContentEntityIteratorImpl(reference, rootHolder))
+    return listOf(GenericContentEntityIteratorImpl(reference, rootHolder, null))
   }
 
   fun createModuleAwareContentEntityIterators(module: Module,
                                               reference: EntityReference<*>,
                                               rootHolder: IndexingRootHolder): Collection<IndexableFilesIterator> {
     if (rootHolder.isEmpty()) return emptyList()
-    return listOf(ModuleAwareContentEntityIteratorImpl(module, reference, rootHolder))
+    return listOf(ModuleAwareContentEntityIteratorImpl(module, reference, rootHolder, null))
   }
 
   fun createForIndexableSetContributor(contributor: IndexableSetContributor,

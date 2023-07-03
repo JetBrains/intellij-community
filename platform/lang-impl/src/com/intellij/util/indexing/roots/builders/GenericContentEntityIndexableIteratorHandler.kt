@@ -30,7 +30,7 @@ class GenericContentEntityIndexableIteratorHandler : IndexableIteratorBuilderHan
       GenericContentEntityIteratorImpl(it.key, it.value.fold(MutableIndexingRootHolder()) { holder, builder ->
         holder.addRoots(builder.roots)
         return@fold holder
-      })
+      }, null)
     }
 
     return usualIterators + customIterators

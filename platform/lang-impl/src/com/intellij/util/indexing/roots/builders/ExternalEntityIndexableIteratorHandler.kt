@@ -31,7 +31,7 @@ class ExternalEntityIndexableIteratorHandler : IndexableIteratorBuilderHandler {
         mutableHolder.addRoots(holder)
         return@foldRight mutableHolder
       }
-      ExternalEntityIndexableIteratorImpl(it.key, sum)
+      ExternalEntityIndexableIteratorImpl(it.key, sum, null)
     }
 
     return usualIterators + customIterators
