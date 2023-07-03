@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("RAW_RUN_BLOCKING")
+
 package com.intellij.toolWindow
 
 import com.intellij.openapi.application.EDT
@@ -12,10 +14,7 @@ import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.SkipInHeadlessEnvironment
 import com.intellij.testFramework.replaceService
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 
 @SkipInHeadlessEnvironment
 abstract class ToolWindowManagerTestCase : LightPlatformTestCase() {
@@ -41,7 +40,7 @@ abstract class ToolWindowManagerTestCase : LightPlatformTestCase() {
       }
 
       val reopeningEditorJob = Job().also { it.complete() }
-      manager!!.doInit(frame, project.messageBus.connect(testRootDisposable), reopeningEditorJob, taskListDeferred = null)
+      manager!!.doInit(CompletableDeferred(value = frame), project.messageBus.connect(testRootDisposable), reopeningEditorJob, taskListDeferred = null)
     }
   }
 

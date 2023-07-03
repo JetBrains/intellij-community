@@ -63,9 +63,12 @@ import com.intellij.serviceContainer.NonInjectable
 import com.intellij.toolWindow.*
 import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.util.*
+import com.intellij.util.BitUtil
+import com.intellij.util.EventDispatcher
+import com.intellij.util.SingleAlarm
+import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.messages.MessageBusConnection
+import com.intellij.util.messages.SimpleMessageBusConnection
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.FocusUtil
 import com.intellij.util.ui.PositionTracker
@@ -73,7 +76,6 @@ import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.*
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.*
@@ -480,33 +482,37 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     }
   }
 
-  suspend fun init(frameHelper: ProjectFrameHelper, reopeningEditorJob: Job, taskListDeferred: Deferred<List<RegisterToolWindowTask>>) {
-    doInit(frameHelper = frameHelper,
-           connection = project.messageBus.connect(this),
+  suspend fun init(frameHelperDeferred: Deferred<ProjectFrameHelper>, reopeningEditorJob: Job, taskListDeferred: Deferred<List<RegisterToolWindowTask>>) {
+    doInit(frameHelperDeferred = frameHelperDeferred,
+           connection = project.messageBus.connect(coroutineScope),
            reopeningEditorJob = reopeningEditorJob,
            taskListDeferred = taskListDeferred)
   }
 
   @VisibleForTesting
-  suspend fun doInit(frameHelper: ProjectFrameHelper,
-                     connection: MessageBusConnection,
+  suspend fun doInit(frameHelperDeferred: Deferred<ProjectFrameHelper>,
+                     connection: SimpleMessageBusConnection,
                      reopeningEditorJob: Job,
                      taskListDeferred: Deferred<List<RegisterToolWindowTask>>?) {
-    connection.subscribe(ToolWindowManagerListener.TOPIC, dispatcher.multicaster)
-    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      this@ToolWindowManagerImpl.frameHelper = frameHelper
+    withContext(ModalityState.any().asContextElement()) {
+      launch(Dispatchers.EDT) {
+        val frameHelper = frameHelperDeferred.await()
+        this@ToolWindowManagerImpl.frameHelper = frameHelper
 
-      // Make sure we haven't already created the root tool window pane. We might have created panes for secondary frames, as they get
-      // registered differently, but we shouldn't have the main pane yet
-      LOG.assertTrue(!toolWindowPanes.containsKey(WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID))
+        // Make sure we haven't already created the root tool window pane.
+        // We might have created panes for secondary frames, as they get
+        // registered differently, but we shouldn't have the main pane yet
+        LOG.assertTrue(!toolWindowPanes.containsKey(WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID))
 
-      val toolWindowPane = frameHelper.rootPane.getToolWindowPane()
-      // This will be the tool window pane for the default frame, which is not automatically added by the ToolWindowPane constructor. If we're
-      // reopening other frames, their tool window panes will be added, but we still need to initialise the tool windows themselves.
-      toolWindowPanes.put(toolWindowPane.paneId, toolWindowPane)
+        val toolWindowPane = frameHelper.rootPane.getToolWindowPane()
+        // This will be the tool window pane for the default frame, which is not automatically added by the ToolWindowPane constructor.
+        // If we're reopening other frames, their tool window panes will be added,
+        // but we still need to initialise the tool windows themselves.
+        toolWindowPanes.put(toolWindowPane.paneId, toolWindowPane)
+      }
+      connection.subscribe(ToolWindowManagerListener.TOPIC, dispatcher.multicaster)
+      toolWindowSetInitializer.initUi(reopeningEditorJob, taskListDeferred)
     }
-
-    toolWindowSetInitializer.initUi(reopeningEditorJob, taskListDeferred)
 
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
       override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
@@ -516,7 +522,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
               focusToolWindowByDefault()
             }
           })
-        }.cancelOnDispose(this@ToolWindowManagerImpl)
+        }
       }
     })
   }
@@ -640,9 +646,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     recentToolWindowsState.add(0, entry.id)
 
     if (!entry.toolWindow.isAvailable) {
-      // Tool window can be "logically" active but not focused.
+      // The Tool window can be "logically" active but not focused.
       // For example, when the user switched to another application.
-      // So we just need to bring a tool window to front.
+      // So we just need to bring a tool window to the front.
       if (autoFocusContents && !entry.toolWindow.hasFocus) {
         entry.toolWindow.requestFocusInToolWindow()
       }
@@ -899,7 +905,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       }
     }
     else {
-      // first we have to find a tool window that was located at the same side and was hidden
+      // first, we have to find a tool window that was located at the same side and was hidden
       if (isStackEnabled) {
         var info2: WindowInfoImpl? = null
         while (!sideStack.isEmpty(info.anchor)) {
@@ -959,7 +965,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     }
     else {
       // docked and sliding windows
-      // If there is a tool window on the same side, then we have to hide it, i.e.
+      // If there is a tool window on the same side, then we have to hide it, i.e.,
       // clear place for a tool window to be shown.
       //
       // We store WindowInfo of a hidden tool window in the SideStack (if the tool window
@@ -1113,7 +1119,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     // If preloaded info is visible or active, then we have to show/activate the installed
     // tool window. This step has sense only for windows which are not in the auto hide
     // mode. But if a tool window was active but its mode doesn't allow to activate it again
-    // (for example, a tool window is in auto hide mode) then we just activate an editor component.
+    // (for example, a tool window is in auto hide mode), then we just activate an editor component.
     if (stripeButton != null && factory != null /* not null on an init tool window from EP */ && infoSnapshot.isVisible) {
       showToolWindowImpl(entry, info, dirtyMode = false)
 
@@ -1135,7 +1141,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     if (taskPlugin != null) return taskPlugin.isBundled
 
     val contentFactoryClass = task.contentFactory?.javaClass?.canonicalName ?: return false
-    // check content factory, Service View and Endpoints View go here
+    // check content factory, Service View, and Endpoints View goes here
     val pluginDescriptor = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(contentFactoryClass)
     return pluginDescriptor == null || pluginDescriptor.isBundled
   }
@@ -1923,7 +1929,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       floatingDecorator.bounds = Rectangle(bounds)
     }
     else {
-      // place new frame at the center of the current frame if there are no floating bounds
+      // place a new frame at the center of the current frame if there are no floating bounds
       var size = decorator.size
       if (size.width == 0 || size.height == 0) {
         size = decorator.preferredSize
@@ -1955,7 +1961,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       window.bounds = Rectangle(bounds)
     }
     else {
-      // place new frame at the center of the current frame if there are no floating bounds
+      // place a new frame at the center of the current frame if there are no floating bounds
       val currentFrame = getToolWindowPane(entry.toolWindow).frame
       var size = decorator.size
       if (size.width == 0 || size.height == 0) {
@@ -2053,7 +2059,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   /**
-   * Handles event from decorator and modify weight/floating bounds of the
+   * Handles event from decorator and modify the weight /floating bounds of the
    * tool window depending on a decoration type.
    */
   open fun movedOrResized(source: InternalDecoratorImpl) {

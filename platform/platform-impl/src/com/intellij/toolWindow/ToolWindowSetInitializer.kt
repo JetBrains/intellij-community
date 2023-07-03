@@ -1,8 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
 package com.intellij.toolWindow
 
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.runActivity
+import com.intellij.diagnostic.subtask
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.actionSystem.ActionManager
@@ -10,7 +13,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointListener
@@ -25,7 +27,6 @@ import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.DesktopLayout
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
-import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.NonNls
@@ -88,12 +89,10 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
       LOG.debug(project) { "create and layout tool windows (project=$it, tasks=${tasks?.joinToString(separator = "\n")}" }
       createAndLayoutToolWindows(manager = manager, tasks = tasks ?: return, reopeningEditorJob = reopeningEditorJob)
       // separate EDT task - ensure that more important tasks like editor restoring maybe executed
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      subtask("toolwindow init pending tasks processing", Dispatchers.EDT) {
         blockingContext {
-          runActivity("toolwindow init pending tasks processing") {
-            while (true) {
-              (pendingTasks.poll() ?: break).run()
-            }
+          while (true) {
+            (pendingTasks.poll() ?: break).run()
           }
         }
       }
@@ -117,28 +116,26 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
       .getExtensionPoint<RegisterToolWindowTaskProvider>("com.intellij.registerToolWindowTaskProvider")
     val list = addExtraTasks(tasks, project, ep)
 
-    val entries = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      blockingContext {
-        val layout = pendingLayout.getAndSet(null) ?: throw IllegalStateException("Expected some pending layout")
-        @Suppress("TestOnlyProblems")
-        manager.setLayoutOnInit(layout)
+    val entries = withContext(Dispatchers.EDT) {
+      val layout = pendingLayout.getAndSet(null) ?: throw IllegalStateException("Expected some pending layout")
+      @Suppress("TestOnlyProblems")
+      manager.setLayoutOnInit(layout)
 
-        runActivity("toolwindow creating") {
-          // Register all tool windows for the default tool window pane. If there are any tool windows for other panes, we'll register them
-          // after the reopening editors job has created the panes
-          val entries = registerToolWindows(list, manager, layout) { it == WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID }
-          for (toolWindowPane in manager.getToolWindowPanes()) {
-            toolWindowPane.buttonManager.initMoreButton()
-            toolWindowPane.buttonManager.revalidateNotEmptyStripes()
-            toolWindowPane.putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, manager.createNotInHierarchyIterable(toolWindowPane.paneId))
-          }
-
-          entries
+      subtask("toolwindow creating") {
+        // Register all tool windows for the default tool window pane.
+        // If there are any tool windows for other panes, we'll register them after the reopening editors job has created the panes.
+        val entries = registerToolWindows(list, manager, layout) { it == WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID }
+        for (toolWindowPane in manager.getToolWindowPanes()) {
+          toolWindowPane.buttonManager.initMoreButton()
+          toolWindowPane.buttonManager.revalidateNotEmptyStripes()
+          toolWindowPane.putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, manager.createNotInHierarchyIterable(toolWindowPane.paneId))
         }
+
+        entries
       }
     }
 
-    service<ToolWindowManagerImpl.ToolWindowManagerAppLevelHelper>()
+    serviceAsync<ToolWindowManagerImpl.ToolWindowManagerAppLevelHelper>()
 
     postEntryProcessing(entries)
 
@@ -180,9 +177,6 @@ private fun registerToolWindows(registerTasks: List<RegisterToolWindowTask>,
       if (shouldRegister(paneId)) {
         entries.add(manager.registerToolWindow(task = task, buttonManager = manager.getToolWindowPane(paneId).buttonManager))
       }
-    }
-    catch (e: ProcessCanceledException) {
-      throw e
     }
     catch (e: CancellationException) {
       throw e
@@ -248,9 +242,9 @@ internal fun getToolWindowAnchor(factory: ToolWindowFactory?, bean: ToolWindowEP
   return factory?.anchor ?: ToolWindowAnchor.fromText(bean.anchor ?: ToolWindowAnchor.LEFT.toString())
 }
 
-private fun beanToTask(project: Project, bean: ToolWindowEP, plugin: PluginDescriptor = bean.pluginDescriptor): RegisterToolWindowTask? {
+private suspend fun beanToTask(project: Project, bean: ToolWindowEP, plugin: PluginDescriptor = bean.pluginDescriptor): RegisterToolWindowTask? {
   val factory = bean.getToolWindowFactory(plugin)
-  return if (factory.isApplicable(project)) beanToTask(project, bean, plugin, factory) else null
+  return if (blockingContext { factory.isApplicable(project) }) beanToTask(project, bean, plugin, factory) else null
 }
 
 private fun beanToTask(project: Project,
@@ -272,22 +266,29 @@ private fun beanToTask(project: Project,
   return task
 }
 
-internal fun computeToolWindowBeans(project: Project): List<RegisterToolWindowTask> {
-  val ep = ToolWindowEP.EP_NAME.point as ExtensionPointImpl<ToolWindowEP>
-  val list = ArrayList<RegisterToolWindowTask>(ep.size())
-  ep.processWithPluginDescriptor(true) { bean, pluginDescriptor ->
-    try {
-      val condition = bean.getCondition(pluginDescriptor)
-      if (condition == null || condition.value(project)) {
-        list.addIfNotNull(beanToTask(project, bean, pluginDescriptor))
+internal suspend fun computeToolWindowBeans(project: Project): List<RegisterToolWindowTask> {
+  return coroutineScope {
+    ToolWindowEP.EP_NAME.filterableLazySequence().map { item ->
+      async {
+        try {
+          val bean = item.instance ?: return@async null
+          val condition = bean.getCondition(item.pluginDescriptor)
+          if (condition == null || condition.value(project)) {
+            beanToTask(project, bean, item.pluginDescriptor)
+          }
+          else {
+            null
+          }
+        }
+        catch (e: CancellationException) {
+          throw e
+        }
+        catch (e: Throwable) {
+          LOG.error("Cannot process toolwindow ${item.id}", e)
+          null
+        }
       }
     }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      LOG.error("Cannot process toolwindow ${bean.id}", e)
-    }
-  }
-  return list
+      .toList()
+  }.mapNotNull { it.getCompleted() }
 }

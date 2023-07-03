@@ -327,9 +327,15 @@ private fun CoroutineScope.scheduleInitFrame(rawProjectDeferred: CompletableDefe
   launch {
     val project = rawProjectDeferred.await()
     subtask("initFrame") {
-      scheduleInitializeToolWindows(deferredProjectFrameHelper = deferredProjectFrameHelper,
-                                    project = project,
-                                    reopeningEditorJob = reopeningEditorJob)
+      launch(CoroutineName("tool window pane creation")) {
+        val toolWindowManager = async { project.serviceAsync<ToolWindowManager>() as? ToolWindowManagerImpl }
+        val taskListDeferred = async(CoroutineName("toolwindow init command creation")) {
+          computeToolWindowBeans(project = project)
+        }
+        toolWindowManager.await()?.init(frameHelperDeferred = deferredProjectFrameHelper,
+                                        reopeningEditorJob = reopeningEditorJob,
+                                        taskListDeferred = taskListDeferred)
+      }
 
       @Suppress("DEPRECATION")
       project.coroutineScope.launch(rootTask()) {
@@ -414,20 +420,6 @@ private fun focusSelectedEditor(editorComponent: EditorsSplitters) {
     AsyncEditorLoader.performWhenLoaded(editor) {
       composite.preferredFocusedComponent?.requestFocusInWindow()
     }
-  }
-}
-
-private fun CoroutineScope.scheduleInitializeToolWindows(deferredProjectFrameHelper: Deferred<ProjectFrameHelper>,
-                                                         project: Project,
-                                                         reopeningEditorJob: Job) {
-  launch(CoroutineName("tool window pane creation")) {
-    val toolWindowManager = project.serviceAsync<ToolWindowManager>() as? ToolWindowManagerImpl ?: return@launch
-
-    val taskListDeferred = async(CoroutineName("toolwindow init command creation")) {
-      computeToolWindowBeans(project)
-    }
-    val frameHelper = deferredProjectFrameHelper.await()
-    toolWindowManager.init(frameHelper = frameHelper, reopeningEditorJob = reopeningEditorJob, taskListDeferred = taskListDeferred)
   }
 }
 
