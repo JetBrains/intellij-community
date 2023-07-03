@@ -39,6 +39,27 @@ internal class ClassLoaderConfiguratorTest {
   }
 
   @Test
+  fun `child with common package prefix must be after included sibling`() {
+    val pluginId = PluginId.getId("com.example")
+    val emptyPath = Path.of("")
+
+    fun createModuleDescriptor(name: String): IdeaPluginDescriptorImpl {
+      return IdeaPluginDescriptorImpl(raw = RawPluginDescriptor().also { it.`package` = name },
+                                      path = emptyPath,
+                                      isBundled = false,
+                                      id = pluginId,
+                                      moduleName = name)
+    }
+
+    val modules = arrayOf(
+      createModuleDescriptor("com.foo"),
+      createModuleDescriptor("com.foo.bar"),
+    )
+    sortDependenciesInPlace(modules)
+    assertThat(modules.map { it.moduleName }).containsExactly("com.foo.bar", "com.foo")
+  }
+
+  @Test
   fun packageForOptionalMustBeSpecified() {
     assertThatThrownBy {
       loadPlugins(modulePackage = null)

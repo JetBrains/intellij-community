@@ -20,7 +20,7 @@ class RawPluginDescriptor {
   @JvmField internal var sinceBuild: String? = null
   @JvmField internal var untilBuild: String? = null
 
-  @JvmField internal var `package`: String? = null
+  @JvmField var `package`: String? = null
 
   @JvmField internal var url: String? = null
   @JvmField internal var vendor: String? = null

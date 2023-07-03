@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.ide.plugins
 
@@ -429,15 +429,23 @@ private fun configureUsingIdeaClassloader(classPath: List<Path>, descriptor: Ide
 
 @VisibleForTesting
 fun sortDependenciesInPlace(dependencies: Array<IdeaPluginDescriptorImpl>) {
-  if (dependencies.size <= 1) return
+  if (dependencies.size <= 1) {
+    return
+  }
 
   fun getWeight(module: IdeaPluginDescriptorImpl) = if (module.moduleName == null) 1 else 0
 
   // java sort is stable, so, it is safe to not use topological comparator here
-  Arrays.sort(dependencies, kotlin.Comparator { o1, o2 ->
+  dependencies.sortWith { o1, o2 ->
     // parent plugin must be after content module because otherwise will be an assert about requesting class from the main classloader
-    getWeight(o1) - getWeight(o2)
-  })
+    val diff = getWeight(o1) - getWeight(o2)
+    if (diff == 0) {
+      (o2.packagePrefix ?: "").compareTo(o1.packagePrefix ?: "")
+    }
+    else {
+      diff
+    }
+  }
 }
 
 private class MainInfo(
