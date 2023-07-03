@@ -255,7 +255,7 @@ private fun @receiver:Nls StringBuilder.renderKotlinDeclaration(
 ) {
     analyze(declaration) {
         // it's not possible to create symbol for function type parameter, so we need to process this case separately
-        // see KTIJ-22404
+        // see KTIJ-22404 and KTIJ-25653
         if (declaration is KtParameter && declaration.isFunctionTypeParameter) {
             val definition = renderFunctionTypeParameter(declaration) ?: return
 

@@ -56,6 +56,11 @@ public abstract class KotlinDefinitionsSearchTestGenerated extends AbstractKotli
             KotlinTestUtils.runTest(this::doTestCallable, this, testDataFilePath);
         }
 
+        @TestMetadata("invalidCodeParameter.kt")
+        public void testInvalidCodeParameter() throws Exception {
+            runTest("../testData/definitionsSearch/kotlinFunction/invalidCodeParameter.kt");
+        }
+
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("../testData/definitionsSearch/kotlinFunction/simple.kt");
